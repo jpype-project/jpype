@@ -14,11 +14,11 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-KEYWORDS = set(
+KEYWORDS = set((
     "del", "for", "is", "raise",
     "assert", "elif", "from", "lambda", "return",
     "break", "else", "global", "not", "try",
     "class", "except", "if", "or", "while",
     "continue", "exec", "import", "pass", "yield",
     "def", "finally", "in", "print", "as", "None"
-)
+))
