@@ -12,73 +12,82 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
-
-import os, re
-
+import os
+import re
+import shlex
+import subprocess
 
 
 _KNOWN_LOCATIONS = [
-    ("/opt/sun/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so") ),
-    ("/usr/java/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so") ),
-    ("/usr/java/", re.compile(r"jdk(.+)/jre/lib/i386/client/libjvm.so") ),
+        ("/opt/sun/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so")),
+        ("/usr/java/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so")),
+        ("/usr/java/", re.compile(r"jdk(.+)/jre/lib/i386/client/libjvm.so")),
 ]
 
-JRE_ARCHS = [
-			 "amd64/server/libjvm.so",
-			 "i386/client/libjvm.so",
-			 "i386/server/libjvm.so",
-			 ]
+JRE_ARCHS = ["amd64/server/libjvm.so",
+             "i386/client/libjvm.so",
+             "i386/server/libjvm.so", ]
 
 
-def getDefaultJVMPath() :
+def getDefaultJVMPath():
     jvm = _getJVMFromJavaHome()
-    if jvm is not None :
+    if jvm is not None:
         return jvm
-       
+
     #on linux, the JVM has to be in the LD_LIBRARY_PATH anyway, so might as well inspect it first
     jvm = _getJVMFromLibPath()
-    if jvm is not None :
+    if jvm is not None:
         return jvm
-    
+
     # failing that, lets look in the "known" locations
-    for i in _KNOWN_LOCATIONS :
+    for i in _KNOWN_LOCATIONS:
         # TODO
         pass
 
     return "/usr/java/jre1.5.0_05/lib/i386/client/libjvm.so"
-        
+
+
 def _getJVMFromJavaHome():
-	java_home = os.getenv("JAVA_HOME")
-	rootJre = None
-	if os.path.exists(java_home+"/bin/javac") :
-		# this is a JDK home
-		rootJre = java_home + '/jre/lib'
-	elif os.path.exists(java_home+"/bin/java") :
-		# this is a JRE home
-		rootJre = java_home + '/lib'
-	else:
-		return None
-	
-	for i in JRE_ARCHS :
-		if os.path.exists(rootJre+"/"+i) :
-			return rootJre+"/"+i
-	return None
-		
-        
-def _getJVMFromLibPath() :
-    if 'LD_LIBRARY_PATH' in os.environ :
+    java_home = os.getenv("JAVA_HOME")
+    if java_home is None:
+        try:
+            # Need to use Popen since check_output is only supported in py2.7+
+            java_home = subprocess.Popen(shlex.split('readlink -f /usr/bin/java'),
+                                        stdout=subprocess.PIPE
+                                ).communicate()[0].strip().replace('bin/java', '')
+        except:  # I know. catchall is bad...
+            # Avoid NoneType + String
+            java_home = ''
+
+    rootJre = None
+    if os.path.exists(java_home + "/bin/javac"):
+        # this is a JDK home
+        rootJre = java_home + '/jre/lib'
+    elif os.path.exists(java_home + "/bin/java"):
+        # this is a JRE home
+        rootJre = java_home + '/lib'
+    else:
+        return None
+
+    for i in JRE_ARCHS:
+        if os.path.exists(rootJre + "/" + i):
+            return rootJre + "/" + i
+    return None
+
+
+def _getJVMFromLibPath():
+    if 'LD_LIBRARY_PATH' in os.environ:
         libpath = os.environ['LD_LIBRARY_PATH']
-        if libpath is None :
+        if libpath is None:
             return None
-        
+
         paths = libpath.split(os.pathsep)
-        for i in paths :
-            if i.find('jre') != -1 :
+        for i in paths:
+            if i.find('jre') != -1:
                 # this could be it!
                 # TODO
                 pass
-                
+
     return None
-    
