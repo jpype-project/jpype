@@ -62,8 +62,15 @@ class JPypeSetup(object):
     def setupLinux(self):
         self.javaHome = os.getenv("JAVA_HOME")
         if self.javaHome is None:
-            self.javaHome = '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08'  # Ubuntu linux
-            #self.javaHome = '/usr/java/jdk1.5.0_05'
+            possibleHomes = ['/usr/lib/jvm/default-java'
+                             '/usr/lib/jvm/java-1.5.0-gcj-4.4',
+                             '/usr/lib/jvm/jdk1.6.0_30',
+                             '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
+                             '/usr/java/jdk1.5.0_05']
+            for home in possibleHomes:
+                if os.path.exists(home):
+                    self.javaHome = home
+                    break
         self.jdkInclude = "linux"
         self.libraries = ["dl"]
         self.libraryDir = [self.javaHome + "/lib"]
