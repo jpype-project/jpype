@@ -1,0 +1,18 @@
+<project default="test" name="JPype - Native">
+
+	<target name="test" depends="compile">
+	</target>	
+	
+	<target name="compile">
+		<mkdir dir="classes"/>
+		<javac destdir="classes"
+			srcdir="harness"
+			includes="jpype/**"
+			source="1.4"
+			target="1.4"
+		/>
+		<rmic base="classes"
+			classname="jpype.rmi.ServerImpl"
+		/>
+	</target>
+</project>	
