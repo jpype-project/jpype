@@ -35,3 +35,8 @@ Easy as
 
 :+1:
 
+Tested on
+---------
+
+* OS X 10.7.4
+* Debian 6.0.4/6.0.5
