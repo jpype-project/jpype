@@ -12,17 +12,13 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
-
-import sets
-
-KEYWORDS = sets.Set( (
+KEYWORDS = set(
     "del", "for", "is", "raise",
-    "assert", "elif", "from", "lambda", "return",   
+    "assert", "elif", "from", "lambda", "return",
     "break", "else", "global", "not", "try",
-    "class", "except", "if", "or", "while", 
+    "class", "except", "if", "or", "while",
     "continue", "exec", "import", "pass", "yield",
     "def", "finally", "in", "print", "as", "None"
-    ))
-
+)
