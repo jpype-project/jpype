@@ -26,6 +26,11 @@ Known Bugs/Limitations
   python code do not have a current class, these methods do not work. The User Manual 
   lists all the known methods like that.
 
+Requirements
+------------
+
+JDK and JRE.
+
 Installation
 ------------
 
@@ -38,5 +43,5 @@ Easy as
 Tested on
 ---------
 
-* OS X 10.7.4
-* Debian 6.0.4/6.0.5
+* OS X 10.7.4 with Sun/Oracle JDK 1.6.0
+* Debian 6.0.4/6.0.5 with Sun/Oracle JDK 1.6.0 
