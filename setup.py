@@ -62,7 +62,7 @@ class JPypeSetup(object):
     def setupLinux(self):
         self.javaHome = os.getenv("JAVA_HOME")
         if self.javaHome is None:
-            possibleHomes = ['/usr/lib/jvm/default-java'
+            possibleHomes = ['/usr/lib/jvm/default-java',
                              '/usr/lib/jvm/java-1.5.0-gcj-4.4',
                              '/usr/lib/jvm/jdk1.6.0_30',
                              '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
