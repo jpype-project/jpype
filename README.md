@@ -13,7 +13,7 @@ From the [original Website](http://jpype.sourceforge.net/index.html):
 > the Python logic, eventually allowing the bridging technology to be used in other environments, 
 > I.E. Ruby, Perl, COM, etc ...
 
-This github fork applies changes to make the installation work on OSX,
+This github fork applies changes to make the installation easier on OSX and Linux,
 as suggested by [Yuvul Adam](http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x)
 and the beautiful people in [one of the JPype Stackoverflow postings](http://stackoverflow.com/questions/8525193/cannot-install-jpype-on-os-x-lion-to-use-with-neo4j).
 
@@ -45,3 +45,4 @@ Tested on
 
 * OS X 10.7.4 with Sun/Oracle JDK 1.6.0
 * Debian 6.0.4/6.0.5 with Sun/Oracle JDK 1.6.0 
+* Ubuntu 12.04 with Sun/Oracle JDK 1.6.0 
