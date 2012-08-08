@@ -63,7 +63,7 @@ class JPypeSetup(object):
         self.javaHome = os.getenv("JAVA_HOME")
         if self.javaHome is None:
             possibleHomes = ['/usr/lib/jvm/default-java',
-                             '/usr/lib/jvm/java-6-sun/',
+                             '/usr/lib/jvm/java-6-sun',
                              '/usr/lib/jvm/java-1.5.0-gcj-4.4',
                              '/usr/lib/jvm/jdk1.6.0_30',
                              '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
@@ -74,7 +74,16 @@ class JPypeSetup(object):
                     break
         self.jdkInclude = "linux"
         self.libraries = ["dl"]
-        self.libraryDir = [self.javaHome + "/lib"]
+        try:
+            self.libraryDir = [self.javaHome + "/lib"]
+        except TypeError:
+            raise RuntimeError(
+                "No Java/JDK could be found. I looked in the following "
+                "directories: %s\nPlease check that you have it installed. "
+                "If you have and the destination is not in the above list "
+                "please consider opening a ticket or creating a pull request "
+                "on github: https://github.com/originell/jpype/"
+                % possibleHomes)
 
     def setupPlatform(self):
         if sys.platform == 'win32':
