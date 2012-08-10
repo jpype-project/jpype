@@ -50,7 +50,7 @@ class JPypeSetup(object):
             # :)
             javaHome = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
                         'Frameworks/JavaVM.framework/Versions/1.6.0/')
-        elif osx == '10.7':
+        elif osx in ('10.7', '10.8'):
             javaHome = ('/System/Library/Frameworks/JavaVM.framework/'
                         'Versions/Current/')
         self.javaHome = javaHome
