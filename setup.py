@@ -67,7 +67,9 @@ class JPypeSetup(object):
                              '/usr/lib/jvm/java-1.5.0-gcj-4.4',
                              '/usr/lib/jvm/jdk1.6.0_30',
                              '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
-                             '/usr/java/jdk1.5.0_05']
+                             '/usr/java/jdk1.5.0_05',
+                             '/usr/lib/jvm/java-6-openjdk-amd64' # xubuntu 12.10
+                            ]
             for home in possibleHomes:
                 if os.path.exists(home):
                     self.javaHome = home
