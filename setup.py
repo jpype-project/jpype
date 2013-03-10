@@ -67,23 +67,26 @@ class JPypeSetup(object):
                              '/usr/lib/jvm/java-1.5.0-gcj-4.4',
                              '/usr/lib/jvm/jdk1.6.0_30',
                              '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
-                             '/usr/java/jdk1.5.0_05']
+                             '/usr/java/jdk1.5.0_05',
+                             '/usr/lib/jvm/java-6-openjdk-amd64' # xubuntu 12.10
+                            ]
             for home in possibleHomes:
-                if os.path.exists(home):
+                includePath = os.path.join(home, 'include')
+                if os.path.exists(includePath):
                     self.javaHome = home
                     break
+            else:
+                raise RuntimeError(
+                    "No Java/JDK could be found. I looked in the following "
+                    "directories: %s\nPlease check that you have it installed. "
+                    "If you have and the destination is not in the above list "
+                    "please consider opening a ticket or creating a pull request "
+                    "on github: https://github.com/originell/jpype/"
+                    % '\n'+'\n'.join(possibleHomes))
+
         self.jdkInclude = "linux"
         self.libraries = ["dl"]
-        try:
-            self.libraryDir = [self.javaHome + "/lib"]
-        except TypeError:
-            raise RuntimeError(
-                "No Java/JDK could be found. I looked in the following "
-                "directories: %s\nPlease check that you have it installed. "
-                "If you have and the destination is not in the above list "
-                "please consider opening a ticket or creating a pull request "
-                "on github: https://github.com/originell/jpype/"
-                % possibleHomes)
+        self.libraryDir = [os.path.join(self.javaHome, "lib"]
 
     def setupPlatform(self):
         if sys.platform == 'win32':
@@ -94,14 +97,17 @@ class JPypeSetup(object):
             self.setupLinux()
 
     def setupInclusion(self):
-        platformdirs = [self.javaHome + "/include",
-                        self.javaHome + "/include/" + self.jdkInclude, ]
         if sys.platform == 'darwin':
-            platformdirs = [self.javaHome + "/Headers",
-                            self.javaHome + "/Headers/" + self.jdkInclude, ]
-        self.includeDirs = ["src/native/common/include",
-                            "src/native/python/include", ]
-        self.includeDirs.extend(platformdirs)
+            headerDirName = 'Headers'
+        else:
+            headerDirName = 'include'
+
+        self.includeDirs = [
+            "src/native/common/include",
+            "src/native/python/include",
+            os.path.join(self.javaHome, headerDirName),
+            os.path.join(self.javaHome, headerDirName, self.jdkInclude)
+        ]
 
     def setup(self):
         self.setupFiles()
