@@ -86,7 +86,7 @@ class JPypeSetup(object):
 
         self.jdkInclude = "linux"
         self.libraries = ["dl"]
-        self.libraryDir = [os.path.join(self.javaHome, "lib"]
+        self.libraryDir = [os.path.join(self.javaHome, "lib")]
 
     def setupPlatform(self):
         if sys.platform == 'win32':
