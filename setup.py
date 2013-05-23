@@ -68,7 +68,8 @@ class JPypeSetup(object):
                              '/usr/lib/jvm/jdk1.6.0_30',
                              '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
                              '/usr/java/jdk1.5.0_05',
-                             '/usr/lib/jvm/java-6-openjdk-amd64' # xubuntu 12.10
+                             '/usr/lib/jvm/java-6-openjdk-amd64', # xubuntu 12.10
+                             '/usr/lib/jvm/java-7-openjdk-amd64' # java 7 ubuntu 12.04
                             ]
             for home in possibleHomes:
                 includePath = os.path.join(home, 'include')
