@@ -58,8 +58,8 @@ void JPJavaEnv::load(const string& path)
 	
 	// WIN32
 	GetAdapter()->loadLibrary((char*)path.c_str());
-	CreateJVM_Method = (jint (JNICALL *)(struct JavaVM_ ** ,void ** ,void *))GetAdapter()->getSymbol("JNI_CreateJavaVM");
-	GetCreatedJVMs_Method = (jint (JNICALL *)(struct JavaVM_ ** , jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
+	CreateJVM_Method = (jint (JNICALL *)(JavaVM ** ,void ** ,void *))GetAdapter()->getSymbol("JNI_CreateJavaVM");
+	GetCreatedJVMs_Method = (jint (JNICALL *)(JavaVM ** , jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 	// No idea why I can't find this symbol .... no matter, it does not work anyway.
 	//JNI_DestroyJavaVM = (jint (__stdcall *)(struct JavaVM_ *))GetAdapter()->getSymbol("DestroyJavaVM");
 TRACE_OUT;
