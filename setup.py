@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 import os
 import sys
 import platform
 
 from distutils.core import setup
 from distutils.core import Extension
-
-
-_here = os.path.abspath(os.path.dirname(__file__))
 
 
 def sources():
@@ -28,7 +23,7 @@ ext['sources'] = sources()
 if sys.platform == 'win32':
     java_home = os.getenv('JAVA_HOME')
     if not java_home:
-        print('environment variable JAVA_HOME must be set')
+        print 'environment variable JAVA_HOME must be set'
         sys.exit(-1)
     ext['libraries'] = ['Advapi32']
     ext['library_dir'] = [os.path.join(java_home, 'lib')]
