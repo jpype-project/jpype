@@ -3,8 +3,8 @@
 import os
 import sys
 import codecs
-from glob import glob
 import platform
+from glob import glob
 
 from distutils.core import setup
 from distutils.core import Extension
@@ -35,9 +35,9 @@ platform_specific = {
 java_home = os.getenv('JAVA_HOME')
 if sys.platform == 'win32':
     if not java_home:
-        raise SystemExit('environment variable JAVA_HOME must be set')
+        raise SystemExit('Environment variable JAVA_HOME must be set.')
     platform_specific['libraries'] = ['Advapi32']
-    platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
+    platform_specific['library_dir'] = [os.path.join(java_home, 'lib'), ]
     platform_specific['define_macros'] = [('WIN32', 1)]
     platform_specific['extra_compile_args'] = ['/EHsc']
     platform_specific['include_dirs'] += [
@@ -68,9 +68,11 @@ elif sys.platform == 'darwin':
     ]
 else:
     if not java_home:
-        possible_homes = glob('/usr/lib/jvm/*')  # (almost) standard in GNU/Linux
-        possible_homes += glob('/usr/java/*')    # Java oracle in some cases
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
+        # (Almost) standard in GNU/Linux
+        possible_homes = glob('/usr/lib/jvm/*')
+        # Sun/Oracle Java in some cases
+        possible_homes += glob('/usr/java/*')
         for home in possible_homes:
             include_path = os.path.join(home, 'include')
             if os.path.exists(include_path):
