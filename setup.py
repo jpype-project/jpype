@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 import os
 import sys
 import codecs
@@ -10,13 +9,12 @@ from distutils.core import setup
 from distutils.core import Extension
 
 
-def read(*parts):
-    """Helper function for opening README with utf8 support."""
+def read_utf8(*parts):
     filename = os.path.join(os.path.dirname(__file__), *parts)
     return codecs.open(filename, encoding='utf-8').read()
 
 
-def sources():
+def find_sources():
     cpp_files = []
     for dirpath, dirnames, filenames in os.walk('src'):
         for filename in filenames:
@@ -25,23 +23,23 @@ def sources():
     return cpp_files
 
 
-kwargs = {'include_dirs': [
-                            os.path.join('src', 'native', 'common', 'include'),
-                            os.path.join('src', 'native', 'python', 'include'),
-                          ],
-         }
-kwargs['sources'] = sources()
+platform_specific = {
+    'include_dirs': [
+        os.path.join('src', 'native', 'common', 'include'),
+        os.path.join('src', 'native', 'python', 'include'),
+    ],
+    'sources': find_sources(),
+}
 
+java_home = os.getenv('JAVA_HOME')
 if sys.platform == 'win32':
-    java_home = os.getenv('JAVA_HOME')
     if not java_home:
-        print 'Environment Variable JAVA_HOME must be set.'
-        sys.exit(-1)
-    kwargs['libraries'] = ['Advapi32']
-    kwargs['library_dir'] = [os.path.join(java_home, 'lib')]
-    kwargs['define_macros'] = [('WIN32', 1)]
-    kwargs['extra_compile_args'] = ['/EHsc']
-    kwargs['include_dirs'] += [
+        sys.exit('\nEnvironment Variable JAVA_HOME must be set.\n')
+    platform_specific['libraries'] = ['Advapi32']
+    platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
+    platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['/EHsc']
+    platform_specific['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'win32')
     ]
@@ -51,7 +49,6 @@ elif sys.platform == 'darwin':
     # and
     # http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x
     osx = platform.mac_ver()[0][:4]
-    java_home = os.getenv('JAVA_HOME')
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
         java_home = '/Library/Java/Home'
@@ -62,14 +59,13 @@ elif sys.platform == 'darwin':
     elif osx in ('10.7', '10.8'):
         java_home = ('/System/Library/Frameworks/JavaVM.framework/'
                      'Versions/Current/')
-    kwargs['libraries'] = ['dl']
-    kwargs['library_dir'] = [os.path.join(java_home, 'Libraries')]
-    kwargs['define_macros'] = [('MACOSX', 1)]
-    kwargs['include_dirs'] += [
+    platform_specific['libraries'] = ['dl']
+    platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
+    platform_specific['define_macros'] = [('MACOSX', 1)]
+    platform_specific['include_dirs'] += [
         os.path.join(java_home, 'Headers'),
     ]
 else:
-    java_home = os.getenv('JAVA_HOME')
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
         possible_homes = [
@@ -100,22 +96,24 @@ else:
                 "https://github.com/originell/jpype/"
                 % '\n'.join(possible_homes))
 
-    kwargs['libraries'] = ['dl']
-    kwargs['library_dir'] = [os.path.join(java_home, 'lib')]
-    kwargs['include_dirs'] += [
+    platform_specific['libraries'] = ['dl']
+    platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
+    platform_specific['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'linux'),
         os.path.join(java_home, '..', 'include'),
         os.path.join(java_home, '..', 'include', 'linux'),
     ]
 
-jpypeLib = Extension(name='_jpype', **kwargs)
+
+jpypeLib = Extension(name='_jpype', **platform_specific)
+
 
 setup(
     name='JPype1',
     version='0.5.4.3',
     description='Friendly jpype fork with focus on easy installation.',
-    long_description=read('README.rst'),
+    long_description=read_utf8('README.rst'),
     license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
