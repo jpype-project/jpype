@@ -3,6 +3,7 @@
 
 import os
 import sys
+from glob import glob
 import platform
 
 from distutils.core import setup
@@ -23,8 +24,7 @@ ext['sources'] = sources()
 if sys.platform == 'win32':
     java_home = os.getenv('JAVA_HOME')
     if not java_home:
-        print 'environment variable JAVA_HOME must be set'
-        sys.exit(-1)
+        raise SystemExit('environment variable JAVA_HOME must be set')
     ext['libraries'] = ['Advapi32']
     ext['library_dir'] = [os.path.join(java_home, 'lib')]
     ext['define_macros'] = [('WIN32', 1)]
@@ -60,16 +60,8 @@ elif sys.platform == 'darwin':
 else:
     java_home = os.getenv('JAVA_HOME')
     if not java_home:
-        possible_homes = [
-            '/usr/lib/jvm/default-java',
-            '/usr/lib/jvm/java-6-sun',
-            '/usr/lib/jvm/java-1.5.0-gcj-4.4',
-            '/usr/lib/jvm/jdk1.6.0_30',
-            '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
-            '/usr/java/jdk1.5.0_05',
-            '/usr/lib/jvm/java-6-openjdk-amd64',   # xubuntu 12.10
-            '/usr/lib/jvm/java-7-openjdk-amd64'    # java 7 ubuntu 12.04
-        ]
+        possible_homes = glob('/usr/lib/jvm/*')  # (almost) standard in GNU/Linux
+        possible_homes += glob('/usr/java/*')    # Java oracle in some cases
         for home in possible_homes:
             include_path = os.path.join(home, 'include')
             if os.path.exists(include_path):
@@ -91,8 +83,6 @@ else:
         'src/native/python/include',
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'linux'),
-        os.path.join(java_home, '..', 'include'),
-        os.path.join(java_home, '..', 'include', 'linux'),
     ]
 
 jpypeLib = Extension(name='_jpype',
