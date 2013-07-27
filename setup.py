@@ -23,7 +23,7 @@ ext['sources'] = sources()
 if sys.platform == 'win32':
     java_home = os.getenv('JAVA_HOME')
     if not java_home:
-        print 'environment variable JAVA_HOME must be set'
+        print 'Environment Variable JAVA_HOME must be set.'
         sys.exit(-1)
     ext['libraries'] = ['Advapi32']
     ext['library_dir'] = [os.path.join(java_home, 'lib')]
@@ -41,7 +41,10 @@ elif sys.platform == 'darwin':
     # and
     # http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x
     osx = platform.mac_ver()[0][:4]
-    java_home = '/Library/Java/Home'
+    java_home = os.getenv('JAVA_HOME')
+    if not java_home:
+        print "No JAVA_HOME Environment Variable set. Trying to guess it..."
+        java_home = '/Library/Java/Home'
     if osx == '10.6':
         # I'm not sure if this really works on all 10.6 - confirm please :)
         java_home = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
@@ -60,6 +63,7 @@ elif sys.platform == 'darwin':
 else:
     java_home = os.getenv('JAVA_HOME')
     if not java_home:
+        print "No JAVA_HOME Environment Variable set. Trying to guess it..."
         possible_homes = [
             '/usr/lib/jvm/default-java',
             '/usr/lib/jvm/java-6-sun',
