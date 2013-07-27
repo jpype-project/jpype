@@ -16,11 +16,12 @@ From the `original Website <http://jpype.sourceforge.net/index.html>`__:
     the bridging technology to be used in other environments, I.E. Ruby,
     Perl, COM, etc ...
 
-This github fork applies changes to make the installation easier on OSX
+This friendly fork applies changes to make the installation easier on OSX
 and Linux, as suggested by `Yuvul
 Adam <http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x>`__
-and the beautiful people in `one of the JPype Stackoverflow
-postings <http://stackoverflow.com/questions/8525193/cannot-install-jpype-on-os-x-lion-to-use-with-neo4j>`__.
+, the beautiful people in `one of the JPype Stackoverflow
+postings <http://stackoverflow.com/questions/8525193/cannot-install-jpype-on-os-x-lion-to-use-with-neo4j>`__
+and all the other `CONTRIBUTORS <https://github.com/originell/jpype/blob/master/AUTHORS>`__.
 
 Known Bugs/Limitations
 ----------------------
