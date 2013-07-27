@@ -3,6 +3,7 @@
 import os
 import sys
 import codecs
+from glob import glob
 import platform
 
 from distutils.core import setup
@@ -34,7 +35,7 @@ platform_specific = {
 java_home = os.getenv('JAVA_HOME')
 if sys.platform == 'win32':
     if not java_home:
-        sys.exit('\nEnvironment Variable JAVA_HOME must be set.\n')
+        raise SystemExit('environment variable JAVA_HOME must be set')
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
     platform_specific['define_macros'] = [('WIN32', 1)]
@@ -67,17 +68,9 @@ elif sys.platform == 'darwin':
     ]
 else:
     if not java_home:
+        possible_homes = glob('/usr/lib/jvm/*')  # (almost) standard in GNU/Linux
+        possible_homes += glob('/usr/java/*')    # Java oracle in some cases
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
-        possible_homes = [
-            '/usr/lib/jvm/default-java',
-            '/usr/lib/jvm/java-6-sun',
-            '/usr/lib/jvm/java-1.5.0-gcj-4.4',
-            '/usr/lib/jvm/jdk1.6.0_30',
-            '/usr/lib/jvm/java-1.5.0-sun-1.5.0.08',
-            '/usr/java/jdk1.5.0_05',
-            '/usr/lib/jvm/java-6-openjdk-amd64',   # xubuntu 12.10
-            '/usr/lib/jvm/java-7-openjdk-amd64'    # java 7 ubuntu 12.04
-        ]
         for home in possible_homes:
             include_path = os.path.join(home, 'include')
             if os.path.exists(include_path):
@@ -101,8 +94,6 @@ else:
     platform_specific['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'linux'),
-        os.path.join(java_home, '..', 'include'),
-        os.path.join(java_home, '..', 'include', 'linux'),
     ]
 
 
