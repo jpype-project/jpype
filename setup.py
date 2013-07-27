@@ -91,8 +91,12 @@ else:
                 "No Java/JDK could be found. I looked in the following "
                 "directories: \n\n%s\n\nPlease check that you have it "
                 "installed.\n\nIf you have and the destination is not in the "
-                "above list please consider opening a ticket or creating a "
-                "pull request on github: https://github.com/originell/jpype/"
+                "above list, please find out where your java's home is, "
+                "set your JAVA_HOME environment variable to that path and "
+                "retry the installation.\n"
+                "If this still fails please open a ticket or create a "
+                "pull request with a fix on github: "
+                "https://github.com/originell/jpype/"
                 % '\n'.join(possible_homes))
 
     kwargs['libraries'] = ['dl']
