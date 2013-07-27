@@ -120,11 +120,24 @@ setup(
     version='0.5.4.3',
     description='Friendly jpype fork with focus on easy installation.',
     long_description=read('README.rst'),
+    license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
     maintainer_email='cooperate@originell.org',
     url='https://github.com/originell/jpype/',
+    platforms=[
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows :: Windows 7',
+        'Operating System :: Microsoft :: Windows :: Windows Vista',
+        'Operating System :: POSIX :: Linux',
+    ],
+    classifiers=[
+        'Programming Language :: Java',
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+    ],
     packages=[
         'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
     package_dir={
