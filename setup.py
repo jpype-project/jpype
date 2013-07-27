@@ -82,11 +82,11 @@ else:
         else:
             raise RuntimeError(
                 "No Java/JDK could be found. I looked in the following "
-                "directories: %s\nPlease check that you have it installed. "
-                "If you have and the destination is not in the above list "
-                "please consider opening a ticket or creating a pull request "
-                "on github: https://github.com/originell/jpype/"
-                % '\n' + '\n'.join(possible_homes))
+                "directories: \n\n%s\n\nPlease check that you have it "
+                "installed.\n\nIf you have and the destination is not in the "
+                "above list please consider opening a ticket or creating a "
+                "pull request on github: https://github.com/originell/jpype/"
+                % '\n'.join(possible_homes))
 
     ext['libraries'] = ['dl']
     ext['library_dir'] = [os.path.join(java_home, 'lib')]
@@ -106,7 +106,7 @@ jpypeLib = Extension(name='_jpype',
                      include_dirs=ext.get('include_dirs'),
                      library_dirs=ext.get('library_dir'),
                      extra_compile_args=ext.get('extra_compile_args'),
-                     )
+                    )
 
 setup(
     name='JPype',
