@@ -109,12 +109,14 @@ jpypeLib = Extension(name='_jpype',
                     )
 
 setup(
-    name='JPype',
-    version='0.5.4.2',
-    description='Python-Java bridge',
+    name='JPype1',
+    version='0.5.4.3',
+    description='Friendly jpype fork with focus on easy installation.',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
-    url='http://jpype.sourceforge.net/',
+    maintainer='Luis Nell',
+    maintainer_email='cooperate@originell.org',
+    url='https://github.com/originell/jpype/',
     packages=[
         'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
     package_dir={
