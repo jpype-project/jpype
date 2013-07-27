@@ -29,7 +29,13 @@ Known Bugs/Limitations
 Requirements
 ------------
 
-JDK and JRE.
+Either the Sun/Oracle JDK/JRE Variant or OpenJDK.
+
+### Debian/Ubuntu ###
+
+Debian/Ubuntu users will have to install `g++` and `python-dev` first:
+
+    sudo apt-get install g++ python-dev
 
 Installation
 ------------
