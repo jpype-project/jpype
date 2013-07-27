@@ -46,6 +46,19 @@ Easy as
 
 :+1:
 
+### If it fails… ###
+
+This happens mostly due to the setup not being able to find your `JAVA_HOME`.
+In case this happens, please do two things:
+
+1. You can continue the installation by finding the `JAVA_HOME` on your own (
+   the place where the headers etc. are) and explicitly setting it for the
+   installation:
+
+       JAVA_HOME=/usr/lib/java/jdk1.6.0/ python setup.py install
+2. Please create an Issue [on github](https://github.com/originell/jpype/issues?state=open)
+   and post all the information you have.
+
 Tested on
 ---------
 
