@@ -61,8 +61,8 @@ Should be easy as
     python setup.py install
 
 
-If it fails…
-~~~~~~~~~~~~
+If it fails...
+~~~~~~~~~~~~~~
 
 This happens mostly due to the setup not being able to find your
 ``JAVA_HOME``. In case this happens, please do two things:
