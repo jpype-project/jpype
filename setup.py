@@ -24,7 +24,12 @@ def sources():
                 cpp_files.append(os.path.join(dirpath, filename))
     return cpp_files
 
-kwargs = {}
+
+kwargs = {'include_dirs': [
+                            os.path.join('src', 'native', 'common', 'include'),
+                            os.path.join('src', 'native', 'python', 'include'),
+                          ],
+         }
 kwargs['sources'] = sources()
 
 if sys.platform == 'win32':
@@ -36,9 +41,7 @@ if sys.platform == 'win32':
     kwargs['library_dir'] = [os.path.join(java_home, 'lib')]
     kwargs['define_macros'] = [('WIN32', 1)]
     kwargs['extra_compile_args'] = ['/EHsc']
-    kwargs['include_dirs'] = [
-        'src/native/common/include',
-        'src/native/python/include',
+    kwargs['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'win32')
     ]
@@ -62,9 +65,7 @@ elif sys.platform == 'darwin':
     kwargs['libraries'] = ['dl']
     kwargs['library_dir'] = [os.path.join(java_home, 'Libraries')]
     kwargs['define_macros'] = [('MACOSX', 1)]
-    kwargs['include_dirs'] = [
-        'src/native/common/include',
-        'src/native/python/include',
+    kwargs['include_dirs'] += [
         os.path.join(java_home, 'Headers'),
     ]
 else:
@@ -101,9 +102,7 @@ else:
 
     kwargs['libraries'] = ['dl']
     kwargs['library_dir'] = [os.path.join(java_home, 'lib')]
-    kwargs['include_dirs'] = [
-        'src/native/common/include',
-        'src/native/python/include',
+    kwargs['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'linux'),
         os.path.join(java_home, '..', 'include'),
