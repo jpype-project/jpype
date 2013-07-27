@@ -3,10 +3,17 @@
 
 import os
 import sys
+import codecs
 import platform
 
 from distutils.core import setup
 from distutils.core import Extension
+
+
+def read(*parts):
+    """Helper function for opening README with utf8 support."""
+    filename = os.path.join(os.path.dirname(__file__), *parts)
+    return codecs.open(filename, encoding='utf-8').read()
 
 
 def sources():
@@ -112,6 +119,7 @@ setup(
     name='JPype1',
     version='0.5.4.3',
     description='Friendly jpype fork with focus on easy installation.',
+    long_description=read('README.rst'),
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
