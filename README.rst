@@ -1,6 +1,8 @@
 JPype
 =====
 
+[![Build Status](https://travis-ci.org/originell/jpype.png?branch=master)](https://travis-ci.org/originell/jpype)
+
 From the `original Website <http://jpype.sourceforge.net/index.html>`__:
 
     JPype is an effort to allow python programs full access to java
