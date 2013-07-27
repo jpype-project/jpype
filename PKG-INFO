@@ -1,10 +1,12 @@
-Metadata-Version: 1.0
+Metadata-Version: 1.1
 Name: JPype
-Version: 0.5.4.2
+Version: 0.5.4.3
 Summary: Python-Java bridge
 Home-page: http://jpype.sourceforge.net/
 Author: Steve Menard
 Author-email: devilwolf@users.sourceforge.net
+Maintainer: Luis Nell
+Maintainer-email: cooperate@originell.org
 License: UNKNOWN
 Description: UNKNOWN
 Platform: UNKNOWN
