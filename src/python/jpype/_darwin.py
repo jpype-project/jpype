@@ -12,9 +12,43 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
-def getDefaultJVMPath() :
-    # on darwin, the JVM is always in the same location it seems ...
-    return '/System/Library/Frameworks/JavaVM.framework/JavaVM'
+# Reuse the Linux code
+from ._linux import LinuxJVMFinder
+
+# ------------------------------------------------------------------------------
+
+class DarwinJVMFinder(LinuxJVMFinder):
+    """
+    Mac OS X JVM library finder class
+    """
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        LinuxJVMFinder.__init__(self)
+
+        # Library file name
+        self._libfile = "libjvm.dylib"
+
+        self._methods = list(self._methods)
+        self._methods.append(self._pre_vm7_path)
+
+        # Predefined locations
+        self._locations = ('/Library/Java/JavaVirtualMachines',)
+
+
+    def _pre_vm7_path(self):
+        """
+        Returns the previous constant JVM library path:
+        '/System/Library/Frameworks/JavaVM.framework/JavaVM'
+        """
+        return '/System/Library/Frameworks/JavaVM.framework/JavaVM'
+
+# ------------------------------------------------------------------------------
+
+# Alias
+JVMFinder = DarwinJVMFinder
