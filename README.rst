@@ -3,6 +3,8 @@ JPype
 
 .. image:: https://travis-ci.org/originell/jpype.png?branch=master
    :target: https://travis-ci.org/originell/jpype
+   
+(Looking for a **Python 3** compatible jpype? `See tcalmant's fork <https://github.com/tcalmant/jpype-py3>`__)
 
 From the `original Website <http://jpype.sourceforge.net/index.html>`__:
 
