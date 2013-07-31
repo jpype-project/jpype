@@ -12,29 +12,29 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 import sys
 
 import _jpype
 
-import _jclass
-import _jarray
-import _jwrapper
-import _jproxy
-import _jexception
-import _jcollection
-import _jobject
-import _properties
-import nio
-import reflect
-import _refdaemon
+from . import _jclass
+from . import _jarray
+from . import _jwrapper
+from . import _jproxy
+from . import _jexception
+from . import _jcollection
+from . import _jobject
+from . import _properties
+from . import nio
+from . import reflect
+from . import _refdaemon
 
 _usePythonThreadForDaemon = False
 
 def setUsePythonThreadForDeamon(v):
-	global _usePythonThreadForDaemon
-	_usePythonThreadForDaemon = v
+    global _usePythonThreadForDaemon
+    _usePythonThreadForDaemon = v
 
 
 def isJVMStarted() :
@@ -52,16 +52,16 @@ def startJVM(jvm, *args) :
     _properties._initialize()
     nio._initialize()
     reflect._initialize()
-    
-    # start the reference deamon thread 
+
+    # start the reference deamon thread
     if _usePythonThreadForDaemon :
-    	_refdaemon.startPython()
+        _refdaemon.startPython()
     else:
-    	_refdaemon.startJava()
-    
+        _refdaemon.startJava()
+
 def attachToJVM(jvm) :
     _jpype.attach(jvm)
-    
+
     _jclass._initialize()
     _jarray._initialize()
     _jwrapper._initialize()
@@ -70,47 +70,58 @@ def attachToJVM(jvm) :
     _jcollection._initialize()
     _jobject._initialize()
     _properties._initialize()
-        
+
 def shutdownJVM() :
     _refdaemon.stop()
     _jpype.shutdown()
-    
+
 def isThreadAttachedToJVM() :
     return _jpype.isThreadAttachedToJVM()
-    
+
 def attachThreadToJVM() :
     _jpype.attachThreadToJVM()
-    
-def detachThreadFromJVM() :    
+
+def detachThreadFromJVM() :
     _jpype.detachThreadFromJVM()
-    
-def getDefaultJVMPath() :
+
+
+def get_default_jvm_path():
+    """
+    Retrieves the path to the default or first found JVM library
+
+    :return: The path to the JVM shared library file
+    :raise ValueError: No JVM library found
+    """
     if sys.platform == "win32" :
-        import _windows
-        return _windows.getDefaultJVMPath()
+        from ._windows import JVMFinder
+
     elif sys.platform == "darwin" :
-        import _darwin
-        return _darwin.getDefaultJVMPath()
+        from ._darwin import JVMFinder
+
     else:
-        import _linux
-        return _linux.getDefaultJVMPath()
-    
+        from ._linux import JVMFinder
+
+    return JVMFinder().get_jvm_path()
+
+# Naming compatibility
+getDefaultJVMPath = get_default_jvm_path
+
+
 class ConversionConfigClass(object):
     def __init__(self):
         self._convertString = 1
-        
+
     def _getConvertString(self):
         return self._convertString
-    
+
     def _setConvertString(self, value):
         if value :
             self._convertString = 1
         else:
             self._convertString = 0
-            
+
         _jpype.setConvertStringObjects(self._convertString)
-        
-    string = property(_getConvertString, _setConvertString, None )
-    
+
+    string = property(_getConvertString, _setConvertString, None)
+
 ConversionConfig = ConversionConfigClass()
-        

@@ -1,5 +1,5 @@
 #*****************************************************************************
-#   Copyright 2004-2008 Steve Menard
+#   Copyright 2013 Thomas Calmant
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,80 +14,56 @@
 #   limitations under the License.
 #
 #*****************************************************************************
+
+from . import _jvmfinder
 import os
-import re
-import shlex
-import subprocess
+
+# ------------------------------------------------------------------------------
+
+class LinuxJVMFinder(_jvmfinder.JVMFinder):
+    """
+    Linux JVM library finder class
+    """
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        _jvmfinder.JVMFinder.__init__(self)
+
+        # Java bin file
+        self._java = "/usr/bin/java"
+
+        # Library file name
+        self._libfile = "libjvm.so"
+
+        # Predefined locations
+        self._locations = ("/usr/lib/jvm", "/usr/java", "/opt/sun")
+
+        # Search methods
+        self._methods = (self._get_from_java_home,
+                         self._get_from_bin,
+                         self._get_from_known_locations)
 
 
-_KNOWN_LOCATIONS = [
-        ("/opt/sun/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so")),
-        ("/usr/java/", re.compile(r"j2sdk(.+)/jre/lib/i386/client/libjvm.so")),
-        ("/usr/java/", re.compile(r"jdk(.+)/jre/lib/i386/client/libjvm.so")),
-]
+    def _get_from_bin(self):
+        """
+        Retrieves the Java library path according to the real installation of
+        the java executable
+        
+        :return: The path to the JVM library, or None
+        """
+        # Find the real interpreter installation path
+        java_bin = os.path.realpath(self._java)
+        if os.path.exists(java_bin):
+            # Get to the home directory
+            java_home = os.path.abspath(os.path.join(os.path.dirname(java_bin),
+                                                     '..'))
 
-JRE_ARCHS = ["amd64/server/libjvm.so",
-             "i386/client/libjvm.so",
-             "i386/server/libjvm.so", ]
+            # Look for the JVM library
+            return self.find_libjvm(java_home)
 
+# ------------------------------------------------------------------------------
 
-def getDefaultJVMPath():
-    jvm = _getJVMFromJavaHome()
-    if jvm is not None:
-        return jvm
-
-    #on linux, the JVM has to be in the LD_LIBRARY_PATH anyway, so might as well inspect it first
-    jvm = _getJVMFromLibPath()
-    if jvm is not None:
-        return jvm
-
-    # failing that, lets look in the "known" locations
-    for i in _KNOWN_LOCATIONS:
-        # TODO
-        pass
-
-    return "/usr/java/jre1.5.0_05/lib/i386/client/libjvm.so"
-
-
-def _getJVMFromJavaHome():
-    java_home = os.getenv("JAVA_HOME")
-    if java_home is None:
-        try:
-            # Need to use Popen since check_output is only supported in py2.7+
-            java_home = subprocess.Popen(shlex.split('readlink -f /usr/bin/java'),
-                                        stdout=subprocess.PIPE
-                                ).communicate()[0].strip().replace('bin/java', '')
-        except:  # I know. catchall is bad...
-            # Avoid NoneType + String
-            java_home = ''
-
-    rootJre = None
-    if os.path.exists(java_home + "/bin/javac"):
-        # this is a JDK home
-        rootJre = java_home + '/jre/lib'
-    elif os.path.exists(java_home + "/bin/java"):
-        # this is a JRE home
-        rootJre = java_home + '/lib'
-    else:
-        return None
-
-    for i in JRE_ARCHS:
-        if os.path.exists(rootJre + "/" + i):
-            return rootJre + "/" + i
-    return None
-
-
-def _getJVMFromLibPath():
-    if 'LD_LIBRARY_PATH' in os.environ:
-        libpath = os.environ['LD_LIBRARY_PATH']
-        if libpath is None:
-            return None
-
-        paths = libpath.split(os.pathsep)
-        for i in paths:
-            if i.find('jre') != -1:
-                # this could be it!
-                # TODO
-                pass
-
-    return None
+# Alias
+JVMFinder = LinuxJVMFinder
