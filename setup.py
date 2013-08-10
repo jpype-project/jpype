@@ -104,7 +104,7 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 
 setup(
     name='JPype1',
-    version='0.5.4.3',
+    version='0.5.4.4',
     description='Friendly jpype fork with focus on easy installation.',
     long_description=read_utf8('README.rst'),
     license='License :: OSI Approved :: Apache Software License',
