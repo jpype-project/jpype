@@ -88,6 +88,7 @@ Tested on
 
 -  OS X 10.7.4 with Sun/Oracle JDK 1.6.0
 -  OSX 10.8.1-10.8.4 with Sun/Oracle JDK 1.6.0
+-  OSX 10.9 DP5
 -  Debian 6.0.4/6.0.5 with Sun/Oracle JDK 1.6.0
 -  Debian 7.1 with OpenJDK 1.6.0
 -  Ubuntu 12.04 with Sun/Oracle JDK 1.6.0
