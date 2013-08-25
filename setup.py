@@ -57,6 +57,7 @@ elif sys.platform == 'darwin':
         # I'm not sure if this really works on all 10.6 - confirm please :)
         java_home = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
                      'Frameworks/JavaVM.framework/Versions/1.6.0/')
+    # With the next OSX release we should probably change this around a bit ;-)
     elif osx in ('10.7', '10.8', '10.9'):
         java_home = ('/System/Library/Frameworks/JavaVM.framework/'
                      'Versions/Current/')
@@ -104,7 +105,7 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 
 setup(
     name='JPype1',
-    version='0.5.4.4',
+    version='0.5.4.5',
     description='Friendly jpype fork with focus on easy installation.',
     long_description=read_utf8('README.rst'),
     license='License :: OSI Approved :: Apache Software License',
