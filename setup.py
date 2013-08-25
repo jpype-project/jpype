@@ -57,7 +57,7 @@ elif sys.platform == 'darwin':
         # I'm not sure if this really works on all 10.6 - confirm please :)
         java_home = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
                      'Frameworks/JavaVM.framework/Versions/1.6.0/')
-    elif osx in ('10.7', '10.8'):
+    elif osx in ('10.7', '10.8', '10.9'):
         java_home = ('/System/Library/Frameworks/JavaVM.framework/'
                      'Versions/Current/')
     platform_specific['libraries'] = ['dl']
