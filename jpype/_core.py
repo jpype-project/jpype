@@ -93,15 +93,18 @@ def get_default_jvm_path():
     :raise ValueError: No JVM library found
     """
     if sys.platform == "win32" :
-        from ._windows import JVMFinder
+        from ._windows import WindowsJVMFinder
+        finder = WindowsJVMFinder()
 
     elif sys.platform == "darwin" :
-        from ._darwin import JVMFinder
+        from ._darwin import DarwinJVMFinder
+        finder = DarwinJVMFinder()
 
     else:
-        from ._linux import JVMFinder
+        from ._linux import LinuxJVMFinder
+        finder = LinuxJVMFinder()
 
-    return JVMFinder().get_jvm_path()
+    return finder.get_jvm_path()
 
 # Naming compatibility
 getDefaultJVMPath = get_default_jvm_path
