@@ -62,8 +62,3 @@ class LinuxJVMFinder(_jvmfinder.JVMFinder):
 
             # Look for the JVM library
             return self.find_libjvm(java_home)
-
-# ------------------------------------------------------------------------------
-
-# Alias
-JVMFinder = LinuxJVMFinder
