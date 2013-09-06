@@ -392,7 +392,7 @@ JCharString::~JCharString()
 {
 	if (m_Value != NULL)
 	{
-		delete m_Value;
+		delete[] m_Value;
 	}
 }
 	

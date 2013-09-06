@@ -3,6 +3,9 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+0.5.4.6 (2013-09-06 15:05)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Added AHL changes
 
 0.5.4.5 (2013-08-25 12:12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

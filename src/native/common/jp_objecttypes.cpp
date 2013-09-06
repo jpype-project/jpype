@@ -231,7 +231,9 @@ void JPObjectType::setArrayValues(jarray a, HostRef* values)
 			for (int i = 0; i < len; i++)
 			{
 				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				JPEnv::getJava()->SetObjectArrayElement(array, i, convertToJava(v).l);
+				jvalue val = convertToJava(v);
+				JPEnv::getJava()->SetObjectArrayElement(array, i, val.l);
+				cleaner.addLocal(val.l);
 				delete v;
 			}
 
@@ -359,7 +361,7 @@ jvalue JPStringType::convertToJava(HostRef* obj)
 		jstr[i] = (jchar)wstr[i];  
 	}
 	jstring res = JPEnv::getJava()->NewString(jstr, (jint)wstr.length());
-	delete jstr;
+	delete[] jstr;
 	
 	v.l = res;
 	

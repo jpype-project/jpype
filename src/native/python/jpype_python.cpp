@@ -219,6 +219,10 @@ PyMODINIT_FUNC init_jpype()
 	PyJPBoundMethod::initType(module);	
 	PyJPClass::initType(module);	
 	PyJPField::initType(module);	
+
+#if (PY_VERSION_HEX < 0x02070000)
+	jpype_memoryview_init(module);
+#endif
 }
 
 PyObject* detachRef(HostRef* ref)
