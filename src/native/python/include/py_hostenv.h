@@ -237,6 +237,8 @@ public :
 	virtual HostRef* getJavaException(HostException*);
 	virtual void clearError();
 	virtual void printReferenceInfo(HostRef* obj);
+	virtual bool isByteBuffer(HostRef*);
+	virtual void getByteBufferPtr(HostRef*, char**, long&);
 };
 
 #endif // _PYHOSTENV_H_

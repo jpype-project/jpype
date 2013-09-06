@@ -148,6 +148,8 @@ public :
 	virtual void clearError() = 0;
 
 	virtual void printReferenceInfo(HostRef* obj) = 0;
+	virtual bool isByteBuffer(HostRef*) = 0;
+	virtual void getByteBufferPtr(HostRef*, char**, long&) = 0;
 };
 
 #endif // _JPHOSTENV_H_

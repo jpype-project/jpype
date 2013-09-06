@@ -50,7 +50,7 @@ void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 	
 	JPType* compType = m_Class->getComponentType();
 	
-	int len = stop-start;
+	unsigned int len = stop-start;
 	size_t plength = val.size();
 	
 	if (len != plength)
