@@ -15,7 +15,7 @@
 #include "jpype_memory_view.h"
 
 
-#if (PY_VERSION_HEX >= 0x02060000) && (PY_VERSION_HEX < 0x02070000)
+#if (PY_VERSION_HEX < 0x02070000)
 
 static PyObject * PyMemorySimpleView_FromObject(PyObject *base);
 
