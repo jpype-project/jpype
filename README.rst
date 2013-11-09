@@ -46,7 +46,7 @@ Known Bugs/Limitations
 Requirements
 ------------
 
-Either the Sun/Oracle JDK/JRE Variant or OpenJDK.
+Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+
 
 Debian/Ubuntu
 ~~~~~~~~~~~~~
