@@ -14,13 +14,27 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
+import sys
+
 import array
 import _jpype
+
+
+if sys.version_info < (2, 7):
+    _mem_view = _jpype.memoryview  # own memoryview implementation
+else:
+    _mem_view = memoryview
+
 
 def _initialize() :
     pass
 
 def convertToDirectBuffer(obj):
     __doc__ = '''Efficiently convert all array.array types, string and unicode to java.nio.Buffer objects.'''
-    
-    return _jpype.convertToDirectBuffer(obj)
+
+    memoryview_of_obj = _mem_view(obj)
+
+    if memoryview_of_obj.readonly:
+        raise ValueError("Memoryview must be writable for wrapping in a byte buffer")
+
+    return _jpype.convertToDirectBuffer(memoryview_of_obj)

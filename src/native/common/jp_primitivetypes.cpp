@@ -151,13 +151,14 @@ jvalue JPByteType::convertToJava(HostRef* obj)
 
 HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 {
+	TRACE_IN("JPByteType::convertToDirectBuffer");
 	JPCleaner cleaner;
-	if (JPEnv::getHost()->isByteString(src))
+	if (JPEnv::getHost()->isByteBuffer(src))
 	{
 
 		char* rawData;
 		long size;
-		JPEnv::getHost()->getRawByteString(src, &rawData, size);
+		JPEnv::getHost()->getByteBufferPtr(src, &rawData, size);
 
 		jobject obj = JPEnv::getJava()->NewDirectByteBuffer(rawData, size);
 		cleaner.addLocal(obj);
@@ -170,7 +171,7 @@ HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 	}
 
 	RAISE(JPypeException, "Unable to convert to Direct Buffer");
-	
+	TRACE_OUT;
 }
 
 //----------------------------------------------------------------------------

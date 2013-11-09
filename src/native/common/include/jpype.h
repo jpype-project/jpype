@@ -20,7 +20,9 @@
 // Define this to generate the trace calls
 
 // Define this to make the trace calls do their output. If you change this only the core.cpp needs to be recompiled
-//#define JPYPE_TRACING_INTERNAL
+#ifdef TRACING
+#define JPYPE_TRACING_INTERNAL
+#endif
 #define JPYPE_TRACING_OUTPUT cerr
 
 #define TRACE_IN(n) JPypeTracer _trace(n); try {

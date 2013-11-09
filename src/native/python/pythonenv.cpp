@@ -83,7 +83,7 @@ PyObject* JPyString::fromUnicode(const jchar* str, int len)
 		value[i] = (Py_UNICODE)str[i];
 	}
 	PY_CHECK( PyObject* obj = PyUnicode_FromUnicode(value, len) );
-	delete value;
+	delete[] value;
 	return obj;
 }
 
@@ -202,6 +202,27 @@ bool JPyObject::isSubclass(PyObject* obj, PyObject* t)
 		return true;
 	}
 	return false;
+}
+
+bool JPyObject::isMemoryView(PyObject* obj)
+{
+	PY_CHECK( int res = PyMemoryView_Check(obj) );
+	if (res)
+	{
+		return true;
+	}
+	return false;
+}
+
+void JPyObject::AsPtrAndSize(PyObject *obj, char **buffer, Py_ssize_t *length)
+{
+		TRACE_IN("JPyObject::AsPtrAndSize");
+		PY_CHECK( Py_buffer* py_buf = PyMemoryView_GET_BUFFER(obj) );
+
+		*buffer = (char*)py_buf->buf;
+		*length = py_buf->len;
+
+		TRACE_OUT;
 }
 
 void JPyErr::setString(PyObject* exClass, const char* str)
@@ -325,7 +346,7 @@ PythonException::PythonException()
 	PyObject* traceback;
 	PyErr_Fetch(&m_ExceptionClass, &m_ExceptionValue, &traceback);
 	Py_INCREF(m_ExceptionClass);
-	Py_INCREF(m_ExceptionValue);
+	Py_XINCREF(m_ExceptionValue);
 
 	PyObject* name = JPyObject::getAttrString(m_ExceptionClass, "__name__");
 	string ascname = JPyString::asString(name);
@@ -333,10 +354,10 @@ PythonException::PythonException()
 	Py_DECREF(name);
 	TRACE1(m_ExceptionValue->ob_type->tp_name);
 
-	if (JPySequence::check(m_ExceptionValue))
+	/*if (JPySequence::check(m_ExceptionValue))
 	{
 
-	}
+	}*/
 
 	PyErr_Restore(m_ExceptionClass, m_ExceptionValue, traceback);
 	TRACE_OUT;

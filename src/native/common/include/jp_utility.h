@@ -111,25 +111,31 @@ public :
 	template <class T>
 	void trace(T msg)
 	{
+#ifdef TRACING
 		stringstream str;
 		str << msg;
 		trace1(m_Name.c_str(), str.str());
+#endif
 	}
 	
 	template <class T, class U>
 	void trace(T msg1, U msg2)
 	{
+#ifdef TRACING
 		stringstream str;
 		str << msg1 << " " << msg2;
 		trace1(m_Name.c_str(), str.str());
+#endif
 	}
 
 	template <class T, class U, class V>
 	void trace(T msg1, U msg2, V msg3)
 	{
+#ifdef TRACING
 		stringstream str;
 		str << msg1 << " " << msg2 << " " << msg3;
 		trace1(m_Name.c_str(), str.str());
+#endif
 	}
 	
 private :

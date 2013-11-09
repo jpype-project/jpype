@@ -26,7 +26,7 @@ PyObject* JPypeJavaNio::convertToDirectBuffer(PyObject* self, PyObject* args)
 	JPyArg::parseTuple(args, "O", &src);
 
 	PyObject* res = NULL;
-	if (JPyString::checkStrict(src))
+	if (JPyObject::isMemoryView(src))
 	{
 		// converts to byte buffer ...
 		JPTypeName tname = JPTypeName::fromType(JPTypeName::_byte);
@@ -46,7 +46,7 @@ PyObject* JPypeJavaNio::convertToDirectBuffer(PyObject* self, PyObject* args)
 		return res;
 	}
 
-	RAISE(JPypeException, "Do not know how to convert to Direct Buffer");
+	RAISE(JPypeException, "Do not know how to convert to direct byte buffer, only memory view supported");
 
 	return NULL;
 	TRACE_OUT;
