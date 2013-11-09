@@ -113,6 +113,8 @@ public:
 
 #include "py_hostenv.h"
 
+#include "jpype_memory_view.h"
+
 extern PythonHostEnvironment* hostEnv;
 
 // Utility method

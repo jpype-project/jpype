@@ -588,6 +588,12 @@ bool PythonHostEnvironment::isByteString(HostRef* ref)
 	return JPyString::checkStrict(obj);
 }
 
+bool PythonHostEnvironment::isByteBuffer(HostRef* ref)
+{
+	PyObject* obj = UNWRAP(ref);
+	return JPyObject::isMemoryView(obj);
+}
+
 bool PythonHostEnvironment::isUnicodeString(HostRef* ref)
 {
 	return JPyString::checkUnicode(UNWRAP(ref));
@@ -599,6 +605,16 @@ void PythonHostEnvironment::getRawByteString(HostRef* obj, char** outBuffer, lon
 	Py_ssize_t tempSize = 0;
 	JPyString::AsStringAndSize(objRef, outBuffer, &tempSize);
 	outSize = (long)tempSize;
+}
+
+void PythonHostEnvironment::getByteBufferPtr(HostRef* obj, char** outBuffer, long& outSize)
+{
+	TRACE_IN("PythonHostEnvironment::getByteBufferPtr");
+	PyObject* objRef = UNWRAP(obj);
+	Py_ssize_t tempSize = 0;
+	JPyObject::AsPtrAndSize(objRef, outBuffer, &tempSize);
+	outSize = (long)tempSize;
+	TRACE_OUT;
 }
 
 void PythonHostEnvironment::getRawUnicodeString(HostRef* obj, jchar** outBuffer, long& outSize)

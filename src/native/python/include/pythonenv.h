@@ -155,7 +155,8 @@ public :
 	static void setAttrString(PyObject*, const char*, PyObject *);
 	static bool isInstance(PyObject* obj, PyObject* t);
 	static bool isSubclass(PyObject* obj, PyObject* t);
-
+	static bool isMemoryView(PyObject* obj);
+	static void AsPtrAndSize(PyObject *obj, char **buffer, Py_ssize_t *);
 };
 
 class JPyInt : public JPythonEnvHelper

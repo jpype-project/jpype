@@ -212,8 +212,12 @@ PyObject* JPypeJavaArray::setArrayValues(PyObject* self, PyObject* arg)
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 		JPArrayClass* arrayClass = a->getClass();
 		HostRef valuesRef(values);
-		arrayClass->getComponentType()->setArrayValues((jarray)a->getObject(), &valuesRef);
-		
+
+		JPCleaner cleaner;
+		jarray arr = (jarray)a->getObject();
+		cleaner.addLocal(arr);
+		arrayClass->getComponentType()->setArrayValues(arr, &valuesRef);
+
 		Py_INCREF(Py_None);
 		return Py_None;
 	}

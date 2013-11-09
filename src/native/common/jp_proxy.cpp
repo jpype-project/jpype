@@ -140,7 +140,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	TRACE_OUT;
 }
 
-JNIEXPORT jobject JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
+JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 	JNIEnv *env, jclass clazz, jlong hostObj)
 {
 	TRACE_IN("Java_jpype_ref_JPypeReferenceQueue_removeHostReference");
@@ -156,7 +156,7 @@ JNIEXPORT jobject JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference
 
 	JPEnv::getHost()->prepareCallbackFinish(callbackState);
 
-	return NULL;
+	//return NULL;
 	TRACE_OUT;
 }
 
@@ -195,6 +195,11 @@ void JPProxy::init()
 	jclass referenceQueue = JPEnv::getJava()->DefineClass("jpype/ref/JPypeReferenceQueue", cl, JPypeReferenceQueue, getJPypeReferenceQueueLength());
 	referenceClass = (jclass)JPEnv::getJava()->NewGlobalRef(reference);
 	referenceQueueClass = (jclass)JPEnv::getJava()->NewGlobalRef(referenceQueue);
+
+	//Required due to bug in jvm
+	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
+	jmethodID refQConstr = JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
+
 	cleaner.addLocal(reference);
 	cleaner.addLocal(referenceQueue);
 

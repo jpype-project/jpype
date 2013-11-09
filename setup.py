@@ -19,7 +19,7 @@ def find_sources():
     cpp_files = []
     for dirpath, dirnames, filenames in os.walk('src'):
         for filename in filenames:
-            if filename.endswith('.cpp'):
+            if filename.endswith('.cpp') or filename.endswith('.c'):
                 cpp_files.append(os.path.join(dirpath, filename))
     return cpp_files
 
@@ -105,7 +105,7 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 
 setup(
     name='JPype1',
-    version='0.5.4.5',
+    version='0.5.4.6',
     description='Friendly jpype fork with focus on easy installation.',
     long_description=read_utf8('README.rst'),
     license='License :: OSI Approved :: Apache Software License',
