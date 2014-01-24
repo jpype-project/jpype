@@ -18,7 +18,6 @@ cnt = 0
 
 #setUsePythonThreadForDeamon(True)
 startJVM(getDefaultJVMPath(), *options)
-#startJVM("c:/tools/jdk1.4.2/jre/bin/server/jvm.dll", *options)
 
 class MyStr(str):
     def __init__ (self, val):
