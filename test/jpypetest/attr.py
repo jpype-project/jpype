@@ -184,5 +184,8 @@ class AttributeTestCase(common.JPypeTestCase) :
 #		finally :
 #			jpype.ConversionConfig.string = True
 		
-		
-		
+ 	def testComplexMethodOvlerloading(self) :
+ 		c = self.__jp.TestOverloadC()
+ 		print c.foo(1)
+ 		assert c.foo(1) == "foo(int) in C: 1"
+ 		assert c.foo() == "foo() in A"
