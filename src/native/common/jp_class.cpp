@@ -121,6 +121,8 @@ void JPClass::loadMethods()
 	JPCleaner cleaner;
 	JPCleaner pcleaner;
 
+    JPClass* superclass;
+
 	// methods
 	vector<jobject> methods = JPJni::getDeclaredMethods(m_Class);
 	cleaner.addAllLocal(methods);
@@ -146,18 +148,21 @@ void JPClass::loadMethods()
 		
 	}
 
+    superclass = m_SuperClass;
+
 	// add previous overloads to methods defined in THIS class
-	if (m_SuperClass != NULL)
+	while (superclass != NULL)
 	{
 		for (map<string, JPMethod*>::iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur ++)
 		{
 			string name = cur->first;
-			JPMethod* superMethod = m_SuperClass->getMethod(name);
+			JPMethod* superMethod = superclass->getMethod(name);
 			if (superMethod != NULL)
 			{
 				cur->second->addOverloads(superMethod);
 			}
 		}
+        superclass = superclass->getSuperClass();
 	}		
 }
 
