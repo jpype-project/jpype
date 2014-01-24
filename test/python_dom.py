@@ -14,6 +14,7 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
+from os import path
 import time
 from xml.dom import minidom
 
@@ -39,7 +40,7 @@ def output(el, prefix="") :
 t = time.time()    
 count = 30
 for i in range(count) :    
-    doc = minidom.parse("d:/darkwolf/jpype/test/sample/big.xml")
+    doc = minidom.parse(path.join(path.dirname(__file__), "sample", "big.xml"))
 
     el = doc.documentElement
     output(el)

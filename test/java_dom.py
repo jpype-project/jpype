@@ -14,6 +14,7 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
+from os import path
 import time
 from jpype import *
 
@@ -23,7 +24,7 @@ startJVM(getDefaultJVMPath(), "-ea")
 Element = JPackage("org").w3c.dom.Element
 
 def output(el, prefix="") :
-    if not Element.__isinstance__(el) :
+    if not isinstance(el, Element) :
         return
         
     #print prefix, "<", el.getTagName(), 
@@ -45,7 +46,7 @@ t = time.time()
 count = 30
 for i in range(count) :    
     build = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
-    doc = build.parse("d:/darkwolf/jpype/test/sample/big.xml")
+    doc = build.parse(path.join(path.dirname(__file__), "sample", "big.xml"))
     
     el = doc.getDocumentElement()
     output(el)
