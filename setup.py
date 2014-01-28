@@ -58,15 +58,17 @@ elif sys.platform == 'darwin':
         java_home = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
                      'Frameworks/JavaVM.framework/Versions/1.6.0/')
     # With the next OSX release we should probably change this around a bit ;-)
-    elif osx in ('10.7', '10.8', '10.9'):
+    # only override if no JAVA_HOME env has been provided.
+    elif osx in ('10.7', '10.8', '10.9') and not os.getenv('JAVA_HOME'):
         java_home = ('/System/Library/Frameworks/JavaVM.framework/'
                      'Versions/Current/')
     platform_specific['libraries'] = ['dl']
     platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
     platform_specific['define_macros'] = [('MACOSX', 1)]
-    platform_specific['include_dirs'] += [
-        os.path.join(java_home, 'Headers'),
-    ]
+    possible_includedirs = [os.path.join(java_home, 'Headers'),
+			    os.path.join(java_home, 'include'),
+			    os.path.join(java_home, 'include/darwin')]
+    platform_specific['include_dirs'] += filter(os.path.exists, possible_includedirs) 
 else:
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
