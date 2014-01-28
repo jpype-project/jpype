@@ -16,30 +16,37 @@
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JClass
 import unittest, common
+import os
+import tempfile
 import traceback
 
 def suite() :
     return unittest.makeSuite(SerializationTestCase)
     
 class SerializationTestCase(common.JPypeTestCase) :
+
+    def setUp(self):
+        self.tempname = tempfile.mktemp()
+
+    def tearDown(self):
+        os.remove(self.tempname)
+
     def testSerialize(self) :
         o = JClass("jpype.serial.SerializationTest")()
-        fos = java.io.FileOutputStream("testSerial.dat")
+        fos = java.io.FileOutputStream(self.tempname)
         oos = java.io.ObjectOutputStream(fos)
         oos.writeObject(o)
         oos.flush()
         oos.close()       
-        fos.close() 
+        fos.close()
+        
         
        
 # The following cannto work because JPype has no way to simulate the "caller's ClassLoader" 
 #    def testDeSerialize(self) :
-#        
-#        fis = java.io.FileInputStream("testSerial.dat")
+#        fis = java.io.FileInputStream(self.tempname)
 #        ois = java.io.ObjectInputStream(fis)
 #        
 #        o = ois.readObject()
 #        ois.close()
 #        fis.close()
-        
-        

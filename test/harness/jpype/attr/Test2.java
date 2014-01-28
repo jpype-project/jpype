@@ -33,7 +33,7 @@ public class Test2 extends Test1
 		return foo;
 	}
 	
-  public Test2 delete(String arg1, String arg2)
+  public Test1 delete(String arg1, String arg2)
   {
     System.out.println("Overloaded test 2 called");
     return null;

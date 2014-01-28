@@ -12,8 +12,7 @@ options = [
 	'-Xmx16m', 
 ] #+ profiler_options
 
-#startJVM(getDefaultJVMPath(), *options)
-startJVM("c:/tools/jdk1.4.2/jre/bin/server/jvm.dll", *options)
+startJVM(getDefaultJVMPath(), *options)
 
 class MyStr(str):
     def __del__(self):

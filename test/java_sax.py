@@ -14,12 +14,13 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
+from os import path
 import time
 from jpype import *
 
-import os.path
-root = os.path.abspath(os.path.dirname(__file__))
-startJVM(getDefaultJVMPath(), "-ea", "-Djava.class.path=%s/classes" % root)
+root = path.abspath(path.dirname(__file__))
+startJVM(getDefaultJVMPath(), "-ea",
+         "-Djava.class.path=%s" % path.join(root, "classes"))
 
 # XML test
 Element = JPackage("org").w3c.dom.Element
@@ -65,7 +66,7 @@ for i in range(count) :
     dh = DelegateHandler(None, None, JProxy("org.xml.sax.ContentHandler", inst=ContentHandler()), None)
     
     build = javax.xml.parsers.SAXParserFactory.newInstance().newSAXParser()
-    build.parse("d:/darkwolf/jpype/test/sample/big.xml", dh)
+    build.parse(path.join(root, "sample", "big.xml"), dh)
     
 t2 = time.time()
 print count, "iterations in", t2-t, "seconds"
