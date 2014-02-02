@@ -50,6 +50,9 @@ elif sys.platform == 'darwin':
     # and
     # http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x
     osx = platform.mac_ver()[0][:4]
+    platform_specific['libraries'] = ['dl']
+    platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
+    platform_specific['define_macros'] = [('MACOSX', 1)]
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
         java_home = '/Library/Java/Home'
@@ -59,16 +62,16 @@ elif sys.platform == 'darwin':
                      'Frameworks/JavaVM.framework/Versions/1.6.0/')
     # With the next OSX release we should probably change this around a bit ;-)
     # only override if no JAVA_HOME env has been provided.
-    elif osx in ('10.7', '10.8', '10.9') and not os.getenv('JAVA_HOME'):
+    elif osx in ('10.7', '10.8', ) and not os.getenv('JAVA_HOME'):
         java_home = ('/System/Library/Frameworks/JavaVM.framework/'
                      'Versions/Current/')
-    platform_specific['libraries'] = ['dl']
-    platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
-    platform_specific['define_macros'] = [('MACOSX', 1)]
+    elif osx in ('10.9', ) and not os.getenv('JAVA_HOME'):
+        java_home = '/System/Library/Frameworks/JavaVM.framework/'
+        platform_specific['library_dir'] = [os.path.join(java_home, '/Home/lib'), ]
     possible_includedirs = [os.path.join(java_home, 'Headers'),
-			    os.path.join(java_home, 'include'),
-			    os.path.join(java_home, 'include/darwin')]
-    platform_specific['include_dirs'] += filter(os.path.exists, possible_includedirs) 
+                            os.path.join(java_home, 'include'),
+                            os.path.join(java_home, 'include/darwin'), ]
+    platform_specific['include_dirs'] += filter(os.path.exists, possible_includedirs)
 else:
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
