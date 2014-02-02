@@ -59,8 +59,6 @@ def _initialize() :
 	_jpype.setJavaExceptionClass(JavaException)
 		
 def _makePythonException(name, bc) :
-	name = bc.getName()
-	
 	if _CLASSES.has_key(name) :
 		return _CLASSES[name]
 		
