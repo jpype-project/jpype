@@ -18,6 +18,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
 
 * Make jpype.JException catch exceptions from subclasses by @baztian
+* Make more complex overloaded Java methods accessible (fixes https://sourceforge.net/p/jpype/bugs/69/) by @baztian and anonymous
 
 0.5.4.5 (2013-08-25 12:12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
