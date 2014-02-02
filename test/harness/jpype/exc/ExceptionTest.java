@@ -44,4 +44,9 @@ class ExceptionTest
     }
     return false;
   }
+
+  public static void throwChildTestException() throws ParentTestException
+  {
+    throw new ChildTestException();
+  }
 }

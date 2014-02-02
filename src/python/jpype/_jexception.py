@@ -59,8 +59,6 @@ def _initialize() :
 	_jpype.setJavaExceptionClass(JavaException)
 		
 def _makePythonException(name, bc) :
-	name = bc.getName()
-	
 	if _CLASSES.has_key(name) :
 		return _CLASSES[name]
 		
@@ -71,4 +69,5 @@ def _makePythonException(name, bc) :
 		
 	ec = new.classobj(name+"PyRaisable", bases, {'JAVACLASSNAME' : name})
 	
+        _CLASSES[name] = ec
 	return ec
