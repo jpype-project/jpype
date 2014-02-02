@@ -8,14 +8,16 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 *Note* that this release is *not* compatible with Python 2.5 anymore!
 
-Added AHL changes:
+* Added AHL changes
 
-* replaced Python set type usage with new 2.6.x and higher
-* fixed broken Python slicing semantics on JArray objects
-* fixed a memory leak in the JVM when passing Python lists to JArray constructors
-* prevent ctrl+c seg faulting
-* corrected new[]/delete pairs to stop valgrind complaining
-* ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
+  * replaced Python set type usage with new 2.6.x and higher
+  * fixed broken Python slicing semantics on JArray objects
+  * fixed a memory leak in the JVM when passing Python lists to JArray constructors
+  * prevent ctrl+c seg faulting
+  * corrected new[]/delete pairs to stop valgrind complaining
+  * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
+
+* Make jpype.JException catch exceptions from subclasses by @baztian
 
 0.5.4.5 (2013-08-25 12:12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
