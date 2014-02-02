@@ -74,3 +74,20 @@ class ExceptionTestCase(common.JPypeTestCase) :
  		e = self.jpype.exc.ChildTestException()
                 name = "jpype.exc.ChildTestExceptionPyRaisable"
                 assert name == e.PYEXC.__name__
+
+ 	def testExceptionInstanceof(self) :
+ 		e = self.jpype.exc.ChildTestException()
+                assert isinstance(e, self.jpype.exc.ParentTestException)
+
+ 	def testExceptionPYEXCInstanceof(self) :
+ 		e = self.jpype.exc.ChildTestException()
+                assert issubclass(e.PYEXC,
+                                  self.jpype.exc.ParentTestException.PYEXC)
+
+        def testThrowChildExceptionFromCatchJExceptionParentClass(self) :
+		try :
+			self.jpype.exc.ExceptionTest.throwChildTestException()
+			assert False
+		except JException(self.jpype.exc.ParentTestException), ex :
+                        pyexc = self.jpype.exc.ChildTestException.PYEXC
+                        assert isinstance(ex, pyexc)
