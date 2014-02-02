@@ -69,4 +69,8 @@ class ExceptionTestCase(common.JPypeTestCase) :
 		p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
 		
 		assert self.jpype.exc.ExceptionTest.delegateThrow(p)
-	
+
+ 	def testExceptionPYEXCName(self) :
+ 		e = self.jpype.exc.ChildTestException()
+                name = "jpype.exc.ChildTestExceptionPyRaisable"
+                assert name == e.PYEXC.__name__
