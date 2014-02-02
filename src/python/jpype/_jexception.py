@@ -69,4 +69,5 @@ def _makePythonException(name, bc) :
 		
 	ec = new.classobj(name+"PyRaisable", bases, {'JAVACLASSNAME' : name})
 	
+        _CLASSES[name] = ec
 	return ec
