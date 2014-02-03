@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -44,7 +44,17 @@ public :
 
 	static int                         getLoadedClasses();
 	
-public:
+
+private:
+	~JPTypeManager();
+
+	typedef map<JPTypeName::ETypes, JPType*> TypeMap;
+	typedef map<string, JPClass* > JavaClassMap;
+	typedef map<string, JPArrayClass* > JavaArrayClassMap;
+
+	static TypeMap typeMap;
+	static JavaClassMap javaClassMap;
+	static JavaArrayClassMap javaArrayClassMap;
 };
 
 #endif // _JPCLASS_H_
