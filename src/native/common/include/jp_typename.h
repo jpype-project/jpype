@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -47,12 +47,12 @@ public:
         };
 
 	JPTypeName() :
-		m_Type(_unknown)
+		 m_SimpleName(""), m_NativeName(""), m_Type(_unknown)
 	{
 	}
 	
 private :
-	JPTypeName(string simple, string native, ETypes t): 
+	JPTypeName(const string& simple, const string& native, ETypes t):
 		m_SimpleName(simple), 
 		m_NativeName(native), 
 		m_Type(t)
@@ -68,6 +68,13 @@ public :
 	{
 	}
 	
+	JPTypeName& operator=(const JPTypeName& other) {
+		this->m_SimpleName = other.getSimpleName();
+		this->m_NativeName = other.getNativeName();
+		this->m_Type = other.getType();
+		return *this;
+	}
+
 	/** Destructor */
 	virtual ~JPTypeName() 
 	{}
@@ -82,19 +89,19 @@ public :
 	static JPTypeName fromSimple(const char* name);
 	static JPTypeName fromType(ETypes t);
 	
-	string getSimpleName()
+	const string& getSimpleName() const
 	{
 		return m_SimpleName;
 	}
 	
-	string getNativeName()
+	const string& getNativeName() const
 	{
 		return m_NativeName;
 	}
 
-	JPTypeName getComponentName();
+	JPTypeName getComponentName(); const
 
-	ETypes getType()
+	ETypes getType() const
 	{
 		return m_Type;
 	}
