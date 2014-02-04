@@ -116,19 +116,30 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 		JPyArg::parseTuple(arg, "O!ii", &PyCObject_Type, &arrayObject, &ndx, &ndx2);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
-		vector<HostRef*> values = a->getRange(ndx, ndx2);
+		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
+		const char* n = name.c_str();
 
-		JPCleaner cleaner;
-		PyObject* res = JPySequence::newList((int)values.size());
-		for (unsigned int i = 0; i < values.size(); i++)
-		{
-			JPySequence::setItem(res, i, (PyObject*)values[i]->data());
-			cleaner.add(values[i]);
+		switch(n[0]) {
+		// for primitive types, we have fast sequence generation available
+		case 'B': case 'S': case 'I': case 'J': case 'F': case 'D': case 'Z': case 'C':
+			// fast
+			return a->getListRange(ndx, ndx2);
+		default: {
+			// horrible slow
+			vector<HostRef*> values = a->getRange(ndx, ndx2);
+
+			JPCleaner cleaner;
+			PyObject* res = JPySequence::newList((int)values.size());
+			for (unsigned int i = 0; i < values.size(); i++)
+			{
+				JPySequence::setItem(res, i, (PyObject*)values[i]->data());
+				cleaner.add(values[i]);
+			}
+
+			return res;
 		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH
+		}
+	} PY_STANDARD_CATCH
 
 	return NULL;
 }
