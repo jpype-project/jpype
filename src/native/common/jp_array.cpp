@@ -50,7 +50,7 @@ PyObject* JPArray::getSequenceFromRange(int start, int stop)
 	JPType* compType = m_Class->getComponentType();
 	TRACE2("Component type", compType->getName().getSimpleName());
 
-	return compType->getArrayRangeToList(m_Object, start, stop-start);
+	return compType->getArrayRangeToSequence(m_Object, start, stop-start);
 }
 
 void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
