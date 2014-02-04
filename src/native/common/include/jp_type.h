@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -35,10 +35,6 @@ protected :
 	{
 	}
 	
-	virtual ~JPType()
-	{
-	}
-	
 public :
 	virtual HostRef*   getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType) = 0 ;
 	virtual void       setStaticValue(jclass c, jfieldID fid, HostRef* val) = 0 ;
@@ -70,6 +66,10 @@ public :
 	virtual void       setArrayValues(jarray, HostRef*) = 0;
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src) = 0;
+
+	virtual ~JPType()
+	{
+	}
 };
 
 #endif // _JPTYPE_H_
