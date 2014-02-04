@@ -15,6 +15,7 @@
    
 *****************************************************************************/   
 #include <jpype.h>
+#include <Python.h>
 
 JPArray::JPArray(JPTypeName name, jarray inst) 
 {
