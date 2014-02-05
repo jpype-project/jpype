@@ -25,6 +25,13 @@ enum EMatchType
 	_exact
 };
 
+// predeclaration of PyObject
+#ifndef PyObject_HEAD
+struct _object;
+typedef _object PyObject;
+#endif
+
+
 /**
  * Base class for all JPype Types, be it primitive, class or array
  */
@@ -64,6 +71,7 @@ public :
 	virtual HostRef*   getArrayItem(jarray, int ndx) = 0;
 	virtual void       setArrayItem(jarray, int ndx, HostRef* val) = 0;
 	virtual void       setArrayValues(jarray, HostRef*) = 0;
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src) = 0;
 
