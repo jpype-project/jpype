@@ -14,7 +14,7 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
-import unittest, os, sys, new
+import unittest
 from jpypetest import *
 
 import jpype
@@ -32,8 +32,6 @@ def suite() :
 		mro.suite(),
 	))
 	
-import jpype
-
 def runTest() :	
 	root = os.path.abspath(os.path.dirname(__file__))
 
