@@ -18,7 +18,10 @@ import _jclass, _jpype
 
 def _initialize() :
 	_jclass.registerClassCustomizer(PropertiesCustomizer())
-	
+
+def _is_java_method(attribute):
+        return isinstance(attribute, _jpype._JavaMethod)
+
 class PropertiesCustomizer(object) :
 	def canCustomize(self, name, jc) :
 		return True
@@ -28,17 +31,19 @@ class PropertiesCustomizer(object) :
 		sets = {}
 		
 		for i in members :
-			if not isinstance(members[i], _jpype._JavaMethod) :
+			if not _is_java_method(members[i]):
 				continue
-				
-			if i[:3] == 'get' :
+                        access, bare_attrib = i[:3], i[3:]
+                        attribute = bare_attrib[:1].lower() + bare_attrib[1:]
+                        if attribute in members:
+                                if _is_java_method(members[attribute]):
+                                        continue
+			if access == 'get' :
 				if len(i) > 3 and members[i].isBeanAccessor() :
-					gets[i[3:]] = members[i]
-			elif i[:3] == 'set' :
+                                        gets[attribute] = members[i]
+			elif access == 'set' :
 				if len(i) > 3 and members[i].isBeanMutator() :
-					sets[i[3:]] = members[i]
+                                        sets[attribute] = members[i]
 				
 		for i in gets :
-			members[i[0].lower()+i[1:]] = property(gets[i], sets.get(i, None))
-			
-			
+			members[i] = property(gets[i], sets.get(i, None))
