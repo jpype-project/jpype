@@ -141,10 +141,12 @@ JPTypeManager::~JPTypeManager()
 
 void JPTypeManager::flushCache()
 {
-	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
-	{
-		delete i->second;
-	}
+	// note that in JPClass destructor SuperInterfaces also get deleted!
+	// I currently do not know, if thats sufficient or if there are any leftovers.
+//	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
+//	{
+//		delete i->second;
+//	}
 
 	for(JavaArrayClassMap::iterator i = javaArrayClassMap.begin();
 			i != javaArrayClassMap.end(); ++i)
