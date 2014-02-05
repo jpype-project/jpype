@@ -103,6 +103,13 @@ class ArrayTestCase(common.JPypeTestCase) :
     	v.add(ba)
     	assert len(v) == 1
     	assert v[0] is not None
+        
+    def testJArrayConversionInt(self):
+        expected = [i for i in range(100)]
+        jarr = jpype.JArray(jpype.JInt)(expected)
+        print jarr
+        result = jarr[0 : len(jarr)]
+        self.assertEqual(expected, result, "sequences do not match")
 
 if __name__ == '__main__' :
     import os.path
