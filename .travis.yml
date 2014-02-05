@@ -14,4 +14,4 @@ install:
 
 script:
   - python -c "import jpype"
-  - python test/testsuite
+  - python test/testsuite.py
