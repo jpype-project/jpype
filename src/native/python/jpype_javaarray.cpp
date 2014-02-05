@@ -123,7 +123,7 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 		// for primitive types, we have fast sequence generation available
 		case 'B': case 'S': case 'I': case 'J': case 'F': case 'D': case 'Z': case 'C':
 			// fast
-			return a->getListRange(ndx, ndx2);
+			return a->getSequenceFromRange(ndx, ndx2);
 		default: {
 			// horrible slow
 			vector<HostRef*> values = a->getRange(ndx, ndx2);

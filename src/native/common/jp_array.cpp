@@ -47,9 +47,9 @@ vector<HostRef*> JPArray::getRange(int start, int stop)
 
 PyObject* JPArray::getSequenceFromRange(int start, int stop)
 {
-	TRACE_IN("JPArray::getSequenceFromRange");
+//	TRACE_IN("JPArray::getSequenceFromRange");
 	JPType* compType = m_Class->getComponentType();
-	TRACE2("Component type", compType->getName().getSimpleName());
+//	TRACE2("Component type", compType->getName().getSimpleName());
 
 	return compType->getArrayRangeToSequence(m_Object, start, stop-start);
 }
