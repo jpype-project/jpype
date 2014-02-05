@@ -60,7 +60,7 @@ public :
 
 	virtual jobject	   convertToJavaObject(HostRef* obj);
 
-	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
 };
 
 class JPVoidType : public JPPrimitiveType
