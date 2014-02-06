@@ -15,11 +15,8 @@
 #   
 #*****************************************************************************
 from jpype import JPackage, java, JFloat
-import unittest, common, sys
+import common, sys
 
-def suite() :
-    return unittest.makeSuite(NumericTestCase)
-    
 class NumericTestCase(common.JPypeTestCase) :
     def testMathAbs(self) :
         assert java.lang.Math.abs(-10) == 10 

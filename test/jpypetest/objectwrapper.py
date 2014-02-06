@@ -15,19 +15,15 @@
 #   
 #*****************************************************************************
 from jpype import *
-import unittest, common
-
-def suite() :
-    return unittest.makeSuite(ObjectWrapperTestCase)
+import common
 
 class ObjectWrapperTestCase(common.JPypeTestCase) :
     def testCallOverloads(self) :
         # build the harness   
         h = JPackage("jpype.objectwrapper").Test1()
-        
+
         o = java.lang.Integer(1)
         assert h.Method1(JObject(o, java.lang.Number)) == 1
         assert h.Method1(o) == 2  
         assert h.Method1(JObject(java.lang.Integer(1), java.lang.Object)) == 3
         assert h.Method1(JString("")) == 4
-

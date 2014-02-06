@@ -15,11 +15,8 @@
 #   
 #*****************************************************************************
 from jpype import JPackage, java
-import unittest, common, sys
+import common, sys
 
-def suite() :
-    return unittest.makeSuite(MroTestCase)
-    
 class MroTestCase(common.JPypeTestCase) :
 	def testMro(self) :
 		C = JPackage('jpype.mro').C

@@ -16,12 +16,8 @@
 #*****************************************************************************
 import jpype
 from jpype import JString, java, JArray
-import unittest
 import common
 import time
-
-def suite() :
-	return unittest.makeSuite(AttributeTestCase)
 
 class AttributeTestCase(common.JPypeTestCase) :
 	def setUp(self) :

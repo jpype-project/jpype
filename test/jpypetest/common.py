@@ -15,16 +15,24 @@
 #   
 #*****************************************************************************
 
-from jpype import *
+import jpype
+from os import path
 import unittest
 
 CLASSPATH = None
 
 class JPypeTestCase(unittest.TestCase) :
     def setUp(self) :
-        self.jpype = JPackage('jpype')
-        
+        if not jpype.isJVMStarted():
+            root = path.dirname(path.abspath(path.dirname(__file__)))
+            jvm_path = jpype.getDefaultJVMPath()
+            print "Running testsuite using JVM", jvm_path
+            classpath_arg = "-Djava.class.path=%s"
+            classpath_arg %= path.join(root, 'classes')
+            jpype.startJVM(jvm_path, "-ea",
+                           # "-Xcheck:jni", 
+                           "-Xmx256M", "-Xms64M", classpath_arg)
+        self.jpype = jpype.JPackage('jpype')
+
     def tearDown(self) :
         pass
-        
-        

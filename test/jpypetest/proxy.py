@@ -15,10 +15,7 @@
 #   
 #*****************************************************************************
 from jpype import *
-import unittest, common
-
-def suite() :
-    return unittest.makeSuite(ProxyTestCase)
+import common
 
 def _testMethod() :
     return 32
@@ -84,4 +81,4 @@ class ProxyTestCase(common.JPypeTestCase) :
 
         c = C()
         proxy = JProxy([itf2,itf3], inst=c)
-        Test3().testCallbackWithParameters(proxy)        
+        Test3().testCallbackWithParameters(proxy)

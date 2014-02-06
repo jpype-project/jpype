@@ -33,25 +33,15 @@ def suite() :
                          _ in pkgutil.iter_modules([pkgpath])]
                 test_suite = loader.loadTestsFromNames(names)
 	return test_suite 
-	
+
 def runTest() :	
-	root = os.path.abspath(os.path.dirname(__file__))
-
-	print "Running testsuite using JVM", jpype.getDefaultJVMPath()
-	jpype.startJVM(jpype.getDefaultJVMPath(),
-				"-ea",
-				#"-Xcheck:jni", 
-				"-Xmx256M", "-Xms64M",
-				"-Djava.class.path=./classes%s%s%sclasses" % (os.pathsep, root, os.sep))
-
 	runner = unittest.TextTestRunner()
 	result = runner.run(suite())
-		
-	jpype.shutdownJVM()
+	
+        if jpype.isJVMStarted():
+                jpype.shutdownJVM()	
 	if not result.wasSuccessful():
 		sys.exit(-1)
 
 if __name__ == '__main__' :
 	runTest()
-	
-	
