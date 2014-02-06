@@ -14,6 +14,7 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
+import unittest2 as unittest
 import jpype
 from jpype import JPackage, JArray, JByte, java
 import common
@@ -111,11 +112,10 @@ class ArrayTestCase(common.JPypeTestCase) :
         v = t.charArray
         self.assertEqual(str(v[:]), 'avcd')
         self.assertEqual(unicode(v[:]), u'avcd')
-        
+
+    @unittest.skip('JShort not available')
     def testJArrayConversionShort(self):
         # TODO: think about impl short
-        return
-        self.skipTest('JShort not available')
         jarr = jpype.JArray(jpype.JShort)(VALUES)
         result = jarr[0 : len(jarr)]
         self.assertEqual(VALUES, result)
