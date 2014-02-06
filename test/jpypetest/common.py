@@ -17,7 +17,7 @@
 
 import jpype
 from os import path
-import unittest
+import unittest2 as unittest
 
 CLASSPATH = None
 
