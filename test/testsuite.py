@@ -15,23 +15,24 @@
 #   
 #*****************************************************************************
 import unittest
-from jpypetest import *
 
 import jpype
 import os.path
+import pkgutil
 import sys
 
 def suite() :
-	return unittest.TestSuite( (
-		numeric.suite(),
-		attr.suite(),
-		array.suite(),
-		objectwrapper.suite(),
-		proxy.suite(), 
-		exc.suite(), 
-		serial.suite(),	  
-		mro.suite(),
-	))
+        loader = unittest.defaultTestLoader
+        if len(sys.argv) > 1:
+                names = sys.argv[1:]
+                test_suite = loader.loadTestsFromNames(names)
+        else:
+                import jpypetest
+                pkgpath = os.path.dirname(jpypetest.__file__)
+                names = ["jpypetest.%s" % name for _, name,
+                         _ in pkgutil.iter_modules([pkgpath])]
+                test_suite = loader.loadTestsFromNames(names)
+	return test_suite 
 	
 def runTest() :	
 	root = os.path.abspath(os.path.dirname(__file__))
