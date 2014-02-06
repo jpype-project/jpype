@@ -6,10 +6,12 @@ python:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq openjdk-7-jdk openjdk-7-jre
+  - sudo apt-get install -qq openjdk-7-jdk openjdk-7-jre ant
 
 install:
   - pip install .
+  - ant -f test/build.xml
 
 script:
   - python -c "import jpype"
+  - python test/testsuite.py
