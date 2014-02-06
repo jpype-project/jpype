@@ -111,22 +111,29 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 {
 	try {
 		PyObject* arrayObject;
-		int ndx;
-		int ndx2;
-		JPyArg::parseTuple(arg, "O!ii", &PyCObject_Type, &arrayObject, &ndx, &ndx2);
+		int lo = -1;
+		int hi = -1;
+		JPyArg::parseTuple(arg, "O!ii", &PyCObject_Type, &arrayObject, &lo, &hi);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
+		int length = a->getLength();
+		// stolen from jcc, to get nice slice support
+        if (lo < 0) lo = length + lo;
+        if (lo < 0) lo = 0;
+        else if (lo > length) lo = length;
+        if (hi < 0) hi = length + hi;
+        if (hi < 0) hi = 0;
+        else if (hi > length) hi = length;
+        if (lo > hi) lo = hi;
 
 		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
-		const char* n = name.c_str();
-
-		switch(n[0]) {
+		switch(name[0]) {
 		// for primitive types, we have fast sequence generation available
 		case 'B': case 'S': case 'I': case 'J': case 'F': case 'D': case 'Z': case 'C':
 			// fast
-			return a->getSequenceFromRange(ndx, ndx2);
+			return a->getSequenceFromRange(lo, hi);
 		default: {
 			// horrible slow
-			vector<HostRef*> values = a->getRange(ndx, ndx2);
+			vector<HostRef*> values = a->getRange(lo, hi);
 
 			JPCleaner cleaner;
 			PyObject* res = JPySequence::newList((int)values.size());
