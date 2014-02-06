@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,6 +16,12 @@
 *****************************************************************************/   
 #ifndef _JPPRIMITIVETYPE_H_
 #define _JPPRIMITIVETYPE_H_
+
+// predeclare PyObject
+#ifndef PyObject_HEAD
+struct _object;
+typedef _object PyObject;
+#endif
 
 class JPPrimitiveType : public JPType
 {
@@ -53,6 +59,8 @@ public :
 	}
 
 	virtual jobject	   convertToJavaObject(HostRef* obj);
+
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
 };
 
 class JPVoidType : public JPPrimitiveType
@@ -84,6 +92,11 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length)
+	{
+		RAISE(JPypeException, "not impled for void*");
+	}
+	
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -118,6 +131,9 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	// this returns tuple instead of list, for performance reasons
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
+
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -152,6 +168,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -186,6 +203,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 	
@@ -221,6 +239,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -255,6 +274,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -289,6 +309,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -323,6 +344,7 @@ public : // JPType implementation
 	virtual HostRef*  getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -357,6 +379,7 @@ public : // JPType implementation
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
+	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
