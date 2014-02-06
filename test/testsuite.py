@@ -14,11 +14,12 @@
 #   limitations under the License.
 #   
 #*****************************************************************************
-import unittest, os, sys, new
+import unittest
 from jpypetest import *
 
 import jpype
 import os.path
+import sys
 
 def suite() :
 	return unittest.TestSuite( (
@@ -32,22 +33,22 @@ def suite() :
 		mro.suite(),
 	))
 	
-import jpype
-
 def runTest() :	
 	root = os.path.abspath(os.path.dirname(__file__))
 
 	print "Running testsuite using JVM", jpype.getDefaultJVMPath()
-	jpype.startJVM(jpype.getDefaultJVMPath(), "-ea", "-Xmx256M", "-Xms64M",
-				   "-Djava.class.path=./classes%s%s%sclasses" % (os.pathsep, root, os.sep))
+	jpype.startJVM(jpype.getDefaultJVMPath(),
+				"-ea",
+				#"-Xcheck:jni", 
+				"-Xmx256M", "-Xms64M",
+				"-Djava.class.path=./classes%s%s%sclasses" % (os.pathsep, root, os.sep))
 
 	runner = unittest.TextTestRunner()
-	runner.run(suite())
-	
-	s = slice(2, 4)
-	print s, dir(s)
-	
-	jpype.shutdownJVM()	
+	result = runner.run(suite())
+		
+	jpype.shutdownJVM()
+	if not result.wasSuccessful():
+		sys.exit(-1)
 
 if __name__ == '__main__' :
 	runTest()

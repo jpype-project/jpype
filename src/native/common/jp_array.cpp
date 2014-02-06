@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
    
 *****************************************************************************/   
 #include <jpype.h>
+#include <Python.h>
 
 JPArray::JPArray(JPTypeName name, jarray inst) 
 {
@@ -43,6 +44,15 @@ vector<HostRef*> JPArray::getRange(int start, int stop)
 	return res;
 	TRACE_OUT;
 }	
+
+PyObject* JPArray::getSequenceFromRange(int start, int stop)
+{
+//	TRACE_IN("JPArray::getSequenceFromRange");
+	JPType* compType = m_Class->getComponentType();
+//	TRACE2("Component type", compType->getName().getSimpleName());
+
+	return compType->getArrayRangeToSequence(m_Object, start, stop);
+}
 
 void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 {
