@@ -1,2 +1,6 @@
 dist/**
 MANIFEST
+*.pyc
+*~
+/test/classes/
+/build/
