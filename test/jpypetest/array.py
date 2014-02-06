@@ -16,12 +16,9 @@
 #*****************************************************************************
 import jpype
 from jpype import JPackage, JArray, JByte, java
-import unittest, common
+import common
 
 VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4]
-
-def suite() :
-    return unittest.makeSuite(ArrayTestCase)
 
 class ArrayTestCase(common.JPypeTestCase) :
     def __arrayEquals(self, a1, a2) :
@@ -157,13 +154,3 @@ class ArrayTestCase(common.JPypeTestCase) :
         
         result = jarr[2:10]
         self.assertEqual(VALUES[2:10], result)
-
-
-if __name__ == '__main__' :
-    import os.path
-    root = os.path.abspath(os.path.dirname(__file__))    
-    common.CLASSPATH= "%s/../../build/test/java" % root
-    
-    runner = unittest.TextTestRunner()
-    runner.run(suite())
-

@@ -15,7 +15,7 @@
 #   
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JPackage
-import unittest, common
+import common
 import traceback
 
 def throwIOException() :
@@ -23,9 +23,6 @@ def throwIOException() :
 
 def throwByJavaException() :
 	JPackage('jpype').exc.ExceptionTest.throwIOException()
-
-def suite() :
-	return unittest.makeSuite(ExceptionTestCase)
 
 class ExceptionTestCase(common.JPypeTestCase) :
 	def testExceptionThrown(self) :

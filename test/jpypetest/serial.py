@@ -15,14 +15,11 @@
 #   
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JClass
-import unittest, common
+import common
 import os
 import tempfile
 import traceback
 
-def suite() :
-    return unittest.makeSuite(SerializationTestCase)
-    
 class SerializationTestCase(common.JPypeTestCase) :
 
     def setUp(self):
