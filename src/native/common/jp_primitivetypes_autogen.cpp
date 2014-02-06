@@ -149,7 +149,7 @@ void JPByteType::setArrayItem(jarray a, int ndx , HostRef* obj)
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
 }
 
-PyObject* JPByteType::getArrayRangeToSequence(jarray a, int start, int length) {
+PyObject* JPByteType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jbyteArray array = (jbyteArray)a;
     jbyte* val = NULL;
     jboolean isCopy;
@@ -157,9 +157,9 @@ PyObject* JPByteType::getArrayRangeToSequence(jarray a, int start, int length) {
 
     try {
        val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
-       PyObject *tuple = PyTuple_New(length);
+       PyObject *tuple = PyTuple_New(hi - lo);
 
-       for (Py_ssize_t i = start; i < length; i++)
+       for (Py_ssize_t i = lo; i < hi; i++)
            PyTuple_SET_ITEM(tuple, i, PyInt_FromLong(val[i]));
 
        JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT);
@@ -299,7 +299,7 @@ void JPShortType::setArrayItem(jarray a, int ndx , HostRef* obj)
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
 }
 
-PyObject* JPShortType::getArrayRangeToSequence(jarray a, int start, int length) {
+PyObject* JPShortType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jshortArray array = (jshortArray)a;
     jshort* val = NULL;
     jboolean isCopy;
@@ -307,10 +307,10 @@ PyObject* JPShortType::getArrayRangeToSequence(jarray a, int start, int length) 
 
     try {
        val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
-       res = PyList_New(length);
-       for (Py_ssize_t i = start; i < length; i++)
+       res = PyList_New(hi - lo);
+       for (Py_ssize_t i = lo; i < hi; i++)
     	   //TODO: maybe use annother (smaller) datatype here, python does not directly support short
-         PyList_SET_ITEM(res, i - start, PyInt_FromLong(( val[i])));
+         PyList_SET_ITEM(res, i - lo, PyInt_FromLong(val[i]));
 
        JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT);
        return res;
@@ -449,18 +449,18 @@ void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 
-PyObject* JPIntType::getArrayRangeToSequence(jarray a, int start, int length) {
-    jintArray array = (jintArray)a;
+PyObject* JPIntType::getArrayRangeToSequence(jarray a, int lo, int hi) {
+	jintArray array = (jintArray)a;
     jint* val = NULL;
     jboolean isCopy;
     PyObject* res = NULL;
-
     try {
        val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
-       res = PyList_New(length);
-       for (Py_ssize_t i = start; i < length; i++)
-         PyList_SET_ITEM(res, i - start, PyInt_FromLong(( val[i])));
-
+       res = PyList_New(hi - lo);
+       for (Py_ssize_t i = lo; i < hi; i++)
+       {
+         PyList_SET_ITEM(res, i - lo, PyInt_FromLong(val[i]));
+       }
        JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT);
        return res;
     }
@@ -596,7 +596,7 @@ void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
 }
 
-PyObject* JPLongType::getArrayRangeToSequence(jarray a, int start, int length) {
+PyObject* JPLongType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jlongArray array = (jlongArray)a;
     jlong* val = NULL;
     jboolean isCopy;
@@ -604,9 +604,9 @@ PyObject* JPLongType::getArrayRangeToSequence(jarray a, int start, int length) {
 
     try {
        val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
-       res = PyList_New(length);
-       for (Py_ssize_t i = start; i < length; i++)
-         PyList_SET_ITEM(res, i - start, PyLong_FromLong(( val[i])));
+       res = PyList_New(hi - lo);
+       for (Py_ssize_t i = lo; i < hi; i++)
+         PyList_SET_ITEM(res, i - lo, PyLong_FromLong(val[i]));
 
        JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT);
        return res;
@@ -745,11 +745,7 @@ void JPFloatType::setArrayItem(jarray a, int ndx , HostRef* obj)
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
 }
 
-
-//----------------------------------------------------------
-
-
-PyObject* JPFloatType::getArrayRangeToSequence(jarray a, int start, int length) {
+PyObject* JPFloatType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jfloatArray array = (jfloatArray)a;
     jfloat* val = NULL;
     jboolean isCopy;
@@ -757,15 +753,17 @@ PyObject* JPFloatType::getArrayRangeToSequence(jarray a, int start, int length) 
 
     try {
        val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
-       res = PyList_New(length);
-       for (Py_ssize_t i = start; i < length; i++)
-         PyList_SET_ITEM(res, i - start, PyFloat_FromDouble((val[i])));
+       res = PyList_New(hi - lo);
+       for (Py_ssize_t i = lo; i < hi; i++)
+         PyList_SET_ITEM(res, i - lo, PyFloat_FromDouble(val[i]));
 
        JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT);
        return res;
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
 }
+
+//----------------------------------------------------------
 
 jarray JPDoubleType::newArrayInstance(int sz)
 {
@@ -894,7 +892,7 @@ void JPDoubleType::setArrayItem(jarray a, int ndx , HostRef* obj)
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT); } );
 }
 
-PyObject* JPDoubleType::getArrayRangeToSequence(jarray a, int start, int length) {
+PyObject* JPDoubleType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jdoubleArray array = (jdoubleArray)a;
     jdouble* val = NULL;
     jboolean isCopy;
@@ -902,9 +900,9 @@ PyObject* JPDoubleType::getArrayRangeToSequence(jarray a, int start, int length)
 
     try {
        val = JPEnv::getJava()->GetDoubleArrayElements(array, &isCopy);
-       res = PyList_New(length);
-       for (Py_ssize_t i = start; i < length; i++)
-         PyList_SET_ITEM(res, i - start, PyFloat_FromDouble((val[i])));
+       res = PyList_New(hi - lo);
+       for (Py_ssize_t i = lo; i < hi; i++)
+         PyList_SET_ITEM(res, i - lo, PyFloat_FromDouble(val[i]));
 
        JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT);
        return res;
