@@ -113,9 +113,9 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(str(v[:]), 'avcd')
         self.assertEqual(unicode(v[:]), u'avcd')
 
-    @unittest.skip('JShort not available')
+    @unittest.expectedFailure
     def testJArrayConversionShort(self):
-        # TODO: think about impl short
+        # TODO: think about impl short (JShort not available)
         jarr = jpype.JArray(jpype.JShort)(VALUES)
         result = jarr[0 : len(jarr)]
         self.assertEqual(VALUES, result)
