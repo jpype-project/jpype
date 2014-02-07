@@ -76,8 +76,8 @@ elif sys.platform == 'darwin':
             # call java_home detector 
             java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
 
-     else: # osx < 10.6
-            java_home = '/System/Library/Frameworks/JavaVM.framework/Home/'
+    else: # osx < 10.6
+        java_home = '/System/Library/Frameworks/JavaVM.framework/Home/'
 
     platform_specific['libraries'] = ['dl']
     # this raises warning:
@@ -109,9 +109,9 @@ else:
                 "pull request with a fix on github: "
                 "https://github.com/originell/jpype/"
                 % '\n'.join(possible_homes))
-             raise RuntimeError
+            raise RuntimeError
     platform_specific['libraries'] = ['dl']
-    platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
+    #platform_specific['library_dir'] = [os.path.join(java_home, 'lib')]
     platform_specific['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'linux'),
