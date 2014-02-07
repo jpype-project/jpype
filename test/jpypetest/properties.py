@@ -38,3 +38,21 @@ class PropertiesTestCase(common.JPypeTestCase):
     def testPrivateAttributeNoThreeCharacterMethodMatchCollision(self):
         self._bean.property4 ="val"
         self.assertEqual("abcval", self._bean.abcProperty4())
+
+    def testPropertyOnlySetter(self):
+        self._bean.property5 = "val"
+        self.assertEqual("returnsetval", self._bean.returnProperty5())
+
+    def testPropertyOnlySetterSet(self):
+        self._bean.setProperty5("val")
+        self.assertEqual("setval", self._bean.property5)
+
+    def testPropertyDifferentAttribute(self):
+        self._bean.property6 = "val"
+        self.assertEqual("getsetval", self._bean.property6)
+        self.assertEqual("setval", self._bean.property7)
+
+    def testProertyDifferentAttributeSet(self):
+        self._bean.setProperty6("val")
+        self.assertEqual("getsetval", self._bean.property6)
+        self.assertEqual("setval", self._bean.property7)
