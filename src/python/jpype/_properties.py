@@ -27,8 +27,7 @@ class PropertiesCustomizer(object) :
 		return True
 		
 	def customize(self, name, jc, bases, members) :
-		gets = {}
-		sets = {}
+		accessor_pairs = {}
 		
 		for i in members :
 			if not _is_java_method(members[i]):
@@ -40,10 +39,26 @@ class PropertiesCustomizer(object) :
                                         continue
 			if access == 'get' :
 				if len(i) > 3 and members[i].isBeanAccessor() :
-                                        gets[attribute] = members[i]
+                                        getter = members[i]
+                                        try:
+                                                pair = accessor_pairs[attribute]
+                                                pair[0] = getter
+                                        except KeyError:
+                                                accessor_pairs[attribute] = [getter, None]
 			elif access == 'set' :
 				if len(i) > 3 and members[i].isBeanMutator() :
-                                        sets[attribute] = members[i]
+                                        setter = members[i]
+                                        try:
+                                                pair = accessor_pairs[attribute]
+                                                pair[1] = setter
+                                        except KeyError:
+                                                accessor_pairs[attribute] = [None, setter]
 				
-		for i in gets :
-			members[i] = property(gets[i], sets.get(i, None))
+		for i in accessor_pairs :
+                        getter, setter = accessor_pairs[i]
+                        if i in members:
+                                if not getter:
+                                        getter = members[i].fget
+                                elif not setter:
+                                        setter = members[i].fset
+                        members[i] = property(getter, setter)
