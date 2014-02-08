@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ HostRef* JPField::getStaticAttribute()
 	JPType* type = JPTypeManager::getType(m_Type);
 	JPCleaner cleaner;
 	jclass claz = m_Class->getClass();
-	cleaner.addLocal(claz);
+	cleaner.addGlobal(claz);
 	
 
 	return type->getStaticValue(claz, m_FieldID, m_Type);
@@ -107,7 +107,7 @@ void JPField::setStaticAttribute(HostRef* val)
 		
 	JPCleaner cleaner;
 	jclass claz = m_Class->getClass();
-	cleaner.addLocal(claz);
+	cleaner.addGlobal(claz);
 
 	type->setStaticValue(claz, m_FieldID, val);		
 	TRACE_OUT;
