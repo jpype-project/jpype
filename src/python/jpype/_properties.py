@@ -16,8 +16,48 @@
 #*****************************************************************************
 import _jclass, _jpype
 
+_PROPERTY_ACCESSOR_PREFIX_LEN = 3
+
 def _initialize() :
 	_jclass.registerClassCustomizer(PropertiesCustomizer())
+
+def _extract_accessor_pairs(members):
+        """Extract pairs of corresponding property access methods
+        (getter and setter) from a Java class's members (attributes).
+
+        If a public method with a property's name exists no pair for
+        that property will be extracted.
+
+        Returns a dictionary with the property name as key and a tuple
+        of (getter method, setter method) as value. A tuple element
+        value might be `None` if only a getter or only a setter
+        exists.
+        """
+        accessor_pairs = {}
+
+        for name, member in members.items():
+                if not (len(name) > _PROPERTY_ACCESSOR_PREFIX_LEN \
+                                or _is_java_method(member)):
+                        continue
+                access, rest = ( name[:_PROPERTY_ACCESSOR_PREFIX_LEN],
+                                 name[_PROPERTY_ACCESSOR_PREFIX_LEN:] )
+                property_name = rest[:1].lower() + rest[1:]
+                if property_name in members:
+                        if _is_java_method(members[property_name]):
+                                continue
+                if access == 'get' and member.isBeanAccessor():
+                        try:
+                                pair = accessor_pairs[property_name]
+                                pair[0] = member
+                        except KeyError:
+                                accessor_pairs[property_name] = [member, None]
+                elif access == 'set' and member.isBeanMutator():
+                        try:
+                                pair = accessor_pairs[property_name]
+                                pair[1] = member
+                        except KeyError:
+                                accessor_pairs[property_name] = [None, member]
+        return accessor_pairs
 
 def _is_java_method(attribute):
         return isinstance(attribute, _jpype._JavaMethod)
@@ -26,39 +66,16 @@ class PropertiesCustomizer(object) :
 	def canCustomize(self, name, jc) :
 		return True
 		
-	def customize(self, name, jc, bases, members) :
-		accessor_pairs = {}
-		
-		for i in members :
-			if not _is_java_method(members[i]):
-				continue
-                        access, bare_attrib = i[:3], i[3:]
-                        attribute = bare_attrib[:1].lower() + bare_attrib[1:]
-                        if attribute in members:
-                                if _is_java_method(members[attribute]):
-                                        continue
-			if access == 'get' :
-				if len(i) > 3 and members[i].isBeanAccessor() :
-                                        getter = members[i]
-                                        try:
-                                                pair = accessor_pairs[attribute]
-                                                pair[0] = getter
-                                        except KeyError:
-                                                accessor_pairs[attribute] = [getter, None]
-			elif access == 'set' :
-				if len(i) > 3 and members[i].isBeanMutator() :
-                                        setter = members[i]
-                                        try:
-                                                pair = accessor_pairs[attribute]
-                                                pair[1] = setter
-                                        except KeyError:
-                                                accessor_pairs[attribute] = [None, setter]
-				
-		for i in accessor_pairs :
-                        getter, setter = accessor_pairs[i]
-                        if i in members:
+	def customize(self, class_name, jc, bases, members) :
+		accessor_pairs = _extract_accessor_pairs(members)
+		for attr_name, (getter, setter) in accessor_pairs.items():
+                        if attr_name in members:
                                 if not getter:
-                                        getter = members[i].fget
+                                        # add default getter if we
+                                        # only have a setter
+                                        getter = members[attr_name].fget
                                 elif not setter:
-                                        setter = members[i].fset
-                        members[i] = property(getter, setter)
+                                        # add default setter if we
+                                        # only have a getter
+                                        setter = members[attr_name].fset
+                        members[attr_name] = property(getter, setter)
