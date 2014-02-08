@@ -1650,7 +1650,7 @@ jclass JPJavaEnv::GetObjectClass(jobject a0)
 
 }
 
-jmethodID JPJavaEnv::GetMethodID(jclass a0, char* a1, char* a2)
+jmethodID JPJavaEnv::GetMethodID(jclass a0, const char* a1, const char* a2)
 {     jmethodID res;
 
     JNIEnv* env = getJNIEnv();
@@ -1664,7 +1664,7 @@ jmethodID JPJavaEnv::GetMethodID(jclass a0, char* a1, char* a2)
 
 }
 
-jmethodID JPJavaEnv::GetStaticMethodID(jclass a0, char* a1, char* a2)
+jmethodID JPJavaEnv::GetStaticMethodID(jclass a0, const char* a1, const char* a2)
 {     jmethodID res;
 
     JNIEnv* env = getJNIEnv();
@@ -1678,7 +1678,7 @@ jmethodID JPJavaEnv::GetStaticMethodID(jclass a0, char* a1, char* a2)
 
 }
 
-jfieldID JPJavaEnv::GetFieldID(jclass a0, char* a1, char* a2)
+jfieldID JPJavaEnv::GetFieldID(jclass a0, const char* a1, const char* a2)
 {     jfieldID res;
 
     JNIEnv* env = getJNIEnv();
@@ -1692,7 +1692,7 @@ jfieldID JPJavaEnv::GetFieldID(jclass a0, char* a1, char* a2)
 
 }
 
-jfieldID JPJavaEnv::GetStaticFieldID(jclass a0, char* a1, char* a2)
+jfieldID JPJavaEnv::GetStaticFieldID(jclass a0, const char* a1,  const char* a2)
 {     jfieldID res;
 
     JNIEnv* env = getJNIEnv();
