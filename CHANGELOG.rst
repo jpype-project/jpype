@@ -17,6 +17,14 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   * corrected new[]/delete pairs to stop valgrind complaining
   * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
 
+* Use setter for Java bean property assignment even if not having a
+  getter by @baztian
+* Fix public methods not being accessible if a Java bean property with
+  the same name exists by @baztian (*Warning*: In rare cases this
+  change is incompatibile to previous releases. If you are accessing a
+  bean property without using the get/set method and the bean has a
+  public method with the property's name you have to change the code
+  to use the get/set methods.)
 * Make jpype.JException catch exceptions from subclasses by @baztian
 * Make more complex overloaded Java methods accessible (fixes https://sourceforge.net/p/jpype/bugs/69/) by @baztian and anonymous
 
