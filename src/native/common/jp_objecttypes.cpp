@@ -116,9 +116,9 @@ void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj)
 jarray JPObjectType::newArrayInstance(int sz)
 {
 	JPCleaner cleaner;
-	
+
 	jclass c = getClass();
-	cleaner.addLocal(c);
+	cleaner.addGlobal(c);
 	
 	return JPEnv::getJava()->NewObjectArray(sz, c, NULL);
 }
