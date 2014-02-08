@@ -23,7 +23,7 @@
 class JPypeException
 {
 public :
-	JPypeException(char* msn, const char* f, int l) 
+	JPypeException(const char* msn, const char* f, int l) 
 	{
 		file=f, line=l;
 		std::stringstream str;
@@ -31,7 +31,7 @@ public :
 		this->msg = str.str();
 	}
 
-	JPypeException(string msn, const char* f, int l)
+	JPypeException(const string& msn, const char* f, int l)
 	{
 		file=f, line=l;
 		std::stringstream str;

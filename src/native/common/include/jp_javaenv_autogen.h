@@ -449,13 +449,13 @@ jobject GetObjectArrayElement(jobjectArray a0, int a1);
 /** GetObjectClass */
 jclass GetObjectClass(jobject a0);
 /** GetMethodID */
-jmethodID GetMethodID(jclass a0, char* a1, char* a2);
+jmethodID GetMethodID(jclass a0, const char* a1, const char* a2);
 /** GetStaticMethodID */
-jmethodID GetStaticMethodID(jclass a0, char* a1, char* a2);
+jmethodID GetStaticMethodID(jclass a0, const char* a1, const char* a2);
 /** GetFieldID */
-jfieldID GetFieldID(jclass a0, char* a1, char* a2);
+jfieldID GetFieldID(jclass a0, const char* a1, const char* a2);
 /** GetStaticFieldID */
-jfieldID GetStaticFieldID(jclass a0, char* a1, char* a2);
+jfieldID GetStaticFieldID(jclass a0, const char* a1, const char* a2);
 /** GetStringChars */
 const jchar* GetStringChars(jstring a0, jboolean* a1);
 /** ReleaseStringChars */
