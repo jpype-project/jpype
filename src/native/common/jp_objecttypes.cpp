@@ -83,7 +83,7 @@ HostRef* JPObjectType::invoke(jobject claz, jclass clazz, jmethodID mth, jvalue*
 	JPTypeName name = JPJni::getClassName(v.l);
 	JPType* type = JPTypeManager::getType(name);
 	HostRef* ref = type->asHostObject(v);
-	TRACE1("Successfulyl converted to host reference");
+	TRACE1("Successfully converted to host reference");
 	return ref;
 	
 	TRACE_OUT;
@@ -221,8 +221,6 @@ void JPObjectType::setArrayValues(jarray a, HostRef* values)
     JPCleaner cleaner;
 
     try {
-		bool converted = true;
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -236,8 +234,6 @@ void JPObjectType::setArrayValues(jarray a, HostRef* values)
 				cleaner.addLocal(val.l);
 				delete v;
 			}
-
-			converted = true;
 		}	
 		else
 		{
