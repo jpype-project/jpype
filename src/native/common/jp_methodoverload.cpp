@@ -130,10 +130,10 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 	}
 	for (unsigned int i = start; i < m_Arguments.size() && i < o.m_Arguments.size(); i++)
 	{
-		JPTypeName mine = m_Arguments[i];
-		JPTypeName his = o.m_Arguments[i];
-		string mineSimple = mine.getSimpleName();
-		string hisSimple = his.getSimpleName();
+		JPTypeName& mine = m_Arguments[i];
+		JPTypeName& his = o.m_Arguments[i];
+		const string& mineSimple = mine.getSimpleName();
+		const string& hisSimple = his.getSimpleName();
 
 		if (mineSimple != hisSimple)
 		{

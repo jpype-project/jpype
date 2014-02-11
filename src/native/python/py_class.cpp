@@ -158,7 +158,7 @@ PyObject* PyJPClass::getBaseInterfaces(PyObject* o, PyObject* arg)
 	try {
 		PyJPClass* self = (PyJPClass*)o;
 
-		vector<JPClass*> baseItf = self->m_Class->getInterfaces();
+		const vector<JPClass*>& baseItf = self->m_Class->getInterfaces();
 
 		PyObject* result = JPySequence::newTuple((int)baseItf.size());
 		for (unsigned int i = 0; i < baseItf.size(); i++)
