@@ -223,7 +223,7 @@ JPMethod* JPClass::getMethod(const string& name)
 	return it->second;
 }
 
-HostRef* JPClass::getStaticAttribute(string name) 
+HostRef* JPClass::getStaticAttribute(const string& name)
 {
 	// static fields 
 	map<string, JPField*>::iterator fld = m_StaticFields.find(name);
@@ -492,7 +492,7 @@ JPObject* JPClass::newInstance(vector<HostRef*>& args)
 	return m_Constructors->invokeConstructor(args);
 }
 
-void JPClass::setStaticAttribute(string name, HostRef* val) 
+void JPClass::setStaticAttribute(const string& name, HostRef* val)
 {
 	map<string, JPField*>::iterator it = m_StaticFields.find(name);
 	if (it == m_StaticFields.end())

@@ -99,7 +99,7 @@ public :
 		return m_NativeName;
 	}
 
-	JPTypeName getComponentName(); const
+	JPTypeName getComponentName() const;
 
 	ETypes getType() const
 	{

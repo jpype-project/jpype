@@ -16,19 +16,19 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-JPMethod::JPMethod(jclass clazz, string name, bool isConstructor) :
+JPMethod::JPMethod(jclass clazz, const string& name, bool isConstructor) :
 	m_Name(name),
 	m_IsConstructor(isConstructor)
 {
 	m_Class = (jclass)JPEnv::getJava()->NewGlobalRef(clazz);
 }
 
-string JPMethod::getName()
+const string& JPMethod::getName() const
 {
 	return m_Name;
 }
 
-string JPMethod::getClassName()
+string JPMethod::getClassName() const
 {
 	JPTypeName name = JPJni::getClassName(m_Class);
 	return name.getSimpleName();

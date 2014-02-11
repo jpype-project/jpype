@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -166,7 +166,7 @@ JPTypeName JPTypeName::fromSimple(const char* name)
 	return JPTypeName(simple, native, t);
 }
 	
-JPTypeName JPTypeName::getComponentName()
+JPTypeName JPTypeName::getComponentName() const
 {
 	if (m_Type != _array)
 	{

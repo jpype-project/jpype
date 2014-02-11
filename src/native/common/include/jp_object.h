@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -37,8 +37,8 @@ public :
 
 	JCharString toString();
 
-	HostRef* getAttribute(string name);
-	void     setAttribute(string name, HostRef* value);
+	HostRef* getAttribute(const string& name);
+	void     setAttribute(const string& name, HostRef* value);
 
 private :
 	JPClass* m_Class;
