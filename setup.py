@@ -51,11 +51,13 @@ elif sys.platform == 'darwin':
     # http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x
     osx = platform.mac_ver()[0][:4]
     platform_specific['libraries'] = ['dl']
-    platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
     platform_specific['define_macros'] = [('MACOSX', 1)]
     if not java_home:
         print "No JAVA_HOME Environment Variable set. Trying to guess it..."
         java_home = '/Library/Java/Home'
+    else:
+        platform_specific['library_dir'] = [os.path.join(java_home, 'Libraries')]
+
     if osx == '10.6':
         # I'm not sure if this really works on all 10.6 - confirm please :)
         java_home = ('/Developer/SDKs/MacOSX10.6.sdk/System/Library/'
