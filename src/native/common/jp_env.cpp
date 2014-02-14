@@ -48,7 +48,8 @@ void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringV
 		jniArgs.options[i].optionString = (char*)args[i].c_str();
 	}
 
-	s_Java = JPJavaEnv::CreateJavaVM((void*)&jniArgs);  
+	s_Java = JPJavaEnv::CreateJavaVM((void*)&jniArgs);
+	free(jniArgs.options);
     
 	if (s_Java == NULL) {
 		RAISE(JPypeException, "Unable to start JVM");
