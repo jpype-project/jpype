@@ -115,7 +115,7 @@ void JPByteType::setArrayValues(jarray a, HostRef* values)
 		{
 			RAISE(JPypeException, "Unable to convert to Byte array");
 		}
-		JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
 }
@@ -282,7 +282,7 @@ void JPShortType::setArrayValues(jarray a, HostRef* values)
 		{
 			RAISE(JPypeException, "Unable to convert to Short array");
 		}
-		JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
 }
@@ -400,7 +400,7 @@ void JPIntType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Int array");
 		}
 
-		JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseIntArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT); } );
 }
@@ -507,7 +507,7 @@ void JPLongType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Long array");
 		}
 
-		JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
 }
@@ -611,7 +611,7 @@ void JPFloatType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Float array");
 		}
 
-		JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
 }
@@ -709,7 +709,7 @@ void JPDoubleType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Double array");
 		}
 
-		JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT); } );
 }
@@ -815,7 +815,7 @@ void JPCharType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Char array");
 		}
 
-		JPEnv::getJava()->ReleaseCharArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseCharArrayElements(array, val, JNI_ABORT); } );
 }
@@ -914,7 +914,7 @@ void JPBooleanType::setArrayValues(jarray a, HostRef* values)
 			RAISE(JPypeException, "Unable to convert to Boolean array");
 		}
 
-		JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_COMMIT);
+		JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_ABORT); } );
 }
