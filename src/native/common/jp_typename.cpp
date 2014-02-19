@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Menard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,32 +17,11 @@
 #include <jpype.h>
 #undef JPYPE_TRACING_INTERNAL
 
-//AT's on porting:
-//  1) the original definition of global static object leads to crashing
-//on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
-//
-//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-//Therefore, they must be guarded with a mutex.
-map<string, string>& GetNativeNamesMap()
-{
-	static map<string, string> nativeNames;
-	return nativeNames;
-}
+JPTypeName::NativeNamesMap JPTypeName::nativeNames;
+JPTypeName::DefinedTypesMap JPTypeName::definedTypes;
+JPTypeName::NativeTypesMap JPTypeName::nativeTypes;
 
-map<string, JPTypeName::ETypes>& GetDefinedTypesMap()
-{                         
-	static map<string, JPTypeName::ETypes> definedTypes;
-	return definedTypes;
-}
-
-map<JPTypeName::ETypes, string>& GetNativeTypesMap()
-{
-	static map<JPTypeName::ETypes, string> nativeTypes;
-	return nativeTypes;
-}
-
-
-static string convertToNativeClassName(const std::string& str)
+static string convertToNativeClassName(const string& str)
 {
 	// simple names are of the form :
 	//   a.c.d.E
@@ -65,38 +44,38 @@ static string convertToNativeClassName(const std::string& str)
 
 void JPTypeName::init()
 {
-	GetNativeNamesMap()["void"] = "V";
-	GetNativeNamesMap()["byte"] = "B";
-	GetNativeNamesMap()["short"] = "S";
-	GetNativeNamesMap()["int"] = "I";
-	GetNativeNamesMap()["long"] = "J";
-	GetNativeNamesMap()["float"] = "F";
-	GetNativeNamesMap()["double"] = "D";
-	GetNativeNamesMap()["boolean"] = "Z";
-	GetNativeNamesMap()["char"] = "C";
+	nativeNames["void"] = "V";
+	nativeNames["byte"] = "B";
+	nativeNames["short"] = "S";
+	nativeNames["int"] = "I";
+	nativeNames["long"] = "J";
+	nativeNames["float"] = "F";
+	nativeNames["double"] = "D";
+	nativeNames["boolean"] = "Z";
+	nativeNames["char"] = "C";
 	
-	GetDefinedTypesMap()["void"] = _void;
-	GetDefinedTypesMap()["byte"] = _byte;
-	GetDefinedTypesMap()["short"] = _short;
-	GetDefinedTypesMap()["int"] = _int;
-	GetDefinedTypesMap()["long"] = _long;
-	GetDefinedTypesMap()["float"] = _float;
-	GetDefinedTypesMap()["double"] = _double;
-	GetDefinedTypesMap()["boolean"] = _boolean;
-	GetDefinedTypesMap()["char"] = _char;
-	GetDefinedTypesMap()["java.lang.String"] = _string;
-	GetDefinedTypesMap()["java.lang.Class"] = _class;
+	definedTypes["void"] = _void;
+	definedTypes["byte"] = _byte;
+	definedTypes["short"] = _short;
+	definedTypes["int"] = _int;
+	definedTypes["long"] = _long;
+	definedTypes["float"] = _float;
+	definedTypes["double"] = _double;
+	definedTypes["boolean"] = _boolean;
+	definedTypes["char"] = _char;
+	definedTypes["java.lang.String"] = _string;
+	definedTypes["java.lang.Class"] = _class;
 
-	for (map<string, JPTypeName::ETypes>::iterator it = GetDefinedTypesMap().begin(); it != GetDefinedTypesMap().end(); ++it)
+	for (DefinedTypesMap::iterator it = definedTypes.begin(); it != definedTypes.end(); ++it)
 	{
-		GetNativeTypesMap()[it->second] = it->first;
+		nativeTypes[it->second] = it->first;
 	}
 
 }
 	
 JPTypeName JPTypeName::fromType(JPTypeName::ETypes t)
 {
-	return fromSimple(GetNativeTypesMap()[t].c_str());
+	return fromSimple(nativeTypes[t].c_str());
 }
 
 JPTypeName JPTypeName::fromSimple(const char* name)
@@ -104,7 +83,7 @@ JPTypeName JPTypeName::fromSimple(const char* name)
 	string simple = name;
 	string componentName = simple;
 	string nativeComponent;
-	JPTypeName::ETypes t;
+	ETypes t;
 		
 	// is it an array?
 	size_t arrayDimCount = 0;
@@ -120,8 +99,8 @@ JPTypeName JPTypeName::fromSimple(const char* name)
 		arrayDimCount = (simple.length() - componentName.length())/2;
 	}
 	
-	map<string, string>::iterator nativeIt = GetNativeNamesMap().find(componentName);
-	if (nativeIt == GetNativeNamesMap().end())
+	NativeNamesMap::iterator nativeIt = nativeNames.find(componentName);
+	if (nativeIt == nativeNames.end())
 	{
 		nativeComponent = convertToNativeClassName(componentName);		
 	}
@@ -146,8 +125,8 @@ JPTypeName JPTypeName::fromSimple(const char* name)
 		native = nativeComponent;
 	}
 	
-	map<string, JPTypeName::ETypes>::iterator typeIt = GetDefinedTypesMap().find(name);
-	if (typeIt == GetDefinedTypesMap().end()) 
+	DefinedTypesMap::iterator typeIt = definedTypes.find(name);
+	if (typeIt == definedTypes.end())
 	{
 		if (native[0] == '[') 
 		{

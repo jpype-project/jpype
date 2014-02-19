@@ -114,7 +114,15 @@ public :
 private :
 	string m_SimpleName;
 	string m_NativeName;
-	ETypes m_Type;	
+	ETypes m_Type;
+
+	typedef map<string, string> NativeNamesMap;
+	typedef map<string, ETypes> DefinedTypesMap;
+	typedef map<ETypes, string> NativeTypesMap;
+
+	static NativeNamesMap nativeNames;
+	static DefinedTypesMap definedTypes;
+	static NativeTypesMap nativeTypes;
 };
 
 #endif // _JPTYPENAME_H_
