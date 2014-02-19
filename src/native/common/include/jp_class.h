@@ -40,10 +40,11 @@ public :
 	JPField*                getInstanceField(const string& name);
 	JPField*                getStaticField(const string& name);
 	JPMethod*				getMethod(const string& name);
-	vector<JPMethod*>		getMethods()
+	vector<JPMethod*>		getMethods() const
 	{
 		vector<JPMethod*> res;
-		for (map<string, JPMethod*>::iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
+		res.reserve(m_Methods.size());
+		for (map<string, JPMethod*>::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
 		{
 			res.push_back(cur->second);
 		}
@@ -73,7 +74,7 @@ public :
 	}
 
 	JPClass* getSuperClass();
-	vector<JPClass*> getInterfaces();
+	const vector<JPClass*>& getInterfaces() const;
 
 	bool isSubclass(JPClass*);
 	
