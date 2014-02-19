@@ -42,6 +42,11 @@ public :
 
 	static void                        flushCache();
 
+	/**
+	 * this should only be called on jpype module unload
+	 */
+	static void                        flushPrimitiveTypes();
+
 	static int                         getLoadedClasses();
 	
 

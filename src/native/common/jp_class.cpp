@@ -27,7 +27,8 @@ JPClass::~JPClass()
 {
 	delete m_Constructors;
 
-    // interfaces of this cannot be simply deleted here
+    // interfaces of this cannot be simply deleted here, since they may be also
+	// super types of other classes, which would be invalidated by doing so.
 
 	for (map<string, JPMethod*>::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit ++)
 	{
