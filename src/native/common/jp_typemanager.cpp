@@ -106,7 +106,6 @@ JPArrayClass* JPTypeManager::findArrayClass(JPTypeName& name)
 
 JPType* JPTypeManager::getType(JPTypeName& t)
 {
-	JPCleaner cleaner;
 	TRACE_IN("JPTypeManager::getType");
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
 	
