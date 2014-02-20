@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public :
 		return m_IsFinal;
 	}
 
-	JPTypeName getReturnType()
+	const JPTypeName& getReturnType() const
 	{
 		return m_ReturnType;
 	}

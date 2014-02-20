@@ -52,7 +52,7 @@ public :
 	virtual HostRef*   asHostObject(jvalue val) = 0 ;
 	virtual HostRef*   asHostObjectFromObject(jvalue val) = 0;
 	
-	virtual JPTypeName getName() = 0;
+	virtual const JPTypeName& getName() const = 0;
 	
 	virtual EMatchType canConvertToJava(HostRef* obj) = 0;
 
@@ -60,7 +60,7 @@ public :
 	virtual jobject    convertToJavaObject(HostRef* obj) = 0;
 
 	virtual bool       isObjectType() = 0;
-	virtual JPTypeName getObjectType() = 0;
+	virtual const JPTypeName& getObjectType() const = 0;
 	
 	virtual HostRef*   invokeStatic(jclass, jmethodID, jvalue*) = 0;
 	virtual HostRef*   invoke(jobject, jclass, jmethodID, jvalue*) = 0;

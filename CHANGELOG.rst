@@ -29,7 +29,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 * Make more complex overloaded Java methods accessible (fixes https://sourceforge.net/p/jpype/bugs/69/) by @baztian and anonymous
 * Fast sliced access for primitive datatype arrays (factor of 10)
 * some minor improvements inferring unnecessary copies in extension code
-* some JNI cleanups (to be merged)
+* some JNI cleanups related to memory
+* fix memory leak in array setters
+* fix memory leak in typemanager
+
 0.5.4.5 (2013-08-25 12:12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

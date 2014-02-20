@@ -106,7 +106,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 
 		PyObject* self;
 		PyObject* intf;
-
+		//TODO: why is self not initialized?
 		JPyArg::parseTuple(arg, "OO", &self, &intf);
 
 		std::vector<jclass> interfaces;
@@ -120,7 +120,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 			PyObject* claz = JPyObject::getAttrString(subObj, "__javaclass__");
 			PyJPClass* c = (PyJPClass*)claz;
 			jclass jc = c->m_Class->getClass();
-			cleaner.addLocal(jc);
+			cleaner.addGlobal(jc);
 			interfaces.push_back(jc);
 		}
 		

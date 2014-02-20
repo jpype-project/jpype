@@ -58,7 +58,7 @@ JCharString JPObject::toString()
 	
 }
 
-HostRef* JPObject::getAttribute(string name)
+HostRef* JPObject::getAttribute(const string& name)
 {
 	TRACE_IN("JPObject::getAttribute");
 	TRACE1(name);
@@ -87,7 +87,7 @@ HostRef* JPObject::getAttribute(string name)
 	TRACE_OUT;
 }
 
-void JPObject::setAttribute(string name, HostRef* val)
+void JPObject::setAttribute(const string& name, HostRef* val)
 {
 	// instance fields ...
 	JPField* fld = m_Class->getInstanceField(name);	

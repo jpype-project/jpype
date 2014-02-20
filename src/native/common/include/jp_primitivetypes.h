@@ -48,12 +48,12 @@ public :
 		return m_IsObject; 
 	}
 	
-	virtual JPTypeName getName()
+	virtual const JPTypeName& getName() const
 	{
 		return m_Type;
 	}
 	
-	virtual JPTypeName getObjectType()
+	virtual const JPTypeName& getObjectType() const
 	{
 		return m_ObjectTypeName;
 	}

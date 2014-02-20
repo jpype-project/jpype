@@ -36,7 +36,7 @@ private :
 };
 
 
-// Pre-delcare those required types
+// Pre-declare those required types
 class JPArray;
 class JPArrayClass;
 class JPClass;
