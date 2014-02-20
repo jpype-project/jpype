@@ -160,12 +160,13 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 	TRACE_OUT;
 }
 
-
-static jclass handlerClass;
-static jclass referenceClass;
-static jclass referenceQueueClass;
-static jmethodID invocationHandlerConstructorID;
-static jfieldID hostObjectID;
+namespace { // impl detail, gets initialized by JPProxy::init()
+	jclass handlerClass;
+	jclass referenceClass;
+	jclass referenceQueueClass;
+	jmethodID invocationHandlerConstructorID;
+	jfieldID hostObjectID;
+}
 
 void JPProxy::init()
 {
