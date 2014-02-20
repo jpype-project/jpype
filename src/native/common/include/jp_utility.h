@@ -17,6 +17,8 @@
 #ifndef _JPYPE_UTILITY_H_
 #define _JPYPE_UTILITY_H_
 
+#include <jni.h>
+
 #define RAISE(exClass, msg) { throw new exClass(msg, __FILE__, __LINE__); }
 
 /** Support Exception for JPype-generated exception */
@@ -142,6 +144,26 @@ private :
 	static void traceIn(const char* msg);
 	static void traceOut(const char* msg, bool error);
 	static void trace1(const char* name, const string& msg);
+};
+
+/** Use this class instewad of basic_string<jchar> because compiler support is not great cross-platform */
+class JCharString
+{
+public :
+	JCharString(const jchar*);
+	JCharString(const JCharString&);
+	JCharString(size_t);
+	virtual ~JCharString();
+
+	const jchar* c_str();
+
+	size_t length() { return m_Length; }
+
+	jchar& operator[](size_t ndx) { return m_Value[ndx]; }
+
+private :
+	jchar* m_Value;
+	size_t m_Length;
 };
 
 #endif // _JPYPE_UTILITY_H_
