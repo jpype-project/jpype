@@ -59,6 +59,12 @@ public :
 		}
 	}
 
+	virtual void unloadLibrary()
+	{
+		// on success return code is nonzero, TODO: handle error?
+		FreeLibrary(jvmLibrary);
+	}
+
 	virtual void* getSymbol(const char* name)
 	{
 		void* res = (void*)GetProcAddress(jvmLibrary, name);

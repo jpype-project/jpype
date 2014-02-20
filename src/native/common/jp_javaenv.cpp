@@ -68,7 +68,8 @@ TRACE_OUT;
 void JPJavaEnv::shutdown()
 {
 	jvm = NULL;
-	// TODO unload the library
+	// unload the jvm library
+	GetAdapter()->unloadLibrary();
 }
 
 /**
@@ -84,6 +85,7 @@ void JPJavaEnv::checkInitialized()
 
 JPJavaEnv* JPJavaEnv::GetCreatedJavaVM()  
 {
+	// TODO: because we're returning NULL, jpype.attach() wont work.
 	/*
 	TRACE_IN("JPJavaEnv::GetCreatedJavaVM");
 

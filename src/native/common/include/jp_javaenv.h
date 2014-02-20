@@ -54,6 +54,7 @@ class JPPlatformAdapter
 public :
 	virtual ~JPPlatformAdapter() {};
 	virtual void loadLibrary(const char* path) = 0;
+	virtual void unloadLibrary() = 0;
 	virtual void* getSymbol(const char* name)= 0;
 };
 
@@ -78,10 +79,10 @@ private :
 	static jint (JNICALL *GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
 
 	JavaVM* jvm;
-   jobject referenceQueue;	
+	jobject referenceQueue;
 	bool convertStringObjects;
 
-	JNIEnv* getJNIEnv();			
+	JNIEnv* getJNIEnv();
 
 public :	
 	static void load(const string& path);
