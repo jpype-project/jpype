@@ -16,8 +16,24 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-HostEnvironment* JPEnv::s_Host = NULL;
-JPJavaEnv*       JPEnv::s_Java = NULL;
+namespace { // impl details
+	 HostEnvironment* s_Host = NULL;
+	 JPJavaEnv*       s_Java = NULL;
+}
+
+JPJavaEnv* JPEnv::getJava()
+{
+	return s_Java;
+}
+HostEnvironment* JPEnv::getHost()
+{
+	return s_Host;
+}
+
+bool JPEnv::isInitialized()
+{
+	return getJava() != NULL && getHost() != NULL;
+}
 
 void JPEnv::init(HostEnvironment* hostEnv)
 {
