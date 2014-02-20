@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ public :
 	/**
 	 * Create a new method based on class and a name;
 	 */
-	JPMethod(jclass clazz, string name, bool isConstructor);
+	JPMethod(jclass clazz, const string& name, bool isConstructor);
 	virtual ~JPMethod()
 	{
 		JPEnv::getJava()->DeleteGlobalRef(m_Class);
@@ -33,8 +33,8 @@ public :
 
 
 public :
-	string getName();
-	string getClassName();
+	const string& getName() const;
+	string getClassName() const;
 	
 	void addOverload(JPClass* clazz, jobject mth);
 	void addOverloads(JPMethod* o);

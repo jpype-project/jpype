@@ -247,42 +247,27 @@ void JPCleaner::remove(HostRef* obj)
 
 void JPCleaner::addAllGlobal(vector<jobject>& r) 
 {
-	for (vector<jobject>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		addGlobal(*cur);
-	}
+	m_GlobalJavaObjects.insert(m_GlobalJavaObjects.end(), r.begin(), r.end());
 }
 
 void JPCleaner::addAllGlobal(vector<jclass>& r) 
 {
-	for (vector<jclass>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		addGlobal(*cur);
-	}
+	m_GlobalJavaObjects.insert(m_GlobalJavaObjects.end(), r.begin(), r.end());
 }
 
 void JPCleaner::addAllLocal(vector<jobject>& r) 
 {
-	for (vector<jobject>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		addLocal(*cur);
-	}
+	m_LocalJavaObjects.insert(m_LocalJavaObjects.end(), r.begin(), r.end());
 }
 
 void JPCleaner::addAllLocal(vector<jclass>& r) 
 {
-	for (vector<jclass>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		addLocal(*cur);
-	}
+	m_LocalJavaObjects.insert(m_LocalJavaObjects.end(), r.begin(), r.end());
 }
 
 void JPCleaner::addAll(vector<HostRef*>& r) 
 {
-	for (vector<HostRef*>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		add(*cur);
-	}
+	m_HostObjects.insert(m_HostObjects.end(), r.begin(), r.end());
 }
 
 void JPCleaner::removeAllGlobal(vector<jobject>& r)

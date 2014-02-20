@@ -106,7 +106,6 @@ JPArrayClass* JPTypeManager::findArrayClass(JPTypeName& name)
 
 JPType* JPTypeManager::getType(JPTypeName& t)
 {
-	JPCleaner cleaner;
 	TRACE_IN("JPTypeManager::getType");
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
 	
@@ -130,8 +129,10 @@ JPType* JPTypeManager::getType(JPTypeName& t)
 
 JPTypeManager::~JPTypeManager()
 {
-	flushCache();
+	// empty, since everything is static
+}
 
+void JPTypeManager::flushPrimitiveTypes() {
 	// delete primitive types
 	for(TypeMap::iterator i = typeMap.begin(); i != typeMap.end(); ++i)
 	{
@@ -141,12 +142,10 @@ JPTypeManager::~JPTypeManager()
 
 void JPTypeManager::flushCache()
 {
-	// note that in JPClass destructor SuperInterfaces also get deleted!
-	// I currently do not know, if thats sufficient or if there are any leftovers.
-//	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
-//	{
-//		delete i->second;
-//	}
+	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
+	{
+		delete i->second;
+	}
 
 	for(JavaArrayClassMap::iterator i = javaArrayClassMap.begin();
 			i != javaArrayClassMap.end(); ++i)

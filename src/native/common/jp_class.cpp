@@ -19,7 +19,7 @@
 JPClass::JPClass(const JPTypeName& n, jclass c) : 
 	JPClassBase(n, c),
 	m_SuperClass(NULL),
-	m_Constructors(NULL)	
+	m_Constructors(NULL)
 {
 }
 
@@ -27,10 +27,8 @@ JPClass::~JPClass()
 {
 	delete m_Constructors;
 
-	for (vector<JPClass*>::iterator clit = m_SuperInterfaces.begin(); clit != m_SuperInterfaces.end(); clit ++)
-	{
-		delete (*clit);
-	}
+    // interfaces of this cannot be simply deleted here, since they may be also
+	// super types of other classes, which would be invalidated by doing so.
 
 	for (map<string, JPMethod*>::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit ++)
 	{
@@ -39,12 +37,12 @@ JPClass::~JPClass()
 
 	for (map<string, JPField*>::iterator fldit = m_InstanceFields.begin(); fldit != m_InstanceFields.end(); fldit++)
 	{
-		delete fldit->second;		
+		delete fldit->second;
 	}
 
 	for (map<string, JPField*>::iterator fldit2 = m_StaticFields.begin(); fldit2 != m_StaticFields.end(); fldit2++)
 	{
-		delete fldit2->second;		
+		delete fldit2->second;
 	}
 
 }
@@ -90,8 +88,8 @@ void JPClass::loadSuperInterfaces()
 	for (vector<jclass>::iterator it = intf.begin(); it != intf.end(); it++)
 	{
 		JPTypeName intfName = JPJni::getName(*it);
-		JPClass* intf = JPTypeManager::findClass(intfName);
-		m_SuperInterfaces.push_back(intf);
+		JPClass* interface = JPTypeManager::findClass(intfName);
+		m_SuperInterfaces.push_back(interface);
 	}
 }
 	
@@ -121,7 +119,7 @@ void JPClass::loadMethods()
 	JPCleaner cleaner;
 	JPCleaner pcleaner;
 
-    JPClass* superclass;
+	JPClass* superclass;
 
 	// methods
 	vector<jobject> methods = JPJni::getDeclaredMethods(m_Class);
@@ -129,7 +127,7 @@ void JPClass::loadMethods()
 
 	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
 	{
-		string name = JPJni::getMemberName(*it);
+		const string& name = JPJni::getMemberName(*it);
 
 		if (JPJni::isMemberPublic(*it) && !JPJni::isMemberAbstract(*it) )
 		{
@@ -141,11 +139,7 @@ void JPClass::loadMethods()
 			}
 			
 			method->addOverload(this, *it);			
-		
-		
 		}
-
-		
 	}
 
     superclass = m_SuperClass;
@@ -155,7 +149,7 @@ void JPClass::loadMethods()
 	{
 		for (map<string, JPMethod*>::iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur ++)
 		{
-			string name = cur->first;
+			const string& name = cur->first;
 			JPMethod* superMethod = superclass->getMethod(name);
 			if (superMethod != NULL)
 			{
@@ -223,7 +217,7 @@ JPMethod* JPClass::getMethod(const string& name)
 	return it->second;
 }
 
-HostRef* JPClass::getStaticAttribute(string name) 
+HostRef* JPClass::getStaticAttribute(const string& name)
 {
 	// static fields 
 	map<string, JPField*>::iterator fld = m_StaticFields.find(name);
@@ -265,7 +259,7 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 
 	JPCleaner cleaner;
 
-	string simpleName = m_Name.getSimpleName();	
+	const string& simpleName = m_Name.getSimpleName();
 	
 	if (simpleName == "java.lang.Byte" || simpleName == "java.lang.Short" ||
 	    simpleName == "java.lang.Integer")
@@ -406,7 +400,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 		res.l = NULL;
 	}
 
-	string simpleName = m_Name.getSimpleName();	
+	const string& simpleName = m_Name.getSimpleName();
 	if (JPEnv::getHost()->isInt(obj) && (simpleName == "java.lang.Byte" || simpleName == "java.lang.Short" ||
 	    simpleName == "java.lang.Integer"))
 	{
@@ -492,7 +486,7 @@ JPObject* JPClass::newInstance(vector<HostRef*>& args)
 	return m_Constructors->invokeConstructor(args);
 }
 
-void JPClass::setStaticAttribute(string name, HostRef* val) 
+void JPClass::setStaticAttribute(const string& name, HostRef* val)
 {
 	map<string, JPField*>::iterator it = m_StaticFields.find(name);
 	if (it == m_StaticFields.end())
@@ -601,16 +595,9 @@ JPClass* JPClass::getSuperClass()
 	return m_SuperClass;
 }
 
-vector<JPClass*> JPClass::getInterfaces()
+const vector<JPClass*>& JPClass::getInterfaces() const
 {
-	vector<JPClass*> res;
-
-	for (vector<JPClass*>::iterator cur = m_SuperInterfaces.begin(); cur != m_SuperInterfaces.end(); cur++)
-	{
-		JPClass* c = *cur;
-		res.push_back(c);
-	}
-	return res;
+	return m_SuperInterfaces;
 }
 
 bool JPClass::isSubclass(JPClass* o)
@@ -618,7 +605,7 @@ bool JPClass::isSubclass(JPClass* o)
 	JPCleaner cleaner;
 
 	jclass jo = o->getClass();
-	cleaner.addLocal(jo);
+	cleaner.addGlobal(jo);
 
 	if (JPEnv::getJava()->IsAssignableFrom(m_Class, jo))
 	{
