@@ -28,7 +28,8 @@ Adam <http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x>`__
 postings <http://stackoverflow.com/questions/8525193/cannot-install-jpype-on-os-x-lion-to-use-with-neo4j>`__
 and all the other `CONTRIBUTORS <https://github.com/originell/jpype/blob/master/AUTHORS>`__.
 
-The `changelog can be found on github <https://github.com/originell/jpype/blob/master/CHANGELOG.rst>`__.
+The `changelog can be found on github <https://github.com/originell/jpype/blob/master/CHANGELOG.rst>`__
+as well as the `documentation <https://github.com/originell/jpype/blob/master/doc/userguide.rst>`__.
 
 Known Bugs/Limitations
 ----------------------
