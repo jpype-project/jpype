@@ -1,0 +1,789 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" >
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<title>JPype 0.4 - User guide</title>
+		<link rel="StyleSheet" href="userguide.css" type="text/css" />
+	    </head>
+	<body>
+	<H1>JPype 0.4 - User Guide</H1>
+	<HR class="pHr"/>
+	<H2><a name="top">Contents</a></H2>
+	<HR class="pHr"/>
+	<P class="pTOC2"><a href="#overview">1. Overview</a></P>
+		<P class="pTOC3"><a href="#why">Why such a project?</a></P>
+		<P class="pTOC3"><a href="#jython">What about Jython?</a></P>
+		<P class="pTOC3"><a href="#using">Using JPype</a></P>
+	<P class="pTOC2"><a href="#coreideas">2. Core Ideas</a></P>
+	<P class="pTOC2"><a href="#threading">3. Threading</a></P>
+		<P class="pTOC3"><a href="#python_threads">Python Threads</a></P>
+		<P class="pTOC3"><a href="#java_threads">Java Threads</a></P>
+		<P class="pTOC3"><a href="#other_threads">Other Threads</a></P>
+		<P class="pTOC3"><a href="#synchronization">Synchronization</a></P>
+	<P class="pTOC2"><a href="#performance">4. Performance</a></P>
+	<P class="pTOC2"><a href="#innerclass">5. Inner Classes</a></P>
+	<P class="pTOC2"><a href="#arrays">6. Arrays</a></P>
+	<P class="pTOC2"><a href="#conversion">7. Type conversion</a></P>
+	<P class="pTOC2"><a href="#proxy">8. JProxy</a></P>
+	<P class="pTOC2"><a href="#exception">9. Java exceptions</a></P>
+	<P class="pTOC2"><a href="#limitation">10. Known Limitations</a></P>
+	<P class="pTOC2"><a href="#moduleref">A. Module Reference</a></P>
+		<P class="pTOC3"><a href="#startupjvm">startupJVM</a></P>
+		<P class="pTOC3"><a href="#shutdownjvm">shutdownJVM</a></P>
+		<P class="pTOC3"><a href="#attachThreadToJVM">attachThreadToJVM</a></P>
+		<P class="pTOC3"><a href="#isThreadAttachedToJVM">isThreadAttachedToJVM</a></P>
+		<P class="pTOC3"><a href="#detachThreadFromJVM">detachThreadFromJVM</a></P>
+		<P class="pTOC3"><a href="#synchronized">synchronized</a></P>
+		<P class="pTOC3"><a href="#jpackage">JPackage class</a></P>
+			<P class="pTOC4"><a href="#predefined">Predefined java packages</a></P>
+		<P class="pTOC3"><a href="#wrapper">Wrapper classes</a></P>
+	<HR/>
+	
+	<BR/>
+	<H2><a name="overview">1. Overview</a></H2>	
+	<P>JPype is an effort to allow python programs full access to java class libraries. This 
+	is achieved not through re-implementing Python, as Jython/JPython has done, but rather 
+	through interfacing at the native level in both Virtual Machines.</P>
+
+	<p>Eventually, it should be possible to replace Java with python in many, though not 
+	all, situations. JSP, Servlets, RMI servers and IDE plugins are all good candidates.</p>
+
+	<p>Once this integration is achieved, a second phase will be started to separate the Java 
+	logic from the Python logic, eventually allowing the bridging technology to be used in other 
+	environments, I.E. Ruby, Perl, COM, etc ...</p>
+	
+	<H3><a name="why">Why such a project?</a></H3>
+	<p>As much as I enjoy programming in Python, there is no denying that Java has the bulk of 
+	the mindshare. Just look on Sourceforge, at the time of creation of this project, there were 
+	3267 Python-related projects, and 12126 Java-related projects. And that's not counting 
+	commercial interests.</p>
+
+	<p>Server-side Python is also pretty weak. Zope may be a great application server, but I have 
+	never been able to figure it out. Java, on the other hand, shines on the server.</p>
+
+	<p>So in order to both enjoy the language, and have access to the most popular libraries, I 
+	have started this project.</p>
+	
+	<H3><a name="jython">What about Jython?</a></H3>
+	<p>Jython (formerly known as JPython) is a great idea. However, it suffers from a large number 
+	of drawbacks, i.e. it always lags behind CPython, it is slow and it does not allow 
+	access to most Python extensions.</P>
+
+	<p>My idea allows using both kinds of libraries in tandem, so the developer is free to pick 
+	and choose. </p>
+	
+	<H3><a name="using">Using JPype</a></H3>
+	<p>Here is a sample program to demonstrate how to use JPype :<br/>	
+	<code class="pythoncode">
+		&nbsp;from jpype import * <br/>
+		&nbsp;startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea") <br/>
+		&nbsp;java.lang.System.out.println("hello world") <br/>
+		&nbsp;shutdownJVM() <br/>
+	</code>
+	
+	<p>This is of course a simple <b>hello world</b> type of application. Yet it shows 
+	the 2 most important calls : <b>startupJVM</b> and <b>shutdownJVM</b>.
+
+	<p>The rest will be explained in more details in the next sections.</p>
+	
+	
+	<BR/>
+	<H2><a name="coreideas">2. Core Ideas</a></H2>	
+
+	<BR/>
+	<H2><a name="threading">3. Threading</a></H2>	
+	<P>Any non-trivial application will have need of threading. Be it implicitly by using a GUI, or because you're 
+	writing a multi-user server. Or explicitly for performance reason.</P>
+	
+	<P>The only real problem here is making sure Java thread and Python threads cooperate correctly. Thankfully, 
+	this is pretty easy to to.</P>
+	
+	<H3><a name="python_threads">Python Threads</a></H3>
+	<p>For the most part, python threads based on OS level threads (i.e posix threads), will work without problem. 
+	The only thing to remember is to call <b>jpype.attachThreadToJVM()</b> in the thread body to make the JVM usable 
+	from that thread. For threads that you do not start yourself, you can call <b>isThreadAttachedToJVM()</b> to check.</p>
+	
+	<H3><a name="java_threads">Java Threads</a></H3>
+	<p>At the moment, it is not possible to use threads created from Java, since there is no <b>callback</b> available.</p>
+
+	<H3><a name="other_threads">Other Threads</a></H3>
+	<p>Some python libraries offer other kinds of thread, (i.e. microthreads). How they interact with Java depends on their 
+	nature. As stated earlier, any OS-level threads will work without problem. Emulated threads, like microthreads, will 
+	appear as a single thread to java, so special care will have to be taken for synchronization.</p>
+	
+	<H3><a name="synchronization">Synchronization</a></H3>
+	<p>Java synchronization support can be split into 2 categories. The first is the <b>synchronized</b> keyword, both as 
+	prefix on a method and as a block inside a method. The second arre the different methods available on the Object class 
+	(<b>notify, notifyAll, wait</b>).</p>
+	
+	<p>To support the <b>synchronized</b> functionality, jpype defines a method called synchronized(O). O has to be a java 
+	object or Java class, or a Java wrapper that corresponds to an object (JString and JObject). The return value is a monitor 
+	object that will keep the synchronization on as long as the object is kept alive. the lock will be broken as soon as the 
+	monitor is GCd. So make sure to hang on to it as long as you need it.</p>
+	
+	<p>The other methods are available as is on any _JavaObject.</p>
+	
+	<p>For synchronization that does not have to be shared with java code, I suggest using python support instead of Java's, 
+	as it'll be more natural and easier</p>
+
+	<BR/>
+	<H2><a name="performance">4. Performance</a></H2>	
+	<P>JPype uses JNI, which is well known in the Java world as not being the most efficient of interfaces. Further, JPype 
+	bridges two very different runtime environment, performing conversion back and forth as needed. Both of these can impose 
+	rather large performance bottlenecks.</P>
+	
+	<P>JNI is the standard native interface for most, if not all, JVMs, so there is no getting around it. down the road, it 
+	is possible that interfacing with CNI (GCC's java native interface). The only to minimize the JNI cost is to move some 
+	code over to Java.</P>
+	
+	<P>Follow the regular python philosophy : <b>Write it all in Python, then write only those parts that need it in C.</b> 
+	Except this time, its write the parts that need it in Java.</P>
+
+	<p>For the conversion costs, again, nothing much can be done. In cases where a given object (be it a string, an object, 
+	an array, etc ...) is passed often into Java, you can pre-convert it once using the wrappers, and then pass in the 
+	wrappers. For most situations, this should solve the problem.</p>
+
+	<p>As a final note, awhile a JPype program will likely be slower than a pure java counterpart, it has a good chance of 
+	being faster than pure python version of it. The JVM is a memory hog, but does a good job of optimizing code execution 
+	speeds.</p>
+
+	<BR/>
+	<H2><a name="innerclass">5. Inner Classes </a></H2>	
+	<p>For the most part, inner classes can be used like normal classesm, with thw following differences :
+	<UL>
+		<LI>Inner classes in java natively use $ to separate the outer class from the inner class. For example, inner class 
+		Foo defined inside class Bar is called Bar.Foo in java, but its real native name is Bar$Foo.</LI>
+		<LI>Because of this name mangling, you cannot use the standard package access method to get them. Use the method 
+		__getclass__ in the JPackage to load them.</LI>
+		<LI>Non-static inner classes cannot be instantiated from Python code. Instances received from Java code thay can be used 
+		without problem.</LI>
+	</UL></p>
+
+	<BR/>
+	<H2><a name="arrays">6. Arrays</a></H2>	
+	<P>JPype has full support for receiving java arrays and passing them to java methods. Java arrays, wrapped in the JArray 
+	wrapper class, behave like Python lists, except that their size is fixed, and that the contents are of a specific type.</P>
+	<P>Multi-dimension arrays (array of arrays) also work without problem.</P>
+
+	<h3>Creating Java arrays form Python</h3>
+	<P>The JArray wrapper is used to create Arrays form Python code. The code to create an arrays is like this :</P>
+	<pre><code>
+		JArray(type, num_dims)(sz or sequence)
+	</code></pre>
+	
+	<P>Type is either a Java Class (as a String or a JavaClass object) or a Wrapper type. num_dims is the number of dimensions to build the array and defaults to 1.</P>
+	<P>sz is the actual number of elements in the arrays, and sequence is a sequence to initialize the array with.</P>
+	
+	<P>The logic behind this is that JArray(type, ndims) returns an Array Class, which can then be called like any other class to create an instance.</P>
+
+	<BR/>
+	<H2><a name="conversion">7. Type conversion</a></H2>	
+	<p>One of the most complex part of a bridge system like JPype is finding a way to seemlessly translate between python types 
+	and Java types. The following table will show what implicit conversions occur, both Python to Java and Java to Python. Explicit 
+	conversion, which happens when a python object is wrapped, is convered in each wrapper.</p>
+	<H3>Conversion from Python to Java</H3>
+	<P>This type of conversion happens when a Python object is used either as a parameter to a Java method or to set the value of 
+	a java field.</P>
+	<H3>Type Matching </H3>
+	JPype defines different leels of "match" between Python objects and Java types. These levels are :
+	<UL>
+		<LI><B>none</b>, There is no way to convert.</B></LI>
+		<LI><B>explicit (E)</b>, JPype canconvert ot the desired type, but only explicitly via the wrapper classes. This means the 
+		proper wrapper class will access this type as argument.</B></LI>
+		<LI><B>implicit (I)</B>, JPype will convert as needed.</LI>
+		<LI><B>exact> (X)</B>, Like implicit, but when deciding with method overload to use, one wj=here all the paramters match 
+		"exact" will take precedence over "implicit" matches.</LI>
+	</UL>
+	<P>&nbsp;</P>
+	<table width="100%" border="1" cellspacing="5" >
+  <tr>
+    <th scope="col"></th>
+    <th scope="col"><div align="center">byte</div></th>
+    <th scope="col"><div align="center">short</div></th>
+    <th scope="col"><div align="center">int</div></th>
+    <th scope="col"><div align="center">long</div></th>
+    <th scope="col"><div align="center">float</div></th>
+    <th scope="col"><div align="center">double</div></th>
+    <th scope="col"><div align="center">boolean</div></th>
+    <th scope="col"><div align="center">char</div></th>
+    <th scope="col"><div align="center">String</div></th>
+    <th scope="col"><div align="center">Array</div></th>
+    <th scope="col"><div align="center">Object</div></th>
+    <th scope="col"><div align="center">Class</div></th>
+  </tr>
+  <tr>
+    <th scope="row">int</th>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center">I</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X (10)</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">long</th>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">float</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (1)</div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">sequence</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">dictionary</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">string</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (2)</div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">unicode</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (2)</div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JByte</th>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JShort</th>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JInt</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JLong</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JFloat</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JDouble</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JBoolean</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JString</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (3)</div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JChar</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">X</div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JArray</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I/X (4)</div></td>
+    <td><div align="center">I (5)</div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JObject</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I/X (6)</div></td>
+    <td><div align="center">I/X (7)</div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JavaObject</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (8)</div></td>
+    <td><div align="center"></div></td>
+  </tr>
+  <tr>
+    <th scope="row">JavaClass</th>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center"></div></td>
+    <td><div align="center">I (9)</div></td>
+    <td><div align="center">X</div></td>
+  </tr>
+</table>
+
+
+
+	<p>(1) Conversion will occur if the Python value fits in the java native type.</p>
+	<p>(2) Conversion occurs if the python string or unicode is of length 1</p>
+	<p>(3) The required object must be of a type compatible with <strong>java.lang.String</strong> (<strong>java.lang.Object</strong>, <strong>java.util.Comparable</strong>)</p>
+	<p>(4) Number of dimensions must match, and the types must be compatible</p>
+	<p>(5) Only when the required type is <strong>java.lang.Object</strong></p>
+	<p>(6) Only if the JObject wrapper's specified type is an compatible array class.</p>
+	<p>(7) Only if the required type is compatible with the wrappers's specified type. The actual type of the java object is not considered.</p>
+	<p>(8) Only if the requireds type is compatible with the Java Object actual type.</p>
+	<p>(9) Only when the required type is <strong>java.lang.Object</strong> or <strong>java.lang.Class</strong> </p>
+	<p>(10) only the values True and False are implitly converted to booleans. </p>
+	<h3>Converting from java to python</h3>
+	<p>The rules here are much simpler.</p>
+	<p>Java <strong>byte, short and int</strong> are converted to python <strong>int</strong>.</p>
+	<p>Java <strong>long</strong> are conversion to Python <strong>long</strong> </p>
+	<p>Java <strong>float and double </strong>are converted to python <strong>float</strong>.</p>
+	<p>Java <strong>boolean</strong> are converted to python <strong>int</strong> of value 1 or 0 </p>
+	<p>Java <strong>char</strong> are converted to python <strong>unicode</strong>  of length 1.</p>
+	<p>Java <strong>String</strong> are converteds to python <strong>unicode.</strong></p>
+	<p>Java <strong>arrays</strong> are converteds to <strong>JArray</strong> </p>
+	<p>All other java object are converted to <strong>JavaObject</strong>.</p>
+	<p>Java <strong>Class</strong> are converted to <strong>JavaClass.</strong></p>
+	<p>Java array <strong>Class</strong> are converted to <strong>JavaArrayClass.</strong></p>
+	<H2><a name="proxy">8. JProxy</a></H2>
+	<P>The JPoxy allows python code to "implement" any number of java interfaces, so as to receive callbacks through them.</P>
+	<P>Using JProxy is simple. The constructor takes 2 arguments. The first is one or a sequence of string of JClass objects, 
+	defining the interfaces to be "implemented". The second must be a keyword argument, and be either <b>dict</b> or <b>inst</b>. 
+	If <b>dict</b> is specified, then the 2nd argument must be a dictionary, with the keys the method names as defined in the 
+	interface(s), and the values calllable objects. If <b>inst</b> an object instance must be given, with methods defined for 
+	the methods declared in the interface(s). Either way, when Java calls the interface method, the corresponding Python callable 
+	is looked up and called.</P>
+	<P>Of course, this is not the same as subclassing Java classes in Python. However, Most Java APIs are built so that subclassing 
+	in non needed. Good examples of this are AWT and SWING. Except for relatively advanced features, it is possible to build complete 
+	UIs without creating a single subclass.</P>
+	<P>For those cases where subclassing is absolutely necessary (I.E. using Java's SAXP classes), it is generally easy to create an 
+	interfaces and a simple subclass that delegates the calls to that interface.</P>
+	<h3>Sample code :</h3>
+	
+	Assume a Java interface like :
+	<pre><code>
+	public interface ITestInterface2
+	{
+		int testMethod();
+		String testMethod2();
+	}
+	</code></pre><br/>
+	
+	You can create a proxy <em>implementing</em> this interface in 2 ways.
+	
+	First, with a class :
+	<pre><code>
+	class C :
+		def testMethod(self) :
+			return 42
+			
+		def testMethod2(self) :
+			return "Bar"      
+	
+	c = C()
+	proxy = JProxy("ITestInterface2", inst=c)
+	</code></pre><br/>
+	
+	or you can do it with a dictionary
+	<pre><code>
+	def _testMethod() :
+    	return 32
+
+	def _testMethod2() :
+    	return "Fooo!"	
+		
+	d = {
+		'testMethod' : _testMethod,
+		'testMethod2' : _testMethod2,
+	}
+	proxy = JProxy("ITestInterface2", dict=d)
+	</code></pre>
+	
+    </h3>
+	<H2><a name="exception">9. Java Exceptions</a></H2>
+	<P>Error handling is a very important part of any non-trivial program. So bridging Java's exception mechanism and Python's is very important.</P>
+	<P>Java exception classes are regular classes that extend, directly or indirectly, the java.lang.Throwable class. Python exception are classes that 
+	extend, directly or indirectly, the Exception class. On the surface they are similar, at the C-API elvel, Python Exceptions are completely different
+	from regular Python classes. This contributes to the fact that it is not possible to catch java exceptions in a completely straightforward way.</P>
+	
+	<P>All Java exception thrown end up throwing the jpype.JavaException exception. you can then use the message(), stackTrace() and javaClass() to 
+	access extended information.</P>
+	
+	Here is an example :
+	<PRE><CODE>
+	try :
+		# Code that throws a java.lang.RuntimeException
+	except JavaException, ex :
+		if JavaException.javaClass() is java.lang.RuntimeException :
+			print "Caught the runtime exception : ", JavaException.message()
+			print JavaException.stackTrace()
+	</CODE></PRE>
+
+	Alternately, you can catch the REAL java exception directly by using the JException wrapper.
+	<PRE><CODE>
+	try :
+		# Code that throws a java.lang.RuntimeException
+	except jpype.JException(java.lang.RuntimeException), ex :
+		print "Caught the runtime exception : ", JavaException.message()
+		print JavaException.stackTrace()
+	</CODE></PRE>
+
+
+	<H2><a name="limitations">10. Known limitations</a></H2>
+	<P>This section list those limitations that are unlikely to change, as they come from external sources.</P>
+	
+	<H3>Unloading the JVM.</H3>
+	<P>The JNI API defines a method called destroyJVM(). However, this method does not work. That is, Sun's JVMs do nto allow 
+	unloading. For this reason, after calling shutdownJVM(), if you attemps calling startupJVM() again you will get a non-specific 
+	exception. There is nothing wrong (that I can see) in JPype. So if Sun get's around to supporting its own properly, or if you use 
+	JPype with a non-SUN JVM that does (I beleive IBM's JVM support JNI invocation, but tI do not know if their destoyJVM work properly), 
+	JPype will be able to take advantage of it. As the time of writing, the latest stable SUN JVM was 1.4.2_04.</P>
+	
+	<H3>Methods dependent on "current" class</H3>
+	<P>There are a few methods in the Java libraries that rely on finding information on the calling class. So these methods, if called 
+	directly form Python code, will fail because there is no calling java class, and the JNI api does not provide methods to simulate one.</P>
+	<P>At the moment, the methods known to fail are :</P>
+	<H4>java.lang.Class.forName(String classname)</H4>
+	<P>This method relies on the current class's classloader to do it loading. it can easily be replaced with <B>Class.forName(classname, True, ClassLoader.getSystemClassLoader())</B>.</P>
+	
+	<H4>java.sql.DriverManager.getConnection(...)</H4>
+	<P>For some reason, this class verifies that the driver class as loaded in teh "current" classloader is the same as previously registered. Since there is no "current" classloader, 
+	it default to the internal classloader, which typically does not find the driver. To remedy, simply instantiate the driver yourself and call it's connect(...) method.</P>
+	
+	<br/>
+	<H2><a name="moduleref">A. Module Reference</a></H2>
+	<h3><a name="startupjvm">startupJVM method</a></h3>
+	<p>This method MUST be called before any other jpype features can be used. It will initialize the specified JVM.
+	<h4>Arguments</h4>
+	<ul>
+		<li>vmPath - Must be the path to the jvm.dll (or jvm.so, depending on platform)</li>
+		<li>misc arguments - All arguments after the first are optional, and are given as it to the JVM. Pretty much 
+		any command-line argument you can give the JVM can be passed here. A caveat, multi-part arguments (like 
+		-classpath) do not seem to work, and must e passed in as a -D option. Option <b>-classpath a;b;c 
+		</b> becomes <b>-Djava.class.path=a;b;c</b></li>
+	</ul>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="shutdownjvm">shutdownJVM method</a></h3>
+	<p>For the most part, this method does nto have to be called. It will be automatically executed when the jpype 
+	module is unloaded at python's exit.</p>
+	<h4>Arguments</h4>
+	<p>None</p>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="attachThreadToJVM">attachThreadToJVM method</a></h3>
+	<p>For the most part, this method does nto have to be called. It will be automatically executed when the jpype 
+	module is unloaded at python's exit.</p>
+	<h4>Arguments</h4>
+	<p>None</p>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="isThreadAttachedToJVM">isThreadAttachedToJVM method</a></h3>
+	<p>For the most part, this method does nto have to be called. It will be automatically executed when the jpype 
+	module is unloaded at python's exit.</p>
+	<h4>Arguments</h4>
+	<p>None</p>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="detachThreadFromJVM">detachThreadFromJVM method</a></h3>
+	<p>For the most part, this method does nto have to be called. It will be automatically executed when the jpype 
+	module is unloaded at python's exit.</p>
+	<h4>Arguments</h4>
+	<p>None</p>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="synchronized">synchronized method</a></h3>
+	<p>For the most part, this method does nto have to be called. It will be automatically executed when the jpype 
+	module is unloaded at python's exit.</p>
+	<h4>Arguments</h4>
+	<p>None</p>
+	<h4>Return value</h4>
+	<p>None</p>
+	<H4>Exceptions</H4>
+	<p>On failure, a RuntimeException is raised.</p>
+
+	<h3><a name="jpackage">JPackage class</a></h3>
+	<p>This packages allows structured access to java packages and classes. It is very similar to a python 
+	import statement.</p>
+
+	<p>Only the root of the package tree need be declared with the JPackage constructor. sub-packages will be 
+	created on demand.</p>
+
+	<p>For example, to import the w3c DOM package : <br/>
+	<code class="pythoncode">Document = JPackage('org').w3c.dom.Document</code><br>
+
+	<H4><a name="predefined">Predefined Java packages</a></h4>
+	<p>For convenience, the jpype modules predefines the following JPackages : <b>java, javax</b></p>
+	<p>They can be used as is, without needing to resort to the JPackage class.</b>
+
+	<H3><a name="wrapper">Wrapper classes</a></h3>
+	<p>The main problem with exposing Java classes and methods to python, is that Java allows overloading a 
+	method. That is, 2 methods can have the same name as long as they have different parameters. Python does 
+	not allow that. Most of the time, this is not a problem. Most overloaded methods have very different 
+	parameters and no confusion take place.</p>
+
+	<p>When jpype is unable to decide with overload of a method to call, the user must resolve the ambiguity. 
+	Thats where the wrapper classes come in.</p>
+
+	<p>Take for example the java.io.PrintStream class. This class has a variant of the print and println methods!</p> 
+
+	<p>So for the following code :<br/>
+	<code class="pythoncode">
+	&nbsp;from jpype import * <br/>
+	&nbsp;startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea") <br/>
+	&nbsp;java.lang.System.out.println(1) <br/>
+	&nbsp;shutdownJVM() <br/>
+	</code>
+	JPype will automatically choose the println(int) method, bcause pytho int - >java int is an exact match, while all the other integral types are only "implicit" matches.
+ 	However, if that not the version you wanted to call ...
+	
+	<p>Changing the line thus :<br/>
+	<code class="pythoncode">
+	&nbsp;from jpype import * <br/>
+	&nbsp;startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea") <br/>
+	&nbsp;java.lang.System.out.println(JByte(1)) # &lt;--- wrap the 1 in a JByte<br/>
+	&nbsp;shutdownJVM() <br/>
+	</code>
+	tells jpype to choose the byte version. </p>
+	
+	<p>Note that wrapped object will only match to a method which takes EXACTLY that type, even 
+	if the type is compatible. Using a JByte wrapper to call a method requiring an int will fail.</p>
+
+	<p>One other area where wrappers help is performance. Native types convert quite fast, but strings, 
+	and later tuples, maps, etc ... conversions can be very costly.</p>
+	
+	<p>If you're going to make many java calls with a complex object, wrapping it once and then using 
+	the wrapper will make a huge difference.</p>
+	
+	<p>Lasty, wrappers allow you to pass in a structure to java to have it modified. an implicitly converted 
+	tuple will not come back modified, even if the java method HAS changed the contents. An explicitly 
+	wrapped tuple will be modified, so that those modifications are visible to the python program.</p>
+
+	<p>Lasty, wrappers allow you to pass in a structure to java to have it modified. an implicitly converted 
+	tuple will not come back modified, even if the java method HAS changed the contents. An explicitly 
+	wrapped tuple will be modified, so that those modifications are visible to the python program.</p>
+
+	<p>The available native wrappers are : <b>JChar, JByte, JShort, JInt, JLong, JFloat, JDouble, JBoolean 
+	and JString. </b></p>
+
+	<h4><a name="jobject">JObject wrapper</a></h4>
+	<p>The JObject wrapper serves a few additional purposes on top of what the other wrappers do.</p>
+
+	<p>While the native wrappers help to resolve ambiguities between native types, it is impossible to 
+	create one JObject wrapper for each java Class to do the same thing.</p>
+
+	<p>So, the JObject wrapper accepts 2 parameters. The first is any convertable object. The second is 
+	the class to convert it to. It can be the name of the class in a string or a JavaClass object. If 
+	omitted, the second parameter will be deduced from the first.</p>
+
+	<p>Like other wrappers, the method called will only match EXACTLY. a JObject wrapper of type 
+	java.lang.Int will not work when calling a method requiring a java.lang.Number.</p>	
+	</body>
+</html>
