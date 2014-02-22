@@ -32,6 +32,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 * some JNI cleanups related to memory
 * fix memory leak in array setters
 * fix memory leak in typemanager
+* Add userguide from sourceforge project by @baztian
 
 0.5.4.5 (2013-08-25 12:12)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
