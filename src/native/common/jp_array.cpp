@@ -55,8 +55,6 @@ PyObject* JPArray::getSequenceFromRange(int start, int stop)
 
 void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 {
-	JPCleaner cleaner;
-	
 	JPType* compType = m_Class->getComponentType();
 	
 	unsigned int len = stop-start;
@@ -79,7 +77,13 @@ void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 	}	
 			
 	compType->setArrayRange(m_Object, start, stop-start, val);
-}	
+}
+
+void JPArray::setRange(int start, int stop, PyObject* sequence)
+{
+	JPType* compType = m_Class->getComponentType();
+	compType->setArrayRange(m_Object, start, stop-start, sequence);
+}
 
 void JPArray::setItem(int ndx, HostRef* val)
 {
