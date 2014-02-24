@@ -34,76 +34,68 @@ typedef int Py_ssize_t;
 
 #include "pythonenv.h"
 
-class JPypeModule
+namespace JPypeModule
 {
-public :
-	static PyObject* startup(PyObject* obj, PyObject* args);  
-	static PyObject* attach(PyObject* obj, PyObject* args);  
-	static PyObject* dumpJVMStats(PyObject* obj);
-	static PyObject* shutdown(PyObject* obj);
-	static PyObject* synchronized(PyObject* obj, PyObject* args);
-	static PyObject* isStarted(PyObject* obj);
-	static PyObject* attachThread(PyObject* obj);
-	static PyObject* detachThread(PyObject* obj);
-	static PyObject* isThreadAttached(PyObject* obj);
-	static PyObject* getJException(PyObject* obj, PyObject* args);
-	static PyObject* raiseJava(PyObject* obj, PyObject* args);
-	static PyObject* attachThreadAsDaemon(PyObject* obj);
-	static PyObject* startReferenceQueue(PyObject* obj, PyObject* args);
-	static PyObject* stopReferenceQueue(PyObject* obj);
+	PyObject* startup(PyObject* obj, PyObject* args);
+	PyObject* attach(PyObject* obj, PyObject* args);
+	PyObject* dumpJVMStats(PyObject* obj);
+	PyObject* shutdown(PyObject* obj);
+	PyObject* synchronized(PyObject* obj, PyObject* args);
+	PyObject* isStarted(PyObject* obj);
+	PyObject* attachThread(PyObject* obj);
+	PyObject* detachThread(PyObject* obj);
+	PyObject* isThreadAttached(PyObject* obj);
+	PyObject* getJException(PyObject* obj, PyObject* args);
+	PyObject* raiseJava(PyObject* obj, PyObject* args);
+	PyObject* attachThreadAsDaemon(PyObject* obj);
+	PyObject* startReferenceQueue(PyObject* obj, PyObject* args);
+	PyObject* stopReferenceQueue(PyObject* obj);
 
-	static PyObject* setConvertStringObjects(PyObject* obj, PyObject* args);
+	PyObject* setConvertStringObjects(PyObject* obj, PyObject* args);
+}
+
+namespace JPypeJavaClass
+{
+	PyObject* findClass(PyObject* obj, PyObject* args);
+	PyObject* setJavaLangObjectClass(PyObject* self, PyObject* arg);
+	PyObject* setGetClassMethod(PyObject* self, PyObject* arg);
+	PyObject* setSpecialConstructorKey(PyObject* self, PyObject* arg);
 };
 
-class JPypeJavaClass
+namespace JPypeJavaProxy
 {
-public:
-	static PyObject* findClass(PyObject* obj, PyObject* args);
-	static PyObject* setJavaLangObjectClass(PyObject* self, PyObject* arg);
-	static PyObject* setGetClassMethod(PyObject* self, PyObject* arg);
-	static PyObject* setSpecialConstructorKey(PyObject* self, PyObject* arg);
+	PyObject* setProxyClass(PyObject* self, PyObject* arg);
+	PyObject* createProxy(PyObject*, PyObject* arg);
 };
 
-class JPypeJavaProxy
+namespace JPypeJavaArray
 {
-public:
-	static PyObject* setProxyClass(PyObject* self, PyObject* arg);
-	static PyObject* createProxy(PyObject*, PyObject* arg);
-
+	PyObject* findArrayClass(PyObject* obj, PyObject* args);
+	PyObject* getArrayLength(PyObject* self, PyObject* arg);
+	PyObject* getArrayItem(PyObject* self, PyObject* arg);
+	PyObject* getArraySlice(PyObject* self, PyObject* arg);
+	PyObject* setArraySlice(PyObject* self, PyObject* arg);
+	PyObject* newArray(PyObject* self, PyObject* arg);
+	PyObject* setArrayItem(PyObject* self, PyObject* arg);
+	PyObject* setGetJavaArrayClassMethod(PyObject* self, PyObject* arg);
+	PyObject* setJavaArrayClass(PyObject* self, PyObject* arg);
+	PyObject* setArrayValues(PyObject* self, PyObject* arg);
 };
 
-class JPypeJavaArray
+namespace JPypeJavaNio
 {
-public:
-	static PyObject* findArrayClass(PyObject* obj, PyObject* args);
-	static PyObject* getArrayLength(PyObject* self, PyObject* arg);
-	static PyObject* getArrayItem(PyObject* self, PyObject* arg);
-	static PyObject* getArraySlice(PyObject* self, PyObject* arg);
-	static PyObject* setArraySlice(PyObject* self, PyObject* arg);
-	static PyObject* newArray(PyObject* self, PyObject* arg);
-	static PyObject* setArrayItem(PyObject* self, PyObject* arg);
-	static PyObject* setGetJavaArrayClassMethod(PyObject* self, PyObject* arg);
-	static PyObject* setJavaArrayClass(PyObject* self, PyObject* arg);
-	static PyObject* setArrayValues(PyObject* self, PyObject* arg);
+	PyObject* convertToDirectBuffer(PyObject* self, PyObject* arg);
 };
 
-class JPypeJavaNio
+namespace JPypeJavaWrapper
 {
-public:
-	static PyObject* convertToDirectBuffer(PyObject* self, PyObject* arg);
+	PyObject* setWrapperClass(PyObject* self, PyObject* arg);
+	PyObject* setStringWrapperClass(PyObject* self, PyObject* arg);
 };
 
-class JPypeJavaWrapper
+namespace JPypeJavaException
 {
-public:
-	static PyObject* setWrapperClass(PyObject* self, PyObject* arg);
-	static PyObject* setStringWrapperClass(PyObject* self, PyObject* arg);
-};
-
-class JPypeJavaException
-{
-public:
-	static void errorOccurred();
+	void errorOccurred();
 };
 
 #include "py_monitor.h"

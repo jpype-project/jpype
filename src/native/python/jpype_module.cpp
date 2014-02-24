@@ -117,8 +117,7 @@ PyObject* JPypeModule::shutdown(PyObject* obj)
 
 		JPEnv::getJava()->checkInitialized();
 
-		JPTypeManager::flushPrimitiveTypes();
-		JPTypeManager::flushCache();
+		JPTypeManager::shutdown();
 
 		if (JPEnv::getJava()->DestroyJavaVM() )
 		{

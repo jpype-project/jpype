@@ -18,48 +18,35 @@
 #define _JPTYPE_MANAGER_H_
 
 /**
- * This class will manage the cache of found type, be it primitive types, class types or the "magic" types.
+ * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.
  */
-class JPTypeManager
+namespace JPTypeManager
 {
-public :
 	/**
 	 * Initialize the type manager caches
 	 */
-	static void                         init();
+	void                         init();
 	
-	static JPType*                      getType(JPTypeName& name);
+	/**
+	 * delete allocated typenames, should only be called at program termination
+	 */
+	void                         shutdown();
+
+	JPType*                      getType(const JPTypeName& name);
 	
 	/**
 	 * The pointer returned is NOT owned by the caller
 	 */
-	static JPClass*					   findClass(JPTypeName&);
+	JPClass*					   findClass(const JPTypeName&);
 
 	/**
 	 * The pointer returned is NOT owned by the caller
 	 */
-	static JPArrayClass*			   findArrayClass(JPTypeName&);
+	JPArrayClass*			   findArrayClass(const JPTypeName&);
 
-	static void                        flushCache();
+	void                        flushCache();
 
-	/**
-	 * this should only be called on jpype module unload
-	 */
-	static void                        flushPrimitiveTypes();
-
-	static int                         getLoadedClasses();
-	
-
-private:
-	~JPTypeManager();
-
-	typedef map<JPTypeName::ETypes, JPType*> TypeMap;
-	typedef map<string, JPClass* > JavaClassMap;
-	typedef map<string, JPArrayClass* > JavaArrayClassMap;
-
-	static TypeMap typeMap;
-	static JavaClassMap javaClassMap;
-	static JavaArrayClassMap javaArrayClassMap;
-};
+	int                         getLoadedClasses();
+}
 
 #endif // _JPCLASS_H_

@@ -16,15 +16,27 @@
 *****************************************************************************/   
 #include <jpype.h>
 
+namespace {
 //AT's on porting:
 // 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
 //
 //  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-JPTypeManager::TypeMap JPTypeManager::typeMap;
-JPTypeManager::JavaClassMap JPTypeManager::javaClassMap;
-JPTypeManager::JavaArrayClassMap JPTypeManager::javaArrayClassMap;
+	typedef map<JPTypeName::ETypes, JPType*> TypeMap;
+	typedef map<string, JPClass* > JavaClassMap;
+	typedef map<string, JPArrayClass* > JavaArrayClassMap;
 
-void JPTypeManager::init()
+	TypeMap typeMap;
+	JavaClassMap javaClassMap;
+	JavaArrayClassMap javaArrayClassMap;
+
+//	TypeMap typeMap;
+//	JavaClassMap javaClassMap;
+//	JavaArrayClassMap javaArrayClassMap;
+}
+
+namespace JPTypeManager {
+
+void init()
 {
 	typeMap[JPTypeName::_void] = new JPVoidType();
 	typeMap[JPTypeName::_byte] = new JPByteType();
@@ -50,7 +62,7 @@ void JPTypeManager::init()
 	javaClassMap["void"] = new JPClass(JPTypeName::fromSimple("void"), JPJni::getVoidClass());
 }
 
-JPClass* JPTypeManager::findClass(JPTypeName& name)
+JPClass* findClass(const JPTypeName& name)
 {
 	// Fist check in the map ...
 	JavaClassMap::iterator cur = javaClassMap.find(name.getSimpleName());
@@ -80,7 +92,7 @@ JPClass* JPTypeManager::findClass(JPTypeName& name)
 	TRACE_OUT;
 }
 
-JPArrayClass* JPTypeManager::findArrayClass(JPTypeName& name)
+JPArrayClass* findArrayClass(const JPTypeName& name)
 {
 	// Fist check in the map ...
 	JavaArrayClassMap::iterator cur = javaArrayClassMap.find(name.getSimpleName());
@@ -104,7 +116,7 @@ JPArrayClass* JPTypeManager::findArrayClass(JPTypeName& name)
 	return res;
 }
 
-JPType* JPTypeManager::getType(JPTypeName& t)
+JPType* getType(const JPTypeName& t)
 {
 	TRACE_IN("JPTypeManager::getType");
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
@@ -127,12 +139,10 @@ JPType* JPTypeManager::getType(JPTypeName& t)
 	TRACE_OUT;
 }
 
-JPTypeManager::~JPTypeManager()
+void shutdown()
 {
-	// empty, since everything is static
-}
+	flushCache();
 
-void JPTypeManager::flushPrimitiveTypes() {
 	// delete primitive types
 	for(TypeMap::iterator i = typeMap.begin(); i != typeMap.end(); ++i)
 	{
@@ -140,7 +150,7 @@ void JPTypeManager::flushPrimitiveTypes() {
 	}
 }
 
-void JPTypeManager::flushCache()
+void flushCache()
 {
 	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
 	{
@@ -157,9 +167,10 @@ void JPTypeManager::flushCache()
 	javaArrayClassMap.clear();
 }
 
-int JPTypeManager::getLoadedClasses()
+int getLoadedClasses()
 {
 	// dignostic tools ... unlikely to load more classes than int can hold ...
 	return (int)(javaClassMap.size() + javaArrayClassMap.size());
 }
 
+} // end of namespace JPTypeManager

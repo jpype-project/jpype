@@ -39,7 +39,7 @@ public:
 
 	static void init();
 
-	vector<jclass> getInterfaces()
+	const vector<jclass>& getInterfaces() const
 	{
 		return m_InterfaceClasses;
 	}

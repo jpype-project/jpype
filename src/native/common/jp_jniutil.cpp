@@ -16,94 +16,95 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-jclass JPJni::s_ClassClass;
-jclass JPJni::s_StringClass;
-jclass JPJni::s_NoSuchMethodErrorClass;
-jclass JPJni::s_RuntimeExceptionClass;
-jclass JPJni::s_ProxyClass;
-jmethodID JPJni::s_NewProxyInstanceID;
+namespace { // impl detail
+	jclass objectClass;
+	jmethodID getClassID;
+	jmethodID toStringID;
+	jmethodID hashCodeID;
 
-jlong   JPJni::s_minByte;
-jlong   JPJni::s_maxByte;
-jlong   JPJni::s_minShort;
-jlong   JPJni::s_maxShort;
-jlong   JPJni::s_minInt;
-jlong   JPJni::s_maxInt;
-jfloat   JPJni::s_minFloat;
-jfloat   JPJni::s_maxFloat;
+	jmethodID getNameID;
+	jmethodID getDeclaredFieldsID;
+	jmethodID getDeclaredMethodsID;
+	jmethodID getInterfacesID;
+	jmethodID getFieldsID;
+	jmethodID getMethodsID;
+	jmethodID getDeclaredConstructorsID;
+	jmethodID getConstructorsID;
+	jmethodID isInterfaceID;
+	jmethodID getClassModifiersID;
 
-static jclass objectClass;
-static jmethodID getClassID;
-static jmethodID toStringID;
-static jmethodID hashCodeID;
+	jclass modifierClass;
+	jmethodID isStaticID;
+	jmethodID isPublicID;
+	jmethodID isAbstractID;
+	jmethodID isFinalID;
 
-static jmethodID getNameID;
-static jmethodID getDeclaredFieldsID;
-static jmethodID getDeclaredMethodsID;
-static jmethodID getInterfacesID;
-static jmethodID getFieldsID;
-static jmethodID getMethodsID;
-static jmethodID getDeclaredConstructorsID;
-static jmethodID getConstructorsID;
-static jmethodID isInterfaceID;
-static jmethodID getClassModifiersID;
+	jclass classLoaderClass;
+	jmethodID getSystemClassLoaderID;
 
-static jclass modifierClass;
-static jmethodID isStaticID;
-static jmethodID isPublicID;
-static jmethodID isAbstractID;
-static jmethodID isFinalID;
+	jclass memberClass;
+	jmethodID getModifiersID;
+	jmethodID getMemberNameID;
 
-static jclass classLoaderClass;
-static jmethodID getSystemClassLoaderID;
+	jclass fieldClass;
+	jmethodID getTypeID;
 
-static jclass memberClass;
-static jmethodID getModifiersID;
-static jmethodID getMemberNameID;
+	jclass methodClass;
+	jclass constructorClass;
+	jmethodID getReturnTypeID;
+	jmethodID getParameterTypesID;
+	jmethodID getConstructorParameterTypesID;
 
-static jclass fieldClass;
-static jmethodID getTypeID;
+	jclass throwableClass;
+	jmethodID getMessageID;
+	jmethodID printStackTraceID;
+	jclass stringWriterClass;
+	jclass printWriterClass;
+	jmethodID stringWriterID;
+	jmethodID printWriterID;
+	jmethodID flushID;
 
-static jclass methodClass;
-static jclass constructorClass;
-static jmethodID getReturnTypeID;
-static jmethodID getParameterTypesID;
-static jmethodID getConstructorParameterTypesID;
+	jclass numberClass;
+	jclass booleanClass;
+	jclass charClass;
+	jclass byteClass;
+	jclass shortClass;
+	jclass intClass;
+	jclass floatClass;
+	jmethodID intValueID;
+	jmethodID longValueID;
+	jmethodID doubleValueID;
+	jmethodID booleanValueID;
+	jmethodID charValueID;
 
-static jclass throwableClass;
-static jmethodID getMessageID;
-static jmethodID printStackTraceID;
-static jclass stringWriterClass;
-static jclass printWriterClass;
-static jmethodID stringWriterID;
-static jmethodID printWriterID;
-static jmethodID flushID;
+	jclass    JPypeReferenceClass;
+	jmethodID JPypeReferenceConstructorMethod;
+	jclass    JPypeReferenceQueueClass;
+	jmethodID JPypeReferenceQueueConstructorMethod;
+	jmethodID JPypeReferenceQueueRegisterMethod;
+	jmethodID JPypeReferenceQueueStartMethod;
+	jmethodID JPypeReferenceQueueRunMethod;
+	jmethodID JPypeReferenceQueueStopMethod;
+}
 
-static jclass numberClass;
-static jclass booleanClass;
-static jclass charClass;
-static jclass byteClass;
-static jclass shortClass;
-static jclass intClass;
-static jclass floatClass;
-static jmethodID intValueID;
-static jmethodID longValueID;
-static jmethodID doubleValueID;
-static jmethodID booleanValueID;
-static jmethodID charValueID;
+namespace JPJni {
+	jclass s_ClassClass;
+	jclass s_StringClass;
+	jclass s_NoSuchMethodErrorClass;
+	jclass s_RuntimeExceptionClass;
+	jclass s_ProxyClass = 0;
+	jmethodID s_NewProxyInstanceID;
 
-static jclass    JPypeReferenceClass;
-static jmethodID JPypeReferenceConstructorMethod;
-static jclass    JPypeReferenceQueueClass;
-static jmethodID JPypeReferenceQueueConstructorMethod;
-static jmethodID JPypeReferenceQueueRegisterMethod;
-static jmethodID JPypeReferenceQueueStartMethod;
-static jmethodID JPypeReferenceQueueRunMethod;
-static jmethodID JPypeReferenceQueueStopMethod;
+	jlong s_minByte;
+	jlong s_maxByte;
+	jlong s_minShort;
+	jlong s_maxShort;
+	jlong s_minInt;
+	jlong s_maxInt;
+	jfloat s_minFloat;
+	jfloat s_maxFloat;
 
-
-
-void JPJni::init() 
+void init()
 {
 	objectClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Object"));
 	s_StringClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/String"));
@@ -194,7 +195,7 @@ void JPJni::init()
 	s_maxFloat = JPEnv::getJava()->GetStaticFloatField(floatClass, fid);
 }
 
-string JPJni::asciiFromJava(jstring str) 
+string asciiFromJava(jstring str)
 {
 	const char* cstr = NULL;
 	jboolean isCopy;
@@ -212,7 +213,7 @@ string JPJni::asciiFromJava(jstring str)
 	return res;	
 }
 
-JCharString JPJni::unicodeFromJava(jstring str) 
+JCharString unicodeFromJava(jstring str)
 {
 	const jchar* cstr = NULL;
 	jboolean isCopy;
@@ -225,14 +226,14 @@ JCharString JPJni::unicodeFromJava(jstring str)
 	return res;	
 }
 
-jstring JPJni::javaStringFromJCharString(JCharString& wstr)
+jstring javaStringFromJCharString(JCharString& wstr)
 {
 	jstring result = JPEnv::getJava()->NewString(wstr.c_str(), (jint)wstr.length());
 	
 	return result;
 }
 
-JPTypeName JPJni::getClassName(jobject o) 
+JPTypeName getClassName(jobject o)
 {
 	if (o == NULL)
 	{
@@ -242,15 +243,15 @@ JPTypeName JPJni::getClassName(jobject o)
 	JPCleaner cleaner;
 	jclass c = getClass(o);
 	cleaner.addLocal(c);
-	return JPJni::getName(c);
+	return getName(c);
 }
 
-jclass JPJni::getClass(jobject o) 
+jclass getClass(jobject o)
 {
 	return (jclass)JPEnv::getJava()->CallObjectMethod(o, getClassID);
 }
 
-jstring JPJni::toString(jobject o) 
+jstring toString(jobject o)
 {
 	jstring str = (jstring)JPEnv::getJava()->CallObjectMethod(o, toStringID);
 	return str;
@@ -261,7 +262,7 @@ static string convertToSimpleName(jclass c)
 	JPCleaner cleaner;
 	jstring jname = (jstring)JPEnv::getJava()->CallObjectMethod(c, getNameID);
 	cleaner.addLocal(jname);
-	string name = JPJni::asciiFromJava(jname);
+	string name = asciiFromJava(jname);
 	
 	// Class.getName returns something weird for arrays ...
 	if (name[0] == '[')
@@ -326,13 +327,13 @@ static string convertToSimpleName(jclass c)
 	return name;
 }
 
-bool JPJni::isInterface(jclass clazz) 
+bool isInterface(jclass clazz)
 {
 	jboolean b = JPEnv::getJava()->CallBooleanMethod(clazz, isInterfaceID);
 	return (b ? true : false);
 }
 
-bool JPJni::isAbstract(jclass clazz) 
+bool isAbstract(jclass clazz)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
@@ -341,7 +342,7 @@ bool JPJni::isAbstract(jclass clazz)
 	return (res ? true : false);
 }
 
-long JPJni::getClassModifiers(jclass clazz) 
+long getClassModifiers(jclass clazz)
 {
 	long res = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 	
@@ -349,7 +350,7 @@ long JPJni::getClassModifiers(jclass clazz)
 }
 
 
-bool JPJni::isFinal(jclass clazz) 
+bool isFinal(jclass clazz)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
@@ -358,14 +359,14 @@ bool JPJni::isFinal(jclass clazz)
 	return (res ? true : false);
 }
 
-JPTypeName JPJni::getName(jclass clazz) 
+JPTypeName getName(jclass clazz)
 {
 	string simpleName = convertToSimpleName(clazz);
 	
 	return JPTypeName::fromSimple(simpleName.c_str());
 }
 
-vector<jclass> JPJni::getInterfaces(jclass clazz) 
+vector<jclass> getInterfaces(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray interfaces = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getInterfacesID);
@@ -382,7 +383,7 @@ vector<jclass> JPJni::getInterfaces(jclass clazz)
 	return res;
 }
 
-vector<jobject> JPJni::getDeclaredFields(jclass clazz) 
+vector<jobject> getDeclaredFields(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray fields = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredFieldsID);
@@ -399,7 +400,7 @@ vector<jobject> JPJni::getDeclaredFields(jclass clazz)
 	return res;
 }
 
-vector<jobject> JPJni::getFields(jclass clazz) 
+vector<jobject> getFields(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray fields = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getFieldsID);
@@ -416,7 +417,7 @@ vector<jobject> JPJni::getFields(jclass clazz)
 	return res;
 }
 
-vector<jobject> JPJni::getDeclaredMethods(jclass clazz) 
+vector<jobject> getDeclaredMethods(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredMethodsID);
@@ -434,7 +435,7 @@ vector<jobject> JPJni::getDeclaredMethods(jclass clazz)
 }
 
 
-vector<jobject> JPJni::getDeclaredConstructors(jclass clazz) 
+vector<jobject> getDeclaredConstructors(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredConstructorsID);
@@ -451,7 +452,7 @@ vector<jobject> JPJni::getDeclaredConstructors(jclass clazz)
 	return res;
 }
 
-vector<jobject> JPJni::getConstructors(jclass clazz) 
+vector<jobject> getConstructors(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getConstructorsID);
@@ -468,7 +469,7 @@ vector<jobject> JPJni::getConstructors(jclass clazz)
 	return res;
 }
 
-vector<jobject> JPJni::getMethods(jclass clazz) 
+vector<jobject> getMethods(jclass clazz)
 {
 	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getMethodsID);
@@ -485,22 +486,22 @@ vector<jobject> JPJni::getMethods(jclass clazz)
 	return res;
 }
 
-jobject JPJni::getSystemClassLoader()
+jobject getSystemClassLoader()
 {
 	return JPEnv::getJava()->CallStaticObjectMethod(classLoaderClass, getSystemClassLoaderID) ; 
 }
 
-string JPJni::getMemberName(jobject o) 
+string getMemberName(jobject o)
 {
 	JPCleaner cleaner;
 	jstring name = (jstring)JPEnv::getJava()->CallObjectMethod(o, getMemberNameID);
 	cleaner.addLocal(name);
 
-	string simpleName = JPJni::asciiFromJava(name);
+	string simpleName = asciiFromJava(name);
 	return simpleName;
 }
 	
-bool JPJni::isMemberPublic(jobject o) 
+bool isMemberPublic(jobject o)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
@@ -509,7 +510,7 @@ bool JPJni::isMemberPublic(jobject o)
 	return (res ? true : false);
 }
 
-bool JPJni::isMemberStatic(jobject o) 
+bool isMemberStatic(jobject o)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
@@ -518,7 +519,7 @@ bool JPJni::isMemberStatic(jobject o)
 	return (res ? true : false);
 }
 
-bool JPJni::isMemberFinal(jobject o) 
+bool isMemberFinal(jobject o)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
@@ -527,7 +528,7 @@ bool JPJni::isMemberFinal(jobject o)
 	return (res ? true : false);
 }
 
-bool JPJni::isMemberAbstract(jobject o) 
+bool isMemberAbstract(jobject o)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
@@ -536,34 +537,34 @@ bool JPJni::isMemberAbstract(jobject o)
 	return (res ? true : false);
 }
 
-jint JPJni::hashCode(jobject obj)
+jint hashCode(jobject obj)
 {
 	jint res = JPEnv::getJava()->CallIntMethod(obj, hashCodeID);
 	return res;
 }
 
-JPTypeName JPJni::getType(jobject fld) 
+JPTypeName getType(jobject fld)
 {
-	TRACE_IN("JPJni::getType");
+	TRACE_IN("getType");
 	
 	JPCleaner cleaner;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(fld, getTypeID);
 	cleaner.addLocal(c);
 	
-	return JPJni::getName(c);
+	return getName(c);
 	TRACE_OUT;
 }
 
-JPTypeName JPJni::getReturnType(jobject o) 
+JPTypeName getReturnType(jobject o)
 {
 	JPCleaner cleaner;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(o, getReturnTypeID);
 	cleaner.addLocal(c);
 	
-	return JPJni::getName(c);
+	return getName(c);
 }
 
-vector<JPTypeName> JPJni::getParameterTypes(jobject o, bool isConstructor) 
+vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 {
 	JPCleaner cleaner;
 	vector<JPTypeName> args;
@@ -587,14 +588,14 @@ vector<JPTypeName> JPJni::getParameterTypes(jobject o, bool isConstructor)
 		jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
 		cleaner.addLocal(c);
 
-		JPTypeName name = JPJni::getName(c);
+		JPTypeName name = getName(c);
 		args.push_back(name);
 	}
 	
 	return args;
 }
 
-bool JPJni::isConstructor(jobject obj)
+bool isConstructor(jobject obj)
 {
 	jboolean r = JPEnv::getJava()->IsInstanceOf(obj, constructorClass);
 	if (r)
@@ -604,7 +605,7 @@ bool JPJni::isConstructor(jobject obj)
 	return false;
 }
 
-string JPJni::getStackTrace(jthrowable th)
+string getStackTrace(jthrowable th)
 {
 	
 	JPCleaner cleaner;
@@ -621,22 +622,22 @@ string JPJni::getStackTrace(jthrowable th)
 
 	JPEnv::getJava()->CallVoidMethod(printWriter, flushID);
 
-	jstring res = JPJni::toString(strWriter);
+	jstring res = toString(strWriter);
 	cleaner.addLocal(res);
 
-	return JPJni::asciiFromJava(res);
+	return asciiFromJava(res);
 }
 
-string JPJni::getMessage(jthrowable th)
+string getMessage(jthrowable th)
 {
 	JPCleaner cleaner;
 	jstring jstr = (jstring)JPEnv::getJava()->CallObjectMethod(th, getMessageID);
 	cleaner.addLocal(jstr);
 
-	return JPJni::asciiFromJava(jstr);
+	return asciiFromJava(jstr);
 }
 
-bool JPJni::isThrowable(jclass c)
+bool isThrowable(jclass c)
 {
 	jboolean res = JPEnv::getJava()->IsAssignableFrom(c, throwableClass);
 	if (res)
@@ -646,32 +647,32 @@ bool JPJni::isThrowable(jclass c)
 	return false;
 }
 
-long JPJni::intValue(jobject obj)
+long intValue(jobject obj)
 {
 	return JPEnv::getJava()->CallIntMethod(obj, intValueID);	
 }
 
-jlong JPJni::longValue(jobject obj)
+jlong longValue(jobject obj)
 {
 	return JPEnv::getJava()->CallLongMethod(obj, longValueID);	
 }
 
-double JPJni::doubleValue(jobject obj)
+double doubleValue(jobject obj)
 {
 	return JPEnv::getJava()->CallDoubleMethod(obj, doubleValueID);	
 }
 
-bool JPJni::booleanValue(jobject obj)
+bool booleanValue(jobject obj)
 {
 	return JPEnv::getJava()->CallBooleanMethod(obj, booleanValueID) ? true : false;	
 }
 
-jchar JPJni::charValue(jobject obj)
+jchar charValue(jobject obj)
 {
 	return JPEnv::getJava()->CallCharMethod(obj, charValueID);	
 }
 
-jclass JPJni::getByteClass()
+jclass getByteClass()
 {
 	jclass byteClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Byte"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(byteClass, "TYPE", "Ljava/lang/Class;");
@@ -680,7 +681,7 @@ jclass JPJni::getByteClass()
 	return res;
 }
 
-jclass JPJni::getShortClass()
+jclass getShortClass()
 {
 	jclass shortClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Short"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(shortClass, "TYPE", "Ljava/lang/Class;");
@@ -689,7 +690,7 @@ jclass JPJni::getShortClass()
 	return res;
 }
 
-jclass JPJni::getIntegerClass()
+jclass getIntegerClass()
 {
 	jclass intClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Integer"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(intClass, "TYPE", "Ljava/lang/Class;");
@@ -698,7 +699,7 @@ jclass JPJni::getIntegerClass()
 	return res;
 }
 
-jclass JPJni::getLongClass()
+jclass getLongClass()
 {
 	jclass longClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Long"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(longClass, "TYPE", "Ljava/lang/Class;");
@@ -707,7 +708,7 @@ jclass JPJni::getLongClass()
 	return res;
 }
 
-jclass JPJni::getFloatClass()
+jclass getFloatClass()
 {
 	jclass floatClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Float"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(floatClass, "TYPE", "Ljava/lang/Class;");
@@ -716,7 +717,7 @@ jclass JPJni::getFloatClass()
 	return res;
 }
 
-jclass JPJni::getDoubleClass()
+jclass getDoubleClass()
 {
 	jclass doubleClass= (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Double"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(doubleClass, "TYPE", "Ljava/lang/Class;");
@@ -725,7 +726,7 @@ jclass JPJni::getDoubleClass()
 	return res;
 }
 
-jclass JPJni::getCharacterClass()
+jclass getCharacterClass()
 {
 	jclass charClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Character"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(charClass, "TYPE", "Ljava/lang/Class;");
@@ -734,7 +735,7 @@ jclass JPJni::getCharacterClass()
 	return res;
 }
 
-jclass JPJni::getBooleanClass()
+jclass getBooleanClass()
 {
 	jclass booleanClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Boolean"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(booleanClass, "TYPE", "Ljava/lang/Class;");
@@ -743,7 +744,7 @@ jclass JPJni::getBooleanClass()
 	return res;
 }
 
-jclass JPJni::getVoidClass()
+jclass getVoidClass()
 {
 	jclass voidClass= (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Void"));
 	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(voidClass, "TYPE", "Ljava/lang/Class;");
@@ -752,7 +753,7 @@ jclass JPJni::getVoidClass()
 	return res;
 }
 
-void JPJni::startJPypeReferenceQueue(bool useJavaThread)
+void startJPypeReferenceQueue(bool useJavaThread)
 {
 	JPCleaner cleaner;
 
@@ -781,14 +782,14 @@ void JPJni::startJPypeReferenceQueue(bool useJavaThread)
 
 }
 
-void JPJni::stopJPypeReferenceQueue()
+void stopJPypeReferenceQueue()
 {
 	JPEnv::getJava()->CallVoidMethod(JPEnv::getJava()->getReferenceQueue(), JPypeReferenceQueueStopMethod);
 }
 
-void JPJni::registerRef(jobject refQueue, jobject obj, jlong hostRef)
+void registerRef(jobject refQueue, jobject obj, jlong hostRef)
 {
-	TRACE_IN("JPJni::registerRef");
+	TRACE_IN("registerRef");
 	// create the ref ...
 	jvalue args[2];
 	args[0].l = obj;
@@ -806,3 +807,4 @@ void JPJni::registerRef(jobject refQueue, jobject obj, jlong hostRef)
 	TRACE_OUT;
 }
 
+} // end of namespace JNIEnv
