@@ -68,6 +68,7 @@ public :
 	virtual jarray     newArrayInstance(int size) = 0;
 	virtual vector<HostRef*>   getArrayRange(jarray, int start, int length) = 0;
 	virtual void       setArrayRange(jarray, int start, int length, vector<HostRef*>& vals) = 0;
+	virtual void       setArrayRange(jarray, int start, int length, PyObject* seq) = 0;
 	virtual HostRef*   getArrayItem(jarray, int ndx) = 0;
 	virtual void       setArrayItem(jarray, int ndx, HostRef* val) = 0;
 	virtual void       setArrayValues(jarray, HostRef*) = 0;

@@ -61,6 +61,8 @@ public :
 	virtual jobject	   convertToJavaObject(HostRef* obj);
 
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
+
+	virtual void setArrayRange(jarray, int, int, PyObject*) = 0;
 };
 
 class JPVoidType : public JPPrimitiveType
@@ -96,7 +98,10 @@ public : // JPType implementation
 	{
 		RAISE(JPypeException, "not impled for void*");
 	}
-	
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* seq)
+	{
+		RAISE(JPypeException, "not impled for void*");
+	}
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 };
@@ -128,6 +133,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -165,6 +171,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -200,6 +207,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int, int, PyObject*);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -236,6 +244,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -271,6 +280,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -306,6 +316,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -341,6 +352,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*>  getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef*  getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
@@ -376,6 +388,7 @@ public : // JPType implementation
 	virtual jarray    newArrayInstance(int size);
 	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
+	virtual void      setArrayRange(jarray, int start, int length, PyObject* sequence);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
 	virtual void       setArrayValues(jarray, HostRef*);
