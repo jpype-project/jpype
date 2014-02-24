@@ -68,6 +68,10 @@ public :
 		RAISE(JPypeException, "not impled for void*");
 	}
 	
+	virtual void setArrayRange(jarray, int start, int len, PyObject*) {
+		RAISE(JPypeException, "not impled for void*");
+	}
+
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
 
 protected :
