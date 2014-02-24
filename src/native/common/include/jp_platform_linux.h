@@ -46,6 +46,14 @@ public :
 		}
 	}
 
+	virtual void unloadLibrary() {
+		int r = dlclose(jvmLibrary);
+		if (r != 0) // error
+		{
+			cerr << dlerror() << endl;
+		}
+	}
+
 	virtual void* getSymbol(const char* name)
 	{
 		void* res = dlsym(jvmLibrary, name);

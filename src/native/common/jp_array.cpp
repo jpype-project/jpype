@@ -15,9 +15,8 @@
    
 *****************************************************************************/   
 #include <jpype.h>
-#include <Python.h>
 
-JPArray::JPArray(JPTypeName name, jarray inst) 
+JPArray::JPArray(const JPTypeName& name, jarray inst)
 {
 	m_Class = JPTypeManager::findArrayClass(name);
 	m_Object = (jarray)JPEnv::getJava()->NewGlobalRef(inst);

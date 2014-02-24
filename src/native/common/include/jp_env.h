@@ -78,55 +78,34 @@ private :
 	T* mData;
 };
 
-class JPEnv
+namespace JPEnv
 {	
-	
-public :
 	/**
-	 * Initialize the JPype subs-system. Does NOT load the JVM
-	 */
-	static void init(HostEnvironment* hostEnv);		
+	* Initialize the JPype subs-system. Does NOT load the JVM
+	*/
+	void init(HostEnvironment* hostEnv);
 	
 	/**
-	 * Load the JVM
-	 * TODO : add the non-string parameters, for possible callbacks
-	 */
-	static void loadJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
+	* Load the JVM
+	* TODO : add the non-string parameters, for possible callbacks
+	*/
+	void loadJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
 
-	static void attachJVM(const string& vmPath);
+	void attachJVM(const string& vmPath);
+
+	void attachCurrentThread();
+	void attachCurrentThreadAsDaemon();
+	bool isThreadAttached();
+
+	JPJavaEnv*       getJava();
+	HostEnvironment* getHost();
 
 	/**
-	 * Check if the JPype environment has been initialized
-	 */
-	static bool isInitialized()
-	{
-		return getJava() != NULL && getHost() != NULL;
-	}
-
-	static void attachCurrentThread();
-	static void attachCurrentThreadAsDaemon();
-	static bool isThreadAttached();
-
-
-	static JPJavaEnv*       getJava()
-	{
-		return s_Java;
-	}
+	* Check if the JPype environment has been initialized
+	*/
+	bool isInitialized();
 	
-	static HostEnvironment* getHost()
-	{
-		return s_Host;
-	}
-	
-	static void registerRef(HostRef*, HostRef* targetRef);
-
-
-private :
-	static void postLoadJVM();	
-	
-private :
-	static HostEnvironment* s_Host;
-	static JPJavaEnv*       s_Java;
-};
+	void registerRef(HostRef*, HostRef* targetRef);
+}
 
 #endif // _JPENV_H_
