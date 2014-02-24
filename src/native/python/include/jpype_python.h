@@ -20,8 +20,8 @@
 
 
 // This file defines the _jpype module's interface and initializes it
-#include <jpype.h>
 #include <Python.h>
+#include <jpype.h>
 
 // TODO figure a better way to do this .. Python dependencies should not be in common code
 
