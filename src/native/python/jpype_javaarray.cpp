@@ -15,7 +15,19 @@
    
 *****************************************************************************/   
 
-#include <jpype_python.h>  
+#include <jpype_python.h>
+
+namespace { // impl detail
+	inline bool is_primitive(char t) {
+		switch(t) {
+			case 'B': case 'S': case 'I': case 'J': case 'F': case 'D': case 'Z': case 'C':
+				return true;
+			default:
+				return false;
+		}
+	}
+}
+
 PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 {
 	try {
@@ -109,30 +121,33 @@ PyObject* JPypeJavaArray::getArrayItem(PyObject* self, PyObject* arg)
 
 PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 {
-	try {
 		PyObject* arrayObject;
 		int lo = -1;
 		int hi = -1;
+	try
+	{
+
 		JPyArg::parseTuple(arg, "O!ii", &PyCObject_Type, &arrayObject, &lo, &hi);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 		int length = a->getLength();
 		// stolen from jcc, to get nice slice support
-        if (lo < 0) lo = length + lo;
-        if (lo < 0) lo = 0;
-        else if (lo > length) lo = length;
-        if (hi < 0) hi = length + hi;
-        if (hi < 0) hi = 0;
-        else if (hi > length) hi = length;
-        if (lo > hi) lo = hi;
+		if (lo < 0) lo = length + lo;
+		if (lo < 0) lo = 0;
+		else if (lo > length) lo = length;
+		if (hi < 0) hi = length + hi;
+		if (hi < 0) hi = 0;
+		else if (hi > length) hi = length;
+		if (lo > hi) lo = hi;
 
 		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
-		switch(name[0]) {
-		// for primitive types, we have fast sequence generation available
-		case 'B': case 'S': case 'I': case 'J': case 'F': case 'D': case 'Z': case 'C':
-			// fast
+		if(is_primitive(name[0]))
+		{
+			// for primitive types, we have fast sequence generation available
 			return a->getSequenceFromRange(lo, hi);
-		default: {
-			// horrible slow
+		}
+		else
+		{
+			// slow wrapped access for non primitives
 			vector<HostRef*> values = a->getRange(lo, hi);
 
 			JPCleaner cleaner;
@@ -145,7 +160,6 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 
 			return res;
 		}
-		}
 	} PY_STANDARD_CATCH
 
 	return NULL;
@@ -153,28 +167,49 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 
 PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 {
+
+	PyObject* arrayObject;
+	int lo = -1;
+	int hi = -1;
+	PyObject* sequence;
 	try {
-		PyObject* arrayObject;
-		int ndx = -1;
-		int ndx2 = -1;
-		PyObject* val;
-		JPyArg::parseTuple(arg, "O!iiO", &PyCObject_Type, &arrayObject, &ndx, &ndx2, &val);
+		JPyArg::parseTuple(arg, "O!iiO", &PyCObject_Type, &arrayObject, &lo, &hi, &sequence);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
-		Py_ssize_t len = JPyObject::length(val);
-		vector<HostRef*> values;
-		JPCleaner cleaner;
-		for (Py_ssize_t i = 0; i < len; i++)
+		Py_ssize_t length = a->getLength();
+
+		if (lo < 0) lo = length + lo;
+		if (lo < 0) lo = 0;
+		else if (lo > length) lo = length;
+		if (hi < 0) hi = length + hi;
+		if (hi < 0) hi = 0;
+		else if (hi > length) hi = length;
+		if (lo > hi) lo = hi;
+
+		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
+
+		if(is_primitive(name[0]))
 		{
-			HostRef* v = new HostRef(JPySequence::getItem(val, i), false);
-			values.push_back(v);
-			cleaner.add(v);
+			// for primitive types, we have fast setters available
+			a->setRange(lo, hi, sequence);
+		}
+		else
+		{
+			// slow wrapped access for non primitive types
+			vector<HostRef*> values;
+			values.reserve(hi - lo);
+			JPCleaner cleaner;
+			for (Py_ssize_t i = 0; i < hi - lo; i++)
+			{
+				HostRef* v = new HostRef(JPySequence::getItem(sequence, i), false);
+				values.push_back(v);
+				cleaner.add(v);
+			}
+
+			a->setRange(lo, hi, values);
 		}
 
-		a->setRange(ndx, ndx2, values);
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
