@@ -42,6 +42,7 @@ public :
 	// return Python Sequence from underlying jarray
 	PyObject* getSequenceFromRange(int start, int stop);
 	void      setRange(int start, int stop, vector<HostRef*>& val);
+	void      setRange(int start, int stop, PyObject* sequence);
 	void      setItem(int ndx, HostRef*);
 	HostRef*  getItem(int ndx);
 
