@@ -177,6 +177,8 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
 		Py_ssize_t length = a->getLength();
+		if(length == 0)
+			Py_RETURN_NONE;
 
 		if (lo < 0) lo = length + lo;
 		if (lo < 0) lo = 0;
