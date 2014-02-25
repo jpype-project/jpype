@@ -82,7 +82,20 @@ void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 void JPArray::setRange(int start, int stop, PyObject* sequence)
 {
 	JPType* compType = m_Class->getComponentType();
-	compType->setArrayRange(m_Object, start, stop-start, sequence);
+
+	unsigned int len = stop-start;
+	// check bounds of sequence which is to be assigned
+	HostRef* ptr = new HostRef(sequence);
+	unsigned int plength = JPEnv::getHost()->getSequenceLength(ptr);
+	delete ptr;
+	if (len != plength)
+	{
+		std::stringstream out;
+		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
+		RAISE(JPypeException, out.str());
+	}
+
+	compType->setArrayRange(m_Object, start, len, sequence);
 }
 
 void JPArray::setItem(int ndx, HostRef* val)
