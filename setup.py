@@ -6,8 +6,8 @@ import codecs
 import platform
 from glob import glob
 
-from distutils.core import setup
-from distutils.core import Extension
+from setuptools import setup
+from setuptools import Extension
 
 
 def read_utf8(*parts):
@@ -124,8 +124,10 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 setup(
     name='JPype1',
     version='0.5.4.6',
-    description='Friendly jpype fork with focus on easy installation.',
-    long_description=read_utf8('README.rst'),
+    description='A Python to Java bridge.',
+    long_description=(read_utf8('README.rst') + '\n\n' +
+                      read_utf8('CHANGELOG.rst') + '\n\n' +
+                      read_utf8('AUTHORS.rst')),
     license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
@@ -140,7 +142,6 @@ setup(
     ],
     classifiers=[
         'Programming Language :: Java',
-        'Programming Language :: Python :: 2.5',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
     ],
