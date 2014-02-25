@@ -4,32 +4,31 @@ JPype
 .. image:: https://travis-ci.org/originell/jpype.png?branch=master
    :target: https://travis-ci.org/originell/jpype
    
-(Looking for a **Python 3** compatible jpype? `See tcalmant's fork <https://github.com/tcalmant/jpype-py3>`__)
+JPype is an effort to allow python programs full access to java class
+libraries. This is achieved not through re-implementing Python, as
+Jython/JPython has done, but rather through interfacing at the native
+level in both Virtual Machines. Eventually, it should be possible to
+replace Java with python in many, though not all, situations. JSP,
+Servlets, RMI servers and IDE plugins are good candidates.
 
-From the `original Website <http://jpype.sourceforge.net/index.html>`__:
+Once this integration is achieved, a second phase will be started to
+separate the Java logic from the Python logic, eventually allowing the
+bridging technology to be used in other environments, I.E. Ruby, Perl,
+COM, etc ...
 
-    JPype is an effort to allow python programs full access to java
-    class libraries. This is achieved not through re-implementing
-    Python, as Jython/JPython has done, but rather through interfacing
-    at the native level in both Virtual Machines. Eventually, it should
-    be possible to replace Java with python in many, though not all,
-    situations. JSP, Servlets, RMI servers and IDE plugins are good
-    candidates.
+Current development is done on `the github project
+<https://github.com/originell/jpype>`__. The work on this project has
+started on `the Sourceforge project
+<http://sourceforge.net/projects/jpype/>`__. Documentation can be
+found on `github
+<https://github.com/originell/jpype/blob/master/doc/userguide.rst>`__
+as well.
 
-    Once this integration is achieved, a second phase will be started to
-    separate the Java logic from the Python logic, eventually allowing
-    the bridging technology to be used in other environments, I.E. Ruby,
-    Perl, COM, etc ...
+Python 3 Support
+----------------
 
-This friendly fork applies changes to make the installation easier on OSX
-and Linux, as suggested by `Yuvul
-Adam <http://blog.y3xz.com/post/5037243230/installing-jpype-on-mac-os-x>`__
-, the beautiful people in `one of the JPype Stackoverflow
-postings <http://stackoverflow.com/questions/8525193/cannot-install-jpype-on-os-x-lion-to-use-with-neo4j>`__
-and all the other `CONTRIBUTORS <https://github.com/originell/jpype/blob/master/AUTHORS>`__.
-
-The `changelog can be found on github <https://github.com/originell/jpype/blob/master/CHANGELOG.rst>`__
-as well as the `documentation <https://github.com/originell/jpype/blob/master/doc/userguide.rst>`__.
+If you're looking for a Python 3 compatible JPype please see
+`tcalmant's github fork <https://github.com/tcalmant/jpype-py3>`__.
 
 Known Bugs/Limitations
 ----------------------
@@ -79,7 +78,7 @@ This happens mostly due to the setup not being able to find your
    your own ( the place where the headers etc. are) and explicitly
    setting it for the installation:
 
-   JAVA\_HOME=/usr/lib/java/jdk1.6.0/ python setup.py install
+   ``JAVA\_HOME=/usr/lib/java/jdk1.6.0/ python setup.py install``
 2. Please create an Issue `on
    github <https://github.com/originell/jpype/issues?state=open>`__ and
    post all the information you have.

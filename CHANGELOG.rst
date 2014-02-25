@@ -1,10 +1,10 @@
 Changelog
-=========
+---------
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 0.5.4.6 (to be released)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 *Note* that this release is *not* compatible with Python 2.5 anymore!
 
@@ -17,6 +17,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   * corrected new[]/delete pairs to stop valgrind complaining
   * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
 
+* Fast sliced access for primitive datatype arrays (factor of 10)
 * Use setter for Java bean property assignment even if not having a
   getter by @baztian
 * Fix public methods not being accessible if a Java bean property with
@@ -27,11 +28,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   to use the get/set methods.)
 * Make jpype.JException catch exceptions from subclasses by @baztian
 * Make more complex overloaded Java methods accessible (fixes https://sourceforge.net/p/jpype/bugs/69/) by @baztian and anonymous
-* Fast sliced access for primitive datatype arrays (factor of 10)
-* some minor improvements inferring unnecessary copies in extension code
-* some JNI cleanups related to memory
-* fix memory leak in array setters
-* fix memory leak in typemanager
+* Some minor improvements inferring unnecessary copies in extension code
+* Some JNI cleanups related to memory
+* Fix memory leak in array setters
+* Fix memory leak in typemanager
 * Add userguide from sourceforge project by @baztian
 
 0.5.4.5 (2013-08-25 12:12)
