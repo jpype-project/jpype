@@ -154,3 +154,11 @@ class ArrayTestCase(common.JPypeTestCase) :
         
         result = jarr[2:10]
         self.assertEqual(VALUES[2:10], result)
+        
+    def testConversionError(self):
+        jarr = jpype.JArray(jpype.JInt, 1)(10)
+        with self.assertRaises(RuntimeError):
+            jarr[1:2] = [dict()]
+        
+        # -1 is returned by python, if conversion fails also, ensure this works
+        jarr[1:2] = [-1]
