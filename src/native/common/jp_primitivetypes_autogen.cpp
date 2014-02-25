@@ -21,6 +21,15 @@
 #include <Python.h>
 #include <jpype.h>
 
+#define CONVERSION_ERROR_HANDLE \
+PyObject* exe = PyErr_Occurred(); \
+if(exe != NULL) \
+{\
+	stringstream ss;\
+	ss <<  "unable to convert element: " << PyObject_REPR(o) <<\
+			"at index: " << i;\
+	RAISE(JPypeException, ss.str());\
+}
 
 jarray JPByteType::newArrayInstance(int sz)
 {
@@ -124,7 +133,9 @@ void JPByteType::setArrayRange(jarray a, int start, int length, PyObject* sequen
 		val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jbyte) PyInt_AS_LONG(o);
+			jbyte b = (jbyte) PyInt_AS_LONG(o);
+			if (b == -1) { CONVERSION_ERROR_HANDLE; }
+			val[start+i] = b;
 		}
 		JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);
 	}
@@ -290,7 +301,9 @@ void JPShortType::setArrayRange(jarray a, int start, int length, PyObject* seque
 		val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jshort) PyInt_AsLong(o);
+			jshort s = (jshort) PyInt_AsLong(o);
+			if(s == -1) { CONVERSION_ERROR_HANDLE; }
+			val[start+i] = s;
 		}
         JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
 	}
@@ -455,7 +468,9 @@ void JPIntType::setArrayRange(jarray a, int start, int length, PyObject* sequenc
 		val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jint) PyInt_AS_LONG(o);
+			jint v = (jint) PyInt_AsLong(o);
+			if (v == -1) { CONVERSION_ERROR_HANDLE }
+			val[start+i] = v;
 		}
         JPEnv::getJava()->ReleaseIntArrayElements(array, val, 0);
 	}
@@ -617,7 +632,9 @@ void JPLongType::setArrayRange(jarray a, int start, int length, PyObject* sequen
 		val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jlong) PyLong_AsLong(o);
+			 jlong l = (jlong) PyLong_AsLong(o);
+			 if(l == -1) { CONVERSION_ERROR_HANDLE; }
+			 val[start+i] = l;
 		}
         JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);
 	}
@@ -777,12 +794,13 @@ void JPFloatType::setArrayRange(jarray a, int start, int length, PyObject* seque
 	jfloatArray array = (jfloatArray)a;
 	jfloat* val = NULL;
 	jboolean isCopy;
-
 	try {
 		val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jfloat) PyFloat_AS_DOUBLE(o);
+			jfloat v = (jfloat) PyFloat_AsDouble(o);
+			if (v == -1.) { CONVERSION_ERROR_HANDLE; }
+			val[start+i] = v;
 		}
 		JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);
 	}
@@ -944,7 +962,9 @@ void JPDoubleType::setArrayRange(jarray a, int start, int length, PyObject* sequ
 		val = JPEnv::getJava()->GetDoubleArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jchar) PyFloat_AS_DOUBLE(o);
+			 jdouble d = (jdouble) PyFloat_AsDouble(o);
+			 if (d == -1.) { CONVERSION_ERROR_HANDLE; }
+			 val[start+i] = d;
 		}
 		JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, 0);
 	}
@@ -1106,7 +1126,9 @@ void JPCharType::setArrayRange(jarray a, int start, int length, PyObject* sequen
 		val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			val[start+i] = (jchar) PyInt_AS_LONG(o);
+			 jchar c = (jchar) PyInt_AsLong(o);
+			 if(c == -1) { CONVERSION_ERROR_HANDLE; }
+			 val[start+i] = c;
 		}
 		JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
 	}
