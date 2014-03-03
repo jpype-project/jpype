@@ -82,11 +82,9 @@ void JPByteType::setArrayValues(jarray a, HostRef* values)
     jbyteArray array = (jbyteArray)a;    
     jbyte* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
-
 
 		// Optimize what I can ...
 		if (JPEnv::getHost()->isByteString(values))
@@ -96,7 +94,6 @@ void JPByteType::setArrayValues(jarray a, HostRef* values)
 			char* data;
 			JPEnv::getHost()->getRawByteString(values, &data, len);
 			memcpy(val, data, len);
-
 		}
 		// TODO also optimize array.array ...
 		else if (JPEnv::getHost()->isSequence(values))
@@ -108,8 +105,6 @@ void JPByteType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).b;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -122,7 +117,6 @@ void JPByteType::setArrayValues(jarray a, HostRef* values)
 
 jvalue JPByteType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
 	{
@@ -189,7 +183,6 @@ HostRef* JPShortType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPShortType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -219,7 +212,6 @@ EMatchType JPShortType::canConvertToJava(HostRef* obj)
 
 jvalue JPShortType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
 	{
@@ -263,7 +255,6 @@ void JPShortType::setArrayValues(jarray a, HostRef* values)
     try {
         val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
 
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -275,8 +266,6 @@ void JPShortType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).s;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -303,7 +292,6 @@ HostRef* JPIntType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPIntType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -328,14 +316,11 @@ EMatchType JPIntType::canConvertToJava(HostRef* obj)
 		}
 	}
 
-
-
 	return _none;
 }
 
 jvalue JPIntType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
 	{
@@ -375,12 +360,9 @@ void JPIntType::setArrayValues(jarray a, HostRef* values)
     jintArray array = (jintArray)a;    
     jint* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
-
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -392,8 +374,6 @@ void JPIntType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).i;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -422,7 +402,6 @@ HostRef* JPLongType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPLongType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -454,7 +433,6 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 
 jvalue JPLongType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
 	{
@@ -482,12 +460,9 @@ void JPLongType::setArrayValues(jarray a, HostRef* values)
     jlongArray array = (jlongArray)a;    
     jlong* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
-
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -499,8 +474,6 @@ void JPLongType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).j;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -527,7 +500,6 @@ HostRef* JPFloatType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPFloatType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -553,7 +525,6 @@ EMatchType JPFloatType::canConvertToJava(HostRef* obj)
 
 jvalue JPFloatType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
@@ -586,12 +557,9 @@ void JPFloatType::setArrayValues(jarray a, HostRef* values)
     jfloatArray array = (jfloatArray)a;    
     jfloat* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
-
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -603,8 +571,6 @@ void JPFloatType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).f;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -633,7 +599,6 @@ HostRef* JPDoubleType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -653,14 +618,11 @@ EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 		}
 	}
 
-
-
 	return _none;
 }
 
 jvalue JPDoubleType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
@@ -684,7 +646,6 @@ void JPDoubleType::setArrayValues(jarray a, HostRef* values)
     jdoubleArray array = (jdoubleArray)a;    
     jdouble* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetDoubleArrayElements(array, &isCopy);
@@ -699,8 +660,6 @@ void JPDoubleType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).d;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -788,12 +747,9 @@ void JPCharType::setArrayValues(jarray a, HostRef* values)
     jcharArray array = (jcharArray)a;    
     jchar* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
-
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -805,8 +761,6 @@ void JPCharType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).c;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
@@ -841,7 +795,6 @@ HostRef* JPBooleanType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPBooleanType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isInt(obj))
 	{
 		return _implicit;
@@ -856,14 +809,11 @@ EMatchType JPBooleanType::canConvertToJava(HostRef* obj)
 		}
 	}
 
-
-
 	return _none;
 }
 
 jvalue JPBooleanType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
@@ -887,12 +837,9 @@ void JPBooleanType::setArrayValues(jarray a, HostRef* values)
     jbooleanArray array = (jbooleanArray)a;    
     jboolean* val = NULL;
     jboolean isCopy;
-    JPCleaner cleaner;
 
     try {
         val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
-
-
 		// Optimize what I can ...
 		// TODO also optimize array.array ...
 		if (JPEnv::getHost()->isSequence(values))
@@ -904,8 +851,6 @@ void JPBooleanType::setArrayValues(jarray a, HostRef* values)
 				val[i] = convertToJava(v).z;
 				delete v;
 			}
-
-
 		}	
 		else
 		{
