@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# JPype1 documentation build configuration file, created by
+# JPype documentation build configuration file, created by
 # sphinx-quickstart on Wed Feb 26 20:16:40 2014.
 #
 # This file is execfile()d with the current directory set to its
@@ -43,7 +43,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'JPype1'
+project = u'JPype'
 copyright = u'2014, Steve Menard, Luis Nell and others'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -176,7 +176,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'JPype1doc'
+htmlhelp_basename = 'JPypedoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -196,7 +196,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'JPype1.tex', u'JPype1 Documentation',
+  ('index', 'JPype.tex', u'JPype Documentation',
    u'Steve Menard, Luis Nell and others', 'manual'),
 ]
 
@@ -226,7 +226,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'jpype1', u'JPype1 Documentation',
+    ('index', 'jpype', u'JPype Documentation',
      [u'Steve Menard, Luis Nell and others'], 1)
 ]
 
@@ -240,8 +240,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'JPype1', u'JPype1 Documentation',
-   u'Steve Menard, Luis Nell and others', 'JPype1', 'One line description of project.',
+  ('index', 'JPype', u'JPype Documentation',
+   u'Steve Menard, Luis Nell and others', 'JPype', 'One line description of project.',
    'Miscellaneous'),
 ]
 
