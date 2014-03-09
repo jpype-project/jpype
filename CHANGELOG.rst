@@ -3,8 +3,8 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-0.5.4.6 (to be released)
-~~~~~~~~~~~~~~~~~~~~~~~~
+0.5.5 (to be released)
+~~~~~~~~~~~~~~~~~~~~~~
 
 *Note* that this release is *not* compatible with Python 2.5 anymore!
 
