@@ -1,5 +1,5 @@
-JPype - User Guide
-==================
+User Guide
+==========
 
 Overview
 --------
