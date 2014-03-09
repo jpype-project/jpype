@@ -126,7 +126,7 @@ setup(
     version='0.5.5',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
-                      read_utf8('CHANGELOG.rst') + '\n\n' +
+                      read_utf8('doc/CHANGELOG.rst') + '\n\n' +
                       read_utf8('AUTHORS.rst')),
     license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
