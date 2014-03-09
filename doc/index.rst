@@ -1,18 +1,15 @@
-.. JPype documentation master file, created by
-   sphinx-quickstart on Wed Feb 26 20:16:40 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+JPype documentation
+===================
 
-Welcome to JPype's documentation!
-==================================
+.. include:: ../README.rst
 
-Contents:
+Parts of the documentation
+==========================
 
 .. toctree::
    :maxdepth: 2
 
    userguide
-
 
 
 Indices and tables
