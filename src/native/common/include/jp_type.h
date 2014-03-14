@@ -71,7 +71,6 @@ public :
 	virtual void       setArrayRange(jarray, int start, int length, PyObject* seq) = 0;
 	virtual HostRef*   getArrayItem(jarray, int ndx) = 0;
 	virtual void       setArrayItem(jarray, int ndx, HostRef* val) = 0;
-	virtual void       setArrayValues(jarray, HostRef*) = 0;
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src) = 0;

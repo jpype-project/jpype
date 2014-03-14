@@ -62,7 +62,6 @@ public :
 	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
 	virtual HostRef* getArrayItem(jarray, int ndx);
 	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
-	virtual void       setArrayValues(jarray, HostRef*);
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length)
 	{
 		RAISE(JPypeException, "not impled for void*");

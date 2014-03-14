@@ -215,35 +215,6 @@ HostRef* JPObjectType::convertToDirectBuffer(HostRef* src)
 	RAISE(JPypeException, "Unable to convert to Direct Buffer");
 }
 
-void JPObjectType::setArrayValues(jarray a, HostRef* values)
-{
-    jobjectArray array = (jobjectArray)a;    
-    JPCleaner cleaner;
-
-    try {
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				jvalue val = convertToJava(v);
-				JPEnv::getJava()->SetObjectArrayElement(array, i, val.l);
-				cleaner.addLocal(val.l);
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Object array");
-		}
-
-    }
-    RETHROW_CATCH( ; );
-}
-
 //-------------------------------------------------------------------------------
 
 HostRef* JPStringType::asHostObject(jvalue val) 

@@ -190,7 +190,6 @@ static PyMethodDef jpype_methods[] =
   {"setArrayItem", &JPypeJavaArray::setArrayItem, METH_VARARGS, ""},
   {"getArraySlice", &JPypeJavaArray::getArraySlice, METH_VARARGS, ""},
   {"setArraySlice", &JPypeJavaArray::setArraySlice, METH_VARARGS, ""},
-  {"setArrayValues", &JPypeJavaArray::setArrayValues, METH_VARARGS, ""},
   {"newArray", &JPypeJavaArray::newArray, METH_VARARGS, ""},
 
   {"setJavaExceptionClass", &setJavaExceptionClass, METH_VARARGS, ""},

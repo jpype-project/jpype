@@ -77,44 +77,6 @@ EMatchType JPByteType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-void JPByteType::setArrayValues(jarray a, HostRef* values)
-{
-    jbyteArray array = (jbyteArray)a;    
-    jbyte* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
-
-		// Optimize what I can ...
-		if (JPEnv::getHost()->isByteString(values))
-		{
-			// Strings are also jbyte[]
-			long len;
-			char* data;
-			JPEnv::getHost()->getRawByteString(values, &data, len);
-			memcpy(val, data, len);
-		}
-		// TODO also optimize array.array ...
-		else if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).b;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Byte array");
-		}
-		JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
-}
-
 jvalue JPByteType::convertToJava(HostRef* obj)
 {
 	jvalue res;
@@ -245,36 +207,6 @@ HostRef* JPShortType::convertToDirectBuffer(HostRef* src)
 	
 }
 
-void JPShortType::setArrayValues(jarray a, HostRef* values)
-{
-    jshortArray array = (jshortArray)a;    
-    jshort* val = NULL;
-    jboolean isCopy;
-    JPCleaner cleaner;
-
-    try {
-        val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
-
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).s;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Short array");
-		}
-		JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
-}
 
 //-------------------------------------------------------------------------------
 
@@ -355,36 +287,6 @@ HostRef* JPIntType::convertToDirectBuffer(HostRef* src)
 	
 }
 
-void JPIntType::setArrayValues(jarray a, HostRef* values)
-{
-    jintArray array = (jintArray)a;    
-    jint* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).i;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Int array");
-		}
-
-		JPEnv::getJava()->ReleaseIntArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT); } );
-}
-
 //-------------------------------------------------------------------------------
 
 HostRef* JPLongType::asHostObject(jvalue val) 
@@ -455,37 +357,6 @@ HostRef* JPLongType::convertToDirectBuffer(HostRef* src)
 	
 }
 
-void JPLongType::setArrayValues(jarray a, HostRef* values)
-{
-    jlongArray array = (jlongArray)a;    
-    jlong* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).j;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Long array");
-		}
-
-		JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
-}
-
-
 //-------------------------------------------------------------------------------
 HostRef* JPFloatType::asHostObject(jvalue val) 
 {
@@ -552,36 +423,6 @@ HostRef* JPFloatType::convertToDirectBuffer(HostRef* src)
 	
 }
 
-void JPFloatType::setArrayValues(jarray a, HostRef* values)
-{
-    jfloatArray array = (jfloatArray)a;    
-    jfloat* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).f;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Float array");
-		}
-
-		JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
-}
-
 //---------------------------------------------------------------------------
 
 HostRef* JPDoubleType::asHostObject(jvalue val) 
@@ -639,36 +480,6 @@ HostRef* JPDoubleType::convertToDirectBuffer(HostRef* src)
 {
 		RAISE(JPypeException, "Unable to convert to Direct Buffer");
 	
-}
-
-void JPDoubleType::setArrayValues(jarray a, HostRef* values)
-{
-    jdoubleArray array = (jdoubleArray)a;    
-    jdouble* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetDoubleArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).d;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Double array");
-		}
-
-		JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT); } );
 }
 
 //----------------------------------------------------------------
@@ -742,36 +553,6 @@ HostRef* JPCharType::convertToDirectBuffer(HostRef* src)
 	
 }
 
-void JPCharType::setArrayValues(jarray a, HostRef* values)
-{
-    jcharArray array = (jcharArray)a;    
-    jchar* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).c;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Char array");
-		}
-
-		JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseCharArrayElements(array, val, JNI_ABORT); } );
-}
-
 //----------------------------------------------------------------------------------------
 
 HostRef* JPBooleanType::asHostObject(jvalue val) 
@@ -829,36 +610,4 @@ jvalue JPBooleanType::convertToJava(HostRef* obj)
 HostRef* JPBooleanType::convertToDirectBuffer(HostRef* src)
 {
 		RAISE(JPypeException, "Unable to convert to Direct Buffer");
-	
 }
-
-void JPBooleanType::setArrayValues(jarray a, HostRef* values)
-{
-    jbooleanArray array = (jbooleanArray)a;    
-    jboolean* val = NULL;
-    jboolean isCopy;
-
-    try {
-        val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
-		// Optimize what I can ...
-		// TODO also optimize array.array ...
-		if (JPEnv::getHost()->isSequence(values))
-		{
-			int len = JPEnv::getHost()->getSequenceLength(values);
-			for (int i = 0; i < len; i++)
-			{
-				HostRef* v = JPEnv::getHost()->getSequenceItem(values, i);
-				val[i] = convertToJava(v).z;
-				delete v;
-			}
-		}	
-		else
-		{
-			RAISE(JPypeException, "Unable to convert to Boolean array");
-		}
-
-		JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_ABORT); } );
-}
-
