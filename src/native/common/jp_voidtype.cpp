@@ -99,8 +99,3 @@ HostRef* JPVoidType::convertToDirectBuffer(HostRef* src)
 {
 	RAISE(JPypeException, "Unable to convert to Direct Buffer");
 }
-
-void JPVoidType::setArrayValues(jarray a, HostRef* values)
-{
-	RAISE(JPypeException, "Unable to convert to Direct Buffer");
-}
