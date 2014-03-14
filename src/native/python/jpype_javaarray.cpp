@@ -38,8 +38,7 @@ PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 		JPArrayClass* claz = JPTypeManager::findArrayClass(name);
 		if (claz == NULL)
 		{
-			Py_INCREF(Py_None);
-			return Py_None;
+			Py_RETURN_NONE;
 		}
 
 		PyObject* res = JPyCObject::fromVoidAndDesc((void*)claz, (void*)"jclass", NULL);
@@ -50,8 +49,7 @@ PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 
 	PyErr_Clear();
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 
@@ -62,8 +60,7 @@ PyObject* JPypeJavaArray::setJavaArrayClass(PyObject* self, PyObject* arg)
 		JPyArg::parseTuple(arg, "O", &t);
 		hostEnv->setJavaArrayClass(t);
 
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -95,8 +92,6 @@ PyObject* JPypeJavaArray::getArrayLength(PyObject* self, PyObject* arg)
 
 		int res = a->getLength();
 		return JPyInt::fromLong(res);
-
-	
 	}
 	PY_STANDARD_CATCH
 
@@ -121,9 +116,9 @@ PyObject* JPypeJavaArray::getArrayItem(PyObject* self, PyObject* arg)
 
 PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 {
-		PyObject* arrayObject;
-		int lo = -1;
-		int hi = -1;
+	PyObject* arrayObject;
+	int lo = -1;
+	int hi = -1;
 	try
 	{
 
@@ -232,8 +227,7 @@ PyObject* JPypeJavaArray::setArrayItem(PyObject* self, PyObject* arg)
 		cleaner.add(v);
 
 		a->setItem(ndx, v);
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -252,29 +246,6 @@ PyObject* JPypeJavaArray::newArray(PyObject* self, PyObject* arg)
 		PyObject* res = JPyCObject::fromVoidAndDesc(v, (void*)"JPArray", PythonHostEnvironment::deleteJPArrayDestructor);
 
 		return res;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-PyObject* JPypeJavaArray::setArrayValues(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* arrayObject;
-		PyObject* values;
-		JPyArg::parseTuple(arg, "O!O", &PyCObject_Type, &arrayObject, &values);
-		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
-		JPArrayClass* arrayClass = a->getClass();
-		HostRef valuesRef(values);
-
-		JPCleaner cleaner;
-		jarray arr = (jarray)a->getObject();
-		cleaner.addLocal(arr);
-		arrayClass->getComponentType()->setArrayValues(arr, &valuesRef);
-
-		Py_INCREF(Py_None);
-		return Py_None;
 	}
 	PY_STANDARD_CATCH
 

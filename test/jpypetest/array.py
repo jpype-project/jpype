@@ -162,3 +162,16 @@ class ArrayTestCase(common.JPypeTestCase) :
         
         # -1 is returned by python, if conversion fails also, ensure this works
         jarr[1:2] = [-1]
+        
+    def testObjectArrayInitial(self):
+        l1 = java.util.ArrayList()
+        l1.add(0)
+        l2 = java.util.ArrayList()
+        l2.add(42)
+        l3 = java.util.ArrayList()
+        l3.add(13)
+        jarr = jpype.JArray(java.util.ArrayList, 1)([l1, l2, l3])
+        
+        self.assertEqual(l1, jarr[0])
+        self.assertEqual(l2, jarr[1])
+        self.assertEqual(l3, jarr[2])
