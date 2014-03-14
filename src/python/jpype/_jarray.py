@@ -131,7 +131,7 @@ def JArray(t, ndims=1) :
 		t = t.__name__
 		
 	elif not isinstance(t, str) and not isinstance(t, unicode) :
-		raise TypeError, "Argument must be a java class, java array class, java wrapper or string represeing a java class"
+		raise TypeError, "Argument must be a java class, java array class, java wrapper or string representing a java class"
 		
 	arrayTypeName = t + ('[]'*ndims)
 	
