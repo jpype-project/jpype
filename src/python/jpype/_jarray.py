@@ -78,7 +78,7 @@ def _jarrayInit(self, *args) :
 		_JavaArrayClass.__init__(self, _jpype.newArray(self.__class__.__javaclass__, sz))
 		
 		if values is not None :
-			_jpype.setArrayValues(self.__javaobject__, values)
+			_jpype.setArraySlice(self.__javaobject__, 0, sz, values)
 		
 	
 class _JavaArrayIter(object) :
