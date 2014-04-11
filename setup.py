@@ -74,8 +74,10 @@ elif sys.platform == 'darwin':
         if StrictVersion(osx) >= StrictVersion('10.6'):
             import subprocess
             # call java_home detector 
-            java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
-
+            if 'check_output' in dir(subprocess): 
+            	java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
+            else:
+                java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
     else: # osx < 10.6
         java_home = '/System/Library/Frameworks/JavaVM.framework/Home/'
 
