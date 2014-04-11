@@ -3,6 +3,10 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+0.5.5.1
+----------------------
+* Fix: setup.py now runs under MacOSX with Python 2.6 (referred to missing subprocess function)
+
 0.5.5 
 ----------------------
 
