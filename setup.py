@@ -125,7 +125,7 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 
 setup(
     name='JPype1',
-    version='0.5.5',
+    version='0.5.5.1',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +
