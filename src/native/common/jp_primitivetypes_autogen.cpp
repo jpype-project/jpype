@@ -43,6 +43,7 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence) {
 	// temporarily disabled until production stable
 	return false;
 
+#if (PY_VERSION_HEX >= 0x02070000)
 	//creates a PyBuffer from sequence check for typeError,
 	// if no underlying buff exists.
 	PyObject* memview = PyMemoryView_FromObject(sequence);
@@ -94,6 +95,7 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence) {
 		PyErr_Clear();
 	}
 	return false;
+#endif
 }
 
 jarray JPByteType::newArrayInstance(int sz)
