@@ -8,12 +8,11 @@ from glob import glob
 
 from setuptools import setup
 from setuptools import Extension
-
+from setuptools.command.build_ext import build_ext
 
 def read_utf8(*parts):
     filename = os.path.join(os.path.dirname(__file__), *parts)
     return codecs.open(filename, encoding='utf-8').read()
-
 
 def find_sources():
     cpp_files = []
@@ -122,6 +121,13 @@ else:
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
 
+# omit -Wstrict-prototypes from CFLAGS since its only valid for C code.
+class my_build_ext(build_ext):
+    def initialize_options(self, *args):
+        from distutils.sysconfig import get_config_vars
+        (opt,) = get_config_vars('OPT')
+        os.environ['OPT'] = ' '.join(flag for flag in opt.split() if flag != '-Wstrict-prototypes')
+        build_ext.initialize_options(self)
 
 setup(
     name='JPype1',
@@ -153,5 +159,6 @@ setup(
         'jpype': 'src/python/jpype',
         'jpypex': 'src/python/jpypex',
     },
+    cmdclass={'build_ext': my_build_ext},
     ext_modules=[jpypeLib],
 )
