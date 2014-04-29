@@ -50,7 +50,7 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence) {
 	Py_buffer* buff = NULL;
 	// check for TypeError, if no underlying buff exists.
 	PyObject* err = PyErr_Occurred();
-	if (not err) {
+	if (err != NULL) {
 		buff = PyMemoryView_GET_BUFFER(memview);
 		if (PyBuffer_IsContiguous(buff, 'C' )) {
 			// TODO: ensure length of buffer contains enough elements somehow.
@@ -1022,7 +1022,7 @@ void JPDoubleType::setArrayRange(jarray a, int start, int length, PyObject* sequ
 
 	// set java array
 	try {
-		JPEnv::getJava()->SetDoubleArrayRegion(array, start, length, val.data());
+		JPEnv::getJava()->SetDoubleArrayRegion(array, start, length, &val.front());
 	} RETHROW_CATCH();
 }
 
@@ -1408,4 +1408,3 @@ PyObject* JPBooleanType::getArrayRangeToSequence(jarray a, int start, int length
 }
 
 //----------------------------------------------------------
-
