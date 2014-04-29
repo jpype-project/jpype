@@ -131,7 +131,7 @@ class my_build_ext(build_ext):
 
 setup(
     name='JPype1',
-    version='0.5.5.1',
+    version='0.5.5.2',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +
