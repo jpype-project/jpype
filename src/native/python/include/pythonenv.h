@@ -31,7 +31,7 @@ class PythonException : public HostException
 {
 public :
 	PythonException();	
-	PythonException(PythonException& ex);
+	PythonException(const PythonException& ex);
 
 	virtual ~PythonException();
 	
