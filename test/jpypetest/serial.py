@@ -23,6 +23,7 @@ import traceback
 class SerializationTestCase(common.JPypeTestCase) :
 
     def setUp(self):
+        super(SerializationTestCase, self).setUp()
         self.tempname = tempfile.mktemp()
 
     def tearDown(self):
