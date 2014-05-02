@@ -363,7 +363,7 @@ PythonException::PythonException()
 	TRACE_OUT;
 }
 
-PythonException::PythonException(PythonException& ex)
+PythonException::PythonException(const PythonException& ex)
 {
 	m_ExceptionClass = ex.m_ExceptionClass;
 	Py_INCREF(m_ExceptionClass);
