@@ -28,23 +28,23 @@
 class JPTypeName
 {
 public:
-//AT's comments on porting:
-// 1) Originally this ETypes enum was declraed outside of this JPTypeName class.
-// This, however, broke compilation on AIX platform because of a conflict with some system headers;
-// As a compromise, it was made part of JPTypeName
-        enum ETypes {
-             _unknown,
-             _void,
-             _byte, _short, _int, _long,
-             _float, _double,
-             _char,
-             _boolean,
+	enum ETypes {
+		_unknown,
+		_void,
+		_byte,
+		_short,
+		_int,
+		_long,
+		_float,
+		_double,
+		_char,
+		_boolean,
 
-             _object,
-             _class,
-             _string,
-             _array
-        };
+		_object,
+		_class,
+		_string,
+		_array
+	};
 
 	JPTypeName() :
 		 m_SimpleName(""), m_NativeName(""), m_Type(_unknown)
@@ -75,10 +75,6 @@ public :
 		return *this;
 	}
 
-	/** Destructor */
-	virtual ~JPTypeName() 
-	{}
-	
 public :
 	/**
 	 * Initialize the cache of type-name to ETypes
@@ -106,7 +102,7 @@ public :
 		return m_Type;
 	}
 
-	bool isObjectType()
+	bool isObjectType() const
 	{
 		return m_Type >= _object;
 	}
