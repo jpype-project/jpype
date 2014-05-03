@@ -331,6 +331,17 @@ HostRef::~HostRef()
 {
 	JPEnv::getHost()->releaseRef(m_HostData);
 }
+
+HostRef::HostRef(const HostRef& h)
+{
+	m_HostData = JPEnv::getHost()->acquireRef(h.m_HostData);
+}
+
+HostRef& HostRef::operator=(const HostRef& h) {
+	m_HostData = JPEnv::getHost()->acquireRef(h.m_HostData);
+	return *this;
+}
+
 	
 HostRef* HostRef::copy()
 {

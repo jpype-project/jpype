@@ -23,6 +23,8 @@ public :
 	HostRef(void* data, bool acquire);
 	HostRef(void* data);
 	virtual ~HostRef();
+	HostRef(const HostRef&);
+	HostRef& operator=(const HostRef&);
 	
 public :
 	HostRef* copy();
