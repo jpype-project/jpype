@@ -17,7 +17,7 @@
 from jpype import *
 import common
 import unittest2
-from sys import version_info as ver
+from sys import hexversion as ver
 
 def _testMethod() :
     return 32
@@ -73,9 +73,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         t3 = Test3()
         t3.testProxyWithThread(proxy)
 
-    @unittest2.skipIf(ver.major == 2 and 
-                      ver.minor == 7 and
-                      ver.micro > 3, 'broken, see ISSUE #67')
+    @unittest2.skipIf(ver > 0x020703, 'broken, see ISSUE #67')
     def testProxyWithArguments(self) :
         itf2 = self.package.ITestInterface2
         Test3 = self.package.Test3
@@ -84,9 +82,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         proxy = JProxy(itf2, inst=c)
         Test3().testCallbackWithParameters(proxy)
     
-    @unittest2.skipIf(ver.major == 2 and 
-                      ver.minor == 7 and
-                      ver.micro > 3, 'broken, see ISSUE #67')
+    @unittest2.skipIf(ver > 0x020703, 'broken, see ISSUE #67')
     def testProxyWithMultipleInterface(self) :
         itf2 = self.package.ITestInterface2
         itf3 = self.package.ITestInterface3
