@@ -242,17 +242,17 @@ PyObject* JPByteType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     jbyteArray array = (jbyteArray)a;
     jbyte* val = NULL;
     jboolean isCopy;
-    PyObject* res = NULL;
 
     try {
        val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
        PyObject *tuple = PyTuple_New(hi - lo);
 
-       for (Py_ssize_t i = lo; i < hi; i++)
-           PyTuple_SET_ITEM(tuple, i, PyInt_FromLong(val[i]));
+       for (Py_ssize_t i = lo; i < hi; i++) {
+    	   PyTuple_SetItem(tuple, i, PyInt_FromLong(val[i]));
+       }
 
        JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT);
-       return res;
+       return tuple;
     }
     RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
 }

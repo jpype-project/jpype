@@ -112,6 +112,17 @@ class ArrayTestCase(common.JPypeTestCase) :
         v = t.charArray
         self.assertEqual(str(v[:]), 'avcd')
         self.assertEqual(unicode(v[:]), u'avcd')
+        
+    def testJArrayConversionByte(self):
+        expected = (0,1,2,3)
+        ByteBuffer = jpype.java.nio.ByteBuffer
+        bb = ByteBuffer.allocate(4)
+        buf = bb.array()
+        print "type: ", type(buf)
+        for i in xrange(len(expected)):
+            buf[i] = expected[i]
+        
+        self.assertEqual(expected[:], buf[:])
 
     @unittest.expectedFailure
     def testJArrayConversionShort(self):
