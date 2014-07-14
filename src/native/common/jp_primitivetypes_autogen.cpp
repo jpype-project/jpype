@@ -25,6 +25,13 @@
 	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
 	#define NO_IMPORT_ARRAY
 	#include <numpy/arrayobject.h>
+#else
+    #define NPY_BYTE 0
+    #define NPY_SHORT 0
+    #define NPY_INT 0
+    #define NPY_LONG 0
+    #define NPY_FLOAT32 0
+    #define NPY_FLOAT64 0
 #endif
 
 #define CONVERSION_ERROR_HANDLE \
