@@ -19,23 +19,20 @@ import jpype
 from jpype import JPackage, JArray, JByte, java
 import common
 
-VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4]
-
 class ArrayTestCase(common.JPypeTestCase) :
-    def __arrayEquals(self, a1, a2) :
-        self.assertEqual(len(a1), len(a2))
-        
-        for i in range(len(a1)) :
-            self.assertEqual(a1[i], a2[i])
+    
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4]
     
     def testReadArray(self) :
         t = JPackage("jpype").array.TestArray()
         assert not isinstance(t, JPackage)
         
-        self.__arrayEquals(VALUES, t.i)
+        self.assertItemsEqual(self.VALUES, t.i)
         
-        self.assertEqual(t.i[0], VALUES[0])
-        self.__arrayEquals(VALUES[1:-2], t.i[1:-2])
+        self.assertEqual(t.i[0], self.VALUES[0])
+        self.assertItemsEqual(self.VALUES[1:-2], t.i[1:-2])
 
     def testStangeBehavior(self) :
         ''' Test for stange crash reported in bug #1089302'''
@@ -51,10 +48,10 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(t.i[0], 32)
         
         t.i[1:3] = (33, 34)
-        self.assertEqual(t.i[1], 33   )
+        self.assertEqual(t.i[1], 33)
         self.assertEqual(t.i[2], 34)
         
-        self.__arrayEquals(t.i[:5], (32, 33, 34 ,1324, 424) )
+        self.assertItemsEqual(t.i[:5], (32, 33, 34 ,1324, 424) )
         
     def testObjectArraySimple(self) :
         a = JArray(java.lang.String, 1)(2)
@@ -118,54 +115,65 @@ class ArrayTestCase(common.JPypeTestCase) :
         ByteBuffer = jpype.java.nio.ByteBuffer
         bb = ByteBuffer.allocate(4)
         buf = bb.array()
-        print "type: ", type(buf)
         for i in xrange(len(expected)):
             buf[i] = expected[i]
         
-        self.assertEqual(expected[:], buf[:])
+        self.assertItemsEqual(expected[:], buf[:])
 
     @unittest.expectedFailure
     def testJArrayConversionShort(self):
         # TODO: think about impl short (JShort not available)
-        jarr = jpype.JArray(jpype.JShort)(VALUES)
+        jarr = jpype.JArray(jpype.JShort)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertEqual(VALUES, result)
+        self.assertItemsEqual(self.VALUES, result)
         
         result = jarr[2:10]
-        self.assertEqual(VALUES[2:10], result)
+        self.assertItemsEqual(self.VALUES[2:10], result)
         
     def testJArrayConversionInt(self):
-        jarr = jpype.JArray(jpype.JInt)(VALUES)
+        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertEqual(VALUES, result)
+        self.assertItemsEqual(self.VALUES, result)
         
         result = jarr[2:10]
-        self.assertEqual(VALUES[2:10], result)
+        self.assertItemsEqual(self.VALUES[2:10], result)
     
     def testJArrayConversionLong(self):
-        jarr = jpype.JArray(jpype.JLong)(VALUES)
+        jarr = jpype.JArray(jpype.JLong)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertEqual(VALUES, result)
+        self.assertItemsEqual(self.VALUES, result)
         
         result = jarr[2:10]
-        self.assertEqual(VALUES[2:10], result)
+        self.assertItemsEqual(self.VALUES[2:10], result)
         
     def testJArrayConversionFloat(self):
-        jarr = jpype.JArray(jpype.JFloat)(VALUES)
+        jarr = jpype.JArray(jpype.JFloat)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertEqual(VALUES, result)
+        self.assertItemsEqual(self.VALUES, result)
         
         result = jarr[2:10]
-        self.assertEqual(VALUES[2:10], result)
+        self.assertItemsEqual(self.VALUES[2:10], result)
         
     def testJArrayConversionDouble(self):
-        jarr = jpype.JArray(jpype.JDouble)(VALUES)
-        result = jarr[0 : len(jarr)]
-        self.assertEqual(VALUES, result)
+        jarr = jpype.JArray(jpype.JDouble)(self.VALUES)
+        self.assertItemsEqual(self.VALUES, jarr)
+        result = jarr[:]
+        self.assertItemsEqual(self.VALUES, result)
         
         result = jarr[2:10]
-        self.assertEqual(VALUES[2:10], result)
         
+        self.assertEqual(len(self.VALUES[2:10]), len(result))
+        self.assertItemsEqual(self.VALUES[2:10], result)
+        
+        # empty slice
+        result = jarr[-1:3]
+        expected = self.VALUES[-1:3]
+        self.assertItemsEqual(expected, result)
+        
+        result = jarr[3:-2]
+        expected = self.VALUES[3:-2]
+        self.assertItemsEqual(expected, result)
+
     def testConversionError(self):
         jarr = jpype.JArray(jpype.JInt, 1)(10)
         with self.assertRaises(RuntimeError):
