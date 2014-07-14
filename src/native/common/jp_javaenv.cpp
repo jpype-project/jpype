@@ -330,3 +330,18 @@ jobject JPJavaEnv::NewObject(jclass a0, jmethodID a1)
     JAVA_CHECK("NewObject");
     return res;
 }
+
+void* JPJavaEnv::GetPrimitiveArrayCritical(jarray array, jboolean *isCopy)
+{
+    JNIEnv* env = getJNIEnv();
+    void* res = env->functions->GetPrimitiveArrayCritical(env, array, isCopy);
+    JAVA_CHECK("GetPrimitiveArrayCritical");
+    return res;
+}
+
+void JPJavaEnv::ReleasePrimitiveArrayCritical(jarray array, void *carray, jint mode)
+{
+    JNIEnv* env = getJNIEnv();
+    env->functions->ReleasePrimitiveArrayCritical(env, array,carray,mode);
+    JAVA_CHECK("ReleasePrimitiveArrayCritical");
+}
