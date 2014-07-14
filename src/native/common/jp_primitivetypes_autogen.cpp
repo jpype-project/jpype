@@ -17,9 +17,15 @@
 *****************************************************************************/   
 
 // This code has been automatically generated ... No not edit
-
+// but has been edited already a lot, maybe we should change the name of this unit?
 #include <Python.h>
 #include <jpype.h>
+
+#ifdef HAVE_NUMPY
+	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
+	#define NO_IMPORT_ARRAY
+	#include <numpy/arrayobject.h>
+#endif
 
 #define CONVERSION_ERROR_HANDLE \
 PyObject* exe = PyErr_Occurred(); \
@@ -32,7 +38,7 @@ if(exe != NULL) \
 }
 
 /**
- * TODO: document this
+ * TODO: pass functions for get/set as template parameters
  */
 // for python 2.6 we have also memory view available
 #include <jpype_memory_view.h>
@@ -96,6 +102,55 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence) {
 	}
 	return false;
 #endif
+}
+
+
+/**
+ * gets either a numpy ndarray or a python list with a copy of the underling java array,
+ * containing the range [lo, hi].
+ *
+ * Parameters:
+ * -----------
+ * lo = low index
+ * hi = high index
+ * npy_type = e.g NPY_FLOAT64
+ * jtype = eg. jdouble
+ * convert = function to convert elements to python types. Eg: PyInt_FromLong
+ */
+template<typename jtype, typename py_wrapper_func>
+inline PyObject* getSlice(jarray array, int lo, int hi, int npy_type,
+        py_wrapper_func convert)
+{
+    jtype* val = NULL;
+    jboolean isCopy;
+    PyObject* res = NULL;
+    uint len = hi - lo;
+
+    try
+    {
+#ifdef HAVE_NUMPY
+        npy_intp dims[] = {len};
+        res = PyArray_SimpleNew(1, dims, npy_type);
+#else
+        res = PyList_New(len);
+#endif
+        if (len > 0)
+        {
+            val = (jtype*) JPEnv::getJava()->GetPrimitiveArrayCritical(array, &isCopy);
+#ifdef HAVE_NUMPY
+            // use typed numpy arrays for results
+            memcpy(((PyArrayObject*) res)->data, &val[lo], len * sizeof(jtype));
+#else
+            // use python lists for results
+            for (Py_ssize_t i = lo; i < hi; i++)
+                PyList_SET_ITEM(res, i - lo, convert(val[i]));
+#endif
+            // unpin array
+            JPEnv::getJava()->ReleasePrimitiveArrayCritical(array, val, JNI_ABORT);
+        }
+        return res;
+    }
+    RETHROW_CATCH(if (val != NULL) { JPEnv::getJava()->ReleasePrimitiveArrayCritical(array, val, JNI_ABORT); });
 }
 
 jarray JPByteType::newArrayInstance(int sz)
@@ -239,22 +294,7 @@ void JPByteType::setArrayItem(jarray a, int ndx, HostRef* obj)
 }
 
 PyObject* JPByteType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    jbyteArray array = (jbyteArray)a;
-    jbyte* val = NULL;
-    jboolean isCopy;
-
-    try {
-       val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
-       PyObject *tuple = PyTuple_New(hi - lo);
-
-       for (Py_ssize_t i = lo; i < hi; i++) {
-    	   PyTuple_SetItem(tuple, i, PyInt_FromLong(val[i]));
-       }
-
-       JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT);
-       return tuple;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jbyte>(a, lo, hi, NPY_BYTE, PyInt_FromLong);
 }
 
 
@@ -403,21 +443,7 @@ void JPShortType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPShortType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    jshortArray array = (jshortArray)a;
-    jshort* val = NULL;
-    jboolean isCopy;
-    PyObject* res = NULL;
-
-    try {
-       val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
-       res = PyList_New(hi - lo);
-       for (Py_ssize_t i = lo; i < hi; i++)
-         PyList_SET_ITEM(res, i - lo, PyInt_FromLong(val[i]));
-
-       JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT);
-       return res;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jshort>(a, lo, hi, NPY_SHORT, PyInt_FromLong);
 }
 
 //----------------------------------------------------------
@@ -555,7 +581,7 @@ HostRef* JPIntType::getArrayItem(jarray a, int ndx)
 
 void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-    jintArray array = (jintArray)a;    
+    jintArray array = (jintArray)a;
     jint val;
     
     try {
@@ -567,21 +593,7 @@ void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
 
 
 PyObject* JPIntType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-	jintArray array = (jintArray)a;
-    jint* val = NULL;
-    jboolean isCopy;
-    PyObject* res = NULL;
-    try {
-       val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
-       res = PyList_New(hi - lo);
-       for (Py_ssize_t i = lo; i < hi; i++)
-       {
-         PyList_SET_ITEM(res, i - lo, PyInt_FromLong(val[i]));
-       }
-       JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT);
-       return res;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jint>(a, lo, hi, NPY_INT, PyInt_FromLong);
 }
 
 //----------------------------------------------------------
@@ -729,23 +741,8 @@ void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPLongType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    jlongArray array = (jlongArray)a;
-    jlong* val = NULL;
-    jboolean isCopy;
-    PyObject* res = NULL;
-
-    try {
-       val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
-       res = PyList_New(hi - lo);
-       for (Py_ssize_t i = lo; i < hi; i++)
-         PyList_SET_ITEM(res, i - lo, PyLong_FromLong(val[i]));
-
-       JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT);
-       return res;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jlong>(a, lo, hi, NPY_LONG, PyLong_FromLong);
 }
-
 
 //----------------------------------------------------------
 
@@ -892,21 +889,7 @@ void JPFloatType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPFloatType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    jfloatArray array = (jfloatArray)a;
-    jfloat* val = NULL;
-    jboolean isCopy;
-    PyObject* res = NULL;
-
-    try {
-       val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
-       res = PyList_New(hi - lo);
-       for (Py_ssize_t i = lo; i < hi; i++)
-         PyList_SET_ITEM(res, i - lo, PyFloat_FromDouble(val[i]));
-
-       JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT);
-       return res;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jfloat>(a, lo, hi, NPY_FLOAT32, PyFloat_FromDouble);
 }
 
 //----------------------------------------------------------
@@ -1054,21 +1037,7 @@ void JPDoubleType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPDoubleType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    jdoubleArray array = (jdoubleArray)a;
-    jdouble* val = NULL;
-    jboolean isCopy;
-    PyObject* res = NULL;
-
-    try {
-       val = JPEnv::getJava()->GetDoubleArrayElements(array, &isCopy);
-       res = PyList_New(hi - lo);
-       for (Py_ssize_t i = lo; i < hi; i++)
-         PyList_SET_ITEM(res, i - lo, PyFloat_FromDouble(val[i]));
-
-       JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT);
-       return res;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, JNI_ABORT); } );
+	return getSlice<jdouble>(a, lo, hi, NPY_FLOAT64, PyFloat_FromDouble);
 }
 
 //----------------------------------------------------------
