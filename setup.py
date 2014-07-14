@@ -119,6 +119,19 @@ else:
     ]
 
 
+# try to use NumPy and define macro 'HAVE_NUMPY' if its the case, so arrays
+# returned from Java can be wrapped efficiently in a ndarray.
+try:
+    import numpy
+    if platform_specific.has_key('define_macros'):
+        platform_specific['define_macros'].append(('HAVE_NUMPY', 1))
+    else:
+        platform_specific['define_macros'] = [('HAVE_NUMPY', 1)]
+
+    platform_specific['include_dirs'].append(numpy.get_include())
+except ImportError:
+    pass
+
 jpypeLib = Extension(name='_jpype', **platform_specific)
 
 # omit -Wstrict-prototypes from CFLAGS since its only valid for C code.
@@ -160,5 +173,6 @@ setup(
         'jpypex': 'src/python/jpypex',
     },
     cmdclass={'build_ext': my_build_ext},
+    #zip_safe=False,
     ext_modules=[jpypeLib],
 )
