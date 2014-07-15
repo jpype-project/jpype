@@ -21,6 +21,13 @@ import common
 
 VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4]
 
+def haveNumpy():
+    try:
+        import numpy
+        return True
+    except ImportError:
+        return False
+
 class ArrayTestCase(common.JPypeTestCase) :
     def __arrayEquals(self, a1, a2) :
         self.assertEqual(len(a1), len(a2))
@@ -118,7 +125,6 @@ class ArrayTestCase(common.JPypeTestCase) :
         ByteBuffer = jpype.java.nio.ByteBuffer
         bb = ByteBuffer.allocate(4)
         buf = bb.array()
-        print "type: ", type(buf)
         for i in xrange(len(expected)):
             buf[i] = expected[i]
         
@@ -186,3 +192,15 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(l1, jarr[0])
         self.assertEqual(l2, jarr[1])
         self.assertEqual(l3, jarr[2])
+
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetDoubleArray(self):
+        from numpy.random import random
+        n = 100
+        a = random(n)
+        jarr = jpype.JArray(jpype.JDouble)(n)
+        # set via slice operator
+        jarr[:] = a
+        
+        self.assertItemsEqual(a, jarr)
