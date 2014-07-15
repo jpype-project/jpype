@@ -60,7 +60,7 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc set
 	Py_buffer* py_buff = PyMemoryView_GET_BUFFER(memview);
 
     // ensure length of buffer contains enough elements somehow.
-    if (py_buff->len != length) {
+    if ((py_buff->len / sizeof(jelementtype)) != length) {
         std::stringstream ss;
         ss << "Underlying buffer does not contain requested number of elements! Has "
            << py_buff->len << ", but " << length <<" are requested.";
