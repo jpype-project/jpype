@@ -144,6 +144,11 @@ public :
 	/** NewObject */
 	jobject NewObject(jclass a0, jmethodID a1);
 
+	/** get/release primitive arrays critical (direct pointer access) */
+	void* GetPrimitiveArrayCritical(jarray array, jboolean *isCopy);
+
+	void ReleasePrimitiveArrayCritical(jarray array, void *carray, jint mode);
+
 	#include "jp_javaenv_autogen.h"
 
 };
