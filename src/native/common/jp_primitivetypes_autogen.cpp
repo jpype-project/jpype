@@ -1359,7 +1359,7 @@ void JPBooleanType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPBooleanType::getArrayRangeToSequence(jarray a, int start, int length) {
-    return getSlice<jboolean>(a, lo, hi, NPY_BOOL, PyBool_FromLong);
+    return getSlice<jboolean>(a, start, length, NPY_BOOL, PyBool_FromLong);
 }
 
 //----------------------------------------------------------
