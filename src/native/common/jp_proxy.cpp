@@ -106,13 +106,13 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		return returnObj;
 
 	}
-	catch(HostException* ex) 
+	catch(HostException& ex)
 	{ 
 		JPEnv::getHost()->clearError();
-		if (JPEnv::getHost()->isJavaException(ex))
+		if (JPEnv::getHost()->isJavaException(&ex))
 		{
 			JPCleaner cleaner;
-			HostRef* javaExcRef = JPEnv::getHost()->getJavaException(ex);
+			HostRef* javaExcRef = JPEnv::getHost()->getJavaException(&ex);
 			JPObject* javaExc = JPEnv::getHost()->asObject(javaExcRef);
 			cleaner.add(javaExcRef);
 			jobject obj = javaExc->getObject();
@@ -124,13 +124,13 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Python exception thrown");
 		}
 	} 
-	catch(JavaException*) 
+	catch(JavaException&)
 	{ 
 		cerr << "Java exception at " << __FILE__ << ":" << __LINE__ << endl; 
 	}
-	catch(JPypeException* ex)
+	catch(JPypeException& ex)
 	{
-		JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, ex->getMsg());
+		JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, ex.getMsg());
 	}
 
 	JPEnv::getHost()->prepareCallbackFinish(callbackState);
