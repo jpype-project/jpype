@@ -15,7 +15,13 @@
    
 *****************************************************************************/   
 
-#include <jpype_python.h>  
+
+#include <jpype_python.h>
+#ifdef HAVE_NUMPY
+//	#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
+	#include <numpy/arrayobject.h>
+#endif
 
 PythonHostEnvironment* hostEnv;
 
@@ -221,6 +227,10 @@ PyMODINIT_FUNC init_jpype()
 
 #if (PY_VERSION_HEX < 0x02070000)
 	jpype_memoryview_init(module);
+#endif
+
+#ifdef HAVE_NUMPY
+	import_array();
 #endif
 }
 
