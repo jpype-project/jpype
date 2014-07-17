@@ -24,7 +24,7 @@ class JavaException
 {
 public :
 	JavaException(const char* msg, const char* f, int l) : file(f), line(l) {message = msg;}
-	JavaException(JavaException& ex) : file(ex.file), line(ex.line) {message = ex.message;}
+	JavaException(const JavaException& ex) : file(ex.file), line(ex.line) {message = ex.message;}
 
 	virtual ~JavaException() {}
 

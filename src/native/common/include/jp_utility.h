@@ -19,7 +19,7 @@
 
 #include <jni.h>
 
-#define RAISE(exClass, msg) { throw new exClass(msg, __FILE__, __LINE__); }
+#define RAISE(exClass, msg) { throw exClass(msg, __FILE__, __LINE__); }
 
 /** Support Exception for JPype-generated exception */
 class JPypeException

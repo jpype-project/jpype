@@ -20,7 +20,7 @@
 #define PY_CHECK(op) op; { \
 	PyObject* __ex = PyErr_Occurred(); \
 	if (__ex) { 	\
-		throw new PythonException(); \
+		throw PythonException(); \
 	}\
 };
 
@@ -239,7 +239,7 @@ public :
 #undef PY_CHECK
 
 #define PY_STANDARD_CATCH \
-catch(JavaException* ex) \
+catch(JavaException& ex) \
 { \
 	try { \
 		JPypeJavaException::errorOccurred(); \
@@ -248,22 +248,19 @@ catch(JavaException* ex) \
 	{ \
 		JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a Java Exception"); \
 	}\
-	delete ex; \
 }\
-catch(JPypeException* ex)\
+catch(JPypeException& ex)\
 {\
 	try { \
-		JPEnv::getHost()->setRuntimeException(ex->getMsg()); \
+		JPEnv::getHost()->setRuntimeException(ex.getMsg()); \
 	} \
 	catch(...) \
 	{ \
 		JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a JPype Exception"); \
 	}\
-	delete ex; \
 }\
-catch(PythonException* ex) \
+catch(PythonException& ex) \
 { \
-	delete ex; \
 } \
 catch(...) \
 {\
@@ -271,34 +268,31 @@ catch(...) \
 } \
 
 #define PY_LOGGING_CATCH \
-catch(JavaException* ex) \
+catch(JavaException& ex) \
 { \
 	try { \
-	cout << "Java error occured : " << ex->message << endl; \
+	cout << "Java error occured : " << ex.message << endl; \
 		JPypeJavaException::errorOccurred(); \
 	} \
 	catch(...) \
 	{ \
 		JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a Java Exception"); \
 	}\
-	delete ex; \
 }\
-catch(JPypeException* ex)\
+catch(JPypeException& ex)\
 {\
 	try { \
 		cout << "JPype error occured" << endl; \
-		JPEnv::getHost()->setRuntimeException(ex->getMsg()); \
+		JPEnv::getHost()->setRuntimeException(ex.getMsg()); \
 	} \
 	catch(...) \
 	{ \
 		JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a JPype Exception"); \
 	}\
-	delete ex; \
 }\
-catch(PythonException* ex) \
+catch(PythonException& ex) \
 { \
 	cout << "Pyhton error occured" << endl; \
-	delete ex; \
 } \
 catch(...) \
 {\

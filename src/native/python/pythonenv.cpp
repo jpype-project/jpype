@@ -16,7 +16,7 @@
 *****************************************************************************/   
 #include <jpype_python.h>
 
-#define PY_CHECK(op) op; { PyObject* __ex = PyErr_Occurred(); if (__ex) { 	throw new PythonException(); }};
+#define PY_CHECK(op) op; { PyObject* __ex = PyErr_Occurred(); if (__ex) { 	throw PythonException(); }};
 
 bool JPyString::check(PyObject* obj)
 {
