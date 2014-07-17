@@ -33,6 +33,9 @@ class _JWrapper(object) :
 class JByte(_JWrapper) :
     typeName = "byte"
     
+class JShort(_JWrapper) :
+    typeName = "short"
+    
 class JInt(_JWrapper) :
     typeName = "int"
 
