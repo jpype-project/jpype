@@ -31,10 +31,11 @@ if(exe != NULL) \
 	RAISE(JPypeException, ss.str());\
 }
 
+
+#if (PY_VERSION_HEX >= 0x02070000)
 // for python 2.6 we have also memory view available, but it does not contain the needed functions.
 #include <jpype_memory_view.h>
 
-//#if (PY_VERSION_HEX >= 0x02070000)
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool
 setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc setter) {
@@ -45,9 +46,9 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc set
     }
 
     // ensure memory is contiguous and 'C' ordered, this may involve a copy.
-//    PyObject* memview = PyMemoryView_GetContiguous(sequence, PyBUF_READ, 'C');
+    PyObject* memview = PyMemoryView_GetContiguous(sequence, PyBUF_READ, 'C');
     // this function is defined in jpype_memory_view, but unusable?!
-    PyObject* memview = PyMemoryView_FromObject(sequence);
+//    PyObject* memview = PyMemoryView_FromObject(sequence);
 
     // check for TypeError, if no underlying py_buff exists.
 	PyObject* err = PyErr_Occurred();
@@ -80,11 +81,12 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc set
     Py_DECREF(memview);
     return true;
 }
-//#else
-//bool setViaBuffer() {
-//    return false;
-//}
-//#endif
+#else
+template <typename a, typename b, typename c>
+bool setViaBuffer(jarray, int, int, PyObject*, c) {
+    return false;
+}
+#endif
 
 jarray JPByteType::newArrayInstance(int sz)
 {
