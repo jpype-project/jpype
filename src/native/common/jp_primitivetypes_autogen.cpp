@@ -44,73 +44,61 @@ if(exe != NULL) \
 	RAISE(JPypeException, ss.str());\
 }
 
-/**
- * TODO: pass functions for get/set as template parameters
- */
-// for python 2.6 we have also memory view available
-#include <jpype_memory_view.h>
-#include <typeinfo>
-template <typename dtype>
-inline bool
-setViaBuffer(jarray array, int start, int length, PyObject* sequence) {
-	// temporarily disabled until production stable
-	return false;
-
 #if (PY_VERSION_HEX >= 0x02070000)
-	//creates a PyBuffer from sequence check for typeError,
-	// if no underlying buff exists.
-	PyObject* memview = PyMemoryView_FromObject(sequence);
-	Py_buffer* buff = NULL;
-	// check for TypeError, if no underlying buff exists.
-	PyObject* err = PyErr_Occurred();
-	if (err != NULL) {
-		buff = PyMemoryView_GET_BUFFER(memview);
-		if (PyBuffer_IsContiguous(buff, 'C' )) {
-			// TODO: ensure length of buffer contains enough elements somehow.
-			assert((buff->len == length));
-			jboolean isCopy;
-			// TODO: impl for supported dtypes
-			if (typeid(dtype) == typeid(double)) {
-				jdoubleArray a = (jdoubleArray) array;
-				jdouble* val = NULL;
-				try {
-					val = JPEnv::getJava()->GetDoubleArrayElements(a, &isCopy);
-					val = (jdouble*) buff->buf; // TODO: test
-					JPEnv::getJava()->ReleaseDoubleArrayElements(a,val, 0);
-				} RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseDoubleArrayElements(a, val, JNI_ABORT); } );
-			}
-			else if(typeid(dtype) == typeid(float))
-				JPEnv::getJava()->SetFloatArrayRegion(
-						(jfloatArray)array, start, length, (jfloat*) buff->buf);
-			else if(typeid(dtype) == typeid(int))
-				JPEnv::getJava()->SetIntArrayRegion(
-						(jintArray)array, start, length, (jint*) buff->buf);
-			else if(typeid(dtype) == typeid(bool))
-				JPEnv::getJava()->SetBooleanArrayRegion(
-						(jbooleanArray)array, start, length, (jboolean*) buff->buf);
-			else if(typeid(dtype) == typeid(char))
-				JPEnv::getJava()->SetCharArrayRegion(
-						(jcharArray)array, start, length, (jchar*) buff->buf);
-			else if(typeid(dtype) == typeid(long))
-				JPEnv::getJava()->SetLongArrayRegion(
-						(jlongArray)array, start, length, (jlong*) buff->buf);
-			else if(typeid(dtype) == typeid(jbyte)) // special case, lets use typedef for jbyte
-				JPEnv::getJava()->SetByteArrayRegion(
-						(jbyteArray)array, start, length, (jbyte*) buff->buf);
-			else if(typeid(dtype) == typeid(short))
-				JPEnv::getJava()->SetShortArrayRegion(
-						(jshortArray)array, start, length, (jshort*) buff->buf);
-			// deallocate memview
-			Py_DECREF(memview);
-			return true;
-		}
-	} else {
-		PyErr_Clear();
-	}
-	return false;
-#endif
-}
+// for python 2.6 we have also memory view available, but it does not contain the needed functions.
+#include <jpype_memory_view.h>
 
+template <typename jarraytype, typename jelementtype, typename setFnc>
+inline bool
+setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc setter) {
+	//creates a PyMemoryView from sequence check for typeError,
+	// if no underlying py_buff exists.
+    if(! PyObject_CheckBuffer(sequence)) {
+        return false;
+    }
+
+    // ensure memory is contiguous and 'C' ordered, this may involve a copy.
+    PyObject* memview = PyMemoryView_GetContiguous(sequence, PyBUF_READ, 'C');
+    // this function is defined in jpype_memory_view, but unusable?!
+//    PyObject* memview = PyMemoryView_FromObject(sequence);
+
+    // check for TypeError, if no underlying py_buff exists.
+	PyObject* err = PyErr_Occurred();
+	if (err) {
+	    PyErr_Clear();
+	    return false;
+	}
+
+	// create a memory view
+	Py_buffer* py_buff = PyMemoryView_GET_BUFFER(memview);
+
+    // ensure length of buffer contains enough elements somehow.
+    if ((py_buff->len / sizeof(jelementtype)) != length) {
+        std::stringstream ss;
+        ss << "Underlying buffer does not contain requested number of elements! Has "
+           << py_buff->len << ", but " << length <<" are requested.";
+        RAISE(JPypeException, ss.str());
+    }
+
+    jarraytype a = (jarraytype)array;
+    jelementtype* buffer = (jelementtype*) py_buff->buf;
+    JPJavaEnv* env = JPEnv::getJava();
+
+    try {
+        (env->*setter)(a, start, length, buffer);
+    } RETHROW_CATCH( /*cleanup*/ Py_DECREF(py_buff); Py_DECREF(memview); );
+
+    // deallocate py_buff and memview
+    Py_DECREF(py_buff);
+    Py_DECREF(memview);
+    return true;
+}
+#else
+template <typename a, typename b, typename c>
+bool setViaBuffer(jarray, int, int, PyObject*, c) {
+    return false;
+}
+#endif
 
 /**
  * gets either a numpy ndarray or a python list with a copy of the underling java array,
@@ -253,8 +241,9 @@ void JPByteType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
 
 void JPByteType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-	if(setViaBuffer<jbyte>(a, start, length, sequence))
-		return;
+    if (setViaBuffer<jbyteArray, jbyte>(a, start, length, sequence,
+            &JPJavaEnv::SetByteArrayRegion))
+        return;
 
     jbyteArray array = (jbyteArray)a;
     jbyte* val = NULL;
@@ -401,8 +390,9 @@ void JPShortType::setArrayRange(jarray a, int start, int length, vector<HostRef*
 
 void JPShortType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-    if(setViaBuffer<short>(a, start, length, sequence))
-    	return;
+    if (setViaBuffer<jshortArray, jshort>(a, start, length, sequence,
+            &JPJavaEnv::SetShortArrayRegion))
+        return;
 
     jshortArray array = (jshortArray)a;
     jshort* val = NULL;
@@ -549,9 +539,9 @@ void JPIntType::setArrayRange(jarray a, int start, int length, vector<HostRef*>&
 
 void JPIntType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-
-	if(setViaBuffer<int>(a, start, length, sequence))
-		return;
+    if (setViaBuffer<jintArray, jint>(a, start, length, sequence,
+            &JPJavaEnv::SetIntArrayRegion))
+        return;
 
     jintArray array = (jintArray)a;
     jint* val = NULL;
@@ -698,7 +688,8 @@ void JPLongType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
 
 void JPLongType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-    if(setViaBuffer<long>(a, start, length, sequence))
+    if (setViaBuffer<jlongArray, jlong>(a, start, length, sequence,
+            &JPJavaEnv::SetLongArrayRegion))
         return;
 
     jlongArray array = (jlongArray)a;
@@ -750,6 +741,7 @@ void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
 PyObject* JPLongType::getArrayRangeToSequence(jarray a, int lo, int hi) {
     return getSlice<jlong>(a, lo, hi, NPY_LONG, PyLong_FromLong);
 }
+
 
 //----------------------------------------------------------
 
@@ -847,7 +839,8 @@ void JPFloatType::setArrayRange(jarray a, int start, int length, vector<HostRef*
 
 void JPFloatType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-    if(setViaBuffer<jfloat>(a, start, length, sequence))
+    if (setViaBuffer<jfloatArray, jfloat>(a, start, length, sequence,
+            &JPJavaEnv::SetFloatArrayRegion))
         return;
 
 	jfloatArray array = (jfloatArray)a;
@@ -994,8 +987,8 @@ void JPDoubleType::setArrayRange(jarray a, int start, int length, vector<HostRef
 
 void JPDoubleType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-	// use memory buffer of sequence type if available, to avoid copies.
-	if (setViaBuffer<double>(a, start, length, sequence))
+    if (setViaBuffer<jdoubleArray, jdouble>(a, start, length, sequence,
+            &JPJavaEnv::SetDoubleArrayRegion))
 		return;
 
 	jdoubleArray array = (jdoubleArray)a;
@@ -1143,21 +1136,23 @@ void JPCharType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
 
 void JPCharType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
+    if (setViaBuffer<jcharArray, jchar>(a, start, length, sequence,
+            &JPJavaEnv::SetCharArrayRegion))
+        return;
+
 	jcharArray array = (jcharArray)a;
 	jchar* val = NULL;
 	jboolean isCopy;
-
-	if(setViaBuffer<jchar>(array, start, length, sequence))
-		return;
+	long c;
 
 	try {
 		val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			jchar c = (jchar) PyInt_AsLong(o);
+			c = PyInt_AsLong(o);
 			Py_DecRef(o);
 			if(c == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = c;
+			val[start+i] = (jchar) c;
 		}
 		JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
 	}
@@ -1314,20 +1309,23 @@ void JPBooleanType::setArrayRange(jarray a, int start, int length, vector<HostRe
 
 void JPBooleanType::setArrayRange(jarray a, int start, int length, PyObject* sequence)
 {
-	if(setViaBuffer<bool>(a, start, length, sequence))
-		return;
+    if (setViaBuffer<jbooleanArray, jboolean>(a, start, length, sequence,
+            &JPJavaEnv::SetBooleanArrayRegion))
+        return;
 
 	jbooleanArray array = (jbooleanArray) a;
 	jboolean isCopy;
 	jboolean* val = NULL;
+	long c;
+
 	try {
 		val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
 		for (Py_ssize_t i = 0; i < length; ++i) {
 			PyObject* o = PySequence_GetItem(sequence, i);
-			jboolean c = (jboolean) PyInt_AsLong(o);
+			c = PyInt_AsLong(o);
 			Py_DecRef(o);
 			if(c == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = c;
+			val[start+i] = (jboolean) c;
 		}
 		JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
 	}
@@ -1361,26 +1359,7 @@ void JPBooleanType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPBooleanType::getArrayRangeToSequence(jarray a, int start, int length) {
-    jbooleanArray array = (jbooleanArray)a;
-    jboolean* val = NULL;
-    jboolean isCopy;
-
-    try {
-       val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
-
-       PyObject *list = PyList_New(length);
-       jboolean *buf = (jboolean *) val;
-
-       for (Py_ssize_t i = start; i < length; i++) {
-           jboolean value = buf[i];
-           PyObject *obj = value ? Py_True : Py_False;
-           PyList_SET_ITEM(list, i, obj);
-       }
-
-       JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
-       return list;
-    }
-    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_ABORT); } );
+    return getSlice<jboolean>(a, lo, hi, NPY_BOOL, PyBool_FromLong);
 }
 
 //----------------------------------------------------------
