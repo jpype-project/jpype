@@ -19,11 +19,20 @@ import jpype
 from jpype import JPackage, JArray, JByte, java
 import common
 
+
+def haveNumpy():
+    try:
+        import numpy
+        return True
+    except ImportError:
+        return False
+
 class ArrayTestCase(common.JPypeTestCase) :
     
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4]
+        self.VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,
+                       1235,46,245132,51, 2, 3, 4]
     
     def testReadArray(self) :
         t = JPackage("jpype").array.TestArray()
@@ -120,12 +129,13 @@ class ArrayTestCase(common.JPypeTestCase) :
         
         self.assertItemsEqual(expected[:], buf[:])
 
-    @unittest.expectedFailure
     def testJArrayConversionShort(self):
-        # TODO: think about impl short (JShort not available)
-        jarr = jpype.JArray(jpype.JShort)(self.VALUES)
+        jarr = jpype.JArray(jpype.JShort)(VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertItemsEqual(self.VALUES, result)
+        self.assertEqual(VALUES[:15], result[:15])
+        # this is an expected overflow, since short does not hold '245132'.
+        self.assertEqual(-17012, result[16])
+        self.assertEqual(VALUES[17:], result[17:])
         
         result = jarr[2:10]
         self.assertItemsEqual(self.VALUES[2:10], result)
@@ -194,3 +204,67 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(l1, jarr[0])
         self.assertEqual(l2, jarr[1])
         self.assertEqual(l3, jarr[2])
+        
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetBoolArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.randint(0, 1, size=n).astype(np.bool)
+        jarr = jpype.JArray(jpype.JBoolean)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetByteArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.randint(-128, 127, size=n).astype(np.byte)
+        jarr = jpype.JArray(jpype.JByte)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetShortArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.randint(-32768, 32767, size=n).astype(np.short)
+        jarr = jpype.JArray(jpype.JShort)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+        
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetIntArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.randint(-2**31 - 1, 2**31 - 1, size=n).astype(np.int32)
+        jarr = jpype.JArray(jpype.JInt)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+        
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetLongArray(self):
+        import numpy as np
+        n = 100
+        # actuall the lower bound should be -2**63 -1, but raises Overflow error in numpy
+        a = np.random.randint(-2**63, 2**63 - 1, size=n).astype(np.int64)
+        jarr = jpype.JArray(jpype.JLong)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+    
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetFloatArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float32)
+        jarr = jpype.JArray(jpype.JFloat)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
+        
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetDoubleArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float64)
+        jarr = jpype.JArray(jpype.JDouble)(n)
+        jarr[:] = a
+        self.assertItemsEqual(a, jarr)
