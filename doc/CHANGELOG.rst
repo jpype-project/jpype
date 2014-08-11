@@ -3,6 +3,10 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+0.5.5.4
+-------
+* Fix: compile issue, if numpy is not available (NPY_BOOL n/a). Closes #77
+
 0.5.5.3
 -------
 * Optional support for NumPy arrays in handling of Java arrays. Both set and get
