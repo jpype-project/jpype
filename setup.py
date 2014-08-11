@@ -139,12 +139,13 @@ class my_build_ext(build_ext):
     def initialize_options(self, *args):
         from distutils.sysconfig import get_config_vars
         (opt,) = get_config_vars('OPT')
-        os.environ['OPT'] = ' '.join(flag for flag in opt.split() if flag != '-Wstrict-prototypes')
+        os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
+                                     if flag and flag != '-Wstrict-prototypes')
         build_ext.initialize_options(self)
 
 setup(
     name='JPype1',
-    version='0.5.5.2',
+    version='0.5.5.3',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +

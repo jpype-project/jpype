@@ -3,24 +3,24 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-0.5.5.3 (to be released)
-----------------------
-* Optional support for NumPy arrays in handling of Java Arrays. Both set and get
+0.5.5.3
+-------
+* Optional support for NumPy arrays in handling of Java arrays. Both set and get
   slice operators are supported. Speed improvement of factor 10 for setting and
   factor 6 for getting. The returned arrays are typed with the matching NumPy type.
 * Fix: add missing wrapper type 'JShort'
 * Fix: Conversion check for unsigned types did not work in array setters (tautological compare)  
 
 0.5.5.2
-----------------------
+-------
 * Fix: array setter memory leak (ISSUE: #64)
 
 0.5.5.1
-----------------------
+-------
 * Fix: setup.py now runs under MacOSX with Python 2.6 (referred to missing subprocess function)
 
-0.5.5 
-----------------------
+0.5.5
+-----
 
 *Note* that this release is *not* compatible with Python 2.5 anymore!
 

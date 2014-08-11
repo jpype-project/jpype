@@ -82,12 +82,11 @@ void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
 void JPArray::setRange(int start, int stop, PyObject* sequence)
 {
 	JPType* compType = m_Class->getComponentType();
-
 	unsigned int len = stop-start;
 	// check bounds of sequence which is to be assigned
-	HostRef* ptr = new HostRef(sequence);
-	unsigned int plength = JPEnv::getHost()->getSequenceLength(ptr);
-	delete ptr;
+	HostRef h(sequence);
+	unsigned int plength = JPEnv::getHost()->getSequenceLength(&h);
+
 	if (len != plength)
 	{
 		std::stringstream out;

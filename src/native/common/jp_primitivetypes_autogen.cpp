@@ -50,7 +50,7 @@ if(exe != NULL) \
 
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool
-setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc setter) {
+setViaBuffer(jarray array, int start, uint length, PyObject* sequence, setFnc setter) {
 	//creates a PyMemoryView from sequence check for typeError,
 	// if no underlying py_buff exists.
     if(! PyObject_CheckBuffer(sequence)) {
@@ -76,7 +76,8 @@ setViaBuffer(jarray array, int start, int length, PyObject* sequence, setFnc set
     if ((py_buff->len / sizeof(jelementtype)) != length) {
         std::stringstream ss;
         ss << "Underlying buffer does not contain requested number of elements! Has "
-           << py_buff->len << ", but " << length <<" are requested.";
+           << py_buff->len << ", but " << length <<" are requested. Element size is "
+           << sizeof(jelementtype);
         RAISE(JPypeException, ss.str());
     }
 
