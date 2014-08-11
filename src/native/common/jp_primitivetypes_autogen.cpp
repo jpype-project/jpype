@@ -26,6 +26,7 @@
 	#define NO_IMPORT_ARRAY
 	#include <numpy/arrayobject.h>
 #else
+    #define NPY_BOOL 0
     #define NPY_BYTE 0
     #define NPY_SHORT 0
     #define NPY_INT 0
