@@ -1,6 +1,11 @@
 package jpype.properties;
 
 public class TestBean {
+
+	private String getA;
+
+	private String setA;
+
 	private String property1;
 
 	private String property2Invisible;
