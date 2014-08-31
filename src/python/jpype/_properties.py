@@ -37,7 +37,7 @@ def _extract_accessor_pairs(members):
 
         for name, member in members.items():
                 if not (len(name) > _PROPERTY_ACCESSOR_PREFIX_LEN \
-                                or _is_java_method(member)):
+                                and _is_java_method(member)):
                         continue
                 access, rest = ( name[:_PROPERTY_ACCESSOR_PREFIX_LEN],
                                  name[_PROPERTY_ACCESSOR_PREFIX_LEN:] )
