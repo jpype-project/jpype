@@ -1,18 +1,25 @@
 <project default="test" name="JPype - Native">
 
+	<property name="src" location="harness"/>
+	<property name="build" location="classes"/>
+
 	<target name="test" depends="compile">
-	</target>	
-	
+	</target>
+
 	<target name="compile">
-		<mkdir dir="classes"/>
-		<javac destdir="classes"
-			srcdir="harness"
-			includes="jpype/**"
+		<mkdir dir="${build}"/>
+		<javac destdir="${build}"
+			srcdir="${src}"
 			source="1.4"
 			target="1.4"
 		/>
-		<rmic base="classes"
+		<rmic base="${build}"
 			classname="jpype.rmi.ServerImpl"
 		/>
 	</target>
-</project>	
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>
