@@ -3,6 +3,11 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+0.5.5.5
+-------
+
+* Fix #63: 'property' object has no attribute 'isBeanMutator'
+
 0.5.5.4
 -------
 * Fix: compile issue, if numpy is not available (NPY_BOOL n/a). Closes #77
