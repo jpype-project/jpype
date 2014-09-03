@@ -97,7 +97,7 @@ setViaBuffer(jarray array, int start, uint length, PyObject* sequence, setFnc se
 }
 #else
 template <typename a, typename b, typename c>
-bool setViaBuffer(jarray, int, int, PyObject*, c) {
+bool setViaBuffer(jarray, int, uint, PyObject*, c) {
     return false;
 }
 #endif
