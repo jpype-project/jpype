@@ -16,7 +16,6 @@
 #*****************************************************************************
 import sys
 
-import array
 import _jpype
 
 
@@ -30,7 +29,7 @@ def _initialize() :
     pass
 
 def convertToDirectBuffer(obj):
-    __doc__ = '''Efficiently convert all array.array types, string and unicode to java.nio.Buffer objects.'''
+    __doc__ = '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''
 
     memoryview_of_obj = _mem_view(obj)
 
