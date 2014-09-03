@@ -139,7 +139,8 @@ class my_build_ext(build_ext):
     def initialize_options(self, *args):
         from distutils.sysconfig import get_config_vars
         (opt,) = get_config_vars('OPT')
-        os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
+        if opt:
+            os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
                                      if flag and flag != '-Wstrict-prototypes')
         build_ext.initialize_options(self)
 
