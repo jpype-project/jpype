@@ -22,26 +22,27 @@ import pkgutil
 import sys
 
 def suite() :
-        loader = unittest.defaultTestLoader
-        if len(sys.argv) > 1:
-                names = sys.argv[1:]
-                test_suite = loader.loadTestsFromNames(names)
-        else:
-                import jpypetest
-                pkgpath = os.path.dirname(jpypetest.__file__)
-                names = ["jpypetest.%s" % name for _, name,
-                         _ in pkgutil.iter_modules([pkgpath])]
-                test_suite = loader.loadTestsFromNames(names)
-	return test_suite 
+    loader = unittest.defaultTestLoader
+    if len(sys.argv) > 1:
+        names = sys.argv[1:]
+        test_suite = loader.loadTestsFromNames(names)
+    else:
+        import jpypetest
+        pkgpath = os.path.dirname(jpypetest.__file__)
+        names = ["jpypetest.%s" % name for _, name,
+                 _ in pkgutil.iter_modules([pkgpath])]
+        print names
+        test_suite = loader.loadTestsFromNames(names)
+    return test_suite
 
-def runTest() :	
-	runner = unittest.TextTestRunner()
-	result = runner.run(suite())
-	
-        if jpype.isJVMStarted():
-                jpype.shutdownJVM()	
-	if not result.wasSuccessful():
-		sys.exit(-1)
+def runTest() :
+    runner = unittest.TextTestRunner()
+    result = runner.run(suite())
+
+    if jpype.isJVMStarted():
+        jpype.shutdownJVM()
+    if not result.wasSuccessful():
+        sys.exit(1)
 
 if __name__ == '__main__' :
-	runTest()
+    runTest()
