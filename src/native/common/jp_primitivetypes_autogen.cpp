@@ -21,6 +21,8 @@
 #include <Python.h>
 #include <jpype.h>
 
+typedef unsigned int uint;
+
 #ifdef HAVE_NUMPY
 	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
 	#define NO_IMPORT_ARRAY
