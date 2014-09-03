@@ -53,6 +53,8 @@
 #endif
 
 
+#include <sys/types.h>
+
 #include <map>
 #include <string>
 #include <sstream>
