@@ -7,6 +7,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 -------
 
 * Fix #63: 'property' object has no attribute 'isBeanMutator'
+* Fix #79, Fix #85: missing declaration of 'uint'
 
 0.5.5.4
 -------
