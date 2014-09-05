@@ -65,7 +65,7 @@ elif sys.platform == 'darwin':
         # return existing include dirs
         return filter(os.path.exists, possible_includedirs)
 
-    if not java_home: # try to estimate, should work solid for osx > 10.5
+    if not os.path.exists(java_home): # try to estimate, should work solid for osx > 10.5
         osx = platform.mac_ver()[0][:4]
         from distutils.version import StrictVersion
 
@@ -77,8 +77,6 @@ elif sys.platform == 'darwin':
             	java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
             else:
                 java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
-    else: # osx < 10.6
-        java_home = '/System/Library/Frameworks/JavaVM.framework/Home/'
 
     platform_specific['libraries'] = ['dl']
     # this raises warning:
