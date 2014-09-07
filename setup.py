@@ -40,7 +40,6 @@ if sys.platform == 'win32':
     if not java_home:
         raise SystemExit('Environment variable JAVA_HOME must be set.')
     platform_specific['libraries'] = ['Advapi32']
-    platform_specific['library_dir'] = [os.path.join(java_home, 'lib'), ]
     platform_specific['define_macros'] = [('WIN32', 1)]
     platform_specific['extra_compile_args'] = ['/EHsc']
     platform_specific['include_dirs'] += [
