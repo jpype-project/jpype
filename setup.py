@@ -69,8 +69,12 @@ elif sys.platform == 'darwin':
         osx = platform.mac_ver()[0][:4]
         from distutils.version import StrictVersion
 
+        import os
+        # for osx > 10.9 /usr/libexec/java_home does NOT work. Instead, we should use jdk in Xcode.app
+        if StrictVersion(osx) >= StrictVersion('10.9') and os.path.exists('/Applications/Xcode.app') == True:
+            java_home = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX' + StrictVersion(osx).__str__() + '.sdk/System/Library/Frameworks/JavaVM.framework/Versions/A/'
         # for osx > 10.5 we have the nice util /usr/libexec/java_home available
-        if StrictVersion(osx) >= StrictVersion('10.6'):
+        elif StrictVersion(osx) >= StrictVersion('10.6'):
             import subprocess
             # call java_home detector 
             if 'check_output' in dir(subprocess): 
