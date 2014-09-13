@@ -64,10 +64,11 @@ public :
 class JPJavaEnv
 {
 public :
-	JPJavaEnv(JavaVM* vm)
+	JPJavaEnv(JavaVM* vm) :
+		jvm(vm),
+		convertStringObjects(true),
+		referenceQueue(NULL)
 	{
-		jvm = vm;
-		convertStringObjects = true;
 	}	
 
 	virtual ~JPJavaEnv() {}
