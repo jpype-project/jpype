@@ -40,7 +40,7 @@ private :
 			(LPTSTR) &lpMsgBuf,
 			0, NULL );
 
-		std::string res = std::string((LPTSTR)lpMsgBuf);
+		std::string res((LPTSTR)lpMsgBuf);
 
 		LocalFree(lpMsgBuf);
 
@@ -55,7 +55,7 @@ public :
 		{
 			std::stringstream msg;
 			msg << "Unable to load DLL [" << path << "], error = " << formatMessage(GetLastError());
-			RAISE(JPypeException, msg.str().c_str());
+			RAISE(JPypeException, msg.str());
 		}
 	}
 
