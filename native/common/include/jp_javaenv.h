@@ -66,8 +66,8 @@ class JPJavaEnv
 public :
 	JPJavaEnv(JavaVM* vm) :
 		jvm(vm),
-		convertStringObjects(true),
-		referenceQueue(NULL)
+		referenceQueue(NULL),
+		convertStringObjects(true)
 	{
 	}	
 
