@@ -54,15 +54,18 @@ class DarwinJVMFinder(LinuxJVMFinder):
         for osx > 10.5 we have the nice util /usr/libexec/java_home available. Invoke it and
         return its output.
         """
-        osx = platform.mac_ver()[0][:4]
+        import platform
+        import subprocess
         from distutils.version import StrictVersion
+
+        osx = platform.mac_ver()[0][:4]
         if StrictVersion(osx) >= StrictVersion('10.6'):
-            import subprocess
-            # call java_home detector
             if 'check_output' in dir(subprocess):
                 java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
             else:
                 java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
+            return java_home
+        return None
 
 # ------------------------------------------------------------------------------
 
