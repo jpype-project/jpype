@@ -49,7 +49,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
         """
         return '/System/Library/Frameworks/JavaVM.framework/JavaVM'
 
-    def javahome_binary(self):
+    def _javahome_binary(self):
         """
         for osx > 10.5 we have the nice util /usr/libexec/java_home available. Invoke it and
         return its output.
