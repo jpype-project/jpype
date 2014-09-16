@@ -52,14 +52,14 @@ class DarwinJVMFinder(LinuxJVMFinder):
     def _javahome_binary(self):
         """
         for osx > 10.5 we have the nice util /usr/libexec/java_home available. Invoke it and
-        return its output.
+        return its output. It seems this tool has been removed in osx 10.9.
         """
         import platform
         import subprocess
         from distutils.version import StrictVersion
 
-        osx = platform.mac_ver()[0][:4]
-        if StrictVersion(osx) >= StrictVersion('10.6'):
+        current = StrictVersion(platform.mac_ver()[0][:4])
+        if current >= StrictVersion('10.6') and current < StrictVersion('10.9'):
             if 'check_output' in dir(subprocess):
                 java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
             else:
