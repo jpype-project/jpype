@@ -36,6 +36,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
 
         self._methods = list(self._methods)
         self._methods.append(self._pre_vm7_path)
+        self._methods.append(self._javahome_binary)
 
         # Predefined locations
         self._locations = ('/Library/Java/JavaVirtualMachines',)
@@ -47,6 +48,21 @@ class DarwinJVMFinder(LinuxJVMFinder):
         '/System/Library/Frameworks/JavaVM.framework/JavaVM'
         """
         return '/System/Library/Frameworks/JavaVM.framework/JavaVM'
+
+    def javahome_binary(self):
+        """
+        for osx > 10.5 we have the nice util /usr/libexec/java_home available. Invoke it and
+        return its output.
+        """
+        osx = platform.mac_ver()[0][:4]
+        from distutils.version import StrictVersion
+        if StrictVersion(osx) >= StrictVersion('10.6'):
+            import subprocess
+            # call java_home detector
+            if 'check_output' in dir(subprocess):
+                java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
+            else:
+                java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
 
 # ------------------------------------------------------------------------------
 
