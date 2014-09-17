@@ -26,7 +26,7 @@ def read_utf8(*parts):
 
 def find_sources():
     cpp_files = []
-    for dirpath, dirnames, filenames in os.walk('src'):
+    for dirpath, dirnames, filenames in os.walk('native'):
         for filename in filenames:
             if filename.endswith('.cpp') or filename.endswith('.c'):
                 cpp_files.append(os.path.join(dirpath, filename))
@@ -39,8 +39,8 @@ def show_error(msg):
 
 platform_specific = {
     'include_dirs': [
-        os.path.join('src', 'native', 'common', 'include'),
-        os.path.join('src', 'native', 'python', 'include'),
+        os.path.join('native', 'common', 'include'),
+        os.path.join('native', 'python', 'include'),
     ],
     'sources': find_sources(),
 }
@@ -181,8 +181,8 @@ setup(
     packages=[
         'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
     package_dir={
-        'jpype': 'src/python/jpype',
-        'jpypex': 'src/python/jpypex',
+        'jpype': 'jpype',
+        'jpypex': 'jpypex',
     },
     extras_require = {'numpy' : ['numpy>=1.6']},
     cmdclass={'build_ext': my_build_ext},
