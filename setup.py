@@ -51,7 +51,6 @@ if sys.platform == 'win32':
         raise SystemExit('Environment variable JAVA_HOME must be set.')
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
-    platform_specific['extra_compile_args'] = ['/EHsc']
     platform_specific['include_dirs'] += [
         os.path.join(java_home, 'include'),
         os.path.join(java_home, 'include', 'win32')
@@ -143,16 +142,36 @@ if not disabled_numpy:
         pass
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
-
-# omit -Wstrict-prototypes from CFLAGS since its only valid for C code.
+       
 class my_build_ext(build_ext):
+    # extra compile args
+    copt = {'msvc': ['/EHsc'],
+            'gcc' : [],
+            'mingw32' : [],
+           }
+    # extra link args
+    lopt = {
+            'mingw32' : [],
+           }
+    
     def initialize_options(self, *args):
+        """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         from distutils.sysconfig import get_config_vars
         (opt,) = get_config_vars('OPT')
         if opt:
             os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
-                                     if flag and flag != '-Wstrict-prototypes')
+                                         if flag != '-Wstrict-prototypes')
         build_ext.initialize_options(self)
+        
+    def build_extensions(self):
+        c = self.compiler.compiler_type
+        if self.copt.has_key(c):
+           for e in self.extensions:
+               e.extra_compile_args = self.copt[ c ]
+        if self.lopt.has_key(c):
+            for e in self.extensions:
+                e.extra_link_args = self.lopt[ c ]
+        build_ext.build_extensions(self)
 
 setup(
     name='JPype1',
