@@ -41,10 +41,10 @@ public :
 	virtual ~JPField();
 	
 public :
-	bool isStatic();
+	bool isStatic() const;
 	
-	string getName();
-	JPTypeName getType()
+	const string& getName() const;
+	const JPTypeName& getType() const
 	{
 		return m_Type;
 	}
@@ -55,7 +55,7 @@ public :
 	HostRef* getAttribute(jobject inst);
 	void     setAttribute(jobject inst, HostRef* val);
 
-	bool isFinal()
+	bool isFinal() const
 	{
 		return m_IsFinal;
 	}

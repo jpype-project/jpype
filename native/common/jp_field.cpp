@@ -16,7 +16,14 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-JPField::JPField()
+JPField::JPField() :
+    m_Name(""),
+    m_Class(NULL),
+    m_IsStatic(false),
+    m_IsFinal(false),
+    m_Field(),
+    m_FieldID(NULL),
+    m_Type()
 {
 }
 
@@ -63,12 +70,12 @@ JPField::~JPField()
 	TRACE_OUT;
 }
 	
-bool JPField::isStatic()
+bool JPField::isStatic() const
 {
 	return m_IsStatic;
 }
 	
-string JPField::getName()
+const string& JPField::getName() const
 {
 	return m_Name;
 }	
