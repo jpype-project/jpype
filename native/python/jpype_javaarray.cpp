@@ -171,7 +171,7 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 		JPyArg::parseTuple(arg, "O!iiO", &PyCObject_Type, &arrayObject, &lo, &hi, &sequence);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
-		Py_ssize_t length = a->getLength();
+		int length = a->getLength();
 		if(length == 0)
 			Py_RETURN_NONE;
 
