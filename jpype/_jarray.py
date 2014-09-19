@@ -53,12 +53,12 @@ class _JavaArrayClass(object) :
 		_jpype.setArrayItem(self.__javaobject__, ndx, val)
 		
 	def __getslice__(self, i, j) : 
-		if j == sys.maxint:
+		if j == sys.maxsize:
 			j = _jpype.getArrayLength(self.__javaobject__)
 		return _jpype.getArraySlice(self.__javaobject__, i, j)
 		
 	def __setslice__(self, i, j, v) : 
-		if j == sys.maxint:
+		if j == sys.maxsize:
 			j = _jpype.getArrayLength(self.__javaobject__)
 		_jpype.setArraySlice(self.__javaobject__, i, j, v)
 
