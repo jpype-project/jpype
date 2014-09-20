@@ -1,4 +1,4 @@
-recursive-include src/native *.h
+recursive-include native *.h
 recursive-include examples *
 include *.rst doc/* LICENSE
 # include everything under test/
