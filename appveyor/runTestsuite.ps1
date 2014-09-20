@@ -21,23 +21,20 @@ function upload($file) {
 }
 
 function run {
-    $stylesheet = $env:APPVEYOR_BUILD_FOLDER + "/test/transform_xunit_to_appveyor.xsl""
-    $output = $env:APPVEYOR_BUILD_FOLDER + "/test/transformed.xml"
+    cd $env:APPVEYOR_BUILD_FOLDER
+    $stylesheet =  "test/transform_xunit_to_appveyor.xsl"
+    $input = "nosetests.xml"
+    $output = "test/transformed.xml"
     
     nosetests test/jpypetest --all-modules --with-xunit
     $success = $?
     Write-Host "result code of nosetests:" $success
-    
-    $input = $env:APPVEYOR_BUILD_FOLDER + "/nosetests.xml"
 
     xslt_transform $input $stylesheet $output
 
     upload $output
-    
-    
     Push-AppveyorArtifact $input
     Push-AppveyorArtifact $output
-    
     
     # return exit code of testsuite
     if ( -not $success) {
