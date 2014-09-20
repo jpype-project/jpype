@@ -21,14 +21,14 @@ function upload($file) {
 }
 
 function run {
-    $stylesheet = "C:/projects/jpype/test/transform_xunit_to_appveyor.xsl"
-    $output = "C:/projects/jpype/test/transformed.xml"
+    $stylesheet = $env:APPVEYOR_BUILD_FOLDER + "/test/transform_xunit_to_appveyor.xsl""
+    $output = $env:APPVEYOR_BUILD_FOLDER + "/test/transformed.xml"
     
     nosetests test/jpypetest --all-modules --with-xunit
     $success = $?
     Write-Host "result code of nosetests:" $success
     
-    $input = "C:/projects/jpype/nosetests.xml"
+    $input = $env:APPVEYOR_BUILD_FOLDER + "/nosetests.xml"
 
     xslt_transform $input $stylesheet $output
 
