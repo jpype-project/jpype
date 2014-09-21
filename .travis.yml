@@ -11,7 +11,7 @@ python:
 env:
   matrix:
     # one build with and without numpy support (opt numpy out)
-    - NUMPY="--install-option=disable-numpy"
+    - NUMPY="--install-option=--disable-numpy"
     - NUMPY=""
 
 before_install:
