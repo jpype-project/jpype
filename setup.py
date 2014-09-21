@@ -5,10 +5,13 @@ import sys
 import codecs
 import platform
 from glob import glob
+import warnings
+import exceptions
 
 from setuptools import setup
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
+
 
 """
 this parameter is used to opt out numpy support in _jpype library
@@ -18,6 +21,10 @@ if "--disable-numpy" in sys.argv:
     sys.argv.remove("--disable-numpy")
 else:
     disabled_numpy = False
+
+class FeatureNotice(exceptions.Warning):
+    """ indicate notices about features """
+    pass
 
 
 def read_utf8(*parts):
@@ -138,8 +145,13 @@ if not disabled_numpy:
             platform_specific['define_macros'] = [('HAVE_NUMPY', 1)]
     
         platform_specific['include_dirs'].append(numpy.get_include())
+        warnings.warn("Turned ON Numpy support for fast Java array access",
+                       FeatureNotice)
     except ImportError:
         pass
+else:
+    warnings.warn("Turned OFF Numpy support for fast Java array access",
+                  FeatureNotice)
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
        
