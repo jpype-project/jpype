@@ -10,15 +10,16 @@ python:
 
 env:
   matrix:
-    - NUMPY=
-    - NUMPY=python-numpy
+    # one build with and without numpy support (opt numpy out)
+    - NUMPY="--install-option=disable-numpy"
+    - NUMPY=""
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq openjdk-7-jdk openjdk-7-jre ant $NUMPY
+  - sudo apt-get install -qq openjdk-7-jdk openjdk-7-jre ant
 
 install:
-  - pip install .
+  - pip install . $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
 
