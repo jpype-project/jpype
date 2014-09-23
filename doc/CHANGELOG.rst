@@ -5,9 +5,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 0.5.5.5
 -------
-
 * Fix #63: 'property' object has no attribute 'isBeanMutator'
+* Fix #70: python setup.py develop does now work as expected
 * Fix #79, Fix #85: missing declaration of 'uint'
+* Fix #80: opt out NumPy code dependency by '--disable-numpy' parameter to setup
+* Use JVMFinder method of @tcalmant to locate a Java runtime
 
 0.5.5.4
 -------
