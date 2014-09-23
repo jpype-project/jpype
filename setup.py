@@ -134,28 +134,19 @@ else:
     ]
 
 
-# if not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
-# returned from Java can be wrapped efficiently in a ndarray.
-if not disabled_numpy:
-    try:
-        import numpy
-        if platform_specific.has_key('define_macros'):
-            platform_specific['define_macros'].append(('HAVE_NUMPY', 1))
-        else:
-            platform_specific['define_macros'] = [('HAVE_NUMPY', 1)]
-    
-        platform_specific['include_dirs'].append(numpy.get_include())
-        warnings.warn("Turned ON Numpy support for fast Java array access",
-                       FeatureNotice)
-    except ImportError:
-        pass
-else:
-    warnings.warn("Turned OFF Numpy support for fast Java array access",
-                  FeatureNotice)
-
 jpypeLib = Extension(name='_jpype', **platform_specific)
        
 class my_build_ext(build_ext):
+    """
+    Override some behavior in extension building:
+    
+    1. Numpy:
+        If not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
+        returned from Java can be wrapped efficiently in a ndarray.
+    2. handle compiler flags for different compilers via a dictionary.
+    3. try to disable warning ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
+    """
+    
     # extra compile args
     copt = {'msvc': ['/EHsc'],
             'gcc' : [],
@@ -173,9 +164,11 @@ class my_build_ext(build_ext):
         if opt:
             os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
                                          if flag != '-Wstrict-prototypes')
+            
         build_ext.initialize_options(self)
         
     def build_extensions(self):
+        # set compiler flags
         c = self.compiler.compiler_type
         if self.copt.has_key(c):
            for e in self.extensions:
@@ -183,6 +176,22 @@ class my_build_ext(build_ext):
         if self.lopt.has_key(c):
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]
+
+        # handle numpy
+        if not disabled_numpy:
+            try:
+                import numpy
+                jpypeLib.define_macros.append(('HAVE_NUMPY', 1))
+                jpypeLib.include_dirs.append(numpy.get_include())
+                warnings.warn("Turned ON Numpy support for fast Java array access",
+                               FeatureNotice)
+            except ImportError:
+                pass
+        else:
+            warnings.warn("Turned OFF Numpy support for fast Java array access",
+                          FeatureNotice)
+        
+        # has to be last call
         build_ext.build_extensions(self)
 
 setup(
