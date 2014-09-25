@@ -408,7 +408,7 @@ Unloading the JVM
 ~~~~~~~~~~~~~~~~~
 
 The JNI API defines a method called destroyJVM(). However, this method does
-not work. That is, Sun's JVMs do nto allow unloading. For this reason, after
+not work. That is, Sun's JVMs do not allow unloading. For this reason, after
 calling shutdownJVM(), if you attemps calling startupJVM() again you will get
 a non-specific exception. There is nothing wrong (that I can see) in JPype.
 So if Sun get's around to supporting its own properly, or if you use JPype
@@ -484,7 +484,7 @@ On failure, a RuntimeException is raised.
 shutdownJVM method
 ~~~~~~~~~~~~~~~~~~
 
-For the most part, this method does nto have to be called. It will be
+For the most part, this method does not have to be called. It will be
 automatically executed when the jpype module is unloaded at python's exit.
 
 
@@ -509,7 +509,7 @@ On failure, a RuntimeException is raised.
 attachThreadToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the most part, this method does nto have to be called. It will be
+For the most part, this method does not have to be called. It will be
 automatically executed when the jpype module is unloaded at python's exit.
 
 
@@ -534,7 +534,7 @@ On failure, a RuntimeException is raised.
 isThreadAttachedToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the most part, this method does nto have to be called. It will be
+For the most part, this method does not have to be called. It will be
 automatically executed when the jpype module is unloaded at python's exit.
 
 
@@ -559,7 +559,7 @@ On failure, a RuntimeException is raised.
 detachThreadFromJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the most part, this method does nto have to be called. It will be
+For the most part, this method does not have to be called. It will be
 automatically executed when the jpype module is unloaded at python's exit.
 
 
@@ -584,7 +584,7 @@ On failure, a RuntimeException is raised.
 synchronized method
 ~~~~~~~~~~~~~~~~~~~
 
-For the most part, this method does nto have to be called. It will be
+For the most part, this method does not have to be called. It will be
 automatically executed when the jpype module is unloaded at python's exit.
 
 
