@@ -144,7 +144,7 @@ code execution speeds.
 Inner Classes
 -------------
 
-For the most part, inner classes can be used like normal classesm, with thw
+For the most part, inner classes can be used like normal classes, with the
 following differences :
 
 - Inner classes in java natively use $ to separate the outer class from
@@ -164,7 +164,7 @@ methods. Java arrays, wrapped in the JArray wrapper class, behave like Python
 lists, except that their size is fixed, and that the contents are of a
 specific type.
 
-Multi-dimension arrays (array of arrays) also work without problem.
+Multi-dimensional arrays (array of arrays) also work without problem.
 
 Creating Java arrays form Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -202,7 +202,7 @@ parameter to a Java method or to set the value of a java field.
 Type Matching
 ~~~~~~~~~~~~~~
 
-JPype defines different leels of "match" between Python objects and Java
+JPype defines different levels of "match" between Python objects and Java
 types. These levels are :
 
 - **none**, There is no way to convert.
