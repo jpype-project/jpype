@@ -68,7 +68,7 @@ using a GUI, or because you're writing a multi-user server. Or explicitly for
 performance reason.
 
 The only real problem here is making sure Java thread and Python threads
-cooperate correctly. Thankfully, this is pretty easy to to.
+cooperate correctly. Thankfully, this is pretty easy to do.
 
 Python Threads
 ~~~~~~~~~~~~~~
