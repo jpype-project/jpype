@@ -68,7 +68,7 @@ using a GUI, or because you're writing a multi-user server. Or explicitly for
 performance reason.
 
 The only real problem here is making sure Java thread and Python threads
-cooperate correctly. Thankfully, this is pretty easy to to.
+cooperate correctly. Thankfully, this is pretty easy to.
 
 Python Threads
 ~~~~~~~~~~~~~~
@@ -99,7 +99,7 @@ Synchronization
 
 Java synchronization support can be split into 2 categories. The first is the
 **synchronized** keyword, both as prefix on a method and as a block inside a
-method. The second arre the different methods available on the Object class
+method. The second are the different methods available on the Object class
 (**notify, notifyAll, wait**).
 
 To support the **synchronized** functionality, jpype defines a method called
@@ -154,7 +154,7 @@ following differences :
   access method to get them. Use the method __getclass__ in the JPackage to
   load them.
 - Non-static inner classes cannot be instantiated from Python code.
-  Instances received from Java code thay can be used without problem.
+  Instances received from Java code that can be used without problem.
 
 Arrays
 ------
@@ -191,7 +191,7 @@ One of the most complex part of a bridge system like JPype is finding a way
 to seemlessly translate between python types and Java types. The following
 table will show what implicit conversions occur, both Python to Java and Java
 to Python. Explicit conversion, which happens when a python object is
-wrapped, is convered in each wrapper.
+wrapped, is converted in each wrapper.
 
 Conversion from Python to Java
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,12 +206,12 @@ JPype defines different levels of "match" between Python objects and Java
 types. These levels are :
 
 - **none**, There is no way to convert.
-- **explicit (E)**, JPype canconvert ot the desired type, but only
+- **explicit (E)**, JPype can convert the desired type, but only
   explicitly via the wrapper classes. This means the proper wrapper class
   will access this type as argument.
 - **implicit (I)**, JPype will convert as needed.
 - **exact> (X)**, Like implicit, but when deciding with method overload
-  to use, one wj=here all the paramters match "exact" will take precedence
+  to use, one wj=here all the parameters match "exact" will take precedence
   over "implicit" matches.
 
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
@@ -277,23 +277,23 @@ The rules here are much simpler.
 
 Java **byte, short and int** are converted to python **int**.
 
-Java **long** are conversion to Python **long**
+Java **long** is converted to Python **long**
 
 Java **float and double **are converted to python **float**.
 
-Java **boolean** are converted to python **int** of value 1 or 0
+Java **boolean** is converted to python **int** of value 1 or 0
 
-Java **char** are converted to python **unicode** of length 1.
+Java **char** is converted to python **unicode** of length 1.
 
-Java **String** are converteds to python **unicode.**
+Java **String** is converted to python **unicode.**
 
-Java **arrays** are converteds to **JArray**
+Java **arrays** are converted to **JArray**
 
-All other java object are converted to **JavaObject**.
+All other java objects are converted to **JavaObject**.
 
-Java **Class** are converted to **JavaClass.**
+Java **Class** is converted to **JavaClass.**
 
-Java array **Class** are converted to **JavaArrayClass.**
+Java array **Class** is converted to **JavaArrayClass.**
 
 
 JProxy
@@ -307,7 +307,7 @@ or a sequence of string of JClass objects, defining the interfaces to be
 "implemented". The second must be a keyword argument, and be either **dict**
 or **inst**. If **dict** is specified, then the 2nd argument must be a
 dictionary, with the keys the method names as defined in the interface(s),
-and the values calllable objects. If **inst** an object instance must be
+and the values callable objects. If **inst** an object instance must be
 given, with methods defined for the methods declared in the interface(s).
 Either way, when Java calls the interface method, the corresponding Python
 callable is looked up and called.
@@ -370,7 +370,7 @@ bridging Java's exception mechanism and Python's is very important.
 Java exception classes are regular classes that extend, directly or
 indirectly, the java.lang.Throwable class. Python exception are classes that
 extend, directly or indirectly, the Exception class. On the surface they are
-similar, at the C-API elvel, Python Exceptions are completely different from
+similar, at the C-API level, Python Exceptions are completely different from
 regular Python classes. This contributes to the fact that it is not possible
 to catch java exceptions in a completely straightforward way.
 
@@ -409,7 +409,7 @@ Unloading the JVM
 
 The JNI API defines a method called destroyJVM(). However, this method does
 not work. That is, Sun's JVMs do not allow unloading. For this reason, after
-calling shutdownJVM(), if you attemps calling startupJVM() again you will get
+calling shutdownJVM(), if you attempt calling startupJVM() again you will get
 a non-specific exception. There is nothing wrong (that I can see) in JPype.
 So if Sun get's around to supporting its own properly, or if you use JPype
 with a non-SUN JVM that does (I beleive IBM's JVM support JNI invocation, but
@@ -676,7 +676,7 @@ costly.
 If you're going to make many java calls with a complex object, wrapping it
 once and then using the wrapper will make a huge difference.
 
-Lasty, wrappers allow you to pass in a structure to java to have it modified.
+Lastly, wrappers allow you to pass in a structure to java to have it modified.
 an implicitly converted tuple will not come back modified, even if the java
 method HAS changed the contents. An explicitly wrapped tuple will be
 modified, so that those modifications are visible to the python program.
@@ -700,7 +700,7 @@ While the native wrappers help to resolve ambiguities between native types,
 it is impossible to create one JObject wrapper for each java Class to do the
 same thing.
 
-So, the JObject wrapper accepts 2 parameters. The first is any convertable
+So, the JObject wrapper accepts 2 parameters. The first is any convertible
 object. The second is the class to convert it to. It can be the name of the
 class in a string or a JavaClass object. If omitted, the second parameter
 will be deduced from the first.
