@@ -166,6 +166,16 @@ specific type.
 
 Multi-dimensional arrays (array of arrays) also work without problem.
 
+As of version 0.5.5.3 we use NumPy arrays to interchange data with Java. This 
+is much faster than using lists, since we do not need to handle every single 
+array element but can process all data at once.
+
+If you do not want this optional feature, because eg. it depends on NumPy, you
+can opt it out in the installation process by passing *"--disable-numpy"* to 
+*setup.py*. To opt out with pip you need to append the additional argument
+*"--install-option='--disable-numpy'*. This possibility exists since version 
+0.5.6.
+
 Creating Java arrays form Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -200,7 +210,7 @@ This type of conversion happens when a Python object is used either as a
 parameter to a Java method or to set the value of a java field.
 
 Type Matching
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 JPype defines different levels of "match" between Python objects and Java
 types. These levels are :

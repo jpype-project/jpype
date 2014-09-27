@@ -3,12 +3,15 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-0.5.5.5
--------
+0.5.6
+-----
+*Note*: In this release we returned to the three point number versioning scheme.
+
 * Fix #63: 'property' object has no attribute 'isBeanMutator'
 * Fix #70: python setup.py develop does now work as expected
 * Fix #79, Fix #85: missing declaration of 'uint'
-* Fix #80: opt out NumPy code dependency by '--disable-numpy' parameter to setup
+* Fix #80: opt out NumPy code dependency by '--disable-numpy' parameter to setup.
+  To opt out with pip append --install-option="--disable-numpy".
 * Use JVMFinder method of @tcalmant to locate a Java runtime
 
 0.5.5.4
