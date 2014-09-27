@@ -149,11 +149,13 @@ class my_build_ext(build_ext):
     
     # extra compile args
     copt = {'msvc': ['/EHsc'],
-            'gcc' : [],
+            'unix' : ['-ggdb'],
             'mingw32' : [],
            }
     # extra link args
     lopt = {
+            'msvc': [],
+            'unix': [],
             'mingw32' : [],
            }
     
@@ -167,7 +169,7 @@ class my_build_ext(build_ext):
             
         build_ext.initialize_options(self)
         
-    def build_extensions(self):
+    def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
         if self.copt.has_key(c):
@@ -176,7 +178,9 @@ class my_build_ext(build_ext):
         if self.lopt.has_key(c):
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]
-
+        
+    def build_extensions(self):
+        self._set_cflags()
         # handle numpy
         if not disabled_numpy:
             try:
@@ -196,7 +200,7 @@ class my_build_ext(build_ext):
 
 setup(
     name='JPype1',
-    version='0.5.5.4',
+    version='0.5.6',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +
@@ -226,6 +230,6 @@ setup(
     },
     extras_require = {'numpy' : ['numpy>=1.6']},
     cmdclass={'build_ext': my_build_ext},
-    #zip_safe=False,
+    zip_safe=False,
     ext_modules=[jpypeLib],
 )
