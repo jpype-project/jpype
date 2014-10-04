@@ -49,13 +49,22 @@ class JVMFinder(object):
         :param filename: Name of the file to find
         :return: The first found file path, or None
         """
+        found_jamvm = False
         # Look for the file
         for root, _, names in os.walk(java_home):
             if self._libfile in names:
-                # Found it
+                # Found it, but check for jamvm
+                if os.path.split(root)[1] == "jamvm":
+                    found_jamvm = True
+                    continue # maybe we will find another one?
                 return os.path.join(root, self._libfile)
 
         else:
+            if found_jamvm:
+                raise JVMNotFoundException("Sorry JamVM is known to be broken."
+                                           " Please ensure your JAVA_HOME"
+                                           " contains at least another JVM "
+                                           "implementation (eg. server)")
             # File not found
             raise JVMNotFoundException("Sorry no JVM could be found."
                                        " Please ensure your JAVA_HOME"
