@@ -49,8 +49,6 @@ platform_specific = {
 }
 
 fallback_jni = os.path.join('native', 'jni_include')
-# TODO: remove  this
-os.environ['JAVA_HOME'] = ''
 # try to include JNI first from eventually given JAVA_HOME, then from distributed
 java_home = os.getenv('JAVA_HOME')
 found_jni = False
@@ -68,7 +66,7 @@ if os.path.exists(java_home):
         warnings.warn('Falling back to provided JNI headers, since your provided'
                       ' JAVA_HOME %s does not provide jni.h' % java_home)
         platform_specific['include_dirs'] += [fallback_jni]
-    
+
 else:
     platform_specific['include_dirs'] += [fallback_jni]
 
