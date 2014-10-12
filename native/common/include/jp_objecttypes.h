@@ -20,13 +20,13 @@
 class JPObjectType : public JPType
 {
 protected :
-	JPObjectType(JPTypeName::ETypes type, JPTypeName objectType) :
+	JPObjectType(JPTypeName::ETypes type, const JPTypeName& objectType) :
 		m_Type(JPTypeName::fromType(type)),
 		m_ObjectTypeName(objectType)
 	{
 	}
 	
-	virtual ~JPObjectType() 
+	virtual ~JPObjectType()
 	{
 	}
 	
@@ -41,7 +41,7 @@ public :
 		return m_ObjectTypeName;
 	}
 
-	virtual bool      isObjectType() 
+	virtual bool      isObjectType() const
 	{ 
 		return true; 
 	}
