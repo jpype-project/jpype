@@ -59,7 +59,7 @@ public :
 	virtual jvalue     convertToJava(HostRef* obj) = 0;
 	virtual jobject    convertToJavaObject(HostRef* obj) = 0;
 
-	virtual bool       isObjectType() = 0;
+	virtual bool       isObjectType() const = 0;
 	virtual const JPTypeName& getObjectType() const = 0;
 	
 	virtual HostRef*   invokeStatic(jclass, jmethodID, jvalue*) = 0;

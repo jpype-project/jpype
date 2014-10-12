@@ -20,11 +20,11 @@
 class JPPrimitiveType : public JPType
 {
 protected :
-	JPPrimitiveType(JPTypeName::ETypes type, bool isObject, JPTypeName objectType)
+	JPPrimitiveType(JPTypeName::ETypes type, bool isObject, const JPTypeName& objectType) :
+		m_Type(JPTypeName::fromType(type)),
+		m_IsObject(isObject),
+		m_ObjectTypeName(objectType)
 	{
-		m_Type = JPTypeName::fromType(type);
-		m_IsObject = isObject;
-		m_ObjectTypeName = objectType;
 	}
 	
 	virtual ~JPPrimitiveType()
@@ -37,7 +37,7 @@ private :
 	JPTypeName m_ObjectTypeName;
 
 public :
-	virtual bool       isObjectType() 
+	virtual bool       isObjectType() const
 	{ 
 		return m_IsObject; 
 	}
