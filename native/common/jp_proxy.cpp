@@ -181,9 +181,9 @@ void JPProxy::init()
 	cleaner.addLocal(handler);
 	
 	JNINativeMethod method[1];
-	method[0].name = "hostInvoke";
-	method[0].signature = "(Ljava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
-	method[0].fnPtr = (void*)&Java_jpype_JPypeInvocationHandler_hostInvoke;
+	method[0].name = (char*) "hostInvoke";
+	method[0].signature =(char*) "(Ljava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
+	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
 
 
 	hostObjectID = JPEnv::getJava()->GetFieldID(handler, "hostObject", "J");
@@ -205,8 +205,8 @@ void JPProxy::init()
 	cleaner.addLocal(referenceQueue);
 
 	JNINativeMethod method2[1];
-	method2[0].name = "removeHostReference";
-	method2[0].signature = "(J)V";
+	method2[0].name = (char*) "removeHostReference";
+	method2[0].signature = (char*) "(J)V";
 	method2[0].fnPtr = (void*)&Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
 
 	JPEnv::getJava()->RegisterNatives(referenceQueueClass, method2, 1);
