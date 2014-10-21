@@ -16,7 +16,7 @@ env:
 
 before_install:
   - sudo apt-get update -qq
-  - sudo apt-get install -qq openjdk-7-jdk openjdk-7-jre ant
+  - sudo apt-get install -qq ant
 
 install:
   - pip install . $NUMPY
