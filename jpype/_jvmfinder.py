@@ -111,9 +111,11 @@ class JVMFinder(object):
         for method in self._methods:
             try:
                 jvm = method()
-
             except NotImplementedError:
                 # Ignore missing implementations
+                pass
+            except JVMNotFoundException:
+                # Ignore not successful methods
                 pass
 
             else:
