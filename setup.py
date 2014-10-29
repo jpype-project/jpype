@@ -50,7 +50,7 @@ platform_specific = {
 
 fallback_jni = os.path.join('native', 'jni_include')
 # try to include JNI first from eventually given JAVA_HOME, then from distributed
-java_home = os.getenv('JAVA_HOME')
+java_home = os.getenv('JAVA_HOME', '')
 found_jni = False
 if os.path.exists(java_home):
     platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
@@ -154,7 +154,7 @@ class my_build_ext(build_ext):
 
 setup(
     name='JPype1',
-    version='0.5.6',
+    version='0.5.7',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +
