@@ -129,7 +129,7 @@ class JVMFinder(object):
                     return jvm
 
         else:
-            raise ValueError("No JVM shared library file ({0}) found. "
+            raise JVMNotFoundException("No JVM shared library file ({0}) found. "
                              "Try setting up the JAVA_HOME environment "
                              "variable properly.".format(self._libfile))
 
