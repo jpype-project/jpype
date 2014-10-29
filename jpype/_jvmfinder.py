@@ -22,6 +22,9 @@ import os
 class JVMNotFoundException(RuntimeError):
     pass
 
+class JVMNotSupportedException(RuntimeError):
+    pass
+
 class JVMFinder(object):
     """
     JVM library finder base class
@@ -50,21 +53,24 @@ class JVMFinder(object):
         :return: The first found file path, or None
         """
         found_jamvm = False
+        non_supported_jvm = ('cacao', 'jamvm')
+        found_non_supported_jvm = False
         # Look for the file
         for root, _, names in os.walk(java_home):
             if self._libfile in names:
-                # Found it, but check for jamvm
-                if os.path.split(root)[1] == "jamvm":
-                    found_jamvm = True
+                # Found it, but check for non supported jvms
+                candidate = os.path.split(root)[1]
+                if candidate in non_supported_jvm:
+                    found_non_supported_jvm = True
                     continue # maybe we will find another one?
                 return os.path.join(root, self._libfile)
 
         else:
-            if found_jamvm:
-                raise JVMNotFoundException("Sorry JamVM is known to be broken."
+            if found_non_supported_jvm:
+                raise JVMNotSupportedException("Sorry '%s' is known to be broken."
                                            " Please ensure your JAVA_HOME"
                                            " contains at least another JVM "
-                                           "implementation (eg. server)")
+                                           "implementation (eg. server)" % candidate)
             # File not found
             raise JVMNotFoundException("Sorry no JVM could be found."
                                        " Please ensure your JAVA_HOME"
