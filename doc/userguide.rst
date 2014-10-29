@@ -48,7 +48,7 @@ Using JPype
 Here is a sample program to demonstrate how to use JPype : ::
 
   from jpype import *
-  startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea")
+  startJVM(getDefaultJVMPath(), "-ea")
   java.lang.System.out.println("hello world")
   shutdownJVM()
 
@@ -457,9 +457,36 @@ typically does not find the driver. To remedy, simply instantiate the driver
 yourself and call it's connect(...) method.
 
 
+Unsupported Java virtual machines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The open JVM implementations *Cacao* and *JamVM* are known not to work with
+JPype.
+
 Module Reference
 ----------------
 
+getDefaultJVMPath method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This method tries to automatically obtain the path to a Java runtime
+installation. This path is needed as argument for startupJVM method and should
+be used in favour of hardcoded paths to make your scripts more portable.
+There are several methods under the hood to search for a JVM. If none
+of them succeeds, the method will raise a JVMNotFoundException.
+
+Arguments
+:::::::::
+
+None
+
+Return value
+::::::::::::
+
+valid path to a Java virtual machine library (jvm.dll, jvm.so, jvm.dylib)
+
+Exceptions
+::::::::::
+JVMNotFoundException, if none of the provided methods returned a valid JVM path.
 
 startupJVM method
 ~~~~~~~~~~~~~~~~~
@@ -657,7 +684,7 @@ the print and println methods!
 So for the following code : ::
 
   from jpype import *
-  startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea")
+  startJVM(getDefaultJVMPath(), "-ea")
   java.lang.System.out.println(1)
   shutdownJVM()
 
@@ -669,7 +696,7 @@ wanted to call ...
 Changing the line thus : ::
 
   from jpype import *
-  startJVM("d:/tools/j2sdk/jre/bin/client/jvm.dll", "-ea")
+  startJVM(getDefaultJVMPath(), "-ea")
   java.lang.System.out.println(JByte(1)) # <--- wrap the 1 in a JByte
   shutdownJVM()
 
