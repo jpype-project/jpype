@@ -3,6 +3,12 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+0.5.7
+-----
+* No JDK/JRE is required to build anymore due to provided jni.h. To override
+  this, one needs to set a JAVA_HOME pointing to a JDK during setup.
+* better support for various platforms and compilers (MinGW, Cygwin, Windows) 
+
 0.5.6
 -----
 *Note*: In this release we returned to the three point number versioning scheme.
