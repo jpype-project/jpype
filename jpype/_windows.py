@@ -59,5 +59,5 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
             return cv[0]
 
         except WindowsError:
-            raise NotImplementedError
+            return None
 

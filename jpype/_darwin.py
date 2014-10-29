@@ -65,7 +65,6 @@ class DarwinJVMFinder(LinuxJVMFinder):
             else:
                 java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
             return java_home
-        raise NotImplementedError
 
 # ------------------------------------------------------------------------------
 
