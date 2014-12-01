@@ -73,4 +73,4 @@ Known Bugs/Limitations
 -  Some methods rely on the "current" class/caller. Since calls coming
    directly from python code do not have a current class, these methods
    do not work. The User Manual lists all the known methods like that.
--  Mixing 64 bit with 32 bit Java and vice versa crashes on importing jpype.
+-  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import jpype.
