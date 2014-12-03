@@ -54,7 +54,7 @@ java_home = os.getenv('JAVA_HOME', '')
 found_jni = False
 if os.path.exists(java_home):
     platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
-    
+
     # check if jni.h can be found
     for d in platform_specific['include_dirs']:
         if os.path.exists(os.path.join(d, 'jni.h')):
@@ -81,11 +81,14 @@ elif sys.platform == 'darwin':
     platform_specific['define_macros'] = [('MACOSX', 1)]
     if found_jni:
         platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'darwin')]
+elif sys.platform.startswith('freebsd'):
+    if found_jni:
+        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'freebsd')]
 else: # linux etc.
     platform_specific['libraries'] = ['dl']
     if found_jni:
         platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'linux')]
- 
+
 
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
@@ -93,14 +96,14 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 class my_build_ext(build_ext):
     """
     Override some behavior in extension building:
-    
+
     1. Numpy:
         If not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
         returned from Java can be wrapped efficiently in a ndarray.
     2. handle compiler flags for different compilers via a dictionary.
     3. try to disable warning ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
     """
-    
+
     # extra compile args
     copt = {'msvc': ['/EHsc'],
             'unix' : ['-ggdb'],
@@ -112,17 +115,17 @@ class my_build_ext(build_ext):
             'unix': [],
             'mingw32' : [],
            }
-    
+
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         from distutils.sysconfig import get_config_vars
         (opt,) = get_config_vars('OPT')
         if opt:
-            os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
+            os.environ['OPT'] = ' '.join(flag for flag in opt.split()
                                          if flag != '-Wstrict-prototypes')
-            
+
         build_ext.initialize_options(self)
-        
+
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
@@ -132,7 +135,7 @@ class my_build_ext(build_ext):
         if self.lopt.has_key(c):
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]
-        
+
     def build_extensions(self):
         self._set_cflags()
         # handle numpy
@@ -148,7 +151,7 @@ class my_build_ext(build_ext):
         else:
             warnings.warn("Turned OFF Numpy support for fast Java array access",
                           FeatureNotice)
-        
+
         # has to be last call
         build_ext.build_extensions(self)
 
