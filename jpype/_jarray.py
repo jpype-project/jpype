@@ -66,7 +66,7 @@ def _jarrayInit(self, *args) :
 	if len(args) == 2 and args[0] == _jclass._SPECIAL_CONSTRUCTOR_KEY :
 		_JavaArrayClass.__init__(self, args[1])
 	elif len(args) != 1 :
-		raise ParameterException, "Array classes only take 2 parameters, %s given" % (len(args)+1,)
+		raise TypeError, "Array classes only take 2 parameters, %s given" % (len(args)+1,)
 	else:
 		values = None
 		if operator.isSequenceType(args[0]) :
