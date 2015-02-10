@@ -26,7 +26,7 @@ class AttributeTestCase(common.JPypeTestCase) :
 		
 	def testWithBufferStrategy(self):
 		j = jpype.JPackage("jpype").attr.ClassWithBuffer
-		print j
+                self.assertIsNone(j().bufferStrategy)
 		
 	def testCallOverloadedMethodWithCovariance(self):
 		# This is a JDk5-specific problem.
@@ -38,42 +38,43 @@ class AttributeTestCase(common.JPypeTestCase) :
  		h = self.__jp.Test1()	
  		v = h.testString(JString("abcd"), JString("abcde"))
  		
- 		assert v[0] == 'abcd'
- 		assert v[1] == 'abcde'
+ 		self.assertEqual(v[0], 'abcd')
+ 		self.assertEqual(v[1], 'abcde')
  		
  	def testCallStaticUnicodeString(self) :
  		h = self.__jp.Test1()	
  		v = h.testString(JString(u"abcd"), JString(u"abcde"))
  		
- 		assert v[0] == 'abcd'
- 		assert v[1] == 'abcde'
+ 		self.assertEqual(v[0], 'abcd')
+ 		self.assertEqual(v[1], 'abcde')
  
  	def testCallString(self) :
  		v = self.__jp.Test1.testStaticString("a", "b")
- 		assert v[0] == 'a'
- 		assert v[1] == 'b'
+ 		self.assertEqual(v[0], 'a')
+ 		self.assertEqual(v[1], 'b')
  
  	def testCallUnicodeString(self) :
  		v = self.__jp.Test1.testStaticString(u"a", u"b")
- 		assert v[0] == 'a'
- 		assert v[1] == 'b'
+ 		self.assertEqual(v[0], 'a')
+ 		self.assertEqual(v[1], 'b')
  
  	def testCallStringWithNone(self) :
  		v = self.__jp.Test1.testStaticString("a", None)
- 		assert v[0] == 'a'
- 		assert v[1] == None
+ 		self.assertEqual(v[0], 'a')
+ 		self.assertIsNone(v[1])
  
  	def testWithHolder(self) :
- 		print 'testWithHolder'
  		holder = self.__jp.Holder()
  		holder.f = "ffff"
- 		assert holder.f == "ffff"
- 		self.__jp.Test1.testStaticHolder(holder)
+ 		self.assertEqual(holder.f, 'ffff')
+ 		result = self.__jp.Test1.testStaticHolder(holder)
+                self.assertEqual(result, 'ffff')
  	
  	def testWithSubHolder(self) :
  		h2 = self.__jp.SubHolder()
  		h2.f = "subholder"
- 		self.__jp.Test1.testStaticHolder(h2)
+ 		result = self.__jp.Test1.testStaticHolder(h2)
+                self.assertEqual(result, 'subholder')
  	
  	def testCallWithArray(self) :
  		h2 = self.__jp.Test1()
@@ -129,10 +130,8 @@ class AttributeTestCase(common.JPypeTestCase) :
  		h = self.__jp.Test1()
  		h.charValue = u'b'
  		
- 		print h.charValue
- 		print repr(h.charValue)
- 		
- 		assert h.charValue == u'b'
+ 		self.assertEqual(h.charValue, 'b')
+ 		self.assertEqual(repr(h.charValue), "u'b'")
  		
  	def testGetPrimitiveType(self) :
  		Integer = jpype.JClass("java.lang.Integer")
@@ -150,9 +149,7 @@ class AttributeTestCase(common.JPypeTestCase) :
  
  	def testSuperToString(self):
  		h = self.__jp.Test2()
- 		print h
- 		assert str(h) == 'aaa'
- 		del h
+		self.assertEqual(str(h), 'aaa')
 		
 #	def testStringToConversion(self):
 #		try :
@@ -181,7 +178,6 @@ class AttributeTestCase(common.JPypeTestCase) :
 #			jpype.ConversionConfig.string = True
 		
  	def testComplexMethodOvlerloading(self) :
- 		c = self.__jp.TestOverloadC()
- 		print c.foo(1)
- 		assert c.foo(1) == "foo(int) in C: 1"
- 		assert c.foo() == "foo() in A"
+		c = self.__jp.TestOverloadC()
+		self.assertEqual(c.foo(1), "foo(int) in C: 1")
+		self.assertEqual(c.foo(), "foo() in A")
