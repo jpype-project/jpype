@@ -31,7 +31,6 @@ def suite() :
         pkgpath = os.path.dirname(jpypetest.__file__)
         names = ["jpypetest.%s" % name for _, name,
                  _ in pkgutil.iter_modules([pkgpath])]
-        print names
         test_suite = loader.loadTestsFromNames(names)
     return test_suite
 
