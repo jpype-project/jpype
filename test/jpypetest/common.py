@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import jpype
@@ -30,7 +30,7 @@ class JPypeTestCase(unittest.TestCase) :
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= path.join(root, 'classes')
             jpype.startJVM(jvm_path, "-ea",
-                           # "-Xcheck:jni", 
+                           # "-Xcheck:jni",
                            "-Xmx256M", "-Xms64M", classpath_arg)
         self.jpype = jpype.JPackage('jpype')
 

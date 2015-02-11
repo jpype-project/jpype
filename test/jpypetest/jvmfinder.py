@@ -90,7 +90,7 @@ class JVMFinderTest(unittest.TestCase):
         p = finder._javahome_binary()
 
         self.assertEquals(p, None)
-        
+
     @unittest.skipIf(sys.version_info[:2] == (2, 7), "skipped on py27")
     @mock.patch('platform.mac_ver')
     def test_javahome_binary_py27(self, mock_mac_ver):
@@ -106,7 +106,7 @@ class JVMFinderTest(unittest.TestCase):
                 def communicate(self):
                     return (expected, )
             mock_popen.return_value = proc()
-            
+
             p = finder._javahome_binary()
 
             self.assertEquals(p.strip(), expected.strip())
