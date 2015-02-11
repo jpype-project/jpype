@@ -16,8 +16,8 @@
 #*****************************************************************************
 import jpype
 from jpype import JString, java, JArray
-import common
 import time
+from . import common
 
 class AttributeTestCase(common.JPypeTestCase) :
     def setUp(self) :

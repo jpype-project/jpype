@@ -15,7 +15,8 @@
 #
 #*****************************************************************************
 from jpype import JPackage, java, JFloat
-import common, sys
+import sys
+from . import common
 
 class NumericTestCase(common.JPypeTestCase) :
     def testMathAbs(self) :

@@ -15,7 +15,7 @@
 #
 #*****************************************************************************
 from jpype import *
-import common
+from . import common
 
 class ObjectWrapperTestCase(common.JPypeTestCase) :
     def testCallOverloads(self) :
