@@ -16,17 +16,22 @@
 #*****************************************************************************
 
 import jpype
+import logging
 from os import path
-import unittest2 as unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 CLASSPATH = None
 
 class JPypeTestCase(unittest.TestCase) :
-    def setUp(self) :
+    def setUp(self):
         if not jpype.isJVMStarted():
             root = path.dirname(path.abspath(path.dirname(__file__)))
             jvm_path = jpype.getDefaultJVMPath()
-            print "Running testsuite using JVM", jvm_path
+            logger = logging.getLogger(__name__)
+            logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= path.join(root, 'classes')
             jpype.startJVM(jvm_path, "-ea",
