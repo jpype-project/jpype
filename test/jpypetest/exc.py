@@ -26,34 +26,20 @@ def throwByJavaException() :
 
 class ExceptionTestCase(common.JPypeTestCase) :
     def testExceptionThrown(self) :
-        try :
+        with self.assertRaises(JavaException) as cm:
             self.jpype.exc.ExceptionTest.throwRuntime()
-            assert False
-        except JavaException, ex :
-            print 'Caught a Java exception ...'
-            if ex.javaClass() is java.lang.RuntimeException :
-                print "Caught the exception", ex.message()
-                print ex.stacktrace()
-            else:
-                assert False
-        except Exception, ex:
-            print ex.__class__, isinstance(ex, JavaException)
-            print ex.__class__.__bases__[0].__bases__[0].__bases__
-            print JavaException
-            assert False
-
-        print 'if here, everything is fine'
+        self.assertIs(cm.exception.javaClass(), java.lang.RuntimeException)
+        self.assertEqual('Foo', cm.exception.message())
+        trace = cm.exception.stacktrace()
+        self.assertTrue(trace.startswith('java.lang.RuntimeException: Foo'))
 
     def testExceptionByJavaClass(self) :
-        try :
+        with self.assertRaises(JException(java.lang.RuntimeException)) as cm:
             self.jpype.exc.ExceptionTest.throwRuntime()
-            assert False
-        except JException(java.lang.RuntimeException), ex :
-            print "Caught the exception", ex.message(), "->", ex.javaClass()
-            print ex.stacktrace()
-        except Exception, ex:
-            print ex
-            assert False
+        self.assertIs(cm.exception.javaClass(), java.lang.RuntimeException)
+        self.assertEqual('Foo', cm.exception.message())
+        trace = cm.exception.stacktrace()
+        self.assertTrue(trace.startswith('java.lang.RuntimeException: Foo'))
 
 #       def testThrowException(self) :
 #               d = {"throwIOException" : throwIOException, }
@@ -65,26 +51,25 @@ class ExceptionTestCase(common.JPypeTestCase) :
         d = {"throwIOException" : throwByJavaException, }
         p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
 
-        assert self.jpype.exc.ExceptionTest.delegateThrow(p)
+        self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
 
     def testExceptionPYEXCName(self) :
         e = self.jpype.exc.ChildTestException()
         name = "jpype.exc.ChildTestExceptionPyRaisable"
-        assert name == e.PYEXC.__name__
+        self.assertEqual(name, e.PYEXC.__name__)
 
     def testExceptionInstanceof(self) :
         e = self.jpype.exc.ChildTestException()
-        assert isinstance(e, self.jpype.exc.ParentTestException)
+        self.assertIsInstance(e, self.jpype.exc.ParentTestException)
 
     def testExceptionPYEXCInstanceof(self) :
         e = self.jpype.exc.ChildTestException()
-        assert issubclass(e.PYEXC,
-                          self.jpype.exc.ParentTestException.PYEXC)
+        self.assertTrue(issubclass(e.PYEXC,
+                                   self.jpype.exc.ParentTestException.PYEXC))
 
     def testThrowChildExceptionFromCatchJExceptionParentClass(self) :
-        try :
+        expected_exc = JException(self.jpype.exc.ParentTestException)
+        with self.assertRaises(expected_exc) as cm:
             self.jpype.exc.ExceptionTest.throwChildTestException()
-            assert False
-        except JException(self.jpype.exc.ParentTestException), ex :
-            pyexc = self.jpype.exc.ChildTestException.PYEXC
-            assert isinstance(ex, pyexc)
+        pyexc = self.jpype.exc.ChildTestException.PYEXC
+        self.assertIsInstance(cm.exception, pyexc)
