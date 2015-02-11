@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from jpype import *
 import common
@@ -28,7 +28,7 @@ def _testMethod2() :
 class C :
     def testMethod(self) :
         return 42
-        
+
     def testMethod2(self) :
         return "Bar"
 
@@ -52,7 +52,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         itf2 = self.package.ITestInterface3
         Test3 = self.package.Test3
         proxy = JProxy(itf2, dict=d)
-    
+
         Test3.testProxy(proxy)
 
     def testProxyWithInst(self) :
@@ -61,7 +61,7 @@ class ProxyTestCase(common.JPypeTestCase) :
 
         c = C()
         proxy = JProxy(itf2, inst=c)
-        Test3.testProxy(proxy)   
+        Test3.testProxy(proxy)
 
     def testProxyWithThread(self) :
         itf2 = self.package.ITestInterface3
@@ -81,7 +81,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         c = C()
         proxy = JProxy(itf2, inst=c)
         Test3().testCallbackWithParameters(proxy)
-    
+
     @unittest2.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
     def testProxyWithMultipleInterface(self) :
         itf2 = self.package.ITestInterface2

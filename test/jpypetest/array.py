@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 import unittest2 as unittest
 import jpype
@@ -28,18 +28,18 @@ def haveNumpy():
         return False
 
 class ArrayTestCase(common.JPypeTestCase) :
-    
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.VALUES = [12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,
                        1235,46,245132,51, 2, 3, 4]
-    
+
     def testReadArray(self) :
         t = JPackage("jpype").array.TestArray()
         assert not isinstance(t, JPackage)
-        
+
         self.assertItemsEqual(self.VALUES, t.i)
-        
+
         self.assertEqual(t.i[0], self.VALUES[0])
         self.assertItemsEqual(self.VALUES[1:-2], t.i[1:-2])
 
@@ -55,23 +55,23 @@ class ArrayTestCase(common.JPypeTestCase) :
 
         t.i[0] = 32
         self.assertEqual(t.i[0], 32)
-        
+
         t.i[1:3] = (33, 34)
         self.assertEqual(t.i[1], 33)
         self.assertEqual(t.i[2], 34)
-        
+
         self.assertItemsEqual(t.i[:5], (32, 33, 34 ,1324, 424) )
-        
+
     def testObjectArraySimple(self) :
         a = JArray(java.lang.String, 1)(2)
         a[1] = "Foo"
         self.assertEqual("Foo", a[1])
-        
+
     def testByteArraySimple(self) :
         a = JArray(JByte)(2)
         a[1] = 2
         self.assertEqual(a[1], 2)
-        
+
     def testIterateArray(self):
         t = JPackage("jpype").array.TestArray()
         self.assertFalse(isinstance(t, JPackage))
@@ -82,35 +82,35 @@ class ArrayTestCase(common.JPypeTestCase) :
     def testGetSubclass(self) :
         t = JPackage("jpype").array.TestArray()
         v = t.getSubClassArray()
-        
+
         self.assertTrue(isinstance(v[0], unicode))
-        
+
     def testGetArrayAsObject(self) :
         t = JPackage("jpype").array.TestArray()
-        v = t.getArrayAsObject()     
+        v = t.getArrayAsObject()
 
     def testCharArrayAsString(self) :
         t = JPackage("jpype").array.TestArray()
         v = t.charArray
         self.assertEqual(str(v), 'avcd')
         self.assertEqual(unicode(v), u'avcd')
-        
+
     def testByteArrayAsString(self) :
         t = JPackage("jpype").array.TestArray()
         v = t.byteArray
         self.assertEqual(str(v), 'avcd')
-        
+
     def testByteArrayIntoVector(self):
         ba = jpype.JArray(jpype.JByte)('123')
         v = jpype.java.util.Vector(1)
         v.add(ba)
         self.assertEqual(len(v), 1)
         self.assertNotEqual(v[0], None)
-        
+
     def testJArrayConversionBool(self):
         expected = [True, False, False, True]
         jarr = jpype.JArray(jpype.JBoolean)(expected)
-        
+
         self.assertItemsEqual(expected, jarr[:])
 
     def testJArrayConversionChar(self):
@@ -120,7 +120,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         # FIXME: this returns unicode on windows
         self.assertEqual(str(v[:]), 'avcd')
         self.assertEqual(unicode(v[:]), u'avcd')
-        
+
     def testJArrayConversionByte(self):
         expected = (0,1,2,3)
         ByteBuffer = jpype.java.nio.ByteBuffer
@@ -128,66 +128,66 @@ class ArrayTestCase(common.JPypeTestCase) :
         buf = bb.array()
         for i in xrange(len(expected)):
             buf[i] = expected[i]
-        
+
         self.assertItemsEqual(expected[:], buf[:])
 
     def testJArrayConversionShort(self):
         # filter out values, which can not be converted to jshort
-        self.VALUES = [v for v in self.VALUES if v < (2**16/2 - 1) 
+        self.VALUES = [v for v in self.VALUES if v < (2**16/2 - 1)
                                              and v > (2**16/2 * -1)]
         jarr = jpype.JArray(jpype.JShort)(self.VALUES)
         result = jarr[0 : len(jarr)]
         self.assertItemsEqual(self.VALUES, result)
-        
+
         result = jarr[2:10]
         self.assertItemsEqual(self.VALUES[2:10], result)
-        
+
         # TODO: investigate why overflow is being casted on linux, but not on windows
         #with self.assertRaises(jpype._):
         #    jpype.JArray(jpype.JShort)([2**16/2])
-        
+
     def testJArrayConversionInt(self):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         result = jarr[0 : len(jarr)]
         self.assertItemsEqual(self.VALUES, result)
-        
+
         result = jarr[2:10]
         self.assertItemsEqual(self.VALUES[2:10], result)
-    
+
     def testJArrayConversionLong(self):
         jarr = jpype.JArray(jpype.JLong)(self.VALUES)
         result = jarr[0 : len(jarr)]
         self.assertItemsEqual(self.VALUES, result)
-        
+
         result = jarr[2:10]
         self.assertItemsEqual(self.VALUES[2:10], result)
-        
+
     def testJArrayConversionFloat(self):
         self.VALUES = map(float, self.VALUES)
         jarr = jpype.JArray(jpype.JFloat)(self.VALUES)
         result = jarr[0 : len(jarr)]
         self.assertItemsEqual(jarr, result)
-        
+
         result = jarr[2:10]
         self.assertItemsEqual(self.VALUES[2:10], result)
-        
+
     def testJArrayConversionDouble(self):
         self.VALUES = map(float, self.VALUES)
         jarr = jpype.JArray(jpype.JDouble)(self.VALUES)
         self.assertItemsEqual(self.VALUES, jarr)
         result = jarr[:]
         self.assertItemsEqual(self.VALUES, result)
-        
+
         result = jarr[2:10]
-        
+
         self.assertEqual(len(self.VALUES[2:10]), len(result))
         self.assertItemsEqual(self.VALUES[2:10], result)
-        
+
         # empty slice
         result = jarr[-1:3]
         expected = self.VALUES[-1:3]
         self.assertItemsEqual(expected, result)
-        
+
         result = jarr[3:-2]
         expected = self.VALUES[3:-2]
         self.assertItemsEqual(expected, result)
@@ -196,10 +196,10 @@ class ArrayTestCase(common.JPypeTestCase) :
         jarr = jpype.JArray(jpype.JInt, 1)(10)
         with self.assertRaises(RuntimeError):
             jarr[1:2] = [dict()]
-        
+
         # -1 is returned by python, if conversion fails also, ensure this works
         jarr[1:2] = [-1]
-        
+
     def testObjectArrayInitial(self):
         l1 = java.util.ArrayList()
         l1.add(0)
@@ -208,11 +208,11 @@ class ArrayTestCase(common.JPypeTestCase) :
         l3 = java.util.ArrayList()
         l3.add(13)
         jarr = jpype.JArray(java.util.ArrayList, 1)([l1, l2, l3])
-        
+
         self.assertEqual(l1, jarr[0])
         self.assertEqual(l2, jarr[1])
         self.assertEqual(l3, jarr[2])
-        
+
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPBoolArray(self):
         import numpy as np
@@ -239,7 +239,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         jarr = jpype.JArray(jpype.JShort)(n)
         jarr[:] = a
         self.assertItemsEqual(a, jarr)
-        
+
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPIntArray(self):
         import numpy as np
@@ -248,7 +248,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         jarr = jpype.JArray(jpype.JInt)(n)
         jarr[:] = a
         self.assertItemsEqual(a, jarr)
-        
+
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPLongArray(self):
         import numpy as np
@@ -258,7 +258,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         jarr = jpype.JArray(jpype.JLong)(n)
         jarr[:] = a
         self.assertItemsEqual(a, jarr)
-    
+
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPFloatArray(self):
         import numpy as np
@@ -267,7 +267,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         jarr = jpype.JArray(jpype.JFloat)(n)
         jarr[:] = a
         self.assertItemsEqual(a, jarr)
-        
+
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPDoubleArray(self):
         import numpy as np
