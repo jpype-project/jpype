@@ -14,11 +14,13 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import unittest2 as unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import jpype
 from jpype import JPackage, JArray, JByte, java
-import common
-
+from . import common
 
 def haveNumpy():
     try:

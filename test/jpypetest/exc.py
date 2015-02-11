@@ -15,8 +15,8 @@
 #
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JPackage
-import common
 import traceback
+from . import common
 
 def throwIOException() :
     raise java.io.IOException.PYEXC("Test throw")

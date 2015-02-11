@@ -15,10 +15,10 @@
 #
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JClass
-import common
 import os
 import tempfile
 import traceback
+from . import common
 
 class SerializationTestCase(common.JPypeTestCase) :
 

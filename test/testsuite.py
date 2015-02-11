@@ -17,6 +17,7 @@
 import unittest
 
 import jpype
+import logging
 import os.path
 import pkgutil
 import sys
@@ -44,4 +45,5 @@ def runTest() :
         sys.exit(1)
 
 if __name__ == '__main__' :
+    logging.basicConfig(level=logging.INFO)
     runTest()

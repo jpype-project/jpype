@@ -1,5 +1,8 @@
 # part of JPype1; author Martin K. Scherer; 2014
-import unittest2 as unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import mock
 
 from jpype._jvmfinder import *

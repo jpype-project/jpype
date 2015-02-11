@@ -15,7 +15,8 @@
 #
 #*****************************************************************************
 from jpype import JPackage, java
-import common, sys
+import sys
+from . import common
 
 class MroTestCase(common.JPypeTestCase) :
     def testMro(self) :

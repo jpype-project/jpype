@@ -15,8 +15,12 @@
 #
 #*****************************************************************************
 from jpype import *
-import common
-import unittest2
+from . import common
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 from sys import hexversion as ver
 
 def _testMethod() :
@@ -73,7 +77,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         t3 = Test3()
         t3.testProxyWithThread(proxy)
 
-    @unittest2.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
+    @unittest.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
     def testProxyWithArguments(self) :
         itf2 = self.package.ITestInterface2
         Test3 = self.package.Test3
@@ -82,7 +86,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         proxy = JProxy(itf2, inst=c)
         Test3().testCallbackWithParameters(proxy)
 
-    @unittest2.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
+    @unittest.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
     def testProxyWithMultipleInterface(self) :
         itf2 = self.package.ITestInterface2
         itf3 = self.package.ITestInterface3
