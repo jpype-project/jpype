@@ -23,75 +23,125 @@ except ImportError:
     import unittest
 from sys import hexversion as ver
 
-def _testMethod() :
-    return 32
+gt_py_27_03=ver > 0x020703ff and ver < 0x3000000
+
+def _testMethod1() :
+    return 33
 
 def _testMethod2() :
-    return "Fooo!"
+    return 32
+
+def _testMethod3() :
+    return "Foo"
 
 class C :
-    def testMethod(self) :
-        return 42
+    def testMethod1(self) :
+        return 43
 
     def testMethod2(self) :
+        return 42
+
+    def testMethod3(self) :
         return "Bar"
 
     def write(self, bytes, start, length) :
-        print 'aaaaa'
-        print bytes.__class__, bytes[0]
-        print start
-        print length
+        return bytes, start, length
+
+class ThreadCallbackImpl :
+    def __init__(self):
+        self.values = []
+
+    def notifyValue(self, val):
+        self.values.append(val)
 
 class ProxyTestCase(common.JPypeTestCase) :
 
     def setUp(self):
         super(ProxyTestCase, self).setUp()
         self.package = JPackage("jpype.proxy")
+        self._triggers = self.package.ProxyTriggers
 
     def testProxyWithDict(self) :
         d = {
-            'testMethod' : _testMethod,
+            'testMethod1' : _testMethod1,
             'testMethod2' : _testMethod2,
         }
-        itf2 = self.package.ITestInterface3
-        Test3 = self.package.Test3
-        proxy = JProxy(itf2, dict=d)
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
+        proxy = JProxy([itf1, itf2], dict=d)
 
-        Test3.testProxy(proxy)
+        result = self._triggers.testProxy(proxy)
+
+        expected = ['Test Method1 = 33', 'Test Method2 = 32']
+        self.assertSequenceEqual(result, expected)
+
+    def testProxyWithDictInherited(self) :
+        d = {
+            'testMethod2' : _testMethod2,
+            'testMethod3' : _testMethod3,
+        }
+        itf3 = self.package.TestInterface3
+        proxy = JProxy(itf3, dict=d)
+
+        result = self._triggers.testProxy(proxy)
+
+        expected = ['Test Method2 = 32', 'Test Method3 = Foo']
+        self.assertSequenceEqual(result, expected)
 
     def testProxyWithInst(self) :
-        itf2 = self.package.ITestInterface3
-        Test3 = self.package.Test3
-
+        itf3 = self.package.TestInterface3
         c = C()
-        proxy = JProxy(itf2, inst=c)
-        Test3.testProxy(proxy)
+        proxy = JProxy(itf3, inst=c)
+
+        result = self._triggers.testProxy(proxy)
+
+        expected = ['Test Method2 = 42', 'Test Method3 = Bar']
+        self.assertSequenceEqual(result, expected)
 
     def testProxyWithThread(self) :
-        itf2 = self.package.ITestInterface3
-        Test3 = self.package.Test3
+        itf = self.package.TestThreadCallback
+        tcb = ThreadCallbackImpl()
+        proxy = JProxy(itf, inst=tcb)
 
-        c = C()
-        proxy = JProxy(itf2, inst=c)
+        self._triggers().testProxyWithThread(proxy)
+        self.assertEqual(tcb.values, ['Waiting for thread start',
+                                      '1', '2', '3',
+                                      'Thread finished'])
 
-        t3 = Test3()
-        t3.testProxyWithThread(proxy)
-
-    @unittest.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
+    @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
     def testProxyWithArguments(self) :
-        itf2 = self.package.ITestInterface2
-        Test3 = self.package.Test3
-
+        itf2 = self.package.TestInterface2
         c = C()
         proxy = JProxy(itf2, inst=c)
-        Test3().testCallbackWithParameters(proxy)
 
-    @unittest.skipIf(ver > 0x020703ff, 'broken, see ISSUE #67')
+        result = self._triggers().testCallbackWithParameters(proxy)
+
+        bytes, start, length = result
+        self.assertSequenceEqual(bytes, [1, 2 ,3 ,4])
+        self.assertEqual(start, 12)
+        self.assertEqual(length, 13)
+
     def testProxyWithMultipleInterface(self) :
-        itf2 = self.package.ITestInterface2
-        itf3 = self.package.ITestInterface3
-        Test3 = self.package.Test3
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
+        c = C()
+        proxy = JProxy([itf1, itf2], inst=c)
 
+        result = self._triggers.testProxy(proxy)
+
+        expected = ['Test Method1 = 43', 'Test Method2 = 42']
+        self.assertSequenceEqual(result, expected)
+
+    @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
+    def testProxyWithMultipleInterfaceInherited(self) :
+        itf2 = self.package.TestInterface2
+        itf3 = self.package.TestInterface3
         c = C()
         proxy = JProxy([itf2,itf3], inst=c)
-        Test3().testCallbackWithParameters(proxy)
+
+        result = self._triggers().testCallbackWithParameters(proxy)
+
+        bytes, start, length = result
+        self.assertSequenceEqual(bytes, [1, 2 ,3 ,4])
+        self.assertEqual(start, 12)
+        self.assertEqual(length, 13)
