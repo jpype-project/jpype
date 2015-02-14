@@ -31,7 +31,6 @@ class AttributeTestCase(common.JPypeTestCase) :
 
     def testCallOverloadedMethodWithCovariance(self):
         # This is a JDk5-specific problem.
-
         h = jpype.java.lang.StringBuffer()
         h.delete(0, 0)
 
@@ -82,33 +81,34 @@ class AttributeTestCase(common.JPypeTestCase) :
         StringArray = JArray(JString)
         v = StringArray(["Foo", "bar"])
         t = self.__jp.Test1()
-        t.testStringArray(v)
+        result = t.testStringArray(v)
+        self.assertSequenceEqual(["Foo", "bar"], result)
 
     def testGetStaticValue(self) :
-        assert str(self.__jp.Test1.objectValue) == "234"
+        self.assertEqual(str(self.__jp.Test1.objectValue), "234")
 
     def testGetStaticByInstance(self) :
         h = self.__jp.Test1()
-        assert str(h.objectValue) == "234"
+        self.assertEqual(str(h.objectValue), "234")
 
     def testGetNonStatic(self) :
         h = self.__jp.Test1()
-        assert h.stringValue == "Foo"
+        self.assertEqual(h.stringValue, "Foo")
 
     def testSetStaticValue(self) :
         self.__jp.Test1.objectValue = java.lang.Integer(43)
-        assert str(self.__jp.Test1.objectValue) == "43"
+        self.assertEqual(str(self.__jp.Test1.objectValue), "43")
         self.__jp.Test1.reset()
 
     def testSetNonStaticValue(self) :
         h = self.__jp.Test1()
         h.stringValue="bar"
-        assert h.stringValue == "bar"
+        self.assertEqual(h.stringValue, "bar")
 
     def testReturnSubClass(self) :
         h = self.__jp.Test1()
         v = h.getSubClass()
-        assert isinstance(v, self.__jp.SubHolder)
+        self.assertIsInstance(v, self.__jp.SubHolder)
 
     def testCallWithClass(self) :
         h = self.__jp.Test1()
@@ -148,12 +148,14 @@ class AttributeTestCase(common.JPypeTestCase) :
     def testDifferentiateClassAndObject(self) :
         h = self.__jp.Test1()
 
-        assert h.callWithSomething(self.__jp.Test1) == u"Class"
-        assert h.callWithSomething(jpype.JObject(self.__jp.Test1, jpype.java.lang.Object)) == u"Object"
+        self.assertEqual(h.callWithSomething(self.__jp.Test1), u"Class")
+        result = h.callWithSomething(jpype.JObject(self.__jp.Test1,
+                                                   jpype.java.lang.Object))
+        self.assertEqual(result, u"Object")
 
     def testToString(self):
         h = self.__jp.Test1()
-        assert str(h) == 'aaa'
+        self.assertEqual(str(h), 'aaa')
 
     def testSuperToString(self):
         h = self.__jp.Test2()

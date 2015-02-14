@@ -16,6 +16,10 @@
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JPackage
 import traceback
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 from . import common
 
 def throwIOException() :
@@ -45,11 +49,11 @@ class ExceptionTestCase(common.JPypeTestCase) :
             trace = ex.stacktrace()
             self.assertTrue(trace.startswith('java.lang.RuntimeException: Foo'))
 
-#       def testThrowException(self) :
-#               d = {"throwIOException" : throwIOException, }
-#               p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
-#
-#               assert self.jpype.exc.ExceptionTest.delegateThrow(p)
+    @unittest.skip("Throwing specific Java exception from Python doesn't work")
+    def testThrowException(self) :
+         d = {"throwIOException" : throwIOException, }
+         p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
+         self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
 
     def testThrowException3(self) :
         d = {"throwIOException" : throwByJavaException, }

@@ -23,7 +23,8 @@ class ObjectWrapperTestCase(common.JPypeTestCase) :
         h = JPackage("jpype.objectwrapper").Test1()
 
         o = java.lang.Integer(1)
-        assert h.Method1(JObject(o, java.lang.Number)) == 1
-        assert h.Method1(o) == 2
-        assert h.Method1(JObject(java.lang.Integer(1), java.lang.Object)) == 3
-        assert h.Method1(JString("")) == 4
+        self.assertEqual(h.Method1(JObject(o, java.lang.Number)), 1)
+        self.assertEqual(h.Method1(o), 2)
+        self.assertEqual(h.Method1(JObject(java.lang.Integer(1),
+                                           java.lang.Object)), 3)
+        self.assertEqual(h.Method1(JString("")), 4)
