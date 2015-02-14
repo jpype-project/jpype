@@ -16,6 +16,7 @@
 #*****************************************************************************
 import jpype
 from jpype import JString, java, JArray
+import sys
 import time
 from . import common
 
@@ -120,7 +121,10 @@ class AttributeTestCase(common.JPypeTestCase) :
 
     def testCallWithLong(self) :
         h = self.__jp.Test1()
-        l = long(123)
+        if sys.version > '3':
+            l = int(123)
+        else:
+            l = long(123)
 
         h.setByte(l)
         h.setShort(l)
@@ -131,7 +135,11 @@ class AttributeTestCase(common.JPypeTestCase) :
         h.charValue = u'b'
 
         self.assertEqual(h.charValue, 'b')
-        self.assertEqual(repr(h.charValue), "u'b'")
+        if sys.version < '3':
+            exp_repr = "u'b'"
+        else:
+            exp_repr = "'b'"
+        self.assertEqual(repr(h.charValue), exp_repr)
 
     def testGetPrimitiveType(self) :
         Integer = jpype.JClass("java.lang.Integer")
