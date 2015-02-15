@@ -40,10 +40,10 @@ class ArrayTestCase(common.JPypeTestCase) :
         t = JPackage("jpype").array.TestArray()
         self.assertNotIsInstance(t, JPackage)
 
-        self.assertSequenceEqual(self.VALUES, t.i)
+        self.assertCountEqual(self.VALUES, t.i)
 
         self.assertEqual(t.i[0], self.VALUES[0])
-        self.assertSequenceEqual(self.VALUES[1:-2], t.i[1:-2])
+        self.assertCountEqual(self.VALUES[1:-2], t.i[1:-2])
 
     def testStangeBehavior(self) :
         ''' Test for stange crash reported in bug #1089302'''
@@ -62,7 +62,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(t.i[1], 33)
         self.assertEqual(t.i[2], 34)
 
-        self.assertSequenceEqual(t.i[:5], (32, 33, 34 ,1324, 424) )
+        self.assertCountEqual(t.i[:5], (32, 33, 34 ,1324, 424) )
 
     def testObjectArraySimple(self) :
         a = JArray(java.lang.String, 1)(2)
@@ -113,7 +113,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         expected = [True, False, False, True]
         jarr = jpype.JArray(jpype.JBoolean)(expected)
 
-        self.assertSequenceEqual(expected, jarr[:])
+        self.assertCountEqual(expected, jarr[:])
 
     def testJArrayConversionChar(self):
         t = JPackage("jpype").array.TestArray()
@@ -131,7 +131,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         for i in xrange(len(expected)):
             buf[i] = expected[i]
 
-        self.assertSequenceEqual(expected[:], buf[:])
+        self.assertCountEqual(expected[:], buf[:])
 
     def testJArrayConversionShort(self):
         # filter out values, which can not be converted to jshort
@@ -139,10 +139,10 @@ class ArrayTestCase(common.JPypeTestCase) :
                                              and v > (2**16/2 * -1)]
         jarr = jpype.JArray(jpype.JShort)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertSequenceEqual(self.VALUES, result)
+        self.assertCountEqual(self.VALUES, result)
 
         result = jarr[2:10]
-        self.assertSequenceEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(self.VALUES[2:10], result)
 
         # TODO: investigate why overflow is being casted on linux, but not on windows
         #with self.assertRaises(jpype._):
@@ -151,48 +151,48 @@ class ArrayTestCase(common.JPypeTestCase) :
     def testJArrayConversionInt(self):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertSequenceEqual(self.VALUES, result)
+        self.assertCountEqual(self.VALUES, result)
 
         result = jarr[2:10]
-        self.assertSequenceEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionLong(self):
         jarr = jpype.JArray(jpype.JLong)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertSequenceEqual(self.VALUES, result)
+        self.assertCountEqual(self.VALUES, result)
 
         result = jarr[2:10]
-        self.assertSequenceEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionFloat(self):
         self.VALUES = map(float, self.VALUES)
         jarr = jpype.JArray(jpype.JFloat)(self.VALUES)
         result = jarr[0 : len(jarr)]
-        self.assertSequenceEqual(jarr, result)
+        self.assertCountEqual(jarr, result)
 
         result = jarr[2:10]
-        self.assertSequenceEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionDouble(self):
         self.VALUES = map(float, self.VALUES)
         jarr = jpype.JArray(jpype.JDouble)(self.VALUES)
-        self.assertSequenceEqual(self.VALUES, jarr)
+        self.assertCountEqual(self.VALUES, jarr)
         result = jarr[:]
-        self.assertSequenceEqual(self.VALUES, result)
+        self.assertCountEqual(self.VALUES, result)
 
         result = jarr[2:10]
 
         self.assertEqual(len(self.VALUES[2:10]), len(result))
-        self.assertSequenceEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(self.VALUES[2:10], result)
 
         # empty slice
         result = jarr[-1:3]
         expected = self.VALUES[-1:3]
-        self.assertSequenceEqual(expected, result)
+        self.assertCountEqual(expected, result)
 
         result = jarr[3:-2]
         expected = self.VALUES[3:-2]
-        self.assertSequenceEqual(expected, result)
+        self.assertCountEqual(expected, result)
 
     def testConversionError(self):
         jarr = jpype.JArray(jpype.JInt, 1)(10)
@@ -222,7 +222,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.randint(0, 1, size=n).astype(np.bool)
         jarr = jpype.JArray(jpype.JBoolean)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPByteArray(self):
@@ -231,7 +231,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.randint(-128, 127, size=n).astype(np.byte)
         jarr = jpype.JArray(jpype.JByte)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPShortArray(self):
@@ -240,7 +240,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.randint(-32768, 32767, size=n).astype(np.short)
         jarr = jpype.JArray(jpype.JShort)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPIntArray(self):
@@ -249,7 +249,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.randint(-2**31 - 1, 2**31 - 1, size=n).astype(np.int32)
         jarr = jpype.JArray(jpype.JInt)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPLongArray(self):
@@ -259,7 +259,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.randint(-2**63, 2**63 - 1, size=n).astype(np.int64)
         jarr = jpype.JArray(jpype.JLong)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPFloatArray(self):
@@ -268,7 +268,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.random(n).astype(np.float32)
         jarr = jpype.JArray(jpype.JFloat)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPDoubleArray(self):
@@ -277,4 +277,4 @@ class ArrayTestCase(common.JPypeTestCase) :
         a = np.random.random(n).astype(np.float64)
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
-        self.assertSequenceEqual(a, jarr)
+        self.assertCountEqual(a, jarr)
