@@ -18,6 +18,7 @@
 import jpype
 import logging
 from os import path
+import sys
 try:
     import unittest2 as unittest
 except ImportError:
@@ -38,6 +39,8 @@ class JPypeTestCase(unittest.TestCase) :
                            # "-Xcheck:jni",
                            "-Xmx256M", "-Xms64M", classpath_arg)
         self.jpype = jpype.JPackage('jpype')
+        if sys.version < '3':
+            self.assertCountEqual = self.assertItemsEqual
 
     def tearDown(self) :
         pass
