@@ -18,9 +18,13 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+import sys
 import jpype
 from jpype import JPackage, JArray, JByte, java
 from . import common
+
+if sys.version > '3':
+    unicode = str
 
 def haveNumpy():
     try:
@@ -128,7 +132,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         ByteBuffer = jpype.java.nio.ByteBuffer
         bb = ByteBuffer.allocate(4)
         buf = bb.array()
-        for i in xrange(len(expected)):
+        for i in range(len(expected)):
             buf[i] = expected[i]
 
         self.assertCountEqual(expected[:], buf[:])
