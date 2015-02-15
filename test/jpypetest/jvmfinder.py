@@ -86,13 +86,13 @@ class JVMFinderTest(unittest.TestCase):
             mock_checkoutput.return_value = expected
             p = finder._javahome_binary()
 
-            self.assertEquals(p, expected.strip())
+            self.assertEqual(p, expected.strip())
 
         # this version has no java_home binary
         mock_mac_ver.return_value = ('10.5', '', '')
         p = finder._javahome_binary()
 
-        self.assertEquals(p, None)
+        self.assertEqual(p, None)
 
     @unittest.skipIf(sys.version_info[:2] == (2, 7), "skipped on py27")
     @mock.patch('platform.mac_ver')
@@ -112,13 +112,13 @@ class JVMFinderTest(unittest.TestCase):
 
             p = finder._javahome_binary()
 
-            self.assertEquals(p.strip(), expected.strip())
+            self.assertEqual(p.strip(), expected.strip())
 
         # this version has no java_home binary
         mock_mac_ver.return_value = ('10.5', '', '')
         p = finder._javahome_binary()
 
-        self.assertEquals(p, None)
+        self.assertEqual(p, None)
 
 if __name__ == '__main__':
     unittest.main()
