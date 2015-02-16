@@ -1,5 +1,8 @@
 # part of JPype1; author Martin K. Scherer; 2014
-import unittest2 as unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 import mock
 
 from jpype._jvmfinder import *
@@ -83,14 +86,14 @@ class JVMFinderTest(unittest.TestCase):
             mock_checkoutput.return_value = expected
             p = finder._javahome_binary()
 
-            self.assertEquals(p, expected.strip())
+            self.assertEqual(p, expected.strip())
 
         # this version has no java_home binary
         mock_mac_ver.return_value = ('10.5', '', '')
         p = finder._javahome_binary()
 
-        self.assertEquals(p, None)
-        
+        self.assertEqual(p, None)
+
     @unittest.skipIf(sys.version_info[:2] == (2, 7), "skipped on py27")
     @mock.patch('platform.mac_ver')
     def test_javahome_binary_py27(self, mock_mac_ver):
@@ -106,16 +109,16 @@ class JVMFinderTest(unittest.TestCase):
                 def communicate(self):
                     return (expected, )
             mock_popen.return_value = proc()
-            
+
             p = finder._javahome_binary()
 
-            self.assertEquals(p.strip(), expected.strip())
+            self.assertEqual(p.strip(), expected.strip())
 
         # this version has no java_home binary
         mock_mac_ver.return_value = ('10.5', '', '')
         p = finder._javahome_binary()
 
-        self.assertEquals(p, None)
+        self.assertEqual(p, None)
 
 if __name__ == '__main__':
     unittest.main()

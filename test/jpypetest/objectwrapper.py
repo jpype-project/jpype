@@ -12,18 +12,19 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from jpype import *
-import common
+from . import common
 
 class ObjectWrapperTestCase(common.JPypeTestCase) :
     def testCallOverloads(self) :
-        # build the harness   
+        # build the harness
         h = JPackage("jpype.objectwrapper").Test1()
 
         o = java.lang.Integer(1)
-        assert h.Method1(JObject(o, java.lang.Number)) == 1
-        assert h.Method1(o) == 2  
-        assert h.Method1(JObject(java.lang.Integer(1), java.lang.Object)) == 3
-        assert h.Method1(JString("")) == 4
+        self.assertEqual(h.Method1(JObject(o, java.lang.Number)), 1)
+        self.assertEqual(h.Method1(o), 2)
+        self.assertEqual(h.Method1(JObject(java.lang.Integer(1),
+                                           java.lang.Object)), 3)
+        self.assertEqual(h.Method1(JString("")), 4)
