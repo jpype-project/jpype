@@ -1,4 +1,4 @@
-import common
+from . import common
 
 class PropertiesTestCase(common.JPypeTestCase):
 

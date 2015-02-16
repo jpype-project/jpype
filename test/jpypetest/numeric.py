@@ -12,29 +12,25 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from jpype import JPackage, java, JFloat
-import common, sys
+from . import common
 
 class NumericTestCase(common.JPypeTestCase) :
     def testMathAbs(self) :
-        assert java.lang.Math.abs(-10) == 10 
+        self.assertEqual(java.lang.Math.abs(-10), 10)
 
     def testDoubleConversion(self) :
         f = java.lang.Float.MAX_VALUE * 2
         jpype = JPackage("jpype")
-        assert jpype.numeric.NumericTest.doubleIsTwiceMaxFloat(f)
-        
+        self.assertTrue(jpype.numeric.NumericTest.doubleIsTwiceMaxFloat(f))
+
     def testDoubleIsProperlyConverted(self) :
-        if sys.platform.find("linux") != -1 :
-            # double comparison on linux is broken ... Nan == 0.0!!! 
-            print java.lang.Double.NaN, " != ", 0.0, " -> ", bool(java.lang.Double.NaN != 0.0), " == -> ", bool(java.lang.Double.NaN == 0.0)
-        else :
-            assert java.lang.Double.NEGATIVE_INFINITY != 0.0
-            assert java.lang.Double.MAX_VALUE != 0.0
-            assert java.lang.Double.NaN != 0.0
-            assert java.lang.Double.POSITIVE_INFINITY != 0.0
-    
+        self.assertTrue(java.lang.Double.POSITIVE_INFINITY != 0.0)
+        self.assertTrue(java.lang.Double.MAX_VALUE != 0.0)
+        self.assertTrue(java.lang.Double.NaN != 0.0)
+        self.assertTrue(java.lang.Double.NEGATIVE_INFINITY != 0.0)
+
     def testNegativeJFloatWrapper(self):
-        f = JFloat(-1)    
+        f = JFloat(-1)

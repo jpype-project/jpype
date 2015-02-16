@@ -16,45 +16,52 @@
 //*****************************************************************************
 package jpype.proxy;
 
-public class Test3
+import java.util.LinkedList;
+import java.util.List;
+
+public class ProxyTriggers
 {
-    public static void testProxy(ITestInterface2 itf)
+    public static String[] testProxy(TestInterface2 itf)
     {
-        System.out.println("Test Method = "+itf.testMethod());
-        if (itf instanceof ITestInterface3)
+        List<String> methods = new LinkedList<>();
+        if (itf instanceof TestInterface1)
         {
-            System.out.println("Test Method2 = "+((ITestInterface3)itf).testMethod2());
+            methods.add("Test Method1 = "+((TestInterface1)itf).testMethod1());
         }
+        methods.add("Test Method2 = "+itf.testMethod2());
+        if (itf instanceof TestInterface3)
+        {
+            methods.add("Test Method3 = "+((TestInterface3)itf).testMethod3());
+        }
+        return methods.toArray(new String[0]);
     }
     
-    public void testProxyWithThread(final ITestInterface2 itf)
+    public void testProxyWithThread(final TestThreadCallback itf)
     {
+        itf.notifyValue("Waiting for thread start");
         Thread t = new Thread(new Runnable() {
             public void run()
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 1; i <= 3; i++)
                 {
-                    itf.testMethod();
+                    itf.notifyValue(String.valueOf(i));
                 }
 
             }
         });
         t.start();
-        
         try {
-            System.out.println("Waiting for thread to finish");
             t.join();
-            System.out.println("Thread has finished");
-        }
-        catch(InterruptedException ex)
-        {
-            
+            itf.notifyValue("Thread finished");
+        } catch(InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            itf.notifyValue("Thread has been interrupted");
         }        
     }
     
-    public void testCallbackWithParameters(ITestInterface2 itf)
+    public Object[] testCallbackWithParameters(TestInterface2 itf)
     {
     	byte[] vals = { 1, 2, 3, 4};
-    	itf.write(vals , 12, 13);
+    	return itf.write(vals , 12, 13);
     }
 }

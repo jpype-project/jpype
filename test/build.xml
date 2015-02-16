@@ -10,8 +10,8 @@
 		<mkdir dir="${build}"/>
 		<javac destdir="${build}"
 			srcdir="${src}"
-			source="1.4"
-			target="1.4"
+			source="1.7"
+			target="1.7"
 		/>
 		<rmic base="${build}"
 			classname="jpype.rmi.ServerImpl"

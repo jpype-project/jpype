@@ -17,6 +17,7 @@
 import unittest
 
 import jpype
+import logging
 import os.path
 import pkgutil
 import sys
@@ -31,7 +32,6 @@ def suite() :
         pkgpath = os.path.dirname(jpypetest.__file__)
         names = ["jpypetest.%s" % name for _, name,
                  _ in pkgutil.iter_modules([pkgpath])]
-        print names
         test_suite = loader.loadTestsFromNames(names)
     return test_suite
 
@@ -45,4 +45,5 @@ def runTest() :
         sys.exit(1)
 
 if __name__ == '__main__' :
+    logging.basicConfig(level=logging.INFO)
     runTest()
