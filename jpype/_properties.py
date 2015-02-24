@@ -14,7 +14,8 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import _jclass, _jpype
+import _jpype
+from . import _jclass
 
 _PROPERTY_ACCESSOR_PREFIX_LEN = 3
 

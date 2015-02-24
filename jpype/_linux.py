@@ -15,8 +15,9 @@
 #
 #*****************************************************************************
 
-from . import _jvmfinder
 import os
+
+from . import _jvmfinder
 
 # ------------------------------------------------------------------------------
 
@@ -44,7 +45,6 @@ class LinuxJVMFinder(_jvmfinder.JVMFinder):
         self._methods = (self._get_from_java_home,
                          self._get_from_bin,
                          self._get_from_known_locations)
-
 
     def _get_from_bin(self):
         """

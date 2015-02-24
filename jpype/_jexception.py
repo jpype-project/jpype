@@ -14,18 +14,19 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import _jclass, _jpype
-import new
+import _jpype
+from . import _jclass
 
 _CLASSES = {}
 
-def JException(t) :
+def JException(t):
     return t.PYEXC
 
-class JavaException(Exception) :
-    def __init__(self, *data) :
-        if isinstance(data[0], tuple) and data[0][0] is _jclass._SPECIAL_CONSTRUCTOR_KEY :
-            # this is wrapped :
+class JavaException(Exception):
+    def __init__(self, *data):
+        if isinstance(data[0], tuple) \
+           and data[0][0] is _jclass._SPECIAL_CONSTRUCTOR_KEY:
+            # this is wrapped:
             self.__javaobject__ = data[0][1]
             self.__javaclass__ = self.__javaobject__.__class__
         else:
@@ -34,13 +35,13 @@ class JavaException(Exception) :
 
         Exception.__init__(self, self.__javaobject__)
 
-    def javaClass(self) :
+    def javaClass(self):
         return self.__javaclass__
 
-    def message(self) :
+    def message(self):
         return self.__javaobject__.getMessage()
 
-    def stacktrace(self) :
+    def stacktrace(self):
         StringWriter = _jclass.JClass("java.io.StringWriter")
         PrintWriter = _jclass.JClass("java.io.PrintWriter")
         sw = StringWriter()
@@ -52,22 +53,22 @@ class JavaException(Exception) :
         sw.close()
         return r
 
-    def __str__(self) :
+    def __str__(self):
         return self.__javaobject__.toString()
 
-def _initialize() :
+def _initialize():
     _jpype.setJavaExceptionClass(JavaException)
 
-def _makePythonException(name, bc) :
-    if _CLASSES.has_key(name) :
+def _makePythonException(name, bc):
+    if name in _CLASSES:
         return _CLASSES[name]
 
-    if name == 'java.lang.Throwable' :
+    if name == 'java.lang.Throwable':
         bases = (JavaException,)
     else:
         bases = (_makePythonException(bc.getName(), bc.getBaseClass()) ,)
 
-    ec = new.classobj(name+"PyRaisable", bases, {'JAVACLASSNAME' : name})
+    ec = type(name+"PyRaisable", bases, {'JAVACLASSNAME': name})
 
     _CLASSES[name] = ec
     return ec

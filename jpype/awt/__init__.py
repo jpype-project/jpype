@@ -14,4 +14,4 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import event
+from . import event

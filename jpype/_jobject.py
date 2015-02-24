@@ -14,18 +14,18 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import _jclass
+from . import _jclass
 
-def _initialize() :
+def _initialize():
     _jclass.registerClassCustomizer(ComparableCustomizer())
 
-class ComparableCustomizer(object) :
+class ComparableCustomizer(object):
     _METHODS = {
-            "__cmp__" : lambda self, o : self.compareTo(o)
+            "__cmp__": lambda self, o: self.compareTo(o)
     }
 
-    def canCustomize(self, name, jc) :
+    def canCustomize(self, name, jc):
         return name == 'java.lang.Comparable'
 
-    def customize(self, name, jc, bases, members) :
+    def customize(self, name, jc, bases, members):
         members.update(ComparableCustomizer._METHODS)
