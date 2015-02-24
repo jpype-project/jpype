@@ -15,14 +15,14 @@
 #
 #*****************************************************************************
 import sys
-import _core
-import _jproxy
-import _jclass
+
+from . import _jproxy
+from . import _jclass
 
 def setupGuiEnvironment(cb):
-    if sys.platform == 'darwin' :
+    if sys.platform == 'darwin':
         from PyObjCTools import AppHelper
-        m = {'run' : cb}
+        m = {'run': cb}
         proxy = _jproxy.JProxy('java.lang.Runnable', m)
         cbthread = _jclass.JClass("java.lang.Thread")(proxy)
         cbthread.start()
@@ -30,7 +30,7 @@ def setupGuiEnvironment(cb):
     else:
         cb()
 
-def shutdownGuiEnvironment() :
-    if sys.platform == 'darwin' :
+def shutdownGuiEnvironment():
+    if sys.platform == 'darwin':
         from PyObjCTools import AppHelper
         AppHelper.stopEventLoop()

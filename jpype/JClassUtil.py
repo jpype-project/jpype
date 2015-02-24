@@ -15,10 +15,10 @@
 #
 #*****************************************************************************
 
-import _jclass
+from . import _jclass
 
-def isInterface(t) :
-    if not isinstance(t, _jclass._JavaClass) :
+def isInterface(t):
+    if not isinstance(t, _jclass._JavaClass):
         return False
 
     return t.__javaclass__.isInterface()

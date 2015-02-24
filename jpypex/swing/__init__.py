@@ -14,4 +14,4 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-from AbstractAction import *
+from .AbstractAction import *

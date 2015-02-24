@@ -16,22 +16,22 @@
 #*****************************************************************************
 
 import _jpype
-import _jclass
+from . import _jclass
 
-class JPackage(object) :
-    def __init__(self, name) :
+class JPackage(object):
+    def __init__(self, name):
         self.__name = name
 
-    def __getattribute__(self, n) :
-        try :
+    def __getattribute__(self, n):
+        try:
             return object.__getattribute__(self, n)
-        except :
+        except:
             # not found ...
 
             # perhaps it is a class?
-            subname = "%s.%s" % (self.__name, n)
+            subname = "{0}.{1}".format(self.__name, n)
             cc = _jpype.findClass(subname)
-            if cc is None :
+            if cc is None:
                 # can only assume it is a sub-package then ...
                 cc = JPackage(subname)
             else:
@@ -41,13 +41,15 @@ class JPackage(object) :
 
             return cc
 
-    def __setattr__(self, n, v, intern=False) :
-        if not n[:len("_JPackage")] == '_JPackage' and not intern : # NOTE this shadows name mangling
-            raise RuntimeError, "Cannot set attributes in a package"+n
+    def __setattr__(self, n, v, intern=False):
+        if not n[:len('_JPackage')] == '_JPackage' \
+           and not intern: # NOTE this shadows name mangling
+            raise RuntimeError("Cannot set attributes in a package {0}"
+                               .format(n))
         object.__setattr__(self, n, v)
 
-    def __str__(self) :
-        return "<Java package %s>" % self.__name
+    def __str__(self):
+        return "<Java package {0}>".format(self.__name)
 
-    def __call__(self, *arg, **kwarg) :
-        raise TypeError, "Package "+self.__name+" is not Callable"
+    def __call__(self, *arg, **kwarg):
+        raise TypeError("Package {0} is not Callable".format(self.__name))

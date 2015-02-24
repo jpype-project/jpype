@@ -6,7 +6,6 @@ import codecs
 import platform
 from glob import glob
 import warnings
-import exceptions
 
 from setuptools import setup
 from setuptools import Extension
@@ -22,7 +21,7 @@ if "--disable-numpy" in sys.argv:
 else:
     disabled_numpy = False
 
-class FeatureNotice(exceptions.Warning):
+class FeatureNotice(Warning):
     """ indicate notices about features """
     pass
 
@@ -129,10 +128,10 @@ class my_build_ext(build_ext):
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
-        if self.copt.has_key(c):
+        if c in self.copt:
             for e in self.extensions:
                 e.extra_compile_args = self.copt[ c ]
-        if self.lopt.has_key(c):
+        if c in self.lopt:
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]
 

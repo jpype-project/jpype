@@ -67,15 +67,17 @@ class JVMFinder(object):
 
         else:
             if found_non_supported_jvm:
-                raise JVMNotSupportedException("Sorry '%s' is known to be broken."
-                                           " Please ensure your JAVA_HOME"
-                                           " contains at least another JVM "
-                                           "implementation (eg. server)" % candidate)
+                raise JVMNotSupportedException("Sorry '{0}' is known to be "
+                                               "broken. Please ensure your "
+                                               "JAVA_HOME contains at least "
+                                               "another JVM implementation "
+                                               "(eg. server)"
+                                               .format(candidate))
             # File not found
-            raise JVMNotFoundException("Sorry no JVM could be found."
-                                       " Please ensure your JAVA_HOME"
-                                       " environment variable is pointing"
-                                       " to correct installation.")
+            raise JVMNotFoundException("Sorry no JVM could be found. "
+                                       "Please ensure your JAVA_HOME "
+                                       "environment variable is pointing "
+                                       "to correct installation.")
 
 
     def find_possible_homes(self, parents):
@@ -129,9 +131,10 @@ class JVMFinder(object):
                     return jvm
 
         else:
-            raise JVMNotFoundException("No JVM shared library file ({0}) found. "
-                             "Try setting up the JAVA_HOME environment "
-                             "variable properly.".format(self._libfile))
+            raise JVMNotFoundException("No JVM shared library file ({0}) "
+                                       "found. Try setting up the JAVA_HOME "
+                                       "environment variable properly."
+                                       .format(self._libfile))
 
 
     def _get_from_java_home(self):
