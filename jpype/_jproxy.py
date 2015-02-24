@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import _jpype, _jclass, JClassUtil
@@ -24,38 +24,37 @@ def _initialize() :
 class JProxy(object) :
     def __init__(self, intf, dict=None, inst=None) :
         actualIntf = None
-        
+
         if isinstance(intf, str) or isinstance(intf, unicode) :
             actualIntf = [ _jclass.JClass(intf) ]
         elif isinstance(intf, _jclass._JavaClass) :
             actualIntf = [ intf ]
         elif operator.isSequenceType(intf) :
             actualIntf = []
-            for i in intf :            
+            for i in intf :
                 if isinstance(i, str) or isinstance(i, unicode) :
                     actualIntf.append(_jclass.JClass(i))
                 elif isinstance(i, _jclass._JavaClass) :
                     actualIntf.append(i)
                 else:
-                    raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"                
+                    raise TypeError("JProxy requires java interface classes or the names of java interfaces classes")
         else:
-            raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"
-                
+            raise TypeError("JProxy requires java interface classes or the names of java interfaces classes")
+
         for i in actualIntf :
             if not JClassUtil.isInterface(i) :
-                raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes : "+i.__name__                 
+                raise TypeError("JProxy requires java interface classes or the names of java interfaces classes : %s" % i.__name__)
 
         if dict is not None and inst is not None :
-            raise RuntimeError, "Specify only one of dict and inst"
+            raise RuntimeError("Specify only one of dict and inst")
 
         self._dict = dict
         self._inst = inst
-        
+
         self._proxy = _jpype.createProxy(self, actualIntf)
-        
+
     def getCallable(self, name) :
         if self._dict is not None :
             return self._dict[name]
         else :
             return getattr(self._inst, name)
-        

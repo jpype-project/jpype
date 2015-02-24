@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import _jclass
@@ -20,5 +20,5 @@ import _jclass
 def isInterface(t) :
     if not isinstance(t, _jclass._JavaClass) :
         return False
-        
+
     return t.__javaclass__.isInterface()

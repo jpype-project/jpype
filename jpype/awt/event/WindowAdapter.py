@@ -1,27 +1,27 @@
 class WindowAdapter(object) :
     def __init__(self, *mth, **kw) :
         object.__init__(self)
-        
+
         for i, j in kw.items() :
             setattr(self, i, j)
-        
+
     def windowActivated(self, e) :
-        pass 
-          
+        pass
+
     def windowClosed(self,  e) :
-        pass 
-          
+        pass
+
     def windowClosing(self,  e) :
-        pass 
-          
+        pass
+
     def windowDeactivated(self,  e) :
-        pass 
-          
+        pass
+
     def windowDeiconified(self,  e) :
-        pass 
-          
+        pass
+
     def windowIconified(self,  e) :
-        pass 
-                  
+        pass
+
     def windowOpened(self,  e) :
-        pass 
+        pass

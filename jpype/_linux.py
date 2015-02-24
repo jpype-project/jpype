@@ -50,7 +50,7 @@ class LinuxJVMFinder(_jvmfinder.JVMFinder):
         """
         Retrieves the Java library path according to the real installation of
         the java executable
-        
+
         :return: The path to the JVM library, or None
         """
         # Find the real interpreter installation path
