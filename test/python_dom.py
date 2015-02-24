@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from os import path
 import time
@@ -21,15 +21,15 @@ from xml.dom import minidom
 def output(el, prefix="") :
     if el.nodeType != el.ELEMENT_NODE :
         return
-        
-    #print prefix, "<", el.tagName, 
-    
+
+    #print prefix, "<", el.tagName,
+
     atts = el.attributes
     for i in range(atts.length) :
         a = atts.item(i);
-        #print a.nodeName, '="%s"' % a.nodeValue, 
+        #print a.nodeName, '="%s"' % a.nodeValue,
     #print '>'
-    
+
     nl = el.childNodes
     for i in range(nl.length) :
         output(nl.item(i), prefix+"  ")
@@ -37,9 +37,9 @@ def output(el, prefix="") :
 
     #print prefix, "</", el.tagName, ">"
 
-t = time.time()    
+t = time.time()
 count = 30
-for i in range(count) :    
+for i in range(count) :
     doc = minidom.parse(path.join(path.dirname(__file__), "sample", "big.xml"))
 
     el = doc.documentElement
@@ -47,4 +47,3 @@ for i in range(count) :
 
 t2 = time.time()
 print count, "iterations in", t2-t, "seconds"
-

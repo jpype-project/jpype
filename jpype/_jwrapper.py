@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import _jpype
@@ -28,14 +28,14 @@ class _JWrapper(object) :
             self._value = _jpype.convertToJValue(self.typeName, v)
         else:
             self._value = None
-            
-    
+
+
 class JByte(_JWrapper) :
     typeName = "byte"
-    
+
 class JShort(_JWrapper) :
     typeName = "short"
-    
+
 class JInt(_JWrapper) :
     typeName = "int"
 
@@ -56,26 +56,26 @@ class JBoolean(_JWrapper) :
 
 class JString(_JWrapper) :
     typeName = "java.lang.String"
-    
+
 def _getDefaultTypeName(obj) :
     if obj is True or obj is False :
         return 'java.lang.Boolean'
-        
+
     if isinstance(obj, str) or isinstance(obj, unicode) :
         return "java.lang.String"
 
     if isinstance(obj, int) :
         return "java.lang.Integer"
-        
+
     if isinstance(obj, long) :
         return "java.lang.Long"
-        
+
     if isinstance(obj, float) :
         return "java.lang.Double"
 
     if isinstance(obj, _jclass._JavaClass) :
         return obj.__javaclassname__
-        
+
     if isinstance(obj, _jclass.java.lang.Class) :
         return obj.__class__.__javaclass__.getName()
 
@@ -91,6 +91,6 @@ class JObject(_JWrapper) :
             tp = _getDefaultTypeName(v)
         if isinstance(tp, _jclass._JavaClass) :
             tp = tp.__javaclass__.getName()
-            
+
         self.typeName = tp
         self._value = _jpype.convertToJValue(tp, v)

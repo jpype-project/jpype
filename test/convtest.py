@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import jpype
@@ -27,17 +27,17 @@ DATA_SIZE = 5*1024*1024 # 5 MB
 
 
 
-def runBaseline(data):    
+def runBaseline(data):
     print 'Running baseline test : converting a python string->array.array->JArray(JByte). size = ', len(data)/1024.0, 'kb'
     print '    Start time (no optimize) on my machine is 3.56 seconds.'
     start = time.time()
-     
+
     #darr = array.array('b', DATA)
     arr_cls = jpype.JArray(jpype.JByte)
     java_arr = arr_cls(DATA)
-    
+
     end = time.time()
-    
+
     print '    test run in', (end-start), 'seconds.'
 
 def runStringToByteBuffer(data):
@@ -47,7 +47,7 @@ def runStringToByteBuffer(data):
     bb = jpype.nio.convertToDirectBuffer(data)
 
     end = time.time()
-    
+
     print '    test run in', (end-start), 'seconds.'
 
     jpype.JPackage("jpype").nio.NioReceive.receiveBuffer(bb)
@@ -60,7 +60,7 @@ def runStringToByteArray(data):
     java_arr = arr_cls(data)
 
     end = time.time()
-    
+
     print '    test run in', (end-start), 'seconds.'
 
 root = os.path.abspath(os.path.dirname(__file__))
@@ -88,20 +88,20 @@ def testStringMemory():
 #    print buf.get()
 #    print buf.get()
 #    print buf.get()
-    
+
     print 'now deleting the buffer itself'
     del buf
     print 'now waiting for the string to get deleted'
     while not DELETED:
         time.sleep(1)
-        
+
         print '.',
         jpype.JPackage("jpype").nio.NioReceive.allocSomeMemory()
 
 testStringMemory()
 
 #for i in range(1,5) :
-    
+
 #    DATA = generateStringData(DATA_SIZE*i)
 #    runBaseline(DATA)
 #    runStringToByteBuffer(DATA)

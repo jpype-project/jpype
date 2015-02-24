@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 import operator
 import _jclass
@@ -24,7 +24,7 @@ def _initialize() :
     _jclass.registerClassCustomizer(IteratorCustomizer())
     _jclass.registerClassCustomizer(EnumerationCustomizer())
 
-def isPythonSequence(v):       
+def isPythonSequence(v):
     if operator.isSequenceType(v) :
         if not hasattr(v.__class__, '__metaclass__') or v.__class__.__metaclass__ is _jclass._JavaClass :
             return True
@@ -32,8 +32,8 @@ def isPythonSequence(v):
 
 def _colLength(self) :
     return self.size()
-    
-def _colIter(self) :    
+
+def _colIter(self) :
     return self.iterator()
 
 def _colDelItem(self, i) :
@@ -64,7 +64,7 @@ def _colRetainAll(self, v):
             r.add(i)
     else:
         r = v
-                
+
     return self._retainAll(r)
 
 class CollectionCustomizer(object) :
@@ -73,17 +73,17 @@ class CollectionCustomizer(object) :
         '__iter__' : _colIter,
         '__delitem__' : _colDelItem,
     }
-    
+
     def canCustomize(self, name, jc) :
         if name == 'java.util.Collection' :
             return True
         return jc.isSubclass('java.util.Collection')
-        
+
     def customize(self, name, jc, bases, members) :
         if name == 'java.util.Collection' :
             members.update(CollectionCustomizer._METHODS)
         else:
-            # AddAll is handled by List  
+            # AddAll is handled by List
             if (not jc.isSubclass("java.util.List")) and 'addAll' in members :
                 members['_addAll'] = members['addAll']
                 members['addAll'] = _colAddAll
@@ -107,7 +107,7 @@ def _listGetItem(self, ndx) :
         if ndx < 0 :
             ndx = self.size() + ndx
         return self.get(ndx)
-        
+
 def _listSetItem(self, ndx, v) :
     if isinstance(ndx, slice) :
         start = ndx.start
@@ -135,7 +135,7 @@ def _listAddAll(self, v, v2=None):
             for i in range(len(v2)) :
                 r = r or self.add(v+i, v2[i])
                 ndx +=1
-        else:    
+        else:
             for i in v :
                 r = self.add(i) or r
         return r
@@ -147,29 +147,29 @@ class ListCustomizer(object) :
         '__setitem__' : _listSetItem,
         '__getitem__' : _listGetItem,
     }
-    
+
     def canCustomize(self, name, jc) :
         if name == 'java.util.List' :
             return True
         return jc.isSubclass('java.util.List')
-        
+
     def customize(self, name, jc, bases, members) :
         if name == 'java.util.List' :
             members.update(ListCustomizer._METHODS)
         else:
             if 'addAll' in members :
                 members['_addAll'] = members['addAll']
-                members['addAll'] = _listAddAll            
-       
-def isPythonMapping(v):       
+                members['addAll'] = _listAddAll
+
+def isPythonMapping(v):
     if operator.isMappingType(v) :
         if not hasattr(v.__class__, '__metaclass__') or v.__class__.__metaclass__ is _jclass._JavaClass :
             return True
     return False
-        
+
 def _mapLength(self) :
     return self.size()
-    
+
 def _mapIter(self) :
     return self.keySet().iterator()
 
@@ -178,7 +178,7 @@ def _mapDelItem(self, i) :
 
 def _mapGetItem(self, ndx) :
     return self.get(ndx)
-        
+
 def _mapSetItem(self, ndx, v) :
     self.put(ndx, v)
 
@@ -186,10 +186,10 @@ def _mapPutAll(self, v):
     if isPythonMapping(v) :
         for i in v :
             self.put(i, v[i])
-    else:        
-        #do the regular method ...    
+    else:
+        #do the regular method ...
         self._putAll(v)
-    
+
 class MapCustomizer(object) :
     _METHODS = {
         '__len__' : _mapLength,
@@ -198,38 +198,38 @@ class MapCustomizer(object) :
         '__getitem__' : _mapGetItem,
         '__setitem__' : _mapSetItem,
     }
-    
+
     def canCustomize(self, name, jc) :
         if name == 'java.util.Map' :
             return True
         return jc.isSubclass('java.util.Map')
-        
+
     def customize(self, name, jc, bases, members) :
         if name == 'java.util.Map' :
             members.update(MapCustomizer._METHODS)
         else:
             if "putAll" in members :
-                   members["_putAll"] = members["putAll"]
-                   members["putAll"] = _mapPutAll
+                members["_putAll"] = members["putAll"]
+                members["putAll"] = _mapPutAll
 
 def _iterNext(self) :
     if self.hasNext() :
         return self._next()
     raise StopIteration
-    
+
 def _iterIter(self) :
     return self
-    
+
 class IteratorCustomizer(object) :
     _METHODS = {
         '__iter__' : _iterIter,
     }
-    
+
     def canCustomize(self, name, jc) :
         if name == 'java.util.Iterator' :
             return True
         return jc.isSubclass('java.util.Iterator')
-        
+
     def customize(self, name, jc, bases, members) :
         if name == 'java.util.Iterator' :
             members.update(IteratorCustomizer._METHODS)
@@ -241,20 +241,19 @@ def _enumNext(self) :
     if self.hasMoreElements() :
         return self.nextElement()
     raise StopIteration
-    
+
 def _enumIter(self) :
     return self
-    
+
 
 class EnumerationCustomizer(object) :
     _METHODS = {
         'next' : _enumNext,
         '__iter__' : _enumIter,
     }
-    
+
     def canCustomize(self, name, jc) :
         return name == 'java.util.Enumeration'
-        
+
     def customize(self, name, jc, bases, members) :
         members.update(EnumerationCustomizer._METHODS)
-        
