@@ -90,7 +90,7 @@ def _javaInit(self, *args):
 def _javaGetAttr(self, name):
     try:
         r = object.__getattribute__(self, name)
-    except AttributeError, ex:
+    except AttributeError as ex:
         if name in dir(self.__class__.__metaclass__):
             r = object.__getattribute__(self.__class__, name)
         else:

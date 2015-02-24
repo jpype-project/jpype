@@ -66,7 +66,7 @@ def _jarrayInit(self, *args) :
     if len(args) == 2 and args[0] == _jclass._SPECIAL_CONSTRUCTOR_KEY :
         _JavaArrayClass.__init__(self, args[1])
     elif len(args) != 1 :
-        raise TypeError, "Array classes only take 2 parameters, %s given" % (len(args)+1,)
+        raise TypeError("Array classes only take 2 parameters, %s given" % (len(args)+1,))
     else:
         values = None
         if operator.isSequenceType(args[0]) :
@@ -131,7 +131,7 @@ def JArray(t, ndims=1) :
         t = t.__name__
 
     elif not isinstance(t, str) and not isinstance(t, unicode) :
-        raise TypeError, "Argument must be a java class, java array class, java wrapper or string representing a java class"
+        raise TypeError("Argument must be a java class, java array class, java wrapper or string representing a java class")
 
     arrayTypeName = t + ('[]'*ndims)
 

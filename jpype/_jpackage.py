@@ -43,11 +43,11 @@ class JPackage(object) :
 
     def __setattr__(self, n, v, intern=False) :
         if not n[:len("_JPackage")] == '_JPackage' and not intern : # NOTE this shadows name mangling
-            raise RuntimeError, "Cannot set attributes in a package"+n
+            raise RuntimeError("Cannot set attributes in a package %s" % n)
         object.__setattr__(self, n, v)
 
     def __str__(self) :
         return "<Java package %s>" % self.__name
 
     def __call__(self, *arg, **kwarg) :
-        raise TypeError, "Package "+self.__name+" is not Callable"
+        raise TypeError("Package %s is not Callable" % self.__name)

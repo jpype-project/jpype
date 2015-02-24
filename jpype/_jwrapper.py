@@ -83,7 +83,8 @@ def _getDefaultTypeName(obj) :
         return obj.typeName
 
 
-    raise RuntimeException, "Unable to determine the default type of "+obj.__class__
+    raise RuntimeException("Unable to determine the default type of %s" %
+                           obj.__class__)
 
 class JObject(_JWrapper) :
     def __init__(self, v, tp = None) :

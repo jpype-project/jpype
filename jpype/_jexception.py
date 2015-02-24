@@ -15,7 +15,6 @@
 #
 #*****************************************************************************
 import _jclass, _jpype
-import new
 
 _CLASSES = {}
 
@@ -67,7 +66,7 @@ def _makePythonException(name, bc) :
     else:
         bases = (_makePythonException(bc.getName(), bc.getBaseClass()) ,)
 
-    ec = new.classobj(name+"PyRaisable", bases, {'JAVACLASSNAME' : name})
+    ec = type(name+"PyRaisable", bases, {'JAVACLASSNAME' : name})
 
     _CLASSES[name] = ec
     return ec

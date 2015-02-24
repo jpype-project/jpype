@@ -37,16 +37,16 @@ class JProxy(object) :
                 elif isinstance(i, _jclass._JavaClass) :
                     actualIntf.append(i)
                 else:
-                    raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"
+                    raise TypeError("JProxy requires java interface classes or the names of java interfaces classes")
         else:
-            raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"
+            raise TypeError("JProxy requires java interface classes or the names of java interfaces classes")
 
         for i in actualIntf :
             if not JClassUtil.isInterface(i) :
-                raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes : "+i.__name__
+                raise TypeError("JProxy requires java interface classes or the names of java interfaces classes : %s" % i.__name__)
 
         if dict is not None and inst is not None :
-            raise RuntimeError, "Specify only one of dict and inst"
+            raise RuntimeError("Specify only one of dict and inst")
 
         self._dict = dict
         self._inst = inst
