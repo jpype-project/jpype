@@ -43,7 +43,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         """
         Retrieves the path to the default Java installation stored in the
         Windows registry
-        
+
         :return: The path found in the registry, or None
         """
         try :
@@ -60,4 +60,3 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         except WindowsError:
             return None
-

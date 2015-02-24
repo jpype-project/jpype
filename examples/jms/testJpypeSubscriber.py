@@ -1,10 +1,10 @@
-from jpype import * 
+from jpype import *
 import time
 
 def pySubscriber (proxy,
-                  javaNamingFactory="weblogic.jndi.WLInitialContextFactory", 
+                  javaNamingFactory="weblogic.jndi.WLInitialContextFactory",
                   javaNamingProvider="t3://158.188.40.21:7001",
-                  connectionFactory="weblogic.jms.ConnectionFactory", 
+                  connectionFactory="weblogic.jms.ConnectionFactory",
                   topicName="defaultTopic"):
     return messaging.JpypeSubscriber(proxy,javaNamingFactory,javaNamingProvider,
                                     connectionFactory,topicName)
@@ -39,4 +39,4 @@ print "Listening..."
 time.sleep(1000)
 
 # exit
-shutdownJVM() 
+shutdownJVM()

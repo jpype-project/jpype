@@ -130,8 +130,8 @@ class my_build_ext(build_ext):
         # set compiler flags
         c = self.compiler.compiler_type
         if self.copt.has_key(c):
-           for e in self.extensions:
-               e.extra_compile_args = self.copt[ c ]
+            for e in self.extensions:
+                e.extra_compile_args = self.copt[ c ]
         if self.lopt.has_key(c):
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]

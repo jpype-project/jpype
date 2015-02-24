@@ -47,7 +47,7 @@ class JVMFinder(object):
     def find_libjvm(self, java_home):
         """
         Recursively looks for the given file
-        
+
         :param java_home: A Java home folder
         :param filename: Name of the file to find
         :return: The first found file path, or None
@@ -82,7 +82,7 @@ class JVMFinder(object):
         """
         Generator that looks for the first-level children folders that could be
         Java installations, according to their name
-        
+
         :param parents: A list of parent directories
         :return: The possible JVM installation folders
         """
@@ -110,7 +110,7 @@ class JVMFinder(object):
     def get_jvm_path(self):
         """
         Retrieves the path to the default or first found JVM library
-        
+
         :return: The path to the JVM shared library file
         :raise ValueError: No JVM library found
         """
@@ -138,8 +138,8 @@ class JVMFinder(object):
         """
         Retrieves the Java library path according to the JAVA_HOME environment
         variable
-        
-        :return: The path to the JVM library, or None 
+
+        :return: The path to the JVM library, or None
         """
         # Get the environment variable
         java_home = os.getenv("JAVA_HOME")
@@ -155,7 +155,7 @@ class JVMFinder(object):
         """
         Retrieves the first existing Java library path in the predefined known
         locations
-        
+
         :return: The path to the JVM library, or None
         """
         for home in self.find_possible_homes(self._locations):

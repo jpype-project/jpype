@@ -51,9 +51,9 @@ class ExceptionTestCase(common.JPypeTestCase) :
 
     @unittest.skip("Throwing specific Java exception from Python doesn't work")
     def testThrowException(self) :
-         d = {"throwIOException" : throwIOException, }
-         p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
-         self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
+        d = {"throwIOException" : throwIOException, }
+        p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
+        self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
 
     def testThrowException3(self) :
         d = {"throwIOException" : throwByJavaException, }
