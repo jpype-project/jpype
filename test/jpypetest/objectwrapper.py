@@ -14,11 +14,17 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-from jpype import *
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+import jpype
+from jpype import java, JObject, JPackage, JString
 from . import common
 
-class ObjectWrapperTestCase(common.JPypeTestCase) :
-    def testCallOverloads(self) :
+class ObjectWrapperTestCase(common.JPypeTestCase):
+    def testCallOverloads(self):
         # build the harness
         h = JPackage("jpype.objectwrapper").Test1()
 
@@ -28,3 +34,15 @@ class ObjectWrapperTestCase(common.JPypeTestCase) :
         self.assertEqual(h.Method1(JObject(java.lang.Integer(1),
                                            java.lang.Object)), 3)
         self.assertEqual(h.Method1(JString("")), 4)
+
+    def testDefaultTypeNameString(self):
+        self.assertEqual(JObject("123").typeName, "java.lang.String")
+
+    def testDefaultTypeNameBoolean(self):
+        self.assertEqual(JObject(True).typeName, "java.lang.Boolean")
+        self.assertEqual(JObject(False).typeName, "java.lang.Boolean")
+
+    @unittest.skip("This seems to be a bug in _jwrapper.py _getDefaultTypeName")
+    def testDefaultTypeNameJavaClass(self):
+        o = java.lang.String
+        self.assertEqual(JObject(o).typeName, "java.lang.Class")

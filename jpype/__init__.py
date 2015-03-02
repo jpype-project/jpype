@@ -12,27 +12,22 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
-from _jpackage import *
-from _jclass import *
-from _jarray import *
-from _jwrapper import *
-from _jproxy import *
-from _jexception import *
-from _core import *
-from _gui import *
-import reflect
-import nio
+from ._jpackage import *
+from ._jclass import *
+from ._jarray import *
+from ._jwrapper import *
+from ._jproxy import *
+from ._jexception import *
+from ._core import *
+from ._gui import *
 
+from . import JClassUtil
 
-import JClassUtil
-    
-def JIterator(it) :
-	"""Deprecated"""
-	return it
-        
+def JIterator(it):
+    """Deprecated"""
+    return it
+
 java = JPackage("java")
 javax = JPackage("javax")
-    
-    

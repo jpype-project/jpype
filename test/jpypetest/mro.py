@@ -18,6 +18,6 @@ from jpype import JPackage, java
 import sys
 from . import common
 
-class MroTestCase(common.JPypeTestCase) :
-    def testMro(self) :
+class MroTestCase(common.JPypeTestCase):
+    def testMro(self):
         C = JPackage('jpype.mro').C

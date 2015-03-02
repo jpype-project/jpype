@@ -12,21 +12,21 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
-import thread
+import threading
 
 import _jpype
 
 def startJava():
     _jpype.startReferenceQueue(1)
-    
+
 def startPython():
-    def _run() :
-    	_jpype.attachThreadToJVM()
+    def _run():
+        _jpype.attachThreadToJVM()
         _jpype.startReferenceQueue(0)
-        
-	thread.start_new_thread(_run, tuple())    
+
+        threading.Thread(target=_run).start()
 
 def stop():
     _jpype.stopReferenceQueue()

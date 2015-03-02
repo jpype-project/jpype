@@ -25,46 +25,46 @@ from sys import hexversion as ver
 
 gt_py_27_03=ver > 0x020703ff and ver < 0x3000000
 
-def _testMethod1() :
+def _testMethod1():
     return 33
 
-def _testMethod2() :
+def _testMethod2():
     return 32
 
-def _testMethod3() :
+def _testMethod3():
     return "Foo"
 
-class C :
-    def testMethod1(self) :
+class C:
+    def testMethod1(self):
         return 43
 
-    def testMethod2(self) :
+    def testMethod2(self):
         return 42
 
-    def testMethod3(self) :
+    def testMethod3(self):
         return "Bar"
 
-    def write(self, bytes, start, length) :
+    def write(self, bytes, start, length):
         return bytes, start, length
 
-class ThreadCallbackImpl :
+class ThreadCallbackImpl:
     def __init__(self):
         self.values = []
 
     def notifyValue(self, val):
         self.values.append(val)
 
-class ProxyTestCase(common.JPypeTestCase) :
+class ProxyTestCase(common.JPypeTestCase):
 
     def setUp(self):
         super(ProxyTestCase, self).setUp()
         self.package = JPackage("jpype.proxy")
         self._triggers = self.package.ProxyTriggers
 
-    def testProxyWithDict(self) :
+    def testProxyWithDict(self):
         d = {
-            'testMethod1' : _testMethod1,
-            'testMethod2' : _testMethod2,
+            'testMethod1': _testMethod1,
+            'testMethod2': _testMethod2,
         }
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
@@ -75,10 +75,10 @@ class ProxyTestCase(common.JPypeTestCase) :
         expected = ['Test Method1 = 33', 'Test Method2 = 32']
         self.assertSequenceEqual(result, expected)
 
-    def testProxyWithDictInherited(self) :
+    def testProxyWithDictInherited(self):
         d = {
-            'testMethod2' : _testMethod2,
-            'testMethod3' : _testMethod3,
+            'testMethod2': _testMethod2,
+            'testMethod3': _testMethod3,
         }
         itf3 = self.package.TestInterface3
         proxy = JProxy(itf3, dict=d)
@@ -88,7 +88,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         expected = ['Test Method2 = 32', 'Test Method3 = Foo']
         self.assertSequenceEqual(result, expected)
 
-    def testProxyWithInst(self) :
+    def testProxyWithInst(self):
         itf3 = self.package.TestInterface3
         c = C()
         proxy = JProxy(itf3, inst=c)
@@ -98,7 +98,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         expected = ['Test Method2 = 42', 'Test Method3 = Bar']
         self.assertSequenceEqual(result, expected)
 
-    def testProxyWithThread(self) :
+    def testProxyWithThread(self):
         itf = self.package.TestThreadCallback
         tcb = ThreadCallbackImpl()
         proxy = JProxy(itf, inst=tcb)
@@ -109,7 +109,7 @@ class ProxyTestCase(common.JPypeTestCase) :
                                       'Thread finished'])
 
     @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
-    def testProxyWithArguments(self) :
+    def testProxyWithArguments(self):
         itf2 = self.package.TestInterface2
         c = C()
         proxy = JProxy(itf2, inst=c)
@@ -121,7 +121,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         self.assertEqual(start, 12)
         self.assertEqual(length, 13)
 
-    def testProxyWithMultipleInterface(self) :
+    def testProxyWithMultipleInterface(self):
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
         c = C()
@@ -133,7 +133,7 @@ class ProxyTestCase(common.JPypeTestCase) :
         self.assertSequenceEqual(result, expected)
 
     @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
-    def testProxyWithMultipleInterfaceInherited(self) :
+    def testProxyWithMultipleInterfaceInherited(self):
         itf2 = self.package.TestInterface2
         itf3 = self.package.TestInterface3
         c = C()

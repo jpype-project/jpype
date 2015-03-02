@@ -40,7 +40,13 @@ def setUsePythonThreadForDeamon(v):
 def isJVMStarted() :
     return _jpype.isStarted()
 
-def startJVM(jvm, *args) :
+def startJVM(jvm, *args):
+    """
+    Starts a Java Virtual Machine
+
+    :param jvm:  Path to the jvm library file (libjvm.so, jvm.dll, ...)
+    :param args: Arguments to give to the JVM
+    """
     _jpype.startup(jvm, tuple(args), True)
     _jclass._initialize()
     _jarray._initialize()
@@ -53,13 +59,13 @@ def startJVM(jvm, *args) :
     nio._initialize()
     reflect._initialize()
 
-    # start the reference deamon thread
-    if _usePythonThreadForDaemon :
+    # start the reference daemon thread
+    if _usePythonThreadForDaemon:
         _refdaemon.startPython()
     else:
         _refdaemon.startJava()
 
-def attachToJVM(jvm) :
+def attachToJVM(jvm):
     _jpype.attach(jvm)
 
     _jclass._initialize()
@@ -71,17 +77,17 @@ def attachToJVM(jvm) :
     _jobject._initialize()
     _properties._initialize()
 
-def shutdownJVM() :
+def shutdownJVM():
     _refdaemon.stop()
     _jpype.shutdown()
 
-def isThreadAttachedToJVM() :
+def isThreadAttachedToJVM():
     return _jpype.isThreadAttachedToJVM()
 
-def attachThreadToJVM() :
+def attachThreadToJVM():
     _jpype.attachThreadToJVM()
 
-def detachThreadFromJVM() :
+def detachThreadFromJVM():
     _jpype.detachThreadFromJVM()
 
 
@@ -119,7 +125,7 @@ class ConversionConfigClass(object):
         return self._convertString
 
     def _setConvertString(self, value):
-        if value :
+        if value:
             self._convertString = 1
         else:
             self._convertString = 0

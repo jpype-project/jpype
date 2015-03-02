@@ -12,29 +12,25 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 import sys
-import _core
-import _jproxy
-import _jclass
+
+from . import _jproxy
+from . import _jclass
 
 def setupGuiEnvironment(cb):
-	if sys.platform == 'darwin' :
-		from PyObjCTools import AppHelper
-		m = {'run' : cb}
-		proxy = _jproxy.JProxy('java.lang.Runnable', m)
-		cbthread = _jclass.JClass("java.lang.Thread")(proxy)
-		cbthread.start()
-		AppHelper.runConsoleEventLoop()
-	else:
-		cb()
-		
-def shutdownGuiEnvironment() :
-	if sys.platform == 'darwin' :
-		from PyObjCTools import AppHelper
-		AppHelper.stopEventLoop()
-	
+    if sys.platform == 'darwin':
+        from PyObjCTools import AppHelper
+        m = {'run': cb}
+        proxy = _jproxy.JProxy('java.lang.Runnable', m)
+        cbthread = _jclass.JClass("java.lang.Thread")(proxy)
+        cbthread.start()
+        AppHelper.runConsoleEventLoop()
+    else:
+        cb()
 
-
-		
+def shutdownGuiEnvironment():
+    if sys.platform == 'darwin':
+        from PyObjCTools import AppHelper
+        AppHelper.stopEventLoop()

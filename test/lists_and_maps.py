@@ -24,8 +24,8 @@ print hmap
 #    hmap.put(str(x), str(x))
 #    # but this doesn't:
 #    hmap.put(str(x), x)
-#    
-#    
+#
+#
 ## this throws: AttributeError: 'java.util.HashMap' object has no attribute 'iterator'
 #for x in hmap:
 #    print x, hmap[x]

@@ -20,8 +20,8 @@ import sys
 import time
 from . import common
 
-class AttributeTestCase(common.JPypeTestCase) :
-    def setUp(self) :
+class AttributeTestCase(common.JPypeTestCase):
+    def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.__jp = self.jpype.attr
 
@@ -34,49 +34,49 @@ class AttributeTestCase(common.JPypeTestCase) :
         h = jpype.java.lang.StringBuffer()
         h.delete(0, 0)
 
-    def testCallStaticString(self) :
+    def testCallStaticString(self):
         h = self.__jp.Test1()
         v = h.testString(JString("abcd"), JString("abcde"))
 
         self.assertEqual(v[0], 'abcd')
         self.assertEqual(v[1], 'abcde')
 
-    def testCallStaticUnicodeString(self) :
+    def testCallStaticUnicodeString(self):
         h = self.__jp.Test1()
         v = h.testString(JString(u"abcd"), JString(u"abcde"))
 
         self.assertEqual(v[0], 'abcd')
         self.assertEqual(v[1], 'abcde')
 
-    def testCallString(self) :
+    def testCallString(self):
         v = self.__jp.Test1.testStaticString("a", "b")
         self.assertEqual(v[0], 'a')
         self.assertEqual(v[1], 'b')
 
-    def testCallUnicodeString(self) :
+    def testCallUnicodeString(self):
         v = self.__jp.Test1.testStaticString(u"a", u"b")
         self.assertEqual(v[0], 'a')
         self.assertEqual(v[1], 'b')
 
-    def testCallStringWithNone(self) :
+    def testCallStringWithNone(self):
         v = self.__jp.Test1.testStaticString("a", None)
         self.assertEqual(v[0], 'a')
         self.assertIsNone(v[1])
 
-    def testWithHolder(self) :
+    def testWithHolder(self):
         holder = self.__jp.Holder()
         holder.f = "ffff"
         self.assertEqual(holder.f, 'ffff')
         result = self.__jp.Test1.testStaticHolder(holder)
         self.assertEqual(result, 'ffff')
 
-    def testWithSubHolder(self) :
+    def testWithSubHolder(self):
         h2 = self.__jp.SubHolder()
         h2.f = "subholder"
         result = self.__jp.Test1.testStaticHolder(h2)
         self.assertEqual(result, 'subholder')
 
-    def testCallWithArray(self) :
+    def testCallWithArray(self):
         h2 = self.__jp.Test1()
         StringArray = JArray(JString)
         v = StringArray(["Foo", "bar"])
@@ -84,42 +84,42 @@ class AttributeTestCase(common.JPypeTestCase) :
         result = t.testStringArray(v)
         self.assertSequenceEqual(["Foo", "bar"], result)
 
-    def testGetStaticValue(self) :
+    def testGetStaticValue(self):
         self.assertEqual(str(self.__jp.Test1.objectValue), "234")
 
-    def testGetStaticByInstance(self) :
+    def testGetStaticByInstance(self):
         h = self.__jp.Test1()
         self.assertEqual(str(h.objectValue), "234")
 
-    def testGetNonStatic(self) :
+    def testGetNonStatic(self):
         h = self.__jp.Test1()
         self.assertEqual(h.stringValue, "Foo")
 
-    def testSetStaticValue(self) :
+    def testSetStaticValue(self):
         self.__jp.Test1.objectValue = java.lang.Integer(43)
         self.assertEqual(str(self.__jp.Test1.objectValue), "43")
         self.__jp.Test1.reset()
 
-    def testSetNonStaticValue(self) :
+    def testSetNonStaticValue(self):
         h = self.__jp.Test1()
         h.stringValue="bar"
         self.assertEqual(h.stringValue, "bar")
 
-    def testReturnSubClass(self) :
+    def testReturnSubClass(self):
         h = self.__jp.Test1()
         v = h.getSubClass()
         self.assertIsInstance(v, self.__jp.SubHolder)
 
-    def testCallWithClass(self) :
+    def testCallWithClass(self):
         h = self.__jp.Test1()
         h.callWithClass(java.lang.Comparable)
 
-    def testCallSuperclassMethod(self) :
+    def testCallSuperclassMethod(self):
         h = self.__jp.Test2()
         h.test2Method()
         h.test1Method()
 
-    def testCallWithLong(self) :
+    def testCallWithLong(self):
         h = self.__jp.Test1()
         if sys.version > '3':
             l = int(123)
@@ -130,7 +130,7 @@ class AttributeTestCase(common.JPypeTestCase) :
         h.setShort(l)
         h.setInt(l)
 
-    def testCharAttribute(self) :
+    def testCharAttribute(self):
         h = self.__jp.Test1()
         h.charValue = u'b'
 
@@ -141,11 +141,11 @@ class AttributeTestCase(common.JPypeTestCase) :
             exp_repr = "'b'"
         self.assertEqual(repr(h.charValue), exp_repr)
 
-    def testGetPrimitiveType(self) :
+    def testGetPrimitiveType(self):
         Integer = jpype.JClass("java.lang.Integer")
         intType = Integer.TYPE
 
-    def testDifferentiateClassAndObject(self) :
+    def testDifferentiateClassAndObject(self):
         h = self.__jp.Test1()
 
         self.assertEqual(h.callWithSomething(self.__jp.Test1), u"Class")
@@ -162,9 +162,9 @@ class AttributeTestCase(common.JPypeTestCase) :
         self.assertEqual(str(h), 'aaa')
 
 #       def testStringToConversion(self):
-#               try :
+#               try:
 #                       jpype.ConversionConfig.string = False
-#                       for i in range(1) :
+#                       for i in range(1):
 #                               h = self.__jp.Test1()
 #
 #                               start = time.time();
@@ -184,10 +184,10 @@ class AttributeTestCase(common.JPypeTestCase) :
 #                               cs = str(JString(s))
 #                               print cs
 #                               print "converted to String in", (stop-start), 'ms', len(cs), cs
-#               finally :
+#               finally:
 #                       jpype.ConversionConfig.string = True
 
-    def testComplexMethodOvlerloading(self) :
+    def testComplexMethodOvlerloading(self):
         c = self.__jp.TestOverloadC()
         self.assertEqual(c.foo(1), "foo(int) in C: 1")
         self.assertEqual(c.foo(), "foo() in A")
