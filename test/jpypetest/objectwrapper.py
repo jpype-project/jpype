@@ -23,8 +23,8 @@ import jpype
 from jpype import java, JObject, JPackage, JString
 from . import common
 
-class ObjectWrapperTestCase(common.JPypeTestCase) :
-    def testCallOverloads(self) :
+class ObjectWrapperTestCase(common.JPypeTestCase):
+    def testCallOverloads(self):
         # build the harness
         h = JPackage("jpype.objectwrapper").Test1()
 

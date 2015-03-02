@@ -17,16 +17,16 @@
 from jpype import JPackage, java, JFloat
 from . import common
 
-class NumericTestCase(common.JPypeTestCase) :
-    def testMathAbs(self) :
+class NumericTestCase(common.JPypeTestCase):
+    def testMathAbs(self):
         self.assertEqual(java.lang.Math.abs(-10), 10)
 
-    def testDoubleConversion(self) :
+    def testDoubleConversion(self):
         f = java.lang.Float.MAX_VALUE * 2
         jpype = JPackage("jpype")
         self.assertTrue(jpype.numeric.NumericTest.doubleIsTwiceMaxFloat(f))
 
-    def testDoubleIsProperlyConverted(self) :
+    def testDoubleIsProperlyConverted(self):
         self.assertTrue(java.lang.Double.POSITIVE_INFINITY != 0.0)
         self.assertTrue(java.lang.Double.MAX_VALUE != 0.0)
         self.assertTrue(java.lang.Double.NaN != 0.0)
