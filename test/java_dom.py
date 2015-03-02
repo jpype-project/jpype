@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from os import path
 import time
@@ -26,15 +26,15 @@ Element = JPackage("org").w3c.dom.Element
 def output(el, prefix="") :
     if not isinstance(el, Element) :
         return
-        
-    #print prefix, "<", el.getTagName(), 
-    
+
+    #print prefix, "<", el.getTagName(),
+
     atts = el.getAttributes()
     for i in range(atts.getLength()) :
         a = atts.item(i);
-        #print a.getNodeName(), '="%s"' % a.getNodeValue(), 
+        #print a.getNodeName(), '="%s"' % a.getNodeValue(),
     #print '>'
-    
+
     nl = el.getChildNodes()
     for i in range(nl.getLength()) :
         output(nl.item(i), prefix+"  ")
@@ -44,10 +44,10 @@ def output(el, prefix="") :
 
 t = time.time()
 count = 30
-for i in range(count) :    
+for i in range(count) :
     build = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
     doc = build.parse(path.join(path.dirname(__file__), "sample", "big.xml"))
-    
+
     el = doc.getDocumentElement()
     output(el)
 

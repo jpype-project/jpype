@@ -15,8 +15,9 @@
 #
 #*****************************************************************************
 
-from . import _jvmfinder
 import os
+
+from . import _jvmfinder
 
 # ------------------------------------------------------------------------------
 
@@ -45,12 +46,11 @@ class LinuxJVMFinder(_jvmfinder.JVMFinder):
                          self._get_from_bin,
                          self._get_from_known_locations)
 
-
     def _get_from_bin(self):
         """
         Retrieves the Java library path according to the real installation of
         the java executable
-        
+
         :return: The path to the JVM library, or None
         """
         # Find the real interpreter installation path

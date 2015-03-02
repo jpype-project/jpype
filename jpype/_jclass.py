@@ -15,9 +15,7 @@
 #
 #*****************************************************************************
 import _jpype
-import _jexception
-import _jcollection
-from _pykeywords import KEYWORDS
+from ._pykeywords import KEYWORDS
 
 
 _CLASSES = {}
@@ -39,7 +37,6 @@ _COMPARABLE_METHODS = {
 def _initialize():
     global _COMPARABLE, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
 
-    import _jpackage
     _JAVAOBJECT = JClass("java.lang.Object")
     _JAVATHROWABLE = JClass("java.lang.Throwable")
     _RUNTIMEEXCEPTION = JClass("java.lang.RuntimeException")
@@ -81,16 +78,18 @@ def _javaExceptionNew(self, *args):
 def _javaInit(self, *args):
     object.__init__(self)
 
-    if len(args) == 1 and isinstance(args[0], tuple) and args[0][0] is _SPECIAL_CONSTRUCTOR_KEY:
+    if len(args) == 1 and isinstance(args[0], tuple) \
+       and args[0][0] is _SPECIAL_CONSTRUCTOR_KEY:
         self.__javaobject__ = args[0][1]
     else:
-        self.__javaobject__ = self.__class__.__javaclass__.newClassInstance(*args)
+        self.__javaobject__ = self.__class__.__javaclass__.newClassInstance(
+            *args)
 
 
 def _javaGetAttr(self, name):
     try:
         r = object.__getattribute__(self, name)
-    except AttributeError, ex:
+    except AttributeError as ex:
         if name in dir(self.__class__.__metaclass__):
             r = object.__getattribute__(self.__class__, name)
         else:
@@ -102,12 +101,11 @@ def _javaGetAttr(self, name):
 
 
 class _JavaClass(type):
-    def __new__(mcs, jc):
+    def __new__(cls, jc):
         bases = []
         name = jc.getName()
 
         static_fields = {}
-        constants = []
         members = {
                 "__javaclass__": jc,
                 "__init__": _javaInit,
@@ -125,6 +123,7 @@ class _JavaClass(type):
             bases.append(_getClassFor(bjc))
 
         if _JAVATHROWABLE is not None and jc.isSubclass("java.lang.Throwable"):
+            from . import _jexception
             members["PYEXC"] = _jexception._makePythonException(name, bjc)
 
         itf = jc.getBaseInterfaces()
@@ -139,7 +138,7 @@ class _JavaClass(type):
         for i in fields:
             fname = i.getName()
             if fname in KEYWORDS:
-                fname = fname + "_"
+                fname += "_"
 
             if i.isStatic():
                 g = lambda self, fld=i: fld.getStaticAttribute()
@@ -148,10 +147,12 @@ class _JavaClass(type):
                     s = lambda self, v, fld=i: fld.setStaticAttribute(v)
                 static_fields[fname] = property(g, s)
             else:
-                g = lambda self, fld=i: fld.getInstanceAttribute(self.__javaobject__)
+                g = lambda self, fld=i: fld.getInstanceAttribute(
+                    self.__javaobject__)
                 s = None
                 if not i.isFinal():
-                    s = lambda self, v, fld=i: fld.setInstanceAttribute(self.__javaobject__, v)
+                    s = lambda self, v, fld=i: fld.setInstanceAttribute(
+                        self.__javaobject__, v)
                 members[fname] = property(g, s)
 
         # methods
@@ -159,7 +160,7 @@ class _JavaClass(type):
         for jm in methods:
             mname = jm.getName()
             if mname in KEYWORDS:
-                mname = mname + "_"
+                mname += "_"
 
             members[mname] = jm
 
@@ -183,7 +184,7 @@ class _JavaClass(type):
         meta_bases = []
         for i in bases:
             if i is object:
-                meta_bases.append(mcs)
+                meta_bases.append(cls)
             else:
                 meta_bases.append(i.__metaclass__)
 

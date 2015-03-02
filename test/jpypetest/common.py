@@ -42,5 +42,5 @@ class JPypeTestCase(unittest.TestCase) :
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual
 
-    def tearDown(self) :
+    def tearDown(self):
         pass

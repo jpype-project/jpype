@@ -1,11 +1,11 @@
-from jpype import * 
+from jpype import *
 import time
 
 NUMMSGS = 10
 
-def pyPublisher (javaNamingFactory="weblogic.jndi.WLInitialContextFactory", 
+def pyPublisher (javaNamingFactory="weblogic.jndi.WLInitialContextFactory",
                  javaNamingProvider="t3://158.188.40.21:7001",
-                 connectionFactory="weblogic.jms.ConnectionFactory", 
+                 connectionFactory="weblogic.jms.ConnectionFactory",
                  topicName="defaultTopic"):
     return messaging.JpypePublisher(javaNamingFactory,javaNamingProvider,
                                     connectionFactory,topicName)
@@ -32,4 +32,4 @@ publisher.publish("Stop")
 
 # Close and quit
 publisher.close()
-shutdownJVM() 
+shutdownJVM()

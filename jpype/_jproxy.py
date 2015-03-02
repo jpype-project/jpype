@@ -12,50 +12,60 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
-import _jpype, _jclass, JClassUtil
-import operator
+import collections
+import sys
 
-def _initialize() :
+import _jpype
+from . import _jclass
+from . import JClassUtil
+
+if sys.version > '3':
+    unicode = str
+
+def _initialize():
     _jpype.setProxyClass(JProxy)
 
-class JProxy(object) :
-    def __init__(self, intf, dict=None, inst=None) :
+class JProxy(object):
+    def __init__(self, intf, dict=None, inst=None):
         actualIntf = None
-        
-        if isinstance(intf, str) or isinstance(intf, unicode) :
-            actualIntf = [ _jclass.JClass(intf) ]
-        elif isinstance(intf, _jclass._JavaClass) :
-            actualIntf = [ intf ]
-        elif operator.isSequenceType(intf) :
+
+        if isinstance(intf, str) or isinstance(intf, unicode):
+            actualIntf = [_jclass.JClass(intf)]
+        elif isinstance(intf, _jclass._JavaClass):
+            actualIntf = [intf]
+        elif isinstance(intf, collections.Sequence):
             actualIntf = []
-            for i in intf :            
-                if isinstance(i, str) or isinstance(i, unicode) :
+            for i in intf:
+                if isinstance(i, str) or isinstance(i, unicode):
                     actualIntf.append(_jclass.JClass(i))
-                elif isinstance(i, _jclass._JavaClass) :
+                elif isinstance(i, _jclass._JavaClass):
                     actualIntf.append(i)
                 else:
-                    raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"                
+                    raise TypeError("JProxy requires java interface classes "
+                                    "or the names of java interfaces classes")
         else:
-            raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes"
-                
-        for i in actualIntf :
-            if not JClassUtil.isInterface(i) :
-                raise TypeError, "JProxy requires java interface classes or the names of java interfaces classes : "+i.__name__                 
+            raise TypeError("JProxy requires java interface classes "
+                            "or the names of java interfaces classes")
 
-        if dict is not None and inst is not None :
-            raise RuntimeError, "Specify only one of dict and inst"
+        for i in actualIntf:
+            if not JClassUtil.isInterface(i):
+                raise TypeError("JProxy requires java interface classes "
+                                "or the names of java interfaces classes: {0}"
+                                .format(i.__name__))
+
+        if dict is not None and inst is not None:
+            raise RuntimeError("Specify only one of dict and inst")
 
         self._dict = dict
         self._inst = inst
-        
+
         self._proxy = _jpype.createProxy(self, actualIntf)
-        
-    def getCallable(self, name) :
-        if self._dict is not None :
+
+    def getCallable(self, name):
+        if self._dict is not None:
             return self._dict[name]
-        else :
+        else:
             return getattr(self._inst, name)
-        
