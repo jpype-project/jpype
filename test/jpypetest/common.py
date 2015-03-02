@@ -37,7 +37,7 @@ class JPypeTestCase(unittest.TestCase) :
             classpath_arg %= path.join(root, 'classes')
             jpype.startJVM(jvm_path, "-ea",
                            # "-Xcheck:jni",
-                           "-Xmx256M", "-Xms64M", classpath_arg)
+                           "-Xmx256M", "-Xms16M", classpath_arg)
         self.jpype = jpype.JPackage('jpype')
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual
