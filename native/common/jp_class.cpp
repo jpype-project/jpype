@@ -605,7 +605,7 @@ bool JPClass::isSubclass(JPClass* o)
 	JPCleaner cleaner;
 
 	jclass jo = o->getClass();
-	cleaner.addGlobal(jo);
+	cleaner.addLocal(jo);
 
 	if (JPEnv::getJava()->IsAssignableFrom(m_Class, jo))
 	{

@@ -99,7 +99,7 @@ public :
 	static void deleteObjectJValueDestructor(void* data, void* desc)
 	{
 		jvalue* pv = (jvalue*)data;
-		JPEnv::getJava()->DeleteLocalRef(pv->l);
+		JPEnv::getJava()->DeleteGlobalRef(pv->l);
 		delete pv;
 	}
 
