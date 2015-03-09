@@ -3,14 +3,18 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-0.5.7
------
+Upcoming version
+----------------
+* 
+
+0.5.7 - 2014-10-29
+------------------
 * No JDK/JRE is required to build anymore due to provided jni.h. To override
   this, one needs to set a JAVA_HOME pointing to a JDK during setup.
 * better support for various platforms and compilers (MinGW, Cygwin, Windows) 
 
-0.5.6
------
+0.5.6 - 2014-09-27
+------------------
 *Note*: In this release we returned to the three point number versioning scheme.
 
 * Fix #63: 'property' object has no attribute 'isBeanMutator'
@@ -20,28 +24,28 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   To opt out with pip append --install-option="--disable-numpy".
 * Use JVMFinder method of @tcalmant to locate a Java runtime
 
-0.5.5.4
--------
+0.5.5.4 - 2014-08-12
+--------------------
 * Fix: compile issue, if numpy is not available (NPY_BOOL n/a). Closes #77
 
-0.5.5.3
--------
+0.5.5.3 - 2014-08-11
+--------------------
 * Optional support for NumPy arrays in handling of Java arrays. Both set and get
   slice operators are supported. Speed improvement of factor 10 for setting and
   factor 6 for getting. The returned arrays are typed with the matching NumPy type.
 * Fix: add missing wrapper type 'JShort'
 * Fix: Conversion check for unsigned types did not work in array setters (tautological compare)  
 
-0.5.5.2
--------
+0.5.5.2 - 2014-04-29
+--------------------
 * Fix: array setter memory leak (ISSUE: #64)
 
-0.5.5.1
--------
+0.5.5.1 - 2014-04-11
+--------------------
 * Fix: setup.py now runs under MacOSX with Python 2.6 (referred to missing subprocess function)
 
-0.5.5
------
+0.5.5 - 2014-04-11
+------------------
 
 *Note* that this release is *not* compatible with Python 2.5 anymore!
 
@@ -71,18 +75,18 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 * Fix memory leak in typemanager
 * Add userguide from sourceforge project by @baztian
 
-0.5.4.5 (2013-08-25 12:12)
---------------------------
+0.5.4.5 - 2013-08-25
+--------------------
 
 * Added support for OSX 10.9 Mavericks by @rmangino (#16)
 
-0.5.4.4 (2013-08-10 19:30)
---------------------------
+0.5.4.4 - 2013-08-10
+--------------------
 
 * Rewritten Java Home directory Search by @marsam (#13, #12 and #7)
 * Stylistic cleanups of setup.py
 
-0.5.4.3 (2013-07-27 14:00)
---------------------------
+0.5.4.3 - 2013-07-27
+--------------------
 
 Initial pypi release with most fixes for easier installation
