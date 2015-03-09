@@ -205,7 +205,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 	}
 	
 	jclass claz = m_Class->getClass();
-	cleaner.addGlobal(claz);
+	cleaner.addLocal(claz);
 
 	JPType* retType = JPTypeManager::getType(m_ReturnType);
 
@@ -233,14 +233,11 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 			HostRef* obj = args[i];
 	
 			JPType* type = JPTypeManager::getType(m_Arguments[i]);
-			v[i-1] = type->convertToJava(obj);
-			// below seems not to be necessary, since jvalues are clean by jpmalloccleaner
-//			if (type->isObjectType())
-//			{
-//			//TODO : investigate: this is not valid for either local or global ref
-//				// add hostref to garbage collection
-//				cleaner.add(v[i-1].l);
-//			}
+			v[i-1] = type->convertToJava(obj);		
+			if (type->isObjectType())
+			{
+				cleaner.addLocal(v[i-1].l);
+			}
 		}
 		
 		JPType* retType = JPTypeManager::getType(m_ReturnType);
@@ -249,7 +246,7 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 		cleaner.addLocal(c);
 	
 		jclass clazz = m_Class->getClass();
-		cleaner.addGlobal(clazz);
+		cleaner.addLocal(clazz);
 	
 		res = retType->invoke(c, clazz, m_MethodID, v.borrow());
 		TRACE1("Call finished");

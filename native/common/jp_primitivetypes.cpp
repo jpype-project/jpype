@@ -23,7 +23,7 @@ jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 	JPClass* c = JPTypeManager::findClass(tname);
 
 	jclass jc = c->getClass();
-	cleaner.addGlobal(jc);
+	cleaner.addLocal(jc);
 
 	vector<HostRef*> args(1);
 	args[0] = obj;
