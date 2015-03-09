@@ -191,3 +191,16 @@ class AttributeTestCase(common.JPypeTestCase):
         c = self.__jp.TestOverloadC()
         self.assertEqual(c.foo(1), "foo(int) in C: 1")
         self.assertEqual(c.foo(), "foo() in A")
+
+    def testPassedObjectGetsCleanedUp(self):
+        h = self.__jp.Test1()
+        block_size = 1024 * 1024 * 10
+        def allocate_then_free():
+            byte_buffer = jpype.JClass('java.nio.ByteBuffer')
+            inst = byte_buffer.allocate(1024 * 1024 * 100)
+             # passing the object back to java seems to stop it being collected
+            result = h.callWithSomething(inst)
+        rt = jpype.java.lang.Runtime.getRuntime()
+        free = rt.freeMemory()
+        for x in range(0, 10 * free / block_size):
+            allocate_then_free()
