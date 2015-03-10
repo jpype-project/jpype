@@ -63,7 +63,7 @@ if os.path.exists(java_home):
     if not found_jni:
         import warnings
         warnings.warn('Falling back to provided JNI headers, since your provided'
-                      ' JAVA_HOME %s does not provide jni.h' % java_home)
+                      ' JAVA_HOME "%s" does not provide jni.h' % java_home)
         platform_specific['include_dirs'] += [fallback_jni]
 
 else:
@@ -72,22 +72,40 @@ else:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'win32')]
+    jni_md_platform = 'win32'
 
 elif sys.platform == 'darwin':
     platform_specific['libraries'] = ['dl']
     platform_specific['define_macros'] = [('MACOSX', 1)]
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'darwin')]
-elif sys.platform.startswith('freebsd'):
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'freebsd')]
-else: # linux etc.
-    platform_specific['libraries'] = ['dl']
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'linux')]
+    jni_md_platform = 'darwin'
 
+elif sys.platform.startswith('linux'):
+    platform_specific['libraries'] = ['dl']
+    jni_md_platform = 'linux'
+
+elif sys.platform.startswith('freebsd'):
+    jni_md_platform = 'freebsd'
+
+else:
+    warnings.warn("Your platform is not being handled explicitly."
+                  " It may work or not!", UserWarning)
+
+if found_jni:
+    platform_specific['include_dirs'] += \
+        [os.path.join(java_home, 'include', jni_md_platform)]
+
+# include this stolen from FindJNI.cmake
+"""
+FIND_PATH(JAVA_INCLUDE_PATH2 jni_md.h
+${JAVA_INCLUDE_PATH}
+${JAVA_INCLUDE_PATH}/win32
+${JAVA_INCLUDE_PATH}/linux
+${JAVA_INCLUDE_PATH}/freebsd
+${JAVA_INCLUDE_PATH}/solaris
+${JAVA_INCLUDE_PATH}/hp-ux
+${JAVA_INCLUDE_PATH}/alpha
+)"""
+ 
 
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
