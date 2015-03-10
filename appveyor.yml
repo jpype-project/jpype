@@ -1,4 +1,9 @@
 environment:
+  PYPI_USER:
+    secure: oiKQKdlgwqXJgXkVE/nHtw==
+  PYPI_PASS:
+    secure: nWt5lvrxyh+kUP2EexsJ7e2uZrGbwurt4v3AxRAW4l0zui0mhnrYXYHDYFj18N6K
+
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
@@ -26,11 +31,6 @@ environment:
       PYTHON_VERSION: "3.4.1"
       PYTHON_ARCH: "64"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-
-cache:
-  - C:\Python*
-  - C:\ant
-  - C:\apache-ant-1.9.4
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
@@ -71,6 +71,6 @@ artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
+on_success:
+# upload the content of dist/*.whl to pypi on tagged commits
+  - appveyor\deploy.ps1
