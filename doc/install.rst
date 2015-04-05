@@ -4,6 +4,11 @@ Installation
 Get JPype from the `github <https://github.com/originell/jpype>`__ or
 from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
 
+::
+
+    pip install jpype1
+
+
 Requirements
 ------------
 
