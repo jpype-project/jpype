@@ -52,6 +52,14 @@
 	#endif
 #endif
 
+#if PY_MAJOR_VERSION >= 3
+    #define PyInt_FromLong PyLong_FromLong
+    #define PyInt_AsLong PyLong_AsLong
+    #define PyInt_AS_LONG PyLong_AS_LONG
+    #define PyInt_Check PyLong_Check
+    #define PyInt_FromSsize_t PyLong_FromSsize_t
+#endif
+
 
 #include <map>
 #include <string>
