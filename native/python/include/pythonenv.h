@@ -24,6 +24,12 @@
 	}\
 };
 
+#if PY_MAJOR_VERSION < 3
+    #include "capsulethunk.h"
+    #define CAPSULE_EXTRACT(obj) (obj)
+#else
+    #define CAPSULE_EXTRACT(obj) (PyCapsule_GetPointer(obj, PyCapsule_GetName(obj)))
+#endif
 /**
  * Exception wrapper for python-generated exceptions
  */
