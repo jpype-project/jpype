@@ -20,12 +20,12 @@
 
 bool JPyString::check(PyObject* obj)
 {
-	return PyString_Check(obj) || PyUnicode_Check(obj);
+	return PyBytes_Check(obj) || PyUnicode_Check(obj);
 }
 
 bool JPyString::checkStrict(PyObject* obj)
 {
-	return PyString_Check(obj);
+	return PyBytes_Check(obj);
 }
 
 bool JPyString::checkUnicode(PyObject* obj)
@@ -41,7 +41,7 @@ Py_UNICODE* JPyString::AsUnicode(PyObject* obj)
 string JPyString::asString(PyObject* obj) 
 {	
 	TRACE_IN("JPyString::asString");
-	PY_CHECK( string res = string(PyString_AsString(obj)) );
+	PY_CHECK( string res = string(PyBytes_AsString(obj)) );
 	return res;
 	TRACE_OUT;
 }
@@ -51,7 +51,7 @@ JCharString JPyString::asJCharString(PyObject* obj)
 	PyObject* torelease = NULL;
 	TRACE_IN("JPyString::asJCharString");
 	
-	if (PyString_Check(obj))
+	if (PyBytes_Check(obj))
 	{
 		PY_CHECK( obj = PyUnicode_FromObject(obj) );	
 		torelease = obj;
@@ -89,14 +89,14 @@ PyObject* JPyString::fromUnicode(const jchar* str, int len)
 
 PyObject* JPyString::fromString(const char* str) 
 {
-	PY_CHECK( PyObject* obj = PyString_FromString(str) );
+	PY_CHECK( PyObject* obj = PyBytes_FromString(str) );
 	return obj;
 }
 
 
 Py_ssize_t JPyString::AsStringAndSize(PyObject *obj, char **buffer, Py_ssize_t *length)
 {	
-	PY_CHECK( Py_ssize_t res = PyString_AsStringAndSize(obj, buffer, length) );
+	PY_CHECK( Py_ssize_t res = PyBytes_AsStringAndSize(obj, buffer, length) );
 	return res;
 }
 
