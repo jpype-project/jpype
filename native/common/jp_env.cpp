@@ -192,7 +192,7 @@ JPCleaner::JPCleaner()
 JPCleaner::~JPCleaner()
 {
 //AT's comments on porting:
-// A variety of Unix compilers do not allow redifinition of the same variable in "for" cycless
+// A variety of Unix compilers do not allow redefinition of the same variable in "for" cycles
 	vector<jobject>::iterator cur;
 	for (cur = m_GlobalJavaObjects.begin(); cur != m_GlobalJavaObjects.end(); cur++)
 	{
