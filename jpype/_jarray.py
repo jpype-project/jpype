@@ -50,10 +50,18 @@ class _JavaArrayClass(object):
     def __iter__(self):
         return _JavaArrayIter(self)
 
-    def __getitem__(self, ndx ):
+    def __getitem__(self, ndx):
+        if isinstance(ndx, slice):
+            indices = range(*ndx.indices(len(self)))
+            return [self[index] for index in indices]
         return _jpype.getArrayItem(self.__javaobject__, ndx)
 
     def __setitem__(self, ndx, val):
+        if isinstance(ndx, slice):
+            indices = range(*ndx.indices(len(self)))
+            for index, value in zip(indices, val):
+                self[index] = value
+            return
         _jpype.setArrayItem(self.__javaobject__, ndx, val)
 
     def __getslice__(self, i, j):
