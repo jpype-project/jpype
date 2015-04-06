@@ -29,8 +29,7 @@ static PyMethodDef fieldMethods[] = {
 
 static PyTypeObject fieldClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaField",              /*tp_name*/
 	sizeof(PyJPField),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -91,7 +90,7 @@ void PyJPField::__dealloc__(PyObject* o)
 {
 	PyJPField* self = (PyJPField*)o;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 }
 
 PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
