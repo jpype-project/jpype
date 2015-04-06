@@ -169,33 +169,33 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionFloat(self):
-        self.VALUES = map(float, self.VALUES)
-        jarr = jpype.JArray(jpype.JFloat)(self.VALUES)
+        VALUES = [float(x) for x in self.VALUES]
+        jarr = jpype.JArray(jpype.JFloat)(VALUES)
         result = jarr[0 : len(jarr)]
         self.assertCountEqual(jarr, result)
 
         result = jarr[2:10]
-        self.assertCountEqual(self.VALUES[2:10], result)
+        self.assertCountEqual(VALUES[2:10], result)
 
     def testJArrayConversionDouble(self):
-        self.VALUES = map(float, self.VALUES)
-        jarr = jpype.JArray(jpype.JDouble)(self.VALUES)
-        self.assertCountEqual(self.VALUES, jarr)
+        VALUES = [float(x) for x in self.VALUES]
+        jarr = jpype.JArray(jpype.JDouble)(VALUES)
+        self.assertCountEqual(VALUES, jarr)
         result = jarr[:]
-        self.assertCountEqual(self.VALUES, result)
+        self.assertCountEqual(VALUES, result)
 
         result = jarr[2:10]
 
-        self.assertEqual(len(self.VALUES[2:10]), len(result))
-        self.assertCountEqual(self.VALUES[2:10], result)
+        self.assertEqual(len(VALUES[2:10]), len(result))
+        self.assertCountEqual(VALUES[2:10], result)
 
         # empty slice
         result = jarr[-1:3]
-        expected = self.VALUES[-1:3]
+        expected = VALUES[-1:3]
         self.assertCountEqual(expected, result)
 
         result = jarr[3:-2]
-        expected = self.VALUES[3:-2]
+        expected = VALUES[3:-2]
         self.assertCountEqual(expected, result)
 
     def testConversionError(self):
