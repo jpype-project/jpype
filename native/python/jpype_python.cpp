@@ -207,13 +207,30 @@ static PyMethodDef jpype_methods[] =
   // sentinel
   {NULL}
 };
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_jpype",
+    "jpype module",
+    -1,
+    jpype_methods,
+};
+#endif
 
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit__jpype()
+#else
 PyMODINIT_FUNC init_jpype()
+#endif
 {
 	Py_Initialize();
 	PyEval_InitThreads();
 	  
-	PyObject* module = Py_InitModule("_jpype", jpype_methods);  
+#if PY_MAJOR_VERSION >= 3
+    PyObject* module = PyModule_Create(&moduledef);
+#else
+	PyObject* module = Py_InitModule("_jpype", jpype_methods);
+#endif
 	Py_INCREF(module);
 	hostEnv = new PythonHostEnvironment();
 	  
@@ -231,6 +248,9 @@ PyMODINIT_FUNC init_jpype()
 
 #ifdef HAVE_NUMPY
 	import_array();
+#endif
+#if PY_MAJOR_VERSION >= 3
+    return module;
 #endif
 }
 

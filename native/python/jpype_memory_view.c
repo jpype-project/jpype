@@ -180,8 +180,7 @@ static PyGetSetDef memorysimpleview_getsets[] =
 };
 
 PyTypeObject PyMemorySimpleView_Type = {
-	PyObject_HEAD_INIT(NULL)
-	0,										  /* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"_jpype.memoryview",
 	sizeof(PyMemorySimpleViewObject),
 	0,										  /* tp_itemsize */
