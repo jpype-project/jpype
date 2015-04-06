@@ -52,10 +52,7 @@
 	#endif
 #endif
 
-#if PY_MAJOR_VERSION < 3
-    // Python 2
-    #include <bytesobject.h>
-#else
+#if PY_MAJOR_VERSION >= 3
     // Python 3
     #define PyInt_FromLong PyLong_FromLong
     #define PyInt_AsLong PyLong_AsLong
