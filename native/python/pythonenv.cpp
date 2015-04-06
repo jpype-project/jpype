@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -41,7 +41,24 @@ Py_UNICODE* JPyString::AsUnicode(PyObject* obj)
 string JPyString::asString(PyObject* obj) 
 {	
 	TRACE_IN("JPyString::asString");
+#if PY_MAJOR_VERSION < 3
 	PY_CHECK( string res = string(PyBytes_AsString(obj)) );
+#else
+	PyObject* val;
+	bool needs_decref = false;
+	if(PyUnicode_Check(obj)) {
+		 val = PyUnicode_AsEncodedString(obj, "UTF-8", "strict");
+		 needs_decref = true;
+	} else {
+		val = obj;
+	}
+
+	PY_CHECK( string res = string(PyBytes_AsString(val)) );
+
+	if(needs_decref) {
+		Py_DECREF(val);
+	}
+#endif
 	return res;
 	TRACE_OUT;
 }
@@ -89,8 +106,16 @@ PyObject* JPyString::fromUnicode(const jchar* str, int len)
 
 PyObject* JPyString::fromString(const char* str) 
 {
-	PY_CHECK( PyObject* obj = PyBytes_FromString(str) );
+#if PY_MAJOR_VERSION < 3
+	PY_CHECK( PyObject* obj = PyString_FromString(str) );
 	return obj;
+#else
+	PY_CHECK( PyObject* bytes = PyBytes_FromString(str) );
+	PY_CHECK( PyObject* unicode = PyUnicode_FromEncodedObject(bytes, "UTF-8", "strict") );
+	Py_DECREF(bytes);
+	return unicode;
+#endif
+
 }
 
 
