@@ -154,7 +154,7 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 
 		PyObject* jo;
 		PyObject* value;
-		JPyArg::parseTuple(arg, "O!O", &PyCObject_Type, &jo, &value);
+		JPyArg::parseTuple(arg, "O!O", &PyCapsule_Type, &jo, &value);
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 
@@ -183,7 +183,7 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 		PyJPField* self = (PyJPField*)o;
 
 		PyObject* jo;
-		JPyArg::parseTuple(arg, "O!", &PyCObject_Type, &jo);
+		JPyArg::parseTuple(arg, "O!", &PyCapsule_Type, &jo);
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 

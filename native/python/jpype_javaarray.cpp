@@ -87,7 +87,7 @@ PyObject* JPypeJavaArray::getArrayLength(PyObject* self, PyObject* arg)
 {
 	try {
 		PyObject* arrayObject;
-		JPyArg::parseTuple(arg, "O!", &PyCObject_Type, &arrayObject);
+		JPyArg::parseTuple(arg, "O!", &PyCapsule_Type, &arrayObject);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
 		int res = a->getLength();
@@ -103,7 +103,7 @@ PyObject* JPypeJavaArray::getArrayItem(PyObject* self, PyObject* arg)
 	try {
 		PyObject* arrayObject;
 		int ndx;
-		JPyArg::parseTuple(arg, "O!i", &PyCObject_Type, &arrayObject, &ndx);
+		JPyArg::parseTuple(arg, "O!i", &PyCapsule_Type, &arrayObject, &ndx);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
 		HostRef* res = a->getItem(ndx);
@@ -122,7 +122,7 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 	try
 	{
 
-		JPyArg::parseTuple(arg, "O!ii", &PyCObject_Type, &arrayObject, &lo, &hi);
+		JPyArg::parseTuple(arg, "O!ii", &PyCapsule_Type, &arrayObject, &lo, &hi);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 		int length = a->getLength();
 		// stolen from jcc, to get nice slice support
@@ -168,7 +168,7 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 	int hi = -1;
 	PyObject* sequence;
 	try {
-		JPyArg::parseTuple(arg, "O!iiO", &PyCObject_Type, &arrayObject, &lo, &hi, &sequence);
+		JPyArg::parseTuple(arg, "O!iiO", &PyCapsule_Type, &arrayObject, &lo, &hi, &sequence);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
 		int length = a->getLength();
@@ -219,7 +219,7 @@ PyObject* JPypeJavaArray::setArrayItem(PyObject* self, PyObject* arg)
 		PyObject* arrayObject;
 		int ndx;
 		PyObject* value;
-		JPyArg::parseTuple(arg, "O!iO", &PyCObject_Type, &arrayObject, &ndx, &value);
+		JPyArg::parseTuple(arg, "O!iO", &PyCapsule_Type, &arrayObject, &ndx, &value);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
 		JPCleaner cleaner;
@@ -239,7 +239,7 @@ PyObject* JPypeJavaArray::newArray(PyObject* self, PyObject* arg)
 	try {
 		PyObject* arrayObject;
 		int sz;
-		JPyArg::parseTuple(arg, "O!i", &PyCObject_Type, &arrayObject, &sz);
+		JPyArg::parseTuple(arg, "O!i", &PyCapsule_Type, &arrayObject, &sz);
 		JPArrayClass* a = (JPArrayClass*)JPyCObject::asVoidPtr(arrayObject);
 
 		JPArray* v = a->newInstance(sz);
