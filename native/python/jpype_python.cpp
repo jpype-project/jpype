@@ -91,11 +91,11 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		PyObject* res;
 		if (type->isObjectType())
 		{
-			res = JPyCObject::fromVoidAndDesc((void*)pv, (void*)"object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
+			res = JPyCObject::fromVoidAndDesc((void*)pv, "object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
 		}
 		else
 		{
-			res = JPyCObject::fromVoidAndDesc((void*)pv, (void*)"jvalue", PythonHostEnvironment::deleteJValueDestructor);
+			res = JPyCObject::fromVoidAndDesc((void*)pv, "jvalue", PythonHostEnvironment::deleteJValueDestructor);
 		}
 
 		return res;
@@ -134,7 +134,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 
 		JPProxy* proxy = new JPProxy(&ref, interfaces);
 
-		PyObject* res = JPyCObject::fromVoidAndDesc(proxy, (void*)"jproxy", PythonHostEnvironment::deleteJPProxyDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc(proxy, "jproxy", PythonHostEnvironment::deleteJPProxyDestructor);
 
 		return res;
 	}

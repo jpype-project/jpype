@@ -414,13 +414,13 @@ PyObject* PythonException::getJavaException()
 	return retVal;
 }
 
-PyObject* JPyCObject::fromVoid(void* data, void (*destr)(void *))
+PyObject* JPyCObject::fromVoid(void* data, PyCapsule_Destructor destr)
 {
-	PY_CHECK( PyObject* res = PyCapsule_New(data, NULL, destr) );
+	PY_CHECK( PyObject* res = PyCapsule_New(data, (char *)NULL, destr) );
 	return res;
 }
 
-PyObject* JPyCObject::fromVoidAndDesc(void* data, void* desc, void (*destr)(void *))
+PyObject* JPyCObject::fromVoidAndDesc(void* data, const char* desc, PyCapsule_Destructor destr)
 {
 	PY_CHECK( PyObject* res = PyCapsule_New(data, desc, destr) );
 	return res;
@@ -434,7 +434,7 @@ void* JPyCObject::asVoidPtr(PyObject* obj)
 
 void* JPyCObject::getDesc(PyObject* obj)
 {
-	PY_CHECK( void* res = PyCapsule_GetName(obj) );
+	PY_CHECK( void* res = (void*)PyCapsule_GetName(obj) );
 	return res;
 }
 
