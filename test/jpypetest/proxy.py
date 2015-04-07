@@ -23,7 +23,7 @@ except ImportError:
     import unittest
 from sys import hexversion as ver
 
-gt_py_27_03=ver > 0x020703ff and ver < 0x3000000
+gt_py_27_03 = (ver > 0x020703ff)
 
 def _testMethod1():
     return 33
