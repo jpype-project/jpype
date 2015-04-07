@@ -440,7 +440,7 @@ void* JPyCObject::getDesc(PyObject* obj)
 
 bool JPyCObject::check(PyObject* obj)
 {
-	return PyCObject_Check(obj);
+	return PyCapsule_CheckExact(obj);
 }
 
 bool JPyType::check(PyObject* obj)
