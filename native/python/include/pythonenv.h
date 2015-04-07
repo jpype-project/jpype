@@ -224,7 +224,7 @@ class JPyCObject : public JPythonEnvHelper
 public :
 	static bool check(PyObject* obj);
 	static PyObject* fromVoid(void* data, void (*destr)(void *));
-	static PyObject* fromVoidAndDesc(void* data, void* desc, void (*destr)(void *, void*));
+	static PyObject* fromVoidAndDesc(void* data, void* desc, void (*destr)(void *));
 	static void* asVoidPtr(PyObject*);
 	static void* getDesc(PyObject*);
 };
