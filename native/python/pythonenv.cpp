@@ -420,9 +420,9 @@ PyObject* JPyCObject::fromVoid(void* data, void (*destr)(void *))
 	return res;
 }
 
-PyObject* JPyCObject::fromVoidAndDesc(void* data, void* desc, void (*destr)(void *, void*))
+PyObject* JPyCObject::fromVoidAndDesc(void* data, void* desc, void (*destr)(void *))
 {
-	PY_CHECK( PyObject* res = PyCObject_FromVoidPtrAndDesc(data, desc, destr) );
+	PY_CHECK( PyObject* res = PyCObject_FromVoidPtr(data, destr) );
 	return res;
 }
 

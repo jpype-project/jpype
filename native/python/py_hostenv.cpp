@@ -660,7 +660,7 @@ void PythonHostEnvironment::printReferenceInfo(HostRef* obj)
 	cout << "    Ref count " << (long)pobj->ob_refcnt << endl;
 }
 
-void PythonHostEnvironment::deleteJPObjectDestructor(void* data, void* desc)
+void PythonHostEnvironment::deleteJPObjectDestructor(void* data)
 {
 	delete (JPObject*)data;
 }
