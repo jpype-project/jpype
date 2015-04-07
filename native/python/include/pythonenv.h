@@ -24,7 +24,10 @@
 	}\
 };
 
-#if PY_MAJOR_VERSION < 3
+#if (    (PY_VERSION_HEX <  0x02070000) \
+     || ((PY_VERSION_HEX >= 0x03000000) \
+      && (PY_VERSION_HEX <  0x03010000)) )
+
     #include "capsulethunk.h"
     #define CAPSULE_EXTRACT(obj) (obj)
 #else
