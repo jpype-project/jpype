@@ -23,6 +23,7 @@ from . import _jwrapper
 
 if sys.version > '3':
     unicode = str
+    irange = range
 
 _CLASSES = {}
 _CUSTOMIZERS = []
@@ -52,13 +53,13 @@ class _JavaArrayClass(object):
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
-            indices = range(*ndx.indices(len(self)))
+            indices = irange(*ndx.indices(len(self)))
             return [self[index] for index in indices]
         return _jpype.getArrayItem(self.__javaobject__, ndx)
 
     def __setitem__(self, ndx, val):
         if isinstance(ndx, slice):
-            indices = range(*ndx.indices(len(self)))
+            indices = irange(*ndx.indices(len(self)))
             for index, value in zip(indices, val):
                 self[index] = value
             return
