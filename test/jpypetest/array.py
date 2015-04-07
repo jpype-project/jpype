@@ -107,7 +107,7 @@ class ArrayTestCase(common.JPypeTestCase) :
         self.assertEqual(str(v), 'avcd')
 
     def testByteArrayIntoVector(self):
-        ba = jpype.JArray(jpype.JByte)('123')
+        ba = jpype.JArray(jpype.JByte)(b'123')
         v = jpype.java.util.Vector(1)
         v.add(ba)
         self.assertEqual(len(v), 1)
