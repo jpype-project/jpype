@@ -94,9 +94,9 @@ class JVMFinderTest(unittest.TestCase):
 
         self.assertEqual(p, None)
 
-    @unittest.skipIf(sys.version_info[:2] == (2, 7), "skipped on py27")
+    @unittest.skipUnless(sys.version_info[:2] == (2, 6), "only py26")
     @mock.patch('platform.mac_ver')
-    def test_javahome_binary_py27(self, mock_mac_ver):
+    def test_javahome_binary_py26(self, mock_mac_ver):
         # this version has java_home binary
         mock_mac_ver.return_value = ('10.6.8', '', '')
         expected = '/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\n'
