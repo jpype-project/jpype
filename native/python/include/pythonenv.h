@@ -47,7 +47,8 @@ public :
 	PythonException(const PythonException& ex);
 
 	virtual ~PythonException();
-	
+
+	virtual string getMessage();
 	
 	bool isJavaException();
 	PyObject* getJavaException();
