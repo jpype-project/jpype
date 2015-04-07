@@ -42,7 +42,7 @@ PyObject* exe = PyErr_Occurred(); \
 if(exe != NULL) \
 {\
 	stringstream ss;\
-	ss <<  "unable to convert element: " << PyObject_REPR(o) <<\
+	ss <<  "unable to convert element: " << PyUnicode_FromFormat("%R",o) <<\
 			" at index: " << i;\
 	RAISE(JPypeException, ss.str());\
 }

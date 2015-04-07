@@ -59,6 +59,8 @@
     #define PyInt_AS_LONG PyLong_AS_LONG
     #define PyInt_Check PyLong_Check
     #define PyInt_FromSsize_t PyLong_FromSsize_t
+#else
+    #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
 
