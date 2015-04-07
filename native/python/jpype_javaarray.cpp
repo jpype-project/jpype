@@ -41,7 +41,7 @@ PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 			Py_RETURN_NONE;
 		}
 
-		PyObject* res = JPyCObject::fromVoidAndDesc((void*)claz, (void*)"jclass", NULL);
+		PyObject* res = JPyCObject::fromVoidAndDesc((void*)claz, "jclass", NULL);
 
 		return res;
 	}
@@ -243,7 +243,7 @@ PyObject* JPypeJavaArray::newArray(PyObject* self, PyObject* arg)
 		JPArrayClass* a = (JPArrayClass*)JPyCObject::asVoidPtr(arrayObject);
 
 		JPArray* v = a->newInstance(sz);
-		PyObject* res = JPyCObject::fromVoidAndDesc(v, (void*)"JPArray", PythonHostEnvironment::deleteJPArrayDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc(v, "JPArray", PythonHostEnvironment::deleteJPArrayDestructor);
 
 		return res;
 	}

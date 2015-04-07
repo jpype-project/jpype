@@ -263,7 +263,7 @@ PyObject* PyJPClass::newClassInstance(PyObject* o, PyObject* arg)
 		}
 
 		JPObject* resObject = self->m_Class->newInstance(args);
-		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, (void*)"JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, "JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
 
 		//JPyHelper::dumpSequenceRefs(arg, "End");
 		return res;
