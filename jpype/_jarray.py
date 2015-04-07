@@ -53,15 +53,22 @@ class _JavaArrayClass(object):
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
-            indices = irange(*ndx.indices(len(self)))
-            return [self[index] for index in indices]
+            start, stop, step = ndx.indices(len(self))
+            if step != 1:
+                raise RuntimeError("Slicing with step unimplemented")
+            return self.__getslice__(start, stop)
         return _jpype.getArrayItem(self.__javaobject__, ndx)
 
     def __setitem__(self, ndx, val):
         if isinstance(ndx, slice):
-            indices = irange(*ndx.indices(len(self)))
-            for index, value in zip(indices, val):
-                self[index] = value
+            start, stop, step = ndx.indices(len(self))
+            if step != 1:
+                # Iterate in python if we need to step
+                indices = irange(start, stop, step)
+                for index, value in zip(indices, val):
+                    self[index] = value
+            else:
+                self.__setslice__(start, stop, val)
             return
         _jpype.setArrayItem(self.__javaobject__, ndx, val)
 
