@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@
 
 bool JPyString::check(PyObject* obj)
 {
-	return PyString_Check(obj) || PyUnicode_Check(obj);
+	return PyBytes_Check(obj) || PyUnicode_Check(obj);
 }
 
 bool JPyString::checkStrict(PyObject* obj)
 {
-	return PyString_Check(obj);
+	return PyBytes_Check(obj);
 }
 
 bool JPyString::checkUnicode(PyObject* obj)
@@ -41,7 +41,24 @@ Py_UNICODE* JPyString::AsUnicode(PyObject* obj)
 string JPyString::asString(PyObject* obj) 
 {	
 	TRACE_IN("JPyString::asString");
-	PY_CHECK( string res = string(PyString_AsString(obj)) );
+#if PY_MAJOR_VERSION < 3
+	PY_CHECK( string res = string(PyBytes_AsString(obj)) );
+#else
+	PyObject* val;
+	bool needs_decref = false;
+	if(PyUnicode_Check(obj)) {
+		 val = PyUnicode_AsEncodedString(obj, "UTF-8", "strict");
+		 needs_decref = true;
+	} else {
+		val = obj;
+	}
+
+	PY_CHECK( string res = string(PyBytes_AsString(val)) );
+
+	if(needs_decref) {
+		Py_DECREF(val);
+	}
+#endif
 	return res;
 	TRACE_OUT;
 }
@@ -51,7 +68,7 @@ JCharString JPyString::asJCharString(PyObject* obj)
 	PyObject* torelease = NULL;
 	TRACE_IN("JPyString::asJCharString");
 	
-	if (PyString_Check(obj))
+	if (PyBytes_Check(obj))
 	{
 		PY_CHECK( obj = PyUnicode_FromObject(obj) );	
 		torelease = obj;
@@ -89,14 +106,22 @@ PyObject* JPyString::fromUnicode(const jchar* str, int len)
 
 PyObject* JPyString::fromString(const char* str) 
 {
+#if PY_MAJOR_VERSION < 3
 	PY_CHECK( PyObject* obj = PyString_FromString(str) );
 	return obj;
+#else
+	PY_CHECK( PyObject* bytes = PyBytes_FromString(str) );
+	PY_CHECK( PyObject* unicode = PyUnicode_FromEncodedObject(bytes, "UTF-8", "strict") );
+	Py_DECREF(bytes);
+	return unicode;
+#endif
+
 }
 
 
 Py_ssize_t JPyString::AsStringAndSize(PyObject *obj, char **buffer, Py_ssize_t *length)
 {	
-	PY_CHECK( Py_ssize_t res = PyString_AsStringAndSize(obj, buffer, length) );
+	PY_CHECK( Py_ssize_t res = PyBytes_AsStringAndSize(obj, buffer, length) );
 	return res;
 }
 
@@ -414,33 +439,57 @@ PyObject* PythonException::getJavaException()
 	return retVal;
 }
 
-PyObject* JPyCObject::fromVoid(void* data, void (*destr)(void *))
+string PythonException::getMessage()
 {
-	PY_CHECK( PyObject* res = PyCObject_FromVoidPtr(data, destr) );
+     string message = "";
+
+     // Exception class name
+     PyObject* className = JPyObject::getAttrString(m_ExceptionClass, "__name__");
+     message += JPyString::asString(className);
+     Py_DECREF(className);
+
+     // Exception value
+     if(m_ExceptionValue)
+     {
+          // Convert the exception value to string
+          PyObject* pyStrValue = PyObject_Str(m_ExceptionValue);
+          if(pyStrValue)
+          {
+               message += ": " + JPyString::asString(pyStrValue);
+               Py_DECREF(pyStrValue);
+          }
+     }
+
+     return message;
+}
+
+PyObject* JPyCObject::fromVoid(void* data, PyCapsule_Destructor destr)
+{
+	PY_CHECK( PyObject* res = PyCapsule_New(data, (char *)NULL, destr) );
 	return res;
 }
 
-PyObject* JPyCObject::fromVoidAndDesc(void* data, void* desc, void (*destr)(void *, void*))
+PyObject* JPyCObject::fromVoidAndDesc(void* data, const char* desc, PyCapsule_Destructor destr)
 {
-	PY_CHECK( PyObject* res = PyCObject_FromVoidPtrAndDesc(data, desc, destr) );
+	PY_CHECK( PyObject* res = PyCapsule_New(data, desc, destr) );
 	return res;
 }
 
 void* JPyCObject::asVoidPtr(PyObject* obj)
 {
-	PY_CHECK( void* res = PyCObject_AsVoidPtr(obj) );
+	PY_CHECK( void* res = PyCapsule_GetPointer(obj, PyCapsule_GetName(obj)) );
 	return res;
 }
 
 void* JPyCObject::getDesc(PyObject* obj)
 {
-	PY_CHECK( void* res = PyCObject_GetDesc(obj) );
+	PY_CHECK( void* res = (void*)PyCapsule_GetName(obj) );
 	return res;
 }
 
 bool JPyCObject::check(PyObject* obj)
 {
-	return PyCObject_Check(obj);
+	return PyCapsule_CheckExact(obj);
 }
 
 bool JPyType::check(PyObject* obj)

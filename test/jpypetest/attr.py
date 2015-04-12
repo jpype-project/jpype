@@ -202,5 +202,5 @@ class AttributeTestCase(common.JPypeTestCase):
             result = h.callWithSomething(inst)
         rt = jpype.java.lang.Runtime.getRuntime()
         free = rt.freeMemory()
-        for x in range(0, 10 * free / block_size):
+        for x in range(0, 10 * free // block_size):
             allocate_then_free()

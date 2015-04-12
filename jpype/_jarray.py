@@ -23,6 +23,7 @@ from . import _jwrapper
 
 if sys.version > '3':
     unicode = str
+    irange = range
 
 _CLASSES = {}
 _CUSTOMIZERS = []
@@ -50,10 +51,25 @@ class _JavaArrayClass(object):
     def __iter__(self):
         return _JavaArrayIter(self)
 
-    def __getitem__(self, ndx ):
+    def __getitem__(self, ndx):
+        if isinstance(ndx, slice):
+            start, stop, step = ndx.indices(len(self))
+            if step != 1:
+                raise RuntimeError("Slicing with step unimplemented")
+            return self.__getslice__(start, stop)
         return _jpype.getArrayItem(self.__javaobject__, ndx)
 
     def __setitem__(self, ndx, val):
+        if isinstance(ndx, slice):
+            start, stop, step = ndx.indices(len(self))
+            if step != 1:
+                # Iterate in python if we need to step
+                indices = irange(start, stop, step)
+                for index, value in zip(indices, val):
+                    self[index] = value
+            else:
+                self.__setslice__(start, stop, val)
+            return
         _jpype.setArrayItem(self.__javaobject__, ndx, val)
 
     def __getslice__(self, i, j):

@@ -121,7 +121,10 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		}
 		else
 		{
-			JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Python exception thrown");
+            // Prepare a message
+            string message = "Python exception thrown: ";
+            message += ex.getMessage();
+            JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, message.c_str());
 		}
 	} 
 	catch(JavaException&)

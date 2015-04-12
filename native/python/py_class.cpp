@@ -46,8 +46,7 @@ static PyMethodDef classMethods[] = {
 
 static PyTypeObject classClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaClass",              /*tp_name*/
 	sizeof(PyJPClass),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -110,7 +109,7 @@ void PyJPClass::__dealloc__(PyObject* o)
 
 	PyJPClass* self = (PyJPClass*)o;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 
 	TRACE_OUT;
 }
@@ -264,7 +263,7 @@ PyObject* PyJPClass::newClassInstance(PyObject* o, PyObject* arg)
 		}
 
 		JPObject* resObject = self->m_Class->newInstance(args);
-		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, (void*)"JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, "JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
 
 		//JPyHelper::dumpSequenceRefs(arg, "End");
 		return res;

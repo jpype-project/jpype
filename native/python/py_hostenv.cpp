@@ -19,7 +19,7 @@
 #define UNWRAP(ref) ((PyObject*)ref->data())
 
 #define GETDESC(ref) string((char*)JPyCObject::getDesc(UNWRAP(ref)))
-#define WRAP(ref, t) new HostRef( JPyCObject::fromVoidAndDesc(ref, (void*)t, NULL) )
+#define WRAP(ref, t) new HostRef( JPyCObject::fromVoidAndDesc(ref, t, NULL) )
 #define IS_REF(ref, t) JPyCObject::check((PyObject*)ref) && GETDESC(ref) == t
 
 void* PythonHostEnvironment::acquireRef(void* d)
@@ -247,7 +247,7 @@ HostRef* PythonHostEnvironment::newObject(JPObject* obj)
 	PyObject* arg2 = JPySequence::newTuple(1);
 	JPySequence::setItem(arg2, 0, args);
 	Py_DECREF(args);
-	PyObject* joHolder = JPyCObject::fromVoidAndDesc((void*)obj, (void*)"JPObject", &deleteJPObjectDestructor);
+	PyObject* joHolder = JPyCObject::fromVoidAndDesc((void*)obj, "JPObject", &deleteJPObjectDestructor);
 	JPySequence::setItem(args, 0, m_SpecialConstructorKey);
 	JPySequence::setItem(args, 1, joHolder);
 	Py_DECREF(joHolder);
@@ -357,7 +357,7 @@ HostRef* PythonHostEnvironment::newArray(JPArray* m)
 	PyObject* pyClass = JPyObject::call(m_GetArrayClassMethod, args, NULL);
 	Py_DECREF(args);
 	
-	PyObject* joHolder = JPyCObject::fromVoidAndDesc((void*)m, (void*)"JPArray", &deleteJPArrayDestructor);
+	PyObject* joHolder = JPyCObject::fromVoidAndDesc((void*)m, "JPArray", &deleteJPArrayDestructor);
 	args = JPySequence::newTuple(2);
 	JPySequence::setItem(args, 0, m_SpecialConstructorKey);
 	JPySequence::setItem(args, 1, joHolder);
@@ -634,7 +634,7 @@ HostRef* PythonHostEnvironment::newStringWrapper(jstring jstr)
 	TRACE_IN("PythonHostEnvironment::newStringWrapper");
 	jvalue* v = new jvalue;
 	v->l = jstr;
-	PyObject* value = JPyCObject::fromVoidAndDesc((void*)v, (void*)"object jvalue", deleteObjectJValueDestructor);
+	PyObject* value = JPyCObject::fromVoidAndDesc((void*)v, "object jvalue", deleteObjectJValueDestructor);
 
 	PyObject* args = JPySequence::newTuple(1);
 	JPySequence::setItem(args, 0, Py_None);
@@ -660,7 +660,3 @@ void PythonHostEnvironment::printReferenceInfo(HostRef* obj)
 	cout << "    Ref count " << (long)pobj->ob_refcnt << endl;
 }
 
-void PythonHostEnvironment::deleteJPObjectDestructor(void* data, void* desc)
-{
-	delete (JPObject*)data;
-}

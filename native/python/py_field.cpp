@@ -29,8 +29,7 @@ static PyMethodDef fieldMethods[] = {
 
 static PyTypeObject fieldClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaField",              /*tp_name*/
 	sizeof(PyJPField),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -91,7 +90,7 @@ void PyJPField::__dealloc__(PyObject* o)
 {
 	PyJPField* self = (PyJPField*)o;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 }
 
 PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
@@ -154,7 +153,7 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 
 		PyObject* jo;
 		PyObject* value;
-		JPyArg::parseTuple(arg, "O!O", &PyCObject_Type, &jo, &value);
+		JPyArg::parseTuple(arg, "O!O", &PyCapsule_Type, &jo, &value);
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 
@@ -183,7 +182,7 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 		PyJPField* self = (PyJPField*)o;
 
 		PyObject* jo;
-		JPyArg::parseTuple(arg, "O!", &PyCObject_Type, &jo);
+		JPyArg::parseTuple(arg, "O!", &PyCapsule_Type, &jo);
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 

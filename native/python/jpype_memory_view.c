@@ -127,7 +127,7 @@ _IntTupleFromSsizet(int len, Py_ssize_t *vals)
 static PyObject *
 memorysimpleview_format_get(PyMemorySimpleViewObject *self)
 {
-	return PyString_FromString(self->view.format);
+	return PyBytes_FromString(self->view.format);
 }
 
 static PyObject *
@@ -180,8 +180,7 @@ static PyGetSetDef memorysimpleview_getsets[] =
 };
 
 PyTypeObject PyMemorySimpleView_Type = {
-	PyObject_HEAD_INIT(NULL)
-	0,										  /* ob_size */
+	PyVarObject_HEAD_INIT(NULL, 0)
 	"_jpype.memoryview",
 	sizeof(PyMemorySimpleViewObject),
 	0,										  /* tp_itemsize */
