@@ -5,7 +5,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Upcoming version
 ----------------
-* 
+* Python3 support 
 
 0.5.7 - 2014-10-29
 ------------------
