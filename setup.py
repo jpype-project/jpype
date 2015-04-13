@@ -177,6 +177,7 @@ setup(
         'Programming Language :: Java',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
     ],
     packages=[
         'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
