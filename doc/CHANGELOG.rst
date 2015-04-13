@@ -5,13 +5,14 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Upcoming version
 ----------------
-* Python3 support 
+* Python3 support.
+* Fix OutOfMemoryError.
 
 0.5.7 - 2014-10-29
 ------------------
 * No JDK/JRE is required to build anymore due to provided jni.h. To override
   this, one needs to set a JAVA_HOME pointing to a JDK during setup.
-* better support for various platforms and compilers (MinGW, Cygwin, Windows) 
+* Better support for various platforms and compilers (MinGW, Cygwin, Windows) 
 
 0.5.6 - 2014-09-27
 ------------------
