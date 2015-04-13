@@ -5,6 +5,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Upcoming version
 ----------------
+*
+0.6.0 - 2015-04-13
+------------------
 * Python3 support.
 * Fix OutOfMemoryError.
 
