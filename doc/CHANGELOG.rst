@@ -3,94 +3,98 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-Upcoming version
-----------------
-*
-0.6.0 - 2015-04-13
-------------------
-* Python3 support.
-* Fix OutOfMemoryError.
+- **Next version - unreleased**
+- **0.6.0 - 2015-04-13**
 
-0.5.7 - 2014-10-29
-------------------
-* No JDK/JRE is required to build anymore due to provided jni.h. To override
-  this, one needs to set a JAVA_HOME pointing to a JDK during setup.
-* Better support for various platforms and compilers (MinGW, Cygwin, Windows) 
+  - Python3 support.
+  - Fix OutOfMemoryError.
 
-0.5.6 - 2014-09-27
-------------------
-*Note*: In this release we returned to the three point number versioning scheme.
+- **0.5.7 - 2014-10-29**
 
-* Fix #63: 'property' object has no attribute 'isBeanMutator'
-* Fix #70: python setup.py develop does now work as expected
-* Fix #79, Fix #85: missing declaration of 'uint'
-* Fix #80: opt out NumPy code dependency by '--disable-numpy' parameter to setup.
-  To opt out with pip append --install-option="--disable-numpy".
-* Use JVMFinder method of @tcalmant to locate a Java runtime
+  - No JDK/JRE is required to build anymore due to provided jni.h. To
+    override this, one needs to set a JAVA_HOME pointing to a JDK
+    during setup.
+  - Better support for various platforms and compilers (MinGW, Cygwin,
+    Windows)
 
-0.5.5.4 - 2014-08-12
---------------------
-* Fix: compile issue, if numpy is not available (NPY_BOOL n/a). Closes #77
+- **0.5.6 - 2014-09-27**
 
-0.5.5.3 - 2014-08-11
---------------------
-* Optional support for NumPy arrays in handling of Java arrays. Both set and get
-  slice operators are supported. Speed improvement of factor 10 for setting and
-  factor 6 for getting. The returned arrays are typed with the matching NumPy type.
-* Fix: add missing wrapper type 'JShort'
-* Fix: Conversion check for unsigned types did not work in array setters (tautological compare)  
+  - *Note*: In this release we returned to the three point number
+    versioning scheme.
+  - Fix #63: 'property' object has no attribute 'isBeanMutator'
+  - Fix #70: python setup.py develop does now work as expected
+  - Fix #79, Fix #85: missing declaration of 'uint'
+  - Fix #80: opt out NumPy code dependency by '--disable-numpy'
+    parameter to setup.  To opt out with pip
+    append --install-option="--disable-numpy".
+  - Use JVMFinder method of @tcalmant to locate a Java runtime
 
-0.5.5.2 - 2014-04-29
---------------------
-* Fix: array setter memory leak (ISSUE: #64)
+- **0.5.5.4 - 2014-08-12**
 
-0.5.5.1 - 2014-04-11
---------------------
-* Fix: setup.py now runs under MacOSX with Python 2.6 (referred to missing subprocess function)
+  - Fix: compile issue, if numpy is not available (NPY_BOOL
+    n/a). Closes #77
 
-0.5.5 - 2014-04-11
-------------------
+- **0.5.5.3 - 2014-08-11**
 
-*Note* that this release is *not* compatible with Python 2.5 anymore!
+  - Optional support for NumPy arrays in handling of Java arrays. Both
+    set and get slice operators are supported. Speed improvement of
+    factor 10 for setting and factor 6 for getting. The returned
+    arrays are typed with the matching NumPy type.
+  - Fix: add missing wrapper type 'JShort'
+  - Fix: Conversion check for unsigned types did not work in array
+    setters (tautological compare)
 
-* Added AHL changes
+- **0.5.5.2 - 2014-04-29**
 
-  * replaced Python set type usage with new 2.6.x and higher
-  * fixed broken Python slicing semantics on JArray objects
-  * fixed a memory leak in the JVM when passing Python lists to JArray constructors
-  * prevent ctrl+c seg faulting
-  * corrected new[]/delete pairs to stop valgrind complaining
-  * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
+  - Fix: array setter memory leak (ISSUE: #64)
 
-* Fast sliced access for primitive datatype arrays (factor of 10)
-* Use setter for Java bean property assignment even if not having a
-  getter by @baztian
-* Fix public methods not being accessible if a Java bean property with
-  the same name exists by @baztian (*Warning*: In rare cases this
-  change is incompatibile to previous releases. If you are accessing a
-  bean property without using the get/set method and the bean has a
-  public method with the property's name you have to change the code
-  to use the get/set methods.)
-* Make jpype.JException catch exceptions from subclasses by @baztian
-* Make more complex overloaded Java methods accessible (fixes https://sourceforge.net/p/jpype/bugs/69/) by @baztian and anonymous
-* Some minor improvements inferring unnecessary copies in extension code
-* Some JNI cleanups related to memory
-* Fix memory leak in array setters
-* Fix memory leak in typemanager
-* Add userguide from sourceforge project by @baztian
+- **0.5.5.1 - 2014-04-11**
 
-0.5.4.5 - 2013-08-25
---------------------
+  - Fix: setup.py now runs under MacOSX with Python 2.6 (referred to
+    missing subprocess function)
 
-* Added support for OSX 10.9 Mavericks by @rmangino (#16)
+- **0.5.5 - 2014-04-11**
 
-0.5.4.4 - 2013-08-10
---------------------
+  - *Note* that this release is *not* compatible with Python 2.5 anymore!
+  - Added AHL changes
 
-* Rewritten Java Home directory Search by @marsam (#13, #12 and #7)
-* Stylistic cleanups of setup.py
+    * replaced Python set type usage with new 2.6.x and higher
+    * fixed broken Python slicing semantics on JArray objects
+    * fixed a memory leak in the JVM when passing Python lists to
+      JArray constructors
+    * prevent ctrl+c seg faulting
+    * corrected new[]/delete pairs to stop valgrind complaining
+    * ship basic PyMemoryView implementation (based on numpy's) for Python 2.6 compatibility
 
-0.5.4.3 - 2013-07-27
---------------------
+  - Fast sliced access for primitive datatype arrays (factor of 10)
+  - Use setter for Java bean property assignment even if not having a
+    getter by @baztian
+  - Fix public methods not being accessible if a Java bean property
+    with the same name exists by @baztian (*Warning*: In rare cases
+    this change is incompatibile to previous releases. If you are
+    accessing a bean property without using the get/set method and the
+    bean has a public method with the property's name you have to
+    change the code to use the get/set methods.)
+  - Make jpype.JException catch exceptions from subclasses by @baztian
+  - Make more complex overloaded Java methods accessible (fixes
+    https://sourceforge.net/p/jpype/bugs/69/) by @baztian and
+    anonymous
+  - Some minor improvements inferring unnecessary copies in extension
+    code
+  - Some JNI cleanups related to memory
+  - Fix memory leak in array setters
+  - Fix memory leak in typemanager
+  - Add userguide from sourceforge project by @baztian
+  
+- **0.5.4.5 - 2013-08-25**
 
-Initial pypi release with most fixes for easier installation
+  - Added support for OSX 10.9 Mavericks by @rmangino (#16)
+
+- **0.5.4.4 - 2013-08-10**
+
+  - Rewritten Java Home directory Search by @marsam (#13, #12 and #7)
+  - Stylistic cleanups of setup.py
+
+- **0.5.4.3 - 2013-07-27**
+
+  - Initial pypi release with most fixes for easier installation
