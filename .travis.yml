@@ -11,15 +11,18 @@ python:
   - '3.4'
   - "nightly"
 
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - ant
 
 env:
   matrix:
     # one build with and without numpy support (opt numpy out)
     - NUMPY="--install-option=--disable-numpy"
     - NUMPY=""
-
-before_install:
-  - sudo apt-get install -qq ant
 
 install:
   - pip install . $NUMPY
