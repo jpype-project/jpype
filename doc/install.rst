@@ -7,13 +7,7 @@ from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
 Requirements
 ------------
 
-Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+
-
-Python 3 Support
-~~~~~~~~~~~~~~~~
-
-If you're looking for a Python 3 compatible JPype please see
-`tcalmant's github fork <https://github.com/tcalmant/jpype-py3>`__.
+Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+ (including Python 3+).
 
 Debian/Ubuntu
 ~~~~~~~~~~~~~
