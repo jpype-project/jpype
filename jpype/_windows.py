@@ -16,7 +16,10 @@
 #*****************************************************************************
 
 from . import _jvmfinder
-import _winreg as winreg
+try:
+    import _winreg as winreg
+except ImportError:
+    import winreg  # in Py3, winreg has been moved
 
 # ------------------------------------------------------------------------------
 
