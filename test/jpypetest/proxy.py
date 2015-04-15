@@ -21,9 +21,6 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
-from sys import hexversion as ver
-
-gt_py_27_03 = (ver > 0x020703ff)
 
 def _testMethod1():
     return 33
@@ -108,7 +105,6 @@ class ProxyTestCase(common.JPypeTestCase):
                                       '1', '2', '3',
                                       'Thread finished'])
 
-    @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
     def testProxyWithArguments(self):
         itf2 = self.package.TestInterface2
         c = C()
@@ -132,7 +128,6 @@ class ProxyTestCase(common.JPypeTestCase):
         expected = ['Test Method1 = 43', 'Test Method2 = 42']
         self.assertSequenceEqual(result, expected)
 
-    @unittest.skipIf(gt_py_27_03, 'broken, see ISSUE #67')
     def testProxyWithMultipleInterfaceInherited(self):
         itf2 = self.package.TestInterface2
         itf3 = self.package.TestInterface3
