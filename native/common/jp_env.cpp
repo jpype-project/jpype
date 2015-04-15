@@ -17,8 +17,9 @@
 #include <jpype.h>
 
 /*
- * FIXME: use a less coupled way to call PyGILState_Ensure/Release() in
- * JPCleaner::~JPCleaner().
+ * FIXME: use a less coupled way to call PyGILState_Ensure/Release()
+ * in JPCleaner::~JPCleaner() if we wan't to target a non Python
+ * implementation.
  */
 #include <Python.h>
 
