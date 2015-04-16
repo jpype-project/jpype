@@ -7,21 +7,21 @@ environment:
     ANT_HOME: C:\ant
 
   matrix:
-#    - PYTHON: "C:\\Python27_32"
-#      PYTHON_VERSION: "2.7.8"
-#      PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python27_32"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python27_64"
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
 
-#    - PYTHON: "C:\\Python34_32"
-#      PYTHON_VERSION: "3.4.1"
-#      PYTHON_ARCH: "32"
+    - PYTHON: "C:\\Python34_32"
+      PYTHON_VERSION: "3.4.1"
+      PYTHON_ARCH: "32"
 
-#    - PYTHON: "C:\\Python34_64"
-#      PYTHON_VERSION: "3.4.1"
-#      PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python34_64"
+      PYTHON_VERSION: "3.4.1"
+      PYTHON_ARCH: "64"
 
 cache:
   - C:\Python*
