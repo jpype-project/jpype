@@ -11,12 +11,28 @@ from jpype._darwin import *
 
 import sys
 
+def replace_chars(s):
+    return s.replace('\r\n', ' ')
+
+def recursively_apply(l, f):
+    for n, i in enumerate(l):
+        if type(i) is list:
+            l[n] = recursively_apply(l[n], f)
+        elif type(i) is str:
+            l[n] = f(i)
+    return l
+#example = [[["dsfasdf", "another\r\ntest extra embedded"], 
+#         "ans a \r\n string here"],
+#        ['another \r\nlist'], "and \r\n another string"]
+#print recursively_apply(example, replace_chars)
+
 class JVMFinderTest(unittest.TestCase):
     """
     test some methods to obtain a jvm.
     TODO: add windows (need to mock registry)
     """
 
+    @unittest.skipIf(sys.platform == 'win32', 'skip on win')
     def test_find_libjvm(self):
         """
         test JVMFinder.find_libjvm does not return broken jvm implementation.
@@ -32,6 +48,7 @@ class JVMFinderTest(unittest.TestCase):
                      ('jre/lib/amd64/server',
                       ('',), ('libjvm.so',)),
                      ]
+
         with mock.patch('os.walk') as mockwalk:
             # contains broken and working jvms
             mockwalk.return_value = walk_fake
@@ -50,6 +67,7 @@ class JVMFinderTest(unittest.TestCase):
             with self.assertRaises(JVMNotSupportedException) as context:
                 finder.find_libjvm('arbitrary java home')
 
+    @unittest.skipIf(sys.platform == 'win32', 'skip on win')
     @mock.patch('os.walk')
     @mock.patch('os.path.exists')
     @mock.patch('os.path.realpath')
