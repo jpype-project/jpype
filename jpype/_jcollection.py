@@ -259,11 +259,12 @@ class IteratorCustomizer(object):
         if name == 'java.util.Iterator':
             members.update(IteratorCustomizer._METHODS)
         elif jc.isSubclass('java.util.Iterator'):
+            __next__ = '__next__'
             if 'next' in members:
-                members['_next'] = members['next']
-            elif '__next__' in members:
-                members['_next'] = members['__next__']
-            members['__next__'] = _iterCustomNext
+                __next__ = 'next'
+
+            members['_next'] = members[__next__]
+            members[__next__] = _iterCustomNext
 
 def _enumNext(self):
     if self.hasMoreElements():
