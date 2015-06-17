@@ -247,7 +247,7 @@ def _iterIter(self):
 class IteratorCustomizer(object):
     _METHODS = {
         '__iter__': _iterIter,
-        '__next__': _iterIteratorNext,
+        '__next__': _iterCustomNext,
     }
 
     def canCustomize(self, name, jc):
@@ -259,10 +259,7 @@ class IteratorCustomizer(object):
         if name == 'java.util.Iterator':
             members.update(IteratorCustomizer._METHODS)
         elif jc.isSubclass('java.util.Iterator'):
-            __next__ = '__next__'
-            if 'next' in members:
-                __next__ = 'next'
-
+            __next__ = 'next' if 'next' in members else '__next__'
             members['_next'] = members[__next__]
             members[__next__] = _iterCustomNext
 
