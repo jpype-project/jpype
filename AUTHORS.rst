@@ -20,3 +20,4 @@ Huge thanks to these CONTRIBUTORS:
 * Bastian Bowe
 * Kristi
 * Martin K. Scherer
+* Dongwon Shin
