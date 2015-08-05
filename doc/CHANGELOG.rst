@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+- **0.6.1 - 2015-08-05**
 
   - Fix proxy with arguments issue.
 
