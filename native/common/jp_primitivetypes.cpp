@@ -336,13 +336,13 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 jvalue JPLongType::convertToJava(HostRef* obj)
 {
 	jvalue res;
-	if (JPEnv::getHost()->isInt(obj))
-	{
-		res.j = (jlong)JPEnv::getHost()->intAsInt(obj);
-	}
-	else if (JPEnv::getHost()->isLong(obj))
+	if (JPEnv::getHost()->isLong(obj))
 	{
 		res.j = (jlong)JPEnv::getHost()->longAsLong(obj);
+	}
+	else if (JPEnv::getHost()->isInt(obj))
+	{
+		res.j = (jlong)JPEnv::getHost()->intAsInt(obj);
 	}
 	else if (JPEnv::getHost()->isWrapper(obj))
 	{
