@@ -21,3 +21,7 @@ from . import common
 class MroTestCase(common.JPypeTestCase):
     def testMro(self):
         C = JPackage('jpype.mro').C
+
+    def testMultipleInterfaces(self):
+        j = JPackage("jpype").mro.MultipleInterfaces
+        myinstance = j()
