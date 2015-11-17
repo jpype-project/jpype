@@ -99,6 +99,27 @@ def _javaGetAttr(self, name):
         return _jpype._JavaBoundMethod(r, self)
     return r
 
+def _mro_override_topsort(cls):
+    # here we run a topological sort to get a linear ordering of the inheritance graph.
+    parents = set().union(*[x.__mro__ for x in cls.__bases__])
+    numsubs = dict()
+    for cls1 in parents:
+        numsubs[cls1] = len([cls2 for cls2 in parents if cls1 != cls2 and issubclass(cls2,cls1)])
+    mergedmro = [cls]
+    while numsubs:
+        for k1,v1 in numsubs.items():
+            if v1 != 0: continue
+            mergedmro.append(k1)
+            for k2,v2 in numsubs.items():
+                if issubclass(k1,k2):
+                    numsubs[k2] = v2-1
+            del numsubs[k1]
+            break
+    return mergedmro
+
+class _MetaClassForMroOverride(type):
+    def mro(cls):
+        return _mro_override_topsort(cls)
 
 class _JavaClass(type):
     def __new__(cls, jc):
@@ -168,18 +189,6 @@ class _JavaClass(type):
             if i.canCustomize(name, jc):
                 i.customize(name, jc, bases, members)
 
-        # remove multiple bases that would cause a MRO problem
-        toRemove = set()
-        for c in bases:
-            for d in bases:
-                if c == d:
-                    continue
-                if issubclass(c, d):
-                    toRemove.add(d)
-
-        for i in toRemove:
-            bases.remove(i)
-
         # Prepare the meta-metaclass
         meta_bases = []
         for i in bases:
@@ -188,7 +197,11 @@ class _JavaClass(type):
             else:
                 meta_bases.append(i.__metaclass__)
 
-        metaclass = type.__new__(type, name + "$$Static", tuple(meta_bases),
+
+
+        static_fields['mro'] = _mro_override_topsort
+
+        metaclass = type.__new__(_MetaClassForMroOverride, name + "$$Static", tuple(meta_bases),
                                  static_fields)
         members['__metaclass__'] = metaclass
         result = type.__new__(metaclass, name, tuple(bases), members)
