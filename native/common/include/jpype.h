@@ -46,7 +46,7 @@
 
 #ifdef WIN32
 	#ifdef __GNUC__
-		// JNICALL causes problem for funtions prototypes .. since I am nto defining any JNI methods there isno need for it
+		// JNICALL causes problem for function prototypes .. since I am not defining any JNI methods there is no need for it
 		#undef JNICALL
 		#define JNICALL
 	#endif

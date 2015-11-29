@@ -76,7 +76,7 @@ void PythonHostEnvironment::setTypeError(const char* msg)
 
 void PythonHostEnvironment::raise(const char* msg)
 {
-	RAISE(JPypeException, msg);
+	throw PythonException();
 }
 
 HostRef* PythonHostEnvironment::getNone()
@@ -145,7 +145,11 @@ void PythonHostEnvironment::setSequenceItem(HostRef* seq, jsize pos, HostRef* va
 
 bool PythonHostEnvironment::isInt(HostRef* res)
 {
+#if PY_MAJOR_VERSION >= 3 || LONG_MAX > 2147483647
+	return false;
+#else
 	return JPyInt::check(UNWRAP(res));
+#endif
 }
 
 HostRef* PythonHostEnvironment::newInt(jint v)
@@ -160,7 +164,11 @@ jint PythonHostEnvironment::intAsInt(HostRef* res)
 
 bool PythonHostEnvironment::isLong(HostRef* ref)
 {
+#if PY_MAJOR_VERSION < 3 || LONG_MAX > 2147483647
+	return JPyInt::check(UNWRAP(ref)) || JPyLong::check(UNWRAP(ref));
+#else
 	return JPyLong::check(UNWRAP(ref));
+#endif
 }
 
 HostRef* PythonHostEnvironment::newLong(jlong v)
@@ -172,7 +180,13 @@ HostRef* PythonHostEnvironment::newLong(jlong v)
 
 jlong PythonHostEnvironment::longAsLong(HostRef* ref)
 {
+#if PY_MAJOR_VERSION >= 3
 	return JPyLong::asLongLong(UNWRAP(ref));
+#elif LONG_MAX > 2147483647
+	return JPyInt::check(UNWRAP(ref)) ? JPyInt::asLong(UNWRAP(ref)) : JPyLong::asLongLong(UNWRAP(ref));
+#else
+	return JPyLong::asLongLong(UNWRAP(ref));
+#endif
 }
 
 bool PythonHostEnvironment::isFloat(HostRef* ref)
