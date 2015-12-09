@@ -28,7 +28,14 @@ env:
 
   allow_failures:
     - python: 'pypy'
+      env: NUMPY="--install-option=--disable-numpy"
     - python: 'pypy3'
+      env: NUMPY="--install-option=--disable-numpy"
+    - python: 'pypy'
+      env: NUMPY=""
+    - python: 'pypy3'
+      env: NUMPY=""
+
 
 install:
   - pip install . $NUMPY
