@@ -9,6 +9,8 @@ python:
   - '3.3'
   - '3.4'
   - '3.5'
+  - 'pypy'
+  - 'pypy3'
   - "nightly"
 
 sudo: false
@@ -23,6 +25,9 @@ env:
     # one build with and without numpy support (opt numpy out)
     - NUMPY="--install-option=--disable-numpy"
     - NUMPY=""
+
+  allow_failures:
+    - python: pypy, pypy3
 
 install:
   - pip install . $NUMPY
