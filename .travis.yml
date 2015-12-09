@@ -27,7 +27,8 @@ env:
     - NUMPY=""
 
   allow_failures:
-    - python: pypy, pypy3
+    - python: pypy
+    - python: pypy3
 
 install:
   - pip install . $NUMPY
