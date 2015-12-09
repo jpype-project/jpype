@@ -47,8 +47,9 @@ if(exe != NULL) \
     RAISE(JPypeException, ss.str());\
 }
 
-#if (PY_VERSION_HEX >= 0x02070000)
-// for python 2.6 we have also memory view available, but it does not contain the needed functions.
+#if (PY_VERSION_HEX >= 0x02070000) and not defined(Py_PYTHON_H)
+// For Python 2.6 we have also memory view available, but it does not contain the needed functions.
+// Disabled for PyPy, as it lacks memoryviews.
 #include <jpype_memory_view.h>
 
 template <typename jarraytype, typename jelementtype, typename setFnc>
