@@ -127,9 +127,69 @@ class AttributeTestCase(common.JPypeTestCase):
             l = long(123)
 
         h.setByte(l)
+        self.assertEqual(l, h.mByteValue)
         h.setShort(l)
+        self.assertEqual(l, h.mShortValue)
         h.setInt(l)
+        self.assertEqual(l, h.mIntValue)
+        h.setLong(l)
+        self.assertEqual(l, h.mLongValue)
 
+    def testCallWithBigLong(self):
+        h = self.__jp.Test1()
+        if sys.version > '3':
+            l = int(4398046511103)
+        else:
+            l = long(4398046511103)
+ 
+        self.assertRaises(TypeError, h.setByte, l)
+        self.assertRaises(TypeError, h.setShort, l)
+        self.assertRaises(TypeError, h.setInt, l)
+        h.setLong(l)
+        self.assertEqual(l, h.mLongValue)
+
+    def testCallWithBigInt(self):
+        h = self.__jp.Test1()
+        if sys.version > '3' or sys.maxint > 2**31:
+            l = int(4398046511103)
+        else:
+            l = long(4398046511103)
+ 
+        self.assertRaises(TypeError, h.setByte, l)
+        self.assertRaises(TypeError, h.setShort, l)
+        self.assertRaises(TypeError, h.setInt, l)
+        h.setLong(l)
+        self.assertEqual(l, h.mLongValue)
+
+    def testSetBoolean(self):
+        h = self.__jp.Test1()
+        self.assertEqual(False, h.mBooleanValue)
+        h.setBoolean(True)
+        self.assertEqual(True, h.mBooleanValue)
+        h.setBoolean(False)
+        self.assertEqual(False, h.mBooleanValue)
+        # just testing the status quo, not sure about if this is nice
+        h.setBoolean(42)
+        self.assertEqual(True, h.mBooleanValue)
+        h.setBoolean(0)
+        self.assertEqual(False, h.mBooleanValue)
+        if sys.version > '3':
+            l = int(4398046511103)
+        else:
+            l = long(4398046511103)
+        h.setBoolean(l)
+        self.assertEqual(True, h.mBooleanValue)
+        if sys.version > '3':
+            l = int(0)
+        else:
+            l = long(0)
+        h.setBoolean(l)
+        self.assertEqual(False, h.mBooleanValue)
+
+    def testCreateDate(self):
+        d = jpype.java.util.Date(1448799485000)
+        self.assertEqual(1448799485000, d.getTime())
+        
     def testCharAttribute(self):
         h = self.__jp.Test1()
         h.charValue = u'b'
@@ -204,3 +264,4 @@ class AttributeTestCase(common.JPypeTestCase):
         free = rt.freeMemory()
         for x in range(0, 10 * free // block_size):
             allocate_then_free()
+        

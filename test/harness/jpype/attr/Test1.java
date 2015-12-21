@@ -83,17 +83,36 @@ public class Test1
 		
 	}
 	
+	boolean mBooleanValue = false;
+	public void setBoolean(boolean b)
+	{
+		mBooleanValue = b;
+	}
+	
+	byte mByteValue;
 	public void setByte(byte b)
 	{
+		mByteValue = b;
 	}
 
-	public void setShort(short b)
+	short mShortValue = 0;
+	public void setShort(short s)
 	{
+		mShortValue = s;
 	}
 
-	public void setInt(int b)
+	int mIntValue = 0;
+	public void setInt(int i)
 	{
+		mIntValue = i;
 	}
+
+	long mLongValue = 0;
+	public void setLong(long l)
+	{
+		mLongValue = l;
+	}
+	
 	
 	public String callWithSomething(Object obj)
 	{

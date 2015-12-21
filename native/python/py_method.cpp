@@ -284,12 +284,11 @@ int PyJPBoundMethod::__init__(PyObject* o, PyObject* args, PyObject* kwargs)
 		Py_INCREF(javaMethod);
 		self->m_Instance = inst;
 		self->m_Method = (PyJPMethod*)javaMethod;
-
 		return 0;
 	}
 	PY_STANDARD_CATCH
 
-	return 1;
+	return -1;
 }
 
 PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
@@ -336,8 +335,8 @@ void PyJPBoundMethod::__dealloc__(PyObject* o)
 	TRACE_IN("PyJPBoundMethod::__dealloc__");
 	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 
-	Py_DECREF(self->m_Instance);
-	Py_DECREF(self->m_Method);
+	Py_XDECREF(self->m_Instance);
+	Py_XDECREF(self->m_Method);
 
 	Py_TYPE(self)->tp_free(o);
 	TRACE1("Method freed");

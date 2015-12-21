@@ -86,6 +86,7 @@ jvalue JPByteType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minByte || l > JPJni::s_maxByte)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java byte");
+			JPEnv::getHost()->raise("JPByteType::convertToJava");
 		}
 		res.b = (jbyte)l;
 	}
@@ -95,6 +96,7 @@ jvalue JPByteType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minByte || l > JPJni::s_maxByte)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java byte");
+			JPEnv::getHost()->raise("JPByteType::convertToJava");
 		}
 		res.b = (jbyte)l;
 	}
@@ -181,6 +183,7 @@ jvalue JPShortType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minShort || l > JPJni::s_maxShort)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java short");
+			JPEnv::getHost()->raise("JPShortType::convertToJava");
 		}
 
 		res.s = (jshort)l;
@@ -191,6 +194,7 @@ jvalue JPShortType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minShort || l > JPJni::s_maxShort)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java short");
+			JPEnv::getHost()->raise("JPShortType::convertToJava");
 		}
 		res.s = (jshort)l;
 	}
@@ -260,6 +264,7 @@ jvalue JPIntType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minInt || l > JPJni::s_maxInt)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java int");
+			JPEnv::getHost()->raise("JPIntType::convertToJava");
 		}
 
 		res.i = (jint)l;
@@ -270,6 +275,7 @@ jvalue JPIntType::convertToJava(HostRef* obj)
 		if (l < JPJni::s_minInt || l > JPJni::s_maxInt)
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java int");
+			JPEnv::getHost()->raise("JPIntType::convertToJava");
 		}
 		res.i = (jint)l;
 	}
@@ -322,7 +328,7 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
 		JPTypeName name = JPEnv::getHost()->getWrapperTypeName(obj);
-		if (name.getType() == JPTypeName::_int)
+		if (name.getType() == JPTypeName::_long)
 		{
 			return _exact;
 		}
@@ -347,6 +353,12 @@ jvalue JPLongType::convertToJava(HostRef* obj)
 	else if (JPEnv::getHost()->isWrapper(obj))
 	{
 		return JPEnv::getHost()->getWrapperValue(obj);
+	}
+	else
+	{
+		JPEnv::getHost()->setTypeError("Cannot convert value to Java long");
+		JPEnv::getHost()->raise("JPLongType::convertToJava");
+		res.j = 0; // never reached
 	}
 	return res;
 }
@@ -407,10 +419,12 @@ jvalue JPFloatType::convertToJava(HostRef* obj)
 		if (l > 0 && (l < JPJni::s_minFloat || l > JPJni::s_maxFloat))
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java float");
+			JPEnv::getHost()->raise("JPFloatType::convertToJava");
 		}
 		else if (l < 0 && (l > -JPJni::s_minFloat || l < -JPJni::s_maxFloat))
 		{
 			JPEnv::getHost()->setTypeError("Cannot convert value to Java float");
+			JPEnv::getHost()->raise("JPFloatType::convertToJava");
 		}
 		res.f = (jfloat)l;
 	}
@@ -576,7 +590,7 @@ HostRef* JPBooleanType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPBooleanType::canConvertToJava(HostRef* obj)
 {
-	if (JPEnv::getHost()->isInt(obj))
+	if (JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj))
 	{
 		return _implicit;
 	}
@@ -599,6 +613,10 @@ jvalue JPBooleanType::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
 		return JPEnv::getHost()->getWrapperValue(obj);
+	}
+	else if (JPEnv::getHost()->isLong(obj))
+	{
+		res.z = (jboolean)JPEnv::getHost()->longAsLong(obj);
 	}
 	else
 	{
