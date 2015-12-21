@@ -134,7 +134,7 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 		else if (hi > length) hi = length;
 		if (lo > hi) lo = hi;
 
-		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
+		const string name = a->getType()->getObjectType().getComponentName().getNativeName();
 		if(is_primitive(name[0]))
 		{
 			// for primitive types, we have fast sequence generation available
@@ -183,7 +183,7 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 		else if (hi > length) hi = length;
 		if (lo > hi) lo = hi;
 
-		const string& name = a->getType()->getObjectType().getComponentName().getNativeName();
+		const string name = a->getType()->getObjectType().getComponentName().getNativeName();
 
 		if(is_primitive(name[0]))
 		{
