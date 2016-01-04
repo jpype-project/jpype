@@ -163,7 +163,7 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 
 PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 {
-
+	TRACE_IN("JPypeJavaArray::setArraySlice")
 	PyObject* arrayObject;
 	int lo = -1;
 	int hi = -1;
@@ -213,6 +213,7 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 	PY_STANDARD_CATCH
 
 	return NULL;
+	TRACE_OUT
 }
 
 PyObject* JPypeJavaArray::setArrayItem(PyObject* self, PyObject* arg)

@@ -215,6 +215,25 @@ HostRef* JPObjectType::convertToDirectBuffer(HostRef* src)
 	RAISE(JPypeException, "Unable to convert to Direct Buffer");
 }
 
+bool JPObjectType::isSubTypeOf(const JPType& other) const
+{
+	const JPObjectType* otherObjectType = dynamic_cast<const JPObjectType*>(&other);
+	if (!otherObjectType)
+	{
+		return false;
+	}
+	JPCleaner cleaner;
+	jclass ourClass = getClass();
+	cleaner.addLocal(ourClass);
+	jclass otherClass = otherObjectType->getClass();
+	cleaner.addLocal(otherClass);
+	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
+	bool otherIsSuperType = JPEnv::getJava()->IsAssignableFrom(ourClass, otherClass);
+	//std::cout << other.getName().getSimpleName() << " isSuperType of " << getName().getSimpleName() << " " << otherIsSuperType << std::endl;
+	return otherIsSuperType;
+}
+
+
 //-------------------------------------------------------------------------------
 
 HostRef* JPStringType::asHostObject(jvalue val) 
@@ -336,7 +355,7 @@ jvalue JPStringType::convertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jclass JPStringType::getClass()
+jclass JPStringType::getClass() const
 {
 	return (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_StringClass);
 }
@@ -409,7 +428,7 @@ jvalue JPClassType::convertToJava(HostRef* obj)
 	return v;		
 }
 
-jclass JPClassType::getClass()
+jclass JPClassType::getClass() const
 {
 	return (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_ClassClass);
 }
