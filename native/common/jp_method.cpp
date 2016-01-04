@@ -81,7 +81,7 @@ void JPMethod::addOverloads(JPMethod* o)
 JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 {
 	TRACE_IN("JPMethod::findOverload");
-	TRACE2("Got overlaod to check", m_Overloads.size());
+	TRACE2("Got overload to check", m_Overloads.size());
 	
 	JPMethodOverload* currentMatch = NULL;
 	EMatchType isExact = _none;
@@ -106,7 +106,7 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 					isExact = _exact;
 				}
 				else {
-					RAISE(JPypeException, "Multiple overloads possible.");
+					RAISE(JPypeException, "Multiple overloads possible: " << m_Name );
 				}			
 			}
 			else
@@ -118,7 +118,7 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 	
 	if (currentMatch == NULL)
 	{
-		RAISE(JPypeException, "No matching overloads found.");
+		RAISE(JPypeException, "No matching overloads found: " << m_Name);
 	}
 
 	return currentMatch;
@@ -148,7 +148,7 @@ HostRef* JPMethod::invokeInstance(vector<HostRef*>& args)
 	
 	if (currentMatch->isStatic())
 	{	
-		RAISE(JPypeException, "No matching overloads found.");
+		RAISE(JPypeException, "No matching overloads found: " << m_Name);
 	}
 	else
 	{
