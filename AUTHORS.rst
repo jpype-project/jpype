@@ -3,7 +3,7 @@ Authors
 
 The original author: Steve Menard
 
-Current Maintainer: Luis Nell
+Current Maintainer: Martin K. Scherer (marscher)
 
 
 Huge thanks to these CONTRIBUTORS:
@@ -19,5 +19,5 @@ Huge thanks to these CONTRIBUTORS:
 * Philip Smith
 * Bastian Bowe
 * Kristi
-* Martin K. Scherer
+* Luis Nell
 * Dongwon Shin
