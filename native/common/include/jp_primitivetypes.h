@@ -97,6 +97,10 @@ public : // JPType implementation
 	}
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		return other.getName().getType() == JPTypeName::_void;
+	}
 };
 
 class JPByteType : public JPPrimitiveType
@@ -134,6 +138,18 @@ public : // JPType implementation
 
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_byte
+				|| otherType == JPTypeName::_short
+				|| otherType == JPTypeName::_int
+				|| otherType == JPTypeName::_long
+				|| otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
+
 };
 
 class JPShortType : public JPPrimitiveType
@@ -169,6 +185,16 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_short
+				|| otherType == JPTypeName::_int
+				|| otherType == JPTypeName::_long
+				|| otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
+
 };
 
 class JPIntType : public JPPrimitiveType
@@ -204,7 +230,15 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
-	
+
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_int
+				|| otherType == JPTypeName::_long
+				|| otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
 };
 
 class JPLongType : public JPPrimitiveType
@@ -240,6 +274,13 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_long
+				|| otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
 };
 
 class JPFloatType : public JPPrimitiveType
@@ -275,6 +316,12 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
 };
 
 class JPDoubleType : public JPPrimitiveType
@@ -310,6 +357,13 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_double;
+	}
+
 };
 
 class JPCharType : public JPPrimitiveType
@@ -345,6 +399,16 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_char
+				|| otherType == JPTypeName::_int
+				|| otherType == JPTypeName::_long
+				|| otherType == JPTypeName::_float
+				|| otherType == JPTypeName::_double;
+	}
+
 };
 
 class JPBooleanType : public JPPrimitiveType
@@ -380,6 +444,11 @@ public : // JPType implementation
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length);
 	
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const
+	{
+		JPTypeName::ETypes otherType = other.getName().getType();
+		return otherType == JPTypeName::_boolean;
+	}
 };
 
 #endif // _JPPRIMITIVETYPE_H_

@@ -140,7 +140,7 @@ class _JavaClass(type):
         if name == 'java.lang.Object' or jc.isPrimitive():
             bases.append(object)
         elif not jc.isInterface():
-            bjc = jc.getBaseClass(jc)
+            bjc = jc.getBaseClass()
             bases.append(_getClassFor(bjc))
 
         if _JAVATHROWABLE is not None and jc.isSubclass("java.lang.Throwable"):

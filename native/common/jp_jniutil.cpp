@@ -12,8 +12,8 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-*****************************************************************************/   
+
+*****************************************************************************/
 #include <jpype.h>
 
 namespace { // impl detail
@@ -52,6 +52,8 @@ namespace { // impl detail
 	jclass methodClass;
 	jclass constructorClass;
 	jmethodID getReturnTypeID;
+	jmethodID isSyntheticMethodID;
+	jmethodID isVarArgsMethodID;
 	jmethodID getParameterTypesID;
 	jmethodID getConstructorParameterTypesID;
 
@@ -117,6 +119,7 @@ void init()
 	getDeclaredFieldsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
 	getDeclaredMethodsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
 	getMethodsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getMethods", "()[Ljava/lang/reflect/Method;");
+	getFieldsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getFields", "()[Ljava/lang/reflect/Field;");
 	getDeclaredConstructorsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
 	getConstructorsID = JPEnv::getJava()->GetMethodID(s_ClassClass, "getConstructors", "()[Ljava/lang/reflect/Constructor;");
 	isInterfaceID = JPEnv::getJava()->GetMethodID(s_ClassClass, "isInterface", "()Z");
@@ -130,7 +133,7 @@ void init()
 	isFinalID = JPEnv::getJava()->GetStaticMethodID(modifierClass, "isFinal", "(I)Z");
 
 	classLoaderClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/ClassLoader"));
-	getSystemClassLoaderID = JPEnv::getJava()->GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");  
+	getSystemClassLoaderID = JPEnv::getJava()->GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
 
 	s_NoSuchMethodErrorClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/NoSuchMethodError") );
 	s_RuntimeExceptionClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/RuntimeException") );
@@ -149,6 +152,8 @@ void init()
 	constructorClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/reflect/Constructor"));
 	getReturnTypeID = JPEnv::getJava()->GetMethodID(methodClass, "getReturnType", "()Ljava/lang/Class;");
 	getParameterTypesID = JPEnv::getJava()->GetMethodID(methodClass, "getParameterTypes", "()[Ljava/lang/Class;");
+	isSyntheticMethodID = JPEnv::getJava()->GetMethodID(methodClass, "isSynthetic", "()Z");
+	isVarArgsMethodID = JPEnv::getJava()->GetMethodID(methodClass, "isVarArgs", "()Z");
 	getConstructorParameterTypesID = JPEnv::getJava()->GetMethodID(constructorClass, "getParameterTypes", "()[Ljava/lang/Class;");
 
 	throwableClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Throwable"));
@@ -159,7 +164,7 @@ void init()
 	stringWriterID = JPEnv::getJava()->GetMethodID(stringWriterClass, "<init>", "()V");
 	printWriterID = JPEnv::getJava()->GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V");
 	flushID = JPEnv::getJava()->GetMethodID(printWriterClass, "flush", "()V");
-	
+
 	numberClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Number"));
 	booleanClass= (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Boolean"));
 	charClass= (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Character"));
@@ -188,7 +193,7 @@ void init()
 	s_minInt = JPEnv::getJava()->GetStaticIntField(intClass, fid);
 	fid = JPEnv::getJava()->GetStaticFieldID(intClass, "MAX_VALUE", "I");
 	s_maxInt = JPEnv::getJava()->GetStaticIntField(intClass, fid);
-	
+
 	fid = JPEnv::getJava()->GetStaticFieldID(floatClass, "MIN_VALUE", "F");
 	s_minFloat = JPEnv::getJava()->GetStaticFloatField(floatClass, fid);
 	fid = JPEnv::getJava()->GetStaticFieldID(floatClass, "MAX_VALUE", "F");
@@ -210,7 +215,7 @@ string asciiFromJava(jstring str)
 
 	JPEnv::getJava()->ReleaseStringUTFChars(str, cstr);
 
-	return res;	
+	return res;
 }
 
 JCharString unicodeFromJava(jstring str)
@@ -223,13 +228,13 @@ JCharString unicodeFromJava(jstring str)
 
 	JPEnv::getJava()->ReleaseStringChars(str, cstr);
 
-	return res;	
+	return res;
 }
 
 jstring javaStringFromJCharString(JCharString& wstr)
 {
 	jstring result = JPEnv::getJava()->NewString(wstr.c_str(), (jint)wstr.length());
-	
+
 	return result;
 }
 
@@ -257,13 +262,13 @@ jstring toString(jobject o)
 	return str;
 }
 
-static string convertToSimpleName(jclass c)  
+static string convertToSimpleName(jclass c)
 {
 	JPCleaner cleaner;
 	jstring jname = (jstring)JPEnv::getJava()->CallObjectMethod(c, getNameID);
 	cleaner.addLocal(jname);
 	string name = asciiFromJava(jname);
-	
+
 	// Class.getName returns something weird for arrays ...
 	if (name[0] == '[')
 	{
@@ -271,14 +276,14 @@ static string convertToSimpleName(jclass c)
 		unsigned int arrayCount = 0;
 		for (unsigned int i = 0; i < name.length(); i++)
 		{
-			if (name[i] == '[') 
+			if (name[i] == '[')
 			{
 				arrayCount++;
 			}
 		}
-		
+
 		name = name.substr(arrayCount, name.length()-(arrayCount));
-		
+
 		// Now, let's convert the "native" part
 		switch(name[0])
 		{
@@ -317,13 +322,13 @@ static string convertToSimpleName(jclass c)
 				}
 				break;
 		}
-		
+
 		for (unsigned int j = 0; j < arrayCount; j++)
 		{
 			name = name + "[]";
 		}
 	}
-	
+
 	return name;
 }
 
@@ -338,14 +343,14 @@ bool isAbstract(jclass clazz)
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
-	
+
 	return (res ? true : false);
 }
 
 long getClassModifiers(jclass clazz)
 {
 	long res = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
-	
+
 	return res;
 }
 
@@ -355,14 +360,14 @@ bool isFinal(jclass clazz)
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
-	
+
 	return (res ? true : false);
 }
 
 JPTypeName getName(jclass clazz)
 {
 	string simpleName = convertToSimpleName(clazz);
-	
+
 	return JPTypeName::fromSimple(simpleName.c_str());
 }
 
@@ -379,7 +384,7 @@ vector<jclass> getInterfaces(jclass clazz)
 		jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(interfaces, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -396,7 +401,7 @@ vector<jobject> getDeclaredFields(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(fields, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -413,7 +418,7 @@ vector<jobject> getFields(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(fields, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -430,7 +435,7 @@ vector<jobject> getDeclaredMethods(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(methods, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -448,7 +453,7 @@ vector<jobject> getDeclaredConstructors(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(methods, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -465,7 +470,7 @@ vector<jobject> getConstructors(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(methods, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
@@ -482,13 +487,13 @@ vector<jobject> getMethods(jclass clazz)
 		jobject c = JPEnv::getJava()->GetObjectArrayElement(methods, i);
 		res.push_back(c);
 	}
-	
+
 	return res;
 }
 
 jobject getSystemClassLoader()
 {
-	return JPEnv::getJava()->CallStaticObjectMethod(classLoaderClass, getSystemClassLoaderID) ; 
+	return JPEnv::getJava()->CallStaticObjectMethod(classLoaderClass, getSystemClassLoaderID) ;
 }
 
 string getMemberName(jobject o)
@@ -500,13 +505,13 @@ string getMemberName(jobject o)
 	string simpleName = asciiFromJava(name);
 	return simpleName;
 }
-	
+
 bool isMemberPublic(jobject o)
 {
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isPublicID, &modif);
-	
+
 	return (res ? true : false);
 }
 
@@ -515,7 +520,7 @@ bool isMemberStatic(jobject o)
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isStaticID, &modif);
-	
+
 	return (res ? true : false);
 }
 
@@ -524,7 +529,7 @@ bool isMemberFinal(jobject o)
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
-	
+
 	return (res ? true : false);
 }
 
@@ -533,7 +538,7 @@ bool isMemberAbstract(jobject o)
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
-	
+
 	return (res ? true : false);
 }
 
@@ -546,11 +551,11 @@ jint hashCode(jobject obj)
 JPTypeName getType(jobject fld)
 {
 	TRACE_IN("getType");
-	
+
 	JPCleaner cleaner;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(fld, getTypeID);
 	cleaner.addLocal(c);
-	
+
 	return getName(c);
 	TRACE_OUT;
 }
@@ -560,15 +565,27 @@ JPTypeName getReturnType(jobject o)
 	JPCleaner cleaner;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(o, getReturnTypeID);
 	cleaner.addLocal(c);
-	
+
 	return getName(c);
+}
+
+bool isMethodSynthetic(jobject o)
+{
+    jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isSyntheticMethodID);
+    return (res ? true : false);
+}
+
+bool isVarArgsMethod(jobject o)
+{
+    jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isVarArgsMethodID);
+    return (res ? true : false);
 }
 
 vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 {
 	JPCleaner cleaner;
 	vector<JPTypeName> args;
-	
+
 	jobjectArray types ;
 	if (isConstructor)
 	{
@@ -582,7 +599,7 @@ vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 	cleaner.addLocal(types);
 
 	int len = JPEnv::getJava()->GetArrayLength(types);
-	
+
 	for (int i = 0; i < len; i++)
 	{
 		jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
@@ -591,7 +608,7 @@ vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 		JPTypeName name = getName(c);
 		args.push_back(name);
 	}
-	
+
 	return args;
 }
 
@@ -607,7 +624,7 @@ bool isConstructor(jobject obj)
 
 string getStackTrace(jthrowable th)
 {
-	
+
 	JPCleaner cleaner;
 	jobject strWriter = JPEnv::getJava()->NewObject(stringWriterClass, stringWriterID);
 	cleaner.addLocal(strWriter);
@@ -649,27 +666,27 @@ bool isThrowable(jclass c)
 
 long intValue(jobject obj)
 {
-	return JPEnv::getJava()->CallIntMethod(obj, intValueID);	
+	return JPEnv::getJava()->CallIntMethod(obj, intValueID);
 }
 
 jlong longValue(jobject obj)
 {
-	return JPEnv::getJava()->CallLongMethod(obj, longValueID);	
+	return JPEnv::getJava()->CallLongMethod(obj, longValueID);
 }
 
 double doubleValue(jobject obj)
 {
-	return JPEnv::getJava()->CallDoubleMethod(obj, doubleValueID);	
+	return JPEnv::getJava()->CallDoubleMethod(obj, doubleValueID);
 }
 
 bool booleanValue(jobject obj)
 {
-	return JPEnv::getJava()->CallBooleanMethod(obj, booleanValueID) ? true : false;	
+	return JPEnv::getJava()->CallBooleanMethod(obj, booleanValueID) ? true : false;
 }
 
 jchar charValue(jobject obj)
 {
-	return JPEnv::getJava()->CallCharMethod(obj, charValueID);	
+	return JPEnv::getJava()->CallCharMethod(obj, charValueID);
 }
 
 jclass getByteClass()
@@ -773,11 +790,11 @@ void startJPypeReferenceQueue(bool useJavaThread)
 
 	if (useJavaThread)
 	{
-		JPEnv::getJava()->CallVoidMethod(obj, JPypeReferenceQueueStartMethod); 
+		JPEnv::getJava()->CallVoidMethod(obj, JPypeReferenceQueueStartMethod);
 	}
 	else
 	{
-		JPEnv::getJava()->CallVoidMethod(obj, JPypeReferenceQueueRunMethod); 
+		JPEnv::getJava()->CallVoidMethod(obj, JPypeReferenceQueueRunMethod);
 	}
 
 }

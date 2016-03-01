@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-*****************************************************************************/   
+
+*****************************************************************************/
 #ifndef _JPJNIUTIL_H_
 #define _JPJNIUTIL_H_
 
@@ -45,7 +45,7 @@ namespace JPJni
 	JCharString unicodeFromJava(jstring str);
 
 	jstring javaStringFromJCharString(JCharString& str);
-	
+
 	JPTypeName getClassName(jobject obj);
 	jclass getClass(jobject obj);
 	jstring toString(jobject obj);
@@ -105,7 +105,7 @@ namespace JPJni
 	* java.lang.Class.getDeclaredMethods()
 	*/
 	vector<jobject> getDeclaredConstructors(jclass);
-	
+
 	/**
 	* java.lang.Class.getModifiers()
 	*/
@@ -117,7 +117,7 @@ namespace JPJni
 	* java.lang.reflect.Member.getName()
 	*/
 	string getMemberName(jobject);
-	
+
 	/**
 	* java.lang.reflect.Modifier.isPublic(java.lang.reflect.member.getModifiers())
 	*/
@@ -134,7 +134,7 @@ namespace JPJni
 	bool isMemberFinal(jobject);
 
 	/**
-	* java.lang.reflect.Modifier.is(java.lang.reflect.member.getModifiers())
+	* java.lang.reflect.Modifier.isAbstract(java.lang.reflect.member.getModifiers())
 	*/
 	bool isMemberAbstract(jobject);
 
@@ -147,7 +147,17 @@ namespace JPJni
 	* java.lang.reflect.Method.getReturnType
 	*/
 	JPTypeName getReturnType(jobject);
-	
+
+	/**
+	* java.lang.reflect.Method.isSynthetic()
+	*/
+	bool isMethodSynthetic(jobject);
+
+	/**
+	* java.lang.reflect.Method.isSynthetic()
+	*/
+	bool isVarArgsMethod(jobject);
+
 	jint hashCode(jobject);
 
 	/**

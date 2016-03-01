@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ struct PyJPClass
 	static PyObject* isSubclass(PyObject* self, PyObject* arg);
 	static PyObject* isException(PyObject* self, PyObject* arg);
 	static PyObject* isArray(PyObject* self, PyObject* arg);
+	static PyObject* isAbstract(PyObject* self, PyObject* arg);
 
 	static PyObject* getConstructors(PyObject* self);
 	static PyObject* getDeclaredConstructors(PyObject* self);

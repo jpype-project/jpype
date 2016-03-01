@@ -22,6 +22,8 @@ except ImportError:
 import jpype
 from jpype import java, JObject, JPackage, JString
 from . import common
+#import os
+#import sys
 
 class ObjectWrapperTestCase(common.JPypeTestCase):
     def testCallOverloads(self):
@@ -46,3 +48,25 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
     def testDefaultTypeNameJavaClass(self):
         o = java.lang.String
         self.assertEqual(JObject(o).typeName, "java.lang.Class")
+
+#     def testMakeSureWeCanLoadAllClasses(self):
+#         def get_system_jars():
+#             for dirpath,_,files in os.walk(jpype.java.lang.System.getProperty("java.home")):
+#                 for file in files:
+#                     if file.endswith('.jar'):
+#                         yield (os.path.join(dirpath,file))
+#         for jar in get_system_jars():
+#             classes = [x.getName() for x in jpype.java.util.jar.JarFile(jar).entries() if x.getName().endswith('.class')]
+#             classes = [x.replace('/','.')[:-6] for x in classes]
+#             for clazz in classes:
+#                 try:
+#                     jpype.JClass(clazz)
+#                 except jpype.JavaException as exception:
+#                     if not 'not found' in exception.message():
+#                         print(clazz)
+#                         print (exception.message())
+#                         #print (exception.stacktrace())
+#                 except:
+#                     print(sys.exc_info()[0])
+#                     pass
+        

@@ -56,6 +56,7 @@ public :
 	string describe(string prefix);
 
 	string matchReport(vector<HostRef*>&);
+	void ensureOverloadOrderCache();
 
 private :
 	JPMethodOverload* findOverload(vector<HostRef*>& arg, bool needStatic);
@@ -63,6 +64,14 @@ private :
 	jclass                        m_Class;
 	string                        m_Name;
 	map<string, JPMethodOverload> m_Overloads;
+
+	struct OverloadData {
+		OverloadData(JPMethodOverload* o) : m_Overload(o) {}
+
+		JPMethodOverload*              m_Overload;
+		std::vector<JPMethodOverload*> m_MoreSpecificOverloads;
+	};
+	std::vector<OverloadData>     m_OverloadOrderCache;
 	bool                          m_IsConstructor;
 	
 };

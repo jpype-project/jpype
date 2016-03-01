@@ -265,3 +265,8 @@ class AttributeTestCase(common.JPypeTestCase):
         for x in range(0, 10 * free // block_size):
             allocate_then_free()
         
+
+    def testSyntheticMethod(self):
+        h = jpype.JClass('jpype.attr.SyntheticMethods$GenericImpl')()
+        h.foo(jpype.java.util.ArrayList())
+        

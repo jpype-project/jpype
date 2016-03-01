@@ -19,6 +19,7 @@
 JPMethodOverload::JPMethodOverload()
 {
 	m_Method = NULL;
+	m_ReturnTypeCache = NULL;
 }
 
 JPMethodOverload::JPMethodOverload(const JPMethodOverload& o) :
@@ -31,26 +32,28 @@ JPMethodOverload::JPMethodOverload(const JPMethodOverload& o) :
 	m_IsConstructor(o.m_IsConstructor)
 {
 	m_Method = JPEnv::getJava()->NewGlobalRef(o.m_Method);
+	m_ReturnTypeCache = NULL;
 }
 
 JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth)
 {
 	m_Class = claz;
 	m_Method = JPEnv::getJava()->NewGlobalRef(mth);
+	m_ReturnTypeCache = NULL;
 
 	// static
-	m_IsStatic = JPJni::isMemberStatic(mth);
-	m_IsFinal = JPJni::isMemberStatic(m_Method);
-	
+	m_IsStatic = JPJni::isMemberStatic(m_Method);
+	m_IsFinal = JPJni::isMemberFinal(m_Method);
+
 	// Method ID
-	m_MethodID = JPEnv::getJava()->FromReflectedMethod(mth);
+	m_MethodID = JPEnv::getJava()->FromReflectedMethod(m_Method);
 	
 	m_IsConstructor = JPJni::isConstructor(m_Method);
 
 	// return type
 	if (! m_IsConstructor)
 	{
-		m_ReturnType = JPJni::getReturnType(mth);
+		m_ReturnType = JPJni::getReturnType(m_Method);
 	}
 
 	// arguments
@@ -147,7 +150,7 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 EMatchType JPMethodOverload::matches(bool ignoreFirst, vector<HostRef*>& arg)
 {
 	TRACE_IN("JPMethodOverload::matches");
-
+	ensureTypeCache();
 	size_t len = arg.size();
 	
 	if (len != m_Arguments.size())
@@ -164,7 +167,7 @@ EMatchType JPMethodOverload::matches(bool ignoreFirst, vector<HostRef*>& arg)
 		}
 
 		HostRef* obj = arg[i];
-		JPType* type = JPTypeManager::getType(m_Arguments[i]);
+		JPType* type = m_ArgumentsTypeCache[i];
 		
 		EMatchType match = type->canConvertToJava(obj);
 		if (match < _implicit)
@@ -184,6 +187,7 @@ EMatchType JPMethodOverload::matches(bool ignoreFirst, vector<HostRef*>& arg)
 HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 {
 	TRACE_IN("JPMethodOverload::invokeStatic");
+	ensureTypeCache();
 	JPCleaner cleaner;
 	
 	
@@ -195,7 +199,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 	for (unsigned int i = 0; i < len; i++)
 	{
 		HostRef* obj = arg[i];
-		types[i] = JPTypeManager::getType(m_Arguments[i]);
+		types[i] = m_ArgumentsTypeCache[i];
 
 		v[i] = types[i]->convertToJava(obj);		
 		if (types[i]->isObjectType())
@@ -207,7 +211,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 	jclass claz = m_Class->getClass();
 	cleaner.addLocal(claz);
 
-	JPType* retType = JPTypeManager::getType(m_ReturnType);
+	JPType* retType = m_ReturnTypeCache;
 
 	return retType->invokeStatic(claz, m_MethodID, v.borrow());
 	TRACE_OUT;
@@ -216,6 +220,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 {
 	TRACE_IN("JPMethodOverload::invokeInstance");
+	ensureTypeCache();
 	HostRef* res;
 	{
 		JPCleaner cleaner;
@@ -232,7 +237,7 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 		{
 			HostRef* obj = args[i];
 	
-			JPType* type = JPTypeManager::getType(m_Arguments[i]);
+			JPType* type = m_ArgumentsTypeCache[i];
 			v[i-1] = type->convertToJava(obj);		
 			if (type->isObjectType())
 			{
@@ -240,7 +245,7 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 			}
 		}
 		
-		JPType* retType = JPTypeManager::getType(m_ReturnType);
+		JPType* retType = m_ReturnTypeCache;
 	
 		jobject c = selfObj->getObject();
 		cleaner.addLocal(c);
@@ -261,6 +266,7 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& args)
 JPObject* JPMethodOverload::invokeConstructor(jclass claz, vector<HostRef*>& arg)
 {
 	TRACE_IN("JPMethodOverload::invokeConstructor");
+	ensureTypeCache();
 
 	size_t len = arg.size();
 	JPCleaner cleaner;
@@ -270,8 +276,7 @@ JPObject* JPMethodOverload::invokeConstructor(jclass claz, vector<HostRef*>& arg
 	for (unsigned int i = 0; i < len; i++)
 	{
 		HostRef* obj = arg[i];
-		// TODO the following can easily be optimized ... or at least cached
-		JPType* t = JPTypeManager::getType(m_Arguments[i]);
+		JPType* t = m_ArgumentsTypeCache[i];
 
 		v[i] = t->convertToJava(obj);		
 		if (t->isObjectType())
@@ -336,3 +341,38 @@ string JPMethodOverload::matchReport(vector<HostRef*>& args)
 	return res.str();
 
 }
+
+bool JPMethodOverload::isMoreSpecificThan(JPMethodOverload& other) const
+{
+	ensureTypeCache();
+	other.ensureTypeCache();
+	// see http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.2.5
+
+	// fixed-arity methods
+	size_t startThis = isStatic() || m_IsConstructor  ? 0 : 1;
+	size_t startOther = other.isStatic() || m_IsConstructor ? 0 : 1;
+	size_t numParametersThis = m_Arguments.size() - startThis;
+	size_t numParametersOther = other.m_Arguments.size() - startOther;
+	if(numParametersOther != numParametersThis) {
+		return false;
+	}
+	for (size_t i = 0; i < numParametersThis; ++i) {
+		const JPType* thisArgType = m_ArgumentsTypeCache[startThis + i];
+		const JPType* otherArgType = other.m_ArgumentsTypeCache[startOther + i];
+		if (!thisArgType->isSubTypeOf(*otherArgType)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void JPMethodOverload::ensureTypeCache() const {
+	if (m_Arguments.size() == m_ArgumentsTypeCache.size() && m_ReturnTypeCache) { return; }
+	for (size_t i = 0; i < m_Arguments.size(); ++i) {
+		m_ArgumentsTypeCache.push_back(JPTypeManager::getType(m_Arguments[i]));
+	}
+	if (!m_IsConstructor) {
+		m_ReturnTypeCache = JPTypeManager::getType(m_ReturnType);
+	}
+}
+

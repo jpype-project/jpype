@@ -18,19 +18,20 @@
 #include <jpype_python.h>  
 
 static PyMethodDef classMethods[] = {
-  {"getName",              &PyJPClass::getName, METH_VARARGS, ""},
-  {"getBaseClass",         &PyJPClass::getBaseClass, METH_VARARGS, ""},
-  {"getClassFields",       &PyJPClass::getClassFields, METH_VARARGS, ""},
-  {"getClassMethods",      &PyJPClass::getClassMethods, METH_VARARGS, ""},
+  {"getName",              &PyJPClass::getName, METH_NOARGS, ""},
+  {"getBaseClass",         &PyJPClass::getBaseClass, METH_NOARGS, ""},
+  {"getClassFields",       &PyJPClass::getClassFields, METH_NOARGS, ""},
+  {"getClassMethods",      &PyJPClass::getClassMethods, METH_NOARGS, ""},
   {"newClassInstance",     &PyJPClass::newClassInstance, METH_VARARGS, ""},
 
-  {"isInterface", &PyJPClass::isInterface, METH_VARARGS, ""},
-  {"getBaseInterfaces", &PyJPClass::getBaseInterfaces, METH_VARARGS, ""},
+  {"isInterface", &PyJPClass::isInterface, METH_NOARGS, ""},
+  {"getBaseInterfaces", &PyJPClass::getBaseInterfaces, METH_NOARGS, ""},
   {"isSubclass", &PyJPClass::isSubclass, METH_VARARGS, ""},
-  {"isPrimitive", &PyJPClass::isPrimitive, METH_VARARGS, ""},
+  {"isPrimitive", &PyJPClass::isPrimitive, METH_NOARGS, ""},
 
-  {"isException", &PyJPClass::isException, METH_VARARGS, ""},
-  {"isArray", &PyJPClass::isArray, METH_VARARGS, ""},
+  {"isException", &PyJPClass::isException, METH_NOARGS, ""},
+  {"isArray", &PyJPClass::isArray, METH_NOARGS, ""},
+  {"isAbstract", &PyJPClass::isAbstract, METH_NOARGS, ""},
   {"getSuperclass",&PyJPClass::getBaseClass, METH_NOARGS, ""},
 
   {"getConstructors", (PyCFunction)&PyJPClass::getConstructors, METH_NOARGS, ""},
@@ -535,4 +536,19 @@ PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 	PY_STANDARD_CATCH;
 	return NULL;
 	
+}
+PyObject* PyJPClass::isAbstract(PyObject* o, PyObject* args)
+{
+	try {
+		JPCleaner cleaner;
+		PyJPClass* self = (PyJPClass*)o;
+		if (self->m_Class->isAbstract()) {
+			return JPyBoolean::getTrue();
+		} else {
+			return JPyBoolean::getFalse();
+		}
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+
 }

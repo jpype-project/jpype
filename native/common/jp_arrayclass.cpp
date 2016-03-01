@@ -64,7 +64,7 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 		// Strings are also char[]
 		return _implicit;
 	}
-	else if (JPEnv::getHost()->isSequence(o))
+	else if (JPEnv::getHost()->isSequence(o) && !JPEnv::getHost()->isObject(o))
 	{
 		EMatchType match = _implicit;
 		int length = JPEnv::getHost()->getSequenceLength(o);

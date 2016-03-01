@@ -38,12 +38,12 @@ public :
 public :	
 	string getSignature();
 
-	bool isStatic()
+	bool isStatic() const
 	{
 		return m_IsStatic;
 	}
 	
-	bool isFinal()
+	bool isFinal() const
 	{
 		return m_IsFinal;
 	}
@@ -53,7 +53,7 @@ public :
 		return m_ReturnType;
 	}
 
-	unsigned char getArgumentCount()
+	unsigned char getArgumentCount() const
 	{
 		return (unsigned char)m_Arguments.size();
 	}
@@ -62,16 +62,20 @@ public :
 
 	bool isSameOverload(JPMethodOverload& o);
 	string matchReport(vector<HostRef*>& args);
-
+	bool isMoreSpecificThan(JPMethodOverload& other) const;
+private:
+	void ensureTypeCache() const;
 private :
-	JPClass*               m_Class;
-	jobject                m_Method;
-	jmethodID              m_MethodID;
-	JPTypeName             m_ReturnType;
-	vector<JPTypeName>     m_Arguments;
-	bool                   m_IsStatic;
-	bool                   m_IsFinal;
-	bool                   m_IsConstructor;
+	JPClass*                 m_Class;
+	jobject                  m_Method;
+	jmethodID                m_MethodID;
+	JPTypeName               m_ReturnType;
+	vector<JPTypeName>       m_Arguments;
+	bool                     m_IsStatic;
+	bool                     m_IsFinal;
+	bool                     m_IsConstructor;
+	mutable vector<JPType*>  m_ArgumentsTypeCache;
+	mutable JPType*          m_ReturnTypeCache;
 };
 
 #endif // _JPMETHODOVERLOAD_H_
