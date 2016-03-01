@@ -30,7 +30,8 @@ class JPackage(object):
 
             # perhaps it is a class?
             subname = "{0}.{1}".format(self.__name, n)
-            if not _jpype.isJVMStarted():
+            from jpype import isJVMStarted
+            if not isJVMStarted():
                import warnings
                warnings.warn("JVM not started yet, can not inspect JPackage contents")
                return n
