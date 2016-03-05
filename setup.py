@@ -117,11 +117,10 @@ class my_build_ext(build_ext):
 
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
-        from distutils.sysconfig import get_config_vars
-        (opt,) = get_config_vars('OPT')
-        if opt:
-            os.environ['OPT'] = ' '.join(flag for flag in opt.split()
-                                         if flag != '-Wstrict-prototypes')
+        import distutils.sysconfig
+        cfg_vars = distutils.sysconfig.get_config_vars()
+        if 'CFLAGS' in cfg_vars:
+            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
 
         build_ext.initialize_options(self)
 

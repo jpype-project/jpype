@@ -96,10 +96,10 @@ function InstallPip ($python_home) {
 
 function DownloadMiniconda ($python_version, $platform_suffix) {
     $webclient = New-Object System.Net.WebClient
-    if ($python_version -eq "3.4") {
-        $filename = "Miniconda3-3.5.5-Windows-" + $platform_suffix + ".exe"
+    if ($python_version.StartsWith("3")) {
+        $filename = "Miniconda3-latest-Windows-" + $platform_suffix + ".exe"
     } else {
-        $filename = "Miniconda-3.5.5-Windows-" + $platform_suffix + ".exe"
+        $filename = "Miniconda2-latest-Windows-" + $platform_suffix + ".exe"
     }
     $url = $MINICONDA_URL + $filename
 
@@ -145,15 +145,13 @@ function InstallMiniconda ($python_version, $architecture, $python_home) {
     }
     $filepath = DownloadMiniconda $python_version $platform_suffix
     Write-Host "Installing" $filepath "to" $python_home
-    $install_log = $python_home + ".log"
-    $args = "/S /D=$python_home"
+    $args = "/InstallationType=AllUsers /S /AddToPath=0 /RegisterPython=1 /D=$python_home"
     Write-Host $filepath $args
     Start-Process -FilePath $filepath -ArgumentList $args -Wait -Passthru
     if (Test-Path $python_home) {
         Write-Host "Python $python_version ($architecture) installation complete"
     } else {
         Write-Host "Failed to install Python in $python_home"
-        Get-Content -Path $install_log
         Exit 1
     }
 }
