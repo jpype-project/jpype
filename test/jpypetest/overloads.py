@@ -75,7 +75,9 @@ class OverloadTestCase(common.JPypeTestCase):
         
     def testPrimitive(self):
         test1 = self.__jp.Test1()
-        self.assertEquals('long', test1.testPrimitive(5))
+        intexpectation = 'int' if not sys.version_info[0] > 2 and sys.maxint == 2**31 - 1 else 'long'
+        self.assertEquals(intexpectation, test1.testPrimitive(5))
+        self.assertEquals('long', test1.testPrimitive(2**31))
         self.assertEquals('byte', test1.testPrimitive(JByte(5)))
         self.assertEquals('Byte', test1.testPrimitive(java.lang.Byte(5)))
         self.assertEquals('short', test1.testPrimitive(JShort(5)))

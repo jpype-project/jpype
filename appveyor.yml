@@ -17,13 +17,13 @@ environment:
       PYTHON_ARCH: "64"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 
-    - PYTHON: "C:\\Python34_32"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python3_32"
+      PYTHON_VERSION: "3"
       PYTHON_ARCH: "32"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
-    - PYTHON: "C:\\Python34_64"
-      PYTHON_VERSION: "3.4.1"
+    - PYTHON: "C:\\Python3_64"
+      PYTHON_VERSION: "3"
       PYTHON_ARCH: "64"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 

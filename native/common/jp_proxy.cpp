@@ -202,7 +202,7 @@ void JPProxy::init()
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	jmethodID refQConstr = JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
+	JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
 
 	cleaner.addLocal(reference);
 	cleaner.addLocal(referenceQueue);

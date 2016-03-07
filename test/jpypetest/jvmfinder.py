@@ -39,7 +39,7 @@ class JVMFinderTest(unittest.TestCase):
             finder = LinuxJVMFinder()
             p = finder.find_libjvm('arbitrary java home')
             self.assertEqual(
-                p, 'jre/lib/amd64/server/libjvm.so', 'wrong jvm returned')
+                p, os.path.join('jre/lib/amd64/server','libjvm.so'), 'wrong jvm returned')
 
         with mock.patch('os.walk') as mockwalk:
             # contains only broken jvms, since server impl is removed
@@ -69,7 +69,7 @@ class JVMFinderTest(unittest.TestCase):
         p = finder._get_from_bin()
 
         self.assertEqual(
-            p, '/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/amd64/server/libjvm.so')
+            p, os.path.join('/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/amd64/server','libjvm.so'))
 
     @unittest.skipIf(sys.version_info[:2] == (2, 6), "skip on py26")
     @mock.patch('platform.mac_ver')

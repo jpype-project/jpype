@@ -24,9 +24,9 @@
 typedef unsigned int uint;
 
 #ifdef HAVE_NUMPY
-	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
-	#define NO_IMPORT_ARRAY
-	#include <numpy/arrayobject.h>
+    #define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
+    #define NO_IMPORT_ARRAY
+    #include <numpy/arrayobject.h>
 #else
     #define NPY_BOOL 0
     #define NPY_BYTE 0
@@ -41,10 +41,10 @@ typedef unsigned int uint;
 PyObject* exe = PyErr_Occurred(); \
 if(exe != NULL) \
 {\
-	stringstream ss;\
-	ss <<  "unable to convert element: " << PyUnicode_FromFormat("%R",o) <<\
-			" at index: " << i;\
-	RAISE(JPypeException, ss.str());\
+    stringstream ss;\
+    ss <<  "unable to convert element: " << PyUnicode_FromFormat("%R",o) <<\
+            " at index: " << i;\
+    RAISE(JPypeException, ss.str());\
 }
 
 #if (PY_VERSION_HEX >= 0x02070000)
@@ -54,8 +54,8 @@ if(exe != NULL) \
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool
 setViaBuffer(jarray array, int start, uint length, PyObject* sequence, setFnc setter) {
-	//creates a PyMemoryView from sequence check for typeError,
-	// if no underlying py_buff exists.
+    //creates a PyMemoryView from sequence check for typeError,
+    // if no underlying py_buff exists.
     if(! PyObject_CheckBuffer(sequence)) {
         return false;
     }
@@ -66,14 +66,14 @@ setViaBuffer(jarray array, int start, uint length, PyObject* sequence, setFnc se
 //    PyObject* memview = PyMemoryView_FromObject(sequence);
 
     // check for TypeError, if no underlying py_buff exists.
-	PyObject* err = PyErr_Occurred();
-	if (err) {
-	    PyErr_Clear();
-	    return false;
-	}
+    PyObject* err = PyErr_Occurred();
+    if (err) {
+        PyErr_Clear();
+        return false;
+    }
 
-	// create a memory view
-	Py_buffer* py_buff = PyMemoryView_GET_BUFFER(memview);
+    // create a memory view
+    Py_buffer* py_buff = PyMemoryView_GET_BUFFER(memview);
 
     // ensure length of buffer contains enough elements somehow.
     if ((py_buff->len / sizeof(jelementtype)) != length) {
@@ -253,18 +253,18 @@ void JPByteType::setArrayRange(jarray a, int start, int length, PyObject* sequen
     jbyte* val = NULL;
     jboolean isCopy;
 
-	try {
-		val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			jbyte l = (jbyte) PyInt_AS_LONG(o);
-			Py_DECREF(o);
-			if(l == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = l;
-		}
-		JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
+    try {
+        val = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            jbyte l = (jbyte) PyInt_AS_LONG(o);
+            Py_DECREF(o);
+            if(l == -1) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = l;
+        }
+        JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseByteArrayElements(array, val, JNI_ABORT); } );
 }
 
 HostRef* JPByteType::getArrayItem(jarray a, int ndx)
@@ -402,18 +402,18 @@ void JPShortType::setArrayRange(jarray a, int start, int length, PyObject* seque
     jshort* val = NULL;
     jboolean isCopy;
 
-	try {
-		val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			jshort l = (jshort) PyInt_AsLong(o);
-			Py_DECREF(o);
-			if(l == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = l;
-		}
-		JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
+    try {
+        val = JPEnv::getJava()->GetShortArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            jshort l = (jshort) PyInt_AsLong(o);
+            Py_DECREF(o);
+            if(l == -1) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = l;
+        }
+        JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseShortArrayElements(array, val, JNI_ABORT); } );
 
 }
 
@@ -551,18 +551,18 @@ void JPIntType::setArrayRange(jarray a, int start, int length, PyObject* sequenc
     jint* val = NULL;
     jboolean isCopy;
 
-	try {
-		val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			jint v = (jint) PyInt_AsLong(o);
-			Py_DecRef(o);
-			if (v == -1) { CONVERSION_ERROR_HANDLE }
-			val[start+i] = v;
-		}
+    try {
+        val = JPEnv::getJava()->GetIntArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            jint v = (jint) PyInt_AsLong(o);
+            Py_DecRef(o);
+            if (v == -1) { CONVERSION_ERROR_HANDLE }
+            val[start+i] = v;
+        }
         JPEnv::getJava()->ReleaseIntArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT); } );
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseIntArrayElements(array, val, JNI_ABORT); } );
 }
 
 HostRef* JPIntType::getArrayItem(jarray a, int ndx)
@@ -571,7 +571,7 @@ HostRef* JPIntType::getArrayItem(jarray a, int ndx)
     jint val;
     
     try {
-    	JPEnv::getJava()->GetIntArrayRegion(array, ndx, 1, &val);
+        JPEnv::getJava()->GetIntArrayRegion(array, ndx, 1, &val);
         jvalue v;
         v.i = val;
 
@@ -587,7 +587,7 @@ void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
     
     try {
         val = convertToJava(obj).i;
-    	JPEnv::getJava()->SetIntArrayRegion(array, ndx, 1, &val);
+        JPEnv::getJava()->SetIntArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
 }
@@ -700,18 +700,18 @@ void JPLongType::setArrayRange(jarray a, int start, int length, PyObject* sequen
     jlong* val = NULL;
     jboolean isCopy;
 
-	try {
-		val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			jlong l = (jlong) PyLong_AsLong(o);
-			Py_DECREF(o);
-			if(l == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = l;
-		}
-		JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
+    try {
+        val = JPEnv::getJava()->GetLongArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            jlong l = (jlong) PyLong_AsLong(o);
+            Py_DECREF(o);
+            if(l == -1) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = l;
+        }
+        JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseLongArrayElements(array, val, JNI_ABORT); } );
 }
 
 
@@ -847,21 +847,21 @@ void JPFloatType::setArrayRange(jarray a, int start, int length, PyObject* seque
             &JPJavaEnv::SetFloatArrayRegion))
         return;
 
-	jfloatArray array = (jfloatArray)a;
-	jfloat* val = NULL;
-	jboolean isCopy;
-	try {
-		val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			jfloat v = (jfloat) PyFloat_AsDouble(o);
-			Py_DecRef(o);
-			if (v == -1.) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = v;
-		}
-		JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
+    jfloatArray array = (jfloatArray)a;
+    jfloat* val = NULL;
+    jboolean isCopy;
+    try {
+        val = JPEnv::getJava()->GetFloatArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            jfloat v = (jfloat) PyFloat_AsDouble(o);
+            Py_DecRef(o);
+            if (v == -1.) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = v;
+        }
+        JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseFloatArrayElements(array, val, JNI_ABORT); } );
 }
 
 HostRef* JPFloatType::getArrayItem(jarray a, int ndx)
@@ -993,24 +993,24 @@ void JPDoubleType::setArrayRange(jarray a, int start, int length, PyObject* sequ
 {
     if (setViaBuffer<jdoubleArray, jdouble>(a, start, length, sequence,
             &JPJavaEnv::SetDoubleArrayRegion))
-		return;
+        return;
 
-	jdoubleArray array = (jdoubleArray)a;
-	vector<jdouble> val;
-	val.reserve(length);
-	// fill temporary array
-	for (Py_ssize_t i = 0; i < length; ++i) {
-		PyObject* o = PySequence_GetItem(sequence, i);
-		jdouble d = (jdouble) PyFloat_AsDouble(o);
-		Py_DecRef(o);
-		if (d == -1.) { CONVERSION_ERROR_HANDLE; }
-		val[i] = d;
-	}
+    jdoubleArray array = (jdoubleArray)a;
+    vector<jdouble> val;
+    val.resize(length);
+    // fill temporary array
+    for (Py_ssize_t i = 0; i < length; ++i) {
+        PyObject* o = PySequence_GetItem(sequence, i);
+        jdouble d = (jdouble) PyFloat_AsDouble(o);
+        Py_DecRef(o);
+        if (d == -1.) { CONVERSION_ERROR_HANDLE; }
+        val[i] = d;
+    }
 
-	// set java array
-	try {
-		JPEnv::getJava()->SetDoubleArrayRegion(array, start, length, &val.front());
-	} RETHROW_CATCH();
+    // set java array
+    try {
+        JPEnv::getJava()->SetDoubleArrayRegion(array, start, length, &val.front());
+    } RETHROW_CATCH();
 }
 
 HostRef* JPDoubleType::getArrayItem(jarray a, int ndx)
@@ -1041,7 +1041,7 @@ void JPDoubleType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPDoubleType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-	return getSlice<jdouble>(a, lo, hi, NPY_FLOAT64, PyFloat_FromDouble);
+    return getSlice<jdouble>(a, lo, hi, NPY_FLOAT64, PyFloat_FromDouble);
 }
 
 //----------------------------------------------------------
@@ -1144,23 +1144,23 @@ void JPCharType::setArrayRange(jarray a, int start, int length, PyObject* sequen
             &JPJavaEnv::SetCharArrayRegion))
         return;
 
-	jcharArray array = (jcharArray)a;
-	jchar* val = NULL;
-	jboolean isCopy;
-	long c;
+    jcharArray array = (jcharArray)a;
+    jchar* val = NULL;
+    jboolean isCopy;
+    long c;
 
-	try {
-		val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			c = PyInt_AsLong(o);
-			Py_DecRef(o);
-			if(c == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = (jchar) c;
-		}
-		JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseCharArrayElements(array, val, JNI_ABORT); } );
+    try {
+        val = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            c = PyInt_AsLong(o);
+            Py_DecRef(o);
+            if(c == -1) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = (jchar) c;
+        }
+        JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseCharArrayElements(array, val, JNI_ABORT); } );
 }
 
 HostRef* JPCharType::getArrayItem(jarray a, int ndx)
@@ -1317,23 +1317,23 @@ void JPBooleanType::setArrayRange(jarray a, int start, int length, PyObject* seq
             &JPJavaEnv::SetBooleanArrayRegion))
         return;
 
-	jbooleanArray array = (jbooleanArray) a;
-	jboolean isCopy;
-	jboolean* val = NULL;
-	long c;
+    jbooleanArray array = (jbooleanArray) a;
+    jboolean isCopy;
+    jboolean* val = NULL;
+    long c;
 
-	try {
-		val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
-		for (Py_ssize_t i = 0; i < length; ++i) {
-			PyObject* o = PySequence_GetItem(sequence, i);
-			c = PyInt_AsLong(o);
-			Py_DecRef(o);
-			if(c == -1) { CONVERSION_ERROR_HANDLE; }
-			val[start+i] = (jboolean) c;
-		}
-		JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
-	}
-	RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_ABORT); } );
+    try {
+        val = JPEnv::getJava()->GetBooleanArrayElements(array, &isCopy);
+        for (Py_ssize_t i = 0; i < length; ++i) {
+            PyObject* o = PySequence_GetItem(sequence, i);
+            c = PyInt_AsLong(o);
+            Py_DecRef(o);
+            if(c == -1) { CONVERSION_ERROR_HANDLE; }
+            val[start+i] = (jboolean) c;
+        }
+        JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
+    }
+    RETHROW_CATCH( if (val != NULL) { JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, JNI_ABORT); } );
 
 }
 
