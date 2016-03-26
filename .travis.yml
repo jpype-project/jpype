@@ -19,13 +19,12 @@ addons:
   apt:
     packages:
     - ant
-
 env:
-  matrix:
-    # one build with and without numpy support (opt numpy out)
-    - NUMPY="--install-option=--disable-numpy"
-    - NUMPY=""
+  # one build with and without numpy support (opt numpy out)
+  - NUMPY="--install-option=--disable-numpy"
+  - NUMPY=""
 
+matrix:
   allow_failures:
     - python: 'pypy'
       env: NUMPY="--install-option=--disable-numpy"
