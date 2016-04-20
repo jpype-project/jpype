@@ -1,8 +1,19 @@
 Installation
 ============
 
-Get JPype from the `github <https://github.com/originell/jpype>`__ or
-from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
+To download and install JPype into your python environment using `pip <https://pip.pypa.io/en/stable/installing.html>`__, simply
+
+::
+
+    pip install jpype
+
+You can also install JPype from the source code available at `github <https://github.com/originell/jpype>`__ or from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
+
+::
+
+    cd jpype
+    python setup.py install
+
 
 Requirements
 ------------
