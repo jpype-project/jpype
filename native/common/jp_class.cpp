@@ -456,6 +456,13 @@ jvalue JPClass::convertToJava(HostRef* obj)
 		res = a->getValue();
 	}
 
+	if (JPEnv::getHost()->isClass(obj))
+	{
+		JPTypeName name = JPTypeName::fromSimple("java.lang.Class");
+		JPType* type = JPTypeManager::getType(name);
+		res.l = type->convertToJavaObject(obj);
+	}
+
 	return res;
 }
 
