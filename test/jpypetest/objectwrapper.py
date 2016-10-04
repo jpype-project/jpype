@@ -44,6 +44,17 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         self.assertEqual(JObject(True).typeName, "java.lang.Boolean")
         self.assertEqual(JObject(False).typeName, "java.lang.Boolean")
 
+    def testPassingClassTypeSucceeds(self):
+        h = JPackage("jpype.objectwrapper").Test1()
+        # Select a convenient java.lang.Class object
+        class_obj = h.getClass()
+
+        # Check that funneling Class obj through java doesn't convert to null
+        result = h.ReturnObject(class_obj)
+
+        self.assertEqual(class_obj, result)
+        self.assertNotEqual(result, None)
+
     @unittest.skip("This seems to be a bug in _jwrapper.py _getDefaultTypeName")
     def testDefaultTypeNameJavaClass(self):
         o = java.lang.String
