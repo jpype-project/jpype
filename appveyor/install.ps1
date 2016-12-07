@@ -196,7 +196,7 @@ function unzipAnt($file, $destination) {
 }
 
 function DownloadAnt() {
-    $url = "http://www.us.apache.org/dist/ant/binaries/apache-ant-1.9.6-bin.zip"
+    $url = "http://www.us.apache.org/dist/ant/binaries/apache-ant-1.9.7-bin.zip"
     $webclient = New-Object System.Net.WebClient
     $filepath = "C:\ant.zip"
 	
