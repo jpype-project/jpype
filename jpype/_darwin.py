@@ -32,7 +32,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
         LinuxJVMFinder.__init__(self)
 
         # Library file name
-        self._libfile = "libjvm.dylib"
+        self._libfile = "libjli.dylib"
 
         self._methods = list(self._methods)
         self._methods.append(self._pre_vm7_path)
