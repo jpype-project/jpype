@@ -1,4 +1,9 @@
 environment:
+  PYPI_USER:
+    secure: oiKQKdlgwqXJgXkVE/nHtw==
+  PYPI_PASS:
+    secure: nWt5lvrxyh+kUP2EexsJ7e2uZrGbwurt4v3AxRAW4l0zui0mhnrYXYHDYFj18N6K
+
   global:
     # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
@@ -66,6 +71,6 @@ artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
+on_success:
+# upload the content of dist/*.whl to pypi on tagged commits
+  - appveyor\deploy.ps1
