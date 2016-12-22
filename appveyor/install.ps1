@@ -1,5 +1,5 @@
 # install apache ant
-$ANT_VERSION = "1.9.6"
+$ANT_VERSION = "1.9.7"
 
 function RunCommand ($command, $command_args) {
     Write-Host $command $command_args
@@ -33,7 +33,7 @@ function unzipAnt($file, $destination) {
 }
 
 function DownloadAnt() {
-    $url = "http://www.us.apache.org/dist/ant/binaries/apache-ant-%ANT_VERSION%-bin.zip"
+    $url = "http://www.us.apache.org/dist/ant/binaries/apache-ant-$ANT_VERSION-bin.zip"
     $webclient = New-Object System.Net.WebClient
     $filepath = "C:\ant.zip"
 	
@@ -64,7 +64,7 @@ function DownloadAnt() {
 }
 
 function InstallAnt() {
-    if (Test-Path "c:\apache-ant-%ANT_VERSION%") {
+    if (Test-Path "c:\apache-ant-$ANT_VERSION") {
         Write-Host "ant already exists"
         return $false
     }
