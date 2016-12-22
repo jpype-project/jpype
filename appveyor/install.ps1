@@ -73,7 +73,7 @@ function InstallAnt() {
     # extract to C: (will result in something like C:\apache-ant-1.9.4
     $folder = unzipAnt $filepath "C:"
     
-    $ant_path  = "C:\" + $folder + "\bin"
+    $ant_path  = "C:\$folder\bin"
     
     if (-not (Test-Path $ant_path)) {
         Throw "unpacked folder '" + $ant_path + "' does not exist!"
