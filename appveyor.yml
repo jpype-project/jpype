@@ -11,8 +11,8 @@ environment:
 #      PYTHON_VERSION: "2.7.8"
 #      PYTHON_ARCH: "32"
 
-    - PYTHON: "C:\\Python27_64"
-      PYTHON_VERSION: "2.7.8"
+    - PYTHON: "C:\\Miniconda-x64"
+      PYTHON_VERSION: "2.7.12"
       PYTHON_ARCH: "64"
 
 #    - PYTHON: "C:\\Python34_32"
@@ -23,10 +23,6 @@ environment:
 #      PYTHON_VERSION: "3.4.1"
 #      PYTHON_ARCH: "64"
 
-cache:
-  - C:\Python*
-  - C:\ant
-  - C:\apache-ant-1.9.4
 
 install:
   # Install Python (from the official .msi of http://python.org) and pip when
