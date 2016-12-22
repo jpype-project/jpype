@@ -12,7 +12,7 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from os import path
 import time
@@ -61,13 +61,13 @@ class ContentHandler(object) :
 
 t = time.time()
 count = 30
-for i in range(count) :    
+for i in range(count) :
     DelegateHandler = JPackage("jpype.xml").DelegateHandler
     dh = DelegateHandler(None, None, JProxy("org.xml.sax.ContentHandler", inst=ContentHandler()), None)
-    
+
     build = javax.xml.parsers.SAXParserFactory.newInstance().newSAXParser()
     build.parse(path.join(root, "sample", "big.xml"), dh)
-    
+
 t2 = time.time()
 print count, "iterations in", t2-t, "seconds"
 

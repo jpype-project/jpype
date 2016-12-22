@@ -16,6 +16,10 @@
 *****************************************************************************/   
 #include <jpype.h>
 
+#include <stack>
+#include <set>
+#include <algorithm>
+
 JPMethod::JPMethod(jclass clazz, const string& name, bool isConstructor) :
 	m_Name(name),
 	m_IsConstructor(isConstructor)
@@ -81,49 +85,84 @@ void JPMethod::addOverloads(JPMethod* o)
 JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 {
 	TRACE_IN("JPMethod::findOverload");
-	TRACE2("Got overlaod to check", m_Overloads.size());
-	
-	JPMethodOverload* currentMatch = NULL;
-	EMatchType isExact = _none;
-		
-	for (map<string, JPMethodOverload>::iterator it = m_Overloads.begin(); it != m_Overloads.end(); it++)
-	{
-		if ((! needStatic) || it->second.isStatic())
-		{
-			TRACE2("Trying t match", it->second.getSignature());
-			EMatchType match = it->second.matches(false, arg);
+	TRACE2("Checking overload", m_Name);
+	TRACE2("Got overloads to check", m_Overloads.size());
+	ensureOverloadOrderCache();
+	JPMethodOverload* maximallySpecificOverload = 0;
+	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it)	{
+		if ((! needStatic) || it->m_Overload->isStatic()) {
+			TRACE2("Trying to match", it->m_Overload->getSignature());
+			EMatchType match = it->m_Overload->matches(false, arg);
 			TRACE2("  match ended", match);
-			if (match >= isExact && match >= _implicit)
-			{
-				if (currentMatch == NULL)
-				{
-					currentMatch = &(it->second);
-					isExact = match;
-				}
-				else if (match == _exact && isExact != _exact)
-				{
-					currentMatch = &(it->second);  
-					isExact = _exact;
-				}
-				else {
-					RAISE(JPypeException, "Multiple overloads possible.");
-				}			
+			if(match == _exact) {
+				return it->m_Overload;
 			}
-			else
-			{
-				TRACE1(" Match is smaller than exact AND explicit");
+			if (match >= _implicit) {
+				if(!maximallySpecificOverload) {
+					maximallySpecificOverload = it->m_Overload;
+				} else {
+					bool isAmbiguous = std::find(it->m_MoreSpecificOverloads.begin(),
+							it->m_MoreSpecificOverloads.end(),
+							maximallySpecificOverload) == it->m_MoreSpecificOverloads.end();
+					if(isAmbiguous) {
+						TRACE3("ambiguous overload", maximallySpecificOverload->getSignature(), it->m_Overload->getSignature());
+						RAISE(JPypeException, "Ambiguous overloads found: " + maximallySpecificOverload->getSignature() + " vs " + it->m_Overload->getSignature());
+					}
+				}
 			}
-		}			
+		}
 	}
-	
-	if (currentMatch == NULL)
+	if (!maximallySpecificOverload)
 	{
 		RAISE(JPypeException, "No matching overloads found.");
 	}
-
-	return currentMatch;
+	return maximallySpecificOverload;
 	TRACE_OUT;
 }
+void JPMethod::ensureOverloadOrderCache()
+{
+	if(m_Overloads.size() == m_OverloadOrderCache.size()) { return; }
+	m_OverloadOrderCache.clear();
+	std::vector<JPMethodOverload*> overloads;
+	for (std::map<string, JPMethodOverload>::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it) {
+		overloads.push_back(&it->second);
+	}
+
+
+	std::vector<char> seen(overloads.size(), false);
+	for (size_t i = 0; i < overloads.size(); ++i) {
+		if (seen[i]) { continue; }
+		std::stack<size_t> st;
+		st.push(i);
+		while(!st.empty()) {
+			size_t curr = st.top();
+			for (size_t j = 0; j < overloads.size(); ++j) {
+				if (j != curr && !seen[j] &&
+						overloads[j]->isMoreSpecificThan(*overloads[curr])) {
+					seen[j] = true;
+					st.push(j);
+				}
+			}
+			if (curr == st.top()) {
+				st.pop();
+				m_OverloadOrderCache.push_back(OverloadData(overloads[curr]));
+			}
+		}
+	}
+//	std::cout << "overload order for " << m_Name << std::endl;
+//	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it) {
+//		std::cout << it->m_Overload->getSignature() << std::endl;
+//	}
+	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it) {
+		for (std::vector<OverloadData>::iterator jt = m_OverloadOrderCache.begin(); jt != m_OverloadOrderCache.end(); ++jt) {
+			if (jt != it && jt->m_Overload->isMoreSpecificThan(*it->m_Overload)) {
+				it->m_MoreSpecificOverloads.push_back(jt->m_Overload);
+			}
+		}
+	}
+
+}
+
 
 HostRef* JPMethod::invoke(vector<HostRef*>& args)
 {

@@ -41,5 +41,10 @@ public class Test1
 	{
 		return 4;
 	}
+
+	public Object ReturnObject(Object o)
+	{
+		return o;
+	}
 	
 }

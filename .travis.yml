@@ -1,22 +1,39 @@
 os:
   - linux
-  - osx
 
 language: python
 
 python:
   - '2.6'
   - '2.7'
+  - '3.3'
+  - '3.4'
+  - '3.5'
+  - 'pypy'
+  - 'pypy3'
+  - "nightly"
 
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - ant
 env:
-  matrix:
-    # one build with and without numpy support (opt numpy out)
-    - NUMPY="--install-option=--disable-numpy"
-    - NUMPY=""
+  # one build with and without numpy support (opt numpy out)
+  - NUMPY="--install-option=--disable-numpy"
+  - NUMPY=""
 
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq ant
+matrix:
+  allow_failures:
+    - python: 'pypy'
+      env: NUMPY="--install-option=--disable-numpy"
+    - python: 'pypy3'
+      env: NUMPY="--install-option=--disable-numpy"
+    - python: 'pypy'
+      env: NUMPY=""
+    - python: 'pypy3'
+      env: NUMPY=""
 
 install:
   - pip install . $NUMPY

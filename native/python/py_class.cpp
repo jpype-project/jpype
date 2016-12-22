@@ -18,19 +18,20 @@
 #include <jpype_python.h>  
 
 static PyMethodDef classMethods[] = {
-  {"getName",              &PyJPClass::getName, METH_VARARGS, ""},
-  {"getBaseClass",         &PyJPClass::getBaseClass, METH_VARARGS, ""},
-  {"getClassFields",       &PyJPClass::getClassFields, METH_VARARGS, ""},
-  {"getClassMethods",      &PyJPClass::getClassMethods, METH_VARARGS, ""},
+  {"getName",              &PyJPClass::getName, METH_NOARGS, ""},
+  {"getBaseClass",         &PyJPClass::getBaseClass, METH_NOARGS, ""},
+  {"getClassFields",       &PyJPClass::getClassFields, METH_NOARGS, ""},
+  {"getClassMethods",      &PyJPClass::getClassMethods, METH_NOARGS, ""},
   {"newClassInstance",     &PyJPClass::newClassInstance, METH_VARARGS, ""},
 
-  {"isInterface", &PyJPClass::isInterface, METH_VARARGS, ""},
-  {"getBaseInterfaces", &PyJPClass::getBaseInterfaces, METH_VARARGS, ""},
+  {"isInterface", &PyJPClass::isInterface, METH_NOARGS, ""},
+  {"getBaseInterfaces", &PyJPClass::getBaseInterfaces, METH_NOARGS, ""},
   {"isSubclass", &PyJPClass::isSubclass, METH_VARARGS, ""},
-  {"isPrimitive", &PyJPClass::isPrimitive, METH_VARARGS, ""},
+  {"isPrimitive", &PyJPClass::isPrimitive, METH_NOARGS, ""},
 
-  {"isException", &PyJPClass::isException, METH_VARARGS, ""},
-  {"isArray", &PyJPClass::isArray, METH_VARARGS, ""},
+  {"isException", &PyJPClass::isException, METH_NOARGS, ""},
+  {"isArray", &PyJPClass::isArray, METH_NOARGS, ""},
+  {"isAbstract", &PyJPClass::isAbstract, METH_NOARGS, ""},
   {"getSuperclass",&PyJPClass::getBaseClass, METH_NOARGS, ""},
 
   {"getConstructors", (PyCFunction)&PyJPClass::getConstructors, METH_NOARGS, ""},
@@ -46,8 +47,7 @@ static PyMethodDef classMethods[] = {
 
 static PyTypeObject classClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaClass",              /*tp_name*/
 	sizeof(PyJPClass),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -110,7 +110,7 @@ void PyJPClass::__dealloc__(PyObject* o)
 
 	PyJPClass* self = (PyJPClass*)o;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 
 	TRACE_OUT;
 }
@@ -264,7 +264,7 @@ PyObject* PyJPClass::newClassInstance(PyObject* o, PyObject* arg)
 		}
 
 		JPObject* resObject = self->m_Class->newInstance(args);
-		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, (void*)"JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc((void*)resObject, "JPObject", &PythonHostEnvironment::deleteJPObjectDestructor);
 
 		//JPyHelper::dumpSequenceRefs(arg, "End");
 		return res;
@@ -536,4 +536,19 @@ PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 	PY_STANDARD_CATCH;
 	return NULL;
 	
+}
+PyObject* PyJPClass::isAbstract(PyObject* o, PyObject* args)
+{
+	try {
+		JPCleaner cleaner;
+		PyJPClass* self = (PyJPClass*)o;
+		if (self->m_Class->isAbstract()) {
+			return JPyBoolean::getTrue();
+		} else {
+			return JPyBoolean::getFalse();
+		}
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+
 }

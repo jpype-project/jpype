@@ -12,15 +12,15 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JClass
-import common
 import os
 import tempfile
 import traceback
+from . import common
 
-class SerializationTestCase(common.JPypeTestCase) :
+class SerializationTestCase(common.JPypeTestCase):
 
     def setUp(self):
         super(SerializationTestCase, self).setUp()
@@ -29,22 +29,22 @@ class SerializationTestCase(common.JPypeTestCase) :
     def tearDown(self):
         os.remove(self.tempname)
 
-    def testSerialize(self) :
+    def testSerialize(self):
         o = JClass("jpype.serial.SerializationTest")()
         fos = java.io.FileOutputStream(self.tempname)
         oos = java.io.ObjectOutputStream(fos)
         oos.writeObject(o)
         oos.flush()
-        oos.close()       
+        oos.close()
         fos.close()
-        
-        
-       
-# The following cannto work because JPype has no way to simulate the "caller's ClassLoader" 
-#    def testDeSerialize(self) :
+
+
+
+# The following cannto work because JPype has no way to simulate the "caller's ClassLoader"
+#    def testDeSerialize(self):
 #        fis = java.io.FileInputStream(self.tempname)
 #        ois = java.io.ObjectInputStream(fis)
-#        
+#
 #        o = ois.readObject()
 #        ois.close()
 #        fis.close()

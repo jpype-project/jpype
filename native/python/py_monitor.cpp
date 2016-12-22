@@ -22,8 +22,7 @@ static PyMethodDef methods[] = {
 
 static PyTypeObject monitorClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaMonitor",              /*tp_name*/
 	sizeof(PyJPMonitor),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -85,7 +84,7 @@ void PyJPMonitor::__dealloc__(PyObject* o)
 
 	delete self->state;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 }
 
 PyObject* PyJPMonitor::__str__(PyObject* o)

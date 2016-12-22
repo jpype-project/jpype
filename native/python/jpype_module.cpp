@@ -143,7 +143,7 @@ PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 	try {
 		PyObject* o;
 		
-		JPyArg::parseTuple(args, "O!", &PyCObject_Type, &o);
+		JPyArg::parseTuple(args, "O!", &PyCapsule_Type, &o);
 		string desc = (char*)JPyCObject::getDesc(o);
 
 		jobject obj;

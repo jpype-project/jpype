@@ -16,10 +16,10 @@
 //*****************************************************************************
 package jpype.proxy;
 
-public interface ITestInterface2
+public interface TestInterface2
 {
-  int testMethod();
+  int testMethod2();
   
-  void write(byte[] bytes, int pos, int length);
+  Object[] write(byte[] bytes, int pos, int length);
  
 }

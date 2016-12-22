@@ -89,29 +89,32 @@ public :
 		m_JavaExceptionClass = obj;
 	}  
 
-	static void deleteJPObjectDestructor(void* data, void* desc);
+	static void deleteJPObjectDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
+    {
+        delete (JPObject*)CAPSULE_EXTRACT(data);
+    }
 
-	static void deleteJPArrayDestructor(void* data, void* desc)
+	static void deleteJPArrayDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
-		delete (JPArray*)data;
+		delete (JPArray*)CAPSULE_EXTRACT(data);
 	}
 
-	static void deleteObjectJValueDestructor(void* data, void* desc)
+	static void deleteObjectJValueDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
-		jvalue* pv = (jvalue*)data;
-		JPEnv::getJava()->DeleteLocalRef(pv->l);
+		jvalue* pv = (jvalue*)CAPSULE_EXTRACT(data);
+		JPEnv::getJava()->DeleteGlobalRef(pv->l);
 		delete pv;
 	}
 
-	static void deleteJValueDestructor(void* data, void* desc)
+	static void deleteJValueDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
-		jvalue* pv = (jvalue*)data;
+		jvalue* pv = (jvalue*)CAPSULE_EXTRACT(data);
 		delete pv;
 	}
 
-	static void deleteJPProxyDestructor(void* data, void* desc)
+	static void deleteJPProxyDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
-		JPProxy* pv = (JPProxy*)data;
+		JPProxy* pv = (JPProxy*)CAPSULE_EXTRACT(data);
 		delete pv;
 	}
 

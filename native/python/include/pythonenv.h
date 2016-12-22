@@ -24,6 +24,19 @@
 	}\
 };
 
+#if (    (PY_VERSION_HEX <  0x02070000) \
+     || ((PY_VERSION_HEX >= 0x03000000) \
+      && (PY_VERSION_HEX <  0x03010000)) )
+
+    #include "capsulethunk.h"
+    #define USE_CAPSULE 1
+    typedef void* CAPSULE_DESTRUCTOR_ARG_TYPE;
+    typedef void (*PyCapsule_Destructor)(void*);
+    #define CAPSULE_EXTRACT(obj) (obj)
+#else
+    typedef PyObject* CAPSULE_DESTRUCTOR_ARG_TYPE;
+    #define CAPSULE_EXTRACT(obj) (PyCapsule_GetPointer(obj, PyCapsule_GetName(obj)))
+#endif
 /**
  * Exception wrapper for python-generated exceptions
  */
@@ -34,7 +47,8 @@ public :
 	PythonException(const PythonException& ex);
 
 	virtual ~PythonException();
-	
+
+	virtual string getMessage();
 	
 	bool isJavaException();
 	PyObject* getJavaException();
@@ -217,8 +231,8 @@ class JPyCObject : public JPythonEnvHelper
 {
 public :
 	static bool check(PyObject* obj);
-	static PyObject* fromVoid(void* data, void (*destr)(void *));
-	static PyObject* fromVoidAndDesc(void* data, void* desc, void (*destr)(void *, void*));
+	static PyObject* fromVoid(void* data, PyCapsule_Destructor destr);
+	static PyObject* fromVoidAndDesc(void* data, const char* desc, PyCapsule_Destructor destr);
 	static void* asVoidPtr(PyObject*);
 	static void* getDesc(PyObject*);
 };

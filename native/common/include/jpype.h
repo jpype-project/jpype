@@ -20,6 +20,7 @@
 // Define this to generate the trace calls
 
 // Define this to make the trace calls do their output. If you change this only the core.cpp needs to be recompiled
+//#define TRACING
 #ifdef TRACING
 #define JPYPE_TRACING_INTERNAL
 #endif
@@ -46,10 +47,21 @@
 
 #ifdef WIN32
 	#ifdef __GNUC__
-		// JNICALL causes problem for funtions prototypes .. since I am nto defining any JNI methods there isno need for it
+		// JNICALL causes problem for function prototypes .. since I am not defining any JNI methods there is no need for it
 		#undef JNICALL
 		#define JNICALL
 	#endif
+#endif
+
+#if PY_MAJOR_VERSION >= 3
+    // Python 3
+    #define PyInt_FromLong PyLong_FromLong
+    #define PyInt_AsLong PyLong_AsLong
+    #define PyInt_AS_LONG PyLong_AS_LONG
+    #define PyInt_Check PyLong_Check
+    #define PyInt_FromSsize_t PyLong_FromSsize_t
+#else
+    #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
 

@@ -121,7 +121,10 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		}
 		else
 		{
-			JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Python exception thrown");
+            // Prepare a message
+            string message = "Python exception thrown: ";
+            message += ex.getMessage();
+            JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, message.c_str());
 		}
 	} 
 	catch(JavaException&)
@@ -199,7 +202,7 @@ void JPProxy::init()
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	jmethodID refQConstr = JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
+	JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
 
 	cleaner.addLocal(reference);
 	cleaner.addLocal(referenceQueue);

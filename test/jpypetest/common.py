@@ -12,27 +12,35 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 
 import jpype
+import logging
 from os import path
-import unittest2 as unittest
+import sys
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 CLASSPATH = None
 
 class JPypeTestCase(unittest.TestCase) :
-    def setUp(self) :
+    def setUp(self):
         if not jpype.isJVMStarted():
             root = path.dirname(path.abspath(path.dirname(__file__)))
             jvm_path = jpype.getDefaultJVMPath()
-            print "Running testsuite using JVM", jvm_path
+            logger = logging.getLogger(__name__)
+            logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= path.join(root, 'classes')
             jpype.startJVM(jvm_path, "-ea",
-                           # "-Xcheck:jni", 
-                           "-Xmx256M", "-Xms64M", classpath_arg)
+                           # "-Xcheck:jni",
+                           "-Xmx256M", "-Xms16M", classpath_arg)
         self.jpype = jpype.JPackage('jpype')
+        if sys.version < '3':
+            self.assertCountEqual = self.assertItemsEqual
 
-    def tearDown(self) :
+    def tearDown(self):
         pass

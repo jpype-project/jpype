@@ -22,6 +22,9 @@ import os
 class JVMNotFoundException(RuntimeError):
     pass
 
+class JVMNotSupportedException(RuntimeError):
+    pass
+
 class JVMFinder(object):
     """
     JVM library finder base class
@@ -44,39 +47,44 @@ class JVMFinder(object):
     def find_libjvm(self, java_home):
         """
         Recursively looks for the given file
-        
+
         :param java_home: A Java home folder
         :param filename: Name of the file to find
         :return: The first found file path, or None
         """
         found_jamvm = False
+        non_supported_jvm = ('cacao', 'jamvm')
+        found_non_supported_jvm = False
         # Look for the file
         for root, _, names in os.walk(java_home):
             if self._libfile in names:
-                # Found it, but check for jamvm
-                if os.path.split(root)[1] == "jamvm":
-                    found_jamvm = True
+                # Found it, but check for non supported jvms
+                candidate = os.path.split(root)[1]
+                if candidate in non_supported_jvm:
+                    found_non_supported_jvm = True
                     continue # maybe we will find another one?
                 return os.path.join(root, self._libfile)
 
         else:
-            if found_jamvm:
-                raise JVMNotFoundException("Sorry JamVM is known to be broken."
-                                           " Please ensure your JAVA_HOME"
-                                           " contains at least another JVM "
-                                           "implementation (eg. server)")
+            if found_non_supported_jvm:
+                raise JVMNotSupportedException("Sorry '{0}' is known to be "
+                                               "broken. Please ensure your "
+                                               "JAVA_HOME contains at least "
+                                               "another JVM implementation "
+                                               "(eg. server)"
+                                               .format(candidate))
             # File not found
-            raise JVMNotFoundException("Sorry no JVM could be found."
-                                       " Please ensure your JAVA_HOME"
-                                       " environment variable is pointing"
-                                       " to correct installation.")
+            raise JVMNotFoundException("Sorry no JVM could be found. "
+                                       "Please ensure your JAVA_HOME "
+                                       "environment variable is pointing "
+                                       "to correct installation.")
 
 
     def find_possible_homes(self, parents):
         """
         Generator that looks for the first-level children folders that could be
         Java installations, according to their name
-        
+
         :param parents: A list of parent directories
         :return: The possible JVM installation folders
         """
@@ -104,16 +112,18 @@ class JVMFinder(object):
     def get_jvm_path(self):
         """
         Retrieves the path to the default or first found JVM library
-        
+
         :return: The path to the JVM shared library file
         :raise ValueError: No JVM library found
         """
         for method in self._methods:
             try:
                 jvm = method()
-
             except NotImplementedError:
                 # Ignore missing implementations
+                pass
+            except JVMNotFoundException:
+                # Ignore not successful methods
                 pass
 
             else:
@@ -121,17 +131,18 @@ class JVMFinder(object):
                     return jvm
 
         else:
-            raise ValueError("No JVM shared library file ({0}) found. "
-                             "Try setting up the JAVA_HOME environment "
-                             "variable properly.".format(self._libfile))
+            raise JVMNotFoundException("No JVM shared library file ({0}) "
+                                       "found. Try setting up the JAVA_HOME "
+                                       "environment variable properly."
+                                       .format(self._libfile))
 
 
     def _get_from_java_home(self):
         """
         Retrieves the Java library path according to the JAVA_HOME environment
         variable
-        
-        :return: The path to the JVM library, or None 
+
+        :return: The path to the JVM library, or None
         """
         # Get the environment variable
         java_home = os.getenv("JAVA_HOME")
@@ -147,7 +158,7 @@ class JVMFinder(object):
         """
         Retrieves the first existing Java library path in the predefined known
         locations
-        
+
         :return: The path to the JVM library, or None
         """
         for home in self.find_possible_homes(self._locations):

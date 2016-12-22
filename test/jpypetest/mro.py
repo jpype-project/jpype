@@ -12,11 +12,16 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-#   
+#
 #*****************************************************************************
 from jpype import JPackage, java
-import common, sys
+import sys
+from . import common
 
-class MroTestCase(common.JPypeTestCase) :
-	def testMro(self) :
-		C = JPackage('jpype.mro').C
+class MroTestCase(common.JPypeTestCase):
+    def testMro(self):
+        C = JPackage('jpype.mro').C
+
+    def testMultipleInterfaces(self):
+        j = JPackage("jpype").mro.MultipleInterfaces
+        myinstance = j()

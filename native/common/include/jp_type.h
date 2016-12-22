@@ -75,6 +75,10 @@ public :
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src) = 0;
 
+	// in the sense of
+	// http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
+	virtual bool isSubTypeOf(const JPType& other) const = 0;
+
 	virtual ~JPType()
 	{
 	}

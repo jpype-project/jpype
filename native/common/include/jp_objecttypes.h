@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -72,9 +72,10 @@ public :
 	}
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src);
+	virtual bool isSubTypeOf(const JPType& other) const;
 
 protected :
-	virtual jclass    getClass() = 0;	
+	virtual jclass    getClass() const = 0;
 	
 private :
 	JPTypeName m_Type;
@@ -93,7 +94,7 @@ public :
 	}
 
 protected :
-	virtual jclass    getClass();	
+	virtual jclass    getClass() const;
 
 public : // JPType implementation	
 	virtual HostRef*  asHostObject(jvalue val);
@@ -113,7 +114,7 @@ public :
 	}
 
 protected :
-	virtual jclass    getClass();	
+	virtual jclass    getClass() const;
 
 public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);

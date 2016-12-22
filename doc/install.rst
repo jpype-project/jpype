@@ -2,18 +2,20 @@ Installation
 ============
 
 Get JPype from the `github <https://github.com/originell/jpype>`__ or
-from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
+from `PyPi <http://pypi.python.org/pypi/JPype1>`__. If you are using `Anaconda <https://anaconda.org>`_ Python stack,
+you can install pre-compiled binaries from conda-forge for Linux, OSX and Windows.
 
-Requirements
-------------
+Binary Install
+--------------
+1. Ensure you have installed Anaconda/Miniconda. Instructions can be found `here <http://conda.pydata.org/docs/install/quick.html>`_.
+2. Install from the conda-forge software channel::
 
-Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+
+    conda install -c conda-forge jpype1
 
-Python 3 Support
-~~~~~~~~~~~~~~~~
+From source - Requirements
+--------------------------
 
-If you're looking for a Python 3 compatible JPype please see
-`tcalmant's github fork <https://github.com/tcalmant/jpype-py3>`__.
+Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+ (including Python 3+).
 
 Debian/Ubuntu
 ~~~~~~~~~~~~~
@@ -73,3 +75,4 @@ Known Bugs/Limitations
 -  Some methods rely on the "current" class/caller. Since calls coming
    directly from python code do not have a current class, these methods
    do not work. The User Manual lists all the known methods like that.
+-  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import jpype.

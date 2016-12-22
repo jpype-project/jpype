@@ -32,7 +32,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
         LinuxJVMFinder.__init__(self)
 
         # Library file name
-        self._libfile = "libjvm.dylib"
+        self._libfile = "libjli.dylib"
 
         self._methods = list(self._methods)
         self._methods.append(self._pre_vm7_path)
@@ -60,12 +60,11 @@ class DarwinJVMFinder(LinuxJVMFinder):
 
         current = StrictVersion(platform.mac_ver()[0][:4])
         if current >= StrictVersion('10.6') and current < StrictVersion('10.9'):
-            if 'check_output' in dir(subprocess):
+            if hasattr(subprocess, 'check_output'):
                 java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
             else:
                 java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
             return java_home
-        return None
 
 # ------------------------------------------------------------------------------
 

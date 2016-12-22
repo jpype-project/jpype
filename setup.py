@@ -6,7 +6,6 @@ import codecs
 import platform
 from glob import glob
 import warnings
-import exceptions
 
 from setuptools import setup
 from setuptools import Extension
@@ -22,7 +21,7 @@ if "--disable-numpy" in sys.argv:
 else:
     disabled_numpy = False
 
-class FeatureNotice(exceptions.Warning):
+class FeatureNotice(Warning):
     """ indicate notices about features """
     pass
 
@@ -50,11 +49,11 @@ platform_specific = {
 
 fallback_jni = os.path.join('native', 'jni_include')
 # try to include JNI first from eventually given JAVA_HOME, then from distributed
-java_home = os.getenv('JAVA_HOME')
+java_home = os.getenv('JAVA_HOME', '')
 found_jni = False
 if os.path.exists(java_home):
     platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
-    
+
     # check if jni.h can be found
     for d in platform_specific['include_dirs']:
         if os.path.exists(os.path.join(d, 'jni.h')):
@@ -64,7 +63,7 @@ if os.path.exists(java_home):
     if not found_jni:
         import warnings
         warnings.warn('Falling back to provided JNI headers, since your provided'
-                      ' JAVA_HOME %s does not provide jni.h' % java_home)
+                      ' JAVA_HOME "%s" does not provide jni.h' % java_home)
         platform_specific['include_dirs'] += [fallback_jni]
 
 else:
@@ -73,18 +72,39 @@ else:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'win32')]
+    jni_md_platform = 'win32'
 
 elif sys.platform == 'darwin':
     platform_specific['libraries'] = ['dl']
     platform_specific['define_macros'] = [('MACOSX', 1)]
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'darwin')]
-else: # linux etc.
+    jni_md_platform = 'darwin'
+
+elif sys.platform.startswith('linux'):
     platform_specific['libraries'] = ['dl']
-    if found_jni:
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include', 'linux')]
+    jni_md_platform = 'linux'
+
+elif sys.platform.startswith('freebsd'):
+    jni_md_platform = 'freebsd'
+
+else:
+    warnings.warn("Your platform is not being handled explicitly."
+                  " It may work or not!", UserWarning)
+
+if found_jni:
+    platform_specific['include_dirs'] += \
+        [os.path.join(java_home, 'include', jni_md_platform)]
+
+# include this stolen from FindJNI.cmake
+"""
+FIND_PATH(JAVA_INCLUDE_PATH2 jni_md.h
+${JAVA_INCLUDE_PATH}
+${JAVA_INCLUDE_PATH}/win32
+${JAVA_INCLUDE_PATH}/linux
+${JAVA_INCLUDE_PATH}/freebsd
+${JAVA_INCLUDE_PATH}/solaris
+${JAVA_INCLUDE_PATH}/hp-ux
+${JAVA_INCLUDE_PATH}/alpha
+)"""
  
 
 
@@ -93,14 +113,14 @@ jpypeLib = Extension(name='_jpype', **platform_specific)
 class my_build_ext(build_ext):
     """
     Override some behavior in extension building:
-    
+
     1. Numpy:
         If not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
         returned from Java can be wrapped efficiently in a ndarray.
     2. handle compiler flags for different compilers via a dictionary.
     3. try to disable warning ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
     """
-    
+
     # extra compile args
     copt = {'msvc': ['/EHsc'],
             'unix' : ['-ggdb'],
@@ -112,27 +132,26 @@ class my_build_ext(build_ext):
             'unix': [],
             'mingw32' : [],
            }
-    
+
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
-        from distutils.sysconfig import get_config_vars
-        (opt,) = get_config_vars('OPT')
-        if opt:
-            os.environ['OPT'] = ' '.join(flag for flag in opt.split() 
-                                         if flag != '-Wstrict-prototypes')
-            
+        import distutils.sysconfig
+        cfg_vars = distutils.sysconfig.get_config_vars()
+        if 'CFLAGS' in cfg_vars:
+            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
+
         build_ext.initialize_options(self)
-        
+
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
-        if self.copt.has_key(c):
-           for e in self.extensions:
-               e.extra_compile_args = self.copt[ c ]
-        if self.lopt.has_key(c):
+        if c in self.copt:
+            for e in self.extensions:
+                e.extra_compile_args = self.copt[ c ]
+        if c in self.lopt:
             for e in self.extensions:
                 e.extra_link_args = self.lopt[ c ]
-        
+
     def build_extensions(self):
         self._set_cflags()
         # handle numpy
@@ -148,13 +167,13 @@ class my_build_ext(build_ext):
         else:
             warnings.warn("Turned OFF Numpy support for fast Java array access",
                           FeatureNotice)
-        
+
         # has to be last call
         build_ext.build_extensions(self)
 
 setup(
     name='JPype1',
-    version='0.5.6',
+    version='0.6.1',
     description='A Python to Java bridge.',
     long_description=(read_utf8('README.rst') + '\n\n' +
                       read_utf8('doc/CHANGELOG.rst') + '\n\n' +
@@ -175,6 +194,7 @@ setup(
         'Programming Language :: Java',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
     ],
     packages=[
         'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],

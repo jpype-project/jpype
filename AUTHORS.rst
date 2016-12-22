@@ -18,3 +18,6 @@ Huge thanks to these CONTRIBUTORS:
 * Stepan Kolesnik
 * Philip Smith
 * Bastian Bowe
+* Kristi
+* Martin K. Scherer
+* Dongwon Shin

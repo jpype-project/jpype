@@ -37,7 +37,7 @@ public : // JPType implementation
 		return m_Name;
 	}
 
-	virtual jclass getClass()
+	virtual jclass getClass() const
 	{
 		return (jclass)JPEnv::getJava()->NewLocalRef(m_Class);
 	}

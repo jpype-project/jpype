@@ -26,8 +26,7 @@ static PyMethodDef methodMethods[] = {
 
 static PyTypeObject methodClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaMethod",              /*tp_name*/
 	sizeof(PyJPMethod),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -124,7 +123,7 @@ void PyJPMethod::__dealloc__(PyObject* o)
 {
 	PyJPMethod* self = (PyJPMethod*)o;
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 }
 
 PyObject* PyJPMethod::__str__(PyObject* o)
@@ -224,8 +223,7 @@ static PyMethodDef boundMethodMethods[] = {
 
 static PyTypeObject boundMethodClassType = 
 {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,                         /*ob_size*/
+	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	"JavaBoundMethod",              /*tp_name*/
 	sizeof(PyJPBoundMethod),      /*tp_basicsize*/
 	0,                         /*tp_itemsize*/
@@ -286,12 +284,11 @@ int PyJPBoundMethod::__init__(PyObject* o, PyObject* args, PyObject* kwargs)
 		Py_INCREF(javaMethod);
 		self->m_Instance = inst;
 		self->m_Method = (PyJPMethod*)javaMethod;
-
 		return 0;
 	}
 	PY_STANDARD_CATCH
 
-	return 1;
+	return -1;
 }
 
 PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
@@ -338,10 +335,10 @@ void PyJPBoundMethod::__dealloc__(PyObject* o)
 	TRACE_IN("PyJPBoundMethod::__dealloc__");
 	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 
-	Py_DECREF(self->m_Instance);
-	Py_DECREF(self->m_Method);
+	Py_XDECREF(self->m_Instance);
+	Py_XDECREF(self->m_Method);
 
-	self->ob_type->tp_free(o);
+	Py_TYPE(self)->tp_free(o);
 	TRACE1("Method freed");
 	TRACE_OUT;
 }

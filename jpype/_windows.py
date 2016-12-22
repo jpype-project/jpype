@@ -16,7 +16,10 @@
 #*****************************************************************************
 
 from . import _jvmfinder
-import _winreg as winreg
+try:
+    import _winreg as winreg
+except ImportError:
+    import winreg  # in Py3, winreg has been moved
 
 # ------------------------------------------------------------------------------
 
@@ -43,7 +46,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         """
         Retrieves the path to the default Java installation stored in the
         Windows registry
-        
+
         :return: The path found in the registry, or None
         """
         try :
@@ -59,6 +62,4 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
             return cv[0]
 
         except WindowsError:
-            pass
-
-        return None
+            return None

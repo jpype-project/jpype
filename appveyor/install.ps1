@@ -6,7 +6,6 @@ function RunCommand ($command, $command_args) {
     Start-Process -FilePath $command -ArgumentList $command_args -Wait -Passthru
 }
 
-
 function unzipAnt($file, $destination) {
     if (-Not (Test-Path $file)) {
         Write-Host "File " $file "does not exist!"

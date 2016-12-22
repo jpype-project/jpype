@@ -91,11 +91,11 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		PyObject* res;
 		if (type->isObjectType())
 		{
-			res = JPyCObject::fromVoidAndDesc((void*)pv, (void*)"object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
+			res = JPyCObject::fromVoidAndDesc((void*)pv, "object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
 		}
 		else
 		{
-			res = JPyCObject::fromVoidAndDesc((void*)pv, (void*)"jvalue", PythonHostEnvironment::deleteJValueDestructor);
+			res = JPyCObject::fromVoidAndDesc((void*)pv, "jvalue", PythonHostEnvironment::deleteJValueDestructor);
 		}
 
 		return res;
@@ -112,7 +112,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 
 		PyObject* self;
 		PyObject* intf;
-		//TODO: why is self not initialized?
+
 		JPyArg::parseTuple(arg, "OO", &self, &intf);
 
 		std::vector<jclass> interfaces;
@@ -126,7 +126,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 			PyObject* claz = JPyObject::getAttrString(subObj, "__javaclass__");
 			PyJPClass* c = (PyJPClass*)claz;
 			jclass jc = c->m_Class->getClass();
-			cleaner.addGlobal(jc);
+			cleaner.addLocal(jc);
 			interfaces.push_back(jc);
 		}
 		
@@ -134,7 +134,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 
 		JPProxy* proxy = new JPProxy(&ref, interfaces);
 
-		PyObject* res = JPyCObject::fromVoidAndDesc(proxy, (void*)"jproxy", PythonHostEnvironment::deleteJPProxyDestructor);
+		PyObject* res = JPyCObject::fromVoidAndDesc(proxy, "jproxy", PythonHostEnvironment::deleteJPProxyDestructor);
 
 		return res;
 	}
@@ -207,13 +207,30 @@ static PyMethodDef jpype_methods[] =
   // sentinel
   {NULL}
 };
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "_jpype",
+    "jpype module",
+    -1,
+    jpype_methods,
+};
+#endif
 
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit__jpype()
+#else
 PyMODINIT_FUNC init_jpype()
+#endif
 {
 	Py_Initialize();
 	PyEval_InitThreads();
 	  
-	PyObject* module = Py_InitModule("_jpype", jpype_methods);  
+#if PY_MAJOR_VERSION >= 3
+    PyObject* module = PyModule_Create(&moduledef);
+#else
+	PyObject* module = Py_InitModule("_jpype", jpype_methods);
+#endif
 	Py_INCREF(module);
 	hostEnv = new PythonHostEnvironment();
 	  
@@ -231,6 +248,9 @@ PyMODINIT_FUNC init_jpype()
 
 #ifdef HAVE_NUMPY
 	import_array();
+#endif
+#if PY_MAJOR_VERSION >= 3
+    return module;
 #endif
 }
 
