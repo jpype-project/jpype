@@ -35,7 +35,6 @@ matrix:
     - python: 'pypy3'
       env: NUMPY=""
 
-
 install:
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
