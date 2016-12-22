@@ -37,7 +37,7 @@ install:
   # compiled extensions and are not provided as pre-built wheel packages,
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
-  - "pip install wheel nose"
+  - "conda install nose setuptools -y"
   - "pip install -r test-requirements.txt" # -r dev-requirements.txt
 
   - "ant -f test\\build.xml"
@@ -49,15 +49,3 @@ test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
   - "powershell ./appveyor/runTestsuite.ps1"
 
-#after_test:
-  # If tests are successful, create a whl package for the project.
-  #- "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst"
-  #- ps: "ls dist"
-
-#artifacts:
-  # Archive the generated wheel package in the ci.appveyor.com build report.
-  #- path: dist\*
-
-#on_success:
-#  - TODO: upload the content of dist/*.whl to a public wheelhouse
-#
