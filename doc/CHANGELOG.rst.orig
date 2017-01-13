@@ -3,13 +3,17 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+<<<<<<< Updated upstream
 - **Next version - unreleased**
+- **0.6.2 - 2017-01-13**
+=======
 - **0.6.2 - 2017-01-13**
 
   - Fix JVM location for OSX.
   - Fix a method overload bug.
   - Add support for synthetic methods 
   
+>>>>>>> Stashed changes
 - **0.6.1 - 2015-08-05**
 
   - Fix proxy with arguments issue.
