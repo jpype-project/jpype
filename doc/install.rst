@@ -27,6 +27,17 @@ first:
 
     sudo apt-get install g++ python-dev
 
+Windows
+~~~~~~~
+
+Windows users need a Python installation and C++ compilers:
+
+1. Install some version of Python (2.7 or higher), e.g., `Anaconda
+   <https://www.continuum.io/downloads>`_ is a good choice for users not yet
+   familiar with the language
+2. Install a `Windows C++ Compiler
+   <http://landinghub.visualstudio.com/visual-cpp-build-tools>`_
+
 Install
 -------
 
