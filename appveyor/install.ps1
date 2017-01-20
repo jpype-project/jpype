@@ -1,5 +1,5 @@
 # install apache ant
-$ANT_VERSION = "1.9.7"
+$ANT_VERSION = "1.10.0"
 
 function RunCommand ($command, $command_args) {
     Write-Host $command $command_args
