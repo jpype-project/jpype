@@ -63,7 +63,7 @@ JPField::JPField(const JPField& fld)
 	TRACE_OUT;
 }
 
-JPField::~JPField()
+JPField::~JPField() NO_EXCEPT_FALSE
 {
 	TRACE_IN("JPField::~JPField");
 	JPEnv::getJava()->DeleteGlobalRef(m_Field);

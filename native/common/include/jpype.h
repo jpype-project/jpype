@@ -64,6 +64,12 @@
     #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
+// Define this and use to allow destructors to throw in C++11 or later
+#if __cplusplus >= 201103L
+#define NO_EXCEPT_FALSE noexcept(false)
+#else
+#define NO_EXCEPT_FALSE
+#endif
 
 #include <map>
 #include <string>
