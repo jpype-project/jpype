@@ -4,8 +4,8 @@ JPype
 .. image:: https://travis-ci.org/originell/jpype.png?branch=master
    :target: https://travis-ci.org/originell/jpype
 
-.. image:: https://ci.appveyor.com/api/projects/status/7x9aqpsbcdnl96wt/branch/master
-   :target: https://ci.appveyor.com/project/marscher/jpype-555
+.. image:: https://img.shields.io/appveyor/ci/originell/jpype.svg
+   :target: https://ci.appveyor.com/project/originell/jpype
 
 
 JPype is an effort to allow python programs full access to java class
