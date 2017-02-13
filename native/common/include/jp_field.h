@@ -38,7 +38,7 @@ public :
 	/**
 	 * destructor
 	 */
-	virtual ~JPField();
+	virtual ~JPField() NO_EXCEPT_FALSE;
 	
 public :
 	bool isStatic() const;
