@@ -30,11 +30,12 @@ class JPackage(object):
 
             # perhaps it is a class?
             subname = "{0}.{1}".format(self.__name, n)
-            from jpype import isJVMStarted
-            if not isJVMStarted():
+            if not _jpype.isStarted():
                import warnings
                warnings.warn("JVM not started yet, can not inspect JPackage contents")
                return n
+            if not _jpype.isThreadAttachedToJVM():
+                _jpype.attachThreadToJVM()
             cc = _jpype.findClass(subname)
             if cc is None:
                 # can only assume it is a sub-package then ...
@@ -43,7 +44,6 @@ class JPackage(object):
                 cc = _jclass._getClassFor(cc)
 
             self.__setattr__(n, cc, True)
-
             return cc
 
     def __setattr__(self, n, v, intern=False):
