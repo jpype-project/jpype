@@ -253,6 +253,15 @@ jint JPJavaEnv::GetEnv(JNIEnv** env)
 	// This function must not be put in GOTO_EXTERNAL/RETURN_EXTERNAL because it is called from WITHIN such a block already
 	jint res;
 	res = jvm->functions->GetEnv(jvm, (void**)env, JNI_VERSION_1_2);
+	if(res == JNI_EDETACHED)
+	{
+		AttachCurrentThread();
+		res = jvm->functions->GetEnv(jvm, (void**)env, JNI_VERSION_1_2);
+		if(res != JNI_OK)
+		{
+			RAISE( JPypeException, "Java Subsystem GetEnv() failed");
+		}
+	}
 	return res;
 }
 
