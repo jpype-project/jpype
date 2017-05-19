@@ -45,10 +45,10 @@ JPPlatformAdapter* JPJavaEnv::GetAdapter()
 jint (JNICALL *JPJavaEnv::CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 jint (JNICALL *JPJavaEnv::GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
 
-JNIEnv* JPJavaEnv::getJNIEnv()
+JNIEnv* JPJavaEnv::getJNIEnv(bool tryAttach)
 {
 	JNIEnv* env;
-	GetEnv(&env);
+	GetEnv(&env, tryAttach);
 	return env;
 }
 
@@ -141,7 +141,7 @@ void JPJavaEnv::DeleteLocalRef(jobject obj)
 {
 	TRACE_IN("JPJavaEnv::DeleteLocalRef");
 	TRACE1((long)obj);
-	JNIEnv* env = getJNIEnv();
+	JNIEnv* env = getJNIEnv(false); // tryAttach=false
 	if (env != NULL)
 	{
 		env->functions->DeleteLocalRef(env, obj);
@@ -153,7 +153,7 @@ void JPJavaEnv::DeleteGlobalRef(jobject obj)
 {
 	TRACE_IN("JPJavaEnv::DeleteGlobalRef");
 	TRACE1((long)obj);
-	JNIEnv* env = getJNIEnv();
+	JNIEnv* env = getJNIEnv(false); // tryAttach=false
 	if (env != NULL)
 	{
 		env->functions->DeleteGlobalRef(env, obj);
@@ -189,7 +189,7 @@ jobject JPJavaEnv::NewGlobalRef(jobject a0)
 
 bool JPJavaEnv::ExceptionCheck()
 {
-	JNIEnv* env = getJNIEnv();
+	JNIEnv* env = getJNIEnv(false); // tryAttach=false
 	if (env != NULL)
 	{
 		return (env->functions->ExceptionCheck(env) ? true : false);
@@ -205,7 +205,7 @@ void JPJavaEnv::ExceptionDescribe()
 
 void JPJavaEnv::ExceptionClear()
 {
-	JNIEnv* env = getJNIEnv();
+	JNIEnv* env = getJNIEnv(false); // tryAttach=false
 	if (env != NULL)
 	{
 		env->functions->ExceptionClear(env);
@@ -232,7 +232,7 @@ jint JPJavaEnv::AttachCurrentThreadAsDaemon()
 
 bool JPJavaEnv::isThreadAttached()
 {
-	return JPEnv::getJava()->getJNIEnv() != NULL;
+	return JPEnv::getJava()->getJNIEnv(false) != NULL; // tryAttach=false
 }
 
 
@@ -242,7 +242,7 @@ jint JPJavaEnv::DetachCurrentThread()
 	
 }
 
-jint JPJavaEnv::GetEnv(JNIEnv** env)
+jint JPJavaEnv::GetEnv(JNIEnv** env, bool tryAttach)
 {
 	if (jvm == NULL)
 	{
@@ -253,7 +253,7 @@ jint JPJavaEnv::GetEnv(JNIEnv** env)
 	// This function must not be put in GOTO_EXTERNAL/RETURN_EXTERNAL because it is called from WITHIN such a block already
 	jint res;
 	res = jvm->functions->GetEnv(jvm, (void**)env, JNI_VERSION_1_2);
-	if(res == JNI_EDETACHED)
+	if(res == JNI_EDETACHED && tryAttach)
 	{
 		AttachCurrentThread();
 		res = jvm->functions->GetEnv(jvm, (void**)env, JNI_VERSION_1_2);
