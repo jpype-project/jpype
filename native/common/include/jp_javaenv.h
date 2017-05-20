@@ -83,7 +83,7 @@ private :
 	jobject referenceQueue;
 	bool convertStringObjects;
 
-	JNIEnv* getJNIEnv();
+	JNIEnv* getJNIEnv(bool tryAttach=true);
 
 public :	
 	static void load(const string& path);
@@ -132,7 +132,7 @@ public :
 	jthrowable ExceptionOccurred();
 	
 	jint DetachCurrentThread();
-	jint GetEnv(JNIEnv** env);
+	jint GetEnv(JNIEnv** env, bool tryAttach);
 	jint ThrowNew(jclass clazz, const char* msg);
 
 	jint Throw(jthrowable th);
