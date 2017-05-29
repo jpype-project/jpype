@@ -46,7 +46,10 @@
 #endif
 
 #ifdef WIN32
-	#ifdef __GNUC__
+	#if defined(__GNUC__)
+		#undef JNICALL
+		#define __int64 long long
+	#elif defined(__GNUC__)
 		// JNICALL causes problem for function prototypes .. since I am not defining any JNI methods there is no need for it
 		#undef JNICALL
 		#define JNICALL

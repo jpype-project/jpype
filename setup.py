@@ -74,6 +74,11 @@ if sys.platform == 'win32':
     platform_specific['define_macros'] = [('WIN32', 1)]
     jni_md_platform = 'win32'
 
+elif sys.platform == 'cygwin':
+    platform_specific['libraries'] = ['Advapi32']
+    platform_specific['define_macros'] = [('WIN32', 1)]
+    jni_md_platform = 'win32'
+
 elif sys.platform == 'darwin':
     platform_specific['libraries'] = ['dl']
     platform_specific['define_macros'] = [('MACOSX', 1)]
