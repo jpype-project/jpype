@@ -64,6 +64,7 @@
     #define PyInt_Check PyLong_Check
     #define PyInt_FromSsize_t PyLong_FromSsize_t
 #else
+    #undef PyUnicode_FromFormat 
     #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
