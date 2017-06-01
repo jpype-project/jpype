@@ -2,7 +2,7 @@ import os as _os
 import sys as _sys
 import glob as _glob
 
-__all__=['addJavaPath', 'getClassPath']
+__all__=['addClassPath', 'getClassPath']
 
 _CLASSPATHS=set()
 _SEP = _os.path.pathsep
@@ -40,7 +40,7 @@ if _sys.platform=='cygwin':
              (path,tail)=_os.path.split(path)
         return parts
 
-    def posix2win(directory):
+    def _posix2win(directory):
         root=_get_root()
         directory=_os.path.abspath(directory)
         paths=_splitpath(directory)
@@ -51,15 +51,22 @@ if _sys.platform=='cygwin':
             return '\\'.join(paths)
         paths.insert(0,root)
         return '\\'.join(paths)
+    # needed for testing
+    __all__.append("_posix2win")
 
-def addJavaPath(path1):
+def addClassPath(path1):
+    """ Add a path to the java class path"""
     global _CLASSPATHS
     path1=_os.path.abspath(path1)
     if _sys.platform=='cygwin':
-        path1=posix2win(path1)
+        path1=_posix2win(path1)
     _CLASSPATHS.add(str(path1))
 
 def getClassPath():
+    """ Get the full java class path.
+
+    Includes user added paths and the environment CLASSPATH.
+    """
     global _CLASSPATHS
     global _SEP
     out=[]
