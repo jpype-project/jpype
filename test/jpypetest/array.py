@@ -252,7 +252,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testSetFromNPIntArray(self):
         import numpy as np
         n = 100
-        a = np.random.randint(-2**31 - 1, 2**31 - 1, size=n).astype(np.int32)
+        a = np.array([2**32-1, 0, 3, 2**32-1]).astype(np.int32)
         jarr = jpype.JArray(jpype.JInt)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
@@ -261,9 +261,9 @@ class ArrayTestCase(common.JPypeTestCase):
     def testSetFromNPLongArray(self):
         import numpy as np
         n = 100
-        # actuall the lower bound should be -2**63 -1, but raises Overflow
+        # actually the lower bound should be -2**63 -1, but raises Overflow
         # error in numpy
-        a = np.random.randint(-2**63, 2**63 - 1, size=n).astype(np.int64)
+        a = np.array([ - 0x7FFFFFFFFFFFFFFF, 0x7FFFFFFFFFFFFFFF]).astype(np.int64)
         jarr = jpype.JArray(jpype.JLong)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
