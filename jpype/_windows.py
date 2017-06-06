@@ -17,6 +17,16 @@
 
 from . import _jvmfinder
 
+try:
+    # python 2.7
+    import _winreg as winreg
+except ImportError:
+    try:
+        # in Py3, winreg has been moved
+        import winreg
+    except ImportError:
+        winreg = None
+
 # ------------------------------------------------------------------------------
 
 class WindowsJVMFinder(_jvmfinder.JVMFinder):
@@ -34,28 +44,9 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         self._libfile = "jvm.dll"
 
         # Search methods
-        winreg = self._get_winreg()
-        if winreg!=None:
-            self._methods = (self._get_from_java_home, self._get_from_registry)
-        else:
-            self._methods = (self._get_from_java_home, )
-
-    def _get_winreg(self):
-        # Py2
-        try:
-            import _winreg as winreg
-            return winreg
-        except ImportError:
-            pass
-
-        # in Py3, winreg has been moved
-        try:
-            import winreg
-            return winreg
-        except ImportError:
-            pass
-        return None
-
+        self._methods = [self._get_from_java_home]
+        if winreg is not None:
+            self._methods.append(self._get_from_registry)
 
     def _get_from_registry(self):
         """
@@ -66,8 +57,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         """
         try:
             # Winreg is an optional package in cygwin
-            winreg = self._get_winreg()
-            if not winreg:
+            if winreg is None:
                 return None
 
             jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
