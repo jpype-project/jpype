@@ -37,7 +37,8 @@ install:
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  - "pip install -r test-requirements.txt numpy pytest setuptools"
+  - "pip install -r test-requirements.txt numpy pytest"
+  - pip install --force-reinstall setuptools
 
   - "ant -f test\\build.xml"
   # Build the compiled extension and run the project tests
