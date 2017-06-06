@@ -20,7 +20,7 @@ environment:
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\cygwin\\usr\\bin"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\cygwin64\\usr\\bin"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
@@ -47,9 +47,9 @@ build: false # Not a C# project, build stuff at the test step instead.
 test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
   #- "powershell ./appveyor/runTestsuite.ps1"
-  - pytest test/jpypetest --xunit-xml=xunit.xml
+  - pytest test/jpypetest --junit-xml=junit.xml
 
 after_test:
   # upload results to AppVeyor
   - powershell "$wc = New-Object 'System.Net.WebClient'; \
-      $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\xunit.xml)) "
+      $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\xunit.xml)) "
