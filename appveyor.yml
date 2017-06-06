@@ -26,26 +26,17 @@ environment:
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 
 install:
-  # Install Python (from the official .msi of http://python.org) and pip when
-  # not already installed.
+  # install apache ant
   - "powershell ./appveyor/install.ps1"
 
-  # Prepend newly installed Python to the PATH of this build (this cannot be
-  # done from inside the powershell script as it would require to restart
-  # the parent CMD process).
+  # use python from build matrix, add ant path.
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\ant\\bin;%PATH%"
 
   # Check that we have the expected version and architecture for Python
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  # Install the build dependencies of the project. If some dependencies contain
-  # compiled extensions and are not provided as pre-built wheel packages,
-  # pip will build them from source using the MSVC compiler matching the
-  # target Python version and architecture
-  - "conda update --all -y"
-  - "conda install nose setuptools -y"
-  - "pip install -r test-requirements.txt" # -r dev-requirements.txt
+  - "pip install -r test-requirements.txt numpy nose setuptools"
 
   - "ant -f test\\build.xml"
   # Build the compiled extension and run the project tests
