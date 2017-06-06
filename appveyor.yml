@@ -33,10 +33,11 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\ant\\bin;%PATH%"
 
   # Check that we have the expected version and architecture for Python
+  - "where python"
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  - "pip install -r test-requirements.txt numpy nose setuptools"
+  - "pip install -r test-requirements.txt numpy pytest setuptools"
 
   - "ant -f test\\build.xml"
   # Build the compiled extension and run the project tests
@@ -46,9 +47,9 @@ build: false # Not a C# project, build stuff at the test step instead.
 test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
   #- "powershell ./appveyor/runTestsuite.ps1"
-  - nosetests test/jpypetest --all-modules --with-xunit
+  - pytest test/jpypetest --xunit-xml=xunit.xml
 
 after_test:
   # upload results to AppVeyor
   - powershell "$wc = New-Object 'System.Net.WebClient'; \
-      $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\nosetests.xml)) "
+      $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\xunit.xml)) "
