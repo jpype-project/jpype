@@ -45,5 +45,10 @@ build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "powershell ./appveyor/runTestsuite.ps1"
+  #- "powershell ./appveyor/runTestsuite.ps1"
+  - nosetests test/jpypetest --all-modules --with-xunit
 
+after_test:
+  # upload results to AppVeyor
+  - powershell "$wc = New-Object 'System.Net.WebClient'; \
+      $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\nosetests.xml)) "
