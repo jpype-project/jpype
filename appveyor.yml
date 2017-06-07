@@ -27,30 +27,32 @@ environment:
 
 install:
   # install apache ant
-  - "powershell ./appveyor/install.ps1"
+  #- "powershell ./appveyor/install.ps1"
 
   # use python from build matrix, add ant path.
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\ant\\bin;%PATH%"
+  - conda install conda-build -qy
 
   # Check that we have the expected version and architecture for Python
-  - "where python"
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+  #- "where python"
+  #- "python --version"
+  #- "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  - "pip install -r test-requirements.txt numpy pytest pytest-faulthandler"
-  - pip install --force-reinstall --ignore-installed setuptools
+  #- "pip install -r test-requirements.txt numpy pytest pytest-faulthandler"
+  #- pip install --force-reinstall --ignore-installed setuptools
 
-  - "ant -f test\\build.xml"
+  #- "ant -f test\\build.xml"
   # Build the compiled extension and run the project tests
-  - "python setup.py install"
+  #- "python setup.py install"
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
   #- "powershell ./appveyor/runTestsuite.ps1"
-  - pytest test/jpypetest --junit-xml=junit.xml
+  #- pytest test/jpypetest --junit-xml=junit.xml
+  - conda build devtools\\conda-recipe --numpy=112
 
-after_test:
+on_finish:
   # upload results to AppVeyor
   - powershell "$wc = New-Object 'System.Net.WebClient'; \
       $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\xunit.xml)) "
