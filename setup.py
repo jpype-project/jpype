@@ -3,8 +3,6 @@
 import os
 import sys
 import codecs
-import platform
-from glob import glob
 import warnings
 
 from setuptools import setup
@@ -69,12 +67,7 @@ if os.path.exists(java_home):
 else:
     platform_specific['include_dirs'] += [fallback_jni]
 
-if sys.platform == 'win32':
-    platform_specific['libraries'] = ['Advapi32']
-    platform_specific['define_macros'] = [('WIN32', 1)]
-    jni_md_platform = 'win32'
-
-elif sys.platform == 'cygwin':
+if sys.platform == 'win32' or sys.platform == 'cygwin' :
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
     jni_md_platform = 'win32'
@@ -127,7 +120,7 @@ class my_build_ext(build_ext):
     """
 
     # extra compile args
-    copt = {'msvc': ['/EHsc'],
+    copt = {'msvc': ['/EHsc', '/DEBUG', '/OPT:REF'],
             'unix' : ['-ggdb'],
             'mingw32' : [],
            }
