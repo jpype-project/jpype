@@ -37,7 +37,7 @@ install:
   - "python --version"
   - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
 
-  - "pip install -r test-requirements.txt numpy pytest faulthandler"
+  - "pip install -r test-requirements.txt numpy pytest pytest-faulthandler"
   - pip install --force-reinstall setuptools
 
   - "ant -f test\\build.xml"
