@@ -153,7 +153,7 @@ class my_build_ext(build_ext):
                 e.extra_link_args = self.lopt[ c ]
 
     def build_extensions(self):
-        self._set_cflags()
+        #self._set_cflags()
         # handle numpy
         if not disabled_numpy:
             try:
