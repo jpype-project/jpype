@@ -163,7 +163,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionLong(self):
-        if sys.version_info < 3:
+        if sys.version_info[0] < 3:
             self.VALUES = map(long, self.VALUES)
         jarr = jpype.JArray(jpype.JLong)(self.VALUES)
         result = jarr[0: len(jarr)]
