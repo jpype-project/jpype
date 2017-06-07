@@ -30,10 +30,6 @@ class JPypeTestCase(unittest.TestCase) :
 
     def setUp(self):
         if not jpype.isJVMStarted():
-
-            import faulthandler
-            faulthandler.enable()
-
             root = path.dirname(path.abspath(path.dirname(__file__)))
             jpype.addClassPath(path.join(root, 'classes'))
             jvm_path = jpype.getDefaultJVMPath()
