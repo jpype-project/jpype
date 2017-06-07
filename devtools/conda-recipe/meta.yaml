@@ -1,0 +1,31 @@
+package:
+  name: "jpype"
+  version: "dev"
+
+source:
+  path: ../../
+
+build:
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record record.txt
+
+requirements:
+  build:
+    - numpy x.x
+    - python
+    - setuptools
+
+  run:
+    - numpy x.x
+    - python
+
+test:
+  imports:
+    - jpype
+  commands:
+    - python compile.py --input_dir=test --output_dir=test/harness
+    - python test/testsuite.py
+  files:
+    - compile.py
+  source_files:
+    - test/*
