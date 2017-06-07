@@ -70,6 +70,8 @@ else:
 if sys.platform == 'win32' or sys.platform == 'cygwin' :
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['/Zi']
+    platform_specific['extra_link_args'] = ['/DEBUG']
     jni_md_platform = 'win32'
 
 elif sys.platform == 'darwin':
@@ -120,7 +122,7 @@ class my_build_ext(build_ext):
     """
 
     # extra compile args
-    copt = {'msvc': ['/EHsc', '/DEBUG', '/OPT:REF'],
+    copt = {'msvc': ['/EHsc', ],
             'unix' : ['-ggdb'],
             'mingw32' : [],
            }
