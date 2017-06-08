@@ -35,25 +35,10 @@ environment:
       ARCH: "64"
 
 install:
-  # install apache ant
-  #- "powershell ./appveyor/install.ps1"
-
   # use python from build matrix, add ant path.
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda install conda-build -qy
   - conda config --add channels conda-forge
-
-  # Check that we have the expected version and architecture for Python
-  #- "where python"
-  #- "python --version"
-  #- "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-  #- "pip install -r test-requirements.txt numpy pytest pytest-faulthandler"
-  #- pip install --force-reinstall --ignore-installed setuptools
-
-  #- "ant -f test\\build.xml"
-  # Build the compiled extension and run the project tests
-  #- "python setup.py install"
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
@@ -62,7 +47,6 @@ test_script:
 on_finish:
   # upload results to AppVeyor
   - powershell "$wc = New-Object 'System.Net.WebClient'; \
-      $wc.UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\xunit.xml)) "
-
+      $wc.UploadFile('https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)', (Resolve-Path .\xunit.xml)) "
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
