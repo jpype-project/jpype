@@ -9,23 +9,23 @@ environment:
   matrix:
   # 32 bit, py27
     - PYTHON: "C:\\Miniconda"
-      CONDA_PY: 2.7
+      CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda-x64"
-      CONDA_PY: 2.7
+      CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda3"
-      CONDA_PY: 3.5
+      CONDA_PY: "3.5"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: 3.6
+      CONDA_PY: "3.6"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\cygwin\\usr\\bin;C:\\miniconda"
-      CONDA_PY: 2.7
+      CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\cygwin64\\usr\\bin;C:\\miniconda-x64"
