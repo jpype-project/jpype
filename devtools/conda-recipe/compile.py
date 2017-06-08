@@ -10,7 +10,7 @@ def build_all(input_dir, output_dir):
         for f in files:
             java_files.append(os.path.join(d, f))
 
-    cmd = ['javac', *java_files, '-d', output_dir]
+    cmd = ['javac', '-d', output_dir] + java_files
     subprocess.check_call(cmd)
 
 
