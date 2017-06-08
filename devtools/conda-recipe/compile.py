@@ -20,5 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--input_dir', default='test/harness')
     parser.add_argument('--output_dir', default='test/classes')
     args = parser.parse_args()
-    os.makedirs(args.output_dir, exist_ok=True)
+    try:
+        os.makedirs(args.output_dir)
+    except OSError: pass
+
     build_all(input_dir=args.input_dir, output_dir=args.output_dir)
