@@ -36,7 +36,7 @@ install:
   #- "powershell ./appveyor/install.ps1"
 
   # use python from build matrix, add ant path.
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\ant\\bin;%PATH%"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda install conda-build -qy
 
   # Check that we have the expected version and architecture for Python
@@ -56,7 +56,7 @@ test_script:
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
   #- "powershell ./appveyor/runTestsuite.ps1"
   #- pytest test/jpypetest --junit-xml=junit.xml
-  - conda build devtools\\conda-recipe --numpy=112
+  - %CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112
 
 on_finish:
   # upload results to AppVeyor
