@@ -38,6 +38,7 @@ install:
   # use python from build matrix, add ant path.
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
   - conda install conda-build -qy
+  - conda config --add channels conda-forge
 
   # Check that we have the expected version and architecture for Python
   #- "where python"
