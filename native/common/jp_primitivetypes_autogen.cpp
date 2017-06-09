@@ -23,7 +23,7 @@
 
 typedef unsigned int uint;
 
-#ifdef HAVE_NUMPY
+#if HAVE_NUMPY
     #define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
     #define NO_IMPORT_ARRAY
     #include <numpy/arrayobject.h>
@@ -127,7 +127,7 @@ inline PyObject* getSlice(jarray array, int lo, int hi, int npy_type,
 
     try
     {
-#ifdef HAVE_NUMPY
+#if HAVE_NUMPY
         npy_intp dims[] = {len};
         res = PyArray_SimpleNew(1, dims, npy_type);
 #else
@@ -136,7 +136,7 @@ inline PyObject* getSlice(jarray array, int lo, int hi, int npy_type,
         if (len > 0)
         {
             val = (jtype*) JPEnv::getJava()->GetPrimitiveArrayCritical(array, &isCopy);
-#ifdef HAVE_NUMPY
+#if HAVE_NUMPY
             // use typed numpy arrays for results
             memcpy(((PyArrayObject*) res)->data, &val[lo], len * sizeof(jtype));
 #else

@@ -7,16 +7,18 @@ source:
 
 build:
   number: 0
+  build_env:
+    - NUMPY_
   script: python setup.py install
 
 requirements:
   build:
-    - numpy x.x
+    - {{ NUMPY_ }}
     - python
     - setuptools
 
   run:
-    - numpy x.x
+    - {{ NUMPY_ }}
     - python
 
 test:

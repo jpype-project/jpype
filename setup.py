@@ -107,11 +107,11 @@ if not disabled_numpy:
     except ImportError:
         warnings.warn("Numpy not found: not building support for fast Java array access",
                        FeatureNotice)
+        platform_specific['define_macros'].append(('HAVE_NUMPY', 0))
 else:
     warnings.warn("Turned OFF Numpy support for fast Java array access",
                   FeatureNotice)
-
-
+    platform_specific['define_macros'].append(('HAVE_NUMPY', 0))
 
 # TODO: include this stolen from FindJNI.cmake
 """
