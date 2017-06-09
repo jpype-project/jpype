@@ -25,13 +25,7 @@ test:
     - pytest
     - pytest-faulthandler
   files:
-    - compile.py
+    - compile_java_classes.py
   source_files:
     - test/*
     - setup.cfg
-
-  imports:
-    - jpype
-  commands:
-    - python compile.py --input_dir=test --output_dir=test/harness
-    - pytest -vv test/jpypetest
