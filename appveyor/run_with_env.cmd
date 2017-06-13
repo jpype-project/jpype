@@ -22,7 +22,7 @@
 SET COMMAND_TO_RUN=%*
 SET WIN_SDK_ROOT=C:\Program Files\Microsoft SDKs\Windows
 
-SET MAJOR_PYTHON_VERSION="%PYTHON_VERSION:~0,1%"
+SET MAJOR_PYTHON_VERSION="%CONDA_PY:~0,1%"
 IF %MAJOR_PYTHON_VERSION% == "2" (
     SET WINDOWS_SDK_VERSION="v7.0"
 ) ELSE IF %MAJOR_PYTHON_VERSION% == "3" (
@@ -32,11 +32,7 @@ IF %MAJOR_PYTHON_VERSION% == "2" (
     EXIT 1
 )
 
-IF NOT "%PYTHON_ARCH%"=="64" SET NO_SPECIFIC_SDK=1
-IF NOT "%MAJOR_PYTHON_VERSION%" == "2" SET NO_SPECIFIC_SDK=1
-
-
-IF NOT DEFINED NO_SPECIFIC_SDK (
+IF "%ARCH%"=="64" (
     ECHO Configuring Windows SDK %WINDOWS_SDK_VERSION% for Python %MAJOR_PYTHON_VERSION% on a 64 bit architecture
     SET DISTUTILS_USE_SDK=1
     SET MSSdk=1
@@ -45,7 +41,7 @@ IF NOT DEFINED NO_SPECIFIC_SDK (
     ECHO Executing: %COMMAND_TO_RUN%
     call %COMMAND_TO_RUN% || EXIT 1
 ) ELSE (
-    ECHO Using default MSVC build environment on a %PYTHON_ARCH% bit architecture for Python %MAJOR_PYTHON_VERSION%
+    ECHO Using default MSVC build environment for 32 bit architecture
     ECHO Executing: %COMMAND_TO_RUN%
     call %COMMAND_TO_RUN% || EXIT 1
 )

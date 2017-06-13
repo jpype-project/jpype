@@ -27,6 +27,7 @@ except ImportError:
 CLASSPATH = None
 
 class JPypeTestCase(unittest.TestCase) :
+
     def setUp(self):
         if not jpype.isJVMStarted():
             root = path.dirname(path.abspath(path.dirname(__file__)))

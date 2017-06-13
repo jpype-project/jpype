@@ -1,0 +1,33 @@
+package:
+  name: "jpype"
+  version: "dev"
+
+source:
+  path: ../../
+
+build:
+  number: 0
+  build_env:
+    - NUMPY_
+  script: python setup.py install
+
+requirements:
+  build:
+    - {{ NUMPY_ }}
+    - python
+    - setuptools
+
+  run:
+    - {{ NUMPY_ }}
+    - python
+
+test:
+  requires:
+    - mock
+    - pytest
+    - pytest-faulthandler
+  files:
+    - compile_java_classes.py
+  source_files:
+    - test/*
+    - setup.cfg

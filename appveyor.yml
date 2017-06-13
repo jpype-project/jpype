@@ -4,49 +4,55 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
-    ANT_HOME: C:\ant
+    NUMPY_: "numpy x.x"
 
   matrix:
+  # 32 bit, py27
     - PYTHON: "C:\\Miniconda"
+      CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda-x64"
+      CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
 
     - PYTHON: "C:\\Miniconda3"
+      CONDA_PY: "3.5"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda3-x64"
+      CONDA_PY: "3.6"
       JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
+
+    - PYTHON: "C:\\Miniconda3-x64"
+      CONDA_PY: "3.6"
+      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
+      NUMPY_: "python"
+
+    - PYTHON: "C:\\cygwin\\usr\\bin;C:\\miniconda"
+      CONDA_PY: "2.7"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+
+    - PYTHON: "C:\\cygwin64\\usr\\bin;C:\\miniconda-x64"
+      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
 
 install:
-  # Install Python (from the official .msi of http://python.org) and pip when
-  # not already installed.
-  - "powershell ./appveyor/install.ps1"
-
-  # Prepend newly installed Python to the PATH of this build (this cannot be
-  # done from inside the powershell script as it would require to restart
-  # the parent CMD process).
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\ant\\bin;%PATH%"
-
-  # Check that we have the expected version and architecture for Python
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-  # Install the build dependencies of the project. If some dependencies contain
-  # compiled extensions and are not provided as pre-built wheel packages,
-  # pip will build them from source using the MSVC compiler matching the
-  # target Python version and architecture
-  - "conda update --all -y"
-  - "conda install nose setuptools -y"
-  - "pip install -r test-requirements.txt" # -r dev-requirements.txt
-
-  - "ant -f test\\build.xml"
-  # Build the compiled extension and run the project tests
-  - "python setup.py install"
+  # use python from build matrix, add ant path.
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  - conda install conda-build -qy
+  - conda config --add channels conda-forge
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
-  # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "powershell ./appveyor/runTestsuite.ps1"
+  - "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
 
+on_finish:
+  # upload results to AppVeyor
+  - powershell "$wc = New-Object 'System.Net.WebClient'; \
+      $wc.UploadFile('https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)', (Resolve-Path .\xunit.xml)) "
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

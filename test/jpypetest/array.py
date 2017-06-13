@@ -163,6 +163,8 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayConversionLong(self):
+        if sys.version_info[0] < 3:
+            self.VALUES = map(long, self.VALUES)
         jarr = jpype.JArray(jpype.JLong)(self.VALUES)
         result = jarr[0: len(jarr)]
         self.assertCountEqual(self.VALUES, result)
@@ -251,20 +253,18 @@ class ArrayTestCase(common.JPypeTestCase):
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPIntArray(self):
         import numpy as np
-        n = 100
-        a = np.random.randint(-2**31 - 1, 2**31 - 1, size=n).astype(np.int32)
-        jarr = jpype.JArray(jpype.JInt)(n)
+        a = np.array([2**32-1, 0, 3, 2**32-1]).astype(np.int32)
+        jarr = jpype.JArray(jpype.JInt)(len(a))
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPLongArray(self):
         import numpy as np
-        n = 100
-        # actuall the lower bound should be -2**63 -1, but raises Overflow
+        # actually the lower bound should be -2**63 -1, but raises Overflow
         # error in numpy
-        a = np.random.randint(-2**63, 2**63 - 1, size=n).astype(np.int64)
-        jarr = jpype.JArray(jpype.JLong)(n)
+        a = np.array([ - 0x7FFFFFFFFFFFFFFF, 0x7FFFFFFFFFFFFFFF]).astype(np.int64)
+        jarr = jpype.JArray(jpype.JLong)(len(a))
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
