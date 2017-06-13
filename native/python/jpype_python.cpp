@@ -17,7 +17,7 @@
 
 
 #include <jpype_python.h>
-#ifdef HAVE_NUMPY
+#if HAVE_NUMPY
 //	#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 	#define PY_ARRAY_UNIQUE_SYMBOL jpype_ARRAY_API
 	#include <numpy/arrayobject.h>
@@ -246,7 +246,7 @@ PyMODINIT_FUNC init_jpype()
 	jpype_memoryview_init(module);
 #endif
 
-#ifdef HAVE_NUMPY
+#if HAVE_NUMPY
 	import_array();
 #endif
 #if PY_MAJOR_VERSION >= 3

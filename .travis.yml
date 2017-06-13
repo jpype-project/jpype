@@ -15,14 +15,10 @@ python:
 
 sudo: false
 
-addons:
-  apt:
-    packages:
-    - ant
 env:
   # one build with and without numpy support (opt numpy out)
-  - NUMPY="--install-option=--disable-numpy"
-  - NUMPY=""
+  - NUMPY_="numpy x.x" # use specified numpy version
+  - NUMPY_="python" # set the numpy dependency in conda-recipe to python
 
 matrix:
   allow_failures:
@@ -34,12 +30,10 @@ matrix:
       env: NUMPY=""
     - python: 'pypy3'
       env: NUMPY=""
+    - python: 'nightly'
 
 install:
-  - pip install . $NUMPY
-  - pip install -r test-requirements.txt
-  - ant -f test/build.xml
-
+  - source devtools/install_miniconda.sh
+  - conda install conda-build -qy
 script:
-  - python -c "import jpype"
-  - python test/testsuite.py
+  - conda build devtools/conda-recipe -qy --numpy=112

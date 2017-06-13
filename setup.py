@@ -3,13 +3,9 @@
 import os
 import sys
 import codecs
-import platform
-from glob import glob
 import warnings
 
-from setuptools import setup
-from setuptools import Extension
-from setuptools.command.build_ext import build_ext
+from setuptools import setup, Extension
 
 
 """
@@ -23,7 +19,6 @@ else:
 
 class FeatureNotice(Warning):
     """ indicate notices about features """
-    pass
 
 
 def read_utf8(*parts):
@@ -45,6 +40,9 @@ platform_specific = {
         os.path.join('native', 'python', 'include'),
     ],
     'sources': find_sources(),
+    'define_macros': [],
+    'extra_compile_args': [],
+    'extra_link_args': [],
 }
 
 fallback_jni = os.path.join('native', 'jni_include')
@@ -72,6 +70,15 @@ else:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+    platform_specific['extra_link_args'] = ['/DEBUG']
+    jni_md_platform = 'win32'
+
+elif sys.platform == 'cygwin' :
+    platform_specific['libraries'] = ['Advapi32']
+    platform_specific['define_macros'] = [('WIN32', 1)]
+#    platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+    platform_specific['extra_link_args'] = ['-g3']
     jni_md_platform = 'win32'
 
 elif sys.platform == 'darwin':
@@ -87,14 +94,33 @@ elif sys.platform.startswith('freebsd'):
     jni_md_platform = 'freebsd'
 
 else:
+    jni_md_platform = None
     warnings.warn("Your platform is not being handled explicitly."
                   " It may work or not!", UserWarning)
 
-if found_jni:
+if found_jni and jni_md_platform:
     platform_specific['include_dirs'] += \
         [os.path.join(java_home, 'include', jni_md_platform)]
 
-# include this stolen from FindJNI.cmake
+# handle numpy
+if not disabled_numpy:
+    try:
+        import numpy
+
+        platform_specific['define_macros'].append(('HAVE_NUMPY', 1))
+        platform_specific['include_dirs'].append(numpy.get_include())
+        warnings.warn("Turned ON Numpy support for fast Java array access",
+                       FeatureNotice)
+    except ImportError:
+        warnings.warn("Numpy not found: not building support for fast Java array access",
+                       FeatureNotice)
+        platform_specific['define_macros'].append(('HAVE_NUMPY', 0))
+else:
+    warnings.warn("Turned OFF Numpy support for fast Java array access",
+                  FeatureNotice)
+    platform_specific['define_macros'].append(('HAVE_NUMPY', 0))
+
+# TODO: include this stolen from FindJNI.cmake
 """
 FIND_PATH(JAVA_INCLUDE_PATH2 jni_md.h
 ${JAVA_INCLUDE_PATH}
@@ -105,71 +131,9 @@ ${JAVA_INCLUDE_PATH}/solaris
 ${JAVA_INCLUDE_PATH}/hp-ux
 ${JAVA_INCLUDE_PATH}/alpha
 )"""
- 
-
 
 jpypeLib = Extension(name='_jpype', **platform_specific)
 
-class my_build_ext(build_ext):
-    """
-    Override some behavior in extension building:
-
-    1. Numpy:
-        If not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
-        returned from Java can be wrapped efficiently in a ndarray.
-    2. handle compiler flags for different compilers via a dictionary.
-    3. try to disable warning ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++
-    """
-
-    # extra compile args
-    copt = {'msvc': ['/EHsc'],
-            'unix' : ['-ggdb'],
-            'mingw32' : [],
-           }
-    # extra link args
-    lopt = {
-            'msvc': [],
-            'unix': [],
-            'mingw32' : [],
-           }
-
-    def initialize_options(self, *args):
-        """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
-        import distutils.sysconfig
-        cfg_vars = distutils.sysconfig.get_config_vars()
-        if 'CFLAGS' in cfg_vars:
-            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
-
-        build_ext.initialize_options(self)
-
-    def _set_cflags(self):
-        # set compiler flags
-        c = self.compiler.compiler_type
-        if c in self.copt:
-            for e in self.extensions:
-                e.extra_compile_args = self.copt[ c ]
-        if c in self.lopt:
-            for e in self.extensions:
-                e.extra_link_args = self.lopt[ c ]
-
-    def build_extensions(self):
-        self._set_cflags()
-        # handle numpy
-        if not disabled_numpy:
-            try:
-                import numpy
-                jpypeLib.define_macros.append(('HAVE_NUMPY', 1))
-                jpypeLib.include_dirs.append(numpy.get_include())
-                warnings.warn("Turned ON Numpy support for fast Java array access",
-                               FeatureNotice)
-            except ImportError:
-                pass
-        else:
-            warnings.warn("Turned OFF Numpy support for fast Java array access",
-                          FeatureNotice)
-
-        # has to be last call
-        build_ext.build_extensions(self)
 
 setup(
     name='JPype1',
@@ -181,8 +145,7 @@ setup(
     license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
-    maintainer='Luis Nell',
-    maintainer_email='cooperate@originell.org',
+    maintainer='Martin K. Scherer (@marscher)',
     url='https://github.com/originell/jpype/',
     platforms=[
         'Operating System :: MacOS :: MacOS X',
@@ -203,7 +166,6 @@ setup(
         'jpypex': 'jpypex',
     },
     extras_require = {'numpy' : ['numpy>=1.6']},
-    cmdclass={'build_ext': my_build_ext},
     zip_safe=False,
     ext_modules=[jpypeLib],
 )

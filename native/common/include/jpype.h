@@ -46,7 +46,16 @@
 #endif
 
 #ifdef WIN32
-	#ifdef __GNUC__
+	#if defined(__GNUC__)
+		// jni_md.h does not work for cygwin.  Use this instead.
+		#define _JAVASOFT_JNI_MD_H_
+		#define JNIEXPORT __declspec(dllexport)
+		#define JNIIMPORT __declspec(dllimport)
+		#define JNICALL __stdcall
+		typedef int jint;
+		typedef long long jlong;
+		typedef signed char jbyte;
+	#elif defined(__GNUC__)
 		// JNICALL causes problem for function prototypes .. since I am not defining any JNI methods there is no need for it
 		#undef JNICALL
 		#define JNICALL
@@ -61,6 +70,7 @@
     #define PyInt_Check PyLong_Check
     #define PyInt_FromSsize_t PyLong_FromSsize_t
 #else
+    #undef PyUnicode_FromFormat 
     #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
