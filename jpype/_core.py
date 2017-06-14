@@ -36,6 +36,25 @@ def setUsePythonThreadForDeamon(v):
     global _usePythonThreadForDaemon
     _usePythonThreadForDaemon = v
 
+_initializers=[]
+
+def registerJVMInitializer(func):
+    """Register a function to be called after jvm is started"""
+    _initializers.append(func)
+
+def _initialize():
+    _jclass._initialize()
+    _jarray._initialize()
+    _jwrapper._initialize()
+    _jproxy._initialize()
+    _jexception._initialize()
+    _jcollection._initialize()
+    _jobject._initialize()
+    _properties._initialize()
+    nio._initialize()
+    reflect._initialize()
+    for func in _initializers:
+        func()
 
 def isJVMStarted() :
     return _jpype.isStarted()
@@ -48,16 +67,7 @@ def startJVM(jvm, *args):
     :param args: Arguments to give to the JVM
     """
     _jpype.startup(jvm, tuple(args), True)
-    _jclass._initialize()
-    _jarray._initialize()
-    _jwrapper._initialize()
-    _jproxy._initialize()
-    _jexception._initialize()
-    _jcollection._initialize()
-    _jobject._initialize()
-    _properties._initialize()
-    nio._initialize()
-    reflect._initialize()
+    _initialize()
 
     # start the reference daemon thread
     if _usePythonThreadForDaemon:
@@ -67,15 +77,7 @@ def startJVM(jvm, *args):
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)
-
-    _jclass._initialize()
-    _jarray._initialize()
-    _jwrapper._initialize()
-    _jproxy._initialize()
-    _jexception._initialize()
-    _jcollection._initialize()
-    _jobject._initialize()
-    _properties._initialize()
+    _initialize()
 
 def shutdownJVM():
     _refdaemon.stop()
