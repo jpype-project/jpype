@@ -85,9 +85,7 @@ def _getStaticMethods(cls):
     global _modifier
     static = {}
     for u in cls.__javaclass__.getMethods():
-        mod=int(u.getModifiers())
-        static=_modifier.isStatic(mod)
-        if not _modifier.isStatic(mod):
+        if not _modifier.isStatic(u.getModifiers()):
             continue
         name = _keywordWrap(u.getName())
         static[name] = getattr(cls, name)
@@ -265,6 +263,8 @@ class _JImportLoader:
         base = _sys.modules[".".join(parts[:-1])]
 
         # Support of inner classes
+        if not isinstance(base,_JImport):
+            return getattr(base, parts[-1])
         jbasename = object.__getattribute__(base, '__javaname__')
         try:
             object.__getattribute(base, '__javaclass__')
