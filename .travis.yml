@@ -9,6 +9,7 @@ python:
   - '3.3'
   - '3.4'
   - '3.5'
+  - '3.6'
   - 'pypy'
   - 'pypy3'
   - "nightly"
@@ -34,6 +35,10 @@ matrix:
       env: NUMPY=""
     - python: 'pypy3'
       env: NUMPY=""
+    - python: 'nightly'
+      env: NUMPY=""
+    - python: 'nightly'
+      env: NUMPY="--install-option=--disable-numpy"
 
 install:
   - pip install . $NUMPY
