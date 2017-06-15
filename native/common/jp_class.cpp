@@ -27,7 +27,7 @@ JPClass::~JPClass()
 {
 	delete m_Constructors;
 
-    // interfaces of this cannot be simply deleted here, since they may be also
+	// interfaces of this cannot be simply deleted here, since they may be also
 	// super types of other classes, which would be invalidated by doing so.
 
 	for (map<string, JPMethod*>::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit ++)
@@ -228,44 +228,24 @@ HostRef* JPClass::asHostObject(jvalue obj)
 	TRACE_OUT;
 }
 
+const char* java_lang = "java.lang.";
 EMatchType JPClass::canConvertToJava(HostRef* obj)
 {
+	TRACE_IN("JPClass::canConvertToJava");
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _implicit;
 	}
 
 	JPCleaner cleaner;
-
 	const string& simpleName = m_Name.getSimpleName();
-
-	if (simpleName == "java.lang.Byte" || simpleName == "java.lang.Short" ||
-	    simpleName == "java.lang.Integer")
-	{
-		if (JPEnv::getHost()->isInt(obj))
-		{
-			return _explicit;
-		}
-	}
-
-	if (simpleName == "java.lang.Long" && JPEnv::getHost()->isLong(obj))
-	{
-		return _explicit;
-	}
-
-	if (simpleName == "java.lang.Float" || simpleName == "java.lang.Double")
-	{
-		if (JPEnv::getHost()->isFloat(obj))
-		{
-			return _explicit;
-		}
-	}
+	TRACE2("Simple name", simpleName);
 
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
-
 		JPClass* oc = o->getClass();
+		TRACE2("Match name", oc->m_Name.getSimpleName());
 
 		if (oc == this)
 		{
@@ -279,15 +259,78 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 		}
 	}
 
-	if (JPEnv::getHost()->isProxy(obj))
+	if (simpleName.compare(0, 10, java_lang)==0)
 	{
-		JPProxy* proxy = JPEnv::getHost()->asProxy(obj);
-		// Check if any of the interfaces matches ...
-		vector<jclass> itf = proxy->getInterfaces();
-		for (unsigned int i = 0; i < itf.size(); i++)
+		if (simpleName == "java.lang.Byte" || simpleName == "java.lang.Short" ||
+		    simpleName == "java.lang.Integer")
 		{
-			if (JPEnv::getJava()->IsAssignableFrom(itf[i], m_Class))
+			if (JPEnv::getHost()->isInt(obj))
 			{
+				TRACE1("explicit int");
+				return _explicit;
+			}
+		}
+	
+		if (simpleName == "java.lang.Long" && JPEnv::getHost()->isLong(obj))
+		{
+			TRACE1("explicit long");
+			return _explicit;
+		}
+	
+		if (simpleName == "java.lang.Float" || simpleName == "java.lang.Double")
+		{
+			if (JPEnv::getHost()->isFloat(obj))
+			{
+				TRACE1("explicit float");
+				return _explicit;
+			}
+		}
+	
+		if (simpleName == "java.lang.Object")
+		{
+			// arrays are objects
+			if (JPEnv::getHost()->isArray(obj))
+			{
+				TRACE1("From array");
+				return _implicit;
+			}
+	
+			// Strings are objects too
+			if (JPEnv::getHost()->isString(obj))
+			{
+				TRACE1("From string");
+				return _implicit;
+			}
+	
+			// Class are objects too
+			if (JPEnv::getHost()->isClass(obj) || JPEnv::getHost()->isArrayClass(obj))
+			{
+				TRACE1("implicit array class");
+				return _implicit;
+			}
+	
+			// Let'a allow primitives (int, long, float and boolean) to convert implicitly too ...
+			if (JPEnv::getHost()->isInt(obj))
+			{
+				TRACE1("implicit int");
+				return _implicit;
+			}
+	
+			if (JPEnv::getHost()->isLong(obj))
+			{
+				TRACE1("implicit long");
+				return _implicit;
+			}
+	
+			if (JPEnv::getHost()->isFloat(obj))
+			{
+				TRACE1("implicit float");
+				return _implicit;
+			}
+	
+			if (JPEnv::getHost()->isBoolean(obj))
+			{
+				TRACE1("implicit boolean");
 				return _implicit;
 			}
 		}
@@ -299,53 +342,28 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 
 		if (o.getSimpleName() == m_Name.getSimpleName())
 		{
+			TRACE1("exact wrapper");
 			return _exact;
 		}
 	}
 
-	if (m_Name.getSimpleName() == "java.lang.Object")
+	if (JPEnv::getHost()->isProxy(obj))
 	{
-		// arrays are objects
-		if (JPEnv::getHost()->isArray(obj))
+		JPProxy* proxy = JPEnv::getHost()->asProxy(obj);
+		// Check if any of the interfaces matches ...
+		vector<jclass> itf = proxy->getInterfaces();
+		for (unsigned int i = 0; i < itf.size(); i++)
 		{
-			return _implicit;
-		}
-
-		// Strings are objects too
-		if (JPEnv::getHost()->isString(obj))
-		{
-			return _implicit;
-		}
-
-		// Class are objects too
-		if (JPEnv::getHost()->isClass(obj) || JPEnv::getHost()->isArrayClass(obj))
-		{
-			return _implicit;
-		}
-
-		// Let'a allow primitives (int, long, float and boolean) to convert implicitly too ...
-		if (JPEnv::getHost()->isInt(obj))
-		{
-			return _implicit;
-		}
-
-		if (JPEnv::getHost()->isLong(obj))
-		{
-			return _implicit;
-		}
-
-		if (JPEnv::getHost()->isFloat(obj))
-		{
-			return _implicit;
-		}
-
-		if (JPEnv::getHost()->isBoolean(obj))
-		{
-			return _implicit;
+			if (JPEnv::getJava()->IsAssignableFrom(itf[i], m_Class))
+			{
+				TRACE1("implicit proxy");
+				return _implicit;
+			}
 		}
 	}
 
 	return _none;
+	TRACE_OUT;
 }
 
 jvalue JPClass::buildObjectWrapper(HostRef* obj)
@@ -367,103 +385,112 @@ jvalue JPClass::buildObjectWrapper(HostRef* obj)
 
 jvalue JPClass::convertToJava(HostRef* obj)
 {
+	TRACE_IN("JPClass::convertToJava");
 	jvalue res;
 	JPCleaner cleaner;
 
 	res.l = NULL;
+	const string& simpleName = m_Name.getSimpleName();
 
 	// assume it is convertible;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		res.l = NULL;
-	}
-
-	const string& simpleName = m_Name.getSimpleName();
-	if (JPEnv::getHost()->isInt(obj) && (simpleName == "java.lang.Byte" || simpleName == "java.lang.Short" ||
-	    simpleName == "java.lang.Integer"))
-	{
-		return buildObjectWrapper(obj);
-	}
-
-	if ((JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj)) && simpleName == "java.lang.Long" && JPEnv::getHost()->isLong(obj))
-	{
-		return buildObjectWrapper(obj);
-	}
-
-	if (JPEnv::getHost()->isFloat(obj) && (simpleName == "java.lang.Float" || simpleName == "java.lang.Double"))
-	{
-		if (JPEnv::getHost()->isFloat(obj))
-		{
-			return buildObjectWrapper(obj);
-		}
-	}
-
-	if (JPEnv::getHost()->isString(obj))
-	{
-		JPTypeName name = JPTypeName::fromSimple("java.lang.String");
-		JPType* type = JPTypeManager::getType(name);
-		return type->convertToJava(obj);
+		return res;
 	}
 
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* ref = JPEnv::getHost()->asObject(obj);
 		res.l = ref->getObject();
+		return res;
+	}
+
+	if (simpleName.compare(0, 10, java_lang)==0)
+	{
+		if ( 
+				   (simpleName == "java.lang.Byte" && JPEnv::getHost()->isInt(obj) )
+				|| (simpleName == "java.lang.Short" && JPEnv::getHost()->isInt(obj))
+				|| (simpleName == "java.lang.Integer" && JPEnv::getHost()->isInt(obj))
+				|| (simpleName == "java.lang.Long" && 
+						(JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj) ))
+				|| (simpleName == "java.lang.Float" && (JPEnv::getHost()->isFloat(obj) 
+						|| JPEnv::getHost()->isInt(obj) 
+						|| JPEnv::getHost()->isLong(obj) ))
+				|| (simpleName == "java.lang.Double" && (JPEnv::getHost()->isFloat(obj) 
+						|| JPEnv::getHost()->isInt(obj) 
+						|| JPEnv::getHost()->isLong(obj) ))
+			 )
+		{
+			return buildObjectWrapper(obj);
+		}
+	
+		if (JPEnv::getHost()->isString(obj))
+		{
+			JPTypeName name = JPTypeName::fromSimple("java.lang.String");
+			JPType* type = JPTypeManager::getType(name);
+			return type->convertToJava(obj);
+		}
+
+		if (simpleName == "java.lang.Object")
+		{
+			if (JPEnv::getHost()->isInt(obj))
+			{
+				JPTypeName tname = JPTypeName::fromType(JPTypeName::_int);
+				JPType* t = JPTypeManager::getType(tname);
+				res.l = t->convertToJavaObject(obj);
+			}
+
+			else if (JPEnv::getHost()->isLong(obj))
+			{
+				JPTypeName tname = JPTypeName::fromType(JPTypeName::_long);
+				JPType* t = JPTypeManager::getType(tname);
+				res.l = t->convertToJavaObject(obj);
+			}
+
+			else if (JPEnv::getHost()->isFloat(obj))
+			{
+				JPTypeName tname = JPTypeName::fromType(JPTypeName::_double);
+				JPType* t = JPTypeManager::getType(tname);
+				res.l = t->convertToJavaObject(obj);
+			}
+
+			else if (JPEnv::getHost()->isBoolean(obj))
+			{
+				JPTypeName tname = JPTypeName::fromType(JPTypeName::_boolean);
+				JPType* t = JPTypeManager::getType(tname);
+				res.l = t->convertToJavaObject(obj);
+			}
+
+			else if (JPEnv::getHost()->isArray(obj) && simpleName == "java.lang.Object")
+			{
+				JPArray* a = JPEnv::getHost()->asArray(obj);
+				res = a->getValue();
+			}
+
+			else if (JPEnv::getHost()->isClass(obj))
+			{
+				JPTypeName name = JPTypeName::fromSimple("java.lang.Class");
+				JPType* type = JPTypeManager::getType(name);
+				res.l = type->convertToJavaObject(obj);
+			}
+		}
 	}
 
 	if (JPEnv::getHost()->isProxy(obj))
 	{
 		JPProxy* proxy = JPEnv::getHost()->asProxy(obj);
 		res.l = proxy->getProxy();
+		return res;
 	}
 
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
-		res = JPEnv::getHost()->getWrapperValue(obj);
-	}
-
-	if (JPEnv::getHost()->isInt(obj))
-	{
-		JPTypeName tname = JPTypeName::fromType(JPTypeName::_int);
-		JPType* t = JPTypeManager::getType(tname);
-		res.l = t->convertToJavaObject(obj);
-	}
-
-	if (JPEnv::getHost()->isLong(obj))
-	{
-		JPTypeName tname = JPTypeName::fromType(JPTypeName::_long);
-		JPType* t = JPTypeManager::getType(tname);
-		res.l = t->convertToJavaObject(obj);
-	}
-
-	if (JPEnv::getHost()->isFloat(obj))
-	{
-		JPTypeName tname = JPTypeName::fromType(JPTypeName::_double);
-		JPType* t = JPTypeManager::getType(tname);
-		res.l = t->convertToJavaObject(obj);
-	}
-
-	if (JPEnv::getHost()->isBoolean(obj))
-	{
-		JPTypeName tname = JPTypeName::fromType(JPTypeName::_boolean);
-		JPType* t = JPTypeManager::getType(tname);
-		res.l = t->convertToJavaObject(obj);
-	}
-
-	if (JPEnv::getHost()->isArray(obj) && simpleName == "java.lang.Object")
-	{
-		JPArray* a = JPEnv::getHost()->asArray(obj);
-		res = a->getValue();
-	}
-
-	if (JPEnv::getHost()->isClass(obj))
-	{
-		JPTypeName name = JPTypeName::fromSimple("java.lang.Class");
-		JPType* type = JPTypeManager::getType(name);
-		res.l = type->convertToJavaObject(obj);
+		return JPEnv::getHost()->getWrapperValue(obj);
 	}
 
 	return res;
+	TRACE_OUT;
 }
 
 JPObject* JPClass::newInstance(vector<HostRef*>& args)

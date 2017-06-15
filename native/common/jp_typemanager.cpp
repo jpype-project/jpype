@@ -77,6 +77,9 @@ JPClass* findClass(const JPTypeName& name)
 
 	// No we havent got it .. lets load it!!!
 	JPCleaner cleaner;
+	if (JPEnv::getJava()==0)
+		return 0;
+
 	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
 	cleaner.addLocal(cls);
 
