@@ -89,22 +89,30 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 	TRACE2("Got overloads to check", m_Overloads.size());
 	ensureOverloadOrderCache();
 	JPMethodOverload* maximallySpecificOverload = 0;
-	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it)	{
-		if ((! needStatic) || it->m_Overload->isStatic()) {
+	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it)	
+	{
+		if ((! needStatic) || it->m_Overload->isStatic()) 
+		{
 			TRACE2("Trying to match", it->m_Overload->getSignature());
 			EMatchType match = it->m_Overload->matches(false, arg);
 			TRACE2("  match ended", match);
-			if(match == _exact) {
+			if(match == _exact) 
+			{
 				return it->m_Overload;
 			}
-			if (match >= _implicit) {
-				if(!maximallySpecificOverload) {
+			if (match >= _implicit) 
+			{
+				if(!maximallySpecificOverload) 
+				{
 					maximallySpecificOverload = it->m_Overload;
-				} else {
+				} 
+				else 
+				{
 					bool isAmbiguous = std::find(it->m_MoreSpecificOverloads.begin(),
 							it->m_MoreSpecificOverloads.end(),
 							maximallySpecificOverload) == it->m_MoreSpecificOverloads.end();
-					if(isAmbiguous) {
+					if(isAmbiguous) 
+					{
 						TRACE3("ambiguous overload", maximallySpecificOverload->getSignature(), it->m_Overload->getSignature());
 						RAISE(JPypeException, "Ambiguous overloads found: " + maximallySpecificOverload->getSignature() + " vs " + it->m_Overload->getSignature());
 					}
