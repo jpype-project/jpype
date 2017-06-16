@@ -48,6 +48,11 @@ public :
 		return m_IsFinal;
 	}
 
+	bool isVarArgs() const
+	{
+		return m_IsVarArgs;
+	}
+
 	const JPTypeName& getReturnType() const
 	{
 		return m_ReturnType;
@@ -60,6 +65,7 @@ public :
 
 	string getArgumentString();
 
+  void packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& arg, JPCleaner& cleaner, size_t skip);
 	bool isSameOverload(JPMethodOverload& o);
 	string matchReport(vector<HostRef*>& args);
 	bool isMoreSpecificThan(JPMethodOverload& other) const;
@@ -73,6 +79,7 @@ private :
 	vector<JPTypeName>       m_Arguments;
 	bool                     m_IsStatic;
 	bool                     m_IsFinal;
+	bool                     m_IsVarArgs;
 	bool                     m_IsConstructor;
 	mutable vector<JPType*>  m_ArgumentsTypeCache;
 	mutable JPType*          m_ReturnTypeCache;
