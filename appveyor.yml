@@ -13,6 +13,12 @@ environment:
       CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
+    - PYTHON: "C:\\cygwin\\usr\\bin"
+      CYGWIN: "C:\\cygwin"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+      ARCH: x86 
+      CYGSH: C:\Cygwin\bin\bash -lc
+
 install:
   - cinst ant
 
