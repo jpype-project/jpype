@@ -1,6 +1,14 @@
 # Setup cygwin path
 export PATH="$ANT_HOME/bin:/bin:/usr/bin"
 
+echo /bin
+ls /bin
+
+echo ANT_HOME=$ANT_HOME
+echo PATH=$PATH
+echo PYTHON=$PYTHON
+echo PIP=$PIP
+
 # Check versions
 ant -version
 $PYTHON --version
