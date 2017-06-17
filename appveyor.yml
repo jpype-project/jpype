@@ -8,43 +8,10 @@ environment:
     NUMPY_: "numpy x.x"
 
   matrix:
-    fast_finish: true
   # 32 bit, py27
     - PYTHON: "C:\\Miniconda"
       CONDA_PY: "2.7"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
-
-#    - PYTHON: "C:\\Miniconda-x64"
-#      CONDA_PY: "2.7"
-#      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-#      ARCH: "64"
-#
-#    - PYTHON: "C:\\Miniconda3"
-#      CONDA_PY: "3.5"
-#      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
-#
-#    - PYTHON: "C:\\Miniconda3-x64"
-#      CONDA_PY: "3.6"
-#      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-#      ARCH: "64"
-#
-#    - PYTHON: "C:\\Miniconda3-x64"
-#      CONDA_PY: "3.6"
-#      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-#      ARCH: "64"
-#      NUMPY_: "python"
-      
-    - PYTHON: "C:\\cygwin\\usr\\bin"
-      CYGWIN: "C:\\cygwin"
-      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
-      ARCH: x86 
-      CYGSH: C:\Cygwin\bin\bash -lc
-
-#    - PYTHON: "C:\\cygwin64\\usr\\bin"
-#      CYGWIN: "C:\\cygwin64"
-#      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-#      ARCH: x86_64
-#      CYGSH: C:\Cygwin64\bin\bash -lc
 
 install:
   - cinst ant
