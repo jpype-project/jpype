@@ -14,10 +14,10 @@ echo NOSETESTS="$NOSETESTS"
 $NOSETESTS --help
 
 echo ===== "TRY 1"
-$NOSETESTS --with-xunit --all-modules -w test/jpypetest
+$NOSETESTS -v --with-xunit --all-modules -w test/jpypetest
 
 echo ===== "TRY 2"
-$NOSETESTS --with-xunit --all-modules -s test/testsuite.py
+$NOSETESTS -v --with-xunit --all-modules -s test/testsuite.py
 
 status=$?
 echo "result code of nosetests:" $status 

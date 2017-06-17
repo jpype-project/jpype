@@ -24,7 +24,7 @@ import sys
 
 def suite() :
     loader = unittest.defaultTestLoader
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1 and __name__=='__main__':
         names = sys.argv[1:]
         test_suite = loader.loadTestsFromNames(names)
     else:
@@ -44,6 +44,6 @@ def runTest() :
     if not result.wasSuccessful():
         sys.exit(1)
 
-if __name__ == '__main__' :
+if __name__ in ['__main__','testsuite'] :
     logging.basicConfig(level=logging.INFO)
     runTest()
