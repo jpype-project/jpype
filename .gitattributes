@@ -1,0 +1,7 @@
+* text=auto 
+
+# Project files
+.gitattributes text eol=lf
+*.sh text eol=lf
+*.cpp text eol=lf
+*.py text eol=lf
