@@ -13,14 +13,14 @@ environment:
       CYGWIN: "C:\\cygwin"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
       ARCH: x86 
-      CYGSH: C:\Cygwin\bin\bash -lc
+      CYGSH: C:\Cygwin\bin\bash -c
 
     - PYTHON: "python3"
       PIP: "pip3"
       CYGWIN: "C:\\cygwin"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
       ARCH: x86 
-      CYGSH: C:\Cygwin\bin\bash -lc
+      CYGSH: C:\Cygwin\bin\bash -c
 
 install:
   #- cinst ant
