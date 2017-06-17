@@ -285,3 +285,4 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+

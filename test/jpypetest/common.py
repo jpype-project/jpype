@@ -45,3 +45,4 @@ class JPypeTestCase(unittest.TestCase) :
 
     def tearDown(self):
         pass
+

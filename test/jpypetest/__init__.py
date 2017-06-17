@@ -36,10 +36,20 @@ def importAll():
         exec("from . import %s"% _name)
         _module=globals()[_name]
         for n,cls in _module.__dict__.items():
-            if not isclass(cls):
-                continue
-            if not issubclass(cls, unittest.TestCase):
-                continue
-            globals()[n]=cls
+            try:
+                if not issubclass(cls, unittest.TestCase):
+                    continue
+                globals()[n]=cls
+            except TypeError as ex:
+                pass
 
 importAll()
+
+# Use ant to build the test harness before running the tests
+#   ant -f test/build.xml
+#
+# To run all tests bench call at the the top level directory
+#   nosetests -v test.jpypetest 
+#
+# Individual tests can be called by their module name, such as
+#   nosetests -v test.jpypetest.array
