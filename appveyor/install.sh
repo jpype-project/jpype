@@ -1,7 +1,7 @@
 # Setup cygwin path
 
 ANT_BIN=`cygpath "$ANT_HOME"`
-export PATH="$ANT_BIN:/bin:/usr/bin"
+export PATH="$ANT_BIN/bin:/bin:/usr/bin"
 
 echo ARCH=$ARCH
 echo ANT_HOME=$ANT_HOME

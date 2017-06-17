@@ -1,4 +1,5 @@
 export PATH="/bin:/usr/bin"
+cd $APPVEYOR_BUILD_FOLDER
 
 if [ $PYTHON = "python3" ]; then
 	NOSETESTS=nosetests-3.6
