@@ -36,7 +36,6 @@ class JPypeTestCase(unittest.TestCase) :
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= jpype.getClassPath()
-            print("CLASSPATH:%s"%classpath_arg)
             jpype.startJVM(jvm_path, "-ea",
                            # "-Xcheck:jni",
                            "-Xmx256M", "-Xms16M", classpath_arg)
