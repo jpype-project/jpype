@@ -4,7 +4,7 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
-    ANT_HOME: C:\ant
+    ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.1"
     NUMPY_: "numpy x.x"
 
   matrix:
@@ -17,7 +17,7 @@ install:
   - cinst ant
 
   # Add thinges to path 
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;C:\\tools\\apache-ant-1.9.4\\bin;%PATH%"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
   - "IF DEFINED CYGWIN (%CYGSH% ./appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"
