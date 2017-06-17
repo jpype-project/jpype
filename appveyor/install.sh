@@ -1,13 +1,21 @@
 # Setup cygwin path
-export PATH="$ANT_HOME/bin:/bin:/usr/bin"
 
-echo /bin
-ls /bin
+ANT_BIN=`cygpath "$ANT_HOME"`
+export PATH="$ANT_BIN:/bin:/usr/bin"
 
+echo ARCH=$ARCH
 echo ANT_HOME=$ANT_HOME
+echo ANT_BIN=$ANT_BIN
 echo PATH=$PATH
 echo PYTHON=$PYTHON
 echo PIP=$PIP
+
+# Install prereqs
+if [ $PYTHON = "python3" ]; then
+	/setup-$ARCH -q -P python3,python3-numpy,python3-devel,python3,python3-setuptools,python3-nose
+else
+	/setup-$ARCH -q -P python,python-numpy,python-devel,python,python-setuptools,python-nose
+fi
 
 # Check versions
 ant -version
@@ -15,10 +23,6 @@ $PYTHON --version
 
 # Get the arch size
 $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
-
-# Install prereqs
-$PIP install nose
-$PIP install setuptools
 
 # Build the test harness
 ant -f test/build.xml
