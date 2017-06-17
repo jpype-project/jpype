@@ -22,8 +22,22 @@ environment:
       ARCH: x86 
       CYGSH: C:\Cygwin\bin\bash -c
 
+    - PYTHON: "python2"
+      PIP: "pip2"
+      CYGWIN: "C:\\cygwin64"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+      ARCH: x86_64 
+      CYGSH: C:\Cygwin64\bin\bash -c
+
+    - PYTHON: "python3"
+      PIP: "pip3"
+      CYGWIN: "C:\\cygwin64"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+      ARCH: x86_64 
+      CYGSH: C:\Cygwin64\bin\bash -c
+
 install:
-  #- cinst ant
+  - cinst ant
 
   # Add thinges to path 
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
