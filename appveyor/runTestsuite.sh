@@ -19,6 +19,9 @@ $NOSETESTS -v --with-xunit --all-modules -w test/jpypetest
 echo ===== "TRY 2"
 $NOSETESTS -v --with-xunit --all-modules -s test/testsuite.py
 
+echo ===== "TRY 3"
+$NOSETESTS -v --with-xunit --all-modules -s test.jpypetest
+
 status=$?
 echo "result code of nosetests:" $status 
 

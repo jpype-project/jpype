@@ -1,5 +1,5 @@
 #*****************************************************************************
-#   Copyright 2004-2008 Steve Menard
+#   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -14,3 +14,32 @@
 #   limitations under the License.
 #
 #*****************************************************************************
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+from inspect import isclass
+
+def importAll():
+    # Import in local scope to keep namespace clean
+    import os as _os
+    import importlib as _importlib
+
+    # Search through all modules in the toplevel directory
+    for _file in _os.listdir(_os.path.dirname(__file__)):
+
+        # Find all modules in the directory
+        if _file.startswith('__') or _file[-3:] != '.py':
+            continue
+
+        # import module
+        _name = _file[:-3]
+        _module=_importlib.import_module('.'+_name, __package__)
+        for n,cls in _module.__dict__.items():
+            if not isclass(cls):
+                continue
+            if not issubclass(cls, unittest.TestCase):
+                continue
+            globals()[n]=cls
+
+importAll()
