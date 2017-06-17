@@ -50,10 +50,12 @@ build: false # Not a C# project, build stuff at the test step instead.
 test_script:
   #- "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "powershell ./appveyor/runTestSuite.ps1"
+  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (powershell ./appveyor/runTestSuite.ps1)"
 
-#on_finish:
-#  # upload results to AppVeyor
+on_finish:
+  # upload results to AppVeyor
+  - "powershell ./appveyor/upload.ps1"
+
 #  - ps: $wc = New-Object 'System.Net.WebClient'; $wc.UploadFile('https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)', (Resolve-Path .\xunit.xml))
 #
 #on_finish:
