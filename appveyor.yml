@@ -8,36 +8,39 @@ environment:
     NUMPY_: "numpy x.x"
 
   matrix:
-  # 32 bit, py27
-    - PYTHON: "C:\\Miniconda"
-      CONDA_PY: "2.7"
+    - PYTHON: "python2"
+      PIP: "pip2"
+      CYGWIN: "C:\\cygwin"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+      ARCH: x86 
+      CYGSH: C:\Cygwin\bin\bash -lc
 
-    - PYTHON: "C:\\cygwin\\usr\\bin"
+    - PYTHON: "python3"
+      PIP: "pip3"
       CYGWIN: "C:\\cygwin"
       JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
       ARCH: x86 
       CYGSH: C:\Cygwin\bin\bash -lc
 
 install:
-  - cinst ant
+  #- cinst ant
 
   # Add thinges to path 
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
-  - "IF DEFINED CYGWIN (%CYGSH% ./appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"
+  - "IF DEFINED CYGWIN (%CYGSH% appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"
 
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
   #- "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "powershell ./appveyor/runTestsuite.ps1"
+  - "powershell ./appveyor/runTestSuite.ps1"
 
-on_finish:
-  # upload results to AppVeyor
-  # - powershell "$wc = New-Object 'System.Net.WebClient'; \
-  #     $wc.UploadFile('https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)', (Resolve-Path .\xunit.xml)) "
+#on_finish:
+#  # upload results to AppVeyor
+#  - ps: $wc = New-Object 'System.Net.WebClient'; $wc.UploadFile('https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)', (Resolve-Path .\xunit.xml))
+#
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

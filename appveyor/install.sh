@@ -1,17 +1,20 @@
+# Setup cygwin path
+export PATH="$ANT_HOME/bin:/bin:/usr/bin"
+
 # Check versions
 ant -version
-python --version
+$PYTHON --version
 
 # Get the arch size
-python.exe -c "import struct; print(struct.calcsize('P') * 8)"
+$PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Install prereqs
-pip install nose
-pip install setuptools
+$PIP install nose
+$PIP install setuptools
 
 # Build the test harness
 ant -f test/build.xml
 
 # Install the package
-python setup.py install
+$PYTHON setup.py install
 
