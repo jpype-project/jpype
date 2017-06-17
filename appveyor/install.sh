@@ -15,12 +15,15 @@ else
 fi
 
 # Install prereqs
-$SETUP -q -P gcc-core, gcc-g++
+$SETUP -q -P gcc-core,gcc-g++
 $SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools,$PYTHON-nose
+$PIP install mock
 
 # Check versions
 "$ANT_HOME"/bin/ant -version
 $PYTHON --version
+
+$PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
 
 # Get the arch size
 $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
