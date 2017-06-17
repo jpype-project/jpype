@@ -1,11 +1,8 @@
 # Setup cygwin path
 
-ANT_BIN=`cygpath "$ANT_HOME"`
 export PATH="$ANT_BIN/bin:/bin:/usr/bin"
 
 echo ARCH=$ARCH
-echo ANT_HOME=$ANT_HOME
-echo ANT_BIN=$ANT_BIN
 echo PATH=$PATH
 echo PYTHON=$PYTHON
 
@@ -19,14 +16,14 @@ else
 fi
 
 # Check versions
-ant -version
+"$ANT_HOME"/bin/ant -version
 $PYTHON --version
 
 # Get the arch size
 $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
-ant -f test/build.xml
+"$ANT_HOME"/bin/ant -f test/build.xml
 
 # Install the package
 $PYTHON setup.py install

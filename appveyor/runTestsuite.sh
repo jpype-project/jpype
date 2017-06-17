@@ -7,6 +7,8 @@ else
 	NOSETESTS=nosetests-2.7
 fi
 
+ls
+
 $NOSETESTS --with-xunit --all-modules -w test/jpypetest
 status=$?
 echo "result code of nosetests:" $status 
