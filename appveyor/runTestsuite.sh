@@ -1,15 +1,26 @@
-export PATH="/bin:/usr/bin"
+export PATH="/bin:/usr/bin:$PATH"
 cd $APPVEYOR_BUILD_FOLDER
 
 if [ $PYTHON = "python3" ]; then
-	NOSETESTS=nosetests-3.6
+	NOSETESTS="nosetests-3.6"
 else
-	NOSETESTS=nosetests-2.7
+	NOSETESTS="nosetests-2.7"
 fi
 
-ls
+echo PATH=$PATH
+echo APPVEYOR_BUILD_FOLDER="$APPVEYOR_BUILD_FOLDER"
+echo NOSETESTS="$NOSETESTS"
 
+$NOSETESTS --help
+
+echo ===== "TRY 1"
 $NOSETESTS --with-xunit --all-modules -w test/jpypetest
+
+echo ===== "TRY 2"
+$NOSETESTS --with-xunit --all-modules -s test/testsuite.py
+
 status=$?
 echo "result code of nosetests:" $status 
-exit $status
+
+exit -1
+#exit $status
