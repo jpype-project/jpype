@@ -7,23 +7,10 @@ else
 	NOSETESTS="nosetests-2.7"
 fi
 
-echo PATH=$PATH
-echo APPVEYOR_BUILD_FOLDER="$APPVEYOR_BUILD_FOLDER"
-echo NOSETESTS="$NOSETESTS"
-
-$NOSETESTS --help
-
-echo ===== "TRY 1"
-$NOSETESTS -v --with-xunit --all-modules -w test/jpypetest
-
-echo ===== "TRY 2"
-$NOSETESTS -v --with-xunit --all-modules -s test/testsuite.py
-
-echo ===== "TRY 3"
+echo "==== Run test.jpypetest"
 $NOSETESTS -v --with-xunit --all-modules -s test.jpypetest
 
 status=$?
 echo "result code of nosetests:" $status 
 
-exit -1
-#exit $status
+exit $status

@@ -23,7 +23,6 @@ from inspect import isclass
 def importAll():
     # Import in local scope to keep namespace clean
     import os as _os
-    import importlib as _importlib
 
     # Search through all modules in the toplevel directory
     for _file in _os.listdir(_os.path.dirname(__file__)):
@@ -34,7 +33,8 @@ def importAll():
 
         # import module
         _name = _file[:-3]
-        _module=_importlib.import_module('.'+_name, __package__)
+        exec("from . import %s"% _name)
+        _module=globals()[_name]
         for n,cls in _module.__dict__.items():
             if not isclass(cls):
                 continue

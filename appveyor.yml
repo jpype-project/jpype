@@ -32,6 +32,30 @@ environment:
       ARCH: x86_64 
       CYGSH: C:\Cygwin64\bin\bash -c
 
+    - PYTHON: "C:\\Miniconda"
+      CONDA_PY: "2.7"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+
+    - PYTHON: "C:\\Miniconda-x64"
+      CONDA_PY: "2.7"
+      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
+
+    - PYTHON: "C:\\Miniconda3"
+      CONDA_PY: "3.5"
+      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
+
+    - PYTHON: "C:\\Miniconda3-x64"
+      CONDA_PY: "3.6"
+      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
+
+    - PYTHON: "C:\\Miniconda3-x64"
+      CONDA_PY: "3.6"
+      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
+      ARCH: "64"
+      NUMPY_: "python"
+
 install:
   - cinst ant
 
