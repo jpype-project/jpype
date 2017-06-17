@@ -9,7 +9,7 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 # target Python version and architecture
 conda.exe update --all -y
 conda.exe install nose setuptools -y
-pip.exe install -r test-requirements.txt" # -r dev-requirements.txt
+pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
 ant.exe -f test\\build.xml
 
