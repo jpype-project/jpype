@@ -19,6 +19,12 @@
 PyObject* JPypeModule::startup(PyObject* obj, PyObject* args)  
 {  
 	TRACE_IN("startup");
+	if (JPEnv::isInitialized())
+	{
+		PyErr_SetString(PyExc_OSError, "JVM is already started");
+		return NULL;
+  }
+
 	try {
 		PyObject* vmOpt;
 		PyObject* vmPath;
@@ -72,6 +78,12 @@ PyObject* JPypeModule::startup(PyObject* obj, PyObject* args)
 PyObject* JPypeModule::attach(PyObject* obj, PyObject* args)  
 {  
 	TRACE_IN("attach");
+  if (JPEnv::isInitialized())
+	{
+		PyErr_SetString(PyExc_OSError, "JVM is already started");
+		return NULL;
+  }
+
 	try {
 		PyObject* vmPath;
 
