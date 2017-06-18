@@ -73,6 +73,12 @@ PyObject* JPypeJavaProxy::setProxyClass(PyObject* self, PyObject* arg)
 
 PyObject* convertToJValue(PyObject* self, PyObject* arg)
 {
+	if (! JPEnv::isInitialized())
+  {
+		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
+		return NULL;
+  }
+
 	try {
 		char* tname;
 		PyObject* value;
