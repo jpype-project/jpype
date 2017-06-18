@@ -31,10 +31,10 @@ namespace { // impl detail
 PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		char* cname;
