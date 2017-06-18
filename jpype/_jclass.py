@@ -99,6 +99,14 @@ def _javaGetAttr(self, name):
         return _jpype._JavaBoundMethod(r, self)
     return r
 
+def _javaSetAttr(self, attr, value):
+    if attr.startswith('_') \
+           or callable(value) \
+           or isinstance(getattr(self.__class__, attr), property):
+        object.__setattr__(self, attr, value)
+    else:
+        raise AttributeError("%s does not have field %s"%(self.__name__, attr), self)
+
 def _mro_override_topsort(cls):
     # here we run a topological sort to get a linear ordering of the inheritance graph.
     parents = set().union(*[x.__mro__ for x in cls.__bases__])
@@ -135,6 +143,7 @@ class _JavaClass(type):
                 "__eq__": lambda self, o: self.equals(o),
                 "__ne__": lambda self, o: not self.equals(o),
                 "__getattribute__": _javaGetAttr,
+                "__setattr__": _javaSetAttr,
                 }
 
         if name == 'java.lang.Object' or jc.isPrimitive():
