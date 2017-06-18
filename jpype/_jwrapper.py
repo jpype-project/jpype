@@ -93,6 +93,7 @@ def _getDefaultTypeName(obj):
         "Unable to determine the default type of {0}".format(obj.__class__))
 
 class JObject(_JWrapper):
+    typeName="java.lang.Object"
     def __init__(self, v, tp=None):
         if tp is None:
             tp = _getDefaultTypeName(v)
