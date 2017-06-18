@@ -18,6 +18,12 @@
 #include <jpype_python.h>  
 PyObject* JPypeJavaNio::convertToDirectBuffer(PyObject* self, PyObject* args)
 {  
+	if (! JPEnv::isInitialized())
+  {
+		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
+		return NULL;
+  }
+
 	TRACE_IN("convertStringToBuffer"); 
 
 	// Use special method defined on the TypeConverter interface ...
