@@ -19,10 +19,10 @@
 PyObject* JPypeJavaNio::convertToDirectBuffer(PyObject* self, PyObject* args)
 {  
 	if (! JPEnv::isInitialized())
-	{
+  {
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-	}
+  }
 
 	TRACE_IN("convertStringToBuffer"); 
 
