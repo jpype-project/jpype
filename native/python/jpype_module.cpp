@@ -238,10 +238,10 @@ PyObject* JPypeModule::attachThread(PyObject* obj)
 PyObject* JPypeModule::detachThread(PyObject* obj)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		JPEnv::getJava()->DetachCurrentThread();
@@ -316,10 +316,10 @@ PyObject* JPypeModule::raiseJava(PyObject* , PyObject* args)
 PyObject* JPypeModule::attachThreadAsDaemon(PyObject* obj)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		JPEnv::attachCurrentThreadAsDaemon();
@@ -336,10 +336,10 @@ PyObject* JPypeModule::attachThreadAsDaemon(PyObject* obj)
 PyObject* JPypeModule::startReferenceQueue(PyObject* obj, PyObject* args)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		int i;
@@ -358,10 +358,10 @@ PyObject* JPypeModule::startReferenceQueue(PyObject* obj, PyObject* args)
 PyObject* JPypeModule::stopReferenceQueue(PyObject* obj)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		JPJni::stopJPypeReferenceQueue();
@@ -378,10 +378,10 @@ PyObject* JPypeModule::stopReferenceQueue(PyObject* obj)
 PyObject* JPypeModule::setConvertStringObjects(PyObject* obj, PyObject* args)
 {
 	if (! JPEnv::isInitialized())
-  {
+	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
-  }
+	}
 
 	try {
 		PyObject* flag;
