@@ -127,6 +127,7 @@ def _defineArrayClass(name, jt):
     members = {
             "__init__": _jarrayInit,
             "__javaclass__": jt,
+            "__name__": name,
     }
 
     bases = [_JavaArrayClass]
