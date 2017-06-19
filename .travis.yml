@@ -41,6 +41,8 @@ matrix:
       env: NUMPY="--install-option=--disable-numpy"
   
 install:
+  - ls /usr/lib/jvm/
+  - update-java-alternatives -l
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
