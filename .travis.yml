@@ -17,10 +17,13 @@ python:
   #dist: trusty
 sudo: false
 
+jdk:
+  - oraclejdk8
+
 addons:
   apt:
     packages:
-    - oracle-java8-installer
+    - oracle-java8-set-default
     - ant
 
 env:
