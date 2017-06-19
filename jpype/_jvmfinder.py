@@ -16,6 +16,7 @@
 #*****************************************************************************
 
 import os
+import sys
 
 # ------------------------------------------------------------------------------
 
@@ -55,6 +56,7 @@ class JVMFinder(object):
         found_jamvm = False
         non_supported_jvm = ('cacao', 'jamvm')
         found_non_supported_jvm = False
+
         # Look for the file
         for root, _, names in os.walk(java_home):
             if self._libfile in names:
@@ -149,6 +151,10 @@ class JVMFinder(object):
         if java_home and os.path.exists(java_home):
             # Get the real installation path
             java_home = os.path.realpath(java_home)
+
+            # Cygwin has a bug in realpath
+            if not os.path.exists(java_home):
+                java_home = os.getenv("JAVA_HOME")
 
             # Look for the library file
             return self.find_libjvm(java_home)
