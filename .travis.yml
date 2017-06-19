@@ -47,11 +47,12 @@ matrix:
       env: NUMPY="--install-option=--disable-numpy"
 
 install:
+  - ls /usr/lib/jvm/
+  - update-java-alternatives -l
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
-  - jdk_switcher use oraclejdk8
   - python -c "import jpype"
   - python test/testsuite.py
