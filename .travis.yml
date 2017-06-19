@@ -14,12 +14,11 @@ python:
   - 'pypy3'
   - "nightly"
 
-sudo: false
-
 addons:
   apt:
     packages:
     - ant
+
 env:
   # one build with and without numpy support (opt numpy out)
   - NUMPY="--install-option=--disable-numpy"
@@ -39,7 +38,7 @@ matrix:
       env: NUMPY=""
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
-
+  
 install:
   - pip install . $NUMPY
   - pip install -r test-requirements.txt

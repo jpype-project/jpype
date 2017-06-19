@@ -314,12 +314,14 @@ double JPyFloat::asDouble(PyObject* obj)
 
 PyObject* JPyBoolean::getTrue()
 {
-	return PyInt_FromLong(1);
+	Py_RETURN_TRUE;
+//	return PyInt_FromLong(1);
 }
 
 PyObject* JPyBoolean::getFalse()
 {
-	return PyInt_FromLong(0);
+	Py_RETURN_FALSE;
+//	return PyInt_FromLong(0);
 }
 
 bool JPyDict::contains(PyObject* m, PyObject* k)
