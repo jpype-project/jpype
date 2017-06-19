@@ -31,6 +31,7 @@ JPArrayClass::~JPArrayClass()
 
 EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 {
+	TRACE_IN("JPArrayClass::canConvertToJava");
 	JPCleaner cleaner;
 	
 	if (JPEnv::getHost()->isNone(o))
@@ -40,6 +41,7 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 	
 	if (JPEnv::getHost()->isArray(o))
 	{
+		TRACE1("array");
 		JPArray* a = JPEnv::getHost()->asArray(o);
 		
 		JPArrayClass* ca = a->getClass();
@@ -56,16 +58,19 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 	}
 	else if (JPEnv::getHost()->isUnicodeString(o) && m_ComponentType->getName().getType() ==JPTypeName::_char)
 	{
+		TRACE1("char[]");
 		// Strings are also char[]
 		return _implicit;
 	}
 	else if (JPEnv::getHost()->isByteString(o) && m_ComponentType->getName().getType() ==JPTypeName::_byte)
 	{
+		TRACE1("char[]");
 		// Strings are also char[]
 		return _implicit;
 	}
 	else if (JPEnv::getHost()->isSequence(o) && !JPEnv::getHost()->isObject(o))
 	{
+		TRACE1("Sequence");
 		EMatchType match = _implicit;
 		int length = JPEnv::getHost()->getSequenceLength(o);
 		for (int i = 0; i < length && match > _none; i++)
@@ -82,6 +87,7 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 	}
 	
 	return _none;
+	TRACE_OUT;
 }
 
 HostRef* JPArrayClass::asHostObject(jvalue val)
@@ -95,6 +101,7 @@ HostRef* JPArrayClass::asHostObject(jvalue val)
 
 jvalue JPArrayClass::convertToJava(HostRef* obj)
 {	
+	TRACE_IN("JPArrayClass::convertToJava");
 	JPCleaner cleaner;
 	jvalue res;
 	res.l = NULL;
@@ -106,6 +113,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	}
 	else if (JPEnv::getHost()->isByteString(obj) && m_ComponentType->getName().getType() == JPTypeName::_byte && sizeof(char) == sizeof(jbyte))
 	{
+		TRACE1("char[]");
 		char* rawData;
 		long size;
 		JPEnv::getHost()->getRawByteString(obj, &rawData, size);
@@ -123,6 +131,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	}
 	else if (JPEnv::getHost()->isUnicodeString(obj) && m_ComponentType->getName().getType() == JPTypeName::_char && JPEnv::getHost()->getUnicodeSize() == sizeof(jchar))
 	{
+		TRACE1("uchar[]");
 		jchar* rawData;
 		long size;
 		JPEnv::getHost()->getRawUnicodeString(obj, &rawData, size);
@@ -140,6 +149,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	}
 	else if (JPEnv::getHost()->isSequence(obj))
 	{
+		TRACE1("sequence");
 		int length = JPEnv::getHost()->getSequenceLength(obj);
 		
 		jarray array = m_ComponentType->newArrayInstance(length);
@@ -157,6 +167,28 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	}
 	
 	return res;
+	TRACE_OUT;
+}
+
+jvalue JPArrayClass::convertToJavaVector(vector<HostRef*>& refs, size_t start, size_t end)
+{
+	TRACE_IN("JPArrayClass::convertToJavaVector");
+	int length = end-start;
+	JPCleaner cleaner;
+
+	jarray array = m_ComponentType->newArrayInstance(length);
+	cleaner.addLocal(array);
+
+	jvalue res;
+	res.l = array;
+		
+	for (int i = start; i < end ; i++)
+	{
+		m_ComponentType->setArrayItem(array, i-start, refs[i]);
+	}
+	cleaner.removeLocal(array);
+	return res;
+	TRACE_OUT;
 }
 
 JPArray* JPArrayClass::newInstance(int length)
