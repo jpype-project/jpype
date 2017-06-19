@@ -14,7 +14,7 @@ python:
   - 'pypy3'
   - "nightly"
 
-  #dist: trusty
+    #dist: trusty
 sudo: required
 
 jdk:
@@ -23,7 +23,6 @@ jdk:
 addons:
   apt:
     packages:
-    - oracle-java8-set-default
     - ant
 
 env:
@@ -46,9 +45,6 @@ matrix:
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
   
-before_install:    
-  - sudo update-java-alternatives -s java-8-oracle
-
 install:
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
