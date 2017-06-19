@@ -20,7 +20,9 @@ sudo: false
 addons:
   apt:
     packages:
+    - oracle-java8-installer
     - ant
+
 env:
   # one build with and without numpy support (opt numpy out)
   - NUMPY="--install-option=--disable-numpy"
