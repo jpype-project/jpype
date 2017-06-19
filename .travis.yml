@@ -14,12 +14,6 @@ python:
   - 'pypy3'
   - "nightly"
 
-    #dist: trusty
-sudo: required
-
-jdk:
-  - oraclejdk8
-
 addons:
   apt:
     packages:
