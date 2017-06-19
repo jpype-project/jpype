@@ -18,6 +18,7 @@ import _jpype
 from ._pykeywords import KEYWORDS
 
 
+
 _CLASSES = {}
 
 _SPECIAL_CONSTRUCTOR_KEY = "This is the special constructor key"
@@ -45,11 +46,26 @@ def _initialize():
     _jpype.setResource('JavaObject', _JavaObject)
     _jpype.setResource('GetClassMethod',_getClassFor)
     _jpype.setResource('SpecialConstructorKey',_SPECIAL_CONSTRUCTOR_KEY)
+    registerClassCustomizer(_JavaLangClassCustomizer())
 
 
 def registerClassCustomizer(c):
     _CUSTOMIZERS.append(c)
 
+class JClassCustomizer(object):
+    def canCustomize(self, name):
+        """ Deterimine if this class can be customized by this customizer.
+
+        Return true if customize should be called, false otherwise."""
+        pass
+
+    def customize(self, name, jc, bases, members=None, fields=None, **kwargs):
+        """ Customize the class.  
+
+        Should be able to handle keyword arguments to support changes in customizers.
+        """
+        pass
+    
 
 def JClass(name):
     jc = _jpype.findClass(name)
@@ -204,7 +220,7 @@ class _JavaClass(type):
             bases.append(_getClassFor(ic))
 
         if len(bases) == 0:
-            bases.append(_JAVAOBJECT)
+            bases.append(_JavaObject)
 
         # add the fields
         fields = jc.getClassFields()
@@ -237,9 +253,15 @@ class _JavaClass(type):
 
             members[mname] = jm
 
+        static_fields['mro'] = _mro_override_topsort
+        static_fields['class_']= property(lambda self: _JAVACLASS.forName(name,True, JClass('java.lang.ClassLoader').getSystemClassLoader()), None)
+
         for i in _CUSTOMIZERS:
             if i.canCustomize(name, jc):
-                i.customize(name, jc, bases, members)
+                if isinstance(i, JClassCustomizer):
+                    i.customize(name, jc, bases, members=members, fields=static_fields)
+                else:
+                    i.customize(name, jc, bases, members)
 
         # Prepare the meta-metaclass
         meta_bases = []
@@ -249,12 +271,25 @@ class _JavaClass(type):
             else:
                 meta_bases.append(i.__metaclass__)
 
-        static_fields['mro'] = _mro_override_topsort
-        static_fields['class_']= property(lambda self: _JAVACLASS.forName(name,True, JClass('java.lang.ClassLoader').getSystemClassLoader()), None)
-
         metaclass = type.__new__(_MetaClassForMroOverride, name + "$$Static", tuple(meta_bases),
                                  static_fields)
         members['__metaclass__'] = metaclass
         result = type.__new__(metaclass, name, tuple(bases), members)
 
         return result
+
+# Patch for forName
+def _jclass_forName(self, *args):
+    if len(args)==1 and isinstance(args[0],str):
+        return self._forName(args[0], True, JClass('java.lang.ClassLoader').getSystemClassLoader())
+    else:
+        return self._forName(*args)
+
+class _JavaLangClassCustomizer(JClassCustomizer):
+    def canCustomize(self, name, jc):
+        return name == 'java.lang.Class'
+
+    def customize(self, name, jc, bases, members, fields, **kwargs):
+        members['_forName']=members['forName']
+        del members['forName']
+        fields['forName']= _jclass_forName
