@@ -45,10 +45,11 @@ matrix:
       env: NUMPY=""
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
+  
+before_install:    
+  - sudo update-java-alternatives -s java-8-oracle
 
 install:
-  - ls /usr/lib/jvm/
-  - update-java-alternatives -l
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
