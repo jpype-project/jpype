@@ -15,7 +15,7 @@ python:
   - "nightly"
 
   #dist: trusty
-sudo: false
+sudo: required
 
 jdk:
   - oraclejdk8
@@ -52,5 +52,6 @@ install:
   - ant -f test/build.xml
 
 script:
+  - jdk_switcher use oraclejdk8
   - python -c "import jpype"
   - python test/testsuite.py
