@@ -48,7 +48,7 @@ class TestJpypeModule(unittest.TestCase):
             expect=c[1]
             if expect==None:
                 method(*args)
-                print("PASS: %s => None "%n)
+                #print("PASS: %s => None "%n)
             else:
                 self.assertRaises(expect, method, *args)
 
