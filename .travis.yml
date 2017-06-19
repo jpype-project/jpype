@@ -14,7 +14,7 @@ python:
   - 'pypy3'
   - "nightly"
 
-dist: trusty
+  #dist: trusty
 sudo: false
 
 addons:
