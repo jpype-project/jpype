@@ -25,17 +25,13 @@ _SPECIAL_CONSTRUCTOR_KEY = "This is the special constructor key"
 _JAVAOBJECT = None
 _JAVATHROWABLE = None
 _COMPARABLE = None
+_RUNTIMEEXCEPTION = None
 
 _CUSTOMIZERS = []
 
 _COMPARABLE_METHODS = {
         "__cmp__": lambda self, o: self.compareTo(o)
         }
-
-class _NotLoaded(object):
-    def PYEXC(self,s):
-        return RuntimeError("JVM not loaded: %s"%s)
-_RUNTIMEEXCEPTION = _NotLoaded()
 
 def _initialize():
     global _COMPARABLE, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
