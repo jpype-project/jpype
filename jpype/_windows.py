@@ -16,10 +16,6 @@
 #*****************************************************************************
 
 from . import _jvmfinder
-try:
-    import _winreg as winreg
-except ImportError:
-    import winreg  # in Py3, winreg has been moved
 
 # ------------------------------------------------------------------------------
 
@@ -38,8 +34,27 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         self._libfile = "jvm.dll"
 
         # Search methods
-        self._methods = (self._get_from_java_home,
-                         self._get_from_registry)
+        winreg = self._get_winreg()
+        if winreg!=None:
+            self._methods = (self._get_from_java_home, self._get_from_registry)
+        else:
+            self._methods = (self._get_from_java_home, )
+
+    def _get_winreg(self):
+        # Py2
+        try:
+            import _winreg as winreg
+            return winreg
+        except ImportError:
+            pass
+
+        # in Py3, winreg has been moved
+        try:
+            import winreg
+            return winreg
+        except ImportError:
+            pass
+        return None
 
 
     def _get_from_registry(self):
@@ -49,7 +64,12 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         :return: The path found in the registry, or None
         """
-        try :
+        try:
+            # Winreg is an optional package in cygwin
+            winreg = self._get_winreg()
+            if not winreg:
+                return None
+
             jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
                                 r"SOFTWARE\JavaSoft\Java Runtime Environment")
             cv = winreg.QueryValueEx(jreKey, "CurrentVersion")

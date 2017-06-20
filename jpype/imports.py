@@ -252,7 +252,7 @@ class _JImportLoader:
     def create_module(self, spec):
         global _initialized
         if not _initialized:
-            raise RuntimeError("Attempt to create modules without jvm")
+            raise ImportError("Attempt to create java modules without jvm")
 
         # Handle creating the java name based on the path
         parts = spec.name.split('.')

@@ -72,6 +72,14 @@ else:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+    platform_specific['extra_link_args'] = ['/DEBUG']
+    jni_md_platform = 'win32'
+ 
+elif sys.platform == 'cygwin' :
+    platform_specific['libraries'] = ['Advapi32']
+    platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_link_args'] = ['-g3']
     jni_md_platform = 'win32'
 
 elif sys.platform == 'darwin':
@@ -87,6 +95,7 @@ elif sys.platform.startswith('freebsd'):
     jni_md_platform = 'freebsd'
 
 else:
+    jni_md_platform = None
     warnings.warn("Your platform is not being handled explicitly."
                   " It may work or not!", UserWarning)
 

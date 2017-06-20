@@ -30,11 +30,12 @@ class JPypeTestCase(unittest.TestCase) :
     def setUp(self):
         if not jpype.isJVMStarted():
             root = path.dirname(path.abspath(path.dirname(__file__)))
+            jpype.addClassPath(path.join(root, 'classes'))
             jvm_path = jpype.getDefaultJVMPath()
             logger = logging.getLogger(__name__)
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
-            classpath_arg %= path.join(root, 'classes')
+            classpath_arg %= jpype.getClassPath()
             jpype.startJVM(jvm_path, "-ea",
                            # "-Xcheck:jni",
                            "-Xmx256M", "-Xms16M", classpath_arg)
@@ -44,3 +45,4 @@ class JPypeTestCase(unittest.TestCase) :
 
     def tearDown(self):
         pass
+
