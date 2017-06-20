@@ -52,7 +52,6 @@ class TestJpypeModule(unittest.TestCase):
             else:
                 self.assertRaises(expect, method, *args)
 
-
 # This is a special test suite that checks to see that every entry point to the private
 # module will safely fail rather than segfaulting.  It can't be run with other tests
 # as the jvm must not be loaded.
