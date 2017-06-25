@@ -18,7 +18,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Python integer primitives will implicitly match java float and double as per
     Java specification.
 
--  **0.6.2 - 2017-01-13**
+  - Added support for try with resources for java.lang.Closeable.  
+    Use python "with MyJavaResource() as resource:" statement
+    to automatically close a resource at the end of a block.
+
+- **0.6.2 - 2017-01-13**
 
   - Fix JVM location for OSX.
   - Fix a method overload bug.

@@ -15,12 +15,25 @@
 #
 #*****************************************************************************
 from . import _jclass
+from . import JavaException
+import sys as _sys
+
+if _sys.version > '3':
+    pass
+
+def _closeableExit(self,exception_type, exception_value, traceback):
+    info = _sys.exc_info()
+    try:
+        self.close()
+    except JavaException as jex:
+        # Eat the second exception if we are already handling one.
+        if (info[0]==None):
+            raise jex
+        pass
 
 def _closeableEnter(self):
     return self
 
-def _closeableExit(self,exception_type, exception_value, traceback):
-    self.close()
 
 class CloseableCustomizer(object):
     _METHODS = {
