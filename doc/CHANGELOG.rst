@@ -4,6 +4,12 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+
+  - Java objects and arrays will not accept setattr unless the 
+    attribute corresponds to a java method or field whith 
+    the exception of private attributes that begin with 
+    underscore.
+
 - **0.6.2 - 2017-01-13**
 
   - Fix JVM location for OSX.
