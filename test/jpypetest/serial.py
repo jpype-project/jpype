@@ -16,6 +16,7 @@
 #*****************************************************************************
 from jpype import JException, java, JavaException, JProxy, JClass
 import os
+import sys
 import tempfile
 import traceback
 from . import common
@@ -31,7 +32,11 @@ class SerializationTestCase(common.JPypeTestCase):
 
     def testSerialize(self):
         o = JClass("jpype.serial.SerializationTest")()
-        fos = java.io.FileOutputStream(self.tempname)
+        tmp = self.tempname
+        if sys.platform=='cygwin':
+            from jpype import _posix2win
+            tmp = _posix2win(tmp)
+        fos = java.io.FileOutputStream(tmp)
         oos = java.io.ObjectOutputStream(fos)
         oos.writeObject(o)
         oos.flush()
