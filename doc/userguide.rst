@@ -309,9 +309,9 @@ Java **String** is converted to Python **unicode**.
 
 Java **arrays** are converted to **JArray**.
 
-Java **boxed** types are converted to extensions of python primitives on return.  
+Java **boxed** types are converted to extensions of python primitives on return.
 
-All other Java objects are converted to **JavaObject**s.
+All other Java objects are converted to **JavaObjects**.
 
 Java **Class** is converted to **JavaClass**.
 
@@ -321,13 +321,13 @@ Boxed types
 ~~~~~~~~~~~
 
 Both python primitives and Boxed types are immutable.  Thus boxed types are
-inherited from the python primitives.  The means that a boxed type regardless
+inherited from the python primitives.  This means that a boxed type regardless
 of whether produced as a return or created explicitely are treated as python
-types.  This means that they will obey all the conversion rules corresponding
-to a python type.  In addition, they will produce an exact match with their
-corresponding java type.  The type conversion for this is somewhat looser than
-java.  While java provides automatic unboxing of a Integer to a double, jpype
-can implicitly convert Integer to a Double.
+types.  They will obey all the conversion rules corresponding
+to a python type as implicit matches.  In addition, they will produce an exact 
+match with their corresponding java type.  The type conversion for this is 
+somewhat looser than java.  While java provides automatic unboxing of a Integer 
+to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
 JProxy
 ------
