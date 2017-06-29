@@ -82,6 +82,15 @@ class _JavaArrayClass(object):
             j = _jpype.getArrayLength(self.__javaobject__)
         _jpype.setArraySlice(self.__javaobject__, i, j, v)
 
+    def __setattr__(self, attr, value):
+        if attr.startswith('_') \
+               or callable(value) \
+               or isinstance(getattr(self.__class__, attr), property):
+            object.__setattr__(self, attr, value)
+        else:
+            raise AttributeError("%s does not have field %s"%(self.__name__, attr), self)
+
+
 def _jarrayInit(self, *args):
     if len(args) == 2 and args[0] == _jclass._SPECIAL_CONSTRUCTOR_KEY:
         _JavaArrayClass.__init__(self, args[1])

@@ -5,6 +5,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 
+  - Java objects and arrays will not accept setattr unless the 
+    attribute corresponds to a java method or field whith 
+    the exception of private attributes that begin with 
+    underscore.
+
   - Added support for automatic conversion of boxed types.  
      - Boxed types automatically convert to python primitives.
      - Boxed types automatically convert to java primitives when resolving functions.
