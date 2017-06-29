@@ -227,8 +227,8 @@ types. These levels are:
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
 Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array     Object      Class   
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
-    int       I [1]_     I [1]_       X          I                             X [10]_                                               
-   long       I [1]_     I [1]_     I [1]_       X                                                                                  
+    int       I [1]_     I [1]_       X          I        I [11]_    I [11]_    X [10]_                                               
+   long       I [1]_     I [1]_     I [1]_       X        I [11]_    I [11]_                                                                   
    float                                                  I [1]_       X                                                            
  sequence                                                                                                                           
 dictionary                                                                                                                          
@@ -247,6 +247,7 @@ dictionary
   JObject                                                                                                       I/X [6]_    I/X [7]_
 JavaObject                                                                                                                  I [8]_
  JavaClass                                                                                                                  I [9]_        X     
+ "Boxed"      I [12]_    I [12]_    I [12]_     I [12]_   I [12]_    I [12]_    I [12]_                                     I/X [8]_ 
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
 
 .. [1] Conversion will occur if the Python value fits in the Java
@@ -279,6 +280,15 @@ JavaObject                                                                      
 .. [10] Only the values True and False are implicitly converted to
         booleans.
 
+.. [11] Java defines conversions from integer types to floating point 
+        types as implicit conversion.  Java's conversion rules are based
+        on the range and can be lossy.
+        See (http://stackoverflow.com/questions/11908429/java-allows-implicit-conversion-of-int-to-float-why)
+
+.. [12] Java boxed types are mapped to python primitives, but will 
+        produce an implicit conversion even if the python type is an exact 
+        match.  This is to allow for resolution between methods 
+        that take both a java primitve and a java boxed type.
 
 Converting from Java to Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -299,12 +309,25 @@ Java **String** is converted to Python **unicode**.
 
 Java **arrays** are converted to **JArray**.
 
-All other Java objects are converted to **JavaObject**s.
+Java **boxed** types are converted to extensions of python primitives on return.
+
+All other Java objects are converted to **JavaObjects**.
 
 Java **Class** is converted to **JavaClass**.
 
 Java array **Class** is converted to **JavaArrayClass**.
 
+Boxed types
+~~~~~~~~~~~
+
+Both python primitives and Boxed types are immutable.  Thus boxed types are
+inherited from the python primitives.  This means that a boxed type regardless
+of whether produced as a return or created explicitely are treated as python
+types.  They will obey all the conversion rules corresponding
+to a python type as implicit matches.  In addition, they will produce an exact 
+match with their corresponding java type.  The type conversion for this is 
+somewhat looser than java.  While java provides automatic unboxing of a Integer 
+to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
 JProxy
 ------

@@ -20,11 +20,16 @@ from ._jarray import *
 from ._jwrapper import *
 from ._jproxy import *
 from ._jexception import *
+from ._jboxed import *
 from ._core import *
 from ._gui import *
 from ._classpath import *
 
 from . import JClassUtil
+
+# Support for isinstance(obj, )
+from ._jclass import _JavaObject as JavaObject
+from ._jclass import _JavaClass as JavaClass
 
 __version_info__ = (0, 6, 2)
 __version__ = ".".join(str(i) for i in __version_info__)

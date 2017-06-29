@@ -139,50 +139,50 @@ int JPJavaEnv::DestroyJavaVM()
 
 void JPJavaEnv::DeleteLocalRef(jobject obj)
 {
-	TRACE_IN("JPJavaEnv::DeleteLocalRef");
-	TRACE1((long)obj);
+	MTRACE_IN("JPJavaEnv::DeleteLocalRef");
+	MTRACE1((long)obj);
 	JNIEnv* env = getJNIEnv();
 	if (env != NULL)
 	{
 		env->functions->DeleteLocalRef(env, obj);
 	}
-	TRACE_OUT;
+	MTRACE_OUT;
 }
 
 void JPJavaEnv::DeleteGlobalRef(jobject obj)
 {
-	TRACE_IN("JPJavaEnv::DeleteGlobalRef");
-	TRACE1((long)obj);
+	MTRACE_IN("JPJavaEnv::DeleteGlobalRef");
+	MTRACE1((long)obj);
 	JNIEnv* env = getJNIEnv();
 	if (env != NULL)
 	{
 		env->functions->DeleteGlobalRef(env, obj);
 	}
-	TRACE_OUT;
+	MTRACE_OUT;
 }
 
 jobject JPJavaEnv::NewLocalRef(jobject a0)
 {
-	TRACE_IN("JPJavaEnv::NewLocalRef");
-	TRACE1((long)a0);
+	MTRACE_IN("JPJavaEnv::NewLocalRef");
+	MTRACE1((long)a0);
 	jobject res;
 	JNIEnv* env = getJNIEnv();
 	res = env->functions->NewLocalRef(env, a0);
-	TRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
+	MTRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
 	return res;
-	TRACE_OUT;
+	MTRACE_OUT;
 }
 
 jobject JPJavaEnv::NewGlobalRef(jobject a0)
 {
-	TRACE_IN("JPJavaEnv::NewGlobalRef");
-	TRACE1((long)a0);
+	MTRACE_IN("JPJavaEnv::NewGlobalRef");
+	MTRACE1((long)a0);
 	jobject res;
 	JNIEnv* env = getJNIEnv();
 	res = env->functions->NewGlobalRef(env, a0);
-	TRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
+	MTRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
 	return res;
-	TRACE_OUT;
+	MTRACE_OUT;
 }
 
 
