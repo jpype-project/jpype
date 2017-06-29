@@ -32,6 +32,7 @@ def _initialize():
 class _JWrapper(object):
     def __init__(self, v):
         if v is not None:
+            self._pyv = v
             self._value = _jpype.convertToJValue(self.typeName, v)
         else:
             self._value = None

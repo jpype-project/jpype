@@ -4,18 +4,25 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
-- **0.6.2 - 2017-01-13**
+
+  - Added support for automatic conversion of boxed types.  
+     - Boxed types automatically convert to python primitives.
+     - Boxed types automatically convert to java primitives when resolving functions.
+     - Functions taking boxed or primitives still resolve based on closest match.
+
+  - Python integer primitives will implicitly match java float and double as per
+    Java specification.
+
+-  **0.6.2 - 2017-01-13**
 
   - Fix JVM location for OSX.
   - Fix a method overload bug.
   - Add support for synthetic methods 
-  
+ 
 - **0.6.1 - 2015-08-05**
 
   - Fix proxy with arguments issue.
-
   - Fix Python 3 support for Windows failing to import winreg.
-
   - Fix non matching overloads on iterating java collections.
 
 - **0.6.0 - 2015-04-13**

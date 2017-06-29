@@ -235,6 +235,10 @@ EMatchType JPIntType::canConvertToJava(HostRef* obj)
 
 	if (JPEnv::getHost()->isInt(obj))
 	{
+		if (JPEnv::getHost()->isObject(obj))
+		{
+			return _implicit;
+		}
 		return _exact;
 	}
 
@@ -322,6 +326,10 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 
 	if (JPEnv::getHost()->isLong(obj))
 	{
+		if (JPEnv::getHost()->isObject(obj))
+		{
+			return _implicit;
+		}
 		return _exact;
 	}
 
@@ -333,8 +341,6 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 			return _exact;
 		}
 	}
-
-
 
 	return _none;
 }
@@ -390,6 +396,10 @@ EMatchType JPFloatType::canConvertToJava(HostRef* obj)
 
 	if (JPEnv::getHost()->isFloat(obj))
 	{
+		if (JPEnv::getHost()->isObject(obj))
+		{
+			return _implicit;
+		}
 		return _implicit;
 	}
 
@@ -402,6 +412,11 @@ EMatchType JPFloatType::canConvertToJava(HostRef* obj)
 		}
 	}
 
+	// Java allows conversion to any type with a longer range even if lossy
+	if (JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj))
+	{
+		return _implicit;
+	}
 
 	return _none;
 }
@@ -412,6 +427,14 @@ jvalue JPFloatType::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
 		return JPEnv::getHost()->getWrapperValue(obj);
+	}
+	else if (JPEnv::getHost()->isInt(obj))
+	{
+		res.d = JPEnv::getHost()->intAsInt(obj);;
+	}
+	else if (JPEnv::getHost()->isLong(obj))
+	{
+		res.d = JPEnv::getHost()->longAsLong(obj);;
 	}
 	else
 	{
@@ -461,6 +484,10 @@ EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 
 	if (JPEnv::getHost()->isFloat(obj))
 	{
+	  if (JPEnv::getHost()->isObject(obj))
+		{
+			return _implicit;
+		}
 		return _exact;
 	}
 
@@ -473,6 +500,12 @@ EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 		}
 	}
 
+	// Java allows conversion to any type with a longer range even if lossy
+	if (JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj))
+	{
+		return _implicit;
+	}
+
 	return _none;
 }
 
@@ -482,6 +515,14 @@ jvalue JPDoubleType::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
 		return JPEnv::getHost()->getWrapperValue(obj);
+	}
+	else if (JPEnv::getHost()->isInt(obj))
+	{
+		res.d = JPEnv::getHost()->intAsInt(obj);;
+	}
+	else if (JPEnv::getHost()->isLong(obj))
+	{
+		res.d = JPEnv::getHost()->longAsLong(obj);;
 	}
 	else
 	{
@@ -537,8 +578,6 @@ EMatchType JPCharType::canConvertToJava(HostRef* obj)
 			return _exact;
 		}
 	}
-
-
 
 	return _none;
 }

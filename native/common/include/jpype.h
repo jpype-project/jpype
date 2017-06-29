@@ -19,18 +19,44 @@
 
 // Define this to generate the trace calls
 
-// Define this to make the trace calls do their output. If you change this only the core.cpp needs to be recompiled
+// Define this to make the trace calls do their output. 
 //#define TRACING
+
+// Define this to make the trace calls for referencing.
+//#define MTRACING
+
 #ifdef TRACING
-#define JPYPE_TRACING_INTERNAL
+  #define JPYPE_TRACING_INTERNAL
 #endif
 #define JPYPE_TRACING_OUTPUT cerr
 
-#define TRACE_IN(n) JPypeTracer _trace(n); try {
-#define TRACE_OUT } catch(...) { _trace.gotError(); throw; }
-#define TRACE1(m) _trace.trace(m)
-#define TRACE2(m,n) _trace.trace(m,n)
-#define TRACE3(m,n,o) _trace.trace(m,n,o)
+#ifdef TRACING
+  #define TRACE_IN(n) JPypeTracer _trace(n); try {
+  #define TRACE_OUT } catch(...) { _trace.gotError(); throw; }
+  #define TRACE1(m) _trace.trace(m)
+  #define TRACE2(m,n) _trace.trace(m,n)
+  #define TRACE3(m,n,o) _trace.trace(m,n,o)
+#else
+  #define TRACE_IN(n)
+  #define TRACE_OUT
+  #define TRACE1(m)
+  #define TRACE2(m,n)
+  #define TRACE3(m,n,o)
+#endif
+
+#ifdef MTRACING
+  #define MTRACE_IN(n) JPypeTracer _trace(n); try {
+  #define MTRACE_OUT } catch(...) { _trace.gotError(); throw; }
+  #define MTRACE1(m) _trace.trace(m)
+  #define MTRACE2(m,n) _trace.trace(m,n)
+  #define MTRACE3(m,n,o) _trace.trace(m,n,o)
+#else
+  #define MTRACE_IN(n)
+  #define MTRACE_OUT
+  #define MTRACE1(m)
+  #define MTRACE2(m,n)
+  #define MTRACE3(m,n,o)
+#endif
 
 #ifdef WIN32
 	#define JPYPE_WIN32

@@ -33,14 +33,14 @@ _COMPARABLE_METHODS = {
         "__cmp__": lambda self, o: self.compareTo(o)
         }
 
-
 def _initialize():
     global _COMPARABLE, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
 
     _JAVAOBJECT = JClass("java.lang.Object")
     _JAVATHROWABLE = JClass("java.lang.Throwable")
     _RUNTIMEEXCEPTION = JClass("java.lang.RuntimeException")
-    _jpype.setJavaLangObjectClass(_JAVAOBJECT)
+#    _jpype.setJavaLangObjectClass(_JAVAOBJECT)
+    _jpype.setJavaLangObjectClass(_JavaObject)
     _jpype.setGetClassMethod(_getClassFor)
     _jpype.setSpecialConstructorKey(_SPECIAL_CONSTRUCTOR_KEY)
 
@@ -74,6 +74,13 @@ def _javaNew(self, *args):
 def _javaExceptionNew(self, *args):
     return Exception.__new__(self)
 
+
+def _isJavaCtor(args):
+    if len(args)==1 and isinstance(args[0], tuple) \
+            and args[0][0] is _SPECIAL_CONSTRUCTOR_KEY:
+        return True
+    return False
+ 
 
 def _javaInit(self, *args):
     object.__init__(self)
@@ -121,7 +128,20 @@ class _MetaClassForMroOverride(type):
     def mro(cls):
         return _mro_override_topsort(cls)
 
+
+class _JavaObject(object):
+    """ Base class for all Java Objects. 
+
+        Use isinstance(obj, jpype.JavaObject) to test for a object.
+    """
+    pass
+
+
 class _JavaClass(type):
+    """ Base class for all Java Class types. 
+
+        Use isinstance(obj, jpype.JavaClass) to test for a class.
+    """
     def __new__(cls, jc):
         bases = []
         name = jc.getName()
@@ -137,7 +157,9 @@ class _JavaClass(type):
                 "__getattribute__": _javaGetAttr,
                 }
 
-        if name == 'java.lang.Object' or jc.isPrimitive():
+        if name == 'java.lang.Object':
+            bases.append(_JavaObject)
+        elif jc.isPrimitive():
             bases.append(object)
         elif not jc.isInterface():
             bjc = jc.getBaseClass()
@@ -192,12 +214,10 @@ class _JavaClass(type):
         # Prepare the meta-metaclass
         meta_bases = []
         for i in bases:
-            if i is object:
+            if i is object or i is _JavaObject:
                 meta_bases.append(cls)
             else:
                 meta_bases.append(i.__metaclass__)
-
-
 
         static_fields['mro'] = _mro_override_topsort
 
