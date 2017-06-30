@@ -81,12 +81,12 @@ JPClass* findClass(const JPTypeName& name)
 	cleaner.addLocal(cls);
 
 	JPClass* res = new JPClass(name, cls);
-	
+	// Finish loading it
+	res->postLoad();
 	// Register it here before we do anything else
 	javaClassMap[name.getSimpleName()] = res;
-	
-	// Finish loading it
-	res->postLoad();		
+
+
 
 	return res;
 	TRACE_OUT;
