@@ -161,11 +161,6 @@ EMatchType matchVars(vector<HostRef*>& arg, size_t start, JPType* vartype)
 	{
 		HostRef* obj = arg[i];
 		EMatchType match = type->canConvertToJava(obj);
-//		if (JPEnv::getHost()->isObject(obj))
-//		{
-//			JPObject* o = JPEnv::getHost()->asObject(obj);
-//			JPClass* oc = o->getClass();
-//		}
 
 		if (match < _implicit)
 		{

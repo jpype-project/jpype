@@ -222,7 +222,7 @@ JPMethod* PythonHostEnvironment::asMethod(HostRef* ref)
 bool PythonHostEnvironment::isObject(HostRef* ref)
 {
 	PyObject* obj = UNWRAP(ref);
-  return JPyObject::isInstance(obj, m_PythonJavaObject);
+	return JPyObject::isInstance(obj, m_PythonJavaObject);
 }
 
 JPObject* PythonHostEnvironment::asObject(HostRef* m)

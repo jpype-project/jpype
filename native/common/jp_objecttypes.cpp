@@ -207,9 +207,7 @@ jobject JPObjectType::convertToJavaObject(HostRef* obj)
 
 HostRef* JPObjectType::asHostObjectFromObject(jvalue val)
 {
-	TRACE_IN("JPObjectType::asHostObjectFromObject");
 	return asHostObject(val);
-	TRACE_OUT;
 }
 
 HostRef* JPObjectType::convertToDirectBuffer(HostRef* src)
@@ -360,80 +358,5 @@ jvalue JPStringType::convertToJava(HostRef* obj)
 jclass JPStringType::getClass() const
 {
 	return (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_StringClass);
-}
-
-//-------------------------------------------------------------------------------
-
-HostRef* JPClassType::asHostObject(jvalue val) 
-{
-	TRACE_IN("JPClassType::asHostObject");
-	jclass lclass = (jclass)val.l;
-	
-	JPTypeName name = JPJni::getName(lclass);
-	
-	JPClass* res = JPTypeManager::findClass(name);
-
-	
-	return JPEnv::getHost()->newClass(res);
-	TRACE_OUT;
-}
-
-EMatchType JPClassType::canConvertToJava(HostRef* obj)
-{
-	JPCleaner cleaner;
-
-	if (JPEnv::getHost()->isNone(obj))
-	{
-		return _implicit;
-	}
-
-	if (JPEnv::getHost()->isClass(obj))
-	{
-		return _exact;
-	}
-
-	if (JPEnv::getHost()->isWrapper(obj))
-	{
-		JPTypeName name = JPEnv::getHost()->getWrapperTypeName(obj);
-
-		if (name.getType() == JPTypeName::_class)
-		{
-			return _exact;
-		}
-	}
-
-	return _none;
-}
-
-jvalue JPClassType::convertToJava(HostRef* obj)
-{
-	JPCleaner cleaner;
-
-	jvalue v;
-	if (JPEnv::getHost()->isNone(obj))
-	{
-		v.l = NULL;
-		return v;
-	}
-	
-	else if (JPEnv::getHost()->isWrapper(obj))
-	{
-		v = JPEnv::getHost()->getWrapperValue(obj);
-	}
-	else
-	{
-		JPClass* w = JPEnv::getHost()->asClass(obj);
-
-		jclass lr = w->getClass();
-
-		v.l = lr;
-	}
-
-	return v;		
-}
-
-jclass JPClassType::getClass() const
-{
-	return (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_ClassClass);
 }
 

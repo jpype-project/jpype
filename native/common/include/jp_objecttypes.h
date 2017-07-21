@@ -102,24 +102,4 @@ public : // JPType implementation
 	virtual jvalue     convertToJava(HostRef* obj);
 };
 
-class JPClassType : public JPObjectType
-{
-public :
-	JPClassType() : JPObjectType(JPTypeName::_class, JPTypeName::fromSimple("java.lang.Class"))
-	{
-	}
-	
-	virtual ~JPClassType()
-	{
-	}
-
-protected :
-	virtual jclass    getClass() const;
-
-public : // JPType implementation
-	virtual HostRef*  asHostObject(jvalue val);
-	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
-};
-
 #endif // _JPPOBJECTTYPE_H_

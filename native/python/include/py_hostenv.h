@@ -40,12 +40,6 @@ public :
 		m_PythonJavaClass = obj;
 	}
 
-	PyObject* getPythoneJavaClass()
-	{
-		return m_PythonJavaClass;
-	}
-
-
 	void setJavaArrayClass(PyObject* obj)
 	{
 		m_JavaArrayClass = obj;

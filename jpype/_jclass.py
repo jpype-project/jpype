@@ -156,12 +156,12 @@ class _JavaObject(object):
 #       inherites from _JavaClass
 #     Foo.__javaclass__ - private jpype capsule holding C resources
 #     Foo.__class__ - python class type for class (will be Foo$$Static)
+#     Foo.class_ - java.lang.Class<Foo>
 #
 #     Foo() - instance of Foo which wraps a java object
 #       inherits from _JavaObject
 #     Foo().__class__ - ptthon class type for object (will be Foo)
-#     Foo().getClass() - Should be java.lang.Class<Foo> but is currently
-#       a reference to Python class Foo
+#     Foo().getClass() - java.lang.Class<Foo> 
 #
 
 
