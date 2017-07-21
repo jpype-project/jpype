@@ -501,11 +501,7 @@ bool JPyType::check(PyObject* obj)
 
 bool JPyType::isSubclass(PyObject* o1, PyObject* o2)
 {
-	if (PyType_IsSubtype((PyTypeObject*)o1, (PyTypeObject*)o2))
-	{
-		return true;
-	}
-	return false;
+	return PyType_IsSubtype((PyTypeObject*)o1, (PyTypeObject*)o2);
 }
 
 void JPyHelper::dumpSequenceRefs(PyObject* seq, const char* comment)

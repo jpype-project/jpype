@@ -17,55 +17,6 @@
 
 #include <jpype_python.h>  
 
-PyObject* JPypeJavaClass::setJavaLangObjectClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setJavaLangObjectClass(t);
-
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-PyObject* JPypeJavaClass::setGetClassMethod(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setGetJavaClassMethod(t);
-
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-
-PyObject* JPypeJavaClass::setSpecialConstructorKey(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setSpecialConstructorKey(t);
-
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
 PyObject* JPypeJavaClass::findClass(PyObject* obj, PyObject* args)
 {
 	TRACE_IN("JPypeModule::findClass");

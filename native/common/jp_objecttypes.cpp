@@ -207,7 +207,9 @@ jobject JPObjectType::convertToJavaObject(HostRef* obj)
 
 HostRef* JPObjectType::asHostObjectFromObject(jvalue val)
 {
+	TRACE_IN("JPObjectType::asHostObjectFromObject");
 	return asHostObject(val);
+	TRACE_OUT;
 }
 
 HostRef* JPObjectType::convertToDirectBuffer(HostRef* src)
@@ -364,6 +366,7 @@ jclass JPStringType::getClass() const
 
 HostRef* JPClassType::asHostObject(jvalue val) 
 {
+	TRACE_IN("JPClassType::asHostObject");
 	jclass lclass = (jclass)val.l;
 	
 	JPTypeName name = JPJni::getName(lclass);
@@ -372,6 +375,7 @@ HostRef* JPClassType::asHostObject(jvalue val)
 
 	
 	return JPEnv::getHost()->newClass(res);
+	TRACE_OUT;
 }
 
 EMatchType JPClassType::canConvertToJava(HostRef* obj)

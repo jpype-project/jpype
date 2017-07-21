@@ -24,53 +24,6 @@
 #endif
 
 PythonHostEnvironment* hostEnv;
-
-PyObject* JPypeJavaWrapper::setWrapperClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setWrapperClass(t);
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-PyObject* JPypeJavaWrapper::setStringWrapperClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setStringWrapperClass(t);
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-
-PyObject* JPypeJavaProxy::setProxyClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setProxyClass(t);
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
 PyObject* convertToJValue(PyObject* self, PyObject* arg)
 {
 	if (! JPEnv::isInitialized())
@@ -149,21 +102,6 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 	return NULL;
 }
 
-static PyObject* setJavaExceptionClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setJavaExceptionClass(t);
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
 static PyMethodDef jpype_methods[] = 
 {  
   {"isStarted", (PyCFunction)&JPypeModule::isStarted, METH_NOARGS, ""},
@@ -171,6 +109,7 @@ static PyMethodDef jpype_methods[] =
   {"attach", &JPypeModule::attach, METH_VARARGS, ""},
   {"shutdown", (PyCFunction)&JPypeModule::shutdown, METH_NOARGS, ""},
   {"findClass", &JPypeJavaClass::findClass, METH_VARARGS, ""},
+  {"setResource", &JPypeModule::setResource, METH_VARARGS, ""},
 
   {"synchronized", &JPypeModule::synchronized, METH_VARARGS, ""},
   {"isThreadAttachedToJVM", (PyCFunction)&JPypeModule::isThreadAttached, METH_NOARGS, ""}, 
@@ -181,18 +120,7 @@ static PyMethodDef jpype_methods[] =
   {"startReferenceQueue", &JPypeModule::startReferenceQueue, METH_VARARGS, ""},
   {"stopReferenceQueue", (PyCFunction)&JPypeModule::stopReferenceQueue, METH_NOARGS, ""},
 
-  {"setJavaLangObjectClass",   &JPypeJavaClass::setJavaLangObjectClass, METH_VARARGS, ""},
-  {"setGetClassMethod",        &JPypeJavaClass::setGetClassMethod, METH_VARARGS, ""},
-  {"setSpecialConstructorKey", &JPypeJavaClass::setSpecialConstructorKey, METH_VARARGS, ""},
-  
-  {"setJavaArrayClass", &JPypeJavaArray::setJavaArrayClass, METH_VARARGS, ""},
-  {"setGetJavaArrayClassMethod", &JPypeJavaArray::setGetJavaArrayClassMethod, METH_VARARGS, ""},
-
-  {"setWrapperClass", &JPypeJavaWrapper::setWrapperClass, METH_VARARGS, ""},
-  {"setProxyClass", &JPypeJavaProxy::setProxyClass, METH_VARARGS, ""},
   {"createProxy", &JPypeJavaProxy::createProxy, METH_VARARGS, ""},
-  {"setStringWrapperClass", &JPypeJavaWrapper::setStringWrapperClass, METH_VARARGS, ""},
-
 
   {"convertToJValue", &convertToJValue, METH_VARARGS, ""},
 
@@ -203,8 +131,6 @@ static PyMethodDef jpype_methods[] =
   {"getArraySlice", &JPypeJavaArray::getArraySlice, METH_VARARGS, ""},
   {"setArraySlice", &JPypeJavaArray::setArraySlice, METH_VARARGS, ""},
   {"newArray", &JPypeJavaArray::newArray, METH_VARARGS, ""},
-
-  {"setJavaExceptionClass", &setJavaExceptionClass, METH_VARARGS, ""},
 
   {"convertToDirectBuffer", &JPypeJavaNio::convertToDirectBuffer, METH_VARARGS, ""},
 

@@ -182,7 +182,7 @@ jvalue JPArrayClass::convertToJavaVector(vector<HostRef*>& refs, size_t start, s
 	jvalue res;
 	res.l = array;
 		
-	for (int i = start; i < end ; i++)
+	for (size_t i = start; i < end ; i++)
 	{
 		m_ComponentType->setArrayItem(array, i-start, refs[i]);
 	}

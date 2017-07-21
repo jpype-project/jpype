@@ -16,6 +16,7 @@
 #*****************************************************************************
 import _jpype
 from . import _jclass
+from ._pykeywords import KEYWORDS
 
 _PROPERTY_ACCESSOR_PREFIX_LEN = 3
 
@@ -70,6 +71,12 @@ class PropertiesCustomizer(object) :
     def customize(self, class_name, jc, bases, members) :
         accessor_pairs = _extract_accessor_pairs(members)
         for attr_name, (getter, setter) in accessor_pairs.items():
+            # class is will be static to match Type.class in Java
+            if attr_name=='class':
+                continue
+            # Handle keyword conflicts
+            if attr_name in KEYWORDS:
+                attr_name += "_"
             if attr_name in members:
                 if not getter:
                     # add default getter if we

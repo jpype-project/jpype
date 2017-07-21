@@ -52,19 +52,16 @@ namespace JPypeModule
 	PyObject* stopReferenceQueue(PyObject* obj);
 
 	PyObject* setConvertStringObjects(PyObject* obj, PyObject* args);
+	PyObject* setResource(PyObject* obj, PyObject* args);
 }
 
 namespace JPypeJavaClass
 {
 	PyObject* findClass(PyObject* obj, PyObject* args);
-	PyObject* setJavaLangObjectClass(PyObject* self, PyObject* arg);
-	PyObject* setGetClassMethod(PyObject* self, PyObject* arg);
-	PyObject* setSpecialConstructorKey(PyObject* self, PyObject* arg);
 };
 
 namespace JPypeJavaProxy
 {
-	PyObject* setProxyClass(PyObject* self, PyObject* arg);
 	PyObject* createProxy(PyObject*, PyObject* arg);
 };
 
@@ -77,20 +74,12 @@ namespace JPypeJavaArray
 	PyObject* setArraySlice(PyObject* self, PyObject* arg);
 	PyObject* newArray(PyObject* self, PyObject* arg);
 	PyObject* setArrayItem(PyObject* self, PyObject* arg);
-	PyObject* setGetJavaArrayClassMethod(PyObject* self, PyObject* arg);
-	PyObject* setJavaArrayClass(PyObject* self, PyObject* arg);
 	PyObject* setArrayValues(PyObject* self, PyObject* arg);
 };
 
 namespace JPypeJavaNio
 {
 	PyObject* convertToDirectBuffer(PyObject* self, PyObject* arg);
-};
-
-namespace JPypeJavaWrapper
-{
-	PyObject* setWrapperClass(PyObject* self, PyObject* arg);
-	PyObject* setStringWrapperClass(PyObject* self, PyObject* arg);
 };
 
 namespace JPypeJavaException

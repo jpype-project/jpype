@@ -30,15 +30,21 @@ public :
 	}
 	
 public :
-	void setJavaLangObjectClass(PyObject* obj)
+	void setPythonJavaObject(PyObject* obj)
 	{
-		m_JavaLangObject = obj;
+		m_PythonJavaObject = obj;
 	}
 
-	PyObject* getJavaLangObjectClass()
+	void setPythonJavaClass(PyObject* obj)
 	{
-		return m_JavaLangObject;
+		m_PythonJavaClass = obj;
 	}
+
+	PyObject* getPythoneJavaClass()
+	{
+		return m_PythonJavaClass;
+	}
+
 
 	void setJavaArrayClass(PyObject* obj)
 	{
@@ -123,7 +129,8 @@ public :
 	PyObject* getJavaShadowClass(JPClass* jc);
 
 private :
-	PyObject* m_JavaLangObject;
+	PyObject* m_PythonJavaObject;
+	PyObject* m_PythonJavaClass;
 	PyObject* m_JavaArrayClass;
 	PyObject* m_WrapperClass;
 	PyObject* m_StringWrapperClass;

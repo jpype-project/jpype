@@ -211,7 +211,7 @@ HostRef* JPClass::getStaticAttribute(const string& name)
 
 HostRef* JPClass::asHostObject(jvalue obj)
 {
-	TRACE_IN("JPClass::asPyObject");
+	TRACE_IN("JPClass::asHostObject");
 	if (obj.l == NULL)
 	{
 		return JPEnv::getHost()->getNone();

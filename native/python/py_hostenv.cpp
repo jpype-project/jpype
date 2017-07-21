@@ -222,13 +222,7 @@ JPMethod* PythonHostEnvironment::asMethod(HostRef* ref)
 bool PythonHostEnvironment::isObject(HostRef* ref)
 {
 	PyObject* obj = UNWRAP(ref);
-
-	if (JPyObject::isInstance(obj, m_JavaLangObject))
-	{
-		return true;
-	}
-
-	return false;
+  return JPyObject::isInstance(obj, m_PythonJavaObject);
 }
 
 JPObject* PythonHostEnvironment::asObject(HostRef* m)
@@ -277,14 +271,7 @@ HostRef* PythonHostEnvironment::newObject(JPObject* obj)
 bool PythonHostEnvironment::isClass(HostRef* ref)
 {
 	PyObject* self = UNWRAP(ref);
-
-	if (! JPyType::check(self)) 
-	{
-		// If its not a type ... it can;t be a java type
-		return false;
-	}
-
-	return JPyType::isSubclass(self, m_JavaLangObject);
+	return JPyObject::isInstance(self, m_PythonJavaClass);
 }
 
 HostRef* PythonHostEnvironment::newClass(JPClass* m)
