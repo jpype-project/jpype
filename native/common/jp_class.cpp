@@ -285,6 +285,15 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 				return _explicit;
 			}
 		}
+
+		// Handle a Python class which wraps java class 
+		if (simpleName == "java.lang.Class")
+		{
+			if (JPEnv::getHost()->isClass(obj))
+			{
+				return _exact;
+			}
+		}
 	
 		if (simpleName == "java.lang.Object")
 		{
@@ -430,6 +439,13 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			JPTypeName name = JPTypeName::fromSimple("java.lang.String");
 			JPType* type = JPTypeManager::getType(name);
 			return type->convertToJava(obj);
+		}
+
+		if (simpleName == "java.lang.Class")
+		{
+			JPClass* w = JPEnv::getHost()->asClass(obj);
+		  jclass lr = w->getClass();
+		  res.l = lr;
 		}
 
 		if (simpleName == "java.lang.Object")

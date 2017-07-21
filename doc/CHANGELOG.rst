@@ -5,6 +5,17 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 
+  - Support of java.lang.Class<> 
+    - java.lang.Object().getClass() on Java objects returns a java.lang.Class 
+      rather than the Python class
+    - java.lang.Object().__class__ on Java objects returns the python class 
+      as do all python objects
+    - java.lang.Object.class_ maps to the java statement 'java.lang.Object.class' and
+      returns the java.lang.Class<java.lang.Object> 
+    - java.lang.Class supports reflection methods
+    - private fields and methods can be accessed via reflection
+    - annotations are avaiable via reflection
+
   - Java objects and arrays will not accept setattr unless the 
     attribute corresponds to a java method or field whith 
     the exception of private attributes that begin with 
