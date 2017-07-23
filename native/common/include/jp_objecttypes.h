@@ -75,7 +75,7 @@ public :
 	virtual bool isSubTypeOf(const JPType& other) const;
 
 protected :
-	virtual jclass    getClass() const = 0;
+	virtual jclass    getClass(JPCleaner& cleaner) const = 0;
 	
 private :
 	JPTypeName m_Type;
@@ -94,7 +94,7 @@ public :
 	}
 
 protected :
-	virtual jclass    getClass() const;
+	virtual jclass    getClass(JPCleaner& cleaner) const;
 
 public : // JPType implementation	
 	virtual HostRef*  asHostObject(jvalue val);

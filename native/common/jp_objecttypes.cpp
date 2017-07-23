@@ -116,10 +116,7 @@ void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj)
 jarray JPObjectType::newArrayInstance(int sz)
 {
 	JPCleaner cleaner;
-	
-	jclass c = getClass();
-	cleaner.addLocal(c);
-	
+	jclass c = getClass(cleaner);
 	return JPEnv::getJava()->NewObjectArray(sz, c, NULL);
 }
 
@@ -223,10 +220,8 @@ bool JPObjectType::isSubTypeOf(const JPType& other) const
 		return false;
 	}
 	JPCleaner cleaner;
-	jclass ourClass = getClass();
-	cleaner.addLocal(ourClass);
-	jclass otherClass = otherObjectType->getClass();
-	cleaner.addLocal(otherClass);
+	jclass ourClass = getClass(cleaner);
+	jclass otherClass = otherObjectType->getClass(cleaner);
 	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
 	bool otherIsSuperType = JPEnv::getJava()->IsAssignableFrom(ourClass, otherClass);
 	//std::cout << other.getName().getSimpleName() << " isSuperType of " << getName().getSimpleName() << " " << otherIsSuperType << std::endl;
@@ -299,7 +294,7 @@ EMatchType JPStringType::canConvertToJava(HostRef* obj)
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
 
-		JPClass* oc = o->getClass();
+		JPClass* oc = o->getClass(cleaner); // CHECK ME
 		if (oc->getName().getSimpleName() == "java.lang.String")
 		{
 			return _exact;
@@ -330,10 +325,10 @@ jvalue JPStringType::convertToJava(HostRef* obj)
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
 
-		JPClass* oc = o->getClass();
+		JPClass* oc = o->getClass(cleaner); // CHECK ME
 		if (oc->getName().getSimpleName() == "java.lang.String")
 		{
-			v.l = o->getObject();
+			v.l = o->getObject(cleaner); // CHECK ME
 			return v;
 		}
 	}
@@ -355,8 +350,10 @@ jvalue JPStringType::convertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jclass JPStringType::getClass() const
+jclass JPStringType::getClass(JPCleaner& cleaner) const
 {
-	return (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_StringClass);
+	jclass obj = (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_StringClass);
+	cleaner.addGlobal(obj);
+	return obj;
 }
 

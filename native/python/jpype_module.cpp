@@ -162,26 +162,22 @@ PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 		if (desc == "JPObject")
 		{
 			JPObject* jpo = (JPObject*)JPyCObject::asVoidPtr(o);
-			obj = jpo->getObject();
-			cleaner.addLocal(obj);
+			obj = jpo->getObject(cleaner);
 		}
 		else if (desc == "JPClass")
 		{
 			JPClass* jpo = (JPClass*)JPyCObject::asVoidPtr(o);
-			obj = jpo->getClass();
-			cleaner.addLocal(obj);
+			obj = jpo->getClass(cleaner);
 		}
 		else if (desc == "JPArray")
 		{
 			JPArray* jpo = (JPArray*)JPyCObject::asVoidPtr(o);
-			obj = jpo->getObject();
-			cleaner.addLocal(obj);
+			obj = jpo->getObject(cleaner);
 		}
 		else if (desc == "JPArrayClass")
 		{
 			JPArrayClass* jpo = (JPArrayClass*)JPyCObject::asVoidPtr(o);
-			obj = jpo->getClass();
-			cleaner.addLocal(obj);
+			obj = jpo->getClass(cleaner);
 		}
 		else if (hostEnv->isWrapper(o) && hostEnv->getWrapperTypeName(o).isObjectType())
 		{

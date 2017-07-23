@@ -244,7 +244,7 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
-		JPClass* oc = o->getClass();
+		JPClass* oc = o->getClass(cleaner); // CHECK ME
 		TRACE2("Match name", oc->m_Name.getSimpleName());
 
 		if (oc == this)
@@ -385,8 +385,7 @@ jvalue JPClass::buildObjectWrapper(HostRef* obj)
 	args.push_back(obj);
 
 	JPObject* pobj = newInstance(args);
-
-	res.l = pobj->getObject();
+	res.l = pobj->getObject(cleaner); // CHECK ME
 	delete pobj;
 
 	return res;
@@ -411,7 +410,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* ref = JPEnv::getHost()->asObject(obj);
-		res.l = ref->getObject();
+		res.l = ref->getObject(cleaner); // CHECK ME
 		return res;
 	}
 
@@ -632,12 +631,7 @@ bool JPClass::isSubclass(JPClass* o)
 {
 	JPCleaner cleaner;
 
-	jclass jo = o->getClass();
-	cleaner.addLocal(jo);
+	jclass jo = o->getClass(cleaner); // CHECK ME
 
-	if (JPEnv::getJava()->IsAssignableFrom(m_Class, jo))
-	{
-		return true;
-	}
-	return false;
+	return JPEnv::getJava()->IsAssignableFrom(m_Class, jo);
 }

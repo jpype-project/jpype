@@ -151,6 +151,7 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 
 EMatchType matchVars(vector<HostRef*>& arg, size_t start, JPType* vartype)
 {
+	JPCleaner cleaner;
 	TRACE_IN("JPMethodOverload::matchVars");
 	JPArrayClass* arraytype = (JPArrayClass*) vartype;
 	JPType* type = arraytype->getComponentType();
@@ -312,9 +313,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 	
 	JPMallocCleaner<jvalue> v(alen);
 	packArgs(v, arg, cleaner, 0);
-	jclass claz = m_Class->getClass();
-	cleaner.addLocal(claz);
-
+	jclass claz = m_Class->getClass(cleaner);
 	JPType* retType = m_ReturnTypeCache;
 
 	return retType->invokeStatic(claz, m_MethodID, v.borrow());
@@ -339,11 +338,8 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& arg)
 		packArgs(v, arg, cleaner, 1);
 		JPType* retType = m_ReturnTypeCache;
 	
-		jobject c = selfObj->getObject();
-		cleaner.addLocal(c);
-	
-		jclass clazz = m_Class->getClass();
-		cleaner.addLocal(clazz);
+		jobject c = selfObj->getObject(cleaner);
+		jclass clazz = m_Class->getClass(cleaner);
 	
 		res = retType->invoke(c, clazz, m_MethodID, v.borrow());
 		TRACE1("Call finished");

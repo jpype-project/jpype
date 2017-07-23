@@ -84,8 +84,7 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 
 			PyObject* claz = JPyObject::getAttrString(subObj, "__javaclass__");
 			PyJPClass* c = (PyJPClass*)claz;
-			jclass jc = c->m_Class->getClass();
-			cleaner.addLocal(jc);
+			jclass jc = c->m_Class->getClass(cleaner);
 			interfaces.push_back(jc);
 		}
 		

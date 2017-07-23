@@ -115,8 +115,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			HostRef* javaExcRef = JPEnv::getHost()->getJavaException(&ex);
 			JPObject* javaExc = JPEnv::getHost()->asObject(javaExcRef);
 			cleaner.add(javaExcRef);
-			jobject obj = javaExc->getObject();
-			cleaner.addLocal(obj);
+			jobject obj = javaExc->getObject(cleaner);
 			JPEnv::getJava()->Throw((jthrowable)obj);
 		}
 		else

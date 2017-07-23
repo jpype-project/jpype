@@ -51,9 +51,11 @@ public :
 		return res;
 	}
 
-	jclass getClass()
+	jclass getClass(JPCleaner& cleaner)
 	{
-		return (jclass)JPEnv::getJava()->NewGlobalRef(m_Class);
+		jclass out = (jclass)JPEnv::getJava()->NewGlobalRef(m_Class);
+		cleaner.addGlobal(out);
+		return out;
 	}
 	
 	map<string, JPField*>& getStaticFields()

@@ -22,14 +22,13 @@ jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 	JPTypeName tname = getObjectType();
 	JPClass* c = JPTypeManager::findClass(tname);
 
-	jclass jc = c->getClass();
-	cleaner.addLocal(jc);
+	jclass jc = c->getClass(cleaner);
 
 	vector<HostRef*> args(1);
 	args[0] = obj;
 
 	JPObject* o = c->newInstance(args);
-	jobject res = o->getObject();
+	jobject res = o->getObject(cleaner); // CHECK ME
 	delete o;
 
 	return res;

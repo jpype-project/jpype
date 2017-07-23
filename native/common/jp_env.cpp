@@ -127,8 +127,7 @@ void JPEnv::registerRef(HostRef* ref, HostRef* targetRef)
 	JPObject* objRef = s_Host->asObject(ref);
 	JPCleaner cleaner;
 	TRACE1("A");
-	jobject srcObject = objRef->getObject();
-	cleaner.addLocal(srcObject);
+	jobject srcObject = objRef->getObject(cleaner);
 	JPJni::registerRef(s_Java->getReferenceQueue(), srcObject, (jlong)targetRef->copy());
 	TRACE_OUT;
 	TRACE1("B");

@@ -25,14 +25,16 @@ public :
 	virtual ~JPObject();
 	
 
-	JPClass* getClass()
+	JPClass* getClass(JPCleaner& cleaner)
 	{
 		return m_Class;
 	}
 
-	jobject      getObject()
+	jobject      getObject(JPCleaner& cleaner)
 	{
-		return JPEnv::getJava()->NewLocalRef(m_Object);
+		jobject obj = JPEnv::getJava()->NewLocalRef(m_Object);
+		cleaner.addLocal(obj);
+		return obj;
 	}
 
 	JCharString toString();

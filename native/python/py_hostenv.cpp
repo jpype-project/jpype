@@ -243,10 +243,11 @@ JPObject* PythonHostEnvironment::asObject(HostRef* m)
 
 HostRef* PythonHostEnvironment::newObject(JPObject* obj)
 {
+	JPCleaner cleaner;
 	TRACE_IN("PythonHostEnvironment::newObject");
 	TRACE2("classname", obj->getClass()->getName().getSimpleName());
 
-	JPClass* jc = obj->getClass();
+	JPClass* jc = obj->getClass(cleaner);
 	JPTypeName name = jc->getName();
 
 	PyObject* pyClass = getJavaShadowClass(jc);

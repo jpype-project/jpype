@@ -160,8 +160,7 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 		HostRef* ref = new HostRef(value);
 		cleaner.add(ref);
 		
-		jobject jobj = obj->getObject();
-		cleaner.addLocal(jobj);
+		jobject jobj = obj->getObject(cleaner);
 
 		self->m_Field->setAttribute(jobj, ref);
 
@@ -186,8 +185,7 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 
-		jobject jobj = obj->getObject();
-		cleaner.addLocal(jobj);
+		jobject jobj = obj->getObject(cleaner);
 
 		HostRef* res = self->m_Field->getAttribute(jobj);
 		return detachRef(res);
