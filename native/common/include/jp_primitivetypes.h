@@ -20,36 +20,42 @@
 class JPPrimitiveType : public JPType
 {
 protected :
-	JPPrimitiveType(JPTypeName::ETypes type, bool isObject, const JPTypeName& objectType) :
-		m_Type(JPTypeName::fromType(type)),
-		m_IsObject(isObject),
-		m_ObjectTypeName(objectType)
-	{
-	}
-	
-	virtual ~JPPrimitiveType()
-	{
-	}
+	JPPrimitiveType(JPTypeName::ETypes type, const string& boxedType, const string& primitiveType);
+	virtual ~JPPrimitiveType();
 	
 private :
 	JPTypeName m_Type;
-	bool       m_IsObject;
-	JPTypeName m_ObjectTypeName;
+	string     m_PrimitiveName;
+	// These will be freed by the typemanager
+	JPClass    *m_BoxedClass;
+	JPClass    *m_PrimitiveClass;
 
 public :
-	virtual bool       isObjectType() const
+
+	virtual JPTypeName::ETypes getType() const;
+
+	virtual bool isObjectType() const
 	{ 
-		return m_IsObject; 
+		return false; 
 	}
 	
-	virtual const JPTypeName& getName() const
+	virtual const JPTypeName& getName() const;
+
+	virtual const JPTypeName& getObjectType() const;
+
+	virtual JPClass* getBoxedClass() const 
 	{
-		return m_Type;
+		return m_BoxedClass;
 	}
-	
-	virtual const JPTypeName& getObjectType() const
+
+	virtual const string& getPrimitiveName() const
 	{
-		return m_ObjectTypeName;
+		return m_PrimitiveName;
+	}
+
+	virtual JPClass* getPrimitiveClass() const
+	{
+		return m_PrimitiveClass;
 	}
 
 	virtual jobject	   convertToJavaObject(HostRef* obj);
@@ -62,13 +68,8 @@ public :
 class JPVoidType : public JPPrimitiveType
 {
 public :
-	JPVoidType() : JPPrimitiveType(JPTypeName::_void, false, JPTypeName::fromSimple("java.lang.Void"))
-	{
-	}
-	
-	virtual ~JPVoidType()
-	{
-	}
+	JPVoidType();
+	virtual ~JPVoidType();
 	
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -106,13 +107,8 @@ public : // JPType implementation
 class JPByteType : public JPPrimitiveType
 {
 public :
-	JPByteType() : JPPrimitiveType(JPTypeName::_byte, false, JPTypeName::fromSimple("java.lang.Byte"))
-	{
-	}
-	
-	virtual ~JPByteType()
-	{
-	}
+	JPByteType();
+	virtual ~JPByteType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -155,13 +151,8 @@ public : // JPType implementation
 class JPShortType : public JPPrimitiveType
 {
 public :
-	JPShortType() : JPPrimitiveType(JPTypeName::_short, false, JPTypeName::fromSimple("java.lang.Short"))
-	{
-	}
-	
-	virtual ~JPShortType()
-	{
-	}
+	JPShortType();
+	virtual ~JPShortType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -200,13 +191,8 @@ public : // JPType implementation
 class JPIntType : public JPPrimitiveType
 {
 public :
-	JPIntType(): JPPrimitiveType(JPTypeName::_int, false, JPTypeName::fromSimple("java.lang.Integer"))
-	{
-	}
-	
-	virtual ~JPIntType()
-	{
-	}
+	JPIntType();
+	virtual ~JPIntType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -244,13 +230,8 @@ public : // JPType implementation
 class JPLongType : public JPPrimitiveType
 {
 public :
-	JPLongType() : JPPrimitiveType(JPTypeName::_long, false, JPTypeName::fromSimple("java.lang.Long"))
-	{
-	}
-	
-	virtual ~JPLongType()
-	{
-	}
+	JPLongType();
+	virtual ~JPLongType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -286,13 +267,8 @@ public : // JPType implementation
 class JPFloatType : public JPPrimitiveType
 {
 public :
-	JPFloatType() : JPPrimitiveType(JPTypeName::_float, false, JPTypeName::fromSimple("java.lang.Float"))
-	{
-	}
-	
-	virtual ~JPFloatType()
-	{
-	}
+	JPFloatType();
+	virtual ~JPFloatType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -327,13 +303,8 @@ public : // JPType implementation
 class JPDoubleType : public JPPrimitiveType
 {
 public :
-	JPDoubleType() : JPPrimitiveType(JPTypeName::_double, false, JPTypeName::fromSimple("java.lang.Double"))
-	{
-	}
-	
-	virtual ~JPDoubleType()
-	{
-	}
+	JPDoubleType();
+	virtual ~JPDoubleType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -369,13 +340,8 @@ public : // JPType implementation
 class JPCharType : public JPPrimitiveType
 {
 public :
-	JPCharType() : JPPrimitiveType(JPTypeName::_char, false, JPTypeName::fromSimple("java.lang.Character"))
-	{
-	}
-	
-	virtual ~JPCharType()
-	{
-	}
+	JPCharType();
+	virtual ~JPCharType();
 
 public : // JPType implementation
 	virtual HostRef*   getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
@@ -414,13 +380,8 @@ public : // JPType implementation
 class JPBooleanType : public JPPrimitiveType
 {
 public :
-	JPBooleanType() : JPPrimitiveType(JPTypeName::_boolean, false, JPTypeName::fromSimple("java.lang.Boolean"))
-	{
-	}
-	
-	virtual ~JPBooleanType()
-	{
-	}
+	JPBooleanType();
+	virtual ~JPBooleanType();
 
 public : // JPType implementation
 	virtual HostRef*  getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);

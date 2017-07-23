@@ -175,16 +175,6 @@ namespace JPJni
 	double doubleValue(jobject);
 	bool booleanValue(jobject);
 	jchar charValue(jobject);
-
-	jclass getByteClass();
-	jclass getShortClass();
-	jclass getIntegerClass();
-	jclass getLongClass();
-	jclass getFloatClass();
-	jclass getDoubleClass();
-	jclass getCharacterClass();
-	jclass getBooleanClass();
-	jclass getVoidClass();
 };
 
 #endif // _JPJNIUTIL_H_
