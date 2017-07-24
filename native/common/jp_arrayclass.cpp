@@ -99,10 +99,9 @@ HostRef* JPArrayClass::asHostObject(jvalue val)
 	return JPEnv::getHost()->newArray(new JPArray(m_Name, (jarray)val.l));
 }
 
-jvalue JPArrayClass::convertToJava(HostRef* obj)
+jvalue JPArrayClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
 {	
 	TRACE_IN("JPArrayClass::convertToJava");
-	JPCleaner cleaner;
 	jvalue res;
 	res.l = NULL;
 	
@@ -170,11 +169,10 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jvalue JPArrayClass::convertToJavaVector(vector<HostRef*>& refs, size_t start, size_t end)
+jvalue JPArrayClass::convertToJavaVector(JPCleaner& cleaner, vector<HostRef*>& refs, size_t start, size_t end)
 {
 	TRACE_IN("JPArrayClass::convertToJavaVector");
 	int length = end-start;
-	JPCleaner cleaner;
 
 	jarray array = m_ComponentType->newArrayInstance(length);
 	cleaner.addLocal(array);

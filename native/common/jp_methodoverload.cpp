@@ -285,11 +285,7 @@ void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& ar
 		HostRef* obj = arg[i];
 		JPType* type = m_ArgumentsTypeCache[i];
 
-		v[i-skip] = type->convertToJava(obj);		
-		if (type->isObjectType())
-		{
-			cleaner.addLocal(v[i-skip].l);
-		}
+		v[i-skip] = type->convertToJava(cleaner, obj);		
 	}
 
 	if (packArray)
@@ -297,8 +293,7 @@ void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& ar
 		TRACE1("Pack array");
 		len = arg.size();
 		JPArrayClass* type = (JPArrayClass*) m_ArgumentsTypeCache[tlen-1];
-		v[tlen-1-skip] = type->convertToJavaVector(arg, tlen-1, len);
-		cleaner.addLocal(v[tlen-1-skip].l);
+		v[tlen-1-skip] = type->convertToJavaVector(cleaner, arg, tlen-1, len);
 	}
 	TRACE_OUT;
 }

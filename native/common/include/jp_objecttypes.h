@@ -52,7 +52,7 @@ public :
 	virtual void      setInstanceValue(jobject c, jfieldID fid, HostRef* val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 
-	virtual jobject convertToJavaObject(HostRef* obj);
+	virtual jobject convertToJavaObject(JPCleaner& cleaner, HostRef* obj);
 
 	virtual HostRef* invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef* invoke(jobject, jclass clazz, jmethodID, jvalue*);
@@ -99,7 +99,7 @@ protected :
 public : // JPType implementation	
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 };
 
 #endif // _JPPOBJECTTYPE_H_

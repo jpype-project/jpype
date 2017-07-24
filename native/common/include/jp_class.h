@@ -85,7 +85,7 @@ public :
 public : // JPType implementation
 	virtual HostRef*   asHostObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 private :
 	void loadSuperClass();	

@@ -56,8 +56,8 @@ public :
 	
 	virtual EMatchType canConvertToJava(HostRef* obj) = 0;
 
-	virtual jvalue     convertToJava(HostRef* obj) = 0;
-	virtual jobject    convertToJavaObject(HostRef* obj) = 0;
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj) = 0;
+	virtual jobject    convertToJavaObject(JPCleaner& cleaner, HostRef* obj) = 0;
 
 	virtual bool       isObjectType() const = 0;
 	virtual const JPTypeName& getObjectType() const = 0;

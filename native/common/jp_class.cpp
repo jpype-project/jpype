@@ -391,11 +391,10 @@ jvalue JPClass::buildObjectWrapper(HostRef* obj)
 	return res;
 }
 
-jvalue JPClass::convertToJava(HostRef* obj)
+jvalue JPClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
 {
 	TRACE_IN("JPClass::convertToJava");
 	jvalue res;
-	JPCleaner cleaner;
 
 	res.l = NULL;
 	const string& simpleName = m_Name.getSimpleName();
@@ -437,7 +436,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 		{
 			JPTypeName name = JPTypeName::fromSimple("java.lang.String");
 			JPType* type = JPTypeManager::getType(name);
-			return type->convertToJava(obj);
+			return type->convertToJava(cleaner, obj);
 		}
 
 		if (simpleName == "java.lang.Class")
@@ -453,28 +452,28 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_int);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = t->convertToJavaObject(cleaner, obj);
 			}
 
 			else if (JPEnv::getHost()->isLong(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_long);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = t->convertToJavaObject(cleaner, obj);
 			}
 
 			else if (JPEnv::getHost()->isFloat(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_double);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = t->convertToJavaObject(cleaner, obj);
 			}
 
 			else if (JPEnv::getHost()->isBoolean(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_boolean);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = t->convertToJavaObject(cleaner, obj);
 			}
 
 			else if (JPEnv::getHost()->isArray(obj) && simpleName == "java.lang.Object")
@@ -487,7 +486,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			{
 				JPTypeName name = JPTypeName::fromSimple("java.lang.Class");
 				JPType* type = JPTypeManager::getType(name);
-				res.l = type->convertToJavaObject(obj);
+				res.l = type->convertToJavaObject(cleaner, obj);
 			}
 		}
 	}

@@ -32,6 +32,7 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		return NULL;
 	}
 
+	JPCleaner cleaner;
 	try {
 		char* tname;
 		PyObject* value;
@@ -42,11 +43,12 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		JPType* type = JPTypeManager::getType(name);
 
 		HostRef ref(value);
-		jvalue v = type->convertToJava(&ref);
+		jvalue v = type->convertToJava(cleaner, &ref);
 
 		jvalue* pv = new jvalue();
 		*pv = v;
 
+		// Transfer ownership to python
 		PyObject* res;
 		if (type->isObjectType())
 		{

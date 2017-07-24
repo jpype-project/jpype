@@ -52,7 +52,7 @@ public :
 		return m_ObjectTypeName;
 	}
 
-	virtual jobject	   convertToJavaObject(HostRef* obj);
+	virtual jobject	   convertToJavaObject(JPCleaner& cleaner, HostRef* obj);
 
 	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
 
@@ -78,7 +78,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);	
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
 
@@ -122,7 +122,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -171,7 +171,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -216,7 +216,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -260,7 +260,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -302,7 +302,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -343,7 +343,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);
@@ -385,7 +385,7 @@ public : // JPType implementation
 	virtual HostRef*   asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*   invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*   invoke(jobject, jclass, jmethodID, jvalue*);
@@ -430,7 +430,7 @@ public : // JPType implementation
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
+	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
 	
 	virtual HostRef*  invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef*  invoke(jobject, jclass, jmethodID, jvalue*);

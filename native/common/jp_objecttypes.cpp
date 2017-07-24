@@ -94,8 +94,7 @@ void JPObjectType::setStaticValue(jclass c, jfieldID fid, HostRef* obj)
 	TRACE_IN("JPObjectType::setStaticValue");
 	JPCleaner cleaner;
 
-	jobject val = convertToJava(obj).l;
-	cleaner.addLocal(val);
+	jobject val = convertToJava(cleaner, obj).l;
 
 	JPEnv::getJava()->SetStaticObjectField(c, fid, val);
 	TRACE_OUT;
@@ -106,8 +105,7 @@ void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj)
 	TRACE_IN("JPObjectType::setInstanceValue");
 	JPCleaner cleaner;
 
-	jobject val = convertToJava(obj).l;
-	cleaner.addLocal(val);
+	jobject val = convertToJava(cleaner, obj).l;
 
 	JPEnv::getJava()->SetObjectField(c, fid, val);
 	TRACE_OUT;
@@ -154,8 +152,7 @@ void JPObjectType::setArrayRange(jarray a, int start, int length, vector<HostRef
 	{
 		HostRef* pv = vals[i];
 		
-		v = convertToJava(pv);
-		cleaner.addLocal(v.l);
+		v = convertToJava(cleaner, pv);
 
 		JPEnv::getJava()->SetObjectArrayElement(array, i+start, v.l);
 	}
@@ -166,8 +163,7 @@ void JPObjectType::setArrayItem(jarray a, int ndx, HostRef* val)
 	jobjectArray array = (jobjectArray)a;	
 	JPCleaner cleaner;
 	
-	jvalue v = convertToJava(val);
-	cleaner.addLocal(v.l);
+	jvalue v = convertToJava(cleaner, val);
 	
 	JPEnv::getJava()->SetObjectArrayElement(array, ndx, v.l);		
 }
@@ -196,9 +192,9 @@ HostRef* JPObjectType::getArrayItem(jarray a, int ndx)
 	TRACE_OUT;
 }
 
-jobject JPObjectType::convertToJavaObject(HostRef* obj)
+jobject JPObjectType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
 {
-	jvalue v = convertToJava(obj);
+	jvalue v = convertToJava(cleaner, obj);
 	return v.l;
 }
 
@@ -304,10 +300,9 @@ EMatchType JPStringType::canConvertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jvalue JPStringType::convertToJava(HostRef* obj)
+jvalue JPStringType::convertToJava(JPCleaner& cleaner, HostRef* obj)
 {
 	TRACE_IN("JPStringType::convertToJava");
-	JPCleaner cleaner;
 	jvalue v;
 	
 	if (JPEnv::getHost()->isNone(obj))
