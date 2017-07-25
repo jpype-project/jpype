@@ -630,7 +630,7 @@ bool JPClass::isSubclass(JPClass* o)
 {
 	JPCleaner cleaner;
 
-	jclass jo = o->getClass(cleaner); // CHECK ME
+	jclass jo = o->accessClass(); // CHECK ME
 
 	return JPEnv::getJava()->IsAssignableFrom(m_Class, jo);
 }

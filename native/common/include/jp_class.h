@@ -57,6 +57,11 @@ public :
 		cleaner.addGlobal(out);
 		return out;
 	}
+
+	jclass accessClass()
+	{
+		return m_Class;
+	}
 	
 	map<string, JPField*>& getStaticFields()
 	{

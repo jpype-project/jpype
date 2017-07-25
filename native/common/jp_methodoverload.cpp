@@ -308,7 +308,7 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 	
 	JPMallocCleaner<jvalue> v(alen);
 	packArgs(v, arg, cleaner, 0);
-	jclass claz = m_Class->getClass(cleaner);
+	jclass claz = m_Class->accessClass();
 	JPType* retType = m_ReturnTypeCache;
 
 	return retType->invokeStatic(claz, m_MethodID, v.borrow());
@@ -334,7 +334,7 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& arg)
 		JPType* retType = m_ReturnTypeCache;
 	
 		jobject c = selfObj->getObject(cleaner);
-		jclass clazz = m_Class->getClass(cleaner);
+		jclass clazz = m_Class->accessClass();
 	
 		res = retType->invoke(c, clazz, m_MethodID, v.borrow());
 		TRACE1("Call finished");

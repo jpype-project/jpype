@@ -315,10 +315,9 @@ PyObject* PyJPClass::isException(PyObject* o, PyObject* args)
 {
 	try 
 	{
-		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
 
-		bool res = JPJni::isThrowable(self->m_Class->getClass(cleaner)); // CHECK ME
+		bool res = JPJni::isThrowable(self->m_Class->accessClass());
 		if (res)
 		{
 			return JPyBoolean::getTrue();
@@ -340,7 +339,7 @@ PyObject* PyJPClass::getDeclaredMethods(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredMethods(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getDeclaredMethods(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -365,7 +364,7 @@ PyObject* PyJPClass::getConstructors(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getConstructors(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getConstructors(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -390,7 +389,7 @@ PyObject* PyJPClass::getDeclaredConstructors(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredConstructors(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getDeclaredConstructors(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -415,7 +414,7 @@ PyObject* PyJPClass::getDeclaredFields(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredFields(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getDeclaredFields(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
@@ -440,7 +439,7 @@ PyObject* PyJPClass::getFields(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getFields(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getFields(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
@@ -463,9 +462,8 @@ PyObject* PyJPClass::getFields(PyObject* o)
 PyObject* PyJPClass::getModifiers(PyObject* o)
 {
 	try {
-		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		long mod = JPJni::getClassModifiers(self->m_Class->getClass(cleaner));
+		long mod = JPJni::getClassModifiers(self->m_Class->accessClass());
 
 		PyObject* res = JPyLong::fromLongLong(mod);
 
@@ -480,7 +478,7 @@ PyObject* PyJPClass::getMethods(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getMethods(self->m_Class->getClass(cleaner));
+		vector<jobject> mth = JPJni::getMethods(self->m_Class->accessClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -504,7 +502,6 @@ PyObject* PyJPClass::getMethods(PyObject* o)
 PyObject* PyJPClass::isPrimitive(PyObject* o, PyObject* args)
 {
 	try {
-		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPTypeName name = self->m_Class->getName();
@@ -522,7 +519,6 @@ PyObject* PyJPClass::isPrimitive(PyObject* o, PyObject* args)
 PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 {
 	try {
-		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPTypeName name = self->m_Class->getName();
@@ -540,7 +536,6 @@ PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 PyObject* PyJPClass::isAbstract(PyObject* o, PyObject* args)
 {
 	try {
-		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
 		if (self->m_Class->isAbstract()) {
 			return JPyBoolean::getTrue();
