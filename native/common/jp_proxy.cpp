@@ -35,6 +35,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		HostRef* callable = JPEnv::getHost()->getCallableFrom(hostObjRef, cname);
 		cleaner.add(callable);
 
+		// If method can't be called, throw an exception
 		if (callable == NULL || callable->isNull() || JPEnv::getHost()->isNone(callable))
 		{
 			JPEnv::getJava()->ThrowNew(JPJni::s_NoSuchMethodErrorClass, cname.c_str());
@@ -45,21 +46,15 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		// convert the arguments into a python list
 		jsize argLen = JPEnv::getJava()->GetArrayLength(types);
 		vector<HostRef*> hostArgs;
-		std::vector<JPTypeName> argTypes;
-
-		for (jsize j = 0; j < argLen; j++)
-		{
-			jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, j);
-			cleaner.addLocal(c);
-			JPTypeName tn = JPJni::getName(c);
-			argTypes.push_back(tn);
-		}
 
 		for (int i = 0; i < argLen; i++)
 		{
+			jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
+			cleaner.addLocal(c);
+			JPTypeName t = JPJni::getName(c);
+
 			jobject obj = JPEnv::getJava()->GetObjectArrayElement(args, i);
 			cleaner.addLocal(obj);
-			JPTypeName t = argTypes[i];
 
 			jvalue v;
 			v.l = obj;
@@ -98,7 +93,8 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			JPEnv::getHost()->prepareCallbackFinish(callbackState);
 			return NULL;
 		}
-		
+	
+		printf("Return type %s\n", rt->getName().getSimpleName().c_str());	
 		jobject returnObj = rt->convertToJavaObject(cleaner, returnValue);
 		JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
     

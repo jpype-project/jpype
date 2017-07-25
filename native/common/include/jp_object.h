@@ -25,7 +25,7 @@ public :
 	virtual ~JPObject();
 	
 
-	JPClass* getClass(JPCleaner& cleaner)
+	JPClass* getClass()
 	{
 		return m_Class;
 	}

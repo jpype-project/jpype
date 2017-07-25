@@ -247,7 +247,7 @@ HostRef* PythonHostEnvironment::newObject(JPObject* obj)
 	TRACE_IN("PythonHostEnvironment::newObject");
 	TRACE2("classname", obj->getClass()->getName().getSimpleName());
 
-	JPClass* jc = obj->getClass(cleaner);
+	JPClass* jc = obj->getClass();
 	JPTypeName name = jc->getName();
 
 	PyObject* pyClass = getJavaShadowClass(jc);

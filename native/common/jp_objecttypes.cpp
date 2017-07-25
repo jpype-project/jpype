@@ -290,7 +290,7 @@ EMatchType JPStringType::canConvertToJava(HostRef* obj)
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
 
-		JPClass* oc = o->getClass(cleaner); // CHECK ME
+		JPClass* oc = o->getClass();
 		if (oc->getName().getSimpleName() == "java.lang.String")
 		{
 			return _exact;
@@ -320,7 +320,7 @@ jvalue JPStringType::convertToJava(JPCleaner& cleaner, HostRef* obj)
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
 
-		JPClass* oc = o->getClass(cleaner); // CHECK ME
+		JPClass* oc = o->getClass();
 		if (oc->getName().getSimpleName() == "java.lang.String")
 		{
 			v.l = o->getObject(cleaner); // CHECK ME

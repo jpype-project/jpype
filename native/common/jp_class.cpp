@@ -244,7 +244,7 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
-		JPClass* oc = o->getClass(cleaner); // CHECK ME
+		JPClass* oc = o->getClass(); 
 		TRACE2("Match name", oc->m_Name.getSimpleName());
 
 		if (oc == this)
