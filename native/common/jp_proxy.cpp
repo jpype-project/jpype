@@ -94,9 +94,8 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			return NULL;
 		}
 	
-		printf("Return type %s\n", rt->getName().getSimpleName().c_str());	
 		jobject returnObj = rt->convertToJavaObject(cleaner, returnValue);
-		JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
+		returnObj = JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
     
 		JPEnv::getHost()->prepareCallbackFinish(callbackState);
 

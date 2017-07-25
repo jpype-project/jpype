@@ -20,7 +20,6 @@ jobject JPPrimitiveType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
 {
 	JPTypeName tname = getObjectType();
 	JPClass* c = JPTypeManager::findClass(tname);
-	printf("Found class %s\n", c->getName().getSimpleName().c_str());
 
 	jclass jc = c->getClass(cleaner);
 
@@ -28,8 +27,7 @@ jobject JPPrimitiveType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
 	args[0] = obj;
 
 	JPObject* o = c->newInstance(args);
-	jobject res = o->getObject(cleaner); // CHECK ME
-	printf("Create class %s\n", o->getClass()->getName().getSimpleName().c_str());
+	jobject res = o->getObject(cleaner); 
 	delete o;
 	return res;
 }
