@@ -164,11 +164,10 @@ void JPJavaEnv::DeleteGlobalRef(jobject obj)
 jobject JPJavaEnv::NewLocalRef(jobject a0)
 {
 	MTRACE_IN("JPJavaEnv::NewLocalRef");
-	MTRACE1((long)a0);
 	jobject res;
 	JNIEnv* env = getJNIEnv();
 	res = env->functions->NewLocalRef(env, a0);
-	MTRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
+	MTRACE3((long)a0, "=>", (long)res); //, JPJni::getClassName(a0).getSimpleName());
 	return res;
 	MTRACE_OUT;
 }
@@ -176,11 +175,10 @@ jobject JPJavaEnv::NewLocalRef(jobject a0)
 jobject JPJavaEnv::NewGlobalRef(jobject a0)
 {
 	MTRACE_IN("JPJavaEnv::NewGlobalRef");
-	MTRACE1((long)a0);
 	jobject res;
 	JNIEnv* env = getJNIEnv();
 	res = env->functions->NewGlobalRef(env, a0);
-	MTRACE1((long)res); //, JPJni::getClassName(a0).getSimpleName());
+	MTRACE3((long)a0, "=>", (long)res); //, JPJni::getClassName(a0).getSimpleName());
 	return res;
 	MTRACE_OUT;
 }
