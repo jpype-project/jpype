@@ -136,7 +136,7 @@ int JPJavaEnv::DestroyJavaVM()
 	return 0;
 }
 
-int JPJavaEnv::PushLocalFrame(int i)
+jint JPJavaEnv::PushLocalFrame(jint i)
 {
   JNIEnv* env = getJNIEnv();
 	if (env != NULL)
