@@ -71,13 +71,16 @@ HostRef* JPObjectType::invoke(jobject claz, jclass clazz, jmethodID mth, jvalue*
 	TRACE_IN("JPObjectType::invoke");
 	JPLocalFrame frame;
 
+	// Call method
 	jobject res = JPEnv::getJava()->CallNonvirtualObjectMethodA(claz, clazz, mth, val);
 
+	// Get the return type
+	JPTypeName name = JPJni::getClassName(res);
+	JPType* type = JPTypeManager::getType(name);
+
+	// Convert the object
 	jvalue v;
 	v.l = res;
-
-	JPTypeName name = JPJni::getClassName(v.l);
-	JPType* type = JPTypeManager::getType(name);
 	HostRef* ref = type->asHostObject(v);
 	TRACE1("Successfully converted to host reference");
 	return ref;
@@ -234,6 +237,7 @@ HostRef* JPStringType::asHostObject(jvalue val)
 	{
 		TRACE1(" Performing conversion");
 		jsize len = JPEnv::getJava()->GetStringLength(v);
+
 		jboolean isCopy;
 		const jchar* str = JPEnv::getJava()->GetStringChars(v, &isCopy);
 

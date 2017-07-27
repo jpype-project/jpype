@@ -444,6 +444,7 @@ JCharString PythonHostEnvironment::stringAsJCharString(HostRef* ref)
 HostRef* PythonHostEnvironment::newStringFromUnicode(const jchar* v, unsigned int l)
 {
 	TRACE_IN("PythonHostEnvironment::newStringFromUnicode");
+	TRACE2("len=", l);
 	return new HostRef(JPyString::fromUnicode(v, l), false);
 	TRACE_OUT;
 }

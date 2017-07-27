@@ -92,11 +92,13 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 
 HostRef* JPArrayClass::asHostObject(jvalue val)
 {
+	TRACE_IN("JPArrayClass::asHostObject")
 	if (val.l == NULL)
 	{
 		return JPEnv::getHost()->getNone();
 	}
 	return JPEnv::getHost()->newArray(new JPArray(m_Name, (jarray)val.l));
+	TRACE_OUT;
 }
 
 jvalue JPArrayClass::convertToJava(HostRef* obj)
@@ -108,6 +110,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 	
 	if (JPEnv::getHost()->isArray(obj))
 	{
+		TRACE1("direct");
 		JPArray* a = JPEnv::getHost()->asArray(obj);
 		res = a->getValue();		
 	}

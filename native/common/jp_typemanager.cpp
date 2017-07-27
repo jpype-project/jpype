@@ -116,6 +116,7 @@ JPArrayClass* findArrayClass(const JPTypeName& name)
 JPType* getType(const JPTypeName& t)
 {
 	TRACE_IN("JPTypeManager::getType");
+	TRACE1(t.getSimpleName());
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
 	
 	if (it != typeMap.end())

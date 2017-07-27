@@ -299,10 +299,10 @@ jobject JPJavaEnv::NewDirectByteBuffer(void* address, jlong capacity)
 {
 	TRACE_IN("JPJavaEnv::NewDirectByteBuffer");
 	JNIEnv* env = getJNIEnv(); 
-  jobject res = env->functions->NewDirectByteBuffer(env, address, capacity);
-  JAVA_CHECK("NewDirectByteBuffer");
+	jobject res = env->functions->NewDirectByteBuffer(env, address, capacity);
+	JAVA_CHECK("NewDirectByteBuffer");
 	TRACE1((long)res);
-  return res;	
+	return res;	
 	TRACE_OUT;
 }
 
@@ -310,8 +310,8 @@ jobject JPJavaEnv::NewObjectA(jclass a0, jmethodID a1, jvalue* a2)
 { 
 	JPLocalFrame frame;
 	jobject res;
-  JNIEnv* env = getJNIEnv();
-  void* _save = JPEnv::getHost()->gotoExternal();
+	JNIEnv* env = getJNIEnv();
+	void* _save = JPEnv::getHost()->gotoExternal();
 
 	res = env->functions->AllocObject(env, a0);
 	JAVA_CHECK("NewObjectA");
@@ -342,7 +342,7 @@ jobject JPJavaEnv::NewObject(jclass a0, jmethodID a1)
 
 	if (ExceptionCheck())
 	{
-		res = NULL;
+		//DeleteLocalRef(res); // This line does not make sense
 	}
 
   JPEnv::getHost()->returnExternal(_save);

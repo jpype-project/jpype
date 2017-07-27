@@ -49,6 +49,7 @@ JPClass::~JPClass()
 
 void JPClass::postLoad()
 {
+	TRACE_IN("JPClass::postLoad");
 	// Is this an interface?
 	m_IsInterface = JPJni::isInterface(m_Class);
 
@@ -57,10 +58,12 @@ void JPClass::postLoad()
 	loadFields();
 	loadMethods();
 	loadConstructors();
+	TRACE_OUT;
 }
 
 void JPClass::loadSuperClass()
 {
+	TRACE_IN("JPClass::loadSuperClass");
 	JPLocalFrame frame;
 
 	// base class .. if any
@@ -74,11 +77,13 @@ void JPClass::loadSuperClass()
 			m_SuperClass = JPTypeManager::findClass(baseClassName);
 		}
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadSuperInterfaces()
 {
 	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadSuperInterfaces");
 	// Super interfaces
 	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class);
 
@@ -88,11 +93,13 @@ void JPClass::loadSuperInterfaces()
 		JPClass* interface = JPTypeManager::findClass(intfName);
 		m_SuperInterfaces.push_back(interface);
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadFields()
 {
-	JPLocalFrame frame(256);
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadFields");
 	// fields
 	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class);
 
@@ -108,11 +115,13 @@ void JPClass::loadFields()
 			m_InstanceFields[field->getName()] = field;
 		}
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadMethods()
 {
-	JPLocalFrame frame(256);
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadMethods");
 
 	// methods
 	vector<jobject> methods = JPJni::getMethods(frame, m_Class);
@@ -129,12 +138,13 @@ void JPClass::loadMethods()
 
 		method->addOverload(this, *it);
 	}
-
+	TRACE_OUT;
 }
 
 void JPClass::loadConstructors()
 {
-	JPLocalFrame frame(64);
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadMethods");
 	m_Constructors = new JPMethod(m_Class, "[init", true);
 
 	if (JPJni::isAbstract(m_Class))
@@ -153,6 +163,7 @@ void JPClass::loadConstructors()
 			m_Constructors->addOverload(this, *it);
 		}
 	}
+	TRACE_OUT;
 }
 
 JPField* JPClass::getInstanceField(const string& name)
@@ -478,7 +489,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			{
 				JPArray* a = JPEnv::getHost()->asArray(obj);
 				res = a->getValue();
-			  res.l = frame.keep(res.l);
+				res.l = frame.keep(res.l);
 				return res;
 			}
 
@@ -501,7 +512,9 @@ jvalue JPClass::convertToJava(HostRef* obj)
 
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
-		return JPEnv::getHost()->getWrapperValue(obj); // FIXME isn't this one global already
+		res = JPEnv::getHost()->getWrapperValue(obj); // FIXME isn't this one global already
+		res.l = frame.keep(res.l);
+		return res;
 	}
 
 	return res;

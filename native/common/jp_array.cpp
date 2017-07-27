@@ -18,8 +18,12 @@
 
 JPArray::JPArray(const JPTypeName& name, jarray inst)
 {
+	TRACE_IN("JPArray::JPArray");
+	TRACE1(name.getSimpleName());
 	m_Class = JPTypeManager::findArrayClass(name);
 	m_Object = (jarray)JPEnv::getJava()->NewGlobalRef(inst);
+	TRACE2("len=",getLength());
+	TRACE_OUT;
 }
 
 JPArray::~JPArray()
@@ -124,7 +128,8 @@ JPType* JPArray::getType()
 jvalue  JPArray::getValue()
 {
 	jvalue val;
-	val.l = JPEnv::getJava()->NewLocalRef(m_Object);
+//	val.l = JPEnv::getJava()->NewLocalRef(m_Object);
+	val.l = m_Object;
 	return val;
 }
 JCharString JPArray::toString()

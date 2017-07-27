@@ -22,8 +22,6 @@ jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 	JPTypeName tname = getObjectType();
 	JPClass* c = JPTypeManager::findClass(tname);
 
-	jclass jc = c->getClass();
-
 	vector<HostRef*> args(1);
 	args[0] = obj;
 

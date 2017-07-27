@@ -436,7 +436,7 @@ bool JPMethodOverload::isMoreSpecificThan(JPMethodOverload& other) const
 
 void JPMethodOverload::ensureTypeCache() const 
 {
-	TRACE_IN("JPMethodOverload::ensureTypeCache");
+//	TRACE_IN("JPMethodOverload::ensureTypeCache");
 	if (m_Arguments.size() == m_ArgumentsTypeCache.size() && (m_ReturnTypeCache || m_IsConstructor)) 
 	{ 
 		return; 
@@ -451,6 +451,6 @@ void JPMethodOverload::ensureTypeCache() const
 	{
 		m_ReturnTypeCache = JPTypeManager::getType(m_ReturnType);
 	}
-	TRACE_OUT;
+//	TRACE_OUT;
 }
 
