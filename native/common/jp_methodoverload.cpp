@@ -151,7 +151,6 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 
 EMatchType matchVars(vector<HostRef*>& arg, size_t start, JPType* vartype)
 {
-	JPCleaner cleaner;
 	TRACE_IN("JPMethodOverload::matchVars");
 	JPArrayClass* arraytype = (JPArrayClass*) vartype;
 	JPType* type = arraytype->getComponentType();
@@ -251,7 +250,7 @@ EMatchType JPMethodOverload::matches(bool ignoreFirst, vector<HostRef*>& arg)
 	TRACE_OUT;
 }
 
-void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& arg, JPCleaner& cleaner, size_t skip)
+void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& arg, size_t skip)
 {	
 	TRACE_IN("JPMethodOverload::packArgs");
 	size_t len = arg.size();
@@ -285,7 +284,7 @@ void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& ar
 		HostRef* obj = arg[i];
 		JPType* type = m_ArgumentsTypeCache[i];
 
-		v[i-skip] = type->convertToJava(cleaner, obj);		
+		v[i-skip] = type->convertToJava(obj);		
 	}
 
 	if (packArray)
@@ -293,7 +292,7 @@ void JPMethodOverload::packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& ar
 		TRACE1("Pack array");
 		len = arg.size();
 		JPArrayClass* type = (JPArrayClass*) m_ArgumentsTypeCache[tlen-1];
-		v[tlen-1-skip] = type->convertToJavaVector(cleaner, arg, tlen-1, len);
+		v[tlen-1-skip] = type->convertToJavaVector(arg, tlen-1, len);
 	}
 	TRACE_OUT;
 }
@@ -302,12 +301,10 @@ HostRef* JPMethodOverload::invokeStatic(vector<HostRef*>& arg)
 {
 	TRACE_IN("JPMethodOverload::invokeStatic");
 	ensureTypeCache();
-	JPCleaner cleaner;
-
 	size_t alen = m_Arguments.size();
-	
+	JPLocalFrame frame(8+alen);
 	JPMallocCleaner<jvalue> v(alen);
-	packArgs(v, arg, cleaner, 0);
+	packArgs(v, arg, 0);
 	jclass claz = m_Class->accessClass();
 	JPType* retType = m_ReturnTypeCache;
 
@@ -321,19 +318,19 @@ HostRef* JPMethodOverload::invokeInstance(vector<HostRef*>& arg)
 	ensureTypeCache();
 	HostRef* res;
 	{
-		JPCleaner cleaner;
+	  size_t alen = m_Arguments.size();
+		JPLocalFrame frame(8+alen);
 	
 		// Arg 0 is "this"
 		HostRef* self = arg[0];
 		JPObject* selfObj = JPEnv::getHost()->asObject(self);
 	
-	  size_t alen = m_Arguments.size();
 	
 		JPMallocCleaner<jvalue> v(alen-1);
-		packArgs(v, arg, cleaner, 1);
+		packArgs(v, arg, 1);
 		JPType* retType = m_ReturnTypeCache;
 	
-		jobject c = selfObj->getObject(cleaner);
+		jobject c = selfObj->getObject();
 		jclass clazz = m_Class->accessClass();
 	
 		res = retType->invoke(c, clazz, m_MethodID, v.borrow());
@@ -352,14 +349,13 @@ JPObject* JPMethodOverload::invokeConstructor(jclass claz, vector<HostRef*>& arg
 	ensureTypeCache();
 
 	size_t alen = m_Arguments.size();
-	JPCleaner cleaner;
+	JPLocalFrame frame(8+alen);
 	
 	JPMallocCleaner<jvalue> v(alen);
-	packArgs(v, arg, cleaner, 0);
+	packArgs(v, arg, 0);
 	
 	jvalue val;
 	val.l = JPEnv::getJava()->NewObjectA(claz, m_MethodID, v.borrow());
-	cleaner.addLocal(val.l);
 	TRACE1("Object created");
 	
 	JPTypeName name = JPJni::getName(claz);

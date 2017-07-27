@@ -16,8 +16,9 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-jobject JPPrimitiveType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
+jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 {
+	JPLocalFrame frame;
 	JPTypeName tname = getObjectType();
 	JPClass* c = JPTypeManager::findClass(tname);
 
@@ -27,9 +28,9 @@ jobject JPPrimitiveType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
 	args[0] = obj;
 
 	JPObject* o = c->newInstance(args);
-	jobject res = o->getObject(cleaner); 
+	jobject res = o->getObject(); 
 	delete o;
-	return res;
+	return frame.keep(res);
 }
 
 HostRef* JPByteType::asHostObject(jvalue val) 
@@ -45,7 +46,6 @@ HostRef* JPByteType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPByteType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -74,7 +74,7 @@ EMatchType JPByteType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPByteType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPByteType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
@@ -106,8 +106,8 @@ jvalue JPByteType::convertToJava(JPCleaner& cleaner, HostRef* obj)
 
 HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 {
+	JPLocalFrame frame;
 	TRACE_IN("JPByteType::convertToDirectBuffer");
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isByteBuffer(src))
 	{
 
@@ -116,7 +116,6 @@ HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 		JPEnv::getHost()->getByteBufferPtr(src, &rawData, size);
 
 		jobject obj = JPEnv::getJava()->NewDirectByteBuffer(rawData, size);
-		cleaner.addLocal(obj);
 
 		jvalue v;
 		v.l = obj;
@@ -171,7 +170,7 @@ EMatchType JPShortType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPShortType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPShortType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
@@ -256,7 +255,7 @@ EMatchType JPIntType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPIntType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPIntType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
@@ -342,7 +341,7 @@ EMatchType JPLongType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPLongType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPLongType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isInt(obj))
@@ -418,7 +417,7 @@ EMatchType JPFloatType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPFloatType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPFloatType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))
@@ -506,7 +505,7 @@ EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPDoubleType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPDoubleType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))
@@ -556,7 +555,6 @@ HostRef* JPCharType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPCharType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -579,7 +577,7 @@ EMatchType JPCharType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPCharType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPCharType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 
@@ -642,7 +640,7 @@ EMatchType JPBooleanType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPBooleanType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPBooleanType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	if (JPEnv::getHost()->isWrapper(obj))

@@ -37,11 +37,9 @@ public : // JPType implementation
 		return m_Name;
 	}
 
-	virtual jclass getClass(JPCleaner& cleaner) const
+	virtual jclass getClass() const
 	{
-		jclass obj = (jclass)JPEnv::getJava()->NewLocalRef(m_Class);
-		cleaner.addLocal(obj);
-		return obj;
+		return (jclass)JPEnv::getJava()->NewLocalRef(m_Class);
 	}
 
 protected :

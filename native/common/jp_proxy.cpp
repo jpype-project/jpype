@@ -50,11 +50,9 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		for (int i = 0; i < argLen; i++)
 		{
 			jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
-			cleaner.addLocal(c);
 			JPTypeName t = JPJni::getName(c);
 
 			jobject obj = JPEnv::getJava()->GetObjectArrayElement(args, i);
-			cleaner.addLocal(obj);
 
 			jvalue v;
 			v.l = obj;
@@ -94,7 +92,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			return NULL;
 		}
 	
-		jobject returnObj = rt->convertToJavaObject(cleaner, returnValue);
+		jobject returnObj = rt->convertToJavaObject(returnValue);
 		returnObj = JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
     
 		JPEnv::getHost()->prepareCallbackFinish(callbackState);
@@ -111,7 +109,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			HostRef* javaExcRef = JPEnv::getHost()->getJavaException(&ex);
 			JPObject* javaExc = JPEnv::getHost()->asObject(javaExcRef);
 			cleaner.add(javaExcRef);
-			jobject obj = javaExc->getObject(cleaner);
+			jobject obj = javaExc->getObject();
 			JPEnv::getJava()->Throw((jthrowable)obj);
 		}
 		else
@@ -168,15 +166,14 @@ namespace { // impl detail, gets initialized by JPProxy::init()
 
 void JPProxy::init()
 {
+	JPLocalFrame frame(32);
 	TRACE_IN("JPProxy::init");
 
 	// build the proxy class ...
 	jobject cl = JPJni::getSystemClassLoader();
-	JPCleaner cleaner;
 
 	jclass handler = JPEnv::getJava()->DefineClass("jpype/JPypeInvocationHandler", cl, JPypeInvocationHandler, getJPypeInvocationHandlerLength());
 	handlerClass = (jclass)JPEnv::getJava()->NewGlobalRef(handler);
-	cleaner.addLocal(handler);
 	
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
@@ -199,9 +196,6 @@ void JPProxy::init()
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
 	JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
 
-	cleaner.addLocal(reference);
-	cleaner.addLocal(referenceQueue);
-
 	JNINativeMethod method2[1];
 	method2[0].name = (char*) "removeHostReference";
 	method2[0].signature = (char*) "(J)V";
@@ -215,11 +209,11 @@ void JPProxy::init()
 
 JPProxy::JPProxy(HostRef* inst, vector<jclass>& intf)
 {
+	JPLocalFrame frame;
 	m_Instance = inst->copy();
 	
 	jobjectArray ar = JPEnv::getJava()->NewObjectArray((int)intf.size(), JPJni::s_ClassClass, NULL);
 	m_Interfaces = (jobjectArray)JPEnv::getJava()->NewGlobalRef(ar);
-	JPEnv::getJava()->DeleteLocalRef(ar);
 
 	for (unsigned int i = 0; i < intf.size(); i++)
 	{
@@ -227,24 +221,38 @@ JPProxy::JPProxy(HostRef* inst, vector<jclass>& intf)
 		JPEnv::getJava()->SetObjectArrayElement(m_Interfaces, i, m_InterfaceClasses[i]);
 	}
 	
-	m_Handler = JPEnv::getJava()->NewObject(handlerClass, invocationHandlerConstructorID);
+	m_Handler = JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->NewObject(handlerClass, invocationHandlerConstructorID));
 
 	JPEnv::getJava()->SetLongField(m_Handler, hostObjectID, (jlong)inst->copy());
 }
 
+JPProxy::~JPProxy()
+{
+	if (m_Instance != NULL)
+	{
+		m_Instance->release();
+	}
+	JPEnv::getJava()->DeleteGlobalRef(m_Handler);
+	JPEnv::getJava()->DeleteGlobalRef(m_Interfaces);
+
+	for (unsigned int i = 0; i < m_InterfaceClasses.size(); i++)
+	{
+		JPEnv::getJava()->DeleteGlobalRef(m_InterfaceClasses[i]);
+	}
+
+}
+
+
 jobject JPProxy::getProxy()
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jobject cl = JPJni::getSystemClassLoader();
-	cleaner.addLocal(cl);
 
 	jvalue v[3];
 	v[0].l = cl;
 	v[1].l = m_Interfaces;
 	v[2].l = m_Handler;
 
-	jobject res = JPEnv::getJava()->CallStaticObjectMethodA(JPJni::s_ProxyClass, JPJni::s_NewProxyInstanceID, v);
-	return res;
-
+	return frame.keep(JPEnv::getJava()->CallStaticObjectMethodA(JPJni::s_ProxyClass, JPJni::s_NewProxyInstanceID, v));
 }
 

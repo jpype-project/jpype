@@ -41,7 +41,7 @@ EMatchType JPVoidType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPVoidType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPVoidType::convertToJava(HostRef* obj)
 {
 	jvalue res;
 	res.l = NULL;

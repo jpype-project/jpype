@@ -71,6 +71,7 @@ void PyJPMonitor::initType(PyObject* module)
 
 PyJPMonitor* PyJPMonitor::alloc(JPMonitor* o)
 {
+	JPLocalFrame frame;
 	PyJPMonitor* res = PyObject_New(PyJPMonitor, &monitorClassType);
 
 	res->state = o;
@@ -80,6 +81,7 @@ PyJPMonitor* PyJPMonitor::alloc(JPMonitor* o)
 
 void PyJPMonitor::__dealloc__(PyObject* o)
 {
+	JPLocalFrame frame;
 	PyJPMonitor* self = (PyJPMonitor*)o;
 
 	delete self->state;

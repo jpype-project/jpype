@@ -85,6 +85,7 @@ PyJPMethod* PyJPMethod::alloc(JPMethod* m)
 
 PyObject* PyJPMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
 {
+	JPLocalFrame frame(32);
 	TRACE_IN("PyJPMethod::__call__");
 	try {
 		PyJPMethod* self = (PyJPMethod*)o;
@@ -128,6 +129,7 @@ void PyJPMethod::__dealloc__(PyObject* o)
 
 PyObject* PyJPMethod::__str__(PyObject* o)
 {
+	JPLocalFrame frame;
 	PyJPMethod* self = (PyJPMethod*)o;
 	stringstream sout;
 
@@ -138,6 +140,7 @@ PyObject* PyJPMethod::__str__(PyObject* o)
 
 PyObject* PyJPMethod::isBeanAccessor(PyObject* o, PyObject* arg)
 {
+	JPLocalFrame frame;
 	try {
 		PyJPMethod* self = (PyJPMethod*)o;
 
@@ -156,6 +159,7 @@ PyObject* PyJPMethod::isBeanAccessor(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::isBeanMutator(PyObject* o, PyObject* arg)
 {
+	JPLocalFrame frame;
 	try {
 		PyJPMethod* self = (PyJPMethod*)o;
 
@@ -174,6 +178,7 @@ PyObject* PyJPMethod::isBeanMutator(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::getName(PyObject* o, PyObject* arg)
 {
+	JPLocalFrame frame;
 	try {
 		PyJPMethod* self = (PyJPMethod*)o;
 
@@ -190,6 +195,7 @@ PyObject* PyJPMethod::getName(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::matchReport(PyObject* o, PyObject* args)
 {
+	JPLocalFrame frame;
 	try {
 		PyJPMethod* self = (PyJPMethod*)o;
 		JPCleaner cleaner;
@@ -293,6 +299,7 @@ int PyJPBoundMethod::__init__(PyObject* o, PyObject* args, PyObject* kwargs)
 
 PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
 {
+	JPLocalFrame frame(32);
 	TRACE_IN("PyJPBoundMethod::__call__");
 	try {
 		PyObject* result=NULL;
@@ -332,6 +339,7 @@ PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwarg
 
 void PyJPBoundMethod::__dealloc__(PyObject* o)
 {
+	JPLocalFrame frame;
 	TRACE_IN("PyJPBoundMethod::__dealloc__");
 	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 
@@ -345,6 +353,7 @@ void PyJPBoundMethod::__dealloc__(PyObject* o)
 
 PyObject* PyJPBoundMethod::__str__(PyObject* o)
 {
+	JPLocalFrame frame;
 	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 	stringstream sout;
 
@@ -355,7 +364,7 @@ PyObject* PyJPBoundMethod::__str__(PyObject* o)
 
 PyObject* PyJPBoundMethod::matchReport(PyObject* o, PyObject* args)
 {
-
+	JPLocalFrame frame;
 	try {
 		PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 

@@ -95,6 +95,7 @@ void PyJPField::__dealloc__(PyObject* o)
 
 PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
 {
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -111,6 +112,7 @@ PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::getStaticAttribute(PyObject* o, PyObject* arg)
 {
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -127,6 +129,7 @@ PyObject* PyJPField::getStaticAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::setStaticAttribute(PyObject* o, PyObject* arg)
 {
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -147,7 +150,7 @@ PyObject* PyJPField::setStaticAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 {
-	JPCleaner cleaner;
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -157,12 +160,11 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 
-		HostRef* ref = new HostRef(value);
-		cleaner.add(ref);
+		HostRef ref(value);
 		
-		jobject jobj = obj->getObject(cleaner);
+		jobject jobj = obj->getObject();
 
-		self->m_Field->setAttribute(jobj, ref);
+		self->m_Field->setAttribute(jobj, &ref);
 
 		Py_INCREF(Py_None);
 		return Py_None;
@@ -175,8 +177,8 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 {
 	TRACE_IN("getInstanceAttribute");
+  JPLocalFrame frame(8);
 
-	JPCleaner cleaner;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -185,7 +187,7 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 
 		JPObject* obj = (JPObject*)JPyCObject::asVoidPtr(jo);
 
-		jobject jobj = obj->getObject(cleaner);
+		jobject jobj = obj->getObject();
 
 		HostRef* res = self->m_Field->getAttribute(jobj);
 		return detachRef(res);
@@ -199,7 +201,7 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::isStatic(PyObject* o, PyObject* arg)
 {
-	JPCleaner cleaner;
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 
@@ -216,7 +218,7 @@ PyObject* PyJPField::isStatic(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::isFinal(PyObject* o, PyObject* arg)
 {
-	JPCleaner cleaner;
+  JPLocalFrame frame;
 	try {
 		PyJPField* self = (PyJPField*)o;
 

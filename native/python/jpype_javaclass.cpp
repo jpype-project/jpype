@@ -20,6 +20,7 @@
 PyObject* JPypeJavaClass::findClass(PyObject* obj, PyObject* args)
 {
 	TRACE_IN("JPypeModule::findClass");
+	JPLocalFrame frame;
 	if (! JPEnv::isInitialized())
 	{
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");

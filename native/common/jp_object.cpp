@@ -47,11 +47,9 @@ JCharString JPObject::toString()
 		return res;
 	}
 
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	jstring jval = JPJni::toString(m_Object);
-	cleaner.addLocal(jval);
-
 	JCharString result = JPJni::unicodeFromJava(jval);
 
 	return result;
@@ -62,8 +60,7 @@ HostRef* JPObject::getAttribute(const string& name)
 {
 	TRACE_IN("JPObject::getAttribute");
 	TRACE1(name);
-
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	
 	// instance fields ...
 	JPField* fld = m_Class->getInstanceField(name);	

@@ -51,11 +51,9 @@ public :
 		return res;
 	}
 
-	jclass getClass(JPCleaner& cleaner)
+	jclass getClass()
 	{
-		jclass out = (jclass)JPEnv::getJava()->NewGlobalRef(m_Class);
-		cleaner.addGlobal(out);
-		return out;
+		return m_Class;
 	}
 
 	jclass accessClass()
@@ -90,7 +88,7 @@ public :
 public : // JPType implementation
 	virtual HostRef*   asHostObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
+	virtual jvalue     convertToJava(HostRef* obj);
 	
 private :
 	void loadSuperClass();	
@@ -99,7 +97,7 @@ private :
 	void loadMethods();	
 	void loadConstructors();	
 
-	jvalue buildObjectWrapper(HostRef* obj);
+	jobject buildObjectWrapper(HostRef* obj);
 
 private :
 	bool                    m_IsInterface;

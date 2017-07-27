@@ -189,15 +189,15 @@ HostRef* JPByteType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPByteType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jbyte val = convertToJava(cleaner, obj).b;
+		JPLocalFrame frame;
+    jbyte val = convertToJava(obj).b;
     JPEnv::getJava()->SetStaticByteField(c, fid, val);
 }
 
 void JPByteType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jbyte val = convertToJava(cleaner, obj).b;
+		JPLocalFrame frame;
+    jbyte val = convertToJava(obj).b;
     JPEnv::getJava()->SetByteField(c, fid, val);
 }
 
@@ -227,7 +227,7 @@ vector<HostRef*> JPByteType::getArrayRange(jarray a, int start, int length)
 
 void JPByteType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jbyteArray array = (jbyteArray)a;
     jbyte* val = NULL;
     jboolean isCopy;
@@ -239,7 +239,7 @@ void JPByteType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).b;            
+            val[start+i] = convertToJava(pv).b;            
         }
         JPEnv::getJava()->ReleaseByteArrayElements(array, val, 0);        
     }
@@ -287,11 +287,11 @@ HostRef* JPByteType::getArrayItem(jarray a, int ndx)
 
 void JPByteType::setArrayItem(jarray a, int ndx, HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jbyteArray array = (jbyteArray)a;
     
     try {
-        jbyte val = convertToJava(cleaner, obj).b;
+        jbyte val = convertToJava(obj).b;
         JPEnv::getJava()->SetByteArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -342,15 +342,15 @@ HostRef* JPShortType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* v
 
 void JPShortType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jshort val = convertToJava(cleaner, obj).s;
+		JPLocalFrame frame;
+    jshort val = convertToJava(obj).s;
     JPEnv::getJava()->SetStaticShortField(c, fid, val);
 }
 
 void JPShortType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jshort val = convertToJava(cleaner, obj).s;
+		JPLocalFrame frame;
+    jshort val = convertToJava(obj).s;
     JPEnv::getJava()->SetShortField(c, fid, val);
 }
 
@@ -380,7 +380,7 @@ vector<HostRef*> JPShortType::getArrayRange(jarray a, int start, int length)
 
 void JPShortType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jshortArray array = (jshortArray)a;
     jshort* val = NULL;
     jboolean isCopy;
@@ -392,7 +392,7 @@ void JPShortType::setArrayRange(jarray a, int start, int length, vector<HostRef*
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).s;
+            val[start+i] = convertToJava(pv).s;
         }
         JPEnv::getJava()->ReleaseShortArrayElements(array, val, 0);
     }
@@ -441,11 +441,11 @@ HostRef* JPShortType::getArrayItem(jarray a, int ndx)
 
 void JPShortType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jshortArray array = (jshortArray)a;
     
     try {
-        jshort val = convertToJava(cleaner, obj).s;
+        jshort val = convertToJava(obj).s;
         JPEnv::getJava()->SetShortArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -495,15 +495,15 @@ HostRef* JPIntType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* val
 
 void JPIntType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jint val = convertToJava(cleaner, obj).i;
+		JPLocalFrame frame;
+    jint val = convertToJava(obj).i;
     JPEnv::getJava()->SetStaticIntField(c, fid, val);
 }
 
 void JPIntType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jint val = convertToJava(cleaner, obj).i;
+		JPLocalFrame frame;
+    jint val = convertToJava(obj).i;
     JPEnv::getJava()->SetIntField(c, fid, val);
 }
 
@@ -533,7 +533,7 @@ vector<HostRef*> JPIntType::getArrayRange(jarray a, int start, int length)
 
 void JPIntType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jintArray array = (jintArray)a;    
     jint* val = NULL;
     jboolean isCopy;
@@ -545,7 +545,7 @@ void JPIntType::setArrayRange(jarray a, int start, int length, vector<HostRef*>&
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).i;            
+            val[start+i] = convertToJava(pv).i;            
         }
         JPEnv::getJava()->ReleaseIntArrayElements(array, val, 0);        
     }
@@ -593,12 +593,12 @@ HostRef* JPIntType::getArrayItem(jarray a, int ndx)
 
 void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jintArray array = (jintArray)a;
     jint val;
     
     try {
-        val = convertToJava(cleaner, obj).i;
+        val = convertToJava(obj).i;
         JPEnv::getJava()->SetIntArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -648,15 +648,15 @@ HostRef* JPLongType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPLongType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jlong val = convertToJava(cleaner, obj).j;
+		JPLocalFrame frame;
+    jlong val = convertToJava(obj).j;
     JPEnv::getJava()->SetStaticLongField(c, fid, val);
 }
 
 void JPLongType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jlong val = convertToJava(cleaner, obj).j;
+		JPLocalFrame frame;
+    jlong val = convertToJava(obj).j;
     JPEnv::getJava()->SetLongField(c, fid, val);
 }
 
@@ -686,7 +686,7 @@ vector<HostRef*> JPLongType::getArrayRange(jarray a, int start, int length)
 
 void JPLongType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jlongArray array = (jlongArray)a;    
     jlong* val = NULL;
     jboolean isCopy;
@@ -698,7 +698,7 @@ void JPLongType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).j;            
+            val[start+i] = convertToJava(pv).j;            
         }
         JPEnv::getJava()->ReleaseLongArrayElements(array, val, 0);        
     }
@@ -747,12 +747,12 @@ HostRef* JPLongType::getArrayItem(jarray a, int ndx)
 
 void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jlongArray array = (jlongArray)a;
     jlong val;
     
     try {
-        val = convertToJava(cleaner, obj).j;
+        val = convertToJava(obj).j;
         JPEnv::getJava()->SetLongArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -803,15 +803,15 @@ HostRef* JPFloatType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* v
 
 void JPFloatType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jfloat val = convertToJava(cleaner, obj).f;
+		JPLocalFrame frame;
+    jfloat val = convertToJava(obj).f;
     JPEnv::getJava()->SetStaticFloatField(c, fid, val);
 }
 
 void JPFloatType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jfloat val = convertToJava(cleaner, obj).f;
+		JPLocalFrame frame;
+    jfloat val = convertToJava(obj).f;
     JPEnv::getJava()->SetFloatField(c, fid, val);
 }
 
@@ -841,7 +841,7 @@ vector<HostRef*> JPFloatType::getArrayRange(jarray a, int start, int length)
 
 void JPFloatType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jfloatArray array = (jfloatArray)a;    
     jfloat* val = NULL;
     jboolean isCopy;
@@ -853,7 +853,7 @@ void JPFloatType::setArrayRange(jarray a, int start, int length, vector<HostRef*
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).f;            
+            val[start+i] = convertToJava(pv).f;            
         }
         JPEnv::getJava()->ReleaseFloatArrayElements(array, val, 0);        
     }
@@ -901,12 +901,12 @@ HostRef* JPFloatType::getArrayItem(jarray a, int ndx)
 
 void JPFloatType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jfloatArray array = (jfloatArray)a;
     jfloat val;
     
     try {
-        val = convertToJava(cleaner, obj).f;
+        val = convertToJava(obj).f;
         JPEnv::getJava()->SetFloatArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -955,15 +955,15 @@ HostRef* JPDoubleType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* 
 
 void JPDoubleType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jdouble val = convertToJava(cleaner, obj).d;
+		JPLocalFrame frame;
+    jdouble val = convertToJava(obj).d;
     JPEnv::getJava()->SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jdouble val = convertToJava(cleaner, obj).d;
+		JPLocalFrame frame;
+    jdouble val = convertToJava(obj).d;
     JPEnv::getJava()->SetDoubleField(c, fid, val);
 }
 
@@ -993,7 +993,7 @@ vector<HostRef*> JPDoubleType::getArrayRange(jarray a, int start, int length)
 
 void JPDoubleType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jdoubleArray array = (jdoubleArray)a;
     jdouble* val = NULL;
     jboolean isCopy;
@@ -1005,7 +1005,7 @@ void JPDoubleType::setArrayRange(jarray a, int start, int length, vector<HostRef
         {
             HostRef* pv = vals[i];
 
-            val[start+i] = convertToJava(cleaner, pv).f;
+            val[start+i] = convertToJava(pv).f;
         }
         JPEnv::getJava()->ReleaseDoubleArrayElements(array, val, 0);
     }
@@ -1053,12 +1053,12 @@ HostRef* JPDoubleType::getArrayItem(jarray a, int ndx)
 
 void JPDoubleType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jdoubleArray array = (jdoubleArray)a;
     jdouble val;
     
     try {
-        val = convertToJava(cleaner, obj).d;
+        val = convertToJava(obj).d;
         JPEnv::getJava()->SetDoubleArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -1108,15 +1108,15 @@ HostRef* JPCharType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPCharType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jchar val = convertToJava(cleaner, obj).c;
+		JPLocalFrame frame;
+    jchar val = convertToJava(obj).c;
     JPEnv::getJava()->SetStaticCharField(c, fid, val);
 }
 
 void JPCharType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jchar val = convertToJava(cleaner, obj).c;
+		JPLocalFrame frame;
+    jchar val = convertToJava(obj).c;
     JPEnv::getJava()->SetCharField(c, fid, val);
 }
 
@@ -1146,7 +1146,7 @@ vector<HostRef*> JPCharType::getArrayRange(jarray a, int start, int length)
 
 void JPCharType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jcharArray array = (jcharArray)a;    
     jchar* val = NULL;
     jboolean isCopy;
@@ -1158,7 +1158,7 @@ void JPCharType::setArrayRange(jarray a, int start, int length, vector<HostRef*>
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).c;            
+            val[start+i] = convertToJava(pv).c;            
         }
         JPEnv::getJava()->ReleaseCharArrayElements(array, val, 0);        
     }
@@ -1207,12 +1207,12 @@ HostRef* JPCharType::getArrayItem(jarray a, int ndx)
 
 void JPCharType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jcharArray array = (jcharArray)a;
     jchar val;
     
     try {
-        val = convertToJava(cleaner, obj).c;
+        val = convertToJava(obj).c;
         JPEnv::getJava()->SetCharArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();
@@ -1285,15 +1285,15 @@ HostRef* JPBooleanType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue*
 
 void JPBooleanType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jboolean val = convertToJava(cleaner, obj).z;
+		JPLocalFrame frame;
+    jboolean val = convertToJava(obj).z;
     JPEnv::getJava()->SetStaticBooleanField(c, fid, val);
 }
 
 void JPBooleanType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPCleaner cleaner;
-    jboolean val = convertToJava(cleaner, obj).z;
+		JPLocalFrame frame;
+    jboolean val = convertToJava(obj).z;
     JPEnv::getJava()->SetBooleanField(c, fid, val);
 }
 
@@ -1323,7 +1323,7 @@ vector<HostRef*> JPBooleanType::getArrayRange(jarray a, int start, int length)
 
 void JPBooleanType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jbooleanArray array = (jbooleanArray)a;
     jboolean* val = NULL;
     jboolean isCopy;
@@ -1335,7 +1335,7 @@ void JPBooleanType::setArrayRange(jarray a, int start, int length, vector<HostRe
         {
             HostRef* pv = vals[i];
             
-            val[start+i] = convertToJava(cleaner, pv).z;
+            val[start+i] = convertToJava(pv).z;
         }
         JPEnv::getJava()->ReleaseBooleanArrayElements(array, val, 0);
     }
@@ -1384,11 +1384,11 @@ HostRef* JPBooleanType::getArrayItem(jarray a, int ndx)
 
 void JPBooleanType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPCleaner cleaner;
+		JPLocalFrame frame;
     jbooleanArray array = (jbooleanArray)a;
     
     try {
-        jboolean val = convertToJava(cleaner, obj).z;
+        jboolean val = convertToJava(obj).z;
         JPEnv::getJava()->SetBooleanArrayRegion(array, ndx, 1, &val);
     }
     RETHROW_CATCH();

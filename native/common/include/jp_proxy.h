@@ -22,20 +22,7 @@ class JPProxy
 public:
 	JPProxy(HostRef* inst, vector<jclass>& intf);
 
-	virtual ~JPProxy()
-	{
-		if (m_Instance != NULL)
-		{
-			m_Instance->release();
-		}
-		JPEnv::getJava()->DeleteGlobalRef(m_Handler);
-
-		for (unsigned int i = 0; i < m_InterfaceClasses.size(); i++)
-		{
-			JPEnv::getJava()->DeleteGlobalRef(m_InterfaceClasses[i]);
-		}
-
-	}
+	virtual ~JPProxy();
 
 	static void init();
 

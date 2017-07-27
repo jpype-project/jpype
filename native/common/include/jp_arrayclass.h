@@ -29,8 +29,8 @@ public :
 public : // JPType implementation
 	virtual HostRef*    asHostObject(jvalue val);
 	virtual EMatchType  canConvertToJava(HostRef* obj);
-	virtual jvalue      convertToJava(JPCleaner& cleaner, HostRef* obj);
-	virtual jvalue      convertToJavaVector(JPCleaner& cleaner, vector<HostRef*>& refs, size_t start, size_t end);
+	virtual jvalue      convertToJava(HostRef* obj);
+	virtual jvalue      convertToJavaVector(vector<HostRef*>& refs, size_t start, size_t end);
 	virtual JPType*     getComponentType()
 	{
 		return m_ComponentType;

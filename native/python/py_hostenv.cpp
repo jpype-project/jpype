@@ -554,7 +554,7 @@ jvalue PythonHostEnvironment::getWrapperValue(PyObject* obj)
 	if (name.isObjectType())
 	{
 		jvalue res;
-		res.l = JPEnv::getJava()->NewGlobalRef(v->l);
+		res.l = JPEnv::getJava()->NewGlobalRef(v->l); // FIXME This is bad, nothing cleans it up
 		return res;
 	}
 	return *v;

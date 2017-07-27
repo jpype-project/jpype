@@ -19,10 +19,9 @@
 HostRef* JPObjectType::getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType) 
 {
 	TRACE_IN("JPObjectType::getStaticValue");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	jobject r = JPEnv::getJava()->GetStaticObjectField(c, fid);
-	cleaner.addLocal(r);
 
 	jvalue v;
 	v.l = r;
@@ -37,9 +36,8 @@ HostRef* JPObjectType::getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtTyp
 HostRef* JPObjectType::getInstanceValue(jobject c, jfieldID fid, JPTypeName& tgtType) 
 {
 	TRACE_IN("JPObjectType::getInstanceValue");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jobject r = JPEnv::getJava()->GetObjectField(c, fid);
-	cleaner.addLocal(r);
 
 	jvalue v;
 	v.l = r;
@@ -54,10 +52,9 @@ HostRef* JPObjectType::getInstanceValue(jobject c, jfieldID fid, JPTypeName& tgt
 HostRef* JPObjectType::invokeStatic(jclass claz, jmethodID mth, jvalue* val)
 {
 	TRACE_IN("JPObjectType::invokeStatic");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	
 	jobject res = JPEnv::getJava()->CallStaticObjectMethodA(claz, mth, val);
-	cleaner.addLocal(res);
 
 	jvalue v;
 	v.l = res;
@@ -72,10 +69,9 @@ HostRef* JPObjectType::invokeStatic(jclass claz, jmethodID mth, jvalue* val)
 HostRef* JPObjectType::invoke(jobject claz, jclass clazz, jmethodID mth, jvalue* val)
 {
 	TRACE_IN("JPObjectType::invoke");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	jobject res = JPEnv::getJava()->CallNonvirtualObjectMethodA(claz, clazz, mth, val);
-	cleaner.addLocal(res);
 
 	jvalue v;
 	v.l = res;
@@ -92,9 +88,9 @@ HostRef* JPObjectType::invoke(jobject claz, jclass clazz, jmethodID mth, jvalue*
 void JPObjectType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
 	TRACE_IN("JPObjectType::setStaticValue");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
-	jobject val = convertToJava(cleaner, obj).l;
+	jobject val = convertToJava(obj).l;
 
 	JPEnv::getJava()->SetStaticObjectField(c, fid, val);
 	TRACE_OUT;
@@ -103,9 +99,9 @@ void JPObjectType::setStaticValue(jclass c, jfieldID fid, HostRef* obj)
 void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
 	TRACE_IN("JPObjectType::setInstanceValue");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
-	jobject val = convertToJava(cleaner, obj).l;
+	jobject val = convertToJava(obj).l;
 
 	JPEnv::getJava()->SetObjectField(c, fid, val);
 	TRACE_OUT;
@@ -113,15 +109,15 @@ void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj)
 
 jarray JPObjectType::newArrayInstance(int sz)
 {
-	JPCleaner cleaner;
-	jclass c = getClass(cleaner);
+	JPLocalFrame frame;
+	jclass c = getClass();
 	return JPEnv::getJava()->NewObjectArray(sz, c, NULL);
 }
 
 vector<HostRef*> JPObjectType::getArrayRange(jarray a, int start, int length)
 {
 	jobjectArray array = (jobjectArray)a;	
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	
 	vector<HostRef*> res;
 	
@@ -129,7 +125,6 @@ vector<HostRef*> JPObjectType::getArrayRange(jarray a, int start, int length)
 	for (int i = 0; i < length; i++)
 	{
 		v.l = JPEnv::getJava()->GetObjectArrayElement(array, i+start);
-		cleaner.addLocal(v.l);
 
 		JPTypeName name = JPJni::getClassName(v.l);
 		JPType* t = JPTypeManager::getType(name);
@@ -144,15 +139,15 @@ vector<HostRef*> JPObjectType::getArrayRange(jarray a, int start, int length)
 
 void JPObjectType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
+	JPLocalFrame frame(8+length);
 	jobjectArray array = (jobjectArray)a;	
-	JPCleaner cleaner;
 	
 	jvalue v;
 	for (int i = 0; i < length; i++)
 	{
 		HostRef* pv = vals[i];
 		
-		v = convertToJava(cleaner, pv);
+		v = convertToJava(pv);
 
 		JPEnv::getJava()->SetObjectArrayElement(array, i+start, v.l);
 	}
@@ -160,22 +155,21 @@ void JPObjectType::setArrayRange(jarray a, int start, int length, vector<HostRef
 
 void JPObjectType::setArrayItem(jarray a, int ndx, HostRef* val)
 {
+	JPLocalFrame frame;
 	jobjectArray array = (jobjectArray)a;	
-	JPCleaner cleaner;
 	
-	jvalue v = convertToJava(cleaner, val);
+	jvalue v = convertToJava(val);
 	
 	JPEnv::getJava()->SetObjectArrayElement(array, ndx, v.l);		
 }
 
 HostRef* JPObjectType::getArrayItem(jarray a, int ndx)
 {
+	JPLocalFrame frame;
 	TRACE_IN("JPObjectType::getArrayItem");
 	jobjectArray array = (jobjectArray)a;	
-	JPCleaner cleaner;
 	
 	jobject obj = JPEnv::getJava()->GetObjectArrayElement(array, ndx);
-	cleaner.addLocal(obj);
 	
 	if (obj == NULL)
 	{
@@ -192,9 +186,9 @@ HostRef* JPObjectType::getArrayItem(jarray a, int ndx)
 	TRACE_OUT;
 }
 
-jobject JPObjectType::convertToJavaObject(JPCleaner& cleaner, HostRef* obj)
+jobject JPObjectType::convertToJavaObject(HostRef* obj)
 {
-	jvalue v = convertToJava(cleaner, obj);
+	jvalue v = convertToJava(obj);
 	return v.l;
 }
 
@@ -215,9 +209,9 @@ bool JPObjectType::isSubTypeOf(const JPType& other) const
 	{
 		return false;
 	}
-	JPCleaner cleaner;
-	jclass ourClass = getClass(cleaner);
-	jclass otherClass = otherObjectType->getClass(cleaner);
+	JPLocalFrame frame;
+	jclass ourClass = getClass();
+	jclass otherClass = otherObjectType->getClass();
 	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
 	bool otherIsSuperType = JPEnv::getJava()->IsAssignableFrom(ourClass, otherClass);
 	//std::cout << other.getName().getSimpleName() << " isSuperType of " << getName().getSimpleName() << " " << otherIsSuperType << std::endl;
@@ -264,7 +258,7 @@ HostRef* JPStringType::asHostObject(jvalue val)
 EMatchType JPStringType::canConvertToJava(HostRef* obj)
 {
 	TRACE_IN("JPStringType::canConvertToJava");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	if (obj == NULL || JPEnv::getHost()->isNone(obj))
 	{
@@ -300,7 +294,7 @@ EMatchType JPStringType::canConvertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jvalue JPStringType::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPStringType::convertToJava(HostRef* obj)
 {
 	TRACE_IN("JPStringType::convertToJava");
 	jvalue v;
@@ -323,7 +317,7 @@ jvalue JPStringType::convertToJava(JPCleaner& cleaner, HostRef* obj)
 		JPClass* oc = o->getClass();
 		if (oc->getName().getSimpleName() == "java.lang.String")
 		{
-			v.l = o->getObject(cleaner); // CHECK ME
+			v.l = o->getObject(); 
 			return v;
 		}
 	}
@@ -345,10 +339,8 @@ jvalue JPStringType::convertToJava(JPCleaner& cleaner, HostRef* obj)
 	TRACE_OUT;
 }
 
-jclass JPStringType::getClass(JPCleaner& cleaner) const
+jclass JPStringType::getClass() const
 {
-	jclass obj = (jclass)JPEnv::getJava()->NewGlobalRef(JPJni::s_StringClass);
-	cleaner.addGlobal(obj);
-	return obj;
+  return JPJni::s_StringClass;
 }
 

@@ -52,7 +52,7 @@ public :
 	virtual void      setInstanceValue(jobject c, jfieldID fid, HostRef* val);
 	virtual HostRef*   asHostObjectFromObject(jvalue val);
 
-	virtual jobject convertToJavaObject(JPCleaner& cleaner, HostRef* obj);
+	virtual jobject convertToJavaObject(HostRef* obj);
 
 	virtual HostRef* invokeStatic(jclass, jmethodID, jvalue*);
 	virtual HostRef* invoke(jobject, jclass clazz, jmethodID, jvalue*);
@@ -75,7 +75,7 @@ public :
 	virtual bool isSubTypeOf(const JPType& other) const;
 
 protected :
-	virtual jclass    getClass(JPCleaner& cleaner) const = 0;
+	virtual jclass    getClass() const = 0;
 	
 private :
 	JPTypeName m_Type;
@@ -94,12 +94,12 @@ public :
 	}
 
 protected :
-	virtual jclass    getClass(JPCleaner& cleaner) const;
+	virtual jclass    getClass() const;
 
 public : // JPType implementation	
 	virtual HostRef*  asHostObject(jvalue val);
 	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(JPCleaner& cleaner, HostRef* obj);
+	virtual jvalue     convertToJava(HostRef* obj);
 };
 
 #endif // _JPPOBJECTTYPE_H_

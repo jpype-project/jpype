@@ -32,7 +32,7 @@ JPArrayClass::~JPArrayClass()
 EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 {
 	TRACE_IN("JPArrayClass::canConvertToJava");
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	
 	if (JPEnv::getHost()->isNone(o))
 	{
@@ -76,12 +76,12 @@ EMatchType JPArrayClass::canConvertToJava(HostRef* o)
 		for (int i = 0; i < length && match > _none; i++)
 		{
 			HostRef* obj = JPEnv::getHost()->getSequenceItem(o, i);
-			cleaner.add(obj);
 			EMatchType newMatch = m_ComponentType->canConvertToJava(obj);
 			if (newMatch < match)
 			{
 				match = newMatch;
 			}
+			delete obj;
 		}
 		return match;
 	}
@@ -99,9 +99,10 @@ HostRef* JPArrayClass::asHostObject(jvalue val)
 	return JPEnv::getHost()->newArray(new JPArray(m_Name, (jarray)val.l));
 }
 
-jvalue JPArrayClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
+jvalue JPArrayClass::convertToJava(HostRef* obj)
 {	
 	TRACE_IN("JPArrayClass::convertToJava");
+	JPLocalFrame frame;
 	jvalue res;
 	res.l = NULL;
 	
@@ -118,15 +119,13 @@ jvalue JPArrayClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
 		JPEnv::getHost()->getRawByteString(obj, &rawData, size);
 		
 		jbyteArray array = JPEnv::getJava()->NewByteArray(size);
-		cleaner.addLocal(array);
-		res.l = array;
 
 		jboolean isCopy;
 		jbyte* contents = JPEnv::getJava()->GetByteArrayElements(array, &isCopy);
 		memcpy(contents, rawData, size*sizeof(jbyte));
 		JPEnv::getJava()->ReleaseByteArrayElements(array, contents, 0);
 		
-		cleaner.removeLocal(array);
+		res.l = frame.keep(array);
 	}
 	else if (JPEnv::getHost()->isUnicodeString(obj) && m_ComponentType->getName().getType() == JPTypeName::_char && JPEnv::getHost()->getUnicodeSize() == sizeof(jchar))
 	{
@@ -136,15 +135,13 @@ jvalue JPArrayClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
 		JPEnv::getHost()->getRawUnicodeString(obj, &rawData, size);
 		
 		jcharArray array = JPEnv::getJava()->NewCharArray(size);
-		cleaner.addLocal(array);
-		res.l = array;
 
 		jboolean isCopy;
 		jchar* contents = JPEnv::getJava()->GetCharArrayElements(array, &isCopy);
 		memcpy(contents, rawData, size*sizeof(jchar));
 		JPEnv::getJava()->ReleaseCharArrayElements(array, contents, 0);
 		
-		cleaner.removeLocal(array);
+		res.l = frame.keep(array);
 	}
 	else if (JPEnv::getHost()->isSequence(obj))
 	{
@@ -152,52 +149,42 @@ jvalue JPArrayClass::convertToJava(JPCleaner& cleaner, HostRef* obj)
 		int length = JPEnv::getHost()->getSequenceLength(obj);
 		
 		jarray array = m_ComponentType->newArrayInstance(length);
-		cleaner.addLocal(array);
-		res.l = array;
 		
 		for (int i = 0; i < length ; i++)
 		{
 			HostRef* obj2 = JPEnv::getHost()->getSequenceItem(obj, i);
-			cleaner.add(obj2);
-			
 			m_ComponentType->setArrayItem(array, i, obj2);
+			delete obj2;
 		}
-		cleaner.removeLocal(array);
+		res.l = frame.keep(array);
 	}
 	
 	return res;
 	TRACE_OUT;
 }
 
-jvalue JPArrayClass::convertToJavaVector(JPCleaner& cleaner, vector<HostRef*>& refs, size_t start, size_t end)
+jvalue JPArrayClass::convertToJavaVector(vector<HostRef*>& refs, size_t start, size_t end)
 {
 	TRACE_IN("JPArrayClass::convertToJavaVector");
+	JPLocalFrame frame;
 	int length = end-start;
 
 	jarray array = m_ComponentType->newArrayInstance(length);
-	cleaner.addLocal(array);
-
 	jvalue res;
-	res.l = array;
 		
 	for (size_t i = start; i < end ; i++)
 	{
 		m_ComponentType->setArrayItem(array, i-start, refs[i]);
 	}
-	cleaner.removeLocal(array);
+	res.l = frame.keep(array);
 	return res;
 	TRACE_OUT;
 }
 
 JPArray* JPArrayClass::newInstance(int length)
 {	
-	JPCleaner cleaner;
-	
+	JPLocalFrame frame;
 	jarray array = m_ComponentType->newArrayInstance(length);
-	cleaner.addLocal(array);
-	
-	JPArray* res = new JPArray(getName(), array);
-	
-	return res;
+	return  new JPArray(getName(), array);
 }
 

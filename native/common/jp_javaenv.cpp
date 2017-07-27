@@ -136,6 +136,25 @@ int JPJavaEnv::DestroyJavaVM()
 	return 0;
 }
 
+int JPJavaEnv::PushLocalFrame(int i)
+{
+  JNIEnv* env = getJNIEnv();
+	if (env != NULL)
+	{
+		return env->functions->PushLocalFrame(env, i);
+	}
+	return -1;
+}
+
+jobject JPJavaEnv::PopLocalFrame(jobject obj)
+{
+  JNIEnv* env = getJNIEnv();
+	if (env != NULL)
+	{
+		return env->functions->PopLocalFrame(env, obj);
+	}
+	return NULL;
+}
 
 void JPJavaEnv::DeleteLocalRef(jobject obj)
 {
@@ -280,18 +299,19 @@ jobject JPJavaEnv::NewDirectByteBuffer(void* address, jlong capacity)
 {
 	TRACE_IN("JPJavaEnv::NewDirectByteBuffer");
 	JNIEnv* env = getJNIEnv(); 
-    jobject res = env->functions->NewDirectByteBuffer(env, address, capacity);
-    JAVA_CHECK("NewDirectByteBuffer");
+  jobject res = env->functions->NewDirectByteBuffer(env, address, capacity);
+  JAVA_CHECK("NewDirectByteBuffer");
 	TRACE1((long)res);
-    return res;	
+  return res;	
 	TRACE_OUT;
 }
 
 jobject JPJavaEnv::NewObjectA(jclass a0, jmethodID a1, jvalue* a2)
-{     jobject res;
-
-    JNIEnv* env = getJNIEnv();
-    void* _save = JPEnv::getHost()->gotoExternal();
+{ 
+	JPLocalFrame frame;
+	jobject res;
+  JNIEnv* env = getJNIEnv();
+  void* _save = JPEnv::getHost()->gotoExternal();
 
 	res = env->functions->AllocObject(env, a0);
 	JAVA_CHECK("NewObjectA");
@@ -300,19 +320,20 @@ jobject JPJavaEnv::NewObjectA(jclass a0, jmethodID a1, jvalue* a2)
 
 	if (ExceptionCheck())
 	{
-		DeleteLocalRef(res);
+		res = NULL;
 	}
 
-    JPEnv::getHost()->returnExternal(_save);
-    JAVA_CHECK("NewObjectA");
-    return res;
-
+  JPEnv::getHost()->returnExternal(_save);
+  JAVA_CHECK("NewObjectA");
+  return frame.keep(res);
 }
 
 jobject JPJavaEnv::NewObject(jclass a0, jmethodID a1)
-{     jobject res;
-    JNIEnv* env = getJNIEnv();
-    void* _save = JPEnv::getHost()->gotoExternal();
+{ 
+	JPLocalFrame frame;
+	jobject res;
+  JNIEnv* env = getJNIEnv();
+  void* _save = JPEnv::getHost()->gotoExternal();
 
 	res = env->functions->AllocObject(env, a0);
 	JAVA_CHECK("NewObject");
@@ -321,12 +342,12 @@ jobject JPJavaEnv::NewObject(jclass a0, jmethodID a1)
 
 	if (ExceptionCheck())
 	{
-		DeleteLocalRef(res);
+		res = NULL;
 	}
 
-    JPEnv::getHost()->returnExternal(_save);
-    JAVA_CHECK("NewObject");
-    return res;
+  JPEnv::getHost()->returnExternal(_save);
+  JAVA_CHECK("NewObject");
+  return frame.keep(res);
 }
 
 void* JPJavaEnv::GetPrimitiveArrayCritical(jarray array, jboolean *isCopy)

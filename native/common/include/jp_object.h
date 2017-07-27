@@ -30,11 +30,9 @@ public :
 		return m_Class;
 	}
 
-	jobject      getObject(JPCleaner& cleaner)
+	jobject      getObject()
 	{
-		jobject obj = JPEnv::getJava()->NewLocalRef(m_Object);
-		cleaner.addLocal(obj);
-		return obj;
+		return JPEnv::getJava()->NewLocalRef(m_Object);
 	}
 
 	JCharString toString();
