@@ -132,10 +132,10 @@ typedef vector<string> StringVector;
 #include "jp_typename.h"
 #include "jp_utility.h"
 #include "jp_javaenv.h"
-#include "jp_jniutil.h"
-
 #include "jp_hostenv.h"
 #include "jp_env.h"
+#include "jp_jniutil.h"
+
 
 // Other header files
 #include "jp_type.h"

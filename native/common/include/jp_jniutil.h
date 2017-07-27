@@ -17,8 +17,6 @@
 #ifndef _JPJNIUTIL_H_
 #define _JPJNIUTIL_H_
 
-class JPLocalFrame;
-
 namespace JPJni
 {
 	extern jclass s_ClassClass;

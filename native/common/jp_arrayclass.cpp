@@ -165,8 +165,8 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 
 jvalue JPArrayClass::convertToJavaVector(vector<HostRef*>& refs, size_t start, size_t end)
 {
-	TRACE_IN("JPArrayClass::convertToJavaVector");
 	JPLocalFrame frame;
+	TRACE_IN("JPArrayClass::convertToJavaVector");
 	int length = end-start;
 
 	jarray array = m_ComponentType->newArrayInstance(length);

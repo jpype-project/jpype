@@ -41,7 +41,7 @@ public:
 };
 
 /**
- * Simple tample class for managing global java references and host references.
+ * Simple tample class for managing host references.
  */
 class JPCleaner
 {
@@ -49,26 +49,12 @@ public :
 	JPCleaner();	
 	virtual ~JPCleaner();
 	
-	void addGlobal(jobject r);
-	void removeGlobal(jobject r);
-	void addAllGlobal(vector<jobject>& r);
-	void addAllGlobal(vector<jclass>& r);
-	void removeAllGlobal(vector<jobject>& r);
-
-//	void addLocal(jobject r);
-//	void removeLocal(jobject r);
-//	void addAllLocal(vector<jobject>& r);
-//	void addAllLocal(vector<jclass>& r);
-//	void removeAllLocal(vector<jobject>& r);
-
 	void add(HostRef* r);
 	void addAll(vector<HostRef*>& r);
 	void remove(HostRef* r);
 	void removeAll(vector<HostRef*>& r);
 	
 private :
-	vector<jobject>  m_GlobalJavaObjects;
-	vector<jobject>  m_LocalJavaObjects;
 	vector<HostRef*> m_HostObjects;
 };
 

@@ -109,9 +109,7 @@ void JPObjectType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj)
 
 jarray JPObjectType::newArrayInstance(int sz)
 {
-	JPLocalFrame frame;
-	jclass c = getClass();
-	return JPEnv::getJava()->NewObjectArray(sz, c, NULL);
+	return JPEnv::getJava()->NewObjectArray(sz, getClass(), NULL);
 }
 
 vector<HostRef*> JPObjectType::getArrayRange(jarray a, int start, int length)
