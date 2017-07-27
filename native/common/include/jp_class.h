@@ -56,11 +56,6 @@ public :
 		return m_Class;
 	}
 
-	jclass accessClass()
-	{
-		return m_Class;
-	}
-	
 	map<string, JPField*>& getStaticFields()
 	{
 		return m_StaticFields;

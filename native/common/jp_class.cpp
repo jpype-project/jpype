@@ -631,7 +631,7 @@ bool JPClass::isSubclass(JPClass* o)
 {
 	JPLocalFrame frame;
 
-	jclass jo = o->accessClass(); // CHECK ME
+	jclass jo = o->getClass();
 
 	return JPEnv::getJava()->IsAssignableFrom(m_Class, jo);
 }

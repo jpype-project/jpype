@@ -326,7 +326,7 @@ PyObject* PyJPClass::isException(PyObject* o, PyObject* args)
 	{
 		PyJPClass* self = (PyJPClass*)o;
 
-		bool res = JPJni::isThrowable(self->m_Class->accessClass());
+		bool res = JPJni::isThrowable(self->m_Class->getClass());
 		if (res)
 		{
 			return JPyBoolean::getTrue();
@@ -349,7 +349,7 @@ PyObject* PyJPClass::getDeclaredMethods(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredMethods(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getDeclaredMethods(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -375,7 +375,7 @@ PyObject* PyJPClass::getConstructors(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getConstructors(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getConstructors(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -401,7 +401,7 @@ PyObject* PyJPClass::getDeclaredConstructors(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredConstructors(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getDeclaredConstructors(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
@@ -427,7 +427,7 @@ PyObject* PyJPClass::getDeclaredFields(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredFields(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getDeclaredFields(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
@@ -453,7 +453,7 @@ PyObject* PyJPClass::getFields(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getFields(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getFields(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
@@ -478,7 +478,7 @@ PyObject* PyJPClass::getModifiers(PyObject* o)
 	JPLocalFrame frame;
 	try {
 		PyJPClass* self = (PyJPClass*)o;
-		long mod = JPJni::getClassModifiers(self->m_Class->accessClass());
+		long mod = JPJni::getClassModifiers(self->m_Class->getClass());
 
 		PyObject* res = JPyLong::fromLongLong(mod);
 
@@ -494,7 +494,7 @@ PyObject* PyJPClass::getMethods(PyObject* o)
 	try {
 		JPCleaner cleaner;
 		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getMethods(frame, self->m_Class->accessClass());
+		vector<jobject> mth = JPJni::getMethods(frame, self->m_Class->getClass());
 
 		PyObject* res = JPySequence::newTuple((int)mth.size());
 		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
