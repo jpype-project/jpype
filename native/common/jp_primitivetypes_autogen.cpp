@@ -189,14 +189,12 @@ HostRef* JPByteType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPByteType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jbyte val = convertToJava(obj).b;
     JPEnv::getJava()->SetStaticByteField(c, fid, val);
 }
 
 void JPByteType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jbyte val = convertToJava(obj).b;
     JPEnv::getJava()->SetByteField(c, fid, val);
 }
@@ -227,7 +225,6 @@ vector<HostRef*> JPByteType::getArrayRange(jarray a, int start, int length)
 
 void JPByteType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jbyteArray array = (jbyteArray)a;
     jbyte* val = NULL;
     jboolean isCopy;
@@ -287,7 +284,6 @@ HostRef* JPByteType::getArrayItem(jarray a, int ndx)
 
 void JPByteType::setArrayItem(jarray a, int ndx, HostRef* obj)
 {
-		JPLocalFrame frame;
     jbyteArray array = (jbyteArray)a;
     
     try {
@@ -342,14 +338,12 @@ HostRef* JPShortType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* v
 
 void JPShortType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jshort val = convertToJava(obj).s;
     JPEnv::getJava()->SetStaticShortField(c, fid, val);
 }
 
 void JPShortType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jshort val = convertToJava(obj).s;
     JPEnv::getJava()->SetShortField(c, fid, val);
 }
@@ -380,7 +374,6 @@ vector<HostRef*> JPShortType::getArrayRange(jarray a, int start, int length)
 
 void JPShortType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jshortArray array = (jshortArray)a;
     jshort* val = NULL;
     jboolean isCopy;
@@ -441,7 +434,6 @@ HostRef* JPShortType::getArrayItem(jarray a, int ndx)
 
 void JPShortType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jshortArray array = (jshortArray)a;
     
     try {
@@ -495,14 +487,12 @@ HostRef* JPIntType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* val
 
 void JPIntType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jint val = convertToJava(obj).i;
     JPEnv::getJava()->SetStaticIntField(c, fid, val);
 }
 
 void JPIntType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jint val = convertToJava(obj).i;
     JPEnv::getJava()->SetIntField(c, fid, val);
 }
@@ -533,7 +523,6 @@ vector<HostRef*> JPIntType::getArrayRange(jarray a, int start, int length)
 
 void JPIntType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jintArray array = (jintArray)a;    
     jint* val = NULL;
     jboolean isCopy;
@@ -593,7 +582,6 @@ HostRef* JPIntType::getArrayItem(jarray a, int ndx)
 
 void JPIntType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jintArray array = (jintArray)a;
     jint val;
     
@@ -648,14 +636,12 @@ HostRef* JPLongType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPLongType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jlong val = convertToJava(obj).j;
     JPEnv::getJava()->SetStaticLongField(c, fid, val);
 }
 
 void JPLongType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jlong val = convertToJava(obj).j;
     JPEnv::getJava()->SetLongField(c, fid, val);
 }
@@ -686,7 +672,6 @@ vector<HostRef*> JPLongType::getArrayRange(jarray a, int start, int length)
 
 void JPLongType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jlongArray array = (jlongArray)a;    
     jlong* val = NULL;
     jboolean isCopy;
@@ -747,7 +732,6 @@ HostRef* JPLongType::getArrayItem(jarray a, int ndx)
 
 void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jlongArray array = (jlongArray)a;
     jlong val;
     
@@ -803,14 +787,12 @@ HostRef* JPFloatType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* v
 
 void JPFloatType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jfloat val = convertToJava(obj).f;
     JPEnv::getJava()->SetStaticFloatField(c, fid, val);
 }
 
 void JPFloatType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jfloat val = convertToJava(obj).f;
     JPEnv::getJava()->SetFloatField(c, fid, val);
 }
@@ -841,7 +823,6 @@ vector<HostRef*> JPFloatType::getArrayRange(jarray a, int start, int length)
 
 void JPFloatType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jfloatArray array = (jfloatArray)a;    
     jfloat* val = NULL;
     jboolean isCopy;
@@ -901,7 +882,6 @@ HostRef* JPFloatType::getArrayItem(jarray a, int ndx)
 
 void JPFloatType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jfloatArray array = (jfloatArray)a;
     jfloat val;
     
@@ -955,14 +935,12 @@ HostRef* JPDoubleType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* 
 
 void JPDoubleType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jdouble val = convertToJava(obj).d;
     JPEnv::getJava()->SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jdouble val = convertToJava(obj).d;
     JPEnv::getJava()->SetDoubleField(c, fid, val);
 }
@@ -993,7 +971,6 @@ vector<HostRef*> JPDoubleType::getArrayRange(jarray a, int start, int length)
 
 void JPDoubleType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jdoubleArray array = (jdoubleArray)a;
     jdouble* val = NULL;
     jboolean isCopy;
@@ -1053,7 +1030,6 @@ HostRef* JPDoubleType::getArrayItem(jarray a, int ndx)
 
 void JPDoubleType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jdoubleArray array = (jdoubleArray)a;
     jdouble val;
     
@@ -1108,14 +1084,12 @@ HostRef* JPCharType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue* va
 
 void JPCharType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jchar val = convertToJava(obj).c;
     JPEnv::getJava()->SetStaticCharField(c, fid, val);
 }
 
 void JPCharType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jchar val = convertToJava(obj).c;
     JPEnv::getJava()->SetCharField(c, fid, val);
 }
@@ -1146,7 +1120,6 @@ vector<HostRef*> JPCharType::getArrayRange(jarray a, int start, int length)
 
 void JPCharType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jcharArray array = (jcharArray)a;    
     jchar* val = NULL;
     jboolean isCopy;
@@ -1207,7 +1180,6 @@ HostRef* JPCharType::getArrayItem(jarray a, int ndx)
 
 void JPCharType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jcharArray array = (jcharArray)a;
     jchar val;
     
@@ -1285,14 +1257,12 @@ HostRef* JPBooleanType::invoke(jobject obj, jclass clazz, jmethodID mth, jvalue*
 
 void JPBooleanType::setStaticValue(jclass c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jboolean val = convertToJava(obj).z;
     JPEnv::getJava()->SetStaticBooleanField(c, fid, val);
 }
 
 void JPBooleanType::setInstanceValue(jobject c, jfieldID fid, HostRef* obj) 
 {
-		JPLocalFrame frame;
     jboolean val = convertToJava(obj).z;
     JPEnv::getJava()->SetBooleanField(c, fid, val);
 }
@@ -1323,7 +1293,6 @@ vector<HostRef*> JPBooleanType::getArrayRange(jarray a, int start, int length)
 
 void JPBooleanType::setArrayRange(jarray a, int start, int length, vector<HostRef*>& vals)
 {
-		JPLocalFrame frame;
     jbooleanArray array = (jbooleanArray)a;
     jboolean* val = NULL;
     jboolean isCopy;
@@ -1384,7 +1353,6 @@ HostRef* JPBooleanType::getArrayItem(jarray a, int ndx)
 
 void JPBooleanType::setArrayItem(jarray a, int ndx , HostRef* obj)
 {
-		JPLocalFrame frame;
     jbooleanArray array = (jbooleanArray)a;
     
     try {
