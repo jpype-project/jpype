@@ -128,7 +128,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 		memcpy(contents, rawData, size*sizeof(jbyte));
 		JPEnv::getJava()->ReleaseByteArrayElements(array, contents, 0);
 		
-		res.l = frame.keep(array);
+		res.l = array;
 	}
 	else if (JPEnv::getHost()->isUnicodeString(obj) && m_ComponentType->getName().getType() == JPTypeName::_char && JPEnv::getHost()->getUnicodeSize() == sizeof(jchar))
 	{
@@ -144,7 +144,7 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 		memcpy(contents, rawData, size*sizeof(jchar));
 		JPEnv::getJava()->ReleaseCharArrayElements(array, contents, 0);
 		
-		res.l = frame.keep(array);
+		res.l = array;
 	}
 	else if (JPEnv::getHost()->isSequence(obj))
 	{
@@ -159,9 +159,10 @@ jvalue JPArrayClass::convertToJava(HostRef* obj)
 			m_ComponentType->setArrayItem(array, i, obj2);
 			delete obj2;
 		}
-		res.l = frame.keep(array);
+		res.l = array;
 	}
-	
+
+	res.l = frame.keep(res.l);
 	return res;
 	TRACE_OUT;
 }

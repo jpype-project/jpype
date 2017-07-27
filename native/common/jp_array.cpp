@@ -128,8 +128,7 @@ JPType* JPArray::getType()
 jvalue  JPArray::getValue()
 {
 	jvalue val;
-//	val.l = JPEnv::getJava()->NewLocalRef(m_Object);
-	val.l = m_Object;
+	val.l = JPEnv::getJava()->NewLocalRef(m_Object);
 	return val;
 }
 JCharString JPArray::toString()

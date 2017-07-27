@@ -46,16 +46,17 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		jvalue v = type->convertToJava(&ref);
 
 		jvalue* pv = new jvalue();
-		*pv = v;
 
 		// Transfer ownership to python
 		PyObject* res;
 		if (type->isObjectType())
 		{
+			pv->l = JPEnv::getJava()->NewGlobalRef(v.l);
 			res = JPyCObject::fromVoidAndDesc((void*)pv, "object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
 		}
 		else
 		{
+			*pv = v;
 			res = JPyCObject::fromVoidAndDesc((void*)pv, "jvalue", PythonHostEnvironment::deleteJValueDestructor);
 		}
 
