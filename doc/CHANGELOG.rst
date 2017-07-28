@@ -4,6 +4,9 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - Java reference counting has been converted to use JNI 
+    PushLocalFrame/PopLocalFrame.  Several resource leaks
+    were removed.
 
   - Support of java.lang.Class<> 
     - java.lang.Object().getClass() on Java objects returns a java.lang.Class 
