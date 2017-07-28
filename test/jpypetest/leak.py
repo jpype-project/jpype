@@ -58,11 +58,11 @@ class LeakChecker():
         # Note, some growth is possible due to loading of objects and classes,
         # Thus we will run it a few times to check the growth rate.
 
-        rss_memory = []
-        jvm_total_mem = []
-        jvm_free_mem = []
-        grow0 = []
-        grow1 = []
+        rss_memory = list()
+        jvm_total_mem = list()
+        jvm_free_mem = list()
+        grow0 = list()
+        grow1 = list()
 
         (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
         success = 0
@@ -72,8 +72,8 @@ class LeakChecker():
             (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
 
             rss_memory.append(rss_memory1)
-            jvm_total_mem.append(jvm_total_mem)
-            jvm_free_mem.append(jvm_free_mem)
+            jvm_total_mem.append(jvm_total_mem1)
+            jvm_free_mem.append(jvm_free_mem1)
 
             growth0=(rss_memory1-rss_memory0)/(float(size))
             growth1=(jvm_total_mem1-jvm_total_mem0)/(float(size))
