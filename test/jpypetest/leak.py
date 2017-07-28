@@ -66,7 +66,7 @@ class LeakChecker():
 
         (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
         success = 0
-        for j in xrange(5): 
+        for j in xrange(10): 
             for i in xrange(size):
                 func()
             (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
@@ -84,14 +84,17 @@ class LeakChecker():
             grow0.append(growth0)
             grow1.append(growth1)
 
+            if ( growth0<0 ) or (growth1<0):
+                continue
+
             if ( growth0<4 ) and ( growth1<4 ):
                 success+=1
 
-            if success>2:
+            if success>3:
                 return False
 
         print()
-        for i in xrange(5):
+        for i in xrange(len(grow0)):
             print('  Pass%d: %f %f  - %d %d %d'%(i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
         print()
         return True
@@ -121,17 +124,17 @@ class LeakTestCase(common.JPypeTestCase):
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
-        self.assertFalse(self.lc.memTest(stringFunc, 10000))
+        self.assertFalse(self.lc.memTest(stringFunc, 5000))
  
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
-        self.assertFalse(self.lc.memTest(classFunc, 10000))
+        self.assertFalse(self.lc.memTest(classFunc, 5000))
  
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
-        self.assertFalse(self.lc.memTest(lambda : ctorFunc(self.cls), 10000))
+        self.assertFalse(self.lc.memTest(lambda : ctorFunc(self.cls), 5000))
  
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
-        self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 10000))
+        self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 5000))
 
