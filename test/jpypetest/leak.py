@@ -54,16 +54,21 @@ class LeakChecker():
             func()
         (rss_memory3, jvm_total_mem3, jvm_free_mem3) = self.freeResources()
 
-
+        # Look for potential growth
         growth0=((rss_memory3-rss_memory2)/(float(size)))
-        growth1=((jvm_total_mem3-jvm_total_mem3)/(float(size)))
-        leak=( growth0>4 or growth1>4)
+        growth1=((rss_memory2-rss_memory1)/(float(size)))
+        growth2=((jvm_total_mem3-jvm_total_mem3)/(float(size)))
+        growth3=((jvm_total_mem2-jvm_total_mem1)/(float(size)))
+        leak=( growth0>4 and growth1>4) or ( growth2>4 and growth3>4) 
+
         if leak:
-            print('Pre:   %d %d %d'%(rss_memory0, jvm_total_mem0, jvm_free_mem0))
-            print('Pass1: %d %d %d'%(rss_memory1, jvm_total_mem1, jvm_free_mem1))
-            print('Pass2: %d %d %d'%(rss_memory2, jvm_total_mem2, jvm_free_mem2))
-            print('Pass3: %d %d %d'%(rss_memory3, jvm_total_mem3, jvm_free_mem3))
-            print("Growth: ",growth0,growth1)
+            print()
+            print('Leak details:',growth0, growth1, growth2, growth3)
+            print('  Pre:   %d %d %d'%(rss_memory0, jvm_total_mem0, jvm_free_mem0))
+            print('  Pass1: %d %d %d'%(rss_memory1, jvm_total_mem1, jvm_free_mem1))
+            print('  Pass2: %d %d %d'%(rss_memory2, jvm_total_mem2, jvm_free_mem2))
+            print('  Pass3: %d %d %d'%(rss_memory3, jvm_total_mem3, jvm_free_mem3))
+            print()
         return leak
 
 # Test functions
