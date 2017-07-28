@@ -2,13 +2,25 @@
 import jpype
 import gc
 import sys
-import resource
+import unittest
 from . import common
+
+try:
+    import resource
+except ImportError:
+    resource = None
+    pass
 
 try:
     xrange
 except NameError:
     xrange = range
+
+def haveResource():
+    if resource:
+        return True
+    return False
+
 
 class LeakChecker():
 
@@ -41,35 +53,44 @@ class LeakChecker():
 
         # Note, some growth is possible due to loading of objects and classes,
         # Thus we will run it a few times to check the growth rate.
+
+        rss_memory = []
+        jvm_total_mem = []
+        jvm_free_mem = []
+        grow0 = []
+        grow1 = []
+
         (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
-        for i in xrange(size):
-            func()
-        (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
+        success = 0
+        for j in xrange(5): 
+            for i in xrange(size):
+                func()
+            (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
 
-        for i in xrange(size):
-            func()
-        (rss_memory2, jvm_total_mem2, jvm_free_mem2) = self.freeResources()
+            rss_memory.append(rss_memory1)
+            jvm_total_mem.append(jvm_total_mem)
+            jvm_free_mem.append(jvm_free_mem)
 
-        for i in xrange(size):
-            func()
-        (rss_memory3, jvm_total_mem3, jvm_free_mem3) = self.freeResources()
+            growth0=(rss_memory1-rss_memory0)/(float(size))
+            growth1=(jvm_total_mem1-jvm_total_mem0)/(float(size))
+            rss_memory0 = rss_memory1
+            jvm_total_mem0 = jvm_total_mem1
+            jvm_free_mem0 = jvm_total_mem1
 
-        # Look for potential growth
-        growth0=((rss_memory3-rss_memory2)/(float(size)))
-        growth1=((rss_memory2-rss_memory1)/(float(size)))
-        growth2=((jvm_total_mem3-jvm_total_mem3)/(float(size)))
-        growth3=((jvm_total_mem2-jvm_total_mem1)/(float(size)))
-        leak=( growth0>4 and growth1>4) or ( growth2>4 and growth3>4) 
+            grow0.append(growth0)
+            grow1.append(growth1)
 
-        if leak:
-            print()
-            print('Leak details:',growth0, growth1, growth2, growth3)
-            print('  Pre:   %d %d %d'%(rss_memory0, jvm_total_mem0, jvm_free_mem0))
-            print('  Pass1: %d %d %d'%(rss_memory1, jvm_total_mem1, jvm_free_mem1))
-            print('  Pass2: %d %d %d'%(rss_memory2, jvm_total_mem2, jvm_free_mem2))
-            print('  Pass3: %d %d %d'%(rss_memory3, jvm_total_mem3, jvm_free_mem3))
-            print()
-        return leak
+            if ( growth0<4 ) and ( growth1<4 ):
+                success+=1
+
+            if success>2:
+                return False
+
+        print()
+        for i in xrange(5):
+            print('  Pass%d: %f %f  - %d %d %d'%(i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
+        print()
+        return True
 
 # Test functions
 def stringFunc():
@@ -88,19 +109,25 @@ def invokeFunc(obj):
 class LeakTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if not haveResource():
+            return
         self.cls = jpype.JClass('java.lang.String')
         self.string = self.cls("there")
         self.lc = LeakChecker()
 
+    @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
         self.assertFalse(self.lc.memTest(stringFunc, 10000))
  
+    @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
         self.assertFalse(self.lc.memTest(classFunc, 10000))
  
+    @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
         self.assertFalse(self.lc.memTest(lambda : ctorFunc(self.cls), 10000))
  
+    @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
         self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 10000))
 
