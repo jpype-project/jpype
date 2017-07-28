@@ -2,8 +2,12 @@
 import jpype
 import gc
 import sys
-import unittest
 from . import common
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 try:
     import resource
