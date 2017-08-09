@@ -25,6 +25,7 @@ from . import _jproxy
 from . import _jexception
 from . import _jcollection
 from . import _jobject
+from . import _jio
 from . import _properties
 from . import nio
 from . import reflect

@@ -122,7 +122,9 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 	}
 	if (!maximallySpecificOverload)
 	{
-		RAISE(JPypeException, "No matching overloads found.");
+		std::stringstream ss;
+		ss << "No matching overloads found for " << getName() << " in find.";
+		RAISE(JPypeException, ss.str());
 	}
 	return maximallySpecificOverload;
 	TRACE_OUT;
@@ -195,7 +197,9 @@ HostRef* JPMethod::invokeInstance(vector<HostRef*>& args)
 	
 	if (currentMatch->isStatic())
 	{	
-		RAISE(JPypeException, "No matching overloads found.");
+		std::stringstream ss;
+		ss << "No matching member overloads found for " << getName() << ".";
+		RAISE(JPypeException, ss.str());
 	}
 	else
 	{
