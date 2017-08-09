@@ -403,3 +403,55 @@ PyObject* JPypeModule::setConvertStringObjects(PyObject* obj, PyObject* args)
 
 	return NULL;
 }
+
+/** Set a Jpype Resource.
+ *
+ * JPype needs to know about a number of python objects to function
+ * properly. These resources are set in the initialization methods
+ * as those resources are created in python. 
+ */
+PyObject* JPypeModule::setResource(PyObject* self, PyObject* arg)
+{	
+	try {
+		char* tname;
+		PyObject* value;
+		JPyArg::parseTuple(arg, "sO", &tname, &value);
+		string name = tname;
+
+		if (name == "WrapperClass")
+			hostEnv->setWrapperClass(value);
+		else if (name == "StringWrapperClass")
+			hostEnv->setStringWrapperClass(value);
+		else if (name == "ProxyClass")
+			hostEnv->setProxyClass(value);
+		else if (name == "JavaExceptionClass")
+			hostEnv->setJavaExceptionClass(value);
+
+		// Base class for JavaClass, used to check isInstance()
+		else if (name == "JavaClass")
+			hostEnv->setPythonJavaClass(value);
+    // Base class for JavaObject wrappers, used to check isInstance()
+		else if (name == "JavaObject")
+			hostEnv->setPythonJavaObject(value);
+
+		else if (name == "GetClassMethod")
+			hostEnv->setGetJavaClassMethod(value);
+		else if (name == "SpecialConstructorKey")
+			hostEnv->setSpecialConstructorKey(value);
+		else if (name == "JavaArrayClass")
+			hostEnv->setJavaArrayClass(value);
+		else if (name == "GetJavaArrayClassMethod")
+			hostEnv->setGetJavaArrayClassMethod(value);
+		else
+		{
+			PyErr_SetString(PyExc_RuntimeError, "Unknown jpype resource");
+			return NULL;
+		}
+
+		Py_RETURN_NONE;
+	}
+	PY_STANDARD_CATCH
+
+	return NULL;
+}
+

@@ -22,6 +22,7 @@ _CLASSES = {}
 
 _SPECIAL_CONSTRUCTOR_KEY = "This is the special constructor key"
 
+_JAVACLASS = None
 _JAVAOBJECT = None
 _JAVATHROWABLE = None
 _COMPARABLE = None
@@ -34,15 +35,16 @@ _COMPARABLE_METHODS = {
         }
 
 def _initialize():
-    global _COMPARABLE, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
+    global _COMPARABLE, _JAVACLASS, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
 
     _JAVAOBJECT = JClass("java.lang.Object")
+    _JAVACLASS = JClass("java.lang.Class")
     _JAVATHROWABLE = JClass("java.lang.Throwable")
     _RUNTIMEEXCEPTION = JClass("java.lang.RuntimeException")
-#    _jpype.setJavaLangObjectClass(_JAVAOBJECT)
-    _jpype.setJavaLangObjectClass(_JavaObject)
-    _jpype.setGetClassMethod(_getClassFor)
-    _jpype.setSpecialConstructorKey(_SPECIAL_CONSTRUCTOR_KEY)
+    _jpype.setResource('JavaClass', _JavaClass)
+    _jpype.setResource('JavaObject', _JavaObject)
+    _jpype.setResource('GetClassMethod',_getClassFor)
+    _jpype.setResource('SpecialConstructorKey',_SPECIAL_CONSTRUCTOR_KEY)
 
 
 def registerClassCustomizer(c):
@@ -144,6 +146,24 @@ class _JavaObject(object):
     """
     pass
 
+#  JPype has several class types (assuming Foo is a java class)
+#     Foo$$Static - python meta class for Foo holding
+#       properties for static fields and static methods
+#
+#     Foo - Python class which produces a Foo object() 
+#       and access to static fields and stataic methods
+#       in addition as a class type it holds all the fields and methods 
+#       inherites from _JavaClass
+#     Foo.__javaclass__ - private jpype capsule holding C resources
+#     Foo.__class__ - python class type for class (will be Foo$$Static)
+#     Foo.class_ - java.lang.Class<Foo>
+#
+#     Foo() - instance of Foo which wraps a java object
+#       inherits from _JavaObject
+#     Foo().__class__ - ptthon class type for object (will be Foo)
+#     Foo().getClass() - java.lang.Class<Foo> 
+#
+
 
 class _JavaClass(type):
     """ Base class for all Java Class types. 
@@ -151,6 +171,7 @@ class _JavaClass(type):
         Use isinstance(obj, jpype.JavaClass) to test for a class.
     """
     def __new__(cls, jc):
+        global _JAVACLASS
         bases = []
         name = jc.getName()
 
@@ -229,6 +250,7 @@ class _JavaClass(type):
                 meta_bases.append(i.__metaclass__)
 
         static_fields['mro'] = _mro_override_topsort
+        static_fields['class_']= property(lambda self: _JAVACLASS.forName(name,True, JClass('java.lang.ClassLoader').getSystemClassLoader()), None)
 
         metaclass = type.__new__(_MetaClassForMroOverride, name + "$$Static", tuple(meta_bases),
                                  static_fields)

@@ -57,7 +57,7 @@ class JavaException(Exception):
         return self.__javaobject__.toString()
 
 def _initialize():
-    _jpype.setJavaExceptionClass(JavaException)
+    _jpype.setResource('JavaExceptionClass', JavaException)
 
 def _makePythonException(name, bc):
     if name in _CLASSES:

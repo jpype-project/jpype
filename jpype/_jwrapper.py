@@ -26,8 +26,8 @@ if sys.version > '3':
     long = int
 
 def _initialize():
-    _jpype.setWrapperClass(_JWrapper)
-    _jpype.setStringWrapperClass(JString)
+    _jpype.setResource('WrapperClass', _JWrapper)
+    _jpype.setResource('StringWrapperClass', JString)
 
 class _JWrapper(object):
     def __init__(self, v):

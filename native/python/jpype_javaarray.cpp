@@ -58,37 +58,6 @@ PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 	Py_RETURN_NONE;
 }
 
-
-PyObject* JPypeJavaArray::setJavaArrayClass(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setJavaArrayClass(t);
-
-		Py_RETURN_NONE;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
-PyObject* JPypeJavaArray::setGetJavaArrayClassMethod(PyObject* self, PyObject* arg)
-{
-	try {
-		PyObject* t;
-		JPyArg::parseTuple(arg, "O", &t);
-		hostEnv->setGetJavaArrayClassMethod(t);
-
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH
-
-	return NULL;
-}
-
 PyObject* JPypeJavaArray::getArrayLength(PyObject* self, PyObject* arg)
 {
 	try {

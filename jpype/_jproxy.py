@@ -26,7 +26,7 @@ if sys.version > '3':
     unicode = str
 
 def _initialize():
-    _jpype.setProxyClass(JProxy)
+    _jpype.setResource('ProxyClass',JProxy)
 
 class JProxy(object):
     def __init__(self, intf, dict=None, inst=None):

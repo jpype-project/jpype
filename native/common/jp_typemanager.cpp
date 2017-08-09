@@ -48,7 +48,6 @@ void init()
 	typeMap[JPTypeName::_char] = new JPCharType();
 	typeMap[JPTypeName::_boolean] = new JPBooleanType();
 	typeMap[JPTypeName::_string] = new JPStringType();
-	typeMap[JPTypeName::_class] = new JPClassType();
 
 	// Preload the "primitive" types
 	javaClassMap["byte"] = new JPClass(JPTypeName::fromSimple("byte"), JPJni::getByteClass());

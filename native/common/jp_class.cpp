@@ -211,7 +211,7 @@ HostRef* JPClass::getStaticAttribute(const string& name)
 
 HostRef* JPClass::asHostObject(jvalue obj)
 {
-	TRACE_IN("JPClass::asPyObject");
+	TRACE_IN("JPClass::asHostObject");
 	if (obj.l == NULL)
 	{
 		return JPEnv::getHost()->getNone();
@@ -283,6 +283,15 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 			{
 				TRACE1("explicit float");
 				return _explicit;
+			}
+		}
+
+		// Handle a Python class which wraps java class 
+		if (simpleName == "java.lang.Class")
+		{
+			if (JPEnv::getHost()->isClass(obj))
+			{
+				return _exact;
 			}
 		}
 	
@@ -430,6 +439,13 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			JPTypeName name = JPTypeName::fromSimple("java.lang.String");
 			JPType* type = JPTypeManager::getType(name);
 			return type->convertToJava(obj);
+		}
+
+		if (simpleName == "java.lang.Class")
+		{
+			JPClass* w = JPEnv::getHost()->asClass(obj);
+		  jclass lr = w->getClass();
+		  res.l = lr;
 		}
 
 		if (simpleName == "java.lang.Object")

@@ -44,6 +44,7 @@ def registerJVMInitializer(func):
     _initializers.append(func)
 
 def _initialize():
+    _properties._initialize()
     _jclass._initialize()
     _jarray._initialize()
     _jwrapper._initialize()
@@ -51,7 +52,6 @@ def _initialize():
     _jexception._initialize()
     _jcollection._initialize()
     _jobject._initialize()
-    _properties._initialize()
     nio._initialize()
     reflect._initialize()
     for func in _initializers:

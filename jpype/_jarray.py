@@ -29,8 +29,8 @@ _CLASSES = {}
 _CUSTOMIZERS = []
 
 def _initialize():
-    _jpype.setJavaArrayClass(_JavaArrayClass)
-    _jpype.setGetJavaArrayClassMethod(_getClassFor)
+    _jpype.setResource('JavaArrayClass',_JavaArrayClass)
+    _jpype.setResource('GetJavaArrayClassMethod',_getClassFor)
 
     registerArrayCustomizer(CharArrayCustomizer())
     registerArrayCustomizer(ByteArrayCustomizer())
