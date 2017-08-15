@@ -462,14 +462,6 @@ API does not provide methods to simulate one.
 At the moment, the methods known to fail are :
 
 
-java.lang.Class.forName(String classname)
-:::::::::::::::::::::::::::::::::::::::::
-
-This method relies on the current class's classloader to do its loading. It
-can easily be replaced with **Class.forName(classname, True,
-ClassLoader.getSystemClassLoader())**.
-
-
 java.sql.DriverManager.getConnection(...)
 :::::::::::::::::::::::::::::::::::::::::
 

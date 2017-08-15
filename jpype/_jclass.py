@@ -37,6 +37,7 @@ _COMPARABLE_METHODS = {
 
 def _initialize():
     global _COMPARABLE, _JAVACLASS, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
+    registerClassCustomizer(_JavaLangClassCustomizer())
 
     _JAVAOBJECT = JClass("java.lang.Object")
     _JAVACLASS = JClass("java.lang.Class")
@@ -46,7 +47,6 @@ def _initialize():
     _jpype.setResource('JavaObject', _JavaObject)
     _jpype.setResource('GetClassMethod',_getClassFor)
     _jpype.setResource('SpecialConstructorKey',_SPECIAL_CONSTRUCTOR_KEY)
-    registerClassCustomizer(_JavaLangClassCustomizer())
 
 
 def registerClassCustomizer(c):
