@@ -39,6 +39,7 @@ def _initialize():
     _jclass.registerClassCustomizer(ListCustomizer())
     _jclass.registerClassCustomizer(MapCustomizer())
     _jclass.registerClassCustomizer(IteratorCustomizer())
+    _jclass.registerClassCustomizer(IterableCustomizer())
     _jclass.registerClassCustomizer(EnumerationCustomizer())
 
 def isPythonSequence(v):
@@ -262,6 +263,23 @@ class IteratorCustomizer(object):
             __next__ = 'next' if 'next' in members else '__next__'
             members['_next'] = members[__next__]
             members[__next__] = _iterCustomNext
+
+def _iterableIter(self):
+    return _WrappedIterator(self.iterator())
+
+class IterableCustomizer(object):
+    _METHODS = {
+        '__iter__': _iterableIter,
+    }
+
+    def canCustomize(self, name, jc):
+        for interface in jc.getBaseInterfaces():
+            if interface.getName() == 'java.lang.Iterable':
+                return True
+        return False
+
+    def customize(self, name, jc, bases, members):
+        members.update(IterableCustomizer._METHODS)
 
 def _enumNext(self):
     if self.hasMoreElements():
