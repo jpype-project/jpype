@@ -216,7 +216,7 @@ public :
 	virtual jsize getStringLength(HostRef*);
 	virtual string   stringAsString(HostRef*);
 	virtual JCharString stringAsJCharString(HostRef*);
-	virtual HostRef* newStringFromUnicode(const jchar*, unsigned int);
+	virtual HostRef* newStringFromUTF16(const jchar*, unsigned int);
 	virtual HostRef* newStringFromASCII(const char*, unsigned int);
 	virtual bool     isByteString(HostRef*);
 	virtual bool     isUnicodeString(HostRef* ref);

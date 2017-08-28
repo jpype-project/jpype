@@ -440,10 +440,10 @@ JCharString PythonHostEnvironment::stringAsJCharString(HostRef* ref)
 	return JPyString::asJCharString(UNWRAP(ref));
 }
 
-HostRef* PythonHostEnvironment::newStringFromUnicode(const jchar* v, unsigned int l)
+HostRef* PythonHostEnvironment::newStringFromUTF16(const jchar* v, unsigned int l)
 {
-	TRACE_IN("PythonHostEnvironment::newStringFromUnicode");
-	return new HostRef(JPyString::fromUnicode(v, l), false);
+	TRACE_IN("PythonHostEnvironment::newStringFromUTF16");
+	return new HostRef(JPyString::fromUTF16(v, l), false);
 	TRACE_OUT;
 }
 

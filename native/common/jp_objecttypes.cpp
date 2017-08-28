@@ -254,7 +254,7 @@ HostRef* JPStringType::asHostObject(jvalue val)
 		jboolean isCopy;
 		const jchar* str = JPEnv::getJava()->GetStringChars(v, &isCopy);
 
-		HostRef* res = JPEnv::getHost()->newStringFromUnicode(str, len);
+		HostRef* res = JPEnv::getHost()->newStringFromUTF16(str, len);
 		
 		JPEnv::getJava()->ReleaseStringChars(v, str);
 

@@ -37,7 +37,7 @@ jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 
 HostRef* JPByteType::asHostObject(jvalue val) 
 {
-	return JPEnv::getHost()->newInt(val.b);
+	return JPEnv::getHost()->newInt((unsigned char)val.b);
 }
 
 HostRef* JPByteType::asHostObjectFromObject(jvalue val)
@@ -545,7 +545,7 @@ HostRef* JPCharType::asHostObject(jvalue val)
 	str[0] = val.c;
 	str[1] = 0;
 	
-	return JPEnv::getHost()->newStringFromUnicode(str, 1);
+	return JPEnv::getHost()->newStringFromUTF16(str, 1);
 }
 
 HostRef* JPCharType::asHostObjectFromObject(jvalue val)
@@ -554,7 +554,7 @@ HostRef* JPCharType::asHostObjectFromObject(jvalue val)
 	str[0] = JPJni::charValue(val.l);
 	str[1] = 0;
 	
-	return JPEnv::getHost()->newStringFromUnicode(str, 1);
+	return JPEnv::getHost()->newStringFromUTF16(str, 1);
 } 
 
 EMatchType JPCharType::canConvertToJava(HostRef* obj)

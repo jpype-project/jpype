@@ -64,8 +64,8 @@ string JPyString::asString(PyObject* obj)
 }
 
 JCharString JPyString::asJCharString(PyObject* obj) 
-{	
-	PyObject* torelease = NULL;
+{
+    PyObject* torelease = NULL;
 	TRACE_IN("JPyString::asJCharString");
 	
 	if (PyBytes_Check(obj))
@@ -74,13 +74,23 @@ JCharString JPyString::asJCharString(PyObject* obj)
 		torelease = obj;
 	}
 
-	Py_UNICODE* val = PyUnicode_AS_UNICODE(obj);	
-	Py_ssize_t length = JPyObject::length(obj);
-	JCharString res(length);
-	for (int i = 0; val[i] != 0; i++)
-	{
-		res[i] = (jchar)val[i];
-	}
+    // Encode to UTF-16
+    obj = PyUnicode_AsEncodedString(obj, "UTF-16LE", "strict");
+
+	Py_buffer view;
+	PyObject_GetBuffer(obj, &view, 0);
+
+    const jchar* buf = (const jchar*)view.buf;
+
+    Py_ssize_t len = view.len / 2;
+    JCharString res(len);
+    for (int i = 0; i < len; i++)
+    {
+        res[i] = buf[i];
+    }
+
+    PyBuffer_Release(&view);
+    Py_DECREF(obj);
 
 	if (torelease != NULL)
 	{
@@ -91,16 +101,10 @@ JCharString JPyString::asJCharString(PyObject* obj)
 	TRACE_OUT;
 }
 
-PyObject* JPyString::fromUnicode(const jchar* str, int len) 
+PyObject* JPyString::fromUTF16(const jchar* str, int len)
 {
-	Py_UNICODE* value = new Py_UNICODE[len+1];
-	value[len] = 0;
-	for (int i = 0; i < len; i++)
-	{
-		value[i] = (Py_UNICODE)str[i];
-	}
-	PY_CHECK( PyObject* obj = PyUnicode_FromUnicode(value, len) );
-	delete[] value;
+    int byteorder = 0;
+    PY_CHECK( PyObject* obj = PyUnicode_DecodeUTF16((const char *)str, len*2, "strict", &byteorder) );
 	return obj;
 }
 
@@ -120,7 +124,7 @@ PyObject* JPyString::fromString(const char* str)
 
 
 Py_ssize_t JPyString::AsStringAndSize(PyObject *obj, char **buffer, Py_ssize_t *length)
-{	
+{
 	PY_CHECK( Py_ssize_t res = PyBytes_AsStringAndSize(obj, buffer, length) );
 	return res;
 }

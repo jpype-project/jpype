@@ -137,7 +137,7 @@ public :
 	static Py_ssize_t AsStringAndSize(PyObject *obj, char **buffer, Py_ssize_t *);
 	static Py_UNICODE* AsUnicode(PyObject *obj);
 
-	static PyObject* fromUnicode(const jchar*, int);
+	static PyObject* fromUTF16(const jchar*, int);
 	static PyObject* fromString(const char*);
 };
 

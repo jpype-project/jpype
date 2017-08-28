@@ -124,7 +124,7 @@ public :
 	virtual jsize    getStringLength(HostRef*) = 0;
 	virtual string   stringAsString(HostRef*) = 0;
 	virtual JCharString  stringAsJCharString(HostRef*) = 0;
-	virtual HostRef* newStringFromUnicode(const jchar*, unsigned int) = 0;
+	virtual HostRef* newStringFromUTF16(const jchar*, unsigned int) = 0;
 	virtual HostRef* newStringFromASCII(const char*, unsigned int) = 0;
 	virtual bool     isByteString(HostRef*) = 0;
 	virtual bool     isUnicodeString(HostRef*) = 0;
