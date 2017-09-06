@@ -113,7 +113,7 @@ PyObject* JPypeModule::shutdown(PyObject* obj)
 {
 	TRACE_IN("shutdown");
 	try {
-		dumpJVMStats(obj);
+		//dumpJVMStats(obj);
 
 		JPEnv::getJava()->checkInitialized();
 
