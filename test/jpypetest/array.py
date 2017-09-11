@@ -234,7 +234,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testSetFromNPByteArray(self):
         import numpy as np
         n = 100
-        a = np.random.randint(-128, 127, size=n).astype(np.byte)
+        a = np.random.randint(-128, 127, size=n).astype('B')
         jarr = jpype.JArray(jpype.JByte)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
