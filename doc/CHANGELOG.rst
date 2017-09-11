@@ -8,6 +8,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     PushLocalFrame/PopLocalFrame.  Several resource leaks
     were removed.
 
+  - java.lang.Class<>.forName() will now return the java.lang.Class.  
+    Work arounds for requiring the class loader are no longer needed.
+    Customizers now support customization of static members.
+
   - Support of java.lang.Class<> 
     - java.lang.Object().getClass() on Java objects returns a java.lang.Class 
       rather than the Python class
