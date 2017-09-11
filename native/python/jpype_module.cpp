@@ -150,7 +150,7 @@ PyObject* JPypeModule::shutdown(PyObject* obj)
 
 PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	TRACE_IN("synchronized");
 	try {
 		PyObject* o;
@@ -163,30 +163,25 @@ PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 		{
 			JPObject* jpo = (JPObject*)JPyCObject::asVoidPtr(o);
 			obj = jpo->getObject();
-			cleaner.addLocal(obj);
 		}
 		else if (desc == "JPClass")
 		{
 			JPClass* jpo = (JPClass*)JPyCObject::asVoidPtr(o);
 			obj = jpo->getClass();
-			cleaner.addLocal(obj);
 		}
 		else if (desc == "JPArray")
 		{
 			JPArray* jpo = (JPArray*)JPyCObject::asVoidPtr(o);
 			obj = jpo->getObject();
-			cleaner.addLocal(obj);
 		}
 		else if (desc == "JPArrayClass")
 		{
 			JPArrayClass* jpo = (JPArrayClass*)JPyCObject::asVoidPtr(o);
 			obj = jpo->getClass();
-			cleaner.addLocal(obj);
 		}
 		else if (hostEnv->isWrapper(o) && hostEnv->getWrapperTypeName(o).isObjectType())
 		{
 			obj = hostEnv->getWrapperValue(o).l;
-			cleaner.addLocal(obj);
 		}
 		// TODO proxy		
 		else 

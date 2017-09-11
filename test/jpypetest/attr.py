@@ -36,17 +36,17 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testCallStaticString(self):
         h = self.__jp.Test1()
-        v = h.testString(JString("abcd"), JString("abcde"))
+        v = h.testString(JString("abcd"), JString("efghi"))
 
         self.assertEqual(v[0], 'abcd')
-        self.assertEqual(v[1], 'abcde')
+        self.assertEqual(v[1], 'efghi')
 
     def testCallStaticUnicodeString(self):
         h = self.__jp.Test1()
-        v = h.testString(JString(u"abcd"), JString(u"abcde"))
+        v = h.testString(JString(u"abcd"), JString(u"efghi"))
 
         self.assertEqual(v[0], 'abcd')
-        self.assertEqual(v[1], 'abcde')
+        self.assertEqual(v[1], 'efghi')
 
     def testCallString(self):
         v = self.__jp.Test1.testStaticString("a", "b")

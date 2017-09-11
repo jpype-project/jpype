@@ -108,6 +108,7 @@ namespace JPJni {
 
 void init()
 {
+	JPLocalFrame frame(32);
 	objectClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/Object"));
 	s_StringClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("java/lang/String"));
 	getClassID = JPEnv::getJava()->GetMethodID(objectClass, "getClass", "()Ljava/lang/Class;");
@@ -202,6 +203,7 @@ void init()
 
 string asciiFromJava(jstring str)
 {
+	JPLocalFrame frame;
 	const char* cstr = NULL;
 	jboolean isCopy;
 	cstr = JPEnv::getJava()->GetStringUTFChars(str, &isCopy);
@@ -220,6 +222,7 @@ string asciiFromJava(jstring str)
 
 JCharString unicodeFromJava(jstring str)
 {
+	JPLocalFrame frame;
 	const jchar* cstr = NULL;
 	jboolean isCopy;
 	cstr = JPEnv::getJava()->GetStringChars(str, &isCopy);
@@ -245,9 +248,8 @@ JPTypeName getClassName(jobject o)
 		return JPTypeName::fromSimple("java.lang.Object");
 	}
 
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jclass c = getClass(o);
-	cleaner.addLocal(c);
 	return getName(c);
 }
 
@@ -264,9 +266,8 @@ jstring toString(jobject o)
 
 static string convertToSimpleName(jclass c)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jstring jname = (jstring)JPEnv::getJava()->CallObjectMethod(c, getNameID);
-	cleaner.addLocal(jname);
 	string name = asciiFromJava(jname);
 
 	// Class.getName returns something weird for arrays ...
@@ -334,12 +335,14 @@ static string convertToSimpleName(jclass c)
 
 bool isInterface(jclass clazz)
 {
+	JPLocalFrame frame;
 	jboolean b = JPEnv::getJava()->CallBooleanMethod(clazz, isInterfaceID);
 	return (b ? true : false);
 }
 
 bool isAbstract(jclass clazz)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
@@ -349,14 +352,14 @@ bool isAbstract(jclass clazz)
 
 long getClassModifiers(jclass clazz)
 {
-	long res = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
-
-	return res;
+	JPLocalFrame frame;
+	return JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 }
 
 
 bool isFinal(jclass clazz)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(clazz, getClassModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
@@ -371,11 +374,10 @@ JPTypeName getName(jclass clazz)
 	return JPTypeName::fromSimple(simpleName.c_str());
 }
 
-vector<jclass> getInterfaces(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jclass> getInterfaces(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray interfaces = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getInterfacesID);
-	cleaner.addLocal(interfaces);
 
 	int len = JPEnv::getJava()->GetArrayLength(interfaces);
 	vector<jclass> res;
@@ -388,11 +390,10 @@ vector<jclass> getInterfaces(jclass clazz)
 	return res;
 }
 
-vector<jobject> getDeclaredFields(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getDeclaredFields(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray fields = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredFieldsID);
-	cleaner.addLocal(fields);
 
 	int len = JPEnv::getJava()->GetArrayLength(fields);
 	vector<jobject> res;
@@ -405,11 +406,10 @@ vector<jobject> getDeclaredFields(jclass clazz)
 	return res;
 }
 
-vector<jobject> getFields(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getFields(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray fields = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getFieldsID);
-	cleaner.addLocal(fields);
 
 	int len = JPEnv::getJava()->GetArrayLength(fields);
 	vector<jobject> res;
@@ -422,11 +422,10 @@ vector<jobject> getFields(jclass clazz)
 	return res;
 }
 
-vector<jobject> getDeclaredMethods(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getDeclaredMethods(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredMethodsID);
-	cleaner.addLocal(methods);
 
 	int len = JPEnv::getJava()->GetArrayLength(methods);
 	vector<jobject> res;
@@ -440,11 +439,10 @@ vector<jobject> getDeclaredMethods(jclass clazz)
 }
 
 
-vector<jobject> getDeclaredConstructors(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getDeclaredConstructors(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getDeclaredConstructorsID);
-	cleaner.addLocal(methods);
 
 	int len = JPEnv::getJava()->GetArrayLength(methods);
 	vector<jobject> res;
@@ -457,11 +455,10 @@ vector<jobject> getDeclaredConstructors(jclass clazz)
 	return res;
 }
 
-vector<jobject> getConstructors(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getConstructors(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getConstructorsID);
-	cleaner.addLocal(methods);
 
 	int len = JPEnv::getJava()->GetArrayLength(methods);
 	vector<jobject> res;
@@ -474,11 +471,10 @@ vector<jobject> getConstructors(jclass clazz)
 	return res;
 }
 
-vector<jobject> getMethods(jclass clazz)
+// Returns multiple local references,  must have a suitable local frame
+vector<jobject> getMethods(JPLocalFrame& frame, jclass clazz)
 {
-	JPCleaner cleaner;
 	jobjectArray methods = (jobjectArray)JPEnv::getJava()->CallObjectMethod(clazz, getMethodsID);
-	cleaner.addLocal(methods);
 
 	int len = JPEnv::getJava()->GetArrayLength(methods);
 	vector<jobject> res;
@@ -491,6 +487,7 @@ vector<jobject> getMethods(jclass clazz)
 	return res;
 }
 
+// Returns local reference
 jobject getSystemClassLoader()
 {
 	return JPEnv::getJava()->CallStaticObjectMethod(classLoaderClass, getSystemClassLoaderID) ;
@@ -498,9 +495,8 @@ jobject getSystemClassLoader()
 
 string getMemberName(jobject o)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jstring name = (jstring)JPEnv::getJava()->CallObjectMethod(o, getMemberNameID);
-	cleaner.addLocal(name);
 
 	string simpleName = asciiFromJava(name);
 	return simpleName;
@@ -508,6 +504,7 @@ string getMemberName(jobject o)
 
 bool isMemberPublic(jobject o)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isPublicID, &modif);
@@ -517,6 +514,7 @@ bool isMemberPublic(jobject o)
 
 bool isMemberStatic(jobject o)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isStaticID, &modif);
@@ -526,6 +524,7 @@ bool isMemberStatic(jobject o)
 
 bool isMemberFinal(jobject o)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
@@ -535,6 +534,7 @@ bool isMemberFinal(jobject o)
 
 bool isMemberAbstract(jobject o)
 {
+	JPLocalFrame frame;
 	jvalue modif;
 	modif.i = JPEnv::getJava()->CallIntMethod(o, getModifiersID);
 	jboolean res = JPEnv::getJava()->CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
@@ -544,17 +544,16 @@ bool isMemberAbstract(jobject o)
 
 jint hashCode(jobject obj)
 {
-	jint res = JPEnv::getJava()->CallIntMethod(obj, hashCodeID);
-	return res;
+	JPLocalFrame frame;
+	return JPEnv::getJava()->CallIntMethod(obj, hashCodeID);
 }
 
 JPTypeName getType(jobject fld)
 {
+	JPLocalFrame frame;
 	TRACE_IN("getType");
 
-	JPCleaner cleaner;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(fld, getTypeID);
-	cleaner.addLocal(c);
 
 	return getName(c);
 	TRACE_OUT;
@@ -562,28 +561,29 @@ JPTypeName getType(jobject fld)
 
 JPTypeName getReturnType(jobject o)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jclass c = (jclass)JPEnv::getJava()->CallObjectMethod(o, getReturnTypeID);
-	cleaner.addLocal(c);
 
 	return getName(c);
 }
 
 bool isMethodSynthetic(jobject o)
 {
-    jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isSyntheticMethodID);
-    return (res ? true : false);
+	JPLocalFrame frame;
+  jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isSyntheticMethodID);
+  return (res ? true : false);
 }
 
 bool isVarArgsMethod(jobject o)
 {
-    jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isVarArgsMethodID);
-    return (res ? true : false);
+	JPLocalFrame frame;
+  jboolean res = JPEnv::getJava()->CallBooleanMethod(o, isVarArgsMethodID);
+  return (res ? true : false);
 }
 
 vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	vector<JPTypeName> args;
 
 	jobjectArray types ;
@@ -596,19 +596,17 @@ vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
 		types = (jobjectArray)JPEnv::getJava()->CallObjectMethod(o, getParameterTypesID);
 	}
 
-	cleaner.addLocal(types);
-
 	int len = JPEnv::getJava()->GetArrayLength(types);
-
-	for (int i = 0; i < len; i++)
 	{
-		jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
-		cleaner.addLocal(c);
+		JPLocalFrame frame2(4+len);
+		for (int i = 0; i < len; i++)
+		{
+			jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
 
-		JPTypeName name = getName(c);
-		args.push_back(name);
+			JPTypeName name = getName(c);
+			args.push_back(name);
+		}
 	}
-
 	return args;
 }
 
@@ -624,15 +622,12 @@ bool isConstructor(jobject obj)
 
 string getStackTrace(jthrowable th)
 {
-
-	JPCleaner cleaner;
+  JPLocalFrame frame;
 	jobject strWriter = JPEnv::getJava()->NewObject(stringWriterClass, stringWriterID);
-	cleaner.addLocal(strWriter);
 
 	jvalue v;
 	v.l = strWriter;
 	jobject printWriter = JPEnv::getJava()->NewObjectA(printWriterClass, printWriterID, &v);
-	cleaner.addLocal(printWriter);
 
 	v.l = printWriter;
 	JPEnv::getJava()->CallVoidMethodA(th, printStackTraceID, &v);
@@ -640,22 +635,21 @@ string getStackTrace(jthrowable th)
 	JPEnv::getJava()->CallVoidMethod(printWriter, flushID);
 
 	jstring res = toString(strWriter);
-	cleaner.addLocal(res);
 
 	return asciiFromJava(res);
 }
 
 string getMessage(jthrowable th)
 {
-	JPCleaner cleaner;
+  JPLocalFrame frame;
 	jstring jstr = (jstring)JPEnv::getJava()->CallObjectMethod(th, getMessageID);
-	cleaner.addLocal(jstr);
 
 	return asciiFromJava(jstr);
 }
 
 bool isThrowable(jclass c)
 {
+  JPLocalFrame frame;
 	jboolean res = JPEnv::getJava()->IsAssignableFrom(c, throwableClass);
 	if (res)
 	{
@@ -772,7 +766,7 @@ jclass getVoidClass()
 
 void startJPypeReferenceQueue(bool useJavaThread)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	JPypeReferenceQueueClass = (jclass)JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->FindClass("jpype/ref/JPypeReferenceQueue"));
 	JPypeReferenceQueueConstructorMethod = JPEnv::getJava()->GetMethodID(JPypeReferenceQueueClass, "<init>", "()V");
@@ -785,7 +779,6 @@ void startJPypeReferenceQueue(bool useJavaThread)
 	JPypeReferenceConstructorMethod = JPEnv::getJava()->GetMethodID(JPypeReferenceClass, "<init>", "(Ljava/lang/Object;Ljava/lang/ref/ReferenceQueue;)V");
 
 	jobject obj = JPEnv::getJava()->NewObject(JPypeReferenceQueueClass, JPypeReferenceQueueConstructorMethod);
-	cleaner.addLocal(obj);
 	JPEnv::getJava()->setReferenceQueue(obj);
 
 	if (useJavaThread)
@@ -806,16 +799,14 @@ void stopJPypeReferenceQueue()
 
 void registerRef(jobject refQueue, jobject obj, jlong hostRef)
 {
+	JPLocalFrame frame;
 	TRACE_IN("registerRef");
 	// create the ref ...
 	jvalue args[2];
 	args[0].l = obj;
 	args[1].l = refQueue;
 
-	JPCleaner cleaner;
-
 	jobject refObj = JPEnv::getJava()->NewObjectA(JPypeReferenceClass, JPypeReferenceConstructorMethod, args);
-	cleaner.addLocal(refObj);
 
 	args[0].l = refObj;
 	args[1].j = hostRef;

@@ -243,6 +243,7 @@ JPObject* PythonHostEnvironment::asObject(HostRef* m)
 
 HostRef* PythonHostEnvironment::newObject(JPObject* obj)
 {
+	JPCleaner cleaner;
 	TRACE_IN("PythonHostEnvironment::newObject");
 	TRACE2("classname", obj->getClass()->getName().getSimpleName());
 
@@ -443,6 +444,7 @@ JCharString PythonHostEnvironment::stringAsJCharString(HostRef* ref)
 HostRef* PythonHostEnvironment::newStringFromUnicode(const jchar* v, unsigned int l)
 {
 	TRACE_IN("PythonHostEnvironment::newStringFromUnicode");
+	TRACE2("len=", l);
 	return new HostRef(JPyString::fromUnicode(v, l), false);
 	TRACE_OUT;
 }
@@ -553,7 +555,7 @@ jvalue PythonHostEnvironment::getWrapperValue(PyObject* obj)
 	if (name.isObjectType())
 	{
 		jvalue res;
-		res.l = JPEnv::getJava()->NewGlobalRef(v->l);
+		res.l = JPEnv::getJava()->NewLocalRef(v->l); // FIXME This is bad, nothing cleans it up
 		return res;
 	}
 	return *v;
@@ -634,7 +636,8 @@ HostRef* PythonHostEnvironment::newStringWrapper(jstring jstr)
 {
 	TRACE_IN("PythonHostEnvironment::newStringWrapper");
 	jvalue* v = new jvalue;
-	v->l = jstr;
+	v->l = JPEnv::getJava()->NewGlobalRef(jstr);
+
 	PyObject* value = JPyCObject::fromVoidAndDesc((void*)v, "object jvalue", deleteObjectJValueDestructor);
 
 	PyObject* args = JPySequence::newTuple(1);

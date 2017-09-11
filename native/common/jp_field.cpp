@@ -84,11 +84,7 @@ HostRef* JPField::getStaticAttribute()
 {
 	TRACE_IN("JPField::getStaticAttribute");
 	JPType* type = JPTypeManager::getType(m_Type);
-	JPCleaner cleaner;
 	jclass claz = m_Class->getClass();
-	cleaner.addLocal(claz);
-	
-
 	return type->getStaticValue(claz, m_FieldID, m_Type);
 	TRACE_OUT;	
 }
@@ -112,10 +108,7 @@ void JPField::setStaticAttribute(HostRef* val)
 		RAISE(JPypeException, err.str().c_str());
 	}
 		
-	JPCleaner cleaner;
 	jclass claz = m_Class->getClass();
-	cleaner.addLocal(claz);
-
 	type->setStaticValue(claz, m_FieldID, val);		
 	TRACE_OUT;
 }

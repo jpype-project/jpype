@@ -150,6 +150,9 @@ public :
 
 	void ReleasePrimitiveArrayCritical(jarray array, void *carray, jint mode);
 
+	jint PushLocalFrame(jint);
+	jobject PopLocalFrame(jobject);
+
 	#include "jp_javaenv_autogen.h"
 
 };

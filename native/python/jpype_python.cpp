@@ -31,6 +31,7 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
 		return NULL;
 	}
+	JPLocalFrame frame;
 
 	try {
 		char* tname;
@@ -45,15 +46,17 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		jvalue v = type->convertToJava(&ref);
 
 		jvalue* pv = new jvalue();
-		*pv = v;
 
+		// Transfer ownership to python
 		PyObject* res;
 		if (type->isObjectType())
 		{
+			pv->l = JPEnv::getJava()->NewGlobalRef(v.l);
 			res = JPyCObject::fromVoidAndDesc((void*)pv, "object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
 		}
 		else
 		{
+			*pv = v;
 			res = JPyCObject::fromVoidAndDesc((void*)pv, "jvalue", PythonHostEnvironment::deleteJValueDestructor);
 		}
 
@@ -67,6 +70,7 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 {
 	try {
+		JPLocalFrame frame;
 		JPCleaner cleaner;
 
 		PyObject* self;
@@ -85,7 +89,6 @@ PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 			PyObject* claz = JPyObject::getAttrString(subObj, "__javaclass__");
 			PyJPClass* c = (PyJPClass*)claz;
 			jclass jc = c->m_Class->getClass();
-			cleaner.addLocal(jc);
 			interfaces.push_back(jc);
 		}
 		
@@ -200,15 +203,14 @@ PyObject* detachRef(HostRef* ref)
 void JPypeJavaException::errorOccurred()
 {
 	TRACE_IN("PyJavaException::errorOccurred");
+	JPLocalFrame frame(8);
 	JPCleaner cleaner;
 	jthrowable th = JPEnv::getJava()->ExceptionOccurred();
-	cleaner.addLocal(th);
 	JPEnv::getJava()->ExceptionClear();
 
 	jclass ec = JPJni::getClass(th);
 	JPTypeName tn = JPJni::getName(ec);
 	JPClass* jpclass = JPTypeManager::findClass(tn);
-	cleaner.addLocal(ec);
 
 	PyObject* jexclass = hostEnv->getJavaShadowClass(jpclass);
 	HostRef* pyth = hostEnv->newObject(new JPObject(tn, th));

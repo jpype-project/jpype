@@ -18,21 +18,17 @@
 
 jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	JPTypeName tname = getObjectType();
 	JPClass* c = JPTypeManager::findClass(tname);
-
-	jclass jc = c->getClass();
-	cleaner.addLocal(jc);
 
 	vector<HostRef*> args(1);
 	args[0] = obj;
 
 	JPObject* o = c->newInstance(args);
-	jobject res = o->getObject();
+	jobject res = o->getObject(); 
 	delete o;
-
-	return res;
+	return frame.keep(res);
 }
 
 HostRef* JPByteType::asHostObject(jvalue val) 
@@ -48,7 +44,6 @@ HostRef* JPByteType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPByteType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -109,8 +104,8 @@ jvalue JPByteType::convertToJava(HostRef* obj)
 
 HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 {
+	JPLocalFrame frame;
 	TRACE_IN("JPByteType::convertToDirectBuffer");
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isByteBuffer(src))
 	{
 
@@ -119,7 +114,6 @@ HostRef* JPByteType::convertToDirectBuffer(HostRef* src)
 		JPEnv::getHost()->getByteBufferPtr(src, &rawData, size);
 
 		jobject obj = JPEnv::getJava()->NewDirectByteBuffer(rawData, size);
-		cleaner.addLocal(obj);
 
 		jvalue v;
 		v.l = obj;
@@ -559,7 +553,6 @@ HostRef* JPCharType::asHostObjectFromObject(jvalue val)
 
 EMatchType JPCharType::canConvertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _none;
@@ -584,7 +577,6 @@ EMatchType JPCharType::canConvertToJava(HostRef* obj)
 
 jvalue JPCharType::convertToJava(HostRef* obj)
 {
-	JPCleaner cleaner;
 	jvalue res;
 
 	if (JPEnv::getHost()->isWrapper(obj))

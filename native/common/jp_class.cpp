@@ -49,6 +49,7 @@ JPClass::~JPClass()
 
 void JPClass::postLoad()
 {
+	TRACE_IN("JPClass::postLoad");
 	// Is this an interface?
 	m_IsInterface = JPJni::isInterface(m_Class);
 
@@ -57,17 +58,18 @@ void JPClass::postLoad()
 	loadFields();
 	loadMethods();
 	loadConstructors();
+	TRACE_OUT;
 }
 
 void JPClass::loadSuperClass()
 {
-	JPCleaner cleaner;
+	TRACE_IN("JPClass::loadSuperClass");
+	JPLocalFrame frame;
 
 	// base class .. if any
 	if (!m_IsInterface && m_Name.getSimpleName() != "java.lang.Object")
 	{
 		jclass baseClass = JPEnv::getJava()->GetSuperclass(m_Class);
-		cleaner.addLocal(baseClass);
 
 		if (baseClass != NULL)
 		{
@@ -75,15 +77,15 @@ void JPClass::loadSuperClass()
 			m_SuperClass = JPTypeManager::findClass(baseClassName);
 		}
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadSuperInterfaces()
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadSuperInterfaces");
 	// Super interfaces
-	vector<jclass> intf = JPJni::getInterfaces(m_Class);
-
-	cleaner.addAllLocal(intf);
+	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class);
 
 	for (vector<jclass>::iterator it = intf.begin(); it != intf.end(); it++)
 	{
@@ -91,14 +93,15 @@ void JPClass::loadSuperInterfaces()
 		JPClass* interface = JPTypeManager::findClass(intfName);
 		m_SuperInterfaces.push_back(interface);
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadFields()
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadFields");
 	// fields
-	vector<jobject> fields = JPJni::getDeclaredFields(m_Class);
-	cleaner.addAllLocal(fields);
+	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class);
 
 	for (vector<jobject>::iterator it = fields.begin(); it != fields.end(); it++)
 	{
@@ -112,16 +115,16 @@ void JPClass::loadFields()
 			m_InstanceFields[field->getName()] = field;
 		}
 	}
+	TRACE_OUT;
 }
 
 void JPClass::loadMethods()
 {
-	JPCleaner cleaner;
-	JPCleaner pcleaner;
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadMethods");
 
 	// methods
-	vector<jobject> methods = JPJni::getMethods(m_Class);
-	cleaner.addAllLocal(methods);
+	vector<jobject> methods = JPJni::getMethods(frame, m_Class);
 
 	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
 	{
@@ -135,13 +138,13 @@ void JPClass::loadMethods()
 
 		method->addOverload(this, *it);
 	}
-
+	TRACE_OUT;
 }
 
 void JPClass::loadConstructors()
 {
-	JPCleaner cleaner;
-
+	JPLocalFrame frame(32);
+	TRACE_IN("JPClass::loadMethods");
 	m_Constructors = new JPMethod(m_Class, "[init", true);
 
 	if (JPJni::isAbstract(m_Class))
@@ -151,8 +154,7 @@ void JPClass::loadConstructors()
 	}
 
 
-	vector<jobject> methods = JPJni::getDeclaredConstructors(m_Class);
-	cleaner.addAllLocal(methods);
+	vector<jobject> methods = JPJni::getDeclaredConstructors(frame, m_Class);
 
 	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
 	{
@@ -161,6 +163,7 @@ void JPClass::loadConstructors()
 			m_Constructors->addOverload(this, *it);
 		}
 	}
+	TRACE_OUT;
 }
 
 JPField* JPClass::getInstanceField(const string& name)
@@ -231,20 +234,20 @@ HostRef* JPClass::asHostObject(jvalue obj)
 const char* java_lang = "java.lang.";
 EMatchType JPClass::canConvertToJava(HostRef* obj)
 {
+	JPLocalFrame frame;
 	TRACE_IN("JPClass::canConvertToJava");
 	if (JPEnv::getHost()->isNone(obj))
 	{
 		return _implicit;
 	}
 
-	JPCleaner cleaner;
 	const string& simpleName = m_Name.getSimpleName();
 	TRACE2("Simple name", simpleName);
 
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* o = JPEnv::getHost()->asObject(obj);
-		JPClass* oc = o->getClass();
+		JPClass* oc = o->getClass(); 
 		TRACE2("Match name", oc->m_Name.getSimpleName());
 
 		if (oc == this)
@@ -375,28 +378,25 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 	TRACE_OUT;
 }
 
-jvalue JPClass::buildObjectWrapper(HostRef* obj)
+jobject JPClass::buildObjectWrapper(HostRef* obj)
 {
-	jvalue res;
-
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	vector<HostRef*> args(1);
 	args.push_back(obj);
 
 	JPObject* pobj = newInstance(args);
-
-	res.l = pobj->getObject();
+	jobject out = pobj->getObject();
 	delete pobj;
 
-	return res;
+	return frame.keep(out);
 }
 
 jvalue JPClass::convertToJava(HostRef* obj)
 {
 	TRACE_IN("JPClass::convertToJava");
+	JPLocalFrame frame;
 	jvalue res;
-	JPCleaner cleaner;
 
 	res.l = NULL;
 	const string& simpleName = m_Name.getSimpleName();
@@ -411,7 +411,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* ref = JPEnv::getHost()->asObject(obj);
-		res.l = ref->getObject();
+		res.l = frame.keep(ref->getObject());
 		return res;
 	}
 
@@ -431,14 +431,17 @@ jvalue JPClass::convertToJava(HostRef* obj)
 						|| JPEnv::getHost()->isLong(obj) ))
 			 )
 		{
-			return buildObjectWrapper(obj);
+			res.l = frame.keep(buildObjectWrapper(obj));
+			return res;
 		}
 	
 		if (JPEnv::getHost()->isString(obj))
 		{
 			JPTypeName name = JPTypeName::fromSimple("java.lang.String");
 			JPType* type = JPTypeManager::getType(name);
-			return type->convertToJava(obj);
+			res = type->convertToJava(obj);
+			res.l = frame.keep(res.l);
+			return res;
 		}
 
 		if (simpleName == "java.lang.Class")
@@ -454,41 +457,48 @@ jvalue JPClass::convertToJava(HostRef* obj)
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_int);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = frame.keep(t->convertToJavaObject(obj));
+				return res;
 			}
 
 			else if (JPEnv::getHost()->isLong(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_long);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = frame.keep(t->convertToJavaObject(obj));
+				return res;
 			}
 
 			else if (JPEnv::getHost()->isFloat(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_double);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = frame.keep(t->convertToJavaObject(obj));
+				return res;
 			}
 
 			else if (JPEnv::getHost()->isBoolean(obj))
 			{
 				JPTypeName tname = JPTypeName::fromType(JPTypeName::_boolean);
 				JPType* t = JPTypeManager::getType(tname);
-				res.l = t->convertToJavaObject(obj);
+				res.l = frame.keep(t->convertToJavaObject(obj));
+				return res;
 			}
 
 			else if (JPEnv::getHost()->isArray(obj) && simpleName == "java.lang.Object")
 			{
 				JPArray* a = JPEnv::getHost()->asArray(obj);
 				res = a->getValue();
+				res.l = frame.keep(res.l);
+				return res;
 			}
 
 			else if (JPEnv::getHost()->isClass(obj))
 			{
 				JPTypeName name = JPTypeName::fromSimple("java.lang.Class");
 				JPType* type = JPTypeManager::getType(name);
-				res.l = type->convertToJavaObject(obj);
+				res.l = frame.keep(type->convertToJavaObject(obj));
+				return res;
 			}
 		}
 	}
@@ -496,13 +506,15 @@ jvalue JPClass::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isProxy(obj))
 	{
 		JPProxy* proxy = JPEnv::getHost()->asProxy(obj);
-		res.l = proxy->getProxy();
+		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 
 	if (JPEnv::getHost()->isWrapper(obj))
 	{
-		return JPEnv::getHost()->getWrapperValue(obj);
+		res = JPEnv::getHost()->getWrapperValue(obj); // FIXME isn't this one global already
+		res.l = frame.keep(res.l);
+		return res;
 	}
 
 	return res;
@@ -528,8 +540,8 @@ void JPClass::setStaticAttribute(const string& name, HostRef* val)
 
 string JPClass::describe()
 {
+	JPLocalFrame frame;
 	stringstream out;
-	JPCleaner cleaner;
 	out << "public ";
 	if (isAbstract())
 	{
@@ -630,14 +642,9 @@ const vector<JPClass*>& JPClass::getInterfaces() const
 
 bool JPClass::isSubclass(JPClass* o)
 {
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 
 	jclass jo = o->getClass();
-	cleaner.addLocal(jo);
 
-	if (JPEnv::getJava()->IsAssignableFrom(m_Class, jo))
-	{
-		return true;
-	}
-	return false;
+	return JPEnv::getJava()->IsAssignableFrom(m_Class, jo);
 }

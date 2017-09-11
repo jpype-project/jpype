@@ -73,38 +73,38 @@ namespace JPJni
 	/**
 	* java.lang.Class.getInterfaces()
 	*/
-	vector<jclass>  getInterfaces(jclass);
+	vector<jclass>  getInterfaces(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredFields()
 	*/
-	vector<jobject> getDeclaredFields(jclass);
+	vector<jobject> getDeclaredFields(JPLocalFrame& frame, jclass);
 
 
 	/**
 	* java.lang.Class.getConstructors()
 	*/
-	vector<jobject> getConstructors(jclass);
+	vector<jobject> getConstructors(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getFields()
 	*/
-	vector<jobject> getFields(jclass);
+	vector<jobject> getFields(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getDeclaredMethods(jclass);
+	vector<jobject> getDeclaredMethods(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getMethods(jclass);
+	vector<jobject> getMethods(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getDeclaredConstructors(jclass);
+	vector<jobject> getDeclaredConstructors(JPLocalFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getModifiers()

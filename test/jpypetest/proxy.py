@@ -123,7 +123,11 @@ class ProxyTestCase(common.JPypeTestCase):
         c = C()
         proxy = JProxy([itf1, itf2], inst=c)
 
-        result = self._triggers.testProxy(proxy)
+        try:
+            result = self._triggers.testProxy(proxy)
+        except Exception as ex:
+            print(ex.stacktrace())
+            raise ex
 
         expected = ['Test Method1 = 43', 'Test Method2 = 42']
         self.assertSequenceEqual(result, expected)

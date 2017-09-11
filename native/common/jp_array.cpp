@@ -18,8 +18,12 @@
 
 JPArray::JPArray(const JPTypeName& name, jarray inst)
 {
+	TRACE_IN("JPArray::JPArray");
+	TRACE1(name.getSimpleName());
 	m_Class = JPTypeManager::findArrayClass(name);
 	m_Object = (jarray)JPEnv::getJava()->NewGlobalRef(inst);
+	TRACE2("len=",getLength());
+	TRACE_OUT;
 }
 
 JPArray::~JPArray()

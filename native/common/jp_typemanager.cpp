@@ -75,13 +75,11 @@ JPClass* findClass(const JPTypeName& name)
 	TRACE1(name.getSimpleName());
 
 	// No we havent got it .. lets load it!!!
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	if (JPEnv::getJava()==0)
 		return 0;
 
 	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
-	cleaner.addLocal(cls);
-
 	JPClass* res = new JPClass(name, cls);
 	
 	// Register it here before we do anything else
@@ -105,11 +103,8 @@ JPArrayClass* findArrayClass(const JPTypeName& name)
 	}
 	
 	// No we havent got it .. lets load it!!!
-	JPCleaner cleaner;
+	JPLocalFrame frame;
 	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
-
-	cleaner.addLocal(cls);
-
 	JPArrayClass* res = new JPArrayClass(name, cls);
 	
 	// Register it here before we do anything else
@@ -121,6 +116,7 @@ JPArrayClass* findArrayClass(const JPTypeName& name)
 JPType* getType(const JPTypeName& t)
 {
 	TRACE_IN("JPTypeManager::getType");
+	TRACE1(t.getSimpleName());
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
 	
 	if (it != typeMap.end())

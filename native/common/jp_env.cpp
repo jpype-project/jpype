@@ -124,11 +124,10 @@ bool JPEnv::isThreadAttached()
 void JPEnv::registerRef(HostRef* ref, HostRef* targetRef)
 {
 	TRACE_IN("JPEnv::registerRef");
+	JPLocalFrame frame;
 	JPObject* objRef = s_Host->asObject(ref);
-	JPCleaner cleaner;
 	TRACE1("A");
 	jobject srcObject = objRef->getObject();
-	cleaner.addLocal(srcObject);
 	JPJni::registerRef(s_Java->getReferenceQueue(), srcObject, (jlong)targetRef->copy());
 	TRACE_OUT;
 	TRACE1("B");
@@ -192,27 +191,38 @@ void JPypeTracer::trace1(const char* name, const string& msg)
 	}
 }
 
+JPLocalFrame::JPLocalFrame(int i)
+{
+	// FIXME check return code
+	popped=false;
+	JPEnv::getJava()->PushLocalFrame(i);
+}
+
+jobject JPLocalFrame::keep(jobject obj)
+{
+	popped=true;
+	return JPEnv::getJava()->PopLocalFrame(obj);
+}
+
+JPLocalFrame::~JPLocalFrame()
+{
+	if (!popped)
+	{
+		JPEnv::getJava()->PopLocalFrame(NULL);
+	}
+}
+
 JPCleaner::JPCleaner()
 {
 }
 
 JPCleaner::~JPCleaner()
 {
+	// FIXME use an exception safe enclosure would be better here
 	PyGILState_STATE state = PyGILState_Ensure();
 
 //AT's comments on porting:
 // A variety of Unix compilers do not allow redefinition of the same variable in "for" cycles
-	vector<jobject>::iterator cur;
-	for (cur = m_GlobalJavaObjects.begin(); cur != m_GlobalJavaObjects.end(); cur++)
-	{
-		JPEnv::getJava()->DeleteGlobalRef(*cur);
-	}
-	
-	for (cur = m_LocalJavaObjects.begin(); cur != m_LocalJavaObjects.end(); cur++)
-	{
-		JPEnv::getJava()->DeleteLocalRef(*cur);
-	}
-
 	for (vector<HostRef*>::iterator cur2 = m_HostObjects.begin(); cur2 != m_HostObjects.end(); cur2++)
 	{
 		(*cur2)->release();
@@ -221,43 +231,9 @@ JPCleaner::~JPCleaner()
 	PyGILState_Release(state);
 }
 
-void JPCleaner::addGlobal(jobject obj)
-{
-	m_GlobalJavaObjects.push_back(obj);
-}
-
-void JPCleaner::addLocal(jobject obj)
-{
-	m_LocalJavaObjects.push_back(obj);
-}
-
 void JPCleaner::add(HostRef* obj)
 {
 	m_HostObjects.push_back(obj);
-}
-
-void JPCleaner::removeGlobal(jobject obj)
-{
-	for (vector<jobject>::iterator cur = m_GlobalJavaObjects.begin(); cur != m_GlobalJavaObjects.end(); cur++)
-	{
-		if (*cur == obj)
-		{
-			m_GlobalJavaObjects.erase(cur);
-			return;
-		}
-	}
-}
-
-void JPCleaner::removeLocal(jobject obj)
-{
-	for (vector<jobject>::iterator cur = m_LocalJavaObjects.begin(); cur != m_LocalJavaObjects.end(); cur++)
-	{
-		if (*cur == obj)
-		{
-			m_LocalJavaObjects.erase(cur);
-			return;
-		}
-	}
 }
 
 void JPCleaner::remove(HostRef* obj)
@@ -272,45 +248,9 @@ void JPCleaner::remove(HostRef* obj)
 	}
 }
 
-void JPCleaner::addAllGlobal(vector<jobject>& r) 
-{
-	m_GlobalJavaObjects.insert(m_GlobalJavaObjects.end(), r.begin(), r.end());
-}
-
-void JPCleaner::addAllGlobal(vector<jclass>& r) 
-{
-	m_GlobalJavaObjects.insert(m_GlobalJavaObjects.end(), r.begin(), r.end());
-}
-
-void JPCleaner::addAllLocal(vector<jobject>& r) 
-{
-	m_LocalJavaObjects.insert(m_LocalJavaObjects.end(), r.begin(), r.end());
-}
-
-void JPCleaner::addAllLocal(vector<jclass>& r) 
-{
-	m_LocalJavaObjects.insert(m_LocalJavaObjects.end(), r.begin(), r.end());
-}
-
 void JPCleaner::addAll(vector<HostRef*>& r) 
 {
 	m_HostObjects.insert(m_HostObjects.end(), r.begin(), r.end());
-}
-
-void JPCleaner::removeAllGlobal(vector<jobject>& r)
-{
-	for (vector<jobject>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		removeGlobal(*cur);
-	}
-}
-
-void JPCleaner::removeAllLocal(vector<jobject>& r)
-{
-	for (vector<jobject>::iterator cur = r.begin(); cur != r.end(); cur++)
-	{
-		removeLocal(*cur);
-	}
 }
 
 void JPCleaner::removeAll(vector<HostRef*>& r)

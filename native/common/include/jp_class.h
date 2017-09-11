@@ -53,9 +53,9 @@ public :
 
 	jclass getClass()
 	{
-		return (jclass)JPEnv::getJava()->NewGlobalRef(m_Class);
+		return m_Class;
 	}
-	
+
 	map<string, JPField*>& getStaticFields()
 	{
 		return m_StaticFields;
@@ -92,7 +92,7 @@ private :
 	void loadMethods();	
 	void loadConstructors();	
 
-	jvalue buildObjectWrapper(HostRef* obj);
+	jobject buildObjectWrapper(HostRef* obj);
 
 private :
 	bool                    m_IsInterface;

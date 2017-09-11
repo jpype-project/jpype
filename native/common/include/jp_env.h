@@ -17,8 +17,31 @@
 #ifndef _JPENV_H_
 #define _JPENV_H_
 
+/** Java method of managing local references.
+ *
+ * This should be used around all entry points from python that 
+ * call java code.  Failure may lead to local references not being
+ * released.  Methods will large numbers of local references 
+ * should allocate a local frame.  At most one local reference 
+ * from a local frame can be kept.  Addition must use global referencing.
+ */
+static const int LOCAL_FRAME_DEFAULT=8;
+class JPLocalFrame
+{
+	bool popped;
+public:
+	/** Create a new local frame with a minimum number of entries */
+	JPLocalFrame(int i=LOCAL_FRAME_DEFAULT);
+
+	/** Exit the local frame and keep a local reference to an object */
+	jobject keep(jobject);
+
+	/** Exit the local frame if get has not been called. */
+	~JPLocalFrame();
+};
+
 /**
- * Simple tample class for managing local java references.
+ * Simple tample class for managing host references.
  */
 class JPCleaner
 {
@@ -26,27 +49,12 @@ public :
 	JPCleaner();	
 	virtual ~JPCleaner();
 	
-	void addGlobal(jobject r);
-	void removeGlobal(jobject r);
-	void addAllGlobal(vector<jobject>& r);
-	void addAllGlobal(vector<jclass>& r);
-	void removeAllGlobal(vector<jobject>& r);
-
-	void addLocal(jobject r);
-	void removeLocal(jobject r);
-	void addAllLocal(vector<jobject>& r);
-	void addAllLocal(vector<jclass>& r);
-	void removeAllLocal(vector<jobject>& r);
-
-
 	void add(HostRef* r);
 	void addAll(vector<HostRef*>& r);
 	void remove(HostRef* r);
 	void removeAll(vector<HostRef*>& r);
 	
 private :
-	vector<jobject>  m_GlobalJavaObjects;
-	vector<jobject>  m_LocalJavaObjects;
 	vector<HostRef*> m_HostObjects;
 };
 
