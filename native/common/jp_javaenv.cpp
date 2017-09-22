@@ -286,13 +286,17 @@ jint JPJavaEnv::Throw(jthrowable th)
 }
 
 jthrowable JPJavaEnv::ExceptionOccurred()
-{   
+{
 	jthrowable res;
-    JNIEnv* env = getJNIEnv();
+	JNIEnv* env = getJNIEnv();
 
 	res = env->functions->ExceptionOccurred(env);
- 
-    return res;
+#ifdef TRACING
+	if(res) {
+		env->functions->ExceptionDescribe(env);
+	}
+#endif
+	return res;
 }
 
 jobject JPJavaEnv::NewDirectByteBuffer(void* address, jlong capacity)
