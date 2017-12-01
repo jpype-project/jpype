@@ -110,6 +110,14 @@ class JVMFinder(object):
                         yield path
                         break
 
+    def check(self, jvm):
+        """
+        Check if the jvm is valid for this architecture.
+
+        This method should be overriden for each architecture.
+        :raise JVMNotSupportedException: If the jvm is not supported.
+        """
+        pass
 
     def get_jvm_path(self):
         """
@@ -121,11 +129,14 @@ class JVMFinder(object):
         for method in self._methods:
             try:
                 jvm = method()
+                self.check(jvm)
             except NotImplementedError:
                 # Ignore missing implementations
                 pass
             except JVMNotFoundException:
                 # Ignore not successful methods
+                pass
+            except JVMNotSupportedException:
                 pass
 
             else:
