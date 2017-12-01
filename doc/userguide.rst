@@ -53,7 +53,7 @@ Here is a sample program to demonstrate how to use JPype: ::
   shutdownJVM()
 
 This is of course a simple **hello world** type of application. Yet it shows
-the 2 most important calls: **startupJVM** and **shutdownJVM**.
+the 2 most important calls: **startJVM** and **shutdownJVM**.
 
 The rest will be explained in more detail in the next sections.
 
@@ -442,7 +442,7 @@ Unloading the JVM
 
 The JNI API defines a method called destroyJVM(). However, this method does
 not work. That is, Sun's JVMs do not allow unloading. For this reason, after
-calling shutdownJVM(), if you attempt calling startupJVM() again you will get
+calling shutdownJVM(), if you attempt calling startJVM() again you will get
 a non-specific exception. There is nothing wrong (that I can see) in JPype.
 So if Sun gets around to supporting its own properly, or if you use JPype
 with a non-SUN JVM that does (I believe IBM's JVMs support JNI invocation, but
@@ -484,7 +484,7 @@ getDefaultJVMPath method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method tries to automatically obtain the path to a Java runtime
-installation. This path is needed as argument for startupJVM method and should
+installation. This path is needed as argument for startJVM method and should
 be used in favour of hardcoded paths to make your scripts more portable.
 There are several methods under the hood to search for a JVM. If none
 of them succeeds, the method will raise a JVMNotFoundException.
@@ -503,7 +503,7 @@ Exceptions
 ::::::::::
 JVMNotFoundException, if none of the provided methods returned a valid JVM path.
 
-startupJVM method
+startJVM method
 ~~~~~~~~~~~~~~~~~
 
 This method MUST be called before any other JPype features can be used. It
