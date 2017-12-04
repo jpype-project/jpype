@@ -60,14 +60,17 @@ def _initialize():
 def isJVMStarted() :
     return _jpype.isStarted()
 
-def startJVM(jvm, *args):
+def startJVM(jvm, *args, ignoreUnrecognized=False):
     """
     Starts a Java Virtual Machine
 
-    :param jvm:  Path to the jvm library file (libjvm.so, jvm.dll, ...)
-    :param args: Arguments to give to the JVM
+    Args:
+      jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
+      *args (str[]): Arguments to give to the JVM
+      ignoreUnrecognized (Optional[bool]): option to jvm to return an 
+        error if a jvm argument is invalid.  (Default False)
     """
-    _jpype.startup(jvm, tuple(args), True)
+    _jpype.startup(jvm, tuple(args), ignoreUnrecognized)
     _initialize()
 
     # start the reference daemon thread
