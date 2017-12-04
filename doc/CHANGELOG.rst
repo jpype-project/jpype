@@ -4,6 +4,9 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - Changed startJVM() to report errors on unrecognized options by default.
+    Use `ignoreUnrecognized=True` to get previous behavior.
+
   - Java reference counting has been converted to use JNI 
     PushLocalFrame/PopLocalFrame.  Several resource leaks
     were removed.
