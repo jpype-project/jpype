@@ -67,8 +67,8 @@ def startJVM(jvm, *args, ignoreUnrecognized=False):
     Args:
       jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
       *args (str[]): Arguments to give to the JVM
-      ignoreUnrecognized (Optional[bool]): option to jvm to return an 
-        error if a jvm argument is invalid.  (Default False)
+      ignoreUnrecognized (Optional[bool]): option to jvm to ignore 
+        invalid jvm arguments.  (Default False)
     """
     _jpype.startup(jvm, tuple(args), ignoreUnrecognized)
     _initialize()
