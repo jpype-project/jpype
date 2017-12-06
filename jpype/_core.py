@@ -60,13 +60,14 @@ def _initialize():
 def isJVMStarted() :
     return _jpype.isStarted()
 
-def startJVM(jvm, *args, **kwargs):
+def startJVM(jvm=None, *args, **kwargs):
     """
     Starts a Java Virtual Machine.  Typical usage
     startJVM(getDefaultJVMPath(), classpath=getClassPath())
 
     Args:
       jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
+        default=None, will use jpype.get_default_jvm_path()
       *args (str[]): Arguments to give to the JVM
       classpath (Optional[string]): set the classpath for the jvm.
         This will override any classpath supplied in the arguments
@@ -74,11 +75,14 @@ def startJVM(jvm, *args, **kwargs):
       ignoreUnrecognized (Optional[bool]): option to jvm to ignore
         invalid jvm arguments.  (Default False)
     """
+    if jvm is None:
+        jvm = get_default_jvm_path()
+
     if 'ignoreUnrecognized' not in kwargs:
         kwargs['ignoreUnrecognized']=False
 
     # Classpath handling
-    args=list(args)
+    args = list(args)
     if 'classpath' in kwargs:
         args.append('-Dclasspath=%s'%(kwargs['classpath']))
 
