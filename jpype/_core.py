@@ -84,7 +84,7 @@ def startJVM(jvm=None, *args, **kwargs):
     # Classpath handling
     args = list(args)
     if 'classpath' in kwargs:
-        args.append('-Dclasspath=%s'%(kwargs['classpath']))
+        args.append('-Djava.class.path=%s'%(kwargs['classpath']))
 
     _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
     _initialize()
