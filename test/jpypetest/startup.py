@@ -41,7 +41,7 @@ class StartJVMCase(common.JPypeTestCase):
 class TestNewJVMInstance(unittest.TestCase):
     def test_invalid_args(self):
         inv_arg = '-for_sure_InVaLiD'
-        script = 'import jpype; jpype.startJVM(None, "{}", ignoreUnrecognized=False)'.format(inv_arg)
+        script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=False)'.format(arg=inv_arg)
         with self.assertRaises(subprocess.CalledProcessError) as cpe:
             subprocess.check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
         exception_stdout = cpe.exception.stdout.decode('ascii')
