@@ -57,6 +57,8 @@ class TestNewJVMInstance(unittest.TestCase):
         cp = os.path.join(root, 'classes')
         assert os.path.exists(cp)
         jclass = 'jpype.array.TestArray'
-        script = ('import jpype; jpype.startJVM(None, classpath="{cp}"); jpype.JClass({jclass})'
+        path_to_test_class = os.path.join(cp, jclass.replace('.', os.path.sep) + '.class')
+        assert os.path.exists(path_to_test_class)
+        script = ('import jpype; jpype.startJVM(None, classpath="{cp}"); jpype.JClass("{jclass}")'
                   .format(cp=cp, jclass=jclass))
         subprocess.check_call([sys.executable, '-c', script])
