@@ -63,7 +63,7 @@ class TestNewJVMInstance(unittest.TestCase):
         inv_arg = '-for_sure_InVaLiD'
         script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=False)'.format(arg=inv_arg)
         with self.assertRaises(subprocess.CalledProcessError) as cpe:
-            subprocess.check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
+            check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
         exception_stdout = cpe.exception.output.decode('ascii')
         self.assertIn('Unrecognized option', exception_stdout)
         self.assertIn(inv_arg, exception_stdout)
