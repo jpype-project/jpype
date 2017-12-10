@@ -23,6 +23,26 @@ import sys
 import jpype
 from . import common
 
+# https://gist.github.com/edufelipe/1027906#file-gistfile1-py
+def check_output(*popenargs, **kwargs):
+    r"""Run command with arguments and return its output as a byte string.
+    Backported from Python 2.7 as it's implemented as pure python on stdlib.
+    >>> check_output(['/usr/bin/python', '--version'])
+    Python 2.6.2
+    """
+    process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
+    output, unused_err = process.communicate()
+    retcode = process.poll()
+    if retcode:
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        error = subprocess.CalledProcessError(retcode, cmd)
+        error.output = output
+        raise error
+    return output
+
+
 class StartJVMCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -44,7 +64,7 @@ class TestNewJVMInstance(unittest.TestCase):
         script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=False)'.format(arg=inv_arg)
         with self.assertRaises(subprocess.CalledProcessError) as cpe:
             subprocess.check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
-        exception_stdout = cpe.exception.stdout.decode('ascii')
+        exception_stdout = cpe.exception.output.decode('ascii')
         self.assertIn('Unrecognized option', exception_stdout)
         self.assertIn(inv_arg, exception_stdout)
 
@@ -61,4 +81,4 @@ class TestNewJVMInstance(unittest.TestCase):
         assert os.path.exists(path_to_test_class)
         script = ('import jpype; jpype.startJVM(None, classpath="{cp}"); jpype.JClass("{jclass}")'
                   .format(cp=cp, jclass=jclass))
-        subprocess.check_call([sys.executable, '-c', script])
+        check_output([sys.executable, '-c', script])
