@@ -30,6 +30,7 @@ from . import _properties
 from . import nio
 from . import reflect
 from . import _refdaemon
+from . import _classpath
 
 _usePythonThreadForDaemon = False
 
@@ -60,14 +61,22 @@ def _initialize():
 def isJVMStarted() :
     return _jpype.isStarted()
 
+def _hasClassPath(args):
+    for i in args:
+        if i.startswith('-Djava.class.path'):
+            return True
+    return False
+
 def startJVM(jvm=None, *args, **kwargs):
     """
-    Starts a Java Virtual Machine.  Typical usage
-    startJVM(getDefaultJVMPath(), classpath=getClassPath())
+    Starts a Java Virtual Machine.  Without options it will start
+    the JVM with the default classpath and jvm.  The default classpath
+    will be determined by jpype.getClassPath().  The default JVM is 
+    determined by jpype.getDefaultJVMPath().
 
     Args:
       jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
-        default=None, will use jpype.get_default_jvm_path()
+        default=None will use jpype.getDefaultJVMPath()
       *args (str[]): Arguments to give to the JVM
       classpath (Optional[string]): set the classpath for the jvm.
         This will override any classpath supplied in the arguments
@@ -78,13 +87,20 @@ def startJVM(jvm=None, *args, **kwargs):
     if jvm is None:
         jvm = get_default_jvm_path()
 
+        # Check to see that the user has not set the classpath
+        # Otherwise use the default if not specified
+        if not _hasClassPath(args) and 'classpath' not in kwargs:
+           kwargs['classpath']=_classpath.getClassPath()
+           print("Use default classpath")
+
     if 'ignoreUnrecognized' not in kwargs:
         kwargs['ignoreUnrecognized']=False
 
     # Classpath handling
     args = list(args)
-    if 'classpath' in kwargs:
+    if 'classpath' in kwargs and kwargs['classpath']!=None:
         args.append('-Djava.class.path=%s'%(kwargs['classpath']))
+        print("Set classpath")
 
     _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
     _initialize()
