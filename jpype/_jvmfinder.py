@@ -129,7 +129,10 @@ class JVMFinder(object):
         for method in self._methods:
             try:
                 jvm = method()
-                self.check(jvm)
+
+                # If found check the architecture 
+                if jvm:
+                    self.check(jvm)
             except NotImplementedError:
                 # Ignore missing implementations
                 pass
