@@ -12,8 +12,8 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-*****************************************************************************/   
+
+*****************************************************************************/
 #include <jpype.h>
 
 namespace {
@@ -65,12 +65,12 @@ JPClass* findClass(const JPTypeName& name)
 {
 	// Fist check in the map ...
 	JavaClassMap::iterator cur = javaClassMap.find(name.getSimpleName());
-	
+
 	if (cur != javaClassMap.end())
 	{
 		return cur->second;
 	}
-	
+
 	TRACE_IN("JPTypeManager::findClass");
 	TRACE1(name.getSimpleName());
 
@@ -81,12 +81,10 @@ JPClass* findClass(const JPTypeName& name)
 
 	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
 	JPClass* res = new JPClass(name, cls);
-	
+	// Finish loading it
+	res->postLoad();
 	// Register it here before we do anything else
 	javaClassMap[name.getSimpleName()] = res;
-	
-	// Finish loading it
-	res->postLoad();		
 
 	return res;
 	TRACE_OUT;
@@ -96,20 +94,20 @@ JPArrayClass* findArrayClass(const JPTypeName& name)
 {
 	// Fist check in the map ...
 	JavaArrayClassMap::iterator cur = javaArrayClassMap.find(name.getSimpleName());
-	
+
 	if (cur != javaArrayClassMap.end())
 	{
 		return cur->second;
 	}
-	
+
 	// No we havent got it .. lets load it!!!
 	JPLocalFrame frame;
 	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
 	JPArrayClass* res = new JPArrayClass(name, cls);
-	
+
 	// Register it here before we do anything else
 	javaArrayClassMap[name.getSimpleName()] = res;
-	
+
 	return res;
 }
 
@@ -118,12 +116,12 @@ JPType* getType(const JPTypeName& t)
 	TRACE_IN("JPTypeManager::getType");
 	TRACE1(t.getSimpleName());
 	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
-	
+
 	if (it != typeMap.end())
 	{
 		return it->second;
 	}
-	
+
 	if (t.getType() == JPTypeName::_array)
 	{
 		JPArrayClass* c = findArrayClass(t);
