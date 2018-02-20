@@ -32,7 +32,7 @@ typedef unsigned int uint;
     #define NPY_BYTE 0
     #define NPY_SHORT 0
     #define NPY_INT 0
-    #define NPY_LONG 0
+    #define NPY_INT64 0
     #define NPY_FLOAT32 0
     #define NPY_FLOAT64 0
 #endif
@@ -743,7 +743,7 @@ void JPLongType::setArrayItem(jarray a, int ndx , HostRef* obj)
 }
 
 PyObject* JPLongType::getArrayRangeToSequence(jarray a, int lo, int hi) {
-    return getSlice<jlong>(a, lo, hi, NPY_LONG, PyLong_FromLong);
+    return getSlice<jlong>(a, lo, hi, NPY_INT64, PyLong_FromLong);
 }
 
 
