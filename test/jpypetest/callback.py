@@ -22,8 +22,13 @@ import jpype
 from . import common
 import sys
 
+
 def pythonNewerThan(major, minor):
     return sys.version_info[0]> major or (sys.version_info[0] == major and sys.version_info[1]>minor)
+
+def javaNewerThan(major, minor):
+    jversion = jpype.getJVMVersion()
+    return jversion[0]> major or (jversion[0] == major and jversion[1]>minor)
 
 # Test the functions of anonymous and lambda callbacks
 class CallbackTestCase(common.JPypeTestCase):
@@ -36,8 +41,10 @@ class CallbackTestCase(common.JPypeTestCase):
         callback = CallbackTest()
         self.assertEqual(callback.getAnonymous().execute(), 1)
 
+    @unittest.skipUnless(javaNewerThan(1, 7), "requires java 1.8")
     def testLambdaCallback(self):
         CallbackTest = jpype.JClass("jpype.callback.CallbackTest")
         callback = CallbackTest()
-        self.assertEqual(callback.getLambda().execute(), 2)
+        v = callback.getLambda()
+        self.assertEqual(v.execute(), 2)
 

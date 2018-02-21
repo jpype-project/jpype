@@ -36,7 +36,7 @@ _COMPARABLE_METHODS = {
         }
 
 def _initialize():
-    global _COMPARABLE, _JAVACLASS, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
+    global _COMPARABLE, _JAVACLASS, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION, _VERSION
     registerClassCustomizer(_JavaLangClassCustomizer())
 
     _JAVAOBJECT = JClass("java.lang.Object")
@@ -48,6 +48,12 @@ def _initialize():
     _jpype.setResource('GetClassMethod',_getClassFor)
     _jpype.setResource('SpecialConstructorKey',_SPECIAL_CONSTRUCTOR_KEY)
 
+def getJVMVersion():
+    """ Get the jvm version if the jvm is started.
+    """
+    if not _jpype.isStarted():
+        return (0,0,0)
+    return tuple([int(i) for i in str(JClass('java.lang.Runtime').class_.getPackage().getcwImplementationVersion())])
 
 def registerClassCustomizer(c):
     _CUSTOMIZERS.append(c)
@@ -68,6 +74,8 @@ class JClassCustomizer(object):
     
 
 def JClass(name):
+    if not _jpype.isStarted():
+        raise RuntimeError("JVM not started yet. Cannot find java class %s"%name)
     jc = _jpype.findClass(name)
     if jc is None:
         raise _RUNTIMEEXCEPTION.PYEXC("Class %s not found" % name)
