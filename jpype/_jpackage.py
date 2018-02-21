@@ -25,7 +25,9 @@ class JPackage(object):
     def __getattribute__(self, n):
         try:
             return object.__getattribute__(self, n)
-        except:
+        except AttributeError as ex:
+            if n.startswith("__"):
+                raise ex
             # not found ...
 
             # perhaps it is a class?
