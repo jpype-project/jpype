@@ -12,17 +12,23 @@ python:
   - '3.6'
   - 'pypy'
   - 'pypy3'
-  - "nightly"
+  - 'nightly'
 
 addons:
   apt:
     packages:
     - ant
+    - openjdk-6-jdk
+    - openjdk-7-jdk
+    - openjdk-8-jdk
+    - openjdk-9-jdk
 
 env:
   # one build with and without numpy support (opt numpy out)
   - NUMPY="--install-option=--disable-numpy"
   - NUMPY=""
+  # TODO: add paths for java 6-9
+  #- JAVA_HOME='/usr/lib/jvm/java-openjdk-1.6.0'
 
 matrix:
   allow_failures:
