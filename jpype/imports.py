@@ -41,7 +41,7 @@ try:
 except Exception:
     raise ImportError("jpype.imports Not supported for Python 2")
 import sys as _sys
-import keyword as _keyword
+from . import _pykeywords as _keyword
 from ._jclass import JClass as _JClass
 from ._jclass import _JavaClass as _JavaClass
 from ._core import registerJVMInitializer as _jinit
@@ -60,7 +60,7 @@ def _keywordUnwrap(name):
     return name
 
 def _keywordWrap(name):
-    if name in _keyword.kwlist:
+    if _keyword.iskeyword(name):
         return name + "_"
     return name
 

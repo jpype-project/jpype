@@ -94,7 +94,7 @@ class _BoxedCustomizer(object):
 
     def customize(self, name, jc, bases, members):
         cls=_BOXED[name]
-        bases.append(cls)
+        bases.insert(0, cls)
         members['__eq__']=cls.__eq__
         members['__ne__']=cls.__ne__
         if hasattr(cls, '__cmp__'):

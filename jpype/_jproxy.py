@@ -15,15 +15,17 @@
 #
 #*****************************************************************************
 
-import collections
-import sys
+import collections as _collections
+import sys as _sys
 
 import _jpype
 from . import _jclass
 from . import JClassUtil
 
-if sys.version > '3':
-    unicode = str
+if _sys.version > '3':
+    _unicode = str
+else:
+    _unicode = unicode
 
 def _initialize():
     _jpype.setResource('ProxyClass',JProxy)
@@ -31,15 +33,16 @@ def _initialize():
 class JProxy(object):
     def __init__(self, intf, dict=None, inst=None):
         actualIntf = None
+        print(intf, isinstance(intf, _jclass._JavaClass))
 
-        if isinstance(intf, str) or isinstance(intf, unicode):
+        if isinstance(intf, str) or isinstance(intf, _unicode):
             actualIntf = [_jclass.JClass(intf)]
         elif isinstance(intf, _jclass._JavaClass):
             actualIntf = [intf]
-        elif isinstance(intf, collections.Sequence):
+        elif isinstance(intf, _collections.Sequence):
             actualIntf = []
             for i in intf:
-                if isinstance(i, str) or isinstance(i, unicode):
+                if isinstance(i, str) or isinstance(i, _unicode):
                     actualIntf.append(_jclass.JClass(i))
                 elif isinstance(i, _jclass._JavaClass):
                     actualIntf.append(i)

@@ -32,7 +32,7 @@ class JPackage(object):
             subname = "{0}.{1}".format(self.__name, n)
             if not _jpype.isStarted():
                import warnings
-               warnings.warn("JVM not started yet, can not inspect JPackage contents")
+               warnings.warn("JVM not started yet, can not inspect JPackage contents for ",n)
                return n
             if not _jpype.isThreadAttachedToJVM():
                 _jpype.attachThreadToJVM()

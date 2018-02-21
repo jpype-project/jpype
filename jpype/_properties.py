@@ -16,7 +16,7 @@
 #*****************************************************************************
 import _jpype
 from . import _jclass
-from ._pykeywords import KEYWORDS
+from . import _pykeywords as _keyword
 
 _PROPERTY_ACCESSOR_PREFIX_LEN = 3
 
@@ -75,7 +75,7 @@ class PropertiesCustomizer(object) :
             if attr_name=='class':
                 continue
             # Handle keyword conflicts
-            if attr_name in KEYWORDS:
+            if _keyword.iskeyword(attr_name):
                 attr_name += "_"
             if attr_name in members:
                 if not getter:

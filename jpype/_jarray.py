@@ -14,16 +14,19 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import collections
-import sys
+import collections as _collections
+import sys as _sys
 
 import _jpype
 from . import _jclass
 from . import _jwrapper
 
-if sys.version > '3':
-    unicode = str
-    irange = range
+if _sys.version > '3':
+    _unicode = str
+    _irange = range
+else:
+    _unicode = uncode
+    _irange = irange
 
 _CLASSES = {}
 _CUSTOMIZERS = []
@@ -32,8 +35,8 @@ def _initialize():
     _jpype.setResource('JavaArrayClass',_JavaArrayClass)
     _jpype.setResource('GetJavaArrayClassMethod',_getClassFor)
 
-    registerArrayCustomizer(CharArrayCustomizer())
-    registerArrayCustomizer(ByteArrayCustomizer())
+    registerArrayCustomizer(_JCharArrayCustomizer())
+    registerArrayCustomizer(_JByteArrayCustomizer())
 
 def registerArrayCustomizer(c):
     _CUSTOMIZERS.append(c)
@@ -64,7 +67,7 @@ class _JavaArrayClass(object):
             start, stop, step = ndx.indices(len(self))
             if step != 1:
                 # Iterate in python if we need to step
-                indices = irange(start, stop, step)
+                indices = _irange(start, stop, step)
                 for index, value in zip(indices, val):
                     self[index] = value
             else:
@@ -73,12 +76,12 @@ class _JavaArrayClass(object):
         _jpype.setArrayItem(self.__javaobject__, ndx, val)
 
     def __getslice__(self, i, j):
-        if j == sys.maxsize:
+        if j == _sys.maxsize:
             j = _jpype.getArrayLength(self.__javaobject__)
         return _jpype.getArraySlice(self.__javaobject__, i, j)
 
     def __setslice__(self, i, j, v):
-        if j == sys.maxsize:
+        if j == _sys.maxsize:
             j = _jpype.getArrayLength(self.__javaobject__)
         _jpype.setArraySlice(self.__javaobject__, i, j, v)
 
@@ -100,7 +103,7 @@ def _jarrayInit(self, *args):
             .format(len(args) + 1))
     else:
         values = None
-        if isinstance(args[0], collections.Sequence):
+        if isinstance(args[0], _collections.Sequence):
             sz = len(args[0])
             values = args[0]
         else:
@@ -150,6 +153,8 @@ def _defineArrayClass(name, jt):
 def _getClassFor(name):
     if name not in _CLASSES:
         jc = _jpype.findArrayClass(name)
+        if jc is None:
+            raise RuntimeError("Unable to find java array class for %s"%name)
         _CLASSES[name] = _defineArrayClass(name, jc)
 
     return _CLASSES[name]
@@ -162,10 +167,10 @@ def JArray(t, ndims=1):
     elif isinstance(t, _JavaArray):
         t = t.typeName
 
-    elif issubclass(t, _jclass._JAVAOBJECT):
-        t = t.__name__
+    elif issubclass(t, _jclass._JavaObject):
+        t = t.__javaclass__.getName()
 
-    elif not isinstance(t, str) and not isinstance(t, unicode):
+    elif not isinstance(t, str) and not isinstance(t, _unicode):
         raise TypeError("Argument must be a java class, java array class, "
                         "java wrapper or string representing a java class")
 
@@ -179,7 +184,7 @@ def _charArrayStr(self):
 def _charArrayUnicode(self):
     return u''.join(self)
 
-class CharArrayCustomizer(object):
+class _JCharArrayCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'char[]':
             return True
@@ -194,7 +199,7 @@ def _byteArrayStr(self):
     return s.toString()
 
 
-class ByteArrayCustomizer(object):
+class _JByteArrayCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'byte[]':
             return True
