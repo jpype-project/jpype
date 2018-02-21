@@ -23,6 +23,9 @@ from . import common
 import sys
 
 
+# JVM must be started to get JVM version
+common.TestJVMStart()
+
 def pythonNewerThan(major, minor):
     return sys.version_info[0]> major or (sys.version_info[0] == major and sys.version_info[1]>minor)
 

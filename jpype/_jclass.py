@@ -53,7 +53,7 @@ def getJVMVersion():
     """
     if not _jpype.isStarted():
         return (0,0,0)
-    return tuple([int(i) for i in str(JClass('java.lang.Runtime').class_.getPackage().getcwImplementationVersion())])
+    return tuple([int(i) for i in str(JClass('java.lang.Runtime').class_.getPackage().getImplementationVersion()).split('.')])
 
 def registerClassCustomizer(c):
     _CUSTOMIZERS.append(c)
