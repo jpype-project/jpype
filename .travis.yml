@@ -4,12 +4,12 @@ os:
 language: python
 
 python:
-        #  - '2.6'
-        #  - '2.7'
-        #- '3.3'
+  - '2.6'
+  - '2.7'
+  - '3.3'
         # - '3.4'
         #  - '3.5'
-        #  - '3.6'
+  - '3.6'
         #  - 'pypy'
         # - 'pypy3'
   - 'nightly'
@@ -27,8 +27,11 @@ env:
   # one build with and without numpy support (opt numpy out)
   - NUMPY="--install-option=--disable-numpy"
   - NUMPY=""
-  # TODO: add paths for java 6-9
-  #- JAVA_HOME='/usr/lib/jvm/java-openjdk-1.6.0'
+  # major java releases
+  - JAVA_VERSION=6
+  - JAVA_VERSION=7
+  - JAVA_VERSION=8
+  - JAVA_VERSION=9
 
 matrix:
   allow_failures:
@@ -44,12 +47,15 @@ matrix:
       env: NUMPY=""
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
-  
+before_install:
+ - [ $JAVA_VERSION -lt 9 ] export JAVA_HOME='/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64'
+ - [ $JAVA_VERSION -eq 9 ] export JAVA_HOME='/usr/lib/jvm/java-9-oracle'
+
 install:
   - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
-  - ant -f test/build.xml
+  - ant -f test/build.xml -v
 
 script:
   - python -c "import jpype"
