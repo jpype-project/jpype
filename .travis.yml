@@ -47,12 +47,16 @@ matrix:
       env: NUMPY=""
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
-# TODO: exclude some matrix elements, as this matrix is likeli too large.
-before_install:
-# set JAVA_HOME
- - [ $JAVA_VERSION -lt 9 ] export JAVA_HOME='/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64' || true
- - [ $JAVA_VERSION -eq 9 ] export JAVA_HOME='/usr/lib/jvm/java-9-oracle' || true
 
+# TODO: exclude some matrix elements, as this matrix is likeli too large.
+# set JAVA_HOME
+before_install:
+  - |
+    if [[ ${JAVA_VERSION} -lt 9 ]];
+       then export JAVA_HOME="/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64"
+    else
+       export JAVA_HOME='/usr/lib/jvm/java-9-oracle'
+    fi
 install:
   - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
