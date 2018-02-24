@@ -4,14 +4,14 @@ os:
 language: python
 
 python:
-  - '2.6'
-  - '2.7'
-  - '3.3'
-  - '3.4'
-  - '3.5'
-  - '3.6'
-  - 'pypy'
-  - 'pypy3'
+        #  - '2.6'
+        #  - '2.7'
+        #- '3.3'
+        # - '3.4'
+        #  - '3.5'
+        #  - '3.6'
+        #  - 'pypy'
+        # - 'pypy3'
   - 'nightly'
 
 addons:
@@ -46,6 +46,7 @@ matrix:
       env: NUMPY="--install-option=--disable-numpy"
   
 install:
+  - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
