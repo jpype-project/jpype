@@ -25,13 +25,16 @@ addons:
 
 env:
   # one build with and without numpy support (opt numpy out)
-  - NUMPY="--install-option=--disable-numpy"
-  - NUMPY=""
   # major java releases
-  - JAVA_VERSION=6
-  - JAVA_VERSION=7
-  - JAVA_VERSION=8
-  - JAVA_VERSION=9
+  - JAVA_VERSION=6  NUMPY="--install-option=--disable-numpy"
+  - JAVA_VERSION=7  NUMPY="--install-option=--disable-numpy"
+  - JAVA_VERSION=8  NUMPY="--install-option=--disable-numpy"
+  - JAVA_VERSION=9  NUMPY="--install-option=--disable-numpy"
+  - JAVA_VERSION=6  NUMPY=""
+  - JAVA_VERSION=7  NUMPY=""
+  - JAVA_VERSION=8  NUMPY=""
+  - JAVA_VERSION=9  NUMPY=""
+
 
 matrix:
   allow_failures:
