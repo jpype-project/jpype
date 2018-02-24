@@ -49,8 +49,9 @@ matrix:
       env: NUMPY="--install-option=--disable-numpy"
 # TODO: exclude some matrix elements, as this matrix is likeli too large.
 before_install:
- - [ $JAVA_VERSION -lt 9 ] export JAVA_HOME='/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64'
- - [ $JAVA_VERSION -eq 9 ] export JAVA_HOME='/usr/lib/jvm/java-9-oracle'
+# set JAVA_HOME
+ - [ $JAVA_VERSION -lt 9 ] export JAVA_HOME='/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64' || true
+ - [ $JAVA_VERSION -eq 9 ] export JAVA_HOME='/usr/lib/jvm/java-9-oracle' || true
 
 install:
   - ls -alh /usr/lib/jvm/
