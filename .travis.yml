@@ -58,6 +58,7 @@ before_install:
         export NUMPY=''
     else:
         export NUMPY='--install-option=--disable-numpy'
+    fi
 install:
   - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
