@@ -18,7 +18,7 @@ addons:
   apt:
     packages:
     - ant
-    - openjdk-6-jdk
+   # - openjdk-6-jdk
     - openjdk-7-jdk
     - openjdk-8-jdk
     - openjdk-9-jdk
@@ -26,15 +26,10 @@ addons:
 env:
   # one build with and without numpy support (opt numpy out)
   # major java releases
-  - JAVA_VERSION=6  NUMPY="--install-option=--disable-numpy"
-  - JAVA_VERSION=7  NUMPY="--install-option=--disable-numpy"
-  - JAVA_VERSION=8  NUMPY="--install-option=--disable-numpy"
-  - JAVA_VERSION=9  NUMPY="--install-option=--disable-numpy"
-  - JAVA_VERSION=6  NUMPY=""
-  - JAVA_VERSION=7  NUMPY=""
-  - JAVA_VERSION=8  NUMPY=""
-  - JAVA_VERSION=9  NUMPY=""
-
+  #- JAVA_VERSION=6
+  - JAVA_VERSION=7
+  - JAVA_VERSION=8
+  - JAVA_VERSION=9
 
 matrix:
   allow_failures:
@@ -51,7 +46,6 @@ matrix:
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
 
-# TODO: exclude some matrix elements, as this matrix is likeli too large.
 # set JAVA_HOME
 before_install:
   - |
@@ -60,6 +54,10 @@ before_install:
     else
        export JAVA_HOME='/usr/lib/jvm/java-9-oracle'
     fi
+    if [[ ${JAVA_VERSION} -eq 7 ]]; then
+        export NUMPY=''
+    else:
+        export NUMPY='--install-option=--disable-numpy'
 install:
   - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
