@@ -4,12 +4,13 @@ os:
 language: python
 
 python:
-#  - '2.6'
+#  - '2.6' # end of life
   - '2.7'
-  - '3.3'
+#  - '3.3' # end of life
   - '3.4'
   - '3.5'
   - '3.6'
+#  - '3.7'
   - 'pypy'
   - 'pypy3'
   - 'nightly'
@@ -27,9 +28,9 @@ env:
   # one build with and without numpy support (opt numpy out)
   # major java releases
   #- JAVA_VERSION=6
-  - JAVA_VERSION=7
-  - JAVA_VERSION=8
-  - JAVA_VERSION=9
+  - JAVA_VERSION=7 ANT="1.9"
+  - JAVA_VERSION=8 ANT="1.10"
+  - JAVA_VERSION=9 ANT="1.10"
 
 matrix:
   allow_failures:
@@ -59,6 +60,14 @@ before_install:
     else:
         export NUMPY='--install-option=--disable-numpy'
     fi
+    # dependend on the java version we need a given ant version...
+    if [[ ${ANT} = "1.9" ]]; then
+       url="http://apache.mirrors.tds.net/ant/binaries/apache-ant-1.10.2-bin.tar.xz"
+    fi
+    wget $url -o ant.tar.xz
+    tar xf ant.tar.xz
+    #export PATH=...
+    # or use jrun from github?
 install:
   - ls -alh /usr/lib/jvm/
   - pip install . $NUMPY
