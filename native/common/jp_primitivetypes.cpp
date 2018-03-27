@@ -424,11 +424,11 @@ jvalue JPFloatType::convertToJava(HostRef* obj)
 	}
 	else if (JPEnv::getHost()->isInt(obj))
 	{
-		res.d = JPEnv::getHost()->intAsInt(obj);;
+		res.f = JPEnv::getHost()->intAsInt(obj);;
 	}
 	else if (JPEnv::getHost()->isLong(obj))
 	{
-		res.d = JPEnv::getHost()->longAsLong(obj);;
+		res.f = JPEnv::getHost()->longAsLong(obj);;
 	}
 	else
 	{
