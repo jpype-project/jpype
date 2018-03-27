@@ -51,7 +51,7 @@ def _checkJVMArch(jvmPath):
 
 class WindowsJVMFinder(_jvmfinder.JVMFinder):
     """
-    Linux JVM library finder class
+    Windows JVM library finder class
     """
     def __init__(self):
         """
