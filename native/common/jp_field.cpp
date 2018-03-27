@@ -105,7 +105,7 @@ void JPField::setStaticAttribute(HostRef* val)
 	{
 		stringstream err;
 		err << "unable to convert to " << type->getName().getSimpleName();
-		RAISE(JPypeException, err.str().c_str());
+		JPEnv::getHost()->setTypeError( err.str().c_str());
 	}
 		
 	jclass claz = m_Class->getClass();
@@ -138,7 +138,7 @@ void JPField::setAttribute(jobject inst, HostRef* val)
 	{
 		stringstream err;
 		err << "unable to convert to " << type->getName().getSimpleName();
-		RAISE(JPypeException, err.str().c_str());
+		JPEnv::getHost()->setTypeError( err.str().c_str());
 	}
 		
 	type->setInstanceValue(inst, m_FieldID, val);		
