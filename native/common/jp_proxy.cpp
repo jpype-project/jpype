@@ -15,6 +15,22 @@
    
 *****************************************************************************/   
 #include <jpype.h>
+#include <Python.h>
+
+class JPCallback
+{
+public:
+	PyGILState_STATE gstate;
+	JPCallback()
+	{
+		gstate = PyGILState_Ensure();
+	}
+	~JPCallback()
+	{
+		PyGILState_Release(gstate);
+	}
+};
+
 
 JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	JNIEnv *env, jclass clazz, jstring name, 
@@ -23,8 +39,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 {
 	TRACE_IN("Java_jpype_JPypeInvocationHandler_hostInvoke");
 
-	void* callbackState = JPEnv::getHost()->prepareCallbackBegin();
-
+	JPCallback callback;
 	JPCleaner cleaner;
 
 	try {
@@ -39,7 +54,6 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		if (callable == NULL || callable->isNull() || JPEnv::getHost()->isNone(callable))
 		{
 			JPEnv::getJava()->ThrowNew(JPJni::s_NoSuchMethodErrorClass, cname.c_str());
-			JPEnv::getHost()->prepareCallbackFinish(callbackState);
 			return NULL;
 		}
 					
@@ -73,14 +87,12 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			if (returnT.getType() != JPTypeName::_void && returnT.getType() < JPTypeName::_object)
 			{
 				JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is None when it cannot be");
-				JPEnv::getHost()->prepareCallbackFinish(callbackState);
 				return NULL;
 			}
 		}
 
 		if (returnT.getType() == JPTypeName::_void)
 		{
-			JPEnv::getHost()->prepareCallbackFinish(callbackState);
 			return NULL;
 		}
 
@@ -88,15 +100,12 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		if (rt->canConvertToJava(returnValue) == _none)
 		{
 			JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is not compatible with required type.");
-			JPEnv::getHost()->prepareCallbackFinish(callbackState);
 			return NULL;
 		}
 	
 		jobject returnObj = rt->convertToJavaObject(returnValue);
 		returnObj = JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
     
-		JPEnv::getHost()->prepareCallbackFinish(callbackState);
-
 		return returnObj;
 
 	}
@@ -129,8 +138,6 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, ex.getMsg());
 	}
 
-	JPEnv::getHost()->prepareCallbackFinish(callbackState);
-
 	return NULL;
 
 	TRACE_OUT;
@@ -141,16 +148,13 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 {
 	TRACE_IN("Java_jpype_ref_JPypeReferenceQueue_removeHostReference");
 
-	void* callbackState = JPEnv::getHost()->prepareCallbackBegin();
-
+	JPCallback callback;
 	if (hostObj >0)
 	{
 		HostRef* hostObjRef = (HostRef*)hostObj;
 		//JPEnv::getHost()->printReferenceInfo(hostObjRef);
 		delete hostObjRef;
 	}
-
-	JPEnv::getHost()->prepareCallbackFinish(callbackState);
 
 	//return NULL;
 	TRACE_OUT;

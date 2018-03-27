@@ -454,19 +454,6 @@ HostRef* PythonHostEnvironment::newStringFromASCII(const char* v, unsigned int l
 	return new HostRef(JPyString::fromString(v), false);
 }
 
-void* PythonHostEnvironment::prepareCallbackBegin()
-{
-	PyGILState_STATE state = PyGILState_Ensure();;
-	return (void*)new PyGILState_STATE(state);
-}
-
-void PythonHostEnvironment::prepareCallbackFinish(void* state)
-{
-	PyGILState_STATE* state2 = (PyGILState_STATE*)state;
-	PyGILState_Release(*state2);
-	delete state2;
-}
-
 HostRef* PythonHostEnvironment::callObject(HostRef* c, vector<HostRef*>& args)
 {
 	JPCleaner cleaner;

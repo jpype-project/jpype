@@ -132,10 +132,6 @@ public :
 	virtual void     getRawUnicodeString(HostRef*, jchar**, long&) = 0;
 	virtual size_t   getUnicodeSize() = 0;
 
-	
-	virtual void* prepareCallbackBegin() = 0;
-	virtual void  prepareCallbackFinish(void* state) = 0;
-
 	virtual HostRef* callObject(HostRef* callable, vector<HostRef*>& args) = 0;
 
 	virtual bool mapContains(HostRef* map, HostRef* key) = 0;
