@@ -1,11 +1,12 @@
 # Setup cygwin path
 
-export PATH="$ANT_BIN/bin:/bin:/usr/bin"
+#export PATH="$ANT_BIN/bin:/bin:/usr/bin"
 
 echo JAVA_HOME=$JAVA_HOME
 echo ARCH=$ARCH
 echo PATH=$PATH
 echo PYTHON=$PYTHON
+echo ANT_HOME=$ANT_HOME
 
 # If we do not have Java installed we can't proceed
 if [ ! -d "$JAVA_HOME" ]; then
@@ -41,6 +42,8 @@ echo "==== Check versions"
 "$ANT_HOME"/bin/ant -version
 $PYTHON --version
 java.exe -version
+which java.exe
+which javac.exe
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
