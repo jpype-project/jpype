@@ -17,7 +17,6 @@
 #ifndef _JPYPE_UTILITY_H_
 #define _JPYPE_UTILITY_H_
 
-#include <jni.h>
 
 #define RAISE(exClass, msg) { throw exClass(msg, __FILE__, __LINE__); }
 

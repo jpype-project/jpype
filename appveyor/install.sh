@@ -1,10 +1,21 @@
 # Setup cygwin path
 
-export PATH="$ANT_BIN/bin:/bin:/usr/bin"
+export PATH="/bin:/usr/bin:$PATH"
 
+echo JAVA_HOME=$JAVA_HOME
 echo ARCH=$ARCH
 echo PATH=$PATH
 echo PYTHON=$PYTHON
+echo ANT_HOME=$ANT_HOME
+
+# If we do not have Java installed we can't proceed
+if [ ! -d "$JAVA_HOME" ]; then
+	echo "JAVA_HOME is not valid"
+	exit -1
+fi
+
+# Make sure the jvm.dll is where it should be
+find "$JAVA_HOME" -name "jvm.dll"
 
 # Define programs
 SETUP=/setup-$ARCH
@@ -30,6 +41,12 @@ $EASYINSTALL mock
 echo "==== Check versions"
 "$ANT_HOME"/bin/ant -version
 $PYTHON --version
+$JAVA_HOME/bin/java.exe -version
+
+echo "==== Check architectures"
+file -L `which $PYTHON`
+file -L $JAVA_HOME/bin/java.exe
+file -L `find $JAVA_HOME -name "jvm.dll"`
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
@@ -46,3 +63,5 @@ echo "==== Build test"
 echo "==== Build module"
 $PYTHON setup.py install
 
+echo "==== Verify jvm.dll found"
+$PYTHON -c "import jpype; print(jpype.getDefaultJVMPath())"
