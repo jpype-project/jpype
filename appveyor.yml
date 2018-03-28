@@ -47,11 +47,11 @@ environment:
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Miniconda3"
-      CONDA_PY: "3.5"
+      PATH: %PYTHON%\\Scripts;%PATH%
 
     - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
       ARCH: "64"
+      PATH: %PYTHON%\\Scripts;%PATH%
 
 install:
   # Force java to be installed where JAVA_HOME points
@@ -65,9 +65,8 @@ install:
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
-  #- "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (conda build devtools/conda-recipe -k)"
+  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (conda.exe build devtools/conda-recipe -k)"
 
 on_finish:
   # upload results to AppVeyor
