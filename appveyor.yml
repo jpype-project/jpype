@@ -64,13 +64,13 @@ install:
      IF DEFINED CYGWIN (
         cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
 
-    ::  cinst jdk7 -params 'installdir=C:\\jdk7'
-    ::  cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
+        REM cinst jdk7 -params 'installdir=C:\\jdk7'
+        REM cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
         cinst ant %CINST_OPTS%
 
-    :: Add thinges to path 
-    SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%
-    %CYGSH% appveyor/install.sh
+       REM Add thinges to path 
+       SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%
+       %CYGSH% appveyor/install.sh
   ) ELSE (
     conda config --set always_yes True
     conda config --set quiet True
