@@ -7,7 +7,7 @@ source:
 
 build:
   number: 0
-  string: np_{{ numpy }}_jdk_{{ java[2] }}_py{{ python }}
+  string: np_{{ numpy_cfg }}_jdk_{{ java[2] }}_py{{ python }}
   script:
     # on linux/osx we use build.sh
     - python setup.py install --single-version-externally-managed --record record.txt  # [win] 
@@ -18,7 +18,7 @@ requirements:
     - setuptools
     - ccache-toolchain  # [osx or linux] 
     {% if numpy_cfg != 'disable' %} 
-    - numpy {{ numpy }}
+    - numpy {{ numpy_cfg }}
     {% endif %}
 
   run:
