@@ -1,0 +1,50 @@
+package:
+  name: jpype
+  version: dev
+
+source:
+  path: ../../
+
+build:
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record record.txt
+  env:
+    - CCACHE_BASEDIR
+
+requirements:
+  build:
+    - python
+    - setuptools
+    {% if numpy_cfg is not string %} 
+    - numpy {{ numpy }}
+    {% endif %}
+
+  run:
+    - python
+    {% if numpy_cfg is not string %} 
+    - numpy
+    {% endif %}
+test:
+  source_files:
+    - test/
+  requires:
+    - ant
+    - openjdk {{ java }}
+    - pytest-faulthandler
+    - pytest-xdist
+    - mock
+    - unittest2  # [ py2k ]
+  imports:
+    - jpype
+  commands:
+    - cd test; ant
+    - cd jpypetest; pytest *.py -v --boxed
+
+about:
+  home: https://github.com/originell/jpype/
+  license: Apache
+  license_file: LICENSE
+  summary: 'A Python to Java bridge.'
+  description: 'A Python to Java bridge.'
+  doc_url: http://jpype.readthedocs.io/en/stable/
+
