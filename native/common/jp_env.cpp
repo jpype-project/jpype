@@ -78,8 +78,8 @@ void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringV
 		RAISE(JPypeException, "Unable to start JVM");
 	}
 
-	JPTypeManager::init();
 	JPJni::init();
+	JPTypeManager::init();
 	JPProxy::init();
 
 	TRACE_OUT;

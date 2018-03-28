@@ -28,37 +28,40 @@ namespace {
 	TypeMap typeMap;
 	JavaClassMap javaClassMap;
 	JavaArrayClassMap javaArrayClassMap;
-
-//	TypeMap typeMap;
-//	JavaClassMap javaClassMap;
-//	JavaArrayClassMap javaArrayClassMap;
 }
 
 namespace JPTypeManager {
 
 void init()
 {
-	typeMap[JPTypeName::_void] = new JPVoidType();
-	typeMap[JPTypeName::_byte] = new JPByteType();
-	typeMap[JPTypeName::_short] = new JPShortType();
-	typeMap[JPTypeName::_int] = new JPIntType();
-	typeMap[JPTypeName::_long] = new JPLongType();
-	typeMap[JPTypeName::_float] = new JPFloatType();
-	typeMap[JPTypeName::_double] = new JPDoubleType();
-	typeMap[JPTypeName::_char] = new JPCharType();
-	typeMap[JPTypeName::_boolean] = new JPBooleanType();
-	typeMap[JPTypeName::_string] = new JPStringType();
-
 	// Preload the "primitive" types
-	javaClassMap["byte"] = new JPClass(JPTypeName::fromSimple("byte"), JPJni::getByteClass());
-	javaClassMap["short"] = new JPClass(JPTypeName::fromSimple("short"), JPJni::getShortClass());
-	javaClassMap["int"] = new JPClass(JPTypeName::fromSimple("int"), JPJni::getIntegerClass());
-	javaClassMap["long"] = new JPClass(JPTypeName::fromSimple("long"), JPJni::getLongClass());
-	javaClassMap["float"] = new JPClass(JPTypeName::fromSimple("float"), JPJni::getFloatClass());
-	javaClassMap["double"] = new JPClass(JPTypeName::fromSimple("double"), JPJni::getDoubleClass());
-	javaClassMap["char"] = new JPClass(JPTypeName::fromSimple("char"), JPJni::getCharacterClass());
-	javaClassMap["boolean"] = new JPClass(JPTypeName::fromSimple("boolean"), JPJni::getBooleanClass());
-	javaClassMap["void"] = new JPClass(JPTypeName::fromSimple("void"), JPJni::getVoidClass());
+	JPPrimitiveType* primitiveType[] = {
+		new JPVoidType(),
+		new JPByteType(),
+		new JPShortType(),
+		new JPIntType(),
+		new JPLongType(),
+		new JPFloatType(),
+		new JPDoubleType(),
+		new JPCharType(),
+		new JPBooleanType()
+	};
+
+	// Bootstrapping (java.lang.Object must be registered)
+	findClass(JPTypeName::fromSimple("java.lang.Object"));
+
+	for (size_t i=0; i<9; ++i)
+	{
+		// Register primitive class
+		typeMap[primitiveType[i]->getType()] = primitiveType[i];
+	    javaClassMap[primitiveType[i]->getPrimitiveName()] = primitiveType[i]->getPrimitiveClass();
+
+		// Register boxed class
+		javaClassMap[primitiveType[i]->getObjectType().getSimpleName()] = primitiveType[i]->getBoxedClass();
+	    primitiveType[i]->getBoxedClass()->postLoad();
+	}
+
+	typeMap[JPTypeName::_string] = new JPStringType();
 }
 
 JPClass* findClass(const JPTypeName& name)

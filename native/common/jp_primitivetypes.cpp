@@ -15,12 +15,79 @@
    
 *****************************************************************************/   
 #include <jpype.h>
+/**
+ * Get the class associated with a primive type from java.lang.<Boxed>.TYPE
+ *
+ * Returns a new local reference.
+ */
+jclass findPrimitiveClass(jclass cls)
+{
+	JPLocalFrame frame;
+	jfieldID fid = JPEnv::getJava()->GetStaticFieldID(cls, "TYPE", "Ljava/lang/Class;");
+	return (jclass)frame.keep(JPEnv::getJava()->GetStaticObjectField(cls, fid));
+}
+
+/**
+ * Create a primitive type.
+ *
+ * These are preloaded into the type manager.
+ */
+JPPrimitiveType::JPPrimitiveType(JPTypeName::ETypes type, const string& boxedType, const string& primitiveType)
+	: m_Type(JPTypeName::fromType(type)),
+		m_PrimitiveName(primitiveType)
+{
+		JPLocalFrame frame;
+		JPTypeName boxedTypeName = JPTypeName::fromSimple(boxedType.c_str());
+		string native = boxedTypeName.getNativeName();
+		m_BoxedClass = new JPClass(boxedTypeName, JPEnv::getJava()->FindClass(native.c_str()));
+		m_PrimitiveClass = new JPClass(JPTypeName::fromSimple(primitiveType.c_str()), m_BoxedClass->getClass());
+}
+
+// Table of primitive types
+JPVoidType::JPVoidType() : JPPrimitiveType(JPTypeName::_void, "java.lang.Void", "void") {}
+JPByteType::JPByteType() : JPPrimitiveType(JPTypeName::_byte, "java.lang.Byte", "byte") {}
+JPShortType::JPShortType() : JPPrimitiveType(JPTypeName::_short, "java.lang.Short", "short") {}
+JPIntType::JPIntType(): JPPrimitiveType(JPTypeName::_int, "java.lang.Integer", "int") {}
+JPLongType::JPLongType() : JPPrimitiveType(JPTypeName::_long, "java.lang.Long", "long") {}
+JPFloatType::JPFloatType() : JPPrimitiveType(JPTypeName::_float, "java.lang.Float", "float") {}
+JPDoubleType::JPDoubleType() : JPPrimitiveType(JPTypeName::_double, "java.lang.Double", "double") {}
+JPCharType::JPCharType() : JPPrimitiveType(JPTypeName::_char, "java.lang.Character", "char") {}
+JPBooleanType::JPBooleanType() : JPPrimitiveType(JPTypeName::_boolean, "java.lang.Boolean", "boolean") {}
+
+// Dtors
+JPPrimitiveType::~JPPrimitiveType() {}
+JPVoidType::~JPVoidType() {}
+JPByteType::~JPByteType() {}
+JPShortType::~JPShortType() {}
+JPIntType::~JPIntType() {}
+JPLongType::~JPLongType() {}
+JPFloatType::~JPFloatType() {}
+JPDoubleType::~JPDoubleType() {}
+JPCharType::~JPCharType() {}
+JPBooleanType::~JPBooleanType() {}
+
+JPTypeName::ETypes JPPrimitiveType::getType() const
+{
+	return m_Type.getType();
+}
+
+const JPTypeName& JPPrimitiveType::getName() const
+{
+	return m_Type;
+}
+
+const JPTypeName& JPPrimitiveType::getObjectType() const
+{
+	return m_BoxedClass->getName();
+}
 
 jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 {
 	JPLocalFrame frame;
 	JPTypeName tname = getObjectType();
-	JPClass* c = JPTypeManager::findClass(tname);
+	JPClass* c = m_BoxedClass;
+
+	jclass jc = c->getClass();
 
 	vector<HostRef*> args(1);
 	args[0] = obj;
