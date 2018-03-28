@@ -46,24 +46,12 @@ environment:
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Miniconda"
-      CONDA_PY: "2.7"
-
-    - PYTHON: "C:\\Miniconda-x64"
-      CONDA_PY: "2.7"
-      ARCH: "64"
-
     - PYTHON: "C:\\Miniconda3"
       CONDA_PY: "3.5"
 
     - PYTHON: "C:\\Miniconda3-x64"
       CONDA_PY: "3.6"
       ARCH: "64"
-
-    - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
-      NUMPY_: "python"
 
 install:
   # Force java to be installed where JAVA_HOME points
@@ -72,24 +60,30 @@ install:
   # - We will need to figure out how to run nose multiple times on the same run so that
   #   we can get the result from each of the java version runs.
   #
-  - cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
+  - cmd: | 
+     IF DEFINED CYGWIN (
+        cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
 
   # - cinst jdk7 -params 'installdir=C:\\jdk7'
   # - cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
-  - cinst ant %CINST_OPTS%
+        cinst ant %CINST_OPTS%
 
   # Add thinges to path 
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
-
-  # If cygwin installed run install.sh, else run the install.ps1
-  - "IF DEFINED CYGWIN (%CYGSH% appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"
+    SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%
+    %CYGSH% appveyor/install.sh
+  ) ELSE (
+    conda config --set always_yes True
+    conda config --set quiet True
+    conda config --add channels conda-forge
+    conda install conda-build -c defaults
+  )
 
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
   #- "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (powershell ./appveyor/runTestSuite.ps1)"
+  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (conda build devtools/conda-recipe -k)"
 
 on_finish:
   # upload results to AppVeyor
