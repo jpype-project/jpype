@@ -13,4 +13,9 @@ $NOSETESTS -v --with-xunit --all-modules -s test.jpypetest
 status=$?
 echo "result code of nosetests:" $status 
 
+# Even if the nose gave a 0, we better have a result to upload.
+if [ ! -e nosetests.xml]; then
+	exit -1
+fi
+
 exit $status
