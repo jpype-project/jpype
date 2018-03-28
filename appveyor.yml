@@ -6,47 +6,47 @@ environment:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
     ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.1"
     NUMPY_: "numpy x.x"
+    JAVA_HOME: "C:\\jdk8"
+    CINST_OPTS:
 
   matrix:
+    ## Cygwin images seem to be very hit or miss.
+    ## Patterns we see:
+    ##  * Fail in threading in python2.
+    ##  * segfault in nose on first call to ByteArrayAsString
+    
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin"
-      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
-      ARCH: x86 
+      ARCH: x86
       CYGSH: C:\Cygwin\bin\bash -c
+      CINST_OPTS: --x86
 
     - PYTHON: "python2"
       CYGWIN: "C:\\cygwin64"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
       ARCH: x86_64 
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin64"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
-      ARCH: x86_64 
+      ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Miniconda"
       CONDA_PY: "2.7"
-      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda-x64"
       CONDA_PY: "2.7"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
       ARCH: "64"
 
     - PYTHON: "C:\\Miniconda3"
       CONDA_PY: "3.5"
-      JAVA_HOME: "C:\\Program Files (x86)\\Java\\jdk1.8.0"
 
     - PYTHON: "C:\\Miniconda3-x64"
       CONDA_PY: "3.6"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
       ARCH: "64"
 
     - PYTHON: "C:\\Miniconda3-x64"
       CONDA_PY: "3.6"
-      JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
       ARCH: "64"
       NUMPY_: "python"
 
@@ -63,6 +63,16 @@ environment:
     #  CYGSH: C:\Cygwin\bin\bash -c
 
 install:
+  # Force java to be installed where JAVA_HOME points
+  # We can install and test multiple versions of java here
+  # - We will have to move the JAVA_HOME and the build of the harness to the test section.
+  # - We will need to figure out how to run nose multiple times on the same run so that
+  #   we can get the result from each of the java version runs.
+  #
+  - cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
+
+  # - cinst jdk7 -params 'installdir=C:\\jdk7'
+  # - cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
   - cinst ant
 
   # Add thinges to path 

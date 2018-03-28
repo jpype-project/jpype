@@ -51,12 +51,13 @@ fallback_jni = os.path.join('native', 'jni_include')
 # try to include JNI first from eventually given JAVA_HOME, then from distributed
 java_home = os.getenv('JAVA_HOME', '')
 found_jni = False
-if os.path.exists(java_home):
+if os.path.exists(java_home) and sys.platform !="cygwin":
     platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
 
     # check if jni.h can be found
     for d in platform_specific['include_dirs']:
         if os.path.exists(os.path.join(d, 'jni.h')):
+            print("Found native jni.h at %s"%d)
             found_jni = True
             break
 
@@ -64,9 +65,8 @@ if os.path.exists(java_home):
         import warnings
         warnings.warn('Falling back to provided JNI headers, since your provided'
                       ' JAVA_HOME "%s" does not provide jni.h' % java_home)
-        platform_specific['include_dirs'] += [fallback_jni]
 
-else:
+if not found_jni:
     platform_specific['include_dirs'] += [fallback_jni]
 
 if sys.platform == 'win32':
