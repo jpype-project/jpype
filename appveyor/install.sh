@@ -42,6 +42,9 @@ echo "==== Check versions"
 "$ANT_HOME"/bin/ant -version
 $PYTHON --version
 $JAVA_HOME/bin/java.exe -version
+
+echo "==== Check architectures"
+file $PYTHON
 file $JAVA_HOME/bin/java.exe
 file `find $JAVA_HOME -name "jvm.dll"`
 
