@@ -44,7 +44,7 @@ $PYTHON --version
 $JAVA_HOME/bin/java.exe -version
 
 echo "==== Check architectures"
-file $PYTHON
+file `which $PYTHON`
 file $JAVA_HOME/bin/java.exe
 file `find $JAVA_HOME -name "jvm.dll"`
 
