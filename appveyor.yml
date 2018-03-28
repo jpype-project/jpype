@@ -61,7 +61,6 @@ install:
   #   we can get the result from each of the java version runs.
   #
   - cmd: |
-      @echo off
       IF DEFINED CYGWIN (
          cinst jdk8 -params "installdir=C:\\jdk8" %CINST_OPTS%
          REM cinst jdk7 -params "installdir=C:\\jdk7"
