@@ -1,6 +1,6 @@
 # Setup cygwin path
 
-#export PATH="$ANT_BIN/bin:/bin:/usr/bin"
+export PATH="/bin:/usr/bin:$PATH"
 
 echo JAVA_HOME=$JAVA_HOME
 echo ARCH=$ARCH
