@@ -1,7 +1,8 @@
 numpy_cfg:
-  - '--disable-numpy'
+  - 'disable'
+  # TODO: selectors do not work for variants?
   - 1.8  # [not (win and (py35 or py36))]
-    #  - 1.11  # [win and py36]
+  #  - 1.11  # [win and py36]
 
 python:
   - 2.7

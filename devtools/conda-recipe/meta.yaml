@@ -7,21 +7,22 @@ source:
 
 build:
   number: 0
-  script: python setup.py install --single-version-externally-managed --record record.txt
-  env:
-    - CCACHE_BASEDIR
+  string: np_{{ numpy }}_jdk_{{ java[2] }}
+  script:
+    # on linux/osx we use build.sh
+    - python setup.py install --single-version-externally-managed --record record.txt  # [win] 
 
 requirements:
   build:
     - python
     - setuptools
-    {% if numpy_cfg is not string %} 
+    {% if numpy_cfg != 'disable' %} 
     - numpy {{ numpy }}
     {% endif %}
 
   run:
     - python
-    {% if numpy_cfg is not string %} 
+    {% if numpy_cfg != 'disable' %} 
     - numpy
     {% endif %}
 test:

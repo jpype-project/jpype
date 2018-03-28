@@ -1,32 +1,19 @@
 os:
   - linux
 
-language: python
+language: c
 
-python:
-  - '3.6'
-    #- 'pypy'
-    #- 'pypy3'
-    #- 'nightly'
-
-matrix:
-  allow_failures:
-    - python: 'pypy'
-      env: NUMPY="--install-option=--disable-numpy"
-    - python: 'pypy3'
-      env: NUMPY="--install-option=--disable-numpy"
-    - python: 'pypy'
-      env: NUMPY=""
-    - python: 'pypy3'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY="--install-option=--disable-numpy"
+addons:
+  apt:
+    packages:
+      - ccache
 
 install:
   - source devtools/install_miniconda.sh 
 
 script:
-  - conda build devtools/conda-recipe
+  # build all variants from devtools/conda-recipe/conda_build_config.yaml 
+  # and keep going after a variant failure.
+  - export CCACHE_BASEDIR=/home
+  - conda build devtools/conda-recipe --keep-going
 
