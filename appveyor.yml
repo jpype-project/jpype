@@ -60,21 +60,7 @@ install:
   # - We will need to figure out how to run nose multiple times on the same run so that
   #   we can get the result from each of the java version runs.
   #
-  - cmd: |
-      IF DEFINED CYGWIN (
-         cinst jdk8 -params "installdir=C:\\jdk8" %CINST_OPTS%
-         REM cinst jdk7 -params "installdir=C:\\jdk7"
-         REM cinst jdk9 -version 9.0.4.11 -params "installdir=C:\\jdk9"
-         cinst ant %CINST_OPTS%
-         REM Add thinges to path
-         SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%
-         %CYGSH% appveyor/install.sh
-      ) ELSE (
-         conda config --set always_yes True
-         conda config --set quiet True
-         conda config --add channels conda-forge
-         conda install conda-build -c defaults
-      )
+  - IF DEFINED CYGWIN ( appveyor/install_cygwin.cmd ) ELSE ( appveyor/install_conda.cmd )
 
 build: false # Not a C# project, build stuff at the test step instead.
 
