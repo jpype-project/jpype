@@ -16,6 +16,7 @@ requirements:
   build:
     - python
     - setuptools
+    - ccache-toolchain  # [osx or linux] 
     {% if numpy_cfg != 'disable' %} 
     - numpy {{ numpy }}
     {% endif %}
@@ -25,6 +26,7 @@ requirements:
     {% if numpy_cfg != 'disable' %} 
     - numpy
     {% endif %}
+
 test:
   source_files:
     - test/
@@ -34,7 +36,7 @@ test:
     - pytest-faulthandler
     - pytest-xdist
     - mock
-    - unittest2  # [ py2k ]
+    - unittest2  # [py2k]
   imports:
     - jpype
   commands:

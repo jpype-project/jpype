@@ -14,6 +14,5 @@ install:
 script:
   # build all variants from devtools/conda-recipe/conda_build_config.yaml 
   # and keep going after a variant failure.
-  - export CCACHE_BASEDIR=/home
   - conda build devtools/conda-recipe --keep-going
 
