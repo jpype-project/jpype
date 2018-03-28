@@ -47,11 +47,11 @@ environment:
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Miniconda3"
-      PATH: %PYTHON%\\Scripts;%PATH%
+      PATH: "%PYTHON%\\Scripts;%PATH%"
 
     - PYTHON: "C:\\Miniconda3-x64"
       ARCH: "64"
-      PATH: %PYTHON%\\Scripts;%PATH%
+      PATH: "%PYTHON%\\Scripts;%PATH%"
 
 install:
   # Force java to be installed where JAVA_HOME points
