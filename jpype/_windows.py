@@ -71,7 +71,8 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
             self._methods = (self._get_from_java_home, )
 
     def check(self, jvm):
-        _checkJVMArch(jvm)
+        pass
+      #  _checkJVMArch(jvm)
 
     def _get_winreg(self):
         # Py2

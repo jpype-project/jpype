@@ -41,9 +41,9 @@ $EASYINSTALL mock
 echo "==== Check versions"
 "$ANT_HOME"/bin/ant -version
 $PYTHON --version
-java.exe -version
-which java.exe
-which javac.exe
+$JAVA_HOME/bin/java.exe -version
+file $JAVA_HOME/bin/java.exe
+file `find $JAVA_HOME -name "jvm.dll"`
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
