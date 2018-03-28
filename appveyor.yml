@@ -13,43 +13,42 @@ environment:
     ## Cygwin images seem to be very hit or miss.
     ## Patterns we see:
     ##  * Fail in threading in python2.
-    ##  * segfault in nose on first call to ByteArrayAsString
     
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin"
       ARCH: x86
       CYGSH: C:\Cygwin\bin\bash -c
       CINST_OPTS: --x86
-
-    - PYTHON: "python2"
-      CYGWIN: "C:\\cygwin64"
-      ARCH: x86_64 
-      CYGSH: C:\Cygwin64\bin\bash -c
-
-    - PYTHON: "python3"
-      CYGWIN: "C:\\cygwin64"
-      ARCH: x86_64
-      CYGSH: C:\Cygwin64\bin\bash -c
-
-    - PYTHON: "C:\\Miniconda"
-      CONDA_PY: "2.7"
-
-    - PYTHON: "C:\\Miniconda-x64"
-      CONDA_PY: "2.7"
-      ARCH: "64"
-
-    - PYTHON: "C:\\Miniconda3"
-      CONDA_PY: "3.5"
-
-    - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
-
-    - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
-      NUMPY_: "python"
-
+#
+#    - PYTHON: "python2"
+#      CYGWIN: "C:\\cygwin64"
+#      ARCH: x86_64 
+#      CYGSH: C:\Cygwin64\bin\bash -c
+#
+#    - PYTHON: "python3"
+#      CYGWIN: "C:\\cygwin64"
+#      ARCH: x86_64
+#      CYGSH: C:\Cygwin64\bin\bash -c
+#
+#    - PYTHON: "C:\\Miniconda"
+#      CONDA_PY: "2.7"
+#
+#    - PYTHON: "C:\\Miniconda-x64"
+#      CONDA_PY: "2.7"
+#      ARCH: "64"
+#
+#    - PYTHON: "C:\\Miniconda3"
+#      CONDA_PY: "3.5"
+#
+#    - PYTHON: "C:\\Miniconda3-x64"
+#      CONDA_PY: "3.6"
+#      ARCH: "64"
+#
+#    - PYTHON: "C:\\Miniconda3-x64"
+#      CONDA_PY: "3.6"
+#      ARCH: "64"
+#      NUMPY_: "python"
+#
     ## This one is failing from gcc died with sig 11.  
     ## This error is apparently common when building python 2 modules with cygwin32.
     ## The failure depends on the windows version and will cause a failure 
@@ -73,7 +72,7 @@ install:
 
   # - cinst jdk7 -params 'installdir=C:\\jdk7'
   # - cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
-  - cinst ant
+  - cinst ant %CINST_OPTS%
 
   # Add thinges to path 
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
