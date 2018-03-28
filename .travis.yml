@@ -4,25 +4,10 @@ os:
 language: python
 
 python:
-  - '2.6'
-  - '2.7'
-  - '3.3'
-  - '3.4'
-  - '3.5'
   - '3.6'
-  - 'pypy'
-  - 'pypy3'
-  - "nightly"
-
-addons:
-  apt:
-    packages:
-    - ant
-
-env:
-  # one build with and without numpy support (opt numpy out)
-  - NUMPY="--install-option=--disable-numpy"
-  - NUMPY=""
+    #- 'pypy'
+    #- 'pypy3'
+    #- 'nightly'
 
 matrix:
   allow_failures:
@@ -38,12 +23,10 @@ matrix:
       env: NUMPY=""
     - python: 'nightly'
       env: NUMPY="--install-option=--disable-numpy"
-  
+
 install:
-  - pip install . $NUMPY
-  - pip install -r test-requirements.txt
-  - ant -f test/build.xml
+  - source devtools/install_miniconda.sh 
 
 script:
-  - python -c "import jpype"
-  - python test/testsuite.py
+  - conda build devtools/conda-recipe
+
