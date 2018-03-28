@@ -18,7 +18,7 @@ environment:
       CYGWIN: "C:\\cygwin"
       ARCH: x86
       CYGSH: C:\Cygwin\bin\bash -c
-#      CINST_OPTS: --x86
+      CINST_OPTS: --x86
 #
 #    - PYTHON: "python2"
 #      CYGWIN: "C:\\cygwin64"
