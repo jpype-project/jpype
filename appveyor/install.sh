@@ -44,9 +44,9 @@ $PYTHON --version
 $JAVA_HOME/bin/java.exe -version
 
 echo "==== Check architectures"
-file `which $PYTHON`
-file $JAVA_HOME/bin/java.exe
-file `find $JAVA_HOME -name "jvm.dll"`
+file -L `which $PYTHON`
+file -L $JAVA_HOME/bin/java.exe
+file -L `find $JAVA_HOME -name "jvm.dll"`
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
