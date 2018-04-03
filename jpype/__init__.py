@@ -31,7 +31,7 @@ from . import JClassUtil
 from ._jclass import _JavaObject as JavaObject
 from ._jclass import _JavaClass as JavaClass
 
-__version_info__ = (0, 6, 2)
+__version_info__ = (0, 6, 3)
 __version__ = ".".join(str(i) for i in __version_info__)
 
 def JIterator(it):
