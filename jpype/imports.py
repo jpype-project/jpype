@@ -142,7 +142,7 @@ class _JImport(object):
     # Module requirements
     __doc__ = None
     __loader__ = None
-    __path__ = "<java>"
+    __path__ = []
     __package__ = "java"
 
     def __init__(self, name):
