@@ -3,7 +3,7 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **0.6.4 - unreleased**
+- **Next version - unreleased**
   - Added extra verbiage to the to the raised exception when an overloaded
     method could not be matched.  It now prints a list of all possible method
     signatures.
