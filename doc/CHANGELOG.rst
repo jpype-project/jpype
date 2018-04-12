@@ -3,33 +3,36 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **Next version - unreleased**
+- **0.6.4 - unreleased**
+  - Added extra verbiage to the to the raised exception when an overloaded
+    method could not be matched.  It now prints a list of all possible method
+    signatures.
 - **0.6.3 - 2018-04-03**
-  - Java reference counting has been converted to use JNI 
+  - Java reference counting has been converted to use JNI
     PushLocalFrame/PopLocalFrame.  Several resource leaks
     were removed.
 
-  - java.lang.Class<>.forName() will now return the java.lang.Class.  
+  - java.lang.Class<>.forName() will now return the java.lang.Class.
     Work arounds for requiring the class loader are no longer needed.
     Customizers now support customization of static members.
 
-  - Support of java.lang.Class<> 
-    - java.lang.Object().getClass() on Java objects returns a java.lang.Class 
+  - Support of java.lang.Class<>
+    - java.lang.Object().getClass() on Java objects returns a java.lang.Class
       rather than the Python class
-    - java.lang.Object().__class__ on Java objects returns the python class 
+    - java.lang.Object().__class__ on Java objects returns the python class
       as do all python objects
     - java.lang.Object.class_ maps to the java statement 'java.lang.Object.class' and
-      returns the java.lang.Class<java.lang.Object> 
+      returns the java.lang.Class<java.lang.Object>
     - java.lang.Class supports reflection methods
     - private fields and methods can be accessed via reflection
     - annotations are avaiable via reflection
 
-  - Java objects and arrays will not accept setattr unless the 
-    attribute corresponds to a java method or field whith 
-    the exception of private attributes that begin with 
+  - Java objects and arrays will not accept setattr unless the
+    attribute corresponds to a java method or field whith
+    the exception of private attributes that begin with
     underscore.
 
-  - Added support for automatic conversion of boxed types.  
+  - Added support for automatic conversion of boxed types.
      - Boxed types automatically convert to python primitives.
      - Boxed types automatically convert to java primitives when resolving functions.
      - Functions taking boxed or primitives still resolve based on closest match.
@@ -37,7 +40,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Python integer primitives will implicitly match java float and double as per
     Java specification.
 
-  - Added support for try with resources for java.lang.Closeable.  
+  - Added support for try with resources for java.lang.Closeable.
     Use python "with MyJavaResource() as resource:" statement
     to automatically close a resource at the end of a block.
 
@@ -45,8 +48,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Fix JVM location for OSX.
   - Fix a method overload bug.
-  - Add support for synthetic methods 
- 
+  - Add support for synthetic methods
+
 - **0.6.1 - 2015-08-05**
 
   - Fix proxy with arguments issue.
@@ -134,7 +137,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Fix memory leak in array setters
   - Fix memory leak in typemanager
   - Add userguide from sourceforge project by @baztian
-  
+
 - **0.5.4.5 - 2013-08-25**
 
   - Added support for OSX 10.9 Mavericks by @rmangino (#16)
