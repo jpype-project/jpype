@@ -12,8 +12,8 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
-*****************************************************************************/   
+
+*****************************************************************************/
 #include <jpype.h>
 
 #include <stack>
@@ -49,18 +49,18 @@ bool JPMethod::hasStatic()
 	}
 	return false;
 }
-	
-void JPMethod::addOverload(JPClass* claz, jobject mth) 
+
+void JPMethod::addOverload(JPClass* claz, jobject mth)
 {
 	JPMethodOverload over(claz, mth);
 
-	m_Overloads[over.getSignature()] = over;	
+	m_Overloads[over.getSignature()] = over;
 }
 
 void JPMethod::addOverloads(JPMethod* o)
 {
 	TRACE_IN("JPMethod::addOverloads");
-	
+
 	for (map<string, JPMethodOverload>::iterator it = o->m_Overloads.begin(); it != o->m_Overloads.end(); it++)
 	{
 		bool found = false;
@@ -76,7 +76,7 @@ void JPMethod::addOverloads(JPMethod* o)
 		if (! found)
 		{
 			// Add it only if we do not already overload it ...
-			m_Overloads[it->first] = it->second;	
+			m_Overloads[it->first] = it->second;
 		}
 	}
 	TRACE_OUT;
@@ -89,29 +89,29 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 	TRACE2("Got overloads to check", m_Overloads.size());
 	ensureOverloadOrderCache();
 	JPMethodOverload* maximallySpecificOverload = 0;
-	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it)	
+	for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin(); it != m_OverloadOrderCache.end(); ++it)
 	{
-		if ((! needStatic) || it->m_Overload->isStatic()) 
+		if ((! needStatic) || it->m_Overload->isStatic())
 		{
 			TRACE2("Trying to match", it->m_Overload->getSignature());
 			EMatchType match = it->m_Overload->matches(false, arg);
 			TRACE2("  match ended", match);
-			if(match == _exact) 
+			if(match == _exact)
 			{
 				return it->m_Overload;
 			}
-			if (match >= _implicit) 
+			if (match >= _implicit)
 			{
-				if(!maximallySpecificOverload) 
+				if(!maximallySpecificOverload)
 				{
 					maximallySpecificOverload = it->m_Overload;
-				} 
-				else 
+				}
+				else
 				{
 					bool isAmbiguous = std::find(it->m_MoreSpecificOverloads.begin(),
 							it->m_MoreSpecificOverloads.end(),
 							maximallySpecificOverload) == it->m_MoreSpecificOverloads.end();
-					if(isAmbiguous) 
+					if(isAmbiguous)
 					{
 						TRACE3("ambiguous overload", maximallySpecificOverload->getSignature(), it->m_Overload->getSignature());
 						RAISE(JPypeException, "Ambiguous overloads found: " + maximallySpecificOverload->getSignature() + " vs " + it->m_Overload->getSignature());
@@ -123,7 +123,14 @@ JPMethodOverload* JPMethod::findOverload(vector<HostRef*>& arg, bool needStatic)
 	if (!maximallySpecificOverload)
 	{
 		std::stringstream ss;
-		ss << "No matching overloads found for " << getName() << " in find.";
+		ss << "No matching overloads found for " << getName() << ", options are:" << std::endl;
+		for (std::vector<OverloadData>::iterator it = m_OverloadOrderCache.begin();
+				it != m_OverloadOrderCache.end();
+				++it)
+		{
+				ss << it->m_Overload->getSignature();
+				ss << std::endl;
+		}
 		RAISE(JPypeException, ss.str());
 	}
 	return maximallySpecificOverload;
@@ -180,12 +187,12 @@ HostRef* JPMethod::invoke(vector<HostRef*>& args)
 	HostRef* res;
 
 	if (currentMatch->isStatic())
-	{	
-		res = currentMatch->invokeStatic(args);	
+	{
+		res = currentMatch->invokeStatic(args);
 	}
 	else
 	{
-		res = currentMatch->invokeInstance(args);	
+		res = currentMatch->invokeInstance(args);
 	}
 
 	return res;
@@ -194,16 +201,16 @@ HostRef* JPMethod::invoke(vector<HostRef*>& args)
 HostRef* JPMethod::invokeInstance(vector<HostRef*>& args)
 {
 	JPMethodOverload* currentMatch = findOverload(args, false);
-	
+
 	if (currentMatch->isStatic())
-	{	
+	{
 		std::stringstream ss;
 		ss << "No matching member overloads found for " << getName() << ".";
 		RAISE(JPypeException, ss.str());
 	}
 	else
 	{
-		return currentMatch->invokeInstance(args);	
+		return currentMatch->invokeInstance(args);
 	}
 }
 
@@ -216,7 +223,7 @@ HostRef* JPMethod::invokeStatic(vector<HostRef*>& args)
 JPObject* JPMethod::invokeConstructor(vector<HostRef*>& arg)
 {
 	JPMethodOverload* currentMatch = findOverload(arg, false);
-	return currentMatch->invokeConstructor(m_Class, arg);	
+	return currentMatch->invokeConstructor(m_Class, arg);
 }
 
 string JPMethod::describe(string prefix)

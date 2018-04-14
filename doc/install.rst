@@ -25,7 +25,7 @@ first:
 
 ::
 
-    sudo apt-get install g++ python-dev
+    sudo apt-get install g++ python-dev python3-dev
 
 Windows
 ~~~~~~~
