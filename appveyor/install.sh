@@ -35,7 +35,7 @@ $SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools,$PYT
 echo "==== get modules"
 $EASYINSTALL pip
 $EASYINSTALL mock
-#$PIP install mock
+$PIP install mock unittest2 nose 
 
 # Check versions
 echo "==== Check versions"
