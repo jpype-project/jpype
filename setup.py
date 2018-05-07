@@ -150,6 +150,9 @@ class my_build_ext(build_ext):
             cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
 
         build_ext.initialize_options(self)
+        if 'CI' in os.environ:
+            self.copt['unix'].extend(['-O0', '-fprofile-arcs', '-ftest-coverage'])
+            self.lopt['unix'].append('-fprofile-arcs')
 
     def _set_cflags(self):
         # set compiler flags

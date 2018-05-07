@@ -42,7 +42,7 @@ test:
   commands:
     - cd test; ant
     - cd jpypetest; pytest *.py -v --boxed
-
+    - cd {{ SRC_DIR }}; bash <(curl -s https://codecov.io/bash) -p {{ SRC_DIR }} -R {{ SRC_DIR }}  # [linux]
 about:
   home: https://github.com/originell/jpype/
   license: Apache
