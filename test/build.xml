@@ -1,21 +1,42 @@
 <project default="test" name="JPype - Native">
 
+	<!-- to use a specific version use "ant -DJAVA_VERSION=1.7 compile" -->
+	<property name="JAVA_VERSION" value="${ant.java.version}"/>
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
 
 	<target name="test" depends="compile">
 	</target>
 
-	<target name="compile">
+	<target name="compile-1.7">
 		<mkdir dir="${build}"/>
 		<javac destdir="${build}"
-			srcdir="${src}"
-			source="1.7"
-			target="1.7"
-		/>
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			>
+			<src path="${src}/1.7"/>
+		</javac>
 		<rmic base="${build}"
 			classname="jpype.rmi.ServerImpl"
 		/>
+	</target>
+
+	<target name="compile-1.8">
+		<mkdir dir="${build}"/>
+		<javac destdir="${build}"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			>
+			<src path="${src}/1.7"/>
+			<src path="${src}/1.8"/>
+		</javac>
+		<rmic base="${build}"
+			classname="jpype.rmi.ServerImpl"
+		/>
+  </target>
+
+	<target name="compile">
+		<antcall target="compile-${JAVA_VERSION}"/>
 	</target>
 
 	<target name="clean">
