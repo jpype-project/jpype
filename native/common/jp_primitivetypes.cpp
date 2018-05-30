@@ -27,6 +27,8 @@ jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
 
 	JPObject* o = c->newInstance(args);
 	jobject res = o->getObject(); 
+	// We need to keep a local reference here
+	res = JPEnv::getJava()->NewLocalRef(res); 
 	delete o;
 	return frame.keep(res);
 }

@@ -387,6 +387,8 @@ jobject JPClass::buildObjectWrapper(HostRef* obj)
 
 	JPObject* pobj = newInstance(args);
 	jobject out = pobj->getObject();
+	// We need to keep a reference to the object here as our global reference is about to die
+	out = JPEnv::getJava()->NewLocalRef(out); 
 	delete pobj;
 
 	return frame.keep(out);
@@ -411,7 +413,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* ref = JPEnv::getHost()->asObject(obj);
-		res.l = frame.keep(ref->getObject());
+		res.l = ref->getObject();
 		return res;
 	}
 
