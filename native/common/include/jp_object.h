@@ -32,7 +32,7 @@ public :
 
 	jobject      getObject()
 	{
-		return JPEnv::getJava()->NewLocalRef(m_Object);
+		return m_Object; 
 	}
 
 	JCharString toString();

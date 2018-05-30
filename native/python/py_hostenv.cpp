@@ -542,7 +542,7 @@ jvalue PythonHostEnvironment::getWrapperValue(PyObject* obj)
 	if (name.isObjectType())
 	{
 		jvalue res;
-		res.l = JPEnv::getJava()->NewLocalRef(v->l); // FIXME This is bad, nothing cleans it up
+		res.l = v->l; 
 		return res;
 	}
 	return *v;
