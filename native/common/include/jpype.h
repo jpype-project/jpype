@@ -25,39 +25,6 @@
 // Define this to make the trace calls for referencing.
 //#define MTRACING
 
-#ifdef TRACING
-  #define JPYPE_TRACING_INTERNAL
-#endif
-#define JPYPE_TRACING_OUTPUT cerr
-
-#ifdef TRACING
-  #define TRACE_IN(n) JPypeTracer _trace(n); try {
-  #define TRACE_OUT } catch(...) { _trace.gotError(); throw; }
-  #define TRACE1(m) _trace.trace(m)
-  #define TRACE2(m,n) _trace.trace(m,n)
-  #define TRACE3(m,n,o) _trace.trace(m,n,o)
-#else
-  #define TRACE_IN(n)
-  #define TRACE_OUT
-  #define TRACE1(m)
-  #define TRACE2(m,n)
-  #define TRACE3(m,n,o)
-#endif
-
-#ifdef MTRACING
-  #define MTRACE_IN(n) JPypeTracer _trace(n); try {
-  #define MTRACE_OUT } catch(...) { _trace.gotError(); throw; }
-  #define MTRACE1(m) _trace.trace(m)
-  #define MTRACE2(m,n) _trace.trace(m,n)
-  #define MTRACE3(m,n,o) _trace.trace(m,n,o)
-#else
-  #define MTRACE_IN(n)
-  #define MTRACE_OUT
-  #define MTRACE1(m)
-  #define MTRACE2(m,n)
-  #define MTRACE3(m,n,o)
-#endif
-
 #ifdef WIN32
 	#define JPYPE_WIN32
 
@@ -74,9 +41,6 @@
 #ifdef WIN32
 	#if defined(__CYGWIN__)
 		// jni_md.h does not work for cygwin.  Use this instead.
-		//#define _JAVASOFT_JNI_MD_H_
-		//#define JNIEXPORT __declspec(dllexport)
-		//#define JNIIMPORT __declspec(dllimport)
 	#elif defined(__GNUC__)
 		// JNICALL causes problem for function prototypes .. since I am not defining any JNI methods there is no need for it
 		#undef JNICALL
@@ -94,7 +58,8 @@
     #define PyInt_Check PyLong_Check
     #define PyInt_FromSsize_t PyLong_FromSsize_t
 #else
-    #define PyUnicode_FromFormat PyString_FromFormat
+	#undef PyUnicode_FromFormat
+  #define PyUnicode_FromFormat PyString_FromFormat
 #endif
 
 // Define this and use to allow destructors to throw in C++11 or later
@@ -127,18 +92,30 @@ typedef vector<string> StringVector;
 
 
 // Base utility headers
+#include "jp_tracer.h"
 #include "jp_typename.h"
-#include "jp_utility.h"
-#include "jp_javaenv.h"
+#include "jp_exception.h"
+#include "jp_jcharstring.h"
 #include "jp_hostenv.h"
 #include "jp_env.h"
+#include "jp_javaframe.h"
 #include "jp_jniutil.h"
+#include "jp_reference_queue.h"
 
 
 // Other header files
 #include "jp_type.h"
-#include "jp_primitivetypes.h"
 #include "jp_objecttypes.h"
+#include "jp_primitivetype.h"
+#include "jp_voidtype.h"
+#include "jp_booleantype.h"
+#include "jp_bytetype.h"
+#include "jp_chartype.h"
+#include "jp_shorttype.h"
+#include "jp_inttype.h"
+#include "jp_longtype.h"
+#include "jp_floattype.h"
+#include "jp_doubletype.h"
 
 #include "jp_field.h"
 #include "jp_methodoverload.h"
@@ -152,9 +129,8 @@ typedef vector<string> StringVector;
 #include "jp_object.h"
 #include "jp_array.h"
 
-#include "jp_invocationhandler.h"
 #include "jp_reference.h"
-#include "jp_referencequeue.h"
+#include "jp_reference_queue.h"
 #include "jp_proxy.h"
 
 #include "jp_monitor.h"

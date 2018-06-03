@@ -28,5 +28,3 @@ def startPython():
 
         threading.Thread(target=_run).start()
 
-def stop():
-    _jpype.stopReferenceQueue()

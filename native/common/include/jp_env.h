@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,27 +17,16 @@
 #ifndef _JPENV_H_
 #define _JPENV_H_
 
-/** Java method of managing local references.
- *
- * This should be used around all entry points from python that 
- * call java code.  Failure may lead to local references not being
- * released.  Methods will large numbers of local references 
- * should allocate a local frame.  At most one local reference 
- * from a local frame can be kept.  Addition must use global referencing.
+/**
+ *  the platform adapter's implementation is chosen by the JPYPE_??? macros
  */
-static const int LOCAL_FRAME_DEFAULT=8;
-class JPLocalFrame
+class JPPlatformAdapter
 {
-	bool popped;
-public:
-	/** Create a new local frame with a minimum number of entries */
-	JPLocalFrame(int i=LOCAL_FRAME_DEFAULT);
-
-	/** Exit the local frame and keep a local reference to an object */
-	jobject keep(jobject);
-
-	/** Exit the local frame if get has not been called. */
-	~JPLocalFrame();
+public :
+	virtual ~JPPlatformAdapter() {};
+	virtual void loadLibrary(const char* path) = 0;
+	virtual void unloadLibrary() = 0;
+	virtual void* getSymbol(const char* name)= 0;
 };
 
 /**
@@ -58,34 +47,6 @@ private :
 	vector<HostRef*> m_HostObjects;
 };
 
-template<typename T>
-class JPMallocCleaner
-{
-public :
-	JPMallocCleaner(size_t size)
-	{
-		mData = (T*)malloc(sizeof(T)*size);
-	}
-	
-	~JPMallocCleaner()
-	{
-		free(mData);
-	}
-	
-	T& operator[](size_t ndx)
-	{
-		return mData[ndx];
-	}
-	
-	T* borrow()
-	{
-		return mData;
-	}
-	
-private :
-	T* mData;
-};
-
 namespace JPEnv
 {	
 	/**
@@ -101,19 +62,26 @@ namespace JPEnv
 
 	void attachJVM(const string& vmPath);
 
+	void detachCurrentThread();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();
 	bool isThreadAttached();
+	void assertJVMRunning(const char* function, const char* file, int line);
 
-	JPJavaEnv*       getJava();
 	HostEnvironment* getHost();
+
+	void setConvertStringObjects(bool flag);
+	bool getConvertStringObjects();
+
+	void shutdown();
 
 	/**
 	* Check if the JPype environment has been initialized
 	*/
 	bool isInitialized();
-	
-	void registerRef(HostRef*, HostRef* targetRef);
+
+	void CreateJavaVM(void* arg);
+	void GetCreatedJavaVM();
 }
 
 #endif // _JPENV_H_

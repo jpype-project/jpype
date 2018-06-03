@@ -18,13 +18,20 @@
 
 JPMonitor::JPMonitor(jobject o)
 {
-	JPEnv::getJava()->MonitorEnter(o);
-	m_Object = JPEnv::getJava()->NewGlobalRef(o);
+	JPJavaFrame frame;
+	frame.MonitorEnter(o);
+	m_Object = frame.NewGlobalRef(o);
 
 }
 
 JPMonitor::~JPMonitor()
 {
-	JPEnv::getJava()->MonitorExit(m_Object);
-	JPEnv::getJava()->DeleteGlobalRef(m_Object);
+	try {
+	JPJavaFrame frame;
+	frame.MonitorExit(m_Object);
+	frame.DeleteGlobalRef(m_Object);
+	}
+	catch(...)
+	{
+	}
 }

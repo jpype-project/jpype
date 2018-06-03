@@ -41,13 +41,19 @@ protected :
 	JPType()
 	{
 	}
-	
-public :
-	virtual HostRef*   getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType) = 0 ;
-	virtual void       setStaticValue(jclass c, jfieldID fid, HostRef* val) = 0 ;
 
-	virtual HostRef*   getInstanceValue(jobject c, jfieldID fid, JPTypeName& tgtType) = 0 ;
-	virtual void       setInstanceValue(jobject c, jfieldID fid, HostRef* val) = 0 ;
+public :
+
+	virtual ~JPType()
+	{
+	}
+
+public :
+	virtual HostRef*   getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType) = 0 ;
+	virtual void       setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef* val) = 0 ;
+
+	virtual HostRef*   getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType) = 0 ;
+	virtual void       setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef* val) = 0 ;
 
 	virtual HostRef*   asHostObject(jvalue val) = 0 ;
 	virtual HostRef*   asHostObjectFromObject(jvalue val) = 0;
@@ -62,16 +68,16 @@ public :
 	virtual bool       isObjectType() const = 0;
 	virtual const JPTypeName& getObjectType() const = 0;
 	
-	virtual HostRef*   invokeStatic(jclass, jmethodID, jvalue*) = 0;
-	virtual HostRef*   invoke(jobject, jclass, jmethodID, jvalue*) = 0;
+	virtual HostRef*   invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) = 0;
+	virtual HostRef*   invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) = 0;
 	
-	virtual jarray     newArrayInstance(int size) = 0;
-	virtual vector<HostRef*>   getArrayRange(jarray, int start, int length) = 0;
-	virtual void       setArrayRange(jarray, int start, int length, vector<HostRef*>& vals) = 0;
-	virtual void       setArrayRange(jarray, int start, int length, PyObject* seq) = 0;
-	virtual HostRef*   getArrayItem(jarray, int ndx) = 0;
-	virtual void       setArrayItem(jarray, int ndx, HostRef* val) = 0;
-	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length) = 0;
+	virtual jarray     newArrayInstance(JPJavaFrame& frame, int size) = 0;
+	virtual vector<HostRef*>   getArrayRange(JPJavaFrame& frame, jarray, int start, int length) = 0;
+	virtual void       setArrayRange(JPJavaFrame& frame, jarray, int start, int length, vector<HostRef*>& vals) = 0;
+	virtual void       setArrayRange(JPJavaFrame& frame, jarray, int start, int length, PyObject* seq) = 0;
+	virtual HostRef*   getArrayItem(JPJavaFrame& frame, jarray, int ndx) = 0;
+	virtual void       setArrayItem(JPJavaFrame& frame, jarray, int ndx, HostRef* val) = 0;
+	virtual PyObject*  getArrayRangeToSequence(JPJavaFrame& frame, jarray, int start, int length) = 0;
 
 	virtual HostRef*   convertToDirectBuffer(HostRef* src) = 0;
 
@@ -79,9 +85,6 @@ public :
 	// http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
 	virtual bool isSubTypeOf(const JPType& other) const = 0;
 
-	virtual ~JPType()
-	{
-	}
 };
 
 #endif // _JPTYPE_H_

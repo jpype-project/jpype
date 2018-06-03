@@ -81,7 +81,6 @@ def attachToJVM(jvm):
     _initialize()
 
 def shutdownJVM():
-    _refdaemon.stop()
     _jpype.shutdown()
 
 def isThreadAttachedToJVM():

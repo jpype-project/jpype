@@ -10,12 +10,16 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include <jpype.h>
 #include "structmember.h"
-
 #include "jpype_memory_view.h"
 
 
 #if (PY_VERSION_HEX < 0x02070000)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 static PyObject * PyMemorySimpleView_FromObject(PyObject *base);
 
@@ -108,8 +112,7 @@ _IntTupleFromSsizet(int len, Py_ssize_t *vals)
 	PyObject *intTuple;
 
 	if (vals == NULL) {
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	intTuple = PyTuple_New(len);
 	if (!intTuple) return NULL;
@@ -283,5 +286,9 @@ jpype_memoryview_init(PyObject* module /*PyObject **typeobject*/)
 //	return 0;
 	PyModule_AddObject(module, "memoryview", (PyObject*)&PyMemorySimpleView_Type);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

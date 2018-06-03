@@ -84,7 +84,7 @@ def _copyProperties(out, mc):
 def _getStaticMethods(cls):
     global _modifier
     static = {}
-    for u in cls.__javaclass__.getMethods():
+    for u in cls.class_.getMethods():
         if not _modifier.isStatic(u.getModifiers()):
             continue
         name = _keywordWrap(u.getName())
