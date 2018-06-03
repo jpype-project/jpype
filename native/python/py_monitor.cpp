@@ -71,22 +71,27 @@ void PyJPMonitor::initType(PyObject* module)
 
 PyJPMonitor* PyJPMonitor::alloc(JPMonitor* o)
 {
-	JPLocalFrame frame;
-	PyJPMonitor* res = PyObject_New(PyJPMonitor, &monitorClassType);
-
-	res->state = o;
-	
-	return res;
+	try {
+		ASSERT_JVM_RUNNING("PyJPMonitor::alloc");
+		JPJavaFrame frame;
+		PyJPMonitor* res = PyObject_New(PyJPMonitor, &monitorClassType);
+		res->state = o;
+		return res;
+	}
+	PY_STANDARD_CATCH
+	return NULL;
 }
 
 void PyJPMonitor::__dealloc__(PyObject* o)
 {
-	JPLocalFrame frame;
-	PyJPMonitor* self = (PyJPMonitor*)o;
-
-	delete self->state;
-
-	Py_TYPE(self)->tp_free(o);
+	try {
+		ASSERT_JVM_RUNNING("PyJPMonitor::__dealloc__");
+		JPJavaFrame frame;
+		PyJPMonitor* self = (PyJPMonitor*)o;
+		delete self->state;
+		Py_TYPE(self)->tp_free(o);
+	}
+	PY_STANDARD_CATCH
 }
 
 PyObject* PyJPMonitor::__str__(PyObject* o)

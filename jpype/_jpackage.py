@@ -36,8 +36,6 @@ class JPackage(object):
                import warnings
                warnings.warn("JVM not started yet, can not inspect JPackage contents")
                return n
-            if not _jpype.isThreadAttachedToJVM():
-                _jpype.attachThreadToJVM()
             cc = _jpype.findClass(subname)
             if cc is None:
                 # can only assume it is a sub-package then ...

@@ -102,7 +102,7 @@ public :
 	static void deleteObjectJValueDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
 		jvalue* pv = (jvalue*)CAPSULE_EXTRACT(data);
-		JPEnv::getJava()->DeleteGlobalRef(pv->l);
+		JPJavaFrame::ReleaseGlobalRef(pv->l);
 		delete pv;
 	}
 

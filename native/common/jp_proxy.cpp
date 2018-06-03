@@ -14,8 +14,14 @@
    limitations under the License.
    
 *****************************************************************************/   
-#include <jpype.h>
 #include <Python.h>
+#include <jpype.h>
+#include "thunk/jp_thunk_invocationhandler.h"
+
+namespace { // impl detail, gets initialized by JPProxy::init()
+	jclass handlerClass;
+	jmethodID invocationHandlerConstructorID;
+	jfieldID hostObjectID;
 
 class JPCallback
 {
@@ -31,6 +37,8 @@ public:
 	}
 };
 
+}
+
 
 JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	JNIEnv *env, jclass clazz, jstring name, 
@@ -39,6 +47,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 {
 	TRACE_IN("Java_jpype_JPypeInvocationHandler_hostInvoke");
 
+	JPJavaFrame frame(env);
 	JPCallback callback;
 	JPCleaner cleaner;
 
@@ -53,20 +62,20 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		// If method can't be called, throw an exception
 		if (callable == NULL || callable->isNull() || JPEnv::getHost()->isNone(callable))
 		{
-			JPEnv::getJava()->ThrowNew(JPJni::s_NoSuchMethodErrorClass, cname.c_str());
+			frame.ThrowNew(JPJni::s_NoSuchMethodErrorClass, cname.c_str());
 			return NULL;
 		}
 					
 		// convert the arguments into a python list
-		jsize argLen = JPEnv::getJava()->GetArrayLength(types);
+		jsize argLen = frame.GetArrayLength(types);
 		vector<HostRef*> hostArgs;
 
 		for (int i = 0; i < argLen; i++)
 		{
-			jclass c = (jclass)JPEnv::getJava()->GetObjectArrayElement(types, i);
+			jclass c = (jclass)frame.GetObjectArrayElement(types, i);
 			JPTypeName t = JPJni::getName(c);
 
-			jobject obj = JPEnv::getJava()->GetObjectArrayElement(args, i);
+			jobject obj = frame.GetObjectArrayElement(args, i);
 
 			jvalue v;
 			v.l = obj;
@@ -86,7 +95,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		{
 			if (returnT.getType() != JPTypeName::_void && returnT.getType() < JPTypeName::_object)
 			{
-				JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is None when it cannot be");
+				frame.ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is None when it cannot be");
 				return NULL;
 			}
 		}
@@ -99,12 +108,12 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		JPType* rt = JPTypeManager::getType(returnT);
 		if (rt->canConvertToJava(returnValue) == _none)
 		{
-			JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is not compatible with required type.");
+			frame.ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is not compatible with required type.");
 			return NULL;
 		}
 	
 		jobject returnObj = rt->convertToJavaObject(returnValue);
-		returnObj = JPEnv::getJava()->NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
+		returnObj = frame.NewLocalRef(returnObj); // Add an extra local reference so returnObj survives cleaner
     
 		return returnObj;
 
@@ -119,14 +128,14 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			JPObject* javaExc = JPEnv::getHost()->asObject(javaExcRef);
 			cleaner.add(javaExcRef);
 			jobject obj = javaExc->getObject();
-			JPEnv::getJava()->Throw((jthrowable)obj);
+			frame.Throw((jthrowable)obj);
 		}
 		else
 		{
-            // Prepare a message
-            string message = "Python exception thrown: ";
-            message += ex.getMessage();
-            JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, message.c_str());
+			// Prepare a message
+			string message = "Python exception thrown: ";
+			message += ex.getMessage();
+			frame.ThrowNew(JPJni::s_RuntimeExceptionClass, message.c_str());
 		}
 	} 
 	catch(JavaException&)
@@ -135,7 +144,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	}
 	catch(JPypeException& ex)
 	{
-		JPEnv::getJava()->ThrowNew(JPJni::s_RuntimeExceptionClass, ex.getMsg());
+		frame.ThrowNew(JPJni::s_RuntimeExceptionClass, ex.getMsg());
 	}
 
 	return NULL;
@@ -143,41 +152,18 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	TRACE_OUT;
 }
 
-JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
-	JNIEnv *env, jclass clazz, jlong hostObj)
-{
-	TRACE_IN("Java_jpype_ref_JPypeReferenceQueue_removeHostReference");
 
-	JPCallback callback;
-	if (hostObj >0)
-	{
-		HostRef* hostObjRef = (HostRef*)hostObj;
-		//JPEnv::getHost()->printReferenceInfo(hostObjRef);
-		delete hostObjRef;
-	}
-
-	//return NULL;
-	TRACE_OUT;
-}
-
-namespace { // impl detail, gets initialized by JPProxy::init()
-	jclass handlerClass;
-	jclass referenceClass;
-	jclass referenceQueueClass;
-	jmethodID invocationHandlerConstructorID;
-	jfieldID hostObjectID;
-}
 
 void JPProxy::init()
 {
-	JPLocalFrame frame(32);
+	JPJavaFrame frame(32);
 	TRACE_IN("JPProxy::init");
 
 	// build the proxy class ...
 	jobject cl = JPJni::getSystemClassLoader();
 
-	jclass handler = JPEnv::getJava()->DefineClass("jpype/JPypeInvocationHandler", cl, JPypeInvocationHandler, getJPypeInvocationHandlerLength());
-	handlerClass = (jclass)JPEnv::getJava()->NewGlobalRef(handler);
+	jclass handler = frame.DefineClass("jpype/JPypeInvocationHandler", cl, JPypeInvocationHandler, getJPypeInvocationHandlerLength());
+	handlerClass = (jclass)frame.NewGlobalRef(handler);
 	
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
@@ -185,49 +171,31 @@ void JPProxy::init()
 	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
 
 
-	hostObjectID = JPEnv::getJava()->GetFieldID(handler, "hostObject", "J");
-	invocationHandlerConstructorID = JPEnv::getJava()->GetMethodID(handler, "<init>", "()V");
+	hostObjectID = frame.GetFieldID(handler, "hostObject", "J");
+	invocationHandlerConstructorID = frame.GetMethodID(handler, "<init>", "()V");
 
-	JPEnv::getJava()->RegisterNatives(handlerClass, method, 1);
-
-	// Not quite the right area ... but I;m doing similar here already so let's register the other classes too
-	jclass reference = JPEnv::getJava()->DefineClass("jpype/ref/JPypeReference", cl, JPypeReference, getJPypeReferenceLength());
-	jclass referenceQueue = JPEnv::getJava()->DefineClass("jpype/ref/JPypeReferenceQueue", cl, JPypeReferenceQueue, getJPypeReferenceQueueLength());
-	referenceClass = (jclass)JPEnv::getJava()->NewGlobalRef(reference);
-	referenceQueueClass = (jclass)JPEnv::getJava()->NewGlobalRef(referenceQueue);
-
-	//Required due to bug in jvm
-	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	JPEnv::getJava()->GetMethodID(referenceQueue, "<init>", "()V");
-
-	JNINativeMethod method2[1];
-	method2[0].name = (char*) "removeHostReference";
-	method2[0].signature = (char*) "(J)V";
-	method2[0].fnPtr = (void*)&Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
-
-	JPEnv::getJava()->RegisterNatives(referenceQueueClass, method2, 1);
+	frame.RegisterNatives(handlerClass, method, 1);
 
 	TRACE_OUT;
-
 }
 
 JPProxy::JPProxy(HostRef* inst, vector<jclass>& intf)
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	m_Instance = inst->copy();
 	
-	jobjectArray ar = JPEnv::getJava()->NewObjectArray((int)intf.size(), JPJni::s_ClassClass, NULL);
-	m_Interfaces = (jobjectArray)JPEnv::getJava()->NewGlobalRef(ar);
+	jobjectArray ar = frame.NewObjectArray((int)intf.size(), JPJni::s_ClassClass, NULL);
+	m_Interfaces = (jobjectArray)frame.NewGlobalRef(ar);
 
 	for (unsigned int i = 0; i < intf.size(); i++)
 	{
-		m_InterfaceClasses.push_back((jclass)JPEnv::getJava()->NewGlobalRef(intf[i]));
-		JPEnv::getJava()->SetObjectArrayElement(m_Interfaces, i, m_InterfaceClasses[i]);
+		m_InterfaceClasses.push_back((jclass)frame.NewGlobalRef(intf[i]));
+		frame.SetObjectArrayElement(m_Interfaces, i, m_InterfaceClasses[i]);
 	}
 	
-	m_Handler = JPEnv::getJava()->NewGlobalRef(JPEnv::getJava()->NewObject(handlerClass, invocationHandlerConstructorID));
+	m_Handler = frame.NewGlobalRef(frame.NewObject(handlerClass, invocationHandlerConstructorID));
 
-	JPEnv::getJava()->SetLongField(m_Handler, hostObjectID, (jlong)inst->copy());
+	frame.SetLongField(m_Handler, hostObjectID, (jlong)inst->copy());
 }
 
 JPProxy::~JPProxy()
@@ -236,20 +204,19 @@ JPProxy::~JPProxy()
 	{
 		m_Instance->release();
 	}
-	JPEnv::getJava()->DeleteGlobalRef(m_Handler);
-	JPEnv::getJava()->DeleteGlobalRef(m_Interfaces);
+	JPJavaFrame::ReleaseGlobalRef(m_Handler);
+	JPJavaFrame::ReleaseGlobalRef(m_Interfaces);
 
 	for (unsigned int i = 0; i < m_InterfaceClasses.size(); i++)
 	{
-		JPEnv::getJava()->DeleteGlobalRef(m_InterfaceClasses[i]);
+		JPJavaFrame::ReleaseGlobalRef(m_InterfaceClasses[i]);
 	}
 
 }
 
-
 jobject JPProxy::getProxy()
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	jobject cl = JPJni::getSystemClassLoader();
 
 	jvalue v[3];
@@ -257,6 +224,6 @@ jobject JPProxy::getProxy()
 	v[1].l = m_Interfaces;
 	v[2].l = m_Handler;
 
-	return frame.keep(JPEnv::getJava()->CallStaticObjectMethodA(JPJni::s_ProxyClass, JPJni::s_NewProxyInstanceID, v));
+	return frame.keep(frame.CallStaticObjectMethodA(JPJni::s_ProxyClass, JPJni::s_NewProxyInstanceID, v));
 }
 

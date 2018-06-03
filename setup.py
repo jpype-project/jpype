@@ -146,9 +146,16 @@ class my_build_ext(build_ext):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
-        if 'CFLAGS' in cfg_vars:
-            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
-
+#        if 'CFLAGS' in cfg_vars:
+#            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
+        for k,v in cfg_vars.items():
+            if isinstance(v,str) and v.find("-Wstrict-prototypes"):
+                v=v.replace('-Wstrict-prototypes', '')
+                cfg_vars[k]=v
+                
+            if isinstance(v,str) and v.find("-Wimplicit-function-declaration"):
+                v=v.replace('-Wimplicit-function-declaration', '')
+                cfg_vars[k]=v 
         build_ext.initialize_options(self)
 
     def _set_cflags(self):

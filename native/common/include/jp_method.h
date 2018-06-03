@@ -26,11 +26,7 @@ public :
 	 * Create a new method based on class and a name;
 	 */
 	JPMethod(jclass clazz, const string& name, bool isConstructor);
-	virtual ~JPMethod()
-	{
-		JPEnv::getJava()->DeleteGlobalRef(m_Class);
-	}
-
+	virtual ~JPMethod();
 
 public :
 	const string& getName() const;

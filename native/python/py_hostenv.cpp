@@ -621,10 +621,11 @@ size_t PythonHostEnvironment::getUnicodeSize()
 
 HostRef* PythonHostEnvironment::newStringWrapper(jstring jstr)
 {
+	JPJavaFrame frame;
 	TRACE_IN("PythonHostEnvironment::newStringWrapper");
-	jvalue* v = new jvalue;
-	v->l = JPEnv::getJava()->NewGlobalRef(jstr);
 
+	jvalue* v = new jvalue;
+	v->l = frame.NewGlobalRef(jstr);
 	PyObject* value = JPyCObject::fromVoidAndDesc((void*)v, "object jvalue", deleteObjectJValueDestructor);
 
 	PyObject* args = JPySequence::newTuple(1);

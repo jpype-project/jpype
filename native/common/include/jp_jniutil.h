@@ -37,10 +37,6 @@ namespace JPJni
 
 	void init();
 
-	void startJPypeReferenceQueue(bool);
-	void stopJPypeReferenceQueue();
-	void registerRef(jobject refQueue, jobject obj, jlong hostRef);
-
 	string asciiFromJava(jstring str);
 	JCharString unicodeFromJava(jstring str);
 
@@ -73,38 +69,38 @@ namespace JPJni
 	/**
 	* java.lang.Class.getInterfaces()
 	*/
-	vector<jclass>  getInterfaces(JPLocalFrame& frame, jclass);
+	vector<jclass>  getInterfaces(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredFields()
 	*/
-	vector<jobject> getDeclaredFields(JPLocalFrame& frame, jclass);
+	vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass);
 
 
 	/**
 	* java.lang.Class.getConstructors()
 	*/
-	vector<jobject> getConstructors(JPLocalFrame& frame, jclass);
+	vector<jobject> getConstructors(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getFields()
 	*/
-	vector<jobject> getFields(JPLocalFrame& frame, jclass);
+	vector<jobject> getFields(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getDeclaredMethods(JPLocalFrame& frame, jclass);
+	vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getMethods(JPLocalFrame& frame, jclass);
+	vector<jobject> getMethods(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getDeclaredMethods()
 	*/
-	vector<jobject> getDeclaredConstructors(JPLocalFrame& frame, jclass);
+	vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass);
 
 	/**
 	* java.lang.Class.getModifiers()

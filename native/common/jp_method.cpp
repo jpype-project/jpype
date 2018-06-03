@@ -24,8 +24,15 @@ JPMethod::JPMethod(jclass clazz, const string& name, bool isConstructor) :
 	m_Name(name),
 	m_IsConstructor(isConstructor)
 {
-	m_Class = (jclass)JPEnv::getJava()->NewGlobalRef(clazz);
+	JPJavaFrame frame;
+	m_Class = (jclass)frame.NewGlobalRef(clazz);
 }
+
+JPMethod::~JPMethod()
+{
+	JPJavaFrame::ReleaseGlobalRef(m_Class);
+}
+
 
 const string& JPMethod::getName() const
 {

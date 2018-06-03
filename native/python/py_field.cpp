@@ -95,15 +95,14 @@ void PyJPField::__dealloc__(PyObject* o)
 
 PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::getName");
+  		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
 
 		string name = self->m_Field->getName();
 
-		PyObject* res = JPyString::fromString(name.c_str());
-
-		return res;
+		return JPyString::fromString(name.c_str());
 	}
 	PY_STANDARD_CATCH
 
@@ -112,15 +111,13 @@ PyObject* PyJPField::getName(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::getStaticAttribute(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::getStaticAttribute");
+  		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
 
 		HostRef* res = self->m_Field->getStaticAttribute();
-		PyObject* result = detachRef(res);
-		return result;
-
-
+		return detachRef(res);
 	}
 	PY_STANDARD_CATCH
 
@@ -129,8 +126,9 @@ PyObject* PyJPField::getStaticAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::setStaticAttribute(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::setStaticAttribute");
+		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
 
 		PyObject* value;
@@ -139,9 +137,7 @@ PyObject* PyJPField::setStaticAttribute(PyObject* o, PyObject* arg)
 		HostRef v(value);
 
 		self->m_Field->setStaticAttribute(&v);
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -150,8 +146,9 @@ PyObject* PyJPField::setStaticAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::setInstanceAttribute");
+		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
 
 		PyObject* jo;
@@ -165,9 +162,7 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 		jobject jobj = obj->getObject();
 
 		self->m_Field->setAttribute(jobj, &ref);
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -177,9 +172,10 @@ PyObject* PyJPField::setInstanceAttribute(PyObject* o, PyObject* arg)
 PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 {
 	TRACE_IN("getInstanceAttribute");
-  JPLocalFrame frame(8);
 
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::getInstanceAttribute");
+		JPJavaFrame frame(8);
 		PyJPField* self = (PyJPField*)o;
 
 		PyObject* jo;
@@ -201,15 +197,11 @@ PyObject* PyJPField::getInstanceAttribute(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::isStatic(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::isStatic");
+		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
-
-		if (self->m_Field->isStatic())
-		{
-			return JPyBoolean::getTrue();
-		}
-		return JPyBoolean::getFalse();
+		return PyBool_FromLong(self->m_Field->isStatic());
 	}
 	PY_STANDARD_CATCH
 
@@ -218,15 +210,11 @@ PyObject* PyJPField::isStatic(PyObject* o, PyObject* arg)
 
 PyObject* PyJPField::isFinal(PyObject* o, PyObject* arg)
 {
-  JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPField::isFinal");
+		JPJavaFrame frame;
 		PyJPField* self = (PyJPField*)o;
-
-		if (self->m_Field->isFinal())
-		{
-			return JPyBoolean::getTrue();
-		}
-		return JPyBoolean::getFalse();
+		return PyBool_FromLong(self->m_Field->isFinal());
 	}
 	PY_STANDARD_CATCH
 

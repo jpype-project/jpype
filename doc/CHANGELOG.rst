@@ -7,6 +7,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Added extra verbiage to the to the raised exception when an overloaded
     method could not be matched.  It now prints a list of all possible method
     signatures.
+  - Harded code to unattached threads and accessing java objects after shutdown.
+  - The following is now DEPRECATED
+    - jpype.reflect.* - All class information is available with .class_
+    - Python thread option for JPypeReferenceQueue.  References are always handled with
+      with the Java cleanup routine.  The undocumented setUsePythonThreadForDaemon()
+      will be removed at a future version.
+
 - **0.6.3 - 2018-04-03**
   - Java reference counting has been converted to use JNI
     PushLocalFrame/PopLocalFrame.  Several resource leaks
