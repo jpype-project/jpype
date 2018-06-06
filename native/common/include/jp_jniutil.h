@@ -45,6 +45,7 @@ namespace JPJni
 	JPTypeName getClassName(jobject obj);
 	jclass getClass(jobject obj);
 	jstring toString(jobject obj);
+	string toStringC(jobject obj);
 
 	/**
 	* java.lang.Class.isInterface()

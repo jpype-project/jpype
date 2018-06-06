@@ -23,6 +23,11 @@ public :
 	JPObject(JPClass* clazz, jobject inst);
 	JPObject(JPTypeName& clazz, jobject inst);
 	virtual ~JPObject();
+private:
+	JPObject(const JPObject&);
+	JPObject& operator=(const JPObject&);
+
+public:
 	
 
 	JPClass* getClass()

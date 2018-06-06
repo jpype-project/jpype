@@ -320,9 +320,12 @@ PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwarg
 	
 			vector<HostRef*> vargs;
 			Py_ssize_t len = JPyObject::length(args);
+
+			// Push the self onto the list
 			HostRef* ref = new HostRef((void*)self->m_Instance);
 			cleaner.add(ref);
 			vargs.push_back(ref);
+
 			for (Py_ssize_t i = 0; i < len; i++)
 			{
 				PyObject* obj = JPySequence::getItem(args, i); // returns a new ref
@@ -332,7 +335,7 @@ PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwarg
 				Py_DECREF(obj); // remove ref returned by getItem
 			}
 	
-			HostRef* res = self->m_Method->m_Method->invoke(vargs);
+			HostRef* res = self->m_Method->m_Method->invokeInstance(vargs);
 			TRACE2("Call finished, result = ", res);	
 			
 			result = detachRef(res);

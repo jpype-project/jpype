@@ -652,3 +652,10 @@ void PythonHostEnvironment::printReferenceInfo(HostRef* obj)
 	cout << "    Ref count " << (long)pobj->ob_refcnt << endl;
 }
 
+const char* PythonHostEnvironment::getTypeName(HostRef* ref)
+{
+	PyObject* obj = UNWRAP(ref);
+	return Py_TYPE(obj)->tp_name;
+}
+
+

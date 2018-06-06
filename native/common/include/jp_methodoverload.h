@@ -17,12 +17,15 @@
 #ifndef _JPMETHODOVERLOAD_H_
 #define _JPMETHODOVERLOAD_H_
 
+#include <list>
 class JPObject;
+class JPMethod;
 class JPMethodOverload
 {
 public :
-	JPMethodOverload();
-	JPMethodOverload(const JPMethodOverload& o);
+	friend class JPMethod;
+	typedef std::list<JPMethodOverload*> OverloadList;
+
 	JPMethodOverload(JPClass* claz, jobject mth);
 	
 	virtual ~JPMethodOverload();
@@ -35,9 +38,11 @@ public :
 
 	JPObject*               invokeConstructor(jclass, vector<HostRef*>& arg);
 
-public :	
-	string getSignature();
+private:
+	JPMethodOverload(const JPMethodOverload& o);
+	JPMethodOverload& operator=(const JPMethodOverload&);
 
+public :	
 	bool isStatic() const
 	{
 		return m_IsStatic;
@@ -63,13 +68,26 @@ public :
 		return (unsigned char)m_Arguments.size();
 	}
 
-	string getArgumentString();
+	string toString();
 
-  void packArgs(vector<jvalue>& v, vector<HostRef*>& arg, size_t skip);
 	bool isSameOverload(JPMethodOverload& o);
 	string matchReport(vector<HostRef*>& args);
 	bool isMoreSpecificThan(JPMethodOverload& other) const;
+
+	bool checkMoreSpecificThan(JPMethodOverload* other) const
+	{
+		for (OverloadList::const_iterator it = m_MoreSpecificOverloads.begin();
+		     it != m_MoreSpecificOverloads.end();
+		     ++it)
+		{
+			if (other == *it)
+				return true;
+		}
+		return false;
+	}
+
 private:
+  void packArgs(vector<jvalue>& v, vector<HostRef*>& arg, size_t skip);
 	void ensureTypeCache() const;
 private :
 	JPClass*                 m_Class;
@@ -83,6 +101,8 @@ private :
 	bool                     m_IsConstructor;
 	mutable vector<JPType*>  m_ArgumentsTypeCache;
 	mutable JPType*          m_ReturnTypeCache;
+	OverloadList             m_MoreSpecificOverloads;
+	bool                     m_Ordered;
 };
 
 #endif // _JPMETHODOVERLOAD_H_

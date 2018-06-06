@@ -293,7 +293,6 @@ void JPyErr::rethrow(const char* file, int line)
 	catch(PythonException& ex)
 	{
 		TRACE1("Python exception");
-//		cout << "Python error occured" << endl;
 	}
 	catch(...)
 	{

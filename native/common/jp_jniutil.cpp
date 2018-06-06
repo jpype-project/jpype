@@ -209,7 +209,6 @@ string asciiFromJava(jstring str)
 	}
 
 	frame.ReleaseStringUTFChars(str, cstr);
-
 	return res;
 }
 
@@ -256,6 +255,13 @@ jstring toString(jobject o)
 	JPJavaFrame frame;
 	jstring str = (jstring)frame.CallObjectMethod(o, toStringID);
 	return str;
+}
+
+string toStringC(jobject o)
+{
+	JPJavaFrame frame;
+	jstring jname = (jstring)frame.CallObjectMethod(o, toStringID);
+	return asciiFromJava(jname);
 }
 
 static string convertToSimpleName(jclass c)
