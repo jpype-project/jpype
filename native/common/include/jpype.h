@@ -100,8 +100,6 @@ typedef vector<string> StringVector;
 #include "jp_env.h"
 #include "jp_javaframe.h"
 #include "jp_jniutil.h"
-#include "jp_reference_queue.h"
-
 
 // Other header files
 #include "jp_type.h"
@@ -129,7 +127,6 @@ typedef vector<string> StringVector;
 #include "jp_object.h"
 #include "jp_array.h"
 
-#include "jp_reference.h"
 #include "jp_reference_queue.h"
 #include "jp_proxy.h"
 

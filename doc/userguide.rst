@@ -173,7 +173,7 @@ array element but can process all data at once.
 If you do not want this optional feature, because eg. it depends on NumPy, you
 can opt it out in the installation process by passing *"--disable-numpy"* to 
 *setup.py*. To opt out with pip you need to append the additional argument
-*"--install-option='--disable-numpy'*. This possibility exists since version 
+*"--global-option='--disable-numpy'*. This possibility exists since version 
 0.5.6.
 
 Creating Java arrays from Python

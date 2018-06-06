@@ -13,6 +13,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     - Python thread option for JPypeReferenceQueue.  References are always handled with
       with the Java cleanup routine.  The undocumented setUsePythonThreadForDaemon()
       will be removed at a future version.
+  - promoted --install-option to a --global-option as it applies to the build as well
+    as install.
 
 - **0.6.3 - 2018-04-03**
   - Java reference counting has been converted to use JNI
