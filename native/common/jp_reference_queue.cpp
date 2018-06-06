@@ -16,7 +16,7 @@
 *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
-#include "thunk/jp_thunk_reference_queue.h"
+#include <jp_thunk.h>
 
 namespace { // impl detail
 	jclass    s_ReferenceClass;
@@ -72,8 +72,12 @@ void JPReferenceQueue::init()
 
 	// build the proxy class ...
 	jobject cl = JPJni::getSystemClassLoader();
-	s_ReferenceClass = (jclass)frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReference", cl, JPypeReference, getJPypeReferenceLength()));
-	s_ReferenceQueueClass = (jclass)frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReferenceQueue", cl, JPypeReferenceQueue, getJPypeReferenceQueueLength()));
+	s_ReferenceClass = (jclass)frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReference", cl, 
+				JPThunk::_jpype_ref_JPypeReference, 
+				JPThunk::_jpype_ref_JPypeReference_size));
+	s_ReferenceQueueClass = (jclass)frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReferenceQueue", cl, 
+				JPThunk::_jpype_ref_JPypeReferenceQueue, 
+				JPThunk::_jpype_ref_JPypeReferenceQueue_size));
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522

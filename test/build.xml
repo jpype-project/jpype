@@ -13,9 +13,10 @@
 			source="1.7"
 			target="1.7"
 		/>
-		<rmic base="${build}"
+	<!--		<rmic base="${build}"
 			classname="jpype.rmi.ServerImpl"
 		/>
+  -->
 	</target>
 
 	<target name="clean">

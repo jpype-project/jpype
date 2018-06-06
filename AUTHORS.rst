@@ -22,3 +22,4 @@ Huge thanks to these CONTRIBUTORS:
 * Martin K. Scherer
 * Dongwon Shin
 * rbprogrammer
+* Karl Einar Nelson

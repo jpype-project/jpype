@@ -16,7 +16,7 @@
 *****************************************************************************/   
 #include <Python.h>
 #include <jpype.h>
-#include "thunk/jp_thunk_invocationhandler.h"
+#include <jp_thunk.h>
 
 namespace { // impl detail, gets initialized by JPProxy::init()
 	jclass handlerClass;
@@ -162,7 +162,9 @@ void JPProxy::init()
 	// build the proxy class ...
 	jobject cl = JPJni::getSystemClassLoader();
 
-	jclass handler = frame.DefineClass("jpype/JPypeInvocationHandler", cl, JPypeInvocationHandler, getJPypeInvocationHandlerLength());
+	jclass handler = frame.DefineClass("jpype/JPypeInvocationHandler", cl, 
+			JPThunk::_jpype_JPypeInvocationHandler, 
+			JPThunk::_jpype_JPypeInvocationHandler_size);
 	handlerClass = (jclass)frame.NewGlobalRef(handler);
 	
 	JNINativeMethod method[1];
