@@ -42,7 +42,7 @@ def test_memory_leak_fix():
 
     #   Perform leak test.
     for i in xrange(ITERATIONS):
-        print 'iteration:', i
+        print('iteration:', i)
         py_list1 = [float(f) for f in xrange(ARRAY_SIZE)]
         j_array1 = JavaDoubleArray(py_list1)
         py_list2 = j_array1[:]

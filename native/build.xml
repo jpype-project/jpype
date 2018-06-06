@@ -1,0 +1,25 @@
+<project default="compile" name="JPype - Native">
+
+	<property name="JAVA_VERSION" value="${ant.java.version}"/>
+	<!-- src can't be "java" as it breaks nose tests -->
+	<property name="src" location="java"/>
+	<property name="build" location="classes"/>
+
+	<target name="test" depends="compile">
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${build}"/>
+		<javac destdir="${build}"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			>
+			<src path="${src}"/>
+		</javac>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>

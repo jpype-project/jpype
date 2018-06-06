@@ -21,15 +21,15 @@ addons:
 
 env:
   # one build with and without numpy support (opt numpy out)
-  - NUMPY="--install-option=--disable-numpy"
+  - NUMPY="--global-option=--disable-numpy"
   - NUMPY=""
 
 matrix:
   allow_failures:
     - python: 'pypy'
-      env: NUMPY="--install-option=--disable-numpy"
+      env: NUMPY="--global-option=--disable-numpy"
     - python: 'pypy3'
-      env: NUMPY="--install-option=--disable-numpy"
+      env: NUMPY="--global-option=--disable-numpy"
     - python: 'pypy'
       env: NUMPY=""
     - python: 'pypy3'
@@ -37,7 +37,7 @@ matrix:
     - python: 'nightly'
       env: NUMPY=""
     - python: 'nightly'
-      env: NUMPY="--install-option=--disable-numpy"
+      env: NUMPY="--global-option=--disable-numpy"
   
 install:
   - pip install . $NUMPY
