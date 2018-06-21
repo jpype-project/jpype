@@ -153,7 +153,6 @@ PyMODINIT_FUNC PyInit__jpype()
 PyMODINIT_FUNC init_jpype()
 #endif
 {
-	Py_Initialize();
 	PyEval_InitThreads();
 	  
 #if PY_MAJOR_VERSION >= 3
