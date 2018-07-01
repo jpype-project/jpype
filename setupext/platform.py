@@ -51,6 +51,7 @@ if sys.platform == 'win32':
 elif sys.platform == 'cygwin' :
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['-std=c++11']
     platform_specific['extra_link_args'] = ['-g3']
     jni_md_platform = 'win32'
 
@@ -61,6 +62,7 @@ elif sys.platform == 'darwin':
 
 elif sys.platform.startswith('linux'):
     platform_specific['libraries'] = ['dl']
+    platform_specific['extra_compile_args'] = ['-g3','-std=c++11']
     jni_md_platform = 'linux'
 
 elif sys.platform.startswith('freebsd'):

@@ -15,7 +15,7 @@
 #
 #*****************************************************************************
 import jpype
-from jpype import JString, java, JArray
+from jpype import JString, java, JArray, JClass
 import sys
 import time
 from . import common
@@ -23,7 +23,6 @@ from . import common
 class AttributeTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.__jp = self.jpype.attr
 
     def testWithBufferStrategy(self):
         j = jpype.JPackage("jpype").attr.ClassWithBuffer
@@ -35,92 +34,103 @@ class AttributeTestCase(common.JPypeTestCase):
         h.delete(0, 0)
 
     def testCallStaticString(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         v = h.testString(JString("abcd"), JString("efghi"))
 
         self.assertEqual(v[0], 'abcd')
         self.assertEqual(v[1], 'efghi')
 
     def testCallStaticUnicodeString(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         v = h.testString(JString(u"abcd"), JString(u"efghi"))
 
         self.assertEqual(v[0], 'abcd')
         self.assertEqual(v[1], 'efghi')
 
     def testCallString(self):
-        v = self.__jp.Test1.testStaticString("a", "b")
+        v = JClass('jpype.attr.Test1').testStaticString("a", "b")
         self.assertEqual(v[0], 'a')
         self.assertEqual(v[1], 'b')
 
     def testCallUnicodeString(self):
-        v = self.__jp.Test1.testStaticString(u"a", u"b")
+        v = JClass('jpype.attr.Test1').testStaticString(u"a", u"b")
         self.assertEqual(v[0], 'a')
         self.assertEqual(v[1], 'b')
 
     def testCallStringWithNone(self):
-        v = self.__jp.Test1.testStaticString("a", None)
+        v = JClass('jpype.attr.Test1').testStaticString("a", None)
         self.assertEqual(v[0], 'a')
         self.assertIsNone(v[1])
 
     def testWithHolder(self):
-        holder = self.__jp.Holder()
+        holder = JClass('jpype.attr.Holder')()
         holder.f = "ffff"
         self.assertEqual(holder.f, 'ffff')
-        result = self.__jp.Test1.testStaticHolder(holder)
+        result = JClass('jpype.attr.Test1').testStaticHolder(holder)
         self.assertEqual(result, 'ffff')
 
     def testWithSubHolder(self):
-        h2 = self.__jp.SubHolder()
+        h2 = JClass('jpype.attr.SubHolder')()
         h2.f = "subholder"
-        result = self.__jp.Test1.testStaticHolder(h2)
+        result = JClass('jpype.attr.Test1').testStaticHolder(h2)
         self.assertEqual(result, 'subholder')
 
     def testCallWithArray(self):
-        h2 = self.__jp.Test1()
+        h2 = JClass('jpype.attr.Test1')()
         StringArray = JArray(JString)
         v = StringArray(["Foo", "bar"])
-        t = self.__jp.Test1()
+        t = JClass('jpype.attr.Test1')()
         result = t.testStringArray(v)
         self.assertSequenceEqual(["Foo", "bar"], result)
 
+    def testCallWithArrayMismatch(self):
+        h2 = JClass('jpype.attr.Test1')()
+        StringArray = JArray(JString)
+        v = StringArray(["Foo", "bar"])
+        t = JClass('jpype.attr.Test1')()
+        result = t.testStringArray(v)
+        self.assertFalse([1,2]==result)
+        self.assertFalse(result==[1,2])
+        self.assertTrue([1,2]!=result)
+        self.assertTrue(result!=[1,2])
+
     def testGetStaticValue(self):
-        self.assertEqual(str(self.__jp.Test1.objectValue), "234")
+        self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "234")
 
     def testGetStaticByInstance(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         self.assertEqual(str(h.objectValue), "234")
 
     def testGetNonStatic(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         self.assertEqual(h.stringValue, "Foo")
 
     def testSetStaticValue(self):
-        self.__jp.Test1.objectValue = java.lang.Integer(43)
-        self.assertEqual(str(self.__jp.Test1.objectValue), "43")
-        self.__jp.Test1.reset()
+        JClass('jpype.attr.Test1').objectValue = java.lang.Integer(43)
+        self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "43")
+        JClass('jpype.attr.Test1').reset()
 
     def testSetNonStaticValue(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         h.stringValue="bar"
         self.assertEqual(h.stringValue, "bar")
 
     def testReturnSubClass(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         v = h.getSubClass()
-        self.assertIsInstance(v, self.__jp.SubHolder)
+        self.assertIsInstance(v, JClass('jpype.attr.SubHolder'))
 
     def testCallWithClass(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         h.callWithClass(java.lang.Comparable)
 
     def testCallSuperclassMethod(self):
-        h = self.__jp.Test2()
+        h = JClass('jpype.attr.Test2')()
         h.test2Method()
         h.test1Method()
 
     def testCallWithLong(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         if sys.version > '3':
             l = int(123)
         else:
@@ -136,7 +146,7 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(l, h.mLongValue)
 
     def testCallWithBigLong(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         if sys.version > '3':
             l = int(4398046511103)
         else:
@@ -149,7 +159,7 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(l, h.mLongValue)
 
     def testCallWithBigInt(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         if sys.version > '3' or sys.maxint > 2**31:
             l = int(4398046511103)
         else:
@@ -162,7 +172,7 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(l, h.mLongValue)
 
     def testSetBoolean(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         self.assertEqual(False, h.mBooleanValue)
         h.setBoolean(True)
         self.assertEqual(True, h.mBooleanValue)
@@ -191,7 +201,7 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(1448799485000, d.getTime())
         
     def testCharAttribute(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         h.charValue = u'b'
 
         self.assertEqual(h.charValue, 'b')
@@ -206,26 +216,26 @@ class AttributeTestCase(common.JPypeTestCase):
         intType = Integer.TYPE
 
     def testDifferentiateClassAndObject(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
 
-        self.assertEqual(h.callWithSomething(self.__jp.Test1), u"Class")
-        result = h.callWithSomething(jpype.JObject(self.__jp.Test1,
+        self.assertEqual(h.callWithSomething(JClass('jpype.attr.Test1')), u"Class")
+        result = h.callWithSomething(jpype.JObject(JClass('jpype.attr.Test1'),
                                                    jpype.java.lang.Object))
         self.assertEqual(result, u"Object")
 
     def testToString(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         self.assertEqual(str(h), 'aaa')
 
     def testSuperToString(self):
-        h = self.__jp.Test2()
+        h = JClass('jpype.attr.Test2')()
         self.assertEqual(str(h), 'aaa')
 
 #       def testStringToConversion(self):
 #               try:
 #                       jpype.ConversionConfig.string = False
 #                       for i in range(1):
-#                               h = self.__jp.Test1()
+#                               h = JClass('jpype.attr.Test1')()
 #
 #                               start = time.time();
 #                               for j in range(10):
@@ -248,12 +258,12 @@ class AttributeTestCase(common.JPypeTestCase):
 #                       jpype.ConversionConfig.string = True
 
     def testComplexMethodOvlerloading(self):
-        c = self.__jp.TestOverloadC()
+        c = JClass('jpype.attr.TestOverloadC')()
         self.assertEqual(c.foo(1), "foo(int) in C: 1")
         self.assertEqual(c.foo(), "foo() in A")
 
     def testPassedObjectGetsCleanedUp(self):
-        h = self.__jp.Test1()
+        h = JClass('jpype.attr.Test1')()
         block_size = 1024 * 1024 * 10
         def allocate_then_free():
             byte_buffer = jpype.JClass('java.nio.ByteBuffer')

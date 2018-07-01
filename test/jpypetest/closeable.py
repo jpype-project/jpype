@@ -101,8 +101,8 @@ class CloseableTestCase(common.JPypeTestCase):
                 myFile.throwException()
                 myFile.print_("there")
         except Exception as ex:
-            self.assertIsInstance(ex, jpype.JavaException, 'type is %s'%type(ex))
-            self.assertEqual(ex.args[0].getMessage(), 'oh no!')
+            self.assertIsInstance(ex, jpype.JException, 'type is %s'%type(ex))
+            self.assertEqual(ex.getMessage(), 'oh no!')
         self.assertEqual(CloseableTest.printed, "hello 4")
         self.assertTrue(CloseableTest.closed)
 
@@ -118,8 +118,8 @@ class CloseableTestCase(common.JPypeTestCase):
                 myFile.throwException()
                 myFile.print_("there")
         except Exception as ex:
-            self.assertIsInstance(ex, jpype.JavaException, 'type is %s'%type(ex))
-            self.assertEqual(ex.args[0].getMessage(), 'oh no!') # fail if get "oh my?"
+            self.assertIsInstance(ex, jpype.JException, 'type is %s'%type(ex))
+            self.assertEqual(ex.getMessage(), 'oh no!') # fail if get "oh my?"
         self.assertEqual(CloseableTest.printed, "hello 5")
         self.assertTrue(CloseableTest.closed)
         self.assertTrue(CloseableTest.failed)

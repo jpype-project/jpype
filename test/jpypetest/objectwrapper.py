@@ -20,7 +20,8 @@ except ImportError:
     import unittest
 
 import jpype
-from jpype import java, JObject, JPackage, JString
+from jpype.types import *
+from jpype import java, JPackage
 from . import common
 #import os
 #import sys
@@ -38,11 +39,11 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         self.assertEqual(h.Method1(JString("")), 4)
 
     def testDefaultTypeNameString(self):
-        self.assertEqual(JObject("123").typeName, "java.lang.String")
+        self.assertEqual(type(JObject("123")), jpype.JClass("java.lang.String"))
 
     def testDefaultTypeNameBoolean(self):
-        self.assertEqual(JObject(True).typeName, "java.lang.Boolean")
-        self.assertEqual(JObject(False).typeName, "java.lang.Boolean")
+        self.assertEqual(type(JObject(True)), jpype.JClass("java.lang.Boolean"))
+        self.assertEqual(type(JObject(False)), jpype.JClass("java.lang.Boolean"))
 
     def testPassingClassTypeSucceeds(self):
         h = JPackage("jpype.objectwrapper").Test1()
@@ -55,10 +56,41 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         self.assertEqual(class_obj, result)
         self.assertNotEqual(result, None)
 
-    @unittest.skip("This seems to be a bug in _jwrapper.py _getDefaultTypeName")
-    def testDefaultTypeNameJavaClass(self):
+    def testWrapJavaClass(self):
         o = java.lang.String
-        self.assertEqual(JObject(o).typeName, "java.lang.Class")
+        self.assertEqual(type(JObject(o)), jpype.JClass("java.lang.Class"))
+
+    def testWrapJavaObject(self):
+        o = java.lang.String("foo")
+        self.assertEqual(type(JObject(o)), jpype.JClass("java.lang.String"))
+
+    def testWrapJavaObjectCast(self):
+        o = java.lang.String("foo")
+        c = java.lang.Object
+        self.assertEqual(type(JObject(o,c)), jpype.JClass("java.lang.Object"))
+
+    def testWrapJavaObjectCastFail(self):
+        o = java.lang.Object()
+        c = java.lang.Math
+        with self.assertRaises(TypeError):
+          f= JObject(o,c)
+
+    def testWrapJavaPrimitiveCast(self):
+        c = java.lang.Object
+        self.assertEqual(type(JObject("foo",c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(True,c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(False,c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(1,c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(1.0,c)), jpype.JClass("java.lang.Object"))
+
+    def testWrapJavaPrimitiveBox(self):
+        self.assertEqual(type(JObject("foo",JString)), jpype.JClass("java.lang.String"))
+        self.assertEqual(type(JObject(1,JInt)), jpype.JClass("java.lang.Integer"))
+        self.assertEqual(type(JObject(1,JLong)), jpype.JClass("java.lang.Long"))
+        self.assertEqual(type(JObject(1.0,JFloat)), jpype.JClass("java.lang.Float"))
+        self.assertEqual(type(JObject(1.0,JDouble)), jpype.JClass("java.lang.Double"))
+        self.assertEqual(type(JObject(1,JShort)), jpype.JClass("java.lang.Short"))
+
 
 #     def testMakeSureWeCanLoadAllClasses(self):
 #         def get_system_jars():

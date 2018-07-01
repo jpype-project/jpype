@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,96 +13,157 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
-#ifndef _JPCLASS_H_
-#define _JPCLASS_H_
+ *****************************************************************************/
+#ifndef _JP_CLASS_H_
+#define _JP_CLASS_H_
 
-/**
- * Class to wrap Java Class and provide low-level behavior
- */
-class JPClass : public JPClassBase
+class JPClass
 {
-public :
-	JPClass(const JPTypeName& tname, jclass c);
-	virtual~ JPClass();
+public:
+	typedef map<string, JPMethod*> MethodMap;
+	typedef vector<JPMethod*> MethodList;
+	typedef vector<JPField*> FieldList;
+	typedef vector<JPClass*> ClassList;
 
-public :
-	/** 
-	 * Called to fully load base classes and members 
-	 */
-	void postLoad();
-	
-	HostRef*                getStaticAttribute(const string& attr_name);
-	void                    setStaticAttribute(const string& attr_name, HostRef* val);
-	
-	JPObject*               newInstance(vector<HostRef*>& args);
-	
-	JPField*                getInstanceField(const string& name);
-	JPField*                getStaticField(const string& name);
-	JPMethod*				getMethod(const string& name);
-	vector<JPMethod*>		getMethods() const
+	JPClass(jclass clss);
+	virtual ~JPClass();
+
+public:
+
+	jclass getJavaClass() const
 	{
-		vector<JPMethod*> res;
-		res.reserve(m_Methods.size());
-		for (map<string, JPMethod*>::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
-		{
-			res.push_back(cur->second);
-		}
-		return res;
+		return m_Class.get();
 	}
 
-	jclass getClass()
-	{
-		return m_Class;
-	}
-
-	map<string, JPField*>& getStaticFields()
-	{
-		return m_StaticFields;
-	}
-	
-	map<string, JPField*>& getInstanceFields()
-	{
-		return m_InstanceFields;
-	}
-
-	bool isFinal();
+	string toString() const;
+	string getCanonicalName() const;
 	bool isAbstract();
-	bool isInterface()
-	{
-		return m_IsInterface;
-	}
+	bool isFinal();
+	bool isThrowable();
+	bool isInterface();
+	const MethodList& getMethods();
+	const FieldList&  getFields();
 
+	/**
+	 * Determine if a Python object will convert to this java type. 
+	 * 
+	 * This is used to determine which overload is the best match.
+	 * 
+	 * @param obj is the Python object.
+	 * @return the quality of the match
+	 */
+	virtual EMatchType canConvertToJava(PyObject* obj);
+
+	/**
+	 * Execute a conversion from Python to java.
+	 * 
+	 * This should only be called if canConvertToJava returned
+	 * a valid conversion.
+	 * 
+	 * @param obj is the Python object.
+	 * @return a jvalue holding the converted python object.
+	 */
+	virtual jvalue convertToJava(PyObject* obj);
+
+	/** Create a new Python object to wrap a Java value. 
+	 * 
+	 * @return a new Python object.
+	 */
+	virtual JPPyObject convertToPythonObject(jvalue val);
+
+	/**
+	 * Get the Java value representing as an object.
+	 * 
+	 * This will unbox if the type is a primitive.
+	 *  
+	 * @return a java value with class.
+	 */
+	virtual JPValue getValueFromObject(jobject obj);
+
+	/** 
+	 * Call a static method that returns this type of object. 
+	 */
+	virtual JPPyObject invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*);
+
+	/** 
+	 * Call a method that returns this type of object. 
+	 */
+	virtual JPPyObject invoke(JPJavaFrame& frame, jobject, jclass clazz, jmethodID, jvalue*);
+
+	/**
+	 * Get a static field that returns this type.
+	 * 
+	 * @param frame is the frame to hold the local reference.
+	 * @param cls is the class holding the static field.
+	 * @param fid is the field id.
+	 * @return 
+	 */
+	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid);
+	virtual void        setStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid, PyObject* val);
+
+	virtual JPPyObject  getField(JPJavaFrame& frame, jobject obj, jfieldID fid);
+	virtual void        setField(JPJavaFrame& frame, jobject obj, jfieldID fid, PyObject* val);
+
+	virtual jarray      newArrayInstance(JPJavaFrame& frame, int size);
+	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, int start, int length);
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray, int start, int length, PyObject* vals);
+	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, int ndx);
+	virtual void        setArrayItem(JPJavaFrame& frame, jarray, int ndx, PyObject* val);
+
+	/** Determine if this class is a super or implements another class.
+	 * 
+	 * This is used specifically in the method overload to determine 
+	 * if a method will cover another.  For objects this is the same as
+	 * IsAssignableFrom.  For primitive type, then this will be true
+	 * if this primitive can be converted to other without a cast.
+	 * 
+	 * In the sense of
+	 *  http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
+	 * 
+	 * @param other is the class to to assign to.
+	 * @return true if this class is the same, a super class, or implements
+	 * the other class.
+	 */
+	virtual bool isSubTypeOf(JPClass* other) const;
+
+	/**
+	 * Expose IsAssignableFrom to python. 
+	 * 
+	 * FIXME this may be able to be replaced with isSubTypeOf.
+	 * They are doing the same thing. 
+	 */
+	bool isAssignableFrom(JPClass* o);
+
+	// Object properties
 	JPClass* getSuperClass();
-	const vector<JPClass*>& getInterfaces() const;
+	virtual JPValue newInstance(JPPyObjectVector& args);
+	const ClassList& getInterfaces();
 
-	bool isSubclass(JPClass*);
-	
 	string describe();
 
-public : // JPType implementation
-	virtual HostRef*   asHostObject(jvalue val);
-	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
-	
-private :
-	void loadSuperClass();	
-	void loadSuperInterfaces();	
-	void loadFields();	
-	void loadMethods();	
-	void loadConstructors();	
+	//JPPyObject        getStaticAttribute(const string& attr_name);
+	//void              setStaticAttribute(const string& attr_name, JPPyObject val);
 
-	jobject buildObjectWrapper(HostRef* obj);
+	virtual void postLoad();
+private:
+	void loadFields();
+	void loadMethods();
+	void loadConstructors();
 
-private :
-	bool                    m_IsInterface;
-	JPClass*				m_SuperClass;
-	vector<JPClass*>		m_SuperInterfaces;
-	map<string, JPField*>   m_StaticFields;
-	map<string, JPField*>   m_InstanceFields;
-	map<string, JPMethod*>	m_Methods;
-	JPMethod*				m_Constructors;
-};
+protected:
+	JPClassRef   m_Class;
+	JPClass*     m_SuperClass;
+	ClassList    m_SuperInterfaces;
+	FieldList    m_Fields;
+	MethodList   m_Methods;
+	JPMethod*    m_Constructors;
+	string       m_CanonicalName;
+	bool         m_InterfacesLoaded;
+	bool         m_IsInterface;
+	bool         m_IsThrowable;
+	bool         m_IsAbstract;
+	bool         m_IsFinal;
 
+} ;
 
-#endif // _JPCLASS_H_
+#endif // _JPPOBJECTTYPE_H_

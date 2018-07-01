@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,141 +13,129 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #include <jpype.h>
 
-JPArray::JPArray(const JPTypeName& name, jarray inst)
+// Note: java represents arrays of zero length as null, thus we
+// need to be careful to handle these properly.  We need to 
+// carry them around so that we can match types.
+
+JPArray::JPArray(JPClass* cls, jarray inst) : m_Object(inst)
 {
 	JPJavaFrame frame;
-	TRACE_IN("JPArray::JPArray");
-	TRACE1(name.getSimpleName());
-	m_Class = JPTypeManager::findArrayClass(name);
-	m_Object = (jarray)frame.NewGlobalRef(inst);
-	TRACE2("len=",getLength());
-	TRACE_OUT;
+	JP_TRACE_IN("JPArray::JPArray");
+	m_Class = (JPArrayClass*) cls;
+	ASSERT_NOT_NULL(m_Class);
+	JP_TRACE(m_Class->toString());
+
+	// We will use this during range checks, so cache it
+	if (m_Object.get() == NULL)
+		m_Length = 0;
+	else
+		m_Length = frame.GetArrayLength(m_Object.get());
+
+	JP_TRACE_OUT;
 }
 
 JPArray::~JPArray()
 {
-	JPJavaFrame::ReleaseGlobalRef(m_Object);
 }
 
 int JPArray::getLength()
 {
-	JPJavaFrame frame;
-	return frame.GetArrayLength(m_Object);
+	return m_Length;
 }
 
-vector<HostRef*> JPArray::getRange(int start, int stop)
+JPPyObject JPArray::getRange(size_t start, size_t stop)
 {
 	JPJavaFrame frame;
-	TRACE_IN("JPArray::getRange");
-	JPType* compType = m_Class->getComponentType();
-	TRACE2("Compoennt type", compType->getName().getSimpleName());
-	
-	vector<HostRef*> res = compType->getArrayRange(frame, m_Object, start, stop-start);
-	
-	return res;
-	TRACE_OUT;
-}	
+	JP_TRACE_IN("JPArray::getRange");
+	JPClass* compType = m_Class->getComponentType();
+	JP_TRACE("Component type", compType->getCanonicalName());
+	JP_TRACE("Range", start, stop);
 
-PyObject* JPArray::getSequenceFromRange(int start, int stop)
-{
-	JPJavaFrame frame;
-//	TRACE_IN("JPArray::getSequenceFromRange");
-	JPType* compType = m_Class->getComponentType();
-//	TRACE2("Component type", compType->getName().getSimpleName());
+	// Python truncates the request to fit the array range
+	if (stop > m_Length)
+		stop = m_Length;
 
-	return compType->getArrayRangeToSequence(frame, m_Object, start, stop);
-//  TRACE_OUT
-}
-
-void JPArray::setRange(int start, int stop, vector<HostRef*>& val)
-{
-	JPJavaFrame frame;
-	JPType* compType = m_Class->getComponentType();
-	
-	unsigned int len = stop-start;
-	size_t plength = val.size();
-	
-	if (len != plength)
+	if (m_Object.get() == NULL || start >= stop)
 	{
-		std::stringstream out;
-		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
-		RAISE(JPypeException, out.str());
+		// Python behavior would be to return an empty list
+		return JPPyList::newList(0);
 	}
 
-	for (size_t i = 0; i < plength; i++)
-	{
-		HostRef* v = val[i];
-		if ( compType->canConvertToJava(v)<= _explicit)
-		{
-			RAISE(JPypeException, "Unable to convert.");
-		}
-	}	
-			
-	compType->setArrayRange(frame, m_Object, start, stop-start, val);
+	return compType->getArrayRange(frame, m_Object.get(), start, stop - start);
+	JP_TRACE_OUT;
 }
 
-void JPArray::setRange(int start, int stop, PyObject* sequence)
+void JPArray::setRange(size_t start, size_t stop, PyObject* val)
 {
+	JP_TRACE_IN("JPArray::setRange");
 	JPJavaFrame frame;
-	JPType* compType = m_Class->getComponentType();
-	unsigned int len = stop-start;
-	// check bounds of sequence which is to be assigned
-	HostRef h(sequence);
-	unsigned int plength = JPEnv::getHost()->getSequenceLength(&h);
+	JPClass* compType = m_Class->getComponentType();
+	unsigned int len = stop - start;
+	JPPySequence seq(JPPyRef::_use, val);
+	size_t plength = seq.size();
 
+	JP_TRACE("Verify lengths", len, plength);
 	if (len != plength)
 	{
+		// Python would allow mismatching size by growing or shrinking 
+		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
-		RAISE(JPypeException, out.str());
+		JP_RAISE_RUNTIME_ERROR(out.str());
 	}
 
-	compType->setArrayRange(frame, m_Object, start, len, sequence);
+	JP_TRACE("Call component set range");
+	compType->setArrayRange(frame, m_Object.get(), start, len, val);
+	JP_TRACE_OUT;
 }
 
-void JPArray::setItem(int ndx, HostRef* val)
+void JPArray::setItem(size_t ndx, PyObject* val)
 {
 	JPJavaFrame frame;
-	JPType* compType = m_Class->getComponentType();
+	JPClass* compType = m_Class->getComponentType();
+	if (ndx > m_Length)
+	{
+		// Python returns IndexError
+		stringstream ss;
+		ss << "java array assignment index out of range for size " << m_Length;
+		JP_RAISE_INDEX_ERROR(ss.str());
+	}
+
 	if (compType->canConvertToJava(val) <= _explicit)
 	{
-		RAISE(JPypeException, "Unable to convert.");
-	}	
-	
-	compType->setArrayItem(frame, m_Object, ndx, val);
+		JP_RAISE_RUNTIME_ERROR("Unable to convert.");
+	}
+
+	compType->setArrayItem(frame, m_Object.get(), ndx, val);
 }
 
-HostRef* JPArray::getItem(int ndx)
+JPPyObject JPArray::getItem(size_t ndx)
 {
 	JPJavaFrame frame;
-	JPType* compType = m_Class->getComponentType();
+	JPClass* compType = m_Class->getComponentType();
 
-	return compType->getArrayItem(frame, m_Object, ndx);
+	if (ndx > m_Length)
+	{
+		// Python behavior is IndexError
+		stringstream ss;
+		ss << "index " << ndx << "is out of bounds for java array with size 0";
+		JP_RAISE_INDEX_ERROR(ss.str());
+	}
+
+	return compType->getArrayItem(frame, m_Object.get(), ndx);
 }
 
-JPType* JPArray::getType()
+JPClass* JPArray::getType()
 {
 	return m_Class;
 }
 
-jvalue  JPArray::getValue()
+jvalue JPArray::getValue()
 {
 	jvalue val;
-	val.l = m_Object;
+	val.l = m_Object.get();
 	return val;
-}
-JCharString JPArray::toString()
-{
-	static const char* value = "Array wrapper";
-	jchar res[14];
-	res[13] = 0;
-	for (int i = 0; value[i] != 0; i++)
-	{
-		res[i] = value[i];
-	}
-	
-	return res;
 }

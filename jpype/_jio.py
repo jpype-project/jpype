@@ -14,9 +14,12 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-from . import _jclass
-from . import JavaException
+from . import _jcustomizer
 import sys as _sys
+from . import _jexception
+
+# This contains a customizer for closeable so that we can use the python "with"
+# statement.
 
 if _sys.version > '3':
     pass
@@ -25,7 +28,7 @@ def _closeableExit(self,exception_type, exception_value, traceback):
     info = _sys.exc_info()
     try:
         self.close()
-    except JavaException as jex:
+    except _jexception.JException as jex:
         # Eat the second exception if we are already handling one.
         if (info[0]==None):
             raise jex
@@ -49,4 +52,4 @@ class CloseableCustomizer(object):
     def customize(self, name, jc, bases, members):
         members.update(CloseableCustomizer._METHODS)
 
-_jclass.registerClassCustomizer(CloseableCustomizer())
+_jcustomizer.registerClassCustomizer(CloseableCustomizer())

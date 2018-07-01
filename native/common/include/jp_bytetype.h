@@ -5,7 +5,7 @@
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,62 +13,65 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #ifndef _JPBYTE_TYPE_H_
 #define _JPBYTE_TYPE_H_
 
 class JPByteType : public JPPrimitiveType
 {
-public :
-	JPByteType() : JPPrimitiveType(JPTypeName::_byte, false, JPTypeName::fromSimple("java.lang.Byte"))
-	{
-	}
-	
-	virtual ~JPByteType()
-	{
-	}
+public:
 
-public :
+	JPByteType();
+	virtual ~JPByteType();
+
+public:
 	typedef jbyte type_t;
 	typedef jbyteArray array_t;
-	inline jbyte& field(jvalue& v) { return v.b; }
-	inline jbyte field(const jvalue& v) const { return v.b; }
 
-public : // JPType implementation
-	virtual HostRef*   getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType);
-	virtual void       setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef* val);
-	virtual HostRef*   getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType);
-	virtual void       setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef* val);
-	virtual HostRef*   asHostObject(jvalue val);
-	virtual HostRef*   asHostObjectFromObject(jvalue val);
-	virtual EMatchType canConvertToJava(HostRef* obj);
-	virtual jvalue     convertToJava(HostRef* obj);
-	
-	virtual HostRef*  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*);
-	virtual HostRef*  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*);
-
-	virtual jarray    newArrayInstance(JPJavaFrame& frame, int size);
-	virtual vector<HostRef*> getArrayRange(JPJavaFrame& frame, jarray, int start, int length);
-	virtual void      setArrayRange(JPJavaFrame& frame, jarray, int start, int length, vector<HostRef*>& vals);
-	virtual void      setArrayRange(JPJavaFrame& frame, jarray, int, int, PyObject*);
-	virtual HostRef*  getArrayItem(JPJavaFrame& frame, jarray, int ndx);
-	virtual void      setArrayItem(JPJavaFrame& frame, jarray, int ndx, HostRef* val);
-	// this returns tuple instead of list, for performance reasons
-	virtual PyObject* getArrayRangeToSequence(JPJavaFrame& frame, jarray, int start, int length);
-
-	virtual HostRef*   convertToDirectBuffer(HostRef* src);
-
-	virtual bool isSubTypeOf(const JPType& other) const
+	inline jbyte& field(jvalue& v)
 	{
-		JPTypeName::ETypes otherType = other.getName().getType();
-		return otherType == JPTypeName::_byte
-				|| otherType == JPTypeName::_short
-				|| otherType == JPTypeName::_int
-				|| otherType == JPTypeName::_long
-				|| otherType == JPTypeName::_float
-				|| otherType == JPTypeName::_double;
+		return v.b;
 	}
-};
+
+	inline jbyte field(const jvalue& v) const
+	{
+		return v.b;
+	}
+
+public:
+	virtual EMatchType  canConvertToJava(PyObject* obj) override;
+	virtual jvalue      convertToJava(PyObject* obj) override;
+	virtual JPPyObject  convertToPythonObject(jvalue val) override;
+	virtual JPValue     getValueFromObject(jobject obj) override;
+
+	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
+	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
+
+	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid) override;
+	virtual void        setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* val) override;
+	virtual JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
+	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
+
+	virtual jarray      newArrayInstance(JPJavaFrame& frame, int size) override;
+	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, int start, int length) override;
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray, int, int, PyObject*) override;
+	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, int ndx) override;
+	virtual void        setArrayItem(JPJavaFrame& frame, jarray, int ndx, PyObject* val) override;
+
+	// Only Byte supports direct buffer convertion
+	virtual jobject   convertToDirectBuffer(PyObject* src);
+
+	virtual bool isSubTypeOf(JPClass* other) const override;
+
+	template <class T> T assertRange(const T& l)
+	{
+		if (l < JPJni::s_Byte_Min || l > JPJni::s_Byte_Max)
+		{
+			JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
+		}
+		return l;
+	}
+} ;
 
 #endif // _JPBYTE_TYPE_H_
 

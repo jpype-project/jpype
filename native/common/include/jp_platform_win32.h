@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #ifndef _PLATFORM_WIN32_H_
 #define _PLATFORM_WIN32_H_
 
@@ -24,7 +24,7 @@
  */
 class Win32PlatformAdapter : public JPPlatformAdapter
 {
-private :
+private:
 	HINSTANCE jvmLibrary;
 
 	std::string formatMessage(DWORD msgCode)
@@ -32,50 +32,51 @@ private :
 		LPVOID lpMsgBuf;
 
 		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-			FORMAT_MESSAGE_FROM_SYSTEM,
-			NULL,
-			msgCode,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPTSTR) &lpMsgBuf,
-			0, NULL );
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,
+				msgCode,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+				(LPTSTR) & lpMsgBuf,
+				0, NULL );
 
-		std::string res((LPTSTR)lpMsgBuf);
+		std::string res((LPTSTR) lpMsgBuf);
 
 		LocalFree(lpMsgBuf);
 
 		return res;
 	}
 
-public :
-	virtual void loadLibrary(const char* path)
+public:
+
+	virtual void loadLibrary(const char* path) override
 	{
 		jvmLibrary = LoadLibrary(path);
 		if (jvmLibrary == NULL)
 		{
 			std::stringstream msg;
 			msg << "Unable to load DLL [" << path << "], error = " << formatMessage(GetLastError());
-			RAISE(JPypeException, msg.str());
+			JP_RAISE_RUNTIME_ERROR( msg.str());
 		}
 	}
 
-	virtual void unloadLibrary()
+	virtual void unloadLibrary() override
 	{
 		// on success return code is nonzero, TODO: handle error?
 		FreeLibrary(jvmLibrary);
 	}
 
-	virtual void* getSymbol(const char* name)
+	virtual void* getSymbol(const char* name) override
 	{
-		void* res = (void*)GetProcAddress(jvmLibrary, name);
+		void* res = (void*) GetProcAddress(jvmLibrary, name);
 		if (res == NULL)
 		{
 			std::stringstream msg;
 			msg << "Unable to load symbol [" << name << "], error = " << formatMessage(GetLastError());
-			RAISE(JPypeException, msg.str().c_str());
+			JP_RAISE_RUNTIME_ERROR( msg.str().c_str());
 		}
 		return res;
 	}
-};
+} ;
 
 #endif // _PLATFORM_WIN32_H_

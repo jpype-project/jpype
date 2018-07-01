@@ -40,11 +40,12 @@ try:
     from types import ModuleType as _ModuleType
 except Exception:
     raise ImportError("jpype.imports Not supported for Python 2")
+
+import _jpype
 import sys as _sys
-import keyword as _keyword
-from ._jclass import JClass as _JClass
-from ._jclass import _JavaClass as _JavaClass
-from ._core import registerJVMInitializer as _jinit
+from . import _pykeywords 
+from . import _jclass 
+from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
 _initialized = False
@@ -55,31 +56,26 @@ _modifier = None
 def _keywordUnwrap(name):
     if not name.endswith('_'):
         return name
-    if _keyword.iskeyword(name[:-1]):
+    if name[:-1] in _pykeywords._KEYWORDS:
         return name[:-1]
     return name
 
 def _keywordWrap(name):
-    if name in _keyword.kwlist:
+    if name in _pykeywords._KEYWORDS:
         return name + "_"
     return name
 
 def _getJavaClass(javaname):
     try:
-        return _JClass(javaname)
+        return _jclass.JClass(javaname)
     except Exception:
         return None
 
+#FIXME imports of static fields not working for now.
 def _copyProperties(out, mc):
-    for v in dir(mc):
-        # Skip private members
-        if v.startswith('_'):
-            continue
-
-        # Copy properties
-        attr = getattr(mc, v)
-        if isinstance(attr, property):
-            out[v] = attr
+#    for jf in mc.__javaclass__.getClassFields():  
+#        out[_keywordWrap(jf.getName())] = jf
+    pass
 
 def _getStaticMethods(cls):
     global _modifier
@@ -221,7 +217,7 @@ def _JImportFactory(spec, javaname, cls=_JImport):
         members['__javaclass__'] = jclass
 
         # Exposed static members as part of the module
-        _copyProperties(members, jclass.__metaclass__)
+        _copyProperties(members, jclass)
         _copyStaticMethods(members, jclass)
 
     return type("module." + spec.name, tuple(bases), members)
@@ -306,9 +302,9 @@ def _initialize():
     global _initialized 
     global _modifier
     _initialized = True
-    _JMethod = type(_JClass('java.lang.Class').forName)
-    _modifier = _JClass('java.lang.reflect.Modifier')
-    _exportTypes = (property, _JavaClass, _JImport, _JMethod)
+    _JMethod = type(_jclass.JClass('java.lang.Class').forName)
+    _modifier = _jclass.JClass('java.lang.reflect.Modifier')
+    _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
 
-_jinit(_initialize)
+_jinit.registerJVMInitializer(_initialize)
 

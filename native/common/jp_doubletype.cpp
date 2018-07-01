@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Menard
+   Copyright 2004-2008 Steve Ménard
   
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,46 +13,66 @@
    See the License for the specific language governing permissions and
    limitations under the License.
   
-*****************************************************************************/  
+ *****************************************************************************/
 #include <jp_primitive_common.h>
 
-HostRef* JPDoubleType::asHostObject(jvalue val)
+JPDoubleType::JPDoubleType() : JPPrimitiveType(JPTypeManager::_java_lang_Double)
 {
-	return JPEnv::getHost()->newFloat(field(val));
 }
 
-HostRef* JPDoubleType::asHostObjectFromObject(jvalue val)
+JPDoubleType::~JPDoubleType()
 {
-	return JPEnv::getHost()->newFloat(JPJni::doubleValue(val.l));
 }
 
-EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
+bool JPDoubleType::isSubTypeOf(JPClass* other) const
 {
-	if (JPEnv::getHost()->isNone(obj))
+	return other == JPTypeManager::_double;
+}
+
+JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
+{
+	return JPPyFloat::fromDouble(field(val));
+}
+
+JPValue JPDoubleType::getValueFromObject(jobject obj)
+{
+	jvalue v;
+	field(v) = JPJni::doubleValue(obj);
+	return JPValue(this, v);
+}
+
+EMatchType JPDoubleType::canConvertToJava(PyObject* obj)
+{
+	ASSERT_NOT_NULL(obj);
+	if (JPPyObject::isNone(obj))
 	{
 		return _none;
 	}
 
-	if (JPEnv::getHost()->isFloat(obj))
+	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (value != NULL)
 	{
-		if (JPEnv::getHost()->isObject(obj))
-		{
-			return _implicit;
-		}
-		return _exact;
-	}
-
-	if (JPEnv::getHost()->isWrapper(obj))
-	{
-		JPTypeName name = JPEnv::getHost()->getWrapperTypeName(obj);
-		if (name.getType() == JPTypeName::_double)
+		if (value->getClass() == this)
 		{
 			return _exact;
 		}
+
+		if (value->getClass() == m_BoxedClass)
+		{
+			return _implicit;
+		}
+
+		// Java does not permit boxed to boxed conversions.
+		return _none;
+	}
+
+	if (JPPyFloat::check(obj))
+	{
+		return _exact;
 	}
 
 	// Java allows conversion to any type with a longer range even if lossy
-	if (JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj))
+	if (JPPyInt::check(obj) || JPPyLong::check(obj))
 	{
 		return _implicit;
 	}
@@ -60,31 +80,41 @@ EMatchType JPDoubleType::canConvertToJava(HostRef* obj)
 	return _none;
 }
 
-jvalue JPDoubleType::convertToJava(HostRef* obj)
+jvalue JPDoubleType::convertToJava(PyObject* obj)
 {
 	jvalue res;
-	if (JPEnv::getHost()->isWrapper(obj))
+	field(res) = 0;
+	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (value != NULL)
 	{
-		return JPEnv::getHost()->getWrapperValue(obj);
+		if (value->getClass() == this)
+		{
+			return *value;
+		}
+		if (value->getClass() == m_BoxedClass)
+		{
+			return getValueFromObject(value->getJavaObject());
+		}
+		JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
 	}
-	else if (JPEnv::getHost()->isInt(obj))
+	else if (JPPyFloat::check(obj))
 	{
-		field(res) = JPEnv::getHost()->intAsInt(obj);;
+		field(res) = (type_t) JPPyFloat::asDouble(obj);
+		return res;
 	}
-	else if (JPEnv::getHost()->isLong(obj))
+	else if (JPPyInt::check(obj))
 	{
-		field(res) = (type_t) JPEnv::getHost()->longAsLong(obj);;
+		field(res) = JPPyInt::asInt(obj);
+		return res;
 	}
-	else
+	else if (JPPyLong::check(obj))
 	{
-		field(res) = (type_t)JPEnv::getHost()->floatAsDouble(obj);
+		field(res) = (type_t) JPPyLong::asLong(obj);
+		return res;
 	}
-	return res;
-}
 
-HostRef* JPDoubleType::convertToDirectBuffer(HostRef* src)
-{
-	RAISE(JPypeException, "Unable to convert to Direct Buffer");
+	JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
+	return res;
 }
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, int sz)
@@ -92,117 +122,96 @@ jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, int sz)
 	return frame.NewDoubleArray(sz);
 }
 
-HostRef* JPDoubleType::getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType)
+JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-HostRef* JPDoubleType::getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType)
+JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-HostRef* JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
+JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
 	jvalue v;
-	field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
-	return asHostObject(v);
+	{
+		JPPyCallRelease call;
+		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
+	}
+	return convertToPythonObject(v);
 }
 
-HostRef* JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
 {
 	jvalue v;
-	field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
-	return asHostObject(v);
+	{
+		JPPyCallRelease call;
+		field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
+	}
+	return convertToPythonObject(v);
 }
 
-void JPDoubleType::setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef* obj)
+void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	type_t val = field(convertToJava(obj));
 	frame.SetStaticDoubleField(c, fid, val);
 }
 
-void JPDoubleType::setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef* obj)
+void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	type_t val = field(convertToJava(obj));
 	frame.SetDoubleField(c, fid, val);
 }
 
-vector<HostRef*> JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
+JPPyObject JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, int lo, int hi)
 {
-	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
-
-	type_t* val = accessor.get();
-	vector<HostRef*> res;
-		
-	jvalue v;
-	for (int i = 0; i < length; i++)
-	{
-		field(v) = val[i+start];
-		res.push_back(asHostObject(v));
-	}
-	return res;
-}
-
-void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, vector<HostRef*>& vals)
-{
-	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
-
-	type_t* val = accessor.get();
-	for (int i = 0; i < length; i++)
-	{
-		HostRef* pv = vals[i];
-		val[start+i] = field(convertToJava(pv));
-	}
-	accessor.commit();
+	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_FLOAT64, PyFloat_FromDouble);
 }
 
 void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
 {
-	if (setViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
-		&JPJavaFrame::SetDoubleArrayRegion))
+	JP_TRACE_IN("JPDoubleType::setArrayRange");
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+			&JPJavaFrame::SetDoubleArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
 
 	type_t* val = accessor.get();
+	JPPySequence seq(JPPyRef::_use, sequence);
 	for (Py_ssize_t i = 0; i < length; ++i)
 	{
-		PyObject* o = PySequence_GetItem(sequence, i);
-		type_t v = (type_t) PyFloat_AsDouble(o);
-		if (v == -1.) { CONVERSION_ERROR_HANDLE(i, o); }
-		Py_DECREF(o);
-		val[start+i] = v;
+		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
+		if (v == -1. && JPPyErr::occurred())
+		{
+			JP_RAISE_PYTHON("JPDoubleType::setArrayRange");
+		}
+		val[start + i] = v;
 	}
 	accessor.commit();
+	JP_TRACE_OUT;
 }
 
-HostRef* JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
-	array_t array = (array_t)a;
+	array_t array = (array_t) a;
 	type_t val;
-	frame.GetDoubleArrayRegion(array,ndx, 1, &val);
+	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx , HostRef* obj)
+void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
 {
-	array_t array = (array_t)a;
+	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));
 	frame.SetDoubleArrayRegion(array, ndx, 1, &val);
-}
-
-PyObject* JPDoubleType::getArrayRangeToSequence(JPJavaFrame& frame, jarray a, int lo, int hi)
-{
-	return getSlice<jdouble>(frame, a, lo, hi, NPY_FLOAT64, PyFloat_FromDouble);
 }
 

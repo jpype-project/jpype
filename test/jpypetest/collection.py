@@ -18,8 +18,8 @@ class CollectionTestCase(common.JPypeTestCase):
         collection.put('B',2)
         asdict = dict()
         for x in collection.entrySet():
-            asdict[x.getKey()] = x.getValue().longValue()
-        self.assertEqual({'A':1,'B':2}, asdict)
+            asdict[str(x.getKey())] = x.getValue().longValue()
+        self.assertEqual(asdict, {'A':1,'B':2})
                     
     def testEnumMap(self):
         enumclass = jpype.JClass('jpype.collection.TestEnum')

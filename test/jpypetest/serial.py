@@ -14,7 +14,7 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-from jpype import JException, java, JavaException, JProxy, JClass
+from jpype import JException, java, JProxy, JClass
 import os
 import sys
 import tempfile

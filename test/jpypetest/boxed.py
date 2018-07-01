@@ -20,7 +20,6 @@ except ImportError:
     import unittest
 import sys
 import jpype
-import jpype._jboxed
 from . import common
 
 #Python2/3 support
@@ -90,6 +89,7 @@ class BoxedTestCase(common.JPypeTestCase):
     def testDoubleFromInt(self):
         self.Double(1)
 
+    @unittest.skip
     def testBoxed2(self):
         self.Short(self.Integer(1))
         self.Integer(self.Integer(1))

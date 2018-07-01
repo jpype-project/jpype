@@ -18,6 +18,8 @@
 import _jpype
 from . import _jclass
 
+__all__ = ['JPackage']
+
 class JPackage(object):
     def __init__(self, name):
         self.__name = name
@@ -36,12 +38,10 @@ class JPackage(object):
                import warnings
                warnings.warn("JVM not started yet, can not inspect JPackage contents")
                return n
-            cc = _jpype.findClass(subname)
-            if cc is None:
-                # can only assume it is a sub-package then ...
+            try:
+                cc = _jclass.JClass(subname)
+            except:
                 cc = JPackage(subname)
-            else:
-                cc = _jclass._getClassFor(cc)
 
             self.__setattr__(n, cc, True)
             return cc

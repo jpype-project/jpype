@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,25 +13,33 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #include <jpype.h>
 
-JPMonitor::JPMonitor(jobject o)
+JPMonitor::JPMonitor(const JPValue& value) : m_Value(value)
 {
 	JPJavaFrame frame;
-	frame.MonitorEnter(o);
-	m_Object = frame.NewGlobalRef(o);
-
+	jvalue& val = m_Value;
+	frame.MonitorEnter(val.l);
+	val.l = frame.NewGlobalRef(val.l);
 }
 
 JPMonitor::~JPMonitor()
 {
-	try {
-	JPJavaFrame frame;
-	frame.MonitorExit(m_Object);
-	frame.DeleteGlobalRef(m_Object);
-	}
-	catch(...)
+	try
 	{
+		JPJavaFrame frame;
+		jvalue& val = m_Value;
+		frame.MonitorExit(val.l);
+		frame.DeleteGlobalRef(val.l);
+	} catch (...)
+	{
+		// Don't be silent.  Force it to our tracer log.
+		JPypeTracer::trace("Exception in monitor destructor");
 	}
+}
+
+JPValue& JPMonitor::getValue()
+{
+	return m_Value;
 }

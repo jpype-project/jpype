@@ -49,3 +49,13 @@ coverage.xml
 docs/_build/
 # PyBuilder
 target/
+/project/jpype_java/nbproject/private/
+/project/jpype_cpython/nbproject/private/
+/project/jpype_cpython/nbproject/Makefile*
+/project/jpype_java/nbproject/build-impl.xml
+/project/jpype_java/nbproject/genfiles.properties
+/project/jpype_java/dist
+/project/jpype_java/build
+/project/jpype_cpython/Makefile
+/project/jpype_cpython/nbproject/Package-Release.bash
+/project/jpype_python/nbproject/private/

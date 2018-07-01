@@ -14,19 +14,19 @@
 #   limitations under the License.
 #
 #*****************************************************************************
-import sys
-
+import sys as _sys
 import _jpype
 
+__all__ = ['convertToDirectBuffer']
 
-if sys.version_info < (2, 7):
+
+if _sys.version_info < (2, 7):
     _mem_view = _jpype.memoryview  # own memoryview implementation
 else:
     _mem_view = memoryview
 
-
-def _initialize() :
-    pass
+# FIXME this is not documented.
+# FIXME there are no tests of this method
 
 def convertToDirectBuffer(obj):
     __doc__ = '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''

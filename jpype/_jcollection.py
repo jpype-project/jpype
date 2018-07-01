@@ -17,6 +17,7 @@
 import collections
 
 from . import _jclass
+from . import _jcustomizer
 
 class _WrappedIterator(object):
     """
@@ -33,13 +34,6 @@ class _WrappedIterator(object):
 
     # Compatibility name
     next = __next__
-
-def _initialize():
-    _jclass.registerClassCustomizer(CollectionCustomizer())
-    _jclass.registerClassCustomizer(ListCustomizer())
-    _jclass.registerClassCustomizer(MapCustomizer())
-    _jclass.registerClassCustomizer(IteratorCustomizer())
-    _jclass.registerClassCustomizer(EnumerationCustomizer())
 
 def isPythonSequence(v):
     if isinstance(v, collections.Sequence):
@@ -95,14 +89,14 @@ class CollectionCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'java.util.Collection':
             return True
-        return jc.isSubclass('java.util.Collection')
+        return jc.isAssignableFrom('java.util.Collection')
 
     def customize(self, name, jc, bases, members):
         if name == 'java.util.Collection':
             members.update(CollectionCustomizer._METHODS)
         else:
             # AddAll is handled by List
-            if (not jc.isSubclass("java.util.List")) and 'addAll' in members:
+            if (not jc.isAssignableFrom("java.util.List")) and 'addAll' in members:
                 members['_addAll'] = members['addAll']
                 members['addAll'] = _colAddAll
             if 'removeAll' in members:
@@ -168,7 +162,7 @@ class ListCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'java.util.List':
             return True
-        return jc.isSubclass('java.util.List')
+        return jc.isAssignableFrom('java.util.List')
 
     def customize(self, name, jc, bases, members):
         if name == 'java.util.List':
@@ -220,7 +214,7 @@ class MapCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'java.util.Map':
             return True
-        return jc.isSubclass('java.util.Map')
+        return jc.isAssignableFrom('java.util.Map')
 
     def customize(self, name, jc, bases, members):
         if name == 'java.util.Map':
@@ -253,12 +247,12 @@ class IteratorCustomizer(object):
     def canCustomize(self, name, jc):
         if name == 'java.util.Iterator':
             return True
-        return jc.isSubclass('java.util.Iterator')
+        return jc.isAssignableFrom('java.util.Iterator')
 
     def customize(self, name, jc, bases, members):
         if name == 'java.util.Iterator':
             members.update(IteratorCustomizer._METHODS)
-        elif jc.isSubclass('java.util.Iterator'):
+        elif jc.isAssignableFrom('java.util.Iterator'):
             __next__ = 'next' if 'next' in members else '__next__'
             members['_next'] = members[__next__]
             members[__next__] = _iterCustomNext
@@ -284,3 +278,12 @@ class EnumerationCustomizer(object):
 
     def customize(self, name, jc, bases, members):
         members.update(EnumerationCustomizer._METHODS)
+
+
+_jcustomizer.registerClassCustomizer(CollectionCustomizer())
+_jcustomizer.registerClassCustomizer(ListCustomizer())
+_jcustomizer.registerClassCustomizer(MapCustomizer())
+_jcustomizer.registerClassCustomizer(IteratorCustomizer())
+_jcustomizer.registerClassCustomizer(EnumerationCustomizer())
+
+

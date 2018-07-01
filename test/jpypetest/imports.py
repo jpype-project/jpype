@@ -33,7 +33,7 @@ def haveJImports():
         return False
 
 def isJavaClass(tp):
-    return isinstance(tp, jpype._jclass._JavaClass)
+    return isinstance(tp, jpype.JClass)
 
 class ImportsTestCase(common.JPypeTestCase):
     def setUp(self):

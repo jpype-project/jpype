@@ -18,40 +18,37 @@
 import collections
 import sys
 
+__all__ = ["JProxy"]
+
 import _jpype
 from . import _jclass
-from . import JClassUtil
 
 if sys.version > '3':
     unicode = str
-
-def _initialize():
-    _jpype.setResource('ProxyClass',JProxy)
 
 class JProxy(object):
     def __init__(self, intf, dict=None, inst=None):
         actualIntf = None
 
-        if isinstance(intf, str) or isinstance(intf, unicode):
-            actualIntf = [_jclass.JClass(intf)]
-        elif isinstance(intf, _jclass._JavaClass):
-            actualIntf = [intf]
-        elif isinstance(intf, collections.Sequence):
-            actualIntf = []
-            for i in intf:
-                if isinstance(i, str) or isinstance(i, unicode):
-                    actualIntf.append(_jclass.JClass(i))
-                elif isinstance(i, _jclass._JavaClass):
-                    actualIntf.append(i)
-                else:
-                    raise TypeError("JProxy requires java interface classes "
-                                    "or the names of java interfaces classes")
-        else:
-            raise TypeError("JProxy requires java interface classes "
-                            "or the names of java interfaces classes")
+        # We operate on lists of interfaces, so a single element is promoted 
+        # to a list
+        if not isinstance(intf, collections.Sequence):
+            intf = [intf]
 
+        # Verify that the list contains the required types
+        actualIntf = []
+        for i in intf:
+            if isinstance(i, str) or isinstance(i, unicode):
+                actualIntf.append(_jclass.JClass(i))
+            elif isinstance(i, _jclass.JClass):
+                actualIntf.append(i)
+            else:
+                raise TypeError("JProxy requires java interface classes "
+                        "or the names of java interfaces classes: {0}".format(i.__name))
+
+        # Check that all are interfaces
         for i in actualIntf:
-            if not JClassUtil.isInterface(i):
+            if not issubclass(i, _jclass.JInterface):
                 raise TypeError("JProxy requires java interface classes "
                                 "or the names of java interfaces classes: {0}"
                                 .format(i.__name__))
@@ -59,13 +56,12 @@ class JProxy(object):
         if dict is not None and inst is not None:
             raise RuntimeError("Specify only one of dict and inst")
 
-        self._dict = dict
-        self._inst = inst
+        if dict is not None:
+            def lookup(d, name):
+              return d[name]
+            self.__javaproxy__ = _jpype.PyJPProxy(dict, lookup, actualIntf)
 
-        self._proxy = _jpype.createProxy(self, actualIntf)
-
-    def getCallable(self, name):
-        if self._dict is not None:
-            return self._dict[name]
-        else:
-            return getattr(self._inst, name)
+        if inst is not None:
+            def lookup(d, name):
+              return getattr(d, name)
+            self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)
