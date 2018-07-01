@@ -39,7 +39,7 @@ public:
 	}
 
 public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
+	virtual EMatchType  canConvertToJava(PyObject* obj) override;
 	virtual jvalue      convertToJava(PyObject* obj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue     getValueFromObject(jobject obj) override;
@@ -52,11 +52,11 @@ public:
 	virtual JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
-	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length) override;
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*) override;
-	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
-	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
+	virtual jarray      newArrayInstance(JPJavaFrame& frame, int size) override;
+	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, int start, int length) override;
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray, int, int, PyObject*) override;
+	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, int ndx) override;
+	virtual void        setArrayItem(JPJavaFrame& frame, jarray, int ndx, PyObject* val) override;
 
 	// Only Byte supports direct buffer convertion
 	virtual jobject   convertToDirectBuffer(PyObject* src);
@@ -67,7 +67,7 @@ public:
 	{
 		if (l < JPJni::s_Byte_Min || l > JPJni::s_Byte_Max)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
+			JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
 		}
 		return l;
 	}

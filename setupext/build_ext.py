@@ -42,18 +42,18 @@ class BuildExtCommand(build_ext):
 #        if 'CFLAGS' in cfg_vars:
 #            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
         replacement = {
-            '-Wstrict-prototypes': '',
-            '-Wimplicit-function-declaration': '',
-        }
+            '-Wstrict-prototypes':'',
+            '-Wimplicit-function-declaration':'',
+            }
         tracing = self.distribution.enable_tracing
         if tracing:
-            replacement['-O3'] = '-O0'
+            replacement['-O3']='-O0'
 
-        for k, v in cfg_vars.items():
-            for r, t in replacement.items():
-                if isinstance(v, str) and k.find("FLAGS") != -1 and v.find(r) != -1:
-                    v = v.replace(r, t)
-                    cfg_vars[k] = v
+        for k,v in cfg_vars.items():
+          for r,t in replacement.items():
+            if isinstance(v,str) and k.find("FLAGS")!=-1 and v.find(r)!=-1:
+                v=v.replace(r, t)
+                cfg_vars[k]=v
         build_ext.initialize_options(self)
 
     def _set_cflags(self):
@@ -61,10 +61,10 @@ class BuildExtCommand(build_ext):
         c = self.compiler.compiler_type
         if c in self.copt:
             for e in self.extensions:
-                e.extra_compile_args.extend(self.copt[c])
+                e.extra_compile_args.extend(self.copt[ c ])
         if c in self.lopt:
             for e in self.extensions:
-                e.extra_link_args.extend(self.lopt[c])
+                e.extra_link_args.extend(self.lopt[ c ])
 
     def build_extensions(self):
         # We need to create the thunk code
@@ -89,7 +89,7 @@ class BuildExtCommand(build_ext):
             warnings.warn("Turned OFF Numpy support for fast Java array access",
                           FeatureNotice)
         if tracing:
-            jpypeLib.define_macros.append(('JP_TRACING_ENABLE', 1))
+           jpypeLib.define_macros.append(('JP_TRACING_ENABLE',1))
 
         # has to be last call
         build_ext.build_extensions(self)

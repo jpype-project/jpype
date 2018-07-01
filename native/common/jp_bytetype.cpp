@@ -60,16 +60,16 @@ JPPyObject JPByteType::convertToPythonObject(jvalue val)
 JPValue JPByteType::getValueFromObject(jobject obj)
 {
 	jvalue v;
-	field(v) = (type_t)JPJni::intValue(obj);
+	field(v) = JPJni::intValue(obj);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
+EMatchType JPByteType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return JPMatch::_none;
+		return _none;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -77,22 +77,22 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			return JPMatch::_implicit;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			return _implicit;
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return JPMatch::_none;
+		return _none;
 	}
 
 	if (JPPyInt::check(obj) || JPPyLong::check(obj))
 	{
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	return JPMatch::_none;
@@ -129,7 +129,7 @@ jvalue JPByteType::convertToJava(PyObject* obj)
 	return res;
 }
 
-jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPByteType::newArrayInstance(JPJavaFrame& frame, int sz)
 {
 	return frame.NewByteArray(sz);
 }
@@ -180,7 +180,7 @@ void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetByteField(c, fid, val);
 }
 
-JPPyObject JPByteType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
+JPPyObject JPByteType::getArrayRange(JPJavaFrame& frame, jarray a, int lo, int hi)
 {
 	return getSlice<jbyte>(frame, a, lo, lo + hi, NPY_BYTE, PyInt_FromLong);
 }
@@ -214,7 +214,7 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize 
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
+JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -224,7 +224,7 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	return convertToPythonObject(v);
 }
 
-void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
+void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

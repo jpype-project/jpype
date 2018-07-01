@@ -26,13 +26,13 @@ JPObjectBaseClass::~JPObjectBaseClass()
 {
 }
 
-JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
+EMatchType JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 {
 	// Implicit rules for java.lang.Object
 	JP_TRACE_IN("JPObjectBaseClass::canConvertToJava");
 	if (JPPyObject::isNone(pyobj))
 	{
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	// arrays are objects
@@ -40,17 +40,17 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
-			return JPMatch::_exact;
+			return _exact;
 
 		JP_TRACE("From jvalue");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	// Strings are objects too
 	if (JPPyString::check(pyobj))
 	{
 		JP_TRACE("From string");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	// Class are objects too
@@ -58,35 +58,35 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	if (cls != NULL)
 	{
 		JP_TRACE("implicit array class");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	// Let'a allow primitives (int, long, float and boolean) to convert implicitly too ...
 	if (JPPyInt::check(pyobj))
 	{
 		JP_TRACE("implicit int");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	if (JPPyLong::check(pyobj))
 	{
 		JP_TRACE("implicit long");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	if (JPPyFloat::check(pyobj))
 	{
 		JP_TRACE("implicit float");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	if (JPPyBool::check(pyobj))
 	{
 		JP_TRACE("implicit boolean");
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
-	return JPMatch::_none;
+	return _none;
 	JP_TRACE_OUT;
 }
 
@@ -183,25 +183,25 @@ JPClassBaseClass::~JPClassBaseClass()
 {
 }
 
-JPMatch::Type JPClassBaseClass::canConvertToJava(PyObject* pyobj)
+EMatchType JPClassBaseClass::canConvertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClassBaseClass::convertToJava");
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_implicit;
+		return _implicit;
 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
-			return JPMatch::_exact;
-		return JPMatch::_none;
+			return _exact;
+		return _none;
 	}
 
 	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
 	if (cls != NULL)
-		return JPMatch::_exact;
+		return _exact;
 
-	return JPMatch::_none;
+	return _none;
 	JP_TRACE_OUT;
 }
 

@@ -1,4 +1,4 @@
-# *****************************************************************************
+#*****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# *****************************************************************************
+#*****************************************************************************
 from . import _jcustomizer
-
 
 class ComparableCustomizer(object):
     _METHODS = {
-        "__cmp__": lambda self, o: self.compareTo(o)
+            "__cmp__": lambda self, o: self.compareTo(o)
     }
 
     def canCustomize(self, name, jc):
@@ -27,6 +26,5 @@ class ComparableCustomizer(object):
 
     def customize(self, name, jc, bases, members):
         members.update(ComparableCustomizer._METHODS)
-
 
 _jcustomizer.registerClassCustomizer(ComparableCustomizer())

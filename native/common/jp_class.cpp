@@ -61,7 +61,7 @@ JPValue JPClass::newInstance(JPPyObjectVector& args)
 	return m_Constructors->invokeConstructor(args);
 }
 
-jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPClass::newArrayInstance(JPJavaFrame& frame, int sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);
 }
@@ -196,7 +196,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
+JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
 {
 	jobjectArray array = (jobjectArray) a;
 
@@ -213,7 +213,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	return res;
 }
 
-void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* vals)
+void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* vals)
 {
 	JP_TRACE_IN("JPClass::setArrayRange");
 	jobjectArray array = (jobjectArray) a;
@@ -225,7 +225,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		if (this->canConvertToJava(v) <= JPMatch::_explicit)
+		if (this->canConvertToJava(v) <= _explicit)
 		{
 			JP_RAISE_TYPE_ERROR("Unable to convert.");
 		}
@@ -239,13 +239,13 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	JP_TRACE_OUT;
 }
 
-void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
+void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* val)
 {
 	jvalue v = convertToJava(val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);
 }
 
-JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
+JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
 	JP_TRACE_IN("JPClass::getArrayItem");
 	jobjectArray array = (jobjectArray) a;
@@ -293,20 +293,22 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	{
 		return JPPyObject::getNone();
 	}
+	JP_TRACE_OUT;
+}
 
 	JPClass* cls = JPTypeManager::findClassForObject(obj.l);
 	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
+EMatchType JPClass::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::canConvertToJava");
 	if (JPPyObject::isNone(obj))
 	{
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -315,15 +317,14 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 		JPClass* oc = value->getClass();
 		JP_TRACE("Match name", oc->toString());
 
-		if (oc == this)
-		{
-			// hey, this is me! :)
-			return JPMatch::_exact;
-		}
+	JPClass* cls = JPTypeManager::findClassForObject(obj.l);
+	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
+	JP_TRACE_OUT;
+}
 
 		if (frame.IsAssignableFrom(oc->getJavaClass(), m_Class.get()))
 		{
-			return JPMatch::_implicit;
+			return _implicit;
 		}
 	}
 
@@ -337,12 +338,12 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 			if (frame.IsAssignableFrom(itf[i]->getJavaClass(), m_Class.get()))
 			{
 				JP_TRACE("implicit proxy");
-				return JPMatch::_implicit;
+				return _implicit;
 			}
 		}
 	}
 
-	return JPMatch::_none;
+	return _none;
 	JP_TRACE_OUT;
 }
 
@@ -386,7 +387,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 bool JPClass::isAssignableFrom(JPClass* o)
 {
 	JPJavaFrame frame;
-	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
+	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass());
 }
 
 // FIXME one of these is a duplicate.
@@ -395,7 +396,7 @@ bool JPClass::isSubTypeOf(JPClass* other) const
 {
 	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
 	JPJavaFrame frame;
-	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass()) != 0;
+	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass());
 }
 
 JPClass* JPClass::getSuperClass()

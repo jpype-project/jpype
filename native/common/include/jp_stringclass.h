@@ -25,7 +25,7 @@ public:
 	virtual ~JPStringClass();
 
 public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
+	virtual EMatchType  canConvertToJava(PyObject* obj) override;
 	virtual jvalue      convertToJava(PyObject* obj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue newInstance(JPPyObjectVector& args) override;

@@ -44,47 +44,43 @@ typedef _object PyObject;
  * policy will produce different actions on the creation of 
  * a reference wrapper.
  */
-namespace JPPyRef
+enum JPPyRef
 {
+	/**  
+	 * This policy is used if we need to hold a reference to an existing 
+	 * object for some duration.  The object may be null.
+	 * 
+	 * Increment reference count if not null, and decrement when done.
+	 */
+	_use =  0,
 
-	enum Type
-	{
-		/**  
-		 * This policy is used if we need to hold a reference to an existing 
-		 * object for some duration.  The object may be null.
-		 * 
-		 * Increment reference count if not null, and decrement when done.
-		 */
-		_use =  0,
+	/**
+	 * This policy is used when we are given a borrowed reference and we
+	 * need to check for errors.
+	 * 
+	 * Check for errors, increment reference count, and decrement when done.
+	 * Will throw an exception an error occurs.
+	 */
+	_borrowed = 1,
 
-		/**
-		 * This policy is used when we are given a borrowed reference and we
-		 * need to check for errors.
-		 * 
-		 * Check for errors, increment reference count, and decrement when done.
-		 * Will throw an exception an error occurs.
-		 */
-		_borrowed = 1,
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 * 
+	 * Assert not null, claim reference, and decremented when done.
+	 * Will throw an exception in the object is null.
+	 */
+	_claim = 2,
 
-		/**
-		 * This policy is used when we are given a new reference that we must
-		 * destroy.  This will steal a reference.
-		 * 
-		 * Assert not null, claim reference, and decremented when done.
-		 * Will throw an exception in the object is null.
-		 */
-		_claim = 2,
-
-		/**
-		 * This policy is used when we are capturing an object returned from a python
-		 * call that we are responsible for.  This will steal a reference.
-		 * 
-		 * Check for errors, assert not null, then claim.
-		 * Will throw an exception an error occurs.
-		 */
-		_call = 3
-	} ;
-}
+	/**
+	 * This policy is used when we are capturing an object returned from a python
+	 * call that we are responsible for.  This will steal a reference.
+	 * 
+	 * Check for errors, assert not null, then claim.
+	 * Will throw an exception an error occurs.
+	 */
+	_call = 3
+} ;
 
 /** Reference to a Python object.
  * 
@@ -111,7 +107,7 @@ public:
 	 * @param usage control how this object is to be handled, see JPPyRef.
 	 * @param obj is the python object.
 	 */
-	JPPyObject(JPPyRef::Type usage, PyObject* obj);
+	JPPyObject(JPPyRef usage, PyObject* obj);
 
 	JPPyObject(const JPPyObject &self);
 
@@ -276,7 +272,7 @@ class JPPyString : public JPPyObject
 {
 public:
 
-	JPPyString(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	JPPyString(JPPyRef usage, PyObject* obj) : JPPyObject(usage, obj)
 	{
 	}
 
@@ -292,14 +288,8 @@ public:
 
 	/** Create a new string from utf8 encoded string.
 	 * Note: java utf8 is not utf8.
-         *
-         * Python2 produced str unless unicode is set to 
-         * true.  Python3 will always produce a unicode string.
-         *
-         * @param str is the string to convert
-         * @param unicode is true if unicode is allowed.
 	 */
-	static JPPyObject fromStringUTF8(const string& str, bool unicode=false);
+	static JPPyObject fromStringUTF8(const string& str);
 
 	/** Get a UTF-8 encoded string from Python
 	 */
@@ -326,7 +316,7 @@ class JPPyTuple : public JPPyObject
 {
 public:
 
-	JPPyTuple(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	JPPyTuple(JPPyRef usage, PyObject* obj) : JPPyObject(usage, obj)
 	{
 	}
 
@@ -368,7 +358,7 @@ class JPPyList : public JPPyObject
 {
 public:
 
-	JPPyList(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	JPPyList(JPPyRef usage, PyObject* obj) : JPPyObject(usage, obj)
 	{
 	}
 
@@ -404,7 +394,7 @@ class JPPySequence : public JPPyObject
 {
 public:
 
-	JPPySequence(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	JPPySequence(JPPyRef usage, PyObject* obj) : JPPyObject(usage, obj)
 	{
 	}
 

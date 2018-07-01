@@ -44,7 +44,7 @@ JPValue JPIntType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
+EMatchType JPIntType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
@@ -57,7 +57,7 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			return _exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -67,7 +67,7 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return JPMatch::_none;
+		return _none;
 	}
 
 	// FIXME this logic is screwy as it implies that 
@@ -75,12 +75,12 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 	// integer types should be exact or none of them.
 	if (JPPyInt::check(obj))
 	{
-		return JPMatch::_exact;
+		return _exact;
 	}
 
 	if (JPPyLong::check(obj))
 	{
-		return JPMatch::_implicit;
+		return _implicit;
 	}
 
 	return JPMatch::_none;
@@ -169,7 +169,7 @@ void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* 
 	frame.SetIntField(c, fid, val);
 }
 
-JPPyObject JPIntType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
+JPPyObject JPIntType::getArrayRange(JPJavaFrame& frame, jarray a, int lo, int hi)
 {
 	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_INT, PyInt_FromLong);
 }
@@ -199,7 +199,7 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize l
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
+JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -209,7 +209,7 @@ JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	return convertToPythonObject(v);
 }
 
-void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
+void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

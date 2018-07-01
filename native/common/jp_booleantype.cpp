@@ -41,18 +41,18 @@ JPValue JPBooleanType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
+EMatchType JPBooleanType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return JPMatch::_none;
+		return _none;
 	}
 
 	// Exact Python match
 	if (JPPyBool::check(obj))
 	{
-		return JPMatch::_exact;
+		return _exact;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -66,16 +66,16 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 		// Implicit conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == this->m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			return _implicit;
 		}
-		return JPMatch::_none;
+		return _none;
 	}
 
 	// Java does not consider ints to be bools, but we may need
 	// it when returning from a proxy.
 	if (JPPyInt::check(obj) || JPPyLong::check(obj))
 	{
-		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit
+		return _implicit; // FIXME this should be _explicit
 	}
 
 	return JPMatch::_none;
@@ -108,7 +108,7 @@ jvalue JPBooleanType::convertToJava(PyObject* obj)
 	return res;
 }
 
-jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, int sz)
 {
 	return frame.NewBooleanArray(sz);
 }
@@ -159,12 +159,12 @@ void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObje
 	frame.SetBooleanField(c, fid, val);
 }
 
-JPPyObject JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
+JPPyObject JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
 {
 	return getSlice<type_t>(frame, a, start, start + length, NPY_BOOL, PyBool_FromLong);
 }
 
-void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPBooleanType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
@@ -190,7 +190,7 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
+JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -200,7 +200,7 @@ JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	return convertToPythonObject(v);
 }
 
-void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
+void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

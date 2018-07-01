@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# *****************************************************************************
+#*****************************************************************************
 
 import sys as _sys
 import inspect
@@ -32,10 +32,8 @@ else:
     _unicode = unicode
     _long = long
 
-
 def _initialize():
-    type.__setattr__(JObject, '__javaclass__',
-                     _jpype.PyJPClass('java.lang.Object'))
+    type.__setattr__(JObject, '__javaclass__', _jpype.PyJPClass('java.lang.Object'))
 
 
 class JObject(object):
@@ -67,21 +65,21 @@ class JObject(object):
         if cls != JObject:
             return super(JObject, cls).__new__(cls)
         # Create a null pointer object
-        if len(args) == 0:
-            args = [None]
+        if len(args)==0:
+          args =[None]
         cls = _JObjectFactory(*args, **kwargs)
         self = cls.__new__(cls, args[0])
         self.__javavalue__ = _jpype.PyJPValue(cls.__javaclass__, args[0])
         return self
 
     def __init__(self, *args):
-        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
+        if len(args)==1 and isinstance(args[0], _jpype.PyJPValue):
             object.__setattr__(self, '__javavalue__', args[0])
         elif not hasattr(self, '__javavalue__'):
             jv = self.__class__.__javaclass__.newInstance(*args)
             object.__setattr__(self, '__javavalue__', jv)
         super(JObject, self).__init__()
-
+ 
     def __setattr__(self, name, value):
         if name.startswith('_'):
             object.__setattr__(self, name, value)
@@ -90,8 +88,7 @@ class JObject(object):
         if hasattr(attr, '__set__'):
             attr.__set__(self, value)
             return
-        raise AttributeError("%s does not have field %s" %
-                             (self.__name__, name))
+        raise AttributeError("%s does not have field %s"%(self.__name__, name))
 
     def __str__(self):
         return self.__javavalue__.toString()
@@ -106,9 +103,6 @@ class JObject(object):
         return not self.equals(other)
 
 
-_jclass._JObject = JObject
-
-
 def _JObjectFactory(v=None, tp=None):
     """ Creates a Java object.
 
@@ -121,7 +115,8 @@ def _JObjectFactory(v=None, tp=None):
         if hasattr(v, '__javaclass__'):
             cls = _jclass.JClass("java.lang.Class").__javaclass__
         else:
-            raise TypeError("%s is not a java class." % v)
+            raise TypeError("%s is not a java class."%v);
+
 
     # Automatically look up the type if not specified,
     if tp is None:
@@ -133,13 +128,12 @@ def _JObjectFactory(v=None, tp=None):
 
     # Check if we are to box it,
     elif isinstance(tp, type):
-        if hasattr(tp, '_java_boxed_class'):
+        if hasattr(tp,'_java_boxed_class'):
             return tp._java_boxed_class
         elif hasattr(tp, '__javaclass__'):
             return _jclass.JClass(tp.__javaclass__)
 
-    raise TypeError("Invalid type conversion to %s requested." % tp)
-
+    raise TypeError("Invalid type conversion to %s requested."%tp);
 
 def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     """ Create a factory type such as JObject or JArray.
@@ -155,7 +149,7 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     # Copy the members from the prototype
     if members == None:
         members = {}
-    for p, v in proto.__dict__.items():
+    for p,v in proto.__dict__.items():
         if isinstance(v, (str)):
             members[p] = v
         elif callable(v):
@@ -165,16 +159,18 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
 
     res = None
 
-    if jclass != None:
-        members['__javaclass__'] = None
+    if jclass!=None:
+        members['__javaclass__']=None
 
     # Create a new class
     res = _jclass.JClass(name, bases, members)
 
-    if jclass != None:
+    if jclass!=None:
         # Register this class to be initialized when jvm starts
         def jinit():
-            type.__setattr__(res, '__javaclass__', _jpype.PyJPClass(jclass))
+            type.__setattr__(res,'__javaclass__',_jpype.PyJPClass(jclass))
         _jinit.registerJVMInitializer(jinit)
 
     return res
+
+

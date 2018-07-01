@@ -17,21 +17,20 @@
 #ifndef _JPMETHODOVERLOAD_H_
 #define _JPMETHODOVERLOAD_H_
 
+enum EMatchType
+{
+	_none = 0,
+	_explicit = 1,
+	_implicit = 2,
+	_exact = 3
+} ;
+
 class JPMethodOverload;
 
 class JPMatch
 {
 public:
-
-	enum Type
-	{
-		_none = 0,
-		_explicit = 1,
-		_implicit = 2,
-		_exact = 3
-	} ;
-
-	Type type;
+	EMatchType type;
 	bool isVarDirect;
 	bool isVarIndirect;
 	JPMethodOverload* overload;
@@ -40,7 +39,7 @@ public:
 
 	JPMatch()
 	{
-		type = JPMatch::_none;
+		type = EMatchType::_none;
 		isVarDirect = false;
 		isVarIndirect = false;
 		overload = NULL;

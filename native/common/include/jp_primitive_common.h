@@ -161,7 +161,7 @@ inline JPPyObject getSlice(JPJavaFrame& frame, jarray array, int lo, int hi, int
 		for (Py_ssize_t i = lo; i < hi; i++)
 			PyList_SET_ITEM(res.get(), i - lo, convert(val[i]));
 	}
-	return res;
+	return res.keep();
 #endif
 }
 

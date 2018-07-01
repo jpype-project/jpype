@@ -206,9 +206,9 @@ public:
 	jboolean CallBooleanMethod(jobject obj, jmethodID mid);
 	jboolean CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jboolean CallNonvirtualBooleanMethod(jobject obj, jclass claz, jmethodID mid);
-	jbooleanArray NewBooleanArray(jsize len);
-	void SetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals);
-	void GetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals);
+	jbooleanArray NewBooleanArray(jint len);
+	void SetBooleanArrayRegion(jbooleanArray array, int start, int len, jboolean* vals);
+	void GetBooleanArrayRegion(jbooleanArray array, int start, int len, jboolean* vals);
 	jboolean* GetBooleanArrayElements(jbooleanArray array, jboolean* isCopy);
 	void ReleaseBooleanArrayElements(jbooleanArray, jboolean* v, jint mode);
 
@@ -223,9 +223,9 @@ public:
 	jbyte CallByteMethod(jobject obj, jmethodID mid);
 	jbyte CallNonvirtualByteMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jbyte CallNonvirtualByteMethod(jobject obj, jclass claz, jmethodID mid);
-	jbyteArray NewByteArray(jsize len);
-	void SetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals);
-	void GetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals);
+	jbyteArray NewByteArray(jint len);
+	void SetByteArrayRegion(jbyteArray array, int start, int len, jbyte* vals);
+	void GetByteArrayRegion(jbyteArray array, int start, int len, jbyte* vals);
 	jbyte* GetByteArrayElements(jbyteArray array, jboolean* isCopy);
 	void ReleaseByteArrayElements(jbyteArray, jbyte* v, jint mode);
 
@@ -240,9 +240,9 @@ public:
 	jchar CallCharMethod(jobject obj, jmethodID mid);
 	jchar CallNonvirtualCharMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jchar CallNonvirtualCharMethod(jobject obj, jclass claz, jmethodID mid);
-	jcharArray NewCharArray(jsize len);
-	void SetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals);
-	void GetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals);
+	jcharArray NewCharArray(jint len);
+	void SetCharArrayRegion(jcharArray array, int start, int len, jchar* vals);
+	void GetCharArrayRegion(jcharArray array, int start, int len, jchar* vals);
 	jchar* GetCharArrayElements(jcharArray array, jboolean* isCopy);
 	void ReleaseCharArrayElements(jcharArray, jchar* v, jint mode);
 
@@ -257,9 +257,9 @@ public:
 	jshort CallShortMethod(jobject obj, jmethodID mid);
 	jshort CallNonvirtualShortMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jshort CallNonvirtualShortMethod(jobject obj, jclass claz, jmethodID mid);
-	jshortArray NewShortArray(jsize len);
-	void SetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals);
-	void GetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals);
+	jshortArray NewShortArray(jint len);
+	void SetShortArrayRegion(jshortArray array, int start, int len, jshort* vals);
+	void GetShortArrayRegion(jshortArray array, int start, int len, jshort* vals);
 	jshort* GetShortArrayElements(jshortArray array, jboolean* isCopy);
 	void ReleaseShortArrayElements(jshortArray, jshort* v, jint mode);
 
@@ -274,9 +274,9 @@ public:
 	jint CallIntMethod(jobject obj, jmethodID mid);
 	jint CallNonvirtualIntMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jint CallNonvirtualIntMethod(jobject obj, jclass claz, jmethodID mid);
-	jintArray NewIntArray(jsize len);
-	void SetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals);
-	void GetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals);
+	jintArray NewIntArray(jint len);
+	void SetIntArrayRegion(jintArray array, int start, int len, jint* vals);
+	void GetIntArrayRegion(jintArray array, int start, int len, jint* vals);
 	jint* GetIntArrayElements(jintArray array, jboolean* isCopy);
 	void ReleaseIntArrayElements(jintArray, jint* v, jint mode);
 
@@ -292,9 +292,9 @@ public:
 	jlong CallNonvirtualLongMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jlong CallNonvirtualLongMethod(jobject obj, jclass claz, jmethodID mid);
 	jfloat GetStaticFloatField(jclass clazz, jfieldID fid);
-	jlongArray NewLongArray(jsize len);
-	void SetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals);
-	void GetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals);
+	jlongArray NewLongArray(jint len);
+	void SetLongArrayRegion(jlongArray array, int start, int len, jlong* vals);
+	void GetLongArrayRegion(jlongArray array, int start, int len, jlong* vals);
 	jlong* GetLongArrayElements(jlongArray array, jboolean* isCopy);
 	void ReleaseLongArrayElements(jlongArray, jlong* v, jint mode);
 
@@ -308,9 +308,9 @@ public:
 	jfloat CallFloatMethod(jobject obj, jmethodID mid);
 	jfloat CallNonvirtualFloatMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jfloat CallNonvirtualFloatMethod(jobject obj, jclass claz, jmethodID mid);
-	jfloatArray NewFloatArray(jsize len);
-	void SetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals);
-	void GetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals);
+	jfloatArray NewFloatArray(jint len);
+	void SetFloatArrayRegion(jfloatArray array, int start, int len, jfloat* vals);
+	void GetFloatArrayRegion(jfloatArray array, int start, int len, jfloat* vals);
 	jfloat* GetFloatArrayElements(jfloatArray array, jboolean* isCopy);
 	void ReleaseFloatArrayElements(jfloatArray, jfloat* v, jint mode);
 
@@ -325,9 +325,9 @@ public:
 	jdouble CallDoubleMethod(jobject obj, jmethodID mid);
 	jdouble CallNonvirtualDoubleMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
 	jdouble CallNonvirtualDoubleMethod(jobject obj, jclass claz, jmethodID mid);
-	jdoubleArray NewDoubleArray(jsize len);
-	void SetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals);
-	void GetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals);
+	jdoubleArray NewDoubleArray(jint len);
+	void SetDoubleArrayRegion(jdoubleArray array, int start, int len, jdouble* vals);
+	void GetDoubleArrayRegion(jdoubleArray array, int start, int len, jdouble* vals);
 	jdouble* GetDoubleArrayElements(jdoubleArray array, jboolean* isCopy);
 	void ReleaseDoubleArrayElements(jdoubleArray, jdouble* v, jint mode);
 
@@ -346,7 +346,7 @@ public:
 	void SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2);
 
 	// String
-	jstring NewStringUTF(const char* a0);
+	jstring NewStringUTF(const char* a0, int a1);
 
 	/** This returns a UTF16 surogate coded UTF-8 string.
 	 */

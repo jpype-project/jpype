@@ -152,22 +152,21 @@ class LeakTestCase(common.JPypeTestCase):
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
-        self.assertFalse(self.lc.memTest(
-            lambda: invokeFunc(self.string), 5000))
+        self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 5000))
 
-    @unittest.skipUnless(hasRefCount(), "no refcount")
     def testRefCountCall(self):
         obj = jpype.JString("help me")
         initialObj = sys.getrefcount(obj)
         initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0, 100):
+        for i in range(0,100):
             obj.charAt(0)
-        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
+        self.assertTrue( sys.getrefcount(obj)-initialObj<5)
+        self.assertTrue( sys.getrefcount(obj.__javavalue__)-initialValue<5)
 
         initialObj = sys.getrefcount(obj)
         initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0, 100):
+        for i in range(0,100):
             obj.compareTo(obj)
-        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
+        self.assertTrue( sys.getrefcount(obj)-initialObj<5)
+        self.assertTrue( sys.getrefcount(obj.__javavalue__)-initialValue<5)
+

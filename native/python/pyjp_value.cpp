@@ -134,7 +134,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
 
-		if (type->canConvertToJava(value) == JPMatch::_none)
+		if (type->canConvertToJava(value) == EMatchType::_none)
 		{
 			stringstream ss;
 			ss << "Unable to convert " << value->ob_type->tp_name << " to java type " << type->toString();
@@ -182,23 +182,19 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::__dealloc__");
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
-	JP_TRACE("Value", cls, &(value.getValue()));
-	if (self->m_StrCache != NULL)
+	if (cls != NULL)
 	{
-		Py_DECREF(self->m_StrCache);
-		self->m_StrCache = NULL;
-	}
-        // This one can't check for initialized because we may need to delete a stale
-        // resource after shutdown.
-	if (cls != NULL && JPEnv::isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
-	{
-                // If the JVM has shutdown then we don't need to free the resource
-                // FIXME there is a problem with initializing the sytem twice.
-                // Once we shut down the cls type goes away so this will fail.  If
-                // we then reinitialize we will access this bad resource.  Not sure
-                // of an easy solution.
-		JP_TRACE("Dereference object");
-		JPJavaFrame::ReleaseGlobalRef(value.getValue().l);
+		JP_TRACE("Value", cls, &(value.getValue()));
+		if (dynamic_cast<JPPrimitiveType*> (cls) != cls)
+		{
+			JP_TRACE("Dereference object");
+			JPJavaFrame::ReleaseGlobalRef(value.getValue().l);
+		}
+		if (self->m_StrCache != NULL)
+		{
+			Py_DECREF(self->m_StrCache);
+			self->m_StrCache = NULL;
+		}
 	}
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	Py_TYPE(self)->tp_free(self);

@@ -57,13 +57,11 @@ class OverloadTestCase(common.JPypeTestCase):
             JObject(self._c, self._bclass)))
         # JObject wrapper forces exact matches
         #self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, self._cclass))
-        self.assertEquals('A', test1.testMostSpecific(
-            JObject(self._c, 'jpype.overloads.Test1$A')))
-        self.assertEquals('B', test1.testMostSpecific(
-            JObject(self._c, 'jpype.overloads.Test1$B')))
+        self.assertEquals('A', test1.testMostSpecific(JObject(self._c, 'jpype.overloads.Test1$A')))
+        self.assertEquals('B', test1.testMostSpecific(JObject(self._c, 'jpype.overloads.Test1$B')))
         # JObject wrapper forces exact matches
         #self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, 'jpype.overloads.Test1$C'))
-
+        
     def testVarArgsCall(self):
         test1 = self.__jp.Test1()
         self.assertEquals('A,B...', test1.testVarArgs(self._a, []))

@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve MÃ©nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ jsize JPArray::getLength()
 	return m_Length;
 }
 
-JPPyObject JPArray::getRange(jsize start, jsize stop)
+JPPyObject JPArray::getRange(size_t start, size_t stop)
 {
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPArray::getRange");
@@ -68,7 +68,7 @@ JPPyObject JPArray::getRange(jsize start, jsize stop)
 	JP_TRACE_OUT;
 }
 
-void JPArray::setRange(jsize start, jsize stop, PyObject* val)
+void JPArray::setRange(size_t start, size_t stop, PyObject* val)
 {
 	JP_TRACE_IN("JPArray::setRange");
 	JPJavaFrame frame;
@@ -92,7 +92,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 	JP_TRACE_OUT;
 }
 
-void JPArray::setItem(jsize ndx, PyObject* val)
+void JPArray::setItem(size_t ndx, PyObject* val)
 {
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();
@@ -104,7 +104,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 		JP_RAISE_INDEX_ERROR(ss.str());
 	}
 
-	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
+	if (compType->canConvertToJava(val) <= _explicit)
 	{
 		JP_RAISE_RUNTIME_ERROR("Unable to convert.");
 	}
@@ -112,7 +112,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 	compType->setArrayItem(frame, m_Object.get(), ndx, val);
 }
 
-JPPyObject JPArray::getItem(jsize ndx)
+JPPyObject JPArray::getItem(size_t ndx)
 {
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();

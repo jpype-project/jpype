@@ -67,12 +67,12 @@ jvalue JPBoxedClass::convertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
+EMatchType JPBoxedClass::canConvertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPBoxedClass::canConvertToJava");
-	JPMatch::Type base = JPClass::canConvertToJava(pyobj);
-	if (base == JPMatch::_none && this->m_PrimitiveType->canConvertToJava(pyobj))
-		return JPMatch::_explicit;
+	EMatchType base = JPClass::canConvertToJava(pyobj);
+	if (base == _none && this->m_PrimitiveType->canConvertToJava(pyobj))
+		return _explicit;
 	return base;
 	JP_TRACE_OUT;
 }

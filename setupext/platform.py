@@ -66,7 +66,7 @@ elif sys.platform == 'darwin':
 
 elif sys.platform.startswith('linux'):
     platform_specific['libraries'] = ['dl']
-    platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
+    platform_specific['extra_compile_args'] = ['-g3','-std=c++11']
     jni_md_platform = 'linux'
 
 elif sys.platform.startswith('freebsd'):

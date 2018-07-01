@@ -19,7 +19,6 @@ import collections
 from . import _jclass
 from . import _jcustomizer
 
-
 class _WrappedIterator(object):
     """
     Wraps a Java iterator to respect the Python 3 iterator API
@@ -36,7 +35,6 @@ class _WrappedIterator(object):
 
     # Compatibility name
     next = __next__
-
 
 def isPythonSequence(v):
     if isinstance(v, collections.Sequence):
@@ -312,3 +310,5 @@ _jcustomizer.registerClassCustomizer(ListCustomizer())
 _jcustomizer.registerClassCustomizer(MapCustomizer())
 _jcustomizer.registerClassCustomizer(IteratorCustomizer())
 _jcustomizer.registerClassCustomizer(EnumerationCustomizer())
+
+

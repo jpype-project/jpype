@@ -20,7 +20,6 @@ import sys as _sys
 import _jpype
 from . import _jclass
 from . import _jobject
-from . import _jstring
 from . import _jcustomizer
 
 if _sys.version > '3':
@@ -30,16 +29,15 @@ if _sys.version > '3':
 __all__ = ['JArray']
 
 _JARRAY_TYPENAME_MAP = {
-    'boolean': 'Z',
-    'byte': 'B',
-    'char': 'C',
-    'short': 'S',
-    'int': 'I',
-    'long': 'J',
-    'float': 'F',
-    'double': 'D',
+  'boolean':'Z', 
+  'byte':'B', 
+  'char':'C', 
+  'short':'S', 
+  'int':'I', 
+  'long':'J',
+  'float':'F',
+  'double':'D',
 }
-
 
 class _JArray(object):
     """ Create a java array class for a given component with a specified number 
@@ -49,7 +47,7 @@ class _JArray(object):
       - as a string with the name of a java class.
       - as a java type wrapper such as jpype.JInt.
       - as a java class type such as java.lang.String.
-
+    
     Args:
       componentClass (str,type): type of element in to hold in the array.
       ndims (int): the number of dimensions of the array (default=1)
@@ -62,9 +60,9 @@ class _JArray(object):
 
 
     """
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args,**kwargs):
         if cls == JArray:
-            return _JArrayNewClass(*args, **kwargs)
+            return _JArrayNewClass(*args,**kwargs)
         return super(JArray, cls).__new__(cls)
 
     def __init__(self, *args, **kwargs):
@@ -151,17 +149,16 @@ class _JArray(object):
         except TypeError:
             return True
 
-
 JArray = _jobject.defineJObjectFactory("JArray", None, _JArray)
 
 
 def _JArrayNewClass(cls, ndims=1):
     """ Convert a array class description into a JArray class."""
     jc = _jclass._toJavaClass(cls)
-
+    
     if jc.isPrimitive():
         # primitives need special handling
-        typename = ('['*ndims)+_JARRAY_TYPENAME_MAP[jc.getCanonicalName()]
+        typename =('['*ndims)+_JARRAY_TYPENAME_MAP[jc.getCanonicalName()]
     else:
         typename = ('['*ndims)+'L'+str(_jobject.JObject(jc).getName())+';'
 
@@ -169,19 +166,18 @@ def _JArrayNewClass(cls, ndims=1):
 
 
 # FIXME JavaArrayClass likely should be exposed for isinstance, issubtype
-# FIXME are these not sequences?  They act like sequences but are they
+# FIXME are these not sequences?  They act like sequences but are they 
 # connected to collections.Sequence
-# has: __len__, __iter__, __getitem__
+# has: __len__, __iter__, __getitem__ 
 # missing: __contains__ (required for in)
 # Cannot be Mutable because java arrays are fixed in length
 
 def _isIterable(obj):
     if isinstance(obj, collections.Sequence):
         return True
-    if hasattr(obj, '__len__') and hasattr(obj, '__iter__'):
+    if hasattr(obj,'__len__') and hasattr(obj,'__iter__'):
         return True
     return False
-
 
 class _JavaArrayIter(object):
     def __init__(self, a):
@@ -199,37 +195,26 @@ class _JavaArrayIter(object):
 
     next = __next__
 
-# **********************************************************
+#**********************************************************
 # Char array customizer
 
-
 def _charArrayStr(self):
-    return str(_jstring.JString(self))
-
+    return ''.join(self[:])
 
 def _charArrayUnicode(self):
-    return unicode(_jstring.JString(self))
-
+    return u''.join(self[:])
 
 def _charArrayEqual(self, other):
-    if hasattr(other, '__javavalue__'):
-        return self.equals(other)
-    elif isinstance(other, (str, unicode)):
-        return self[:] == other
-    try:
-        return self.equals(self.__class__(other))
-    except TypeError:
-        return False
-
+    return self[:]==other
 
 class _JCharArrayCustomizer(object):
     def canCustomize(self, name, jc):
-        return name == 'char[]' or name == "byte[]"
+        return name == 'char[]'
 
     def customize(self, name, jc, bases, members):
         members['__str__'] = _charArrayStr
         members['__unicode__'] = _charArrayUnicode
         members['__eq__'] = _charArrayEqual
 
-
 _jcustomizer.registerClassCustomizer(_JCharArrayCustomizer())
+

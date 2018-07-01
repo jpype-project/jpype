@@ -39,19 +39,12 @@ try:
     from importlib.machinery import ModuleSpec as _ModuleSpec
     from types import ModuleType as _ModuleType
 except Exception:
-
-    # For Python2 compatiblity
-    #  (Note: customizers are not supported)
-    class _ModuleSpec(object):
-        def __init__(self, name, loader):
-            self.name = name
-            self.loader = loader
-    _ModuleType = object
+    raise ImportError("jpype.imports Not supported for Python 2")
 
 import _jpype
 import sys as _sys
-from . import _pykeywords
-from . import _jclass
+from . import _pykeywords 
+from . import _jclass 
 from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
@@ -81,14 +74,11 @@ def _getJavaClass(javaname):
     except Exception:
         return None
 
-# FIXME imports of static fields not working for now.
-
-
+#FIXME imports of static fields not working for now.
 def _copyProperties(out, mc):
-    #    for jf in mc.__javaclass__.getClassFields():
-    #        out[_keywordWrap(jf.getName())] = jf
+#    for jf in mc.__javaclass__.getClassFields():  
+#        out[_keywordWrap(jf.getName())] = jf
     pass
-
 
 def _getStaticMethods(cls):
     global _modifier
@@ -346,9 +336,11 @@ registerDomain('org')
 def _initialize():
     global _exportTypes
     global _modifier
+    _initialized = True
     _JMethod = type(_jclass.JClass('java.lang.Class').forName)
     _modifier = _jclass.JClass('java.lang.reflect.Modifier')
     _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
 
+_jinit.registerJVMInitializer(_initialize)
 
 _jinit.registerJVMInitializer(_initialize)

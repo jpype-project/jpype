@@ -46,12 +46,12 @@ JPValue JPCharType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
+EMatchType JPCharType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return JPMatch::_none;
+		return _none;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -59,16 +59,21 @@ JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			return JPMatch::_implicit;
 		}
 
 		if (value->getClass() == m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			return _implicit;
 		}
 
 		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
+		return _none;
+	}
+
+	if (JPPyString::checkCharUTF16(obj))
+	{
+		return _implicit;
 	}
 
 	if (JPPyString::checkCharUTF16(obj))
@@ -160,7 +165,7 @@ void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetCharField(c, fid, val);
 }
 
-JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
+JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
 {
 	JP_TRACE_IN("JPCharType::getArrayRange");
 	// FIXME this section is not exception safe.
@@ -204,7 +209,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize 
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
+JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -214,7 +219,7 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	return convertToPythonObject(v);
 }
 
-void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
+void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

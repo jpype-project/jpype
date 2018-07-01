@@ -28,7 +28,7 @@ JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const char* msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(JPError errType, const char* msn, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN:", errType, msn);
 	m_Type = errType;
@@ -36,7 +36,7 @@ JPypeException::JPypeException(JPError::Type errType, const char* msn, const JPS
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const string& msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(JPError errType, const string& msn, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
 	m_Type = errType;

@@ -38,11 +38,11 @@ public:
 		return m_Class;
 	}
 
-	jsize     getLength();
-	JPPyObject getRange(jsize start, jsize stop);
-	void       setRange(jsize start, jsize stop, PyObject* val);
-	JPPyObject getItem(jsize ndx);
-	void       setItem(jsize ndx, PyObject*);
+	int        getLength();
+	JPPyObject getRange(size_t start, size_t stop);
+	void       setRange(size_t start, size_t stop, PyObject* val);
+	JPPyObject getItem(size_t ndx);
+	void       setItem(size_t ndx, PyObject*);
 
 	jobject getObject()
 	{
@@ -56,7 +56,7 @@ public: // Wrapper
 private:
 	JPArrayClass* m_Class;
 	JPArrayRef    m_Object;
-	jsize        m_Length;
+	size_t        m_Length;
 } ;
 
 

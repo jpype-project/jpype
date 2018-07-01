@@ -13,17 +13,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# *****************************************************************************
+#*****************************************************************************
 import sys as _sys
 
 from . import _jproxy
 from . import _jclass
 
-__all__ = ['setupGuiEnvironment', 'shutdownGuiEnvironment']
+__all__ = ['setupGuiEnvironment','shutdownGuiEnvironment']
 
 # FIXME this is not documented
-# FIXME this is darwin specific
-
+# FIXME this is darwin specific 
 
 def setupGuiEnvironment(cb):
     if _sys.platform == 'darwin':
