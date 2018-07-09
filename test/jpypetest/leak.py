@@ -25,6 +25,12 @@ def haveResource():
         return True
     return False
 
+def hasRefCount():
+    try:
+        sys.getrefcount(sys)
+        return True
+    except:
+        return False
 
 class LeakChecker():
 
@@ -138,6 +144,7 @@ class LeakTestCase(common.JPypeTestCase):
     def testInvokeLeak(self):
         self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 5000))
 
+    @unittest.skipUnless(hasRefCount(), "no refcount")
     def testRefCountCall(self):
         obj = jpype.JString("help me")
         initialObj = sys.getrefcount(obj)

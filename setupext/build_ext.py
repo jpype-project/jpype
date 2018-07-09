@@ -23,7 +23,7 @@ class BuildExtCommand(build_ext):
     """
 
     # extra compile args
-    copt = {'msvc': ['/EHsc'],
+    copt = {'msvc': [],
             'unix' : ['-ggdb'],
             'mingw32' : [],
            }

@@ -16,6 +16,7 @@
  *****************************************************************************/
 
 #include <pyjp.h>
+#include <jpype_memory_view.h>
 
 #ifdef HAVE_NUMPY
 //	#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -72,8 +73,8 @@ PyMODINIT_FUNC init_jpype()
 #else
 	PyObject* module = Py_InitModule("_jpype", jpype_methods);
 #endif
-
 	Py_INCREF(module);
+        PyModule_AddStringConstant(module,"__version__","0.7.0");
 
 	// Initialize the Java static resources
 	JPEnv::init();

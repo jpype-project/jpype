@@ -73,7 +73,7 @@ void JPField::setStaticField(PyObject* val)
 		JP_RAISE_RUNTIME_ERROR(err.str().c_str());
 	}
 
-	if (m_TypeCache->canConvertToJava(val) <= _explicit)
+	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_TypeCache->getCanonicalName();
@@ -108,7 +108,7 @@ void JPField::setField(jobject inst, PyObject* val)
 		JP_RAISE_RUNTIME_ERROR(err.str().c_str());
 	}
 
-	if (m_TypeCache->canConvertToJava(val) <= _explicit)
+	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_TypeCache->getCanonicalName();

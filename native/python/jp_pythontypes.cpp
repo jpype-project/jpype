@@ -1,10 +1,11 @@
 #include <Python.h>
 #include <jpype.h>
+#include <jpype_memory_view.h>
 
 /****************************************************************************
  * Base object
  ***************************************************************************/
-JPPyObject::JPPyObject(JPPyRef usage, PyObject* obj)
+JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
 : pyobj(NULL)
 {
 	// See if we are to check the result.
@@ -210,7 +211,7 @@ JPPyObject JPPyInt::fromLong(jlong l)
 #if PY_MAJOR_VERSION >= 3 
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 #else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong(l));
+	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int)l));
 #endif
 }
 
@@ -255,7 +256,7 @@ jlong JPPyLong::asLong(PyObject* obj)
 #elif LONG_MAX > 2147483647
 	res = PyInt_Check(obj) ? PyInt_AsLong(obj) : PyLong_AsLongLong(obj);
 #else
-	res = PyLong_asLongLong(obj);
+	res = PyLong_AsLongLong(obj);
 #endif
 	JP_PY_CHECK();
 	return res;
@@ -302,17 +303,10 @@ void JPPyString::getRawUnicodeString(jchar** outBuffer, jlong& outSize)
 
 JPPyObject JPPyString::fromCharUTF16(jchar c)
 {
-#if PY_MAJOR_VERSION < 3
-	if (c < 128)
-	{
-		char c1 = c;
-		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(&c1, 1));
-	}
+#if PY_MAJOR_VERSION < 3 || defined(PYPY_VERSION)
 	wchar_t buf[1];
 	buf[0] = c;
-	PyObject* buf = PyUnicode_FromWideChar(buf, 1);
-	JP_PY_CHECK();
-	return JPPyObject(buf, true);
+	return JPPyObject(JPPyRef::_call, PyUnicode_FromWideChar(buf, 1));
 #else
 	if (c < 128)
 	{
@@ -323,6 +317,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 	Py_UCS4 c2 = c;
 	PyUnicode_WriteChar(buf.get(), 0, c2);
 	JP_PY_CHECK();
+        PyUnicode_READY(buf.get());
 	return buf;
 #endif
 }
@@ -359,10 +354,10 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		return (jchar) val;
 	}
 
-#if PY_MAJOR_VERSION < 3
+#if PY_MAJOR_VERSION < 3 
 	if (PyString_Check(pyobj))
 	{
-		int sz = PyString_Size(pyobj);
+		Py_ssize_t sz = PyString_Size(pyobj);
 		if (sz != 1)
 			JP_RAISE_VALUE_ERROR("Char must be length 1");
 
@@ -381,6 +376,31 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		PyUnicode_AsWideChar((PyUnicodeObject*) pyobj, &buffer, 1);
 		return buffer;
 	}
+#elif defined(PYPY_VERSION)
+	if (PyBytes_Check(pyobj))
+	{
+		int sz = PyBytes_Size(pyobj);
+		if (sz != 1)
+			JP_RAISE_VALUE_ERROR("Char must be length 1");
+
+		jchar c = PyBytes_AsString(pyobj)[0];
+		if (PyErr_Occurred())
+			JP_RAISE_PYTHON("Error in byte conversion");
+		return c;
+	}
+	if (PyUnicode_Check(pyobj))
+	{
+		if (PyUnicode_GET_LENGTH(pyobj) > 1)
+			JP_RAISE_VALUE_ERROR("Char must be length 1");
+
+		PyUnicode_READY(pyobj);
+		Py_UCS4 value = PyUnicode_READ_CHAR(pyobj, 0);
+		if (value > 0xffff)
+		{
+			JP_RAISE_VALUE_ERROR("Unable to pack 4 byte unicode into java char");
+		}
+		return value;
+	}
 #else
 	if (PyBytes_Check(pyobj))
 	{
@@ -398,6 +418,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		if (PyUnicode_GET_LENGTH(pyobj) > 1)
 			JP_RAISE_VALUE_ERROR("Char must be length 1");
 
+		PyUnicode_READY(pyobj);
 		Py_UCS4 value = PyUnicode_ReadChar(pyobj, 0);
 		if (value > 0xffff)
 		{
@@ -426,33 +447,22 @@ bool JPPyString::check(PyObject* obj)
 /** Create a new string from utf8 encoded string.
  * Note: java utf8 is not utf8.
  */
-JPPyObject JPPyString::fromStringUTF8(const string& str)
+JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 {
 	size_t len = str.size();
 
 #if PY_MAJOR_VERSION < 3
-	// Figure out which representation makes the most sense.
-	bool hasUTF8 = false;
-	for (int i = 0; i < len; ++i)
-	{
-		if (str[i]&0x80 == 0x80)
-		{
-			hasUTF8 = true;
-			break;
-		}
-	}
-
-	// Okay it is really just a string
-	if (hasUTF8)
+        // Python 2 is unicode only on request
+	if (unicode)
 	{
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(str.c_str(), len));
 	}
-		// Yes it really needs to be unicode
 	else
 	{
 		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(str.c_str(), len));
 	}
 #else
+        // Python 3 is always unicode
 	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 #endif
@@ -468,9 +478,8 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
-		JPPyObject val(PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
-		JP_PY_CHECK();
-		PyBytes_AsStringAndSize(val, &buffer, &size); // internal reference
+		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
+		PyBytes_AsStringAndSize(val.get(), &buffer, &size); // internal reference
 		JP_PY_CHECK();
 		if (buffer != NULL)
 			return string(buffer, size);
@@ -534,7 +543,7 @@ void JPPyMemoryView::getByteBufferSize(PyObject* obj, char** outBuffer, long& ou
 
 JPPyTuple JPPyTuple::newTuple(jlong sz)
 {
-	return JPPyTuple(JPPyRef::_call, PyTuple_New(sz));
+	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t)sz));
 }
 
 bool JPPyTuple::check(PyObject* obj)
@@ -545,7 +554,7 @@ bool JPPyTuple::check(PyObject* obj)
 void JPPyTuple::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
-	PyTuple_SetItem(pyobj, ndx, val); // steals reference
+	PyTuple_SetItem(pyobj, (Py_ssize_t)ndx, val); // steals reference
 	JP_PY_CHECK();
 
 	// Return the stolen reference, but only after transfer has been completed.
@@ -554,7 +563,7 @@ void JPPyTuple::setItem(jlong ndx, PyObject* val)
 
 PyObject* JPPyTuple::getItem(jlong ndx)
 {
-	PyObject* res = PyTuple_GetItem(pyobj, ndx);
+	PyObject* res = PyTuple_GetItem(pyobj, (Py_ssize_t)ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -571,7 +580,7 @@ jlong JPPyTuple::size()
 
 JPPyList JPPyList::newList(jlong sz)
 {
-	return JPPyList(JPPyRef::_call, PyList_New(sz));
+	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t)sz));
 }
 
 bool JPPyList::check(PyObject* obj)
@@ -582,13 +591,13 @@ bool JPPyList::check(PyObject* obj)
 void JPPyList::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
-	PySequence_SetItem(pyobj, ndx, val); // Does not steal
+	PySequence_SetItem(pyobj, (Py_ssize_t)ndx, val); // Does not steal
 	JP_PY_CHECK();
 }
 
 PyObject* JPPyList::getItem(jlong ndx)
 {
-	PyObject* res = PyList_GetItem(pyobj, ndx);
+	PyObject* res = PyList_GetItem(pyobj, (Py_ssize_t)ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -702,7 +711,7 @@ void JPPyErr::clear()
 
 bool JPPyErr::occurred()
 {
-	return PyErr_Occurred();
+	return PyErr_Occurred()!=0;
 }
 
 bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)

@@ -43,12 +43,12 @@ JPValue JPLongType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-EMatchType JPLongType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPLongType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return _none;
+		return JPMatch::_none;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -56,17 +56,17 @@ EMatchType JPLongType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return _exact;
+			return JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			return _implicit;
+			return JPMatch::_implicit;
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return _none;
+		return JPMatch::_none;
 	}
 
 	// FIXME this logic is screwy as it implies that 
@@ -74,15 +74,15 @@ EMatchType JPLongType::canConvertToJava(PyObject* obj)
 	// integer types should be exact or none of them.
 	if (JPPyInt::check(obj))
 	{
-		return _implicit;
+		return JPMatch::_implicit;
 	}
 
 	if (JPPyLong::check(obj))
 	{
-		return _exact;
+		return JPMatch::_exact;
 	}
 
-	return _none;
+	return JPMatch::_none;
 }
 
 jvalue JPLongType::convertToJava(PyObject* obj)
@@ -117,7 +117,7 @@ jvalue JPLongType::convertToJava(PyObject* obj)
 	return res; // never reached
 }
 
-jarray JPLongType::newArrayInstance(JPJavaFrame& frame, int sz)
+jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewLongArray(sz);
 }
@@ -168,12 +168,12 @@ void JPLongType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetLongField(c, fid, val);
 }
 
-JPPyObject JPLongType::getArrayRange(JPJavaFrame& frame, jarray a, int lo, int hi)
+JPPyObject JPLongType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
 {
 	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_INT64, PyLong_FromLong);
 }
 
-void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
+void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPLongType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
@@ -198,7 +198,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int leng
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -208,7 +208,7 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 	return convertToPythonObject(v);
 }
 
-void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
+void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

@@ -159,9 +159,9 @@ inline JPPyObject getSlice(JPJavaFrame& frame, jarray array, int lo, int hi, int
 		jtype* val = (jtype*) accessor.get();
 		// use python lists for results
 		for (Py_ssize_t i = lo; i < hi; i++)
-			PyList_SET_ITEM(res, i - lo, convert(val[i]));
+			PyList_SET_ITEM(res.get(), i - lo, convert(val[i]));
 	}
-	return res.keep();
+	return res;
 #endif
 }
 

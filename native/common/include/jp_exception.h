@@ -53,17 +53,21 @@
  *
  * FIXME consider adding Type to the name.
  */
-enum JPError
+namespace JPError
 {
-	_java_error = 0,
-	_python_error = 1,
-	_runtime_error = 2,
-	_type_error = 3,
-	_value_error = 4,
-	_overflow_error = 5,
-	_index_error = 6,
-	_attribute_error = 7
-} ;
+
+	enum Type
+	{
+		_java_error = 0,
+		_python_error = 1,
+		_runtime_error = 2,
+		_type_error = 3,
+		_value_error = 4,
+		_overflow_error = 5,
+		_index_error = 6,
+		_attribute_error = 7
+	} ;
+}
 
 // Create a stackinfo for a particular location in the code that can then 
 // be passed to the handler routine for auditing.
@@ -135,8 +139,8 @@ class JPypeException
 {
 public:
 	JPypeException(jthrowable, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError errorType, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError errorType, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
 
 	~JPypeException();
@@ -163,7 +167,7 @@ public:
 	jthrowable getJavaException();
 
 private:
-	JPError m_Type;
+	JPError::Type m_Type;
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;

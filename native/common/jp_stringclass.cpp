@@ -37,14 +37,14 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 	JP_TRACE_OUT;
 }
 
-EMatchType JPStringClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPStringType::canConvertToJava");
 	ASSERT_NOT_NULL(obj);
 
 	if (obj == NULL || JPPyObject::isNone(obj))
 	{
-		return _implicit;
+		return JPMatch::_implicit;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -52,17 +52,17 @@ EMatchType JPStringClass::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return _exact;
+			return JPMatch::_exact;
 		}
-		return _none;
+		return JPMatch::_none;
 	}
 
 	if (JPPyString::check(obj))
 	{
-		return _exact;
+		return JPMatch::_exact;
 	}
 
-	return _none;
+	return JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

@@ -41,12 +41,12 @@ JPValue JPDoubleType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-EMatchType JPDoubleType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return _none;
+		return JPMatch::_none;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -54,30 +54,30 @@ EMatchType JPDoubleType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return _exact;
+			return JPMatch::_exact;
 		}
 
 		if (value->getClass() == m_BoxedClass)
 		{
-			return _implicit;
+			return JPMatch::_implicit;
 		}
 
 		// Java does not permit boxed to boxed conversions.
-		return _none;
+		return JPMatch::_none;
 	}
 
 	if (JPPyFloat::check(obj))
 	{
-		return _exact;
+		return JPMatch::_exact;
 	}
 
 	// Java allows conversion to any type with a longer range even if lossy
 	if (JPPyInt::check(obj) || JPPyLong::check(obj))
 	{
-		return _implicit;
+		return JPMatch::_implicit;
 	}
 
-	return _none;
+	return JPMatch::_none;
 }
 
 jvalue JPDoubleType::convertToJava(PyObject* obj)
@@ -117,7 +117,7 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 	return res;
 }
 
-jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, int sz)
+jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewDoubleArray(sz);
 }
@@ -168,12 +168,12 @@ void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObjec
 	frame.SetDoubleField(c, fid, val);
 }
 
-JPPyObject JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, int lo, int hi)
+JPPyObject JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
 {
 	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_FLOAT64, PyFloat_FromDouble);
 }
 
-void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
+void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
@@ -198,7 +198,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int le
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -208,7 +208,7 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 	return convertToPythonObject(v);
 }
 
-void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
+void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

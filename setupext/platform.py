@@ -44,7 +44,10 @@ if not found_jni:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
-    platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+    if sys.version > '3':
+        platform_specific['extra_compile_args'] = ['/Zi', '/EHsc', '/std:c++14']
+    else:
+        platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
     platform_specific['extra_link_args'] = ['/DEBUG']
     jni_md_platform = 'win32'
  

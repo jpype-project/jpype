@@ -61,7 +61,7 @@ JPValue JPClass::newInstance(JPPyObjectVector& args)
 	return m_Constructors->invokeConstructor(args);
 }
 
-jarray JPClass::newArrayInstance(JPJavaFrame& frame, int sz)
+jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);
 }
@@ -196,7 +196,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
+JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
 {
 	jobjectArray array = (jobjectArray) a;
 
@@ -213,7 +213,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, int start, int l
 	return res;
 }
 
-void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* vals)
+void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* vals)
 {
 	JP_TRACE_IN("JPClass::setArrayRange");
 	jobjectArray array = (jobjectArray) a;
@@ -225,7 +225,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length,
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		if (this->canConvertToJava(v) <= _explicit)
+		if (this->canConvertToJava(v) <= JPMatch::_explicit)
 		{
 			JP_RAISE_TYPE_ERROR("Unable to convert.");
 		}
@@ -239,13 +239,13 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length,
 	JP_TRACE_OUT;
 }
 
-void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* val)
+void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
 {
 	jvalue v = convertToJava(val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);
 }
 
-JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
 	JP_TRACE_IN("JPClass::getArrayItem");
 	jobjectArray array = (jobjectArray) a;
@@ -299,14 +299,14 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	JP_TRACE_OUT;
 }
 
-EMatchType JPClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::canConvertToJava");
 	if (JPPyObject::isNone(obj))
 	{
-		return _implicit;
+		return JPMatch::_implicit;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -318,12 +318,12 @@ EMatchType JPClass::canConvertToJava(PyObject* obj)
 		if (oc == this)
 		{
 			// hey, this is me! :)
-			return _exact;
+			return JPMatch::_exact;
 		}
 
 		if (frame.IsAssignableFrom(oc->getJavaClass(), m_Class.get()))
 		{
-			return _implicit;
+			return JPMatch::_implicit;
 		}
 	}
 
@@ -337,12 +337,12 @@ EMatchType JPClass::canConvertToJava(PyObject* obj)
 			if (frame.IsAssignableFrom(itf[i]->getJavaClass(), m_Class.get()))
 			{
 				JP_TRACE("implicit proxy");
-				return _implicit;
+				return JPMatch::_implicit;
 			}
 		}
 	}
 
-	return _none;
+	return JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -386,7 +386,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 bool JPClass::isAssignableFrom(JPClass* o)
 {
 	JPJavaFrame frame;
-	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass());
+	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
 }
 
 // FIXME one of these is a duplicate.
@@ -395,7 +395,7 @@ bool JPClass::isSubTypeOf(JPClass* other) const
 {
 	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
 	JPJavaFrame frame;
-	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass());
+	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass()) != 0;
 }
 
 JPClass* JPClass::getSuperClass()

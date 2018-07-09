@@ -29,6 +29,7 @@ if sys.version > '3':
 
 # Test code
 class BoxedTestCase(common.JPypeTestCase):
+    __name__="BoxedTestCase"
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.Boxed = jpype.JClass('jpype.boxed.Boxed')

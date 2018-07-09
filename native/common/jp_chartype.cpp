@@ -46,12 +46,12 @@ JPValue JPCharType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-EMatchType JPCharType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	if (JPPyObject::isNone(obj))
 	{
-		return _none;
+		return JPMatch::_none;
 	}
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -59,24 +59,24 @@ EMatchType JPCharType::canConvertToJava(PyObject* obj)
 	{
 		if (value->getClass() == this)
 		{
-			return _exact;
+			return JPMatch::_exact;
 		}
 
 		if (value->getClass() == m_BoxedClass)
 		{
-			return _implicit;
+			return JPMatch::_implicit;
 		}
 
 		// Java does not permit boxed to boxed conversions.
-		return _none;
+		return JPMatch::_none;
 	}
 
 	if (JPPyString::checkCharUTF16(obj))
 	{
-		return _implicit;
+		return JPMatch::_implicit;
 	}
 
-	return _none;
+	return JPMatch::_none;
 }
 
 jvalue JPCharType::convertToJava(PyObject* obj)
@@ -109,7 +109,7 @@ jvalue JPCharType::convertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-jarray JPCharType::newArrayInstance(JPJavaFrame& frame, int sz)
+jarray JPCharType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewCharArray(sz);
 }
@@ -160,7 +160,7 @@ void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetCharField(c, fid, val);
 }
 
-JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
+JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
 {
 	JP_TRACE_IN("JPCharType::getArrayRange");
 	// FIXME this section is not exception safe.
@@ -179,7 +179,7 @@ JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, int start, in
 	JP_TRACE_OUT;
 }
 
-void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
+void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
@@ -204,7 +204,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int leng
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
 	array_t array = (array_t) a;
 	type_t val;
@@ -214,7 +214,7 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
 	return convertToPythonObject(v);
 }
 
-void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx, PyObject* obj)
+void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));

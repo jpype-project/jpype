@@ -59,10 +59,24 @@
 #endif
 
 // Define this and use to allow destructors to throw in C++11 or later
-#if __cplusplus >= 201103L
+#if defined(_MSC_VER)  
+
+// Visual Studio C++ does not seem have changed __cplusplus since 1997
+#if (_MSVC_LAND >= 201402)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
-#define NO_EXCEPT_FALSE
+#define NO_EXCEPT_FALSE throw(JPypeException)
+#endif
+
+#else
+
+// For all the compilers than understand standards
+#if (__cplusplus >= 201103L) 
+#define NO_EXCEPT_FALSE noexcept(false)
+#else
+#define NO_EXCEPT_FALSE throw(JPypeException)
+#endif
+
 #endif
 
 #include <map>

@@ -45,15 +45,15 @@ class NumericTestCase(common.JPypeTestCase):
         f = jwrapper(min_value)
         self.assertEqual(min_value, javawrapper(f).longValue())
         
-        self.assertRaises(expected, javawrapper, max_value+1)
-        self.assertRaises(expected, jwrapper, max_value+1)
-        self.assertRaises(expected, javawrapper, min_value-1)
-        self.assertRaises(expected, jwrapper, min_value-1)
+        self.assertRaises(OverflowError, javawrapper, max_value+1)
+        self.assertRaises(OverflowError, jwrapper, max_value+1)
+        self.assertRaises(OverflowError, javawrapper, min_value-1)
+        self.assertRaises(OverflowError, jwrapper, min_value-1)
 
         # test against int overflow
         if(max_value < 2**32):
-            self.assertRaises(expected, javawrapper, 2**32)
-            self.assertRaises(expected, jwrapper, 2**32)
+            self.assertRaises(OverflowError, javawrapper, 2**32)
+            self.assertRaises(OverflowError, jwrapper, 2**32)
 
     def testJCharWrapper(self):
         self.checkJWrapper(-2**7, 2**7-1, java.lang.Byte, JByte)
@@ -75,7 +75,7 @@ class NumericTestCase(common.JPypeTestCase):
         javawrapper = java.lang.Float
         jwrapper(float(2**127))
         javawrapper(float(2**127))
-        self.assertRaises(TypeError, jwrapper, float(2**128))
+        self.assertRaises(OverflowError, jwrapper, float(2**128))
         #self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
 
         # this difference might be undesirable, 

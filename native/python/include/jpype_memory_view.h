@@ -55,7 +55,11 @@ public:
 	{
 		if (!PyObject_CheckBuffer(sequence))
 			return;
+#ifdef PYPY_VERSION
+		memview = PyMemoryView_FromObject(sequence);
+#else
 		memview = PyMemoryView_GetContiguous(sequence, PyBUF_READ, 'C');
+#endif
 
 		// check for TypeError, if no underlying py_buff exists.
 		if (memview == NULL  || PyErr_Occurred())

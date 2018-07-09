@@ -102,6 +102,7 @@ class JObject(object):
     def __ne__(self, other):
         return not self.equals(other)
 
+_jclass._JObject = JObject 
 
 def _JObjectFactory(v=None, tp=None):
     """ Creates a Java object.

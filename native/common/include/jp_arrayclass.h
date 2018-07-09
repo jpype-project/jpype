@@ -28,7 +28,7 @@ public:
 
 public:
 	virtual JPPyObject convertToPythonObject(jvalue val) override;
-	virtual EMatchType canConvertToJava(PyObject* obj) override;
+	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue convertToJava(PyObject* obj) override;
 
 	JPValue newInstance(int length);
@@ -44,7 +44,7 @@ public:
 	 * @param end is the end of the range exclusive.
 	 * @return a jvalue containing a java vector.
 	 */
-	jvalue convertToJavaVector(JPPyObjectVector& refs, size_t start, size_t end);
+	jvalue convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end);
 
 	virtual JPClass* getComponentType()
 	{

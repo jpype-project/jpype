@@ -1011,19 +1011,19 @@ jobject JPJavaFrame::CallNonvirtualObjectMethod(jobject obj, jclass claz, jmetho
 	return env->functions->CallNonvirtualObjectMethod(env, obj, claz, mid);
 }
 
-jbyteArray JPJavaFrame::NewByteArray(jint len)
+jbyteArray JPJavaFrame::NewByteArray(jsize len)
 {
 	JPCall call(*this, "NewByteArray");
 	return env->functions->NewByteArray(env, len);
 }
 
-void JPJavaFrame::SetByteArrayRegion(jbyteArray array, int start, int len, jbyte* vals)
+void JPJavaFrame::SetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals)
 {
 	JPCall call(*this, "SetByteArrayRegion");
 	env->functions->SetByteArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetByteArrayRegion(jbyteArray array, int start, int len, jbyte* vals)
+void JPJavaFrame::GetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals)
 {
 	JPCall call(*this, "GetByteArrayRegion");
 	env->functions->GetByteArrayRegion(env, array, start, len, vals);
@@ -1041,19 +1041,19 @@ void JPJavaFrame::ReleaseByteArrayElements(jbyteArray array, jbyte* v, jint mode
 	env->functions->ReleaseByteArrayElements(env, array, v, mode);
 }
 
-jshortArray JPJavaFrame::NewShortArray(jint len)
+jshortArray JPJavaFrame::NewShortArray(jsize len)
 {
 	JPCall call(*this, "NewShortArray");
 	return env->functions->NewShortArray(env, len);
 }
 
-void JPJavaFrame::SetShortArrayRegion(jshortArray array, int start, int len, jshort* vals)
+void JPJavaFrame::SetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals)
 {
 	JPCall call(*this, "SetShortArrayRegion");
 	env->functions->SetShortArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetShortArrayRegion(jshortArray array, int start, int len, jshort* vals)
+void JPJavaFrame::GetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals)
 {
 	JPCall call(*this, "GetShortArrayRegion");
 	env->functions->GetShortArrayRegion(env, array, start, len, vals);
@@ -1071,19 +1071,19 @@ void JPJavaFrame::ReleaseShortArrayElements(jshortArray array, jshort* v, jint m
 	env->functions->ReleaseShortArrayElements(env, array, v, mode);
 }
 
-jintArray JPJavaFrame::NewIntArray(jint len)
+jintArray JPJavaFrame::NewIntArray(jsize len)
 {
 	JPCall call(*this, "NewIntArray");
 	return env->functions->NewIntArray(env, len);
 }
 
-void JPJavaFrame::SetIntArrayRegion(jintArray array, int start, int len, jint* vals)
+void JPJavaFrame::SetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals)
 {
 	JPCall call(*this, "SetIntArrayRegion");
 	env->functions->SetIntArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetIntArrayRegion(jintArray array, int start, int len, jint* vals)
+void JPJavaFrame::GetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals)
 {
 	JPCall call(*this, "GetIntArrayRegion");
 	env->functions->GetIntArrayRegion(env, array, start, len, vals);
@@ -1101,19 +1101,19 @@ void JPJavaFrame::ReleaseIntArrayElements(jintArray array, jint* v, jint mode)
 	env->functions->ReleaseIntArrayElements(env, array, v, mode);
 }
 
-jlongArray JPJavaFrame::NewLongArray(jint len)
+jlongArray JPJavaFrame::NewLongArray(jsize len)
 {
 	JPCall call(*this, "NewLongArray");
 	return env->functions->NewLongArray(env, len);
 }
 
-void JPJavaFrame::SetLongArrayRegion(jlongArray array, int start, int len, jlong* vals)
+void JPJavaFrame::SetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals)
 {
 	JPCall call(*this, "SetLongArrayRegion");
 	env->functions->SetLongArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetLongArrayRegion(jlongArray array, int start, int len, jlong* vals)
+void JPJavaFrame::GetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals)
 {
 	JPCall call(*this, "GetLongArrayRegion");
 	env->functions->GetLongArrayRegion(env, array, start, len, vals);
@@ -1131,19 +1131,19 @@ void JPJavaFrame::ReleaseLongArrayElements(jlongArray array, jlong* v, jint mode
 	env->functions->ReleaseLongArrayElements(env, array, v, mode);
 }
 
-jfloatArray JPJavaFrame::NewFloatArray(jint len)
+jfloatArray JPJavaFrame::NewFloatArray(jsize len)
 {
 	JPCall call(*this, "NewFloatArray");
 	return env->functions->NewFloatArray(env, len);
 }
 
-void JPJavaFrame::SetFloatArrayRegion(jfloatArray array, int start, int len, jfloat* vals)
+void JPJavaFrame::SetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals)
 {
 	JPCall call(*this, "SetFloatArrayRegion");
 	env->functions->SetFloatArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetFloatArrayRegion(jfloatArray array, int start, int len, jfloat* vals)
+void JPJavaFrame::GetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals)
 {
 	JPCall call(*this, "GetFloatArrayRegion");
 	env->functions->GetFloatArrayRegion(env, array, start, len, vals);
@@ -1161,19 +1161,19 @@ void JPJavaFrame::ReleaseFloatArrayElements(jfloatArray array, jfloat* v, jint m
 	env->functions->ReleaseFloatArrayElements(env, array, v, mode);
 }
 
-jdoubleArray JPJavaFrame::NewDoubleArray(jint len)
+jdoubleArray JPJavaFrame::NewDoubleArray(jsize len)
 {
 	JPCall call(*this, "NewDoubleArray");
 	return env->functions->NewDoubleArray(env, len);
 }
 
-void JPJavaFrame::SetDoubleArrayRegion(jdoubleArray array, int start, int len, jdouble* vals)
+void JPJavaFrame::SetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals)
 {
 	JPCall call(*this, "SetDoubleArrayRegion");
 	env->functions->SetDoubleArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetDoubleArrayRegion(jdoubleArray array, int start, int len, jdouble* vals)
+void JPJavaFrame::GetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals)
 {
 	JPCall call(*this, "GetDoubleArrayRegion");
 	env->functions->GetDoubleArrayRegion(env, array, start, len, vals);
@@ -1191,19 +1191,19 @@ void JPJavaFrame::ReleaseDoubleArrayElements(jdoubleArray array, jdouble* v, jin
 	env->functions->ReleaseDoubleArrayElements(env, array, v, mode);
 }
 
-jcharArray JPJavaFrame::NewCharArray(jint len)
+jcharArray JPJavaFrame::NewCharArray(jsize len)
 {
 	JPCall call(*this, "NewCharArray");
 	return env->functions->NewCharArray(env, len);
 }
 
-void JPJavaFrame::SetCharArrayRegion(jcharArray array, int start, int len, jchar* vals)
+void JPJavaFrame::SetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals)
 {
 	JPCall call(*this, "SetCharArrayRegion");
 	env->functions->SetCharArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetCharArrayRegion(jcharArray array, int start, int len, jchar* vals)
+void JPJavaFrame::GetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals)
 {
 	JPCall call(*this, "GetCharArrayRegion");
 	env->functions->GetCharArrayRegion(env, array, start, len, vals);
@@ -1221,19 +1221,19 @@ void JPJavaFrame::ReleaseCharArrayElements(jcharArray array, jchar* v, jint mode
 	env->functions->ReleaseCharArrayElements(env, array, v, mode);
 }
 
-jbooleanArray JPJavaFrame::NewBooleanArray(jint len)
+jbooleanArray JPJavaFrame::NewBooleanArray(jsize len)
 {
 	JPCall call(*this, "NewBooleanArray");
 	return env->functions->NewBooleanArray(env, len);
 }
 
-void JPJavaFrame::SetBooleanArrayRegion(jbooleanArray array, int start, int len, jboolean* vals)
+void JPJavaFrame::SetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals)
 {
 	JPCall call(*this, "SetBooleanArrayRegion");
 	env->functions->SetBooleanArrayRegion(env, array, start, len, vals);
 }
 
-void JPJavaFrame::GetBooleanArrayRegion(jbooleanArray array, int start, int len, jboolean* vals)
+void JPJavaFrame::GetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals)
 {
 	JPCall call(*this, "GetBooleanArrayRegion");
 	env->functions->GetBooleanArrayRegion(env, array, start, len, vals);
@@ -1287,13 +1287,13 @@ jboolean JPJavaFrame::IsInstanceOf(jobject a0, jclass a1)
 	return env->functions->IsInstanceOf(env, a0, a1);
 }
 
-jobjectArray JPJavaFrame::NewObjectArray(int a0, jclass a1, jobject a2)
+jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass a1, jobject a2)
 {
 	JPCall call(*this, "NewObjectArray");
 	return env->functions->NewObjectArray(env, a0, a1, a2);
 }
 
-void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, int a1, jobject a2)
+void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2)
 {
 	JPCall call(*this, "SetObjectArrayElement");
 	env->functions->SetObjectArrayElement(env, a0, a1, a2);
@@ -1323,7 +1323,7 @@ jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)
 	return env->functions->IsAssignableFrom(env, a0, a1);
 }
 
-jstring JPJavaFrame::NewStringUTF(const char* a0, int a1)
+jstring JPJavaFrame::NewStringUTF(const char* a0)
 {
 	JPCall call(*this, "NewString");
 	return env->functions->NewStringUTF(env, a0);
@@ -1353,7 +1353,7 @@ jsize JPJavaFrame::GetArrayLength(jarray a0)
 	return env->functions->GetArrayLength(env, a0);
 }
 
-jobject JPJavaFrame::GetObjectArrayElement(jobjectArray a0, int a1)
+jobject JPJavaFrame::GetObjectArrayElement(jobjectArray a0, jsize a1)
 {
 	JPCall call(*this, "GetObjectArrayElement");
 	return env->functions->GetObjectArrayElement(env, a0, a1);
