@@ -65,7 +65,7 @@ extern "C"
 	memorysimpleview_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 	{
 		PyObject *obj;
-		static char *kwlist[] = {"object", 0};
+		static char *kwlist[] = {"object", NULL};
 		if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:memoryview", kwlist,
 				&obj))
 		{

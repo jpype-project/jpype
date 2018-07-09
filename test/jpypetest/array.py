@@ -87,7 +87,7 @@ class ArrayTestCase(common.JPypeTestCase):
         for i in t.i:
             self.assertNotEqual(i, 0)
 
-    @unittest.skip
+    #@unittest.skip
     def testGetSubclass(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getSubClassArray()
@@ -103,10 +103,9 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(str(v), 'avcd')
         self.assertEqual(unicode(v), u'avcd')
 
-    @unittest.skip
     def testByteArrayAsString(self):
         t = JClass("jpype.array.TestArray")()
-        v = t.byteArray
+        v = t.getByteArray()
         self.assertEqual(str(v), 'avcd')
 
     def testByteArrayIntoVector(self):

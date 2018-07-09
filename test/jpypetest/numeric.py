@@ -45,7 +45,7 @@ class NumericTestCase(common.JPypeTestCase):
         self.assertEqual(min_value, javawrapper(min_value).longValue())
         f = jwrapper(min_value)
         self.assertEqual(min_value, javawrapper(f).longValue())
-
+        
         self.assertRaises(OverflowError, javawrapper, max_value+1)
         self.assertRaises(OverflowError, jwrapper, max_value+1)
         self.assertRaises(OverflowError, javawrapper, min_value-1)
@@ -78,11 +78,10 @@ class NumericTestCase(common.JPypeTestCase):
         jwrapper(float(2**127))
         javawrapper(float(2**127))
         self.assertRaises(OverflowError, jwrapper, float(2**128))
-        # self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
+        #self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
 
-        # this difference might be undesirable,
-        # a double bigger than maxfloat passed to java.lang.Float turns into infinity
-        self.assertEquals(float('inf'), javawrapper(
-            float(2**128)).doubleValue())
-        self.assertEquals(
-            float('-inf'), javawrapper(float(-2**128)).doubleValue())
+        # this difference might be undesirable, 
+        # a double bigger than maxfloat passed to java.lang.Float turns into infinity 
+        self.assertEquals(float('inf'), javawrapper(float(2**128)).doubleValue())
+        self.assertEquals(float('-inf'), javawrapper(float(-2**128)).doubleValue())
+                

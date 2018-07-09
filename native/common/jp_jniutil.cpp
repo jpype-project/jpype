@@ -225,7 +225,7 @@ bool JPJni::equalsObject(jobject obj1, jobject obj2)
 	JPJavaFrame frame;
 	jvalue v;
 	v.l = obj2;
-	return frame.CallBooleanMethodA(obj1, s_Object_EqualsID, &v);
+	return frame.CallBooleanMethodA(obj1, s_Object_EqualsID, &v) != 0;
 }
 
 jobject JPJni::stringToCharArray(jstring str)
@@ -745,5 +745,5 @@ jstring JPJni::fromStringUTF8(const string& str)
 {
 	JPJavaFrame frame;
 	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
-	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str(), mstr.length()));
+	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
 }

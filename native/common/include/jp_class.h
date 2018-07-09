@@ -52,7 +52,7 @@ public:
 	 * @param obj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual EMatchType canConvertToJava(PyObject* obj);
+	virtual JPMatch::Type canConvertToJava(PyObject* obj);
 
 	/**
 	 * Execute a conversion from Python to java.
@@ -104,11 +104,11 @@ public:
 	virtual JPPyObject  getField(JPJavaFrame& frame, jobject obj, jfieldID fid);
 	virtual void        setField(JPJavaFrame& frame, jobject obj, jfieldID fid, PyObject* val);
 
-	virtual jarray      newArrayInstance(JPJavaFrame& frame, int size);
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, int start, int length);
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, int start, int length, PyObject* vals);
-	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, int ndx);
-	virtual void        setArrayItem(JPJavaFrame& frame, jarray, int ndx, PyObject* val);
+	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size);
+	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length);
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length, PyObject* vals);
+	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);
+	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
 	/** Determine if this class is a super or implements another class.
 	 * 

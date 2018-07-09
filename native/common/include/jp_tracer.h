@@ -21,12 +21,12 @@
 #ifdef JP_TRACING_ENABLE
 #define JP_TRACE_IN(n) JPypeTracer _trace(n); try {
 #define JP_TRACE_OUT } catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
-#define JP_TRACE(m...) JPypeTracer::trace(m)
+#define JP_TRACE(...) JPypeTracer::trace(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
 #define JP_TRACE_IN(n)  try {
 #define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
-#define JP_TRACE(m...)
+#define JP_TRACE(...)
 #define JP_TRACE_PY(m, obj) 
 #endif
 

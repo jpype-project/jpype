@@ -34,7 +34,7 @@ public:
 	virtual ~JPBoxedClass();
 
 	void setPrimitiveType(JPPrimitiveType* primitiveType);
-	virtual EMatchType canConvertToJava(PyObject* obj) override;
+	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue     convertToJava(PyObject* obj) override;
 protected:
 	JPPrimitiveType* m_PrimitiveType;

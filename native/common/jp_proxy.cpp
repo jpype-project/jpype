@@ -80,7 +80,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			return NULL;
 		}
 
-		if (returnClass->canConvertToJava(returnValue.get()) == _none)
+		if (returnClass->canConvertToJava(returnValue.get()) == JPMatch::_none)
 		{
 			frame.ThrowNew(JPJni::s_RuntimeExceptionClass, "Return value is not compatible with required type.");
 			return NULL;

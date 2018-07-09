@@ -44,9 +44,9 @@ JPPyObject JPVoidType::convertToPythonObject(jvalue val)
 	return JPPyObject::getNone();
 }
 
-EMatchType JPVoidType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
+	return JPMatch::_none;
 }
 
 jvalue JPVoidType::convertToJava(PyObject* obj)
@@ -87,27 +87,27 @@ void JPVoidType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
 }
 
-JPPyObject JPVoidType::getArrayRange(JPJavaFrame& frame, jarray, int start, int length)
+JPPyObject JPVoidType::getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray, int, int, PyObject*)
+void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, int)
-{
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
-}
-
-void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, int, PyObject*)
+JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, jsize)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
 void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
+{
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
+}
+
+jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }

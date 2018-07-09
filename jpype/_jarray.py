@@ -20,6 +20,7 @@ import sys as _sys
 import _jpype
 from . import _jclass
 from . import _jobject
+from . import _jstring
 from . import _jcustomizer
 
 if _sys.version > '3':
@@ -199,17 +200,24 @@ class _JavaArrayIter(object):
 # Char array customizer
 
 def _charArrayStr(self):
-    return ''.join(self[:])
+    return str(_jstring.JString(self))
 
 def _charArrayUnicode(self):
-    return u''.join(self[:])
+    return unicode(_jstring.JString(self))
 
 def _charArrayEqual(self, other):
-    return self[:]==other
+    if hasattr(other, '__javavalue__'):
+        return self.equals(other)
+    elif isinstance(other, (str, unicode)):
+      return self[:]==other
+    try:
+        return self.equals(self.__class__(other))
+    except TypeError:
+        return False
 
 class _JCharArrayCustomizer(object):
     def canCustomize(self, name, jc):
-        return name == 'char[]'
+        return name == 'char[]' or name == "byte[]"
 
     def customize(self, name, jc, bases, members):
         members['__str__'] = _charArrayStr
@@ -217,4 +225,3 @@ class _JCharArrayCustomizer(object):
         members['__eq__'] = _charArrayEqual
 
 _jcustomizer.registerClassCustomizer(_JCharArrayCustomizer())
-

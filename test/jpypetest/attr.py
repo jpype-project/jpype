@@ -152,7 +152,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
-
+ 
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -165,7 +165,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
-
+ 
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)

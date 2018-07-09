@@ -33,7 +33,7 @@ public:
 	virtual~ JPObjectBaseClass();
 
 public: // JPClass implementation
-	virtual EMatchType canConvertToJava(PyObject* obj) override;
+	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue     convertToJava(PyObject* obj) override;
 } ;
 
@@ -52,7 +52,7 @@ public:
 	virtual~ JPClassBaseClass();
 
 public: // JPClass implementation
-	virtual EMatchType canConvertToJava(PyObject* obj) override;
+	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue     convertToJava(PyObject* obj) override;
 } ;
 

@@ -39,7 +39,14 @@ try:
     from importlib.machinery import ModuleSpec as _ModuleSpec
     from types import ModuleType as _ModuleType
 except Exception:
-    raise ImportError("jpype.imports Not supported for Python 2")
+
+    # For Python2 compatiblity 
+    #  (Note: customizers are not supported)
+    class _ModuleSpec(object):
+        def __init__(self, name, loader):
+            self.name = name
+            self.loader = loader
+    _ModuleType = object
 
 import _jpype
 import sys as _sys
@@ -125,7 +132,6 @@ if _sys.version_info > (3,):
           |         path = os.path.join(devel, pname,'py','__init__.py')
           |         return importlib.util.spec_from_file_location(name, path)
        """
-
         def canCustomize(self, name):
             """ Determine if this path is to be treated differently 
 
@@ -140,8 +146,7 @@ if _sys.version_info > (3,):
             raise NotImplementedError
 else:
     def registerImportCustomizer(customizer):
-        raise NotImplementedError(
-            "Import customizers not implemented for Python 2.x")
+        raise NotImplementedError("Import customizers not implemented for Python 2.x")
     JImportCustomizer = object
 
 
@@ -301,9 +306,8 @@ class _JImportLoader:
     # For compatablity with Python 2.7
     def load_module(self, name):
         module = self.create_module(_ModuleSpec(name, self))
-        _sys.modules[name] = module
+        _sys.modules[name]=module
         return module
-
 
 # Install hooks into python importlib
 _sys.meta_path.append(_JImportLoader())
@@ -336,7 +340,6 @@ registerDomain('org')
 def _initialize():
     global _exportTypes
     global _modifier
-    _initialized = True
     _JMethod = type(_jclass.JClass('java.lang.Class').forName)
     _modifier = _jclass.JClass('java.lang.reflect.Modifier')
     _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)

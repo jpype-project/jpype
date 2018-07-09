@@ -25,9 +25,9 @@ class BuildExtCommand(build_ext):
 
     # extra compile args
     copt = {'msvc': [],
-            'unix': ['-ggdb'],
-            'mingw32': [],
-            }
+            'unix' : ['-ggdb'],
+            'mingw32' : [],
+           }
     # extra link args
     lopt = {
         'msvc': [],

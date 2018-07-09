@@ -25,7 +25,7 @@ JPArrayClass::~JPArrayClass()
 {
 }
 
-EMatchType JPArrayClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPArrayClass::canConvertToJava");
 	JPJavaFrame frame;
@@ -47,34 +47,34 @@ EMatchType JPArrayClass::canConvertToJava(PyObject* obj)
 		{
 			return JPMatch::_implicit;
 		}
-		return _none;
+		return JPMatch::_none;
 	}
 
 	if (JPPyString::check(obj) && m_ComponentType == JPTypeManager::_char)
 	{
 		JP_TRACE("char[]");
 		// Strings are also char[]
-		return _implicit; // FIXME this should be _explicit under java rules.
+		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit under java rules.
 	}
 
 	// String to bytes is possible, but not sure if worth it.  
-	// It would definitely be _explicit.
+	// It would definitely be JPMatch::_explicit.
 	//	if (JPPyString::checkBytes(o) && m_ComponentType == JPTypeManager::_byte)
 	//	{
 	//		TRACE1("char[]");
 	//		// Strings are also char[]
-	//		return _implicit;
+	//		return JPMatch::_implicit;
 	//	}
 
 	JPPySequence seq(JPPyRef::_use, obj);
 	if (JPPyObject::isSequenceOfItems(obj))
 	{
 		JP_TRACE("Sequence");
-		EMatchType match = _implicit;
-		int length = seq.size();
-		for (int i = 0; i < length && match > _none; i++)
+		JPMatch::Type match = JPMatch::_implicit;
+		jlong length = seq.size();
+		for (jlong i = 0; i < length && match > JPMatch::_none; i++)
 		{
-			EMatchType newMatch = m_ComponentType->canConvertToJava(seq[i].get());
+			JPMatch::Type newMatch = m_ComponentType->canConvertToJava(seq[i].get());
 			if (newMatch < match)
 			{
 				match = newMatch;
@@ -83,7 +83,7 @@ EMatchType JPArrayClass::canConvertToJava(PyObject* obj)
 		return match;
 	}
 
-	return _none;
+	return JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -133,11 +133,11 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 	{
 		JP_TRACE("sequence");
 		JPPySequence seq(JPPyRef::_use, obj);
-		int length = seq.size();
+		jsize length = (jsize)seq.size();
 
-		jarray array = m_ComponentType->newArrayInstance(frame, length);
+		jarray array = m_ComponentType->newArrayInstance(frame, (jsize)length);
 
-		for (int i = 0; i < length; i++)
+		for (jsize i = 0; i < length; i++)
 		{
 			m_ComponentType->setArrayItem(frame, array, i, seq[i].get());
 		}
@@ -153,15 +153,15 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, size_t start, size_t end)
+jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end)
 {
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
-	int length = end - start;
+	jsize length = (jsize)(end - start);
 
 	jarray array = m_ComponentType->newArrayInstance(frame, length);
 	jvalue res;
-	for (size_t i = start; i < end; i++)
+	for (jsize i = start; i < end; i++)
 	{
 		m_ComponentType->setArrayItem(frame, array, i - start, refs[i]);
 	}

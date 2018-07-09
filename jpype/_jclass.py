@@ -15,7 +15,6 @@
 import sys as _sys
 import _jpype
 from ._pykeywords import pysafe
-from . import _jobject
 from . import _jcustomizer
 
 __all__ = ['JClass','JInterface']
@@ -26,6 +25,8 @@ if _sys.version > '3':
 else:
     _unicode = unicode
     _long = long
+
+_JObject = None
 
 _java_lang_throwable = None
 _java_lang_RuntimeException = None
@@ -83,7 +84,7 @@ class JClass(type):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
-    class_ = property( lambda self: _jobject.JObject(self.__javaclass__), None)
+    class_ = property( lambda self: _JObject(self.__javaclass__), None)
 
     def __new__(cls, *args, **kwargs):
         if len(args)==1:
@@ -94,6 +95,16 @@ class JClass(type):
         if len(args)==1:
             return
         super(JClass,self.__class__).__init__(self, *args)
+
+    def __getattribute__(self, name):
+        if name.startswith('_'):
+            return type.__getattribute__(self, name)
+        attr = type.__getattribute__(self,name)
+        if isinstance(attr, _jpype.PyJPMethod):
+           return attr
+        if hasattr(attr, '__get__'):
+           return attr.__get__(self)
+        return attr
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
@@ -110,7 +121,7 @@ class JClass(type):
         parents = set().union(*[x.__mro__ for x in cls.__bases__])
 
         # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance 
-        if _jobject.JObject in parents and JInterface in parents:
+        if _JObject in parents and JInterface in parents:
           parents.remove(JInterface)
 
         numsubs = dict()
@@ -151,7 +162,7 @@ class JInterface(object):
 
         Use isinstance(obj, jpype.JavaInterface) to test for a interface.
     """
-    class_ = property(lambda self: _jobject.JObject(self.__javaclass__), None)
+    class_ = property(lambda self: _JObject(self.__javaclass__), None)
     def __new__(cls, *args, **kwargs):
         return super(JInterface, cls).__new__(cls)
     def __str__(self): 
@@ -170,7 +181,7 @@ def _JClassFactory(name, jc):
     bases = []
     bjc = jc.getSuperClass()
     if name == 'java.lang.Object':
-        bases.append(_jobject.JObject)
+        bases.append(_JObject)
     elif jc.isArray():
         bases.append(_jarray.JArray)
     elif jc.isPrimitive():
@@ -267,10 +278,10 @@ def _getDefaultJavaObject(obj):
 
 # Patch for forName
 def _jclass_forName(*args):
-    if len(args)==1 and isinstance(args[0],str):
-        return _java_lang_Class._forName(args[0], True, _java_ClassLoader)
+    if len(args)==2 and isinstance(args[1],str):
+        return _java_lang_Class._forName(args[1], True, _java_ClassLoader)
     else:
-        return _java_lang_Class._forName(*args)
+        return _java_lang_Class._forName(*args[1:])
 
 class _JavaLangClassCustomizer(_jcustomizer.JClassCustomizer):
     def canCustomize(self, name, jc):

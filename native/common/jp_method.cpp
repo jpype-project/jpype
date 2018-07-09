@@ -162,11 +162,11 @@ JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
 		JPMatch match = current->matches(callInstance, arg);
 
 		JP_TRACE("  match ended", match.type);
-		if (match.type == _exact)
+		if (match.type == JPMatch::_exact)
 		{
 			return match;
 		}
-		if (match.type < _implicit)
+		if (match.type < JPMatch::_implicit)
 			continue;
 
 		if (bestMatch.overload == 0)

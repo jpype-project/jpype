@@ -85,7 +85,7 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 	//	JP_TRACE_OUT;
 }
 
-EMatchType matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
+JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 {
 	JP_TRACE_IN("JPMethodOverload::matchVars");
 	JPArrayClass* arraytype = (JPArrayClass*) vartype;
@@ -95,7 +95,7 @@ EMatchType matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 	JPMatch::Type lastMatch = JPMatch::_exact;
 	for (size_t i = start; i < len; i++)
 	{
-		EMatchType match = type->canConvertToJava(arg[i]);
+		JPMatch::Type match = type->canConvertToJava(arg[i]);
 
 		if (match < JPMatch::_implicit)
 		{
@@ -139,7 +139,7 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 		if (len != tlen)
 		{
 			JP_TRACE("Argument length mismatch", len, tlen);
-			return match; // _none
+			return match; // JPMatch::_none
 		}
 	}
 	else
@@ -159,7 +159,7 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 			PyObject* obj = arg[last];
 			--len;
 			lastMatch = type->canConvertToJava(obj);
-			if (lastMatch < _implicit)
+			if (lastMatch < JPMatch::_implicit)
 			{
 				// Try indirect
 				lastMatch = matchVars(arg, last, type);
@@ -182,7 +182,7 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 			JP_TRACE("Match vargs indirect", lastMatch);
 		}
 
-		if (lastMatch < _implicit)
+		if (lastMatch < JPMatch::_implicit)
 		{
 			return match;
 		}
@@ -192,9 +192,9 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 	for (size_t i = 0; i < len; i++)
 	{
 		JPClass* type = m_ArgumentsTypeCache[i];
-		EMatchType ematch = type->canConvertToJava(arg[i + match.offset]);
+		JPMatch::Type ematch = type->canConvertToJava(arg[i + match.offset]);
 		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[i + match.offset]));
-		if (ematch < _implicit)
+		if (ematch < JPMatch::_implicit)
 		{
 			return match;
 		}
@@ -310,16 +310,16 @@ string JPMethodOverload::matchReport(JPPyObjectVector& sequence)
 	JPMatch match = matches(!isStatic(), sequence);
 	switch (match.type)
 	{
-		case _none:
+		case JPMatch::_none:
 			res << "NONE";
 			break;
-		case _explicit:
+		case JPMatch::_explicit:
 			res << "EXPLICIT";
 			break;
-		case _implicit:
+		case JPMatch::_implicit:
 			res << "IMPLICIT";
 			break;
-		case _exact:
+		case JPMatch::_exact:
 			res << "EXACT";
 			break;
 		default:

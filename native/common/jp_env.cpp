@@ -1293,7 +1293,7 @@ jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass a1, jobject a2)
 	return env->functions->NewObjectArray(env, a0, a1, a2);
 }
 
-void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, int a1, jobject a2)
+void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2)
 {
 	JPCall call(*this, "SetObjectArrayElement");
 	env->functions->SetObjectArrayElement(env, a0, a1, a2);
@@ -1323,7 +1323,7 @@ jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)
 	return env->functions->IsAssignableFrom(env, a0, a1);
 }
 
-jstring JPJavaFrame::NewStringUTF(const char* a0, int a1)
+jstring JPJavaFrame::NewStringUTF(const char* a0)
 {
 	JPCall call(*this, "NewString");
 	return env->functions->NewStringUTF(env, a0);
