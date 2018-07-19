@@ -87,8 +87,7 @@ class Utf8TestCase(common.JPypeTestCase):
         self.TDICT['cn_simp'] = "人人生而自由,在尊严和权利上一律平等。他们赋有理性和良心,并应以兄弟关系的精神互相对待。"
         self.TDICT['cn_trad'] = "人人生而自由﹐在尊嚴和權利上一律平等。他們賦有理性和良心﹐並應以兄弟關係的精神互相對待。"
         self.TDICT['arab'] = "أنا قادر على أكل الزجاج و هذا لا يؤلمني."
-        self.TDICT[
-            'emoji'] = "😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0"
+        self.TDICT['emoji'] = "😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0"
 
     def test_get_ascii(self):
         """
@@ -127,7 +126,8 @@ class Utf8TestCase(common.JPypeTestCase):
         for lbl, val in self.TDICT.items():
             utf8_test = self.Utf8Test(String(val.encode(), 'UTF8'))
             try:
-                rval = utf8_test.get().encode('utf-16').decode('utf-16')
+                utf8_test.get().encode('utf-16')
+                rval = utf8_test.get()
             except UnicodeEncodeError as uue:
                 rval = utf8_test.get().encode('utf-16', errors='surrogatepass').decode('utf-16')
                 lbl += (' ' + str(uue))
@@ -161,7 +161,8 @@ class Utf8TestCase(common.JPypeTestCase):
         for lbl, val in self.TDICT.items():
             utf8_test = self.Utf8Test(val)
             try:
-                rval = utf8_test.get().encode('utf-16').decode('utf-16')
+                utf8_test.get().encode('utf-16')
+                rval = utf8_test.get()
             except UnicodeEncodeError as uue:
                 rval = utf8_test.get().encode('utf-16', errors='surrogatepass').decode('utf-16')
                 lbl += (' ' + str(uue))
