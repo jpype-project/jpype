@@ -54,7 +54,7 @@ class _JException(object):
         super(Exception, self.__class__).__init__(self)
 
     def __str__(self):
-        return self.getMessage()
+        return str(self.getMessage())
 
     def message(self):
         return self.getMessage()
