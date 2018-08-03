@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import JException, java, JProxy, JPackage
 import traceback
 try:
@@ -22,11 +22,14 @@ except ImportError:
     import unittest
 from . import common
 
+
 def throwIOException():
     raise java.io.IOException("Test throw")
 
+
 def throwByJavaException():
     JPackage('jpype').exc.ExceptionTest.throwIOException()
+
 
 class ExceptionTestCase(common.JPypeTestCase):
     def testExceptionThrown(self):
@@ -37,7 +40,8 @@ class ExceptionTestCase(common.JPypeTestCase):
             self.assertIs(type(ex), java.lang.RuntimeException)
             self.assertEqual('Foo', ex.message())
             trace = ex.stacktrace()
-            self.assertTrue(trace.startsWith('java.lang.RuntimeException: Foo'))
+            self.assertTrue(trace.startsWith(
+                'java.lang.RuntimeException: Foo'))
 
     def testExceptionByJavaClass(self):
         try:
@@ -47,7 +51,8 @@ class ExceptionTestCase(common.JPypeTestCase):
             self.assertIs(type(ex), java.lang.RuntimeException)
             self.assertEqual('Foo', ex.message())
             trace = ex.stacktrace()
-            self.assertTrue(trace.startsWith('java.lang.RuntimeException: Foo'))
+            self.assertTrue(trace.startsWith(
+                'java.lang.RuntimeException: Foo'))
 
     def testThrowException(self):
         d = {"throwIOException": throwIOException, }

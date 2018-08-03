@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 # import package to get minimum types needed to use module.
 
@@ -25,17 +25,17 @@ from ._jexception import *
 from ._jstring import *
 
 __all__ = [
-  'JArray', 
-  'JClass', 
-  'JBoolean',
-  'JByte',
-  'JChar',
-  'JShort',
-  'JInt',
-  'JLong',
-  'JFloat',
-  'JDouble',
-  'JString',
-  'JObject',
-  'JException',
+    'JArray',
+    'JClass',
+    'JBoolean',
+    'JByte',
+    'JChar',
+    'JShort',
+    'JInt',
+    'JLong',
+    'JFloat',
+    'JDouble',
+    'JString',
+    'JObject',
+    'JException',
 ]

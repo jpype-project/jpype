@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import jpype
 from jpype import JString, java, JArray, JClass
 import sys
 import time
 from . import common
+
 
 class AttributeTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -89,10 +90,10 @@ class AttributeTestCase(common.JPypeTestCase):
         v = StringArray(["Foo", "bar"])
         t = JClass('jpype.attr.Test1')()
         result = t.testStringArray(v)
-        self.assertFalse([1,2]==result)
-        self.assertFalse(result==[1,2])
-        self.assertTrue([1,2]!=result)
-        self.assertTrue(result!=[1,2])
+        self.assertFalse([1, 2] == result)
+        self.assertFalse(result == [1, 2])
+        self.assertTrue([1, 2] != result)
+        self.assertTrue(result != [1, 2])
 
     def testGetStaticValue(self):
         self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "234")
@@ -112,7 +113,7 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testSetNonStaticValue(self):
         h = JClass('jpype.attr.Test1')()
-        h.stringValue="bar"
+        h.stringValue = "bar"
         self.assertEqual(h.stringValue, "bar")
 
     def testReturnSubClass(self):
@@ -151,7 +152,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
- 
+
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -164,7 +165,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
- 
+
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -199,7 +200,7 @@ class AttributeTestCase(common.JPypeTestCase):
     def testCreateDate(self):
         d = jpype.java.util.Date(1448799485000)
         self.assertEqual(1448799485000, d.getTime())
-        
+
     def testCharAttribute(self):
         h = JClass('jpype.attr.Test1')()
         h.charValue = u'b'
@@ -218,7 +219,8 @@ class AttributeTestCase(common.JPypeTestCase):
     def testDifferentiateClassAndObject(self):
         h = JClass('jpype.attr.Test1')()
 
-        self.assertEqual(h.callWithSomething(JClass('jpype.attr.Test1')), u"Class")
+        self.assertEqual(h.callWithSomething(
+            JClass('jpype.attr.Test1')), u"Class")
         result = h.callWithSomething(jpype.JObject(JClass('jpype.attr.Test1'),
                                                    jpype.java.lang.Object))
         self.assertEqual(result, u"Object")
@@ -265,18 +267,17 @@ class AttributeTestCase(common.JPypeTestCase):
     def testPassedObjectGetsCleanedUp(self):
         h = JClass('jpype.attr.Test1')()
         block_size = 1024 * 1024 * 10
+
         def allocate_then_free():
             byte_buffer = jpype.JClass('java.nio.ByteBuffer')
             inst = byte_buffer.allocate(1024 * 1024 * 100)
-             # passing the object back to java seems to stop it being collected
+            # passing the object back to java seems to stop it being collected
             result = h.callWithSomething(inst)
         rt = jpype.java.lang.Runtime.getRuntime()
         free = rt.freeMemory()
         for x in range(0, 10 * free // block_size):
             allocate_then_free()
-        
 
     def testSyntheticMethod(self):
         h = jpype.JClass('jpype.attr.SyntheticMethods$GenericImpl')()
         h.foo(jpype.java.util.ArrayList())
-        

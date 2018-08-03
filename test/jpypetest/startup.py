@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -21,6 +21,7 @@ except ImportError:
 import sys
 import jpype
 from . import common
+
 
 class StartJVMCase(common.JPypeTestCase):
 
@@ -30,10 +31,11 @@ class StartJVMCase(common.JPypeTestCase):
     def testStartup(self):
         # Test that we are robust to multiple startJVM
         try:
-            self.assertRaises(OSError, jpype.startJVM, jpype.getDefaultJVMPath())
-            self.assertRaises(OSError, jpype.startJVM, jpype.getDefaultJVMPath())
+            self.assertRaises(OSError, jpype.startJVM,
+                              jpype.getDefaultJVMPath())
+            self.assertRaises(OSError, jpype.startJVM,
+                              jpype.getDefaultJVMPath())
         except RuntimeError:
-            pass 
+            pass
         # Verify that we don't crash after repeat
         jpype.JClass("java.lang.String")
-

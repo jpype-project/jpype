@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -22,8 +22,10 @@ import jpype
 from . import common
 import sys
 
+
 def pythonNewerThan(major, minor):
-    return sys.version_info[0]> major or (sys.version_info[0] == major and sys.version_info[1]>minor)
+    return sys.version_info[0] > major or (sys.version_info[0] == major and sys.version_info[1] > minor)
+
 
 class CloseableTestCase(common.JPypeTestCase):
 
@@ -45,7 +47,7 @@ class CloseableTestCase(common.JPypeTestCase):
         CloseableTest.reset()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
-        ex1=None
+        ex1 = None
         try:
             with CloseableTest() as myFile:
                 myFile.print_("hello 1")
@@ -54,11 +56,10 @@ class CloseableTestCase(common.JPypeTestCase):
                 except Exception as ex:
                     pass
         except Exception as ex:
-            ex1=ex
+            ex1 = ex
         self.assertTrue(ex1)
         self.assertEqual(CloseableTest.printed, "hello 1")
         self.assertTrue(CloseableTest.closed)
-
 
     def testCloseablePyExcept(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
@@ -74,11 +75,11 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 2")
         self.assertTrue(CloseableTest.closed)
 
-    @unittest.skipUnless(pythonNewerThan(2,6), "Earlier python does not support stacked exceptions.")
+    @unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
     def testCloseablePyExceptFail(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()
-        CloseableTest.willfail=True
+        CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
         try:
             with CloseableTest() as myFile:
@@ -101,12 +102,13 @@ class CloseableTestCase(common.JPypeTestCase):
                 myFile.throwException()
                 myFile.print_("there")
         except Exception as ex:
-            self.assertIsInstance(ex, jpype.JException, 'type is %s'%type(ex))
+            self.assertIsInstance(ex, jpype.JException,
+                                  'type is %s' % type(ex))
             self.assertEqual(ex.getMessage(), 'oh no!')
         self.assertEqual(CloseableTest.printed, "hello 4")
         self.assertTrue(CloseableTest.closed)
 
-    @unittest.skipUnless(pythonNewerThan(2,6), "Earlier python does not support stacked exceptions.")
+    @unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
     def testCloseableJExceptFail(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()
@@ -118,8 +120,9 @@ class CloseableTestCase(common.JPypeTestCase):
                 myFile.throwException()
                 myFile.print_("there")
         except Exception as ex:
-            self.assertIsInstance(ex, jpype.JException, 'type is %s'%type(ex))
-            self.assertEqual(ex.getMessage(), 'oh no!') # fail if get "oh my?"
+            self.assertIsInstance(ex, jpype.JException,
+                                  'type is %s' % type(ex))
+            self.assertEqual(ex.getMessage(), 'oh no!')  # fail if get "oh my?"
         self.assertEqual(CloseableTest.printed, "hello 5")
         self.assertTrue(CloseableTest.closed)
         self.assertTrue(CloseableTest.failed)

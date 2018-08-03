@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from . import _jcustomizer
 import sys as _sys
 from . import _jexception
@@ -24,15 +24,17 @@ from . import _jexception
 if _sys.version > '3':
     pass
 
-def _closeableExit(self,exception_type, exception_value, traceback):
+
+def _closeableExit(self, exception_type, exception_value, traceback):
     info = _sys.exc_info()
     try:
         self.close()
     except _jexception.JException as jex:
         # Eat the second exception if we are already handling one.
-        if (info[0]==None):
+        if (info[0] == None):
             raise jex
         pass
+
 
 def _closeableEnter(self):
     return self
@@ -51,5 +53,6 @@ class CloseableCustomizer(object):
 
     def customize(self, name, jc, bases, members):
         members.update(CloseableCustomizer._METHODS)
+
 
 _jcustomizer.registerClassCustomizer(CloseableCustomizer())

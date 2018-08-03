@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import jpype
 import sys
 import logging
@@ -32,13 +32,15 @@ def haveJImports():
     except ImportError:
         return False
 
+
 def isJavaClass(tp):
     return isinstance(tp, jpype.JClass)
 
+
 class ImportsTestCase(common.JPypeTestCase):
     def setUp(self):
-#        logger = logging.getLogger(__name__)
-#        logger.info("TEST:JImports")
+        #        logger = logging.getLogger(__name__)
+        #        logger.info("TEST:JImports")
         common.JPypeTestCase.setUp(self)
         self.__jp = self.jpype.attr
 
@@ -69,4 +71,4 @@ class ImportsTestCase(common.JPypeTestCase):
         from java.lang.ProcessBuilder import Redirect
         self.assertTrue(isJavaClass(Redirect))
 
-# FIXME add test for static member variable imports and other edge cases.        
+# FIXME add test for static member variable imports and other edge cases.

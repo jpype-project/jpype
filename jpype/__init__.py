@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from ._jpackage import *
 from ._jproxy import *
 from ._core import *
@@ -25,7 +25,7 @@ from . import nio
 from . import types
 
 
-__all__ = ['java','javax','JIterator','JException']
+__all__ = ['java', 'javax', 'JIterator', 'JException']
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)
@@ -42,8 +42,9 @@ def JIterator(it):
     """Deprecated"""
     return it
 
-# FIXME these should be deprecated. The old JPackage system is only for 
-#  python2 series and generates lots of deceptive classes.  At some point 
+
+# FIXME these should be deprecated. The old JPackage system is only for
+#  python2 series and generates lots of deceptive classes.  At some point
 #  these two are going to have to go away.
 java = JPackage("java")
 javax = JPackage("javax")

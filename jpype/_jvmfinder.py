@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2013 Thomas Calmant
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,23 +13,27 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 import os
 import sys
 
 # ------------------------------------------------------------------------------
 
+
 class JVMNotFoundException(RuntimeError):
     pass
 
+
 class JVMNotSupportedException(RuntimeError):
     pass
+
 
 class JVMFinder(object):
     """
     JVM library finder base class
     """
+
     def __init__(self):
         """
         Sets up members
@@ -43,7 +47,6 @@ class JVMFinder(object):
         # Search methods
         self._methods = (self._get_from_java_home,
                          self._get_from_known_locations)
-
 
     def find_libjvm(self, java_home):
         """
@@ -64,7 +67,7 @@ class JVMFinder(object):
                 candidate = os.path.split(root)[1]
                 if candidate in non_supported_jvm:
                     found_non_supported_jvm = True
-                    continue # maybe we will find another one?
+                    continue  # maybe we will find another one?
                 return os.path.join(root, self._libfile)
 
         else:
@@ -80,7 +83,6 @@ class JVMFinder(object):
                                        "Please ensure your JAVA_HOME "
                                        "environment variable is pointing "
                                        "to correct installation.")
-
 
     def find_possible_homes(self, parents):
         """
@@ -130,7 +132,7 @@ class JVMFinder(object):
             try:
                 jvm = method()
 
-                # If found check the architecture 
+                # If found check the architecture
                 if jvm:
                     self.check(jvm)
             except NotImplementedError:
@@ -152,7 +154,6 @@ class JVMFinder(object):
                                        "environment variable properly."
                                        .format(self._libfile))
 
-
     def _get_from_java_home(self):
         """
         Retrieves the Java library path according to the JAVA_HOME environment
@@ -172,7 +173,6 @@ class JVMFinder(object):
 
             # Look for the library file
             return self.find_libjvm(java_home)
-
 
     def _get_from_known_locations(self):
         """

@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import sys as _sys
 
 import _jpype
@@ -22,7 +22,7 @@ from . import _jclass
 from . import _jobject
 from . import _jtypes
 
-# Import all the class customizers 
+# Import all the class customizers
 # Customizers are applied in the order that they are defined currently.
 #from . import _properties
 from . import _jarray
@@ -40,6 +40,8 @@ __all__ = [
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
+
+
 def deprecated(*args):
     """ Marks a function a deprecated when used as decorator.
 
@@ -48,8 +50,8 @@ def deprecated(*args):
     def func2(*args, **kwargs):
         import warnings
         if not func2._warned:
-            warnings.warn(func2._warning%(func2._real.__module__, func2._real.__name__), 
-                    category=DeprecationWarning, stacklevel=2)
+            warnings.warn(func2._warning % (func2._real.__module__, func2._real.__name__),
+                          category=DeprecationWarning, stacklevel=2)
         func2._warned = True
         return func2._real(*args, **kwargs)
 
@@ -59,7 +61,8 @@ def deprecated(*args):
             func2.__doc__ = func.__doc__
             func2._warned = False
             func2._real = func
-            func2._warning = "%s.%s is deprecated, use {0} instead".format(args[0])
+            func2._warning = "%s.%s is deprecated, use {0} instead".format(
+                args[0])
             return func2
         return decorate
     else:
@@ -71,14 +74,17 @@ def deprecated(*args):
         func2._warning = "%s.%s is deprecated"
         return func2
 
+
 def _initialize():
     _jclass._initialize()
     _jobject._initialize()
     _jtypes._initialize()
     _jinit.runJVMInitializers()
 
-def isJVMStarted() :
+
+def isJVMStarted():
     return _jpype.isStarted()
+
 
 def startJVM(jvm, *args):
     """
@@ -90,18 +96,23 @@ def startJVM(jvm, *args):
     _jpype.startup(jvm, tuple(args), True)
     _initialize()
 
+
 def attachToJVM(jvm):
     _jpype.attach(jvm)
     _initialize()
 
+
 def shutdownJVM():
     _jpype.shutdown()
+
 
 def isThreadAttachedToJVM():
     return _jpype.isThreadAttachedToJVM()
 
+
 def attachThreadToJVM():
     _jpype.attachThreadToJVM()
+
 
 def detachThreadFromJVM():
     _jpype.detachThreadFromJVM()
@@ -133,17 +144,19 @@ def getDefaultJVMPath():
 
     return finder.get_jvm_path()
 
+
 # Naming compatibility
-get_default_jvm_path = getDefaultJVMPath 
+get_default_jvm_path = getDefaultJVMPath
+
 
 def getJVMVersion():
     """ Get the jvm version if the jvm is started.
     """
     if not _jpype.isStarted():
-        return (0,0,0)
-    version=str(_jclass.JClass('java.lang.Runtime').class_.getPackage().getImplementationVersion())
-    if version.find('_')!=-1:
-            parts=version.split('_')
-            version=parts[0]
+        return (0, 0, 0)
+    version = str(_jclass.JClass(
+        'java.lang.Runtime').class_.getPackage().getImplementationVersion())
+    if version.find('_') != -1:
+        parts = version.split('_')
+        version = parts[0]
     return tuple([int(i) for i in version.split('.')])
-

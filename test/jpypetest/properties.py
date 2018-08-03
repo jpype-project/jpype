@@ -8,7 +8,7 @@ except ImportError:
 
 
 class PropertiesTestCase(common.JPypeTestCase):
-#    __name__="PropertiesTestCase"
+    #    __name__="PropertiesTestCase"
 
     def setUp(self):
         super(PropertiesTestCase, self).setUp()
@@ -53,7 +53,7 @@ class PropertiesTestCase(common.JPypeTestCase):
 
     @unittest.skip("properties disabled")
     def testPrivateAttributeNoThreeCharacterMethodMatchCollision(self):
-        self._bean.property4 ="val"
+        self._bean.property4 = "val"
         self.assertEqual("abcval", self._bean.abcProperty4())
 
     @unittest.skip("properties disabled")

@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import sys as _sys
 import inspect
 
 import _jpype
 
-__all__ = [ 'registerJVMInitializer']
+__all__ = ['registerJVMInitializer']
 
-JInitializers=[]
+JInitializers = []
+
 
 def registerJVMInitializer(func):
     """Register a function to be called after jvm is started"""
@@ -31,8 +32,7 @@ def registerJVMInitializer(func):
         # JVM is already started so we are safe to execute immediately.
         func()
 
+
 def runJVMInitializers():
     for func in JInitializers:
         func()
-    
-

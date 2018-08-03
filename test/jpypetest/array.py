@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -87,7 +87,7 @@ class ArrayTestCase(common.JPypeTestCase):
         for i in t.i:
             self.assertNotEqual(i, 0)
 
-    #@unittest.skip
+    # @unittest.skip
     def testGetSubclass(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getSubClassArray()
@@ -171,10 +171,14 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayPythonTypes(self):
-        self.assertEquals(jpype.JArray(object).class_.getComponentType(), JClass('java.lang.Object'))
-        self.assertEquals(jpype.JArray(float).class_.getComponentType(), JClass('java.lang.Double').TYPE)
-        self.assertEquals(jpype.JArray(str).class_.getComponentType(), JClass('java.lang.String'))
-        self.assertEquals(jpype.JArray(type).class_.getComponentType(), JClass('java.lang.Class'))
+        self.assertEquals(jpype.JArray(
+            object).class_.getComponentType(), JClass('java.lang.Object'))
+        self.assertEquals(jpype.JArray(
+            float).class_.getComponentType(), JClass('java.lang.Double').TYPE)
+        self.assertEquals(jpype.JArray(
+            str).class_.getComponentType(), JClass('java.lang.String'))
+        self.assertEquals(jpype.JArray(
+            type).class_.getComponentType(), JClass('java.lang.Class'))
 
     def testJArrayConversionFloat(self):
         VALUES = [float(x) for x in self.VALUES]

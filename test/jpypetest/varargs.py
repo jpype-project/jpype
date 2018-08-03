@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -22,12 +22,14 @@ import sys
 import jpype
 from . import common
 
-#Python2/3 support
+# Python2/3 support
 if sys.version > '3':
-    long  =  int
+    long = int
     unicode = str
 
 # Test code
+
+
 class VarArgsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -39,27 +41,27 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.StringA = jpype.JArray(self.String)
 
     def testVarArgsCtor(self):
-        va0=self.VarArgs('1')
-        va1=self.VarArgs('1','a')
-        va2=self.VarArgs('1','a','b')
+        va0 = self.VarArgs('1')
+        va1 = self.VarArgs('1', 'a')
+        va2 = self.VarArgs('1', 'a', 'b')
 
-        self.assertTrue(isinstance(va0.rest,self.ObjectA))
-        self.assertTrue(isinstance(va1.rest,self.ObjectA))
-        self.assertTrue(isinstance(va2.rest,self.ObjectA))
-        self.assertEquals(len(va0.rest),0)
-        self.assertEquals(len(va1.rest),1)
-        self.assertEquals(len(va2.rest),2)
+        self.assertTrue(isinstance(va0.rest, self.ObjectA))
+        self.assertTrue(isinstance(va1.rest, self.ObjectA))
+        self.assertTrue(isinstance(va2.rest, self.ObjectA))
+        self.assertEquals(len(va0.rest), 0)
+        self.assertEquals(len(va1.rest), 1)
+        self.assertEquals(len(va2.rest), 2)
 
     def testVarArgsMethod(self):
-        va=self.VarArgs()
-        a0=va.method('a')
-        a1=va.method('a','b')
-        a2=va.method('a','b','c')
+        va = self.VarArgs()
+        a0 = va.method('a')
+        a1 = va.method('a', 'b')
+        a2 = va.method('a', 'b', 'c')
 
     def testVarArgsStatic(self):
-        a0=self.VarArgs.call()
-        a1=self.VarArgs.call(self.Object())
-        a2=self.VarArgs.call(self.Object(), self.Object())
+        a0 = self.VarArgs.call()
+        a1 = self.VarArgs.call(self.Object())
+        a2 = self.VarArgs.call(self.Object(), self.Object())
 
         self.assertTrue(isinstance(a0, self.ObjectA))
         self.assertEqual(len(a0), 0)
@@ -68,9 +70,9 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertTrue(isinstance(a2, self.ObjectA))
         self.assertEqual(len(a2), 2)
 
-        s2=self.VarArgs.call('a','b')
-        i2=self.VarArgs.call(1, 2)
-        m2=self.VarArgs.call('a',1,1.0)
+        s2 = self.VarArgs.call('a', 'b')
+        i2 = self.VarArgs.call(1, 2)
+        m2 = self.VarArgs.call('a', 1, 1.0)
 
         self.assertTrue(isinstance(s2, self.ObjectA))
         self.assertEqual(len(s2), 2)
@@ -80,13 +82,14 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(len(m2), 3)
 
     def testVarArgsOverload(self):
-        m0=self.VarArgs.callOverload(self.Integer(1))
-        m1=self.VarArgs.callOverload('a')
-        m2=self.VarArgs.callOverload('a','1')
-        self.assertTrue(isinstance(m0,self.Integer))
-        self.assertTrue(isinstance(m1,self.StringA))
-        self.assertTrue(isinstance(m2,self.StringA))
+        m0 = self.VarArgs.callOverload(self.Integer(1))
+        m1 = self.VarArgs.callOverload('a')
+        m2 = self.VarArgs.callOverload('a', '1')
+        self.assertTrue(isinstance(m0, self.Integer))
+        self.assertTrue(isinstance(m1, self.StringA))
+        self.assertTrue(isinstance(m2, self.StringA))
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     jpype.startJVM(jpype.getDefaultJVMPath())
     unittest.main()

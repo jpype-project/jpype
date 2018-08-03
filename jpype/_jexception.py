@@ -11,7 +11,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import _jpype
 import sys as _sys
 from . import _jcustomizer
@@ -24,6 +24,7 @@ if _sys.version > '3':
     _unicode = str
 else:
     _unicode = unicode
+
 
 class _JException(object):
     """ Base class for all java.lang.Throwable objects.
@@ -41,7 +42,7 @@ class _JException(object):
             import warnings
             if not hasattr(JException, '_warned'):
                 warnings.warn("Using JException to construct an exception type is deprecated.",
-                            category=DeprecationWarning, stacklevel=2)
+                              category=DeprecationWarning, stacklevel=2)
                 JException._warned = True
             return _JExceptionClassFactory(*args, **kwargs)
         return super(JException, cls).__new__(cls)
@@ -50,7 +51,8 @@ class _JException(object):
         if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             self.__javavalue__ = args[0]
         else:
-            self.__javavalue__ = self.__class__.__javaclass__.newInstance( *args)
+            self.__javavalue__ = self.__class__.__javaclass__.newInstance(
+                *args)
         super(Exception, self.__class__).__init__(self)
 
     def __str__(self):
@@ -70,7 +72,7 @@ class _JException(object):
         sw.close()
         return r
 
-    args = property( lambda self: self._jargs(), None)
+    args = property(lambda self: self._jargs(), None)
 
     def _jargs(self):
         cause = self.getCause()
@@ -78,14 +80,16 @@ class _JException(object):
             return (self.getMessage(),)
         return (self.getMessage(), cause,)
 
-JException = _jobject.defineJObjectFactory("JException", "java.lang.Throwable", 
-        _JException, bases=(Exception, _jobject.JObject))
+
+JException = _jobject.defineJObjectFactory("JException", "java.lang.Throwable",
+                                           _JException, bases=(Exception, _jobject.JObject))
 _jcustomizer.registerClassBase('java.lang.Throwable', JException)
+
 
 def _JExceptionClassFactory(tp):
     if isinstance(tp, (str, _unicode)):
         return _jclass.JClass(tp)
     if isinstance(tp, _jclass.JClass):
         return _jclass.JClass(tp.__javaclass__)
-    raise TypeError("JException requires a string or java throwable type, got %s."%tp)
-
+    raise TypeError(
+        "JException requires a string or java throwable type, got %s." % tp)

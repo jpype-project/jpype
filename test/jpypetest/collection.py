@@ -1,6 +1,7 @@
 import jpype
 from . import common
 
+
 class CollectionTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -14,13 +15,13 @@ class CollectionTestCase(common.JPypeTestCase):
 
     def testIterateHashmap(self):
         collection = jpype.java.util.HashMap()
-        collection.put('A',1)
-        collection.put('B',2)
+        collection.put('A', 1)
+        collection.put('B', 2)
         asdict = dict()
         for x in collection.entrySet():
             asdict[str(x.getKey())] = x.getValue().longValue()
-        self.assertEqual(asdict, {'A':1,'B':2})
-                    
+        self.assertEqual(asdict, {'A': 1, 'B': 2})
+
     def testEnumMap(self):
         enumclass = jpype.JClass('jpype.collection.TestEnum')
         enummap = jpype.java.util.EnumMap(enumclass)
@@ -29,4 +30,4 @@ class CollectionTestCase(common.JPypeTestCase):
         asdict = dict()
         for x in enummap.entrySet():
             asdict[str(x.getKey())] = x.getValue()
-        self.assertEqual({'A':'ABC','B':'DEF'}, asdict)
+        self.assertEqual({'A': 'ABC', 'B': 'DEF'}, asdict)

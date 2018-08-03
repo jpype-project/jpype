@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import *
 from . import common
 
@@ -22,14 +22,18 @@ try:
 except ImportError:
     import unittest
 
+
 def _testMethod1():
     return 33
+
 
 def _testMethod2():
     return 32
 
+
 def _testMethod3():
     return "Foo"
+
 
 class C:
     def testMethod1(self):
@@ -44,12 +48,14 @@ class C:
     def write(self, bytes, start, length):
         return bytes, start, length
 
+
 class ThreadCallbackImpl:
     def __init__(self):
         self.values = []
 
     def notifyValue(self, val):
         self.values.append(val)
+
 
 class ProxyTestCase(common.JPypeTestCase):
 
@@ -113,7 +119,7 @@ class ProxyTestCase(common.JPypeTestCase):
         result = self._triggers().testCallbackWithParameters(proxy)
 
         bytes, start, length = result
-        self.assertSequenceEqual(bytes, [1, 2 ,3 ,4])
+        self.assertSequenceEqual(bytes, [1, 2, 3, 4])
         self.assertEqual(start, 12)
         self.assertEqual(length, 13)
 
@@ -136,11 +142,11 @@ class ProxyTestCase(common.JPypeTestCase):
         itf2 = self.package.TestInterface2
         itf3 = self.package.TestInterface3
         c = C()
-        proxy = JProxy([itf2,itf3], inst=c)
+        proxy = JProxy([itf2, itf3], inst=c)
 
         result = self._triggers().testCallbackWithParameters(proxy)
 
         bytes, start, length = result
-        self.assertSequenceEqual(bytes, [1, 2 ,3 ,4])
+        self.assertSequenceEqual(bytes, [1, 2, 3, 4])
         self.assertEqual(start, 12)
         self.assertEqual(length, 13)

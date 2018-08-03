@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -25,6 +25,7 @@ from jpype import java, JPackage
 from . import common
 #import os
 #import sys
+
 
 class ObjectWrapperTestCase(common.JPypeTestCase):
     def testCallOverloads(self):
@@ -39,11 +40,14 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         self.assertEqual(h.Method1(JString("")), 4)
 
     def testDefaultTypeNameString(self):
-        self.assertEqual(type(JObject("123")), jpype.JClass("java.lang.String"))
+        self.assertEqual(type(JObject("123")),
+                         jpype.JClass("java.lang.String"))
 
     def testDefaultTypeNameBoolean(self):
-        self.assertEqual(type(JObject(True)), jpype.JClass("java.lang.Boolean"))
-        self.assertEqual(type(JObject(False)), jpype.JClass("java.lang.Boolean"))
+        self.assertEqual(type(JObject(True)),
+                         jpype.JClass("java.lang.Boolean"))
+        self.assertEqual(type(JObject(False)),
+                         jpype.JClass("java.lang.Boolean"))
 
     def testPassingClassTypeSucceeds(self):
         h = JPackage("jpype.objectwrapper").Test1()
@@ -67,29 +71,39 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
     def testWrapJavaObjectCast(self):
         o = java.lang.String("foo")
         c = java.lang.Object
-        self.assertEqual(type(JObject(o,c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(o, c)), jpype.JClass("java.lang.Object"))
 
     def testWrapJavaObjectCastFail(self):
         o = java.lang.Object()
         c = java.lang.Math
         with self.assertRaises(TypeError):
-          f= JObject(o,c)
+            f = JObject(o, c)
 
     def testWrapJavaPrimitiveCast(self):
         c = java.lang.Object
-        self.assertEqual(type(JObject("foo",c)), jpype.JClass("java.lang.Object"))
-        self.assertEqual(type(JObject(True,c)), jpype.JClass("java.lang.Object"))
-        self.assertEqual(type(JObject(False,c)), jpype.JClass("java.lang.Object"))
-        self.assertEqual(type(JObject(1,c)), jpype.JClass("java.lang.Object"))
-        self.assertEqual(type(JObject(1.0,c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject("foo", c)),
+                         jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(True, c)),
+                         jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(False, c)),
+                         jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(1, c)), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(JObject(1.0, c)),
+                         jpype.JClass("java.lang.Object"))
 
     def testWrapJavaPrimitiveBox(self):
-        self.assertEqual(type(JObject("foo",JString)), jpype.JClass("java.lang.String"))
-        self.assertEqual(type(JObject(1,JInt)), jpype.JClass("java.lang.Integer"))
-        self.assertEqual(type(JObject(1,JLong)), jpype.JClass("java.lang.Long"))
-        self.assertEqual(type(JObject(1.0,JFloat)), jpype.JClass("java.lang.Float"))
-        self.assertEqual(type(JObject(1.0,JDouble)), jpype.JClass("java.lang.Double"))
-        self.assertEqual(type(JObject(1,JShort)), jpype.JClass("java.lang.Short"))
+        self.assertEqual(type(JObject("foo", JString)),
+                         jpype.JClass("java.lang.String"))
+        self.assertEqual(type(JObject(1, JInt)),
+                         jpype.JClass("java.lang.Integer"))
+        self.assertEqual(type(JObject(1, JLong)),
+                         jpype.JClass("java.lang.Long"))
+        self.assertEqual(type(JObject(1.0, JFloat)),
+                         jpype.JClass("java.lang.Float"))
+        self.assertEqual(type(JObject(1.0, JDouble)),
+                         jpype.JClass("java.lang.Double"))
+        self.assertEqual(type(JObject(1, JShort)),
+                         jpype.JClass("java.lang.Short"))
 
 
 #     def testMakeSureWeCanLoadAllClasses(self):
@@ -112,4 +126,3 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
 #                 except:
 #                     print(sys.exc_info()[0])
 #                     pass
-        

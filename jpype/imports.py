@@ -26,7 +26,7 @@
 #
 #   jpype.imports.registerDomain(moduleName, alias=<java_pkg>)
 #   jpype.imports.registerImportCustomizer(JImportCustomizer)
-# 
+#
 # Requires Python 3.6 or later
 # Usage:
 #   import jpype
@@ -40,7 +40,7 @@ try:
     from types import ModuleType as _ModuleType
 except Exception:
 
-    # For Python2 compatiblity 
+    # For Python2 compatiblity
     #  (Note: customizers are not supported)
     class _ModuleSpec(object):
         def __init__(self, name, loader):
@@ -50,8 +50,8 @@ except Exception:
 
 import _jpype
 import sys as _sys
-from . import _pykeywords 
-from . import _jclass 
+from . import _pykeywords
+from . import _jclass
 from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
@@ -59,6 +59,8 @@ _exportTypes = ()
 _modifier = None
 
 # %% Utility
+
+
 def _keywordUnwrap(name):
     if not name.endswith('_'):
         return name
@@ -66,10 +68,12 @@ def _keywordUnwrap(name):
         return name[:-1]
     return name
 
+
 def _keywordWrap(name):
     if name in _pykeywords._KEYWORDS:
         return name + "_"
     return name
+
 
 def _getJavaClass(javaname):
     try:
@@ -77,11 +81,14 @@ def _getJavaClass(javaname):
     except Exception:
         return None
 
-#FIXME imports of static fields not working for now.
+# FIXME imports of static fields not working for now.
+
+
 def _copyProperties(out, mc):
-#    for jf in mc.__javaclass__.getClassFields():  
-#        out[_keywordWrap(jf.getName())] = jf
+    #    for jf in mc.__javaclass__.getClassFields():
+    #        out[_keywordWrap(jf.getName())] = jf
     pass
+
 
 def _getStaticMethods(cls):
     global _modifier
@@ -93,9 +100,11 @@ def _getStaticMethods(cls):
         static[name] = getattr(cls, name)
     return static
 
+
 def _copyStaticMethods(out, cls):
     for u, v in _getStaticMethods(cls).items():
         out[u] = v
+
 
 # %% Customizer
 _CUSTOMIZERS = []
@@ -126,6 +135,7 @@ if _sys.version_info > (3,):
           |         path = os.path.join(devel, pname,'py','__init__.py')
           |         return importlib.util.spec_from_file_location(name, path)
        """
+
         def canCustomize(self, name):
             """ Determine if this path is to be treated differently 
 
@@ -140,7 +150,8 @@ if _sys.version_info > (3,):
             raise NotImplementedError
 else:
     def registerImportCustomizer(customizer):
-        raise NotImplementedError("Import customizers not implemented for Python 2.x")
+        raise NotImplementedError(
+            "Import customizers not implemented for Python 2.x")
     JImportCustomizer = object
 
 
@@ -197,6 +208,7 @@ def _JImportFactory(spec, javaname, cls=_JImport):
 
     This is needed to create a new type node to hold static methods.
     """
+
     def init(self, name):
         # Call the base class
         cls.__init__(self, name)
@@ -206,7 +218,7 @@ def _JImportFactory(spec, javaname, cls=_JImport):
         d1 = self.__dict__.items()
         d2 = self.__class__.__dict__.items()
         local = [name for name, attr in d1 if not name.startswith('_')
-                and isinstance(attr, _exportTypes)]
+                 and isinstance(attr, _exportTypes)]
         glob = [name for name, attr in d2 if not name.startswith('_')
                 and isinstance(attr, _exportTypes)]
         local.extend(glob)
@@ -234,6 +246,7 @@ def _JImportFactory(spec, javaname, cls=_JImport):
 
     return type("module." + spec.name, tuple(bases), members)
 
+
 def _JModule(spec, javaname):
     """ (internal) Front end for creating a java module dynamically """
     cls = _JImportFactory(spec, javaname)
@@ -241,8 +254,11 @@ def _JModule(spec, javaname):
     return out
 
 # %% Finder
+
+
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
+
     def find_spec(self, name, path, target):
         parts = name.split('.', 1)
         if not parts[0] in _JDOMAINS:
@@ -257,6 +273,7 @@ class _JImportLoader:
         return _ModuleSpec(name, self)
 
     """ (internal) Loader hook for importlib. """
+
     def create_module(self, spec):
         if not _jpype.isStarted():
             raise ImportError("Attempt to create java modules without jvm")
@@ -270,7 +287,7 @@ class _JImportLoader:
         base = _sys.modules[".".join(parts[:-1])]
 
         # Support of inner classes
-        if not isinstance(base,_JImport):
+        if not isinstance(base, _JImport):
             return getattr(base, parts[-1])
         jbasename = object.__getattribute__(base, '__javaname__')
         try:
@@ -294,14 +311,16 @@ class _JImportLoader:
     # For compatablity with Python 2.7
     def load_module(self, name):
         module = self.create_module(_ModuleSpec(name, self))
-        _sys.modules[name]=module
+        _sys.modules[name] = module
         return module
+
 
 # Install hooks into python importlib
 _sys.meta_path.append(_JImportLoader())
 
 # %% Domains
 _JDOMAINS = {}
+
 
 def registerDomain(mod, alias=None):
     """ Add a java domain to python as a dynamic module.
@@ -314,6 +333,7 @@ def registerDomain(mod, alias=None):
         alias = mod
     _JDOMAINS[mod] = alias
 
+
 # Preregister common top level domains
 registerDomain('com')
 registerDomain('gov')
@@ -321,6 +341,8 @@ registerDomain('java')
 registerDomain('org')
 
 # %% Initialize
+
+
 def _initialize():
     global _exportTypes
     global _modifier
@@ -328,5 +350,5 @@ def _initialize():
     _modifier = _jclass.JClass('java.lang.reflect.Modifier')
     _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
 
-_jinit.registerJVMInitializer(_initialize)
 
+_jinit.registerJVMInitializer(_initialize)

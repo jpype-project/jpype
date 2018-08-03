@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 import jpype
 import logging
@@ -26,7 +26,8 @@ except ImportError:
 
 CLASSPATH = None
 
-class JPypeTestCase(unittest.TestCase) :
+
+class JPypeTestCase(unittest.TestCase):
     def setUp(self):
         if not jpype.isJVMStarted():
             root = path.dirname(path.abspath(path.dirname(__file__)))
@@ -45,4 +46,3 @@ class JPypeTestCase(unittest.TestCase) :
 
     def tearDown(self):
         pass
-

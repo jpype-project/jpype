@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 from . import _jvmfinder
 from ._jvmfinder import JVMNotSupportedException
@@ -22,37 +22,42 @@ import sys as _sys
 
 # ------------------------------------------------------------------------------
 
+
 def _checkJVMArch(jvmPath):
-    IMAGE_FILE_MACHINE_I386=332
-    IMAGE_FILE_MACHINE_IA64=512
-    IMAGE_FILE_MACHINE_AMD64=34404
+    IMAGE_FILE_MACHINE_I386 = 332
+    IMAGE_FILE_MACHINE_IA64 = 512
+    IMAGE_FILE_MACHINE_AMD64 = 34404
 
     is64 = _sys.maxsize > 2**32
     with open(jvmPath, "rb") as f:
-        s=f.read(2)
-        if s!=b"MZ":
+        s = f.read(2)
+        if s != b"MZ":
             raise JVMNotSupportedException("JVM not valid")
         else:
             f.seek(60)
-            s=f.read(4)
-            header_offset=_struct.unpack("<L", s)[0]
+            s = f.read(4)
+            header_offset = _struct.unpack("<L", s)[0]
             f.seek(header_offset+4)
-            s=f.read(2)
-            machine=_struct.unpack("<H", s)[0]
+            s = f.read(2)
+            machine = _struct.unpack("<H", s)[0]
 
-    if machine==IMAGE_FILE_MACHINE_I386:
+    if machine == IMAGE_FILE_MACHINE_I386:
         if is64:
-            raise JVMNotSupportedException("JVM mismatch, python is 64 bit and JVM is 32 bit.")
-    elif machine==IMAGE_FILE_MACHINE_IA64 or machine==IMAGE_FILE_MACHINE_AMD64:
+            raise JVMNotSupportedException(
+                "JVM mismatch, python is 64 bit and JVM is 32 bit.")
+    elif machine == IMAGE_FILE_MACHINE_IA64 or machine == IMAGE_FILE_MACHINE_AMD64:
         if not is64:
-            raise JVMNotSupportedException("JVM mismatch, python is 32 bit and JVM is 64 bit.")
+            raise JVMNotSupportedException(
+                "JVM mismatch, python is 32 bit and JVM is 64 bit.")
     else:
         raise JVMNotSupportedException("Unable to deterime JVM Type")
+
 
 class WindowsJVMFinder(_jvmfinder.JVMFinder):
     """
     Windows JVM library finder class
     """
+
     def __init__(self):
         """
         Sets up members
@@ -65,7 +70,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         # Search methods
         winreg = self._get_winreg()
-        if winreg!=None:
+        if winreg != None:
             self._methods = (self._get_from_java_home, self._get_from_registry)
         else:
             self._methods = (self._get_from_java_home, )
@@ -89,7 +94,6 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
             pass
         return None
 
-
     def _get_from_registry(self):
         """
         Retrieves the path to the default Java installation stored in the
@@ -104,7 +108,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
                 return None
 
             jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                r"SOFTWARE\JavaSoft\Java Runtime Environment")
+                                    r"SOFTWARE\JavaSoft\Java Runtime Environment")
             cv = winreg.QueryValueEx(jreKey, "CurrentVersion")
             versionKey = winreg.OpenKey(jreKey, cv[0])
             winreg.CloseKey(jreKey)
@@ -116,4 +120,3 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         except WindowsError:
             return None
-

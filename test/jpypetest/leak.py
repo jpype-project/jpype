@@ -20,10 +20,12 @@ try:
 except NameError:
     xrange = range
 
+
 def haveResource():
     if resource:
         return True
     return False
+
 
 def hasRefCount():
     try:
@@ -31,6 +33,7 @@ def hasRefCount():
         return True
     except:
         return False
+
 
 class LeakChecker():
 
@@ -47,7 +50,6 @@ class LeakChecker():
         else:
             rusage_mp = 1024
         return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * rusage_mp
-
 
     def freeResources(self):
         self.runtime.gc()  # Garbage collect Java
@@ -72,7 +74,7 @@ class LeakChecker():
 
         (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
         success = 0
-        for j in xrange(10): 
+        for j in xrange(10):
             for i in xrange(size):
                 func()
             (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
@@ -81,8 +83,8 @@ class LeakChecker():
             jvm_total_mem.append(jvm_total_mem1)
             jvm_free_mem.append(jvm_free_mem1)
 
-            growth0=(rss_memory1-rss_memory0)/(float(size))
-            growth1=(jvm_total_mem1-jvm_total_mem0)/(float(size))
+            growth0 = (rss_memory1-rss_memory0)/(float(size))
+            growth1 = (jvm_total_mem1-jvm_total_mem0)/(float(size))
             rss_memory0 = rss_memory1
             jvm_total_mem0 = jvm_total_mem1
             jvm_free_mem0 = jvm_total_mem1
@@ -90,35 +92,43 @@ class LeakChecker():
             grow0.append(growth0)
             grow1.append(growth1)
 
-            if ( growth0<0 ) or (growth1<0):
+            if (growth0 < 0) or (growth1 < 0):
                 continue
 
-            if ( growth0<4 ) and ( growth1<4 ):
-                success+=1
+            if (growth0 < 4) and (growth1 < 4):
+                success += 1
 
-            if success>3:
+            if success > 3:
                 return False
 
         print()
         for i in xrange(len(grow0)):
-            print('  Pass%d: %f %f  - %d %d %d'%(i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
+            print('  Pass%d: %f %f  - %d %d %d' %
+                  (i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
         print()
         return True
 
 # Test functions
+
+
 def stringFunc():
-   jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
+    jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
+
 
 def classFunc():
     cls = jpype.JClass('java.lang.String')
 
+
 def ctorFunc(cls):
     cls("hello")
+
 
 def invokeFunc(obj):
     obj.getBytes()
 
 # Test case
+
+
 class LeakTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -131,33 +141,33 @@ class LeakTestCase(common.JPypeTestCase):
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
         self.assertFalse(self.lc.memTest(stringFunc, 5000))
- 
+
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
         self.assertFalse(self.lc.memTest(classFunc, 5000))
- 
+
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
-        self.assertFalse(self.lc.memTest(lambda : ctorFunc(self.cls), 5000))
- 
+        self.assertFalse(self.lc.memTest(lambda: ctorFunc(self.cls), 5000))
+
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
-        self.assertFalse(self.lc.memTest(lambda : invokeFunc(self.string), 5000))
+        self.assertFalse(self.lc.memTest(
+            lambda: invokeFunc(self.string), 5000))
 
     @unittest.skipUnless(hasRefCount(), "no refcount")
     def testRefCountCall(self):
         obj = jpype.JString("help me")
         initialObj = sys.getrefcount(obj)
         initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0,100):
+        for i in range(0, 100):
             obj.charAt(0)
-        self.assertTrue( sys.getrefcount(obj)-initialObj<5)
-        self.assertTrue( sys.getrefcount(obj.__javavalue__)-initialValue<5)
+        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
+        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
 
         initialObj = sys.getrefcount(obj)
         initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0,100):
+        for i in range(0, 100):
             obj.compareTo(obj)
-        self.assertTrue( sys.getrefcount(obj)-initialObj<5)
-        self.assertTrue( sys.getrefcount(obj.__javavalue__)-initialValue<5)
-
+        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
+        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)

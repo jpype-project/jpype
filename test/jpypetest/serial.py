@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,13 +13,14 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import JException, java, JProxy, JClass
 import os
 import sys
 import tempfile
 import traceback
 from . import common
+
 
 class SerializationTestCase(common.JPypeTestCase):
 
@@ -33,7 +34,7 @@ class SerializationTestCase(common.JPypeTestCase):
     def testSerialize(self):
         o = JClass("jpype.serial.SerializationTest")()
         tmp = self.tempname
-        if sys.platform=='cygwin':
+        if sys.platform == 'cygwin':
             from jpype import _posix2win
             tmp = _posix2win(tmp)
         fos = java.io.FileOutputStream(tmp)
@@ -42,7 +43,6 @@ class SerializationTestCase(common.JPypeTestCase):
         oos.flush()
         oos.close()
         fos.close()
-
 
 
 # The following cannto work because JPype has no way to simulate the "caller's ClassLoader"

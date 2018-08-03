@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import collections
 
 from . import _jclass
 from . import _jcustomizer
 
+
 class _WrappedIterator(object):
     """
     Wraps a Java iterator to respect the Python 3 iterator API
     """
+
     def __init__(self, iterator):
         self.iterator = iterator
 
@@ -35,6 +37,7 @@ class _WrappedIterator(object):
     # Compatibility name
     next = __next__
 
+
 def isPythonSequence(v):
     if isinstance(v, collections.Sequence):
         if not hasattr(v.__class__, '__metaclass__') \
@@ -42,14 +45,18 @@ def isPythonSequence(v):
             return True
     return False
 
+
 def _colLength(self):
     return self.size()
+
 
 def _colIter(self):
     return _WrappedIterator(self.iterator())
 
+
 def _colDelItem(self, i):
     return self.remove(i)
+
 
 def _colAddAll(self, v):
     if isPythonSequence(v):
@@ -60,6 +67,7 @@ def _colAddAll(self, v):
     else:
         return self._addAll(v)
 
+
 def _colRemoveAll(self, v):
     if isPythonSequence(v):
         r = False
@@ -68,6 +76,7 @@ def _colRemoveAll(self, v):
         return r
     else:
         return self._removeAll(v)
+
 
 def _colRetainAll(self, v):
     if isPythonSequence(v):
@@ -78,6 +87,7 @@ def _colRetainAll(self, v):
         r = v
 
     return self._retainAll(r)
+
 
 class CollectionCustomizer(object):
     _METHODS = {
@@ -106,6 +116,7 @@ class CollectionCustomizer(object):
                 members['_retainAll'] = members['retainAll']
                 members['retainAll'] = _colRetainAll
 
+
 def _listGetItem(self, ndx):
     if isinstance(ndx, slice):
         start = ndx.start
@@ -119,6 +130,7 @@ def _listGetItem(self, ndx):
         if ndx < 0:
             ndx = self.size() + ndx
         return self.get(ndx)
+
 
 def _listSetItem(self, ndx, v):
     if isinstance(ndx, slice):
@@ -140,10 +152,11 @@ def _listSetItem(self, ndx, v):
             ndx = self.size() + ndx
         self.set(ndx, v)
 
+
 def _listAddAll(self, v, v2=None):
     if isPythonSequence(v):
         r = False
-        if v2 is not None: # assume form (int, values)
+        if v2 is not None:  # assume form (int, values)
             for i in range(len(v2)):
                 r = r or self.add(v + i, v2[i])
         else:
@@ -152,6 +165,7 @@ def _listAddAll(self, v, v2=None):
         return r
     else:
         return self._addAll(v)
+
 
 class ListCustomizer(object):
     _METHODS = {
@@ -172,6 +186,7 @@ class ListCustomizer(object):
                 members['_addAll'] = members['addAll']
                 members['addAll'] = _listAddAll
 
+
 def isPythonMapping(v):
     if isinstance(v, collections.Mapping):
         if not hasattr(v.__class__, '__metaclass__') or \
@@ -179,20 +194,26 @@ def isPythonMapping(v):
             return True
     return False
 
+
 def _mapLength(self):
     return self.size()
+
 
 def _mapIter(self):
     return _WrappedIterator(self.keySet().iterator())
 
+
 def _mapDelItem(self, i):
     return self.remove(i)
+
 
 def _mapGetItem(self, ndx):
     return self.get(ndx)
 
+
 def _mapSetItem(self, ndx, v):
     self.put(ndx, v)
+
 
 def _mapPutAll(self, v):
     if isPythonMapping(v):
@@ -201,6 +222,7 @@ def _mapPutAll(self, v):
     else:
         # do the regular method ...
         self._putAll(v)
+
 
 class MapCustomizer(object):
     _METHODS = {
@@ -224,6 +246,7 @@ class MapCustomizer(object):
                 members["_putAll"] = members["putAll"]
                 members["putAll"] = _mapPutAll
 
+
 def _iterCustomNext(self):
     if self.hasNext():
         return self._next()
@@ -235,8 +258,10 @@ def _iterIteratorNext(self):
         return next(self)
     raise StopIteration
 
+
 def _iterIter(self):
     return self
+
 
 class IteratorCustomizer(object):
     _METHODS = {
@@ -257,10 +282,12 @@ class IteratorCustomizer(object):
             members['_next'] = members[__next__]
             members[__next__] = _iterCustomNext
 
+
 def _enumNext(self):
     if self.hasMoreElements():
         return self.nextElement()
     raise StopIteration
+
 
 def _enumIter(self):
     return self
@@ -285,5 +312,3 @@ _jcustomizer.registerClassCustomizer(ListCustomizer())
 _jcustomizer.registerClassCustomizer(MapCustomizer())
 _jcustomizer.registerClassCustomizer(IteratorCustomizer())
 _jcustomizer.registerClassCustomizer(EnumerationCustomizer())
-
-

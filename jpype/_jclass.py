@@ -11,13 +11,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import sys as _sys
 import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 
-__all__ = ['JClass','JInterface']
+__all__ = ['JClass', 'JInterface']
 
 if _sys.version > '3':
     _unicode = str
@@ -38,8 +38,9 @@ _JCLASSES = {}
 _JP_TYPE_CLASSES = {}
 _JP_OBJECT_CLASSES = {}
 
+
 def _initialize():
-    global _java_ClassLoader 
+    global _java_ClassLoader
 
     _jpype.setResource('GetClassMethod', _JClassNew)
 
@@ -70,9 +71,10 @@ def _initialize():
     _JP_OBJECT_CLASSES[_jpype.PyJPClass] = _java_lang_Class
     _JP_OBJECT_CLASSES[object] = _java_lang_Object
 
+
 class JClass(type):
     """ Meta class for all java class instances.
-    
+
     JClass when called as an object will contruct a new java Class. 
 
     Args:
@@ -84,26 +86,26 @@ class JClass(type):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
-    class_ = property( lambda self: _JObject(self.__javaclass__), None)
+    class_ = property(lambda self: _JObject(self.__javaclass__), None)
 
     def __new__(cls, *args, **kwargs):
-        if len(args)==1:
+        if len(args) == 1:
             return _JClassNew(args[0])
         return super(JClass, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, *args):
-        if len(args)==1:
+        if len(args) == 1:
             return
-        super(JClass,self.__class__).__init__(self, *args)
+        super(JClass, self.__class__).__init__(self, *args)
 
     def __getattribute__(self, name):
         if name.startswith('_'):
             return type.__getattribute__(self, name)
-        attr = type.__getattribute__(self,name)
+        attr = type.__getattribute__(self, name)
         if isinstance(attr, _jpype.PyJPMethod):
-           return attr
+            return attr
         if hasattr(attr, '__get__'):
-           return attr.__get__(self)
+            return attr.__get__(self)
         return attr
 
     def __setattr__(self, name, value):
@@ -111,45 +113,48 @@ class JClass(type):
             type.__setattr__(self, name, value)
         else:
             attr = typeLookup(self, name)
-            if hasattr(attr,'__set__'):
+            if hasattr(attr, '__set__'):
                 attr.__set__(self, value)
                 return
-            raise AttributeError("%s does not have field %s"%(self.__name__, attr))
+            raise AttributeError("%s does not have field %s" %
+                                 (self.__name__, attr))
 
     def mro(cls):
         # here we run a topological sort to get a linear ordering of the inheritance graph.
         parents = set().union(*[x.__mro__ for x in cls.__bases__])
 
-        # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance 
+        # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance
         if _JObject in parents and JInterface in parents:
-          parents.remove(JInterface)
+            parents.remove(JInterface)
 
         numsubs = dict()
         for cls1 in parents:
-            numsubs[cls1] = len([cls2 for cls2 in parents \
-                    if cls1 != cls2 and issubclass(cls2,cls1)])
+            numsubs[cls1] = len([cls2 for cls2 in parents
+                                 if cls1 != cls2 and issubclass(cls2, cls1)])
         mergedmro = [cls]
         while numsubs:
-            for k1,v1 in numsubs.items():
-                if v1 != 0: continue
+            for k1, v1 in numsubs.items():
+                if v1 != 0:
+                    continue
                 mergedmro.append(k1)
-                for k2,v2 in numsubs.items():
-                    if issubclass(k1,k2):
+                for k2, v2 in numsubs.items():
+                    if issubclass(k1, k2):
                         numsubs[k2] = v2-1
                 del numsubs[k1]
                 break
         return mergedmro
+
 
 def _JClassNew(arg):
     if isinstance(arg, _jpype.PyJPClass):
         javaClass = arg
     else:
         javaClass = _jpype.PyJPClass(arg)
-        
+
     if javaClass is None:
         raise _java_lang_RuntimeException("Class %s not found" % name)
 
-    # Lookup the class name 
+    # Lookup the class name
     name = javaClass.getCanonicalName()
 
     # See if we have an existing class in the cache
@@ -157,22 +162,29 @@ def _JClassNew(arg):
         return _JCLASSES[name]
     return _JClassFactory(name, javaClass)
 
+
 class JInterface(object):
     """ Base class for all Java Interfaces. 
 
         Use isinstance(obj, jpype.JavaInterface) to test for a interface.
     """
     class_ = property(lambda self: _JObject(self.__javaclass__), None)
+
     def __new__(cls, *args, **kwargs):
         return super(JInterface, cls).__new__(cls)
-    def __str__(self): 
+
+    def __str__(self):
         return self.toString()
+
     def __hash__(self):
         return self.hashCode()
-    def __eq__(self): 
+
+    def __eq__(self):
         return self.equals(o)
+
     def __ne__(self):
         return not self.equals(o)
+
 
 def _JClassFactory(name, jc):
     from . import _jarray
@@ -195,15 +207,15 @@ def _JClassFactory(name, jc):
         bases.append(JClass(ic))
 
     # Set up members
-    members = { 
-            "__javaclass__": jc, 
-            "__name__": name,
-            }
+    members = {
+        "__javaclass__": jc,
+        "__name__": name,
+    }
     fields = jc.getClassFields()
     for i in fields:
         fname = pysafe(i.getName())
         members[fname] = i
-    for jm in jc.getClassMethods():  
+    for jm in jc.getClassMethods():
         members[pysafe(jm.getName())] = jm
 
     # Apply customizers
@@ -212,7 +224,8 @@ def _JClassFactory(name, jc):
     _JCLASSES[name] = res
     return res
 
-#**********************************************************
+# **********************************************************
+
 
 def _toJavaClass(tp):
     """ (internal) Converts a class type in python into a internal java class.
@@ -224,7 +237,7 @@ def _toJavaClass(tp):
      - (JClass) just returns the java type.
      - (type) uses a lookup table to find the class.
     """
-    # if it a string 
+    # if it a string
     if isinstance(tp, (str, _unicode)):
         return JClass(tp).__javaclass__
 
@@ -232,7 +245,8 @@ def _toJavaClass(tp):
         return tp
 
     if not isinstance(tp, type):
-        raise TypeError("Argument must be a class, java class, java wrapper or string representing a java class")
+        raise TypeError(
+            "Argument must be a class, java class, java wrapper or string representing a java class")
 
     # See if it a class type
     try:
@@ -245,7 +259,8 @@ def _toJavaClass(tp):
     except KeyError:
         pass
 
-    raise TypeError("Unable to find class for %s"%tp.__name__)
+    raise TypeError("Unable to find class for %s" % tp.__name__)
+
 
 def _getDefaultJavaObject(obj):
     global _JP_OBJECT_CLASSES
@@ -262,12 +277,12 @@ def _getDefaultJavaObject(obj):
     if isinstance(obj, _jpype.PyJPClass):
         return _java_lang_Class
 
-    # We need to check this first as values have both 
+    # We need to check this first as values have both
     # __javavalue__ and __javaclass__
-    if hasattr(obj,'__javavalue__'):
+    if hasattr(obj, '__javavalue__'):
         return JClass(obj.__javaclass__)
 
-    if hasattr(obj,'__javaclass__'):
+    if hasattr(obj, '__javaclass__'):
         return _java_lang_Class
 
     if obj == None:
@@ -277,22 +292,27 @@ def _getDefaultJavaObject(obj):
         "Unable to determine the default type of {0}".format(obj.__class__))
 
 # Patch for forName
+
+
 def _jclass_forName(*args):
-    if len(args)==2 and isinstance(args[1],str):
+    if len(args) == 2 and isinstance(args[1], str):
         return _java_lang_Class._forName(args[1], True, _java_ClassLoader)
     else:
         return _java_lang_Class._forName(*args[1:])
 
+
 class _JavaLangClassCustomizer(_jcustomizer.JClassCustomizer):
     def canCustomize(self, name, jc):
-       return name == 'java.lang.Class'
+        return name == 'java.lang.Class'
 
     def customize(self, name, jc, bases, members):
-       members['_forName'] = members['forName']
-       del members['forName']
-       members['forName'] = _jclass_forName
+        members['_forName'] = members['forName']
+        del members['forName']
+        members['forName'] = _jclass_forName
+
 
 _jcustomizer.registerClassCustomizer(_JavaLangClassCustomizer())
+
 
 def typeLookup(tp, name):
     """ Fetch a descriptor from the inheritance tree.
@@ -301,7 +321,7 @@ def typeLookup(tp, name):
     the tree multiple times.
     """
     try:
-        cache = tp.__dict__['_cache'] 
+        cache = tp.__dict__['_cache']
     except:
         cache = {}
         type.__setattr__(tp, '_cache', cache)
@@ -309,8 +329,6 @@ def typeLookup(tp, name):
         return cache[name]
     for cls in tp.__mro__:
         if name in cls.__dict__:
-            obj=cls.__dict__[name]
-            cache[name]=obj
+            obj = cls.__dict__[name]
+            cache[name] = obj
             return obj
-
-
