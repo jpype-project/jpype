@@ -25,7 +25,7 @@ from . import nio
 from . import types
 
 
-__all__ = ['java','javax','JIterator','JException']
+__all__ = ['java', 'javax', 'JIterator', 'JException']
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)
@@ -42,8 +42,9 @@ def JIterator(it):
     """Deprecated"""
     return it
 
-# FIXME these should be deprecated. The old JPackage system is only for 
-#  python2 series and generates lots of deceptive classes.  At some point 
+
+# FIXME these should be deprecated. The old JPackage system is only for
+#  python2 series and generates lots of deceptive classes.  At some point
 #  these two are going to have to go away.
 java = JPackage("java")
 javax = JPackage("javax")

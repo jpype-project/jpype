@@ -20,6 +20,7 @@ from . import _jclass
 
 __all__ = ['JPackage']
 
+
 class JPackage(object):
     def __init__(self, name):
         self.__name = name
@@ -35,9 +36,10 @@ class JPackage(object):
             # perhaps it is a class?
             subname = "{0}.{1}".format(self.__name, n)
             if not _jpype.isStarted():
-               import warnings
-               warnings.warn("JVM not started yet, can not inspect JPackage contents")
-               return n
+                import warnings
+                warnings.warn(
+                    "JVM not started yet, can not inspect JPackage contents")
+                return n
             try:
                 cc = _jclass.JClass(subname)
             except:

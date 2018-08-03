@@ -45,7 +45,8 @@ if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
     if sys.version > '3':
-        platform_specific['extra_compile_args'] = ['/Zi', '/EHsc', '/std:c++14']
+        platform_specific['extra_compile_args'] = [
+            '/Zi', '/EHsc', '/std:c++14']
     else:
         platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
     platform_specific['extra_link_args'] = ['/DEBUG']
@@ -65,7 +66,7 @@ elif sys.platform == 'darwin':
 
 elif sys.platform.startswith('linux'):
     platform_specific['libraries'] = ['dl']
-    platform_specific['extra_compile_args'] = ['-g3','-std=c++11']
+    platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
     jni_md_platform = 'linux'
 
 elif sys.platform.startswith('freebsd'):

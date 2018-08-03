@@ -90,10 +90,10 @@ class AttributeTestCase(common.JPypeTestCase):
         v = StringArray(["Foo", "bar"])
         t = JClass('jpype.attr.Test1')()
         result = t.testStringArray(v)
-        self.assertFalse([1,2]==result)
-        self.assertFalse(result==[1,2])
-        self.assertTrue([1,2]!=result)
-        self.assertTrue(result!=[1,2])
+        self.assertFalse([1, 2] == result)
+        self.assertFalse(result == [1, 2])
+        self.assertTrue([1, 2] != result)
+        self.assertTrue(result != [1, 2])
 
     def testGetStaticValue(self):
         self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "234")
@@ -113,7 +113,7 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testSetNonStaticValue(self):
         h = JClass('jpype.attr.Test1')()
-        h.stringValue="bar"
+        h.stringValue = "bar"
         self.assertEqual(h.stringValue, "bar")
 
     def testReturnSubClass(self):
@@ -152,7 +152,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
- 
+
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -165,7 +165,7 @@ class AttributeTestCase(common.JPypeTestCase):
             l = int(4398046511103)
         else:
             l = long(4398046511103)
- 
+
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -219,7 +219,8 @@ class AttributeTestCase(common.JPypeTestCase):
     def testDifferentiateClassAndObject(self):
         h = JClass('jpype.attr.Test1')()
 
-        self.assertEqual(h.callWithSomething(JClass('jpype.attr.Test1')), u"Class")
+        self.assertEqual(h.callWithSomething(
+            JClass('jpype.attr.Test1')), u"Class")
         result = h.callWithSomething(jpype.JObject(JClass('jpype.attr.Test1'),
                                                    jpype.java.lang.Object))
         self.assertEqual(result, u"Object")

@@ -36,6 +36,7 @@ def haveJImports():
 def isJavaClass(tp):
     return isinstance(tp, jpype.JClass)
 
+
 class ImportsTestCase(common.JPypeTestCase):
     def setUp(self):
         #        logger = logging.getLogger(__name__)

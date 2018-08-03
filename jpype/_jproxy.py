@@ -26,11 +26,12 @@ from . import _jclass
 if sys.version > '3':
     unicode = str
 
+
 class JProxy(object):
     def __init__(self, intf, dict=None, inst=None):
         actualIntf = None
 
-        # We operate on lists of interfaces, so a single element is promoted 
+        # We operate on lists of interfaces, so a single element is promoted
         # to a list
         if not isinstance(intf, collections.Sequence):
             intf = [intf]
@@ -44,7 +45,7 @@ class JProxy(object):
                 actualIntf.append(i)
             else:
                 raise TypeError("JProxy requires java interface classes "
-                        "or the names of java interfaces classes: {0}".format(i.__name))
+                                "or the names of java interfaces classes: {0}".format(i.__name))
 
         # Check that all are interfaces
         for i in actualIntf:
@@ -58,10 +59,10 @@ class JProxy(object):
 
         if dict is not None:
             def lookup(d, name):
-              return d[name]
+                return d[name]
             self.__javaproxy__ = _jpype.PyJPProxy(dict, lookup, actualIntf)
 
         if inst is not None:
             def lookup(d, name):
-              return getattr(d, name)
+                return getattr(d, name)
             self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)

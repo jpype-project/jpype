@@ -15,19 +15,27 @@
 #
 # *****************************************************************************
 
-# This is a super set of the keywords in Python2 and Python3.
-# We use this so that jpype is a bit more version independent.
-_KEYWORDS = set((
-    "del", "for", "is", "raise",
-    "assert", "elif", "from", "lambda", "return",
-    "break", "else", "global", "not", "try",
-    "class", "except", "if", "or", "while",
-    "continue", "exec", "import", "pass", "yield",
-    "def", "finally", "in", "print", "as", "None"
-))
+# import package to get minimum types needed to use module.
 
+from ._jclass import *
+from ._jtypes import *
+from ._jobject import *
+from ._jarray import *
+from ._jexception import *
+from ._jstring import *
 
-def pysafe(s):
-    if s in _KEYWORDS:
-        return s+"_"
-    return s
+__all__ = [
+    'JArray',
+    'JClass',
+    'JBoolean',
+    'JByte',
+    'JChar',
+    'JShort',
+    'JInt',
+    'JLong',
+    'JFloat',
+    'JDouble',
+    'JString',
+    'JObject',
+    'JException',
+]

@@ -18,12 +18,13 @@ import _jpype
 from . import _jcustomizer
 from ._pykeywords import pysafe
 
-# FIXME this customizer seems like a bad idea.  It creates 
+# FIXME this customizer seems like a bad idea.  It creates
 # properties for every bean pattern it finds creating a
 # second way to access the methods.  This overrides any actual
 # fields making it a good way to fool yourself while debugging.
 
 _PROPERTY_ACCESSOR_PREFIX_LEN = 3
+
 
 def _extract_accessor_pairs(members):
     """Extract pairs of corresponding property access methods
@@ -67,6 +68,7 @@ def _extract_accessor_pairs(members):
 def _is_java_method(attribute):
     return isinstance(attribute, _jpype.PyJPMethod)
 
+
 class PropertiesCustomizer(object):
     def canCustomize(self, name, jc):
         return True
@@ -89,5 +91,6 @@ class PropertiesCustomizer(object):
                     # only have a getter
                     setter = members[attr_name].fset
             members[attr_name] = property(getter, setter)
+
 
 _jcustomizer.registerClassCustomizer(PropertiesCustomizer())

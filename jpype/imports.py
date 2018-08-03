@@ -40,7 +40,7 @@ try:
     from types import ModuleType as _ModuleType
 except Exception:
 
-    # For Python2 compatiblity 
+    # For Python2 compatiblity
     #  (Note: customizers are not supported)
     class _ModuleSpec(object):
         def __init__(self, name, loader):
@@ -50,8 +50,8 @@ except Exception:
 
 import _jpype
 import sys as _sys
-from . import _pykeywords 
-from . import _jclass 
+from . import _pykeywords
+from . import _jclass
 from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
@@ -81,11 +81,14 @@ def _getJavaClass(javaname):
     except Exception:
         return None
 
-#FIXME imports of static fields not working for now.
+# FIXME imports of static fields not working for now.
+
+
 def _copyProperties(out, mc):
-#    for jf in mc.__javaclass__.getClassFields():  
-#        out[_keywordWrap(jf.getName())] = jf
+    #    for jf in mc.__javaclass__.getClassFields():
+    #        out[_keywordWrap(jf.getName())] = jf
     pass
+
 
 def _getStaticMethods(cls):
     global _modifier
@@ -132,6 +135,7 @@ if _sys.version_info > (3,):
           |         path = os.path.join(devel, pname,'py','__init__.py')
           |         return importlib.util.spec_from_file_location(name, path)
        """
+
         def canCustomize(self, name):
             """ Determine if this path is to be treated differently 
 
@@ -146,7 +150,8 @@ if _sys.version_info > (3,):
             raise NotImplementedError
 else:
     def registerImportCustomizer(customizer):
-        raise NotImplementedError("Import customizers not implemented for Python 2.x")
+        raise NotImplementedError(
+            "Import customizers not implemented for Python 2.x")
     JImportCustomizer = object
 
 
@@ -306,8 +311,9 @@ class _JImportLoader:
     # For compatablity with Python 2.7
     def load_module(self, name):
         module = self.create_module(_ModuleSpec(name, self))
-        _sys.modules[name]=module
+        _sys.modules[name] = module
         return module
+
 
 # Install hooks into python importlib
 _sys.meta_path.append(_JImportLoader())
@@ -344,6 +350,5 @@ def _initialize():
     _modifier = _jclass.JClass('java.lang.reflect.Modifier')
     _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
 
-_jinit.registerJVMInitializer(_initialize)
 
 _jinit.registerJVMInitializer(_initialize)

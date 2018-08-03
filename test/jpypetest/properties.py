@@ -8,7 +8,7 @@ except ImportError:
 
 
 class PropertiesTestCase(common.JPypeTestCase):
-#    __name__="PropertiesTestCase"
+    #    __name__="PropertiesTestCase"
 
     def setUp(self):
         super(PropertiesTestCase, self).setUp()

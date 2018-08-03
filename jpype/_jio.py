@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from . import _jcustomizer
 import sys as _sys
 from . import _jexception
@@ -53,5 +53,6 @@ class CloseableCustomizer(object):
 
     def customize(self, name, jc, bases, members):
         members.update(CloseableCustomizer._METHODS)
+
 
 _jcustomizer.registerClassCustomizer(CloseableCustomizer())

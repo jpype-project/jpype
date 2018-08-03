@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import JException, java, JProxy, JClass
 import os
 import sys
