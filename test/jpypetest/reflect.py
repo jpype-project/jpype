@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -25,6 +25,7 @@ from . import common
 
 if sys.version > '3':
     unicode = str
+
 
 class ReflectCase(common.JPypeTestCase):
 
@@ -38,9 +39,12 @@ class ReflectCase(common.JPypeTestCase):
         t = jpype.JClass('java.lang.Object')
         obj = self.Reflect()
         self.assertEquals('Class', self.test1.testClassVsObject(self.Reflect))
-        self.assertEquals('Class', self.test1.testClassVsObject(self.Reflect.class_))
-        self.assertEquals('Class', self.test1.testClassVsObject(obj.getClass()))
-        self.assertEquals('Class', self.test1.testClassVsObject(obj.__class__.class_))
+        self.assertEquals(
+            'Class', self.test1.testClassVsObject(self.Reflect.class_))
+        self.assertEquals(
+            'Class', self.test1.testClassVsObject(obj.getClass()))
+        self.assertEquals(
+            'Class', self.test1.testClassVsObject(obj.__class__.class_))
 
     def testAnnotation(self):
         method = self.Reflect.class_.getMethod('annotatedMethod')

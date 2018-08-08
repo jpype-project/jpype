@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,52 +13,78 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
-import sys
+# *****************************************************************************
+import sys as _sys
 
 import _jpype
 
 from . import _jclass
+from . import _jobject
+from . import _jtypes
+
+# Import all the class customizers
+# Customizers are applied in the order that they are defined currently.
+#from . import _properties
 from . import _jarray
-from . import _jwrapper
-from . import _jproxy
+from . import _jboxed
 from . import _jexception
 from . import _jcollection
-from . import _jobject
+from . import _jcomparable
 from . import _jio
-from . import _properties
-from . import nio
-from . import reflect
-from . import _refdaemon
+from . import _jinit
 
-_usePythonThreadForDaemon = False
+__all__ = [
+    'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
+    'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
+    'detachThreadFromJVM'
+]
 
-def setUsePythonThreadForDeamon(v):
-    global _usePythonThreadForDaemon
-    _usePythonThreadForDaemon = v
+# See http://scottlobdell.me/2015/04/decorators-arguments-python/
 
-_initializers=[]
 
-def registerJVMInitializer(func):
-    """Register a function to be called after jvm is started"""
-    _initializers.append(func)
+def deprecated(*args):
+    """ Marks a function a deprecated when used as decorator.
+
+    Be sure to start python with -Wd to see warnings.
+    """
+    def func2(*args, **kwargs):
+        import warnings
+        if not func2._warned:
+            warnings.warn(func2._warning % (func2._real.__module__, func2._real.__name__),
+                          category=DeprecationWarning, stacklevel=2)
+        func2._warned = True
+        return func2._real(*args, **kwargs)
+
+    if isinstance(args[0], str):
+        def decorate(func):
+            func2.__name__ = func.__name__
+            func2.__doc__ = func.__doc__
+            func2._warned = False
+            func2._real = func
+            func2._warning = "%s.%s is deprecated, use {0} instead".format(
+                args[0])
+            return func2
+        return decorate
+    else:
+        func = args[0]
+        func2.__name__ = func.__name__
+        func2.__doc__ = func.__doc__
+        func2._warned = False
+        func2._real = func
+        func2._warning = "%s.%s is deprecated"
+        return func2
+
 
 def _initialize():
-    _properties._initialize()
     _jclass._initialize()
-    _jarray._initialize()
-    _jwrapper._initialize()
-    _jproxy._initialize()
-    _jexception._initialize()
-    _jcollection._initialize()
     _jobject._initialize()
-    nio._initialize()
-    reflect._initialize()
-    for func in _initializers:
-        func()
+    _jtypes._initialize()
+    _jinit.runJVMInitializers()
 
-def isJVMStarted() :
+
+def isJVMStarted():
     return _jpype.isStarted()
+
 
 def startJVM(jvm, *args):
     """
@@ -70,45 +96,44 @@ def startJVM(jvm, *args):
     _jpype.startup(jvm, tuple(args), True)
     _initialize()
 
-    # start the reference daemon thread
-    if _usePythonThreadForDaemon:
-        _refdaemon.startPython()
-    else:
-        _refdaemon.startJava()
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)
     _initialize()
 
+
 def shutdownJVM():
     _jpype.shutdown()
+
 
 def isThreadAttachedToJVM():
     return _jpype.isThreadAttachedToJVM()
 
+
 def attachThreadToJVM():
     _jpype.attachThreadToJVM()
+
 
 def detachThreadFromJVM():
     _jpype.detachThreadFromJVM()
 
 
-def get_default_jvm_path():
+def getDefaultJVMPath():
     """
     Retrieves the path to the default or first found JVM library
 
     :return: The path to the JVM shared library file
     :raise ValueError: No JVM library found
     """
-    if sys.platform == "cygwin":
+    if _sys.platform == "cygwin":
         # Cygwin
         from ._cygwin import WindowsJVMFinder
         finder = WindowsJVMFinder()
-    elif sys.platform == "win32":
+    elif _sys.platform == "win32":
         # Windows
         from ._windows import WindowsJVMFinder
         finder = WindowsJVMFinder()
-    elif sys.platform == "darwin":
+    elif _sys.platform == "darwin":
         # Mac OS X
         from ._darwin import DarwinJVMFinder
         finder = DarwinJVMFinder()
@@ -119,25 +144,19 @@ def get_default_jvm_path():
 
     return finder.get_jvm_path()
 
+
 # Naming compatibility
-getDefaultJVMPath = get_default_jvm_path
+get_default_jvm_path = getDefaultJVMPath
 
 
-class ConversionConfigClass(object):
-    def __init__(self):
-        self._convertString = 1
-
-    def _getConvertString(self):
-        return self._convertString
-
-    def _setConvertString(self, value):
-        if value:
-            self._convertString = 1
-        else:
-            self._convertString = 0
-
-        _jpype.setConvertStringObjects(self._convertString)
-
-    string = property(_getConvertString, _setConvertString, None)
-
-ConversionConfig = ConversionConfigClass()
+def getJVMVersion():
+    """ Get the jvm version if the jvm is started.
+    """
+    if not _jpype.isStarted():
+        return (0, 0, 0)
+    version = str(_jclass.JClass(
+        'java.lang.Runtime').class_.getPackage().getImplementationVersion())
+    if version.find('_') != -1:
+        parts = version.split('_')
+        version = parts[0]
+    return tuple([int(i) for i in version.split('.')])

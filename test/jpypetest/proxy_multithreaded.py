@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import *
 from . import common
 
@@ -49,6 +49,7 @@ class ThreadCallbackImpl:
     def notifyValue(self, val):
         self.values.append(val)
 
+
 class ProxyMultiThreadedTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -56,12 +57,10 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         self.package = JPackage("jpype.proxy")
         self.executor = None
 
-
     def tearDown(self):
 
         if self.executor is not None:
             self.executor.shutdown()
-
 
     def testProxyWithSingleThreadExecution(self):
         """Test multiple proxy calls with a single threaded executor.
@@ -75,7 +74,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         proxy = JProxy(self.package.TestInterface4, inst=C())
 
         self.executor = self.package.ProxyExecutor(1)
-        self.executor.registerProxy(proxy,10)
+        self.executor.registerProxy(proxy, 10)
 
         # register proxy executions
         # threads
@@ -83,8 +82,8 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         self.executor.runExecutor()
         result = self.executor.waitForExecutedTasks()
         expected = self.executor.getExpectedTasks()
-        self.assertEqual(result, expected, "Executed Tasks should be the same.")
-
+        self.assertEqual(result, expected,
+                         "Executed Tasks should be the same.")
 
     def testProxyWithMultipleThreadExecutionSingleCallbackInstance(self):
         """Test multiple proxy calls with different threads at the same time.
@@ -96,7 +95,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         called:
             java.lang.RuntimeException: Python exception thrown:
                 AttributeError: 'NoneType' object has no attribute 'getName'
-	        at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
+                at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
             at jpype.JPypeInvocationHandler.invoke(
                 JPypeInvocationHandler.java:10)
             ...
@@ -104,7 +103,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         proxy = JProxy(self.package.TestInterface4, inst=C())
 
         self.executor = self.package.ProxyExecutor(10)
-        self.executor.registerProxy(proxy,100)
+        self.executor.registerProxy(proxy, 100)
 
         # register proxy executions
         # threads
@@ -112,7 +111,8 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         result = self.executor.waitForExecutedTasks()
 
         expected = self.executor.getExpectedTasks()
-        self.assertEqual(result, expected, "Executed Tasks should be the same.")
+        self.assertEqual(result, expected,
+                         "Executed Tasks should be the same.")
 
     def testProxyWithMultipleThreadExecutionMultiCallbackInstances(self):
         """Test multiple proxy calls with different threads at the same time.
@@ -124,7 +124,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         called:
             java.lang.RuntimeException: Python exception thrown:
                 AttributeError: 'NoneType' object has no attribute 'getName'
-	        at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
+                at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
             at jpype.JPypeInvocationHandler.invoke(
                 JPypeInvocationHandler.java:10)
             ...
@@ -132,9 +132,9 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
 
         self.executor = self.package.ProxyExecutor(10)
 
-        for i in range(0,5):
+        for i in range(0, 5):
             proxy = JProxy(self.package.TestInterface4, inst=C())
-            self.executor.registerProxy(proxy,15)
+            self.executor.registerProxy(proxy, 15)
 
         # register proxy executions
         # threads
@@ -142,4 +142,5 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         self.executor.runExecutor()
         result = self.executor.waitForExecutedTasks()
         expected = self.executor.getExpectedTasks()
-        self.assertEqual(result, expected, "Executed Tasks should be the same.")
+        self.assertEqual(result, expected,
+                         "Executed Tasks should be the same.")

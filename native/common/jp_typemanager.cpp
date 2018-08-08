@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve Menard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,161 +13,205 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-*****************************************************************************/
+ *****************************************************************************/
 #include <jpype.h>
+#include <jp_typemanager.h>
 
-namespace {
-//AT's on porting:
-// 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
-//
-//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-	typedef map<JPTypeName::ETypes, JPType*> TypeMap;
+namespace
+{
+	//AT's on porting:
+	// 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
+	//
+	//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
 	typedef map<string, JPClass* > JavaClassMap;
-	typedef map<string, JPArrayClass* > JavaArrayClassMap;
 
-	TypeMap typeMap;
 	JavaClassMap javaClassMap;
-	JavaArrayClassMap javaArrayClassMap;
 
-//	TypeMap typeMap;
-//	JavaClassMap javaClassMap;
-//	JavaArrayClassMap javaArrayClassMap;
+	//	TypeMap typeMap;
+	//	JavaClassMap javaClassMap;
+	//	JavaArrayClassMap javaArrayClassMap;
 }
 
-namespace JPTypeManager {
-
-void init()
+namespace JPTypeManager
 {
-	TRACE_IN("JPTypeManager::init");
-	typeMap[JPTypeName::_void] = new JPVoidType();
-	typeMap[JPTypeName::_byte] = new JPByteType();
-	typeMap[JPTypeName::_short] = new JPShortType();
-	typeMap[JPTypeName::_int] = new JPIntType();
-	typeMap[JPTypeName::_long] = new JPLongType();
-	typeMap[JPTypeName::_float] = new JPFloatType();
-	typeMap[JPTypeName::_double] = new JPDoubleType();
-	typeMap[JPTypeName::_char] = new JPCharType();
-	typeMap[JPTypeName::_boolean] = new JPBooleanType();
-	typeMap[JPTypeName::_string] = new JPStringType();
+	JPVoidType* _void;
+	JPBooleanType* _boolean;
+	JPByteType* _byte;
+	JPCharType* _char;
+	JPShortType* _short;
+	JPIntType* _int;
+	JPLongType* _long;
+	JPFloatType* _float;
+	JPDoubleType* _double;
+	JPClass* _java_lang_Object;
+	JPClass* _java_lang_Class;
+	JPStringClass* _java_lang_String;
 
-	// Preload the "primitive" types
-	javaClassMap["byte"] = new JPClass(JPTypeName::fromSimple("byte"), JPJni::getByteClass());
-	javaClassMap["short"] = new JPClass(JPTypeName::fromSimple("short"), JPJni::getShortClass());
-	javaClassMap["int"] = new JPClass(JPTypeName::fromSimple("int"), JPJni::getIntegerClass());
-	javaClassMap["long"] = new JPClass(JPTypeName::fromSimple("long"), JPJni::getLongClass());
-	javaClassMap["float"] = new JPClass(JPTypeName::fromSimple("float"), JPJni::getFloatClass());
-	javaClassMap["double"] = new JPClass(JPTypeName::fromSimple("double"), JPJni::getDoubleClass());
-	javaClassMap["char"] = new JPClass(JPTypeName::fromSimple("char"), JPJni::getCharacterClass());
-	javaClassMap["boolean"] = new JPClass(JPTypeName::fromSimple("boolean"), JPJni::getBooleanClass());
-	javaClassMap["void"] = new JPClass(JPTypeName::fromSimple("void"), JPJni::getVoidClass());
-	TRACE_OUT;
+	JPBoxedClass* _java_lang_Void;
+	JPBoxedClass* _java_lang_Boolean;
+	JPBoxedClass* _java_lang_Byte;
+	JPBoxedClass* _java_lang_Char;
+	JPBoxedClass* _java_lang_Short;
+	JPBoxedClass* _java_lang_Integer;
+	JPBoxedClass* _java_lang_Long;
+	JPBoxedClass* _java_lang_Float;
+	JPBoxedClass* _java_lang_Double;
 }
 
-JPClass* findClass(const JPTypeName& name)
+JPClass* registerClass(JPClass* classWrapper)
 {
+	JP_TRACE_IN("JPTypeManager::registerClass (specialized)");
+	const string& simple = classWrapper->getCanonicalName();
+	javaClassMap[simple] = classWrapper;
+	JP_TRACE(simple, classWrapper);
+	classWrapper->postLoad();
+	return classWrapper;
+	JP_TRACE_OUT;
+}
+
+JPClass* registerArrayClass(string name, jclass jc)
+{
+	JP_TRACE_IN("JPTypeManager::registerArrayClass");
+	JPClass* cls = new JPArrayClass(jc);
+	JP_TRACE(name, cls);
+	javaClassMap[name] = cls;
+	cls->postLoad();
+	return cls;
+	JP_TRACE_OUT;
+}
+
+JPClass* registerObjectClass(string name, jclass jc)
+{
+	JP_TRACE_IN("JPTypeManager::registerObjectClass");
+	JPClass* cls = new JPClass(jc);
+	JP_TRACE(name, cls);
+	javaClassMap[name] = cls;
+	cls->postLoad();
+	return cls;
+	JP_TRACE_OUT;
+}
+
+void JPTypeManager::init()
+{
+	// Everything that requires specialization must be created here.
+	JPJavaFrame frame;
+	JP_TRACE_IN("JPTypeManager::init");
+	registerClass(_java_lang_Object = new JPObjectBaseClass());
+	registerClass(_java_lang_Class = new JPClassBaseClass());
+	registerClass(_java_lang_String = new JPStringClass());
+
+	registerClass(_java_lang_Void = new JPBoxedVoidClass());
+	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass());
+	registerClass(_java_lang_Byte = new JPBoxedByteClass());
+	registerClass(_java_lang_Char = new JPBoxedCharacterClass());
+	registerClass(_java_lang_Short = new JPBoxedShortClass());
+	registerClass(_java_lang_Integer = new JPBoxedIntegerClass());
+	registerClass(_java_lang_Long = new JPBoxedLongClass());
+	registerClass(_java_lang_Float = new JPBoxedFloatClass());
+	registerClass(_java_lang_Double = new JPBoxedDoubleClass());
+
+	registerClass(_void = new JPVoidType());
+	registerClass(_boolean = new JPBooleanType());
+	registerClass(_byte = new JPByteType());
+	registerClass(_char = new JPCharType());
+	registerClass(_short = new JPShortType());
+	registerClass(_int = new JPIntType());
+	registerClass(_long = new JPLongType());
+	registerClass(_float = new JPFloatType());
+	registerClass(_double = new JPDoubleType());
+
+	JP_TRACE_OUT;
+}
+
+JPClass* JPTypeManager::findClass(const string& name)
+{
+	JP_TRACE_IN("JPTypeManager::findClass");
+	try
+	{
+		JP_TRACE("Finding", name);
+		// First check in the map ...
+		JavaClassMap::iterator cur = javaClassMap.find(name);
+
+		if (cur != javaClassMap.end())
+		{
+			return cur->second;
+		}
+
+		// Convert to native name
+		string cname = name;
+		for (size_t i = 0; i < cname.size(); ++i)
+		{
+			if (cname[i] == '.')
+				cname[i] = '/';
+		}
+
+		// Okay so it isn't already loaded, we need to find the class then make a wrapper for it
+		JPJavaFrame frame;
+		jclass cls = (jclass) frame.FindClass(cname.c_str());
+		string aname = JPJni::getCanonicalName(cls);
+		JP_TRACE("FIXME ", cname, aname);
+		return findClass((jclass) frame.keep(cls));
+	}
+	JP_CATCH;
+	JP_TRACE_OUT;
+}
+
+JPClass* JPTypeManager::findClassForObject(jobject obj)
+{
+	if (obj == NULL)
+		return NULL;
+	return findClass(JPJni::getClass(obj));
+}
+
+JPClass* JPTypeManager::findClass(jclass cls)
+{
+	if (cls == NULL)
+		return NULL;
+
+	string name = JPJni::getCanonicalName(cls);
+
 	// Fist check in the map ...
-	JavaClassMap::iterator cur = javaClassMap.find(name.getSimpleName());
+	JavaClassMap::iterator cur = javaClassMap.find(name);
 
 	if (cur != javaClassMap.end())
 	{
 		return cur->second;
 	}
 
-	TRACE_IN("JPTypeManager::findClass");
-	TRACE1(name.getSimpleName());
+	JP_TRACE_IN("JPTypeManager::findClassLoad");
+	JP_TRACE(name);
 
-	// No we havent got it .. lets load it!!!
+	// No we haven't got it .. lets load it!!!
 	JPJavaFrame frame;
-	jclass cls = frame.FindClass(name.getNativeName().c_str());
-	JPClass* res = new JPClass(name, cls);
-	// Finish loading it
-	res->postLoad();
-	// Register it here before we do anything else
-	javaClassMap[name.getSimpleName()] = res;
-
-	return res;
-	TRACE_OUT;
-}
-
-JPArrayClass* findArrayClass(const JPTypeName& name)
-{
-	// Fist check in the map ...
-	JavaArrayClassMap::iterator cur = javaArrayClassMap.find(name.getSimpleName());
-
-	if (cur != javaArrayClassMap.end())
+	if (JPJni::isArray(cls))
 	{
-		return cur->second;
-	}
-
-	// No we havent got it .. lets load it!!!
-	JPJavaFrame frame;
-	jclass cls = frame.FindClass(name.getNativeName().c_str());
-	JPArrayClass* res = new JPArrayClass(name, cls);
-
-	// Register it here before we do anything else
-	javaArrayClassMap[name.getSimpleName()] = res;
-
-	return res;
-}
-
-JPType* getType(const JPTypeName& t)
-{
-	TRACE_IN("JPTypeManager::getType");
-	TRACE1(t.getSimpleName());
-	map<JPTypeName::ETypes, JPType*>::iterator it = typeMap.find(t.getType());
-
-	if (it != typeMap.end())
-	{
-		return it->second;
-	}
-
-	if (t.getType() == JPTypeName::_array)
-	{
-		JPArrayClass* c = findArrayClass(t);
-		return c;
+		return registerArrayClass(name, cls);
 	}
 	else
 	{
-		JPClass* c = findClass(t);
-		return c;
+		return registerObjectClass(name, cls);
 	}
-	TRACE_OUT;
+	JP_TRACE_OUT;
 }
 
-void shutdown()
+void JPTypeManager::shutdown()
 {
-	TRACE_IN("JPTypeManager::shutdown");
+	JP_TRACE_IN("JPTypeManager::shutdown");
 	flushCache();
-
-	// delete primitive types
-	for(TypeMap::iterator i = typeMap.begin(); i != typeMap.end(); ++i)
-	{
-		delete i->second;
-	}
-	TRACE_OUT;
+	JP_TRACE_OUT;
 }
 
-void flushCache()
+void JPTypeManager::flushCache()
 {
-	for(JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
+	for (JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
 	{
 		delete i->second;
 	}
-
-	for(JavaArrayClassMap::iterator i = javaArrayClassMap.begin();
-			i != javaArrayClassMap.end(); ++i)
-	{
-		delete i->second;
-	}
-
 	javaClassMap.clear();
-	javaArrayClassMap.clear();
 }
 
-int getLoadedClasses()
+int JPTypeManager::getLoadedClasses()
 {
-	// dignostic tools ... unlikely to load more classes than int can hold ...
-	return (int)(javaClassMap.size() + javaArrayClassMap.size());
+	// diagnostic tools ... unlikely to load more classes than int can hold ...
+	return (int) javaClassMap.size();
 }
-
-} // end of namespace JPTypeManager

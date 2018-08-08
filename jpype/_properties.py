@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +13,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 import _jpype
-from . import _jclass
-from ._pykeywords import KEYWORDS
+from . import _jcustomizer
+from ._pykeywords import pysafe
+
+# FIXME this customizer seems like a bad idea.  It creates
+# properties for every bean pattern it finds creating a
+# second way to access the methods.  This overrides any actual
+# fields making it a good way to fool yourself while debugging.
 
 _PROPERTY_ACCESSOR_PREFIX_LEN = 3
 
-def _initialize() :
-    _jclass.registerClassCustomizer(PropertiesCustomizer())
 
 def _extract_accessor_pairs(members):
     """Extract pairs of corresponding property access methods
@@ -38,11 +41,11 @@ def _extract_accessor_pairs(members):
     accessor_pairs = {}
 
     for name, member in members.items():
-        if not (len(name) > _PROPERTY_ACCESSOR_PREFIX_LEN \
-                        and _is_java_method(member)):
+        if not (len(name) > _PROPERTY_ACCESSOR_PREFIX_LEN
+                and _is_java_method(member)):
             continue
-        access, rest = ( name[:_PROPERTY_ACCESSOR_PREFIX_LEN],
-                         name[_PROPERTY_ACCESSOR_PREFIX_LEN:] )
+        access, rest = (name[:_PROPERTY_ACCESSOR_PREFIX_LEN],
+                        name[_PROPERTY_ACCESSOR_PREFIX_LEN:])
         property_name = rest[:1].lower() + rest[1:]
         if property_name in members:
             if _is_java_method(members[property_name]):
@@ -61,22 +64,23 @@ def _extract_accessor_pairs(members):
                 accessor_pairs[property_name] = [None, member]
     return accessor_pairs
 
-def _is_java_method(attribute):
-    return isinstance(attribute, _jpype._JavaMethod)
 
-class PropertiesCustomizer(object) :
-    def canCustomize(self, name, jc) :
+def _is_java_method(attribute):
+    return isinstance(attribute, _jpype.PyJPMethod)
+
+
+class PropertiesCustomizer(object):
+    def canCustomize(self, name, jc):
         return True
 
-    def customize(self, class_name, jc, bases, members) :
+    def customize(self, class_name, jc, bases, members):
         accessor_pairs = _extract_accessor_pairs(members)
         for attr_name, (getter, setter) in accessor_pairs.items():
             # class is will be static to match Type.class in Java
-            if attr_name=='class':
+            if attr_name == 'class':
                 continue
             # Handle keyword conflicts
-            if attr_name in KEYWORDS:
-                attr_name += "_"
+            attr_name = pysafe(attr_name)
             if attr_name in members:
                 if not getter:
                     # add default getter if we
@@ -87,3 +91,6 @@ class PropertiesCustomizer(object) :
                     # only have a getter
                     setter = members[attr_name].fset
             members[attr_name] = property(getter, setter)
+
+
+_jcustomizer.registerClassCustomizer(PropertiesCustomizer())

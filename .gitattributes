@@ -7,6 +7,7 @@
 *.h text eol=lf
 
 *.xml text eol=lf
+*.md text
 *.txt text
 .gitignore text eol=lf
 .gitattributes text eol=lf 
