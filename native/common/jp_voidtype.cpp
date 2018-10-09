@@ -51,12 +51,9 @@ JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
 
 jvalue JPVoidType::convertToJava(PyObject* obj)
 {
-	return JPPyObject::getNone();
-}
-
-JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
-{
-	return JPMatch::_none;
+	jvalue res;
+	res.l = NULL;
+	return res;
 }
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)

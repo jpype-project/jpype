@@ -293,8 +293,6 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	{
 		return JPPyObject::getNone();
 	}
-	JP_TRACE_OUT;
-}
 
 	JPClass* cls = JPTypeManager::findClassForObject(obj.l);
 	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
