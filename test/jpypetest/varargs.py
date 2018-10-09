@@ -29,6 +29,13 @@ if sys.version > '3':
 
 # Test code
 
+def compareList(l1, l2):
+    if len(l1)!=len(l2):
+        return False
+    for i in range(0, len(l1)):
+        if l1[i]!=l2[i]:
+            return False
+    return True
 
 class VarArgsTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -88,6 +95,23 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertTrue(isinstance(m0, self.Integer))
         self.assertTrue(isinstance(m1, self.StringA))
         self.assertTrue(isinstance(m2, self.StringA))
+
+    def testVarArgsStringTest(self):
+        strArray = jpype.JArray(jpype.JString)
+        self.assertTrue(compareList(self.VarArgs.callString('a','b'),['a','b']))
+        self.assertTrue(compareList(self.VarArgs.callString('a'),['a']))
+        self.assertTrue(compareList(self.VarArgs.callString(),[]))
+
+    def testVarArgsPlus0(self):
+        self.assertEquals(self.VarArgs.callString0("a"),0)
+        self.assertEquals(self.VarArgs.callString0("a","b"),1)
+        self.assertEquals(self.VarArgs.callString0("a","b","c"),2)
+
+    def testVarArgsPlus1(self):
+        var = self.VarArgs()
+        self.assertEquals(var.callString1("a"),0)
+        self.assertEquals(var.callString1("a","b"),1)
+        self.assertEquals(var.callString1("a","b","c"),2)
 
 
 if __name__ == '__main__':
