@@ -169,6 +169,7 @@ void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringV
 
 	JP_TRACE("Initialize");
 	JPJni::init();
+	JPClassLoader::init();
 	JPTypeManager::init();
 	JPReferenceQueue::init();
 	JPProxy::init();

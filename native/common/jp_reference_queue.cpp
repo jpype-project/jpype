@@ -54,14 +54,9 @@ void JPReferenceQueue::init()
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPReferenceQueue::init");
 
-	// build the proxy class ...
-	jobject cl = JPJni::getSystemClassLoader();
-	s_ReferenceClass = (jclass) frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReference", cl,
-			JPThunk::_jpype_ref_JPypeReference,
-			JPThunk::_jpype_ref_JPypeReference_size));
-	s_ReferenceQueueClass = (jclass) frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReferenceQueue", cl,
-			JPThunk::_jpype_ref_JPypeReferenceQueue,
-			JPThunk::_jpype_ref_JPypeReferenceQueue_size));
+	// build the ReferenceQueue class ...
+	s_ReferenceClass = (jclass) frame.NewGlobalRef(JPClassLoader::findClass("jpype.ref.JPypeReference"));
+	s_ReferenceQueueClass = (jclass) frame.NewGlobalRef(JPClassLoader::findClass("jpype.ref.JPypeReferenceQueue"));
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522

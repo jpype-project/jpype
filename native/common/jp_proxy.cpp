@@ -112,12 +112,7 @@ void JPProxy::init()
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPProxy::init");
 
-	// build the proxy class ...
-	jobject cl = JPJni::getSystemClassLoader();
-
-	jclass handler = frame.DefineClass("jpype/JPypeInvocationHandler", cl,
-			JPThunk::_jpype_JPypeInvocationHandler,
-			JPThunk::_jpype_JPypeInvocationHandler_size);
+	jclass handler = JPClassLoader::findClass("jpype.JPypeInvocationHandler");
 	handlerClass = (jclass) frame.NewGlobalRef(handler);
 
 	JNINativeMethod method[1];

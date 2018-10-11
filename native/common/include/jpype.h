@@ -162,6 +162,7 @@ class JPField;
 
 // Services
 #include "jp_reference_queue.h"
+#include "jp_classloader.h"
 #include "jp_proxy.h"
 #include "jp_monitor.h"
 

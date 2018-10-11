@@ -21,7 +21,7 @@ class BuildJavaCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
-        buildDir = os.path.join("..", "build", "lib")
+        buildDir = os.path.join("..", "build")
         buildXmlFile = os.path.join("native", "build.xml")
         command = [self.distribution.ant, '-Dbuild=%s' %
                    buildDir, '-f', buildXmlFile]
