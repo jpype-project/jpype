@@ -340,7 +340,7 @@ string JPJni::getCanonicalName(jclass clazz)
 	JP_TRACE_IN("getCanonicalName");
 	JPJavaFrame frame;
 	jstring str = (jstring) frame.CallObjectMethod(clazz, s_Class_GetCanonicalNameID);
-        // Anonomous classes don't have canonical names so they return null
+        // Anonymous classes don't have canonical names so they return null
         if (str==NULL)
 	  str = (jstring) frame.CallObjectMethod(clazz, s_Class_GetNameID);
 	JP_TRACE("toString");
