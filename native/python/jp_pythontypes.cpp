@@ -211,7 +211,7 @@ JPPyObject JPPyInt::fromLong(jlong l)
 #if PY_MAJOR_VERSION >= 3 
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 #else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int)l));
+	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int) l));
 #endif
 }
 
@@ -317,7 +317,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 	Py_UCS4 c2 = c;
 	PyUnicode_WriteChar(buf.get(), 0, c2);
 	JP_PY_CHECK();
-        PyUnicode_READY(buf.get());
+	PyUnicode_READY(buf.get());
 	return buf;
 #endif
 }
@@ -452,7 +452,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 	size_t len = str.size();
 
 #if PY_MAJOR_VERSION < 3
-        // Python 2 is unicode only on request
+	// Python 2 is unicode only on request
 	if (unicode)
 	{
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(str.c_str(), len));
@@ -462,7 +462,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(str.c_str(), len));
 	}
 #else
-        // Python 3 is always unicode
+	// Python 3 is always unicode
 	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 #endif
@@ -543,7 +543,7 @@ void JPPyMemoryView::getByteBufferSize(PyObject* obj, char** outBuffer, long& ou
 
 JPPyTuple JPPyTuple::newTuple(jlong sz)
 {
-	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t)sz));
+	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
 }
 
 bool JPPyTuple::check(PyObject* obj)
@@ -554,7 +554,7 @@ bool JPPyTuple::check(PyObject* obj)
 void JPPyTuple::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
-	PyTuple_SetItem(pyobj, (Py_ssize_t)ndx, val); // steals reference
+	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
 	JP_PY_CHECK();
 
 	// Return the stolen reference, but only after transfer has been completed.
@@ -563,7 +563,7 @@ void JPPyTuple::setItem(jlong ndx, PyObject* val)
 
 PyObject* JPPyTuple::getItem(jlong ndx)
 {
-	PyObject* res = PyTuple_GetItem(pyobj, (Py_ssize_t)ndx);
+	PyObject* res = PyTuple_GetItem(pyobj, (Py_ssize_t) ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -580,7 +580,7 @@ jlong JPPyTuple::size()
 
 JPPyList JPPyList::newList(jlong sz)
 {
-	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t)sz));
+	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t) sz));
 }
 
 bool JPPyList::check(PyObject* obj)
@@ -591,13 +591,13 @@ bool JPPyList::check(PyObject* obj)
 void JPPyList::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
-	PySequence_SetItem(pyobj, (Py_ssize_t)ndx, val); // Does not steal
+	PySequence_SetItem(pyobj, (Py_ssize_t) ndx, val); // Does not steal
 	JP_PY_CHECK();
 }
 
 PyObject* JPPyList::getItem(jlong ndx)
 {
-	PyObject* res = PyList_GetItem(pyobj, (Py_ssize_t)ndx);
+	PyObject* res = PyList_GetItem(pyobj, (Py_ssize_t) ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -711,7 +711,7 @@ void JPPyErr::clear()
 
 bool JPPyErr::occurred()
 {
-	return PyErr_Occurred()!=0;
+	return PyErr_Occurred() != 0;
 }
 
 bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)

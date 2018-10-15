@@ -1,4 +1,45 @@
+/*****************************************************************************
+   Copyright 2018 Karl Einar Nelson
+  
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+	   http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+  
+ *****************************************************************************/
 #include <jp_encoding.h>
+
+// FIXME These encoders handle all of the codes expected to be passed between
+// Java and Python assuming they both generate complient codings.  However,
+// this code does not handle miscodings very well.  The current behavior
+// is to simply terminate the string at the bad code without producing 
+// a warning.  I can add errors, but I am not sure how I would test it
+// as both java and python will produce an error if I tried to force a
+// bad encoding on them.  Thus I am going to leave this with the truncation
+// behavior for now.
+//
+// Examples of bad encodings:
+//   - non-utf8 such as extended ascii passed from python
+//   - encoded forbidden utf passed from python
+//   - truncated surrogate codes passed from java
+//
+// The secondary problem is that string conversion is part of exception 
+// handling.  And the last thing we want to do is throw an exception
+// while trying to convert an exception string while reporting.  That
+// would completely redirect the user.  Thus truncation seems like
+// a sane policy unless we can verify all of the potential edge cases.
+//
+// Alternatively we could make them a bit more permissive and 
+// try to automatically correct bad encodings by recognizing 
+// extend ASCII, etc.  But this is potentially complex and 
+// has the downside that we can't test it currently.
 
 JPEncoding::~JPEncoding()
 {
@@ -6,7 +47,6 @@ JPEncoding::~JPEncoding()
 
 // char* to stream from 
 // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char
-
 struct membuf : std::streambuf
 {
 
@@ -16,10 +56,29 @@ struct membuf : std::streambuf
 	}
 };
 
+// Convert a string from one encoding to another.
+// Currently we use this to transcribe from utf-8 to java-utf-8 and back.
+// It could do other encodings, but would need to be generalized to 
+// a template to handle wider character sets.
 std::string transcribe(const char* in, size_t len,
 		const JPEncoding& sourceEncoding,
 		const JPEncoding& targetEncoding)
 {
+	// ASCII bypass
+	bool ascii = true;
+	for (size_t i = 0; i < len; ++i)
+	{
+		if (in[i]&0x80 || in[i] == 0)
+		{
+			ascii = false;
+			break;
+		}
+	}
+	if (ascii)
+	{
+		return std::string(in, len);
+	}
+
 	// Convert input to istream source
 	membuf sbuf(const_cast<char*> (in), const_cast<char*> (in + len));
 	std::istream inStream(&sbuf);
@@ -34,7 +93,9 @@ std::string transcribe(const char* in, size_t len,
 		unsigned int coding = sourceEncoding.fetch(inStream);
 		if (coding == (unsigned int) - 1)
 		{
-			// Truncate bad strings for now.
+			if (inStream.eof())
+				break;
+			// FIXME Truncate bad strings for now.
 			return outStream.str();
 		}
 
@@ -77,15 +138,15 @@ void JPEncodingUTF8::encode(std::ostream& out, unsigned int c) const
 
 unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 {
-	if (in.eof()) return -1;
 	unsigned int c0 = in.get();
+	if (in.eof()) return -1;
 
 	// 1 byte code
 	if ((c0 & 0x80) == 0)
 		return c0;
 
-	if (in.eof()) return -1;
 	unsigned int c1 = in.get();
+	if (in.eof()) return -1;
 
 	// 2 byte code
 	if ((c0 & 0xe0) == 0xc0)
@@ -96,19 +157,19 @@ unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 			return -1; // bad 2 byte format
 	}
 
-	if (in.eof()) return -1;
 	unsigned int c2 = in.get();
+	if (in.eof()) return -1;
 
 	// 3 byte code
-	if ((c0 & 0xf0) == 0x80)
+	if ((c0 & 0xf0) == 0xe0)
 	{
 		if ((c1 & 0xc0) == 0x80 && (c2 & 0xc0) == 0x80)
 			return ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
 		return -1;
 	}
 
-	if (in.eof()) return -1;
 	unsigned int c3 = in.get();
+	if (in.eof()) return -1;
 
 	// 4 byte code
 	if ((c0 & 0xf8) == 0xf0)
@@ -134,7 +195,7 @@ unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 //
 // Any time saving that you got by doing this in a lazy fashion was lost when 
 // the second programmer besides yourself had to write a translation code.  And
-// all efficiency gains that thought were made have been lost in the 
+// all efficiency gains that you thought were made have been lost in the 
 // memory management and retranslation that anyone would need to make use of your
 // U+1F4A9.  You are solely responsible for wasting thousands of hours of other 
 // programmer's lives and promoting the heat death of the universe.
@@ -181,24 +242,25 @@ void JPEncodingJavaUTF8::encode(std::ostream& out, unsigned int c) const
 
 		// encode 6
 		out.put(char(0xed));
-		out.put(char(0x80 + ((c >> 16)&0xf)));
+		out.put(char(0xa0 + ((c >> 16)&0xf)));
 		out.put(char(0x80 + ((c >> 10)&0x3f)));
 		out.put(char(0xed));
-		out.put(char(0x80 + ((c >> 6)&0x0f)));
+		out.put(char(0xb0 + ((c >> 6)&0xf)));
 		out.put(char(0x80 + ((c >> 0)&0x3f)));
 	}
 }
 
 unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 {
-	if (in.eof()) return -1;
+	unsigned int out = 0;
 	unsigned int c0 = in.get();
+	if (in.eof()) return -1;
 
 	if ((c0 & 0x80) == 0)
 		return c0;
 
-	if (in.eof()) return -1;
 	unsigned int c1 = in.get();
+	if (in.eof()) return -1;
 
 	if ((c0 & 0xe0) == 0xc0)
 	{
@@ -208,30 +270,38 @@ unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 			return -1; // bad 2 byte format
 	}
 
-	if (in.eof()) return -1;
 	unsigned int c2 = in.get();
+	if (in.eof()) return -1;
 
-	if ((c0 & 0xf0) == 0x80 && (c1 & 0xc0) == 0x80 && (c2 & 0xc0) == 0x80)
+	if ((c0 & 0xf0) == 0xe0 && (c1 & 0xc0) == 0x80 && (c2 & 0xc0) == 0x80)
 	{
-		unsigned int out = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
-		// We can only hold up to 0xd7ff
-		// Surrogate code 2 pairs of 3.
-		if ((out & 0xf300) == 0xd800)
-		{
-			unsigned int next = fetch(in);
-			if (next == (unsigned int) - 1)
-				return -1;
+		out = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
+		// 0xD800-0xDF00 are surrogate codes for 6 byte encoding
+		// High code is 0xD800-0xDBFF, Low code is 0xDC00-0xDFFF
 
-			if ((next & 0xf300) == 0xd800)
-			{
-				unsigned int q1 = (out & 0x3ff);
-				unsigned int q2 = (next & 0x3ff);
-				return 0x10000 + (q1 << 10) + q2;
-			}
-			return -1;
-		}
-		return out;
+		// Plain old code if between 0x0000-0xD7FF, 0xE000-0xFFFF
+		if ((out & 0xf800) != 0xd800)
+			return out;
 	}
-	return -1;
+	else
+	{
+		return -1;
+	}
+
+	// Surrogate code should be followed by 3 byte utf8 code
+	unsigned int next = in.peek();
+	if (next == (unsigned int) (-1) || (next & 0xf0) != 0xe0)
+		return out; // unpaired surrogate error.
+
+	// Grab the low word for surrogate code
+	c0 = in.get();
+	c1 = in.get();
+	c2 = in.get();
+	next = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
+	if (in.eof())
+		return -1;
+	unsigned int q1 = (out & 0x3ff);
+	unsigned int q2 = (next & 0x3ff);
+	return 0x10000 + (q1 << 10) + q2;
 }
 

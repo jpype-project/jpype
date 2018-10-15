@@ -74,7 +74,7 @@ PyMODINIT_FUNC init_jpype()
 	PyObject* module = Py_InitModule("_jpype", jpype_methods);
 #endif
 	Py_INCREF(module);
-        PyModule_AddStringConstant(module,"__version__","0.7.0");
+	PyModule_AddStringConstant(module, "__version__", "0.7.0");
 
 	// Initialize the Java static resources
 	JPEnv::init();

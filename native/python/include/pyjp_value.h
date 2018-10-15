@@ -34,9 +34,10 @@ struct PyJPValue
 	static void        __dealloc__(PyJPValue* self);
 	static PyObject*   __str__(PyJPValue* self);
 	static PyObject*   toString(PyJPValue* self);
+	static PyObject*   toUnicode(PyJPValue* self);
 
 	JPValue m_Value;
-	PyObject* m_StrCache;
+	PyObject* m_Cache;
 } ;
 
 #endif // _PYJP_VALUE_H_2

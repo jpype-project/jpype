@@ -355,6 +355,7 @@ public:
 	const jchar* GetStringChars(jstring a0, jboolean* a1);
 	void ReleaseStringChars(jstring a0, const jchar* a1);
 	jsize GetStringLength(jstring a0);
+	jsize GetStringUTFLength(jstring a0);
 } ;
 
 /** JPClass is a bit heavy when we just need to hold a 

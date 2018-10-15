@@ -1407,6 +1407,12 @@ jsize JPJavaFrame::GetStringLength(jstring a0)
 	return env->functions->GetStringLength(env, a0);
 }
 
+jsize JPJavaFrame::GetStringUTFLength(jstring a0)
+{
+	JPCall call(*this, "GetStringUTFLength");
+	return env->functions->GetStringUTFLength(env, a0);
+}
+
 jclass JPJavaFrame::DefineClass(const char* a0, jobject a1, const jbyte* a2, jsize a3)
 {
 	JPCall call(*this, "DefineClass");
