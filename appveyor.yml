@@ -72,7 +72,7 @@ install:
   # - We will need to figure out how to run nose multiple times on the same run so that
   #   we can get the result from each of the java version runs.
   #
-  - cinst upgrade chocolatey
+  - choco upgrade chocolatey
   - cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
 
   # - cinst jdk7 -params 'installdir=C:\\jdk7'
