@@ -292,14 +292,14 @@ public:
 
 	/** Create a new string from utf8 encoded string.
 	 * Note: java utf8 is not utf8.
-         *
-         * Python2 produced str unless unicode is set to 
-         * true.  Python3 will always produce a unicode string.
-         *
-         * @param str is the string to convert
-         * @param unicode is true if unicode is allowed.
+	 *
+	 * Python2 produced str unless unicode is set to 
+	 * true.  Python3 will always produce a unicode string.
+	 *
+	 * @param str is the string to convert
+	 * @param unicode is true if unicode is allowed.
 	 */
-	static JPPyObject fromStringUTF8(const string& str, bool unicode=false);
+	static JPPyObject fromStringUTF8(const string& str, bool unicode = false);
 
 	/** Get a UTF-8 encoded string from Python
 	 */

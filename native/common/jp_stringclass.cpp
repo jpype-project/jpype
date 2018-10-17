@@ -32,7 +32,7 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 	{
 		return JPPyObject::getNone();
 	}
-	
+
 	return JPPythonEnv::newJavaObject(JPValue(this, val));
 	JP_TRACE_OUT;
 }

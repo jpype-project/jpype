@@ -728,7 +728,7 @@ public:
 	: frame_(frame), jstr_(jstr)
 	{
 		cstr = frame_.GetStringUTFChars(jstr, &isCopy);
-		length = frame_.GetStringLength(jstr);
+		length = frame_.GetStringUTFLength(jstr);
 	}
 
 	~JPStringAccessor()
