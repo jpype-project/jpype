@@ -16,33 +16,26 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPMonitor::JPMonitor(const JPValue& value) : m_Value(value)
+JPMonitor::JPMonitor(jobject value) : m_Value(value)
 {
-	// This can hold off for a while so we need to release resource 
-        // so that we don't dead lock.
-	JPPyCallRelease call;
-	JPJavaFrame frame;
-	jvalue& val = m_Value;
-	frame.MonitorEnter(val.l);
-	val.l = frame.NewGlobalRef(val.l);
 }
 
 JPMonitor::~JPMonitor()
 {
-	try
-	{
-		JPJavaFrame frame;
-		jvalue& val = m_Value;
-		frame.MonitorExit(val.l);
-		frame.DeleteGlobalRef(val.l);
-	} catch (...)
-	{
-		// Don't be silent.  Force it to our tracer log.
-		JPypeTracer::trace("Exception in monitor destructor");
-	}
 }
 
-JPValue& JPMonitor::getValue()
+void JPMonitor::enter()
 {
-	return m_Value;
+	// This can hold off for a while so we need to release resource 
+  // so that we don't dead lock.
+	JPPyCallRelease call;
+	JPJavaFrame frame;
+	frame.MonitorEnter(m_Value.get());
 }
+
+void JPMonitor::exit()
+{
+	JPJavaFrame frame;
+	frame.MonitorExit(m_Value.get());
+}
+

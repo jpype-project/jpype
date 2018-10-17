@@ -20,13 +20,14 @@
 class JPMonitor
 {
 public:
-	JPMonitor(const JPValue& value);
+	JPMonitor(jobject obj);
 	virtual ~JPMonitor();
 
-	JPValue& getValue();
+	void enter();
+	void exit();
 
 private:
-	JPValue m_Value;
+	JPObjectRef m_Value;
 } ;
 
 #endif // _JPMONITOR_H_

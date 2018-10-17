@@ -36,7 +36,7 @@ from . import _jinit
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM'
+    'detachThreadFromJVM', 'synchronized'
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -117,6 +117,8 @@ def attachThreadToJVM():
 def detachThreadFromJVM():
     _jpype.detachThreadFromJVM()
 
+def synchronized(obj):
+    return _jpype.PyJPMonitor(obj.__javavalue__)
 
 def getDefaultJVMPath():
     """

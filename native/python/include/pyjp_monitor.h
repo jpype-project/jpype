@@ -32,6 +32,8 @@ struct PyJPMonitor
 	static int        __init__(PyJPMonitor* self, PyObject* args);
 	static void       __dealloc__(PyJPMonitor* o);
 	static PyObject*  __str__(PyJPMonitor* o);
+	static PyObject*  __enter__(PyJPMonitor* self, PyObject* args);
+	static PyObject*  __exit__(PyJPMonitor* self, PyObject* args);
 
 	JPMonitor* m_Monitor;
 } ;
