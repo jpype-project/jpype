@@ -17,6 +17,8 @@
 #include <pyjp.h>
 
 static PyMethodDef methods[] = {
+	{"__enter__", (PyCFunction) (&PyJPMonitor::__enter__), METH_NOARGS, ""},
+	{"__exit__", (PyCFunction) (&PyJPMonitor::__exit__), METH_VARARGS, ""},
 	{NULL},
 };
 
@@ -108,7 +110,7 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 			return -1;
 		}
 
-		self->m_Monitor = new JPMonitor(v1);
+		self->m_Monitor = new JPMonitor(v1.getValue().l);
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -133,11 +135,36 @@ PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPMonitor::__str__");
-		JPClass* cls = self->m_Monitor->getValue().getClass();
 		stringstream ss;
-		ss << "<java monitor for " << cls->toString() << ">";
+		ss << "<java monitor>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
 	}
 	PY_STANDARD_CATCH
 	return NULL;
 }
+
+PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPMonitor::__enter__");
+		self->m_Monitor->enter();
+                Py_RETURN_NONE;
+	}
+	PY_STANDARD_CATCH
+	return NULL;
+}
+
+PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPMonitor::__exit__");
+		self->m_Monitor->exit();
+                Py_RETURN_NONE;
+	}
+	PY_STANDARD_CATCH
+	return NULL;
+}
+
+
