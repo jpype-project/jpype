@@ -14,8 +14,8 @@ platform_specific = {
         os.path.join('native', 'python', 'include'),
         os.path.join('build', 'src'),
     ],
-    'sources': [ 
-        os.path.join('build','src','jp_thunk.cpp') 
+    'sources': [
+        os.path.join('build', 'src', 'jp_thunk.cpp')
     ] + setupext.utils.find_sources(),
 }
 
@@ -23,13 +23,13 @@ fallback_jni = os.path.join('native', 'jni_include')
 # try to include JNI first from eventually given JAVA_HOME, then from distributed
 java_home = os.getenv('JAVA_HOME', '')
 found_jni = False
-if os.path.exists(java_home) and sys.platform !="cygwin":
+if os.path.exists(java_home) and sys.platform != "cygwin":
     platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
 
     # check if jni.h can be found
     for d in platform_specific['include_dirs']:
         if os.path.exists(os.path.join(d, 'jni.h')):
-            print("Found native jni.h at %s"%d)
+            print("Found native jni.h at %s" % d)
             found_jni = True
             break
 
@@ -44,13 +44,18 @@ if not found_jni:
 if sys.platform == 'win32':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
-    platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+    if sys.version > '3':
+        platform_specific['extra_compile_args'] = [
+            '/Zi', '/EHsc', '/std:c++14']
+    else:
+        platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
     platform_specific['extra_link_args'] = ['/DEBUG']
     jni_md_platform = 'win32'
- 
-elif sys.platform == 'cygwin' :
+
+elif sys.platform == 'cygwin':
     platform_specific['libraries'] = ['Advapi32']
     platform_specific['define_macros'] = [('WIN32', 1)]
+    platform_specific['extra_compile_args'] = ['-std=c++11']
     platform_specific['extra_link_args'] = ['-g3']
     jni_md_platform = 'win32'
 
@@ -61,6 +66,7 @@ elif sys.platform == 'darwin':
 
 elif sys.platform.startswith('linux'):
     platform_specific['libraries'] = ['dl']
+    platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
     jni_md_platform = 'linux'
 
 elif sys.platform.startswith('freebsd'):
@@ -86,4 +92,3 @@ ${JAVA_INCLUDE_PATH}/solaris
 ${JAVA_INCLUDE_PATH}/hp-ux
 ${JAVA_INCLUDE_PATH}/alpha
 )"""
-

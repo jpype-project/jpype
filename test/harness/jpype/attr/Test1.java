@@ -83,31 +83,31 @@ public class Test1
 		
 	}
 	
-	boolean mBooleanValue = false;
+	public boolean mBooleanValue = false;
 	public void setBoolean(boolean b)
 	{
 		mBooleanValue = b;
 	}
 	
-	byte mByteValue;
+	public byte mByteValue;
 	public void setByte(byte b)
 	{
 		mByteValue = b;
 	}
 
-	short mShortValue = 0;
+	public short mShortValue = 0;
 	public void setShort(short s)
 	{
 		mShortValue = s;
 	}
 
-	int mIntValue = 0;
+	public int mIntValue = 0;
 	public void setInt(int i)
 	{
 		mIntValue = i;
 	}
 
-	long mLongValue = 0;
+	public long mLongValue = 0;
 	public void setLong(long l)
 	{
 		mLongValue = l;

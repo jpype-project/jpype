@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Menard
+   Copyright 2004-2008 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,74 +13,85 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-*****************************************************************************/
+ *****************************************************************************/
 #include <jpype.h>
 
-namespace { // impl detail
-	jclass objectClass;
-	jmethodID getClassID;
-	jmethodID toStringID;
-	jmethodID hashCodeID;
+namespace
+{ // impl detail
+	jmethodID s_Object_GetClassID;
+	jmethodID s_Object_ToStringID;
+	jmethodID s_Object_HashCodeID;
+	jmethodID s_Object_EqualsID;
 
-	jmethodID getNameID;
-	jmethodID getDeclaredFieldsID;
-	jmethodID getDeclaredMethodsID;
-	jmethodID getInterfacesID;
-	jmethodID getFieldsID;
-	jmethodID getMethodsID;
-	jmethodID getDeclaredConstructorsID;
-	jmethodID getConstructorsID;
-	jmethodID isInterfaceID;
-	jmethodID getClassModifiersID;
+	jmethodID s_Class_GetNameID;
+	jmethodID s_Class_GetComponentTypeID;
+	jmethodID s_Class_GetDeclaredFieldsID;
+	jmethodID s_Class_GetDeclaredMethodsID;
+	jmethodID s_Class_GetInterfacesID;
+	jmethodID s_Class_GetFieldsID;
+	jmethodID s_Class_GetMethodsID;
+	jmethodID s_Class_GetDeclaredConstructorsID;
+	jmethodID s_Class_GetConstructorsID;
+	jmethodID s_Class_IsArrayID;
+	jmethodID s_Class_IsInterfaceID;
+	jmethodID s_Class_GetModifiersID;
+	jmethodID s_Class_GetCanonicalNameID;
 
-	jclass modifierClass;
-	jmethodID isStaticID;
-	jmethodID isPublicID;
-	jmethodID isAbstractID;
-	jmethodID isFinalID;
+	jclass s_ModifierClass;
+	jmethodID s_Modifier_IsStaticID;
+	jmethodID s_Modifier_IsPublicID;
+	jmethodID s_Modifier_IsAbstractID;
+	jmethodID s_Modifier_IsFinalID;
 
-	jclass classLoaderClass;
-	jmethodID getSystemClassLoaderID;
+	jclass s_ClassLoaderClass;
+	jmethodID s_ClassLoader_GetSystemClassLoaderID;
 
-	jclass memberClass;
-	jmethodID getModifiersID;
-	jmethodID getMemberNameID;
+	jclass s_MemberClass;
+	jmethodID s_Member_GetModifiersID;
+	jmethodID s_Member_GetMemberNameID;
 
-	jclass fieldClass;
-	jmethodID getTypeID;
+	jclass s_FieldClass;
+	jmethodID s_Field_GetTypeID;
+	jmethodID s_Field_GetModifiersID;
 
 	jclass methodClass;
-	jclass constructorClass;
-	jmethodID getReturnTypeID;
-	jmethodID isSyntheticMethodID;
-	jmethodID isVarArgsMethodID;
-	jmethodID getParameterTypesID;
-	jmethodID getConstructorParameterTypesID;
+	jmethodID s_Method_GetReturnTypeID;
+	jmethodID s_Method_IsSyntheticMethodID;
+	jmethodID s_Method_IsVarArgsMethodID;
+	jmethodID s_Method_GetParameterTypesID;
 
-	jclass throwableClass;
-	jmethodID getMessageID;
-	jmethodID printStackTraceID;
-	jclass stringWriterClass;
-	jclass printWriterClass;
-	jmethodID stringWriterID;
-	jmethodID printWriterID;
-	jmethodID flushID;
+	jclass s_ConstructorClass;
+	jmethodID s_Constructor_GetParameterTypesID;
 
-	jclass numberClass;
-	jclass booleanClass;
-	jclass charClass;
-	jclass byteClass;
-	jclass shortClass;
-	jclass intClass;
-	jclass floatClass;
-	jmethodID intValueID;
-	jmethodID longValueID;
-	jmethodID doubleValueID;
-	jmethodID booleanValueID;
-	jmethodID charValueID;
+	jclass s_ThrowableClass;
+	jmethodID s_Throwable_GetMessageID;
+	jmethodID s_Throwable_PrintStackTraceID;
+
+	jclass s_StringWriterClass;
+	jclass s_PrintWriterClass;
+	jmethodID s_StringWriterID;
+	jmethodID s_PrintWriterID;
+	jmethodID s_FlushID;
+
+	jclass s_NumberClass;
+	jclass s_BooleanClass;
+	jclass s_CharClass;
+	jclass s_ByteClass;
+	jclass s_ShortClass;
+	jclass s_IntClass;
+	jclass s_FloatClass;
+	jmethodID s_Number_IntValueID;
+	jmethodID s_Number_LongValueID;
+	jmethodID s_Number_DoubleValueID;
+	jmethodID s_BooleanValueID;
+	jmethodID s_CharValueID;
+
+	jmethodID s_String_ToCharArrayID;
 }
 
-namespace JPJni {
+namespace JPJni
+{
+	jclass s_ObjectClass;
 	jclass s_ClassClass;
 	jclass s_StringClass;
 	jclass s_NoSuchMethodErrorClass;
@@ -88,181 +99,178 @@ namespace JPJni {
 	jclass s_ProxyClass = 0;
 	jmethodID s_NewProxyInstanceID;
 
-	jlong s_minByte;
-	jlong s_maxByte;
-	jlong s_minShort;
-	jlong s_maxShort;
-	jlong s_minInt;
-	jlong s_maxInt;
-	jfloat s_minFloat;
-	jfloat s_maxFloat;
+	jlong s_Byte_Min;
+	jlong s_Byte_Max;
+	jlong s_Short_Min;
+	jlong s_Short_Max;
+	jlong s_Int_Min;
+	jlong s_Int_Max;
+	jfloat s_Float_Min;
+	jfloat s_Float_Max;
 
-void init()
+} // end of namespace JNIEnv
+
+void JPJni::init()
 {
-	TRACE_IN("JPJni::init");
+	JP_TRACE_IN("JPJni::init");
 	JPJavaFrame frame(32);
-	objectClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Object"));
-	s_StringClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/String"));
-	getClassID = frame.GetMethodID(objectClass, "getClass", "()Ljava/lang/Class;");
-	toStringID = frame.GetMethodID(objectClass, "toString", "()Ljava/lang/String;");
-	hashCodeID = frame.GetMethodID(objectClass, "hashCode", "()I");
+	s_ObjectClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Object"));
+	s_Object_GetClassID = frame.GetMethodID(s_ObjectClass, "getClass", "()Ljava/lang/Class;");
+	s_Object_ToStringID = frame.GetMethodID(s_ObjectClass, "toString", "()Ljava/lang/String;");
+	s_Object_HashCodeID = frame.GetMethodID(s_ObjectClass, "hashCode", "()I");
+	s_Object_EqualsID = frame.GetMethodID(s_ObjectClass, "equals", "(Ljava/lang/Object;)Z");
 
-	s_ClassClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Class"));
-	getNameID = frame.GetMethodID(s_ClassClass, "getName", "()Ljava/lang/String;");
-	getDeclaredFieldsID = frame.GetMethodID(s_ClassClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
-	getDeclaredMethodsID = frame.GetMethodID(s_ClassClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
-	getMethodsID = frame.GetMethodID(s_ClassClass, "getMethods", "()[Ljava/lang/reflect/Method;");
-	getFieldsID = frame.GetMethodID(s_ClassClass, "getFields", "()[Ljava/lang/reflect/Field;");
-	getDeclaredConstructorsID = frame.GetMethodID(s_ClassClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
-	getConstructorsID = frame.GetMethodID(s_ClassClass, "getConstructors", "()[Ljava/lang/reflect/Constructor;");
-	isInterfaceID = frame.GetMethodID(s_ClassClass, "isInterface", "()Z");
-	getClassModifiersID = frame.GetMethodID(s_ClassClass, "getModifiers", "()I");
-	getInterfacesID = frame.GetMethodID(s_ClassClass, "getInterfaces", "()[Ljava/lang/Class;");
+	s_StringClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/String"));
+	s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
 
-	modifierClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Modifier"));
-	isStaticID = frame.GetStaticMethodID(modifierClass, "isStatic", "(I)Z");
-	isPublicID = frame.GetStaticMethodID(modifierClass, "isPublic", "(I)Z");
-	isAbstractID = frame.GetStaticMethodID(modifierClass, "isAbstract", "(I)Z");
-	isFinalID = frame.GetStaticMethodID(modifierClass, "isFinal", "(I)Z");
+	s_ClassClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Class"));
+	s_Class_GetNameID = frame.GetMethodID(s_ClassClass, "getName", "()Ljava/lang/String;");
 
-	classLoaderClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/ClassLoader"));
-	getSystemClassLoaderID = frame.GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+	s_Class_GetComponentTypeID = frame.GetMethodID(s_ClassClass, "getComponentType", "()Ljava/lang/Class;");
+	s_Class_GetDeclaredFieldsID = frame.GetMethodID(s_ClassClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
+	s_Class_GetDeclaredMethodsID = frame.GetMethodID(s_ClassClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
+	s_Class_GetMethodsID = frame.GetMethodID(s_ClassClass, "getMethods", "()[Ljava/lang/reflect/Method;");
+	s_Class_GetFieldsID = frame.GetMethodID(s_ClassClass, "getFields", "()[Ljava/lang/reflect/Field;");
+	s_Class_GetDeclaredConstructorsID = frame.GetMethodID(s_ClassClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
+	s_Class_GetConstructorsID = frame.GetMethodID(s_ClassClass, "getConstructors", "()[Ljava/lang/reflect/Constructor;");
+	s_Class_IsArrayID = frame.GetMethodID(s_ClassClass, "isArray", "()Z");
+	s_Class_IsInterfaceID = frame.GetMethodID(s_ClassClass, "isInterface", "()Z");
+	s_Class_GetModifiersID = frame.GetMethodID(s_ClassClass, "getModifiers", "()I");
+	s_Class_GetInterfacesID = frame.GetMethodID(s_ClassClass, "getInterfaces", "()[Ljava/lang/Class;");
+	s_Class_GetCanonicalNameID = frame.GetMethodID(s_ClassClass, "getCanonicalName", "()Ljava/lang/String;");
 
-	s_NoSuchMethodErrorClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError") );
-	s_RuntimeExceptionClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException") );
+	s_ModifierClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Modifier"));
+	s_Modifier_IsStaticID = frame.GetStaticMethodID(s_ModifierClass, "isStatic", "(I)Z");
+	s_Modifier_IsPublicID = frame.GetStaticMethodID(s_ModifierClass, "isPublic", "(I)Z");
+	s_Modifier_IsAbstractID = frame.GetStaticMethodID(s_ModifierClass, "isAbstract", "(I)Z");
+	s_Modifier_IsFinalID = frame.GetStaticMethodID(s_ModifierClass, "isFinal", "(I)Z");
 
-	s_ProxyClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Proxy") );
+	s_ClassLoaderClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/ClassLoader"));
+	s_ClassLoader_GetSystemClassLoaderID = frame.GetStaticMethodID(s_ClassLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+
+	s_NoSuchMethodErrorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError"));
+	s_RuntimeExceptionClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException"));
+
+	s_ProxyClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Proxy"));
 	s_NewProxyInstanceID = frame.GetStaticMethodID(s_ProxyClass, "newProxyInstance", "(Ljava/lang/ClassLoader;[Ljava/lang/Class;Ljava/lang/reflect/InvocationHandler;)Ljava/lang/Object;");
 
-	memberClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Member"));
-	getModifiersID = frame.GetMethodID(memberClass, "getModifiers", "()I");
-	getMemberNameID = frame.GetMethodID(memberClass, "getName", "()Ljava/lang/String;");
+	s_MemberClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Member"));
+	s_Member_GetModifiersID = frame.GetMethodID(s_MemberClass, "getModifiers", "()I");
+	s_Member_GetMemberNameID = frame.GetMethodID(s_MemberClass, "getName", "()Ljava/lang/String;");
 
-	fieldClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Field"));
-	getTypeID = frame.GetMethodID(fieldClass, "getType", "()Ljava/lang/Class;");
+	s_FieldClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Field"));
+	s_Field_GetTypeID = frame.GetMethodID(s_FieldClass, "getType", "()Ljava/lang/Class;");
+	s_Field_GetModifiersID = frame.GetMethodID(s_FieldClass, "getModifiers", "()I");
 
-	methodClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Method"));
-	constructorClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Constructor"));
-	getReturnTypeID = frame.GetMethodID(methodClass, "getReturnType", "()Ljava/lang/Class;");
-	getParameterTypesID = frame.GetMethodID(methodClass, "getParameterTypes", "()[Ljava/lang/Class;");
-	isSyntheticMethodID = frame.GetMethodID(methodClass, "isSynthetic", "()Z");
-	isVarArgsMethodID = frame.GetMethodID(methodClass, "isVarArgs", "()Z");
-	getConstructorParameterTypesID = frame.GetMethodID(constructorClass, "getParameterTypes", "()[Ljava/lang/Class;");
+	methodClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Method"));
+	s_Method_GetReturnTypeID = frame.GetMethodID(methodClass, "getReturnType", "()Ljava/lang/Class;");
+	s_Method_GetParameterTypesID = frame.GetMethodID(methodClass, "getParameterTypes", "()[Ljava/lang/Class;");
+	s_Method_IsSyntheticMethodID = frame.GetMethodID(methodClass, "isSynthetic", "()Z");
+	s_Method_IsVarArgsMethodID = frame.GetMethodID(methodClass, "isVarArgs", "()Z");
 
-	throwableClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
-	getMessageID = frame.GetMethodID(throwableClass, "getMessage", "()Ljava/lang/String;");
-	printStackTraceID = frame.GetMethodID(throwableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
-	stringWriterClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
-	printWriterClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
-	stringWriterID = frame.GetMethodID(stringWriterClass, "<init>", "()V");
-	printWriterID = frame.GetMethodID(printWriterClass, "<init>", "(Ljava/io/Writer;)V");
-	flushID = frame.GetMethodID(printWriterClass, "flush", "()V");
+	s_ConstructorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Constructor"));
+	s_Constructor_GetParameterTypesID = frame.GetMethodID(s_ConstructorClass, "getParameterTypes", "()[Ljava/lang/Class;");
 
-	numberClass = (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Number"));
-	booleanClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Boolean"));
-	charClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Character"));
-	intValueID = frame.GetMethodID(numberClass, "intValue", "()I");
-	longValueID = frame.GetMethodID(numberClass, "longValue", "()J");
-	doubleValueID = frame.GetMethodID(numberClass, "doubleValue", "()D");
-	booleanValueID = frame.GetMethodID(booleanClass, "booleanValue", "()Z");
-	charValueID = frame.GetMethodID(charClass, "charValue", "()C");
+	s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
+	s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
+	s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
 
-	byteClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Byte"));
-	shortClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Short"));
-	intClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Integer"));
-	floatClass= (jclass)frame.NewGlobalRef(frame.FindClass("java/lang/Float"));
+	s_StringWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
+	s_PrintWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
+	s_StringWriterID = frame.GetMethodID(s_StringWriterClass, "<init>", "()V");
+	s_PrintWriterID = frame.GetMethodID(s_PrintWriterClass, "<init>", "(Ljava/io/Writer;)V");
+	s_FlushID = frame.GetMethodID(s_PrintWriterClass, "flush", "()V");
 
-	jfieldID fid = frame.GetStaticFieldID(byteClass, "MIN_VALUE", "B");
-	s_minByte = frame.GetStaticByteField(byteClass, fid);
-	fid = frame.GetStaticFieldID(byteClass, "MAX_VALUE", "B");
-	s_maxByte = frame.GetStaticByteField(byteClass, fid);
+	s_NumberClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Number"));
+	s_Number_IntValueID = frame.GetMethodID(s_NumberClass, "intValue", "()I");
+	s_Number_LongValueID = frame.GetMethodID(s_NumberClass, "longValue", "()J");
+	s_Number_DoubleValueID = frame.GetMethodID(s_NumberClass, "doubleValue", "()D");
 
-	fid = frame.GetStaticFieldID(shortClass, "MIN_VALUE", "S");
-	s_minShort = frame.GetStaticShortField(shortClass, fid);
-	fid = frame.GetStaticFieldID(shortClass, "MAX_VALUE", "S");
-	s_maxShort = frame.GetStaticShortField(shortClass, fid);
+	s_BooleanClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Boolean"));
+	s_BooleanValueID = frame.GetMethodID(s_BooleanClass, "booleanValue", "()Z");
 
-	fid = frame.GetStaticFieldID(intClass, "MIN_VALUE", "I");
-	s_minInt = frame.GetStaticIntField(intClass, fid);
-	fid = frame.GetStaticFieldID(intClass, "MAX_VALUE", "I");
-	s_maxInt = frame.GetStaticIntField(intClass, fid);
+	s_CharClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Character"));
+	s_CharValueID = frame.GetMethodID(s_CharClass, "charValue", "()C");
 
-	fid = frame.GetStaticFieldID(floatClass, "MIN_VALUE", "F");
-	s_minFloat = frame.GetStaticFloatField(floatClass, fid);
-	fid = frame.GetStaticFieldID(floatClass, "MAX_VALUE", "F");
-	s_maxFloat = frame.GetStaticFloatField(floatClass, fid);
-	TRACE_OUT;
+	s_ByteClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Byte"));
+	s_ShortClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Short"));
+	s_IntClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Integer"));
+	s_FloatClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Float"));
+
+	jfieldID fid = frame.GetStaticFieldID(s_ByteClass, "MIN_VALUE", "B");
+	s_CharClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Character"));
+	s_Byte_Min = frame.GetStaticByteField(s_ByteClass, fid);
+	fid = frame.GetStaticFieldID(s_ByteClass, "MAX_VALUE", "B");
+	s_Byte_Max = frame.GetStaticByteField(s_ByteClass, fid);
+
+	fid = frame.GetStaticFieldID(s_ShortClass, "MIN_VALUE", "S");
+	s_Short_Min = frame.GetStaticShortField(s_ShortClass, fid);
+	fid = frame.GetStaticFieldID(s_ShortClass, "MAX_VALUE", "S");
+	s_Short_Max = frame.GetStaticShortField(s_ShortClass, fid);
+
+	fid = frame.GetStaticFieldID(s_IntClass, "MIN_VALUE", "I");
+	s_Int_Min = frame.GetStaticIntField(s_IntClass, fid);
+	fid = frame.GetStaticFieldID(s_IntClass, "MAX_VALUE", "I");
+	s_Int_Max = frame.GetStaticIntField(s_IntClass, fid);
+
+	fid = frame.GetStaticFieldID(s_FloatClass, "MIN_VALUE", "F");
+	s_Float_Min = frame.GetStaticFloatField(s_FloatClass, fid);
+	fid = frame.GetStaticFieldID(s_FloatClass, "MAX_VALUE", "F");
+	s_Float_Max = frame.GetStaticFloatField(s_FloatClass, fid);
+	JP_TRACE_OUT;
 }
 
-string asciiFromJava(jstring str)
+bool JPJni::equalsObject(jobject obj1, jobject obj2)
 {
 	JPJavaFrame frame;
-	const char* cstr = NULL;
-	jboolean isCopy;
-	cstr = frame.GetStringUTFChars(str, &isCopy);
-	int length = frame.GetStringLength(str);
-
-	string res;
-	for (int i = 0; i < length; i++)
-	{
-		res += (char)cstr[i];
-	}
-
-	frame.ReleaseStringUTFChars(str, cstr);
-
-	return res;
+	jvalue v;
+	v.l = obj2;
+	return frame.CallBooleanMethodA(obj1, s_Object_EqualsID, &v) != 0;
 }
 
-JCharString unicodeFromJava(jstring str)
+jobject JPJni::stringToCharArray(jstring str)
 {
 	JPJavaFrame frame;
-	const jchar* cstr = NULL;
-	jboolean isCopy;
-	cstr = frame.GetStringChars(str, &isCopy);
-
-	JCharString res = cstr;
-
-	frame.ReleaseStringChars(str, cstr);
-
-	return res;
+	jobject res = frame.CallObjectMethod(str, s_String_ToCharArrayID);
+	return frame.keep(res);
 }
 
-jstring javaStringFromJCharString(JCharString& wstr)
+//JPTypeName JPJni::getTypeNameForObject(jobject o)
+//{
+//	if (o == NULL)
+//	{
+//		return JPTypeName::fromSimpleName("java.lang.Object");
+//	}
+//
+//	JPJavaFrame frame;
+//	jclass c = getClass(o);
+//	return getTypeNameForClass(c);
+//}
+
+jclass JPJni::getClass(jobject o)
 {
 	JPJavaFrame frame;
-	return frame.NewString(wstr.c_str(), (jint)wstr.length());
+	return (jclass) frame.keep(frame.CallObjectMethod(o, s_Object_GetClassID));
 }
 
-JPTypeName getClassName(jobject o)
+string JPJni::toString(jobject o)
 {
-	if (o == NULL)
-	{
-		return JPTypeName::fromSimple("java.lang.Object");
-	}
-
 	JPJavaFrame frame;
-	jclass c = getClass(o);
-	return getName(c);
+	jstring jname = (jstring) frame.CallObjectMethod(o, s_Object_ToStringID);
+	return toStringUTF8(jname);
 }
 
-jclass getClass(jobject o)
+jclass JPJni::getComponentType(jclass c)
 {
 	JPJavaFrame frame;
-	return (jclass)frame.CallObjectMethod(o, getClassID);
+	return (jclass) frame.keep(frame.CallObjectMethod(c, s_Class_GetComponentTypeID));
 }
 
-jstring toString(jobject o)
+string JPJni::convertToSimpleName(jclass c)
 {
 	JPJavaFrame frame;
-	jstring str = (jstring)frame.CallObjectMethod(o, toStringID);
-	return str;
-}
-
-static string convertToSimpleName(jclass c)
-{
-	JPJavaFrame frame;
-	jstring jname = (jstring)frame.CallObjectMethod(c, getNameID);
-	string name = asciiFromJava(jname);
+	jstring jname = (jstring) frame.CallObjectMethod(c, s_Class_GetNameID);
+	string name = toStringUTF8(jname);
 
 	// Class.getName returns something weird for arrays ...
 	if (name[0] == '[')
@@ -280,34 +288,34 @@ static string convertToSimpleName(jclass c)
 		name = name.substr(arrayCount, name.length()-(arrayCount));
 
 		// Now, let's convert the "native" part
-		switch(name[0])
+		switch (name[0])
 		{
-			case 'B' :
+			case 'B':
 				name = "byte";
 				break;
-			case 'S' :
+			case 'S':
 				name = "short";
 				break;
-			case 'I' :
+			case 'I':
 				name = "int";
 				break;
-			case 'J' :
+			case 'J':
 				name = "long";
 				break;
-			case 'F' :
+			case 'F':
 				name = "float";
 				break;
-			case 'D' :
+			case 'D':
 				name = "double";
 				break;
-			case 'C' :
+			case 'C':
 				name = "char";
 				break;
-			case 'Z' :
+			case 'Z':
 				name = "boolean";
 				break;
-			case 'L' :
-				name = name.substr(1, name.length()-2);
+			case 'L':
+				name = name.substr(1, name.length() - 2);
 				for (unsigned int i = 0; i < name.length(); i++)
 				{
 					if (name[i] == '/')
@@ -327,56 +335,86 @@ static string convertToSimpleName(jclass c)
 	return name;
 }
 
-bool isInterface(jclass clazz)
+string JPJni::getCanonicalName(jclass clazz)
+{
+	JP_TRACE_IN("getCanonicalName");
+	JPJavaFrame frame;
+	jstring str = (jstring) frame.CallObjectMethod(clazz, s_Class_GetCanonicalNameID);
+        // Anonymous classes don't have canonical names so they return null
+        if (str==NULL)
+	  str = (jstring) frame.CallObjectMethod(clazz, s_Class_GetNameID);
+	JP_TRACE("toString");
+	return JPJni::toStringUTF8(str);
+	JP_TRACE_OUT;
+}
+
+bool JPJni::isArray(jclass clazz)
 {
 	JPJavaFrame frame;
-	jboolean b = frame.CallBooleanMethod(clazz, isInterfaceID);
+	jboolean b = frame.CallBooleanMethod(clazz, s_Class_IsArrayID);
 	return (b ? true : false);
 }
 
-bool isAbstract(jclass clazz)
+bool JPJni::isInterface(jclass clazz)
+{
+	JPJavaFrame frame;
+	jboolean b = frame.CallBooleanMethod(clazz, s_Class_IsInterfaceID);
+	return (b ? true : false);
+}
+
+bool JPJni::isAbstract(jclass clazz)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(clazz, getClassModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
+	modif.i = frame.CallIntMethod(clazz, s_Class_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsAbstractID, &modif);
 
 	return (res ? true : false);
 }
 
-long getClassModifiers(jclass clazz)
+long JPJni::getClassModifiers(jclass clazz)
 {
 	JPJavaFrame frame;
-	return frame.CallIntMethod(clazz, getClassModifiersID);
+	return frame.CallIntMethod(clazz, s_Class_GetModifiersID);
 }
 
-
-bool isFinal(jclass clazz)
+bool JPJni::isFinal(jclass clazz)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(clazz, getClassModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
+	modif.i = frame.CallIntMethod(clazz, s_Class_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsFinalID, &modif);
 
 	return (res ? true : false);
 }
 
-JPTypeName getName(jclass clazz)
+bool JPJni::isFieldPublic(jobject field)
 {
-	string simpleName = convertToSimpleName(clazz);
-	return JPTypeName::fromSimple(simpleName.c_str());
+	JPJavaFrame frame;
+	jvalue modif;
+	modif.i = frame.CallIntMethod(field, s_Field_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsPublicID, &modif);
+
+	return (res ? true : false);
 }
+
+//JPTypeName JPJni::getTypeNameForClass(jclass clazz)
+//{
+//	string simpleName = convertToSimpleName(clazz);
+//	return JPTypeName::fromSimpleName(simpleName.c_str());
+//}
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jclass> getInterfaces(JPJavaFrame& frame, jclass clazz)
+
+vector<jclass> JPJni::getInterfaces(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray interfaces = (jobjectArray)frame.CallObjectMethod(clazz, getInterfacesID);
+	jobjectArray interfaces = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetInterfacesID);
 
 	int len = frame.GetArrayLength(interfaces);
 	vector<jclass> res;
 	for (int i = 0; i < len; i++)
 	{
-		jclass c = (jclass)frame.GetObjectArrayElement(interfaces, i);
+		jclass c = (jclass) frame.GetObjectArrayElement(interfaces, i);
 		res.push_back(c);
 	}
 
@@ -384,9 +422,10 @@ vector<jclass> getInterfaces(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getDeclaredFields(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray fields = (jobjectArray)frame.CallObjectMethod(clazz, getDeclaredFieldsID);
+	jobjectArray fields = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredFieldsID);
 
 	int len = frame.GetArrayLength(fields);
 	vector<jobject> res;
@@ -400,9 +439,10 @@ vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getFields(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getFields(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray fields = (jobjectArray)frame.CallObjectMethod(clazz, getFieldsID);
+	jobjectArray fields = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetFieldsID);
 
 	int len = frame.GetArrayLength(fields);
 	vector<jobject> res;
@@ -416,9 +456,10 @@ vector<jobject> getFields(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getDeclaredMethods(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray methods = (jobjectArray)frame.CallObjectMethod(clazz, getDeclaredMethodsID);
+	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredMethodsID);
 
 	int len = frame.GetArrayLength(methods);
 	vector<jobject> res;
@@ -433,9 +474,10 @@ vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass clazz)
 
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getDeclaredConstructors(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray methods = (jobjectArray)frame.CallObjectMethod(clazz, getDeclaredConstructorsID);
+	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredConstructorsID);
 
 	int len = frame.GetArrayLength(methods);
 	vector<jobject> res;
@@ -449,9 +491,10 @@ vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getConstructors(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getConstructors(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray methods = (jobjectArray)frame.CallObjectMethod(clazz, getConstructorsID);
+	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetConstructorsID);
 
 	int len = frame.GetArrayLength(methods);
 	vector<jobject> res;
@@ -465,9 +508,10 @@ vector<jobject> getConstructors(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns multiple local references,  must have a suitable local frame
-vector<jobject> getMethods(JPJavaFrame& frame, jclass clazz)
+
+vector<jobject> JPJni::getMethods(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray methods = (jobjectArray)frame.CallObjectMethod(clazz, getMethodsID);
+	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetMethodsID);
 
 	int len = frame.GetArrayLength(methods);
 	vector<jobject> res;
@@ -481,251 +525,228 @@ vector<jobject> getMethods(JPJavaFrame& frame, jclass clazz)
 }
 
 // Returns local reference
-jobject getSystemClassLoader()
+
+jobject JPJni::getSystemClassLoader()
 {
 	JPJavaFrame frame;
-	return frame.keep(frame.CallStaticObjectMethod(classLoaderClass, getSystemClassLoaderID)) ;
+	return frame.keep(frame.CallStaticObjectMethod(s_ClassLoaderClass, s_ClassLoader_GetSystemClassLoaderID));
 }
 
-string getMemberName(jobject o)
+string JPJni::getMemberName(jobject o)
 {
 	JPJavaFrame frame;
-	jstring name = (jstring)frame.CallObjectMethod(o, getMemberNameID);
+	jstring name = (jstring) frame.CallObjectMethod(o, s_Member_GetMemberNameID);
 
-	string simpleName = asciiFromJava(name);
+	string simpleName = toStringUTF8(name);
 	return simpleName;
 }
 
-bool isMemberPublic(jobject o)
+bool JPJni::isMemberPublic(jobject o)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(o, getModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isPublicID, &modif);
+	modif.i = frame.CallIntMethod(o, s_Member_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsPublicID, &modif);
 
 	return (res ? true : false);
 }
 
-bool isMemberStatic(jobject o)
+bool JPJni::isMemberStatic(jobject o)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(o, getModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isStaticID, &modif);
+	modif.i = frame.CallIntMethod(o, s_Member_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsStaticID, &modif);
 
 	return (res ? true : false);
 }
 
-bool isMemberFinal(jobject o)
+bool JPJni::isMemberFinal(jobject o)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(o, getModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isFinalID, &modif);
+	modif.i = frame.CallIntMethod(o, s_Member_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsFinalID, &modif);
 
 	return (res ? true : false);
 }
 
-bool isMemberAbstract(jobject o)
+bool JPJni::isMemberAbstract(jobject o)
 {
 	JPJavaFrame frame;
 	jvalue modif;
-	modif.i = frame.CallIntMethod(o, getModifiersID);
-	jboolean res = frame.CallStaticBooleanMethodA(modifierClass, isAbstractID, &modif);
+	modif.i = frame.CallIntMethod(o, s_Member_GetModifiersID);
+	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsAbstractID, &modif);
 
 	return (res ? true : false);
 }
 
-jint hashCode(jobject obj)
+jint JPJni::hashCode(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.CallIntMethod(obj, hashCodeID);
+	return frame.CallIntMethod(obj, s_Object_HashCodeID);
 }
 
-JPTypeName getType(jobject fld)
+jclass JPJni::getFieldType(jobject fld)
 {
 	JPJavaFrame frame;
-	TRACE_IN("getType");
-
-	jclass c = (jclass)frame.CallObjectMethod(fld, getTypeID);
-
-	return getName(c);
-	TRACE_OUT;
+	return (jclass) frame.keep(frame.CallObjectMethod(fld, s_Field_GetTypeID));
 }
 
-JPTypeName getReturnType(jobject o)
+jclass JPJni::getMethodReturnType(jobject o)
 {
 	JPJavaFrame frame;
-	jclass c = (jclass)frame.CallObjectMethod(o, getReturnTypeID);
-	return getName(c);
+	return (jclass) frame.keep(frame.CallObjectMethod(o, s_Method_GetReturnTypeID));
 }
 
-bool isMethodSynthetic(jobject o)
+bool JPJni::isMethodSynthetic(jobject o)
 {
 	JPJavaFrame frame;
-	jboolean res = frame.CallBooleanMethod(o, isSyntheticMethodID);
-  	return (res ? true : false);
+	jboolean res = frame.CallBooleanMethod(o, s_Method_IsSyntheticMethodID);
+	return (res ? true : false);
 }
 
-bool isVarArgsMethod(jobject o)
+bool JPJni::isMethodVarArgs(jobject o)
 {
 	JPJavaFrame frame;
-  	jboolean res = frame.CallBooleanMethod(o, isVarArgsMethodID);
-  	return (res ? true : false);
+	jboolean res = frame.CallBooleanMethod(o, s_Method_IsVarArgsMethodID);
+	return (res ? true : false);
 }
 
-vector<JPTypeName> getParameterTypes(jobject o, bool isConstructor)
+//FIXME tough one
+
+vector<JPClassRef> JPJni::getMethodParameterTypes(jobject o, bool isConstructor)
 {
 	JPJavaFrame frame;
-	vector<JPTypeName> args;
+	vector<JPClassRef> args;
 
-	jobjectArray types ;
+	jobjectArray types;
 	if (isConstructor)
 	{
-		types = (jobjectArray)frame.CallObjectMethod(o, getConstructorParameterTypesID);
+		types = (jobjectArray) frame.CallObjectMethod(o, s_Constructor_GetParameterTypesID);
 	}
 	else
 	{
-		types = (jobjectArray)frame.CallObjectMethod(o, getParameterTypesID);
+		types = (jobjectArray) frame.CallObjectMethod(o, s_Method_GetParameterTypesID);
 	}
 
 	int len = frame.GetArrayLength(types);
 	{
-		JPJavaFrame frame2(4+len);
+		JPJavaFrame frame2(4 + len);
 		for (int i = 0; i < len; i++)
 		{
-			jclass c = (jclass)frame.GetObjectArrayElement(types, i);
-
-			JPTypeName name = getName(c);
-			args.push_back(name);
+			args.push_back((jclass) frame.GetObjectArrayElement(types, i));
 		}
 	}
 	return args;
 }
 
-bool isConstructor(jobject obj)
+bool JPJni::isConstructor(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.IsInstanceOf(obj, constructorClass)!=0;
+	return frame.IsInstanceOf(obj, s_ConstructorClass) != 0;
 }
 
-string getStackTrace(jthrowable th)
+string JPJni::getStackTrace(jthrowable th)
 {
 	JPJavaFrame frame;
-	jobject strWriter = frame.NewObject(stringWriterClass, stringWriterID);
+	jobject strWriter = frame.NewObject(s_StringWriterClass, s_StringWriterID);
 
 	jvalue v;
 	v.l = strWriter;
-	jobject printWriter = frame.NewObjectA(printWriterClass, printWriterID, &v);
+	jobject printWriter = frame.NewObjectA(s_PrintWriterClass, s_PrintWriterID, &v);
 
 	v.l = printWriter;
-	frame.CallVoidMethodA(th, printStackTraceID, &v);
-	frame.CallVoidMethod(printWriter, flushID);
-	return asciiFromJava(toString(strWriter));
+	frame.CallVoidMethodA(th, s_Throwable_PrintStackTraceID, &v);
+	frame.CallVoidMethod(printWriter, s_FlushID);
+	return toString(strWriter);
 }
 
-string getMessage(jthrowable th)
+string JPJni::getMessage(jthrowable th)
 {
 	JPJavaFrame frame;
-	jstring jstr = (jstring)frame.CallObjectMethod(th, getMessageID);
+	jstring jstr = (jstring) frame.CallObjectMethod(th, s_Throwable_GetMessageID);
 
-	return asciiFromJava(jstr);
+	return toStringUTF8(jstr);
 }
 
-bool isThrowable(jclass c)
-{
-  	JPJavaFrame frame;
-	jboolean res = frame.IsAssignableFrom(c, throwableClass);
-	if (res)
-	{
-		return true;
-	}
-	return false;
-}
-
-long intValue(jobject obj)
+bool JPJni::isThrowable(jclass c)
 {
 	JPJavaFrame frame;
-	return frame.CallIntMethod(obj, intValueID);
+	return frame.IsAssignableFrom(c, s_ThrowableClass) != 0;
 }
 
-jlong longValue(jobject obj)
+long JPJni::intValue(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.CallLongMethod(obj, longValueID);
+	return frame.CallIntMethod(obj, s_Number_IntValueID);
 }
 
-double doubleValue(jobject obj)
+jlong JPJni::longValue(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.CallDoubleMethod(obj, doubleValueID);
+	return frame.CallLongMethod(obj, s_Number_LongValueID);
 }
 
-bool booleanValue(jobject obj)
+double JPJni::doubleValue(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.CallBooleanMethod(obj, booleanValueID) ? true : false;
+	return frame.CallDoubleMethod(obj, s_Number_DoubleValueID);
 }
 
-jchar charValue(jobject obj)
+bool JPJni::booleanValue(jobject obj)
 {
 	JPJavaFrame frame;
-	return frame.CallCharMethod(obj, charValueID);
+	return frame.CallBooleanMethod(obj, s_BooleanValueID) ? true : false;
 }
 
-jclass getPrimitiveClass(const char* name)
+jchar JPJni::charValue(jobject obj)
 {
 	JPJavaFrame frame;
-	jclass clz = (jclass)frame.FindClass(name);
+	return frame.CallCharMethod(obj, s_CharValueID);
+}
+
+jclass JPJni::getPrimitiveClass(jclass clz)
+{
+	JPJavaFrame frame;
 	jfieldID fid = frame.GetStaticFieldID(clz, "TYPE", "Ljava/lang/Class;");
-	jclass res = (jclass)frame.GetStaticObjectField(clz, fid);
+	jclass res = (jclass) frame.GetStaticObjectField(clz, fid);
 	return res;
 }
 
-
-jclass getByteClass()
+class JPStringAccessor
 {
-	return getPrimitiveClass("java/lang/Byte");
+	JPJavaFrame& frame_;
+	jboolean isCopy;
+
+public:
+	const char* cstr;
+	int length;
+	jstring jstr_;
+
+	JPStringAccessor(JPJavaFrame& frame, jstring jstr)
+	: frame_(frame), jstr_(jstr)
+	{
+		cstr = frame_.GetStringUTFChars(jstr, &isCopy);
+		length = frame_.GetStringUTFLength(jstr);
+	}
+
+	~JPStringAccessor()
+	{
+		frame_.ReleaseStringUTFChars(jstr_, cstr);
+	}
+};
+
+string JPJni::toStringUTF8(jstring str)
+{
+	JPJavaFrame frame;
+	JPStringAccessor contents(frame, str);
+	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 }
 
-jclass getShortClass()
+jstring JPJni::fromStringUTF8(const string& str)
 {
-	return getPrimitiveClass("java/lang/Short");
+	JPJavaFrame frame;
+	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
+	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
 }
-
-jclass getIntegerClass()
-{
-	return getPrimitiveClass("java/lang/Integer");
-}
-
-jclass getLongClass()
-{
-	return getPrimitiveClass("java/lang/Long");
-}
-
-jclass getFloatClass()
-{
-	return getPrimitiveClass("java/lang/Float");
-}
-
-jclass getDoubleClass()
-{
-	return getPrimitiveClass("java/lang/Double");
-}
-
-jclass getCharacterClass()
-{
-	return getPrimitiveClass("java/lang/Character");
-}
-
-jclass getBooleanClass()
-{
-	return getPrimitiveClass("java/lang/Boolean");
-}
-
-jclass getVoidClass()
-{
-	return getPrimitiveClass("java/lang/Void");
-}
-
-} // end of namespace JNIEnv

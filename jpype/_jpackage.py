@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 import _jpype
 from . import _jclass
+
+__all__ = ['JPackage']
+
 
 class JPackage(object):
     def __init__(self, name):
@@ -33,22 +36,21 @@ class JPackage(object):
             # perhaps it is a class?
             subname = "{0}.{1}".format(self.__name, n)
             if not _jpype.isStarted():
-               import warnings
-               warnings.warn("JVM not started yet, can not inspect JPackage contents")
-               return n
-            cc = _jpype.findClass(subname)
-            if cc is None:
-                # can only assume it is a sub-package then ...
+                import warnings
+                warnings.warn(
+                    "JVM not started yet, can not inspect JPackage contents")
+                return n
+            try:
+                cc = _jclass.JClass(subname)
+            except:
                 cc = JPackage(subname)
-            else:
-                cc = _jclass._getClassFor(cc)
 
             self.__setattr__(n, cc, True)
             return cc
 
     def __setattr__(self, n, v, intern=False):
         if not n[:len('_JPackage')] == '_JPackage' \
-           and not intern: # NOTE this shadows name mangling
+           and not intern:  # NOTE this shadows name mangling
             raise RuntimeError("Cannot set attributes in a package {0}"
                                .format(n))
         object.__setattr__(self, n, v)

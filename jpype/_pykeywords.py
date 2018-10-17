@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,8 +13,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
-KEYWORDS = set((
+# *****************************************************************************
+
+# This is a super set of the keywords in Python2 and Python3.
+# We use this so that jpype is a bit more version independent.
+_KEYWORDS = set((
     "del", "for", "is", "raise",
     "assert", "elif", "from", "lambda", "return",
     "break", "else", "global", "not", "try",
@@ -22,3 +25,9 @@ KEYWORDS = set((
     "continue", "exec", "import", "pass", "yield",
     "def", "finally", "in", "print", "as", "None"
 ))
+
+
+def pysafe(s):
+    if s in _KEYWORDS:
+        return s+"_"
+    return s

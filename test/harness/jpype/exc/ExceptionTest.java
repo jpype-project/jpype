@@ -40,8 +40,10 @@ class ExceptionTest
     } 
     catch (Throwable ex)
     {
+      System.out.println("Unexpected Exception during delegateThrow");
       ex.printStackTrace();
     }
+    System.out.println("Failed");
     return false;
   }
 

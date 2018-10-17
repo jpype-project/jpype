@@ -14,6 +14,16 @@ class VarArgs
 		return args;
 	}
 
+	public static int callString0(String str, String ... args)
+	{
+		return args.length;
+	}
+
+	public int callString1(String str, String ... args)
+	{
+		return args.length;
+	}
+
 	public static Integer callOverload(Integer i)
 	{
 		return i;
