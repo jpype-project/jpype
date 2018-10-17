@@ -19,7 +19,7 @@
 JPMonitor::JPMonitor(const JPValue& value) : m_Value(value)
 {
 	// This can hold off for a while so we need to release resource 
-        // so that we don't dead lock.
+	// so that we don't dead lock.
 	JPPyCallRelease call;
 	JPJavaFrame frame;
 	jvalue& val = m_Value;

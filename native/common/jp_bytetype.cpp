@@ -60,7 +60,7 @@ JPPyObject JPByteType::convertToPythonObject(jvalue val)
 JPValue JPByteType::getValueFromObject(jobject obj)
 {
 	jvalue v;
-	field(v) = (type_t)JPJni::intValue(obj);
+	field(v) = (type_t) JPJni::intValue(obj);
 	return JPValue(this, v);
 }
 

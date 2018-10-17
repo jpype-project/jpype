@@ -14,6 +14,7 @@
    limitations under the License.
    
  *****************************************************************************/
+#include <Python.h> // FIXME work on bytes, remove when complete
 #include <jpype.h>
 
 JPArrayClass::JPArrayClass(jclass c) : JPClass(c)
@@ -57,8 +58,20 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit under java rules.
 	}
 
-	// String to bytes is possible, but not sure if worth it.  
-	// It would definitely be JPMatch::_explicit.
+#if PY_MAJOR_VERSION >= 3 
+	// Bytes are byte[]
+	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	{
+		return JPMatch::_implicit;
+	}
+#else
+	// Bytes are byte[]
+	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	{
+		return JPMatch::_implicit;
+	}
+#endif
+
 	//	if (JPPyString::checkBytes(o) && m_ComponentType == JPTypeManager::_byte)
 	//	{
 	//		TRACE1("char[]");
@@ -129,13 +142,37 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
+#if PY_MAJOR_VERSION >= 3 
+	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	{
+		Py_ssize_t size = 0;
+		char *buffer = NULL;
+		PyBytes_AsStringAndSize(obj, &buffer, &size); // internal reference
+		jbyteArray byteArray = frame.NewByteArray(size);
+		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
+		res.l = frame.keep(byteArray);
+		return res;
+	}
+#else
+	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	{
+		Py_ssize_t size = 0;
+		char *buffer = NULL;
+		PyString_AsStringAndSize(obj, &buffer, &size); // internal reference
+		jbyteArray byteArray = frame.NewByteArray(size);
+		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
+		res.l = frame.keep(byteArray);
+		return res;
+	}
+#endif
+
 	if (JPPyObject::isSequenceOfItems(obj))
 	{
 		JP_TRACE("sequence");
 		JPPySequence seq(JPPyRef::_use, obj);
-		jsize length = (jsize)seq.size();
+		jsize length = (jsize) seq.size();
 
-		jarray array = m_ComponentType->newArrayInstance(frame, (jsize)length);
+		jarray array = m_ComponentType->newArrayInstance(frame, (jsize) length);
 
 		for (jsize i = 0; i < length; i++)
 		{
@@ -157,7 +194,7 @@ jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, js
 {
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
-	jsize length = (jsize)(end - start);
+	jsize length = (jsize) (end - start);
 
 	jarray array = m_ComponentType->newArrayInstance(frame, length);
 	jvalue res;

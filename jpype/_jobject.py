@@ -96,6 +96,9 @@ class JObject(object):
     def __str__(self):
         return self.__javavalue__.toString()
 
+    def __unicode__(self):
+        return self.__javavalue__.toUnicode()
+
     def __hash__(self):
         return self.hashCode()
 
