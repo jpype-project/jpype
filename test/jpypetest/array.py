@@ -285,3 +285,22 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+
+    def testArrayCtor1(self):
+        jobject = jpype.JClass('java.lang.Object')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor2(self):
+        jobject = jpype.JClass('java.util.List')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor3(self):
+        jarray = jpype.JArray("java.lang.Object")
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor4(self):
+        jarray = jpype.JArray(jpype.JObject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
