@@ -3,6 +3,7 @@ import os
 import subprocess
 import distutils.cmd
 import distutils.log
+from distutils.errors import DistutilsPlatformError
 
 class BuildJavaCommand(distutils.cmd.Command):
   """A custom command to create jar file during build."""
@@ -25,5 +26,9 @@ class BuildJavaCommand(distutils.cmd.Command):
     command = [self.distribution.ant, '-Dbuild=%s'%buildDir, '-f', buildXmlFile]
     cmdStr= ' '.join(command)
     self.announce("  %s"%cmdStr, level=distutils.log.INFO)
-    subprocess.check_call(command)
+    try:
+        subprocess.check_call(command)
+    except subprocess.CalledProcessError as exc:
+        distutils.log.error(exc.output)
+        raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
 
