@@ -9,4 +9,5 @@ public class FieldsTest
   public static int intField;
   public static float floatField;
   public static double doubleField;
+	public static Object objectField;
 }
