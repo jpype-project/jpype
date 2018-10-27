@@ -1,5 +1,5 @@
-/** ***************************************************************************
- * Copyright 2018 Karl Nelson
+/*
+ * Copyright 2018, Karl Nelson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- **************************************************************************** */
-package org.jpype.bootloader;
+ */
+package org.jpype.classloader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,20 +32,36 @@ import java.util.jar.JarInputStream;
 public class JPypeClassLoader extends ClassLoader
 {
   TreeMap<String, byte[]> map = new TreeMap<>();
+  static private JPypeClassLoader instance;
 
-  public JPypeClassLoader(ClassLoader parent)
+  public static JPypeClassLoader getInstance()
+  {
+    if (instance == null)
+    {
+      JPypeClassLoader.instance = new JPypeClassLoader(getSystemClassLoader());
+    }
+    return instance;
+  }
+
+  private JPypeClassLoader(ClassLoader parent)
   {
     super(parent);
   }
 
+  public void importClass(String name, byte[] code)
+  {
+    name = name.substring(0, name.length() - 6).replaceAll("/", ".");
+    map.put(name, code);
+  }
+
   /**
-   * Load a jar from memory into the class loader.
+   * Import a jar from memory into the class loader.
    * <p>
    * Does not handle unknown jar entry lengths.
    *
    * @param bytes
    */
-  public void loadJar(byte[] bytes)
+  public void importJar(byte[] bytes)
   {
     try (JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
     {
@@ -76,8 +92,7 @@ public class JPypeClassLoader extends ClassLoader
         String name = nextEntry.getName();
         if (name.endsWith(".class"))
         {
-          name = name.substring(0, name.length() - 6).replaceAll("/", ".");
-          map.put(name, data);
+          importClass(name, data);
         }
       }
     } catch (IOException ex)
