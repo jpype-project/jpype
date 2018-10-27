@@ -38,10 +38,10 @@ void JPClassLoader::init()
 	jvalue v;
 
 	// Set up class loader
-	//jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
+	jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
 	//v.l = cl;
 
-	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg.jpype.classloader.JPypeClassLoader;");
+	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
 	classLoader = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
 
 	// Load the jar
