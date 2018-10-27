@@ -84,18 +84,22 @@ class ValuesTestCase(common.JPypeTestCase):
         self.Fields.doubleField = jpype.JDouble(5.0)
         self.assertEquals(self.Fields.doubleField, 5.0)
 
-    def testObjectBool(self):
+    def testObjectBoolTrue(self):
         self.Fields.objectField = True
+        self.assertIsInstance(self.Fields.objectField, jpype.JClass('java.lang.Boolean'))
+        self.assertEquals(str(self.Fields.objectField), str(True))
         self.assertEquals(self.Fields.objectField, True)
-        self.assertIsInstance(self.Fields.objectField, jpype.JClass('java.lang.Boolean'))
-        self.Fields.objectFiels = False
-        self.assertEquals(self.Fields.objectField, False)
-        self.assertIsInstance(self.Fields.objectField, jpype.JClass('java.lang.Boolean'))
 
-    def testObjectBool2(self):
-        self.Fields.objectField = jpype.JBoolean(True)
-        self.assertEquals(self.Fields.objectField, True)
+    def testObjectBoolFalse(self):
+        self.Fields.objectField = False
         self.assertIsInstance(self.Fields.objectField, jpype.JClass('java.lang.Boolean'))
+        self.assertEquals(str(self.Fields.objectField), str(False))
+        self.assertEquals(self.Fields.objectField, False)
+
+    def testObjectBoolJValue(self):
+        self.Fields.objectField = jpype.JBoolean(True)
+        self.assertIsInstance(self.Fields.objectField, jpype.JClass('java.lang.Boolean'))
+        self.assertEquals(self.Fields.objectField, True)
 
     def testObjectShort(self):
         self.Fields.objectField = jpype.JShort(1)

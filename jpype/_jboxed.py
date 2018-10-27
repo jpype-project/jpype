@@ -29,20 +29,26 @@ else:
 
 __all__ = []
 
-
+# Boolean is special because in python True and False are singletons,
+# thus it is not possible to make a wrapper properly act as a bool
 class _JBoxedBoolean(int, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
             raise TypeError("Invalid arguments")
         if isinstance(args[0], (bool, int, _long)):
-            return super(_JBoxedBoolean, cls).__new__(cls, args[0])
-        if hasattr(args[0], 'byteValue'):
-            return super(_JBoxedBoolean, cls).__new__(cls, args[0].byteValue())
+            return int.__new__(cls, args[0])
+        if hasattr(args[0], 'booleanValue'):
+            return int.__new__(cls, args[0].booleanValue())
         if isinstance(args[0], _jpype.PyJPValue):
-            return super(_JBoxedBoolean, cls).__new__(cls, cls.byteValue(args[0]))
+            return int.__new__(cls, cls.booleanValue(args[0]))
         raise ValueError("Invalid arguments %s" % args[0])
     __eq__ = int.__eq__
     __ne__ = int.__ne__
+
+    def __str__(self):
+        if int(self)==0:
+            return str(False)
+        return str(True)
 
 
 class _JBoxedByte(int, _jobject.JObject):
