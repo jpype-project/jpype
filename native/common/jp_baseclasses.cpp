@@ -132,6 +132,13 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
+	if (JPPyBool::check(pyobj))
+	{
+		res = JPTypeManager::_boolean->getBoxedClass()->convertToJava(pyobj);
+		res.l = frame.keep(res.l);
+		return res;
+	}
+
 	if (JPPyInt::check(pyobj) || JPPyLong::check(pyobj))
 	{
 		res = JPTypeManager::_long->getBoxedClass()->convertToJava(pyobj);
@@ -142,13 +149,6 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 	if (JPPyFloat::check(pyobj))
 	{
 		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
-		res.l = frame.keep(res.l);
-		return res;
-	}
-
-	if (JPPyBool::check(pyobj))
-	{
-		res = JPTypeManager::_boolean->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
