@@ -33,7 +33,6 @@ class MemorySourceObject extends SimpleJavaFileObject
     super(new URI("memory://"+name.replace(".", "/")+Kind.SOURCE.extension), Kind.SOURCE);
     this.contents = contents;
     this.name=name.replace(".", "/")+Kind.SOURCE.extension;
-    System.out.println(this.getName());
   }
   
   @Override

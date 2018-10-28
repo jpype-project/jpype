@@ -89,10 +89,4 @@ public class MemoryCompiler
     return diagnostics;
   }
   
-  static public void main(String[] args)
-  {
-    MemoryCompiler mc = new MemoryCompiler();
-    Class<?> cls = mc.compile("my/Test", "package my; public class Test { static public class Inner{}; void run() { System.out.println(\"hello world\"); } }");
-  }
-
 }
