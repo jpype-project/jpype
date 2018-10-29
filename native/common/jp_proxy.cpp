@@ -112,14 +112,13 @@ void JPProxy::init()
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPProxy::init");
 
-	jclass handler = JPClassLoader::findClass("jpype.JPypeInvocationHandler");
+	jclass handler = JPClassLoader::findClass("org.jpype.proxy.JPypeInvocationHandler");
 	handlerClass = (jclass) frame.NewGlobalRef(handler);
 
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
 	method[0].signature = (char*) "(Ljava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
 	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
-
 
 	hostObjectID = frame.GetFieldID(handler, "hostObject", "J");
 	invocationHandlerConstructorID = frame.GetMethodID(handler, "<init>", "()V");
@@ -166,4 +165,3 @@ jobject JPProxy::getProxy()
 	JPReferenceQueue::registerRef(proxy, this->m_Instance);
 	return frame.keep(proxy);
 }
-

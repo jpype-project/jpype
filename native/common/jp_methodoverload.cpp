@@ -184,8 +184,8 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 
 		else if (len < tlen)
 		{
-				match.isVarIndirect = true;
-				JP_TRACE("Match vargs empty");
+			match.isVarIndirect = true;
+			JP_TRACE("Match vargs empty");
 		}
 
 		if (lastMatch < JPMatch::_implicit)

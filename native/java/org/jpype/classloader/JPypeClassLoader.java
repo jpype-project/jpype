@@ -18,6 +18,7 @@ package org.jpype.classloader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -113,7 +114,13 @@ public class JPypeClassLoader extends ClassLoader
   {
     byte[] data = map.get(name);
     if (data == null)
+    {
+      for (Map.Entry<String, byte[]> entry:map.entrySet())
+      {
+        System.out.println(entry.getKey());
+      }
       throw new RuntimeException("Class not found " + name);
+    }
 
     Class cls = defineClass(name, data, 0, data.length);
     if (cls == null)

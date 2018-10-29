@@ -1,4 +1,4 @@
-package jpype;
+package org.jpype.proxy;
 
 import java.lang.reflect.*;
 
