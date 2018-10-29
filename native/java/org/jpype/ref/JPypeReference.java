@@ -13,11 +13,13 @@ public class JPypeReference extends PhantomReference
     mHostReference = hostObject;
   }
 
+  @Override
   public int hashCode()
   {
     return (int) mHostReference;
   }
 
+  @Override
   public boolean equals(Object arg0)
   {
     if (!(arg0 instanceof JPypeReference))

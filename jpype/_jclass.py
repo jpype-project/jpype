@@ -75,13 +75,23 @@ def _initialize():
 class JClass(type):
     """ Meta class for all java class instances.
 
-    JClass when called as an object will contruct a new java Class. 
+    JClass when called as an object will contruct a new java Class wrapper. 
+
+    All python wrappers for java classes derived from this type.
+    To test if a python class is a java wrapper use
+    isinstance(obj, jpype.JClass).
 
     Args:
       className (str): name of a java type.
 
+    Keyword Args:
+      loader (java.lang.ClassLoader): specifies a class loader to use
+        when creating a class.
+      initialize (bool): Passed to class loader when loading a class
+        using the class loader.
+
     Returns:
-      JavaClass: a new wrapper for a Java array class
+      JavaClass: a new wrapper for a Java class
 
     Raises:
       TypeError: if the component class is invalid or could not be found.
@@ -90,10 +100,10 @@ class JClass(type):
 
     def __new__(cls, *args, **kwargs):
         if len(args) == 1:
-            return _JClassNew(args[0])
+            return _JClassNew(args[0], **kwargs)
         return super(JClass, cls).__new__(cls, *args, **kwargs)
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         if len(args) == 1:
             return
         super(JClass, self.__class__).__init__(self, *args)
@@ -145,7 +155,10 @@ class JClass(type):
         return mergedmro
 
 
-def _JClassNew(arg):
+def _JClassNew(arg, loader=None, initialize=True):
+    if loader and isinstance(arg, str):
+        arg = _java_lang_Class.forName(arg, initialize, loader)
+
     if isinstance(arg, _jpype.PyJPClass):
         javaClass = arg
     else:

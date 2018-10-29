@@ -44,7 +44,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
   /**
    * Start the threading queue.
    * <p>
-   * This method is long running. It will return only if the queue gets stopped
+   * This method is long running. It will return only if the queue gets stopped.
    * <p>
    */
   public void start()
@@ -81,19 +81,37 @@ public class JPypeReferenceQueue extends ReferenceQueue
     }
   }
 
+  /**
+   * Checks the status of the reference queue.
+   *
+   * @return true is the queue is running.
+   */
   public boolean isRunning()
   {
     return !mStopped;
   }
 
+  /**
+   * Get the number of items in the reference queue.
+   *
+   * @return the number of python resources held.
+   */
   public int getQueueSize()
   {
     return this.mHostReferences.size();
   }
 
 //<editor-fold desc="internal" defaultstate="collapsed">
+  /**
+   * Native hook to delete a python resource.
+   *
+   * @param hostRef is the address of the python object (cast to PyObject*).
+   */
   private static native void removeHostReference(long hostRef);
 
+  /**
+   * Thread to monitor the queue and delete resources.
+   */
   private class Worker implements Runnable
   {
     @Override
