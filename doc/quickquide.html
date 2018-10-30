@@ -1,0 +1,558 @@
+
+<html>
+  <body>
+Quick start quide to using JPype.  This quide will show a series of simple examples with the 
+corresponding commands in both java and python for using JPype. 
+The JPype userguide addition details on the use of the JPype module.
+<p>
+JPype uses two factory classes (JArray and JClass) to produce class wrappers which can be used to 
+create all Java objects.  These serve as both the base class for the corresponding hierarchy and
+as the factory to produce new wrappers.  Casting operators are used to construct specify types of Java types
+(JObject, JString, JBoolean, JByte, JChar, JShort, JInt, JLong, JFloat, JDouble). Two special
+classes serve as the base classes for exceptions (JException) and interfaces (JInterface).
+There are a small number of support methods to help in controlling the JVM.  Last, there are 
+a few annotations used to create customized wrappers.
+<p>
+For the purpose of this guide, we will assume that the following classes were defined
+in Java.  We will also assume the reader knows enough Java and Python to be 
+dangerous.  
+<p>
+
+<pre>
+package org.pkg;
+
+publc class BassClass
+{
+   public callMember(int i)
+   {}
+}
+
+public class MyClass extends BaseClass
+{
+   final public static int CONST_FIELD = 1;
+   public static int staticField = 1;
+   public int memberField = 2;
+   int internalField =3;
+
+   public MyClass() {}
+   public MyClass(int i) {}
+
+   public static void callStatic(int i) {}
+   public void callMember(int i) {}
+
+   // Python name conflict
+   public void pass() {}
+
+   public void throwsException throws java.lang.Exception {}
+
+   // Overloaded methods
+   public call(int i) {}
+   public call(double d) {}
+}
+</pre>
+<h1>Starting JPype</h1>
+
+The hardest thing about using JPype is getting the jars loaded into the JVM.
+Java is curiously unfriendly about reporting problems when it is unable to find
+a jar.  Instead it will be reported as an ImportError in python.
+These patterns will help debug problems regarding jar loading.
+<p>
+Once the JVM is started Java packages that are within a top level domain (TLD)
+are exposed as python modules allowing Java to be treated as part of python.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Start Java Virtual Machine (JVM)</td>
+<td><pre>NA</pre></td>
+<td><pre>
+# Import module
+import jpype
+
+# Enable Java imports
+import jpype.imports
+
+# Pull in types
+from jpype.types import *
+
+# Launch the JVM
+jvmPath = jpype.getDefaultJVMPath()
+jvmArgs = "-Djava.class.path=%" %
+  jpype.getClassPath()
+jpype.startJVM(jvmPath,jvmArgs)
+</pre></td>
+<td>REVISE</td>
+</tr>
+<tr><td>Import default java namespace</td>
+<td><pre>NA</pre></td>
+<td><pre>import java.lang</pre></td>
+<td>All java.lang.* classes are available.</td>
+</tr>
+<tr><td>Add a set of jars from a directory</td>
+<td><pre>NA</pre></td>
+<td><pre>jpype.addClassPath('/my/path/*')</pre></td>
+<td>Must happen prior to starting JVM</td>
+</tr>
+<tr><td>Add a specific jar to the classpath</td>
+<td><pre>NA</pre></td>
+<td><pre>jpype.addClassPath('/my/path/myJar.jar')</pre></td>
+<td>Must happen prior to starting the JVM</td>
+</tr>
+<tr><td>Print JVM CLASSPATH</td>
+<td><pre>NA</pre></td>
+<td><pre>
+from java.lang import System
+print(System.getProperty("java.class.path"))
+</pre></td>
+<td>After JVM is started</td>
+</tr>
+</table>
+<h1>Classes/Objects</h1>
+
+Java classes are presented whereever possible exactly like python classes. The only
+major difference is that Java classes and objects are closed and cannot be modified.
+As Java is strongly typed, casting operators are used to select specific 
+overloads when calling methods.  Classes are either imported using as a module
+or loaded with the JClass factory.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Import a class</td>
+<td><pre>import org.pkg.MyClass</pre></td>
+<td><pre>from org.pkg import MyClass</pre></td>
+<td>This will report an error if the class is not found.</td>
+</tr>
+<tr><td>Import a class and rename</td>
+<td><pre>NA</pre></td>
+<td><pre>from org.pkg import MyClass as OurClass</pre></td>
+<td>This will report an error if the class is not found.</td>
+</tr>
+<tr><td>Import multiple classes from a package</td>
+<td><pre>NA</pre></td>
+<td><pre>from org.pkg import MyClass, AnotherClass</pre></td>
+<td>This will report an error if the classes are not found</td>
+</tr>
+<tr><td>Import a java package for long name access</td>
+<td><pre>NA</pre></td>
+<td><pre>import org.pkg</pre></td>
+<td>Does not report errors if the package is invalid</td>
+</tr>
+<tr><td>Import a class static</td>
+<td><pre>import my.pkg.MyClass.CONST_FIELD</pre></td>
+<td><pre>from org.pkg.MyClass import CONST_FIELD</pre></td>
+<td>Constants, static fiels, and static methods can be imported.</td>
+</tr>
+<tr><td>Import a class without tld</td>
+<td><pre>import zippy.NonStandard</pre></td>
+<td><pre>NonStandard = JClass('zippy.NonStandard')</pre></td>
+<td>JClass loads any class by name including inner classes.</td>
+</tr>
+<tr><td>Construct an object</td>
+<td><pre>MyClass myObject = new MyClass(1);</pre></td>
+<td><pre>myObject = MyClass(1)</pre></td>
+<td></td>
+</tr>
+<tr><td>Constructing a cless with full class name</td>
+<td><pre>NA</pre></td>
+<td><pre>
+import org.pkg 
+myObject = org.pkg.MyClass(args)
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Get a static field</td>
+<td><pre>int var = MyClass.staticField;</pre></td>
+<td><pre>var = MyClass.staticField</pre></td>
+<td></td>
+</tr>
+<tr><td>Get a member field</td>
+<td><pre>int var = myObject.memberField;</pre></td>
+<td><pre>var = myObject.memberField</pre></td>
+<td></td>
+</tr>
+<tr><td>Set a static field</td>
+<td><pre>MyClass.staticField = 2;</pre></td>
+<td><pre>MyClass.staticField = 2</pre></td>
+<td>Produces error for final fields</td>
+</tr>
+<tr><td>Set a member field</td>
+<td><pre>myObject.memberField = 2;</pre></td>
+<td><pre>myObject.memberField = 2</pre></td>
+<td>Produces error for final fields</td>
+</tr>
+<tr><td>Call a static method</td>
+<td><pre>MyClass.callStatic(1);</pre></td>
+<td><pre>MyClass.callStatic(1)</pre></td>
+<td></td>
+</tr>
+<tr><td>Call a member method</td>
+<td><pre>myObject.callMember(1);</pre></td>
+<td><pre>myObject.callMember(1)</pre></td>
+<td></td>
+</tr>
+<tr><td>Access member with python naming conflict</td>
+<td><pre>myObject.pass()</pre></td>
+<td><pre>myObject.pass_()</pre></td>
+<td>Underscore is added during wrapping.</td>
+</tr>
+<tr><td>Checking inheritance</td>
+<td><pre>if (obj instanceof MyClass) {...}</pre></td>
+<td><pre>if (isinstance(obj, MyClass): ...</pre></td>
+<td></td>
+</tr>
+<tr><td>Checking if java class wrapper</td>
+<td><pre>NA</pre></td>
+<td><pre>if (isinstance(obj, JClass): ...</pre></td>
+<td></td>
+</tr>
+<tr><td>Checking if java object wrapper</td>
+<td><pre>NA</pre></td>
+<td><pre>if (isinstance(obj, JObject): ...</pre></td>
+<td></td>
+</tr>
+<tr><td>Casting to a specific type</td>
+<td><pre>BaseClass b = (BaseClass)myObject;</pre></td>
+<td><pre>b = JObject(myObject, BaseClass)</pre></td>
+<td></td>
+</tr>
+</table>
+<h1>Exceptions</h1>
+
+Java exceptions extend from python exceptions and can be dealt with no different 
+that Python native exceptions. JException serves as the base class for all Java exceptions.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Catch an exception</td>
+<td><pre>
+try {
+   myObject.throwsException();
+} catch (java.lang.Exception ex)
+{ ... }
+</pre></td>
+<td><pre>
+try:
+    myObject.throwsException()
+except java.lang.Exception as ex:
+    ...
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Throw an exception to Java</td>
+<td><pre>
+throw new java.lang.Exception("Problem");
+</pre></td>
+<td><pre>
+raise java.lang.Exception("Problem");
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Checking if java exception wrapper</td>
+<td><pre>NA</pre></td>
+<td><pre>if (isinstance(obj, JException): ...</pre></td>
+<td></td>
+</tr>
+</table>
+<h1>Primitives</h1>
+
+Most python primitives directly map into Java primitives. However, python does not
+have the same primitive types, thus sometimes it is necessary to cast to a specific 
+Java primitive type especially if there are 
+Java overloads that would otherwise be in conflict.  Each of the Java types are
+exposed in JPype (JBoolean, JByte, JChar, JShort, JInt, JLong, JFloat, JDouble).
+<p>
+Python int is equivalent to Java long.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Casting to hit an overload</td>
+<td><pre>myObject.call((int)v);</pre></td>
+<td><pre>myObject.call(JInt(v))</pre></td>
+<td>JInt acts as a casting operator</td>
+</tr>
+<tr><td>Create a primitive array</td>
+<td><pre>int[] array = new int[5]</pre></td>
+<td><pre>array = JArray(JInt)(5)</pre></td>
+<td></td>
+</tr>
+<tr><td>Create a primitive array</td>
+<td><pre>int[] array = new int[){1,2,3}</pre></td>
+<td><pre>array = JArray(JInt)([1,2,3])</pre></td>
+<td>list, sequences, or np.array can be used to initialize.</td>
+</tr>
+<tr><td>Put a specific primitive type on a list</td>
+<td><pre>
+List<Integer> myList 
+  = new ArrayList<>();
+myList.add(1);
+</pre></td>
+<td><pre>
+from java.util import ArrayList
+myList = ArrayList()
+myList.add(JInt(1))
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Boxing a primitive</td>
+<td><pre>Integer boxed = 1;</pre></td>
+<td><pre>
+boxed = JObject(JInt(1))
+</pre></td>
+<td>JInt specifies the prmitive type. JObject boxes the primitive.</td>
+</tr>
+</table>
+<h1>Strings</h1>
+
+Java strings are similar to python strings.  They are both immutable and
+produce a new string when altered.  Most operations can use Java strings
+in place of python strings, with minor exceptions as python strings 
+are not completely duck typed.  When comparing or using as dictionary keys
+JString should be converted to python.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Create a Java string</td>
+<td><pre>String javaStr = new String("foo");</pre></td>
+<td><pre>myStr = JString("foo")</pre></td>
+<td>JString constructs a java.lang.String</td>
+</tr>
+<tr><td>Create a Java string from bytes</td>
+<td><pre>
+byte[] b;
+String javaStr = new String(b, "UTF-8");
+</pre></td>
+<td><pre>
+b= b'foo'
+myStr = JString(b, "UTF-8")
+</pre></td>
+<td>All java.lang.String constuctors work.</td>
+</tr>
+<tr><td>Converting Java string</td>
+<td><pre>NA</pre></td>
+<td><pre>str(javaStr)</pre></td>
+<td></td>
+</tr>
+<tr><td>Comparing python and Java strings</td>
+<td><pre>NA</pre></td>
+<td><pre>str(javaStr) == pyString</pre></td>
+<td>str() converts the object for comparison</td>
+</tr>
+<tr><td>Comparing Java strings</td>
+<td><pre>javaStr.equals("foo")</pre></td>
+<td><pre>javaStr == "foo"</pre></td>
+<td></td>
+</tr>
+<tr><td>Checking if java string</td>
+<td><pre>NA</pre></td>
+<td><pre>if (isinstance(obj, JString): ...</pre></td>
+<td></td>
+</tr>
+</table>
+<h1>Arrays</h1>
+
+Arrays are create using JArray class factory. They operate like python lists, but they are 
+fixed in size.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Create a single dimension array</td>
+<td><pre>MyClass[] array = new MyClass[5];</pre></td>
+<td><pre>array = JArray(MyClass)(5)</pre></td>
+<td></td>
+</tr>
+<tr><td>Create a multi dimension array</td>
+<td><pre>MyClass[][] array2 = new MyClass[5][];</pre></td>
+<td><pre>array2 = JArray(MyClass, 2)(5)</pre></td>
+<td></td>
+</tr>
+<tr><td>Access an element</td>
+<td><pre>array[0] = new MyClass()</pre></td>
+<td><pre>array[0] = MyClass()</pre></td>
+<td></td>
+</tr>
+<tr><td>Size of an array</td>
+<td><pre>array.length</pre></td>
+<td><pre>len(array)</pre></td>
+<td></td>
+</tr>
+<tr><td>Convert to python list</td>
+<td><pre>NA</pre></td>
+<td><pre>pylist = list(array)</pre></td>
+<td></td>
+</tr>
+<tr><td>Iterate elements</td>
+<td><pre>
+for (MyClass element: array) {...}
+</pre></td>
+<td><pre>
+for element in array:
+  ...
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Checking if java array wrapper</td>
+<td><pre>NA</pre></td>
+<td><pre>if (isinstance(obj, JArray): ...</pre></td>
+<td></td>
+</tr>
+</table>
+<h1>Reflection</h1>
+
+For operations that are outside the scope of the JPype syntax, Using
+Java reflection, any java operation include calling a specific overload
+or even accessing private methods and fields.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Access Java reflection class</td>
+<td><pre>MyClass.class</pre></td>
+<td><pre>MyClass.class_</pre></td>
+<td></td>
+</tr>
+<tr><td>Access a private field by name</td>
+<td><pre>NA</pre></td>
+<td><pre>
+cls = myObject.class_
+field = cls.getDeclaredField("internalField")
+field.setAccessible(True)
+field.get()
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Accessing a specific overload</td>
+<td><pre>NA</pre></td>
+<td><pre>
+cls = MyClass.class_
+cls.getDeclaredMethod("call", JInt)
+cls.invoke(myObject, JInt(1))
+</pre></td>
+<td>types must be exactly specified.</td>
+</tr>
+<tr><td>Convert a java.lang.Class into python wrapper</td>
+<td><pre>NA</pre></td>
+<td><pre>
+# Something returned a java.lang.Class
+MyClassJava = getClassMethod()
+
+# Convert to it to Python
+MyClass = JClass(myClassJava)
+</pre></td>
+<td>Rarely required unless the class was supplied external such as generics.</td>
+</tr>
+<tr><td>Load a class with a external class loader</td>
+<td><pre>
+ClassLoader cl = new ExternalClassLoader();
+Class cls = Class.forName("External", True, cl)
+</pre></td>
+<td><pre>
+cl = ExternalClassLoader()
+cls = JClass("External", loader=cl)
+</pre></td>
+<td></td>
+</tr>
+<tr><td>Accessing base method implementation</td>
+<td><pre>NA</pre></td>
+<td><pre>
+from org.pkg import BaseClass, MyClass
+myObject = MyClass(1)
+BaseClass.callMember(myObject, 2)
+</pre></td>
+<td></td>
+</tr>
+</table>
+<h1>Implements and Extension</h1>
+
+JPype can implement a Java interface by annotating a python class.  Each
+method that is required must be implemented.
+<p>
+JPype does not support extending a class directly in python.  Where it is
+necessary to exend a Java class, it is required to create a Java extension
+with an interface for each methods that are to be accessed from python.
+For some deployments this may be be an option.  If that is the case, 
+the JPype inline compiler can be used to create the dynamic class on the 
+fly.
+<p>
+
+<table border='1' width="100%">
+<col width="20%"/><col width="30%"/><col width="30%"/><col width="20%"/>
+<thead>
+<tr><td>Description</td><td>Java</td><td>Python</td><td>Notes</td></tr></thead>
+<tbody>
+
+<tr><td>Implement an interface</td>
+<td><pre>
+public class PyImpl implements MyInterface
+{
+  public void call() {...}
+}
+</pre></td>
+<td><pre>
+@JImplments(MyInterface)
+class PyImpl(object):
+    @JOverride
+    def call(self):
+      pass
+</pre></td>
+<td>FIXME this pull request is missing?</td>
+</tr>
+<tr><td>Extending a class</td>
+<td><pre>NA</pre></td>
+<td><pre>
+FIXME make pull require for this.
+from jpype.compiler import Compiler
+comp = Compiler()
+MyExtension = comp.compile("""
+
+  class MyExtension extends MyClass
+  { ... }
+""")
+obj = MyExtension()
+</pre></td>
+<td>WIP</td>
+</tr>
+<tr><td>Lambdas</td>
+<td><pre>NA</pre></td>
+<td><pre>None</pre></td>
+<td>Support for use of python function as Java 8 lambda is WIP.</td>
+</tr>
+</table>
+
+<i>Don't like the formatting? Feel the guide is missing something? Submit a pull request 
+at the project page.</i>
+  </body>
+</html>
+
