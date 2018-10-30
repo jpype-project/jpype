@@ -62,12 +62,12 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void stop()
   {
-    mStopped = true;
     try
     {
       // wait for the thread to finish ...
-      synchronized (this)
+      synchronized (mQueueStopMutex)
       {
+        mStopped = true;
         mQueueStopMutex.wait(5000);
 
         // FIXME what happens to any references that are outstanding after
@@ -140,7 +140,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
         }
       }
       mHostReferences = null;
-      synchronized (this)
+      synchronized (mQueueStopMutex)
       {
         mQueueStopMutex.notifyAll();
       }
