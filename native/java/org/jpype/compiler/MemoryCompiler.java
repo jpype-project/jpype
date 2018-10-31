@@ -32,10 +32,11 @@ public class MemoryCompiler
 {
   public DiagnosticCollector<JavaFileObject> diagnostics;
 
-  /** Compile code from memory into a class.
-   * 
+  /**
+   * Compile code from memory into a class.
+   * <p>
    * Diagnostics contains the reports of any errors in the class.
-   * 
+   *
    * @param name is the name of the class to compile
    * @param source is the class source
    * @return the created class or null on a failure.
@@ -50,13 +51,13 @@ public class MemoryCompiler
 
       JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
       this.diagnostics = new DiagnosticCollector<>();
-      
+
       // We need a standard file manager to serve as our base.
       JavaFileManager stdFileManager = javac.getStandardFileManager(null, null, null);
-      
+
       // Create our own file manager for collecting the resulting byte code
       MemoryFileManager memoryFileManager = new MemoryFileManager(stdFileManager);
-      
+
       // Create a compiler
       JavaCompiler.CompilationTask task = javac.getTask(null, memoryFileManager, null, null, null, sources);
       boolean success = task.call();
@@ -64,14 +65,14 @@ public class MemoryCompiler
       {
         return null;
       }
-      
+
       // Collect up all the code objects and transfer them to the dynamic class loader.
-      JPypeClassLoader cl=JPypeClassLoader.getInstance();
-      for (MemoryCodeObject code:memoryFileManager.getCode())
+      JPypeClassLoader cl = JPypeClassLoader.getInstance();
+      for (MemoryCodeObject code : memoryFileManager.getCode())
       {
         cl.importClass(code.getName(), code.toByteArray());
       }
-      
+
       // Retreive the resulting class from the dynamic loader.
       return cl.loadClass(name);
     } catch (Exception ex)
@@ -80,13 +81,13 @@ public class MemoryCompiler
     }
   }
 
-  /** Get the diagnostics for the last code compiled.
-   * 
+  /**
+   * Get the diagnostics for the last code compiled.
+   *
    * @return the diagnostics collector from the run.
    */
   public DiagnosticCollector<JavaFileObject> getDiagnostics()
   {
     return diagnostics;
   }
-  
 }

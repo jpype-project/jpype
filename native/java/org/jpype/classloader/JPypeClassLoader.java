@@ -18,7 +18,6 @@ package org.jpype.classloader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -32,9 +31,14 @@ import java.util.jar.JarInputStream;
  */
 public class JPypeClassLoader extends ClassLoader
 {
-  TreeMap<String, byte[]> map = new TreeMap<>();
   static private JPypeClassLoader instance;
+  private TreeMap<String, byte[]> map = new TreeMap<>();
 
+  /**
+   * Get the class loader.
+   *
+   * @return the singleton class loader.
+   */
   public static JPypeClassLoader getInstance()
   {
     if (instance == null)
@@ -49,9 +53,19 @@ public class JPypeClassLoader extends ClassLoader
     super(parent);
   }
 
+  /**
+   * Add a class to the class loader.
+   * <p>
+   * This can be called from within python to add a class to the Java JVM.
+   *
+   * @param name is the name of the class.
+   * @param code is the byte code.
+   */
   public void importClass(String name, byte[] code)
   {
-    name = name.substring(0, name.length() - 6).replaceAll("/", ".");
+    if (name.endsWith(".class"))
+      name = name.substring(0, name.length() - 6);
+    name = name.replaceAll("/", ".");
     map.put(name, code);
   }
 
@@ -107,24 +121,22 @@ public class JPypeClassLoader extends ClassLoader
    *
    * @param name is the name of the class with java class notation (using dots).
    * @return the class
-   * @throws RuntimeException on a fail.
+   * @throws ClassNotFoundException was not found by the class loader.
+   * @throws ClassFormatError if the class byte code was invalid.
    */
   @Override
-  public Class findClass(String name)
+  public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
     byte[] data = map.get(name);
     if (data == null)
     {
-      for (Map.Entry<String, byte[]> entry:map.entrySet())
-      {
-        System.out.println(entry.getKey());
-      }
-      throw new RuntimeException("Class not found " + name);
+      // Call the default implementation, throws ClassNotFoundException
+      return super.findClass(name);
     }
 
     Class cls = defineClass(name, data, 0, data.length);
     if (cls == null)
-      throw new RuntimeException("Class load was null");
+      throw new ClassFormatError("Class load was null");
     return cls;
   }
 }

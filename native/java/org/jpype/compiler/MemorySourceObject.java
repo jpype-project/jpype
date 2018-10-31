@@ -27,20 +27,20 @@ class MemorySourceObject extends SimpleJavaFileObject
 {
   private final String contents;
   private final String name;
-  
+
   MemorySourceObject(String name, String contents) throws URISyntaxException
   {
-    super(new URI("memory://"+name.replace(".", "/")+Kind.SOURCE.extension), Kind.SOURCE);
+    super(new URI("memory://" + name.replace(".", "/") + Kind.SOURCE.extension), Kind.SOURCE);
     this.contents = contents;
-    this.name=name.replace(".", "/")+Kind.SOURCE.extension;
+    this.name = name.replace(".", "/") + Kind.SOURCE.extension;
   }
-  
+
   @Override
   public String getName()
   {
     return name;
   }
-  
+
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors)
   {

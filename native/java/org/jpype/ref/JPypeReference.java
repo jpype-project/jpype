@@ -3,7 +3,10 @@ package org.jpype.ref;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 
-public class JPypeReference extends PhantomReference
+/**
+ * (internal) Reference to a PyObject*.
+ */
+class JPypeReference extends PhantomReference
 {
   long mHostReference;
 
@@ -26,7 +29,7 @@ public class JPypeReference extends PhantomReference
     {
       return false;
     }
-    
+
     return ((JPypeReference) arg0).mHostReference == mHostReference;
   }
 }

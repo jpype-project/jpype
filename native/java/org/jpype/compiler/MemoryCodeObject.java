@@ -31,7 +31,7 @@ class MemoryCodeObject extends SimpleJavaFileObject
 
   MemoryCodeObject(String name) throws URISyntaxException
   {
-    super(new URI(name+Kind.CLASS.extension), Kind.CLASS);
+    super(new URI(name + Kind.CLASS.extension), Kind.CLASS);
   }
 
   @Override
@@ -39,7 +39,7 @@ class MemoryCodeObject extends SimpleJavaFileObject
   {
     return this.baos;
   }
-  
+
   byte[] toByteArray()
   {
     return this.baos.toByteArray();

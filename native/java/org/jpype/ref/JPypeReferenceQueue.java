@@ -28,6 +28,11 @@ public class JPypeReferenceQueue extends ReferenceQueue
     super();
   }
 
+  /**
+   * Get the reference queue.
+   *
+   * @return the singleton instance.
+   */
   static public JPypeReferenceQueue getInstance()
   {
     if (mInstance == null)
@@ -35,9 +40,18 @@ public class JPypeReferenceQueue extends ReferenceQueue
     return mInstance;
   }
 
-  public void registerRef(Object javaObject, long hostRef)
+  /**
+   * (internal) Binds the lifetime of a Python object to a Java object.
+   * <p>
+   * JPype adds an extra reference to a PyObject* and then calls this method to
+   * hold that reference until the Java object is garbage collected.
+   *
+   * @param javaObject
+   * @param pythonObject
+   */
+  public void registerRef(Object javaObject, long pythonObject)
   {
-    JPypeReference ref = new JPypeReference(this, javaObject, hostRef);
+    JPypeReference ref = new JPypeReference(this, javaObject, pythonObject);
     mHostReferences.add(ref);
   }
 
