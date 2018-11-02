@@ -162,6 +162,8 @@ def _JArrayNewClass(cls, ndims=1):
     if jc.isPrimitive():
         # primitives need special handling
         typename = ('['*ndims)+_JARRAY_TYPENAME_MAP[jc.getCanonicalName()]
+    elif jc.isArray():
+        typename = ('['*ndims)+str(_jobject.JObject(jc).getName())
     else:
         typename = ('['*ndims)+'L'+str(_jobject.JObject(jc).getName())+';'
 
