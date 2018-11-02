@@ -1,4 +1,4 @@
-# *****************************************************************************
+#*****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,14 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# *****************************************************************************
+#*****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 import sys
 import jpype
-from jpype import JPackage, JArray, JByte, java, JClass
+from jpype import JPackage, JArray, JByte, java
 from . import common
 
 if sys.version > '3':
@@ -43,7 +43,7 @@ class ArrayTestCase(common.JPypeTestCase):
                        1235, 46, 245132, 51, 2, 3, 4]
 
     def testReadArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JPackage("jpype").array.TestArray()
         self.assertNotIsInstance(t, JPackage)
 
         self.assertCountEqual(self.VALUES, t.i)
@@ -51,14 +51,14 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(t.i[0], self.VALUES[0])
         self.assertCountEqual(self.VALUES[1:-2], t.i[1:-2])
 
-    def testEmptyObjectArray(self):
-        ''' Test for strange crash reported in bug #1089302'''
+    def testStangeBehavior(self):
+        ''' Test for stange crash reported in bug #1089302'''
         Test2 = jpype.JPackage('jpype.array').Test2
         test = Test2()
         test.test(test.getValue())
 
     def testWriteArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JPackage("jpype").array.TestArray()
         self.assertNotIsInstance(t, JPackage)
 
         t.i[0] = 32
@@ -81,31 +81,31 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(a[1], 2)
 
     def testIterateArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JPackage("jpype").array.TestArray()
         self.assertFalse(isinstance(t, JPackage))
 
         for i in t.i:
             self.assertNotEqual(i, 0)
 
-    # @unittest.skip
     def testGetSubclass(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JPackage("jpype").array.TestArray()
         v = t.getSubClassArray()
-        self.assertTrue(isinstance(v[0], jpype.JString))
+
+        self.assertTrue(isinstance(v[0], unicode))
 
     def testGetArrayAsObject(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JPackage("jpype").array.TestArray()
         v = t.getArrayAsObject()
 
     def testCharArrayAsString(self):
-        t = JClass("jpype.array.TestArray")()
-        v = t.getCharArray()
+        t = JPackage("jpype").array.TestArray()
+        v = t.charArray
         self.assertEqual(str(v), 'avcd')
         self.assertEqual(unicode(v), u'avcd')
 
     def testByteArrayAsString(self):
-        t = JClass("jpype.array.TestArray")()
-        v = t.getByteArray()
+        t = JPackage("jpype").array.TestArray()
+        v = t.byteArray
         self.assertEqual(str(v), 'avcd')
 
     def testByteArrayIntoVector(self):
@@ -122,8 +122,8 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(expected, jarr[:])
 
     def testJArrayConversionChar(self):
-        t = JClass("jpype.array.TestArray")()
-        v = t.getCharArray()
+        t = JPackage("jpype").array.TestArray()
+        v = t.charArray
         self.assertEqual(v[:], 'avcd')
         # FIXME: this returns unicode on windows
         self.assertEqual(str(v[:]), 'avcd')
@@ -170,16 +170,6 @@ class ArrayTestCase(common.JPypeTestCase):
         result = jarr[2:10]
         self.assertCountEqual(self.VALUES[2:10], result)
 
-    def testJArrayPythonTypes(self):
-        self.assertEquals(jpype.JArray(
-            object).class_.getComponentType(), JClass('java.lang.Object'))
-        self.assertEquals(jpype.JArray(
-            float).class_.getComponentType(), JClass('java.lang.Double').TYPE)
-        self.assertEquals(jpype.JArray(
-            str).class_.getComponentType(), JClass('java.lang.String'))
-        self.assertEquals(jpype.JArray(
-            type).class_.getComponentType(), JClass('java.lang.Class'))
-
     def testJArrayConversionFloat(self):
         VALUES = [float(x) for x in self.VALUES]
         jarr = jpype.JArray(jpype.JFloat)(VALUES)
@@ -212,7 +202,7 @@ class ArrayTestCase(common.JPypeTestCase):
 
     def testConversionError(self):
         jarr = jpype.JArray(jpype.JInt, 1)(10)
-        with self.assertRaises(TypeError):
+        with self.assertRaises(RuntimeError):
             jarr[1:2] = [dict()]
 
         # -1 is returned by python, if conversion fails also, ensure this works
@@ -295,3 +285,22 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+
+    def testArrayCtor1(self):
+        jobject = jpype.JClass('java.lang.Object')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor2(self):
+        jobject = jpype.JClass('java.util.List')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor3(self):
+        jarray = jpype.JArray("java.lang.Object")
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor4(self):
+        jarray = jpype.JArray(jpype.JObject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+

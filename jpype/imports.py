@@ -27,7 +27,7 @@
 #   jpype.imports.registerDomain(moduleName, alias=<java_pkg>)
 #   jpype.imports.registerImportCustomizer(JImportCustomizer)
 #
-# Requires Python 3.6 or later
+# Requires Python 2.7 or 3.6 or later
 # Usage:
 #   import jpype
 #   import jpype.imports

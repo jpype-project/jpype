@@ -3,5 +3,6 @@ recursive-include examples *
 include *.rst doc/* LICENSE
 # include everything under test/
 graft test
+graft setupext
 global-exclude *.pyc
 prune test/classes 
