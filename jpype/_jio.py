@@ -21,38 +21,21 @@ from . import _jexception
 # This contains a customizer for closeable so that we can use the python "with"
 # statement.
 
-if _sys.version > '3':
+if _sys.version_info > (3,):
     pass
 
 
-def _closeableExit(self, exception_type, exception_value, traceback):
-    info = _sys.exc_info()
-    try:
-        self.close()
-    except _jexception.JException as jex:
-        # Eat the second exception if we are already handling one.
-        if (info[0] == None):
-            raise jex
-        pass
+@_jcustomizer.JImplementationFor("java.io.Closeable")
+class _JCloseable(object):
+    def __enter__(self):
+        return self
 
-
-def _closeableEnter(self):
-    return self
-
-
-class CloseableCustomizer(object):
-    _METHODS = {
-        '__enter__': _closeableEnter,
-        '__exit__': _closeableExit,
-    }
-
-    def canCustomize(self, name, jc):
-        if name == 'java.io.Closeable':
-            return True
-        return False
-
-    def customize(self, name, jc, bases, members):
-        members.update(CloseableCustomizer._METHODS)
-
-
-_jcustomizer.registerClassCustomizer(CloseableCustomizer())
+    def __exit__(self, exception_type, exception_value, traceback):
+        info = _sys.exc_info()
+        try:
+            self.close()
+        except _jexception.JException as jex:
+            # Eat the second exception if we are already handling one.
+            if (info[0] == None):
+                raise jex
+            pass

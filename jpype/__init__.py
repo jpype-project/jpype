@@ -19,18 +19,20 @@ from ._jproxy import *
 from ._core import *
 from ._gui import *
 from ._classpath import *
+from ._jclass import *
 from .types import *
 from . import reflect
 from . import nio
 from . import types
 
 
-__all__ = ['java', 'javax', 'JIterator', 'JException']
+__all__ = ['java', 'javax', 'JException', 'JOverride']
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)
 __all__.extend(_jproxy.__all__)
 __all__.extend(_jpackage.__all__)
+__all__.extend(_jclass.__all__)
 __all__.extend(_gui.__all__)
 
 __version_info__ = (0, 7, 0)

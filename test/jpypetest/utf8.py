@@ -85,20 +85,20 @@ class Utf8TestCase(common.JPypeTestCase):
         # IMPORTANT: they should be identical, and in the same order, as the test strings difned in the
         #            java class Utf8Test
         self.TDICT = []
-        self.TDICT.append(['english', 
-            tounicode("I can eat glass and it doesn't hurt me.")])
-        self.TDICT.append(['french', 
-            tounicode("Je peux manger du verre, ça ne me fait pas mal.")])
-        self.TDICT.append(['rune', 
-            tounicode("ᛖᚴ ᚷᛖᛏ ᛖᛏᛁ ᚧ ᚷᛚᛖᚱ ᛘᚾ ᚦᛖᛋᛋ ᚨᚧ ᚡᛖ ᚱᚧᚨ ᛋᚨᚱ")])
-        self.TDICT.append(['cn_simp', 
-            tounicode("人人生而自由,在尊严和权利上一律平等。他们赋有理性和良心,并应以兄弟关系的精神互相对待。")])
-        self.TDICT.append(['cn_trad', 
-            tounicode("人人生而自由﹐在尊嚴和權利上一律平等。他們賦有理性和良心﹐並應以兄弟關係的精神互相對待。")])
-        self.TDICT.append(['arab', 
-            tounicode("أنا قادر على أكل الزجاج و هذا لا يؤلمني.")])
-        self.TDICT.append(['emoji', 
-            tounicode("😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0")])
+        self.TDICT.append(['english',
+                           tounicode("I can eat glass and it doesn't hurt me.")])
+        self.TDICT.append(['french',
+                           tounicode("Je peux manger du verre, ça ne me fait pas mal.")])
+        self.TDICT.append(['rune',
+                           tounicode("ᛖᚴ ᚷᛖᛏ ᛖᛏᛁ ᚧ ᚷᛚᛖᚱ ᛘᚾ ᚦᛖᛋᛋ ᚨᚧ ᚡᛖ ᚱᚧᚨ ᛋᚨᚱ")])
+        self.TDICT.append(['cn_simp',
+                           tounicode("人人生而自由,在尊严和权利上一律平等。他们赋有理性和良心,并应以兄弟关系的精神互相对待。")])
+        self.TDICT.append(['cn_trad',
+                           tounicode("人人生而自由﹐在尊嚴和權利上一律平等。他們賦有理性和良心﹐並應以兄弟關係的精神互相對待。")])
+        self.TDICT.append(['arab',
+                           tounicode("أنا قادر على أكل الزجاج و هذا لا يؤلمني.")])
+        self.TDICT.append(['emoji',
+                           tounicode("😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0")])
 
     def test_get_ascii(self):
         """

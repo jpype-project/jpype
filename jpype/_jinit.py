@@ -36,3 +36,17 @@ def registerJVMInitializer(func):
 def runJVMInitializers():
     for func in JInitializers:
         func()
+
+
+def registerJVMInitializer(func):
+    """Register a function to be called after jvm is started"""
+    if not _jpype.isStarted():
+        JInitializers.append(func)
+    else:
+        # JVM is already started so we are safe to execute immediately.
+        func()
+
+
+def runJVMInitializers():
+    for func in JInitializers:
+        func()

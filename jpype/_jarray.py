@@ -203,33 +203,21 @@ class _JavaArrayIter(object):
 # Char array customizer
 
 
-def _charArrayStr(self):
-    return str(_jstring.JString(self))
+@_jcustomizer.JImplementationFor("byte[]")
+@_jcustomizer.JImplementationFor("char[]")
+class _JCharArray(object):
+    def __str__(self):
+        return str(_jstring.JString(self))
 
+    def __unicode__(self):
+        return unicode(_jstring.JString(self))
 
-def _charArrayUnicode(self):
-    return unicode(_jstring.JString(self))
-
-
-def _charArrayEqual(self, other):
-    if hasattr(other, '__javavalue__'):
-        return self.equals(other)
-    elif isinstance(other, (str, unicode)):
-        return self[:] == other
-    try:
-        return self.equals(self.__class__(other))
-    except TypeError:
-        return False
-
-
-class _JCharArrayCustomizer(object):
-    def canCustomize(self, name, jc):
-        return name == 'char[]' or name == "byte[]"
-
-    def customize(self, name, jc, bases, members):
-        members['__str__'] = _charArrayStr
-        members['__unicode__'] = _charArrayUnicode
-        members['__eq__'] = _charArrayEqual
-
-
-_jcustomizer.registerClassCustomizer(_JCharArrayCustomizer())
+    def __eq__(self, other):
+        if hasattr(other, '__javavalue__'):
+            return self.equals(other)
+        elif isinstance(other, (str, unicode)):
+            return self[:] == other
+        try:
+            return self.equals(self.__class__(other))
+        except TypeError:
+            return False

@@ -17,7 +17,7 @@ import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 
-__all__ = ['JClass', 'JInterface']
+__all__ = ['JClass', 'JInterface', 'JOverride']
 
 if _sys.version > '3':
     _unicode = str
@@ -72,6 +72,27 @@ def _initialize():
     _JP_OBJECT_CLASSES[object] = _java_lang_Object
 
 
+def JOverride(*args, **kwargs):
+    """ Annotation to denote a method as overriding a Java method.
+
+    This annotation applies to customizers, proxies, and extension
+    to Java class.
+
+    FIXME specify what specific keyword arguments apply.
+
+    """
+    # Check if called bare
+    if len(args) == 1 and callable(args[0]):
+        object.__setattr__(args[0], "__joverride__", {})
+        return args[0]
+     # Otherwise apply arguments as needed
+
+    def modifier(method):
+        object.__setattr__(method, "__joverride__", kwargs)
+        return method
+    return modifier
+
+
 class JClass(type):
     """ Meta class for all java class instances.
 
@@ -111,6 +132,8 @@ class JClass(type):
     def __setattr__(self, name, value):
         if name.startswith('_'):
             type.__setattr__(self, name, value)
+#        elif callable(value):
+#            type.__setattr__(self, name, value)
         else:
             attr = typeLookup(self, name)
             if hasattr(attr, '__set__'):
@@ -120,29 +143,42 @@ class JClass(type):
                                  (self.__name__, attr))
 
     def mro(cls):
-        # here we run a topological sort to get a linear ordering of the inheritance graph.
-        parents = set().union(*[x.__mro__ for x in cls.__bases__])
+        # Bases is ordered by (user, extend, interfaces)
+        # Thus we maintain order of parents whereever possible
+        # Breadth first inclusion of the parents
+        parents = list(cls.__bases__)
+        out = [cls]
+
+        # Until we run out of parents
+        while parents:
+
+            # Test if the first is a leaf of the tree
+            front = parents.pop(0)
+            for p in parents:
+                if issubclass(p, front):
+                    parents.append(front)
+                    front = None
+                    break
+
+            if not front:
+                # It is not a leaf, we select another candidate
+                continue
+
+            # It is a leaf, so add it to the parents
+            out.append(front)
+
+            # Place the immediate parents of newest in the head of the list
+            prev = parents
+            parents = list(front.__bases__)
+
+            # Include the remaining that we still need to consider
+            parents.extend([b for b in prev if not b in parents])
 
         # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance
-        if _JObject in parents and JInterface in parents:
-            parents.remove(JInterface)
+        if _JObject in out and JInterface in out:
+            out.remove(JInterface)
 
-        numsubs = dict()
-        for cls1 in parents:
-            numsubs[cls1] = len([cls2 for cls2 in parents
-                                 if cls1 != cls2 and issubclass(cls2, cls1)])
-        mergedmro = [cls]
-        while numsubs:
-            for k1, v1 in numsubs.items():
-                if v1 != 0:
-                    continue
-                mergedmro.append(k1)
-                for k2, v2 in numsubs.items():
-                    if issubclass(k1, k2):
-                        numsubs[k2] = v2-1
-                del numsubs[k1]
-                break
-        return mergedmro
+        return out
 
 
 def _JClassNew(arg):
@@ -222,6 +258,10 @@ def _JClassFactory(name, jc):
     _jcustomizer._applyCustomizers(name, jc, bases, members)
     res = JClass(name, tuple(bases), members)
     _JCLASSES[name] = res
+
+    # Post customizers
+    _jcustomizer._applyInitializer(res)
+
     return res
 
 # **********************************************************
@@ -294,24 +334,13 @@ def _getDefaultJavaObject(obj):
 # Patch for forName
 
 
-def _jclass_forName(*args):
-    if len(args) == 2 and isinstance(args[1], str):
-        return _java_lang_Class._forName(args[1], True, _java_ClassLoader)
-    else:
-        return _java_lang_Class._forName(*args[1:])
-
-
-class _JavaLangClassCustomizer(_jcustomizer.JClassCustomizer):
-    def canCustomize(self, name, jc):
-        return name == 'java.lang.Class'
-
-    def customize(self, name, jc, bases, members):
-        members['_forName'] = members['forName']
-        del members['forName']
-        members['forName'] = _jclass_forName
-
-
-_jcustomizer.registerClassCustomizer(_JavaLangClassCustomizer())
+@_jcustomizer.JImplementationFor('java.lang.Class')
+class _JavaLangClass(object):
+    def forName(self, *args):
+        if len(args) == 1 and isinstance(args[0], str):
+            return self._forName(args[0], True, _java_ClassLoader)
+        else:
+            return self._forName(*args)
 
 
 def typeLookup(tp, name):
