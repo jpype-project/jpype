@@ -109,7 +109,9 @@ class JObject(object):
         return not self.equals(other)
 
 
+# Post load dependencies
 _jclass._JObject = JObject
+_jcustomizer._JObject = JObject
 
 
 def _JObjectFactory(v=None, tp=None):

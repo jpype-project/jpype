@@ -52,6 +52,8 @@ class BoxedTestCase(common.JPypeTestCase):
         d2 = self.Short(c1)
         self.assertEqual(d1, c1)
         self.assertEqual(d2, c1)
+        self.assertEqual(c1, d1)
+        self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
         self.assertEqual(self.Boxed.callShort(c1), self.Boxed.callShort(d2))
         # Verify ops
@@ -65,6 +67,8 @@ class BoxedTestCase(common.JPypeTestCase):
         d2 = self.Integer(c1)
         self.assertEqual(d1, c1)
         self.assertEqual(d2, c1)
+        self.assertEqual(c1, d1)
+        self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
         self.assertEqual(self.Boxed.callInteger(c1),
                          self.Boxed.callInteger(d2))
@@ -79,6 +83,8 @@ class BoxedTestCase(common.JPypeTestCase):
         d2 = self.Long(c1)
         self.assertEqual(d1, c1)
         self.assertEqual(d2, c1)
+        self.assertEqual(c1, d1)
+        self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
         self.assertEqual(self.Boxed.callLong(c1), self.Boxed.callLong(d2))
         # Verify ops
@@ -112,6 +118,8 @@ class BoxedTestCase(common.JPypeTestCase):
         d2 = self.Float(c1)
         self.assertEqual(d1, c1)
         self.assertEqual(d2, c1)
+        self.assertEqual(c1, d1)
+        self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
         self.assertEqual(self.Boxed.callFloat(c1), self.Boxed.callFloat(d2))
         # Verify ops
@@ -127,6 +135,8 @@ class BoxedTestCase(common.JPypeTestCase):
         d2 = self.Double(c1)
         self.assertEqual(d1, c1)
         self.assertEqual(d2, c1)
+        self.assertEqual(c1, d1)
+        self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
         self.assertEqual(self.Boxed.callDouble(c1), self.Boxed.callDouble(d2))
         # Verify ops

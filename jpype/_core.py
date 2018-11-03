@@ -117,8 +117,10 @@ def attachThreadToJVM():
 def detachThreadFromJVM():
     _jpype.detachThreadFromJVM()
 
+
 def synchronized(obj):
     return _jpype.PyJPMonitor(obj.__javavalue__)
+
 
 def getDefaultJVMPath():
     """

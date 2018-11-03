@@ -19,23 +19,7 @@ import collections
 from . import _jclass
 from . import _jcustomizer
 
-
-class _WrappedIterator(object):
-    """
-    Wraps a Java iterator to respect the Python 3 iterator API
-    """
-
-    def __init__(self, iterator):
-        self.iterator = iterator
-
-    def __iter__(self):
-        return self.iterator
-
-    def __next__(self):
-        return next(self.iterator)
-
-    # Compatibility name
-    next = __next__
+JOverride = _jclass.JOverride
 
 
 def isPythonSequence(v):
@@ -46,145 +30,105 @@ def isPythonSequence(v):
     return False
 
 
-def _colLength(self):
-    return self.size()
+@_jcustomizer.JImplementationFor("java.lang.Iterable")
+class _JIterable(object):
+    def __iter__(self):
+        return self.iterator()
 
 
-def _colIter(self):
-    return _WrappedIterator(self.iterator())
+@_jcustomizer.JImplementationFor("java.util.Collection")
+class _JCollection(object):
 
+    def __len__(self):
+        return self.size()
 
-def _colDelItem(self, i):
-    return self.remove(i)
+    def __delitem__(self, i):
+        return self.remove(i)
 
-
-def _colAddAll(self, v):
-    if isPythonSequence(v):
-        r = False
-        for i in v:
-            r = self.add(i) or r
-        return r
-    else:
-        return self._addAll(v)
-
-
-def _colRemoveAll(self, v):
-    if isPythonSequence(v):
-        r = False
-        for i in v:
-            r = self.remove(i) or r
-        return r
-    else:
-        return self._removeAll(v)
-
-
-def _colRetainAll(self, v):
-    if isPythonSequence(v):
-        r = _jclass.JClass("java.util.ArrayList")(len(v))
-        for i in v:
-            r.add(i)
-    else:
-        r = v
-
-    return self._retainAll(r)
-
-
-class CollectionCustomizer(object):
-    _METHODS = {
-        '__len__': _colLength,
-        '__iter__': _colIter,
-        '__delitem__': _colDelItem,
-    }
-
-    def canCustomize(self, name, jc):
-        if name == 'java.util.Collection':
-            return True
-        return jc.isAssignableFrom('java.util.Collection')
-
-    def customize(self, name, jc, bases, members):
-        if name == 'java.util.Collection':
-            members.update(CollectionCustomizer._METHODS)
-        else:
-            # AddAll is handled by List
-            if (not jc.isAssignableFrom("java.util.List")) and 'addAll' in members:
-                members['_addAll'] = members['addAll']
-                members['addAll'] = _colAddAll
-            if 'removeAll' in members:
-                members['_removeAll'] = members['removeAll']
-                members['removeAll'] = _colRemoveAll
-            if 'retainAll' in members:
-                members['_retainAll'] = members['retainAll']
-                members['retainAll'] = _colRetainAll
-
-
-def _listGetItem(self, ndx):
-    if isinstance(ndx, slice):
-        start = ndx.start
-        stop = ndx.stop
-        if start < 0:
-            start = self.size() + start
-        if stop < 0:
-            stop = self.size() + stop
-        return self.subList(start, stop)
-    else:
-        if ndx < 0:
-            ndx = self.size() + ndx
-        return self.get(ndx)
-
-
-def _listSetItem(self, ndx, v):
-    if isinstance(ndx, slice):
-        start = ndx.start
-        stop = ndx.stop
-        if start < 0:
-            start = self.size() + start
-        if stop < 0:
-            stop = self.size() + stop
-        for i in range(start, stop):
-            self.remove(start)
-        if isinstance(v, collections.Sequence):
-            ndx = start
-            for i in v:
-                self.add(ndx, i)
-                ndx += 1
-    else:
-        if ndx < 0:
-            ndx = self.size() + ndx
-        self.set(ndx, v)
-
-
-def _listAddAll(self, v, v2=None):
-    if isPythonSequence(v):
-        r = False
-        if v2 is not None:  # assume form (int, values)
-            for i in range(len(v2)):
-                r = r or self.add(v + i, v2[i])
-        else:
+    @JOverride(sticky=True)
+    def addAll(self, v):
+        if isPythonSequence(v):
+            r = False
             for i in v:
                 r = self.add(i) or r
-        return r
-    else:
-        return self._addAll(v)
-
-
-class ListCustomizer(object):
-    _METHODS = {
-        '__setitem__': _listSetItem,
-        '__getitem__': _listGetItem,
-    }
-
-    def canCustomize(self, name, jc):
-        if name == 'java.util.List':
-            return True
-        return jc.isAssignableFrom('java.util.List')
-
-    def customize(self, name, jc, bases, members):
-        if name == 'java.util.List':
-            members.update(ListCustomizer._METHODS)
+            return r
         else:
-            if 'addAll' in members:
-                members['_addAll'] = members['addAll']
-                members['addAll'] = _listAddAll
+            return self._addAll(v)
+
+    @JOverride(sticky=True)
+    def removeAll(self, v):
+        if isPythonSequence(v):
+            r = False
+            for i in v:
+                r = self.remove(i) or r
+            return r
+        else:
+            return self._removeAll(v)
+
+    @JOverride(sticky=True)
+    def retainAll(self, v):
+        if isPythonSequence(v):
+            r = _jclass.JClass("java.util.ArrayList")(len(v))
+            for i in v:
+                r.add(i)
+        else:
+            r = v
+
+        return self._retainAll(r)
+
+
+@_jcustomizer.JImplementationFor('java.util.List')
+class _JList(object):
+    #    def __jclass_init__(cls):
+    #        type.__setattr__(cls, 'addAll', _JList.addAll)
+
+    def __getitem__(self, ndx):
+        if isinstance(ndx, slice):
+            start = ndx.start
+            stop = ndx.stop
+            if start < 0:
+                start = self.size() + start
+            if stop < 0:
+                stop = self.size() + stop
+            return self.subList(start, stop)
+        else:
+            if ndx < 0:
+                ndx = self.size() + ndx
+            return self.get(ndx)
+
+    def __setitem__(self, ndx, v):
+        if isinstance(ndx, slice):
+            start = ndx.start
+            stop = ndx.stop
+            if start < 0:
+                start = self.size() + start
+            if stop < 0:
+                stop = self.size() + stop
+            for i in range(start, stop):
+                self.remove(start)
+            if isinstance(v, collections.Sequence):
+                ndx = start
+                for i in v:
+                    self.add(ndx, i)
+                    ndx += 1
+        else:
+            if ndx < 0:
+                ndx = self.size() + ndx
+            self.set(ndx, v)
+
+    @JOverride(sticky=True)
+    def addAll(self, v, v2=None):
+        if isPythonSequence(v):
+            r = False
+            if v2 is not None:  # assume form (int, values)
+                for i in range(len(v2)):
+                    r = r or self.add(v + i, v2[i])
+            else:
+                for i in v:
+                    r = self.add(i) or r
+            return r
+        else:
+            return self._addAll(v)
 
 
 def isPythonMapping(v):
@@ -195,120 +139,67 @@ def isPythonMapping(v):
     return False
 
 
-def _mapLength(self):
-    return self.size()
+@_jcustomizer.JImplementationFor('java.util.Map')
+class _JMap(object):
+    #    def __jclass_init__(cls):
+    #        type.__setattr__(cls, 'putAll', _JMap.putAll)
 
+    def __len__(self):
+        return self.size()
 
-def _mapIter(self):
-    return _WrappedIterator(self.keySet().iterator())
+    def __iter__(self):
+        return _WrappedIterator(self.keySet().iterator())
 
+    def __delitem__(self, i):
+        return self.remove(i)
 
-def _mapDelItem(self, i):
-    return self.remove(i)
+    def __getitem__(self, ndx):
+        return self.get(ndx)
 
+    def __setitem__(self, ndx, v):
+        self.put(ndx, v)
 
-def _mapGetItem(self, ndx):
-    return self.get(ndx)
-
-
-def _mapSetItem(self, ndx, v):
-    self.put(ndx, v)
-
-
-def _mapPutAll(self, v):
-    if isPythonMapping(v):
-        for i in v:
-            self.put(i, v[i])
-    else:
-        # do the regular method ...
-        self._putAll(v)
-
-
-class MapCustomizer(object):
-    _METHODS = {
-        '__len__': _mapLength,
-        '__iter__': _mapIter,
-        '__delitem__': _mapDelItem,
-        '__getitem__': _mapGetItem,
-        '__setitem__': _mapSetItem,
-    }
-
-    def canCustomize(self, name, jc):
-        if name == 'java.util.Map':
-            return True
-        return jc.isAssignableFrom('java.util.Map')
-
-    def customize(self, name, jc, bases, members):
-        if name == 'java.util.Map':
-            members.update(MapCustomizer._METHODS)
+    @JOverride(sticky=True)
+    def putAll(self, v):
+        if isPythonMapping(v):
+            for i in v:
+                self.put(i, v[i])
         else:
-            if "putAll" in members:
-                members["_putAll"] = members["putAll"]
-                members["putAll"] = _mapPutAll
+            # do the regular method ...
+            self._putAll(v)
 
 
-def _iterCustomNext(self):
-    if self.hasNext():
-        return self._next()
-    raise StopIteration
+@_jcustomizer.JImplementationFor('java.util.Iterator')
+class _JIterator(object):
+    #    def __jclass_init__(cls):
+    #        type.__setattr__(cls, '_next', cls.next)
+    #        type.__setattr__(cls, 'next', _JIterator.__next__)
+
+    # Python 2 requires next to function as python next(), thus
+    # we have a conflict in behavior. Java next is renamed.
+    @JOverride(sticky=True, rename="_next")
+    def next(self):
+        if self.hasNext():
+            return self._next()
+        raise StopIteration
+
+    def __next__(self):
+        if self.hasNext():
+            return self._next()
+        raise StopIteration
+
+    def __iter__(self):
+        return self
 
 
-def _iterIteratorNext(self):
-    if self.hasNext():
-        return next(self)
-    raise StopIteration
+@_jcustomizer.JImplementationFor('java.util.Enumeration')
+class _JEnumeration(object):
+    def __next__(self):
+        if self.hasMoreElements():
+            return self.nextElement()
+        raise StopIteration
 
+    def __iter__(self):
+        return self
 
-def _iterIter(self):
-    return self
-
-
-class IteratorCustomizer(object):
-    _METHODS = {
-        '__iter__': _iterIter,
-        '__next__': _iterCustomNext,
-    }
-
-    def canCustomize(self, name, jc):
-        if name == 'java.util.Iterator':
-            return True
-        return jc.isAssignableFrom('java.util.Iterator')
-
-    def customize(self, name, jc, bases, members):
-        if name == 'java.util.Iterator':
-            members.update(IteratorCustomizer._METHODS)
-        elif jc.isAssignableFrom('java.util.Iterator'):
-            __next__ = 'next' if 'next' in members else '__next__'
-            members['_next'] = members[__next__]
-            members[__next__] = _iterCustomNext
-
-
-def _enumNext(self):
-    if self.hasMoreElements():
-        return self.nextElement()
-    raise StopIteration
-
-
-def _enumIter(self):
-    return self
-
-
-class EnumerationCustomizer(object):
-    _METHODS = {
-        'next': _enumNext,
-        '__next__': _enumNext,
-        '__iter__': _enumIter,
-    }
-
-    def canCustomize(self, name, jc):
-        return name == 'java.util.Enumeration'
-
-    def customize(self, name, jc, bases, members):
-        members.update(EnumerationCustomizer._METHODS)
-
-
-_jcustomizer.registerClassCustomizer(CollectionCustomizer())
-_jcustomizer.registerClassCustomizer(ListCustomizer())
-_jcustomizer.registerClassCustomizer(MapCustomizer())
-_jcustomizer.registerClassCustomizer(IteratorCustomizer())
-_jcustomizer.registerClassCustomizer(EnumerationCustomizer())
+    next = __next__

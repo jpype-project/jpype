@@ -15,18 +15,29 @@
 #
 # *****************************************************************************
 from . import _jcustomizer
+import sys as _sys
 
 
-class ComparableCustomizer(object):
-    _METHODS = {
-        "__cmp__": lambda self, o: self.compareTo(o)
-    }
+@_jcustomizer.JImplementationFor('java.lang.Comparable')
+class _JComparable(object):
+    if _sys.version_info < (3,):
+        def __cmp__(self, o):
+            return self.compareTo(o)
 
-    def canCustomize(self, name, jc):
-        return name == 'java.lang.Comparable'
+    def __eq__(self, o):
+        return self.compareTo(o) == 0
 
-    def customize(self, name, jc, bases, members):
-        members.update(ComparableCustomizer._METHODS)
+    def __ne__(self, o):
+        return self.compareTo(o) != 0
 
+    def __gt__(self, o):
+        return self.compareTo(o) > 0
 
-_jcustomizer.registerClassCustomizer(ComparableCustomizer())
+    def __lt__(self, o):
+        return self.compareTo(o) < 0
+
+    def __ge__(self, o):
+        return self.compareTo(o) >= 0
+
+    def __le__(self, o):
+        return self.compareTo(o) <= 0

@@ -24,7 +24,7 @@ from . import _jcustomizer
 __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
            'JInt', 'JLong', 'JFloat', 'JDouble']
 
-if _sys.version > '3':
+if _sys.version_info > (3,):
     _unicode = str
     _long = int
 else:
@@ -74,7 +74,7 @@ def _JPrimitiveLoad(cls, boxedType):
 
 
 class _JPrimitiveClass(_jclass.JClass):
-    """ A wrapper specifying a specific java type.  
+    """ A wrapper specifying a specific java type.
     These objects have three fields:
 
      - __javaclass__ - the class for this object when matching arguments.
