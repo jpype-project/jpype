@@ -90,6 +90,7 @@ class _JavaArrayClass(object):
         else:
             raise AttributeError("%s does not have field %s"%(self.__name__, attr), self)
 
+
 def _isIterable(obj):
     if isinstance(obj, collections.Sequence):
         return True

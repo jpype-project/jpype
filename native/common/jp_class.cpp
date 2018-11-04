@@ -201,8 +201,18 @@ JPMethod* JPClass::getMethod(const string& name)
 	{
 		return NULL;
 	}
-
 	return it->second;
+}
+
+vector<JPMethod*>  JPClass::getMethods()
+{
+	vector<JPMethod*> res;
+	res.reserve(m_Methods.size());
+	for (map<string, JPMethod*>::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
+	{
+		res.push_back(cur->second);
+	}
+	return res;
 }
 
 HostRef* JPClass::getStaticAttribute(const string& name)

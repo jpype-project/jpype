@@ -16,27 +16,6 @@
 *****************************************************************************/   
 #include <jpype.h>
 
-JPMethodOverload::JPMethodOverload()
-{
-	m_Method = NULL;
-	m_ReturnTypeCache = NULL;
-}
-
-JPMethodOverload::JPMethodOverload(const JPMethodOverload& o) :
-	m_Class(o.m_Class),
-	m_MethodID(o.m_MethodID),
-	m_ReturnType(o.m_ReturnType),
-	m_Arguments(o.m_Arguments),
-	m_IsStatic(o.m_IsStatic),
-	m_IsFinal(o.m_IsFinal),
-	m_IsVarArgs(o.m_IsVarArgs),
-	m_IsConstructor(o.m_IsConstructor)
-{
-	JPJavaFrame frame;
-	m_Method = frame.NewGlobalRef(o.m_Method);
-	m_ReturnTypeCache = NULL;
-}
-
 JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth)
 {
 	JPJavaFrame frame;
@@ -45,19 +24,19 @@ JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth)
 	m_ReturnTypeCache = NULL;
 
 	// static
-	m_IsStatic = JPJni::isMemberStatic(m_Method);
-	m_IsFinal = JPJni::isMemberFinal(m_Method);
-	m_IsVarArgs = JPJni::isVarArgsMethod(m_Method);
+	m_IsStatic = JPJni::isMemberStatic(mth);
+	m_IsFinal = JPJni::isMemberFinal(mth);
+	m_IsVarArgs = JPJni::isVarArgsMethod(mth);
 
 	// Method ID
 	m_MethodID = frame.FromReflectedMethod(m_Method);
 	
-	m_IsConstructor = JPJni::isConstructor(m_Method);
+	m_IsConstructor = JPJni::isConstructor(mth);
 
 	// return type
 	if (! m_IsConstructor)
 	{
-		m_ReturnType = JPJni::getReturnType(m_Method);
+		m_ReturnType = JPJni::getReturnType(mth);
 	}
 
 	// arguments
@@ -74,45 +53,9 @@ JPMethodOverload::~JPMethodOverload()
 	JPJavaFrame::ReleaseGlobalRef(m_Method);
 }
 
-string JPMethodOverload::getSignature()
-{
-	stringstream res;
-	
-	res << "(";
-	
-	for (vector<JPTypeName>::iterator it = m_Arguments.begin(); it != m_Arguments.end(); it++)
+string JPMethodOverload::toString()
 	{
-		res << it->getNativeName();
-	}
-	
-	res << ")" ;
-	
-	return res.str();
-}
-
-string JPMethodOverload::getArgumentString()
-{
-	stringstream res;
-	
-	res << "(";
-	
-	bool first = true;
-	for (vector<JPTypeName>::iterator it = m_Arguments.begin(); it != m_Arguments.end(); it++)
-	{
-		if (! first)
-		{
-			res << ", ";
-		}
-		else
-		{
-			first = false;
-		}
-		res << it->getSimpleName();
-	}
-	
-	res << ")";
-	
-	return res.str();
+	return JPJni::toStringC(m_Method);
 }
 
 bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
@@ -128,10 +71,8 @@ bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
 	}
 
 	TRACE_IN("JPMethodOverload::isSameOverload");
-	TRACE2("My sig", getSignature());
-	TRACE2("It's sig", o.getSignature());
 	int start = 0;
-	if (! isStatic())
+	if (! isStatic() && !m_IsConstructor)
 	{
 		start = 1;
 	}

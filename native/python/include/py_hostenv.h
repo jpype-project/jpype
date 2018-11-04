@@ -240,6 +240,8 @@ public :
 	virtual void printReferenceInfo(HostRef* obj);
 	virtual bool isByteBuffer(HostRef*);
 	virtual void getByteBufferPtr(HostRef*, char**, long&);
+
+	virtual const char* getTypeName(HostRef*);
 };
 
 #endif // _PYHOSTENV_H_

@@ -17,25 +17,35 @@
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
 
+#include <list>
 class JPObject;
 
 class JPMethod
 {
 public :
+	typedef std::list<JPMethodOverload*> OverloadList;
+
 	/**
 	 * Create a new method based on class and a name;
 	 */
 	JPMethod(jclass clazz, const string& name, bool isConstructor);
 	virtual ~JPMethod();
 
+private:
+	JPMethod(const JPMethod& method);
+	JPMethod& operator=(const JPMethod& method);
+
 public :
 	const string& getName() const;
 	string getClassName() const;
 	
 	void addOverload(JPClass* clazz, jobject mth);
-	void addOverloads(JPMethod* o);
 	
-	bool hasStatic(); 
+	bool hasStatic() 
+	{
+		return m_hasStatic;
+	}
+
 	size_t getCount()
 	{
 		return m_Overloads.size();
@@ -52,23 +62,18 @@ public :
 	string describe(string prefix);
 
 	string matchReport(vector<HostRef*>&);
-	void ensureOverloadOrderCache();
 
 private :
-	JPMethodOverload* findOverload(vector<HostRef*>& arg, bool needStatic);
+	JPMethodOverload* findOverload(vector<HostRef*>& arg, bool searchStatic, bool searchInstance);
+	void ensureOverloadCache();
+	void dumpOverloads();
 
 	jclass                        m_Class;
 	string                        m_Name;
-	map<string, JPMethodOverload> m_Overloads;
-
-	struct OverloadData {
-		OverloadData(JPMethodOverload* o) : m_Overload(o) {}
-
-		JPMethodOverload*              m_Overload;
-		std::vector<JPMethodOverload*> m_MoreSpecificOverloads;
-	};
-	std::vector<OverloadData>     m_OverloadOrderCache;
+	OverloadList  m_Overloads;
 	bool                          m_IsConstructor;
+	bool          m_hasStatic;
+	bool          m_Cached;
 	
 };
 
