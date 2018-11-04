@@ -31,11 +31,6 @@ public:
 		return m_InterfaceClasses;
 	}
 
-//	jobject getHandler()
-//	{
-//		return JPEnv::getJava()->NewGlobalRef(m_Handler);
-//	}
-
 	jobject getProxy();
 
 private :

@@ -30,13 +30,9 @@ namespace { // impl detail
 
 PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::findArrayClass");
+		JPJavaFrame frame;
 		char* cname;
 		JPyArg::parseTuple(args, "s", &cname);
 
@@ -61,6 +57,8 @@ PyObject* JPypeJavaArray::findArrayClass(PyObject* obj, PyObject* args)
 PyObject* JPypeJavaArray::getArrayLength(PyObject* self, PyObject* arg)
 {
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::getArrayLength");
+		JPJavaFrame frame;
 		PyObject* arrayObject;
 		JPyArg::parseTuple(arg, "O!", &PyCapsule_Type, &arrayObject);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
@@ -76,6 +74,8 @@ PyObject* JPypeJavaArray::getArrayLength(PyObject* self, PyObject* arg)
 PyObject* JPypeJavaArray::getArrayItem(PyObject* self, PyObject* arg)
 {
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::getArrayItem");
+		JPJavaFrame frame;
 		PyObject* arrayObject;
 		int ndx;
 		JPyArg::parseTuple(arg, "O!i", &PyCapsule_Type, &arrayObject, &ndx);
@@ -96,6 +96,8 @@ PyObject* JPypeJavaArray::getArraySlice(PyObject* self, PyObject* arg)
 	int hi = -1;
 	try
 	{
+		ASSERT_JVM_RUNNING("JPypeJavaArray::getArraySlice");
+		JPJavaFrame frame;
 
 		JPyArg::parseTuple(arg, "O!ii", &PyCapsule_Type, &arrayObject, &lo, &hi);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
@@ -144,6 +146,9 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 	int hi = -1;
 	PyObject* sequence;
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::setArraySlice");
+		JPJavaFrame frame;
+
 		JPyArg::parseTuple(arg, "O!iiO", &PyCapsule_Type, &arrayObject, &lo, &hi, &sequence);
 		JPArray* a = (JPArray*)JPyCObject::asVoidPtr(arrayObject);
 
@@ -193,7 +198,11 @@ PyObject* JPypeJavaArray::setArraySlice(PyObject* self, PyObject* arg)
 
 PyObject* JPypeJavaArray::setArrayItem(PyObject* self, PyObject* arg)
 {
+	TRACE_IN("JPypeJavaArray::setArrayItem");
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::setArrayItem");
+		JPJavaFrame frame;
+
 		PyObject* arrayObject;
 		int ndx;
 		PyObject* value;
@@ -210,11 +219,16 @@ PyObject* JPypeJavaArray::setArrayItem(PyObject* self, PyObject* arg)
 	PY_STANDARD_CATCH
 
 	return NULL;
+	TRACE_OUT;
 }
 
 PyObject* JPypeJavaArray::newArray(PyObject* self, PyObject* arg)
 {
+	TRACE_IN("JPypeJavaArray::newArray");
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaArray::newArray");
+		JPJavaFrame frame;
+
 		PyObject* arrayObject;
 		int sz;
 		JPyArg::parseTuple(arg, "O!i", &PyCapsule_Type, &arrayObject, &sz);
@@ -228,4 +242,5 @@ PyObject* JPypeJavaArray::newArray(PyObject* self, PyObject* arg)
 	PY_STANDARD_CATCH
 
 	return NULL;
+	TRACE_OUT;
 }

@@ -173,7 +173,7 @@ array element but can process all data at once.
 If you do not want this optional feature, because eg. it depends on NumPy, you
 can opt it out in the installation process by passing *"--disable-numpy"* to 
 *setup.py*. To opt out with pip you need to append the additional argument
-*"--install-option='--disable-numpy'*. This possibility exists since version 
+*"--global-option='--disable-numpy'*. This possibility exists since version 
 0.5.6.
 
 Creating Java arrays from Python
@@ -408,7 +408,7 @@ regular Python classes. This contributes to the fact that it is not possible
 to catch Java exceptions in a completely straightforward way.
 
 All Java exceptions thrown end up throwing the jpype.JavaException exception.
-You can then use the message(), stackTrace() and javaClass() to access
+You can then use the message(), stacktrace() and javaClass() to access
 extended information.
 
 Here is an example: ::
@@ -416,9 +416,9 @@ Here is an example: ::
   try :
           # Code that throws a java.lang.RuntimeException
   except JavaException, ex :
-          if JavaException.javaClass() is java.lang.RuntimeException :
-                  print "Caught the runtime exception : ", JavaException.message()
-                  print JavaException.stackTrace()
+          if ex.javaClass() is java.lang.RuntimeException :
+                  print "Caught the runtime exception : ", ex.message()
+                  print ex.stacktrace()
 
 Alternately, you can catch the REAL Java exception directly by using
 the JException wrapper. ::
@@ -426,8 +426,8 @@ the JException wrapper. ::
         try :
                 # Code that throws a java.lang.RuntimeException
         except jpype.JException(java.lang.RuntimeException), ex :
-                print "Caught the runtime exception : ", JavaException.message()
-                print JavaException.stackTrace()
+                print "Caught the runtime exception : ", ex.message()
+                print ex.stacktrace()
 
 
 Known limitations

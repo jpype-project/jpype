@@ -38,6 +38,7 @@ namespace JPTypeManager {
 
 void init()
 {
+	TRACE_IN("JPTypeManager::init");
 	typeMap[JPTypeName::_void] = new JPVoidType();
 	typeMap[JPTypeName::_byte] = new JPByteType();
 	typeMap[JPTypeName::_short] = new JPShortType();
@@ -59,6 +60,7 @@ void init()
 	javaClassMap["char"] = new JPClass(JPTypeName::fromSimple("char"), JPJni::getCharacterClass());
 	javaClassMap["boolean"] = new JPClass(JPTypeName::fromSimple("boolean"), JPJni::getBooleanClass());
 	javaClassMap["void"] = new JPClass(JPTypeName::fromSimple("void"), JPJni::getVoidClass());
+	TRACE_OUT;
 }
 
 JPClass* findClass(const JPTypeName& name)
@@ -75,11 +77,8 @@ JPClass* findClass(const JPTypeName& name)
 	TRACE1(name.getSimpleName());
 
 	// No we havent got it .. lets load it!!!
-	JPLocalFrame frame;
-	if (JPEnv::getJava()==0)
-		return 0;
-
-	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
+	JPJavaFrame frame;
+	jclass cls = frame.FindClass(name.getNativeName().c_str());
 	JPClass* res = new JPClass(name, cls);
 	// Finish loading it
 	res->postLoad();
@@ -101,8 +100,8 @@ JPArrayClass* findArrayClass(const JPTypeName& name)
 	}
 
 	// No we havent got it .. lets load it!!!
-	JPLocalFrame frame;
-	jclass cls = JPEnv::getJava()->FindClass(name.getNativeName().c_str());
+	JPJavaFrame frame;
+	jclass cls = frame.FindClass(name.getNativeName().c_str());
 	JPArrayClass* res = new JPArrayClass(name, cls);
 
 	// Register it here before we do anything else
@@ -137,6 +136,7 @@ JPType* getType(const JPTypeName& t)
 
 void shutdown()
 {
+	TRACE_IN("JPTypeManager::shutdown");
 	flushCache();
 
 	// delete primitive types
@@ -144,6 +144,7 @@ void shutdown()
 	{
 		delete i->second;
 	}
+	TRACE_OUT;
 }
 
 void flushCache()

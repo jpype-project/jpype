@@ -29,16 +29,17 @@ JPField::JPField() :
 
 JPField::JPField(JPClass* clazz, jobject fld)
 {
+	JPJavaFrame frame;
 	TRACE_IN("JPField::JPField1");
 	
 	m_Class = clazz;
-	m_Field = JPEnv::getJava()->NewGlobalRef(fld);
+	m_Field = frame.NewGlobalRef(fld);
 	
 	m_Name = JPJni::getMemberName(fld);
 	
 	m_IsStatic = JPJni::isMemberStatic(fld);
 	m_IsFinal = JPJni::isMemberFinal(fld);
-	m_FieldID = JPEnv::getJava()->FromReflectedField(fld);
+	m_FieldID = frame.FromReflectedField(fld);
 	m_Type = JPJni::getType(m_Field);	
 
 	TRACE2("field type", m_Type.getSimpleName());
@@ -49,6 +50,7 @@ JPField::JPField(JPClass* clazz, jobject fld)
 
 JPField::JPField(const JPField& fld)
 {
+	JPJavaFrame frame;
 	TRACE_IN("JPField::JPField2");
 	
 	m_Name = fld.m_Name; 
@@ -59,14 +61,14 @@ JPField::JPField(const JPField& fld)
 
 	m_Class = fld.m_Class;
 
-	m_Field = JPEnv::getJava()->NewGlobalRef(fld.m_Field);
+	m_Field = frame.NewGlobalRef(fld.m_Field);
 	TRACE_OUT;
 }
 
 JPField::~JPField() NO_EXCEPT_FALSE
 {
 	TRACE_IN("JPField::~JPField");
-	JPEnv::getJava()->DeleteGlobalRef(m_Field);
+	JPJavaFrame::ReleaseGlobalRef(m_Field);
 	TRACE_OUT;
 }
 	
@@ -83,15 +85,17 @@ const string& JPField::getName() const
 HostRef* JPField::getStaticAttribute() 
 {
 	TRACE_IN("JPField::getStaticAttribute");
+	JPJavaFrame frame;
 	JPType* type = JPTypeManager::getType(m_Type);
 	jclass claz = m_Class->getClass();
-	return type->getStaticValue(claz, m_FieldID, m_Type);
+	return type->getStaticValue(frame, claz, m_FieldID, m_Type);
 	TRACE_OUT;	
 }
 
 void JPField::setStaticAttribute(HostRef* val) 
 {
 	TRACE_IN("JPField::setStaticAttribute");
+	JPJavaFrame frame;
 
 	if (m_IsFinal)
 	{
@@ -109,23 +113,25 @@ void JPField::setStaticAttribute(HostRef* val)
 	}
 		
 	jclass claz = m_Class->getClass();
-	type->setStaticValue(claz, m_FieldID, val);		
+	type->setStaticValue(frame, claz, m_FieldID, val);		
 	TRACE_OUT;
 }
 
 HostRef* JPField::getAttribute(jobject inst) 
 {
 	TRACE_IN("JPField::getAttribute");
+	JPJavaFrame frame;
 	TRACE2("field type", m_Type.getSimpleName()); 
 	JPType* type = JPTypeManager::getType(m_Type);
 	
-	return type->getInstanceValue(inst, m_FieldID, m_Type);	
+	return type->getInstanceValue(frame, inst, m_FieldID, m_Type);	
 	TRACE_OUT;
 }
 
 void JPField::setAttribute(jobject inst, HostRef* val) 
 {
 	TRACE_IN("JPField::setAttribute");
+	JPJavaFrame frame;
 	if (m_IsFinal)
 	{
 		stringstream err;
@@ -141,7 +147,7 @@ void JPField::setAttribute(jobject inst, HostRef* val)
 		JPEnv::getHost()->setTypeError( err.str().c_str());
 	}
 		
-	type->setInstanceValue(inst, m_FieldID, val);		
+	type->setInstanceValue(frame, inst, m_FieldID, val);		
 	TRACE_OUT;
 }
 

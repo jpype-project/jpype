@@ -454,19 +454,6 @@ HostRef* PythonHostEnvironment::newStringFromASCII(const char* v, unsigned int l
 	return new HostRef(JPyString::fromString(v), false);
 }
 
-void* PythonHostEnvironment::prepareCallbackBegin()
-{
-	PyGILState_STATE state = PyGILState_Ensure();;
-	return (void*)new PyGILState_STATE(state);
-}
-
-void PythonHostEnvironment::prepareCallbackFinish(void* state)
-{
-	PyGILState_STATE* state2 = (PyGILState_STATE*)state;
-	PyGILState_Release(*state2);
-	delete state2;
-}
-
 HostRef* PythonHostEnvironment::callObject(HostRef* c, vector<HostRef*>& args)
 {
 	JPCleaner cleaner;
@@ -555,7 +542,7 @@ jvalue PythonHostEnvironment::getWrapperValue(PyObject* obj)
 	if (name.isObjectType())
 	{
 		jvalue res;
-		res.l = JPEnv::getJava()->NewLocalRef(v->l); // FIXME This is bad, nothing cleans it up
+		res.l = v->l; 
 		return res;
 	}
 	return *v;
@@ -634,10 +621,11 @@ size_t PythonHostEnvironment::getUnicodeSize()
 
 HostRef* PythonHostEnvironment::newStringWrapper(jstring jstr)
 {
+	JPJavaFrame frame;
 	TRACE_IN("PythonHostEnvironment::newStringWrapper");
-	jvalue* v = new jvalue;
-	v->l = JPEnv::getJava()->NewGlobalRef(jstr);
 
+	jvalue* v = new jvalue;
+	v->l = frame.NewGlobalRef(jstr);
 	PyObject* value = JPyCObject::fromVoidAndDesc((void*)v, "object jvalue", deleteObjectJValueDestructor);
 
 	PyObject* args = JPySequence::newTuple(1);

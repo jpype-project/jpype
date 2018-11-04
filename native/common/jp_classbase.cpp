@@ -20,10 +20,11 @@ JPClassBase::JPClassBase(const JPTypeName& tname, jclass c) :
 	JPObjectType(JPTypeName::_unknown, JPTypeName::fromType(JPTypeName::_void)),
 	m_Name(tname)
 {
-	m_Class = (jclass)JPEnv::getJava()->NewGlobalRef(c);
+	JPJavaFrame frame;
+	m_Class = (jclass)frame.NewGlobalRef(c);
 }
 
 JPClassBase::~JPClassBase()
 {
-	JPEnv::getJava()->DeleteGlobalRef(m_Class);	
+	JPJavaFrame::ReleaseGlobalRef(m_Class);
 }

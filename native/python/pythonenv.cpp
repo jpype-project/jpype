@@ -260,6 +260,49 @@ void JPyErr::setObject(PyObject* exClass, PyObject* str)
 	PyErr_SetObject(exClass, str);
 }
 
+void JPyErr::rethrow(const char* file, int line)
+{
+	TRACE_IN("JPyErr::rethrow");
+	TRACE2(file,line);
+	try
+	{
+		throw;
+	}
+	catch(JavaException& ex)
+	{
+		TRACE1("Java exception");
+		try {
+			JPypeJavaException::errorOccurred();
+		}
+		catch(...)
+		{
+			JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a Java Exception");
+		}
+	}
+	catch(JPypeException& ex)
+	{
+		TRACE1("JPype exception");
+		try {
+			JPEnv::getHost()->setRuntimeException(ex.getMsg());
+		}
+		catch(...)
+		{
+			JPEnv::getHost()->setRuntimeException("An unknown error occured while handling a JPype Exception");
+		}
+	}
+	catch(PythonException& ex)
+	{
+		TRACE1("Python exception");
+//		cout << "Python error occured" << endl;
+	}
+	catch(...)
+	{
+		TRACE1("Other exception");
+		JPEnv::getHost()->setRuntimeException("Unknown Exception");
+	}
+	TRACE_OUT;
+}
+
 PyObject* JPyInt::fromLong(long l)
 {
 	TRACE_IN("JPyInt::fromLong");

@@ -23,7 +23,7 @@ PyObject* JPypeModule::startup(PyObject* obj, PyObject* args)
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
 		return NULL;
-  }
+  	}
 
 	try {
 		PyObject* vmOpt;
@@ -65,9 +65,7 @@ PyObject* JPypeModule::startup(PyObject* obj, PyObject* args)
 		}
 
 		JPEnv::loadJVM(cVmPath, ignoreUnrecognized, args);
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -78,11 +76,11 @@ PyObject* JPypeModule::startup(PyObject* obj, PyObject* args)
 PyObject* JPypeModule::attach(PyObject* obj, PyObject* args)  
 {  
 	TRACE_IN("attach");
-  if (JPEnv::isInitialized())
+	if (JPEnv::isInitialized())
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
 		return NULL;
-  }
+	}
 
 	try {
 		PyObject* vmPath;
@@ -96,9 +94,7 @@ PyObject* JPypeModule::attach(PyObject* obj, PyObject* args)
 
 		string cVmPath = JPyString::asString(vmPath);
 		JPEnv::attachJVM(cVmPath);
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 
@@ -116,31 +112,15 @@ PyObject* JPypeModule::dumpJVMStats(PyObject* obj)
 	//cerr << "\tfield gets           : " << fieldGets << endl;
 	//cerr << "\tfield sets           : " << fieldSets << endl;
 	cerr << "\tclasses loaded       : " << JPTypeManager::getLoadedClasses() << endl;
-
-	Py_INCREF(Py_None);	
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject* JPypeModule::shutdown(PyObject* obj)
 {
 	TRACE_IN("shutdown");
 	try {
-		//dumpJVMStats(obj);
-
-		JPEnv::getJava()->checkInitialized();
-
-		JPTypeManager::shutdown();
-
-		if (JPEnv::getJava()->DestroyJavaVM() )
-		{
-			RAISE(JPypeException, "Unable to destroy JVM");
-		}
-
-		JPEnv::getJava()->shutdown();
-		cerr << "JVM has been shutdown" << endl;
-		
-		Py_INCREF(Py_None);		
-		return Py_None;
+		JPEnv::shutdown();
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
 
@@ -150,7 +130,7 @@ PyObject* JPypeModule::shutdown(PyObject* obj)
 
 PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	TRACE_IN("synchronized");
 	try {
 		PyObject* o;
@@ -196,9 +176,7 @@ PyObject* JPypeModule::synchronized(PyObject* obj, PyObject* args)
 	PY_STANDARD_CATCH;
 
 	PyErr_Clear();
-
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 
 	TRACE_OUT;
 }
@@ -214,16 +192,10 @@ PyObject* JPypeModule::isStarted(PyObject* obj)
 
 PyObject* JPypeModule::attachThread(PyObject* obj)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeModule::attachThread");
 		JPEnv::attachCurrentThread();
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
 
@@ -232,16 +204,10 @@ PyObject* JPypeModule::attachThread(PyObject* obj)
 
 PyObject* JPypeModule::detachThread(PyObject* obj)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
-		JPEnv::getJava()->DetachCurrentThread();
-		Py_INCREF(Py_None);
-		return Py_None;
+		ASSERT_JVM_RUNNING("JPypeModule::detachThread");
+		JPEnv::detachCurrentThread();
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
 
@@ -250,13 +216,8 @@ PyObject* JPypeModule::detachThread(PyObject* obj)
 
 PyObject* JPypeModule::isThreadAttached(PyObject* obj)
 {	
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeModule::isThreadAttached");
 		if (JPEnv::isThreadAttached())
 	{
 		return JPyBoolean::getTrue();
@@ -310,17 +271,10 @@ PyObject* JPypeModule::raiseJava(PyObject* , PyObject* args)
 
 PyObject* JPypeModule::attachThreadAsDaemon(PyObject* obj)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeModule::attachThreadAsDaemon");
 		JPEnv::attachCurrentThreadAsDaemon();
-
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
 
@@ -330,73 +284,26 @@ PyObject* JPypeModule::attachThreadAsDaemon(PyObject* obj)
 
 PyObject* JPypeModule::startReferenceQueue(PyObject* obj, PyObject* args)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeModule::startReferenceQueue");
 		int i;
 		JPyArg::parseTuple(args, "i", &i);
 
-		JPJni::startJPypeReferenceQueue(i == 1);
+		JPReferenceQueue::startJPypeReferenceQueue(i == 1);
 
-		Py_INCREF(Py_None);
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
 
 	return NULL;
 }
-
-PyObject* JPypeModule::stopReferenceQueue(PyObject* obj)
-{
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
-	try {
-		JPJni::stopJPypeReferenceQueue();
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
-}
-
 
 PyObject* JPypeModule::setConvertStringObjects(PyObject* obj, PyObject* args)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
-	try {
-		PyObject* flag;
-		JPyArg::parseTuple(args, "O", &flag);
-
-		if (JPyBoolean::isTrue(flag))
-		{
-			JPEnv::getJava()->setConvertStringObjects(true);
-		}
-		else
-		{
-			JPEnv::getJava()->setConvertStringObjects(false);
-		}
-
-		Py_INCREF(Py_None);
-		return Py_None;
-	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
+	PyObject* flag;
+	JPyArg::parseTuple(args, "O", &flag);
+	JPEnv::setConvertStringObjects(JPyBoolean::isTrue(flag));
+	Py_RETURN_NONE;
 }
 
 /** Set a Jpype Resource.

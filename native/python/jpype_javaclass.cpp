@@ -20,14 +20,9 @@
 PyObject* JPypeJavaClass::findClass(PyObject* obj, PyObject* args)
 {
 	TRACE_IN("JPypeModule::findClass");
-	JPLocalFrame frame;
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	try {
+		ASSERT_JVM_RUNNING("JPypeJavaClass::findClass");
+		JPJavaFrame frame;
 		char* cname;
 		JPyArg::parseTuple(args, "s", &cname);
 		TRACE1(cname);
@@ -37,8 +32,7 @@ PyObject* JPypeJavaClass::findClass(PyObject* obj, PyObject* args)
 		JPClass* claz = JPTypeManager::findClass(name);
 		if (claz == NULL)
 		{
-			Py_INCREF(Py_None);
-			return Py_None;
+			Py_RETURN_NONE;
 		}
 
 		PyObject* res = (PyObject*)PyJPClass::alloc(claz);
@@ -49,8 +43,7 @@ PyObject* JPypeJavaClass::findClass(PyObject* obj, PyObject* args)
 
 	PyErr_Clear();
 
-	Py_INCREF(Py_None);
-	return Py_None;
+	Py_RETURN_NONE;
 
 	TRACE_OUT;
 }

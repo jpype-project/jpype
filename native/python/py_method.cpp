@@ -85,9 +85,10 @@ PyJPMethod* PyJPMethod::alloc(JPMethod* m)
 
 PyObject* PyJPMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
 {
-	JPLocalFrame frame(32);
 	TRACE_IN("PyJPMethod::__call__");
 	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::__call__");
+		JPJavaFrame frame(32);
 		PyJPMethod* self = (PyJPMethod*)o;
 		TRACE1(self->m_Method->getName());
 		JPCleaner cleaner;
@@ -123,25 +124,30 @@ PyObject* PyJPMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
 void PyJPMethod::__dealloc__(PyObject* o)
 {
 	PyJPMethod* self = (PyJPMethod*)o;
-
 	Py_TYPE(self)->tp_free(o);
 }
 
 PyObject* PyJPMethod::__str__(PyObject* o)
 {
-	JPLocalFrame frame;
-	PyJPMethod* self = (PyJPMethod*)o;
-	stringstream sout;
+	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::__str__");
+		JPJavaFrame frame;
+		PyJPMethod* self = (PyJPMethod*)o;
+		stringstream sout;
 
-	sout << "<method " << self->m_Method->getClassName() << "." << self->m_Method->getName() << ">";
+		sout << "<method " << self->m_Method->getClassName() << "." << self->m_Method->getName() << ">";
 
-	return JPyString::fromString(sout.str().c_str());
+		return JPyString::fromString(sout.str().c_str());
+	}
+	PY_STANDARD_CATCH
+	return NULL;
 }
 
 PyObject* PyJPMethod::isBeanAccessor(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::isBeanAccessor");
+		JPJavaFrame frame;
 		PyJPMethod* self = (PyJPMethod*)o;
 
 		bool res = self->m_Method->isBeanAccessor();
@@ -159,8 +165,9 @@ PyObject* PyJPMethod::isBeanAccessor(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::isBeanMutator(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::isBeanMutator");
+		JPJavaFrame frame;
 		PyJPMethod* self = (PyJPMethod*)o;
 
 		bool res = self->m_Method->isBeanMutator();
@@ -178,8 +185,9 @@ PyObject* PyJPMethod::isBeanMutator(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::getName(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::getName");
+		JPJavaFrame frame;
 		PyJPMethod* self = (PyJPMethod*)o;
 
 		string name = self->m_Method->getName();
@@ -195,8 +203,9 @@ PyObject* PyJPMethod::getName(PyObject* o, PyObject* arg)
 
 PyObject* PyJPMethod::matchReport(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPMethod::matchReport");
+		JPJavaFrame frame;
 		PyJPMethod* self = (PyJPMethod*)o;
 		JPCleaner cleaner;
 
@@ -299,9 +308,10 @@ int PyJPBoundMethod::__init__(PyObject* o, PyObject* args, PyObject* kwargs)
 
 PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwargs)
 {
-	JPLocalFrame frame(32);
 	TRACE_IN("PyJPBoundMethod::__call__");
 	try {
+		ASSERT_JVM_RUNNING("PyJPBoundMethod::__call__");
+		JPJavaFrame frame(32);
 		PyObject* result=NULL;
 		{
 			PyJPBoundMethod* self = (PyJPBoundMethod*)o;
@@ -331,7 +341,6 @@ PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwarg
 		return result;
 	}
 	PY_STANDARD_CATCH
-
 	return NULL;
 
 	TRACE_OUT;
@@ -339,7 +348,7 @@ PyObject* PyJPBoundMethod::__call__(PyObject* o, PyObject* args, PyObject* kwarg
 
 void PyJPBoundMethod::__dealloc__(PyObject* o)
 {
-	JPLocalFrame frame;
+	// This is just freeing the memory for the object.  It does not own the method so no need for protection.
 	TRACE_IN("PyJPBoundMethod::__dealloc__");
 	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 
@@ -353,19 +362,25 @@ void PyJPBoundMethod::__dealloc__(PyObject* o)
 
 PyObject* PyJPBoundMethod::__str__(PyObject* o)
 {
-	JPLocalFrame frame;
-	PyJPBoundMethod* self = (PyJPBoundMethod*)o;
-	stringstream sout;
+	try {
+		ASSERT_JVM_RUNNING("PyJPBoundMethod::__str__");
+		JPJavaFrame frame;
+		PyJPBoundMethod* self = (PyJPBoundMethod*)o;
+		stringstream sout;
 
-	sout << "<bound method " << self->m_Method->m_Method->getClassName() << "." << self->m_Method->m_Method->getName() << ">";
+		sout << "<bound method " << self->m_Method->m_Method->getClassName() << "." << self->m_Method->m_Method->getName() << ">";
 
-	return JPyString::fromString(sout.str().c_str());
+		return JPyString::fromString(sout.str().c_str());
+	}
+	PY_STANDARD_CATCH
+	return NULL;
 }
 
 PyObject* PyJPBoundMethod::matchReport(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPBoundMethod::matchReport");
+		JPJavaFrame frame;
 		PyJPBoundMethod* self = (PyJPBoundMethod*)o;
 
 		cout << "Match report for " << self->m_Method->m_Method->getName() << endl;
@@ -386,6 +401,5 @@ PyObject* PyJPBoundMethod::matchReport(PyObject* o, PyObject* args)
 		return res;
 	}
 	PY_STANDARD_CATCH
-
 	return NULL;
 }

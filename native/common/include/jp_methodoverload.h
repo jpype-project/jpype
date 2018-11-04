@@ -65,7 +65,7 @@ public :
 
 	string getArgumentString();
 
-  void packArgs(JPMallocCleaner<jvalue>& v, vector<HostRef*>& arg, size_t skip);
+  void packArgs(vector<jvalue>& v, vector<HostRef*>& arg, size_t skip);
 	bool isSameOverload(JPMethodOverload& o);
 	string matchReport(vector<HostRef*>& args);
 	bool isMoreSpecificThan(JPMethodOverload& other) const;

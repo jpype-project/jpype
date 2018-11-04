@@ -25,26 +25,33 @@ JPClass::JPClass(const JPTypeName& n, jclass c) :
 
 JPClass::~JPClass()
 {
-	delete m_Constructors;
+	TRACE_IN("~JPClass");
+	try{
+		delete m_Constructors;
 
-	// interfaces of this cannot be simply deleted here, since they may be also
-	// super types of other classes, which would be invalidated by doing so.
+		// interfaces of this cannot be simply deleted here, since they may be also
+		// super types of other classes, which would be invalidated by doing so.
 
-	for (map<string, JPMethod*>::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit ++)
+		for (map<string, JPMethod*>::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit ++)
+		{
+			delete mthit->second;
+		}
+
+		for (map<string, JPField*>::iterator fldit = m_InstanceFields.begin(); fldit != m_InstanceFields.end(); fldit++)
+		{
+			delete fldit->second;
+		}
+
+		for (map<string, JPField*>::iterator fldit2 = m_StaticFields.begin(); fldit2 != m_StaticFields.end(); fldit2++)
+		{
+			delete fldit2->second;
+		}
+	} catch (...)
 	{
-		delete mthit->second;
+		// This should not happen
+		TRACE1("Surpressed exception");
 	}
-
-	for (map<string, JPField*>::iterator fldit = m_InstanceFields.begin(); fldit != m_InstanceFields.end(); fldit++)
-	{
-		delete fldit->second;
-	}
-
-	for (map<string, JPField*>::iterator fldit2 = m_StaticFields.begin(); fldit2 != m_StaticFields.end(); fldit2++)
-	{
-		delete fldit2->second;
-	}
-
+	TRACE_OUT;
 }
 
 void JPClass::postLoad()
@@ -64,12 +71,12 @@ void JPClass::postLoad()
 void JPClass::loadSuperClass()
 {
 	TRACE_IN("JPClass::loadSuperClass");
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 
 	// base class .. if any
 	if (!m_IsInterface && m_Name.getSimpleName() != "java.lang.Object")
 	{
-		jclass baseClass = JPEnv::getJava()->GetSuperclass(m_Class);
+		jclass baseClass = frame.GetSuperclass(m_Class);
 
 		if (baseClass != NULL)
 		{
@@ -82,7 +89,7 @@ void JPClass::loadSuperClass()
 
 void JPClass::loadSuperInterfaces()
 {
-	JPLocalFrame frame(32);
+	JPJavaFrame frame(32);
 	TRACE_IN("JPClass::loadSuperInterfaces");
 	// Super interfaces
 	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class);
@@ -98,7 +105,7 @@ void JPClass::loadSuperInterfaces()
 
 void JPClass::loadFields()
 {
-	JPLocalFrame frame(32);
+	JPJavaFrame frame(32);
 	TRACE_IN("JPClass::loadFields");
 	// fields
 	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class);
@@ -120,7 +127,7 @@ void JPClass::loadFields()
 
 void JPClass::loadMethods()
 {
-	JPLocalFrame frame(32);
+	JPJavaFrame frame(32);
 	TRACE_IN("JPClass::loadMethods");
 
 	// methods
@@ -143,7 +150,7 @@ void JPClass::loadMethods()
 
 void JPClass::loadConstructors()
 {
-	JPLocalFrame frame(32);
+	JPJavaFrame frame(32);
 	TRACE_IN("JPClass::loadMethods");
 	m_Constructors = new JPMethod(m_Class, "[init", true);
 
@@ -234,7 +241,7 @@ HostRef* JPClass::asHostObject(jvalue obj)
 const char* java_lang = "java.lang.";
 EMatchType JPClass::canConvertToJava(HostRef* obj)
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	TRACE_IN("JPClass::canConvertToJava");
 	if (JPEnv::getHost()->isNone(obj))
 	{
@@ -256,7 +263,7 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 			return _exact;
 		}
 
-		if (JPEnv::getJava()->IsAssignableFrom(oc->m_Class, m_Class))
+		if (frame.IsAssignableFrom(oc->m_Class, m_Class))
 		{
 			return _implicit;
 		}
@@ -366,7 +373,7 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 		vector<jclass> itf = proxy->getInterfaces();
 		for (unsigned int i = 0; i < itf.size(); i++)
 		{
-			if (JPEnv::getJava()->IsAssignableFrom(itf[i], m_Class))
+			if (frame.IsAssignableFrom(itf[i], m_Class))
 			{
 				TRACE1("implicit proxy");
 				return _implicit;
@@ -380,13 +387,15 @@ EMatchType JPClass::canConvertToJava(HostRef* obj)
 
 jobject JPClass::buildObjectWrapper(HostRef* obj)
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 
 	vector<HostRef*> args(1);
 	args.push_back(obj);
 
 	JPObject* pobj = newInstance(args);
 	jobject out = pobj->getObject();
+	// We need to keep a reference to the object here as our global reference is about to die
+	out = frame.NewLocalRef(out); 
 	delete pobj;
 
 	return frame.keep(out);
@@ -395,7 +404,7 @@ jobject JPClass::buildObjectWrapper(HostRef* obj)
 jvalue JPClass::convertToJava(HostRef* obj)
 {
 	TRACE_IN("JPClass::convertToJava");
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	jvalue res;
 
 	res.l = NULL;
@@ -411,7 +420,7 @@ jvalue JPClass::convertToJava(HostRef* obj)
 	if (JPEnv::getHost()->isObject(obj))
 	{
 		JPObject* ref = JPEnv::getHost()->asObject(obj);
-		res.l = frame.keep(ref->getObject());
+		res.l = ref->getObject();
 		return res;
 	}
 
@@ -540,7 +549,7 @@ void JPClass::setStaticAttribute(const string& name, HostRef* val)
 
 string JPClass::describe()
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	stringstream out;
 	out << "public ";
 	if (isAbstract())
@@ -642,9 +651,27 @@ const vector<JPClass*>& JPClass::getInterfaces() const
 
 bool JPClass::isSubclass(JPClass* o)
 {
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 
 	jclass jo = o->getClass();
 
-	return JPEnv::getJava()->IsAssignableFrom(m_Class, jo);
+	return frame.IsAssignableFrom(m_Class, jo);
 }
+
+jobject JPPrimitiveType::convertToJavaObject(HostRef* obj)
+{
+	JPJavaFrame frame;
+	JPTypeName tname = getObjectType();
+	JPClass* c = JPTypeManager::findClass(tname);
+
+	vector<HostRef*> args(1);
+	args[0] = obj;
+
+	JPObject* o = c->newInstance(args);
+	jobject res = o->getObject(); 
+	// We need to keep a local reference here
+	res = frame.NewLocalRef(res); 
+	delete o;
+	return frame.keep(res);
+}
+

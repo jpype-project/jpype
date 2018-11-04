@@ -39,12 +39,12 @@ public : // JPType implementation
 
 	virtual jclass getClass() const
 	{
-		return (jclass)JPEnv::getJava()->NewLocalRef(m_Class);
+		return m_Class;
 	}
 
 protected :
-	JPTypeName                 m_Name;
-	jclass					   m_Class;
+	JPTypeName m_Name;
+	jclass	   m_Class;
 };
 
 #endif // _JPCLASS_BASE_H_

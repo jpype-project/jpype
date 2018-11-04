@@ -18,43 +18,42 @@
 #include <jpype_python.h>  
 PyObject* JPypeJavaNio::convertToDirectBuffer(PyObject* self, PyObject* args)
 {  
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-
 	TRACE_IN("convertStringToBuffer"); 
+	try {
+		ASSERT_JVM_RUNNING("JPypeJavaNio::convertToDirectBuffer");
+		JPJavaFrame frame;
 
-	// Use special method defined on the TypeConverter interface ...
-	PyObject* src;
+		// Use special method defined on the TypeConverter interface ...
+		PyObject* src;
 
-	JPyArg::parseTuple(args, "O", &src);
+		JPyArg::parseTuple(args, "O", &src);
 
-	PyObject* res = NULL;
-	if (JPyObject::isMemoryView(src))
-	{
-		// converts to byte buffer ...
-		JPTypeName tname = JPTypeName::fromType(JPTypeName::_byte);
-		JPType* type = JPTypeManager::getType(tname);
-		HostRef srcRef(src);
+		PyObject* res = NULL;
+		if (JPyObject::isMemoryView(src))
+		{
+			// converts to byte buffer ...
+			JPTypeName tname = JPTypeName::fromType(JPTypeName::_byte);
+			JPType* type = JPTypeManager::getType(tname);
+			HostRef srcRef(src);
 
-		TRACE1("Converting");
-		HostRef* ref = type->convertToDirectBuffer(&srcRef);
-		JPEnv::registerRef(ref, &srcRef);
+			TRACE1("Converting");
+			HostRef* ref = type->convertToDirectBuffer(&srcRef);
+			JPReferenceQueue::registerRef(ref, &srcRef);
 
-		TRACE1("detaching result");
-		res = detachRef(ref);
+			TRACE1("detaching result");
+			res = detachRef(ref);
+		}
+
+		if (res != NULL)
+		{
+			return res;
+		}
+
+		RAISE(JPypeException, "Do not know how to convert to direct byte buffer, only memory view supported");
 	}
-
-	if (res != NULL)
-	{
-		return res;
-	}
-
-	RAISE(JPypeException, "Do not know how to convert to direct byte buffer, only memory view supported");
-
-	return NULL;
+	PY_STANDARD_CATCH
+	
 	TRACE_OUT;
+	return NULL;
 }
 

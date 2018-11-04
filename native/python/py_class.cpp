@@ -34,14 +34,6 @@ static PyMethodDef classMethods[] = {
   {"isAbstract", &PyJPClass::isAbstract, METH_NOARGS, ""},
   {"getSuperclass",&PyJPClass::getBaseClass, METH_NOARGS, ""},
 
-  {"getConstructors", (PyCFunction)&PyJPClass::getConstructors, METH_NOARGS, ""},
-  {"getDeclaredConstructors", (PyCFunction)&PyJPClass::getDeclaredConstructors, METH_NOARGS, ""},
-  {"getDeclaredFields", (PyCFunction)&PyJPClass::getDeclaredFields, METH_NOARGS, ""},
-  {"getDeclaredMethods", (PyCFunction)&PyJPClass::getDeclaredMethods, METH_NOARGS, ""},
-  {"getFields", (PyCFunction)&PyJPClass::getFields, METH_NOARGS, ""},
-  {"getMethods", (PyCFunction)&PyJPClass::getMethods, METH_NOARGS, ""},
-  {"getModifiers", (PyCFunction)&PyJPClass::getModifiers, METH_NOARGS, ""},
-
   {NULL},
 };
 
@@ -117,8 +109,9 @@ void PyJPClass::__dealloc__(PyObject* o)
 
 PyObject* PyJPClass::getName(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::getName");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPTypeName name = self->m_Class->getName();
@@ -134,15 +127,15 @@ PyObject* PyJPClass::getName(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::getBaseClass(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::getBaseClass");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPClass* base = self->m_Class->getSuperClass();
 		if (base == NULL)
 		{
-			Py_INCREF(Py_None);
-			return Py_None;
+			Py_RETURN_NONE;
 		}
 
 		PyObject* res  = (PyObject*)PyJPClass::alloc(base);
@@ -157,8 +150,9 @@ PyObject* PyJPClass::getBaseClass(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::getBaseInterfaces(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::getBaseInterfaces");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		const vector<JPClass*>& baseItf = self->m_Class->getInterfaces();
@@ -181,8 +175,9 @@ PyObject* PyJPClass::getBaseInterfaces(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::getClassFields(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::getClassFields");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		map<string, JPField*> staticFields = self->m_Class->getStaticFields();
@@ -220,8 +215,9 @@ PyObject* PyJPClass::getClassFields(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::getClassMethods(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::getClassMethods");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		vector<JPMethod*> methods = self->m_Class->getMethods();
@@ -250,8 +246,9 @@ PyObject* PyJPClass::getClassMethods(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::newClassInstance(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::newClassInstance");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 		JPCleaner cleaner;
 
@@ -282,8 +279,9 @@ PyObject* PyJPClass::newClassInstance(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::isInterface(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isInterface");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		if (self->m_Class->isInterface())
@@ -299,8 +297,9 @@ PyObject* PyJPClass::isInterface(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::isSubclass(PyObject* o, PyObject* arg)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isSubClass");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 		char* other;
 
@@ -321,9 +320,9 @@ PyObject* PyJPClass::isSubclass(PyObject* o, PyObject* arg)
 
 PyObject* PyJPClass::isException(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
-	try 
-	{
+	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isException");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		bool res = JPJni::isThrowable(self->m_Class->getClass());
@@ -343,182 +342,11 @@ bool PyJPClass::check(PyObject* o)
 	return o->ob_type == &classClassType;
 }
 
-PyObject* PyJPClass::getDeclaredMethods(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredMethods(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
-		JPClass* methodClass = JPTypeManager::findClass(methodClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = methodClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getConstructors(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getConstructors(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
-		JPClass* methodClass = JPTypeManager::findClass(methodClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = methodClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getDeclaredConstructors(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredConstructors(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
-		JPClass* methodClass = JPTypeManager::findClass(methodClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = methodClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getDeclaredFields(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getDeclaredFields(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
-		JPClass* fieldClass = JPTypeManager::findClass(fieldClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = fieldClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getFields(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getFields(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName fieldClassName = JPTypeName::fromSimple("java.lang.reflect.Field");
-		JPClass* fieldClass = JPTypeManager::findClass(fieldClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = fieldClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getModifiers(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		PyJPClass* self = (PyJPClass*)o;
-		long mod = JPJni::getClassModifiers(self->m_Class->getClass());
-
-		PyObject* res = JPyLong::fromLongLong(mod);
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;	
-}
-
-PyObject* PyJPClass::getMethods(PyObject* o)
-{
-	JPLocalFrame frame;
-	try {
-		JPCleaner cleaner;
-		PyJPClass* self = (PyJPClass*)o;
-		vector<jobject> mth = JPJni::getMethods(frame, self->m_Class->getClass());
-
-		PyObject* res = JPySequence::newTuple((int)mth.size());
-		JPTypeName methodClassName = JPTypeName::fromSimple("java.lang.reflect.Method");
-		JPClass* methodClass = JPTypeManager::findClass(methodClassName);
-		for (unsigned int i = 0; i < mth.size(); i++)
-		{
-			jvalue v;
-			v.l = mth[i];
-			HostRef* ref = methodClass->asHostObject(v);
-			cleaner.add(ref);
-			JPySequence::setItem(res, i, (PyObject*)ref->data());
-		}
-
-		return res;
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
-	
-}
-
 PyObject* PyJPClass::isPrimitive(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isPrimitive");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPTypeName name = self->m_Class->getName();
@@ -535,8 +363,9 @@ PyObject* PyJPClass::isPrimitive(PyObject* o, PyObject* args)
 
 PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isArray");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 
 		JPTypeName name = self->m_Class->getName();
@@ -549,12 +378,13 @@ PyObject* PyJPClass::isArray(PyObject* o, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	
 }
+
 PyObject* PyJPClass::isAbstract(PyObject* o, PyObject* args)
 {
-	JPLocalFrame frame;
 	try {
+		ASSERT_JVM_RUNNING("PyJPClass::isAbstract");
+		JPJavaFrame frame;
 		PyJPClass* self = (PyJPClass*)o;
 		if (self->m_Class->isAbstract()) {
 			return JPyBoolean::getTrue();
@@ -564,5 +394,4 @@ PyObject* PyJPClass::isAbstract(PyObject* o, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-
 }

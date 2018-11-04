@@ -18,19 +18,21 @@
 
 JPObject::JPObject(JPTypeName& c, jobject o)
 {
+	JPJavaFrame frame;
 	m_Class = JPTypeManager::findClass(c);
-	m_Object = JPEnv::getJava()->NewGlobalRef(o);
+	m_Object = frame.NewGlobalRef(o);
 }
   
 JPObject::JPObject(JPClass* c, jobject o)
 {
+	JPJavaFrame frame;
 	m_Class = c;
-	m_Object = JPEnv::getJava()->NewGlobalRef(o);
+	m_Object = frame.NewGlobalRef(o);
 }
 
 JPObject::~JPObject()
 {
-	JPEnv::getJava()->DeleteGlobalRef(m_Object);
+	JPJavaFrame::ReleaseGlobalRef(m_Object);
 }
 
 JCharString JPObject::toString()
@@ -47,7 +49,7 @@ JCharString JPObject::toString()
 		return res;
 	}
 
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 
 	jstring jval = JPJni::toString(m_Object);
 	JCharString result = JPJni::unicodeFromJava(jval);
@@ -60,7 +62,7 @@ HostRef* JPObject::getAttribute(const string& name)
 {
 	TRACE_IN("JPObject::getAttribute");
 	TRACE1(name);
-	JPLocalFrame frame;
+	JPJavaFrame frame;
 	
 	// instance fields ...
 	JPField* fld = m_Class->getInstanceField(name);	

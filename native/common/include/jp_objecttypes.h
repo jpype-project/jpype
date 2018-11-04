@@ -46,28 +46,28 @@ public :
 		return true; 
 	}
 
-	virtual HostRef* getStaticValue(jclass c, jfieldID fid, JPTypeName& tgtType);
-	virtual void      setStaticValue(jclass c, jfieldID fid, HostRef* val);
-	virtual HostRef* getInstanceValue(jobject c, jfieldID fid, JPTypeName& tgtType);
-	virtual void      setInstanceValue(jobject c, jfieldID fid, HostRef* val);
-	virtual HostRef*   asHostObjectFromObject(jvalue val);
+	virtual HostRef*  getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType);
+	virtual void      setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef* val);
+	virtual HostRef*  getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType);
+	virtual void      setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef* val);
+	virtual HostRef*  asHostObjectFromObject(jvalue val);
 
 	virtual jobject convertToJavaObject(HostRef* obj);
 
-	virtual HostRef* invokeStatic(jclass, jmethodID, jvalue*);
-	virtual HostRef* invoke(jobject, jclass clazz, jmethodID, jvalue*);
+	virtual HostRef*  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*);
+	virtual HostRef*  invoke(JPJavaFrame& frame, jobject, jclass clazz, jmethodID, jvalue*);
 
-	virtual jarray    newArrayInstance(int size);
-	virtual vector<HostRef*> getArrayRange(jarray, int start, int length);
-	virtual void      setArrayRange(jarray, int start, int length, vector<HostRef*>& vals);
-	virtual HostRef* getArrayItem(jarray, int ndx);
-	virtual void      setArrayItem(jarray, int ndx, HostRef* val);
-	virtual PyObject* getArrayRangeToSequence(jarray, int start, int length)
+	virtual jarray    newArrayInstance(JPJavaFrame& frame, int size);
+	virtual vector<HostRef*> getArrayRange(JPJavaFrame& frame, jarray, int start, int length);
+	virtual void      setArrayRange(JPJavaFrame& frame, jarray, int start, int length, vector<HostRef*>& vals);
+	virtual HostRef*  getArrayItem(JPJavaFrame& frame, jarray, int ndx);
+	virtual void      setArrayItem(JPJavaFrame& frame, jarray, int ndx, HostRef* val);
+	virtual PyObject* getArrayRangeToSequence(JPJavaFrame& frame, jarray, int start, int length)
 	{
 		RAISE(JPypeException, "not impled for void*");
 	}
 	
-	virtual void setArrayRange(jarray, int start, int len, PyObject*) {
+	virtual void setArrayRange(JPJavaFrame& frame, jarray, int start, int len, PyObject*) {
 		RAISE(JPypeException, "not impled for void*");
 	}
 

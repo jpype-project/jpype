@@ -102,7 +102,7 @@ public :
 	static void deleteObjectJValueDestructor(CAPSULE_DESTRUCTOR_ARG_TYPE data)
 	{
 		jvalue* pv = (jvalue*)CAPSULE_EXTRACT(data);
-		JPEnv::getJava()->DeleteGlobalRef(pv->l);
+		JPJavaFrame::ReleaseGlobalRef(pv->l);
 		delete pv;
 	}
 
@@ -223,9 +223,6 @@ public :
 	virtual void     getRawByteString(HostRef*, char**, long&);
 	virtual void     getRawUnicodeString(HostRef*, jchar**, long&);
 	virtual size_t   getUnicodeSize();
-
-	virtual void* prepareCallbackBegin();
-	virtual void  prepareCallbackFinish(void* state);
 
 	virtual HostRef* callObject(HostRef* callable, vector<HostRef*>& args);
 

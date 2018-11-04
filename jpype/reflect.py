@@ -16,31 +16,33 @@
 #*****************************************************************************
 import _jpype
 
+# FIXME this class is entirely replaced with calls to .class_ and should likely be deprecated.
+
 def _initialize() :
     pass
 
 def getConstructors(clas):
-    return clas.__javaclass__.getConstructors()
+    return clas.class_.getConstructors()[:]
 
 def getDeclaredConstructors(clas):
-    return clas.__javaclass__.getDeclaredConstructors()
+    return clas.class_.getDeclaredConstructors()[:]
 
 def getDeclaredFields(clas) :
     '''Returns an array of Field objects reflecting all the fields declared by the class or interface represented by this Class object.'''
-    return clas.__javaclass__.getDeclaredFields()
+    return clas.class_.getDeclaredFields()[:]
 
 def getDeclaredMethods(clas):
     '''Returns an array of Method objects reflecting all the methods declared by the class or interface represented by this Class object.'''
-    return clas.__javaclass__.getDeclaredMethods()
+    return clas.class_.getDeclaredMethods()[:]
 
 def getFields(clas):
     '''Returns an array containing Field objects reflecting all the accessible public fields of the class or interface represented by this Class object.'''
-    return clas.__javaclass__.getFields()
+    return clas.class_.getFields()[:]
 
 def getMethods(clas):
     '''Returns an array containing Method objects reflecting all the public member methods of the class or interface represented by this Class object, including those declared by the class or interface and those inherited from superclasses and superinterfaces.'''
-    return clas.__javaclass__.getMethods()
+    return clas.class_.getMethods()[:]
 
 def getModifiers(clas):
     '''Returns the Java language modifiers for this class or interface, encoded in an integer.'''
-    return clas.__javaclass__.getModifiers()
+    return clas.class_.getModifiers()

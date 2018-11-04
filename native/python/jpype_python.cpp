@@ -26,14 +26,9 @@
 PythonHostEnvironment* hostEnv;
 PyObject* convertToJValue(PyObject* self, PyObject* arg)
 {
-	if (! JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Java Subsystem not started");
-		return NULL;
-	}
-	JPLocalFrame frame;
-
 	try {
+		ASSERT_JVM_RUNNING("convertToJValue");
+		JPJavaFrame frame;
 		char* tname;
 		PyObject* value;
 
@@ -51,7 +46,7 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 		PyObject* res;
 		if (type->isObjectType())
 		{
-			pv->l = JPEnv::getJava()->NewGlobalRef(v.l);
+			pv->l = frame.NewGlobalRef(v.l);
 			res = JPyCObject::fromVoidAndDesc((void*)pv, "object jvalue", PythonHostEnvironment::deleteObjectJValueDestructor);
 		}
 		else
@@ -70,7 +65,8 @@ PyObject* convertToJValue(PyObject* self, PyObject* arg)
 PyObject* JPypeJavaProxy::createProxy(PyObject*, PyObject* arg)
 {
 	try {
-		JPLocalFrame frame;
+		ASSERT_JVM_RUNNING("createProxy");
+		JPJavaFrame frame;
 		JPCleaner cleaner;
 
 		PyObject* self;
@@ -121,7 +117,6 @@ static PyMethodDef jpype_methods[] =
   {"dumpJVMStats", (PyCFunction)&JPypeModule::dumpJVMStats, METH_NOARGS, ""},
   {"attachThreadAsDaemon", (PyCFunction)&JPypeModule::attachThreadAsDaemon, METH_NOARGS, ""},
   {"startReferenceQueue", &JPypeModule::startReferenceQueue, METH_VARARGS, ""},
-  {"stopReferenceQueue", (PyCFunction)&JPypeModule::stopReferenceQueue, METH_NOARGS, ""},
 
   {"createProxy", &JPypeJavaProxy::createProxy, METH_VARARGS, ""},
 
@@ -158,7 +153,6 @@ PyMODINIT_FUNC PyInit__jpype()
 PyMODINIT_FUNC init_jpype()
 #endif
 {
-	Py_Initialize();
 	PyEval_InitThreads();
 	  
 #if PY_MAJOR_VERSION >= 3
@@ -203,10 +197,10 @@ PyObject* detachRef(HostRef* ref)
 void JPypeJavaException::errorOccurred()
 {
 	TRACE_IN("PyJavaException::errorOccurred");
-	JPLocalFrame frame(8);
+	JPJavaFrame frame(8);
 	JPCleaner cleaner;
-	jthrowable th = JPEnv::getJava()->ExceptionOccurred();
-	JPEnv::getJava()->ExceptionClear();
+	jthrowable th = frame.ExceptionOccurred();
+	frame.ExceptionClear();
 
 	jclass ec = JPJni::getClass(th);
 	JPTypeName tn = JPJni::getName(ec);
