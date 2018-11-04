@@ -285,3 +285,70 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPIntArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.int)
+        jarr = jpype.JArray(jpype.JInt)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArrayFloat32(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float32)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArrayFloat64(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float64)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPFloatArrayInt(self):
+        import numpy as np
+        a = np.array([1,2,3],dtype=np.int32)
+        jarr = jpype.JArray(jpype.JFloat)(a)
+        print(a)
+        print(jarr)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetFromNPFloatArrayInt(self):
+        import numpy as np
+        a = np.array([1,2,3],np.int32)
+        jarr = jpype.JArray(jpype.JFloat)(len(a))
+        jarr[:] = a
+        self.assertCountEqual(a, jarr)
+
+    def testArrayCtor1(self):
+        jobject = jpype.JClass('java.lang.Object')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor2(self):
+        jobject = jpype.JClass('java.util.List')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor3(self):
+        jarray = jpype.JArray("java.lang.Object")
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))
+
+    def testArrayCtor4(self):
+        jarray = jpype.JArray(jpype.JObject)
+        self.assertTrue( isinstance(jarray, jpype._jarray._JavaArray))

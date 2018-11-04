@@ -39,7 +39,16 @@ try:
     from importlib.machinery import ModuleSpec as _ModuleSpec
     from types import ModuleType as _ModuleType
 except Exception:
-    raise ImportError("jpype.imports Not supported for Python 2")
+
+    # For Python2 compatiblity 
+    #  (Note: customizers are not supported)
+    class _ModuleSpec(object):
+        def __init__(self, name, loader):
+            self.name = name
+            self.loader = loader
+    _ModuleType = object
+
+import _jpype
 import sys as _sys
 import keyword as _keyword
 from ._jclass import JClass as _JClass
@@ -47,7 +56,6 @@ from ._jclass import _JavaClass as _JavaClass
 from ._core import registerJVMInitializer as _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
-_initialized = False
 _exportTypes = ()
 _modifier = None
 
@@ -98,43 +106,49 @@ def _copyStaticMethods(out, cls):
 # %% Customizer
 _CUSTOMIZERS = []
 
-def registerImportCustomizer(customizer):
-    """ Import customizers can be used to import python packages
-    into java modules automatically.
-    """
-    _CUSTOMIZERS.append(customizer)
-
-# Support hook for placing other things into the java tree
-class JImportCustomizer(object):
-    """ Base class for Import customizer.
-
-    Import customizers should implement canCustomize and getSpec.
-
-    Example:
-      | # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
-      | class SiteCustomizer(jpype.imports.JImportCustomizer):
-      |     def canCustomize(self, name):
-      |         if name.startswith('org.mysite') and name.endswith('.py'):
-      |             return True
-      |         return False
-      |     def getSpec(self, name):
-      |         pname = name[:-3]
-      |         devel = os.environ.get('DEVEL')
-      |         path = os.path.join(devel, pname,'py','__init__.py')
-      |         return importlib.util.spec_from_file_location(name, path)
-   """
-    def canCustomize(self, name):
-        """ Determine if this path is to be treated differently 
-
-        Return:
-            True if an alternative spec is required.
+if _sys.version_info > (3,):
+    def registerImportCustomizer(customizer):
+        """ Import customizers can be used to import python packages
+        into java modules automatically.
         """
-        return False
+        _CUSTOMIZERS.append(customizer)
 
-    def getSpec(self, name):
-        """ Get the module spec for this module. 
-        """
-        raise Exception
+    # Support hook for placing other things into the java tree
+    class JImportCustomizer(object):
+        """ Base class for Import customizer.
+
+        Import customizers should implement canCustomize and getSpec.
+
+        Example:
+          | # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
+          | class SiteCustomizer(jpype.imports.JImportCustomizer):
+          |     def canCustomize(self, name):
+          |         if name.startswith('org.mysite') and name.endswith('.py'):
+          |             return True
+          |         return False
+          |     def getSpec(self, name):
+          |         pname = name[:-3]
+          |         devel = os.environ.get('DEVEL')
+          |         path = os.path.join(devel, pname,'py','__init__.py')
+          |         return importlib.util.spec_from_file_location(name, path)
+       """
+        def canCustomize(self, name):
+            """ Determine if this path is to be treated differently 
+
+            Return:
+                True if an alternative spec is required.
+            """
+            return False
+
+        def getSpec(self, name):
+            """ Get the module spec for this module. 
+            """
+            raise NotImplementedError
+else:
+    def registerImportCustomizer(customizer):
+        raise NotImplementedError("Import customizers not implemented for Python 2.x")
+    JImportCustomizer = object
+
 
 # %% Import
 class _JImport(object):
@@ -250,8 +264,7 @@ class _JImportLoader:
 
     """ (internal) Loader hook for importlib. """
     def create_module(self, spec):
-        global _initialized
-        if not _initialized:
+        if not _jpype.isStarted():
             raise ImportError("Attempt to create java modules without jvm")
 
         # Handle creating the java name based on the path
@@ -276,6 +289,19 @@ class _JImportLoader:
 
     def exec_module(self, fullname):
         pass
+
+    # For compatablity with Python 2.7
+    def find_module(self, name, path=None):
+        parts = name.split('.', 1)
+        if not parts[0] in _JDOMAINS:
+            return None
+        return self
+
+    # For compatablity with Python 2.7
+    def load_module(self, name):
+        module = self.create_module(_ModuleSpec(name, self))
+        _sys.modules[name]=module
+        return module
 
 # Install hooks into python importlib
 _sys.meta_path.append(_JImportLoader())
@@ -303,9 +329,7 @@ registerDomain('org')
 # %% Initialize
 def _initialize():
     global _exportTypes
-    global _initialized 
     global _modifier
-    _initialized = True
     _JMethod = type(_JClass('java.lang.Class').forName)
     _modifier = _JClass('java.lang.reflect.Modifier')
     _exportTypes = (property, _JavaClass, _JImport, _JMethod)
