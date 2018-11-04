@@ -295,3 +295,31 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+
+    def testArrayCtor1(self):
+        jobject = jpype.JClass('java.lang.Object')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( issubclass(jarray, jpype.JArray))
+        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+
+    def testArrayCtor2(self):
+        jobject = jpype.JClass('java.util.List')
+        jarray = jpype.JArray(jobject)
+        self.assertTrue( issubclass(jarray, jpype.JArray))
+        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+
+    def testArrayCtor3(self):
+        jarray = jpype.JArray("java.lang.Object")
+        self.assertTrue( issubclass(jarray, jpype.JArray))
+        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+
+    def testArrayCtor4(self):
+        jarray = jpype.JArray(jpype.JObject)
+        self.assertTrue( issubclass(jarray, jpype.JArray))
+        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+
+    def testArrayCtor5(self):
+        jarray0 = jpype.JArray("java.lang.Object")
+        jarray = jpype.JArray(jarray0)
+        self.assertTrue( issubclass(jarray, jpype.JArray))
+        self.assertTrue( isinstance(jarray(10), jpype.JArray))
