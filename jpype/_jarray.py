@@ -90,6 +90,12 @@ class _JavaArrayClass(object):
         else:
             raise AttributeError("%s does not have field %s"%(self.__name__, attr), self)
 
+def _isIterable(obj):
+    if isinstance(obj, collections.Sequence):
+        return True
+    if hasattr(obj,'__len__') and hasattr(obj,'__iter__'):
+        return True
+    return False
 
 def _jarrayInit(self, *args):
     if len(args) == 2 and args[0] == _jclass._SPECIAL_CONSTRUCTOR_KEY:
@@ -100,7 +106,7 @@ def _jarrayInit(self, *args):
             .format(len(args) + 1))
     else:
         values = None
-        if isinstance(args[0], collections.Sequence):
+        if _isIterable(args[0]):
             sz = len(args[0])
             values = args[0]
         else:
