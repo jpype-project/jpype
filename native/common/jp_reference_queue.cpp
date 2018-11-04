@@ -20,13 +20,8 @@
 
 namespace
 { // impl detail
-	jclass s_ReferenceClass;
-	jmethodID s_ReferenceConstructorMethod;
-	jclass s_ReferenceQueueClass;
-	jmethodID s_ReferenceQueueConstructorMethod;
 	jmethodID s_ReferenceQueueRegisterMethod;
 	jmethodID s_ReferenceQueueStartMethod;
-	jmethodID s_ReferenceQueueRunMethod;
 	jmethodID s_ReferenceQueueStopMethod;
 
 	jobject s_ReferenceQueue;
@@ -54,32 +49,27 @@ void JPReferenceQueue::init()
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPReferenceQueue::init");
 
-	// build the proxy class ...
-	jobject cl = JPJni::getSystemClassLoader();
-	s_ReferenceClass = (jclass) frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReference", cl,
-			JPThunk::_jpype_ref_JPypeReference,
-			JPThunk::_jpype_ref_JPypeReference_size));
-	s_ReferenceQueueClass = (jclass) frame.NewGlobalRef(frame.DefineClass("jpype/ref/JPypeReferenceQueue", cl,
-			JPThunk::_jpype_ref_JPypeReferenceQueue,
-			JPThunk::_jpype_ref_JPypeReferenceQueue_size));
+	// build the ReferenceQueue class ...
+	jclass cls = JPClassLoader::findClass("org.jpype.ref.JPypeReferenceQueue");
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	s_ReferenceQueueConstructorMethod = frame.GetMethodID(s_ReferenceQueueClass, "<init>", "()V");
+	jmethodID ctor = frame.GetMethodID(cls, "<init>", "()V");
 
 	JNINativeMethod method2[1];
 	method2[0].name = (char*) "removeHostReference";
 	method2[0].signature = (char*) "(J)V";
 	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
 
-	frame.RegisterNatives(s_ReferenceQueueClass, method2, 1);
+	frame.RegisterNatives(cls, method2, 1);
+
+	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/ref/JPypeReferenceQueue;");
+	s_ReferenceQueue = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
 
 	// Get all required methods
-	s_ReferenceQueueRegisterMethod = frame.GetMethodID(s_ReferenceQueueClass, "registerRef", "(Ljpype/ref/JPypeReference;J)V");
-	s_ReferenceQueueStartMethod = frame.GetMethodID(s_ReferenceQueueClass, "startManaging", "()V");
-	s_ReferenceQueueRunMethod = frame.GetMethodID(s_ReferenceQueueClass, "run", "()V");
-	s_ReferenceQueueStopMethod = frame.GetMethodID(s_ReferenceQueueClass, "stop", "()V");
-	s_ReferenceConstructorMethod = frame.GetMethodID(s_ReferenceClass, "<init>", "(Ljava/lang/Object;Ljava/lang/ref/ReferenceQueue;)V");
+	s_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;J)V");
+	s_ReferenceQueueStartMethod = frame.GetMethodID(cls, "start", "()V");
+	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
 
 	JP_TRACE_OUT;
 }
@@ -91,15 +81,7 @@ void JPReferenceQueue::startJPypeReferenceQueue(bool useJavaThread)
 {
 	JP_TRACE_IN("JPReferenceQueue::startJPypeReferenceQueue");
 	JPJavaFrame frame;
-	s_ReferenceQueue = frame.NewGlobalRef(frame.NewObject(s_ReferenceQueueClass, s_ReferenceQueueConstructorMethod));
-	if (useJavaThread)
-	{
-		frame.CallVoidMethod(s_ReferenceQueue, s_ReferenceQueueStartMethod);
-	}
-	else
-	{
-		frame.CallVoidMethod(s_ReferenceQueue, s_ReferenceQueueRunMethod);
-	}
+	frame.CallVoidMethod(s_ReferenceQueue, s_ReferenceQueueStartMethod);
 	JP_TRACE_OUT;
 }
 
@@ -113,26 +95,16 @@ void JPReferenceQueue::shutdown()
 
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 {
-	JP_TRACE_IN("JPReferenceQueue::rregisterRef");
+	JP_TRACE_IN("JPReferenceQueue::registerRef");
 	JPJavaFrame frame;
 
 	// create the ref ...
 	jvalue args[2];
 	args[0].l = obj;
-	args[1].l = s_ReferenceQueue;
-
-	JP_TRACE("Create reference obj");
-	jobject refObj = frame.NewObjectA(s_ReferenceClass, s_ReferenceConstructorMethod, args);
-
-	args[0].l = refObj;
 	args[1].j = (jlong) hostRef;
 
 	// MATCH TO DECREF IN Java_jpype_ref_JPypeReferenceQueue_removeHostReference
 	Py_INCREF(hostRef);
-
-	JP_TRACE(s_ReferenceQueue);
-	JP_TRACE(s_ReferenceQueueRegisterMethod);
-	JP_TRACE(refObj);
 
 	JP_TRACE("Register reference");
 	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);

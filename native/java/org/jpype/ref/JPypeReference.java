@@ -1,39 +1,35 @@
-package jpype.ref;
+package org.jpype.ref;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 
-public class JPypeReference extends PhantomReference
+/**
+ * (internal) Reference to a PyObject*.
+ */
+class JPypeReference extends PhantomReference
 {
-  private long mHostReference;
+  long mHostReference;
 
-  public JPypeReference(Object arg0, ReferenceQueue arg1)
+  public JPypeReference(ReferenceQueue arg1, Object javaObject, long hostObject)
   {
-    super(arg0, arg1);
+    super(javaObject, arg1);
+    mHostReference = hostObject;
   }
 
-  long getHostReference()
-  {
-    return mHostReference;
-  }
-
-  void setHostReference(long aHostReference)
-  {
-    mHostReference = aHostReference;
-  }
-
+  @Override
   public int hashCode()
   {
     return (int) mHostReference;
   }
 
+  @Override
   public boolean equals(Object arg0)
   {
     if (!(arg0 instanceof JPypeReference))
     {
       return false;
     }
-    
+
     return ((JPypeReference) arg0).mHostReference == mHostReference;
   }
 }

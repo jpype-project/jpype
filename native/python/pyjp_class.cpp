@@ -117,11 +117,31 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 	{
 		ASSERT_JVM_RUNNING("PyJPClass::__init__");
 		JPJavaFrame frame;
-		char* cname;
-		PyArg_ParseTuple(args, "s", &cname);
-		JP_PY_CHECK();
-		ASSERT_NOT_NULL(cname);
-		JPClass* claz = JPTypeManager::findClass(cname);
+		JPPyTuple tuple(JPPyRef::_use, args);
+		if (tuple.size() != 1)
+		{
+			PyErr_SetString(PyExc_TypeError, "Classes must have one argument.");
+			return (-1);
+		}
+
+		JPClass* claz = NULL;
+		PyObject* arg0 = tuple.getItem(0);
+		JPValue* jpvalue = JPPythonEnv::getJavaValue(arg0);
+		if (jpvalue != NULL && jpvalue->getClass() == JPTypeManager::_java_lang_Class)
+		{
+			claz = JPTypeManager::findClass((jclass) jpvalue->getJavaObject());
+		}
+		else if (JPPyString::check(arg0))
+		{
+			string cname = JPPyString::asStringUTF8(arg0);
+			claz = JPTypeManager::findClass(cname);
+		}
+		else
+		{
+			PyErr_SetString(PyExc_TypeError, "Classes require str or java.lang.Class object.");
+			return (-1);
+		}
+
 		if (claz == NULL)
 		{
 			return -1;
