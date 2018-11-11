@@ -190,7 +190,7 @@ JPPyObject JPFloatType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, js
 void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPFloatType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT32,
 			&JPJavaFrame::SetFloatArrayRegion))
 		return;
 

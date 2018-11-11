@@ -176,7 +176,7 @@ JPPyObject JPLongType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsi
 void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPLongType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT64,
 			&JPJavaFrame::SetLongArrayRegion))
 		return;
 

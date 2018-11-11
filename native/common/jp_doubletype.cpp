@@ -176,7 +176,7 @@ JPPyObject JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, j
 void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_DOUBLE,
 			&JPJavaFrame::SetDoubleArrayRegion))
 		return;
 

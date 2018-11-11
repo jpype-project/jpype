@@ -94,8 +94,24 @@ public:
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool setRangeViaBuffer(JPJavaFrame& frame,
 		jarray array, int start, uint length,
-		PyObject* sequence, setFnc setter)
+		PyObject* sequence, int npy_type, setFnc setter)
 {
+#ifdef HAVE_NUMPY
+	JPPyObject ref;
+	// Arrays need to be checked
+	// FIXME This will still allow mismatched byte order and 
+	// irregular array types pass.  
+	if (PyArray_Check(sequence) && PyArray_TYPE(sequence) != npy_type)
+	{
+		// If we can't cast then fall back to standard methods
+		if (!PyArray_CanCastSafely(PyArray_TYPE(sequence), npy_type))
+			return false;
+
+		// Otherwise, create a casted array
+		sequence = PyArray_Cast((PyArrayObject*) sequence, npy_type);
+		ref = JPPyObject(JPPyRef::_call, sequence);
+	}
+#endif
 	JPPyMemoryViewAccessor accessor(sequence);
 	if (!accessor.valid())
 		return false;
