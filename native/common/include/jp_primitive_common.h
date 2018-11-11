@@ -114,7 +114,8 @@ inline bool setRangeViaBuffer(JPJavaFrame& frame,
 #else
 	// If we compile without numpy and then encounter numpy
 	// types we will incorrectly convert here.
-	return false;
+	if (strcmp(JPPyObject::getTypeName(sequence), "numpy.ndarray") == 0)
+		return false;
 #endif
 
 	JPPyMemoryViewAccessor accessor(sequence);
@@ -136,6 +137,7 @@ inline bool setRangeViaBuffer(JPJavaFrame& frame,
 }
 #else
 // Used only by Python 2.6
+
 template <typename a, typename b, typename c>
 bool setRangeViaBuffer(JPJavaFrame& frame, jarray, int, uint, PyObject*, int, c)
 {
