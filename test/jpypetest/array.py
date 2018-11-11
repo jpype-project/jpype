@@ -333,8 +333,6 @@ class ArrayTestCase(common.JPypeTestCase):
         import numpy as np
         a = np.array([1, 2, 3], dtype=np.int32)
         jarr = jpype.JArray(jpype.JFloat)(a)
-        print(a)
-        print(jarr)
         self.assertCountEqual(a, jarr)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
