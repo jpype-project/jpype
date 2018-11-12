@@ -167,7 +167,7 @@ JPPyObject JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, jsize star
 void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPBooleanType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_BOOL,
 			&JPJavaFrame::SetBooleanArrayRegion))
 		return;
 

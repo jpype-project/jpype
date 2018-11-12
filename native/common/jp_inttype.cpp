@@ -177,7 +177,7 @@ JPPyObject JPIntType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsiz
 void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
 	JP_TRACE_IN("JPIntType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT,
 			&JPJavaFrame::SetIntArrayRegion))
 		return;
 

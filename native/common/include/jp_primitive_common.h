@@ -94,8 +94,30 @@ public:
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool setRangeViaBuffer(JPJavaFrame& frame,
 		jarray array, int start, uint length,
-		PyObject* sequence, setFnc setter)
+		PyObject* sequence, int npy_type, setFnc setter)
 {
+#ifdef HAVE_NUMPY
+	JPPyObject ref;
+	// Arrays need to be checked
+	// FIXME This will still allow mismatched byte order and 
+	// irregular array types pass.  
+	if (PyArray_Check(sequence) && PyArray_TYPE(sequence) != npy_type)
+	{
+		// If we can't cast then fall back to standard methods
+		if (!PyArray_CanCastSafely(PyArray_TYPE(sequence), npy_type))
+			return false;
+
+		// Otherwise, create a casted array
+		sequence = PyArray_Cast((PyArrayObject*) sequence, npy_type);
+		ref = JPPyObject(JPPyRef::_call, sequence);
+	}
+#else
+	// If we compile without numpy and then encounter numpy
+	// types we will incorrectly convert here.
+	if (strcmp(JPPyObject::getTypeName(sequence), "numpy.ndarray") == 0)
+		return false;
+#endif
+
 	JPPyMemoryViewAccessor accessor(sequence);
 	if (!accessor.valid())
 		return false;
@@ -114,9 +136,10 @@ inline bool setRangeViaBuffer(JPJavaFrame& frame,
 	return true;
 }
 #else
+// Used only by Python 2.6
 
 template <typename a, typename b, typename c>
-bool setRangeViaBuffer(JPJavaFrame& frame, jarray, int, uint, PyObject*, c)
+bool setRangeViaBuffer(JPJavaFrame& frame, jarray, int, uint, PyObject*, int, c)
 {
 	return false;
 }

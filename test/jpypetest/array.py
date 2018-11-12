@@ -296,30 +296,77 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPIntArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.int)
+        jarr = jpype.JArray(jpype.JInt)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArray(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArrayFloat32(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float32)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPDoubleArrayFloat64(self):
+        import numpy as np
+        n = 100
+        a = np.random.random(n).astype(np.float64)
+        jarr = jpype.JArray(jpype.JDouble)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testInitFromNPFloatArrayInt(self):
+        import numpy as np
+        a = np.array([1, 2, 3], dtype=np.int32)
+        jarr = jpype.JArray(jpype.JFloat)(a)
+        self.assertCountEqual(a, jarr)
+
+    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testSetFromNPFloatArrayInt(self):
+        import numpy as np
+        a = np.array([1, 2, 3], np.int32)
+        jarr = jpype.JArray(jpype.JFloat)(len(a))
+        jarr[:] = a
+        self.assertCountEqual(a, jarr)
+
     def testArrayCtor1(self):
         jobject = jpype.JClass('java.lang.Object')
         jarray = jpype.JArray(jobject)
-        self.assertTrue( issubclass(jarray, jpype.JArray))
-        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+        self.assertTrue(issubclass(jarray, jpype.JArray))
+        self.assertTrue(isinstance(jarray(10), jpype.JArray))
 
     def testArrayCtor2(self):
         jobject = jpype.JClass('java.util.List')
         jarray = jpype.JArray(jobject)
-        self.assertTrue( issubclass(jarray, jpype.JArray))
-        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+        self.assertTrue(issubclass(jarray, jpype.JArray))
+        self.assertTrue(isinstance(jarray(10), jpype.JArray))
 
     def testArrayCtor3(self):
         jarray = jpype.JArray("java.lang.Object")
-        self.assertTrue( issubclass(jarray, jpype.JArray))
-        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+        self.assertTrue(issubclass(jarray, jpype.JArray))
+        self.assertTrue(isinstance(jarray(10), jpype.JArray))
 
     def testArrayCtor4(self):
         jarray = jpype.JArray(jpype.JObject)
-        self.assertTrue( issubclass(jarray, jpype.JArray))
-        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+        self.assertTrue(issubclass(jarray, jpype.JArray))
+        self.assertTrue(isinstance(jarray(10), jpype.JArray))
 
     def testArrayCtor5(self):
         jarray0 = jpype.JArray("java.lang.Object")
         jarray = jpype.JArray(jarray0)
-        self.assertTrue( issubclass(jarray, jpype.JArray))
-        self.assertTrue( isinstance(jarray(10), jpype.JArray))
+        self.assertTrue(issubclass(jarray, jpype.JArray))
+        self.assertTrue(isinstance(jarray(10), jpype.JArray))
