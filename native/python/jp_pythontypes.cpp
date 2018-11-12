@@ -241,11 +241,30 @@ JPPyObject JPPyLong::fromLong(jlong l)
 
 bool JPPyLong::check(PyObject* obj)
 {
-#if PY_MAJOR_VERSION < 3 || LONG_MAX > 2147483647
-	return PyInt_Check(obj) || PyLong_Check(obj);
-#else
+#if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj);
+#else
+	return PyInt_Check(obj)
+			|| PyLong_Check(obj);
 #endif
+}
+
+bool JPPyLong::checkConvertable(PyObject* obj)
+{
+#if PY_MAJOR_VERSION >= 3
+	return PyLong_Check(obj)
+			|| PyObject_HasAttrString(obj, "__int__");
+#else
+	return PyInt_Check(obj)
+			|| PyLong_Check(obj)
+			|| PyObject_HasAttrString(obj, "__int__")
+			|| PyObject_HasAttrString(obj, "__long__");
+#endif
+}
+
+bool JPPyLong::checkIndexable(PyObject* obj)
+{
+	return PyObject_HasAttrString(obj, "__index__");
 }
 
 jlong JPPyLong::asLong(PyObject* obj)
@@ -278,6 +297,11 @@ JPPyObject JPPyFloat::fromDouble(jdouble l)
 bool JPPyFloat::check(PyObject* obj)
 {
 	return PyFloat_Check(obj);
+}
+
+bool JPPyFloat::checkConvertable(PyObject* obj)
+{
+	return PyFloat_Check(obj) || PyObject_HasAttrString(obj, "__float__");
 }
 
 jdouble JPPyFloat::asDouble(PyObject* obj)
@@ -325,7 +349,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 bool JPPyString::checkCharUTF16(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPPyString::checkCharUTF16");
-	if (JPPyInt::check(pyobj) || JPPyLong::check(pyobj))
+	if (JPPyLong::checkConvertable(pyobj))
 		return true;
 #if PY_MAJOR_VERSION < 3
 	if (PyUnicode_Check(pyobj))
@@ -344,7 +368,7 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 
 jchar JPPyString::asCharUTF16(PyObject* pyobj)
 {
-	if (JPPyInt::check(pyobj) || JPPyLong::check(pyobj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
 		jlong val = JPPyLong::asLong(pyobj);
 		if (val < 0 || val > 65535)

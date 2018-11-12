@@ -69,17 +69,18 @@ JPMatch::Type JPLongType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	// FIXME this logic is screwy as it implies that 
-	// only python 3 can hit an exact.  Thus either all
-	// integer types should be exact or none of them.
-	if (JPPyInt::check(obj))
+	if (JPPyLong::check(obj))
 	{
 		return JPMatch::_implicit;
 	}
 
-	if (JPPyLong::check(obj))
+	if (JPPyLong::checkConvertable(obj))
 	{
-		return JPMatch::_exact;
+		// If it has integer operations then we will call it an int
+		if (JPPyLong::checkIndexable(obj))
+			return JPMatch::_implicit;
+		else
+			return JPMatch::_explicit;
 	}
 
 	return JPMatch::_none;
@@ -102,12 +103,7 @@ jvalue JPLongType::convertToJava(PyObject* obj)
 		}
 		JP_RAISE_TYPE_ERROR("Cannot convert value to Java long");
 	}
-	else if (JPPyInt::check(obj))
-	{
-		field(res) = (type_t) JPPyInt::asInt(obj);
-		return res;
-	}
-	else if (JPPyLong::check(obj))
+	else if (JPPyLong::checkConvertable(obj))
 	{
 		field(res) = (type_t) JPPyLong::asLong(obj);
 		return res;

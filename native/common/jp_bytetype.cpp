@@ -90,9 +90,18 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	if (JPPyInt::check(obj) || JPPyLong::check(obj))
+	if (JPPyLong::check(obj))
 	{
 		return JPMatch::_implicit;
+	}
+
+	if (JPPyLong::checkConvertable(obj))
+	{
+		// If it has integer operations then we will call it an int
+		if (JPPyLong::checkIndexable(obj))
+			return JPMatch::_implicit;
+		else
+			return JPMatch::_explicit;
 	}
 
 	return JPMatch::_none;
@@ -101,6 +110,7 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 jvalue JPByteType::convertToJava(PyObject* obj)
 {
 	jvalue res;
+	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
 	{
@@ -112,14 +122,9 @@ jvalue JPByteType::convertToJava(PyObject* obj)
 		{
 			return getValueFromObject(value->getJavaObject());
 		}
-		JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
+		JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
 	}
-	else if (JPPyInt::check(obj))
-	{
-		field(res) = (type_t) assertRange(JPPyInt::asInt(obj));
-		return res;
-	}
-	else if (JPPyLong::check(obj))
+	else if (JPPyLong::checkConvertable(obj))
 	{
 		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
 		return res;

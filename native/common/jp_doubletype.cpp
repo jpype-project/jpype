@@ -72,7 +72,8 @@ JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
 	}
 
 	// Java allows conversion to any type with a longer range even if lossy
-	if (JPPyInt::check(obj) || JPPyLong::check(obj))
+	// Does it quack?
+	if (JPPyFloat::checkConvertable(obj))
 	{
 		return JPMatch::_implicit;
 	}
@@ -102,14 +103,14 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 		field(res) = (type_t) JPPyFloat::asDouble(obj);
 		return res;
 	}
-	else if (JPPyInt::check(obj))
-	{
-		field(res) = JPPyInt::asInt(obj);
-		return res;
-	}
 	else if (JPPyLong::check(obj))
 	{
 		field(res) = (type_t) JPPyLong::asLong(obj);
+		return res;
+	}
+	else if (JPPyObject::hasAttrString(obj, "__float__"))
+	{
+		field(res) = (type_t) JPPyFloat::asDouble(obj);
 		return res;
 	}
 

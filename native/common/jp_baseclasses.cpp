@@ -62,27 +62,15 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	}
 
 	// Let'a allow primitives (int, long, float and boolean) to convert implicitly too ...
-	if (JPPyInt::check(pyobj))
-	{
-		JP_TRACE("implicit int");
-		return JPMatch::_implicit;
-	}
-
-	if (JPPyLong::check(pyobj))
-	{
-		JP_TRACE("implicit long");
-		return JPMatch::_implicit;
-	}
-
-	if (JPPyFloat::check(pyobj))
+	if (JPPyFloat::checkConvertable(pyobj))
 	{
 		JP_TRACE("implicit float");
 		return JPMatch::_implicit;
 	}
 
-	if (JPPyBool::check(pyobj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
-		JP_TRACE("implicit boolean");
+		JP_TRACE("implicit long");
 		return JPMatch::_implicit;
 	}
 
@@ -139,14 +127,30 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	if (JPPyInt::check(pyobj) || JPPyLong::check(pyobj))
+	if (JPPyFloat::check(pyobj))
+	{
+		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
+		res.l = frame.keep(res.l);
+		return res;
+	}
+
+	if (JPPyLong::check(pyobj))
 	{
 		res = JPTypeManager::_long->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
 
-	if (JPPyFloat::check(pyobj))
+	// It is only an integer type if it can be used as a slice PEP-357
+	if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
+	{
+		res = JPTypeManager::_long->getBoxedClass()->convertToJava(pyobj);
+		res.l = frame.keep(res.l);
+		return res;
+	}
+
+	// Okay so if it does not have bit operations we will go to float
+	if (JPPyFloat::checkConvertable(pyobj))
 	{
 		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);

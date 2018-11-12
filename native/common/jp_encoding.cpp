@@ -47,6 +47,7 @@ JPEncoding::~JPEncoding()
 
 // char* to stream from
 // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char
+
 struct membuf : std::streambuf
 {
 
@@ -60,6 +61,7 @@ struct membuf : std::streambuf
 // Currently we use this to transcribe from utf-8 to java-utf-8 and back.
 // It could do other encodings, but would need to be generalized to
 // a template to handle wider character sets.
+
 std::string transcribe(const char* in, size_t len,
 		const JPEncoding& sourceEncoding,
 		const JPEncoding& targetEncoding)
@@ -134,6 +136,7 @@ std::string transcribe(const char* in, size_t len,
 // the byte position, then shifting to get the lowest bits, the masking
 // off the required bits.
 //
+
 void JPEncodingUTF8::encode(std::ostream& out, unsigned int c) const
 {
 	if (c < 0x80)
@@ -171,6 +174,7 @@ void JPEncodingUTF8::encode(std::ostream& out, unsigned int c) const
 // top of the byte, then pull off the encoded bits.  The
 // final code point is the sum of each set of encoded bits.
 //
+
 unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 {
 	unsigned int c0 = in.get();
@@ -292,6 +296,7 @@ unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 // 4 byte unicode or coding a 3 point in the invalid range followed by anything other
 // than 3 byte encoding (in the invalid range) is a coding error.
 //
+
 void JPEncodingJavaUTF8::encode(std::ostream& out, unsigned int c) const
 {
 	if (c == 0)
@@ -349,6 +354,7 @@ void JPEncodingJavaUTF8::encode(std::ostream& out, unsigned int c) const
 // java encoder it will be valid.  However, a user could
 // manually encode a string with an invalid coding.
 //
+
 unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 {
 	unsigned int out = 0;

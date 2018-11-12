@@ -71,11 +71,21 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
+	if (JPPyBool::check(obj))
+	{
+		return JPMatch::_exact;
+	}
+
 	// Java does not consider ints to be bools, but we may need
 	// it when returning from a proxy.
-	if (JPPyInt::check(obj) || JPPyLong::check(obj))
+	if (JPPyLong::checkConvertable(obj))
 	{
-		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit
+		// If it implements logical operations it is an integer type
+		if (JPPyLong::checkIndexable(obj))
+			return JPMatch::_implicit;
+			// Otherwise it may be a float or list.  
+		else
+			return JPMatch::_explicit;
 	}
 
 	return JPMatch::_none;
@@ -97,13 +107,9 @@ jvalue JPBooleanType::convertToJava(PyObject* obj)
 			return getValueFromObject(value->getJavaObject());
 		}
 	}
-	else if (JPPyLong::check(obj))
+	else if (JPPyLong::checkConvertable(obj))
 	{
-		res.z = (jboolean) JPPyLong::asLong(obj);
-	}
-	else
-	{
-		res.z = (jboolean) JPPyInt::asInt(obj);
+		res.z = (jboolean) JPPyLong::asLong(obj) != 0;
 	}
 	return res;
 }
