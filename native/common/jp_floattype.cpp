@@ -74,7 +74,7 @@ JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
 	}
 
 	// Java allows conversion to any type with a longer range even if lossy
-	if (JPPyInt::check(obj) || JPPyLong::check(obj))
+	if (JPPyFloat::checkConvertable(obj))
 	{
 		return JPMatch::_implicit;
 	}
@@ -100,7 +100,7 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 
 		JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
 	}
-	else if (JPPyFloat::check(obj))
+	else if (JPPyFloat::checkConvertable(obj))
 	{
 		double l = JPPyFloat::asDouble(obj);
 		// FIXME the check for s_minFloat seems wrong.
@@ -116,12 +116,10 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 		res.f = (jfloat) l;
 		return res;
 	}
-	else if (JPPyInt::check(obj))
-	{
-		field(res) = (type_t) JPPyInt::asInt(obj);
-		return res;
-	}
-	else if (JPPyLong::check(obj))
+		// We should never reach here as an int because we should
+		// have hit the float conversion.  But we are leaving it for the odd
+		// duck with __int__ but no __float__
+	else if (JPPyLong::checkConvertable(obj))
 	{
 		field(res) = (type_t) JPPyLong::asLong(obj);
 		return res;

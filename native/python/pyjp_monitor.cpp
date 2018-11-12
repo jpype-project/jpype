@@ -149,7 +149,7 @@ PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
 	{
 		ASSERT_JVM_RUNNING("PyJPMonitor::__enter__");
 		self->m_Monitor->enter();
-                Py_RETURN_NONE;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 	return NULL;
@@ -161,7 +161,7 @@ PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
 	{
 		ASSERT_JVM_RUNNING("PyJPMonitor::__exit__");
 		self->m_Monitor->exit();
-                Py_RETURN_NONE;
+		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH
 	return NULL;

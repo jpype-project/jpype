@@ -247,6 +247,14 @@ namespace JPPyInt
 namespace JPPyLong
 {
 	bool check(PyObject* obj);
+	bool checkConvertable(PyObject* obj);
+
+	/** Check if this is really an integer type or just can be converted to.  
+	 * 
+	 * PEP-357 says __index__ is defined if we can use it as an array slice. 
+	 * Only integer types can do that.
+	 */
+	bool checkIndexable(PyObject* obj);
 	jlong asLong(PyObject* obj);
 	JPPyObject fromLong(jlong l);
 }
@@ -255,6 +263,7 @@ namespace JPPyLong
 namespace JPPyFloat
 {
 	bool check(PyObject* obj);
+	bool checkConvertable(PyObject* obj);
 	jdouble asDouble(PyObject* obj);
 	jfloat asFloat(PyObject* obj);
 
