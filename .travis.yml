@@ -40,7 +40,8 @@ matrix:
       env: NUMPY="--global-option=--disable-numpy"
   
 install:
-  - pip install . $NUMPY
+  - python setup.py sdist
+  - pip install dist/* $NUMPY
   - pip install -r test-requirements.txt
   - ant -f test/build.xml
 
