@@ -39,14 +39,14 @@ $EASYINSTALL mock
 
 # Check versions
 echo "==== Check versions"
-"$ANT_HOME"/bin/ant -version
+"$ANT_HOME/bin/ant" -version
 $PYTHON --version
-$JAVA_HOME/bin/java.exe -version
+"$JAVA_HOME/bin/java.exe" -version
 
 echo "==== Check architectures"
 file -L `which $PYTHON`
-file -L $JAVA_HOME/bin/java.exe
-file -L `find $JAVA_HOME -name "jvm.dll"`
+file -L "$JAVA_HOME/bin/java.exe"
+file -L `find "$JAVA_HOME" -name "jvm.dll"`
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
@@ -57,7 +57,7 @@ $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
 echo "==== Build test"
-"$ANT_HOME"/bin/ant -f test/build.xml
+"$ANT_HOME/bin/ant" -f test/build.xml
 
 # Install the package
 echo "==== Build module"
