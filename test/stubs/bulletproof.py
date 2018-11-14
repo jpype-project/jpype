@@ -1,3 +1,8 @@
+# This is an outdated test that hit each entry point in the 
+# _jpype module and tested if the module response properly to 
+# an attempt to call without the jvm running.  We can't
+# run this in our testbench as it requires that the 
+# jvm is not running.
 import unittest
 import jpype
 import _jpype
