@@ -15,4 +15,4 @@ ant.exe -f test\\build.xml
 # Build the compiled extension and run the project tests
 python.exe setup.py bdist_wheel
 dir .\dist
-pip install --upgrade .\dist\*.whl
+Get-ChildItem -File -Path .\dist\*.whl | Foreach {pip install --upgrade $_.fullname}
