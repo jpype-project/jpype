@@ -7,7 +7,9 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 # compiled extensions and are not provided as pre-built wheel packages,
 # pip will build them from source using the MSVC compiler matching the
 # target Python version and architecture
-pip.exe install nose setuptools -r test-requirements.txt
+pip.exe install --upgrade setuptools nose setuptools -r test-requirements.txt
+pip install --upgrade setuptools_scm
+pip install --upgrade git+https://github.com/pypa/pip.git git+https://github.com/pypa/wheel.git
 #pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
 ant.exe -f test\\build.xml
