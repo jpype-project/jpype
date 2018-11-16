@@ -14,4 +14,4 @@ ant.exe -f test\\build.xml
 
 # Build the compiled extension and run the project tests
 python.exe setup.py bdist_wheel
-pip install --upgrade .\dist\*.whl
+pip install --upgrade \\dist\\*.whl
