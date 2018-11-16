@@ -36,6 +36,9 @@ echo "==== get modules"
 $EASYINSTALL pip
 $EASYINSTALL mock
 #$PIP install mock
+$PYTHON -m pip install --upgrade setuptools
+$PYTHON -m pip install --upgrade setuptools_scm
+$PYTHON -m pip install --upgrade git+https://github.com/pypa/pip.git git+https://github.com/pypa/wheel.git
 
 # Check versions
 echo "==== Check versions"
