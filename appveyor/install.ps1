@@ -1,4 +1,6 @@
-v# Check that we have the expected version and architecture for Python
+set PATH=%PATH%;%PYTHON%
+
+# Check that we have the expected version and architecture for Python
 ant.exe -version
 python.exe --version
 python.exe -c "import struct; print(struct.calcsize('P') * 8)"
