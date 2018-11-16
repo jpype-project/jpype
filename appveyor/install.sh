@@ -61,7 +61,8 @@ echo "==== Build test"
 
 # Install the package
 echo "==== Build module"
-$PYTHON setup.py install
+$PYTHON ./setup.py bdist_wheel
+$PYTHON -m pip install --upgrade ./dist/*.whl
 
 echo "==== Verify jvm.dll found"
 $PYTHON -c "import jpype; print(jpype.getDefaultJVMPath())"
