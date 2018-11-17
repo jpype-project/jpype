@@ -42,14 +42,6 @@ environment:
     #      ARCH: x86_64 
     #      CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Python26"
-      ARCH: x86
-      CONDA_PY: "2.6"
-
-    - PYTHON: "C:\\Python26-x64"
-      ARCH: x86_64
-      PY: "2.6"
-
     - PYTHON: "C:\\Miniconda"
       ARCH: x86
       CONDA_PY: "2-latest"
@@ -143,3 +135,7 @@ on_finish:
 #
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+artifacts:
+  - path: 'dist\*.whl'
+    name:  wheels
