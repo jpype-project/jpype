@@ -16,8 +16,10 @@ if ($env:CONDA_PY -eq "3.4.3"){
 }
 
 git clone --depth=1 https://github.com/pypa/setuptools.git
-python .\setuptools\bootstrap.py
-python -m pip install --upgrade .\setuptools
+cd setuptools
+python .\bootstrap.py
+python -m pip install --upgrade .\
+cd ..
 
 git clone --depth=1 https://github.com/pypa/wheel.git
 python -m pip install --upgrade .\wheel
