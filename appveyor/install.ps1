@@ -10,10 +10,7 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 # pip will build them from source using the MSVC compiler matching the
 # target Python version and architecture
 
-#seem like pip is not installed in 3.4 
-if ($env:CONDA_PY -eq "3.4.3"){
-   (Invoke-WebRequest https://bootstrap.pypa.io/get-pip.py).Content | python
-}
+#seem like pip is not installed in 3.4
 
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
@@ -26,6 +23,7 @@ python -m pip install --upgrade .\wheel
 
 git clone --depth=1 https://github.com/pypa/pip.git
 python -m pip install --upgrade .\pip
+
 Remove-Item .\pip -Force -Recurse
 Remove-Item .\setuptools -Force -Recurse
 Remove-Item .\wheel -Force -Recurse
