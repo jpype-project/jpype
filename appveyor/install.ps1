@@ -19,7 +19,7 @@ git clone --depth=1 https://github.com/pypa/setuptools.git
 python .\setuptools\bootstrap.py
 python -m pip install --upgrade .\setuptools
 
-git clone --depth=1 git+https://github.com/pypa/wheel.git
+git clone --depth=1 https://github.com/pypa/wheel.git
 python -m pip install --upgrade .\wheel
 
 git clone --depth=1 https://github.com/pypa/pip.git
