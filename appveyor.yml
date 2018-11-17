@@ -61,7 +61,7 @@ environment:
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin"
       ARCH: x86
-      CYGSH: C:\Cygwin64\bin\bash -c
+      CYGSH: C:\Cygwin\bin\bash -c
 
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin64"
