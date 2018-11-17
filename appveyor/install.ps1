@@ -19,10 +19,10 @@ python .\setup.py install
 cd ..
 
 git clone --depth=1 https://github.com/pypa/wheel.git
-python -m pip install --upgrade .\wheel
+python .\wheel\setup.py install
 
 git clone --depth=1 https://github.com/pypa/pip.git
-python -m pip install --upgrade .\pip
+python .\pip\setup.py install
 
 Remove-Item .\pip -Force -Recurse
 Remove-Item .\setuptools -Force -Recurse
