@@ -43,7 +43,7 @@ environment:
     #      CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Python26"
-      ARCH: i686
+      ARCH: x86
       CONDA_PY: "2.6"
 
     - PYTHON: "C:\\Python26-x64"
@@ -51,7 +51,7 @@ environment:
       PY: "2.6"
 
     - PYTHON: "C:\\Miniconda"
-      ARCH: i686
+      ARCH: x86
       CONDA_PY: "2-latest"
 
     - PYTHON: "C:\\Miniconda-x64"
@@ -60,7 +60,7 @@ environment:
 
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin"
-      ARCH: i686
+      ARCH: x86
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "python3"
@@ -69,7 +69,7 @@ environment:
       CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Miniconda3"
-      ARCH: i686
+      ARCH: x86
       CONDA_PY: "3-latest"
 
     - PYTHON: "C:\\Miniconda3-x64"
@@ -82,7 +82,7 @@ environment:
 
     - PYTHON: "C:\\Miniconda34"
       CONDA_PY: "3.4.3"
-      ARCH: i686
+      ARCH: x86
 
     - PYTHON: "C:\\Miniconda35-x64"
       CONDA_PY: "3.5.2"
@@ -90,7 +90,7 @@ environment:
 
     - PYTHON: "C:\\Miniconda35"
       CONDA_PY: "3.5.2"
-      ARCH: i686
+      ARCH: x86
 
     - PYTHON: "C:\\Miniconda36-x64"
       CONDA_PY: "3.6.5"
@@ -98,7 +98,7 @@ environment:
 
     - PYTHON: "C:\\Miniconda36"
       CONDA_PY: "3.6.5"
-      ARCH: i686
+      ARCH: x86
 
     - PYTHON: "C:\\Miniconda37-x64"
       CONDA_PY: "3.7"
@@ -106,7 +106,7 @@ environment:
 
     - PYTHON: "C:\\Miniconda37"
       CONDA_PY: "3.7"
-      ARCH: i686
+      ARCH: x86
 
 install:
   # Force java to be installed where JAVA_HOME points
