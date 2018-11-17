@@ -12,13 +12,14 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 
 #seem like pip is not installed in 3.4 
 if ($env:CONDA_PY -eq "3.4.3"){
-   curl https://bootstrap.pypa.io/get-pip.py | python
+   wget https://bootstrap.pypa.io/get-pip.py
+   python .\get-pip.py
 }
 
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
 python .\bootstrap.py
-python -m pip install --upgrade .\
+python .\setup.py install
 cd ..
 
 git clone --depth=1 https://github.com/pypa/wheel.git
