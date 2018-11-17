@@ -1,4 +1,4 @@
-set PATH=%PATH%;%PYTHON%
+$env:Path += ";"+$env:PYTHON
 
 # Check that we have the expected version and architecture for Python
 ant.exe -version
