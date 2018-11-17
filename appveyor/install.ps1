@@ -12,8 +12,7 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 
 #seem like pip is not installed in 3.4 
 if ($env:CONDA_PY -eq "3.4.3"){
-   wget https://bootstrap.pypa.io/get-pip.py
-   python .\get-pip.py
+   (Invoke-WebRequest https://bootstrap.pypa.io/get-pip.py).Content | python
 }
 
 git clone --depth=1 https://github.com/pypa/setuptools.git
