@@ -11,7 +11,7 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 # target Python version and architecture
 
 #seem like pip is not installed in 3.4 
-if ($env:CONDA_PY=="4.4.3"){
+if ($env:CONDA_PY -eq "4.4.3"){
    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py | python
 }
 
