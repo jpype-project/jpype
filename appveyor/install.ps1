@@ -28,11 +28,14 @@ cd pip
 python .\setup.py install
 cd ..
 
+git clone --depth=1 git+https://github.com/pypa/setuptools_scm.git
+pip install --upgrade ./setuptools_scm
+
 Remove-Item .\pip -Force -Recurse
 Remove-Item .\setuptools -Force -Recurse
 Remove-Item .\wheel -Force -Recurse
+Remove-Item .\setuptools_scm -Force -Recurse
 
-pip install --upgrade git+https://github.com/pypa/setuptools_scm.git
 pip install --upgrade nose -r test-requirements.txt
 #pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
