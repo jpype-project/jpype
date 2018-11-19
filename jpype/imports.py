@@ -96,7 +96,7 @@ def _getStaticMethods(cls):
     for u in cls.class_.getMethods():
         if not _modifier.isStatic(u.getModifiers()):
             continue
-        name = _keywordWrap(u.getName())
+        name = _keywordWrap(str(u.getName()))
         static[name] = getattr(cls, name)
     return static
 
