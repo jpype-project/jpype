@@ -4,21 +4,11 @@ import glob as _glob
 
 __all__ = ['addClassPath', 'getClassPath']
 
-_CLASSPATHS = set()
+_CLASSPATHS = []
 _SEP = _os.path.pathsep
 if _sys.platform == 'cygwin':
     _SEP = ';'
 
-
-def _init():
-    global _CLASSPATHS
-    global _SEP
-    classpath = _os.environ.get("CLASSPATH")
-    if classpath:
-        _CLASSPATHS |= set(classpath.split(_SEP))
-
-
-_init()
 
 # Cygwin needs to convert to windows paths
 if _sys.platform == 'cygwin':
@@ -61,21 +51,32 @@ if _sys.platform == 'cygwin':
 def addClassPath(path1):
     """ Add a path to the java class path"""
     global _CLASSPATHS
+
     path1 = _os.path.abspath(path1)
     if _sys.platform == 'cygwin':
         path1 = _posix2win(path1)
-    _CLASSPATHS.add(str(path1))
+    _CLASSPATHS.append(str(path1))
 
 
-def getClassPath():
+def getClassPath(env=True):
     """ Get the full java class path.
 
     Includes user added paths and the environment CLASSPATH.
+
+    Arguments:
+      env(bool): If true then environment is included. (default True)
     """
     global _CLASSPATHS
     global _SEP
+
+    # Merge the evironment path
+    classPath = list(_CLASSPATHS)
+    envPath = _os.environ.get("CLASSPATH")
+    if env and envPath:
+        classPath.extend(envPath.split(_SEP))
+
     out = []
-    for path in _CLASSPATHS:
+    for path in classPath:
         if path == '':
             continue
         if path.endswith('*'):
@@ -86,6 +87,3 @@ def getClassPath():
         else:
             out.append(path)
     return _SEP.join(out)
-
-
-# print(getClassPath())
