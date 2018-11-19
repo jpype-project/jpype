@@ -189,7 +189,7 @@ class _JImport(object):
             return jtype
 
         # If the java class does not exist, throw a ClassNotFound exception
-        raise Exception("Unable to find java class " + jname)
+        raise ImportError("Unable to find java class " + jname)
 
     def __setattr__(self, name, value):
         if name.startswith('__'):
