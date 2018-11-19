@@ -38,12 +38,18 @@ $EASYINSTALL mock
 #$PIP install mock
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
-python ./bootstrap.py
+$PYTHON ./bootstrap.py
 $PYTHON -m pip install ./
 cd ..
 rm -r ./setuptools
 
-$PYTHON -m pip install --upgrade git+https://github.com/pypa/pip.git git+https://github.com/pypa/wheel.git git+https://github.com/pypa/setuptools_scm.git
+git clone --depth=1 https://github.com/pypa/wheel.git
+git clone --depth=1 https://github.com/pypa/pip.git
+git clone --depth=1 https://github.com/pypa/setuptools_scm.git
+
+
+$PYTHON -m pip install --upgrade ./pip ./wheel ./setuptools_scm
+rm -r ./pip ./wheel ./setuptools_scm
 
 # Check versions
 echo "==== Check versions"
