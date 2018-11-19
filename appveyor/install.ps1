@@ -28,7 +28,7 @@ cd pip
 python .\setup.py install
 cd ..
 
-git clone --depth=1 git+https://github.com/pypa/setuptools_scm.git
+git clone --depth=1 https://github.com/pypa/setuptools_scm.git
 pip install --upgrade ./setuptools_scm
 
 Remove-Item .\pip -Force -Recurse
