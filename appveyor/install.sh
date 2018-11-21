@@ -36,20 +36,6 @@ echo "==== get modules"
 $EASYINSTALL pip
 $EASYINSTALL mock
 #$PIP install mock
-git clone --depth=1 https://github.com/pypa/setuptools.git
-cd setuptools
-$PYTHON ./bootstrap.py
-$PYTHON -m pip install ./
-cd ..
-rm -r ./setuptools
-
-git clone --depth=1 https://github.com/pypa/wheel.git
-git clone --depth=1 https://github.com/pypa/pip.git
-git clone --depth=1 https://github.com/pypa/setuptools_scm.git
-
-
-$PYTHON -m pip install --upgrade ./pip ./wheel ./setuptools_scm
-rm -r ./pip ./wheel ./setuptools_scm
 
 # Check versions
 echo "==== Check versions"
@@ -75,8 +61,7 @@ echo "==== Build test"
 
 # Install the package
 echo "==== Build module"
-$PYTHON ./setup.py bdist_wheel
-$PYTHON -m pip install --upgrade ./dist/*.whl
+$PYTHON setup.py install
 
 echo "==== Verify jvm.dll found"
 $PYTHON -c "import jpype; print(jpype.getDefaultJVMPath())"
