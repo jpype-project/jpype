@@ -41,30 +41,59 @@ environment:
     #      CYGWIN: "C:\\cygwin64"
     #      ARCH: x86_64 
     #      CYGSH: C:\Cygwin64\bin\bash -c
-    
+
+    - PYTHON: "C:\\Miniconda"
+      ARCH: x86
+      CONDA_PY: "2-latest"
+
+    - PYTHON: "C:\\Miniconda-x64"
+      ARCH: x86_64
+      CONDA_PY: "2-latest"
+
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin64"
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Miniconda"
-      CONDA_PY: "2.7"
-
-    - PYTHON: "C:\\Miniconda-x64"
-      CONDA_PY: "2.7"
-      ARCH: "64"
-
     - PYTHON: "C:\\Miniconda3"
-      CONDA_PY: "3.5"
+      ARCH: x86
+      CONDA_PY: "3-latest"
 
     - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
+      CONDA_PY: "3-latest"
+      ARCH: x86_64
 
-    - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
-      NUMPY_: "python"
+    - PYTHON: "C:\\Miniconda34-x64"
+      CONDA_PY: "3.4.3"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda34"
+      CONDA_PY: "3.4.3"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda35-x64"
+      CONDA_PY: "3.5.2"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda35"
+      CONDA_PY: "3.5.2"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda36-x64"
+      CONDA_PY: "3.6.5"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda36"
+      CONDA_PY: "3.6.5"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda37-x64"
+      CONDA_PY: "3.7"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda37"
+      CONDA_PY: "3.7"
+      ARCH: x86
 
 install:
   # Force java to be installed where JAVA_HOME points
@@ -101,3 +130,7 @@ on_finish:
 #
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+artifacts:
+  - path: 'dist\*.whl'
+    name:  wheels

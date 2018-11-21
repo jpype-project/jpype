@@ -19,7 +19,7 @@ setup(
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
     maintainer_email='cooperate@originell.org',
-    url='https://github.com/originell/jpype/',
+    url='https://github.com/jpype-project/jpype',
     platforms=[
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows :: Windows 7',
@@ -50,4 +50,5 @@ setup(
     zip_safe=False,
     ext_modules=[jpypeLib],
     distclass=setupext.dist.Distribution,
+    use_scm_version = True,
 )
