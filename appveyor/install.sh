@@ -29,7 +29,7 @@ fi
 
 # Install prereqs
 echo "==== update gcc"
-$SETUP -q -P gcc-core,gcc-g++
+$SETUP -q -P gcc-core,gcc-g++,libcrypt-devel
 echo "==== update python"
 $SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools,$PYTHON-nose
 echo "==== get modules"
