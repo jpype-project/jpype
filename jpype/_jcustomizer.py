@@ -149,7 +149,7 @@ def _applyCustomizers(name, jc, bases, members):
         sticky = []
         for proto in _JP_IMPLEMENTATIONS[name]:
             for p, v in proto.__dict__.items():
-                if isinstance(v, (str)):
+                if isinstance(v, (str, property)):
                     members[p] = v
                 elif callable(v):
                     rename = "_"+p
