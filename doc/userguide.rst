@@ -13,9 +13,6 @@ Eventually, it should be possible to replace Java with Python in many, though
 not all, situations. JSP, Servlets, RMI servers and IDE plugins are all good
 candidates.
 
-Once this integration is achieved, a second phase will be started to separate
-the Java logic from the Python logic, eventually allowing the bridging
-technology to be used in other environments, i.e. Ruby, Perl, COM, etc ...
 
 Why such a project?
 ~~~~~~~~~~~~~~~~~~~
