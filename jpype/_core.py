@@ -21,6 +21,7 @@ import _jpype
 from . import _jclass
 from . import _jobject
 from . import _jtypes
+from . import _classpath
 
 # Import all the class customizers
 # Customizers are applied in the order that they are defined currently.
@@ -85,15 +86,46 @@ def _initialize():
 def isJVMStarted():
     return _jpype.isStarted()
 
+def _hasClassPath(args):
+    for i in args:
+        if i.startswith('-Djava.class.path'):
+            return True
+    return False
 
-def startJVM(jvm, *args):
+def startJVM(jvm=None, *args, **kwargs):
     """
-    Starts a Java Virtual Machine
+    Starts a Java Virtual Machine.  Without options it will start
+    the JVM with the default classpath and jvm.  The default classpath
+    will be determined by jpype.getClassPath().  The default JVM is 
+    determined by jpype.getDefaultJVMPath().
 
-    :param jvm:  Path to the jvm library file (libjvm.so, jvm.dll, ...)
-    :param args: Arguments to give to the JVM
+    Args:
+      jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
+        default=None will use jpype.getDefaultJVMPath()
+      *args (str[]): Arguments to give to the JVM
+      classpath (Optional[string]): set the classpath for the jvm.
+        This will override any classpath supplied in the arguments
+        list.
+      ignoreUnrecognized (Optional[bool]): option to jvm to ignore
+        invalid jvm arguments.  (Default False)
     """
-    _jpype.startup(jvm, tuple(args), True)
+    if jvm is None:
+        jvm = getDefaultJVMPath()
+
+        # Check to see that the user has not set the classpath
+        # Otherwise use the default if not specified
+        if not _hasClassPath(args) and 'classpath' not in kwargs:
+           kwargs['classpath']=_classpath.getClassPath()
+
+    if 'ignoreUnrecognized' not in kwargs:
+        kwargs['ignoreUnrecognized']=False
+
+    # Classpath handling
+    args = list(args)
+    if 'classpath' in kwargs and kwargs['classpath']!=None:
+        args.append('-Djava.class.path=%s'%(kwargs['classpath']))
+
+    _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
     _initialize()
 
 
