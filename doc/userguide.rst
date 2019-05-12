@@ -49,8 +49,8 @@ Here is a sample program to demonstrate how to use JPype: ::
   java.lang.System.out.println("hello world")
   shutdownJVM()
 
-This is of course a simple **hello world** type of application. Yet it shows
-the 2 most important calls: **startJVM** and **shutdownJVM**.
+This is of course a simple ``hello world`` type of application. Yet it shows
+the 2 most important calls: ``startJVM`` and ``shutdownJVM``.
 
 The rest will be explained in more detail in the next sections.
 
@@ -72,15 +72,15 @@ Python Threads
 
 For the most part, Python threads based on OS level threads (i.e. posix
 threads) will work without problem. The only thing to remember is to call
-**jpype.attachThreadToJVM()** in the thread body to make the JVM usable from
+``jpype.attachThreadToJVM()`` in the thread body to make the JVM usable from
 that thread. For threads that you do not start yourself, you can call
-**isThreadAttachedToJVM()** to check.
+``isThreadAttachedToJVM()`` to check.
 
 Java Threads
 ~~~~~~~~~~~~
 
 At the moment, it is not possible to use threads created from Java, since
-there is no **callback** available.
+there is no ``callback`` available.
 
 Other Threads
 ~~~~~~~~~~~~~
@@ -95,18 +95,18 @@ Synchronization
 ~~~~~~~~~~~~~~~
 
 Java synchronization support can be split into 2 categories. The first is the
-**synchronized** keyword, both as prefix on a method and as a block inside a
+``synchronized`` keyword, both as prefix on a method and as a block inside a
 method. The second are the different methods available on the Object class
-(**notify, notifyAll, wait**).
+(``notify, notifyAll, wait``).
 
-To support the **synchronized** functionality, JPype defines a method called
-synchronized(O). O has to be a Java object or Java class, or a Java wrapper
-that corresponds to an object (JString and JObject). The return value is a
+To support the ``synchronized`` functionality, JPype defines a method called
+``synchronized(O)``. O has to be a Java object or Java class, or a Java wrapper
+that corresponds to an object (``JString`` and ``JObject``). The return value is a
 monitor object that will keep the synchronization on as long as the object is
 kept alive. The lock will be broken as soon as the monitor is GCd. So make
 sure to hang on to it as long as you need it.
 
-The other methods are available as-is on any _JavaObject.
+The other methods are available as-is on any ``_JavaObject``.
 
 For synchronization that does not have to be shared with Java code, I suggest
 using Python's support instead of Java's, as it'll be more natural and easier.
@@ -124,8 +124,8 @@ no getting around it. Down the road, it is possible that interfacing with CNI
 (GCC's java native interface) may be used. The only way to minimize the JNI 
 cost is to move some code over to Java.
 
-Follow the regular Python philosophy : **Write it all in Python, then write
-only those parts that need it in C.** Except this time, it's write the parts
+Follow the regular Python philosophy : ``Write it all in Python, then write
+only those parts that need it in C.`` Except this time, it's write the parts
 that need it in Java.
 
 For the conversion costs, again, nothing much can be done. In cases where a
@@ -181,14 +181,14 @@ create an array is like this: ::
 
   JArray(type, num_dims)(sz or sequence)
 
-Type is either a Java Class (as a String or a JavaClass object) or a Wrapper
+Type is either a Java Class (as a String or a Java Class object) or a Wrapper
 type. num_dims is the number of dimensions to build the array and defaults to
 1.
 
 sz is the actual number of elements in the arrays, and sequence is a sequence
 to initialize the array with.
 
-The logic behind this is that JArray(type, ndims) returns an Array Class,
+The logic behind this is that ``JArray(type, ndims)`` returns an Array Class,
 which can then be called like any other class to create an instance.
 
 Type conversion
@@ -212,12 +212,12 @@ Type Matching
 JPype defines different levels of "match" between Python objects and Java
 types. These levels are:
 
-- **none**, There is no way to convert.
-- **explicit (E)**, JPype can convert the desired type, but only
+- ``none``, There is no way to convert.
+- ``explicit (E)``, JPype can convert the desired type, but only
   explicitly via the wrapper classes. This means the proper wrapper class
   will access this type as argument.
-- **implicit (I)**, JPype will convert as needed.
-- **exact> (X)**, Like implicit, but when deciding with method overload
+- ``implicit (I)``, JPype will convert as needed.
+- ``exact> (X)``, Like implicit, but when deciding with method overload
   to use, one where all the parameters match "exact" will take precedence
   over "implicit" matches.
 
@@ -292,27 +292,27 @@ Converting from Java to Python
 
 The rules here are much simpler.
 
-Java **byte, short and int** are converted to Python **int**.
+Java ``byte, short and int`` are converted to Python ``int``.
 
-Java **long** is converted to Python **long**.
+Java ``long`` is converted to Python ``long``.
 
-Java **float and double** are converted to Python **float**.
+Java ``float and double`` are converted to Python ``float``.
 
-Java **boolean** is converted to Python **int** of value 1 or 0.
+Java ``boolean`` is converted to Python ``int`` of value 1 or 0.
 
-Java **char** is converted to Python **unicode** of length 1.
+Java ``char`` is converted to Python ``unicode`` of length 1.
 
-Java **String** is converted to Python **unicode**.
+Java ``String`` is converted to Python ``unicode``.
 
-Java **arrays** are converted to **JArray**.
+Java ``arrays`` are converted to ``JArray``.
 
-Java **boxed** types are converted to extensions of python primitives on return.
+Java ``boxed`` types are converted to extensions of python primitives on return.
 
-All other Java objects are converted to **JavaObjects**.
+All other Java objects are converted to ``JavaObjects``.
 
-Java **Class** is converted to **JavaClass**.
+Java ``Class`` is converted to ``JavaClass``.
 
-Java array **Class** is converted to **JavaArrayClass**.
+Java array ``Class`` is converted to ``JavaArrayClass``.
 
 Boxed types
 ~~~~~~~~~~~
@@ -326,8 +326,8 @@ match with their corresponding java type.  The type conversion for this is
 somewhat looser than java.  While java provides automatic unboxing of a Integer 
 to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
-To box a primitive into a specific type such as to place in on a java.util.List
-use JObject on the desired boxed type.  For example: ::
+To box a primitive into a specific type such as to place in on a ``java.util.List``
+use ``JObject`` on the desired boxed type.  For example: ::
 
     from jpype.types import *
     from jpype import java
@@ -340,15 +340,15 @@ use JObject on the desired boxed type.  For example: ::
 JProxy
 ------
 
-The JProxy allows Python code to "implement" any number of Java interfaces, so
+The ``JProxy`` allows Python code to "implement" any number of Java interfaces, so
 as to receive callbacks through them.
 
-Using JProxy is simple. The constructor takes 2 arguments. The first is one
+Using ``JProxy`` is simple. The constructor takes 2 arguments. The first is one
 or a sequence of string of JClass objects, defining the interfaces to be
-"implemented". The second must be a keyword argument, and be either **dict**
-or **inst**. If **dict** is specified, then the 2nd argument must be a
+"implemented". The second must be a keyword argument, and be either ``dict``
+or ``inst``. If ``dict`` is specified, then the 2nd argument must be a
 dictionary, with the keys the method names as defined in the interface(s),
-and the values callable objects. If **inst** an object instance must be
+and the values callable objects. If ``inst`` an object instance must be
 given, with methods defined for the methods declared in the interface(s).
 Either way, when Java calls the interface method, the corresponding Python
 callable is looked up and called.
@@ -406,10 +406,10 @@ Java Exceptions
 ---------------
 
 Error handling is an important part of any non-trivial program. 
-All Java exceptions occurring within java code raise a jpype.JException which 
+All Java exceptions occurring within java code raise a ``jpype.JException`` which 
 derives from python Exception.  These can be caught either using a specific 
-java exception or generically as a jpype.JException or java.lang.Throwable.  
-You can then use the stacktrace(), str(), and args to access extended information.
+java exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.  
+You can then use the ``stacktrace()``, ``str()``, and args to access extended information.
 
 Here is an example: ::
 
@@ -438,31 +438,31 @@ Multiple java exceptions can be caught together or separately: ::
 Exceptions can be raised in proxies to throw an exception back to java. 
 
 Exceptions within the jpype core are issued with the most appropriate 
-python exception type such as TypeError, ValueError, AttributeError, 
-or OSError.
+python exception type such as ``TypeError``, ``ValueError``, ``AttributeError``, 
+or ``OSError``.
 
-Using jpype.JException with a class name as a string was supported in previous jpype 
+Using ``jpype.JException`` with a class name as a string was supported in previous JPype 
 versions but is currently deprecated.
 
 Customizers
 -----------
 
 Java wrappers can be customized to better match the expected behavior in python.
-Customizers are defined using annotations.  Currently the annotations @JImplementionFor
-and @JOverride can be applied to a regular class to customize an existing class.
-@JImplementationFor requires the class name as a string so that it can be applied
-to the class before the JVM is started.  @JOverride can be applied method to 
+Customizers are defined using annotations.  Currently the annotations ``@JImplementionFor``
+and ``@JOverride`` can be applied to a regular class to customize an existing class.
+``@JImplementationFor`` requires the class name as a string so that it can be applied
+to the class before the JVM is started.  ``@JOverride`` can be applied method to 
 hide the java implementation allowing a python functionality to be placed into method.
 If a java method is overridden it is renamed with an proceeding underscore to 
-appear as a private method.  Optional arguments to @JOverride can be used to 
+appear as a private method.  Optional arguments to ``@JOverride`` can be used to 
 control the renaminging and force the method override to apply to all classes that 
 derive from a base class ("sticky").
 
-Generally speaking a customizer should be defined before the first instance of a
+Generally speaking, a customizer should be defined before the first instance of a
 given class is created so that the class wrapper and all instances will have the 
 customization.
 
-Example taken from jpype Collection customizer: ::
+Example taken from JPype ``java.util.Collection`` customizer: ::
 
   @JImplementationFor("java.util.Collection")
   class _JCollection(object):
@@ -492,7 +492,7 @@ it should probabily be a private class so that it does not get used accidentally
 The customizer code will steal from the prototype class rather than acting as a
 base class, thus ensuring that the methods will appear on the most derived 
 python class and are not hidden by the java implementations.  The customizer will 
-copy methods, callable objects, __new__, class member strings, and properties.
+copy methods, callable objects, ``__new__``, class member strings, and properties.
 
 
 Known limitations
@@ -505,9 +505,9 @@ from external sources.
 Unloading the JVM
 ~~~~~~~~~~~~~~~~~
 
-The JNI API defines a method called destroyJVM(). However, this method does
+The JNI API defines a method called ``destroyJVM()``. However, this method does
 not work. That is, Sun's JVMs do not allow unloading. For this reason, after
-calling shutdownJVM(), if you attempt calling startJVM() again you will get
+calling ``shutdownJVM()``, if you attempt calling ``startJVM()`` again you will get
 a non-specific exception. There is nothing wrong (that I can see) in JPype.
 So if Sun gets around to supporting its own properly, or if you use JPype
 with a non-SUN JVM that does (I believe IBM's JVMs support JNI invocation, but
@@ -534,7 +534,14 @@ For some reason, this class verifies that the driver class as loaded in the
 "current" classloader is the same as previously registered. Since there is no
 "current" classloader, it defaults to the internal classloader, which
 typically does not find the driver. To remedy, simply instantiate the driver
-yourself and call its connect(...) method.
+yourself and call its ``connect(...)`` method.
+
+Unsupported Python versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PyPy 2.7 has issues with the Python meta class programming.  PyPy 3 appears
+to work, but does not have very aggressive memory deallocation.  Thus PyPy
+3 fails the leak test.
 
 
 Unsupported Java virtual machines
@@ -546,10 +553,10 @@ JPype.
 Module Reference
 ----------------
 
-jpype.imports module
+``jpype.imports`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The jpype.imports module provides a runtime safe method to import a 
+The ``jpype.imports`` module provides a runtime safe method to import a 
 java class into the project scope.  Imports of java classes can only 
 occur after the JVM is started.  
 
@@ -565,17 +572,17 @@ Example: ::
      from java.util import HashMap, TreeMap
 
 Inner classes are loaded into the class scope.
-If the class cannot be located when importing an ImportError is raised.
+If the class cannot be located when importing an ``ImportError`` is raised.
 
 
-jpype.types module
+``jpype.types`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The jpype.types module contains all of the required type wrappers for using
-jpype.  It can be used to simplify coding without pulling in unnecessary 
-symbols.  Currently this contains: **JArray, JBoolean, JByte, JChar,
-JClass, JDouble, JException, JFloat, JInt, JInterface, JLong,
-JObject, JShort, and JString**.
+The ``jpype.types`` module contains all of the required type wrappers for using
+JPype.  It can be used to simplify coding without pulling in unnecessary 
+symbols.  Currently this contains: ``JArray``, ``JBoolean``, ``JByte``, ``JChar``,
+``JClass``, ``JDouble``, ``JException``, ``JFloat``, ``JInt``, ``JInterface``, ``JLong``,
+``JObject``, ``JShort``, and ``JString``.
 
 Example: ::
 
@@ -583,12 +590,12 @@ Example: ::
      from jpype.types import *
 
 
-jpype.reflect module
+``jpype.reflect`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This module is deprecated and will be removed.  The functionality for 
 getting reflection on java classes is currently supported with the 
-class_ field in java classes and objects.
+``class_`` field in java classes and objects.
 
 Example: ::
 
@@ -599,7 +606,7 @@ Example: ::
 addClassPath method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This method manually adds a java class path into the getClassPath
+This method manually adds a java class path into the ``getClassPath``
 method results.
 
 
@@ -609,7 +616,7 @@ getClassPath method
 This method gets the class path for java with the correct platform dependent
 seperator.  This can be used to define the class path when starting the 
 JVM. The class path can be altered either by using os.environ or by using 
-jpype.addClassPath().  This is useful when building platform independent
+``jpype.addClassPath()``.  This is useful when building platform independent
 python modules.  Some platforms such as cygwin have a mismatch between 
 the java seperator and the python file seperator.
 
@@ -637,7 +644,7 @@ This method tries to automatically obtain the path to a Java runtime
 installation. This path is needed as argument for startJVM method and should
 be used in favour of hardcoded paths to make your scripts more portable.
 There are several methods under the hood to search for a JVM. If none
-of them succeeds, the method will raise a JVMNotFoundException.
+of them succeeds, the method will raise a ``JVMNotFoundException``.
 
 Arguments
 :::::::::
@@ -647,30 +654,30 @@ None
 Return value
 ::::::::::::
 
-valid path to a Java virtual machine library (jvm.dll, jvm.so, jvm.dylib)
+valid path to a Java virtual machine library (``jvm.dll``, ``jvm.so``, ``jvm.dylib``)
 
 Exceptions
 ::::::::::
-JVMNotSupportedException, if none of the provided methods returned a valid JVM path.
+``JVMNotSupportedException``, if none of the provided methods returned a valid JVM path.
 
 
 startJVM method
 ~~~~~~~~~~~~~~~~~
 
 This method MUST be called before any other JPype features can be used. It
-will initialize the specified JVM.  Use isJVMStarted() to verify if it is 
+will initialize the specified JVM.  Use ``isJVMStarted()`` to verify if it is 
 necessary to start in multiple places.
 
 Arguments
 :::::::::
 
--   vmPath - Must be the path to the jvm.dll (or jvm.so, depending on
+-   vmPath - Must be the path to the ``jvm.dll`` (or ``jvm.so``, depending on
     platform)
 -   misc arguments - All arguments after the first are optional, and are
     given as it to the JVM. Pretty much any command-line argument you can
     give the JVM can be passed here. A caveat, multi-part arguments (like
-    -classpath) do not seem to work, and must e passed in as a -D option.
-    Option **-classpath a;b;c** becomes **-Djava.class.path=a;b;c**
+    ``-classpath``) do not seem to work, and must e passed in as a ``-D`` option.
+    Option ``-classpath a;b;c`` becomes ``-Djava.class.path=a;b;c``
 
 
 Return value
@@ -682,14 +689,14 @@ None
 Exceptions
 ::::::::::
 
-If the JVM is already started a OSError is raised.
+If the JVM is already started a ``OSError`` is raised.
 
 
 shutdownJVM method
 ~~~~~~~~~~~~~~~~~~
 
 For the most part, this method does not have to be called. It will be
-automatically executed when the jpype module is unloaded at Python's exit.
+automatically executed when the ``jpype`` module is unloaded at Python's exit.
 
 
 Arguments
@@ -713,8 +720,8 @@ On failure, a RuntimeException is raised.
 attachThreadToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-attachThreadToJVM is called when a new thread is created in python and 
-must be attached to the JVM.  Currently, this method is deprecated as jpype
+``attachThreadToJVM`` is called when a new thread is created in python and 
+must be attached to the JVM.  Currently, this method is deprecated as JPype
 automatically attached threads when they are encounted.  Automatic 
 attachment is a requirement as often third party programs such as sypder
 create threads and attempt to call java method which would result in 
@@ -751,7 +758,7 @@ None
 Return value
 ::::::::::::
 
-True if the thread is attached.
+``True`` if the thread is attached.
 
 
 detachThreadFromJVM method
@@ -778,7 +785,7 @@ None
 Exceptions
 ::::::::::
 
-On failure, a RuntimeException is raised.
+On failure, a ``RuntimeException`` is raised.
 
 
 synchronized method
@@ -786,7 +793,7 @@ synchronized method
 
 synchronized can be used to create a threads safe lock on a java 
 object for a limited period of time.  It is used with the python 
-"with" statement to create a block that locks an object.
+``with`` statement to create a block that locks an object.
 
 Example: ::
   from jpype import synchronized
@@ -802,7 +809,7 @@ Example: ::
 Arguments
 :::::::::
 
-A java object to lock on.
+A Java object to lock on.
 
 
 Return value
@@ -814,7 +821,7 @@ A monitor object which will release the object at the end of the scope.
 Exceptions
 ::::::::::
 
-On failure, a TypeError is raised if the object is a null pointer, a primitive,
+On failure, a ``TypeError`` is raised if the object is a null pointer, a primitive,
 or is not a python object.
 
 
@@ -822,10 +829,10 @@ JPackage class
 ~~~~~~~~~~~~~~
 
 This class allows structured access to Java packages and classes. 
-This functionality has been replaced by jpype.imports, but is still
+This functionality has been replaced by ``jpype.imports``, but is still
 provided to support older code.
 
-Only the root of the package tree need be declared with the JPackage
+Only the root of the package tree need be declared with the ``JPackage``
 constructor. Sub-packages will be created on demand.
 
 For example, to import the w3c DOM package: ::
@@ -841,10 +848,10 @@ jpype.imports module is preferred.
 Predefined Java packages
 ::::::::::::::::::::::::
 
-For convenience, the jpype module predefines the following JPackages :
-**java, javax**
+For convenience, the jpype module predefines the following ``JPackage`` :
+``java, javax``
 
-They can be used as-is, without needing to resort to the JPackage
+They can be used as-is, without needing to resort to the ``JPackage``
 class.
 
 
@@ -860,7 +867,7 @@ different parameters and no confusion takes place.
 When JPype is unable to decide with overload of a method to call, the user
 must resolve the ambiguity. That's where the wrapper classes come in.
 
-Take for example the java.io.PrintStream class. This class has a variant of
+Take for example the ``java.io.PrintStream`` class. This class has a variant of
 the print and println methods!
 
 So for the following code: ::
@@ -870,7 +877,7 @@ So for the following code: ::
   java.lang.System.out.println(1)
   shutdownJVM()
 
-JPype will automatically choose the println(int) method, because the Python
+JPype will automatically choose the ``println(int)`` method, because the Python
 int matches exactly with the Java int, while all the other integral types
 are only "implicit" matches. However, if that is not the version you
 wanted to call ...
@@ -900,48 +907,48 @@ An implicitly converted tuple will not come back modified, even if the Java
 method HAS changed the contents. An explicitly wrapped tuple will be
 modified, so that those modifications are visible to the Python program.
 
-The available native wrappers are: **JChar, JByte, JShort, JInt,
-JLong, JFloat, JDouble, JBoolean and JString.**
+The available native wrappers are: ``JChar``, ``JByte``, ``JShort``, ``JInt``,
+``JLong``, ``JFloat``, ``JDouble``, ``JBoolean`` and ``JString``.
 
 
 JObject wrapper
 :::::::::::::::
 
-The JObject wrapper serves a few additional purposes on top of what the other
-wrappers do.  JObject serves as the base class for java classes that derive 
-from java.lang.Object.
+The ``JObject`` wrapper serves a few additional purposes on top of what the other
+wrappers do.  ``JObject`` serves as the base class for java classes that derive 
+from ``java.lang.Object``.
 
 While the native wrappers help to resolve ambiguities between native types,
-it is impossible to create one JObject wrapper for each Java Class to do the
+it is impossible to create one ``JObject`` wrapper for each Java Class to do the
 same thing.
 
-So, the JObject wrapper accepts two parameters. The first is any convertible
-object. The second is the class to convert it to.  Thus JObject can serve as
+So, the ``JObject`` wrapper accepts two parameters. The first is any convertible
+object. The second is the class to convert it to.  Thus ``JObject`` can serve as
 a cast operator when used to match overloads.  The second arguments can be the 
-name of the class in a string or a JClass object. If omitted, the second parameter
+name of the class in a string or a ``JClass`` object. If omitted, the second parameter
 will be deduced from the first.
 
-Like other wrappers, the method called will only match EXACTLY. A JObject
-wrapper of type java.lang.Int will not work when calling a method requiring a
-java.lang.Number.
+Like other wrappers, the method called will only match EXACTLY. A ``JObject``
+wrapper of type ``java.lang.Int`` will not work when calling a method requiring a
+``java.lang.Number``.
 
 
 
 JClass wrapper
 ::::::::::::::
 
-The JClass wrapper serves as the meta class for all java class instances and 
+The ``JClass`` wrapper serves as the meta class for all java class instances and 
 as a factory for new java classes.  If called with a string, it will find the 
 java class and create a python wrapper.  If called with an existing java class value
-instance it will create the corresponding python wrapper.  JClass has a 
+instance it will create the corresponding python wrapper.  ``JClass`` has a 
 strange relationships to java classes as it is a meta class.  Thus, a java
-class wrapper is an instance of a JClass.
+class wrapper is an instance of a ``JClass``.
 
 
 JException class
 ::::::::::::::::::
 
-The JException wrapper serves as the base class for all java exceptions.
+The ``JException`` wrapper serves as the base class for all java exceptions.
 It currently accepts a string to create a java class instance, but this 
 functionality is deprecated and will be removed.
 
@@ -956,9 +963,9 @@ Example: ::
 JInterface class
 ::::::::::::::::::
 
-The JInterface is serves as the base class for any java class that is a pure 
+The ``JInterface`` is serves as the base class for any java class that is a pure 
 interface without implementation.  It is not possible to create a instance of 
-a java interface.  The mro is hacked such that JInterface does not appear 
+a java interface.  The mro is hacked such that ``JInterface`` does not appear 
 in the tree of objects implement an interface.
 
 Example: ::
@@ -970,10 +977,10 @@ Example: ::
 JArray class
 ::::::::::::
 
-The JArray class is the base class used as a factory for all java arrays. 
+The ``JArray`` class is the base class used as a factory for all java arrays. 
 See the section of java arrays for useage.
 
-One can test if an object is a java arrays using isinstance: ::
+One can test if an object is a java arrays using ``isinstance``: ::
 
       if isinstance(obj, jpype.JArray):
            print("object is a java array")

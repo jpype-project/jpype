@@ -51,7 +51,7 @@ JPype is split into several distinct pieces.
 ``jpype`` Python module
   The majority of the front end logic for the toolkit is in Python jpype module.  
   This module deals with the construction of class wrappers and control functions.  
-  The classes in the layer are all prefixed by J.
+  The classes in the layer are all prefixed by ``J``.
 
 ``_jpype`` CPython module  
   The native module is supported by a CPython module called ``_jpype``.  The ``_jpype`` 
@@ -211,7 +211,7 @@ internal layer as we need these hard coded support paths.  To help keep
 the order of the bootstrapping consistent and allow the module to load before
 the JVM is started, actions are delayed in the jpype module.  Those
 delayed actions are placing in initialize routines that are automatically
-called once the jvm is started.
+called once the JVM is started.
 
 Where accessing the class instance is required while building the class,
 the module globals are checked.  If these globals are not yet loaded, 
@@ -413,7 +413,7 @@ pointer ``JPPyObject`` with the policy that it was created with such as
 
 If we need to pass an object which is held in a smart pointer to Python
 which requires a reference, we call keep on the reference which transfers
-control to a PyObject* and prevents the pointer from removing the reference.
+control to a ``PyObject*`` and prevents the pointer from removing the reference.
 As the object handle is leaving our control keep should only be called the
 return statement.
 
@@ -511,7 +511,7 @@ In addition to the type wrappers, there are several support classes. These are:
   Decodes and encodes Java UTF strings.
 
 ``JPTypeManager``
-+++++++++++++++++++++++++++++++
+++++++++++++++++++
 
 C++ typewrappers are created as needed.  Instance of each of the 
 primitives along with ``java.lang.Object`` and ``java.lang.Class`` are preloaded.  
@@ -530,7 +530,7 @@ The typemanager provides a number lookup methods.  ::
   JPClass* JPTypeManager::findClassForObject(jobject obj)
 
 ``JPReferenceQueue``
-+++++++++++++++++++++++++++++++
+++++++++++++++++++++
 
 When a Python object is presented to Java as opposed to a Java object, the 
 lifespan of the Python object must be extended to match the Java wrapper.  
@@ -545,7 +545,7 @@ to bind a Python object live span to a Java object. ::
   void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 
 ``JPProxy``
-+++++++++++++++++++++++++++++++
+++++++++++++
 
 In order to call Python functions from within Java, a Java proxy is used. The
 majority of the code is in Java.  The C++ code holds the Java native portion.
@@ -556,7 +556,7 @@ As all proxies are ties to Python references, this code is strongly tied to
 the reference queue.
 
 ``JPClassLoader``
-+++++++++++++++++++++++++++++++
+++++++++++++++++++
 
 This code is responsible for loading the Java class thunks.  AS it is difficult
 to ensure we can access a Java jar from within Python, all Java native code
@@ -572,7 +572,7 @@ which loads a class from the internal jar. ::
 
 
 ``JPEncoding``
-+++++++++++++++++++++++++++++++  
++++++++++++++++
 
 Java concept of UTF is pretty much orthagonal to the rest of the world.  Java
 used 16 bits for its native characters.  But this was inadequate for all of the
