@@ -274,7 +274,7 @@ void JPEnv::attachCurrentThreadAsDaemon()
 bool JPEnv::isThreadAttached()
 {
 	JNIEnv* env;
-	return JNI_OK != s_JavaVM->functions->GetEnv(s_JavaVM, (void**) &env, USE_JNI_VERSION);
+	return JNI_OK == s_JavaVM->functions->GetEnv(s_JavaVM, (void**) &env, USE_JNI_VERSION);
 }
 
 void JPEnv::detachCurrentThread()

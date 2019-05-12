@@ -259,8 +259,8 @@ PyObject* PyJPModule::detachThread(PyObject* obj)
 	JP_TRACE_IN("PyJPModule::detachThread");
 	try
 	{
-		ASSERT_JVM_RUNNING("JPypeModule::detachThread");
-		JPEnv::detachCurrentThread();
+		if (JPEnv::isInitialized())
+			JPEnv::detachCurrentThread();
 		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
@@ -273,7 +273,8 @@ PyObject* PyJPModule::isThreadAttached(PyObject* obj)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("JPypeModule::isThreadAttached");
+		if (!JPEnv::isInitialized())
+			return PyBool_FromLong(0);
 		return PyBool_FromLong(JPEnv::isThreadAttached());
 	}
 	PY_STANDARD_CATCH;
