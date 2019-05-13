@@ -32,7 +32,8 @@ _JCLASSES = None
 def registerClassBase(name, cls):
     """ (internal) Add an implementation for a class
 
-    Use @JImplementationFor(cls, True) to access this.
+    Use @JImplementationFor(cls, base=True) to access this.
+
     """
     if not issubclass(cls,  _JObject):
         raise TypeError("Classbases must derive from JObject")
@@ -41,6 +42,9 @@ def registerClassBase(name, cls):
         _JP_BASES[name].append(cls)
     else:
         _JP_BASES[name] = [cls]
+
+    # Changing the base class in python can break things, 
+    # so we will tag this as an error for now.
     if name in _JCLASSES:
         raise RuntimeError("Base classes must be added before class is created")
 
@@ -54,6 +58,8 @@ def registerClassImplementation(classname, proto):
         _JP_IMPLEMENTATIONS[classname].append(proto)
     else:
         _JP_IMPLEMENTATIONS[classname] = [proto]
+
+    # If we have already created a class, apply it retroactively.
     if classname in _JCLASSES:
         _applyCustomizerPost( _JCLASSES[classname], proto)
 
@@ -70,6 +76,15 @@ def JImplementationFor(clsname, base=False):
     class as the argument.  This call be used to set methods for all classes 
     that derive from the specified class.  Use ``type.__setattr__()`` to 
     alter the class methods.
+
+    Using the prototype class as a base class is used mainly to support 
+    classes which must be derived from a python type by design.  Use
+    of a base class will produce a RuntimeError if the class has already
+    been created.  
+
+    For non-base class customizers, the customizer will be applied 
+    retroactively if the class is already created.  Conflicts are
+    resolved by the last customizer applied.
 
     Args:
       clsname (str): name of java class.
@@ -89,40 +104,6 @@ def JImplementationFor(clsname, base=False):
     return customizer
 
 
-# FIXME customizers currently only apply to classes after the customizer is
-# loaded. this creates issues for bootstrapping especially with classes like
-# basic arrays which may be overloaded to support operations like __add__.
-
-
-# FIXME remove this once all customizers are converted
-class JClassCustomizer(object):
-    def canCustomize(self, name, jc):
-        """ Determine if this class can be customized by this customizer.
-
-        Classes should be customized on the basis of an exact match to 
-        the class name or if the java class is derived from some base class.
-
-        Args:
-          name (str): is the name of the java class being created.
-          jc (_jpype.PyJPClass): is the java class wrapper. 
-
-        Returns:
-          bool: true if customize should be called, false otherwise.
-        """
-        pass
-
-    def customize(self, name, jc, bases, members):
-        """ Customize the class.
-
-        Should be able to handle keyword arguments to support changes in customizers.
-
-        Args:
-          name (str): is the name of the java class being created.
-
-        """
-        pass
-
-
 def _applyStickyMethods(cls, sticky):
     for method in sticky:
         attr = getattr(method, '__joverride__')
@@ -133,7 +114,16 @@ def _applyStickyMethods(cls, sticky):
         type.__setattr__(cls, method.__name__, method)
 
 def _applyCustomizerImpl(members, proto, sticky, setter):
-    """ Apply a customizer to a class after the class is created"""
+    """ (internal) Apply a customizer to a class.
+
+    This "borrows" methods from a prototype class.
+    Current behavior is:
+     - Copy any string or property.
+     - Copy any callable applying @JOverride
+       if applicable with conflict renaming.
+     - Copy __new__ method.
+    
+    """
     for p, v in proto.__dict__.items():
         if isinstance(v, (str, property)):
             setter(p,v)
@@ -167,6 +157,7 @@ def _applyAll(cls, method):
         method(c)
 
 def _applyCustomizerPost(cls, proto):
+    """ (internal) Customize a class after it has been created """
     sticky = []
     _applyCustomizerImpl(cls.__dict__, proto, sticky, lambda p,v : type.__setattr__(cls, p, v))
 
@@ -175,9 +166,19 @@ def _applyCustomizerPost(cls, proto):
         method = proto.__dict__['__jclass_init__']
         _applyAll(cls, method)
 
+    # Merge sticky into existing __jclass_init__
+    if len(sticky) > 0:
+        method = proto.__dict__.get('__jclass_init__', None)
+        def init(cls):
+            if method:
+                method(cls)
+            _applyStickyMethods(cls, sticky)
+        type.__setattr__(cls, '__jclass_init__', init)
+        _applyAll(cls, init)
+
 
 def _applyCustomizers(name, jc, bases, members):
-    """ Called by JClass and JArray to customize a newly created class."""
+    """ (internal) Called by JClass and JArray to customize a newly created class."""
     # Apply base classes
     if name in _JP_BASES:
         for b in _JP_BASES[name]:
@@ -196,6 +197,9 @@ def _applyCustomizers(name, jc, bases, members):
 
 
 def _applyInitializer(cls):
+    """ (internal) Called after the class is created to apply any customizations
+    required by inherited parents. 
+    """
     if hasattr(cls, '__jclass_init__'):
         init = []
         for base in cls.__mro__:
