@@ -38,6 +38,7 @@ _JCLASSES = {}
 _JP_TYPE_CLASSES = {}
 _JP_OBJECT_CLASSES = {}
 
+_jcustomizer._JCLASSES = _JCLASSES
 
 def _initialize():
     global _java_ClassLoader

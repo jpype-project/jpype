@@ -17,7 +17,6 @@ import sys as _sys
 
 _JP_BASES = {}
 _JP_IMPLEMENTATIONS = {}
-_JP_CUSTOMIZERS = []
 
 if _sys.version_info > (3,):
     _unicode = str
@@ -26,8 +25,9 @@ else:
 
 __all__ = ['JImplementationFor']
 
+# Forward declarations
 _JObject = None
-
+_JCLASSES = None
 
 def registerClassBase(name, cls):
     """ (internal) Add an implementation for a class
@@ -41,25 +41,21 @@ def registerClassBase(name, cls):
         _JP_BASES[name].append(cls)
     else:
         _JP_BASES[name] = [cls]
+    if name in _JCLASSES:
+        raise RuntimeError("Base classes must be added before class is created")
 
 
-def registerClassImplementation(classname, cls):
+def registerClassImplementation(classname, proto):
     """ (internal) Add an implementation for a class
 
     Use @JImplementationFor(cls) to access this.
     """
     if classname in _JP_IMPLEMENTATIONS:
-        _JP_IMPLEMENTATIONS[classname].append(cls)
+        _JP_IMPLEMENTATIONS[classname].append(proto)
     else:
-        _JP_IMPLEMENTATIONS[classname] = [cls]
-
-
-def registerClassCustomizer(c):
-    """ (internal) Add a customizer for a java class wrapper.
-
-    Deprecated customizer implementation.
-    """
-    _JP_CUSTOMIZERS.append(c)
+        _JP_IMPLEMENTATIONS[classname] = [proto]
+    if classname in _JCLASSES:
+        _applyCustomizerPost( _JCLASSES[classname], proto)
 
 
 def JImplementationFor(clsname, base=False):
@@ -136,6 +132,49 @@ def _applyStickyMethods(cls, sticky):
                 cls, rename, type.__getattribute__(cls, method.__name__))
         type.__setattr__(cls, method.__name__, method)
 
+def _applyCustomizerImpl(members, proto, sticky, setter):
+    """ Apply a customizer to a class after the class is created"""
+    for p, v in proto.__dict__.items():
+        if isinstance(v, (str, property)):
+            setter(p,v)
+        elif callable(v):
+            rename = "_"+p
+
+            # Apply JOverride annotation
+            attr = getattr(v, '__joverride__', None)
+            if attr is not None:
+                if attr.get('sticky', False):
+                    sticky.append(v)
+                rename = attr.get('rename', rename)
+
+            # Apply rename
+            if p in members and isinstance(members[p], (_jpype.PyJPField, _jpype.PyJPMethod)):
+                setter(rename, members[p])
+
+            setter(p, v)
+        elif p == "__new__":
+            setter(p, v)
+
+def _applyAll(cls, method):
+    applied = set()
+    todo = [cls]
+    while len(todo)!=0:
+        c = todo.pop(0)
+        if c in applied:
+            continue
+        todo.extend(c.__subclasses__())
+        applied.add(c)
+        method(c)
+
+def _applyCustomizerPost(cls, proto):
+    sticky = []
+    _applyCustomizerImpl(cls.__dict__, proto, sticky, lambda p,v : type.__setattr__(cls, p, v))
+
+    # Apply a customizer to all derived classes
+    if '__jclass_init__' in proto.__dict__:
+        method = proto.__dict__['__jclass_init__']
+        _applyAll(cls, method)
+
 
 def _applyCustomizers(name, jc, bases, members):
     """ Called by JClass and JArray to customize a newly created class."""
@@ -148,36 +187,12 @@ def _applyCustomizers(name, jc, bases, members):
     if name in _JP_IMPLEMENTATIONS:
         sticky = []
         for proto in _JP_IMPLEMENTATIONS[name]:
-            for p, v in proto.__dict__.items():
-                if isinstance(v, (str, property)):
-                    members[p] = v
-                elif callable(v):
-                    rename = "_"+p
-
-                    # Apply JOverride annotation
-                    attr = getattr(v, '__joverride__', None)
-                    if attr is not None:
-                        if attr.get('sticky', False):
-                            sticky.append(v)
-                        rename = attr.get('rename', rename)
-
-                    # Apply rename
-                    if p in members:
-                        members[rename] = members[p]
-
-                    members[p] = v
-                elif p == "__new__":
-                    members[p] = v
+            _applyCustomizerImpl(members, proto, sticky, lambda p,v : members.__setitem__(p,v))
 
         if len(sticky) > 0:
             def init(cls):
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
-
-    # Apply customizers
-    for i in _JP_CUSTOMIZERS:
-        if i.canCustomize(name, jc):
-            i.customize(name, jc, bases, members)
 
 
 def _applyInitializer(cls):

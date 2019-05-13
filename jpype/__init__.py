@@ -25,6 +25,7 @@ from ._jcustomizer import *
 from . import reflect
 from . import nio
 from . import types
+from ._jcustomizer import *
 
 
 __all__ = ['java', 'javax', 'JException', 'JOverride']
@@ -34,6 +35,7 @@ __all__.extend(types.__all__)
 __all__.extend(_jproxy.__all__)
 __all__.extend(_jpackage.__all__)
 __all__.extend(_jclass.__all__)
+__all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
 __version_info__ = (0, 7, 0)
