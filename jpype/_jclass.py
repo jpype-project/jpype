@@ -44,20 +44,21 @@ def _initialize():
 
     _jpype.setResource('GetClassMethod', _JClassNew)
 
+    # Due to bootstrapping, Object and Class must be defined first.
+    global _java_lang_Object, _java_lang_Class
+    _java_lang_Object = JClass("java.lang.Object")
+    _java_lang_Class = JClass("java.lang.Class")
+
     _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
 
     global _java_lang_throwable, _java_lang_RuntimeException
     _java_lang_throwable = JClass("java.lang.Throwable")
     _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
 
-    global _java_lang_Object, _java_lang_Class
-
     # Preload needed classes
     java_lang_Boolean = JClass("java.lang.Boolean")
     java_lang_Long = JClass("java.lang.Long")
     java_lang_Double = JClass("java.lang.Double")
-    _java_lang_Object = JClass("java.lang.Object")
-    _java_lang_Class = JClass("java.lang.Class")
     java_lang_String = JClass("java.lang.String")
 
     global _JP_OBJECT_CLASSES
@@ -274,6 +275,16 @@ def _JClassFactory(name, jc):
 
     # Post customizers
     _jcustomizer._applyInitializer(res)
+
+    # Attach public inner classes we find
+    #   Due to bootstrapping, we must wait until java.lang.Class is defined
+    #   before we can access the class structures.
+    if _java_lang_Class:
+        for cls in res.class_.getDeclaredClasses():
+            if cls.getModifiers() & 1 == 0:
+                continue
+            cls2 = JClass(cls)
+            type.__setattr__(res, str(cls.getSimpleName()), cls2)
 
     return res
 
