@@ -15,8 +15,8 @@ This module supports three different styles of importing java classes.
 **import <java_package_path>**
 
 Importing a series of package creates a path to all classes contained
-in that package.  It does not provide access the the contained packages.
-The root package is added to the global scope.  Imported packages are
+in that package. It does not provide access the the contained packages.
+The root package is added to the global scope. Imported packages are
 added to the directory of the base module.
 
  .. code-block:: python
@@ -33,10 +33,10 @@ added to the directory of the base module.
 
 **import <java_package> as <var>**
 
-A package can be imported as a local variable.  This provides access to
-all java classes in that package.  Contained packages are not available.
+A package can be imported as a local variable. This provides access to
+all java classes in that package. Contained packages are not available.
 
-Example: 
+Example:
  .. code-block:: python
 
   import java.nio as nio
@@ -48,7 +48,7 @@ Example:
 
 **from <java_package> import <class>[,<class>\*] [as <var>]**
 
-An individual class can be imported from a java package.  This supports
+An individual class can be imported from a java package. This supports
 inner classes as well.
 
 Example:
@@ -74,18 +74,18 @@ Wild card Imports
 -----------------
 
 Wild card imports for classes will import all static method and
-fields into the global namespace.  They will also import any
+fields into the global namespace. They will also import any
 inner classes that have been previously be accessed.
 
 Wild card importation of package symbols are not currently supported
-and have unpredictable effects.  Because of the nature of class loaders
-it is not possible to determine what classes are currently loaded.  Some
+and have unpredictable effects. Because of the nature of class loaders
+it is not possible to determine what classes are currently loaded. Some
 classes are loaded by the boot strap loader and thus are not available
 for discovery.
 
 As currently implemented [from <java_package> import \*] will import
 all classes and static variables which have already been imported by
-another import call.  As a result which classes will be imported
+another import call. As a result which classes will be imported
 is based on the code pat and thus very unreliable.
 
 It is possible to determine the classes available using Guava for
@@ -107,8 +107,8 @@ Controlling Java package imports
 --------------------------------
 
 By default domains imports four top level domains (TLD) into the python
-import system (com, gov, java, org).  Additional domains can be added
-by calling registerDomain.  Domains can be an alias for a java package
+import system (com, gov, java, org). Additional domains can be added
+by calling registerDomain. Domains can be an alias for a java package
 path.
 
 Example:
@@ -123,19 +123,19 @@ Example:
 
 Limitations
 -----------
-* Wildcard imports are unreliable and should be avoided.  Limitations
+* Wildcard imports are unreliable and should be avoided. Limitations
   in the Java specification are such that there is no way to get
-  class information at runtime.  Python does not have a good hook
+  class information at runtime. Python does not have a good hook
   to prevent the use of wildcard loading.
 
 * Non-static members can be imported but can not be called without an
-  instance.  Jpype does not provide an easy way to determine which
+  instance. Jpype does not provide an easy way to determine which
   functions objects can be called without an object.
 
 Bugs:
 -----
 
 * Something in spyder IPython does not play well with the importlib
-  hooks.  Inspect element causes a segmentation fault.  Unable
+  hooks. Inspect element causes a segmentation fault. Unable
   to determine the source.
 

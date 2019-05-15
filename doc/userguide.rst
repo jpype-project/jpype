@@ -147,7 +147,7 @@ following differences:
 - Inner classes in Java natively use $ to separate the outer class from
   the inner class. For example, inner class Foo defined inside class Bar is
   called Bar.Foo in Java, but its real native name is Bar$Foo.
-- Inner classes appear as member of the containing class.  Thus
+- Inner classes appear as member of the containing class. Thus
   to access them simply import the outer class and call them as
   members.
 - Non-static inner classes cannot be instantiated from Python code.
@@ -278,13 +278,13 @@ JavaObject                                                                      
         booleans.
 
 .. [11] Java defines conversions from integer types to floating point
-        types as implicit conversion.  Java's conversion rules are based
+        types as implicit conversion. Java's conversion rules are based
         on the range and can be lossy.
         See (http://stackoverflow.com/questions/11908429/java-allows-implicit-conversion-of-int-to-float-why)
 
 .. [12] Java boxed types are mapped to python primitives, but will
         produce an implicit conversion even if the python type is an exact
-        match.  This is to allow for resolution between methods
+        match. This is to allow for resolution between methods
         that take both a java primitve and a java boxed type.
 
 Converting from Java to Python
@@ -317,17 +317,17 @@ Java array ``Class`` is converted to ``JavaArrayClass``.
 Boxed types
 ~~~~~~~~~~~
 
-Both python primitives and Boxed types are immutable.  Thus boxed types are
-inherited from the python primitives.  This means that a boxed type regardless
+Both python primitives and Boxed types are immutable. Thus boxed types are
+inherited from the python primitives. This means that a boxed type regardless
 of whether produced as a return or created explicitely are treated as python
-types.  They will obey all the conversion rules corresponding
-to a python type as implicit matches.  In addition, they will produce an exact
-match with their corresponding java type.  The type conversion for this is
-somewhat looser than java.  While java provides automatic unboxing of a Integer
+types. They will obey all the conversion rules corresponding
+to a python type as implicit matches. In addition, they will produce an exact
+match with their corresponding java type. The type conversion for this is
+somewhat looser than java. While java provides automatic unboxing of a Integer
 to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
 To box a primitive into a specific type such as to place in on a ``java.util.List``
-use ``JObject`` on the desired boxed type.  For example: ::
+use ``JObject`` on the desired boxed type. For example: ::
 
     from jpype.types import *
     from jpype import java
@@ -407,7 +407,7 @@ Java Exceptions
 
 Error handling is an important part of any non-trivial program.
 All Java exceptions occurring within java code raise a ``jpype.JException`` which
-derives from python Exception.  These can be caught either using a specific
+derives from python Exception. These can be caught either using a specific
 java exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.
 You can then use the ``stacktrace()``, ``str()``, and args to access extended information.
 
@@ -448,13 +448,13 @@ Customizers
 -----------
 
 Java wrappers can be customized to better match the expected behavior in python.
-Customizers are defined using annotations.  Currently the annotations ``@JImplementionFor``
+Customizers are defined using annotations. Currently the annotations ``@JImplementionFor``
 and ``@JOverride`` can be applied to a regular class to customize an existing class.
 ``@JImplementationFor`` requires the class name as a string so that it can be applied
-to the class before the JVM is started.  ``@JOverride`` can be applied method to
+to the class before the JVM is started. ``@JOverride`` can be applied method to
 hide the java implementation allowing a python functionality to be placed into method.
 If a java method is overridden it is renamed with an proceeding underscore to
-appear as a private method.  Optional arguments to ``@JOverride`` can be used to
+appear as a private method. Optional arguments to ``@JOverride`` can be used to
 control the renaminging and force the method override to apply to all classes that
 derive from a base class ("sticky").
 
@@ -491,7 +491,7 @@ The name of the class does not matter for the purposes of customizer though
 it should probabily be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
 base class, thus ensuring that the methods will appear on the most derived
-python class and are not hidden by the java implementations.  The customizer will
+python class and are not hidden by the java implementations. The customizer will
 copy methods, callable objects, ``__new__``, class member strings, and properties.
 
 
@@ -539,8 +539,8 @@ yourself and call its ``connect(...)`` method.
 Unsupported Python versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyPy 2.7 has issues with the Python meta class programming.  PyPy 3 appears
-to work, but does not have very aggressive memory deallocation.  Thus PyPy
+PyPy 2.7 has issues with the Python meta class programming. PyPy 3 appears
+to work, but does not have very aggressive memory deallocation. Thus PyPy
 3 fails the leak test.
 
 
@@ -557,7 +557,7 @@ Module Reference
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``jpype.imports`` module provides a runtime safe method to import a
-java class into the project scope.  Imports of java classes can only
+java class into the project scope. Imports of java classes can only
 occur after the JVM is started.
 
 Example: ::
@@ -580,8 +580,8 @@ If the class cannot be located when importing an ``ImportError`` is raised.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``jpype.types`` module contains all of the required type wrappers for using
-JPype.  It can be used to simplify coding without pulling in unnecessary
-symbols.  Currently this contains: ``JArray``, ``JBoolean``, ``JByte``, ``JChar``,
+JPype. It can be used to simplify coding without pulling in unnecessary
+symbols. Currently this contains: ``JArray``, ``JBoolean``, ``JByte``, ``JChar``,
 ``JClass``, ``JDouble``, ``JException``, ``JFloat``, ``JInt``, ``JInterface``, ``JLong``,
 ``JObject``, ``JShort``, and ``JString``.
 
@@ -594,7 +594,7 @@ Example: ::
 ``jpype.reflect`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This module is deprecated and will be removed.  The functionality for
+This module is deprecated and will be removed. The functionality for
 getting reflection on java classes is currently supported with the
 ``class_`` field in java classes and objects.
 
@@ -615,22 +615,22 @@ getClassPath method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method gets the class path for java with the correct platform dependent
-seperator.  This can be used to define the class path when starting the
+seperator. This can be used to define the class path when starting the
 JVM. The class path can be altered either by using os.environ or by using
-``jpype.addClassPath()``.  This is useful when building platform independent
-python modules.  Some platforms such as cygwin have a mismatch between
+``jpype.addClassPath()``. This is useful when building platform independent
+python modules. Some platforms such as cygwin have a mismatch between
 the java seperator and the python file seperator.
 
 Arguments
 :::::::::
 
-env is an optional boolean argument that defaults to true.  If env is
+env is an optional boolean argument that defaults to true. If env is
 false than only those paths defined by addClassPath are used.
 
 Return value
 ::::::::::::
 
-valid path classpath.  Wildcards in the path are expanded to include
+valid path classpath. Wildcards in the path are expanded to include
 all jars found in the path.
 
 Exceptions
@@ -666,7 +666,7 @@ startJVM method
 ~~~~~~~~~~~~~~~~~
 
 This method MUST be called before any other JPype features can be used. It
-will initialize the specified JVM.  Use ``isJVMStarted()`` to verify if it is
+will initialize the specified JVM. Use ``isJVMStarted()`` to verify if it is
 necessary to start in multiple places.
 
 Arguments
@@ -722,12 +722,12 @@ attachThreadToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``attachThreadToJVM`` is called when a new thread is created in python and
-must be attached to the JVM.  Currently, this method is deprecated as JPype
-automatically attached threads when they are encounted.  Automatic
+must be attached to the JVM. Currently, this method is deprecated as JPype
+automatically attached threads when they are encounted. Automatic
 attachment is a requirement as often third party programs such as sypder
 create threads and attempt to call java method which would result in
-a crash.  This can create a resource leak as each thread that is attached
-will consume an additional java object.  If this is an issue manually
+a crash. This can create a resource leak as each thread that is attached
+will consume an additional java object. If this is an issue manually
 detach the thread as they are destroyed.
 
 Arguments
@@ -793,7 +793,7 @@ synchronized method
 ~~~~~~~~~~~~~~~~~~~
 
 synchronized can be used to create a threads safe lock on a java
-object for a limited period of time.  It is used with the python
+object for a limited period of time. It is used with the python
 ``with`` statement to create a block that locks an object.
 
 Example: ::
@@ -842,8 +842,8 @@ For example, to import the w3c DOM package: ::
   Document = JPackage('org').w3c.dom.Document
 
 Under some situations such as a missing jar the resulting object
-will be a JPackage object rather than the expected java class.  This
-results in rather challanging debugging messages.  Thus the
+will be a JPackage object rather than the expected java class. This
+results in rather challanging debugging messages. Thus the
 jpype.imports module is preferred.
 
 
@@ -917,7 +917,7 @@ JObject wrapper
 :::::::::::::::
 
 The ``JObject`` wrapper serves a few additional purposes on top of what the other
-wrappers do.  ``JObject`` serves as the base class for java classes that derive
+wrappers do. ``JObject`` serves as the base class for java classes that derive
 from ``java.lang.Object``.
 
 While the native wrappers help to resolve ambiguities between native types,
@@ -925,8 +925,8 @@ it is impossible to create one ``JObject`` wrapper for each Java Class to do the
 same thing.
 
 So, the ``JObject`` wrapper accepts two parameters. The first is any convertible
-object. The second is the class to convert it to.  Thus ``JObject`` can serve as
-a cast operator when used to match overloads.  The second arguments can be the
+object. The second is the class to convert it to. Thus ``JObject`` can serve as
+a cast operator when used to match overloads. The second arguments can be the
 name of the class in a string or a ``JClass`` object. If omitted, the second parameter
 will be deduced from the first.
 
@@ -940,10 +940,10 @@ JClass wrapper
 ::::::::::::::
 
 The ``JClass`` wrapper serves as the meta class for all java class instances and
-as a factory for new java classes.  If called with a string, it will find the
-java class and create a python wrapper.  If called with an existing java class value
-instance it will create the corresponding python wrapper.  ``JClass`` has a
-strange relationships to java classes as it is a meta class.  Thus, a java
+as a factory for new java classes. If called with a string, it will find the
+java class and create a python wrapper. If called with an existing java class value
+instance it will create the corresponding python wrapper. ``JClass`` has a
+strange relationships to java classes as it is a meta class. Thus, a java
 class wrapper is an instance of a ``JClass``.
 
 
@@ -966,8 +966,8 @@ JInterface class
 ::::::::::::::::::
 
 The ``JInterface`` is serves as the base class for any java class that is a pure
-interface without implementation.  It is not possible to create a instance of
-a java interface.  The mro is hacked such that ``JInterface`` does not appear
+interface without implementation. It is not possible to create a instance of
+a java interface. The mro is hacked such that ``JInterface`` does not appear
 in the tree of objects implement an interface.
 
 Example: ::
