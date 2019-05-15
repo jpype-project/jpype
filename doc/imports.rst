@@ -1,5 +1,5 @@
 JImport
-=============
+=======
 Module for dynamically loading Java Classes using the import system.
 
 This is a replacement for the jpype.JPackage("com").fuzzy.Main type syntax.
@@ -10,24 +10,27 @@ importing a java class.
 This module supports three different styles of importing java classes.
 
 1) Import of the package path
---------------------------------
-**import <java_package_path>**  
+-----------------------------
+
+**import <java_package_path>**
 
 Importing a series of package creates a path to all classes contained
 in that package.  It does not provide access the the contained packages.
-The root package is added to the global scope.  Imported packages are 
+The root package is added to the global scope.  Imported packages are
 added to the directory of the base module.
 
-Example:
-  | import java.lang      # Adds java as a module
-  | import java.util
-  |
-  | mystr = java.lang.String('hello')
-  | mylist = java.util.LinkedList()
-  | path = java.nio.files.Paths.get() # ERROR java.nio.files not imported
+ .. code-block:: python
+
+  import java.lang      # Adds java as a module
+  import java.util
+
+  mystr = java.lang.String('hello')
+  mylist = java.util.LinkedList()
+  path = java.nio.files.Paths.get() # ERROR java.nio.files not imported
 
 2) Import of the package path as a module
---------------------------------
+-----------------------------------------
+
 **import <java_package> as <var>**
 
 A package can be imported as a local variable.  This provides access to
@@ -40,27 +43,34 @@ Example:
 
 3) Import a class from an object
 --------------------------------
+
 **from <java_package> import <class>[,<class>\*] [as <var>]**
 
 An individual class can be imported from a java package.  This supports
 inner classes as well.
 
 Example:
-  | # Import one class
-  | from java.lang import String
-  | mystr = String('hello')
-  |
-  | # Import multiple classes
-  | from java.lang import Number,Integer,Double
-  |
-  | # Import java inner class java.lang.ProcessBuilder.Redirect
-  | from java.lang.ProcessBuilder import Redirect
+
+ .. code-block:: python
+
+  # Import one class
+  from java.lang import String
+  mystr = String('hello')
+
+  # Import multiple classes
+  from java.lang import Number,Integer,Double
+  # Import java inner class java.lang.ProcessBuilder.Redirect
+  from java.lang.ProcessBuilder import Redirect
 
 This method can also be used to import a static variable or method
 from a class.
 
+Import caveats
+===============
+
 Wild card Imports
-=========================
+-----------------
+
 Wild card imports for classes will import all static method and
 fields into the global namespace.  They will also import any
 inner classes that have been previously be accessed.
@@ -82,28 +92,35 @@ But this is sufficiently unreliable that we recommend not using wildcards
 for any purpose.
 
 Keyword naming
-==================
+--------------
+
 Occasionally a java class may contain a python keyword.
 Python keywords as automatically remapped using training underscore.
 
-Example:
+Example::
+
   from org.raise_ import Object  => imports "org.raise.Object"
 
 Controlling Java package imports
-==========================
+--------------------------------
+
 By default domains imports four top level domains (TLD) into the python
 import system (com, gov, java, org).  Additional domains can be added
 by calling registerDomain.  Domains can be an alias for a java package
 path.
 
 Example:
-  | domains.registerDomain('jname')
-  | from jname.framework import FrameObject
-  | domains.registerDomain('jlang', alias='java.lang')
-  | from jlang import String
 
-Limitations:
-======================
+ .. code-block:: python
+
+  domains.registerDomain('jname')
+  from jname.framework import FrameObject
+  domains.registerDomain('jlang', alias='java.lang')
+  from jlang import String
+
+
+Limitations
+-----------
 * Wildcard imports are unreliable and should be avoided.  Limitations
   in the Java specification are such that there is no way to get
   class information at runtime.  Python does not have a good hook
@@ -114,7 +131,8 @@ Limitations:
   functions objects can be called without an object.
 
 Bugs:
-==========
+-----
+
 * Something in spyder IPython does not play well with the importlib
   hooks.  Inspect element causes a segmentation fault.  Unable
   to determine the source.

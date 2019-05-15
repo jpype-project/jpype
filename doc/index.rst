@@ -16,6 +16,7 @@ Parts of the documentation
 
    install
    userguide
+   imports
    CHANGELOG
    develguide
 
