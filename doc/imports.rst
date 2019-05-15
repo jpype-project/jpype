@@ -36,10 +36,12 @@ added to the directory of the base module.
 A package can be imported as a local variable.  This provides access to
 all java classes in that package.  Contained packages are not available.
 
-Example:
-  | import java.nio as nio
-  | bb = nio.ByteBuffer()
-  | path = nio.file.Path()   # ERROR subpackages file must be imported
+Example: 
+ .. code-block:: python
+
+  import java.nio as nio
+  bb = nio.ByteBuffer()
+  path = nio.file.Path()   # ERROR subpackages file must be imported
 
 3) Import a class from an object
 --------------------------------
