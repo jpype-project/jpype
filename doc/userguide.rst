@@ -121,7 +121,7 @@ can impose rather large performance bottlenecks.
 
 JNI is the standard native interface for most, if not all, JVMs, so there is
 no getting around it. Down the road, it is possible that interfacing with CNI
-(GCC's java native interface) may be used. The only way to minimize the JNI 
+(GCC's java native interface) may be used. The only way to minimize the JNI
 cost is to move some code over to Java.
 
 Follow the regular Python philosophy : ``Write it all in Python, then write
@@ -147,8 +147,8 @@ following differences:
 - Inner classes in Java natively use $ to separate the outer class from
   the inner class. For example, inner class Foo defined inside class Bar is
   called Bar.Foo in Java, but its real native name is Bar$Foo.
-- Inner classes appear as member of the containing class.  Thus 
-  to access them simply import the outer class and call them as 
+- Inner classes appear as member of the containing class.  Thus
+  to access them simply import the outer class and call them as
   members.
 - Non-static inner classes cannot be instantiated from Python code.
   Instances received from Java code that can be used without problem.
@@ -163,14 +163,14 @@ specific type.
 
 Multi-dimensional arrays (array of arrays) also work without problem.
 
-As of version 0.5.5.3 we use NumPy arrays to interchange data with Java. This 
-is much faster than using lists, since we do not need to handle every single 
+As of version 0.5.5.3 we use NumPy arrays to interchange data with Java. This
+is much faster than using lists, since we do not need to handle every single
 array element but can process all data at once.
 
 If you do not want this optional feature, because eg. it depends on NumPy, you
-can opt it out in the installation process by passing *"--disable-numpy"* to 
+can opt it out in the installation process by passing *"--disable-numpy"* to
 *setup.py*. To opt out with pip you need to append the additional argument
-*"--global-option='--disable-numpy'*. This possibility exists since version 
+*"--global-option='--disable-numpy'*. This possibility exists since version
 0.5.6.
 
 Creating Java arrays from Python
@@ -222,29 +222,29 @@ types. These levels are:
   over "implicit" matches.
 
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
-Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array     Object      Class   
+Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array     Object      Class
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
-    int       I [1]_     I [1]_       X          I        I [11]_    I [11]_    X [10]_                                               
-   long       I [1]_     I [1]_     I [1]_       X        I [11]_    I [11]_                                                                   
-   float                                                  I [1]_       X                                                            
- sequence                                                                                                                           
-dictionary                                                                                                                          
-  string                                                                                   I [2]_       X                           
-  unicode                                                                                  I [2]_       X                           
-   JByte        X                                                                                                                   
-  JShort                   X                                                                                                        
-   JInt                               X                                                                                             
-   JLong                                         X                                                                                  
-  JFloat                                                    X                                                                       
-  JDouble                                                              X                                                            
- JBoolean                                                                         X                                                 
+    int       I [1]_     I [1]_       X          I        I [11]_    I [11]_    X [10]_
+   long       I [1]_     I [1]_     I [1]_       X        I [11]_    I [11]_
+   float                                                  I [1]_       X
+ sequence
+dictionary
+  string                                                                                   I [2]_       X
+  unicode                                                                                  I [2]_       X
+   JByte        X
+  JShort                   X
+   JInt                               X
+   JLong                                         X
+  JFloat                                                    X
+  JDouble                                                              X
+ JBoolean                                                                         X
   JString                                                                                               X                   I [3]_
-   JChar                                                                                     X                                      
-  JArray                                                                                                        I/X [4]_    I [5]_   
+   JChar                                                                                     X
+  JArray                                                                                                        I/X [4]_    I [5]_
   JObject                                                                                                       I/X [6]_    I/X [7]_
 JavaObject                                                                                                                  I [8]_
- JavaClass                                                                                                                  I [9]_        X     
- "Boxed"      I [12]_    I [12]_    I [12]_     I [12]_   I [12]_    I [12]_    I [12]_                                     I/X [8]_ 
+ JavaClass                                                                                                                  I [9]_        X
+ "Boxed"      I [12]_    I [12]_    I [12]_     I [12]_   I [12]_    I [12]_    I [12]_                                     I/X [8]_
 ============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
 
 .. [1] Conversion will occur if the Python value fits in the Java
@@ -277,14 +277,14 @@ JavaObject                                                                      
 .. [10] Only the values True and False are implicitly converted to
         booleans.
 
-.. [11] Java defines conversions from integer types to floating point 
+.. [11] Java defines conversions from integer types to floating point
         types as implicit conversion.  Java's conversion rules are based
         on the range and can be lossy.
         See (http://stackoverflow.com/questions/11908429/java-allows-implicit-conversion-of-int-to-float-why)
 
-.. [12] Java boxed types are mapped to python primitives, but will 
-        produce an implicit conversion even if the python type is an exact 
-        match.  This is to allow for resolution between methods 
+.. [12] Java boxed types are mapped to python primitives, but will
+        produce an implicit conversion even if the python type is an exact
+        match.  This is to allow for resolution between methods
         that take both a java primitve and a java boxed type.
 
 Converting from Java to Python
@@ -321,9 +321,9 @@ Both python primitives and Boxed types are immutable.  Thus boxed types are
 inherited from the python primitives.  This means that a boxed type regardless
 of whether produced as a return or created explicitely are treated as python
 types.  They will obey all the conversion rules corresponding
-to a python type as implicit matches.  In addition, they will produce an exact 
-match with their corresponding java type.  The type conversion for this is 
-somewhat looser than java.  While java provides automatic unboxing of a Integer 
+to a python type as implicit matches.  In addition, they will produce an exact
+match with their corresponding java type.  The type conversion for this is
+somewhat looser than java.  While java provides automatic unboxing of a Integer
 to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
 To box a primitive into a specific type such as to place in on a ``java.util.List``
@@ -391,10 +391,10 @@ or you can do it with a dictionary ::
 
   def _testMethod() :
   return 32
-  
+
   def _testMethod2() :
-  return "Fooo!"	
-  	
+  return "Fooo!"
+
   d = {
   	'testMethod' : _testMethod,
   	'testMethod2' : _testMethod2,
@@ -405,10 +405,10 @@ or you can do it with a dictionary ::
 Java Exceptions
 ---------------
 
-Error handling is an important part of any non-trivial program. 
-All Java exceptions occurring within java code raise a ``jpype.JException`` which 
-derives from python Exception.  These can be caught either using a specific 
-java exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.  
+Error handling is an important part of any non-trivial program.
+All Java exceptions occurring within java code raise a ``jpype.JException`` which
+derives from python Exception.  These can be caught either using a specific
+java exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.
 You can then use the ``stacktrace()``, ``str()``, and args to access extended information.
 
 Here is an example: ::
@@ -435,13 +435,13 @@ Multiple java exceptions can be caught together or separately: ::
   except Exception as ex:
         print("Caught python exception :", str(ex))
 
-Exceptions can be raised in proxies to throw an exception back to java. 
+Exceptions can be raised in proxies to throw an exception back to java.
 
-Exceptions within the jpype core are issued with the most appropriate 
-python exception type such as ``TypeError``, ``ValueError``, ``AttributeError``, 
+Exceptions within the jpype core are issued with the most appropriate
+python exception type such as ``TypeError``, ``ValueError``, ``AttributeError``,
 or ``OSError``.
 
-Using ``jpype.JException`` with a class name as a string was supported in previous JPype 
+Using ``jpype.JException`` with a class name as a string was supported in previous JPype
 versions but is currently deprecated.
 
 Customizers
@@ -451,15 +451,15 @@ Java wrappers can be customized to better match the expected behavior in python.
 Customizers are defined using annotations.  Currently the annotations ``@JImplementionFor``
 and ``@JOverride`` can be applied to a regular class to customize an existing class.
 ``@JImplementationFor`` requires the class name as a string so that it can be applied
-to the class before the JVM is started.  ``@JOverride`` can be applied method to 
+to the class before the JVM is started.  ``@JOverride`` can be applied method to
 hide the java implementation allowing a python functionality to be placed into method.
-If a java method is overridden it is renamed with an proceeding underscore to 
-appear as a private method.  Optional arguments to ``@JOverride`` can be used to 
-control the renaminging and force the method override to apply to all classes that 
+If a java method is overridden it is renamed with an proceeding underscore to
+appear as a private method.  Optional arguments to ``@JOverride`` can be used to
+control the renaminging and force the method override to apply to all classes that
 derive from a base class ("sticky").
 
 Generally speaking, a customizer should be defined before the first instance of a
-given class is created so that the class wrapper and all instances will have the 
+given class is created so that the class wrapper and all instances will have the
 customization.
 
 Example taken from JPype ``java.util.Collection`` customizer: ::
@@ -474,8 +474,8 @@ Example taken from JPype ``java.util.Collection`` customizer: ::
       def __delitem__(self, i):
           return self.remove(i)
 
-      # addAll does not automatically convert to 
-      # a Collection, so we can augment that 
+      # addAll does not automatically convert to
+      # a Collection, so we can augment that
       # behavior here.
       @JOverride(sticky=True)
       def addAll(self, v):
@@ -487,11 +487,11 @@ Example taken from JPype ``java.util.Collection`` customizer: ::
           else:
               return self._addAll(v)
 
-The name of the class does not matter for the purposes of customizer though 
+The name of the class does not matter for the purposes of customizer though
 it should probabily be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
-base class, thus ensuring that the methods will appear on the most derived 
-python class and are not hidden by the java implementations.  The customizer will 
+base class, thus ensuring that the methods will appear on the most derived
+python class and are not hidden by the java implementations.  The customizer will
 copy methods, callable objects, ``__new__``, class member strings, and properties.
 
 
@@ -556,11 +556,12 @@ Module Reference
 ``jpype.imports`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``jpype.imports`` module provides a runtime safe method to import a 
-java class into the project scope.  Imports of java classes can only 
-occur after the JVM is started.  
+The ``jpype.imports`` module provides a runtime safe method to import a
+java class into the project scope.  Imports of java classes can only
+occur after the JVM is started.
 
 Example: ::
+
      import jpype
      import jpype.imports
 
@@ -579,7 +580,7 @@ If the class cannot be located when importing an ``ImportError`` is raised.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``jpype.types`` module contains all of the required type wrappers for using
-JPype.  It can be used to simplify coding without pulling in unnecessary 
+JPype.  It can be used to simplify coding without pulling in unnecessary
 symbols.  Currently this contains: ``JArray``, ``JBoolean``, ``JByte``, ``JChar``,
 ``JClass``, ``JDouble``, ``JException``, ``JFloat``, ``JInt``, ``JInterface``, ``JLong``,
 ``JObject``, ``JShort``, and ``JString``.
@@ -593,8 +594,8 @@ Example: ::
 ``jpype.reflect`` module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This module is deprecated and will be removed.  The functionality for 
-getting reflection on java classes is currently supported with the 
+This module is deprecated and will be removed.  The functionality for
+getting reflection on java classes is currently supported with the
 ``class_`` field in java classes and objects.
 
 Example: ::
@@ -614,22 +615,22 @@ getClassPath method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method gets the class path for java with the correct platform dependent
-seperator.  This can be used to define the class path when starting the 
-JVM. The class path can be altered either by using os.environ or by using 
+seperator.  This can be used to define the class path when starting the
+JVM. The class path can be altered either by using os.environ or by using
 ``jpype.addClassPath()``.  This is useful when building platform independent
-python modules.  Some platforms such as cygwin have a mismatch between 
+python modules.  Some platforms such as cygwin have a mismatch between
 the java seperator and the python file seperator.
 
 Arguments
 :::::::::
 
-env is an optional boolean argument that defaults to true.  If env is 
+env is an optional boolean argument that defaults to true.  If env is
 false than only those paths defined by addClassPath are used.
 
 Return value
 ::::::::::::
 
-valid path classpath.  Wildcards in the path are expanded to include 
+valid path classpath.  Wildcards in the path are expanded to include
 all jars found in the path.
 
 Exceptions
@@ -665,7 +666,7 @@ startJVM method
 ~~~~~~~~~~~~~~~~~
 
 This method MUST be called before any other JPype features can be used. It
-will initialize the specified JVM.  Use ``isJVMStarted()`` to verify if it is 
+will initialize the specified JVM.  Use ``isJVMStarted()`` to verify if it is
 necessary to start in multiple places.
 
 Arguments
@@ -720,11 +721,11 @@ On failure, a RuntimeException is raised.
 attachThreadToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-``attachThreadToJVM`` is called when a new thread is created in python and 
+``attachThreadToJVM`` is called when a new thread is created in python and
 must be attached to the JVM.  Currently, this method is deprecated as JPype
-automatically attached threads when they are encounted.  Automatic 
+automatically attached threads when they are encounted.  Automatic
 attachment is a requirement as often third party programs such as sypder
-create threads and attempt to call java method which would result in 
+create threads and attempt to call java method which would result in
 a crash.  This can create a resource leak as each thread that is attached
 will consume an additional java object.  If this is an issue manually
 detach the thread as they are destroyed.
@@ -745,7 +746,7 @@ isThreadAttachedToJVM method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This method can be used to determine if a thread is attached to the JVM.
-This method is currently broken as the act of checking if a thread is 
+This method is currently broken as the act of checking if a thread is
 attached caused the thread to become attached.
 
 
@@ -791,11 +792,12 @@ On failure, a ``RuntimeException`` is raised.
 synchronized method
 ~~~~~~~~~~~~~~~~~~~
 
-synchronized can be used to create a threads safe lock on a java 
-object for a limited period of time.  It is used with the python 
+synchronized can be used to create a threads safe lock on a java
+object for a limited period of time.  It is used with the python
 ``with`` statement to create a block that locks an object.
 
 Example: ::
+
   from jpype import synchronized
 
   ... # Get an object from java that requires a thread lock
@@ -828,7 +830,7 @@ or is not a python object.
 JPackage class
 ~~~~~~~~~~~~~~
 
-This class allows structured access to Java packages and classes. 
+This class allows structured access to Java packages and classes.
 This functionality has been replaced by ``jpype.imports``, but is still
 provided to support older code.
 
@@ -841,7 +843,7 @@ For example, to import the w3c DOM package: ::
 
 Under some situations such as a missing jar the resulting object
 will be a JPackage object rather than the expected java class.  This
-results in rather challanging debugging messages.  Thus the 
+results in rather challanging debugging messages.  Thus the
 jpype.imports module is preferred.
 
 
@@ -915,7 +917,7 @@ JObject wrapper
 :::::::::::::::
 
 The ``JObject`` wrapper serves a few additional purposes on top of what the other
-wrappers do.  ``JObject`` serves as the base class for java classes that derive 
+wrappers do.  ``JObject`` serves as the base class for java classes that derive
 from ``java.lang.Object``.
 
 While the native wrappers help to resolve ambiguities between native types,
@@ -924,7 +926,7 @@ same thing.
 
 So, the ``JObject`` wrapper accepts two parameters. The first is any convertible
 object. The second is the class to convert it to.  Thus ``JObject`` can serve as
-a cast operator when used to match overloads.  The second arguments can be the 
+a cast operator when used to match overloads.  The second arguments can be the
 name of the class in a string or a ``JClass`` object. If omitted, the second parameter
 will be deduced from the first.
 
@@ -937,10 +939,10 @@ wrapper of type ``java.lang.Int`` will not work when calling a method requiring 
 JClass wrapper
 ::::::::::::::
 
-The ``JClass`` wrapper serves as the meta class for all java class instances and 
-as a factory for new java classes.  If called with a string, it will find the 
+The ``JClass`` wrapper serves as the meta class for all java class instances and
+as a factory for new java classes.  If called with a string, it will find the
 java class and create a python wrapper.  If called with an existing java class value
-instance it will create the corresponding python wrapper.  ``JClass`` has a 
+instance it will create the corresponding python wrapper.  ``JClass`` has a
 strange relationships to java classes as it is a meta class.  Thus, a java
 class wrapper is an instance of a ``JClass``.
 
@@ -949,7 +951,7 @@ JException class
 ::::::::::::::::::
 
 The ``JException`` wrapper serves as the base class for all java exceptions.
-It currently accepts a string to create a java class instance, but this 
+It currently accepts a string to create a java class instance, but this
 functionality is deprecated and will be removed.
 
 Example: ::
@@ -963,13 +965,13 @@ Example: ::
 JInterface class
 ::::::::::::::::::
 
-The ``JInterface`` is serves as the base class for any java class that is a pure 
-interface without implementation.  It is not possible to create a instance of 
-a java interface.  The mro is hacked such that ``JInterface`` does not appear 
+The ``JInterface`` is serves as the base class for any java class that is a pure
+interface without implementation.  It is not possible to create a instance of
+a java interface.  The mro is hacked such that ``JInterface`` does not appear
 in the tree of objects implement an interface.
 
 Example: ::
-  
+
      if issubclass(java.util.function.Function, jpype.JInterface):
           print("is interface")
 
@@ -977,7 +979,7 @@ Example: ::
 JArray class
 ::::::::::::
 
-The ``JArray`` class is the base class used as a factory for all java arrays. 
+The ``JArray`` class is the base class used as a factory for all java arrays.
 See the section of java arrays for useage.
 
 One can test if an object is a java arrays using ``isinstance``: ::
