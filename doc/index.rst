@@ -17,6 +17,7 @@ Parts of the documentation
    install
    userguide
    CHANGELOG
+   develguide
 
 Indices and tables
 ==================
