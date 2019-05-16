@@ -1,16 +1,23 @@
+import textwrap
+
+footnotes = []
 def section(Title=None, Desc=None):
     print("%s" % Title)
     print("-"*len(Title))
     if Desc:
         print("%s" % Desc)
         print()
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+"+("-"*42)+"+")
-    print("| %-25s | %-55s | %-55s | %-40s |" %
-          ("Description", "Java", "Python", "Notes"))
-    print("+"+("="*27)+"+"+("="*57)+"+"+("="*57)+"+"+("="*42)+"+")
+    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
+    print("| %-25s | %-55s | %-55s |" %
+          ("Description", "Java", "Python"))
+    print("+"+("="*27)+"+"+("="*57)+"+"+("="*57)+"+")
 
 
 def endSection():
+    global footnotes
+    for i in range(0,len(footnotes)):
+        print(".. [%d] %s"%(i+1, footnotes[i]))
+    footnotes=[]
     print()
     print()
 
@@ -30,21 +37,24 @@ def python(s):
 
 
 def entry(Desc=None, Java=None, Python=None, Notes=None):
+    global footnotes
     if not Java:
         Java = ""
     if not Python:
         Python = "None"
-    if not Notes:
-        Notes = ""
-    DescLines = Desc.split("\n")
+    if Notes:
+        global footnotes
+        if Notes in footnotes:
+            Desc += " [%d]_"%(footnotes.index(Notes)+1)
+        else:
+            footnotes.append(Notes)
+            Desc += " [%d]_"%len(footnotes)
+    DescLines = textwrap.wrap(Desc,25)
     DescLines.insert(0, "")
     JavaLines = Java.split("\n")
     PythonLines = Python.split("\n")
-    NotesLines = Notes.split("\n")
-    if Notes:
-        NotesLines.insert(0, "")
 
-    while (len(DescLines) > 0 or len(JavaLines) > 0 or len(PythonLines) > 0 or len(NotesLines) > 0):
+    while (len(DescLines) > 0 or len(JavaLines) > 0 or len(PythonLines) > 0):
         if len(DescLines) > 0:
             print("| %-25s |" % DescLines.pop(0), end="")
         else:
@@ -56,15 +66,11 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
             print(" %-55s |" % "", end="")
 
         if len(PythonLines) > 0:
-            print(" %-55s |" % PythonLines.pop(0), end="")
+            print(" %-55s |" % PythonLines.pop(0))
         else:
-            print(" %-55s |" % "", end="")
+            print(" %-55s |" % "")
 
-        if len(NotesLines) > 0:
-            print(" %-40s |" % NotesLines.pop(0))
-        else:
-            print(" %-40s |" % "")
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+"+("-"*42)+"+")
+    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
 
 ########################################################
 
@@ -140,7 +146,7 @@ Once the JVM is started Java packages that are within a top level domain (TLD)
 are exposed as python modules allowing Java to be treated as part of python.
 """
         )
-entry("Start Java Virtual\nMachine (JVM)", None,
+entry("Start Java Virtual Machine (JVM)", None,
       """
 .. code-block:: python
     # Import module
@@ -159,19 +165,19 @@ entry("Start Java Virtual\nMachine (JVM)", None,
     jpype.startJVM(jvmPath,jvmArgs)
 """, "REVISE")
 
-entry("Import default Java\nnamespace", None,
+entry("Import default Java namespace", None,
       """
 .. code-block:: python
     import java.lang
 """, "All java.lang.* classes are available.")
 
-entry("Add a set of jars\nfrom a directory", None,
+entry("Add a set of jars from a directory", None,
       """
 .. code-block:: python
     jpype.addClassPath('/my/path/*')
 """, "Must happen prior to starting JVM")
 
-entry("Add a specific jar\nto the classpath", None,
+entry("Add a specific jar to the classpath", None,
       """
 .. code-block:: python
     jpype.addClassPath('/my/path/myJar.jar')
@@ -199,36 +205,36 @@ or loaded with the ``JClass`` factory.
 entry("Import a class",
       java("import org.pkg.MyClass"),
       python("from org.pkg import MyClass"),
-      "This will report an error\nif the class\nis not found.")
+      "This will report an error if the class is not found.")
 
-entry("Import a class\nand rename", None,
+entry("Import a class and rename", None,
       python("from org.pkg import MyClass as OurClass"),
-      "This will report an error if the class\nis not found.")
+      "This will report an error if the class is not found.")
 
-entry("Import multiple classes\nfrom a package", None,
+entry("Import multiple classes from a package", None,
       python("from org.pkg import MyClass, AnotherClass"),
-      "This will report an error if the classes\nare not found")
+      "This will report an error if the classes are not found")
 
-entry("Import a java package for\nlong name access", None,
+entry("Import a java package for long name access", None,
       python("import org.pkg"),
-      "Does not report errors if the package\nis invalid")
+      "Does not report errors if the package is invalid")
 
 entry("Import a class static",
       java("import org.pkg.MyClass.CONST_FIELD"),
       python("from org.pkg.MyClass import CONST_FIELD"),
-      'Constants, static fields, and\nstatic methods can be imported.')
+      'Constants, static fields, and static methods can be imported.')
 
-entry("Import a class\nwithout tld",
+entry("Import a class without tld",
       java("import zippy.NonStandard"),
       python("NonStandard = JClass('zippy.NonStandard')"),
-      "``JClass`` loads any class by name\nincluding inner classes.")
+      "``JClass`` loads any class by name including inner classes.")
 
 # Construction
 entry("Construct an object",
       java("MyClass myObject = new MyClass(1);"),
       python("myObject = MyClass(1)"))
 
-entry("Constructing a cless\nwith full class name", None, """
+entry("Constructing a cless with full class name", None, """
 .. code-block:: python
     import org.pkg 
     myObject = org.pkg.MyClass(args)
@@ -257,20 +263,20 @@ entry("Call a static method",
 entry("Call a member method",
       java("myObject.callMember(1);"),
       python("myObject.callMember(1)"))
-entry("Access member with python\nnaming conflict",
+entry("Access member with python naming conflict",
       java("myObject.pass()"),
       python("myObject.pass_()"),
       "Underscore is added during wrapping.")
 entry("Checking inheritance",
       java("if (obj instanceof MyClass) {...}"),
       python("if (isinstance(obj, MyClass): ..."))
-entry("Checking if Java\nclass wrapper", None,
+entry("Checking if Java class wrapper", None,
       python("if (isinstance(obj, JClass): ..."))
-entry("Checking if Java\nobject wrapper", None,
+entry("Checking if Java object wrapper", None,
       python("if (isinstance(obj, JObject): ..."))
 
 # Casting
-entry("Casting to a\nspecific type",
+entry("Casting to a specific type",
       java("BaseClass b = (BaseClass)myObject;"),
       python("b = JObject(myObject, BaseClass)"))
 endSection()
@@ -298,7 +304,7 @@ entry("Catch an exception",
         ...
 """)
 
-entry("Throw an exception\nto Java",
+entry("Throw an exception to Java",
       """
 .. code-block:: java
     throw new java.lang.Exception("Problem");
@@ -309,7 +315,7 @@ entry("Throw an exception\nto Java",
 """
       )
 
-entry("Checking if Java\nexception wrapper", None,
+entry("Checking if Java exception wrapper", None,
       """
 .. code-block:: pythoe
     if (isinstance(obj, JException): ...
@@ -339,7 +345,7 @@ exposed in JPype (``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JL
 
 Python int is equivalent to Java long.
 """)
-entry("Casting to hit\nan overload",
+entry("Casting to hit an overload",
       java("myObject.call((int)v);"),
       python("myObject.call(JInt(v))"),
       "``JInt`` acts as a casting operator")
@@ -351,8 +357,8 @@ entry("Create a primitive array",
 entry("Create a primitive array",
       java("int[] array = new int[){1,2,3}"),
       python("array = JArray(JInt)([1,2,3])"),
-      "list, sequences, or np.array\ncan be used to initialize.")
-entry("Put a specific\nprimitive type on a list",
+      "list, sequences, or np.array can be used to initialize.")
+entry("Put a specific primitive type on a list",
       """
 .. code-block: java
     List<Integer> myList 
@@ -371,7 +377,7 @@ entry("Boxing a primitive",
       """
 boxed = JObject(JInt(1))
 """,
-      "``JInt`` specifies the prmitive type.\n``JObject`` boxes the primitive.")
+      "``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.")
 endSection()
 
 #####################################################################################
@@ -385,8 +391,8 @@ are not completely duck typed.  When comparing or using as dictionary keys
 JString should be converted to python.
 """)
 entry("Create a Java string", java('String javaStr = new String("foo");'), python(
-    'myStr = JString("foo")'), "``JString`` constructs a\n``java.lang.String``")
-entry("Create a Java string\nfrom bytes",
+    'myStr = JString("foo")'), "``JString`` constructs a ``java.lang.String``")
+entry("Create a Java string from bytes",
       '''
 .. code-block: java
     byte[] b;
@@ -396,11 +402,11 @@ entry("Create a Java string\nfrom bytes",
 .. code-block: python
     b= b'foo'
     myStr = JString(b, "UTF-8")
-''', "All ``java.lang.String``\nconstuctors work.")
+''', "All ``java.lang.String`` constuctors work.")
 
 entry("Converting Java string", None, python("str(javaStr)"))
-entry("Comparing Python and\nJava strings", None, python(
-    "str(javaStr) == pyString"), "``str()`` converts the object for\ncomparison")
+entry("Comparing Python and Java strings", None, python(
+    "str(javaStr) == pyString"), "``str()`` converts the object for comparison")
 entry("Comparing Java strings", java(
     'javaStr.equals("foo")'), python('javaStr == "foo"'))
 entry("Checking if java string", None, python(
@@ -414,10 +420,10 @@ section("Arrays",
 Arrays are create using JArray class factory. They operate like python lists, but they are 
 fixed in size.
 """)
-entry("Create a single\ndimension array",
+entry("Create a single dimension array",
       java("MyClass[] array = new MyClass[5];"),
       python("array = JArray(MyClass)(5)"))
-entry("Create a multi\n dimension array",
+entry("Create a multi  dimension array",
       java("MyClass[][] array2 = new MyClass[5][];"),
       python("array2 = JArray(MyClass, 2)(5)"))
 entry("Access an element",
@@ -441,7 +447,7 @@ entry("Iterate elements",
       ...
 """)
 
-entry("Checking if java array\nwrapper", None,
+entry("Checking if java array wrapper", None,
       """
 .. code-block:: python
     if (isinstance(obj, JArray): ...
@@ -472,7 +478,7 @@ entry("Get list item",
 entry("Set list item",
       java('myList.set(0, 1)'),
       python('myList[0]=Jint(1)'),
-      "Casting is required to box primitives\nto the correct type.")
+      "Casting is required to box primitives to the correct type.")
 entry("Iterate list elements",
       """
 .. code-block:: java
@@ -504,7 +510,7 @@ entry("Get map item",
 entry("Set map item",
       java('myMap.set("foo", 1)'),
       python('myMap["foo"]=Jint(1)'),
-      "Casting is required to box primitives\nto the correct type.")
+      "Casting is required to box primitives to the correct type.")
 
 entry("Iterate map entries",
       """
@@ -528,7 +534,7 @@ For operations that are outside the scope of the JPype syntax, Using
 Java reflection, any Java operation include calling a specific overload
 or even accessing private methods and fields.
 """)
-entry("Access Java reflection\nclass",
+entry("Access Java reflection class",
       """
 .. code-block:: java
     MyClass.class
@@ -538,7 +544,7 @@ entry("Access Java reflection\nclass",
     MyClass.class_
 """)
 
-entry("Access a private field\nby name", None,
+entry("Access a private field by name", None,
       """
 .. code-block:: python
     cls = myObject.class_
@@ -547,7 +553,7 @@ entry("Access a private field\nby name", None,
     field.get()
 """)
 
-entry("Accessing a specific\noverload", None,
+entry("Accessing a specific overload", None,
       """
 .. code-block:: python
     cls = MyClass.class_
@@ -555,7 +561,7 @@ entry("Accessing a specific\noverload", None,
     cls.invoke(myObject, JInt(1))
 """, "types must be exactly specified.")
 
-entry("Convert a\n``java.lang.Class``\ninto python wrapper", None,
+entry("Convert a ``java.lang.Class`` into python wrapper", None,
       """
 .. code-block:: python
     # Something returned a java.lang.Class
@@ -563,9 +569,9 @@ entry("Convert a\n``java.lang.Class``\ninto python wrapper", None,
 
     # Convert to it to Python
     MyClass = JClass(myClassJava)
-""", "Rarely required unless the\nclass was supplied external such\nas generics.")
+""", "Rarely required unless the class was supplied external such as generics.")
 
-entry("Load a class with a\nexternal class loader",
+entry("Load a class with a external class loader",
       """
 .. code-block:: java
     ClassLoader cl = new ExternalClassLoader();
@@ -577,7 +583,7 @@ entry("Load a class with a\nexternal class loader",
     cls = JClass("External", loader=cl)
 """)
 
-entry("Accessing base method\nimplementation", None,
+entry("Accessing base method implementation", None,
       """
 .. code-block:: python
     from org.pkg import BaseClass, MyClass
@@ -618,12 +624,10 @@ entry("Implement an interface",
       "")
 
 entry("Extending classes", None, None,
-      """Support for use of python function 
-as Java 8 lambda is WIP.""")
+      """Support for use of python function as Java 8 lambda is WIP.""")
 
 entry("Lambdas", None, None,
-      """Support for use of python function 
-as Java 8 lambda is WIP.""")
+      """Support for use of python function as Java 8 lambda is WIP.""")
 endSection()
 
 print(
