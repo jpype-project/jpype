@@ -26,7 +26,7 @@ dangerous.
 .. code-block:: java
     package org.pkg;
 
-    publc class BassClass
+    public class BassClass
     {
        public callMember(int i)
        {}
@@ -95,7 +95,7 @@ are exposed as python modules allowing Java to be treated as part of python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+------------------------------------------+
 |                           |                                                         |                                                         |                                          |
 | Add a set of jars         |                                                         | .. code-block:: python                                  | Must happen prior to starting JVM        |
-| from a directory          |                                                         |     jpype.addClassPath('/my/path/*')                    |                                          |
+| from a directory          |                                                         |     jpype.addClassPath('/my/path/\*')                    |                                          |
 |                           |                                                         |                                                         |                                          |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+------------------------------------------+
 |                           |                                                         |                                                         |                                          |
@@ -265,7 +265,7 @@ Most python primitives directly map into Java primitives. However, python does n
 have the same primitive types, thus sometimes it is necessary to cast to a specific 
 Java primitive type especially if there are 
 Java overloads that would otherwise be in conflict.  Each of the Java types are
-exposed in JPype (``JBoolean``, ``JByte``,``JChar``,``JShort``, ``JInt``,``JLong``, 
+exposed in JPype (``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
 ``JFloat``, ``JDouble``).
 
 Python int is equivalent to Java long.
