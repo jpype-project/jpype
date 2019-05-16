@@ -1,6 +1,8 @@
 import textwrap
 
 footnotes = []
+footnotecounter = 1
+
 def section(Title=None, Desc=None):
     print("%s" % Title)
     print("-"*len(Title))
@@ -14,9 +16,11 @@ def section(Title=None, Desc=None):
 
 
 def endSection():
-    global footnotes
+    print()
+    global footnotes, footnotecounter
     for i in range(0,len(footnotes)):
-        print(".. [%d] %s"%(i+1, footnotes[i]))
+        print("    .. [%d] %s"%(i+footnotecounter, footnotes[i]))
+    footnotecounter+=len(footnotes)
     footnotes=[]
     print()
     print()
@@ -24,20 +28,22 @@ def endSection():
 
 def java(s):
     return """
-.. code-block: java
+.. code-block:: java
+
     %s
 """ % s
 
 
 def python(s):
     return """
-.. code-block: java
+.. code-block:: python
+
     %s
 """ % s
 
 
 def entry(Desc=None, Java=None, Python=None, Notes=None):
-    global footnotes
+    global footnotes, footnotecounter
     if not Java:
         Java = ""
     if not Python:
@@ -45,10 +51,10 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
     if Notes:
         global footnotes
         if Notes in footnotes:
-            Desc += " [%d]_"%(footnotes.index(Notes)+1)
+            Desc += " [%d]_"%(footnotes.index(Notes)+footnotecounter)
         else:
+            Desc += " [%d]_"%(len(footnotes)+footnotecounter)
             footnotes.append(Notes)
-            Desc += " [%d]_"%len(footnotes)
     DescLines = textwrap.wrap(Desc,25)
     DescLines.insert(0, "")
     JavaLines = Java.split("\n")
@@ -102,6 +108,7 @@ dangerous.
 
 print("""
 .. code-block:: java
+
     package org.pkg;
 
     publc class BassClass
@@ -149,6 +156,7 @@ are exposed as python modules allowing Java to be treated as part of python.
 entry("Start Java Virtual Machine (JVM)", None,
       """
 .. code-block:: python
+
     # Import module
     import jpype
 
@@ -159,33 +167,25 @@ entry("Start Java Virtual Machine (JVM)", None,
     from jpype.types import *
 
     # Launch the JVM
-    jvmPath = jpype.getDefaultJVMPath()
-    jvmArgs = "-Djava.class.path=%" %
-      jpype.getClassPath()
-    jpype.startJVM(jvmPath,jvmArgs)
-""", "REVISE")
+    jpype.startJVM()
+""")
 
 entry("Import default Java namespace", None,
-      """
-.. code-block:: python
-    import java.lang
-""", "All java.lang.* classes are available.")
+      python("import java.lang"), 
+      "All ``java.lang.*`` classes are available.")
 
 entry("Add a set of jars from a directory", None,
-      """
-.. code-block:: python
-    jpype.addClassPath('/my/path/*')
-""", "Must happen prior to starting JVM")
+      python('jpype.addClassPath("/my/path/*")'),
+      "Must happen prior to starting JVM")
 
 entry("Add a specific jar to the classpath", None,
-      """
-.. code-block:: python
-    jpype.addClassPath('/my/path/myJar.jar')
-""", "Must happen prior to starting the JVM")
+      python("jpype.addClassPath('/my/path/myJar.jar')"),
+      "Must happen prior to starting the JVM")
 
 entry("Print JVM CLASSPATH", None,
       """
 .. code-block:: python
+
     from java.lang import System
     print(System.getProperty("java.class.path"))
 """, "After JVM is started")
@@ -236,6 +236,7 @@ entry("Construct an object",
 
 entry("Constructing a cless with full class name", None, """
 .. code-block:: python
+
     import org.pkg 
     myObject = org.pkg.MyClass(args)
 """)
@@ -291,6 +292,7 @@ that Python native exceptions. JException serves as the base class for all Java 
 entry("Catch an exception",
       """
 .. code-block:: java
+
     try {
        myObject.throwsException();
     } catch (java.lang.Exception ex)
@@ -298,6 +300,7 @@ entry("Catch an exception",
 """,
       """
 .. code-block:: python
+
     try:
         myObject.throwsException()
     except java.lang.Exception as ex:
@@ -305,29 +308,22 @@ entry("Catch an exception",
 """)
 
 entry("Throw an exception to Java",
-      """
-.. code-block:: java
-    throw new java.lang.Exception("Problem");
-""",
-      """
-.. code-block:: python
-    raise java.lang.Exception("Problem");
-"""
-      )
+      java('throw new java.lang.Exception("Problem");'),
+      python('raise java.lang.Exception("Problem");'))
 
 entry("Checking if Java exception wrapper", None,
-      """
-.. code-block:: pythoe
-    if (isinstance(obj, JException): ...
-""")
+      python('if (isinstance(obj, JException): ...'))
+
 entry("Closeable items",
       """
 .. code-block: java
+
     try (InputStream is = Files.newInputStream(file)
     { ... }
 """,
       """
 .. code-block: python
+
     with Files.newInputStream(file) as is:
        ...
 """)
@@ -361,12 +357,14 @@ entry("Create a primitive array",
 entry("Put a specific primitive type on a list",
       """
 .. code-block: java
+
     List<Integer> myList 
       = new ArrayList<>();
     myList.add(1);
 """,
       """
 .. code-block: python
+
     from java.util import ArrayList
     myList = ArrayList()
     myList.add(JInt(1))
@@ -374,9 +372,7 @@ entry("Put a specific primitive type on a list",
 
 entry("Boxing a primitive",
       java("Integer boxed = 1;"),
-      """
-boxed = JObject(JInt(1))
-""",
+      python("boxed = JObject(JInt(1))"),
       "``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.")
 endSection()
 
@@ -395,11 +391,13 @@ entry("Create a Java string", java('String javaStr = new String("foo");'), pytho
 entry("Create a Java string from bytes",
       '''
 .. code-block: java
+
     byte[] b;
     String javaStr = new String(b, "UTF-8");
 ''',
       '''
 .. code-block: python
+
     b= b'foo'
     myStr = JString(b, "UTF-8")
 ''', "All ``java.lang.String`` constuctors work.")
@@ -438,20 +436,20 @@ entry("Convert to python list", None,
 entry("Iterate elements",
       """
 .. code-block:: java
+
     for (MyClass element: array) 
     {...}
 """,
       """
 .. code-block:: python
+
     for element in array:
       ...
 """)
 
 entry("Checking if java array wrapper", None,
-      """
-.. code-block:: python
-    if (isinstance(obj, JArray): ...
-""")
+      python("if (isinstance(obj, JArray): ..."))
+
 endSection()
 
 #####################################################################################
@@ -482,11 +480,13 @@ entry("Set list item",
 entry("Iterate list elements",
       """
 .. code-block:: java
+
     for (Integer element: myList) 
     {...}
 """,
       """
 .. code-block:: python
+
     for element in myList:
       ...
 """)
@@ -515,12 +515,14 @@ entry("Set map item",
 entry("Iterate map entries",
       """
 .. code-block:: java
+
     for (Map.Entry<String,Integer> e
       : myMap.entrySet()) 
       {...}
 """,
       """
 .. code-block:: python
+
     for e in myMap.entrySet():
       ...
 """)
@@ -535,18 +537,13 @@ Java reflection, any Java operation include calling a specific overload
 or even accessing private methods and fields.
 """)
 entry("Access Java reflection class",
-      """
-.. code-block:: java
-    MyClass.class
-""",
-      """
-.. code-block:: java
-    MyClass.class_
-""")
+      java("MyClass.class"),
+      python("MyClass.class_"))
 
 entry("Access a private field by name", None,
       """
 .. code-block:: python
+
     cls = myObject.class_
     field = cls.getDeclaredField("internalField")
     field.setAccessible(True)
@@ -556,6 +553,7 @@ entry("Access a private field by name", None,
 entry("Accessing a specific overload", None,
       """
 .. code-block:: python
+
     cls = MyClass.class_
     cls.getDeclaredMethod("call", JInt)
     cls.invoke(myObject, JInt(1))
@@ -564,6 +562,7 @@ entry("Accessing a specific overload", None,
 entry("Convert a ``java.lang.Class`` into python wrapper", None,
       """
 .. code-block:: python
+
     # Something returned a java.lang.Class
     MyClassJava = getClassMethod()
 
@@ -574,11 +573,13 @@ entry("Convert a ``java.lang.Class`` into python wrapper", None,
 entry("Load a class with a external class loader",
       """
 .. code-block:: java
+
     ClassLoader cl = new ExternalClassLoader();
     Class cls = Class.forName("External", True, cl)
 """,
       """
 .. code-block:: python
+
     cl = ExternalClassLoader()
     cls = JClass("External", loader=cl)
 """)
@@ -586,6 +587,7 @@ entry("Load a class with a external class loader",
 entry("Accessing base method implementation", None,
       """
 .. code-block:: python
+
     from org.pkg import BaseClass, MyClass
     myObject = MyClass(1)
     BaseClass.callMember(myObject, 2)
@@ -608,6 +610,7 @@ fly.
 entry("Implement an interface",
       """
 .. code-block:: java
+
     public class PyImpl implements MyInterface
     {
       public void call() {...}
@@ -615,6 +618,7 @@ entry("Implement an interface",
 """,
       """
 .. code-block:: python
+
     @JImplements(MyInterface)
     class PyImpl(object):
         @JOverride
