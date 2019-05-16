@@ -350,8 +350,8 @@ entry("Create a primitive array",
       java("int[] array = new int[5]"),
       python("array = JArray(JInt)(5)"))
 
-entry("Create a primitive array",
-      java("int[] array = new int[){1,2,3}"),
+entry("Create an initialized primitive array",
+      java("int[] array = new int[]{1,2,3}"),
       python("array = JArray(JInt)([1,2,3])"),
       "list, sequences, or np.array can be used to initialize.")
 entry("Put a specific primitive type on a list",

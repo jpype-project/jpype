@@ -327,9 +327,9 @@ Python int is equivalent to Java long.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Create a primitive array  | .. code-block:: java                                    | .. code-block:: python                                  |
-| [13]_                     |                                                         |                                                         |
-|                           |     int[] array = new int[){1,2,3}                      |     array = JArray(JInt)([1,2,3])                       |
+| Create an initialized     | .. code-block:: java                                    | .. code-block:: python                                  |
+| primitive array [13]_     |                                                         |                                                         |
+|                           |     int[] array = new int[]{1,2,3}                      |     array = JArray(JInt)([1,2,3])                       |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
