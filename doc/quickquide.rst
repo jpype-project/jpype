@@ -289,7 +289,7 @@ that Python native exceptions. JException serves as the base class for all Java 
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Closeable items           | .. code-block: java                                     | .. code-block: python                                   |
+| Closeable items           | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     try (InputStream is = Files.newInputStream(file)    |     with Files.newInputStream(file) as is:              |
 |                           |     { ... }                                             |        ...                                              |
@@ -333,11 +333,12 @@ Python int is equivalent to Java long.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Put a specific primitive  | .. code-block: java                                     | .. code-block: python                                   |
+| Put a specific primitive  | .. code-block:: java                                    | .. code-block:: python                                  |
 | type on a list            |                                                         |                                                         |
 |                           |     List<Integer> myList                                |     from java.util import ArrayList                     |
 |                           |       = new ArrayList<>();                              |     myList = ArrayList()                                |
 |                           |     myList.add(1);                                      |     myList.add(JInt(1))                                 |
+|                           |                                                         |                                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -372,7 +373,7 @@ JString should be converted to python.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Create a Java string from | .. code-block: java                                     | .. code-block: python                                   |
+| Create a Java string from | .. code-block:: java                                    | .. code-block:: python                                  |
 | bytes [16]_               |                                                         |                                                         |
 |                           |     byte[] b;                                           |     b= b'foo'                                           |
 |                           |     String javaStr = new String(b, "UTF-8");            |     myStr = JString(b, "UTF-8")                         |

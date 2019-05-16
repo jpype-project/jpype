@@ -316,13 +316,13 @@ entry("Checking if Java exception wrapper", None,
 
 entry("Closeable items",
       """
-.. code-block: java
+.. code-block:: java
 
     try (InputStream is = Files.newInputStream(file)
     { ... }
 """,
       """
-.. code-block: python
+.. code-block:: python
 
     with Files.newInputStream(file) as is:
        ...
@@ -356,18 +356,20 @@ entry("Create a primitive array",
       "list, sequences, or np.array can be used to initialize.")
 entry("Put a specific primitive type on a list",
       """
-.. code-block: java
+.. code-block:: java
 
     List<Integer> myList 
       = new ArrayList<>();
     myList.add(1);
+
 """,
       """
-.. code-block: python
+.. code-block:: python
 
     from java.util import ArrayList
     myList = ArrayList()
     myList.add(JInt(1))
+
 """)
 
 entry("Boxing a primitive",
@@ -390,13 +392,13 @@ entry("Create a Java string", java('String javaStr = new String("foo");'), pytho
     'myStr = JString("foo")'), "``JString`` constructs a ``java.lang.String``")
 entry("Create a Java string from bytes",
       '''
-.. code-block: java
+.. code-block:: java
 
     byte[] b;
     String javaStr = new String(b, "UTF-8");
 ''',
       '''
-.. code-block: python
+.. code-block:: python
 
     b= b'foo'
     myStr = JString(b, "UTF-8")
