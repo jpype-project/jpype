@@ -21,14 +21,17 @@ import java.util.List;
 
 public class ProxyTriggers
 {
-    public static String[] testProxy(TestInterface2 itf)
+    public static String[] testProxy(Object itf)
     {
         List<String> methods = new LinkedList<>();
         if (itf instanceof TestInterface1)
         {
             methods.add("Test Method1 = "+((TestInterface1)itf).testMethod1());
         }
-        methods.add("Test Method2 = "+itf.testMethod2());
+        if (itf instanceof TestInterface2)
+        {
+          methods.add("Test Method2 = "+((TestInterface2)itf).testMethod2());
+        }
         if (itf instanceof TestInterface3)
         {
             methods.add("Test Method3 = "+((TestInterface3)itf).testMethod3());
