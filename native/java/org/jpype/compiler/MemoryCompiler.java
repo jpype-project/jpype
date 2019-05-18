@@ -32,6 +32,12 @@ public class MemoryCompiler
 {
   public DiagnosticCollector<JavaFileObject> diagnostics;
 
+	public boolean isAvailable()
+	{
+    JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
+		return javac!=null;
+	}
+
   /**
    * Compile code from memory into a class.
    * <p>
@@ -50,6 +56,9 @@ public class MemoryCompiler
               new MemorySourceObject(name, source));
 
       JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
+			if (javac == null)
+				throw new NullPointerException("javac is null");
+
       this.diagnostics = new DiagnosticCollector<>();
 
       // We need a standard file manager to serve as our base.
@@ -59,7 +68,7 @@ public class MemoryCompiler
       MemoryFileManager memoryFileManager = new MemoryFileManager(stdFileManager);
 
       // Create a compiler
-      JavaCompiler.CompilationTask task = javac.getTask(null, memoryFileManager, null, null, null, sources);
+      JavaCompiler.CompilationTask task = javac.getTask(null, memoryFileManager, diagnostics, null, null, sources);
       boolean success = task.call();
       if (!success)
       {
