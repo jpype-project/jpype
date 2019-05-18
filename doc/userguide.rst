@@ -42,7 +42,8 @@ free to pick and choose.
 Using JPype
 ~~~~~~~~~~~
 
-Here is a sample program to demonstrate how to use JPype: ::
+Here is a sample program to demonstrate how to use JPype:
+.. code-block:: python
 
   from jpype import *
   startJVM(getDefaultJVMPath(), "-ea")
@@ -94,19 +95,23 @@ for synchronization.
 Synchronization
 ~~~~~~~~~~~~~~~
 
-Java synchronization support can be split into 2 categories. The first is the
+Java synchronization support can be split into two categories. The first is the
 ``synchronized`` keyword, both as prefix on a method and as a block inside a
 method. The second are the different methods available on the Object class
-(``notify, notifyAll, wait``).
+(``notify, notifyAll, wait``).  
 
 To support the ``synchronized`` functionality, JPype defines a method called
-``synchronized(O)``. O has to be a Java object or Java class, or a Java wrapper
-that corresponds to an object (``JString`` and ``JObject``). The return value is a
+``synchronized(O)``. O has to be a Java object or Java class. The return value is a
 monitor object that will keep the synchronization on as long as the object is
-kept alive. The lock will be broken as soon as the monitor is GCd. So make
-sure to hang on to it as long as you need it.
+kept alive. Use Python ``with`` statement to control the exact scope.  Do 
+not hold onto the object indefinitly without a ``with`` statement, the lock 
+will be not be broken until the monitor is garbage collected.  CPython and
+PyPy have difference GC rules.  See synchronized_ for details of how
+to properly synchronize.
 
-The other methods are available as-is on any ``_JavaObject``.
+The other synchronization methods are available as-is on any ``JObject``.  However, as 
+general rule one should not use synchronization methods on Java String as
+internal string representations may not be complete objects.
 
 For synchronization that does not have to be shared with Java code, I suggest
 using Python's support instead of Java's, as it'll be more natural and easier.
@@ -124,8 +129,8 @@ no getting around it. Down the road, it is possible that interfacing with CNI
 (GCC's java native interface) may be used. The only way to minimize the JNI
 cost is to move some code over to Java.
 
-Follow the regular Python philosophy : ``Write it all in Python, then write
-only those parts that need it in C.`` Except this time, it's write the parts
+Follow the regular Python philosophy : **Write it all in Python, then write
+only those parts that need it in C.** Except this time, it's write the parts
 that need it in Java.
 
 For the conversion costs, again, nothing much can be done. In cases where a
@@ -221,31 +226,34 @@ types. These levels are:
   to use, one where all the parameters match "exact" will take precedence
   over "implicit" matches.
 
-============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
-Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array     Object      Class
-============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
-    int       I [1]_     I [1]_       X          I        I [11]_    I [11]_    X [10]_
-   long       I [1]_     I [1]_     I [1]_       X        I [11]_    I [11]_
-   float                                                  I [1]_       X
- sequence
-dictionary
-  string                                                                                   I [2]_       X
-  unicode                                                                                  I [2]_       X
-   JByte        X
-  JShort                   X
-   JInt                               X
-   JLong                                         X
-  JFloat                                                    X
-  JDouble                                                              X
- JBoolean                                                                         X
-  JString                                                                                               X                   I [3]_
-   JChar                                                                                     X
-  JArray                                                                                                        I/X [4]_    I [5]_
-  JObject                                                                                                       I/X [6]_    I/X [7]_
-JavaObject                                                                                                                  I [8]_
- JavaClass                                                                                                                  I [9]_        X
- "Boxed"      I [12]_    I [12]_    I [12]_     I [12]_   I [12]_    I [12]_    I [12]_                                     I/X [8]_
-============ ========== ========= =========== ========= ========== ========== =========== ========= ========== ========== =========== =========
+There are special rules for ``java.lang.Object`` as compared with a 
+specific Java object.  In Java, primitives are boxed automatically when
+passing to a ``java.lang.Object``.
+
+============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
+Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array       Object    java.lang.Object   java.lang.Class
+============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
+    int         I [1]_     I [1]_       X          I        I [3]_     I [3]_     X [8]_                                                       I [11]_                          
+   long         I [1]_     I [1]_     I [1]_       X        I [3]_     I [3]_                                                                  I [11]_                        
+   float                                                    I [1]_       X                                                                     I [12]_                        
+ sequence                                                                                                                                                                
+dictionary                                                                                                                                                               
+  string                                                                                     I [2]_       X                                    I                           
+  unicode                                                                                    I [2]_       X                                    I                          
+   JByte          X                                                                                                                            I [9]_                          
+  JShort                     X                                                                                                                 I [9]_                          
+   JInt                                 X                                                                                                      I [9]_                          
+   JLong                                           X                                                                                           I [9]_                         
+  JFloat                                                      X                                                                                I [9]_                         
+  JDouble                                                                X                                                                     I [9]_                          
+ JBoolean                                                                           X                                                          I [9]_                          
+   JChar                                                                                       X                                               I [9]_                          
+  JString                                                                                                 X                                    I                      
+  JArray                                                                                                          I/X [4]_                     I                      
+  JObject                                                                                                         I/X [6]_    I/X [7]_         I/X [7]_                    
+  JClass                                                                                                                                       I                  X    
+ "Boxed"[10]_     I          I          I          I          I          I          I                                                          I                    
+============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
 
 .. [1] Conversion will occur if the Python value fits in the Java
        native type.
@@ -253,66 +261,59 @@ JavaObject                                                                      
 .. [2] Conversion occurs if the Python string or unicode is of
        length 1.
 
-.. [3] The required object must be of a type compatible with
-       ``java.lang.String(java.lang.Object, java.util.Comparable)``.
+.. [3] Java defines conversions from integer types to floating point
+       types as implicit conversion. Java's conversion rules are based
+       on the range and can be lossy.
+       See (http://stackoverflow.com/questions/11908429/java-allows-implicit-conversion-of-int-to-float-why)
 
 .. [4] Number of dimensions must match, and the types must be
        compatible.
 
-.. [5] Only when the required type is ``java.lang.Object``.
+.. [6] Only if the specified type is an compatible array class.
 
-.. [6] Only if the JObject wrapper's specified type is an compatible
-       array class.
+.. [7] Exact is the object class is an exact match, otherwise
+       implicit.
 
-.. [7] Only if the required type is compatible with the wrappers's
-       specified type. The actual type of the Java object is not
-       considered.
+.. [8] Only the values True and False are implicitly converted to
+       booleans.
 
-.. [8] Only if the required type is compatible with the Java Object
-       actual type.
+.. [9] Primitives are boxed as per Java rules.
 
-.. [9] Only when the required type is ``java.lang.Object`` or
-       ``java.lang.Class``.
-
-.. [10] Only the values True and False are implicitly converted to
-        booleans.
-
-.. [11] Java defines conversions from integer types to floating point
-        types as implicit conversion. Java's conversion rules are based
-        on the range and can be lossy.
-        See (http://stackoverflow.com/questions/11908429/java-allows-implicit-conversion-of-int-to-float-why)
-
-.. [12] Java boxed types are mapped to python primitives, but will
+.. [10] Java boxed types are mapped to python primitives, but will
         produce an implicit conversion even if the python type is an exact
         match. This is to allow for resolution between methods
         that take both a java primitve and a java boxed type.
+
+.. [11] Boxed to ``java.lang.Long`` as there is no difference 
+        between long and int in Python3,
+
+.. [12] Boxed to ``java.lang.Double``
 
 Converting from Java to Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The rules here are much simpler.
 
-Java ``byte, short and int`` are converted to Python ``int``.
+- Java ``byte, short and int`` are converted to Python ``int``.
 
-Java ``long`` is converted to Python ``long``.
+- Java ``long`` is converted to Python ``long``.
 
-Java ``float and double`` are converted to Python ``float``.
+- Java ``float and double`` are converted to Python ``float``.
 
-Java ``boolean`` is converted to Python ``int`` of value 1 or 0.
+- Java ``boolean`` is converted to Python ``int`` of value 1 or 0.
 
-Java ``char`` is converted to Python ``unicode`` of length 1.
+- Java ``char`` is converted to Python ``unicode`` of length 1.
 
-Java ``String`` is converted to Python ``unicode``.
+- All Java objects are converted to ``JObject``.
 
-Java ``arrays`` are converted to ``JArray``.
+- Java ``Throwable`` is converted to ``JException`` derived from ``JObject``.
 
-Java ``boxed`` types are converted to extensions of python primitives on return.
+- Java ``String`` is converted to ``JString`` derived from ``JObject``.
 
-All other Java objects are converted to ``JavaObjects``.
+- Java **arrays** are converted to ``JArray`` derived from ``JObject``.
 
-Java ``Class`` is converted to ``JavaClass``.
+- Java **boxed** types are converted to ``JObject`` with extensions of python primitives on return.
 
-Java array ``Class`` is converted to ``JavaArrayClass``.
 
 Boxed types
 ~~~~~~~~~~~
@@ -327,14 +328,42 @@ somewhat looser than java. While java provides automatic unboxing of a Integer
 to a double primitive, jpype can implicitly convert Integer to a Double boxed.
 
 To box a primitive into a specific type such as to place in on a ``java.util.List``
-use ``JObject`` on the desired boxed type. For example: ::
+use ``JObject`` on the desired boxed type. For example:
+
+.. code-block:: python
 
     from jpype.types import *
     from jpype import java
-    ...
+    # ...
     lst = java.util.ArrayList()
     lst.add(JObject(JInt(1)))
     print(type(lst.get(0)))
+
+Implementing interfaces
+-----------------------
+
+At times it is necessary to implement an interface in python especially to use
+classes that require java lambdas.  To implement an interface contruct a 
+python class and decorate it with annotations ``@JImplements`` and ``@JOverride``. 
+
+.. code-block:: python
+
+  from jpype import JImplements, JOverride
+  from java.lang.util import DoubleUnaryOperator
+  # ...
+  @JImplements(DoubleUnaryOperator)
+  class MyImpl(object):
+      @JOverride
+      def applyAsDouble(self, value):
+          return 123+value
+
+The java interface may specified by a java wrapper or using a string naming the
+class.  Multiple interfaces can be implemented by a single class by giving a 
+list of interfaces.   Alternatively, the interface can be implemented using 
+JProxy.  
+
+In a future release, Python callables will be able to automatically match to 
+interfaces that have the Java annotation ``@FunctionalInterface``.
 
 
 JProxy
@@ -366,7 +395,9 @@ subclass that delegates the calls to that interface.
 Sample code :
 ~~~~~~~~~~~~~
 
-Assume a Java interface like: ::
+Assume a Java interface like: 
+
+.. code-block:: java
 
   public interface ITestInterface2
   {
@@ -375,7 +406,9 @@ Assume a Java interface like: ::
   }
 
 You can create a proxy *implementing* this interface in 2 ways.
-First, with a class: ::
+First, with a class: 
+
+.. code-block:: python
 
   class C :
           def testMethod(self) :
@@ -387,7 +420,9 @@ First, with a class: ::
   c = C()
   proxy = JProxy("ITestInterface2", inst=c)
 
-or you can do it with a dictionary ::
+or you can do it with a dictionary 
+
+.. code-block:: python
 
   def _testMethod() :
   return 32
@@ -411,7 +446,9 @@ derives from python Exception. These can be caught either using a specific
 java exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.
 You can then use the ``stacktrace()``, ``str()``, and args to access extended information.
 
-Here is an example: ::
+Here is an example:
+
+.. code-block:: python
 
   try :
           # Code that throws a java.lang.RuntimeException
@@ -419,10 +456,12 @@ Here is an example: ::
         print("Caught the runtime exception : ", str(ex))
         print(ex.stacktrace())
 
-Multiple java exceptions can be caught together or separately: ::
+Multiple java exceptions can be caught together or separately:
 
-  try :
-        ...
+.. code-block:: python
+
+  try:
+        #  ...
   except (java.lang.ClassCastException, java.lang.NullPointerException) as ex:
         print("Caught multiple exceptions : ", str(ex))
         print(ex.stacktrace())
@@ -462,7 +501,9 @@ Generally speaking, a customizer should be defined before the first instance of 
 given class is created so that the class wrapper and all instances will have the
 customization.
 
-Example taken from JPype ``java.util.Collection`` customizer: ::
+Example taken from JPype ``java.util.Collection`` customizer:
+
+.. code-block:: python
 
   @JImplementationFor("java.util.Collection")
   class _JCollection(object):
@@ -660,7 +701,7 @@ valid path to a Java virtual machine library (``jvm.dll``, ``jvm.so``, ``jvm.dyl
 Exceptions
 ::::::::::
 ``JVMNotSupportedException``, if none of the provided methods returned a valid JVM path.
-
+``JVMNotFoundException``, if none of the provided methods returned a valid JVM path.
 
 startJVM method
 ~~~~~~~~~~~~~~~~~
@@ -788,7 +829,7 @@ Exceptions
 
 On failure, a ``RuntimeException`` is raised.
 
-
+.. _synchronized:
 synchronized method
 ~~~~~~~~~~~~~~~~~~~
 
@@ -796,7 +837,9 @@ synchronized can be used to create a threads safe lock on a java
 object for a limited period of time. It is used with the python
 ``with`` statement to create a block that locks an object.
 
-Example: ::
+Example:
+
+.. code-block:: python
 
   from jpype import synchronized
 
@@ -837,7 +880,8 @@ provided to support older code.
 Only the root of the package tree need be declared with the ``JPackage``
 constructor. Sub-packages will be created on demand.
 
-For example, to import the w3c DOM package: ::
+For example, to import the w3c DOM package:
+.. code-block:: python 
 
   Document = JPackage('org').w3c.dom.Document
 
@@ -872,7 +916,9 @@ must resolve the ambiguity. That's where the wrapper classes come in.
 Take for example the ``java.io.PrintStream`` class. This class has a variant of
 the print and println methods!
 
-So for the following code: ::
+So for the following code:
+
+.. code-block:: python 
 
   from jpype import *
   startJVM(getDefaultJVMPath(), "-ea")
@@ -884,7 +930,9 @@ int matches exactly with the Java int, while all the other integral types
 are only "implicit" matches. However, if that is not the version you
 wanted to call ...
 
-Changing the line thus: ::
+Changing the line thus:
+
+.. code-block:: python 
 
   from jpype import *
   startJVM(getDefaultJVMPath(), "-ea")
