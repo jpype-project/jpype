@@ -2,7 +2,9 @@
 import jpype
 import gc
 import sys
-from . import common
+import os
+from os import path
+from subprocess import call
 
 try:
     import unittest2 as unittest
@@ -128,46 +130,95 @@ def invokeFunc(obj):
 
 # Test case
 
+# These test require a clean JVM, thus we will use subprocess to start a fresh
+# copy each time
+def subJVM(impl, methodName):
 
-class LeakTestCase(common.JPypeTestCase):
+    # if called from a test framework, fork it 
+    if __name__!="__main__":
+        f = call([sys.executable, os.path.realpath(__file__), methodName])
+        return f==0
+
+    # Otherwise run the requested test
+    impl()
+    return True
+
+
+class LeakTestCase(unittest.TestCase):
+
+    def runTest(self):
+        pass
+
     def setUp(self):
-        common.JPypeTestCase.setUp(self)
         if not haveResource():
             return
-        self.cls = jpype.JClass('java.lang.String')
-        self.string = self.cls("there")
-        self.lc = LeakChecker()
+
+        if __name__=="__main__":
+            self.cls = jpype.JClass('java.lang.String')
+            self.string = self.cls("there")
+            self.lc = LeakChecker()
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
-        self.assertFalse(self.lc.memTest(stringFunc, 5000))
+        def f():
+            self.assertFalse(self.lc.memTest(stringFunc, 5000))
+        self.assertTrue(subJVM(f,'testStringLeak'))
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
-        self.assertFalse(self.lc.memTest(classFunc, 5000))
+        def f():
+            self.assertFalse(self.lc.memTest(classFunc, 5000))
+        self.assertTrue(subJVM(f,'testClassLeak'))
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
-        self.assertFalse(self.lc.memTest(lambda: ctorFunc(self.cls), 5000))
+        def f():
+            self.assertFalse(self.lc.memTest(lambda: ctorFunc(self.cls), 5000))
+        self.assertTrue(subJVM(f,'testCtorLeak'))
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
-        self.assertFalse(self.lc.memTest(
-            lambda: invokeFunc(self.string), 5000))
+        def f():
+            self.assertFalse(self.lc.memTest(
+                lambda: invokeFunc(self.string), 5000))
+        self.assertTrue(subJVM(f,'testInvokeLeak'))
 
     @unittest.skipUnless(hasRefCount(), "no refcount")
     def testRefCountCall(self):
-        obj = jpype.JString("help me")
-        initialObj = sys.getrefcount(obj)
-        initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0, 100):
-            obj.charAt(0)
-        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
+        def f():
+            obj = jpype.JString("help me")
+            initialObj = sys.getrefcount(obj)
+            initialValue = sys.getrefcount(obj.__javavalue__)
+            for i in range(0, 100):
+                obj.charAt(0)
+            self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
+            self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
 
-        initialObj = sys.getrefcount(obj)
-        initialValue = sys.getrefcount(obj.__javavalue__)
-        for i in range(0, 100):
-            obj.compareTo(obj)
-        self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-        self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
+            initialObj = sys.getrefcount(obj)
+            initialValue = sys.getrefcount(obj.__javavalue__)
+            for i in range(0, 100):
+                obj.compareTo(obj)
+            self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
+            self.assertTrue(sys.getrefcount(obj.__javavalue__)-initialValue < 5)
+        self.assertTrue(subJVM(f,'testRefCountCall'))
+
+if __name__=="__main__":
+    # Launch jpype with a clean JVM
+    root = path.dirname(path.abspath(path.dirname(__file__)))
+    jpype.addClassPath(path.join(root, 'classes'))
+    jvm_path = jpype.getDefaultJVMPath()
+    classpath_arg = "-Djava.class.path=%s"
+    classpath_arg %= jpype.getClassPath()
+    jpype.startJVM(jvm_path, "-ea",
+                   # "-Xcheck:jni",
+                   "-Xmx256M", "-Xms16M", classpath_arg)
+
+    # Execute the requested test case
+    ltc = LeakTestCase()
+    ltc.setUp()
+    getattr(ltc, sys.argv[1])()
+
+    # Return 0 on success
+    exit(0)
+
+
