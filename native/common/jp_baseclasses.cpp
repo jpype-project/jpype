@@ -74,6 +74,13 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 		return JPMatch::_implicit;
 	}
 
+	JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
+	if (proxy != NULL)
+	{
+		JP_TRACE("implicit python proxy");
+		return JPMatch::_implicit;
+	}
+
 	return JPMatch::_none;
 	JP_TRACE_OUT;
 }
