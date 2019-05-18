@@ -161,7 +161,7 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     if members == None:
         members = {}
     for p, v in proto.__dict__.items():
-        if isinstance(v, (str)):
+        if isinstance(v, (str, property)):
             members[p] = v
         elif callable(v):
             members[p] = v

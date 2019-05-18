@@ -58,9 +58,11 @@ class _JException(object):
     def __str__(self):
         return str(self.getMessage())
 
+    # Included for compatibility with JPype 0.6.3
     def message(self):
-        return self.getMessage()
+        return str(self.getMessage())
 
+    # Included for compatibility with JPype 0.6.3
     def stacktrace(self):
         StringWriter = _jclass.JClass("java.io.StringWriter")
         PrintWriter = _jclass.JClass("java.io.PrintWriter")
@@ -72,13 +74,14 @@ class _JException(object):
         sw.close()
         return r
 
+    # For compatiblity with python exceptions
     args = property(lambda self: self._jargs(), None)
 
     def _jargs(self):
         cause = self.getCause()
         if cause is None:
-            return (self.getMessage(),)
-        return (self.getMessage(), cause,)
+            return (str(self.getMessage()),)
+        return (str(self.getMessage()), cause,)
 
 
 JException = _jobject.defineJObjectFactory("JException", "java.lang.Throwable",

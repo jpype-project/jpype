@@ -223,6 +223,14 @@ class JInterface(object):
     def __new__(cls, *args, **kwargs):
         return super(JInterface, cls).__new__(cls)
 
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
+            object.__setattr__(self, '__javavalue__', args[0])
+        elif not hasattr(self, '__javavalue__'):
+            raise JClass("java.lang.InstantiationException")("%s is an interface."%str(self.class_.getName()))
+        print("otherwise")
+        super(JObject, self).__init__()
+
     def __str__(self):
         return self.toString()
 

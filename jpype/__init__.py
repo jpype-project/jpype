@@ -21,6 +21,7 @@ from ._gui import *
 from ._classpath import *
 from ._jclass import *
 from .types import *
+from ._jcustomizer import *
 from . import reflect
 from . import nio
 from . import types

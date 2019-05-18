@@ -151,7 +151,11 @@ def detachThreadFromJVM():
 
 
 def synchronized(obj):
-    return _jpype.PyJPMonitor(obj.__javavalue__)
+    try:
+        return _jpype.PyJPMonitor(obj.__javavalue__)
+    except AttributeError as ex:
+        pass
+    raise TypeError("synchronized only applies to java objects")
 
 
 def getDefaultJVMPath():
