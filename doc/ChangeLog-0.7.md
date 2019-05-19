@@ -458,14 +458,7 @@ Because these do affect the end user, we have marked them as enhance, change, re
     type wrapper cached in ensureTypeCache so we are guaranteed to find
     the conversion.
 
-[ ] Use translation customizer to merge numpy basic data types into 
-    primitive conversions.
-
-[ ] Revise proxy to use implements.  (Assuming someone ever responds to the 
-    issue posting.)
-
 [ ] Add tests for Exception.args
 
-[ ] Reenable lost "synchronized" command
 
 
