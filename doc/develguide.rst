@@ -940,12 +940,13 @@ these JVMs to be developed if there are differences in getting the JVM
 launched.
 
 There is a project page on github shows what is being developed for the 
-next release. Series 0.6 was usable but mostly beta quality code as
-threading and internal memory management concepts had to be redone for
+next release. Series 0.6 was usable, but early versions had notable issues
+with threading and internal memory management concepts had to be redone for
 stability.  Series 0.7 is the first verion after rewrite for 
-simplication and hardening and is of production quality.  Series 0.8
-will deal with higher levels of Python/Java integration such as Java
-extension and pickle support.  Series 0.9 will be dedicated to any
+simplication and hardening.  I consider 0.7 to be at the level of production 
+quality code suitable for most usage though still missing some needed 
+features. Series 0.8 will deal with higher levels of Python/Java integration such as Java
+class extension and pickle support.  Series 0.9 will be dedicated to any
 additional hardening and edge cases in the core code as we should have complete
 integration.  Assuming everything is completed, we will one day become a
 real boy and have a 1.0 release. 
