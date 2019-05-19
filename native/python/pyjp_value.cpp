@@ -144,7 +144,9 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		JPValue* jval = JPPythonEnv::getJavaValue(value);
 		if (jval != NULL && type->isInstance(*jval))
 		{
-			self->m_Value = JPValue(type, jval->getValue());
+			jvalue v = jval->getValue();
+			v.l = frame.NewGlobalRef(v.l);
+			self->m_Value = JPValue(type, v);
 			return 0;
 		}
 
@@ -158,6 +160,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		}
 
 		jvalue v = type->convertToJava(value);
+		v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
 		return 0;
 	}
@@ -177,11 +180,11 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 
 		// FIXME Remove these extra diagnostic values
 		if (dynamic_cast<JPPrimitiveType*> (self->m_Value.getClass()) != NULL)
-			sout << endl << "  value = primitive" << endl;
+			sout << endl << "  value = primitive";
 		else
 		{
 			jobject jo = self->m_Value.getJavaObject();
-			sout << "  value = " << jo << " " << JPJni::toString(jo) << endl;
+			sout << "  value = " << jo << " " << JPJni::toString(jo);
 		}
 
 		sout << ">";
