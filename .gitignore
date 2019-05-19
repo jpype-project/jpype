@@ -59,3 +59,6 @@ target/
 /project/jpype_cpython/Makefile
 /project/jpype_cpython/nbproject/Package-Release.bash
 /project/jpype_python/nbproject/private/
+*.swp
+*.stackdump
+tmp

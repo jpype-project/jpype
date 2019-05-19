@@ -596,4 +596,17 @@ string JPClass::describe()
 
 	return out.str();
 }
+
+bool JPClass::isInstance(JPValue& val)
+{
+	JPClass* cls = val.getClass();
+	if (dynamic_cast<JPPrimitiveType*> (cls) == cls)
+		return false;
+
+	JPJavaFrame frame;
+	return frame.IsInstanceOf(val.getValue().l, m_Class.get());
+}
+
+
+
 //</editor-fold>

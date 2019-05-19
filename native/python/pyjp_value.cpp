@@ -95,8 +95,11 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
 	JP_PY_CHECK();
 
+	// If it is not a primitive we need to reference it
 	if (dynamic_cast<JPPrimitiveType*> (cls) != cls)
 		value.l = frame.NewGlobalRef(value.l);
+
+	// New value instance
 	self->m_Value = JPValue(cls, value);
 	self->m_Cache = NULL;
 	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
@@ -122,6 +125,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 	{
 		ASSERT_JVM_RUNNING("PyJPValue::__init__");
 		JPJavaFrame frame;
+		self->m_Cache = NULL;
 
 		PyObject* claz;
 		PyObject* value;
@@ -135,6 +139,18 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
 
+		// If it is already a Java object, then let Java decide
+		// if the cast is possible
+		JPValue* jval = JPPythonEnv::getJavaValue(value);
+		if (jval != NULL && type->isInstance(*jval))
+		{
+			jvalue v = jval->getValue();
+			v.l = frame.NewGlobalRef(v.l);
+			self->m_Value = JPValue(type, v);
+			return 0;
+		}
+
+		// Otherwise, see if we can convert it
 		if (type->canConvertToJava(value) == JPMatch::_none)
 		{
 			stringstream ss;
@@ -144,8 +160,9 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		}
 
 		jvalue v = type->convertToJava(value);
+		if (dynamic_cast<JPPrimitiveType*> (type) != type)
+			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
-		self->m_Cache = NULL;
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -164,11 +181,11 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 
 		// FIXME Remove these extra diagnostic values
 		if (dynamic_cast<JPPrimitiveType*> (self->m_Value.getClass()) != NULL)
-			sout << endl << "  value = primitive" << endl;
+			sout << endl << "  value = primitive";
 		else
 		{
 			jobject jo = self->m_Value.getJavaObject();
-			sout << "  value = " << jo << " " << JPJni::toString(jo) << endl;
+			sout << "  value = " << jo << " " << JPJni::toString(jo);
 		}
 
 		sout << ">";

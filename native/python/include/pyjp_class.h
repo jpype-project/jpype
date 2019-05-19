@@ -68,6 +68,10 @@ struct PyJPClass
 	/** Create an new PyJPValue with this class as the object. */
 	static PyObject* asJavaValue(PyJPClass* self, PyObject* arg);
 
+	/** For diagnostics */
+	static PyObject* canConvertToJava(PyJPClass* self, PyObject* args);
+	static PyObject* convertToJava(PyJPClass* self, PyObject* args);
+
 	JPClass* m_Class;
 } ;
 

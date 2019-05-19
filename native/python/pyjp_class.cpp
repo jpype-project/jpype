@@ -32,6 +32,8 @@ static PyMethodDef classMethods[] = {
 	{"isAbstract", (PyCFunction) (&PyJPClass::isAbstract), METH_NOARGS, ""},
 	{"isAssignableFrom", (PyCFunction) (&PyJPClass::isAssignableFrom), METH_VARARGS, ""},
 	{"asJavaValue", (PyCFunction) (&PyJPClass::asJavaValue), METH_NOARGS, ""},
+	{"canConvertToJava", (PyCFunction) (&PyJPClass::canConvertToJava), METH_VARARGS, ""},
+	{"convertToJava", (PyCFunction) (&PyJPClass::convertToJava), METH_VARARGS, ""},
 
 	{NULL},
 };
@@ -408,6 +410,76 @@ PyObject* PyJPClass::asJavaValue(PyJPClass* self, PyObject* args)
 		jvalue v;
 		v.l = self->m_Class->getJavaClass();
 		return PyJPValue::alloc(JPTypeManager::_java_lang_Class, v).keep();
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+}
+
+// Added for auditing
+
+PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPClass::asJavaValue");
+		JPJavaFrame frame;
+
+		PyObject* other;
+		if (!PyArg_ParseTuple(args, "O", &other))
+		{
+			return NULL;
+		}
+		JPClass* cls = self->m_Class;
+
+		// Test the conversion
+		JPMatch::Type match = cls->canConvertToJava(other);
+
+		// Report to user
+		if (match == JPMatch::_none)
+			return JPPyString::fromStringUTF8("none", false).keep();
+		if (match == JPMatch::_explicit)
+			return JPPyString::fromStringUTF8("explicit", false).keep();
+		if (match == JPMatch::_implicit)
+			return JPPyString::fromStringUTF8("implicit", false).keep();
+		if (match == JPMatch::_exact)
+			return JPPyString::fromStringUTF8("exact", false).keep();
+
+		// Not sure how this could happen
+		Py_RETURN_NONE;
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+}
+
+// Added for auditing
+
+PyObject* PyJPClass::convertToJava(PyJPClass* self, PyObject* args)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPClass::asJavaValue");
+		JPJavaFrame frame;
+
+		PyObject* other;
+		if (!PyArg_ParseTuple(args, "O", &other))
+		{
+			return NULL;
+		}
+		JPClass* cls = self->m_Class;
+
+		// Test the conversion
+		JPMatch::Type match = cls->canConvertToJava(other);
+
+		// If there is no conversion report a failure
+		if (match == JPMatch::_none)
+		{
+			PyErr_SetString(PyExc_TypeError, "Unable to create an instance.");
+			return 0;
+		}
+
+		// Otherwise give back a PyJPValue
+		jvalue v = cls->convertToJava(other);
+		return PyJPValue::alloc(cls, v).keep();
 	}
 	PY_STANDARD_CATCH;
 	return NULL;

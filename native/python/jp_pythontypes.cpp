@@ -349,17 +349,17 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 bool JPPyString::checkCharUTF16(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPPyString::checkCharUTF16");
-	if (JPPyLong::checkConvertable(pyobj))
+	if (JPPyLong::checkIndexable(pyobj))
 		return true;
 #if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj))
+	if (PyUnicode_Check(pyobj) && PyUnicode_GET_SIZE(pyobj) == 1)
 		return true;
-	if (PyString_Check(pyobj))
+	if (PyString_Check(pyobj) && PyString_Size(pyobj) == 1)
 		return true;
 #else
-	if (PyUnicode_Check(pyobj))
+	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj) == 1)
 		return true;
-	if (PyBytes_Check(pyobj))
+	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
 #endif
 	return false;
