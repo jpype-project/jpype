@@ -141,8 +141,8 @@ public:
 
 	string describe();
 
-	//JPPyObject        getStaticAttribute(const string& attr_name);
-	//void              setStaticAttribute(const string& attr_name, JPPyObject val);
+	// Check if a value is an instance of this class
+	bool isInstance(JPValue& val);
 
 	virtual void postLoad();
 private:

@@ -48,7 +48,9 @@ class _JException(object):
         return super(JException, cls).__new__(cls)
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
+        if hasattr(self, '__javavalue__'):
+            pass
+        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             self.__javavalue__ = args[0]
         else:
             self.__javavalue__ = self.__class__.__javaclass__.newInstance(

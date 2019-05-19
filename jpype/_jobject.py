@@ -75,7 +75,9 @@ class JObject(object):
         return self
 
     def __init__(self, *args):
-        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
+        if hasattr(self, '__javavalue__'):
+            pass
+        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             object.__setattr__(self, '__javavalue__', args[0])
         elif not hasattr(self, '__javavalue__'):
             jv = self.__class__.__javaclass__.newInstance(*args)

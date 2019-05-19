@@ -422,13 +422,13 @@ PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 		JPJavaFrame frame;
 
 		PyObject* other;
-		if (!PyArg_ParseTuple(arg, "O", &other))
+		if (!PyArg_ParseTuple(args, "O", &other))
 		{
 			return NULL;
 		}
 		JPClass* cls = self->m_Class;
 
-    // Test the conversion
+		// Test the conversion
 		JPMatch::Type match = cls->canConvertToJava(other);
 
 		// Report to user
@@ -439,7 +439,7 @@ PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 		if (match == JPMatch::_implicit)
 			return JPPyString::fromStringUTF8("implicit", false).keep();
 		if (match == JPMatch::_exact)
-			return JPPyString::fromStringUTF8("none", false).keep();
+			return JPPyString::fromStringUTF8("exact", false).keep();
 
 		// Not sure how this could happen
 		Py_RETURN_NONE;

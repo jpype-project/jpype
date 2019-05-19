@@ -9,7 +9,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
 setup(
     name='JPype1',
-    version='0.6.3',
+    version='0.7.0',
     description='A Python to Java bridge.',
     long_description=(setupext.utils.read_utf8(__file__, 'README.rst') + '\n\n' +
                       setupext.utils.read_utf8(__file__, 'doc/CHANGELOG.rst') + '\n\n' +
