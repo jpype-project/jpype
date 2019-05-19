@@ -416,6 +416,7 @@ PyObject* PyJPClass::asJavaValue(PyJPClass* self, PyObject* args)
 }
 
 // Added for auditing
+
 PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 {
 	try
@@ -451,6 +452,7 @@ PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 }
 
 // Added for auditing
+
 PyObject* PyJPClass::convertToJava(PyJPClass* self, PyObject* args)
 {
 	try

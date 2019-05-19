@@ -352,14 +352,14 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 	if (JPPyLong::checkIndexable(pyobj))
 		return true;
 #if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj) && PyUnicode_GET_SIZE(pyobj)==1)
+	if (PyUnicode_Check(pyobj) && PyUnicode_GET_SIZE(pyobj) == 1)
 		return true;
-	if (PyString_Check(pyobj) && PyString_Size(pyobj)==1)
+	if (PyString_Check(pyobj) && PyString_Size(pyobj) == 1)
 		return true;
 #else
-	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj)==1)
+	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj) == 1)
 		return true;
-	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj)==1)
+	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
 #endif
 	return false;

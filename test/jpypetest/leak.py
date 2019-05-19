@@ -136,11 +136,14 @@ def subJVM(impl, methodName):
 
     # if called from a test framework, fork it 
     if __name__!="__main__":
+        # In some cases during testing the forked copy finds a previous version of JPype
+        os.environ['PYTHONPATH']=os.getcwd()
         f = call([sys.executable, os.path.realpath(__file__), methodName])
         return f==0
 
     # Otherwise run the requested test
     impl()
+
     return True
 
 

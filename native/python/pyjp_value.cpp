@@ -160,7 +160,8 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		}
 
 		jvalue v = type->convertToJava(value);
-		v.l = frame.NewGlobalRef(v.l);
+		if (dynamic_cast<JPPrimitiveType*> (type) != type)
+			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
 		return 0;
 	}
