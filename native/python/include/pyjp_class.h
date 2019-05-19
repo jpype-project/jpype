@@ -70,6 +70,7 @@ struct PyJPClass
 
 	/** For diagnostics */
 	static PyObject* canConvertToJava(PyJPClass* self, PyObject* args);
+	static PyObject* convertToJava(PyJPClass* self, PyObject* args);
 
 	JPClass* m_Class;
 } ;
