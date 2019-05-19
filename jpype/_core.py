@@ -96,11 +96,12 @@ def startJVM(jvm=None, *args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
     the JVM with the default classpath and jvm.  The default classpath
-    will be determined by jpype.getClassPath().  The default JVM is 
-    determined by jpype.getDefaultJVMPath().
+    will be determined by ``jpype.getClassPath()``.  The default JVM is 
+    determined by ``jpype.getDefaultJVMPath()``.
 
     Args:
-      jvm (str):  Path to the jvm library file (libjvm.so, jvm.dll, ...)
+      jvm (str):  Path to the jvm library file (``libjvm.so``, ``jvm.dll``, i
+        ...)
         default=None will use jpype.getDefaultJVMPath()
       *args (str[]): Arguments to give to the JVM
       classpath (Optional[string]): set the classpath for the jvm.
@@ -135,22 +136,77 @@ def attachToJVM(jvm):
 
 
 def shutdownJVM():
+    """ Shuts down the JVM.
+
+    This method shuts down the JVM and thus disables access to existing 
+    Java objects. Due to limitations in the JPype, it is not possible to 
+    restart the JVM after being terminated.
+    """
     _jpype.shutdown()
 
 
 def isThreadAttachedToJVM():
+    """ Checks if a thread is attached to the JVM.
+
+    Python automatically attaches threads when a Java method is called. 
+    This creates a resource in Java for the Python thread. This method 
+    can be used to check if a Python thread is currently attached so that 
+    it can be disconnected prior to thread termination to prevent leaks.  
+
+    Returns:
+      True if the thread is attached to the JVM, False if the thread is
+      not attached or the JVM is not running.
+    """
     return _jpype.isThreadAttachedToJVM()
 
 
 def attachThreadToJVM():
+    """ Attaches a thread to the JVM.
+
+    The function manually connects a thread to the JVM to allow access to 
+    Java objects and methods. JPype automaticatlly attaches when a Java 
+    resource is used, so a call to this is usually not needed.
+
+    Raises:
+      RuntimeError: If the JVM is not running.
+    """
     _jpype.attachThreadToJVM()
 
 
 def detachThreadFromJVM():
+    """ Detaches a thread from the JVM.
+
+    This function detaches the thread and frees the associated resource in
+    the JVM. For codes making heavy use of threading this should be used
+    to prevent resource leaks. The thread can be reattached, so there 
+    is no harm in detaching early or more than once. This method cannot fail
+    and there is no harm in calling it when the JVM is not running.
+    """
     _jpype.detachThreadFromJVM()
 
 
 def synchronized(obj):
+    """ Creates a resource lock for a Java object.
+
+    Produces a monitor object. During the lifespan of the monitor the Java
+    will not be able to acquire a thread lock on the object. This will 
+    prevent multiple threads from modifying a shared resource.
+
+    This should always be used as part of a Python ``with`` startment.
+
+    Arguments:
+        obj: A valid Java object shared by multiple threads.
+
+    Example:
+
+    .. code-block:: python
+
+      with synchronized(obj):
+         # modify obj values
+         
+      # lock is freed when with block ends
+
+    """
     try:
         return _jpype.PyJPMonitor(obj.__javavalue__)
     except AttributeError as ex:
@@ -162,8 +218,14 @@ def getDefaultJVMPath():
     """
     Retrieves the path to the default or first found JVM library
 
-    :return: The path to the JVM shared library file
-    :raise ValueError: No JVM library found
+    Returns:
+      The path to the JVM shared library file
+    
+    Raises:
+      JVMNotFoundException: If there was no JVM found in the search path.
+      JVMNotSupportedException: If the JVM was found was not compatible with
+        Python due to cpu architecture.
+
     """
     if _sys.platform == "cygwin":
         # Cygwin
@@ -190,7 +252,13 @@ get_default_jvm_path = getDefaultJVMPath
 
 
 def getJVMVersion():
-    """ Get the jvm version if the jvm is started.
+    """ Get the JVM version if the JVM is started.
+    
+    This function can be used to determine the version of the JVM. It is 
+    useful to help determine why a Jar has failed to load.  
+
+    Returns:
+      A typle with the (major, minor, revison) of the JVM if running.
     """
     if not _jpype.isStarted():
         return (0, 0, 0)

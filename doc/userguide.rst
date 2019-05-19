@@ -830,6 +830,7 @@ Exceptions
 On failure, a ``RuntimeException`` is raised.
 
 .. _synchronized:
+
 synchronized method
 ~~~~~~~~~~~~~~~~~~~
 
