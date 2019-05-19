@@ -36,8 +36,10 @@ def haveJImports():
 def isJavaClass(tp):
     return isinstance(tp, jpype.JClass)
 
+
 def isJavaEnum(tp):
     return issubclass(tp, jpype.JClass('java.lang.Enum'))
+
 
 class ImportsTestCase(common.JPypeTestCase):
     def setUp(self):
