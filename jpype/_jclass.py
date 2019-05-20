@@ -77,9 +77,12 @@ def JOverride(*args, **kwargs):
     """ Annotation to denote a method as overriding a Java method.
 
     This annotation applies to customizers, proxies, and extension
-    to Java class.
+    to Java class. Apply it to methods to mark them as implementing
+    or overriding Java methods.  Keyword arguments are passed to the 
+    corresponding implementation factory.
 
-    FIXME specify what specific keyword arguments apply.
+    Args:
+      sticky=bool: Applies a customizer method to all derived classes.
 
     """
     # Check if called bare

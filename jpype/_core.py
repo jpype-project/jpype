@@ -100,15 +100,15 @@ def startJVM(jvm=None, *args, **kwargs):
     determined by ``jpype.getDefaultJVMPath()``.
 
     Args:
-      jvm (str):  Path to the jvm library file (``libjvm.so``, ``jvm.dll``, i
-        ...)
-        default=None will use jpype.getDefaultJVMPath()
-      *args (str[]): Arguments to give to the JVM
-      classpath (Optional[string]): set the classpath for the jvm.
+      jvm (Optional, str):  Path to the jvm library file,
+        The default of None will use ``jpype.getDefaultJVMPath()``
+        Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
+      *args (Optional, str[]): Arguments to give to the JVM
+      classpath (Optional[string]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
-        list.
-      ignoreUnrecognized (Optional[bool]): option to jvm to ignore
-        invalid jvm arguments.  (Default False)
+        list.  Default will use ``jpype.getClassPath``
+      ignoreUnrecognized (Optional, [bool]): Option to JVM to ignore
+        invalid JVM arguments.  Default is False.
     """
     if jvm is None:
         jvm = getDefaultJVMPath()

@@ -45,20 +45,27 @@ class _JArray(object):
     """ Create a java array class for a given component with a specified number 
     of dimensions.
 
-    Class can be specified in three ways:
-      - as a string with the name of a java class.
-      - as a java type wrapper such as jpype.JInt.
-      - as a java class type such as java.lang.String.
+    As this serves as a base class for all array types it can be used
+    with ``isinstance``.
 
     Args:
-      componentClass (str,type): type of element in to hold in the array.
-      ndims (int): the number of dimensions of the array (default=1)
+      javaClass (str,type): Is the type of element in to hold in 
+        the array.
+      ndims (Optional,int): the number of dimensions of the array 
+        (default=1)
 
     Returns:
-      JavaArrayClass: a new wrapper for a Java array class
+      A new Python class that representing a Java array class.
 
     Raises:
       TypeError: if the component class is invalid or could not be found.
+
+    Note: 
+      javaClass can be specified in three ways:
+
+        - as a string with the name of a java class.
+        - as a Java primitive type such as ``jpype.JInt``.
+        - as a Java class type such as ``java.lang.String``.
 
 
     """

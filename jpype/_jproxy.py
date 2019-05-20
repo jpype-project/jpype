@@ -80,19 +80,26 @@ def _createJProxy(cls, intf, **kwargs):
 
 def JImplements(*args, **kwargs):
     """ Annotation for creating a new proxy that implements a list of
-    java interfaces.
+    Java interfaces.
 
-    This annotation is placed on a python class.  The annotation
+    This annotation is placed on an ordinary Python class.  The annotation
     requires a list of interfaces.  It must implement all of the java
     methods for each of the interfaces.  Each implemented method
     should have a @JOverride annotation.
 
+    Args:
+      interfaces (str): Strings for each Java interface this proxy is to
+        implement.
+
     Example:
-      ... @JImplement("org.my.Interface")
-      ... class MyImpl(object):
-      ...    @JOverride
-      ...    def method(self, arg):
-      ...      pass
+
+      .. code-block:: python
+
+          @JImplement("org.my.Interface")
+          class MyImpl(object):
+             @JOverride
+             def method(self, arg):
+               pass
 
     """
     def f(cls):
@@ -129,13 +136,13 @@ def _convertInterfaces(intf):
 
 
 class JProxy(object):
-    """ Define a proxy for a java interface.
+    """ Define a proxy for a Java interface.
 
-    This is an older style jpype proxy interface that uses either a
+    This is an older style JPype proxy interface that uses either a
     dictionary or an object instance to implement methods defined
     in java.  The python object can be held by java and its lifespan
     will continue as long as java holds a reference to the object
-    instance.  New code should use @JImplements annotation as
+    instance.  New code should use ``@JImplements`` annotation as
     it will support improved type safety and error handling.
 
     Name lookups can either made using a dictionary or an object

@@ -49,7 +49,15 @@ if _sys.platform == 'cygwin':
 
 
 def addClassPath(path1):
-    """ Add a path to the java class path"""
+    """ Add a path to the Java class path
+
+    Classpath items can be a java, a directory, or a
+    glob pattern.
+
+    Arguments:
+      path(str): 
+    
+    """
     global _CLASSPATHS
 
     path1 = _os.path.abspath(path1)
@@ -64,7 +72,8 @@ def getClassPath(env=True):
     Includes user added paths and the environment CLASSPATH.
 
     Arguments:
-      env(bool): If true then environment is included. (default True)
+      env(Optional, bool): If true then environment is included. 
+        (default True)
     """
     global _CLASSPATHS
     global _SEP

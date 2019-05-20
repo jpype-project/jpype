@@ -24,9 +24,11 @@ Parts of the documentation
    install
    userguide
    quickguide
+   api
    imports
    CHANGELOG
    develguide
+
 
 Indices and tables
 ==================

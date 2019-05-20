@@ -32,13 +32,22 @@ def isPythonSequence(v):
 
 @_jcustomizer.JImplementationFor("java.lang.Iterable")
 class _JIterable(object):
+    """ Customizer for ``java.util.Iterable``
+
+    This customizer adds the Python iterator syntax to classes that 
+    implement Java Iterable.
+    """
     def __iter__(self):
         return self.iterator()
 
 
 @_jcustomizer.JImplementationFor("java.util.Collection")
 class _JCollection(object):
+    """ Customizer for ``java.util.Collection``
 
+    This customizer adds the Python functions ``len()`` and ``del`` to
+    Java Collions to allow for Python syntax.
+    """
     def __len__(self):
         return self.size()
 
@@ -79,7 +88,12 @@ class _JCollection(object):
 
 @_jcustomizer.JImplementationFor('java.util.List')
 class _JList(object):
-    #    def __jclass_init__(cls):
+    """ Customizer for ``java.util.List``
+
+    This customizer adds the Python list operator to function on classes
+    that implement the Java List interface.
+    """
+#    def __jclass_init__(cls):
     #        type.__setattr__(cls, 'addAll', _JList.addAll)
 
     def __getitem__(self, ndx):
@@ -141,6 +155,11 @@ def isPythonMapping(v):
 
 @_jcustomizer.JImplementationFor('java.util.Map')
 class _JMap(object):
+    """ Customizer for ``java.util.Map``
+
+    This customizer adds the Python list and len operators to classes
+    that implement the Java Map interface.
+    """
     #    def __jclass_init__(cls):
     #        type.__setattr__(cls, 'putAll', _JMap.putAll)
 
@@ -171,7 +190,12 @@ class _JMap(object):
 
 @_jcustomizer.JImplementationFor('java.util.Iterator')
 class _JIterator(object):
-    #    def __jclass_init__(cls):
+    """ Customizer for ``java.util.Iterator``
+
+    This customizer adds the Python iterator concept to classes
+    that implement the Java Iterator interface.
+    """
+#    def __jclass_init__(cls):
     #        type.__setattr__(cls, '_next', cls.next)
     #        type.__setattr__(cls, 'next', _JIterator.__next__)
 
@@ -194,6 +218,11 @@ class _JIterator(object):
 
 @_jcustomizer.JImplementationFor('java.util.Enumeration')
 class _JEnumeration(object):
+    """ Customizer for ``java.util.Enumerator``
+
+    This customizer adds the Python iterator concept to classes
+    that implement the Java Enumerator interface.
+    """
     def __next__(self):
         if self.hasMoreElements():
             return self.nextElement()

@@ -75,6 +75,7 @@ def _JPrimitiveLoad(cls, boxedType):
 
 class _JPrimitiveClass(_jclass.JClass):
     """ A wrapper specifying a specific java type.
+
     These objects have three fields:
 
      - __javaclass__ - the class for this object when matching arguments.

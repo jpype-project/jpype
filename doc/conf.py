@@ -20,6 +20,11 @@ import os
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
 
+# For some reason jpype.imports does not work if called in sphinx. Importing
+# it here solved the problem.
+import jpype
+import jpype.imports
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

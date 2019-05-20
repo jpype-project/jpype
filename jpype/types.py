@@ -15,6 +15,22 @@
 #
 # *****************************************************************************
 
+""" 
+JPype Types module
+------------------
+
+Optional module containing only the Java types and factorys used by 
+JPype.  Classes in this module include ``JArray``, ``JClass``, 
+``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
+``JFloat``, ``JDouble``, ``JString``, ``JObject``, and ``JException``.
+
+Example:
+
+    .. code-block:: python
+
+        from jpype.types import *
+
+"""
 # import package to get minimum types needed to use module.
 
 from ._jclass import *
