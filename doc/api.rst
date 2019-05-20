@@ -112,4 +112,7 @@ imported to add additional functionality.
 .. autofunction:: jpype.imports.registerImportCustomizer
 .. autoclass:: jpype.imports.JImportCustomizer
 
+.. automodule:: jpype.beans
+
 .. automodule:: jpype.types
+
