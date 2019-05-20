@@ -20,6 +20,7 @@ except ImportError:
     import unittest
 import subprocess
 import sys
+import os
 import jpype
 from . import common
 
@@ -30,6 +31,7 @@ def check_output(*popenargs, **kwargs):
     >>> check_output(['/usr/bin/python', '--version'])
     Python 2.6.2
     """
+    os.environ['PYTHONPATH'] = os.getcwd()
     process = subprocess.Popen(stdout=subprocess.PIPE, *popenargs, **kwargs)
     output, unused_err = process.communicate()
     retcode = process.poll()
@@ -69,17 +71,25 @@ class TestNewJVMInstance(unittest.TestCase):
         self.assertIn('Unrecognized option', exception_stdout)
         self.assertIn(inv_arg, exception_stdout)
 
+    def test_invalid_args2(self):
+        inv_arg = '-for_sure_InVaLiD'
+        script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=True)'.format(arg=inv_arg)
+        check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
+
     def test_classpath_arg(self):
         """ pass class path of jpypetest and try to instance a contained class.
         This only works if the classpath argument is handled correctly.
         """
         import os
         root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        cp = os.path.join(root, 'classes')
+        cp = os.path.join(root, 'classes').replace('\\','/')
         assert os.path.exists(cp)
         jclass = 'jpype.array.TestArray'
         path_to_test_class = os.path.join(cp, jclass.replace('.', os.path.sep) + '.class')
         assert os.path.exists(path_to_test_class)
+        #script = ('import jpype; jpype.startJVM(None, classpath="{cp}"); print(jpype.java.lang.System.getProperty("java.class.path"))'
+        #          .format(cp=cp))
+        #print(check_output([sys.executable, '-c', script]))
         script = ('import jpype; jpype.startJVM(None, classpath="{cp}"); jpype.JClass("{jclass}")'
                   .format(cp=cp, jclass=jclass))
         check_output([sys.executable, '-c', script])
