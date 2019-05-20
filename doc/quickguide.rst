@@ -101,12 +101,12 @@ are exposed as python modules allowing Java to be treated as part of python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Add a specific jar to the |                                                         | .. code-block:: python                                  |
-| classpath [3]_            |                                                         |                                                         |
+| classpath [2]_            |                                                         |                                                         |
 |                           |                                                         |     jpype.addClassPath('/my/path/myJar.jar')            |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Print JVM CLASSPATH [4]_  |                                                         | .. code-block:: python                                  |
+| Print JVM CLASSPATH [3]_  |                                                         | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |                                                         |     from java.lang import System                        |
 |                           |                                                         |     print(System.getProperty("java.class.path"))        |
@@ -114,9 +114,8 @@ are exposed as python modules allowing Java to be treated as part of python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
     .. [1] All ``java.lang.*`` classes are available.
-    .. [2] Must happen prior to starting JVM
-    .. [3] Must happen prior to starting the JVM
-    .. [4] After JVM is started
+    .. [2] Must happen prior to starting the JVM
+    .. [3] After JVM is started
 
 
 Classes/Objects
@@ -133,38 +132,38 @@ or loaded with the ``JClass`` factory.
 | Description               | Java                                                    | Python                                                  |
 +===========================+=========================================================+=========================================================+
 |                           |                                                         |                                                         |
-| Import a class [5]_       | .. code-block:: java                                    | .. code-block:: python                                  |
+| Import a class [4]_       | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     import org.pkg.MyClass                              |     from org.pkg import MyClass                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Import a class and rename |                                                         | .. code-block:: python                                  |
-| [5]_                      |                                                         |                                                         |
+| [4]_                      |                                                         |                                                         |
 |                           |                                                         |     from org.pkg import MyClass as OurClass             |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Import multiple classes   |                                                         | .. code-block:: python                                  |
-| from a package [6]_       |                                                         |                                                         |
+| from a package [5]_       |                                                         |                                                         |
 |                           |                                                         |     from org.pkg import MyClass, AnotherClass           |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Import a java package for |                                                         | .. code-block:: python                                  |
-| long name access [7]_     |                                                         |                                                         |
+| long name access [6]_     |                                                         |                                                         |
 |                           |                                                         |     import org.pkg                                      |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Import a class static     | .. code-block:: java                                    | .. code-block:: python                                  |
-| [8]_                      |                                                         |                                                         |
+| [7]_                      |                                                         |                                                         |
 |                           |     import org.pkg.MyClass.CONST_FIELD                  |     from org.pkg.MyClass import CONST_FIELD             |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Import a class without    | .. code-block:: java                                    | .. code-block:: python                                  |
-| tld [9]_                  |                                                         |                                                         |
+| tld [8]_                  |                                                         |                                                         |
 |                           |     import zippy.NonStandard                            |     NonStandard = JClass('zippy.NonStandard')           |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -194,13 +193,13 @@ or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set a static field [10]_  | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set a static field [9]_   | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     MyClass.staticField = 2;                            |     MyClass.staticField = 2                             |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set a member field [10]_  | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set a member field [9]_   | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     myObject.memberField = 2;                           |     myObject.memberField = 2                            |
 |                           |                                                         |                                                         |
@@ -219,7 +218,7 @@ or loaded with the ``JClass`` factory.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Access member with python | .. code-block:: java                                    | .. code-block:: python                                  |
-| naming conflict [11]_     |                                                         |                                                         |
+| naming conflict [10]_     |                                                         |                                                         |
 |                           |     myObject.pass()                                     |     myObject.pass_()                                    |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -248,13 +247,13 @@ or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [5] This will report an error if the class is not found.
-    .. [6] This will report an error if the classes are not found
-    .. [7] Does not report errors if the package is invalid
-    .. [8] Constants, static fields, and static methods can be imported.
-    .. [9] ``JClass`` loads any class by name including inner classes.
-    .. [10] Produces error for final fields
-    .. [11] Underscore is added during wrapping.
+    .. [4] This will report an error if the class is not found.
+    .. [5] This will report an error if the classes are not found
+    .. [6] Does not report errors if the package is invalid
+    .. [7] Constants, static fields, and static methods can be imported.
+    .. [8] ``JClass`` loads any class by name including inner classes.
+    .. [9] Produces error for final fields
+    .. [10] Underscore is added during wrapping.
 
 
 Exceptions
@@ -279,7 +278,9 @@ that Python native exceptions. JException serves as the base class for all Java 
 |                           |                                                         |                                                         |
 | Throw an exception to     | .. code-block:: java                                    | .. code-block:: python                                  |
 | Java                      |                                                         |                                                         |
-|                           |     throw new java.lang.Exception("Problem");           |     raise java.lang.Exception("Problem");               |
+|                           |   throw new java.lang.Exception(                        |   raise java.lang.Exception(                            |
+|                           |           "Problem");                                   |           "Problem")                                    |
+|                           |                                                         |                                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -291,8 +292,9 @@ that Python native exceptions. JException serves as the base class for all Java 
 |                           |                                                         |                                                         |
 | Closeable items           | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     try (InputStream is = Files.newInputStream(file)    |     with Files.newInputStream(file) as is:              |
-|                           |     { ... }                                             |        ...                                              |
+|                           |     try (InputStream is                                 |     with Files.newInputStream(file) as is:              |
+|                           |       = Files.newInputStream(file))                     |        ...                                              |
+|                           |     { ... }                                             |                                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
@@ -316,7 +318,7 @@ Python int is equivalent to Java long.
 +===========================+=========================================================+=========================================================+
 |                           |                                                         |                                                         |
 | Casting to hit an         | .. code-block:: java                                    | .. code-block:: python                                  |
-| overload [12]_            |                                                         |                                                         |
+| overload [11]_            |                                                         |                                                         |
 |                           |     myObject.call((int)v);                              |     myObject.call(JInt(v))                              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -328,7 +330,7 @@ Python int is equivalent to Java long.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Create an initialized     | .. code-block:: java                                    | .. code-block:: python                                  |
-| primitive array [13]_     |                                                         |                                                         |
+| primitive array [12]_     |                                                         |                                                         |
 |                           |     int[] array = new int[]{1,2,3}                      |     array = JArray(JInt)([1,2,3])                       |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -342,15 +344,15 @@ Python int is equivalent to Java long.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Boxing a primitive [14]_  | .. code-block:: java                                    | .. code-block:: python                                  |
+| Boxing a primitive [13]_  | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     Integer boxed = 1;                                  |     boxed = JObject(JInt(1))                            |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [12] ``JInt`` acts as a casting operator
-    .. [13] list, sequences, or np.array can be used to initialize.
-    .. [14] ``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.
+    .. [11] ``JInt`` acts as a casting operator
+    .. [12] list, sequences, or np.array can be used to initialize.
+    .. [13] ``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.
 
 
 Strings
@@ -368,13 +370,13 @@ JString should be converted to python.
 +===========================+=========================================================+=========================================================+
 |                           |                                                         |                                                         |
 | Create a Java string      | .. code-block:: java                                    | .. code-block:: python                                  |
-| [15]_                     |                                                         |                                                         |
+| [14]_                     |                                                         |                                                         |
 |                           |     String javaStr = new String("foo");                 |     myStr = JString("foo")                              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Create a Java string from | .. code-block:: java                                    | .. code-block:: python                                  |
-| bytes [16]_               |                                                         |                                                         |
+| bytes [15]_               |                                                         |                                                         |
 |                           |     byte[] b;                                           |     b= b'foo'                                           |
 |                           |     String javaStr = new String(b, "UTF-8");            |     myStr = JString(b, "UTF-8")                         |
 |                           |                                                         |                                                         |
@@ -387,7 +389,7 @@ JString should be converted to python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Comparing Python and Java |                                                         | .. code-block:: python                                  |
-| strings [17]_             |                                                         |                                                         |
+| strings [16]_             |                                                         |                                                         |
 |                           |                                                         |     str(javaStr) == pyString                            |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -404,9 +406,9 @@ JString should be converted to python.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [15] ``JString`` constructs a ``java.lang.String``
-    .. [16] All ``java.lang.String`` constuctors work.
-    .. [17] ``str()`` converts the object for comparison
+    .. [14] ``JString`` constructs a ``java.lang.String``
+    .. [15] All ``java.lang.String`` constuctors work.
+    .. [16] ``str()`` converts the object for comparison
 
 
 Arrays
@@ -502,7 +504,7 @@ that will be introduced in Java 9.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set list item [18]_       | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set list item [17]_       | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     myList.set(0, 1)                                    |     myList[0]=Jint(1)                                   |
 |                           |                                                         |                                                         |
@@ -539,7 +541,7 @@ that will be introduced in Java 9.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set map item [18]_        | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set map item [17]_        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     myMap.set("foo", 1)                                 |     myMap["foo"]=Jint(1)                                |
 |                           |                                                         |                                                         |
@@ -553,7 +555,7 @@ that will be introduced in Java 9.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [18] Casting is required to box primitives to the correct type.
+    .. [17] Casting is required to box primitives to the correct type.
 
 
 Reflection
@@ -577,14 +579,15 @@ or even accessing private methods and fields.
 | Access a private field by |                                                         | .. code-block:: python                                  |
 | name                      |                                                         |                                                         |
 |                           |                                                         |     cls = myObject.class_                               |
-|                           |                                                         |     field = cls.getDeclaredField("internalField")       |
+|                           |                                                         |     field = cls.getDeclaredField(                       |
+|                           |                                                         |         "internalField")                                |
 |                           |                                                         |     field.setAccessible(True)                           |
 |                           |                                                         |     field.get()                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Accessing a specific      |                                                         | .. code-block:: python                                  |
-| overload [19]_            |                                                         |                                                         |
+| overload [18]_            |                                                         |                                                         |
 |                           |                                                         |     cls = MyClass.class_                                |
 |                           |                                                         |     cls.getDeclaredMethod("call", JInt)                 |
 |                           |                                                         |     cls.invoke(myObject, JInt(1))                       |
@@ -593,7 +596,7 @@ or even accessing private methods and fields.
 |                           |                                                         |                                                         |
 | Convert a                 |                                                         | .. code-block:: python                                  |
 | ``java.lang.Class`` into  |                                                         |                                                         |
-| python wrapper [20]_      |                                                         |     # Something returned a java.lang.Class              |
+| python wrapper [19]_      |                                                         |     # Something returned a java.lang.Class              |
 |                           |                                                         |     MyClassJava = getClassMethod()                      |
 |                           |                                                         |                                                         |
 |                           |                                                         |     # Convert to it to Python                           |
@@ -603,21 +606,25 @@ or even accessing private methods and fields.
 |                           |                                                         |                                                         |
 | Load a class with a       | .. code-block:: java                                    | .. code-block:: python                                  |
 | external class loader     |                                                         |                                                         |
-|                           |     ClassLoader cl = new ExternalClassLoader();         |     cl = ExternalClassLoader()                          |
-|                           |     Class cls = Class.forName("External", True, cl)     |     cls = JClass("External", loader=cl)                 |
+|                           |     ClassLoader cl                                      |     cl = ExternalClassLoader()                          |
+|                           |       = new ExternalClassLoader();                      |     cls = JClass("External", loader=cl)                 |
+|                           |     Class cls                                           |                                                         |
+|                           |       = Class.forName("External",                       |                                                         |
+|                           |                       True, cl)                         |                                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Accessing base method     |                                                         | .. code-block:: python                                  |
 | implementation            |                                                         |                                                         |
-|                           |                                                         |     from org.pkg import BaseClass, MyClass              |
+|                           |                                                         |     from org.pkg import \                               |
+|                           |                                                         |             BaseClass, MyClass                          |
 |                           |                                                         |     myObject = MyClass(1)                               |
 |                           |                                                         |     BaseClass.callMember(myObject, 2)                   |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [19] types must be exactly specified.
-    .. [20] Rarely required unless the class was supplied external such as generics.
+    .. [18] types must be exactly specified.
+    .. [19] Rarely required unless the class was supplied external such as generics.
 
 
 Implements and Extension
@@ -640,21 +647,22 @@ fly.
 |                           |                                                         |                                                         |
 | Implement an interface    | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     public class PyImpl implements MyInterface          |     @JImplements(MyInterface)                           |
-|                           |     {                                                   |     class PyImpl(object):                               |
-|                           |       public void call() {...}                          |         @JOverride                                      |
-|                           |     }                                                   |         def call(self):                                 |
-|                           |                                                         |           pass                                          |
+|                           |     public class PyImpl                                 |     @JImplements(MyInterface)                           |
+|                           |       implements MyInterface                            |     class PyImpl(object):                               |
+|                           |     {                                                   |         @JOverride                                      |
+|                           |       public void call()                                |         def call(self):                                 |
+|                           |       {...}                                             |           pass                                          |
+|                           |     }                                                   |                                                         |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         | None                                                    |
-| Extending classes [21]_   |                                                         |                                                         |
+| Extending classes [20]_   |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         | None                                                    |
-| Lambdas [21]_             |                                                         |                                                         |
+| Lambdas [20]_             |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [21] Support for use of python function as Java 8 lambda is WIP.
+    .. [20] Support for use of python function as Java 8 lambda is WIP.
 
 
 

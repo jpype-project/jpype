@@ -23,7 +23,10 @@ Types
 
 JPype has types for each of the Java primitives: ``JBoolean``, ``JByte``,
 ``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  In addition
-there is one class which can be used to cast objects.
+there is one class for working with Java objects, ``JObject``.  These
+types can be used to cast Python or Java object to select specific overloaded
+methods in Java.  They are also useful to cast to a specific object type
+when storing information in generic container types.
 
 .. autoclass:: jpype.JObject
 
@@ -39,8 +42,9 @@ Threading
 Decorators
 ~~~~~~~~~~~
 
-JPype uses ordinary Python classes to implement functionality in Java. Adding these decorators to a Python
-class will mark them for use by JPype to interact with Java classes.
+JPype uses ordinary Python classes to implement functionality in Java. Adding 
+these decorators to a Python class will mark them for use by JPype to interact 
+with Java classes.
 
 .. autodecorator:: jpype.JImplementationFor
 .. autodecorator:: jpype.JImplements
@@ -50,8 +54,9 @@ class will mark them for use by JPype to interact with Java classes.
 Proxies
 ~~~~~~~
 
-JPype can implement Java interfaces either using decorators or by manually creating a JProxy.  Java only 
-support proxying interfaces, thus we cannot extend an existing Java class.
+JPype can implement Java interfaces either using decorators or by manually 
+creating a JProxy.  Java only support proxying interfaces, thus we cannot 
+extend an existing Java class.
 
 .. autoclass:: jpype.JProxy
 
@@ -59,11 +64,13 @@ support proxying interfaces, thus we cannot extend an existing Java class.
 Customized Classes
 ~~~~~~~~~~~~~~~~~~
 
-JPype provides standard customizers for Java interfaces so that Java objects have syntax matching the 
-corresponding Python objects. The customizers are automatically bound the class on creation without user 
-intervention.  We are documentating the functions that each customizer adds here.
+JPype provides standard customizers for Java interfaces so that Java objects 
+have syntax matching the corresponding Python objects. The customizers are 
+automatically bound the class on creation without user intervention.  We are 
+documentating the functions that each customizer adds here.
 
-These internal classes can be used as example of how to implement your own customizers for Java classes.
+These internal classes can be used as example of how to implement your own 
+customizers for Java classes.
 
 .. autoclass:: jpype._jcollection._JIterable
 .. autoclass:: jpype._jcollection._JCollection
@@ -77,8 +84,8 @@ These internal classes can be used as example of how to implement your own custo
 Modules
 ~~~~~~~
 
-Optional JPype behavior is stored in modules. These optional modules can be imported to add additional 
-functionality.
+Optional JPype behavior is stored in modules. These optional modules can be 
+imported to add additional functionality.
 
 .. automodule:: jpype.imports
 .. autofunction:: jpype.imports.registerDomain
