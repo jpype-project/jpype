@@ -148,7 +148,7 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
 def _applyAll(cls, method):
     applied = set()
     todo = [cls]
-    while len(todo)!=0:
+    while todo:
         c = todo.pop(0)
         if c in applied:
             continue

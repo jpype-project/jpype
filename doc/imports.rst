@@ -68,10 +68,10 @@ This method can also be used to import a static variable or method
 from a class.
 
 Import caveats
-===============
+--------------
 
 Wild card Imports
------------------
+~~~~~~~~~~~~~~~~~
 
 Wild card imports for classes will import all static method and
 fields into the global namespace. They will also import any
@@ -94,7 +94,7 @@ But this is sufficiently unreliable that we recommend not using wildcards
 for any purpose.
 
 Keyword naming
---------------
+~~~~~~~~~~~~~~
 
 Occasionally a java class may contain a python keyword.
 Python keywords as automatically remapped using training underscore.
@@ -104,7 +104,7 @@ Example::
   from org.raise_ import Object  => imports "org.raise.Object"
 
 Controlling Java package imports
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 By default domains imports four top level domains (TLD) into the python
 import system (com, gov, java, org). Additional domains can be added
@@ -122,7 +122,7 @@ Example:
 
 
 Limitations
------------
+~~~~~~~~~~~
 * Wildcard imports are unreliable and should be avoided. Limitations
   in the Java specification are such that there is no way to get
   class information at runtime. Python does not have a good hook

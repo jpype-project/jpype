@@ -63,7 +63,8 @@ class JObject(object):
         is not compatible, an exception will be raised.
 
       - If the value is a python wrapper for class it will create a class
-        instance.  But this can be achieve using ``jclass.class_``
+        instance.  This is aliased to be much more obvious as the ``class_`` 
+        member of each Java class.
 
     Args:
        value: The value to be cast into an Java object.
