@@ -42,11 +42,21 @@ _JARRAY_TYPENAME_MAP = {
 
 
 class _JArray(object):
-    """ Create a java array class for a given component with a specified number 
-    of dimensions.
+    """ Create a java array class for a Java type of a given dimension.
 
-    As this serves as a base class for all array types it can be used
-    with ``isinstance``.
+    This serves as a base type and factory for all Java array classes.
+
+    Example:
+        .. code-block:: python
+
+          IntArrayCls = JArray(JInt)
+          intArray = IntArrayCls([1,2,3])
+
+          if isinstance(intArray, JArray):
+               print("object is a java array")
+
+          if issubclass(IntArrayCls, JArray):
+               print("class is a java array type.")
 
     Args:
       javaClass (str,type): Is the type of element in to hold in 

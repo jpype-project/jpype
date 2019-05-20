@@ -27,11 +27,12 @@ else:
 
 
 class _JException(object):
-    """ Base class for all java.lang.Throwable objects.
+    """ Base class for all ``java.lang.Throwable`` objects.
 
-    When called as an object JException will produce a new exception class.  
-    The arguments may either be a string or an existing java throwable.  
-    This functionality is deprecated.
+    When called as an object ``JException`` will produce a new exception class.  
+    The arguments may either be a string or an existing Java throwable.  
+    This functionality is deprecated as exception classes can be created with 
+    ``JClass``.
 
     Use ``issubclass(cls, JException)`` to test if a class is derived 
     from ``java.lang.Throwable.``

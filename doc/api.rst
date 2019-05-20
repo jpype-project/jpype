@@ -11,24 +11,42 @@ These functions control and start the JVM.
 .. autofunction:: jpype.getDefaultJVMPath
 .. autofunction:: jpype.getClassPath
 
+Class importing
+~~~~~~~~~~~~~~~
+
+JPype supports several styles of importing.  The newer integrated style is 
+provided by the imports_ module. The older ``JPackage`` method is available for 
+accessing package trees with less error checking.  Direct loading of Java 
+classes can be made with JClass_.
+
+For convenience, the JPpype module predefines the following ``JPackage`` 
+instances for ``java`` and ``javax``.
+
+.. autoclass:: jpype.JPackage
+
 Class Factories
 ~~~~~~~~~~~~~~~
+
+.. _JClass:
 
 .. autoclass:: jpype.JClass
 .. autoclass:: jpype.JArray
 .. autoclass:: jpype.JException
 
-Types
-~~~~~
+Java Types
+~~~~~~~~~~
 
 JPype has types for each of the Java primitives: ``JBoolean``, ``JByte``,
 ``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  In addition
-there is one class for working with Java objects, ``JObject``.  These
-types can be used to cast Python or Java object to select specific overloaded
-methods in Java.  They are also useful to cast to a specific object type
-when storing information in generic container types.
+there is one class for working with Java objects, ``JObject``.  These serve
+to be able to cast to a specified type and specify types with the ``JArray``
+factory. There is a ``JString`` type provided for convenience when creating
+or casting to strings.
 
 .. autoclass:: jpype.JObject
+.. autoclass:: jpype.JString
+
+.. _synchronized:
 
 Threading
 ~~~~~~~~~
@@ -86,6 +104,8 @@ Modules
 
 Optional JPype behavior is stored in modules. These optional modules can be 
 imported to add additional functionality.
+
+.. _imports:
 
 .. automodule:: jpype.imports
 .. autofunction:: jpype.imports.registerDomain

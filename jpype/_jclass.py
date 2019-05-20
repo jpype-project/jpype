@@ -104,7 +104,7 @@ class JClass(type):
 
     All python wrappers for java classes derived from this type.
     To test if a python class is a java wrapper use
-    isinstance(obj, jpype.JClass).
+    ``isinstance(obj, jpype.JClass)``.
 
     Args:
       className (str): name of a java type.
@@ -218,6 +218,20 @@ def _JClassNew(arg, loader=None, initialize=True):
 
 class JInterface(object):
     """ Base class for all Java Interfaces. 
+
+    ``JInterface`` is serves as the base class for any java class that is 
+    a pure interface without implementation. It is not possible to create 
+    a instance of a java interface. The ``mro`` is hacked such that
+    ``JInterface`` does not appear in the tree of objects implement an 
+    interface.
+
+    Example:
+
+    .. code-block:: python
+
+       if issubclass(java.util.function.Function, jpype.JInterface):
+          print("is interface")
+
 
         Use isinstance(obj, jpype.JavaInterface) to test for a interface.
     """
