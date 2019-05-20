@@ -1,7 +1,9 @@
 os:
   - linux
+  - osx
 
 language: python
+dist: xenial
 
 python:
   - '2.6'
@@ -10,6 +12,7 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
+  - '3.7'
   - 'pypy'
   - 'pypy3'
   - "nightly"
