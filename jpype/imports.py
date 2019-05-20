@@ -28,12 +28,12 @@ syntax.
 Import customizers are supported in Python 3.6 or greater.
 
 Forms supported:
-   - ``import <java_pkg> [ as <name> ]``
-   - ``import <java_pkg>.<java_class> [ as <name> ]``
-   - ``from <java_pkg> import <java_class>[,<java_class>*]``
-   - ``from <java_pkg> import <java_class> [ as <name> ]``
-   - ``from <java_pkg>.<java_class> import <java_static> [ as <name> ]``
-   - ``from <java_pkg>.<java_class> import <java_inner> [ as <name> ]``
+   - **import <java_pkg> [ as <name> ]**
+   - **import <java_pkg>.<java_class> [ as <name> ]**
+   - **from <java_pkg> import <java_class>[,<java_class>*]**
+   - **from <java_pkg> import <java_class> [ as <name> ]**
+   - **from <java_pkg>.<java_class> import <java_static> [ as <name> ]**
+   - **from <java_pkg>.<java_class> import <java_inner> [ as <name> ]**
 
 For further information please read the :doc:`imports` guide.
 

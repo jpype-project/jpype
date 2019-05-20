@@ -82,12 +82,14 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
 
 
 print("""
-JPype QuickStart Guide
-======================
+QuickStart Guide
+================
 
 Quick start quide to using JPype.  This quide will show a series of simple examples with the 
-corresponding commands in both java and python for using JPype. 
-The JPype userguide addition details on the use of the JPype module.
+corresponding commands in both Java and Python for using JPype. 
+The JPype :doc:`userguide` and :doc:`api` have addition details on the use of 
+the JPype module.
+
 
 JPype uses two factory classes (``JArray`` and ``JClass``) to produce class 
 wrappers which can be used to create all Java objects.  These serve as both 
