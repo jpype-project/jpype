@@ -2,7 +2,8 @@ import unittest
 import jpype
 from . import common
 
-#jpype.startJVM(jpype.getDefaultJVMPath())
+# jpype.startJVM(jpype.getDefaultJVMPath())
+
 
 class ClosedTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -11,7 +12,7 @@ class ClosedTestCase(common.JPypeTestCase):
     def testObjects(self):
         from jpype import java
 
-        s=java.lang.String('foo')
+        s = java.lang.String('foo')
         s._allowed = 1
         try:
             s.forbidden = 1
@@ -21,7 +22,7 @@ class ClosedTestCase(common.JPypeTestCase):
             raise AssertionError("AttributeError not raised")
 
     def testArrays(self):
-        s=jpype.JArray(jpype.JInt)(5)
+        s = jpype.JArray(jpype.JInt)(5)
         # Setting private members is allowed
         s._allowed = 1
         try:
@@ -33,8 +34,7 @@ class ClosedTestCase(common.JPypeTestCase):
             raise AssertionError("AttributeError not raised")
 
     def testStatic(self):
-        static=jpype.JClass('jpype.objectwrapper.StaticTest')
+        static = jpype.JClass('jpype.objectwrapper.StaticTest')
         self.assertEquals(static.i, 1)
         self.assertEquals(static.d, 1.2345)
         self.assertEquals(static.s, "hello")
-

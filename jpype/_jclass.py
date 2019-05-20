@@ -1,5 +1,3 @@
-#*****************************************************************************
-#   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,283 +11,402 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
+import sys as _sys
 import _jpype
-from ._pykeywords import KEYWORDS
+from ._pykeywords import pysafe
+from . import _jcustomizer
 
+__all__ = ['JClass', 'JInterface', 'JOverride']
 
+if _sys.version > '3':
+    _unicode = str
+    _long = int
+else:
+    _unicode = unicode
+    _long = long
 
-_CLASSES = {}
+_JObject = None
 
-_SPECIAL_CONSTRUCTOR_KEY = "This is the special constructor key"
+_java_lang_throwable = None
+_java_lang_RuntimeException = None
+_java_ClassLoader = None
+_java_lang_Class = None
+_java_lang_Object = None
 
-_JAVACLASS = None
-_JAVAOBJECT = None
-_JAVATHROWABLE = None
-_COMPARABLE = None
-_RUNTIMEEXCEPTION = None
+_JCLASSES = {}
+_JP_TYPE_CLASSES = {}
+_JP_OBJECT_CLASSES = {}
 
-_CUSTOMIZERS = []
-
-_COMPARABLE_METHODS = {
-        "__cmp__": lambda self, o: self.compareTo(o)
-        }
+_jcustomizer._JCLASSES = _JCLASSES
 
 def _initialize():
-    global _COMPARABLE, _JAVACLASS, _JAVAOBJECT, _JAVATHROWABLE, _RUNTIMEEXCEPTION
-    registerClassCustomizer(_JavaLangClassCustomizer())
+    global _java_ClassLoader
 
-    _JAVAOBJECT = JClass("java.lang.Object")
-    _JAVACLASS = JClass("java.lang.Class")
-    _JAVATHROWABLE = JClass("java.lang.Throwable")
-    _RUNTIMEEXCEPTION = JClass("java.lang.RuntimeException")
-    _jpype.setResource('JavaClass', _JavaClass)
-    _jpype.setResource('JavaObject', _JavaObject)
-    _jpype.setResource('GetClassMethod',_getClassFor)
-    _jpype.setResource('SpecialConstructorKey',_SPECIAL_CONSTRUCTOR_KEY)
+    _jpype.setResource('GetClassMethod', _JClassNew)
 
+    # Due to bootstrapping, Object and Class must be defined first.
+    global _java_lang_Object, _java_lang_Class
+    _java_lang_Object = JClass("java.lang.Object")
+    _java_lang_Class = JClass("java.lang.Class")
 
-def registerClassCustomizer(c):
-    _CUSTOMIZERS.append(c)
+    _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
 
-class JClassCustomizer(object):
-    def canCustomize(self, name):
-        """ Deterimine if this class can be customized by this customizer.
+    global _java_lang_throwable, _java_lang_RuntimeException
+    _java_lang_throwable = JClass("java.lang.Throwable")
+    _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
 
-        Return true if customize should be called, false otherwise."""
-        pass
+    # Preload needed classes
+    java_lang_Boolean = JClass("java.lang.Boolean")
+    java_lang_Long = JClass("java.lang.Long")
+    java_lang_Double = JClass("java.lang.Double")
+    java_lang_String = JClass("java.lang.String")
 
-    def customize(self, name, jc, bases, members=None, fields=None, **kwargs):
-        """ Customize the class.  
-
-        Should be able to handle keyword arguments to support changes in customizers.
-        """
-        pass
-    
-
-def JClass(name):
-    jc = _jpype.findClass(name)
-    if jc is None:
-        raise _RUNTIMEEXCEPTION.PYEXC("Class %s not found" % name)
-
-    return _getClassFor(jc)
+    global _JP_OBJECT_CLASSES
+    _JP_OBJECT_CLASSES[bool] = java_lang_Boolean
+    _JP_OBJECT_CLASSES[int] = java_lang_Long
+    _JP_OBJECT_CLASSES[_long] = java_lang_Long
+    _JP_OBJECT_CLASSES[float] = java_lang_Double
+    _JP_OBJECT_CLASSES[str] = java_lang_String
+    _JP_OBJECT_CLASSES[_unicode] = java_lang_String
+    _JP_OBJECT_CLASSES[type] = _java_lang_Class
+    _JP_OBJECT_CLASSES[_jpype.PyJPClass] = _java_lang_Class
+    _JP_OBJECT_CLASSES[object] = _java_lang_Object
 
 
-def _getClassFor(javaClass):
-    name = javaClass.getName()
-    if name in _CLASSES:
-        return _CLASSES[name]
+def JOverride(*args, **kwargs):
+    """ Annotation to denote a method as overriding a Java method.
 
-    pyJavaClass = _JavaClass(javaClass)
-    _CLASSES[name] = pyJavaClass
-    return pyJavaClass
+    This annotation applies to customizers, proxies, and extension
+    to Java class. Apply it to methods to mark them as implementing
+    or overriding Java methods.  Keyword arguments are passed to the 
+    corresponding implementation factory.
 
+    Args:
+      sticky=bool: Applies a customizer method to all derived classes.
 
-def _javaNew(self, *args):
-    return object.__new__(self)
+    """
+    # Check if called bare
+    if len(args) == 1 and callable(args[0]):
+        object.__setattr__(args[0], "__joverride__", {})
+        return args[0]
+     # Otherwise apply arguments as needed
 
-
-def _javaExceptionNew(self, *args):
-    return Exception.__new__(self)
-
-
-def _isJavaCtor(args):
-    if len(args)==1 and isinstance(args[0], tuple) \
-            and args[0][0] is _SPECIAL_CONSTRUCTOR_KEY:
-        return True
-    return False
- 
-
-def _javaInit(self, *args):
-    object.__init__(self)
-
-    if len(args) == 1 and isinstance(args[0], tuple) \
-       and args[0][0] is _SPECIAL_CONSTRUCTOR_KEY:
-        self.__javaobject__ = args[0][1]
-    else:
-        self.__javaobject__ = self.__class__.__javaclass__.newClassInstance(
-            *args)
+    def modifier(method):
+        object.__setattr__(method, "__joverride__", kwargs)
+        return method
+    return modifier
 
 
-def _javaGetAttr(self, name):
-    try:
-        r = object.__getattribute__(self, name)
-    except AttributeError as ex:
-        if name in dir(self.__class__.__metaclass__):
-            r = object.__getattribute__(self.__class__, name)
+class JClass(type):
+    """ Meta class for all java class instances.
+
+    JClass when called as an object will contruct a new java Class wrapper. 
+
+    All python wrappers for java classes derived from this type.
+    To test if a python class is a java wrapper use
+    ``isinstance(obj, jpype.JClass)``.
+
+    Args:
+      className (str): name of a java type.
+
+    Keyword Args:
+      loader (java.lang.ClassLoader): specifies a class loader to use
+        when creating a class.
+      initialize (bool): Passed to class loader when loading a class
+        using the class loader.
+
+    Returns:
+      JavaClass: a new wrapper for a Java class
+
+    Raises:
+      TypeError: if the component class is invalid or could not be found.
+    """
+    class_ = property(lambda self: _JObject(self.__javaclass__), None)
+
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 1:
+            return _JClassNew(args[0], **kwargs)
+        return super(JClass, cls).__new__(cls, *args, **kwargs)
+
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            return
+        super(JClass, self.__class__).__init__(self, *args)
+
+    def __getattribute__(self, name):
+        if name.startswith('_'):
+            return type.__getattribute__(self, name)
+        attr = type.__getattribute__(self, name)
+        if isinstance(attr, _jpype.PyJPMethod):
+            return attr
+        if hasattr(attr, '__get__'):
+            return attr.__get__(self)
+        return attr
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            type.__setattr__(self, name, value)
+#        elif callable(value):
+#            type.__setattr__(self, name, value)
         else:
-            raise ex
+            attr = typeLookup(self, name)
+            if hasattr(attr, '__set__'):
+                attr.__set__(self, value)
+                return
+            raise AttributeError("%s does not have field %s" %
+                                 (self.__name__, attr))
 
-    if isinstance(r, _jpype._JavaMethod):
-        return _jpype._JavaBoundMethod(r, self)
-    return r
-
-def _javaSetAttr(self, attr, value):
-    if attr.startswith('_') \
-           or callable(value) \
-           or isinstance(getattr(self.__class__, attr), property):
-        object.__setattr__(self, attr, value)
-    else:
-        raise AttributeError("%s does not have field %s"%(self.__name__, attr), self)
-
-def _mro_override_topsort(cls):
-    # here we run a topological sort to get a linear ordering of the inheritance graph.
-    parents = set().union(*[x.__mro__ for x in cls.__bases__])
-    numsubs = dict()
-    for cls1 in parents:
-        numsubs[cls1] = len([cls2 for cls2 in parents if cls1 != cls2 and issubclass(cls2,cls1)])
-    mergedmro = [cls]
-    while numsubs:
-        for k1,v1 in numsubs.items():
-            if v1 != 0: continue
-            mergedmro.append(k1)
-            for k2,v2 in numsubs.items():
-                if issubclass(k1,k2):
-                    numsubs[k2] = v2-1
-            del numsubs[k1]
-            break
-    return mergedmro
-
-class _MetaClassForMroOverride(type):
     def mro(cls):
-        return _mro_override_topsort(cls)
+        # Bases is ordered by (user, extend, interfaces)
+        # Thus we maintain order of parents whereever possible
+        # Breadth first inclusion of the parents
+        parents = list(cls.__bases__)
+        out = [cls]
+
+        # Until we run out of parents
+        while parents:
+
+            # Test if the first is a leaf of the tree
+            front = parents.pop(0)
+            for p in parents:
+                if issubclass(p, front):
+                    parents.append(front)
+                    front = None
+                    break
+
+            if not front:
+                # It is not a leaf, we select another candidate
+                continue
+
+            # It is a leaf, so add it to the parents
+            out.append(front)
+
+            # Place the immediate parents of newest in the head of the list
+            prev = parents
+            parents = list(front.__bases__)
+
+            # Include the remaining that we still need to consider
+            parents.extend([b for b in prev if not b in parents])
+
+        # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance
+        if _JObject in out and JInterface in out:
+            out.remove(JInterface)
+
+        return out
 
 
-class _JavaObject(object):
-    """ Base class for all Java Objects. 
+def _JClassNew(arg, loader=None, initialize=True):
+    if loader and isinstance(arg, str):
+        arg = _java_lang_Class.forName(arg, initialize, loader)
 
-        Use isinstance(obj, jpype.JavaObject) to test for a object.
+    if isinstance(arg, _jpype.PyJPClass):
+        javaClass = arg
+    else:
+        javaClass = _jpype.PyJPClass(arg)
+
+    if javaClass is None:
+        raise _java_lang_RuntimeException("Class %s not found" % name)
+
+    # Lookup the class name
+    name = javaClass.getCanonicalName()
+
+    # See if we have an existing class in the cache
+    if name in _JCLASSES:
+        return _JCLASSES[name]
+    return _JClassFactory(name, javaClass)
+
+
+class JInterface(object):
+    """ Base class for all Java Interfaces. 
+
+    ``JInterface`` is serves as the base class for any java class that is 
+    a pure interface without implementation. It is not possible to create 
+    a instance of a java interface. The ``mro`` is hacked such that
+    ``JInterface`` does not appear in the tree of objects implement an 
+    interface.
+
+    Example:
+
+    .. code-block:: python
+
+       if issubclass(java.util.function.Function, jpype.JInterface):
+          print("is interface")
+
+
+        Use isinstance(obj, jpype.JavaInterface) to test for a interface.
     """
-    pass
+    class_ = property(lambda self: _JObject(self.__javaclass__), None)
 
-#  JPype has several class types (assuming Foo is a java class)
-#     Foo$$Static - python meta class for Foo holding
-#       properties for static fields and static methods
-#
-#     Foo - Python class which produces a Foo object() 
-#       and access to static fields and stataic methods
-#       in addition as a class type it holds all the fields and methods 
-#       inherites from _JavaClass
-#     Foo.__javaclass__ - private jpype capsule holding C resources
-#     Foo.__class__ - python class type for class (will be Foo$$Static)
-#     Foo.class_ - java.lang.Class<Foo>
-#
-#     Foo() - instance of Foo which wraps a java object
-#       inherits from _JavaObject
-#     Foo().__class__ - ptthon class type for object (will be Foo)
-#     Foo().getClass() - java.lang.Class<Foo> 
-#
+    def __new__(cls, *args, **kwargs):
+        return super(JInterface, cls).__new__(cls)
+
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
+            object.__setattr__(self, '__javavalue__', args[0])
+        elif not hasattr(self, '__javavalue__'):
+            raise JClass("java.lang.InstantiationException")("%s is an interface."%str(self.class_.getName()))
+        super(JObject, self).__init__()
+
+    def __str__(self):
+        return self.toString()
+
+    def __hash__(self):
+        return self.hashCode()
+
+    def __eq__(self):
+        return self.equals(o)
+
+    def __ne__(self):
+        return not self.equals(o)
 
 
-class _JavaClass(type):
-    """ Base class for all Java Class types. 
+def _JClassFactory(name, jc):
+    from . import _jarray
 
-        Use isinstance(obj, jpype.JavaClass) to test for a class.
+    # Set up bases
+    bases = []
+    bjc = jc.getSuperClass()
+    if name == 'java.lang.Object':
+        bases.append(_JObject)
+    elif jc.isArray():
+        bases.append(_jarray.JArray)
+    elif jc.isPrimitive():
+        bases.append(object)
+    elif bjc is not None:
+        bases.append(JClass(bjc))
+    elif bjc is None:
+        bases.append(JInterface)
+    itf = jc.getInterfaces()
+    for ic in itf:
+        bases.append(JClass(ic))
+
+    # Set up members
+    members = {
+        "__javaclass__": jc,
+        "__name__": name,
+    }
+    fields = jc.getClassFields()
+    for i in fields:
+        fname = pysafe(i.getName())
+        members[fname] = i
+    for jm in jc.getClassMethods():
+        members[pysafe(jm.getName())] = jm
+
+    # Apply customizers
+    _jcustomizer._applyCustomizers(name, jc, bases, members)
+    res = JClass(name, tuple(bases), members)
+    _JCLASSES[name] = res
+
+    # Post customizers
+    _jcustomizer._applyInitializer(res)
+
+    # Attach public inner classes we find
+    #   Due to bootstrapping, we must wait until java.lang.Class is defined
+    #   before we can access the class structures.
+    if _java_lang_Class:
+        for cls in res.class_.getDeclaredClasses():
+            if cls.getModifiers() & 1 == 0:
+                continue
+            cls2 = JClass(cls)
+            type.__setattr__(res, str(cls.getSimpleName()), cls2)
+
+    return res
+
+# **********************************************************
+
+
+def _toJavaClass(tp):
+    """ (internal) Converts a class type in python into a internal java class.
+
+    Used mainly to support JArray.
+
+    The type argument will operate on:
+     - (str) lookup by class name or fail if not found.
+     - (JClass) just returns the java type.
+     - (type) uses a lookup table to find the class.
     """
-    def __new__(cls, jc):
-        global _JAVACLASS
-        bases = []
-        name = jc.getName()
+    # if it a string
+    if isinstance(tp, (str, _unicode)):
+        return JClass(tp).__javaclass__
 
-        static_fields = {}
-        members = {
-                "__javaclass__": jc,
-                "__init__": _javaInit,
-                "__str__": lambda self: self.toString(),
-                "__hash__": lambda self: self.hashCode(),
-                "__eq__": lambda self, o: self.equals(o),
-                "__ne__": lambda self, o: not self.equals(o),
-                "__getattribute__": _javaGetAttr,
-                "__setattr__": _javaSetAttr,
-                }
+    if isinstance(tp, _jpype.PyJPClass):
+        return tp
 
-        if name == 'java.lang.Object':
-            bases.append(_JavaObject)
-        elif jc.isPrimitive():
-            bases.append(object)
-        elif not jc.isInterface():
-            bjc = jc.getBaseClass()
-            bases.append(_getClassFor(bjc))
+    if not isinstance(tp, type):
+        raise TypeError(
+            "Argument must be a class, java class, java wrapper or string representing a java class")
 
-        if _JAVATHROWABLE is not None and jc.isSubclass("java.lang.Throwable"):
-            from . import _jexception
-            members["PYEXC"] = _jexception._makePythonException(name, bjc)
+    # See if it a class type
+    try:
+        return tp.__javaclass__
+    except AttributeError:
+        pass
 
-        itf = jc.getBaseInterfaces()
-        for ic in itf:
-            bases.append(_getClassFor(ic))
+    try:
+        return _JP_TYPE_CLASSES[tp].__javaclass__
+    except KeyError:
+        pass
 
-        if len(bases) == 0:
-            bases.append(_JavaObject)
+    raise TypeError("Unable to find class for %s" % tp.__name__)
 
-        # add the fields
-        fields = jc.getClassFields()
-        for i in fields:
-            fname = i.getName()
-            if fname in KEYWORDS:
-                fname += "_"
 
-            if i.isStatic():
-                g = lambda self, fld=i: fld.getStaticAttribute()
-                s = None
-                if not i.isFinal():
-                    s = lambda self, v, fld=i: fld.setStaticAttribute(v)
-                static_fields[fname] = property(g, s)
-            else:
-                g = lambda self, fld=i: fld.getInstanceAttribute(
-                    self.__javaobject__)
-                s = None
-                if not i.isFinal():
-                    s = lambda self, v, fld=i: fld.setInstanceAttribute(
-                        self.__javaobject__, v)
-                members[fname] = property(g, s)
+def _getDefaultJavaObject(obj):
+    global _JP_OBJECT_CLASSES
+    try:
+        return _JP_OBJECT_CLASSES[type(obj)]
+    except KeyError:
+        pass
 
-        # methods
-        methods = jc.getClassMethods()  # Return tuple of tuple (name, method).
-        for jm in methods:
-            mname = jm.getName()
-            if mname in KEYWORDS:
-                mname += "_"
+    try:
+        return obj._java_boxed_class
+    except AttributeError:
+        pass
 
-            members[mname] = jm
+    if isinstance(obj, _jpype.PyJPClass):
+        return _java_lang_Class
 
-        static_fields['mro'] = _mro_override_topsort
-        static_fields['class_']= property(lambda self: _JAVACLASS.forName(name,True, JClass('java.lang.ClassLoader').getSystemClassLoader()), None)
+    # We need to check this first as values have both
+    # __javavalue__ and __javaclass__
+    if hasattr(obj, '__javavalue__'):
+        return JClass(obj.__javaclass__)
 
-        for i in _CUSTOMIZERS:
-            if i.canCustomize(name, jc):
-                if isinstance(i, JClassCustomizer):
-                    i.customize(name, jc, bases, members=members, fields=static_fields)
-                else:
-                    i.customize(name, jc, bases, members)
+    if hasattr(obj, '__javaclass__'):
+        return _java_lang_Class
 
-        # Prepare the meta-metaclass
-        meta_bases = []
-        for i in bases:
-            if i is object or i is _JavaObject:
-                meta_bases.append(cls)
-            else:
-                meta_bases.append(i.__metaclass__)
+    if obj == None:
+        return _java_lang_Object
 
-        metaclass = type.__new__(_MetaClassForMroOverride, name + "$$Static", tuple(meta_bases),
-                                 static_fields)
-        members['__metaclass__'] = metaclass
-        result = type.__new__(metaclass, name, tuple(bases), members)
-
-        return result
+    raise TypeError(
+        "Unable to determine the default type of {0}".format(obj.__class__))
 
 # Patch for forName
-def _jclass_forName(self, *args):
-    if len(args)==1 and isinstance(args[0],str):
-        return self._forName(args[0], True, JClass('java.lang.ClassLoader').getSystemClassLoader())
-    else:
-        return self._forName(*args)
 
-class _JavaLangClassCustomizer(JClassCustomizer):
-    def canCustomize(self, name, jc):
-        return name == 'java.lang.Class'
 
-    def customize(self, name, jc, bases, members, fields, **kwargs):
-        members['_forName']=members['forName']
-        del members['forName']
-        fields['forName']= _jclass_forName
+@_jcustomizer.JImplementationFor('java.lang.Class')
+class _JavaLangClass(object):
+    def forName(self, *args):
+        if len(args) == 1 and isinstance(args[0], str):
+            return self._forName(args[0], True, _java_ClassLoader)
+        else:
+            return self._forName(*args)
+
+
+def typeLookup(tp, name):
+    """ Fetch a descriptor from the inheritance tree.
+
+    This uses a cache to avoid additional cost when accessing items deep in 
+    the tree multiple times.
+    """
+    try:
+        cache = tp.__dict__['_cache']
+    except:
+        cache = {}
+        type.__setattr__(tp, '_cache', cache)
+    if name in cache:
+        return cache[name]
+    for cls in tp.__mro__:
+        if name in cls.__dict__:
+            obj = cls.__dict__[name]
+            cache[name] = obj
+            return obj

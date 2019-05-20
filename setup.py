@@ -9,7 +9,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
 setup(
     name='JPype1',
-    version='0.6.3',
+    version='0.7.0',
     description='A Python to Java bridge.',
     long_description=(setupext.utils.read_utf8(__file__, 'README.rst') + '\n\n' +
                       setupext.utils.read_utf8(__file__, 'doc/CHANGELOG.rst') + '\n\n' +
@@ -19,7 +19,7 @@ setup(
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
     maintainer_email='cooperate@originell.org',
-    url='https://github.com/originell/jpype/',
+    url='https://github.com/jpype-project/jpype',
     platforms=[
         'Operating System :: MacOS :: MacOS X',
         'Operating System :: Microsoft :: Windows :: Windows 7',
@@ -40,14 +40,15 @@ setup(
         'jpype': 'jpype',
         'jpypex': 'jpypex',
     },
-    extras_require = {'numpy' : ['numpy>=1.6']},
+    extras_require={'numpy': ['numpy>=1.6']},
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,
         'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
-        },
+    },
     zip_safe=False,
     ext_modules=[jpypeLib],
     distclass=setupext.dist.Distribution,
+    use_scm_version = True,
 )

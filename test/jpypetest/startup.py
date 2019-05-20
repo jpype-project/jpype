@@ -42,7 +42,6 @@ def check_output(*popenargs, **kwargs):
         raise error
     return output
 
-
 class StartJVMCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -50,8 +49,10 @@ class StartJVMCase(common.JPypeTestCase):
     def testStartup(self):
         # Test that we are robust to multiple startJVM
         try:
-            self.assertRaises(OSError, jpype.startJVM, jpype.getDefaultJVMPath())
-            self.assertRaises(OSError, jpype.startJVM, jpype.getDefaultJVMPath())
+            self.assertRaises(OSError, jpype.startJVM,
+                              jpype.getDefaultJVMPath())
+            self.assertRaises(OSError, jpype.startJVM,
+                              jpype.getDefaultJVMPath())
         except RuntimeError:
             pass
             # Verify that we don't crash after repeat

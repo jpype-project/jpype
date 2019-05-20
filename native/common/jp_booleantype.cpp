@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Menard
+   Copyright 2004-2008 Steve Ménard
   
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -13,149 +13,167 @@
    See the License for the specific language governing permissions and
    limitations under the License.
   
-*****************************************************************************/ 
+ *****************************************************************************/
 #include <jp_primitive_common.h>
 
-HostRef* JPBooleanType::asHostObject(jvalue val)
+JPBooleanType::JPBooleanType() : JPPrimitiveType(JPTypeManager::_java_lang_Boolean)
 {
-	if (val.z)
-	{
-		return JPEnv::getHost()->getTrue();
-	}
-	return JPEnv::getHost()->getFalse();
 }
 
-HostRef* JPBooleanType::asHostObjectFromObject(jvalue val)
+JPBooleanType::~JPBooleanType()
 {
-	bool z = JPJni::booleanValue(val.l);
-	if (z)
-	{
-		return JPEnv::getHost()->getTrue();
-	}
-	return JPEnv::getHost()->getFalse();
 }
 
-EMatchType JPBooleanType::canConvertToJava(HostRef* obj)
+bool JPBooleanType::isSubTypeOf(JPClass* other) const
 {
-	if (JPEnv::getHost()->isInt(obj) || JPEnv::getHost()->isLong(obj))
+	return other == JPTypeManager::_boolean;
+}
+
+JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
+{
+	return JPPyBool::fromLong(val.z);
+}
+
+JPValue JPBooleanType::getValueFromObject(jobject obj)
+{
+	jvalue v;
+	field(v) = JPJni::booleanValue(obj);
+	return JPValue(this, v);
+}
+
+JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
+{
+	ASSERT_NOT_NULL(obj);
+	if (JPPyObject::isNone(obj))
 	{
-		return _implicit;
+		return JPMatch::_none;
 	}
 
-	if (JPEnv::getHost()->isWrapper(obj))
+	// Exact Python match
+	if (JPPyBool::check(obj))
 	{
-		JPTypeName name = JPEnv::getHost()->getWrapperTypeName(obj);
-		if (name.getType() == JPTypeName::_boolean)
+		return JPMatch::_exact;
+	}
+
+	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (value != NULL)
+	{
+		// Wrapper
+		if (value->getClass() == this)
 		{
-			return _exact;
+			return JPMatch::_exact;
 		}
+		// Implicit conversion from boxed to primitive (JLS 5.1.8)
+		if (value->getClass() == this->m_BoxedClass)
+		{
+			return JPMatch::_implicit;
+		}
+		return JPMatch::_none;
 	}
 
-	return _none;
+	if (JPPyBool::check(obj))
+	{
+		return JPMatch::_exact;
+	}
+
+	// Java does not consider ints to be bools, but we may need
+	// it when returning from a proxy.
+	if (JPPyLong::checkConvertable(obj))
+	{
+		// If it implements logical operations it is an integer type
+		if (JPPyLong::checkIndexable(obj))
+			return JPMatch::_implicit;
+			// Otherwise it may be a float or list.  
+		else
+			return JPMatch::_explicit;
+	}
+
+	return JPMatch::_none;
 }
 
-jvalue JPBooleanType::convertToJava(HostRef* obj)
+jvalue JPBooleanType::convertToJava(PyObject* obj)
 {
 	jvalue res;
-	if (JPEnv::getHost()->isWrapper(obj))
+
+	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (value != NULL)
 	{
-		return JPEnv::getHost()->getWrapperValue(obj);
+		if (value->getClass() == this)
+			return *value;
+		if (value->getClass() == m_BoxedClass)
+		{
+			if (value->getJavaObject() == NULL)
+				JP_RAISE_RUNTIME_ERROR("Null pointer in implicit conversion from boxed.");
+			return getValueFromObject(value->getJavaObject());
+		}
 	}
-	else if (JPEnv::getHost()->isLong(obj))
+	else if (JPPyLong::checkConvertable(obj))
 	{
-		res.z = (jboolean)JPEnv::getHost()->longAsLong(obj);
-	}
-	else
-	{
-		res.z = (jboolean)JPEnv::getHost()->intAsInt(obj);
+		res.z = (jboolean) JPPyLong::asLong(obj) != 0;
 	}
 	return res;
 }
 
-HostRef* JPBooleanType::convertToDirectBuffer(HostRef* src)
-{
-	RAISE(JPypeException, "Unable to convert to Direct Buffer");
-}
-
-jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, int sz)
+jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewBooleanArray(sz);
 }
 
-HostRef* JPBooleanType::getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType)
+JPPyObject JPBooleanType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetStaticBooleanField(c, fid);
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-HostRef* JPBooleanType::getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType)
+JPPyObject JPBooleanType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetBooleanField(c, fid);
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-HostRef* JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
+JPPyObject JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
 	jvalue v;
-	field(v) = frame.CallStaticBooleanMethodA(claz, mth, val);
-	return asHostObject(v);
+	{
+		JPPyCallRelease call;
+		field(v) = frame.CallStaticBooleanMethodA(claz, mth, val);
+	}
+	return convertToPythonObject(v);
 }
 
-HostRef* JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
 {
 	jvalue v;
-	field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
-	return asHostObject(v);
+	{
+		JPPyCallRelease call;
+		field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
+	}
+	return convertToPythonObject(v);
 }
 
-void JPBooleanType::setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef* obj)
+void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	type_t val = field(convertToJava(obj));
 	frame.SetStaticBooleanField(c, fid, val);
 }
 
-void JPBooleanType::setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef* obj)
+void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	type_t val = field(convertToJava(obj));
 	frame.SetBooleanField(c, fid, val);
 }
 
-vector<HostRef*> JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, int start, int length)
+JPPyObject JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
 {
-	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
-
-	type_t* val = accessor.get();
-	vector<HostRef*> res;
-		
-	jvalue v;
-	for (int i = 0; i < length; i++)
-	{
-		field(v) = val[i+start];
-		res.push_back(asHostObject(v));
-	}
-	return res;
+	return getSlice<type_t>(frame, a, start, start + length, NPY_BOOL, PyBool_FromLong);
 }
 
-void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, vector<HostRef*>& vals)
+void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
 {
-	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
-
-	type_t* val = accessor.get();
-	for (int i = 0; i < length; i++)
-	{
-		HostRef* pv = vals[i];
-		val[start+i] = field(convertToJava(pv));
-	}
-	accessor.commit();
-}
-
-void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int length, PyObject* sequence)
-{
-	if (setViaBuffer<array_t, type_t>(frame, a, start, length, sequence,
+	JP_TRACE_IN("JPBooleanType::setArrayRange");
+	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_BOOL,
 			&JPJavaFrame::SetBooleanArrayRegion))
 		return;
 
@@ -163,37 +181,35 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, int start, int l
 			&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
 
 	type_t* val = accessor.get();
+	JPPySequence seq(JPPyRef::_use, sequence);
 	for (Py_ssize_t i = 0; i < length; ++i)
 	{
-		PyObject* o = PySequence_GetItem(sequence, i);
-// FIXME this is suspect as we are supposed to be boolean, not integers
-		long v = PyInt_AsLong(o);
-		if (v == -1) { CONVERSION_ERROR_HANDLE(i, o); }
-		Py_DECREF(o);
-		val[start+i] = (type_t) v;
+		// FIXME this is suspect as we are supposed to be boolean, not integers
+		long v = PyInt_AsLong(seq[i].get());
+		if (v == -1 && JPPyErr::occurred())
+		{
+			JP_RAISE_PYTHON("JPBooleanType::setArrayRange");
+		}
+		val[start + i] = (type_t) v;
 	}
 	accessor.commit();
+	JP_TRACE_OUT;
 }
 
-HostRef* JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, int ndx)
+JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t)a;
+	array_t array = (array_t) a;
 	type_t val;
 	frame.GetBooleanArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return asHostObject(v);
+	return convertToPythonObject(v);
 }
 
-void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, int ndx , HostRef* obj)
+void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t)a;
+	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));
 	frame.SetBooleanArrayRegion(array, ndx, 1, &val);
-}
-
-PyObject* JPBooleanType::getArrayRangeToSequence(JPJavaFrame& frame, jarray a, int start, int length)
-{
-	return getSlice<type_t>(frame, a, start, length, NPY_BOOL, PyBool_FromLong);
 }
 

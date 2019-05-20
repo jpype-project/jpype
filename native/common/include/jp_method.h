@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,69 +13,67 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
 
-#include <list>
-class JPObject;
-
 class JPMethod
 {
-public :
-	typedef std::list<JPMethodOverload*> OverloadList;
+public:
+	typedef list<JPMethodOverload*> OverloadList;
 
 	/**
 	 * Create a new method based on class and a name;
 	 */
-	JPMethod(jclass clazz, const string& name, bool isConstructor);
+	JPMethod(JPClass *clazz, const string& name, bool isConstructor);
 	virtual ~JPMethod();
 
 private:
 	JPMethod(const JPMethod& method);
 	JPMethod& operator=(const JPMethod& method);
 
-public :
+public:
 	const string& getName() const;
 	string getClassName() const;
-	
+
 	void addOverload(JPClass* clazz, jobject mth);
-	
-	bool hasStatic() 
+
+	bool hasStatic()
 	{
 		return m_hasStatic;
 	}
 
-	size_t getCount()
-	{
-		return m_Overloads.size();
-	}
-	
 	bool isBeanMutator();
 	bool isBeanAccessor();
 
-	HostRef*  invoke(vector<HostRef*>&); 
-	HostRef*  invokeStatic(vector<HostRef*>&); 
-	HostRef*  invokeInstance(vector<HostRef*>&); 
-	JPObject* invokeConstructor(vector<HostRef*>& args); 
+	JPPyObject invoke(JPPyObjectVector& vargs, bool instance);
+	JPValue invokeConstructor(JPPyObjectVector& vargs);
 
-	string describe(string prefix);
+	string matchReport(JPPyObjectVector& sequence);
+	string dump();
 
-	string matchReport(vector<HostRef*>&);
+	const OverloadList& getMethodOverloads()
+	{
+		return m_Overloads;
+	}
 
-private :
-	JPMethodOverload* findOverload(vector<HostRef*>& arg, bool searchStatic, bool searchInstance);
+private:
+	/** Search for a matching overload.
+	 * 
+	 * @param searchInstance is true if the first argument is to be skipped
+	 * when matching with a non-static.
+	 */
+	JPMatch findOverload(JPPyObjectVector& vargs, bool searchInstance);
 	void ensureOverloadCache();
 	void dumpOverloads();
 
-	jclass                        m_Class;
-	string                        m_Name;
+	JPClass*      m_Class;
+	string        m_Name;
 	OverloadList  m_Overloads;
-	bool                          m_IsConstructor;
+	bool          m_IsConstructor;
 	bool          m_hasStatic;
 	bool          m_Cached;
-	
-};
+} ;
 
 #endif // _JPMETHOD_H_
 

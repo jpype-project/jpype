@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
@@ -22,14 +22,24 @@ import sys
 import jpype
 from . import common
 
+
 class ForNameTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
     def testForName(self):
-        cls=jpype.JClass('java.lang.Class')
-        test=cls.forName('jpype.overloads.Test1')
+        cls = jpype.JClass('java.lang.Class')
+        test = cls.forName('jpype.overloads.Test1')
         # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
-        self.assertTrue( type(test)==type(cls.class_))
-        self.assertEquals( test.getName(), 'jpype.overloads.Test1')
+        self.assertTrue(type(test) == type(cls.class_))
+        self.assertEquals(test.getName(), 'jpype.overloads.Test1')
+
+    def testForName2(self):
+        cls = jpype.JClass('java.lang.Class')
+        clsloader = jpype.JClass(
+            'java.lang.ClassLoader').getSystemClassLoader()
+        test = cls.forName('jpype.overloads.Test1', True, clsloader)
+        # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
+        self.assertTrue(type(test) == type(cls.class_))
+        self.assertEquals(test.getName(), 'jpype.overloads.Test1')

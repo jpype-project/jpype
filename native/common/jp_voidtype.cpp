@@ -1,11 +1,11 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,89 +13,98 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-*****************************************************************************/   
+ *****************************************************************************/
 #include <jpype.h>
 
-HostRef* JPVoidType::getStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, JPTypeName& tgtType) 
+JPVoidType::JPVoidType() : JPPrimitiveType(JPTypeManager::_java_lang_Void)
 {
-	RAISE(JPypeException, "void cannot be the type of a static field.");
 }
 
-HostRef* JPVoidType::getInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, JPTypeName& tgtType) 
+JPVoidType::~JPVoidType()
 {
-	RAISE(JPypeException, "void cannot be the type of a field.");
 }
 
-HostRef* JPVoidType::asHostObject(jvalue val) 
+bool JPVoidType::isSubTypeOf(JPClass* other) const
 {
-	return JPEnv::getHost()->getNone();
-}
-	
-HostRef* JPVoidType::asHostObjectFromObject(jvalue val) 
-{
-	return JPEnv::getHost()->getNone();
+	return other == JPTypeManager::_void;
 }
 
-EMatchType JPVoidType::canConvertToJava(HostRef* obj)
+JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
-	return _none;
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a static field.");
 }
 
-jvalue JPVoidType::convertToJava(HostRef* obj)
+JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
+{
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
+}
+
+JPPyObject JPVoidType::convertToPythonObject(jvalue val)
+{
+	return JPPyObject::getNone();
+}
+
+JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
+{
+	return JPMatch::_none;
+}
+
+jvalue JPVoidType::convertToJava(PyObject* obj)
 {
 	jvalue res;
 	res.l = NULL;
 	return res;
 }
 
-HostRef* JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
+JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
-	frame.CallStaticVoidMethodA(claz, mth, val);
-	return JPEnv::getHost()->getNone();
+	{
+		JPPyCallRelease call;
+		frame.CallStaticVoidMethodA(claz, mth, val);
+	}
+	return JPPyObject::getNone();
 }
 
-HostRef* JPVoidType::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmethodID mth, jvalue* val)
 {
-	frame.CallVoidMethodA(claz, mth, val);
-	return JPEnv::getHost()->getNone();
+	{
+		JPPyCallRelease call;
+		frame.CallVoidMethodA(claz, mth, val);
+	}
+	return JPPyObject::getNone();
 }
 
-void JPVoidType::setStaticValue(JPJavaFrame& frame, jclass c, jfieldID fid, HostRef*) 
+void JPVoidType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject*)
 {
-	RAISE(JPypeException, "void cannot be the type of a static field.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a static field.");
 }
 
-void JPVoidType::setInstanceValue(JPJavaFrame& frame, jobject c, jfieldID fid, HostRef*) 
+void JPVoidType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*)
 {
-	RAISE(JPypeException, "void cannot be the type of a field.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
 }
 
-vector<HostRef*> JPVoidType::getArrayRange(JPJavaFrame& frame, jarray, int, int)
+JPPyObject JPVoidType::getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length)
 {
-	RAISE(JPypeException, "void cannot be the type of an array.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray, int, int, vector<HostRef*>&)
+void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*)
 {
-	RAISE(JPypeException, "void cannot be the type of an array.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-HostRef* JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, int)
+JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, jsize)
 {
-	RAISE(JPypeException, "void cannot be the type of an array.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, int, HostRef*)
+void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
 {
-	RAISE(JPypeException, "void cannot be the type of an array.");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
 
-jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, int)
+jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 {
-	RAISE(JPypeException, "void cannot be the type of an array.");
-}
-
-HostRef* JPVoidType::convertToDirectBuffer(HostRef* src)
-{
-	RAISE(JPypeException, "Unable to convert to Direct Buffer");
+	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }

@@ -36,7 +36,7 @@ def suite() :
     return test_suite
 
 def runTest() :
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite())
 
     if jpype.isJVMStarted():

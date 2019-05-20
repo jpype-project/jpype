@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2013 Thomas Calmant
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 import os
 
@@ -21,10 +21,12 @@ from . import _jvmfinder
 
 # ------------------------------------------------------------------------------
 
+
 class LinuxJVMFinder(_jvmfinder.JVMFinder):
     """
     Linux JVM library finder class
     """
+
     def __init__(self):
         """
         Sets up members
