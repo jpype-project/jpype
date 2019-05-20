@@ -15,16 +15,6 @@
 import sys
 import os
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
-
-# For some reason jpype.imports does not work if called in sphinx. Importing
-# it here solved the problem.
-import jpype
-import jpype.imports
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -50,7 +40,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'JPype'
-copyright = u'2014-18, Steve Menard, Luis Nell and others'
+copyright = u'2014-19, Steve Menard, Luis Nell and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -59,12 +49,20 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # The short X.Y version.
 import mock
 mock_modules = ('_jpype',
+                'jpype._jinit',
         )
 for m in mock_modules:
     sys.modules[m] = mock.MagicMock()
 
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('..'))
+
 import jpype
+import jpype.imports
 print(jpype.__path__)
+
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
