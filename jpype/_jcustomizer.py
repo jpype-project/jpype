@@ -70,9 +70,9 @@ def JImplementationFor(clsname, base=False):
     derive from JObject.  Otherwise, the methods are copied from 
     the prototype to java class wrapper.
 
-    The method __jclass_init__(cls) will be called with the constructed 
+    The method ``__jclass_init__(cls)`` will be called with the constructed 
     class as the argument.  This call be used to set methods for all classes 
-    that derive from the specified class.  Use type.__setattr__() to 
+    that derive from the specified class.  Use ``type.__setattr__()`` to 
     alter the class methods.
 
     Args:

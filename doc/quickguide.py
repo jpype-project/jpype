@@ -82,12 +82,14 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
 
 
 print("""
-JPype QuickStart Guide
-======================
+QuickStart Guide
+================
 
 Quick start quide to using JPype.  This quide will show a series of simple examples with the 
-corresponding commands in both java and python for using JPype. 
-The JPype userguide addition details on the use of the JPype module.
+corresponding commands in both Java and Python for using JPype. 
+The JPype :doc:`userguide` and :doc:`api` have addition details on the use of 
+the JPype module.
+
 
 JPype uses two factory classes (``JArray`` and ``JClass``) to produce class 
 wrappers which can be used to create all Java objects.  These serve as both 
@@ -176,7 +178,7 @@ entry("Import default Java namespace", None,
 
 entry("Add a set of jars from a directory", None,
       python('jpype.addClassPath("/my/path/*")'),
-      "Must happen prior to starting JVM")
+      "Must happen prior to starting the JVM")
 
 entry("Add a specific jar to the classpath", None,
       python("jpype.addClassPath('/my/path/myJar.jar')"),
@@ -308,8 +310,20 @@ entry("Catch an exception",
 """)
 
 entry("Throw an exception to Java",
-      java('throw new java.lang.Exception("Problem");'),
-      python('raise java.lang.Exception("Problem");'))
+"""
+.. code-block:: java
+
+  throw new java.lang.Exception(
+          "Problem");
+          
+""",
+"""
+.. code-block:: python
+
+  raise java.lang.Exception(
+          "Problem")
+
+""")
 
 entry("Checking if Java exception wrapper", None,
       python('if (isinstance(obj, JException): ...'))
@@ -318,7 +332,8 @@ entry("Closeable items",
       """
 .. code-block:: java
 
-    try (InputStream is = Files.newInputStream(file)
+    try (InputStream is 
+      = Files.newInputStream(file))
     { ... }
 """,
       """
@@ -547,7 +562,8 @@ entry("Access a private field by name", None,
 .. code-block:: python
 
     cls = myObject.class_
-    field = cls.getDeclaredField("internalField")
+    field = cls.getDeclaredField(
+        "internalField")
     field.setAccessible(True)
     field.get()
 """)
@@ -576,8 +592,11 @@ entry("Load a class with a external class loader",
       """
 .. code-block:: java
 
-    ClassLoader cl = new ExternalClassLoader();
-    Class cls = Class.forName("External", True, cl)
+    ClassLoader cl 
+      = new ExternalClassLoader();
+    Class cls 
+      = Class.forName("External", 
+                      True, cl)
 """,
       """
 .. code-block:: python
@@ -590,7 +609,8 @@ entry("Accessing base method implementation", None,
       """
 .. code-block:: python
 
-    from org.pkg import BaseClass, MyClass
+    from org.pkg import \\
+            BaseClass, MyClass
     myObject = MyClass(1)
     BaseClass.callMember(myObject, 2)
 """)
@@ -613,9 +633,11 @@ entry("Implement an interface",
       """
 .. code-block:: java
 
-    public class PyImpl implements MyInterface
+    public class PyImpl 
+      implements MyInterface
     {
-      public void call() {...}
+      public void call() 
+      {...}
     }
 """,
       """

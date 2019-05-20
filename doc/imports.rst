@@ -132,10 +132,3 @@ Limitations
   instance. Jpype does not provide an easy way to determine which
   functions objects can be called without an object.
 
-Bugs:
------
-
-* Something in spyder IPython does not play well with the importlib
-  hooks. Inspect element causes a segmentation fault. Unable
-  to determine the source.
-

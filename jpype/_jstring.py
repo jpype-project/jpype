@@ -25,11 +25,11 @@ __all__ = ['JString']
 
 
 class _JString(object):
-    """ Base class for java.lang.String
+    """ Base class for ``java.lang.String`` objects
 
-    When called as a function this class will produce a java.lang.String 
-    object.  It can be used to test if an object is a java string
-    using isinstance(obj, JString).
+    When called as a function, this class will produce a ``java.lang.String`` 
+    object.  It can be used to test if an object is a Java string
+    using ``isinstance(obj, JString)``.
 
     """
     def __new__(cls, *args, **kwargs):

@@ -49,5 +49,5 @@ def JIterator(it):
 # FIXME these should be deprecated. The old JPackage system is only for
 #  python2 series and generates lots of deceptive classes.  At some point
 #  these two are going to have to go away.
-java = JPackage("java")
-javax = JPackage("javax")
+java = JPackage("java", strict = True)
+javax = JPackage("javax", strict = True)

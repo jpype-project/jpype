@@ -128,6 +128,9 @@ types of inheritance, extension and implementation. As such we delete
 the ``JInterface`` parent from all concrete class implementation during
 the mro resolution phase.
 
+resource types
+~~~~~~~~~~~~~~
+
 jpype objects work with the inner layers primarily through duck typing
 using a series of special fields. These fields correspond to a
 JNI type such as ``jvalue``, ``jclass``, ``jobject``, and ``jstring``. But as these
@@ -135,7 +138,7 @@ resources cannot be held directly, they are provided as resources exposed
 as ``_jpype.PyJP`` classes.
 
 ``jvalue``
-+++++++++++++++++++++++++++++++
+++++++++++
 
 In the earlier design, wrappers, primitives and objects were all seperate
 concepts. At the JNI layer these are unified by a common element called
@@ -150,7 +153,7 @@ type is used to help in casting the object and resolving method overloads.
 We will discuss this object further in the CPython section.
 
 ``jclass``
-+++++++++++++++++++++++++++++++
+++++++++++
 
 In addition class wrappers have a ``_jpype.PyJPClass`` field which represents the
 internal class wrapper. This class wrapper holds the reflection api used to create
@@ -170,7 +173,7 @@ needs to be aware of that the this class instance is not available until
 the key wrappers are created. See bootstrapping_ for further details.
 
 ``jarray``
-+++++++++++++++++++++++++++++++
+++++++++++
 
 Java arrays are a special form of objects. They have no real methods as they
 are not extendable. To help in accessing the additonal special methods associated
@@ -178,7 +181,7 @@ with an array, Java array instances have an additional field ``__javaarray__`` o
 type ``PyJParray``.
 
 ``jstring``
-+++++++++++++++++++++++++++++++
++++++++++++
 
 For most practical purposes Java strings are treated as objects. However, they
 also need to be able to interact with Python strings. In the previous version,
@@ -194,8 +197,8 @@ comparing a Java and Python string. Also it causes minor issues when using a
 Java string as a key to a ``dict``. There is no special fields associated with
 the ``jstring``.
 
-
 .. _bootstrapping:
+
 Bootstrapping
 ~~~~~~~~~~~~~
 
@@ -355,7 +358,80 @@ additional Python resources will likely be required for new features.
 ~~~~~~~~~~~~~~~~~~~
 
 This class supplied the portion of the reflection API required to create
-classes without the aid of the ``java.lang.Class`` structure.
+classes without the aid of the ``java.lang.Class`` structure.  It can be constructed
+either from within JPype or directly from Python.  It points to a 
+``JPClass``.  It has methods for diagnostics and reflection.
+
+
+``PyJPMethod`` class
+~~~~~~~~~~~~~~~~~~~~
+
+This class acts as descriptor with a call method.  As a descriptor accessing its
+methods through the class will trigger its ``__get__`` function, thus
+getting ahold of it within Python is a bit tricky.  The ``__get__`` mathod
+is used to bind the static unbound method to a particular object instance
+so that we can call with the first argument as the ``this`` pointer.
+
+It has some reflection and diagnostics methods that can be useful
+it tracing down errors. The beans methods are there just to support
+the old properties API.
+
+The naming on this class is a bit deceptive. It does not correspond
+to a single method but rather all the overloads with the same name.  
+When called it passes to with the arguments to the C++ layer where
+it must be resolved to a specific overload. 
+
+This class is stored directly in the class wrappers.
+
+
+``PyJPField`` class
+~~~~~~~~~~~~~~~~~~~
+
+This class is a descriptor with ``__get__`` and ``__set__`` methods.
+When called at the static class layer it operates on static fields.  When
+called on a Python object, it binds to the object making a ``this`` pointer.
+If the field is static, it will continue to access the static field, otherwise,
+it will provide access to the member field. This trickery allows both
+static and member fields to wrap as one type.
+
+This class is stored directly in the class wrappers.
+
+``PyJPArray`` class
+~~~~~~~~~~~~~~~~~~~
+
+This class serves as to provide the extra methods that are needed for 
+working with Java arrays. It is not a descriptor and thus is hidden in
+the python class as ``__javaarray__``.  A Python array wrapper should have
+both the ``__javavalue__`` and the ``__javaarray__`` field to function.
+
+
+``PyJPMonitor`` class
+~~~~~~~~~~~~~~~~~~~~~
+
+This class provides ``synchronized`` to JPype.  Instances of this
+class are created and held using ``with``.  It has two methods 
+``__enter__`` and ``__exit__`` which hook into the Python RAII
+system.  
+
+
+``PyJPValue`` class
+~~~~~~~~~~~~~~~~~~~
+
+This class holds all types of Java resources that correspond to the Java
+jvalue union.  This includes both objects and primitives.  It provides 
+a cache for string conversions so the when ``str()`` is called on a
+Java string we only pay for the conversion cost once.  Both Java and 
+Python strings are immutable thus this is a valid cache operation.
+
+Unlike ``jvalue`` we hold the object type in the C++ ``JPValue``
+object.  The class reference is used to determine how to match the arguments
+to methods. The class may not correspond to the actual class of the 
+object. Using a class other than the actual class serves to allow
+an object to be cast and thus treated like another type for the purposes
+of overloading. This mechanism is what allows the ``JObject`` factory
+to perform a typecast.
+
+``PyJPValue`` is held in the private python field ``__javavalue__``.
 
 
 CPython API layer
@@ -379,7 +455,9 @@ A key piece of the jpype interaction is the transfer of exceptions from
 Java to Python. To accomplish this Python method that can result in a call to
 Java must have a ``try`` block around the contents of the function.
 
-We use a routine pattern of code to interact with Java to achieve this: ::
+We use a routine pattern of code to interact with Java to achieve this:
+
+.. code-block:: cpp 
 
     PyObject* dosomething(PyObject* self, PyObject* args)
     {
@@ -473,6 +551,149 @@ methods, provide reflection of classes, determine if a conversion is possible,
 perform conversion, match arguments to overloads, and convert return values
 back to Java.
 
+Memory management
+~~~~~~~~~~~~~~~~~
+
+Java provides built in memory management for controlling the lifespan of 
+Java objects that are passed through JNI. When a Java object is created
+or returned from the JVM it returns a handle to object with a reference
+counter. To manage the lifespan of this reference counter a local frame
+is created. For the duration of this frame all local references will
+continue to exist. To extend the lifespan either a new global reference
+to the object needs to be created, or the object needs to be kept.  When
+the local frame is destroyed all local references are destroyed with 
+the exception of an optional specified local return reference.  
+
+We have wrapped the Java reference system with the wrapper ``JPLocalFrame``.
+This wrapper has three functions. It acts as a RAII (Resource acquisition
+is initialization) for the local frame. Further, as creating a local
+frame requires creating a Java env reference and all JNI calls require
+access to the env, the local frame acts as the front end to call all
+JNI calls. Finally as getting ahold of the env requires that the 
+thread be attached to Java, it also serves to automatically attach
+threads to the JVM. As accessing an unbound thread will cause a segmentation
+fault in JNI, we are now safe from any threads created from within
+Python even those created outside our knowledge.  (I am looking at 
+you spyder)
+
+Using this pattern makes the JPype core safe by design.  Forcing JNI
+calles to be called using the frame ensures:
+
+  - Every local reference is destroyed.
+  - Every thread is properly attached before JNI is used.
+  - The pattern of keep only one local reference is obeyed.
+
+To use a local frame, use the pattern shown in this example.
+
+.. code-block:: cpp
+
+    jobject doSomeThing(std::string args)
+    {
+        // Create a frame at the top of the scope
+        JPLocalFrame frame;
+
+        // Do the required work
+        jobject obj =frame.CallObjectMethodA(globalObj, methodRef, params);
+
+        // Tell the frame to return the reference to the outer scope.
+        //   once keep is called the frame is destroyed and any
+        //   call will fail.
+        return frame.keep(obj);
+    }
+
+Note that the value of the object returned and the object in the function
+will not be the same. The returned reference is owned by the enclosing
+local frame and points to the same object. But as its lifespan belongs
+to the outer frame, its location in memory is different.  You are allowed
+to ``keep`` a reference that was global or was passed in, in either of
+those case, the outer scope will get a new local reference that points
+to the same object. Thus you don't need to track the origin of the object.
+
+The changing of the value while pointing is another common problem.
+A routine error is to get a local reference, call ``NewGlobalRef``
+and then keeping the local reference rather than the shiny new
+global reference it made. This is not like the Python reference system
+where you have the object that you can ref and unref. Thus make sure
+you always store only the global reference.
+
+.. code-block:: cpp
+
+    jobject global;
+
+    // we are getting a reference, may be local, may be global.
+    // either way it is borrowed and it doesn't belong to us.
+    void elseWhere(jvalue value)
+    {
+      JPLocalFrame frame;
+
+      // Bunch of code leading us to decide we need to
+      // hold the resource longer.
+      if (cond)
+      {
+        // okay we need to keep this reference, so make a 
+        // new global reference to it.
+        global = frame.NewGlobalRef(value.l);
+      }
+    }
+
+But don't mistake this as an invitation to make global references
+everywhere. Global reference are global, thus will hold the member
+until the reference is destroyed. C++ exceptions can lead
+to missing the unreference, thus global references should only
+happen when you are placing the Java object into a class member
+variable or a global variable. 
+
+To help manage global references, we have ``JPRef<>`` which
+holds a global reference for the duration of the C++ lifespace.
+This is the base class for each of the global reference types
+we use.
+
+.. code-block:: cpp
+
+    typedef JPRef<jclass> JPClassRef;
+    typedef JPRef<jobject> JPObjectRef;
+    typedef JPRef<jarray> JPArrayRef;
+    typedef JPRef<jthrowable> JPThrowableRef;
+
+
+For functions that expect the outer scope to already have created a frame
+for this context, we use the pattern of extending the outer scope rather
+than creating a new one.
+
+.. code-block:: cpp
+
+    jobject doSomeThing(JPLocalFrame& frame, std::string args)
+    {
+        // Do the required work
+        jobject obj = frame.CallObjectMethodA(globalObj, methodRef, params);
+
+        // We must not call keep here or we will terminate 
+        // a frame we do not own.
+        return obj;
+    }
+
+Although the system we have set up is "safe by design", there are things that can 
+go wrong is misused.  If the caller fails to create a frame prior to calling a 
+function that returns a local reference, the reference will go into the program 
+scoped local references and thus leak. Thus, it is usually best to force the user 
+to make a scope with the frame extension pattern. Second, if any JNI references 
+that are not kept or converted to global, it becomes invalid. Further, since JNI 
+recycles the reference pointer fairly quickly, it most likely will be pointed to 
+another object whose type may not be expected. Thus, best case is using the stale 
+reference will crash and burn. Worse case, the reference will be a live reference 
+to another object and it will produce an error which seems completely irrelevant 
+to anything that was being called. Horrible case, the live object does not object 
+to bad call and it all silently proceeds down the road another two miles before 
+coming to flaming death. 
+
+Moral of the story, always create a local frame even if you are handling a global 
+reference. If passed or returned a reference of any kind, it is a borrowed reference 
+belonging to the caller or being held by the current local frame. Thus it must
+be treated accordingly. If you have to hold a global use the appropraite ``JPRef``
+class to ensure it is exception and dtor safe. For further information 
+read ``native/common/jp_javaframe.h``.
+
+
 Type wrappers
 ~~~~~~~~~~~~~
 
@@ -565,7 +786,9 @@ primitives along with ``java.lang.Object`` and ``java.lang.Class`` are preloaded
 Additional instances are created as requested for individual Java classes.
 Currently this is backed by a C++ map of string to class wrappers.
 
-The typemanager provides a number lookup methods. ::
+The typemanager provides a number lookup methods.
+
+.. code-block:: cpp 
 
   // Call from within Python
   JPClass* JPTypeManager::findClass(const string& name)
@@ -575,6 +798,7 @@ The typemanager provides a number lookup methods. ::
 
   // Call used when returning an object from Java
   JPClass* JPTypeManager::findClassForObject(jobject obj)
+
 
 ``JPReferenceQueue``
 ++++++++++++++++++++
@@ -587,9 +811,12 @@ This code is almost entirely in the Java library, thus only the portion
 to support Java native methods appears in the C++ layer.
 
 Once started the reference queue is mostly transparent. registerRef is used
-to bind a Python object live span to a Java object. ::
+to bind a Python object live span to a Java object.
+
+.. code-block:: cpp 
 
   void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
+
 
 ``JPProxy``
 ++++++++++++
@@ -613,7 +840,9 @@ a custom Java classloader and then using that classloader to load the internal
 jar.
 
 The classloader is mostly transparent. It provides one method called findClass
-which loads a class from the internal jar. ::
+which loads a class from the internal jar.
+
+.. code-block:: cpp 
 
   jclass JPClassLoader::findClass(string name)
 
@@ -629,7 +858,9 @@ encoding such as UTF8, Java used UTF16 encoded in 8 bits which they dub
 Modified-UTF8. ``JPEncoding`` deals with converting this unusual encoding into
 something that Python can understand.
 
-The key method in this module is transcribe with signature ::
+The key method in this module is transcribe with signature 
+
+.. code-block:: cpp 
 
   std::string transcribe(const char* in, size_t len,
       const JPEncoding& sourceEncoding,
@@ -705,4 +936,17 @@ that need to be bound in the C++ layer.
 The world of JVMs is currently in flux. Jpype needs to be able to support
 other JVMs. In theory, so long a JVM provides a working JNI layer, there
 is no reason the jpype can't support it. But we need loading routines for
-these JVMs to be developed.
+these JVMs to be developed if there are differences in getting the JVM
+launched.
+
+There is a project page on github shows what is being developed for the 
+next release. Series 0.6 was usable, but early versions had notable issues
+with threading and internal memory management concepts had to be redone for
+stability.  Series 0.7 is the first verion after rewrite for 
+simplication and hardening.  I consider 0.7 to be at the level of production 
+quality code suitable for most usage though still missing some needed 
+features. Series 0.8 will deal with higher levels of Python/Java integration such as Java
+class extension and pickle support.  Series 0.9 will be dedicated to any
+additional hardening and edge cases in the core code as we should have complete
+integration.  Assuming everything is completed, we will one day become a
+real boy and have a 1.0 release. 

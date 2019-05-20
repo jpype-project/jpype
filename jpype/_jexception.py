@@ -27,14 +27,18 @@ else:
 
 
 class _JException(object):
-    """ Base class for all java.lang.Throwable objects.
+    """ Base class for all ``java.lang.Throwable`` objects.
 
-    When called as an object JException will produce a new exception class.  The arguments 
-    may either be a string or an existing java throwable.  This functionality is 
-    deprecated.
+    When called as an object ``JException`` will produce a new exception class.  
+    The arguments may either be a string or an existing Java throwable.  
+    This functionality is deprecated as exception classes can be created with 
+    ``JClass``.
 
-    Use issubclass(cls, JException) to test if a class is derived from java.lang.Throwable.
-    Use isinstance(obj, JException) to test if an object is a java.lang.Throwable.
+    Use ``issubclass(cls, JException)`` to test if a class is derived 
+    from ``java.lang.Throwable.``
+
+    Use ``isinstance(obj, JException)`` to test if an object is a 
+    ``java.lang.Throwable``.
 
     """
     def __new__(cls, *args, **kwargs):
@@ -66,6 +70,11 @@ class _JException(object):
 
     # Included for compatibility with JPype 0.6.3
     def stacktrace(self):
+        """ Get a string listing the stack frame.
+
+        Returns:
+          A string with the classic Java ``printStackTrace`` result.
+        """
         StringWriter = _jclass.JClass("java.io.StringWriter")
         PrintWriter = _jclass.JClass("java.io.PrintWriter")
         sw = StringWriter()
@@ -78,6 +87,7 @@ class _JException(object):
 
     # For compatiblity with python exceptions
     args = property(lambda self: self._jargs(), None)
+    """ Test doc string on property"""
 
     def _jargs(self):
         cause = self.getCause()

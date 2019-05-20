@@ -3,35 +3,108 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **Next version - unreleased**
+- **0.7.0 - 2019**
+
+  - Complete rewrite of the core module code to deal unattached threads,
+    improved hardening, and member management.  Massive number of internal 
+    bugs were identified during the rewrite and corrected.
+    See the :doc:`ChangeLog-0.7` for details of all changes.
+
+  - API breakage:
+
+     - Java strings no longer convert automatically to Python strings.
+       The previous behavior was switchable, but only the default
+       convert to Python was working. Converting to automatically
+       lead to problems in which is was impossible to work with
+       classes like StringBuilder in Java. To convert a Java
+       string use ``str()``.
+
+     - Java exceptions are now derived from Python exception. The
+       old wrapper types have been removed. Catch the exception
+       with the actual Java exception type rather than ``JException``.
+       
+     - Undocumented exceptions issued from within JPype have
+       been mapped to the corresponding Python exception types
+       such as ``TypeError`` and ``ValueError`` appropriately.
+       Code catching exceptions from previous versions should 
+       be checked to make sure all exception paths are being
+       handled.
+
+     - Undocumented property import of Java bean pattern
+       get/set accessors was removed as the default. It is 
+       available with ``import jpype.beans``, but its
+       use is discouraged.
+
+  - API rework:
+
+     - JPype factory methods now act as base classes for dynamic
+       class trees. 
+     - Static fields and methods are now available in object
+       instances.
+     - Inner classes are now imported with the parent class.
+     - ``jpype.imports`` works with Python 2.7.
+     - Proxies and customizers now use decorators rather than
+       exposing internal classes.  Existing ``JProxy`` code
+       still works.
+     - Decorator style proxies use ``@JImplements`` and ``@JOverload``
+       to create proxies from regular classes.
+     - Decorator style customizers use ``@JImplementionFor``
+     - Module ``jpype.types`` was introduced containing only
+       the Java type wrappers. Use ``from jpype.types import *`` to
+       pull in this subset of JPype.
+
+  - ``synchronized`` using the Python ``with`` statement now works
+    for locking of Java objects.
+
+  - Previous bug in initialization of arrays from list has been
+    corrected.
+
   - Added extra verbiage to the to the raised exception when an overloaded
     method could not be matched.  It now prints a list of all possible method
     signatures.
-  - Harded code to unattached threads and accessing java objects after shutdown.
+
   - The following is now DEPRECATED
-    - jpype.reflect.* - All class information is available with .class_
-    - Python thread option for JPypeReferenceQueue.  References are always handled with
-      with the Java cleanup routine.  The undocumented setUsePythonThreadForDaemon()
-      will be removed at a future version.
-  - promoted --install-option to a --global-option as it applies to the build as well
+
+    - ``jpype.reflect.*`` - All class information is available with ``.class_``
+    - Unncessary ``JException`` from string now issues a warning.
+
+  - The followind is now REMOVED
+
+    - Python thread option for ``JPypeReferenceQueue``.  References are always handled with
+      with the Java cleanup routine.  The undocumented ``setUsePythonThreadForDaemon()``
+      has been removed.
+    - Undocumented switch to change strings from automatic to manual
+      conversion has been removed.
+    - Artifical base classes ``JavaClass`` and ``JavaObject`` have been removed.
+    - Undocumented old style customizers have been removed.
+    - Many internal jpype symbols have been removed from the namespace to 
+      prevent leakage of symbols on imports.
+
+  - promoted *`--install-option`* to a *`--global-option`* as it applies to the build as well
     as install.
+  - Added *`--enable-tracing`* to setup.py to allow for compiling with tracing
+    for debugging.
+  - Ant is required to build jpype from source, use ``--ant=`` with setup.py
+    to direct to a specific ant.
 
 - **0.6.3 - 2018-04-03**
+
   - Java reference counting has been converted to use JNI
     PushLocalFrame/PopLocalFrame.  Several resource leaks
     were removed.
 
-  - java.lang.Class<>.forName() will now return the java.lang.Class.
+  - ``java.lang.Class<>.forName()`` will now return the java.lang.Class.
     Work arounds for requiring the class loader are no longer needed.
     Customizers now support customization of static members.
 
-  - Support of java.lang.Class<>
-    - java.lang.Object().getClass() on Java objects returns a java.lang.Class
+  - Support of ``java.lang.Class<>``
+
+    - ``java.lang.Object().getClass()`` on Java objects returns a java.lang.Class
       rather than the Python class
-    - java.lang.Object().__class__ on Java objects returns the python class
+    - ``java.lang.Object().__class__`` on Java objects returns the python class
       as do all python objects
-    - java.lang.Object.class_ maps to the java statement 'java.lang.Object.class' and
-      returns the java.lang.Class<java.lang.Object>
+    - ``java.lang.Object.class_`` maps to the java statement ``java.lang.Object.class`` and
+      returns the ``java.lang.Class<java.lang.Object>``
     - java.lang.Class supports reflection methods
     - private fields and methods can be accessed via reflection
     - annotations are avaiable via reflection
@@ -42,6 +115,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     underscore.
 
   - Added support for automatic conversion of boxed types.
+
      - Boxed types automatically convert to python primitives.
      - Boxed types automatically convert to java primitives when resolving functions.
      - Functions taking boxed or primitives still resolve based on closest match.
@@ -49,7 +123,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Python integer primitives will implicitly match java float and double as per
     Java specification.
 
-  - Added support for try with resources for java.lang.Closeable.
+  - Added support for try with resources for ``java.lang.Closeable``.
     Use python "with MyJavaResource() as resource:" statement
     to automatically close a resource at the end of a block.
 

@@ -42,26 +42,37 @@ class JObject(object):
     """ Base class for all object instances.
 
     It can be used to test if an object is a java object instance with
-    isinstance(obj, JObject).
+    ``isinstance(obj, JObject)``.
 
-    Calling JObject as a function can be used to covert or cast to specific java
-    type.  It will box primitive types and supports an option type to box to.
+    Calling ``JObject`` as a function can be used to covert or cast to 
+    specific Java type.  It will box primitive types and supports an 
+    option type to box to.
 
-        JObject(value) - where value is a simple python primitive type like int, float, 
-          str, bool, string converts to an automatically determine boxed type.
+    This wrapper functions four ways. 
+    
+      - If the no type is given the object is automatically 
+        cast to type best matched given the value.  This can be used 
+        to create a boxed primitive.  ``JObject(JInt(i))``
 
-        JObject(cls) - where cls is an existing java class will produce a java.lang.Class instance
-          equivalent to c.class_
+      - If the type is a primitve, the object will be the boxed type of that
+        primitive.  ``JObject(1, JInt)``
 
-        JObject(javaObj, objectClass) - specifically cast an object to another class to
-          match a specified overload.  This may return a TypeError if the object is 
-          not assignable to the specified class.
+      - If the type is a Java class and the value is a Java object, the
+        object will be cast to the Java class and will be an exact match to 
+        the class for the purposes of matching arguments. If the object 
+        is not compatible, an exception will be raised.
 
-        JObject(value, primitiveClass) - specify a specific primitive wrapper type
-          for the conversion to a boxed class.
+      - If the value is a python wrapper for class it will create a class
+        instance.  But this can be achieve using ``jclass.class_``
 
-    Using these conversion can be useful match to an otherwise ambiguous overload
-    or pack a specific type into a generic container.
+    Args:
+       value: The value to be cast into an Java object.
+       type(Optional, type): The type to cast into.  
+
+    Raises:
+       TypeError: If the object cannot be cast to the specified type, or
+         the requested type is not a Java class or primitive.
+
     """
     def __new__(cls, *args, **kwargs):
         if cls != JObject:
@@ -152,11 +163,11 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     """ Create a factory type such as JObject or JArray.
 
     Args:
-        name (str) - Name of the class to produce
-        jclass (str) - Name of the java class this should shadow.
-        proto (type) - Is a type from which the class methods will be based.
-        bases (tuple) - Bases for this meta class factory.
-        members (dict) - Any additional members for this class.
+        name (str): Name of the class to produce
+        jclass (str): Name of the java class this should shadow.
+        proto (type): Is a type from which the class methods will be based.
+        bases (tuple): Bases for this meta class factory.
+        members (dict): Any additional members for this class.
 
     """
     # Copy the members from the prototype

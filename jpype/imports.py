@@ -16,25 +16,44 @@
 #
 # *****************************************************************************
 
-# Optional jpype module to support:
-#   import <java_pkg> [ as <name> ]
-#   import <java_pkg>.<java_class> [ as <name> ]
-#   from <java_pkg> import <java_class>[,<java_class>*]
-#   from <java_pkg> import <java_class> [ as <name> ]
-#   from <java_pkg>.<java_class> import <java_static> [ as <name> ]
-#   from <java_pkg>.<java_class> import <java_inner> [ as <name> ]
-#
-#   jpype.imports.registerDomain(moduleName, alias=<java_pkg>)
-#   jpype.imports.registerImportCustomizer(JImportCustomizer)
-#
-# Requires Python 2.7 or 3.6 or later
-# Usage:
-#   import jpype
-#   import jpype.imports
-#   <start or attach jvm>
-#   # Import java packages as modules
-#   from java.lang import String
+"""
+JPype Imports Module
+--------------------
 
+Once imported this module will place the standard TLDs into the python
+scope. These tlds are ``java``, ``com``, ``org``, and ``gov``.  Java
+symbols from these domains can be imported using the standard Python
+syntax.
+
+Import customizers are supported in Python 3.6 or greater.
+
+Forms supported:
+   - **import <java_pkg> [ as <name> ]**
+   - **import <java_pkg>.<java_class> [ as <name> ]**
+   - **from <java_pkg> import <java_class>[,<java_class>*]**
+   - **from <java_pkg> import <java_class> [ as <name> ]**
+   - **from <java_pkg>.<java_class> import <java_static> [ as <name> ]**
+   - **from <java_pkg>.<java_class> import <java_inner> [ as <name> ]**
+
+For further information please read the :doc:`imports` guide.
+
+Requires:
+    Python 2.7 or 3.6 or later
+
+Example:
+
+.. code-block:: python
+
+   import jpype
+   import jpype.imports
+   jpype.startJVM()
+
+   # Import java packages as modules
+   from java.lang import String
+
+"""
+
+import _jpype
 try:
     from importlib.machinery import ModuleSpec as _ModuleSpec
     from types import ModuleType as _ModuleType
@@ -123,17 +142,20 @@ if _sys.version_info > (3,):
         Import customizers should implement canCustomize and getSpec.
 
         Example:
-          | # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
-          | class SiteCustomizer(jpype.imports.JImportCustomizer):
-          |     def canCustomize(self, name):
-          |         if name.startswith('org.mysite') and name.endswith('.py'):
-          |             return True
-          |         return False
-          |     def getSpec(self, name):
-          |         pname = name[:-3]
-          |         devel = os.environ.get('DEVEL')
-          |         path = os.path.join(devel, pname,'py','__init__.py')
-          |         return importlib.util.spec_from_file_location(name, path)
+
+        .. code-block:: python
+
+           # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
+           class SiteCustomizer(jpype.imports.JImportCustomizer):
+               def canCustomize(self, name):
+                   if name.startswith('org.mysite') and name.endswith('.py'):
+                       return True
+                   return False
+               def getSpec(self, name):
+                   pname = name[:-3]
+                   devel = os.environ.get('DEVEL')
+                   path = os.path.join(devel, pname,'py','__init__.py')
+                   return importlib.util.spec_from_file_location(name, path)
        """
 
         def canCustomize(self, name):
@@ -325,9 +347,12 @@ _JDOMAINS = {}
 def registerDomain(mod, alias=None):
     """ Add a java domain to python as a dynamic module.
 
+    This can be used to bind a Java path to a Python path.
+
     Args:
-        mod is the name of the dynamic module
-        alias is the name of the java path. (optional)
+        mod(str): Is the Python module to bind to Java.
+        alias(str, optional): Is the name of the Java path if different 
+          than the Python name. 
     """
     if not alias:
         alias = mod

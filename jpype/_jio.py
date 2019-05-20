@@ -27,6 +27,22 @@ if _sys.version_info > (3,):
 
 @_jcustomizer.JImplementationFor("java.io.Closeable")
 class _JCloseable(object):
+    """ Customizer for ``java.io.Closable``
+
+    This customizer adds support of the `with` operator to all Java 
+    classes that implement Java Closable interface. 
+
+    Example:
+
+    .. code-block:: python
+
+        from java.nio.files import Files, Paths
+        with Files.newInputStream(Paths.get("foo")) as fd:
+          # operate on the input stream
+
+        # Input stream closes at the end of the block.
+
+    """
     def __enter__(self):
         return self
 
