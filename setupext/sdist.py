@@ -2,6 +2,7 @@
 import os
 import sys
 import warnings
+import distutils
 from distutils.dir_util import copy_tree, remove_tree
 from setuptools.command.sdist import sdist
 from setuptools import Extension
