@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,10 +13,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from jpype import JPackage, java, JFloat, JByte, JShort, JInt, JLong
 from . import common
 import sys
+
 
 class NumericTestCase(common.JPypeTestCase):
     def testMathAbs(self):
@@ -44,16 +45,16 @@ class NumericTestCase(common.JPypeTestCase):
         self.assertEqual(min_value, javawrapper(min_value).longValue())
         f = jwrapper(min_value)
         self.assertEqual(min_value, javawrapper(f).longValue())
-        
-        self.assertRaises(expected, javawrapper, max_value+1)
-        self.assertRaises(expected, jwrapper, max_value+1)
-        self.assertRaises(expected, javawrapper, min_value-1)
-        self.assertRaises(expected, jwrapper, min_value-1)
+
+        self.assertRaises(OverflowError, javawrapper, max_value+1)
+        self.assertRaises(OverflowError, jwrapper, max_value+1)
+        self.assertRaises(OverflowError, javawrapper, min_value-1)
+        self.assertRaises(OverflowError, jwrapper, min_value-1)
 
         # test against int overflow
         if(max_value < 2**32):
-            self.assertRaises(expected, javawrapper, 2**32)
-            self.assertRaises(expected, jwrapper, 2**32)
+            self.assertRaises(OverflowError, javawrapper, 2**32)
+            self.assertRaises(OverflowError, jwrapper, 2**32)
 
     def testJCharWrapper(self):
         self.checkJWrapper(-2**7, 2**7-1, java.lang.Byte, JByte)
@@ -68,18 +69,20 @@ class NumericTestCase(common.JPypeTestCase):
         self.checkJWrapper(-2**31, 2**31-1, java.lang.Integer, JInt)
 
     def testJLongWrapper(self):
-        self.checkJWrapper(-2**63, 2**63-1, java.lang.Long, JLong, OverflowError)
-        
+        self.checkJWrapper(-2**63, 2**63-1, java.lang.Long,
+                           JLong, OverflowError)
+
     def testJFloatWrapper(self):
         jwrapper = JFloat
         javawrapper = java.lang.Float
         jwrapper(float(2**127))
         javawrapper(float(2**127))
-        self.assertRaises(TypeError, jwrapper, float(2**128))
-        #self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
+        self.assertRaises(OverflowError, jwrapper, float(2**128))
+        # self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
 
-        # this difference might be undesirable, 
-        # a double bigger than maxfloat passed to java.lang.Float turns into infinity 
-        self.assertEquals(float('inf'), javawrapper(float(2**128)).doubleValue())
-        self.assertEquals(float('-inf'), javawrapper(float(-2**128)).doubleValue())
-                
+        # this difference might be undesirable,
+        # a double bigger than maxfloat passed to java.lang.Float turns into infinity
+        self.assertEquals(float('inf'), javawrapper(
+            float(2**128)).doubleValue())
+        self.assertEquals(
+            float('-inf'), javawrapper(float(-2**128)).doubleValue())

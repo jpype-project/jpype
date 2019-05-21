@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
-import sys
-
+# *****************************************************************************
+import sys as _sys
 import _jpype
 
+__all__ = ['convertToDirectBuffer']
 
-if sys.version_info < (2, 7):
+
+if _sys.version_info < (2, 7):
     _mem_view = _jpype.memoryview  # own memoryview implementation
 else:
     _mem_view = memoryview
 
+# FIXME this is not documented.
+# FIXME there are no tests of this method
 
-def _initialize() :
-    pass
 
 def convertToDirectBuffer(obj):
     __doc__ = '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''
@@ -34,6 +35,7 @@ def convertToDirectBuffer(obj):
     memoryview_of_obj = _mem_view(obj)
 
     if memoryview_of_obj.readonly:
-        raise ValueError("Memoryview must be writable for wrapping in a byte buffer")
+        raise ValueError(
+            "Memoryview must be writable for wrapping in a byte buffer")
 
     return _jpype.convertToDirectBuffer(memoryview_of_obj)

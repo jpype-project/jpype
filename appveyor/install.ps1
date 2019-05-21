@@ -1,3 +1,5 @@
+$env:Path += ";"+$env:PYTHON
+
 # Check that we have the expected version and architecture for Python
 ant.exe -version
 python.exe --version
@@ -13,5 +15,6 @@ pip.exe install nose setuptools -r test-requirements.txt
 ant.exe -f test\\build.xml
 
 # Build the compiled extension and run the project tests
-python.exe setup.py install
-
+python.exe setup.py bdist_wheel
+dir .\dist
+Get-ChildItem -File -Path .\dist\*.whl | Foreach {pip install --upgrade $_.fullname}

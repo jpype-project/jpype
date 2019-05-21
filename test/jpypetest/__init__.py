@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,12 +13,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 from inspect import isclass
+
 
 def importAll():
     # Import in local scope to keep namespace clean
@@ -33,15 +34,16 @@ def importAll():
 
         # import module
         _name = _file[:-3]
-        exec("from . import %s"% _name)
-        _module=globals()[_name]
-        for n,cls in _module.__dict__.items():
+        exec("from . import %s" % _name)
+        _module = globals()[_name]
+        for n, cls in _module.__dict__.items():
             try:
                 if not issubclass(cls, unittest.TestCase):
                     continue
-                globals()[n]=cls
+                globals()[n] = cls
             except TypeError as ex:
                 pass
+
 
 importAll()
 
@@ -49,7 +51,7 @@ importAll()
 #   ant -f test/build.xml
 #
 # To run all tests bench call at the the top level directory
-#   nosetests -v test.jpypetest 
+#   nosetests -v test.jpypetest
 #
 # Individual tests can be called by their module name, such as
 #   nosetests -v test.jpypetest.array

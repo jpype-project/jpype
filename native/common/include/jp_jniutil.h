@@ -5,7 +5,7 @@
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,12 +13,13 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-*****************************************************************************/
+ *****************************************************************************/
 #ifndef _JPJNIUTIL_H_
 #define _JPJNIUTIL_H_
 
 namespace JPJni
 {
+	extern jclass s_ObjectClass;
 	extern jclass s_ClassClass;
 	extern jclass s_StringClass;
 	extern jclass s_NoSuchMethodErrorClass;
@@ -26,162 +27,167 @@ namespace JPJni
 	extern jclass s_ProxyClass;
 	extern jmethodID s_NewProxyInstanceID;
 
-	extern jlong s_minByte;
-	extern jlong s_maxByte;
-	extern jlong s_minShort;
-	extern jlong s_maxShort;
-	extern jlong s_minInt;
-	extern jlong s_maxInt;
-	extern jfloat s_minFloat;
-	extern jfloat s_maxFloat;
+	extern jlong s_Byte_Min;
+	extern jlong s_Byte_Max;
+	extern jlong s_Short_Min;
+	extern jlong s_Short_Max;
+	extern jlong s_Int_Min;
+	extern jlong s_Int_Max;
+	extern jfloat s_Float_Min;
+	extern jfloat s_Float_Max;
 
 	void init();
 
-	string asciiFromJava(jstring str);
-	JCharString unicodeFromJava(jstring str);
-
-	jstring javaStringFromJCharString(JCharString& str);
-
-	JPTypeName getClassName(jobject obj);
+	// Object
 	jclass getClass(jobject obj);
-	jstring toString(jobject obj);
-	string toStringC(jobject obj);
+	string toString(jobject obj);
+	bool equalsObject(jobject obj1, jobject obj2);
+	jint hashCode(jobject obj);
+
+	// String
+	string toStringUTF8(jstring str);
+	jstring fromStringUTF8(const string& str);
+	jobject stringToCharArray(jstring str);
+
+	// Class	
+	jclass getComponentType(jclass cls);
+	string convertToSimpleName(jclass cls);
+	string getCanonicalName(jclass cls);
+	bool isArray(jclass cls);
+	bool isThrowable(jclass c);
 
 	/**
-	* java.lang.Class.isInterface()
-	*/
-	bool            isInterface(jclass);
+	 * java.lang.Class.isInterface()
+	 */
+	bool isInterface(jclass cls);
 
 	/**
-	* java.lang.reflect.Modifier.isAbstract(java.lang.Class.getModifiers()
-	*/
-	bool            isAbstract(jclass);
+	 * java.lang.reflect.Modifier.isAbstract(java.lang.Class.getModifiers()
+	 */
+	bool isAbstract(jclass cls);
 
 	/**
-	* java.lang.reflect.Modifier.isFinal(java.lang.Class.getModifiers()
-	*/
-	bool            isFinal(jclass);
+	 * java.lang.reflect.Modifier.isFinal(java.lang.Class.getModifiers()
+	 */
+	bool            isFinal(jclass cls);
 
 	/**
-	* java.lang.Class.getName()
-	*/
-	JPTypeName      getName(jclass);
+	 * java.lang.Class.getInterfaces()
+	 */
+	vector<jclass>  getInterfaces(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getInterfaces()
-	*/
-	vector<jclass>  getInterfaces(JPJavaFrame& frame, jclass);
-
-	/**
-	* java.lang.Class.getDeclaredFields()
-	*/
-	vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getDeclaredFields()
+	 */
+	vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass cls);
 
 
 	/**
-	* java.lang.Class.getConstructors()
-	*/
-	vector<jobject> getConstructors(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getConstructors()
+	 */
+	vector<jobject> getConstructors(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getFields()
-	*/
-	vector<jobject> getFields(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getFields()
+	 */
+	vector<jobject> getFields(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getDeclaredMethods()
-	*/
-	vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getDeclaredMethods()
+	 */
+	vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getDeclaredMethods()
-	*/
-	vector<jobject> getMethods(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getDeclaredMethods()
+	 */
+	vector<jobject> getMethods(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getDeclaredMethods()
-	*/
-	vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass);
+	 * java.lang.Class.getDeclaredMethods()
+	 */
+	vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass cls);
 
 	/**
-	* java.lang.Class.getModifiers()
-	*/
-	long getClassModifiers(jclass);
+	 * java.lang.Class.getModifiers()
+	 */
+	long getClassModifiers(jclass cls);
 
 	jobject getSystemClassLoader();
 
 	/**
-	* java.lang.reflect.Member.getName()
-	*/
-	string getMemberName(jobject);
+	 * java.lang.reflect.Member.getName()
+	 */
+	string getMemberName(jobject member);
 
 	/**
-	* java.lang.reflect.Modifier.isPublic(java.lang.reflect.member.getModifiers())
-	*/
-	bool isMemberPublic(jobject);
+	 * java.lang.reflect.Modifier.isPublic(java.lang.reflect.member.getModifiers())
+	 */
+	bool isMemberPublic(jobject member);
 
 	/**
-	* java.lang.reflect.Modifier.is(java.lang.reflect.member.getModifiers())
-	*/
-	bool isMemberStatic(jobject);
+	 * java.lang.reflect.Modifier.is(java.lang.reflect.member.getModifiers())
+	 */
+	bool isMemberStatic(jobject member);
 
 	/**
-	* java.lang.reflect.Modifier.isFinal(java.lang.reflect.member.getModifiers())
-	*/
-	bool isMemberFinal(jobject);
+	 * java.lang.reflect.Modifier.isFinal(java.lang.reflect.member.getModifiers())
+	 */
+	bool isMemberFinal(jobject member);
 
 	/**
-	* java.lang.reflect.Modifier.isAbstract(java.lang.reflect.member.getModifiers())
-	*/
-	bool isMemberAbstract(jobject);
+	 * java.lang.reflect.Modifier.isAbstract(java.lang.reflect.member.getModifiers())
+	 */
+	bool isMemberAbstract(jobject member);
+
+	// Field
+	/**
+	 * java.lang.reflect.Modifier.isPublic(java.lang.reflect.Field.getModifiers()
+	 */
+	bool isFieldPublic(jobject field);
 
 	/**
-	* java.lang.reflect.Field.getType
-	*/
-	JPTypeName getType(jobject fld);
+	 * java.lang.reflect.Field.getType
+	 */
+	jclass getFieldType(jobject field);
+
+	// Method
+	/**
+	 * java.lang.reflect.Method.getReturnType
+	 */
+	jclass getMethodReturnType(jobject method);
 
 	/**
-	* java.lang.reflect.Method.getReturnType
-	*/
-	JPTypeName getReturnType(jobject);
+	 * java.lang.reflect.Method.isSynthetic()
+	 */
+	bool isMethodSynthetic(jobject method);
 
 	/**
-	* java.lang.reflect.Method.isSynthetic()
-	*/
-	bool isMethodSynthetic(jobject);
+	 * java.lang.reflect.Method.isSynthetic()
+	 */
+	bool isMethodVarArgs(jobject);
 
 	/**
-	* java.lang.reflect.Method.isSynthetic()
-	*/
-	bool isVarArgsMethod(jobject);
-
-	jint hashCode(jobject);
-
-	/**
-	* java.lang.reflect.Method.getParameterTypes
-	*/
-	vector<JPTypeName> getParameterTypes(jobject, bool);
+	 * java.lang.reflect.Method.getParameterTypes
+	 */
+	vector<JPClassRef> getMethodParameterTypes(jobject, bool);
 
 	bool isConstructor(jobject);
+
 	string getStackTrace(jthrowable th);
 	string getMessage(jthrowable th);
-	bool isThrowable(jclass c);
 
+	// Boxed class methods
 	long intValue(jobject);
 	jlong longValue(jobject);
 	double doubleValue(jobject);
 	bool booleanValue(jobject);
 	jchar charValue(jobject);
 
-	jclass getByteClass();
-	jclass getShortClass();
-	jclass getIntegerClass();
-	jclass getLongClass();
-	jclass getFloatClass();
-	jclass getDoubleClass();
-	jclass getCharacterClass();
-	jclass getBooleanClass();
-	jclass getVoidClass();
+	/** Look up the class for a java primitive.
+	 * @param name is the name of the Boxed type in native format.
+	 */
+	jclass getPrimitiveClass(jclass cls);
+
 };
 
 #endif // _JPJNIUTIL_H_
