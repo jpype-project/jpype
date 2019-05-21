@@ -56,7 +56,7 @@ def addClassPath(path1):
 
     Arguments:
       path(str): 
-    
+
     """
     global _CLASSPATHS
 

@@ -29,6 +29,7 @@ if sys.version > '3':
 # FIXME the java.lang.method we are overriding should be passes to the lookup function
 # so we can properly handle name mangling on the override.
 
+
 def _createJProxy(cls, intf, **kwargs):
     """ (internal) Create a proxy from a python class with
     @JOverride notation on methods.
@@ -38,20 +39,21 @@ def _createJProxy(cls, intf, **kwargs):
 
     # Find all class defined overrides
     overrides = {}
-    for k,v in cls.__dict__.items():
+    for k, v in cls.__dict__.items():
         try:
             attr = object.__getattribute__(v, "__joverride__")
-            overrides[k]=(v, attr)
+            overrides[k] = (v, attr)
         except AttributeError:
             pass
 
     # Verify all methods are overriden
     for interface in actualIntf:
         for method in interface.class_.getMethods():
-            if method.getModifiers()&1024==0:
+            if method.getModifiers() & 1024 == 0:
                 continue
             if not str(method.getName()) in overrides:
-                raise NotImplementedError("Interface %s requires method %s to be implemented."%(interface.class_.getName(), method.getName()))
+                raise NotImplementedError("Interface %s requires method %s to be implemented." % (
+                    interface.class_.getName(), method.getName()))
 
     # Define a lookup interface
     def lookup(self, name):
@@ -106,6 +108,7 @@ def JImplements(*args, **kwargs):
         return _createJProxy(cls, args, **kwargs)
     return f
 
+
 def _convertInterfaces(intf):
     """ (internal) Convert a list of interface names into
     a list of interfaces suitable for a proxy.
@@ -159,6 +162,7 @@ class JProxy(object):
         inst (object, optional): specifies an object with methods
             whose names matches the java interfaces methods.
     """
+
     def __init__(self, intf, dict=None, inst=None):
         # Convert the interfaces
         actualIntf = _convertInterfaces(intf)

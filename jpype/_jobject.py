@@ -49,7 +49,7 @@ class JObject(object):
     option type to box to.
 
     This wrapper functions four ways. 
-    
+
       - If the no type is given the object is automatically 
         cast to type best matched given the value.  This can be used 
         to create a boxed primitive.  ``JObject(JInt(i))``

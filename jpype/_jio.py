@@ -43,6 +43,7 @@ class _JCloseable(object):
         # Input stream closes at the end of the block.
 
     """
+
     def __enter__(self):
         return self
 

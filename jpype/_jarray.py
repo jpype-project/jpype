@@ -112,10 +112,12 @@ class _JArray(object):
         if values is not None:
             self.__javaarray__.setArraySlice(0, sz, values)
 
-    length = property(lambda self: self.__len__(), None)
-
     def __str__(self):
         return str(tuple(self))
+
+    @property
+    def length(self):
+        return self.__len__()
 
     def __len__(self):
         return self.__javaarray__.getArrayLength()
