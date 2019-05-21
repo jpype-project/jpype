@@ -149,17 +149,20 @@ class JClass(type):
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
-            type.__setattr__(self, name, value)
-        else:
-            try:
-                attr = typeLookup(self, name)
-                if hasattr(attr, '__set__'):
-                    attr.__set__(self, value)
-                    return
-            except AttributeError:
-                pass
-            raise AttributeError("Field '%s' is not settable on Java '%s' object" %
+            return type.__setattr__(self, name, value)
+
+        if not hasattr(self, name):
+            raise AttributeError("Field '%s' not found on Java '%s' class" %
                                  (name, self.__name__))
+
+        try:
+            attr = typeLookup(self, name)
+            if hasattr(attr, '__set__'):
+                return attr.__set__(self, value)
+        except AttributeError:
+            pass
+        raise AttributeError("Field '%s' is not settable on Java '%s' class" %
+                             (name, self.__name__))
 
     def mro(cls):
         # Bases is ordered by (user, extend, interfaces)
