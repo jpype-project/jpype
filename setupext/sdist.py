@@ -25,7 +25,7 @@ class BuildSourceDistribution(sdist):
         copy_tree(src, dest)
 
         # Collect the sources
-        super(sdist, self).run()
+        sdist.run(self)
 
         # Clean up the jar cache after sdist
         remove_tree(dest)
