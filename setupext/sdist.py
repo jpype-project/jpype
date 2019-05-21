@@ -15,12 +15,18 @@ class BuildSourceDistribution(sdist):
     Copy the build/lib to native/jars to remove ant/jdk dependency
     """
     def run(self):
+        # We need to build a jar cache for the source distribution
+        self.run_command("build_java")
         dest = os.path.join('native','jars')
         src = os.path.join('build','lib')
         if not os.path.exists(src):
             distutils.log.error("Jar source file is missing from build")
             raise distutils.errors.DistutilsPlatformError("Error copying jar file")
         copy_tree(src, dest)
+
+        # Collect the sources
         super(sdist, self).run()
+
+        # Clean up the jar cache after sdist
         remove_tree(dest)
 
