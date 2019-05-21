@@ -4,6 +4,7 @@ import subprocess
 import distutils.cmd
 import distutils.log
 from distutils.errors import DistutilsPlatformError
+from distutils.dir_util import copy_tree, remove_tree
 
 
 class BuildJavaCommand(distutils.cmd.Command):
@@ -22,6 +23,17 @@ class BuildJavaCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+        java = self.distribution.enable_build_jar
+        if not java:
+            src = os.path.join('native','jars')
+            dest = os.path.join('build','lib')
+            if not os.path.exists(src):
+                distutils.log.error("Jar cache missing, use --enable-build-jar make the jar")
+                raise DistutilsPlatformError("Fail to find org.jpype.jar")
+            copy_tree(src, dest)
+            return
+
+        # build the jar
         buildDir = os.path.join("..", "build")
         buildXmlFile = os.path.join("native", "build.xml")
         command = [self.distribution.ant, '-Dbuild=%s' %
@@ -33,3 +45,4 @@ class BuildJavaCommand(distutils.cmd.Command):
         except subprocess.CalledProcessError as exc:
             distutils.log.error(exc.output)
             raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
+

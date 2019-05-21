@@ -63,13 +63,14 @@ environment:
       CONDA_PY: "3-latest"
       ARCH: x86_64
 
-    - PYTHON: "C:\\Miniconda34-x64"
-      CONDA_PY: "3.4.3"
-      ARCH: x86_64
-
-    - PYTHON: "C:\\Miniconda34"
-      CONDA_PY: "3.4.3"
-      ARCH: x86
+      ### Dropping 3.4 build due to problem with setuptools
+      #- PYTHON: "C:\\Miniconda34-x64"
+      #CONDA_PY: "3.4.3"
+      #ARCH: x86_64
+      #
+      #- PYTHON: "C:\\Miniconda34"
+      #CONDA_PY: "3.4.3"
+      #ARCH: x86
 
     - PYTHON: "C:\\Miniconda35-x64"
       CONDA_PY: "3.5.2"
