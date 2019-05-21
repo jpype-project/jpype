@@ -19,7 +19,7 @@ class BuildSourceDistribution(sdist):
         src = os.path.join('build','lib')
         if not os.path.exists(src):
             distutils.log.error("Jar source file is missing from build")
-            raise DistutilsPlatformError("Error copying jar file")
+            raise distutils.errors.DistutilsPlatformError("Error copying jar file")
         copy_tree(src, dest)
         super(sdist, self).run()
         remove_tree(dest)
