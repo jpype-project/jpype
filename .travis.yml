@@ -14,10 +14,13 @@ addons:
       python: 3.7           # this works for Linux but is ignored on macOS or Windows
       dist: xenial
       language: python
+      PYTHON="python3"
+
     - name: "Python 3.7.2 on macOS"
       os: osx
       osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
       language: shell       # 'language: python' is an error on Travis CI macOS
+      PYTHON="python3"
 
       #- python: 'pypy'
       #  env: NUMPY="--global-option=--disable-numpy"
@@ -33,11 +36,11 @@ addons:
       #  env: NUMPY="--global-option=--disable-numpy"
   
 install:
-  - python setup.py --enable-build-jar sdist
-  - pip install --user dist/* $NUMPY
-  - pip install --user -r test-requirements.txt
+  - $PYTHON setup.py --enable-build-jar sdist
+  - $PYTHON -m pip install --user dist/* $NUMPY
+  - $PYTHON -m pip install --user -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
-  - python -c "import jpype"
-  - pytest -v test/jpypetest
+  - $PYTHON -c "import jpype"
+  - $PYTHON -m pytest -v test/jpypetest
