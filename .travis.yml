@@ -14,13 +14,17 @@ matrix:
       python: 3.7
       dist: xenial
       language: python
-      env: PYTHON=python3
+      env: 
+        - PYTHON=python3
+        - INST=""
 
     - name: "Python 3.7.2 on macOS"
       os: osx
       osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
       language: shell
-      env: PYTHON=python3
+      env: 
+        - PYTHON=python3
+        - INST=--user
 
       #- python: 'pypy'
       #  env: NUMPY="--global-option=--disable-numpy"
@@ -38,8 +42,8 @@ matrix:
 install:
   - echo $PYTHON
   - $PYTHON setup.py --enable-build-jar sdist
-  - $PYTHON -m pip install --user dist/* $NUMPY
-  - $PYTHON -m pip install --user -r test-requirements.txt
+  - $PYTHON -m pip install $INST dist/* $NUMPY
+  - $PYTHON -m pip install $INST -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
