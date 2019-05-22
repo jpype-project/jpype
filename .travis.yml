@@ -9,7 +9,7 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
-  - "nightly"
+  - 'nightly'
   - 'pypy'
   - 'pypy3'
 
@@ -30,6 +30,7 @@ addons:
 
 matrix:
   allow_failures:
+    - python: nightly
     - python: pypy
     - python: pypy3
     - os: osx
@@ -78,18 +79,18 @@ matrix:
           packages:
             - ant
 
-     name: "Python 3.7 on macOS"
-     os: osx
-     osx_image: xcode10.2
-     language: java
-     env:
-       - PYTHON=python3
-       - INST=--user
-       - PIP=pip3
-     addons:
-       homebrew:
-         packages:
-           - ant
+    - name: "Python 3.7 on macOS"
+      os: osx
+      osx_image: xcode10.2
+      language: java
+      env:
+        - PYTHON=python3
+        - INST=--user
+        - PIP=pip3
+      addons:
+        homebrew:
+          packages:
+            - ant
 
 install:
   - echo $PYTHON $INST
