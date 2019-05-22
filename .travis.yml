@@ -21,7 +21,7 @@ matrix:
     - name: "Python 3.7.2 on macOS"
       os: osx
       osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
-      language: shell
+      language: java
       env: 
         - PYTHON=python3
         - INST=--user
