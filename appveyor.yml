@@ -59,45 +59,45 @@ environment:
       ARCH: x86
       CONDA_PY: "3-latest"
 
-# Limit run for debugging
-#    - PYTHON: "C:\\Miniconda3-x64"
-#      CONDA_PY: "3-latest"
-#      ARCH: x86_64
-#
-#      ### Dropping 3.4 build due to problem with setuptools
-#      #- PYTHON: "C:\\Miniconda34-x64"
-#      #CONDA_PY: "3.4.3"
-#      #ARCH: x86_64
-#      #
-#      #- PYTHON: "C:\\Miniconda34"
-#      #CONDA_PY: "3.4.3"
-#      #ARCH: x86
-#
-#    - PYTHON: "C:\\Miniconda35-x64"
-#      CONDA_PY: "3.5.2"
-#      ARCH: x86_64
-#
-#    - PYTHON: "C:\\Miniconda35"
-#      CONDA_PY: "3.5.2"
-#      ARCH: x86
-#
-#    - PYTHON: "C:\\Miniconda36-x64"
-#      CONDA_PY: "3.6.5"
-#      ARCH: x86_64
-#
-#    - PYTHON: "C:\\Miniconda36"
-#      CONDA_PY: "3.6.5"
-#      ARCH: x86
-#
-#    - PYTHON: "C:\\Miniconda37-x64"
-#      CONDA_PY: "3.7"
-#      ARCH: x86_64
-#
-#    - PYTHON: "C:\\Miniconda37"
-#      CONDA_PY: "3.7"
-#      ARCH: x86
+    # Limit run for debugging
+    #    - PYTHON: "C:\\Miniconda3-x64"
+    #      CONDA_PY: "3-latest"
+    #      ARCH: x86_64
+    #
+    #      ### Dropping 3.4 build due to problem with setuptools
+    #      #- PYTHON: "C:\\Miniconda34-x64"
+    #      #CONDA_PY: "3.4.3"
+    #      #ARCH: x86_64
+    #      #
+    #      #- PYTHON: "C:\\Miniconda34"
+    #      #CONDA_PY: "3.4.3"
+    #      #ARCH: x86
+    #
+    #    - PYTHON: "C:\\Miniconda35-x64"
+    #      CONDA_PY: "3.5.2"
+    #      ARCH: x86_64
+    #
+    #    - PYTHON: "C:\\Miniconda35"
+    #      CONDA_PY: "3.5.2"
+    #      ARCH: x86
+    #
+    #    - PYTHON: "C:\\Miniconda36-x64"
+    #      CONDA_PY: "3.6.5"
+    #      ARCH: x86_64
+    #
+    #    - PYTHON: "C:\\Miniconda36"
+    #      CONDA_PY: "3.6.5"
+    #      ARCH: x86
+    #
+    #    - PYTHON: "C:\\Miniconda37-x64"
+    #      CONDA_PY: "3.7"
+    #      ARCH: x86_64
+    #
+    #    - PYTHON: "C:\\Miniconda37"
+    #      CONDA_PY: "3.7"
+    #      ARCH: x86
 
-#install:
+install:
   # Force java to be installed where JAVA_HOME points
   # We can install and test multiple versions of java here
   # - We will have to move the JAVA_HOME and the build of the harness to the test section.

@@ -47,4 +47,4 @@ install:
 
 script:
   - python -c "import jpype"
-  - pytest test/jpypetest
+  - pytest -v test/jpypetest
