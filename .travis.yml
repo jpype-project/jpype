@@ -4,20 +4,26 @@ os:
 language: python
 
 python:
+  # Python 2.6 is past service life and should be dropped
   - '2.6'
   - '2.7'
   - '3.3'
   - '3.4'
   - '3.5'
   - '3.6'
-  - 'pypy3'
   - "nightly"
+  # This one should be allow fail
+  - 'pypy'
+  - 'pypy3'
 
 env:
   global:
     - PYTHON=python
     - PIP=pip
     - INST=""
+    # Testing with and without numpy on more than 2.7/3.7 for each arch
+    # is likely a waste.  The paths to a CPython module do not really
+    # change, but byte order and major version may make a difference.
 
 addons:
   apt:
@@ -37,9 +43,6 @@ matrix:
       python: 2.7
       dist: xenial
       language: python
-      env:
-        - PYTHON=python
-        - INST=""
 
     - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
       python: 3.7
@@ -47,6 +50,7 @@ matrix:
       language: python
       env:
         - PYTHON=python3
+        - PIP=pip3
         - NUMPY="--global-option=--disable-numpy"
 
     - name: "Python 3.7 on Xenial Linux"
@@ -55,31 +59,38 @@ matrix:
       language: python
       env:
         - PYTHON=python3
-
-    - name: "Python 2.7 on macOS"
-      os: osx
-      osx_image: xcode10.2
-      language: java
-      env:
-        - PYTHON=python
-        - INST=--user
-      addons:
-        homebrew:
-          packages:
-            - ant
-
-    - name: "Python 3.7 on macOS"
-      os: osx
-      osx_image: xcode10.2
-      language: java
-      env:
-        - PYTHON=python3
-        - INST=--user
         - PIP=pip3
-      addons:
-        homebrew:
-          packages:
-            - ant
+
+    ## This pattern is good, but something is broken in openJDK 12
+    ## Deal with in another pull
+    #    - name: "Python 2.7 on macOS"
+    #      os: osx
+    #      osx_image: xcode10.2
+    #      language: java
+    #      env:
+    #        - PYTHON=python
+    #        - INST=--user
+    #      addons:
+    #        homebrew:
+    #          packages:
+    #            - ant
+    #
+    #    - name: "Python 3.7 on macOS"
+    #      os: osx
+    #      osx_image: xcode10.2
+    #      language: java
+    #      env:
+    #        - PYTHON=python3
+    #        - INST=--user
+    #        - PIP=pip3
+    #      addons:
+    #        homebrew:
+    #          packages:
+    #            - ant
+    #
+  allow_failures:
+    python: pypy
+    python: pypy3
 
 install:
   - echo $PYTHON $INST
