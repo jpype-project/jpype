@@ -41,6 +41,7 @@ matrix:
   
 install:
   - echo $PYTHON
+  - ant -f test/build.xml
   - $PYTHON setup.py --enable-build-jar sdist
   - $PYTHON -m pip install $INST dist/* $NUMPY
   - $PYTHON -m pip install $INST -r test-requirements.txt
