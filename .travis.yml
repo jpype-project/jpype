@@ -34,8 +34,8 @@ addons:
   
 install:
   - python setup.py --enable-build-jar sdist
-  - pip install dist/* $NUMPY
-  - pip install -r test-requirements.txt
+  - pip install --user dist/* $NUMPY
+  - pip install --user -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
