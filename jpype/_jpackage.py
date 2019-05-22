@@ -63,6 +63,7 @@ class JPackage(object):
         result = google.common.IntMath.pow(x,m)
 
     """
+
     def __init__(self, name, strict=False, pattern=None):
         self.__name = name
         self.__pattern = pattern
@@ -99,7 +100,8 @@ class JPackage(object):
         # Check to see if this conforms to the required package name
         # convention, it not then we should not create a new package
         if self.__pattern and self.__pattern.match(n) == None:
-            raise AttributeError("Java package %s does not contain a class %s"%(self.__name, n))
+            raise AttributeError(
+                "Java package %s does not contain a class %s" % (self.__name, n))
 
         # Add package to the path
         cc = JPackage(subname, pattern=self.__pattern)

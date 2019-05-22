@@ -44,6 +44,7 @@ import _jpype
 from . import _jcustomizer
 from ._pykeywords import pysafe
 
+
 def _extract_accessor_pairs(members):
     """Extract pairs of corresponding property access methods
     (getter and setter) from a Java class's members (attributes).
@@ -59,19 +60,19 @@ def _extract_accessor_pairs(members):
     accessor_pairs = {}
 
     for name, member in members.items():
-        if not isinstance(member, _jpype.PyJPMethod) or len(name)<=3:
+        if not isinstance(member, _jpype.PyJPMethod) or len(name) <= 3:
             continue
-        if name=="getClass":
+        if name == "getClass":
             continue
 
-        if name.startswith("get")  and member.isBeanAccessor():
+        if name.startswith("get") and member.isBeanAccessor():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
                 pair[0] = member
             except KeyError:
                 accessor_pairs[property_name] = [member, None]
-        elif name.startswith("set")  and member.isBeanMutator():
+        elif name.startswith("set") and member.isBeanMutator():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
@@ -79,6 +80,7 @@ def _extract_accessor_pairs(members):
             except KeyError:
                 accessor_pairs[property_name] = [None, member]
     return accessor_pairs
+
 
 @_jcustomizer.JImplementationFor("java.lang.Object")
 class _BeansCustomizer(object):
@@ -88,10 +90,9 @@ class _BeansCustomizer(object):
         for attr_name, (getter, setter) in accessor_pairs.items():
             attr_name = pysafe(attr_name)
 
-            # Don't mess with an existing member 
+            # Don't mess with an existing member
             if attr_name in cls.__dict__:
                 continue
 
             # Add the property
             type.__setattr__(cls, attr_name, property(getter, setter))
-

@@ -115,6 +115,10 @@ class _JArray(object):
     def __str__(self):
         return str(tuple(self))
 
+    @property
+    def length(self):
+        return self.__len__()
+
     def __len__(self):
         return self.__javaarray__.getArrayLength()
 

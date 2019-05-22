@@ -49,7 +49,7 @@ class JObject(object):
     option type to box to.
 
     This wrapper functions four ways. 
-    
+
       - If the no type is given the object is automatically 
         cast to type best matched given the value.  This can be used 
         to create a boxed primitive.  ``JObject(JInt(i))``
@@ -98,14 +98,20 @@ class JObject(object):
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
-            object.__setattr__(self, name, value)
-            return
-        attr = _jclass.typeLookup(type(self), name)
-        if hasattr(attr, '__set__'):
-            attr.__set__(self, value)
-            return
-        raise AttributeError("%s does not have field %s" %
-                             (self.__name__, name))
+            return object.__setattr__(self, name, value)
+
+        if not hasattr(self, name):
+            raise AttributeError("Field '%s' not found on Java '%s' object" %
+                                 (name, self.__name__))
+
+        try:
+            attr = _jclass.typeLookup(type(self), name)
+            if hasattr(attr, '__set__'):
+                return attr.__set__(self, value)
+        except AttributeError:
+            pass
+        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
+                             (name, self.__name__))
 
     def __str__(self):
         return self.__javavalue__.toString()

@@ -86,11 +86,13 @@ def _initialize():
 def isJVMStarted():
     return _jpype.isStarted()
 
+
 def _hasClassPath(args):
     for i in args:
         if i.startswith('-Djava.class.path'):
             return True
     return False
+
 
 def startJVM(jvm=None, *args, **kwargs):
     """
@@ -116,15 +118,15 @@ def startJVM(jvm=None, *args, **kwargs):
         # Check to see that the user has not set the classpath
         # Otherwise use the default if not specified
         if not _hasClassPath(args) and 'classpath' not in kwargs:
-           kwargs['classpath']=_classpath.getClassPath()
+            kwargs['classpath'] = _classpath.getClassPath()
 
     if 'ignoreUnrecognized' not in kwargs:
-        kwargs['ignoreUnrecognized']=False
+        kwargs['ignoreUnrecognized'] = False
 
     # Classpath handling
     args = list(args)
-    if 'classpath' in kwargs and kwargs['classpath']!=None:
-        args.append('-Djava.class.path=%s'%(kwargs['classpath']))
+    if 'classpath' in kwargs and kwargs['classpath'] != None:
+        args.append('-Djava.class.path=%s' % (kwargs['classpath']))
 
     _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
     _initialize()
@@ -203,7 +205,7 @@ def synchronized(obj):
 
       with synchronized(obj):
          # modify obj values
-         
+
       # lock is freed when with block ends
 
     """
@@ -220,7 +222,7 @@ def getDefaultJVMPath():
 
     Returns:
       The path to the JVM shared library file
-    
+
     Raises:
       JVMNotFoundException: If there was no JVM found in the search path.
       JVMNotSupportedException: If the JVM was found was not compatible with
@@ -253,7 +255,7 @@ get_default_jvm_path = getDefaultJVMPath
 
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
-    
+
     This function can be used to determine the version of the JVM. It is 
     useful to help determine why a Jar has failed to load.  
 
