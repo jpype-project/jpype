@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     packages=[
-        'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
+        'jpype', 'jpypex', 'jpypex.swing'],
     package_dir={
         'jpype': 'jpype',
         'jpypex': 'jpypex',
