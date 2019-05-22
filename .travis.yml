@@ -109,12 +109,4 @@ install:
 
 script:
   - $PYTHON -c "import jpype"
-  - jdk_switcher use oraclejdk8
-  - java -version
-  - $PYTHON -m pytest -v test/jpypetest
-  - jdk_switcher use openjdk10
-  - java -version
-  - $PYTHON -m pytest -v test/jpypetest
-  - jdk_switcher use openjdk11
-  - java -version
   - $PYTHON -m pytest -v test/jpypetest
