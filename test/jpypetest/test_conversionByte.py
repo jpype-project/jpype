@@ -42,36 +42,36 @@ class ConversionByteTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testByteFromInt(self):
-        self.assertEquals(self.Test.callByte(int(123)), 123)
+        self.assertEqual(self.Test.callByte(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callByte(np.int(123)), 123)
+        self.assertEqual(self.Test.callByte(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callByte(np.int8(123)), 123)
-        self.assertEquals(self.Test.callByte(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callByte(np.int8(123)), 123)
+        self.assertEqual(self.Test.callByte(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callByte(np.int16(123)), 123)
-        self.assertEquals(self.Test.callByte(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callByte(np.int16(123)), 123)
+        self.assertEqual(self.Test.callByte(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callByte(np.int32(123)), 123)
-        self.assertEquals(self.Test.callByte(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callByte(np.int32(123)), 123)
+        self.assertEqual(self.Test.callByte(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callByte(np.int64(123)), 123)
-        self.assertEquals(self.Test.callByte(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callByte(np.int64(123)), 123)
+        self.assertEqual(self.Test.callByte(np.uint64(123)), 123)
 
     def testByteFromFloat(self):
         with self.assertRaises(RuntimeError):

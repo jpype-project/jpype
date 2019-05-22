@@ -43,61 +43,61 @@ class ConversionDoubleTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testDoubleFromInt(self):
-        self.assertEquals(self.Test.callDouble(int(123)), 123)
+        self.assertEqual(self.Test.callDouble(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(np.int(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(np.int8(123)), 123)
-        self.assertEquals(self.Test.callDouble(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.int8(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(np.int16(123)), 123)
-        self.assertEquals(self.Test.callDouble(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.int16(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(np.int32(123)), 123)
-        self.assertEquals(self.Test.callDouble(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.int32(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(np.int64(123)), 123)
-        self.assertEquals(self.Test.callDouble(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.int64(123)), 123)
+        self.assertEqual(self.Test.callDouble(np.uint64(123)), 123)
 
     def testDoubleFromFloat(self):
-        self.assertEquals(self.Test.callDouble(float(self.value)), self.value)
+        self.assertEqual(self.Test.callDouble(float(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPFloat(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(
+        self.assertEqual(self.Test.callDouble(
             np.float(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPFloat32(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(
+        self.assertEqual(self.Test.callDouble(
             np.float32(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleFromNPFloat64(self):
         import numpy as np
-        self.assertEquals(self.Test.callDouble(
+        self.assertEqual(self.Test.callDouble(
             np.float64(self.value)), self.value)
 
     def testDoubleRange(self):
-        self.assertEquals(self.Test.callDouble(float(1e340)), float(1e340))
-        self.assertEquals(self.Test.callDouble(float(-1e340)), float(-1e340))
+        self.assertEqual(self.Test.callDouble(float(1e340)), float(1e340))
+        self.assertEqual(self.Test.callDouble(float(-1e340)), float(-1e340))
 
     def testDoubleNaN(self):
         import math

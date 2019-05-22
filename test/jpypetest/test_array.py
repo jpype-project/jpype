@@ -171,13 +171,13 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(self.VALUES[2:10], result)
 
     def testJArrayPythonTypes(self):
-        self.assertEquals(jpype.JArray(
+        self.assertEqual(jpype.JArray(
             object).class_.getComponentType(), JClass('java.lang.Object'))
-        self.assertEquals(jpype.JArray(
+        self.assertEqual(jpype.JArray(
             float).class_.getComponentType(), JClass('java.lang.Double').TYPE)
-        self.assertEquals(jpype.JArray(
+        self.assertEqual(jpype.JArray(
             str).class_.getComponentType(), JClass('java.lang.String'))
-        self.assertEquals(jpype.JArray(
+        self.assertEqual(jpype.JArray(
             type).class_.getComponentType(), JClass('java.lang.Class'))
 
     def testJArrayConversionFloat(self):

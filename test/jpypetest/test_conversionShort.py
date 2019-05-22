@@ -42,36 +42,36 @@ class ConversionShortTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testShortFromInt(self):
-        self.assertEquals(self.Test.callShort(int(123)), 123)
+        self.assertEqual(self.Test.callShort(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callShort(np.int(123)), 123)
+        self.assertEqual(self.Test.callShort(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callShort(np.int8(123)), 123)
-        self.assertEquals(self.Test.callShort(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callShort(np.int8(123)), 123)
+        self.assertEqual(self.Test.callShort(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callShort(np.int16(123)), 123)
-        self.assertEquals(self.Test.callShort(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callShort(np.int16(123)), 123)
+        self.assertEqual(self.Test.callShort(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callShort(np.int32(123)), 123)
-        self.assertEquals(self.Test.callShort(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callShort(np.int32(123)), 123)
+        self.assertEqual(self.Test.callShort(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callShort(np.int64(123)), 123)
-        self.assertEquals(self.Test.callShort(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callShort(np.int64(123)), 123)
+        self.assertEqual(self.Test.callShort(np.uint64(123)), 123)
 
     def testShortFromFloat(self):
         with self.assertRaises(RuntimeError):

@@ -43,56 +43,56 @@ class ConversionFloatTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testFloatFromInt(self):
-        self.assertEquals(self.Test.callFloat(int(123)), 123)
+        self.assertEqual(self.Test.callFloat(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(np.int(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(np.int8(123)), 123)
-        self.assertEquals(self.Test.callFloat(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.int8(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(np.int16(123)), 123)
-        self.assertEquals(self.Test.callFloat(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.int16(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(np.int32(123)), 123)
-        self.assertEquals(self.Test.callFloat(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.int32(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(np.int64(123)), 123)
-        self.assertEquals(self.Test.callFloat(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.int64(123)), 123)
+        self.assertEqual(self.Test.callFloat(np.uint64(123)), 123)
 
     def testFloatFromFloat(self):
-        self.assertEquals(self.Test.callFloat(float(self.value)), self.value)
+        self.assertEqual(self.Test.callFloat(float(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPFloat(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(
+        self.assertEqual(self.Test.callFloat(
             np.float(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPFloat32(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(
+        self.assertEqual(self.Test.callFloat(
             np.float32(self.value)), self.value)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatFromNPFloat64(self):
         import numpy as np
-        self.assertEquals(self.Test.callFloat(
+        self.assertEqual(self.Test.callFloat(
             np.float64(self.value)), self.value)
 
     def testFloatRange(self):

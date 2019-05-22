@@ -33,7 +33,7 @@ class ForNameTestCase(common.JPypeTestCase):
         test = cls.forName('jpype.overloads.Test1')
         # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
         self.assertTrue(type(test) == type(cls.class_))
-        self.assertEquals(test.getName(), 'jpype.overloads.Test1')
+        self.assertEqual(test.getName(), 'jpype.overloads.Test1')
 
     def testForName2(self):
         cls = jpype.JClass('java.lang.Class')
@@ -42,4 +42,4 @@ class ForNameTestCase(common.JPypeTestCase):
         test = cls.forName('jpype.overloads.Test1', True, clsloader)
         # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
         self.assertTrue(type(test) == type(cls.class_))
-        self.assertEquals(test.getName(), 'jpype.overloads.Test1')
+        self.assertEqual(test.getName(), 'jpype.overloads.Test1')

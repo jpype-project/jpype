@@ -38,35 +38,35 @@ class ReflectCase(common.JPypeTestCase):
     def testClass(self):
         t = jpype.JClass('java.lang.Object')
         obj = self.Reflect()
-        self.assertEquals('Class', self.test1.testClassVsObject(self.Reflect))
-        self.assertEquals(
+        self.assertEqual('Class', self.test1.testClassVsObject(self.Reflect))
+        self.assertEqual(
             'Class', self.test1.testClassVsObject(self.Reflect.class_))
-        self.assertEquals(
+        self.assertEqual(
             'Class', self.test1.testClassVsObject(obj.getClass()))
-        self.assertEquals(
+        self.assertEqual(
             'Class', self.test1.testClassVsObject(obj.__class__.class_))
 
     def testAnnotation(self):
         method = self.Reflect.class_.getMethod('annotatedMethod')
         annotation = method.getAnnotation(self.Annotation)
-        self.assertEquals('annotation', annotation.value())
+        self.assertEqual('annotation', annotation.value())
 
     def testCallPublicMethod(self):
         method = self.Reflect.class_.getMethod('publicMethod')
         obj = self.Reflect()
-        self.assertEquals('public', method.invoke(obj))
+        self.assertEqual('public', method.invoke(obj))
 
     def testCallPrivateMethod(self):
         method = self.Reflect.class_.getDeclaredMethod('privateMethod')
         obj = self.Reflect()
-        self.assertEquals('private', method.invoke(obj))
+        self.assertEqual('private', method.invoke(obj))
 
     def testAccessPublicField(self):
         field = self.Reflect.class_.getField('publicField')
         obj = self.Reflect()
-        self.assertEquals('public', field.get(obj))
+        self.assertEqual('public', field.get(obj))
 
     def testAccessPrivateField(self):
         field = self.Reflect.class_.getDeclaredField('privateField')
         obj = self.Reflect()
-        self.assertEquals('private', field.get(obj))
+        self.assertEqual('private', field.get(obj))

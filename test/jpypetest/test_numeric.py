@@ -82,7 +82,7 @@ class NumericTestCase(common.JPypeTestCase):
 
         # this difference might be undesirable,
         # a double bigger than maxfloat passed to java.lang.Float turns into infinity
-        self.assertEquals(float('inf'), javawrapper(
+        self.assertEqual(float('inf'), javawrapper(
             float(2**128)).doubleValue())
-        self.assertEquals(
+        self.assertEqual(
             float('-inf'), javawrapper(float(-2**128)).doubleValue())

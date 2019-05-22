@@ -38,7 +38,7 @@ class ValuesTestCase(common.JPypeTestCase):
 # Int
     def testIntFromInt(self):
         self.Fields.intField = 1
-        self.assertEquals(self.Fields.intField, 1)
+        self.assertEqual(self.Fields.intField, 1)
 
     def testIntFromInt(self):
         with self.assertRaises(TypeError):
@@ -51,85 +51,85 @@ class ValuesTestCase(common.JPypeTestCase):
 # Float
     def testFloatFromInt(self):
         self.Fields.floatField = 1
-        self.assertEquals(self.Fields.floatField, 1.0)
+        self.assertEqual(self.Fields.floatField, 1.0)
 
     def testFloatFromFloat(self):
         self.Fields.floatField = 2.0
-        self.assertEquals(self.Fields.floatField, 2.0)
+        self.assertEqual(self.Fields.floatField, 2.0)
 
 # Double
     def testDoubleFromInt(self):
         self.Fields.doubleField = 1
-        self.assertEquals(self.Fields.doubleField, 1.0)
+        self.assertEqual(self.Fields.doubleField, 1.0)
 
     def testDoubleFromFloat(self):
         self.Fields.doubleField = 2.0
-        self.assertEquals(self.Fields.doubleField, 2.0)
+        self.assertEqual(self.Fields.doubleField, 2.0)
 
 # Wrappers (must be exact currently)
     def testIntFromIntWrapper(self):
         self.Fields.intField = jpype.JInt(5)
-        self.assertEquals(self.Fields.intField, 5)
+        self.assertEqual(self.Fields.intField, 5)
 
 # This one fails as it seems to be casting the 6.0 to an integer value literally.  I am not sure if that is intended behavior.
 #    def testIntFromFloatWrapper(self):
 #        self.Fields.intField = jpype.JInt(6.0)
-#        self.assertEquals(self.Fields.intField,6)
+#        self.assertEqual(self.Fields.intField,6)
 
     def testFloatFromFloatWrapper(self):
         self.Fields.floatField = jpype.JFloat(5.0)
-        self.assertEquals(self.Fields.floatField, 5.0)
+        self.assertEqual(self.Fields.floatField, 5.0)
 
     def testDoubleFromDoubleWrapper(self):
         self.Fields.doubleField = jpype.JDouble(5.0)
-        self.assertEquals(self.Fields.doubleField, 5.0)
+        self.assertEqual(self.Fields.doubleField, 5.0)
 
     def testObjectBoolTrue(self):
         self.Fields.objectField = True
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Boolean'))
-        self.assertEquals(str(self.Fields.objectField), str(True))
-        self.assertEquals(self.Fields.objectField, True)
+        self.assertEqual(str(self.Fields.objectField), str(True))
+        self.assertEqual(self.Fields.objectField, True)
 
     def testObjectBoolFalse(self):
         self.Fields.objectField = False
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Boolean'))
-        self.assertEquals(str(self.Fields.objectField), str(False))
-        self.assertEquals(self.Fields.objectField, False)
+        self.assertEqual(str(self.Fields.objectField), str(False))
+        self.assertEqual(self.Fields.objectField, False)
 
     def testObjectBoolJValue(self):
         self.Fields.objectField = jpype.JBoolean(True)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Boolean'))
-        self.assertEquals(self.Fields.objectField, True)
+        self.assertEqual(self.Fields.objectField, True)
 
     def testObjectShort(self):
         self.Fields.objectField = jpype.JShort(1)
-        self.assertEquals(self.Fields.objectField, 1)
+        self.assertEqual(self.Fields.objectField, 1)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Short'))
 
     def testObjectInteger(self):
         self.Fields.objectField = jpype.JInt(2)
-        self.assertEquals(self.Fields.objectField, 2)
+        self.assertEqual(self.Fields.objectField, 2)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Integer'))
 
     def testObjectLong(self):
         self.Fields.objectField = jpype.JLong(3)
-        self.assertEquals(self.Fields.objectField, 3)
+        self.assertEqual(self.Fields.objectField, 3)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Long'))
 
     def testObjectFloat(self):
         self.Fields.objectField = jpype.JFloat(1.125)
-        self.assertEquals(self.Fields.objectField, 1.125)
+        self.assertEqual(self.Fields.objectField, 1.125)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Float'))
 
     def testObjectDouble(self):
         self.Fields.objectField = jpype.JDouble(2.6125)
-        self.assertEquals(self.Fields.objectField, 2.6125)
+        self.assertEqual(self.Fields.objectField, 2.6125)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Double'))

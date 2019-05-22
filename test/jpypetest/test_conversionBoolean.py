@@ -42,37 +42,37 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testBooleanFromInt(self):
-        self.assertEquals(self.Test.callBoolean(int(123)), True)
-        self.assertEquals(self.Test.callBoolean(int(0)), False)
+        self.assertEqual(self.Test.callBoolean(int(123)), True)
+        self.assertEqual(self.Test.callBoolean(int(0)), False)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callBoolean(np.int(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int(123)), True)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callBoolean(np.int8(123)), True)
-        self.assertEquals(self.Test.callBoolean(np.uint8(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int8(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.uint8(123)), True)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callBoolean(np.int16(123)), True)
-        self.assertEquals(self.Test.callBoolean(np.uint16(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int16(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.uint16(123)), True)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callBoolean(np.int32(123)), True)
-        self.assertEquals(self.Test.callBoolean(np.uint32(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int32(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.uint32(123)), True)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callBoolean(np.int64(123)), True)
-        self.assertEquals(self.Test.callBoolean(np.uint64(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int64(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.uint64(123)), True)
 
     def testBooleanFromFloat(self):
         with self.assertRaises(RuntimeError):

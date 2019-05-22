@@ -2,14 +2,38 @@ addons:
   apt:
     packages:
     - ant
-    
-    #env:
-    #  # one build with and without numpy support (opt numpy out)
-    #  #- NUMPY="--global-option=--disable-numpy"
-    #  - NUMPY=""
-    #
+  homebrew:
+    packages:
+      - ant
+   
 matrix:
   include:
+    - name: "Python 2.7 on Xenial Linux (w/o NUMPY)"
+      python: 2.7
+      dist: xenial
+      language: python
+      env: 
+        - PYTHON=python3
+        - INST=""
+        - NUMPY="--global-option=--disable-numpy"
+
+    - name: "Python 2.7 on Xenial Linux"
+      python: 2.7
+      dist: xenial
+      language: python
+      env: 
+        - PYTHON=python3
+        - INST=""
+
+    - name: "Python 3.7.1 on Xenial Linux (w/o NUMPY)"
+      python: 3.7
+      dist: xenial
+      language: python
+      env: 
+        - PYTHON=python3
+        - INST=""
+        - NUMPY="--global-option=--disable-numpy"
+
     - name: "Python 3.7.1 on Xenial Linux"
       python: 3.7
       dist: xenial
@@ -18,34 +42,51 @@ matrix:
         - PYTHON=python3
         - INST=""
 
-    - name: "Python 3.?.? on macOS"
+    - name: "Python 2.6 on Trusty"
+      python: 2.6
+      language: python
+      env: 
+        - PYTHON=python
+        - INST=""
+
+    - name: "Python 3.5 on Trusty"
+      python: 3.5
+      language: python
+      env: 
+        - PYTHON=python
+        - INST=""
+
+    - name: "Python 3.6 on Trusty"
+      python: 3.6
+      language: python
+      env: 
+        - PYTHON=python
+        - INST=""
+
+  allow_failures:
+    - name: "Python 3.7.2 on macOS"
       os: osx
       osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
       language: java
-      addons:
-        homebrew:
-          packages:
-            - ant
-
       env: 
         - PYTHON=python3
         - INST=--user
 
-      #- python: 'pypy'
-      #  env: NUMPY="--global-option=--disable-numpy"
-      #- python: 'pypy3'
-      #  env: NUMPY="--global-option=--disable-numpy"
-      #- python: 'pypy'
-      #  env: NUMPY=""
-      #- python: 'pypy3'
-      #  env: NUMPY=""
-      #- python: 'nightly'
-      #  env: NUMPY=""
-      #- python: 'nightly'
-      #  env: NUMPY="--global-option=--disable-numpy"
-  
+    - name: "PyPy 3 on Trusty"
+      python: pypy
+      language: python
+      env: 
+        - PYTHON=python
+        - INST=""
+
+    - name: "Nightly on Trusty"
+      python: nightly
+      language: python
+      env: 
+        - PYTHON=python
+        - INST=""
+
 install:
-  - ant -f test/build.xml
   - $PYTHON setup.py --enable-build-jar sdist
   - $PYTHON -m pip install $INST dist/* $NUMPY
   - $PYTHON -m pip install $INST -r test-requirements.txt

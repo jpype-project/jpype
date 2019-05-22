@@ -42,36 +42,36 @@ class ConversionIntTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testIntFromInt(self):
-        self.assertEquals(self.Test.callInt(int(123)), 123)
+        self.assertEqual(self.Test.callInt(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callInt(np.int(123)), 123)
+        self.assertEqual(self.Test.callInt(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callInt(np.int8(123)), 123)
-        self.assertEquals(self.Test.callInt(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callInt(np.int8(123)), 123)
+        self.assertEqual(self.Test.callInt(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callInt(np.int16(123)), 123)
-        self.assertEquals(self.Test.callInt(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callInt(np.int16(123)), 123)
+        self.assertEqual(self.Test.callInt(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callInt(np.int32(123)), 123)
-        self.assertEquals(self.Test.callInt(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callInt(np.int32(123)), 123)
+        self.assertEqual(self.Test.callInt(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callInt(np.int64(123)), 123)
-        self.assertEquals(self.Test.callInt(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callInt(np.int64(123)), 123)
+        self.assertEqual(self.Test.callInt(np.uint64(123)), 123)
 
     def testIntFromFloat(self):
         with self.assertRaises(RuntimeError):

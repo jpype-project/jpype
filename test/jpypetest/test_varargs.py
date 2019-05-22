@@ -57,9 +57,9 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertTrue(isinstance(va0.rest, self.ObjectA))
         self.assertTrue(isinstance(va1.rest, self.ObjectA))
         self.assertTrue(isinstance(va2.rest, self.ObjectA))
-        self.assertEquals(len(va0.rest), 0)
-        self.assertEquals(len(va1.rest), 1)
-        self.assertEquals(len(va2.rest), 2)
+        self.assertEqual(len(va0.rest), 0)
+        self.assertEqual(len(va1.rest), 1)
+        self.assertEqual(len(va2.rest), 2)
 
     def testVarArgsMethod(self):
         va = self.VarArgs()
@@ -106,15 +106,15 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertTrue(compareList(self.VarArgs.callString(), []))
 
     def testVarArgsPlus0(self):
-        self.assertEquals(self.VarArgs.callString0("a"), 0)
-        self.assertEquals(self.VarArgs.callString0("a", "b"), 1)
-        self.assertEquals(self.VarArgs.callString0("a", "b", "c"), 2)
+        self.assertEqual(self.VarArgs.callString0("a"), 0)
+        self.assertEqual(self.VarArgs.callString0("a", "b"), 1)
+        self.assertEqual(self.VarArgs.callString0("a", "b", "c"), 2)
 
     def testVarArgsPlus1(self):
         var = self.VarArgs()
-        self.assertEquals(var.callString1("a"), 0)
-        self.assertEquals(var.callString1("a", "b"), 1)
-        self.assertEquals(var.callString1("a", "b", "c"), 2)
+        self.assertEqual(var.callString1("a"), 0)
+        self.assertEqual(var.callString1("a", "b"), 1)
+        self.assertEqual(var.callString1("a", "b", "c"), 2)
 
 
 if __name__ == '__main__':

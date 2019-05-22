@@ -42,36 +42,36 @@ class ConversionLongTestCase(common.JPypeTestCase):
         self.Test = jpype.JClass("jpype.conversion.Test")
 
     def testLongFromInt(self):
-        self.assertEquals(self.Test.callLong(int(123)), 123)
+        self.assertEqual(self.Test.callLong(int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt(self):
         import numpy as np
-        self.assertEquals(self.Test.callLong(np.int(123)), 123)
+        self.assertEqual(self.Test.callLong(np.int(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt8(self):
         import numpy as np
-        self.assertEquals(self.Test.callLong(np.int8(123)), 123)
-        self.assertEquals(self.Test.callLong(np.uint8(123)), 123)
+        self.assertEqual(self.Test.callLong(np.int8(123)), 123)
+        self.assertEqual(self.Test.callLong(np.uint8(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt16(self):
         import numpy as np
-        self.assertEquals(self.Test.callLong(np.int16(123)), 123)
-        self.assertEquals(self.Test.callLong(np.uint16(123)), 123)
+        self.assertEqual(self.Test.callLong(np.int16(123)), 123)
+        self.assertEqual(self.Test.callLong(np.uint16(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt32(self):
         import numpy as np
-        self.assertEquals(self.Test.callLong(np.int32(123)), 123)
-        self.assertEquals(self.Test.callLong(np.uint32(123)), 123)
+        self.assertEqual(self.Test.callLong(np.int32(123)), 123)
+        self.assertEqual(self.Test.callLong(np.uint32(123)), 123)
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt64(self):
         import numpy as np
-        self.assertEquals(self.Test.callLong(np.int64(123)), 123)
-        self.assertEquals(self.Test.callLong(np.uint64(123)), 123)
+        self.assertEqual(self.Test.callLong(np.int64(123)), 123)
+        self.assertEqual(self.Test.callLong(np.uint64(123)), 123)
 
     def testLongFromFloat(self):
         with self.assertRaises(RuntimeError):

@@ -36,7 +36,7 @@ class LambdasTestCase(common.JPypeTestCase):
         raise unittest.SkipTest
 
     def testLambdasFunction(self):
-        self.assertEquals(self.lambdas.getFunction().apply(1.0), 2.0)
+        self.assertEqual(self.lambdas.getFunction().apply(1.0), 2.0)
 
     def testLambdasLambda(self):
-        self.assertEquals(self.lambdas.getLambda().apply(1.0), 2.0)
+        self.assertEqual(self.lambdas.getLambda().apply(1.0), 2.0)

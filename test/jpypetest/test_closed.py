@@ -35,6 +35,6 @@ class ClosedTestCase(common.JPypeTestCase):
 
     def testStatic(self):
         static = jpype.JClass('jpype.objectwrapper.StaticTest')
-        self.assertEquals(static.i, 1)
-        self.assertEquals(static.d, 1.2345)
-        self.assertEquals(static.s, "hello")
+        self.assertEqual(static.i, 1)
+        self.assertEqual(static.d, 1.2345)
+        self.assertEqual(static.s, "hello")
