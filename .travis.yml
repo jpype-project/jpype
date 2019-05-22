@@ -14,8 +14,7 @@ python:
   - "nightly"
 
 env:
-  - PYTHON=python
-  - INST=""
+  - PYTHON=python INST=""
 
 addons:
   apt:
