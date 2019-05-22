@@ -83,9 +83,11 @@ class JPackage(object):
         # perhaps it is a class?
         subname = "{0}.{1}".format(self.__name, n)
         if not _jpype.isStarted():
+            if n.startswith('_'):
+                raise ex1
             import warnings
             warnings.warn(
-                "JVM not started yet, can not inspect JPackage contents")
+                "JVM not started yet, can not inspect JPackage contents %s")
             return n
 
         # See if it is a Java class
