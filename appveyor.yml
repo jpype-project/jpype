@@ -42,9 +42,9 @@ environment:
     #      ARCH: x86_64 
     #      CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Miniconda"
-      ARCH: x86
-      CONDA_PY: "2-latest"
+    #- PYTHON: "C:\\Miniconda"
+    #  ARCH: x86
+    #  CONDA_PY: "2-latest"
 
     - PYTHON: "C:\\Miniconda-x64"
       ARCH: x86_64
@@ -55,9 +55,9 @@ environment:
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Miniconda3"
-      ARCH: x86
-      CONDA_PY: "3-latest"
+    # - PYTHON: "C:\\Miniconda3"
+    # ARCH: x86
+    #   CONDA_PY: "3-latest"
 
     # Limit run for debugging
     #    - PYTHON: "C:\\Miniconda3-x64"

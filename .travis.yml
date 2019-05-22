@@ -14,13 +14,15 @@ addons:
       python: 3.7           # this works for Linux but is ignored on macOS or Windows
       dist: xenial
       language: python
-      PYTHON="python3"
+      env:
+        - PYTHON="python3"
 
     - name: "Python 3.7.2 on macOS"
       os: osx
       osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
       language: shell       # 'language: python' is an error on Travis CI macOS
-      PYTHON="python3"
+      env:
+        - PYTHON="python3"
 
       #- python: 'pypy'
       #  env: NUMPY="--global-option=--disable-numpy"
