@@ -12,21 +12,21 @@ environment:
 
   matrix:
 
-    ## This one is failing from gcc died with sig 11.  
+    ## This one is failing from gcc died with sig 11.
     ## This error is apparently common when building python 2 modules with cygwin32.
-    ## The failure depends on the windows version and will cause a failure 
+    ## The failure depends on the windows version and will cause a failure
     ## on appveyor depending on which image is used.
     ## We will disable it for now
     #
     # - PYTHON: "python2"
     #  CYGWIN: "C:\\cygwin"
-    #  ARCH: x86 
+    #  ARCH: x86
     #  CYGSH: C:\Cygwin\bin\bash -c
 
-    ## This one is failing due to a segfault when executing the first test in 
+    ## This one is failing due to a segfault when executing the first test in
     ## the test suite.  We have been unable to replicate it outside of appveyor
     ## We will disable it for now
-    #    
+    #
     #    - PYTHON: "python3"
     #      CYGWIN: "C:\\cygwin"
     #      ARCH: x86
@@ -35,16 +35,16 @@ environment:
 
     ## Python 2 on this platform is failing in the multi-threaded test.
     ## It is not clear if the issue is with the python build or incorrect
-    ## locking code in jpype. 
+    ## locking code in jpype.
     ## We will disable it for now
     #    - PYTHON: "python2"
     #      CYGWIN: "C:\\cygwin64"
-    #      ARCH: x86_64 
+    #      ARCH: x86_64
     #      CYGSH: C:\Cygwin64\bin\bash -c
 
-    #- PYTHON: "C:\\Miniconda"
-    #  ARCH: x86
-    #  CONDA_PY: "2-latest"
+    - PYTHON: "C:\\Miniconda"
+      ARCH: x86
+      CONDA_PY: "2-latest"
 
     - PYTHON: "C:\\Miniconda-x64"
       ARCH: x86_64
@@ -55,47 +55,37 @@ environment:
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
-    # - PYTHON: "C:\\Miniconda3"
-    # ARCH: x86
-    #   CONDA_PY: "3-latest"
+    - PYTHON: "C:\\Miniconda3"
+      ARCH: x86
+      CONDA_PY: "3-latest"
 
-    # Limit run for debugging
-    #    - PYTHON: "C:\\Miniconda3-x64"
-    #      CONDA_PY: "3-latest"
-    #      ARCH: x86_64
-    #
-    #      ### Dropping 3.4 build due to problem with setuptools
-    #      #- PYTHON: "C:\\Miniconda34-x64"
-    #      #CONDA_PY: "3.4.3"
-    #      #ARCH: x86_64
-    #      #
-    #      #- PYTHON: "C:\\Miniconda34"
-    #      #CONDA_PY: "3.4.3"
-    #      #ARCH: x86
-    #
-    #    - PYTHON: "C:\\Miniconda35-x64"
-    #      CONDA_PY: "3.5.2"
-    #      ARCH: x86_64
-    #
-    #    - PYTHON: "C:\\Miniconda35"
-    #      CONDA_PY: "3.5.2"
-    #      ARCH: x86
-    #
-    #    - PYTHON: "C:\\Miniconda36-x64"
-    #      CONDA_PY: "3.6.5"
-    #      ARCH: x86_64
-    #
-    #    - PYTHON: "C:\\Miniconda36"
-    #      CONDA_PY: "3.6.5"
-    #      ARCH: x86
-    #
-    #    - PYTHON: "C:\\Miniconda37-x64"
-    #      CONDA_PY: "3.7"
-    #      ARCH: x86_64
-    #
-    #    - PYTHON: "C:\\Miniconda37"
-    #      CONDA_PY: "3.7"
-    #      ARCH: x86
+    - PYTHON: "C:\\Miniconda3-x64"
+      CONDA_PY: "3-latest"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda35-x64"
+      CONDA_PY: "3.5.2"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda35"
+      CONDA_PY: "3.5.2"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda36-x64"
+      CONDA_PY: "3.6.5"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda36"
+      CONDA_PY: "3.6.5"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda37-x64"
+      CONDA_PY: "3.7"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda37"
+      CONDA_PY: "3.7"
+      ARCH: x86
 
 install:
   # Force java to be installed where JAVA_HOME points
@@ -111,7 +101,7 @@ install:
   - cinst ant %CINST_OPTS% --ignore-dependencies
   - refreshenv
 
-  # Add thinges to path 
+  # Add thinges to path
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
