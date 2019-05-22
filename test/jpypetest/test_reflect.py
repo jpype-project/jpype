@@ -54,19 +54,27 @@ class ReflectCase(common.JPypeTestCase):
     def testCallPublicMethod(self):
         method = self.Reflect.class_.getMethod('publicMethod')
         obj = self.Reflect()
+        self.assertIsNotNone(obj)
+        self.assertIsNotNone(method)
         self.assertEqual('public', method.invoke(obj))
 
     def testCallPrivateMethod(self):
         method = self.Reflect.class_.getDeclaredMethod('privateMethod')
         obj = self.Reflect()
+        self.assertIsNotNone(obj)
+        self.assertIsNotNone(method)
         self.assertEqual('private', method.invoke(obj))
 
     def testAccessPublicField(self):
         field = self.Reflect.class_.getField('publicField')
         obj = self.Reflect()
+        self.assertIsNotNone(obj)
+        self.assertIsNotNone(field)
         self.assertEqual('public', field.get(obj))
 
     def testAccessPrivateField(self):
         field = self.Reflect.class_.getDeclaredField('privateField')
         obj = self.Reflect()
+        self.assertIsNotNone(obj)
+        self.assertIsNotNone(field)
         self.assertEqual('private', field.get(obj))

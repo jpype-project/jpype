@@ -22,7 +22,7 @@ matrix:
         - PYTHON=python
         - INST=""
 
-    - name: "Python 3.7.1 on Xenial Linux (w/o NUMPY)"
+    - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
       python: 3.7
       dist: xenial
       language: python
@@ -31,7 +31,7 @@ matrix:
         - INST=""
         - NUMPY="--global-option=--disable-numpy"
   
-    - name: "Python 3.7.1 on Xenial Linux"
+    - name: "Python 3.7 on Xenial Linux"
       python: 3.7
       dist: xenial
       language: python
@@ -41,6 +41,7 @@ matrix:
   
     - name: "Python 2.6 on Trusty"
       python: 2.6
+      dist: trusty
       language: python
       env: 
         - PYTHON=python
@@ -48,6 +49,7 @@ matrix:
   
     - name: "Python 3.5 on Trusty"
       python: 3.5
+      dist: trusty
       language: python
       env: 
         - PYTHON=python
@@ -55,14 +57,27 @@ matrix:
   
     - name: "Python 3.6 on Trusty"
       python: 3.6
+      dist: trusty
       language: python
       env: 
         - PYTHON=python
         - INST=""
   
-    - name: "Python 3.7.2 on macOS"
+    - name: "Python 2.7 on macOS"
       os: osx
-      osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
+      osx_image: xcode10.2 
+      language: java
+      env: 
+        - PYTHON=python
+        - INST=--user
+      addons:
+        homebrew:
+          packages:
+            - ant
+
+    - name: "Python 3.7 on macOS"
+      os: osx
+      osx_image: xcode10.2 
       language: java
       env: 
         - PYTHON=python3
@@ -87,11 +102,19 @@ matrix:
       #        - INST=""
       #
 install:
-  - $PYTHON setup.py --enable-build-jar sdist
+  - $PYTHON setup.py sdist
   - $PYTHON -m pip install $INST dist/* $NUMPY
   - $PYTHON -m pip install $INST -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
   - $PYTHON -c "import jpype"
+  - jdk_switcher use oraclejdk8
+  - java -version
+  - $PYTHON -m pytest -v test/jpypetest
+  - jdk_switcher use openjdk10
+  - java -version
+  - $PYTHON -m pytest -v test/jpypetest
+  - jdk_switcher use openjdk11
+  - java -version
   - $PYTHON -m pytest -v test/jpypetest
