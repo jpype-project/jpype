@@ -1,15 +1,34 @@
+os:
+  - linux
+
+language: python
+
+python:
+  - '2.6'
+  - '2.7'
+  - '3.3'
+  - '3.4'
+  - '3.5'
+  - '3.6'
+  - 'pypy3'
+  - "nightly"
+
+env:
+  - PYTHON=python
+  - INST=""
+
 addons:
   apt:
     packages:
     - ant
-  
+
 matrix:
   include:
     - name: "Python 2.7 on Xenial Linux (w/o NUMPY)"
       python: 2.7
       dist: xenial
       language: python
-      env: 
+      env:
         - PYTHON=python
         - INST=""
         - NUMPY="--global-option=--disable-numpy"
@@ -18,7 +37,7 @@ matrix:
       python: 2.7
       dist: xenial
       language: python
-      env: 
+      env:
         - PYTHON=python
         - INST=""
 
@@ -26,48 +45,24 @@ matrix:
       python: 3.7
       dist: xenial
       language: python
-      env: 
+      env:
         - PYTHON=python3
         - INST=""
         - NUMPY="--global-option=--disable-numpy"
-  
+
     - name: "Python 3.7 on Xenial Linux"
       python: 3.7
       dist: xenial
       language: python
-      env: 
+      env:
         - PYTHON=python3
         - INST=""
-  
-    - name: "Python 2.6 on Trusty"
-      python: 2.6
-      dist: trusty
-      language: python
-      env: 
-        - PYTHON=python
-        - INST=""
-  
-    - name: "Python 3.5 on Trusty"
-      python: 3.5
-      dist: trusty
-      language: python
-      env: 
-        - PYTHON=python
-        - INST=""
-  
-    - name: "Python 3.6 on Trusty"
-      python: 3.6
-      dist: trusty
-      language: python
-      env: 
-        - PYTHON=python
-        - INST=""
-  
+
     - name: "Python 2.7 on macOS"
       os: osx
-      osx_image: xcode10.2 
+      osx_image: xcode10.2
       language: java
-      env: 
+      env:
         - PYTHON=python
         - INST=--user
       addons:
@@ -77,30 +72,16 @@ matrix:
 
     - name: "Python 3.7 on macOS"
       os: osx
-      osx_image: xcode10.2 
+      osx_image: xcode10.2
       language: java
-      env: 
+      env:
         - PYTHON=python3
         - INST=--user
       addons:
         homebrew:
           packages:
             - ant
-       
-      #    - name: "PyPy 3 on Trusty"
-      #      python: pypy
-      #      language: python
-      #      env: 
-      #        - PYTHON=python
-      #        - INST=""
-      #
-      #    - name: "Nightly on Trusty"
-      #      python: nightly
-      #      language: python
-      #      env: 
-      #        - PYTHON=python
-      #        - INST=""
-      #
+
 install:
   - $PYTHON setup.py sdist
   - $PYTHON -m pip install $INST dist/* $NUMPY
