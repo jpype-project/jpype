@@ -1,11 +1,12 @@
 os:
-  - linux
+  - osx
+  #- linux
 
 language: python
 
 python:
   #- '2.6'
-  - '2.7'
+  #- '2.7'
   #- '3.3'
   #- '3.4'
   #- '3.5'
@@ -21,7 +22,7 @@ addons:
 
 env:
   # one build with and without numpy support (opt numpy out)
-  - NUMPY="--global-option=--disable-numpy"
+  #- NUMPY="--global-option=--disable-numpy"
   - NUMPY=""
 
 matrix:
