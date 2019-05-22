@@ -46,6 +46,7 @@ setup(
         'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
+        'sdist': setupext.sdist.BuildSourceDistribution,
     },
     zip_safe=False,
     ext_modules=[jpypeLib],
