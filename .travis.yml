@@ -20,8 +20,13 @@ matrix:
 
     - name: "Python 3.?.? on macOS"
       os: osx
-      # osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
+      osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
       language: java
+      addons:
+        homebrew:
+          packages:
+            - ant
+
       env: 
         - PYTHON=python3
         - INST=--user
@@ -40,7 +45,6 @@ matrix:
       #  env: NUMPY="--global-option=--disable-numpy"
   
 install:
-  - echo $PYTHON
   - ant -f test/build.xml
   - $PYTHON setup.py --enable-build-jar sdist
   - $PYTHON -m pip install $INST dist/* $NUMPY
