@@ -14,7 +14,10 @@ python:
   - "nightly"
 
 env:
-  - PYTHON=python INST=""
+  global:
+    - PYTHON=python
+    - PIP=pip
+    - INST=""
 
 addons:
   apt:
@@ -28,8 +31,6 @@ matrix:
       dist: xenial
       language: python
       env:
-        - PYTHON=python
-        - INST=""
         - NUMPY="--global-option=--disable-numpy"
 
     - name: "Python 2.7 on Xenial Linux"
@@ -46,7 +47,6 @@ matrix:
       language: python
       env:
         - PYTHON=python3
-        - INST=""
         - NUMPY="--global-option=--disable-numpy"
 
     - name: "Python 3.7 on Xenial Linux"
@@ -55,7 +55,6 @@ matrix:
       language: python
       env:
         - PYTHON=python3
-        - INST=""
 
     - name: "Python 2.7 on macOS"
       os: osx
@@ -76,15 +75,17 @@ matrix:
       env:
         - PYTHON=python3
         - INST=--user
+        - PIP=pip3
       addons:
         homebrew:
           packages:
             - ant
 
 install:
+  - echo $PYTHON $INST
   - $PYTHON setup.py sdist
-  - $PYTHON -m pip install $INST dist/* $NUMPY
-  - $PYTHON -m pip install $INST -r test-requirements.txt
+  - $PIP install $INST dist/* $NUMPY
+  - $PIP install $INST -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
