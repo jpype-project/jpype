@@ -1,44 +1,36 @@
-os:
-  - osx
-  #- linux
-
-language: python
-
-python:
-  #- '2.6'
-  #- '2.7'
-  #- '3.3'
-  #- '3.4'
-  #- '3.5'
-  - '3.6'
-  #- 'pypy'
-  #- 'pypy3'
-  #- "nightly"
-
 addons:
   apt:
     packages:
     - ant
+    
+    #env:
+    #  # one build with and without numpy support (opt numpy out)
+    #  #- NUMPY="--global-option=--disable-numpy"
+    #  - NUMPY=""
+    #
+  matrix:
+  include:
+    - name: "Python 3.7.1 on Xenial Linux"
+      python: 3.7           # this works for Linux but is ignored on macOS or Windows
+      dist: xenial
+      language: python
+    - name: "Python 3.7.2 on macOS"
+      os: osx
+      osx_image: xcode10.2  # Python 3.7.2 running on macOS 10.14.3
+      language: shell       # 'language: python' is an error on Travis CI macOS
 
-env:
-  # one build with and without numpy support (opt numpy out)
-  #- NUMPY="--global-option=--disable-numpy"
-  - NUMPY=""
-
-matrix:
-  allow_failures:
-    - python: 'pypy'
-      env: NUMPY="--global-option=--disable-numpy"
-    - python: 'pypy3'
-      env: NUMPY="--global-option=--disable-numpy"
-    - python: 'pypy'
-      env: NUMPY=""
-    - python: 'pypy3'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY="--global-option=--disable-numpy"
+      #- python: 'pypy'
+      #  env: NUMPY="--global-option=--disable-numpy"
+      #- python: 'pypy3'
+      #  env: NUMPY="--global-option=--disable-numpy"
+      #- python: 'pypy'
+      #  env: NUMPY=""
+      #- python: 'pypy3'
+      #  env: NUMPY=""
+      #- python: 'nightly'
+      #  env: NUMPY=""
+      #- python: 'nightly'
+      #  env: NUMPY="--global-option=--disable-numpy"
   
 install:
   - python setup.py --enable-build-jar sdist
