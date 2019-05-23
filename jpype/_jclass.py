@@ -143,8 +143,6 @@ class JClass(type):
         attr = type.__getattribute__(self, name)
         if isinstance(attr, _jpype.PyJPMethod):
             return attr
-        if hasattr(attr, '__get__'):
-            return attr.__get__(self)
         return attr
 
     def __setattr__(self, name, value):
