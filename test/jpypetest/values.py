@@ -31,9 +31,10 @@ if sys.version > '3':
 
 
 class ValuesTestCase(common.JPypeTestCase):
+    """ Test of type conversion for fields. """
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Fields = jpype.JClass('jpype.values.FieldsTest')
+        self.Fields = jpype.JClass('jpype.values.FieldsTest')()
 
 # Int
     def testIntFromInt(self):

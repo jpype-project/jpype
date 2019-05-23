@@ -17,12 +17,17 @@
 import jpype
 from . import common
 
-# Test the methods in JClass
-#   __getattribute__
-#   __setattr__
-#   mro (not tested)
-#   class_
+
 class JClassTestCase(common.JPypeTestCase):
+    """ Test for methods of JClass
+
+    Should test:
+    - ``__getattribute__`` against methods, fields, python methods, and python properties
+    - ``__setattr__`` against fields, final fields, python private fields
+    - ``class_`` property
+    - ``mro``
+    """
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
@@ -43,9 +48,10 @@ class JClassTestCase(common.JPypeTestCase):
         cls = jpype.JClass('java.lang.String')
         obj = cls("foo")
         # Static fields should be the same when accessed as classes or objects
-        self.assertEqual(cls.CASE_INSENSITIVE_ORDER, obj.CASE_INSENSITIVE_ORDER)
+        self.assertEqual(cls.CASE_INSENSITIVE_ORDER,
+                         obj.CASE_INSENSITIVE_ORDER)
 
-    def testSetAttrField(self):
+    def testSetAttrPythonField(self):
         cls = jpype.JClass('java.lang.String')
         # Setting a private field on a Java class is allowed
         cls._allowed = 1
@@ -62,7 +68,65 @@ class JClassTestCase(common.JPypeTestCase):
     def testClass(self):
         cls = jpype.JClass('java.lang.Long')
         clsType = jpype.JClass('java.lang.Class')
-        # Get class must return a java.lang.Class instance
+        # Get class must return a java.lang.Class instance belonging to the class
         self.assertIsInstance(cls.class_, clsType)
         self.assertEqual(cls.class_.getSimpleName(), "Long")
 
+    def testGetAttrProperty(self):
+        cls = jpype.JClass('java.lang.RuntimeException')
+        with self.assertRaises(AttributeError):
+            value = cls.args
+
+    def testSetAttrProperty(self):
+        cls = jpype.JClass('java.lang.RuntimeException')
+        with self.assertRaises(AttributeError):
+            cls.args = 1
+
+    def testGetAttrStaticField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        cls.staticObjectField = "fred"
+        self.assertEqual(cls.staticObjectField, "fred")
+
+    def testSetAttrStaticField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        cls.staticObjectField = "fred"
+
+    def testGetAttrField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            v = cls.objectField
+
+    def testSetAttrField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            cls.objectField = "fred"
+
+    def testGetAttrPrivateField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            v = cls.privateObjectField
+
+    def testSetAttrPrivateField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            cls.privateObjectField = "fred"
+
+    def testGetAttrFinalField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            v = cls.finalObjectField
+
+    def testSetAttrFinalField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            cls.finalObjectField = "fred"
+
+    def testGetAttrStaticFinalField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        self.assertEqual(cls.finalStaticObjectField,
+                         "final static object field")
+
+    def testSetAttrStaticFinalField(self):
+        cls = jpype.JClass('jpype.values.FieldsTest')
+        with self.assertRaises(AttributeError):
+            cls.finalStaticObjectField = "bar"
