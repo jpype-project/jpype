@@ -133,3 +133,20 @@ class ValuesTestCase(common.JPypeTestCase):
         self.assertEqual(self.Fields.objectField, 2.6125)
         self.assertIsInstance(self.Fields.objectField,
                               jpype.JClass('java.lang.Double'))
+
+    def testStringDictKey1(self):
+        d = dict()
+        d['foo']='a'
+        self.assertEquals(d[jpype.JString('foo')],'a')
+
+    def testStringDictKey2(self):
+        d = dict()
+        d[jpype.JString('foo')]='a'
+        self.assertEquals(d['foo'],'a')
+
+    def testStringDictKey3(self):
+        d = dict()
+        d[jpype.JString('foo')]='a'
+        self.assertEquals(d[jpype.JString('foo')],'a')
+
+

@@ -40,6 +40,7 @@ _JP_OBJECT_CLASSES = {}
 
 _jcustomizer._JCLASSES = _JCLASSES
 
+
 def _initialize():
     global _java_ClassLoader
 
@@ -122,7 +123,9 @@ class JClass(type):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
-    class_ = property(lambda self: _JObject(self.__javaclass__), None)
+    @property
+    def class_(self):
+        return _JObject(self.__javaclass__)
 
     def __new__(cls, *args, **kwargs):
         if len(args) == 1:
@@ -146,16 +149,20 @@ class JClass(type):
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
-            type.__setattr__(self, name, value)
-#        elif callable(value):
-#            type.__setattr__(self, name, value)
-        else:
+            return type.__setattr__(self, name, value)
+
+        if not hasattr(self, name):
+            raise AttributeError("Field '%s' not found on Java '%s' class" %
+                                 (name, self.__name__))
+
+        try:
             attr = typeLookup(self, name)
             if hasattr(attr, '__set__'):
-                attr.__set__(self, value)
-                return
-            raise AttributeError("%s does not have field %s" %
-                                 (self.__name__, attr))
+                return attr.__set__(self, value)
+        except AttributeError:
+            pass
+        raise AttributeError("Field '%s' is not settable on Java '%s' class" %
+                             (name, self.__name__))
 
     def mro(cls):
         # Bases is ordered by (user, extend, interfaces)
@@ -206,7 +213,7 @@ def _JClassNew(arg, loader=None, initialize=True):
         javaClass = _jpype.PyJPClass(arg)
 
     if javaClass is None:
-        raise _java_lang_RuntimeException("Class %s not found" % name)
+        raise _java_lang_RuntimeException("Java class '%s' not found" % name)
 
     # Lookup the class name
     name = javaClass.getCanonicalName()
@@ -234,9 +241,11 @@ class JInterface(object):
           print("is interface")
 
 
-        Use isinstance(obj, jpype.JavaInterface) to test for a interface.
+        Use ``isinstance(obj, jpype.JavaInterface)`` to test for a interface.
     """
-    class_ = property(lambda self: _JObject(self.__javaclass__), None)
+    @property
+    def class_(self):
+        return _JObject(self.__javaclass__)
 
     def __new__(cls, *args, **kwargs):
         return super(JInterface, cls).__new__(cls)
@@ -245,7 +254,8 @@ class JInterface(object):
         if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             object.__setattr__(self, '__javavalue__', args[0])
         elif not hasattr(self, '__javavalue__'):
-            raise JClass("java.lang.InstantiationException")("%s is an interface."%str(self.class_.getName()))
+            raise JClass("java.lang.InstantiationException")(
+                "`%s` is an interface." % str(self.class_.getName()))
         super(JObject, self).__init__()
 
     def __str__(self):
@@ -335,7 +345,7 @@ def _toJavaClass(tp):
 
     if not isinstance(tp, type):
         raise TypeError(
-            "Argument must be a class, java class, java wrapper or string representing a java class")
+            "Argument must be a class, java class, or string representing a java class")
 
     # See if it a class type
     try:
@@ -348,7 +358,7 @@ def _toJavaClass(tp):
     except KeyError:
         pass
 
-    raise TypeError("Unable to find class for %s" % tp.__name__)
+    raise TypeError("Unable to find class for '%s'" % tp.__name__)
 
 
 def _getDefaultJavaObject(obj):
@@ -378,7 +388,7 @@ def _getDefaultJavaObject(obj):
         return _java_lang_Object
 
     raise TypeError(
-        "Unable to determine the default type of {0}".format(obj.__class__))
+        "Unable to determine the default type of `{0}`".format(obj.__class__))
 
 # Patch for forName
 
@@ -398,6 +408,9 @@ def typeLookup(tp, name):
     This uses a cache to avoid additional cost when accessing items deep in 
     the tree multiple times.
     """
+    # TODO this cache may have interactions with retroactive
+    # customizers. We should likely clear the cache if
+    # the class is customized.
     try:
         cache = tp.__dict__['_cache']
     except:
@@ -405,8 +418,13 @@ def typeLookup(tp, name):
         type.__setattr__(tp, '_cache', cache)
     if name in cache:
         return cache[name]
+
+    # Drill down the tree searching all parents for a field
     for cls in tp.__mro__:
         if name in cls.__dict__:
             obj = cls.__dict__[name]
             cache[name] = obj
             return obj
+
+    cache[name] = None
+    return None
