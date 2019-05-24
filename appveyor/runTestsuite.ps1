@@ -1,7 +1,7 @@
 cd $env:APPVEYOR_BUILD_FOLDER
-nosetests test/jpypetest --all-modules --with-xunit
+python.exe -m pytest -v --junitxml=junit.xml test/jpypetest
 $success = $?
-Write-Host "result code of nosetests:" $success
+Write-Host "result code of pytest:" $success
 
 # return exit code of testsuite
 if ( -not $success) {

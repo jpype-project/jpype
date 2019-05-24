@@ -15,7 +15,7 @@
 #
 # *****************************************************************************
 import jpype
-from . import common
+import common
 
 
 class JClassTestCase(common.JPypeTestCase):

@@ -31,7 +31,7 @@ fi
 echo "==== update gcc"
 $SETUP -q -P gcc-core,gcc-g++,libcrypt-devel
 echo "==== update python"
-$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools,$PYTHON-nose
+$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools
 echo "==== get modules"
 $EASYINSTALL pip
 $EASYINSTALL mock
@@ -47,8 +47,9 @@ git clone --depth=1 https://github.com/pypa/wheel.git
 git clone --depth=1 https://github.com/pypa/pip.git
 git clone --depth=1 https://github.com/pypa/setuptools_scm.git
 
-
 $PYTHON -m pip install --upgrade ./pip ./wheel ./setuptools_scm
+$PYTHON -m pip install pytest==4.5.0
+
 rm -r ./pip ./wheel ./setuptools_scm
 
 # Check versions

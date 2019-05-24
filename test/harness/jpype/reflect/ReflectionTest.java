@@ -1,6 +1,6 @@
 package jpype.reflect;
 
-class ReflectionTest
+public class ReflectionTest
 {
 	public String publicField = "public";
 	private String privateField ="private";

@@ -5,4 +5,3 @@ include *.rst doc/* LICENSE
 graft test
 graft setupext
 global-exclude *.pyc
-prune test/classes 
