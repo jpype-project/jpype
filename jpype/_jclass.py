@@ -143,8 +143,8 @@ class JClass(type):
         attr = type.__getattribute__(self, name)
         if isinstance(attr, _jpype.PyJPMethod):
             return attr
-        if hasattr(attr, '__get__'):
-            return attr.__get__(self)
+        if isinstance(attr, property):
+            raise AttributeError("Field is not static")
         return attr
 
     def __setattr__(self, name, value):
@@ -152,7 +152,7 @@ class JClass(type):
             return type.__setattr__(self, name, value)
 
         if not hasattr(self, name):
-            raise AttributeError("Field '%s' not found on Java '%s' class" %
+            raise AttributeError("Static field '%s' not found on Java '%s' class" %
                                  (name, self.__name__))
 
         try:
@@ -161,7 +161,7 @@ class JClass(type):
                 return attr.__set__(self, value)
         except AttributeError:
             pass
-        raise AttributeError("Field '%s' is not settable on Java '%s' class" %
+        raise AttributeError("Static field '%s' is not settable on Java '%s' class" %
                              (name, self.__name__))
 
     def mro(cls):
@@ -395,11 +395,12 @@ def _getDefaultJavaObject(obj):
 
 @_jcustomizer.JImplementationFor('java.lang.Class')
 class _JavaLangClass(object):
-    def forName(self, *args):
+    @classmethod
+    def forName(cls, *args):
         if len(args) == 1 and isinstance(args[0], str):
-            return self._forName(args[0], True, _java_ClassLoader)
+            return cls._forName(args[0], True, _java_ClassLoader)
         else:
-            return self._forName(*args)
+            return cls._forName(*args)
 
 
 def typeLookup(tp, name):

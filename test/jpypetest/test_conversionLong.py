@@ -39,7 +39,7 @@ def haveNumpy():
 class ConversionLongTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = jpype.JClass("jpype.conversion.Test")
+        self.Test = jpype.JClass("jpype.types.MethodsTest")()
 
     def testLongFromInt(self):
         self.assertEqual(self.Test.callLong(int(123)), 123)

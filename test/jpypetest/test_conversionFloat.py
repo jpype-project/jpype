@@ -40,7 +40,7 @@ class ConversionFloatTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0+1.0/65536
-        self.Test = jpype.JClass("jpype.conversion.Test")
+        self.Test = jpype.JClass("jpype.types.MethodsTest")()
 
     def testFloatFromInt(self):
         self.assertEqual(self.Test.callFloat(int(123)), 123)
