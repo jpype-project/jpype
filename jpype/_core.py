@@ -94,41 +94,75 @@ def _hasClassPath(args):
     return False
 
 
-def startJVM(jvm=None, *args, **kwargs):
+def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
     the JVM with the default classpath and jvm.  The default classpath
     will be determined by ``jpype.getClassPath()``.  The default JVM is 
     determined by ``jpype.getDefaultJVMPath()``.
 
-    Args:
-      jvm (Optional, str):  Path to the jvm library file,
-        The default of None will use ``jpype.getDefaultJVMPath()``
+    Parameters:
+     *args (Optional, str[]): Arguments to give to the JVM.
+        The first argument may be the path the JVM.
+
+    Keyword Arguments:
+      jvm (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
-      *args (Optional, str[]): Arguments to give to the JVM
-      classpath (Optional[string]): Set the classpath for the jvm.
+        Default of None will use ``jpype.getDefaultJVMPath()``
+      classpath ([string]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
         list.  Default will use ``jpype.getClassPath``
-      ignoreUnrecognized (Optional, [bool]): Option to JVM to ignore
+      ignoreUnrecognized (bool): Option to JVM to ignore
         invalid JVM arguments.  Default is False.
-    """
-    if jvm is None:
+
+    Raises:
+      OSError if the JVM cannot be started or is already running.
+      TypeError if an invalid keyword argument is supplied 
+        or a keyword argument conflicts with the arguments.
+
+     """
+    args = list(args)
+
+    # JVM path
+    jvm = None
+    if args and not args[0].startswith('-'):
+        # jvm is the first argument the first argument is a path
+        jvm = args.pop(0)
+    if 'jvm' in kwargs:
+        if jvm:
+            raise TypeError('jvm path specified twice')
+        jvm = kwargs['jvm']
+        del kwargs['jvm']
+    if not jvm:
         jvm = getDefaultJVMPath()
 
-        # Check to see that the user has not set the classpath
-        # Otherwise use the default if not specified
-        if not _hasClassPath(args) and 'classpath' not in kwargs:
-            kwargs['classpath'] = _classpath.getClassPath()
-
-    if 'ignoreUnrecognized' not in kwargs:
-        kwargs['ignoreUnrecognized'] = False
-
     # Classpath handling
-    args = list(args)
-    if 'classpath' in kwargs and kwargs['classpath'] != None:
-        args.append('-Djava.class.path=%s' % (kwargs['classpath']))
+    classpath = None
+    if 'classpath' in kwargs:
+        if _hasClassPath(args):
+            raise TypeError('classpath specified twice')
+        classpath = kwargs['classpath']
+        del kwargs['classpath']
+    elif not _hasClassPath(args):
+        classpath = _classpath.getClassPath()
 
-    _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
+    if classpath:
+        if isinstance(classpath, (str, _jtypes._unicode)):
+            args.append('-Djava.class.path=%s' % classpath)
+        else:
+            args.append('-Djava.class.path=%s' % (_classpath._SEP.join(classpath)))
+
+    # Handle ignoreUnrecognized
+    ignoreUnrecognized = False
+    if 'ignoreUnrecognized' in kwargs:
+        ignoreUnrecognized = kwargs['ignoreUnrecognized']
+        del kwargs['ignoreUnrecognized']
+
+    if kwargs:
+        raise TypeError("startJVM() got an unexpected keyword argument '%s'"
+                %(','.join([str(i) for i in kwargs])))
+
+    _jpype.startup(jvm, tuple(args), ignoreUnrecognized)
     _initialize()
 
 
