@@ -111,13 +111,13 @@ def startJVM(*args, **kwargs):
         Default of None will use ``jpype.getDefaultJVMPath()``
       classpath ([string]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
-        list.  Default will use ``jpype.getClassPath``
+        list. Default will use ``jpype.getClassPath``
       ignoreUnrecognized (bool): Option to JVM to ignore
-        invalid JVM arguments.  Default is False.
+        invalid JVM arguments. Default is False.
 
     Raises:
-      OSError if the JVM cannot be started or is already running.
-      TypeError if an invalid keyword argument is supplied 
+      OSError: if the JVM cannot be started or is already running.
+      TypeError: if an invalid keyword argument is supplied 
         or a keyword argument conflicts with the arguments.
 
      """
