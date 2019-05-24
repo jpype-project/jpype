@@ -128,9 +128,7 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
 
     """
     for p, v in proto.__dict__.items():
-        if isinstance(v, (str, property)):
-            setter(p, v)
-        elif callable(v):
+        if callable(v) or isinstance(v, (str, property, staticmethod, classmethod)):
             rename = "_"+p
 
             # Apply JOverride annotation
@@ -144,8 +142,6 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
             if p in members and isinstance(members[p], (_jpype.PyJPField, _jpype.PyJPMethod)):
                 setter(rename, members[p])
 
-            setter(p, v)
-        elif p == "__new__":
             setter(p, v)
 
 

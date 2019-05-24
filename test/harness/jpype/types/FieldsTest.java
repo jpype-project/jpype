@@ -1,4 +1,4 @@
-package jpype.values;
+package jpype.types;
 
 public class FieldsTest 
 {

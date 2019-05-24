@@ -39,7 +39,7 @@ def haveNumpy():
 class ConversionIntTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = jpype.JClass("jpype.conversion.Test")
+        self.Test = jpype.JClass("jpype.types.MethodsTest")()
 
     def testIntFromInt(self):
         self.assertEquals(self.Test.callInt(int(123)), 123)

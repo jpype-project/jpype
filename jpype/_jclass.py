@@ -395,11 +395,12 @@ def _getDefaultJavaObject(obj):
 
 @_jcustomizer.JImplementationFor('java.lang.Class')
 class _JavaLangClass(object):
-    def forName(self, *args):
+    @classmethod
+    def forName(cls, *args):
         if len(args) == 1 and isinstance(args[0], str):
-            return self._forName(args[0], True, _java_ClassLoader)
+            return cls._forName(args[0], True, _java_ClassLoader)
         else:
-            return self._forName(*args)
+            return cls._forName(*args)
 
 
 def typeLookup(tp, name):
