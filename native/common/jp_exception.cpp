@@ -295,36 +295,36 @@ void JPypeException::toPython()
 				return;
 
 			case JPError::_os_error_unix:
+			{
+				PyObject* val = Py_BuildValue("(iz)", m_Error, (string("JVM DLL not found: ") + mesg).c_str());
+				if (val != NULL)
 				{
-					PyObject* val = Py_BuildValue("(iz)", m_Error, (string("JVM DLL not found: ")+mesg).c_str());
-					if (val != NULL)
+					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+					Py_DECREF(val);
+					if (exc != NULL)
 					{
-						PyObject* exc = PyObject_Call( PyExc_OSError, val, NULL);
-						Py_DECREF(val);
-						if (exc != NULL)
-						{
-							PyErr_SetObject( PyExc_OSError, exc);
-							Py_DECREF(exc);
-					  }
+						PyErr_SetObject(PyExc_OSError, exc);
+						Py_DECREF(exc);
 					}
-					return;
 				}
+				return;
+			}
 
 			case JPError::_os_error_windows:
+			{
+				PyObject* val = Py_BuildValue("(izzi)", 2, (string("JVM DLL not found: ") + mesg).c_str(), NULL, m_Error);
+				if (val != NULL)
 				{
-					PyObject* val = Py_BuildValue("(izzi)", 2, (string("JVM DLL not found: ")+mesg).c_str(), NULL, m_Error);
-					if (val != NULL)
+					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+					Py_DECREF(val);
+					if (exc != NULL)
 					{
-						PyObject* exc = PyObject_Call( PyExc_OSError, val, NULL);
-						Py_DECREF(val);
-						if (exc != NULL)
-						{
-							PyErr_SetObject( PyExc_OSError, exc);
-							Py_DECREF(exc);
-					  }
+						PyErr_SetObject(PyExc_OSError, exc);
+						Py_DECREF(exc);
 					}
-					return;
 				}
+				return;
+			}
 
 			default:
 				JP_TRACE("Unknown Error");

@@ -150,7 +150,8 @@ def startJVM(*args, **kwargs):
         if isinstance(classpath, (str, _jtypes._unicode)):
             args.append('-Djava.class.path=%s' % classpath)
         else:
-            args.append('-Djava.class.path=%s' % (_classpath._SEP.join(classpath)))
+            args.append('-Djava.class.path=%s' %
+                        (_classpath._SEP.join(classpath)))
 
     # Handle ignoreUnrecognized
     ignoreUnrecognized = False
@@ -160,7 +161,7 @@ def startJVM(*args, **kwargs):
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
-                %(','.join([str(i) for i in kwargs])))
+                        % (','.join([str(i) for i in kwargs])))
 
     _jpype.startup(jvm, tuple(args), ignoreUnrecognized)
     _initialize()
