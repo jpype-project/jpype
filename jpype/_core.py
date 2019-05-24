@@ -133,9 +133,10 @@ def startJVM(*args, **kwargs):
 
     # JVM path
     jvm = None
-    if args and not args[0].startswith('-'):
-        # jvm is the first argument the first argument is a path
-        jvm = args.pop(0)
+    if args:
+        # jvm is the first argument the first argument is a path or None
+        if not args[0] or not args[0].startswith('-'):
+            jvm = args.pop(0)
     if 'jvm' in kwargs:
         if jvm:
             raise TypeError('jvm path specified twice')
