@@ -597,6 +597,39 @@ Known limitations
 This section lists those limitations that are unlikely to change, as they come
 from external sources.
 
+Restarting the JVM
+~~~~~~~~~~~~~~~~~~
+
+JPype caches many data structures within the JVM. Those resource are still
+allocated after the JVM is shutdown as there are still Python objects 
+that point to those resources.  If the JVM is restarted, those stale Python
+objects will be in a broken state and the fresh startiJVM will reallocated the
+Java resources resulting in a memory leak. Thus it is not possible to 
+start the JVM after it has been shutdown with the current implementation.
+
+Running multiple JVM
+~~~~~~~~~~~~~~~~~~~~
+
+JPype uses the Python global import module dictionary, a global Python to 
+Java class map, and global JNI typemanager map.  These resources are all 
+tied to the JVM that is started or attached. Thus operating more than one 
+JVM does not appear to be possible under the current implementation. 
+Difficulties that would need to be overcome to remove this limitation include:
+
+- Which JVM would a static class method call. Thus the class types
+  would need to be JVM specific (ie. ``JClass('org.MyObject', jvm=JVM1)``)
+- How would can a wrapper for two different JVM coexist in the 
+  ``jpype._jclass`` module with the same name if different class
+  is required for each JVM.
+- How would the user specify which JVM a class resource is created in
+  when importing a module.
+- How would objects in one JVM be passed to another.
+- How can boxed and String types hold which JVM they will box to on type
+  conversion.  
+
+Thus it appears prohibitive to support multiple JVMs in the JPype 
+class model.
+
 
 Unloading the JVM
 ~~~~~~~~~~~~~~~~~
@@ -644,4 +677,24 @@ Unsupported Java virtual machines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The open JVM implementations *Cacao* and *JamVM* are known not to work with
 JPype.
+
+Cygwin
+~~~~~~
+
+Cygwin is currently usable in JPype, but has a number of issues for
+which there is no current solution. The python2 compilation on cygwin has
+bugs in a threading implementation that lead to crashes in the test bench.
+Cygwin does not appear to pass environment variables to the JVM properly
+resulting in unusual behavior with certain windows calls. The path
+separator for Cygwin does not match that of the Java dll, thus specification
+of class paths must account for this. Subject to these issues JPype is usable.
+
+PyPy
+~~~~
+
+The GC routine in PyPy does not play well with Java. It runs when it thinks
+that Python is running out of resources. Thus a code that allocates a lot
+of Java memory and deletes the Python objects will still be holding the
+Java memory until Python is garbage collected. This means that out of 
+memory failures can be issued during heavy operation.  
 

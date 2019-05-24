@@ -93,6 +93,7 @@ def _hasClassPath(args):
             return True
     return False
 
+_JVM_started = False
 
 def startJVM(jvm=None, *args, **kwargs):
     """
@@ -112,6 +113,13 @@ def startJVM(jvm=None, *args, **kwargs):
       ignoreUnrecognized (Optional, [bool]): Option to JVM to ignore
         invalid JVM arguments.  Default is False.
     """
+    if _jpype.isStarted():
+         raise OSError('JVM is already started')
+    global _JVM_started
+    if _JVM_started:
+         raise OSError('JVM cannot be restarted')
+    _JVM_started = True
+
     if jvm is None:
         jvm = getDefaultJVMPath()
 

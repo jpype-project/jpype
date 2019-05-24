@@ -169,7 +169,7 @@ class _JMap(object):
         return self.size()
 
     def __iter__(self):
-        return _WrappedIterator(self.keySet().iterator())
+        return self.keySet().iterator()
 
     def __delitem__(self, i):
         return self.remove(i)
