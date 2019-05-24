@@ -138,16 +138,16 @@ class ValuesTestCase(common.JPypeTestCase):
     def testStringDictKey1(self):
         d = dict()
         d['foo']='a'
-        self.assertEquals(d[jpype.JString('foo')],'a')
+        self.assertEqual(d[jpype.JString('foo')],'a')
 
     def testStringDictKey2(self):
         d = dict()
         d[jpype.JString('foo')]='a'
-        self.assertEquals(d['foo'],'a')
+        self.assertEqual(d['foo'],'a')
 
     def testStringDictKey3(self):
         d = dict()
         d[jpype.JString('foo')]='a'
-        self.assertEquals(d[jpype.JString('foo')],'a')
+        self.assertEqual(d[jpype.JString('foo')],'a')
 
 
