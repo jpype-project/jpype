@@ -93,6 +93,7 @@ def _hasClassPath(args):
             return True
     return False
 
+_JVM_started = False
 
 def startJVM(*args, **kwargs):
     """
@@ -109,7 +110,7 @@ def startJVM(*args, **kwargs):
       jvm (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
         Default of None will use ``jpype.getDefaultJVMPath()``
-      classpath ([string]): Set the classpath for the jvm.
+      classpath (str,[str]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
         list. Default will use ``jpype.getClassPath``
       ignoreUnrecognized (bool): Option to JVM to ignore
@@ -121,6 +122,13 @@ def startJVM(*args, **kwargs):
         or a keyword argument conflicts with the arguments.
 
      """
+    if _jpype.isStarted():
+         raise OSError('JVM is already started')
+    global _JVM_started
+    if _JVM_started:
+         raise OSError('JVM cannot be restarted')
+    _JVM_started = True
+
     args = list(args)
 
     # JVM path

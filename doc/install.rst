@@ -178,6 +178,8 @@ Known Bugs/Limitations
    imported.
 -  Because of lack of JVM support, you cannot shutdown the JVM and then
    restart it.
+-  Structural issues prevent managing objects from more than one JVM
+   at a time.
 -  Some methods rely on the "current" class/caller. Since calls coming
    directly from python code do not have a current class, these methods
    do not work. The :doc:`userguide` lists all the known methods like that.
