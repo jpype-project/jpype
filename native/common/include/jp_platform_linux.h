@@ -42,7 +42,7 @@ public:
 
 		if (jvmLibrary == NULL)
 		{
-			JP_RAISE_OS_ERROR_LINUX( errno(), path);
+			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
 	}
 
