@@ -17,6 +17,7 @@ class BuildSourceDistribution(sdist):
     def run(self):
         # We need to build a jar cache for the source distribution
         self.run_command("build_java")
+        self.run_command("test_java")
         dest = os.path.join('native','jars')
         src = os.path.join('build','lib')
         if not os.path.exists(src):

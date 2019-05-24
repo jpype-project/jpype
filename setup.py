@@ -35,11 +35,11 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     packages=[
-        'jpype', 'jpype.awt', 'jpype.awt.event', 'jpypex', 'jpypex.swing'],
+        'jpype'],
     package_dir={
         'jpype': 'jpype',
-        'jpypex': 'jpypex',
     },
+    tests_requires=['pytest'],
     extras_require={'numpy': ['numpy>=1.6']},
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,
@@ -47,6 +47,7 @@ setup(
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
+        'test': setupext.pytester.PyTest,
     },
     zip_safe=False,
     ext_modules=[jpypeLib],
