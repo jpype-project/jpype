@@ -163,5 +163,5 @@ void PyJPProxy::__dealloc__(PyJPProxy* self)
 
 bool PyJPProxy::check(PyObject* o)
 {
-	return o->ob_type == &PyJPProxy::Type;
+	return Py_TYPE(o) == &PyJPProxy::Type;
 }
