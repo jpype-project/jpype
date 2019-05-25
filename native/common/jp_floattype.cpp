@@ -163,7 +163,10 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallFloatMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

@@ -150,7 +150,10 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallShortMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

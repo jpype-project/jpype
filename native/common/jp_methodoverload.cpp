@@ -26,6 +26,7 @@ JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth) : m_Method(mth)
 	m_IsStatic = JPJni::isMemberStatic(mth);
 	m_IsFinal = JPJni::isMemberFinal(mth);
 	m_IsVarArgs = JPJni::isMethodVarArgs(mth);
+	m_IsAbstract = JPJni::isMemberAbstract(mth);
 
 	// Method ID
 	m_MethodID = frame.FromReflectedMethod(m_Method.get());
@@ -266,7 +267,9 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg)
 	{
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c = selfObj->getJavaObject();
-		jclass clazz = m_Class->getJavaClass();
+		jclass clazz = NULL;
+		if (!m_IsAbstract)
+			clazz = m_Class->getJavaClass();
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}
 	JP_TRACE_OUT;

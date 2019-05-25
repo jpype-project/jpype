@@ -168,7 +168,10 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallByteMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

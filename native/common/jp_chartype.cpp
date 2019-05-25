@@ -143,7 +143,10 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallCharMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

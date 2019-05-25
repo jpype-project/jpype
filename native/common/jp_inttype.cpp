@@ -148,7 +148,10 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualIntMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallIntMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualIntMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }
