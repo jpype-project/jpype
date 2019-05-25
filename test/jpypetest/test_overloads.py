@@ -56,13 +56,13 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('B', test1.testMostSpecific(
             JObject(self._c, self._bclass)))
         # JObject wrapper forces exact matches
-        #self.assertRaisesRegex(RuntimeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, self._cclass))
+        #self.assertRaisesRegex(TypeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, self._cclass))
         self.assertEqual('A', test1.testMostSpecific(
             JObject(self._c, 'jpype.overloads.Test1$A')))
         self.assertEqual('B', test1.testMostSpecific(
             JObject(self._c, 'jpype.overloads.Test1$B')))
         # JObject wrapper forces exact matches
-        #self.assertRaisesRegex(RuntimeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, 'jpype.overloads.Test1$C'))
+        #self.assertRaisesRegex(TypeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, 'jpype.overloads.Test1$C'))
 
     def testVarArgsCall(self):
         test1 = self.__jp.Test1()
@@ -118,7 +118,7 @@ class OverloadTestCase(common.JPypeTestCase):
     def testInterfaces1(self):
         test1 = self.__jp.Test1()
         self.assertRaisesRegex(
-            RuntimeError, 'Ambiguous overloads found', test1.testInterfaces1, self._i4impl)
+            TypeError, 'Ambiguous overloads found', test1.testInterfaces1, self._i4impl)
         self.assertEqual('I2', test1.testInterfaces1(
             JObject(self._i4impl, 'jpype.overloads.Test1$I2')))
         self.assertEqual('I3', test1.testInterfaces1(
@@ -135,10 +135,10 @@ class OverloadTestCase(common.JPypeTestCase):
     def testInterfaces3(self):
         test1 = self.__jp.Test1()
         self.assertRaisesRegex(
-            RuntimeError, 'Ambiguous overloads found', test1.testInterfaces3, self._i8impl)
+            TypeError, 'Ambiguous overloads found', test1.testInterfaces3, self._i8impl)
         self.assertEqual('I4', test1.testInterfaces3(self._i6impl))
         self.assertRaisesRegex(
-            RuntimeError, 'No matching overloads found', test1.testInterfaces3, self._i3impl)
+            TypeError, 'No matching overloads found', test1.testInterfaces3, self._i3impl)
 
     def testInterfaces4(self):
         test1 = self.__jp.Test1()
@@ -167,7 +167,7 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('Object', test1.testStringArray(self._i4impl))
         self.assertEqual('Object', test1.testStringArray(1))
         self.assertRaisesRegex(
-            RuntimeError, 'Ambiguous overloads found', test1.testStringArray, None)
+            TypeError, 'Ambiguous overloads found', test1.testStringArray, None)
         self.assertEqual('String', test1.testStringArray('somestring'))
         self.assertEqual('String[]', test1.testStringArray([]))
         self.assertEqual('String[]', test1.testStringArray(['a', 'b']))

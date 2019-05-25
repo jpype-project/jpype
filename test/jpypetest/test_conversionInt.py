@@ -74,25 +74,25 @@ class ConversionIntTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callInt(np.uint64(123)), 123)
 
     def testIntFromFloat(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callInt(float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPFloat(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callInt(np.float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPFloat32(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callInt(np.float32(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPFloat64(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callInt(np.float64(2))
 
     def testIntRange(self):
