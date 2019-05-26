@@ -1,9 +1,19 @@
 /*
- * Copyright 2018, Karl Einar Nelson
- * All rights reserved.
- * 
+ *    Copyright 2019 Karl Einar Nelson
+ *   
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *  
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
-package org.jpype;
+package org.jpype.manager;
 
 import java.lang.reflect.Executable;
 import java.util.ArrayList;
@@ -12,30 +22,30 @@ import java.util.List;
 
 /**
  * Sort out which methods hide other methods.
- * 
- * When resolving method overloads there may be times in which
- * more than one overload applies.  JPype requires that the 
- * methods appear in order from most to least specific.  And
- * each method overload requires a list of methods that are
- * more general. If two or more methods match and one is not
- * more specific than the other 
+ * <p>
+ * When resolving method overloads there may be times in which more than one
+ * overload applies. JPype requires that the methods appear in order from most
+ * to least specific. And each method overload requires a list of methods that
+ * are more general. If two or more methods match and one is not more specific
+ * than the other.  
+ *
  * @author nelson85
  */
-public class MethodOverloadResolution
+public class MethodResolution
 {
-  long ptr=0;
+  long ptr = 0;
   boolean covered = false;
   Executable executable;
-  List<MethodOverloadResolution> children = new ArrayList<>();
+  List<MethodResolution> children = new ArrayList<>();
 
-  MethodOverloadResolution(Executable method)
+  MethodResolution(Executable method)
   {
     this.executable = method;
   }
 
   private boolean isCovered()
   {
-    for (MethodOverloadResolution ov : this.children)
+    for (MethodResolution ov : this.children)
     {
       if (!ov.covered)
         return false;
@@ -47,20 +57,23 @@ public class MethodOverloadResolution
   /**
    * Order methods from least to most specific.
    *
+   * @param <T>
    * @param methods
    * @return
    */
-  public static <T extends Executable> List<MethodOverloadResolution> sortMethods(List<T> methods)
+  public static <T extends Executable>
+          List<MethodResolution> sortMethods(List<T> methods)
   {
-    LinkedList<MethodOverloadResolution> unsorted = new LinkedList<>();
+    // Create a method resolution for each method
+    LinkedList<MethodResolution> unsorted = new LinkedList<>();
     for (T m1 : methods)
     {
-      unsorted.add(new MethodOverloadResolution(m1));
+      unsorted.add(new MethodResolution(m1));
     }
 
-    for (MethodOverloadResolution m1 : unsorted)
+    for (MethodResolution m1 : unsorted)
     {
-      for (MethodOverloadResolution m2 : unsorted)
+      for (MethodResolution m2 : unsorted)
       {
         if (m1 == m2)
           continue;
@@ -73,11 +86,11 @@ public class MethodOverloadResolution
     }
 
     // Execute a graph sort problem so that the most specific are always on the front
-    LinkedList<MethodOverloadResolution> out = new LinkedList<>();
+    LinkedList<MethodResolution> out = new LinkedList<>();
     while (!unsorted.isEmpty())
     {
       // Remove the first unsorted element
-      MethodOverloadResolution front = unsorted.pop();
+      MethodResolution front = unsorted.pop();
       // Check to see if all dependencies are already ordered
       boolean good = front.isCovered();
 
@@ -111,7 +124,7 @@ public class MethodOverloadResolution
 
     if (param1.length != param2.length)
       return false;
-    
+
     for (int i = 0; i < param1.length; ++i)
     {
       if (!param1[i].isAssignableFrom(param2[i]))

@@ -1,21 +1,30 @@
 /*
- * Copyright 2018, Karl Einar Nelson
- * All rights reserved
- * 
+ *    Copyright 2019 Karl Einar Nelson
+ *   
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *  
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */
-package org.jpype;
+package org.jpype.manager;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  *
@@ -23,10 +32,13 @@ import java.util.TreeMap;
 public class TypeManager
 {
   private static TypeManager INSTANCE = new TypeManager();
+  public boolean isStarted = false;
   public boolean isShutdown = false;
-  public HashMap<Class, ClassDescription> classMap = new HashMap<>();
-  LinkedList<Long> destroy = new LinkedList<>();
-  public TypeFactory typeFactory = new TypeFactory();
+  public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
+  public TypeFactory typeFactory = null;
+  public List<Action> deferred = new LinkedList<>();
+  private ClassDescriptor java_lang_Class;
+  private ClassDescriptor java_lang_Object;
 
 //<editor-fold desc="interface">
   public static TypeManager getInstance()
@@ -36,27 +48,29 @@ public class TypeManager
 
   public synchronized void init()
   {
-    if (!this.destroy.isEmpty())
-      throw new RuntimeException("Initialize must only be called once");
+    if (isStarted)
+      throw new RuntimeException("Cannot be restarted");
+    isStarted = true;
     isShutdown = false;
 
     // Create the required minimum classes
-    createClass(-1, Object.class);
-    createClass(-1, Class.class);
+    this.java_lang_Object = createClass(Object.class, true);
+    this.java_lang_Class = createClass(Class.class, true);
+    this.executeDeferred();
 
     // Create the boxed types
     // These require special rules in the C++ layer so we will tag them 
     // as being different.
-    createClass(0, Void.class);
-    createClass(1, Boolean.class);
-    createClass(2, Byte.class);
-    createClass(3, Character.class);
-    createClass(4, Short.class);
-    createClass(5, Integer.class);
-    createClass(6, Long.class);
-    createClass(7, Float.class);
-    createClass(8, Double.class);
-    createClass(9, String.class);
+    createClass(Void.class, true);
+    createClass(Boolean.class, true);
+    createClass(Byte.class, true);
+    createClass(Character.class, true);
+    createClass(Short.class, true);
+    createClass(Integer.class, true);
+    createClass(Long.class, true);
+    createClass(Float.class, true);
+    createClass(Double.class, true);
+    createClass(String.class, true);
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.
@@ -69,172 +83,100 @@ public class TypeManager
     createPrimitive(6, Long.TYPE, Long.class);
     createPrimitive(7, Float.TYPE, Float.class);
     createPrimitive(8, Double.TYPE, Double.class);
+    this.executeDeferred();
   }
 
   /**
    * Find a wrapper for a class.
    * <p>
-   * Creates one if needed.
+   * Creates one if needed. This a front end used by JPype.
    *
    * @param cls
-   * @return the class wrapper, or null it one cannot be created.
+   * @return the JPClass, or 0 it one cannot be created.
    */
-  public synchronized long findClass(Class cls)
+  public synchronized long findXXClass(Class cls)
   {
     if (this.isShutdown)
       return 0;
 
-    ClassDescription ptr = this.classMap.get(cls);
-    if (ptr != null)
-      return ptr.classPtr;
+    ClassDescriptor out = getClass(cls);
 
-    return createClass(-1, cls);
+    // Before we can leave, we need to make sure all classes that were 
+    // loaded in the process have methods.
+    executeDeferred();
+
+    return out.classPtr;
   }
 
+  /**
+   * Called to delete all C++ resources
+   */
   public synchronized void shutdown()
   {
-    final int BLOCK_SIZE = 64;
+    // First and most important, we can't operate from this 
+    // point forward.
     this.isShutdown = true;
+
+    // Next set up a block for deleting resources
+    final int BLOCK_SIZE = 64;
     long[] set = new long[BLOCK_SIZE];
     int i = 0;
 
-    // Destroy all wrapper class/methods/overloads
-    Iterator<Long> iter = this.destroy.iterator();
-    while (iter.hasNext())
+    // Destroy all the resources held in C++
+    for (ClassDescriptor entry : this.classMap.values())
     {
-      set[i++] = iter.next();
-      if (i == BLOCK_SIZE)
-      {
-        typeFactory.destroy(set,i);
-        i = 0;
-      }
+      // Kill all methods and dispatchs
+      if (entry.methodDispatch != null && !entry.cls.isArray())
+        this.typeFactory.destroy(entry.methodDispatch, entry.methodDispatch.length);
+      if (entry.methods != null)
+        this.typeFactory.destroy(entry.methods, entry.methods.length);
+      if (entry.fields != null)
+        this.typeFactory.destroy(entry.fields, entry.fields.length);
+      set[i++] = entry.classPtr;
+      set[i++] = entry.constructorDispatch;
+      if (i == 64)
+        this.typeFactory.destroy(set, i);
     }
 
-    for (; i < BLOCK_SIZE; ++i)
-      set[i] = 0;
-    typeFactory.destroy(set,i);
+    if (i > 0)
+      this.typeFactory.destroy(set, i);
 
-    // Clear the maps
-    destroy.clear();
+    // FIXME. If someone was to try the wild ass stunt of 
+    // shutting down the JVM from within a python proxy method
+    // it would likely all go to hell. We would lose the class
+    // that is calling things and the ability to throw exceptions.
+    // Most likely this will go splat. We need to catch this 
+    // from within JPype and hard fault our way to safety.
     this.classMap.clear();
   }
-
-  /**
-   * Load the constructors for a class.
-   *
-   * @param cls
-   */
-  public synchronized long getConstructor(Class cls)
-  {
-    LinkedList<Constructor> constructors = new LinkedList<>(Arrays.asList(cls.getDeclaredConstructors()));
-    ClassDescription desc = this.classMap.get(cls);
-    if (desc.constructorPtr != 0)
-      return desc.constructorPtr;
-
-    // Finded all public constructors
-    filterPublic(constructors);
-
-    // Sort them by precedence order
-    List<MethodOverloadResolution> overloads = MethodOverloadResolution.sortMethods(constructors);
-
-    // Convert overload list to a list of overloads pointers
-    long[] overloadPtrs = this.createConstructorOverloads(desc, overloads);
-    desc.constructorPtr = typeFactory.defineConstructorContainer(desc.classPtr, "[init", overloadPtrs);
-    return desc.constructorPtr;
-  }
-
-  /**
-   * Load the methods for a class.
-   *
-   * @param cls
-   * @return a list of method wrappers.
-   */
-  public synchronized long[] getMethods(Class cls)
-  {
-    ClassDescription desc = this.classMap.get(cls);
-    if (desc == null)
-      throw new RuntimeException("Class not defined");
-
-    // We may already be loaded
-    if (desc.methodPtrs != null)
-      return desc.methodPtrs;
-
-    desc.methodContainerMap = new TreeMap<>();
-    desc.methodOverloadMap = new TreeMap<>();
-
-    // Collect a list of parents
-    LinkedList<ClassDescription> parents = new LinkedList<>();
-    ClassDescription superDesc = this.classMap.get(cls.getSuperclass());
-    if (superDesc != null)
-    {
-      getMethods(cls.getSuperclass());
-      parents.add(superDesc);
-    }
-    for (Class intr : cls.getInterfaces())
-    {
-      getMethods(intr);
-      parents.add(this.classMap.get(intr));
-    }
-
-    // Figure out what we have to resolve by comparing the declared list 
-    TreeMap<String, Long> resolve = new TreeMap<>();
-
-    for (Method method : cls.getDeclaredMethods())
-    {
-      if (Modifier.isPublic(method.getModifiers()))
-        resolve.put(method.getName(), 0l);
-    }
-
-    // Anything that is not overriden can be inherited.
-    for (ClassDescription p : parents)
-    {
-      for (Map.Entry<String, Long> e : p.methodContainerMap.entrySet())
-      {
-        if (resolve.containsKey(e.getKey()))
-        {
-          resolve.put(e.getKey(), 0l);
-        } else
-        {
-          resolve.put(e.getKey(), e.getValue());
-        }
-      }
-    }
-
-    // Get the list of all methods we will process
-    LinkedList<Method> methods = new LinkedList<>(Arrays.asList(cls.getMethods()));
-
-    // Remove overridden and non-public methods so we don't have to deal with them.
-    filterOverridden(cls, methods);
-
-    // Everything with a 0 needs to be resolved with a new method container
-    // wrapper.  Everything with a non-zero number can be inherited.
-    for (Map.Entry<String, Long> e : resolve.entrySet())
-    {
-      if (e.getValue() != 0)
-      {
-        // inherit the executable container
-        desc.methodContainerMap.put(e.getKey(), e.getValue());
-      } else
-      {
-        desc.methodContainerMap.put(e.getKey(), this.createMethodContainer(desc, e.getKey(), methods));
-      }
-    }
-
-    // Collect a list from the map
-    long[] methodPtrs = new long[desc.methodContainerMap.size()];
-    int i = 0;
-    for (long v : desc.methodContainerMap.values())
-    {
-      methodPtrs[i++] = v;
-    }
-
-    // Cache for later
-    desc.methodPtrs = methodPtrs;
-    return methodPtrs;
-  }
-
 //</editor-fold>
-//<editor-fold desc="ctors" defaultstate="classes">
+//<editor-fold desc="classes" defaultstate="defaultstate">
+
+  private ClassDescriptor getClass(Class cls)
+  {
+    if (cls == null)
+      return null;
+
+    // Look up the current description
+    ClassDescriptor ptr = this.classMap.get(cls);
+    if (ptr != null)
+      return ptr;
+
+    // If we can't find it create a new class
+    return createClass(cls, false);
+  }
+
+  private void executeDeferred()
+  {
+    while (!this.deferred.isEmpty())
+    {
+      Action next = this.deferred.remove(0);
+
+      // This may trigger even more classes to get loaded
+      next.execute();
+    }
+  }
+
   /**
    * Allocate a new wrapper for a java class.
    * <p>
@@ -244,60 +186,243 @@ public class TypeManager
    * @param cls
    * @return a C++ wrapper handle for a jp_classtype
    */
-  private long createClass(int code, Class cls)
+  private ClassDescriptor createClass(Class cls, boolean special)
   {
     if (cls.isArray())
-    {
-      // Array classes are simple, we just need the component type
-      Class componentType = cls.getComponentType();
-      long componentTypePtr = this.findClass(componentType);
-
-      long classPtr = typeFactory.defineArrayClass(cls, cls.getSimpleName(), componentTypePtr);
-      this.classMap.put(cls, new ClassDescription(cls, classPtr));
-      this.destroy.add(classPtr);
-      return classPtr;
-    }
+      return this.createArrayClass(cls);
 
     // Object classes are more work as we need the super information as well.
     // Make sure all base classes are loaded
     Class superClass = cls.getSuperclass();
+    Class[] interfaces = cls.getInterfaces();
+    ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
+    long[] interfacesPtr = new long[interfaces.length];
     long superClassPtr = 0;
     if (superClass != null)
     {
-      superClassPtr = this.findClass(superClass);
+      parents[0] = this.getClass(superClass);
+      superClassPtr = parents[0].classPtr;
     }
 
     // Make sure all interfaces are loaded.
-    Class[] interfaces = cls.getInterfaces();
-    long[] interfacesPtr = new long[interfaces.length];
     for (int i = 0; i < interfaces.length; ++i)
     {
-      interfacesPtr[i] = this.findClass(interfaces[i]);
+      parents[i + 1] = this.getClass(interfaces[i]);
+      interfacesPtr[i] = parents[i + 1].classPtr;
     }
 
+    // Set up the modifiers
+    int modifiers = cls.getModifiers();
+    if (special)
+      modifiers |= ModifierCodes.SPECIAL.value;
+
+    // FIXME watch out for anonyous and lambda here.
+    String name = cls.getSimpleName();
+
+    // Create the JPClass
     long classPtr = typeFactory.defineObjectClass(
-            code,
             cls,
-            cls.getSimpleName(),
             superClassPtr,
             interfacesPtr,
-            cls.isInterface());
-    this.classMap.put(cls, new ClassDescription(cls, classPtr));
-    this.destroy.add(classPtr);
-    return classPtr;
+            modifiers,
+            name);
+
+    //
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr);
+    this.classMap.put(cls, out);
+
+    this.deferred.add(new CreateMembers(out));
+    return out;
   }
 
+  ClassDescriptor createArrayClass(Class cls)
+  {
+    // Array classes are simple, we just need the component type
+    Class componentType = cls.getComponentType();
+    long componentTypePtr = this.getClass(componentType).classPtr;
+
+    long classPtr = typeFactory
+            .defineArrayClass(
+                    cls,
+                    this.java_lang_Object.classPtr,
+                    cls.getSimpleName(),
+                    componentTypePtr);
+
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr);
+
+    // Java array classes don't have their own declared methods
+    // so we can reuse the dispatch.
+    out.methodDispatch = this.java_lang_Object.methodDispatch;
+    this.classMap.put(cls, out);
+    return out;
+  }
+
+  /**
+   * Tell JPype to make a primitive Class.
+   *
+   * @param code
+   * @param cls
+   * @param boxed
+   */
   private void createPrimitive(int code, Class cls, Class boxed)
   {
-    long classPtr = typeFactory.definePrimitive(code, cls, this.findClass(boxed));
-    this.classMap.put(cls, new ClassDescription(cls, classPtr));
-    this.destroy.add(classPtr);
+    long classPtr = typeFactory.definePrimitive(
+            code, 
+            cls, 
+            this.getClass(boxed).classPtr);
+    this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
   }
 
 //</editor-fold>
-//<editor-fold desc="containers" defaultstate="collapsed">
-  private long createMethodContainer(
-          ClassDescription desc,
+//<editor-fold desc="members" defaultstate="collapsed">
+  private void createMembers(ClassDescriptor out)
+  {
+    this.createFields(out);
+    this.createConstructorDispatch(out);
+    this.createMethodDispatches(out);
+
+    // Pass this to JPype      
+    this.typeFactory.assignMembers(out.classPtr,
+            out.constructorDispatch,
+            out.methodDispatch,
+            out.fields);
+  }
+
+//<editor-fold desc="fields" defaultstate="collapsed">
+  private void createFields(ClassDescriptor desc)
+  {
+    // We only need declared fields as the wrappers for previous classes hold
+    // members declared earlier
+    LinkedList<Field> fields = filterPublic(desc.cls.getDeclaredFields());
+
+    long[] fieldPtr = new long[fields.size()];
+    int i = 0;
+    for (Field field : fields)
+    {
+      fieldPtr[i++] = this.typeFactory.defineField(
+              desc.classPtr,
+              field.getName(),
+              field,
+              getClass(field.getType()).classPtr,
+              field.getModifiers());
+    }
+    desc.fields = fieldPtr;
+  }
+//</editor-fold>
+//<editor-fold desc="ctor" defaultstate="collapsed">
+
+  /**
+   * Load the constructors for a class.
+   *
+   * @param desc
+   */
+  public void createConstructorDispatch(ClassDescriptor desc)
+  {
+    Class cls = desc.cls;
+
+    // Get the list of declared constructors
+    LinkedList<Constructor> constructors
+            = filterPublic(cls.getDeclaredConstructors());
+
+    // Sort them by precedence order
+    List<MethodResolution> overloads = MethodResolution.sortMethods(constructors);
+
+    // Convert overload list to a list of overloads pointers
+    desc.constructors = this.createConstructors(desc, overloads);
+
+    // Create the dispatch for it
+    desc.constructorDispatch = typeFactory
+            .defineMethodDispatch(
+                    desc.classPtr,
+                    "[init",
+                    desc.constructors,
+                    ModifierCodes.CTOR.value);
+  }
+
+  /**
+   * Construct a set of constructor overloads for an OverloadResolution.
+   * <p>
+   * These will be added to the shutdown destruction list.
+   *
+   * @param desc
+   * @param overloads
+   * @return
+   */
+  private long[] createConstructors(ClassDescriptor desc,
+          List<MethodResolution> overloads)
+  {
+    int n = overloads.size();
+    long[] overloadPtrs = new long[overloads.size()];
+    for (MethodResolution ov : overloads)
+    {
+      Constructor constructor = (Constructor) ov.executable;
+      Class[] params = constructor.getParameterTypes();
+      long[] paramPtrs = new long[params.length];
+      int i = 0;
+      for (Class p : params)
+      {
+        paramPtrs[i++] = this.getClass(p).classPtr;
+      }
+
+      i = 0;
+      long[] precedencePtrs = new long[ov.children.size()];
+      for (MethodResolution ch : ov.children)
+      {
+        precedencePtrs[i++] = ch.ptr;
+      }
+
+      int modifiers = constructor.getModifiers() | ModifierCodes.CTOR.value;
+      ov.ptr = typeFactory.defineMethod(
+              desc.classPtr,
+              constructor.toString(),
+              constructor,
+              0,
+              paramPtrs,
+              precedencePtrs,
+              modifiers);
+      overloadPtrs[--n] = ov.ptr;
+    }
+    return overloadPtrs;
+  }
+
+//</editor-fold>
+//<editor-fold desc="methods" defaultstate="collapsed">
+  /**
+   * Load the methods for a class.
+   *
+   * @param desc
+   */
+  public void createMethodDispatches(ClassDescriptor desc)
+  {
+    Class cls = desc.cls;
+
+    // Get the list of all public, non-overrided methods we will process
+    LinkedList<Method> methods = filterOverridden(cls, cls.getMethods());
+
+    // Get the list of public declared methods
+    LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
+
+    // We only need one dispatch per name
+    TreeSet<String> resolve = new TreeSet<>();
+    for (Method method : declaredMethods)
+    {
+      resolve.add(method.getName());
+    }
+
+    // Reserve memory for our lookup table
+    desc.methods = new long[declaredMethods.size()];
+    desc.methodIndex = new Method[declaredMethods.size()];
+    desc.methodDispatch = new long[resolve.size()];
+
+    int i = 0;
+    for (String name : resolve)
+    {
+      desc.methodDispatch[i++] = this.createMethodDispatch(desc, name, methods);
+    }
+  }
+
+  private long createMethodDispatch(
+          ClassDescriptor desc,
           String key,
           LinkedList<Method> candidates)
   {
@@ -316,62 +441,20 @@ public class TypeManager
         hasStatic = true;
     }
 
-    List<MethodOverloadResolution> overloads = MethodOverloadResolution.sortMethods(methods);
-
     // Convert overload list to a list of overloads pointers
-    long[] overloadPtrs = this.createMethodOverloads(desc, overloads);
-    long methodContainer = typeFactory.defineMethodContainer(desc.classPtr, key, overloadPtrs, hasStatic);
+    List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
+    long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    // Place in the list for shutdown
-    this.destroy.add(methodContainer);
+    int modifiers = 0;
+    if (hasStatic)
+      modifiers |= ModifierCodes.STATIC.value;
+    long methodContainer = typeFactory.defineMethodDispatch(
+            desc.classPtr,
+            key,
+            overloadPtrs,
+            modifiers);
+
     return methodContainer;
-  }
-
-//</editor-fold>
-//<editor-fold desc="overloads" defaultstate="collapsed">
-  /**
-   * Construct a set of constructor overloads for an OverloadResolution.
-   * <p>
-   * These will be added to the shutdown destruction list.
-   *
-   * @param desc
-   * @param overloads
-   * @return
-   */
-  private long[] createConstructorOverloads(ClassDescription desc,
-          List<MethodOverloadResolution> overloads)
-  {
-    int n = overloads.size();
-    long[] overloadPtrs = new long[overloads.size()];
-    for (MethodOverloadResolution ov : overloads)
-    {
-      Constructor constructor = (Constructor) ov.executable;
-      Class<?>[] params = constructor.getParameterTypes();
-      long[] paramPtrs = new long[params.length];
-      int i = 0;
-      for (Class<?> p : params)
-      {
-        paramPtrs[i++] = this.findClass(p);
-      }
-      i = 0;
-      long[] precedencePtrs = new long[ov.children.size()];
-      for (MethodOverloadResolution ch : ov.children)
-      {
-        precedencePtrs[i++] = ch.ptr;
-      }
-      ov.ptr = typeFactory.defineConstructorOverload(
-              desc.classPtr,
-              constructor,
-              constructor.toString(),
-              paramPtrs,
-              precedencePtrs,
-              constructor.isVarArgs());
-      overloadPtrs[--n] = ov.ptr;
-
-      // Place this on the clean up list
-      this.destroy.add(ov.ptr);
-    }
-    return overloadPtrs;
   }
 
   /**
@@ -384,13 +467,13 @@ public class TypeManager
    * @param overloads
    * @return a list of method overload wrappers.
    */
-  private long[] createMethodOverloads(
-          ClassDescription desc,
-          List<MethodOverloadResolution> overloads)
+  private long[] createMethods(
+          ClassDescriptor desc,
+          List<MethodResolution> overloads)
   {
     int n = overloads.size();
     long[] overloadPtrs = new long[overloads.size()];
-    for (MethodOverloadResolution ov : overloads)
+    for (MethodResolution ov : overloads)
     {
       Method method = (Method) ov.executable;
 
@@ -398,12 +481,12 @@ public class TypeManager
       Class<?> decl = method.getDeclaringClass();
       if (method.getDeclaringClass() != desc.cls)
       {
-        ov.ptr = this.classMap.get(decl).methodOverloadMap.get(method);
+        ov.ptr = this.classMap.get(decl).getMethod(method);
         overloadPtrs[--n] = ov.ptr;
         continue;
       }
 
-      long returnPtr = findClass(method.getReturnType());
+      long returnPtr = getClass(method.getReturnType()).classPtr;
 
       // Convert the executable parameters
       Class<?>[] params = method.getParameterTypes();
@@ -411,53 +494,54 @@ public class TypeManager
       int i = 0;
       for (Class<?> p : params)
       {
-        paramPtrs[i++] = this.findClass(p);
+        paramPtrs[i++] = this.getClass(p).classPtr;
       }
 
       // Determine what takes precedence
       i = 0;
       long[] precedencePtrs = new long[ov.children.size()];
-      for (MethodOverloadResolution ch : ov.children)
+      for (MethodResolution ch : ov.children)
       {
         precedencePtrs[i++] = ch.ptr;
       }
 
-      ov.ptr = typeFactory.defineMethodOverload(
+      int modifiers = method.getModifiers();
+      ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
-              method,
               method.toString(),
+              method,
               returnPtr,
               paramPtrs,
               precedencePtrs,
-              Modifier.isStatic(method.getModifiers()),
-              method.isVarArgs());
+              modifiers);
       overloadPtrs[--n] = ov.ptr;
-
-      // Place this on the clean up list
-      this.destroy.add(ov.ptr);
+      desc.methods[desc.methodCounter] = ov.ptr;
+      desc.methodIndex[desc.methodCounter] = method;
     }
     return overloadPtrs;
   }
+
+//</editor-fold>
+//<editor-fold desc="containers" defaultstate="collapsed">
+//</editor-fold>
 //</editor-fold>
 //<editor-fold desc="filters" defaultstate="collapsed">
-
   /**
    * Remove any methods that are not public from a list.
    *
    * @param <T>
    * @param methods
    */
-  public static <T extends Executable> void filterPublic(LinkedList<T> methods)
+  public static <T extends Member> LinkedList<T> filterPublic(T[] methods)
   {
-    Iterator<T> iter = methods.iterator();
-    while (iter.hasNext())
+    LinkedList<T> out = new LinkedList<>();
+    for (T method : methods)
     {
-      Executable next = iter.next();
-      if (!Modifier.isPublic(next.getModifiers()))
-      {
-        iter.remove();
-      }
+      if (!Modifier.isPublic(method.getModifiers()))
+        continue;
+      out.add(method);
     }
+    return out;
   }
 
   /**
@@ -467,16 +551,16 @@ public class TypeManager
    * @param cls
    * @param methods
    */
-  public static void filterOverridden(Class cls, LinkedList<Method> methods)
+  public static LinkedList<Method> filterOverridden(Class cls, Method[] methods)
   {
-    Iterator<Method> iter = methods.iterator();
-    while (iter.hasNext())
+    LinkedList<Method> out = new LinkedList<>();
+    for (Method method : methods)
     {
-      Method next = iter.next();
-      if (Modifier.isPublic(next.getModifiers()) && !isOverridden(cls, next))
+      if (!Modifier.isPublic(method.getModifiers()) || isOverridden(cls, method))
         continue;
-      iter.remove();
+      out.add(method);
     }
+    return out;
   }
 
 //</editor-fold>
@@ -499,5 +583,26 @@ public class TypeManager
       return false;
     }
   }
+
 //</editor-fold>
+  private interface Action
+  {
+    void execute();
+  }
+
+  private class CreateMembers implements Action
+  {
+    ClassDescriptor cd;
+
+    public CreateMembers(ClassDescriptor out)
+    {
+      this.cd = out;
+    }
+
+    @Override
+    public void execute()
+    {
+      createMembers(cd);
+    }
+  }
 }
