@@ -20,40 +20,45 @@ import java.lang.reflect.Method;
 
 /**
  * A list of resources associated with this class.
- * 
+ * <p>
  * These can be accessed within JPype using the org.jpype.manager.TypeManager.
- * 
+ * <p>
  */
 public class ClassDescriptor
 {
   public Class cls;
-  public ClassDescriptor[] parents;
-  
-  /** JPClass pointer for this class. */
+
+  /**
+   * JPClass pointer for this class.
+   */
   public long classPtr;
-  
-  /** JPMethodDispatch for the constructor. */
+  /**
+   * JPMethodDispatch for the constructor.
+   */
   public long constructorDispatch;
   public long[] constructors;
   
-  /** Resources needed by the class */
-  public long[]       methodDispatch;  
+  /**
+   * Resources needed by the class
+   */
+  public long[] methodDispatch;
   public Executable[] methodIndex;
-  public long[]       methods;
-  public int          methodCounter = 0;
-  public long[]       fields;
-  
+  public long[] methods;
+  public int methodCounter = 0;
+  public long[] fields;
+
   ClassDescriptor(Class cls, long classPtr)
   {
     this.cls = cls;
     this.classPtr = classPtr;
   }
 
-  long getMethod(Method method)
+  long getMethod(Method requestedMethod)
   {
-    for (int i = 0; i< methods.length; ++i)
-      if (this.methodIndex[i] == method)
+    for (int i = 0; i < methods.length; ++i)
+      if (this.methodIndex[i].equals(requestedMethod))
         return this.methods[i];
-    throw new RuntimeException("method note found");
+    return 0;
+
   }
 }

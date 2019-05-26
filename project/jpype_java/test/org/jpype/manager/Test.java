@@ -1,0 +1,51 @@
+/*
+ *    Copyright 2019 Karl Einar Nelson
+ *   
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *  
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *  
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
+package org.jpype.manager;
+
+import org.jpype.manager.TypeFactoryHarness.DeletedResource;
+import org.jpype.manager.TypeFactoryHarness.Resource;
+
+/**
+ *
+ * @author nelson85
+ */
+public class Test
+{
+  static public void main(String[] args)
+  {
+    System.out.println("Create:");
+    TypeManager tm = new TypeManager();
+    TypeFactoryHarness tf = new TypeFactoryHarness(tm);
+    tm.typeFactory =tf;
+    System.out.println("Initialize:");
+    tm.init();
+    System.out.println("Shutdown:");
+    tm.shutdown();
+    
+    System.out.println("Leaked resources:");
+    int leaked = 0;
+    for (Resource entry:tf.resourceMap.values())
+    {
+      if (entry instanceof DeletedResource)
+        continue;
+      System.out.println("  "+entry.getName());
+      leaked++;
+    }
+    System.out.println("Leaked total "+leaked);
+    if (leaked>0)
+      throw new RuntimeException("Leaked resources");
+  }
+}

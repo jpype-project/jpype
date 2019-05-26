@@ -31,21 +31,16 @@ import java.util.TreeSet;
  */
 public class TypeManager
 {
-  private static TypeManager INSTANCE = new TypeManager();
+//  private static TypeManager INSTANCE = new TypeManager();
   public boolean isStarted = false;
   public boolean isShutdown = false;
   public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
   public TypeFactory typeFactory = null;
   public List<Action> deferred = new LinkedList<>();
-  private ClassDescriptor java_lang_Class;
+  public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
 
 //<editor-fold desc="interface">
-  public static TypeManager getInstance()
-  {
-    return TypeManager.INSTANCE;
-  }
-
   public synchronized void init()
   {
     if (isStarted)
@@ -55,8 +50,7 @@ public class TypeManager
 
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
-    this.java_lang_Class = createClass(Class.class, true);
-    this.executeDeferred();
+    createClass(Class.class, true);
 
     // Create the boxed types
     // These require special rules in the C++ layer so we will tag them 
@@ -94,7 +88,7 @@ public class TypeManager
    * @param cls
    * @return the JPClass, or 0 it one cannot be created.
    */
-  public synchronized long findXXClass(Class cls)
+  public synchronized long findClass(Class cls)
   {
     if (this.isShutdown)
       return 0;
@@ -118,28 +112,20 @@ public class TypeManager
     this.isShutdown = true;
 
     // Next set up a block for deleting resources
-    final int BLOCK_SIZE = 64;
-    long[] set = new long[BLOCK_SIZE];
-    int i = 0;
+    Destroyer dest = new Destroyer();
 
     // Destroy all the resources held in C++
     for (ClassDescriptor entry : this.classMap.values())
     {
-      // Kill all methods and dispatchs
-      if (entry.methodDispatch != null && !entry.cls.isArray())
-        this.typeFactory.destroy(entry.methodDispatch, entry.methodDispatch.length);
-      if (entry.methods != null)
-        this.typeFactory.destroy(entry.methods, entry.methods.length);
-      if (entry.fields != null)
-        this.typeFactory.destroy(entry.fields, entry.fields.length);
-      set[i++] = entry.classPtr;
-      set[i++] = entry.constructorDispatch;
-      if (i == 64)
-        this.typeFactory.destroy(set, i);
+      if (entry.constructorDispatch != 0)
+        dest.add(entry.constructorDispatch);
+      dest.add(entry.constructors);
+      dest.add(entry.methodDispatch);
+      dest.add(entry.methods);
+      dest.add(entry.fields);
+      dest.add(entry.classPtr);
     }
-
-    if (i > 0)
-      this.typeFactory.destroy(set, i);
+    dest.flush();
 
     // FIXME. If someone was to try the wild ass stunt of 
     // shutting down the JVM from within a python proxy method
@@ -215,6 +201,8 @@ public class TypeManager
     int modifiers = cls.getModifiers();
     if (special)
       modifiers |= ModifierCodes.SPECIAL.value;
+    if (Throwable.class.isAssignableFrom(cls))
+      modifiers |= ModifierCodes.THROWABLE.value;
 
     // FIXME watch out for anonyous and lambda here.
     String name = cls.getSimpleName();
@@ -249,10 +237,6 @@ public class TypeManager
                     componentTypePtr);
 
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
-
-    // Java array classes don't have their own declared methods
-    // so we can reuse the dispatch.
-    out.methodDispatch = this.java_lang_Object.methodDispatch;
     this.classMap.put(cls, out);
     return out;
   }
@@ -267,25 +251,29 @@ public class TypeManager
   private void createPrimitive(int code, Class cls, Class boxed)
   {
     long classPtr = typeFactory.definePrimitive(
-            code, 
-            cls, 
+            code,
+            cls,
             this.getClass(boxed).classPtr);
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
   }
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-  private void createMembers(ClassDescriptor out)
+  private void createMembers(ClassDescriptor desc)
   {
-    this.createFields(out);
-    this.createConstructorDispatch(out);
-    this.createMethodDispatches(out);
+    this.createFields(desc);
+    this.createConstructorDispatch(desc);
+    this.createMethodDispatches(desc);
+
+    // Verify integrity
+    if (audit != null)
+      audit.verifyMembers(desc);
 
     // Pass this to JPype      
-    this.typeFactory.assignMembers(out.classPtr,
-            out.constructorDispatch,
-            out.methodDispatch,
-            out.fields);
+    this.typeFactory.assignMembers(desc.classPtr,
+            desc.constructorDispatch,
+            desc.methodDispatch,
+            desc.fields);
   }
 
 //<editor-fold desc="fields" defaultstate="collapsed">
@@ -324,6 +312,9 @@ public class TypeManager
     LinkedList<Constructor> constructors
             = filterPublic(cls.getDeclaredConstructors());
 
+    if (constructors.isEmpty())
+      return;
+
     // Sort them by precedence order
     List<MethodResolution> overloads = MethodResolution.sortMethods(constructors);
 
@@ -334,7 +325,7 @@ public class TypeManager
     desc.constructorDispatch = typeFactory
             .defineMethodDispatch(
                     desc.classPtr,
-                    "[init",
+                    "<init>",
                     desc.constructors,
                     ModifierCodes.CTOR.value);
   }
@@ -400,7 +391,7 @@ public class TypeManager
     LinkedList<Method> methods = filterOverridden(cls, cls.getMethods());
 
     // Get the list of public declared methods
-    LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
+    LinkedList<Method> declaredMethods = filterOverridden(cls, cls.getDeclaredMethods());
 
     // We only need one dispatch per name
     TreeSet<String> resolve = new TreeSet<>();
@@ -433,11 +424,11 @@ public class TypeManager
     while (iter.hasNext())
     {
       Method next = iter.next();
-      if (next.getName().equals(key))
-      {
-        iter.remove();
-        methods.add(next);
-      } else if (Modifier.isStatic(next.getModifiers()))
+      if (!next.getName().equals(key))
+        continue;
+      iter.remove();
+      methods.add(next);
+      if (Modifier.isStatic(next.getModifiers()))
         hasStatic = true;
     }
 
@@ -482,6 +473,12 @@ public class TypeManager
       if (method.getDeclaringClass() != desc.cls)
       {
         ov.ptr = this.classMap.get(decl).getMethod(method);
+        if (ov.ptr == 0)
+        {
+          if (audit != null)
+            audit.failFindMethod(desc, method);
+          throw new RuntimeException("Fail");
+        }
         overloadPtrs[--n] = ov.ptr;
         continue;
       }
@@ -517,6 +514,7 @@ public class TypeManager
       overloadPtrs[--n] = ov.ptr;
       desc.methods[desc.methodCounter] = ov.ptr;
       desc.methodIndex[desc.methodCounter] = method;
+      desc.methodCounter++;
     }
     return overloadPtrs;
   }
@@ -603,6 +601,47 @@ public class TypeManager
     public void execute()
     {
       createMembers(cd);
+    }
+  }
+
+  private class Destroyer
+  {
+    final int BLOCK_SIZE = 64;
+    long[] queue = new long[BLOCK_SIZE];
+    int index = 0;
+
+    void add(long v)
+    {
+      queue[index++] = v;
+      if (index == BLOCK_SIZE)
+        flush();
+    }
+
+    void add(long[] v)
+    {
+      if (v == null)
+        return;
+      if (v.length > BLOCK_SIZE / 2)
+      {
+        typeFactory.destroy(v, v.length);
+        return;
+      }
+      if (index + v.length > BLOCK_SIZE)
+      {
+        flush();
+      }
+      for (int j = 0; j < v.length; ++j)
+      {
+        queue[index++] = v[j];
+      }
+      if (index == BLOCK_SIZE)
+        flush();
+    }
+
+    void flush()
+    {
+      typeFactory.destroy(queue, index);
+      index = 0;
     }
   }
 }
