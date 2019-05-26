@@ -99,18 +99,18 @@ Synchronization
 Java synchronization support can be split into two categories. The first is the
 ``synchronized`` keyword, both as prefix on a method and as a block inside a
 method. The second are the different methods available on the Object class
-(``notify, notifyAll, wait``).  
+(``notify, notifyAll, wait``).
 
 To support the ``synchronized`` functionality, JPype defines a method called
 ``synchronized(O)``. O has to be a Java object or Java class. The return value is a
 monitor object that will keep the synchronization on as long as the object is
-kept alive. Use Python ``with`` statement to control the exact scope.  Do 
-not hold onto the object indefinitly without a ``with`` statement, the lock 
+kept alive. Use Python ``with`` statement to control the exact scope.  Do
+not hold onto the object indefinitly without a ``with`` statement, the lock
 will be not be broken until the monitor is garbage collected.  CPython and
 PyPy have difference GC rules.  See :ref:`synchronized <synchronized>` for details of how
 to properly synchronize.
 
-The other synchronization methods are available as-is on any ``JObject``.  However, as 
+The other synchronization methods are available as-is on any ``JObject``.  However, as
 general rule one should not use synchronization methods on Java String as
 internal string representations may not be complete objects.
 
@@ -227,33 +227,33 @@ types. These levels are:
   to use, one where all the parameters match "exact" will take precedence
   over "implicit" matches.
 
-There are special rules for ``java.lang.Object`` as compared with a 
+There are special rules for ``java.lang.Object`` as compared with a
 specific Java object.  In Java, primitives are boxed automatically when
 passing to a ``java.lang.Object``.
 
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
 Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array       Object    java.lang.Object   java.lang.Class
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
-    int         I [1]_     I [1]_       X          I        I [3]_     I [3]_     X [8]_                                                       I [11]_                          
-   long         I [1]_     I [1]_     I [1]_       X        I [3]_     I [3]_                                                                  I [11]_                        
-   float                                                    I [1]_       X                                                                     I [12]_                        
- sequence                                                                                                                                                                
-dictionary                                                                                                                                                               
-  string                                                                                     I [2]_       X                                    I                           
-  unicode                                                                                    I [2]_       X                                    I                          
-   JByte          X                                                                                                                            I [9]_                          
-  JShort                     X                                                                                                                 I [9]_                          
-   JInt                                 X                                                                                                      I [9]_                          
-   JLong                                           X                                                                                           I [9]_                         
-  JFloat                                                      X                                                                                I [9]_                         
-  JDouble                                                                X                                                                     I [9]_                          
- JBoolean                                                                           X                                                          I [9]_                          
-   JChar                                                                                       X                                               I [9]_                          
-  JString                                                                                                 X                                    I                      
-  JArray                                                                                                          I/X [4]_                     I                      
-  JObject                                                                                                         I/X [6]_    I/X [7]_         I/X [7]_                    
-  JClass                                                                                                                                       I                  X    
- "Boxed"[10]_     I          I          I          I          I          I          I                                                          I                    
+    int         I [1]_     I [1]_       X          I        I [3]_     I [3]_     X [8]_                                                       I [11]_                   
+   long         I [1]_     I [1]_     I [1]_       X        I [3]_     I [3]_                                                                  I [11]_                 
+   float                                                    I [1]_       X                                                                     I [12]_                 
+ sequence                                                                                                                                                         
+dictionary                                                                                                                                                        
+  string                                                                                     I [2]_       X                                    I                    
+  unicode                                                                                    I [2]_       X                                    I                   
+   JByte          X                                                                                                                            I [9]_                   
+  JShort                     X                                                                                                                 I [9]_                   
+   JInt                                 X                                                                                                      I [9]_                   
+   JLong                                           X                                                                                           I [9]_                  
+  JFloat                                                      X                                                                                I [9]_                  
+  JDouble                                                                X                                                                     I [9]_                   
+ JBoolean                                                                           X                                                          I [9]_                   
+   JChar                                                                                       X                                               I [9]_                   
+  JString                                                                                                 X                                    I               
+  JArray                                                                                                          I/X [4]_                     I               
+  JObject                                                                                                         I/X [6]_    I/X [7]_         I/X [7]_             
+  JClass                                                                                                                                       I                  X
+ "Boxed"[10]_     I          I          I          I          I          I          I                                                          I             
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
 
 .. [1] Conversion will occur if the Python value fits in the Java
@@ -285,7 +285,7 @@ dictionary
         match. This is to allow for resolution between methods
         that take both a java primitve and a java boxed type.
 
-.. [11] Boxed to ``java.lang.Long`` as there is no difference 
+.. [11] Boxed to ``java.lang.Long`` as there is no difference
         between long and int in Python3,
 
 .. [12] Boxed to ``java.lang.Double``
@@ -319,7 +319,7 @@ Casting
 ~~~~~~~
 
 The main problem with exposing Java classes and methods to Python, is that
-Java allows overloading a method. That is, multiple methods can have the same 
+Java allows overloading a method. That is, multiple methods can have the same
 name as long as they have different parameters. Python does not allow that. Most
 of the time, this is not a problem. Most overloaded methods have very
 different parameters and no confusion takes place.
@@ -332,7 +332,7 @@ the print and println methods!
 
 So for the following code:
 
-.. code-block:: python 
+.. code-block:: python
 
   from jpype import *
   startJVM(getDefaultJVMPath(), "-ea")
@@ -346,7 +346,7 @@ wanted to call ...
 
 Changing the line thus:
 
-.. code-block:: python 
+.. code-block:: python
 
   from jpype import *
   startJVM(getDefaultJVMPath(), "-ea")
@@ -361,11 +361,11 @@ requiring an int will fail.
 
 One other area where wrappers help is performance. Native types convert quite
 fast, but strings, and later tuples, maps, etc ... conversions can be very
-costly.  If you're going to make many Java calls with a complex object, 
+costly.  If you're going to make many Java calls with a complex object,
 wrapping it once and then using the wrapper will make a huge difference.
 
 Casting using the Java types is also usedful when placing objects in generic
-containers such as Java List or Map. Both primitive and boxed type Java 
+containers such as Java List or Map. Both primitive and boxed type Java
 object derive from the corresponding Python type, so they will work with any
 Python call.
 
@@ -398,8 +398,8 @@ Implementing interfaces
 -----------------------
 
 At times it is necessary to implement an interface in python especially to use
-classes that require java lambdas.  To implement an interface contruct a 
-python class and decorate it with annotations ``@JImplements`` and ``@JOverride``. 
+classes that require java lambdas.  To implement an interface contruct a
+python class and decorate it with annotations ``@JImplements`` and ``@JOverride``.
 
 .. code-block:: python
 
@@ -413,11 +413,11 @@ python class and decorate it with annotations ``@JImplements`` and ``@JOverride`
           return 123+value
 
 The java interface may specified by a java wrapper or using a string naming the
-class.  Multiple interfaces can be implemented by a single class by giving a 
-list of interfaces.   Alternatively, the interface can be implemented using 
-JProxy.  
+class.  Multiple interfaces can be implemented by a single class by giving a
+list of interfaces.   Alternatively, the interface can be implemented using
+JProxy.
 
-In a future release, Python callables will be able to automatically match to 
+In a future release, Python callables will be able to automatically match to
 interfaces that have the Java annotation ``@FunctionalInterface``.
 
 
@@ -450,7 +450,7 @@ subclass that delegates the calls to that interface.
 Sample code :
 ~~~~~~~~~~~~~
 
-Assume a Java interface like: 
+Assume a Java interface like:
 
 .. code-block:: java
 
@@ -461,7 +461,7 @@ Assume a Java interface like:
   }
 
 You can create a proxy *implementing* this interface in 2 ways.
-First, with a class: 
+First, with a class:
 
 .. code-block:: python
 
@@ -475,7 +475,7 @@ First, with a class:
   c = C()
   proxy = JProxy("ITestInterface2", inst=c)
 
-or you can do it with a dictionary 
+or you can do it with a dictionary
 
 .. code-block:: python
 
@@ -597,6 +597,39 @@ Known limitations
 This section lists those limitations that are unlikely to change, as they come
 from external sources.
 
+Restarting the JVM
+~~~~~~~~~~~~~~~~~~
+
+JPype caches many resources to the JVM. Those resource are still allocated
+after the JVM is shutdown as there are still Python objects that point to
+those resources.  If the JVM is restarted, those stale Python objects will be
+in a broken state and the new JVM instance will obtain the references to these
+resulting in a memory leak. Thus it is not possible to start the JVM after it
+has been shutdown with the current implementation.
+
+Running multiple JVM
+~~~~~~~~~~~~~~~~~~~~
+
+JPype uses the Python global import module dictionary, a global Python to
+Java class map, and global JNI typemanager map.  These resources are all
+tied to the JVM that is started or attached. Thus operating more than one
+JVM does not appear to be possible under the current implementation.
+Difficulties that would need to be overcome to remove this limitation include:
+
+- Which JVM would a static class method call. Thus the class types
+  would need to be JVM specific (ie. ``JClass('org.MyObject', jvm=JVM1)``)
+- How would can a wrapper for two different JVM coexist in the
+  ``jpype._jclass`` module with the same name if different class
+  is required for each JVM.
+- How would the user specify which JVM a class resource is created in
+  when importing a module.
+- How would objects in one JVM be passed to another.
+- How can boxed and String types hold which JVM they will box to on type
+  conversion.
+
+Thus it appears prohibitive to support multiple JVMs in the JPype
+class model.
+
 
 Unloading the JVM
 ~~~~~~~~~~~~~~~~~
@@ -644,4 +677,24 @@ Unsupported Java virtual machines
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The open JVM implementations *Cacao* and *JamVM* are known not to work with
 JPype.
+
+Cygwin
+~~~~~~
+
+Cygwin is currently usable in JPype, but has a number of issues for
+which there is no current solution. The python2 compilation on cygwin has
+bugs in a threading implementation that lead to crashes in the test bench.
+Cygwin does not appear to pass environment variables to the JVM properly
+resulting in unusual behavior with certain windows calls. The path
+separator for Cygwin does not match that of the Java dll, thus specification
+of class paths must account for this. Subject to these issues JPype is usable.
+
+PyPy
+~~~~
+
+The GC routine in PyPy does not play well with Java. It runs when it thinks
+that Python is running out of resources. Thus a code that allocates a lot
+of Java memory and deletes the Python objects will still be holding the
+Java memory until Python is garbage collected. This means that out of
+memory failures can be issued during heavy operation.
 

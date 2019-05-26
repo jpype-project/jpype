@@ -37,6 +37,7 @@ class _JIterable(object):
     This customizer adds the Python iterator syntax to classes that 
     implement Java Iterable.
     """
+
     def __iter__(self):
         return self.iterator()
 
@@ -48,6 +49,7 @@ class _JCollection(object):
     This customizer adds the Python functions ``len()`` and ``del`` to
     Java Collions to allow for Python syntax.
     """
+
     def __len__(self):
         return self.size()
 
@@ -167,7 +169,7 @@ class _JMap(object):
         return self.size()
 
     def __iter__(self):
-        return _WrappedIterator(self.keySet().iterator())
+        return self.keySet().iterator()
 
     def __delitem__(self, i):
         return self.remove(i)
@@ -223,6 +225,7 @@ class _JEnumeration(object):
     This customizer adds the Python iterator concept to classes
     that implement the Java Enumerator interface.
     """
+
     def __next__(self):
         if self.hasMoreElements():
             return self.nextElement()

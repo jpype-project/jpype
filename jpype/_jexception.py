@@ -86,8 +86,11 @@ class _JException(object):
         return r
 
     # For compatiblity with python exceptions
-    args = property(lambda self: self._jargs(), None)
-    """ Test doc string on property"""
+    @property
+    def args(self):
+        return self._jargs()
+#    args = property(lambda self: self._jargs(), None)
+#    """ Test doc string on property"""
 
     def _jargs(self):
         cause = self.getCause()

@@ -1,8 +1,7 @@
-recursive-include native *.h *.xml *.java
+recursive-include native *.h *.xml *.java *.jar *.class
 recursive-include examples *
 include *.rst doc/* LICENSE
 # include everything under test/
 graft test
 graft setupext
 global-exclude *.pyc
-prune test/classes 
