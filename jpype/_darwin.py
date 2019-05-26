@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
 # Reuse the Linux code
 from ._linux import LinuxJVMFinder
 
 # ------------------------------------------------------------------------------
 
+
 class DarwinJVMFinder(LinuxJVMFinder):
     """
     Mac OS X JVM library finder class
     """
+
     def __init__(self):
         """
         Sets up members
@@ -40,7 +42,6 @@ class DarwinJVMFinder(LinuxJVMFinder):
 
         # Predefined locations
         self._locations = ('/Library/Java/JavaVirtualMachines',)
-
 
     def _pre_vm7_path(self):
         """
@@ -61,12 +62,15 @@ class DarwinJVMFinder(LinuxJVMFinder):
         current = StrictVersion(platform.mac_ver()[0][:4])
         if current >= StrictVersion('10.6') and current < StrictVersion('10.9'):
             if hasattr(subprocess, 'check_output'):
-                java_home = subprocess.check_output(['/usr/libexec/java_home']).strip()
+                java_home = subprocess.check_output(
+                    ['/usr/libexec/java_home']).strip()
             else:
-                java_home = subprocess.Popen(['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
+                java_home = subprocess.Popen(
+                    ['/usr/libexec/java_home'], stdout=subprocess.PIPE).communicate()[0]
             return java_home
 
 # ------------------------------------------------------------------------------
+
 
 # Alias
 JVMFinder = DarwinJVMFinder

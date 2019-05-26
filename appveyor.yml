@@ -4,28 +4,29 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
-    ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.1"
+    ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.5"
     NUMPY_: "numpy x.x"
-    JAVA_HOME: "C:\\jdk8"
+    #JAVA_HOME: "C:\\jdk8"
+    JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
     CINST_OPTS:
 
   matrix:
 
-    ## This one is failing from gcc died with sig 11.  
+    ## This one is failing from gcc died with sig 11.
     ## This error is apparently common when building python 2 modules with cygwin32.
-    ## The failure depends on the windows version and will cause a failure 
+    ## The failure depends on the windows version and will cause a failure
     ## on appveyor depending on which image is used.
     ## We will disable it for now
     #
     # - PYTHON: "python2"
     #  CYGWIN: "C:\\cygwin"
-    #  ARCH: x86 
+    #  ARCH: x86
     #  CYGSH: C:\Cygwin\bin\bash -c
 
-    ## This one is failing due to a segfault when executing the first test in 
+    ## This one is failing due to a segfault when executing the first test in
     ## the test suite.  We have been unable to replicate it outside of appveyor
     ## We will disable it for now
-    #    
+    #
     #    - PYTHON: "python3"
     #      CYGWIN: "C:\\cygwin"
     #      ARCH: x86
@@ -34,36 +35,57 @@ environment:
 
     ## Python 2 on this platform is failing in the multi-threaded test.
     ## It is not clear if the issue is with the python build or incorrect
-    ## locking code in jpype. 
+    ## locking code in jpype.
     ## We will disable it for now
     #    - PYTHON: "python2"
     #      CYGWIN: "C:\\cygwin64"
-    #      ARCH: x86_64 
+    #      ARCH: x86_64
     #      CYGSH: C:\Cygwin64\bin\bash -c
-    
+
+    - PYTHON: "C:\\Miniconda"
+      ARCH: x86
+      CONDA_PY: "2-latest"
+
+    - PYTHON: "C:\\Miniconda-x64"
+      ARCH: x86_64
+      CONDA_PY: "2-latest"
+
     - PYTHON: "python3"
       CYGWIN: "C:\\cygwin64"
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
 
-    - PYTHON: "C:\\Miniconda"
-      CONDA_PY: "2.7"
-
-    - PYTHON: "C:\\Miniconda-x64"
-      CONDA_PY: "2.7"
-      ARCH: "64"
-
     - PYTHON: "C:\\Miniconda3"
-      CONDA_PY: "3.5"
+      ARCH: x86
+      CONDA_PY: "3-latest"
 
     - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
+      CONDA_PY: "3-latest"
+      ARCH: x86_64
 
-    - PYTHON: "C:\\Miniconda3-x64"
-      CONDA_PY: "3.6"
-      ARCH: "64"
-      NUMPY_: "python"
+    - PYTHON: "C:\\Miniconda35-x64"
+      CONDA_PY: "3.5.2"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda35"
+      CONDA_PY: "3.5.2"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda36-x64"
+      CONDA_PY: "3.6.5"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda36"
+      CONDA_PY: "3.6.5"
+      ARCH: x86
+
+    - PYTHON: "C:\\Miniconda37-x64"
+      CONDA_PY: "3.7"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda37"
+      CONDA_PY: "3.7"
+      ARCH: x86
 
 install:
   # Force java to be installed where JAVA_HOME points
@@ -72,13 +94,14 @@ install:
   # - We will need to figure out how to run nose multiple times on the same run so that
   #   we can get the result from each of the java version runs.
   #
-  - cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
+  #- cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
 
   # - cinst jdk7 -params 'installdir=C:\\jdk7'
   # - cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
-  - cinst ant %CINST_OPTS%
+  - cinst ant %CINST_OPTS% --ignore-dependencies
+  - refreshenv
 
-  # Add thinges to path 
+  # Add thinges to path
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
@@ -99,3 +122,7 @@ on_finish:
 #
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+artifacts:
+  - path: 'dist\*.whl'
+    name:  wheels

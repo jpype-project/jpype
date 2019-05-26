@@ -29,24 +29,39 @@ fi
 
 # Install prereqs
 echo "==== update gcc"
-$SETUP -q -P gcc-core,gcc-g++
+$SETUP -q -P gcc-core,gcc-g++,libcrypt-devel
 echo "==== update python"
-$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools,$PYTHON-nose
+$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools
 echo "==== get modules"
 $EASYINSTALL pip
 $EASYINSTALL mock
 #$PIP install mock
+git clone --depth=1 https://github.com/pypa/setuptools.git
+cd setuptools
+$PYTHON ./bootstrap.py
+$PYTHON -m pip install ./
+cd ..
+rm -r ./setuptools
+
+git clone --depth=1 https://github.com/pypa/wheel.git
+git clone --depth=1 https://github.com/pypa/pip.git
+git clone --depth=1 https://github.com/pypa/setuptools_scm.git
+
+$PYTHON -m pip install --upgrade ./pip ./wheel ./setuptools_scm
+$PYTHON -m pip install pytest==4.5.0
+
+rm -r ./pip ./wheel ./setuptools_scm
 
 # Check versions
 echo "==== Check versions"
-"$ANT_HOME"/bin/ant -version
+"$ANT_HOME/bin/ant" -version
 $PYTHON --version
-$JAVA_HOME/bin/java.exe -version
+"$JAVA_HOME/bin/java.exe" -version
 
 echo "==== Check architectures"
 file -L `which $PYTHON`
-file -L $JAVA_HOME/bin/java.exe
-file -L `find $JAVA_HOME -name "jvm.dll"`
+file -L "$JAVA_HOME/bin/java.exe"
+file -L `find "$JAVA_HOME" -name "jvm.dll"`
 
 echo "==== Check modules"
 $PYTHON -c 'import pip; print(sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]))'
@@ -57,11 +72,12 @@ $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
 echo "==== Build test"
-"$ANT_HOME"/bin/ant -f test/build.xml
+"$ANT_HOME/bin/ant" -f test/build.xml
 
 # Install the package
 echo "==== Build module"
-$PYTHON setup.py install
+$PYTHON ./setup.py --enable-build-jar bdist_wheel
+$PYTHON -m pip install --upgrade ./dist/*.whl
 
 echo "==== Verify jvm.dll found"
 $PYTHON -c "import jpype; print(jpype.getDefaultJVMPath())"

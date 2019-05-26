@@ -18,7 +18,12 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
+
+# For some reason jpype.imports does not work if called in sphinx. Importing
+# it here solved the problem.
+import jpype
+import jpype.imports
 
 # -- General configuration ------------------------------------------------
 
@@ -28,7 +33,8 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = []
+extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autosectionlabel']
+autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -44,14 +50,21 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'JPype'
-copyright = u'2014, Steve Menard, Luis Nell and others'
+copyright = u'2014-18, Steve Menard, Luis Nell and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
+import mock
+mock_modules = ('_jpype',
+        )
+for m in mock_modules:
+    sys.modules[m] = mock.MagicMock()
+
 import jpype
+print(jpype.__path__)
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
@@ -139,6 +152,12 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_context = {
+    'css_files': [
+        '_static/theme_overrides.css',  # override wide tables in RTD theme
+        ],
+     }
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

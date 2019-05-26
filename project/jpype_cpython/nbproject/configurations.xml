@@ -1,0 +1,567 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <logicalFolder name="f2" displayName="Common" projectFiles="true">
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+          <itemPath>../../native/common/include/jp_array.h</itemPath>
+          <itemPath>../../native/common/include/jp_arrayclass.h</itemPath>
+          <itemPath>../../native/common/include/jp_baseclasses.h</itemPath>
+          <itemPath>../../native/common/include/jp_booleantype.h</itemPath>
+          <itemPath>../../native/common/include/jp_boxedclasses.h</itemPath>
+          <itemPath>../../native/common/include/jp_bytetype.h</itemPath>
+          <itemPath>../../native/common/include/jp_chartype.h</itemPath>
+          <itemPath>../../native/common/include/jp_class.h</itemPath>
+          <itemPath>../../native/common/include/jp_doubletype.h</itemPath>
+          <itemPath>../../native/common/include/jp_encoding.h</itemPath>
+          <itemPath>../../native/common/include/jp_env.h</itemPath>
+          <itemPath>../../native/common/include/jp_exception.h</itemPath>
+          <itemPath>../../native/common/include/jp_field.h</itemPath>
+          <itemPath>../../native/common/include/jp_floattype.h</itemPath>
+          <itemPath>../../native/common/include/jp_hostenv.h</itemPath>
+          <itemPath>../../native/common/include/jp_inttype.h</itemPath>
+          <itemPath>../../native/common/include/jp_javaframe.h</itemPath>
+          <itemPath>../../native/common/include/jp_jniutil.h</itemPath>
+          <itemPath>../../native/common/include/jp_longtype.h</itemPath>
+          <itemPath>../../native/common/include/jp_method.h</itemPath>
+          <itemPath>../../native/common/include/jp_methodoverload.h</itemPath>
+          <itemPath>../../native/common/include/jp_monitor.h</itemPath>
+          <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
+          <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
+          <itemPath>../../native/common/include/jp_primitive_common.h</itemPath>
+          <itemPath>../../native/common/include/jp_primitivetype.h</itemPath>
+          <itemPath>../../native/common/include/jp_proxy.h</itemPath>
+          <itemPath>../../native/common/include/jp_reference_queue.h</itemPath>
+          <itemPath>../../native/common/include/jp_shorttype.h</itemPath>
+          <itemPath>../../native/common/include/jp_stringclass.h</itemPath>
+          <itemPath>../../native/common/include/jp_tracer.h</itemPath>
+          <itemPath>../../native/common/include/jp_typemanager.h</itemPath>
+          <itemPath>../../native/common/include/jp_typename.h</itemPath>
+          <itemPath>../../native/common/include/jp_value.h</itemPath>
+          <itemPath>../../native/common/include/jp_voidtype.h</itemPath>
+          <itemPath>../../native/common/include/jpype.h</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="f1" displayName="Python" projectFiles="true">
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+          <itemPath>../../native/python/include/jp_pythonenv.h</itemPath>
+          <itemPath>../../native/python/include/jp_pythontypes.h</itemPath>
+          <itemPath>../../native/python/include/jpype_memory_view.h</itemPath>
+          <itemPath>../../native/python/include/pyjp.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_array.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_class.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_field.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_method.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_module.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_monitor.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_proxy.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_value.h</itemPath>
+        </logicalFolder>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <logicalFolder name="common" displayName="common" projectFiles="true">
+        <itemPath>../../native/common/jp_array.cpp</itemPath>
+        <itemPath>../../native/common/jp_arrayclass.cpp</itemPath>
+        <itemPath>../../native/common/jp_baseclasses.cpp</itemPath>
+        <itemPath>../../native/common/jp_booleantype.cpp</itemPath>
+        <itemPath>../../native/common/jp_boxedclasses.cpp</itemPath>
+        <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
+        <itemPath>../../native/common/jp_chartype.cpp</itemPath>
+        <itemPath>../../native/common/jp_class.cpp</itemPath>
+        <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
+        <itemPath>../../native/common/jp_encoding.cpp</itemPath>
+        <itemPath>../../native/common/jp_env.cpp</itemPath>
+        <itemPath>../../native/common/jp_exception.cpp</itemPath>
+        <itemPath>../../native/common/jp_field.cpp</itemPath>
+        <itemPath>../../native/common/jp_floattype.cpp</itemPath>
+        <itemPath>../../native/common/jp_inttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_jniutil.cpp</itemPath>
+        <itemPath>../../native/common/jp_longtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_method.cpp</itemPath>
+        <itemPath>../../native/common/jp_methodoverload.cpp</itemPath>
+        <itemPath>../../native/common/jp_monitor.cpp</itemPath>
+        <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
+        <itemPath>../../native/common/jp_proxy.cpp</itemPath>
+        <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
+        <itemPath>../../native/common/jp_shorttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_stringclass.cpp</itemPath>
+        <itemPath>../../native/common/jp_tracer.cpp</itemPath>
+        <itemPath>../../native/common/jp_typemanager.cpp</itemPath>
+        <itemPath>../../native/common/jp_value.cpp</itemPath>
+        <itemPath>../../native/common/jp_voidtype.cpp</itemPath>
+      </logicalFolder>
+      <logicalFolder name="python" displayName="python" projectFiles="true">
+        <itemPath>../../native/python/jp_pythonenv.cpp</itemPath>
+        <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
+        <itemPath>../../native/python/jpype_memory_view.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_array.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_class.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_field.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_method.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_module.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_monitor.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_proxy.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_value.cpp</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>../../doc/ChangeLog-0.7.md</itemPath>
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>../../native/common</Elem>
+    <Elem>../../native/python</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Release" type="3">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+          <incDir>
+            <pElem>../../native/jni_include</pElem>
+            <pElem>../../native/python/include</pElem>
+            <pElem>../../native/common/include</pElem>
+          </incDir>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+        <archiverTool>
+        </archiverTool>
+      </compileType>
+      <item path="../../native/common/include/jp_array.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_arrayclass.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_baseclasses.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_booleantype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_boxedclasses.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_bytetype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_chartype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_class.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_doubletype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_encoding.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_env.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_exception.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_field.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_floattype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_hostenv.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_inttype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_javaframe.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_jniutil.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_longtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_method.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_methodoverload.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_monitor.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_platform_linux.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_platform_win32.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_primitive_common.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_primitivetype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_proxy.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_reference_queue.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_shorttype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_stringclass.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_tracer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_typemanager.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_typename.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_value.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_voidtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jpype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_array.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_arrayclass.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_baseclasses.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_booleantype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_boxedclasses.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_bytetype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_chartype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_class.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_classloader.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_doubletype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_encoding.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_env.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_exception.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_field.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_floattype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_inttype.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_jniutil.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_longtype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_method.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_methodoverload.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_monitor.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_primitivetype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_proxy.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_reference_queue.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_shorttype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_stringclass.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_tracer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_typemanager.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_value.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_voidtype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/jp_pythonenv.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/jp_pythontypes.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/jpype_memory_view.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_array.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_class.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_field.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_method.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_module.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_monitor.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_proxy.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/include/pyjp_value.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/jp_pythonenv.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/jp_pythontypes.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/jpype_memory_view.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_array.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_field.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_method.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_module.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_monitor.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_proxy.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_value.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <folder path="SourceFiles">
+        <ccTool>
+          <incDir>
+            <pElem>../../native/python/include</pElem>
+            <pElem>../../native/common/include</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+    </conf>
+  </confs>
+</configurationDescriptor>
