@@ -39,10 +39,12 @@ public interface TypeFactory
    * @param componentPtr
    * @return the pointer to the JPArrayClass.
    */
-  long defineArrayClass(Class cls, 
-          long superClass, 
+  long defineArrayClass(
+          Class cls, 
           String name, 
-          long componentPtr);
+          long superClass, 
+          long componentPtr, 
+          long modifiers);
   
   /**
    * Create a class type.  
@@ -54,14 +56,15 @@ public interface TypeFactory
    * @param name
    * @return the pointer to the JPClass.
    */
-  long defineObjectClass(Class cls, 
+  long defineObjectClass(
+          Class cls, 
+          String name, 
           long superClass, 
-          long[] interfaces,
-          int modifiers,
-          String name);
+          long[] interfaces, 
+          long modifiers);
   
   /** 
-   * Define a primitive types
+   * Define a primitive types.
    * 
    * @param code is a code number used to determine which type of
    *      primitive this will attach to.
@@ -69,7 +72,11 @@ public interface TypeFactory
    * @param boxedPtr is the JPClass for the boxed class.
    * @return 
    */
-  long definePrimitive(int code, Class cls, long boxedPtr);
+  long definePrimitive(
+          int code, 
+          Class cls, 
+          long boxedPtr, 
+          long modifiers);
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
@@ -102,12 +109,13 @@ public interface TypeFactory
           String name,
           Field field, // This will convert to a field id
           long fieldType,
-          int modifiers);
+          long modifiers);
   
   /**
    * Create a Method.
    * 
    * @param cls is the class holding this.
+   * @param name
    * @param method is the Java method that will be called, converts to a method id.
    * @param returnType 
    * @param argumentTypes
@@ -122,7 +130,7 @@ public interface TypeFactory
           long returnType,
           long[] argumentTypes,
           long[] overloadList,
-          int modifiers);
+          long modifiers);
   
   /** 
    * Create a Method dispatch for Python by name.
@@ -137,7 +145,8 @@ public interface TypeFactory
           long cls,
           String name,
           long[] overloadList,
-          int modifiers);
+          long modifiers);
+  
 //</editor-fold>
 //<editor-fold desc="destroy" defaultstate="collapsed">
   /**

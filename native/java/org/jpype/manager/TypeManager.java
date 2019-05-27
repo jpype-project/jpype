@@ -15,6 +15,7 @@
  */
 package org.jpype.manager;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -39,6 +40,8 @@ public class TypeManager
   public List<Action> deferred = new LinkedList<>();
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
+  public Class functionalAnnotation =null;
+  = Class.forName("java.lang.FunctionalInterface");
 
 //<editor-fold desc="interface">
   public synchronized void init()
@@ -47,6 +50,14 @@ public class TypeManager
       throw new RuntimeException("Cannot be restarted");
     isStarted = true;
     isShutdown = false;
+    
+    try
+    {
+      this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface");
+    } catch (ClassNotFoundException ex)
+    {
+      // It is okay if we don't find this
+    }
 
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
@@ -93,13 +104,35 @@ public class TypeManager
     if (this.isShutdown)
       return 0;
 
-    ClassDescriptor out = getClass(cls);
+    long out = 0;
+    if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
+    {
+      // If is it lambda, we need a special wrapper
+      // we don't want to create a class each time in that case.
+      // Thus use the parent interface for this class
+      out = getClass(cls.getInterfaces()[0]).classPtr;
+    } else if (cls.isAnonymousClass())
+    {
+      // This one is more of a burden.  It depends what whether is was
+      // anonymous extends or implements.
+      if (cls.getInterfaces().length == 1)
+        out = getClass(cls.getInterfaces()[0]).classPtr;
+      else
+      {
+        ClassDescriptor parent = getClass(cls.getSuperclass());
+        out = createAnonymous(parent);
+      }
+    } else
+    {
+      // Just a regular class
+      out = getClass(cls).classPtr;
+    }
 
     // Before we can leave, we need to make sure all classes that were 
     // loaded in the process have methods.
     executeDeferred();
 
-    return out.classPtr;
+    return out;
   }
 
   /**
@@ -123,6 +156,8 @@ public class TypeManager
       dest.add(entry.methodDispatch);
       dest.add(entry.methods);
       dest.add(entry.fields);
+      if (entry.anonymous != 0)
+        dest.add(entry.anonymous);
       dest.add(entry.classPtr);
     }
     dest.flush();
@@ -198,22 +233,25 @@ public class TypeManager
     }
 
     // Set up the modifiers
-    int modifiers = cls.getModifiers();
+    long modifiers = cls.getModifiers();
     if (special)
-      modifiers |= ModifierCodes.SPECIAL.value;
+      modifiers |= ModifierCode.SPECIAL.value;
     if (Throwable.class.isAssignableFrom(cls))
-      modifiers |= ModifierCodes.THROWABLE.value;
+      modifiers |= ModifierCode.THROWABLE.value;
+    if (Serializable.class.isAssignableFrom(cls))
+      modifiers |= ModifierCode.SERIALIZABLE.value;
+    if (this.functionalAnnotation!=null &&
+            cls.getAnnotation(this.functionalAnnotation)!=null)
+      modifiers |= ModifierCode.FUNCTIONAL.value;
 
     // FIXME watch out for anonyous and lambda here.
-    String name = cls.getSimpleName();
+    String name = cls.getCanonicalName();
 
     // Create the JPClass
-    long classPtr = typeFactory.defineObjectClass(
-            cls,
+    long classPtr = typeFactory.defineObjectClass(cls, name,
             superClassPtr,
             interfacesPtr,
-            modifiers,
-            name);
+            modifiers);
 
     //
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
@@ -223,6 +261,18 @@ public class TypeManager
     return out;
   }
 
+  private long createAnonymous(ClassDescriptor parent)
+  {
+    if (parent.anonymous !=0)
+      return parent.anonymous;
+    
+    parent.anonymous = typeFactory.defineObjectClass(parent.cls, parent.cls.getCanonicalName()+"$Anonymous", 
+            parent.classPtr, 
+            null, 
+            ModifierCode.ANONYMOUS.value);
+    return parent.anonymous;
+  }
+
   ClassDescriptor createArrayClass(Class cls)
   {
     // Array classes are simple, we just need the component type
@@ -230,11 +280,10 @@ public class TypeManager
     long componentTypePtr = this.getClass(componentType).classPtr;
 
     long classPtr = typeFactory
-            .defineArrayClass(
-                    cls,
-                    this.java_lang_Object.classPtr,
-                    cls.getSimpleName(),
-                    componentTypePtr);
+            .defineArrayClass(cls,
+                    cls.getCanonicalName(), this.java_lang_Object.classPtr,
+                    componentTypePtr, 
+                    cls.getModifiers());
 
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
     this.classMap.put(cls, out);
@@ -250,10 +299,10 @@ public class TypeManager
    */
   private void createPrimitive(int code, Class cls, Class boxed)
   {
-    long classPtr = typeFactory.definePrimitive(
-            code,
+    long classPtr = typeFactory.definePrimitive(code,
             cls,
-            this.getClass(boxed).classPtr);
+            this.getClass(boxed).classPtr, 
+            cls.getModifiers());
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
   }
 
@@ -327,7 +376,7 @@ public class TypeManager
                     desc.classPtr,
                     "<init>",
                     desc.constructors,
-                    ModifierCodes.CTOR.value);
+                    ModifierCode.PUBLIC.value | ModifierCode.CTOR.value);
   }
 
   /**
@@ -362,12 +411,12 @@ public class TypeManager
         precedencePtrs[i++] = ch.ptr;
       }
 
-      int modifiers = constructor.getModifiers() | ModifierCodes.CTOR.value;
+      long modifiers = constructor.getModifiers() | ModifierCode.CTOR.value;
       ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               constructor.toString(),
               constructor,
-              0,
+              0, // no return type
               paramPtrs,
               precedencePtrs,
               modifiers);
@@ -436,9 +485,9 @@ public class TypeManager
     List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
     long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    int modifiers = 0;
+    long modifiers = 0;
     if (hasStatic)
-      modifiers |= ModifierCodes.STATIC.value;
+      modifiers |= ModifierCode.STATIC.value;
     long methodContainer = typeFactory.defineMethodDispatch(
             desc.classPtr,
             key,
@@ -502,7 +551,7 @@ public class TypeManager
         precedencePtrs[i++] = ch.ptr;
       }
 
-      int modifiers = method.getModifiers();
+      long modifiers = method.getModifiers();
       ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               method.toString(),
@@ -529,6 +578,7 @@ public class TypeManager
    *
    * @param <T>
    * @param methods
+   * @return a new list containing only public members.
    */
   public static <T extends Member> LinkedList<T> filterPublic(T[] methods)
   {
@@ -548,6 +598,7 @@ public class TypeManager
    *
    * @param cls
    * @param methods
+   * @return a new list containing only public members that are not overridden.
    */
   public static LinkedList<Method> filterOverridden(Class cls, Method[] methods)
   {
@@ -568,8 +619,7 @@ public class TypeManager
    *
    * @param cls is the class to investigate.
    * @param method is a method that applies to the class.
-   * @return true if the method is not overridden in the true, or false if this
-   * method is overridden.
+   * @return true if the method is hidden by another method.
    */
   public static boolean isOverridden(Class cls, Method method)
   {
@@ -606,7 +656,7 @@ public class TypeManager
 
   private class Destroyer
   {
-    final int BLOCK_SIZE = 64;
+    final int BLOCK_SIZE = 256;
     long[] queue = new long[BLOCK_SIZE];
     int index = 0;
 

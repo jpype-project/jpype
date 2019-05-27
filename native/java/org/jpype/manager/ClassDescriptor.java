@@ -46,6 +46,7 @@ public class ClassDescriptor
   public long[] methods;
   public int methodCounter = 0;
   public long[] fields;
+  public long anonymous;
 
   ClassDescriptor(Class cls, long classPtr)
   {

@@ -16,6 +16,7 @@
 package org.jpype.manager;
 
 import java.lang.reflect.Method;
+import java.util.EnumSet;
 
 /**
  *
@@ -42,7 +43,21 @@ public class TestDefault
     {
       System.out.println("  "+ method);
     }
-      
+    
+    System.out.println(int[][][].class.getCanonicalName());
+    System.out.println(int[][][].class.getName());
+    System.out.println(int[][][].class.getSimpleName());
+ 
+    System.out.println(Object[][][].class.getCanonicalName());
+    System.out.println(Object[][][].class.getName());
+    System.out.println(Object[][][].class.getSimpleName());
+    
+    System.out.println(Object.class.getSimpleName());
+    System.out.println(Object.class.getName());
+    System.out.println(Object.class.getCanonicalName());
+  
+    EnumSet<ModifierCode> set=EnumSet.of(ModifierCode.PUBLIC, ModifierCode.CTOR);
+    System.out.println(set);
   }
           
 }

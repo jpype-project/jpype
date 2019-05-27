@@ -24,28 +24,66 @@ import org.jpype.manager.TypeFactoryHarness.Resource;
  */
 public class Test
 {
+  public interface MyFunction
+  {
+    Object apply(Object o);
+  }
+
+  public static class MyBase
+  {
+    void run()
+    {
+    }
+  }
+
   static public void main(String[] args)
   {
     System.out.println("Create:");
     TypeManager tm = new TypeManager();
     TypeFactoryHarness tf = new TypeFactoryHarness(tm);
-    tm.typeFactory =tf;
+    tm.typeFactory = tf;
     System.out.println("Initialize:");
     tm.init();
+    System.out.println();
+    System.out.println("==================================================");
+    tm.findClass(int[][][].class);
+    MyFunction f = (Object o) -> o;
+    tm.findClass(f.getClass());
+
+    MyFunction f2 = new MyFunction()
+    {
+      @Override
+      public Object apply(Object t)
+      {
+        return t;
+      }
+    };
+    tm.findClass(f2.getClass());
+
+    MyBase f3 = new MyBase()
+    {
+      void run()
+      {
+      }
+    };
+    tm.findClass(f3.getClass());
+
+    System.out.println("==================================================");
+    System.out.println();
     System.out.println("Shutdown:");
     tm.shutdown();
-    
+
     System.out.println("Leaked resources:");
     int leaked = 0;
-    for (Resource entry:tf.resourceMap.values())
+    for (Resource entry : tf.resourceMap.values())
     {
       if (entry instanceof DeletedResource)
         continue;
-      System.out.println("  "+entry.getName());
+      System.out.println("  " + entry.getName());
       leaked++;
     }
-    System.out.println("Leaked total "+leaked);
-    if (leaked>0)
+    System.out.println("Leaked total " + leaked);
+    if (leaked > 0)
       throw new RuntimeException("Leaked resources");
   }
 }

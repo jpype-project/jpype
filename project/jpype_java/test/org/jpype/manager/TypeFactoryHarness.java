@@ -23,7 +23,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * A special version of the TypeFactory for debugging.
+ * A special version of the TypeFactory for debugging and testing.
+ * 
+ * This harness operates like JPype C++ layer with checks for problems and 
+ * inconsistencies that may indicate a problem with the TypeManager.
  *
  * @author nelson85
  */
@@ -55,30 +58,49 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
 
 //<editor-fold desc="class" defaultstate="collapsed">
   @Override
-  public long defineArrayClass(Class cls, long superClass, String name, long componentPtr)
+  public long defineArrayClass(
+          Class cls,
+          String name,
+          long superClass,
+          long componentPtr,
+          long modifiers)
   {
     value++;
-    System.out.println("defineArrayClass " + value + ": " + cls.toString());
-    Resource resource = new ArrayClassResource(value, "array class " + cls.getName(), cls);
+    System.out.println("defineArrayClass " + value + ": " + name);
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
+    Resource resource = new ArrayClassResource(value, "array class " + name, cls);
     resourceMap.put(value, resource);
     return value;
   }
 
   @Override
-  public long defineObjectClass(Class cls, long superClass, long[] interfaces, int modifiers, String name)
+  public long defineObjectClass(Class cls, String name, long superClass, long[] interfaces, long modifiers)
   {
     value++;
-    System.out.println("defineObjectClass " + value + ": " + cls.toString());
-    Resource resource = new ObjectClassResource(value, "object class " + cls.getName(), cls);
+    System.out.println("defineObjectClass " + value + ": " + name);
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
+    if (superClass != 0)
+    {
+      ClassResource superClassResource = assertResource(superClass, ClassResource.class);
+      System.out.println("  super: " + superClass + " " + superClassResource.getName());
+    }
+    this.dumpResourceList("interfaces", interfaces);
+
+    Resource resource = new ObjectClassResource(value, "object class " + name, cls);
     resourceMap.put(value, resource);
     return value;
   }
 
   @Override
-  public long definePrimitive(int code, Class cls, long boxedPtr)
+  public long definePrimitive(
+          int code,
+          Class cls,
+          long boxedPtr,
+          long modifiers)
   {
     value++;
     System.out.println("defineObjectClass " + value + ": " + cls.toString());
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
     Resource resource = new PrimitiveClassResource(value, "primitive class " + cls.getName(), cls);
     resourceMap.put(value, resource);
     return value;
@@ -87,7 +109,11 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
 //<editor-fold desc="members" defaultstate="collapsed">
 
   @Override
-  public void assignMembers(long classId, long ctorMethod, long[] methodList, long[] fieldList)
+  public void assignMembers(
+          long classId,
+          long ctorMethod,
+          long[] methodList,
+          long[] fieldList)
   {
     // Verify resources
     ClassResource classResource = assertResource(classId, ClassResource.class);
@@ -100,7 +126,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
       for (int i = 0; i < fieldList.length; ++i)
         assertResource(fieldList[i], FieldResource.class);
 
-      System.out.println("assignClass " + classResource.getName());
+      System.out.println("assignMembers " + classId + " " + classResource.getName());
     } catch (Exception ex)
     {
       System.out.println("Fail in assignClass");
@@ -111,14 +137,20 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
   }
 
   @Override
-  public long defineField(long classId, String name, Field field, long fieldTypeId, int modifiers)
+  public long defineField(
+          long classId,
+          String name,
+          Field field,
+          long fieldTypeId,
+          long modifiers)
   {
     ClassResource classResource = assertResource(classId, ClassResource.class);
     ClassResource fieldResource = assertResource(fieldTypeId, ClassResource.class);
     value++;
     System.out.println("defineField " + value + ":" + name);
-    System.out.println("    class:" + classResource.getName());
-    System.out.println("    fieldType:" + fieldResource.getName());
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
+    System.out.println("  class: " + classResource.getName());
+    System.out.println("  fieldType: " + fieldResource.getName());
 
     resourceMap.put(value, new FieldResource(value, "field " + field.getName(), field));
     return value;
@@ -129,7 +161,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
           long returnType,
           long[] argumentTypes,
           long[] overloadList,
-          int modifiers)
+          long modifiers)
   {
     // Verify resources
     assertResource(classId, ClassResource.class);
@@ -141,6 +173,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
       assertResource(overloadList[i], MethodResource.class);
     value++;
     System.out.println("defineMethod " + value + ": " + name);
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
     System.out.flush();
 
     resourceMap.put(value, new MethodResource(value, "method " + method.toString(), method));
@@ -148,24 +181,27 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
   }
 
   @Override
-  public long defineMethodDispatch(long classId, String name, long[] overloadList, int modifiers)
+  public long defineMethodDispatch(
+          long classId,
+          String name,
+          long[] overloadList,
+          long modifiers)
   {
     ClassResource classResource = assertResource(classId, ClassResource.class);
     for (int i = 0; i < overloadList.length; ++i)
       assertResource(overloadList[i], MethodResource.class);
     value++;
     System.out.println("defineMethodDispatch " + value + ": '" + name + "' for " + classResource.getName());
+    System.out.println("  modifiers: " + ModifierCode.decode(modifiers));
     this.dumpResourceList("members", overloadList);
-    System.out.println("  modifiers: " + modifiers);
 
     resourceMap.put(value, new MethodDispatchResource(value, "dispatch " + name));
     return value;
   }
 //</editor-fold>
 //<editor-fold desc="destroy" defaultstate="collapsed">
-
   Resource lastDestroyed = null;
-  
+
   @Override
   public void destroy(long[] resources, int sz)
   {
@@ -195,7 +231,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
         }
       }
 
-      throw new RuntimeException("repeat delete " + r + " at index " + i + " last "+lastDestroyed);
+      throw new RuntimeException("repeat delete " + r + " at index " + i + " last " + lastDestroyed);
     }
   }
 //</editor-fold>

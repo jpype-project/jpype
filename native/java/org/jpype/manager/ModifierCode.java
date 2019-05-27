@@ -25,7 +25,7 @@ import java.util.EnumSet;
  * 
  * @author nelson85
  */
-public enum ModifierCodes
+public enum ModifierCode
 {
   // we need 
   //   fields: static, final
@@ -39,25 +39,40 @@ public enum ModifierCodes
   VARARGS(128),
   ENUM(16384),
   
-  // Special flags required for JPype
-  SPECIAL(0x08000000),
-  CTOR(0x10000000),
-  THROWABLE(0x20000000),
-  ABSTRACT(0x40000000);
+  // Special flags for classes required for JPype
+  SPECIAL      (0x000100000000l),
+  THROWABLE    (0x000200000000l),
+  ABSTRACT     (0x000400000000l),
+  SERIALIZABLE (0x000800000000l),
+  ANONYMOUS    (0x001000000000l),
+  FUNCTIONAL   (0x002000000000l),
+  CTOR         (0x100000000000l);
   
-  final public int value;
-  ModifierCodes(int value)
+  
+  final public long value;
+  ModifierCode(long value)
   {
     this.value = value;
   }
 
-  public int get(EnumSet<ModifierCodes> set)
+  public long get(EnumSet<ModifierCode> set)
   {
-    int out = 0;
-    for (ModifierCodes m : set)
+    long out = 0;
+    for (ModifierCode m : set)
     {
       out |= m.value;
     }
     return out;
   }
+  static EnumSet<ModifierCode> decode(long modifiers)
+  {
+    EnumSet<ModifierCode> out=EnumSet.noneOf(ModifierCode.class);
+    for (ModifierCode code:ModifierCode.values())
+    {
+      if ((modifiers&code.value)==code.value)
+        out.add(code);
+    }
+    return out;
+  }
+
 }

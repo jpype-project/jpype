@@ -29,20 +29,25 @@ public class TypeFactoryNative implements TypeFactory
   @Override
   public native long defineArrayClass(
           Class cls, 
-          long superClass, 
           String name, 
-          long componentPtr);
+          long superClass, 
+          long componentPtr, 
+          long modifiers);
  
   @Override
   public native long defineObjectClass(
           Class cls, 
+          String name, 
           long superClass, 
           long[] interfaces, 
-          int modifiers, 
-          String name);
+          long modifiers);
   
   @Override
-  public native long definePrimitive(int code, Class cls, long boxedPtr);
+  public native long definePrimitive(
+          int code, 
+          Class cls, 
+          long boxedPtr, 
+          long modifiers);
 
 
   @Override
@@ -58,7 +63,7 @@ public class TypeFactoryNative implements TypeFactory
           String name, 
           Field field, 
           long fieldType, 
-          int modifiers);
+          long modifiers);
   
   @Override
   public native long defineMethod(
@@ -68,14 +73,14 @@ public class TypeFactoryNative implements TypeFactory
           long returnType, 
           long[] argumentTypes, 
           long[] overloadList, 
-          int modifiers);
+          long modifiers);
  
   @Override
   public native long defineMethodDispatch(
           long cls, 
           String name, 
           long[] overloadList, 
-          int modifiers);
+          long modifiers);
   
   @Override
   public native void destroy(long[] resources, int sz);
