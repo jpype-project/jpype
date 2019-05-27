@@ -75,7 +75,7 @@ void PyJPMethod::initType(PyObject* module)
 	PyModule_AddObject(module, "PyJPMethod", (PyObject*) (&PyJPMethod::Type));
 }
 
-JPPyObject PyJPMethod::alloc(JPMethod* m, PyObject* instance)
+JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
 {
 	JP_TRACE_IN("PyJPMethod::alloc");
 	PyJPMethod* res = PyObject_New(PyJPMethod, &PyJPMethod::Type);

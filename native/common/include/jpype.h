@@ -117,7 +117,7 @@ class JPLongType;
 class JPFloatType;
 class JPDoubleType;
 class JPStringClass;
-class JPMethod;
+class JPMethodDispatch;
 class JPField;
 
 // Base utility headers
@@ -131,6 +131,7 @@ class JPField;
 #include "jp_jniutil.h"
 #include "jp_typemanager.h"
 #include "jp_encoding.h"
+#include "jp_modifier.h"
 
 class JPResource
 {
@@ -139,7 +140,7 @@ class JPResource
 };
 
 // Other header files
-#include "jp_methodoverload.h"
+#include "jp_method.h"
 #include "jp_value.h"
 #include "jp_class.h"
 
@@ -157,7 +158,7 @@ class JPResource
 
 // Accessors
 #include "jp_field.h"
-#include "jp_method.h"
+#include "jp_methoddispatch.h"
 #include "jp_array.h"
 
 // Object classes

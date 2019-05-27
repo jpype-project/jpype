@@ -26,7 +26,7 @@ struct PyJPMethod
 
 	// Python-visible methods
 	static void       initType(PyObject* module);
-	static JPPyObject alloc(JPMethod* mth, PyObject* obj);
+	static JPPyObject alloc(JPMethodDispatch* mth, PyObject* obj);
 
 	static PyObject*  __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
 	static void       __dealloc__(PyJPMethod* o);
@@ -39,7 +39,7 @@ struct PyJPMethod
 	static PyObject*  matchReport(PyJPMethod* self, PyObject* arg);
 	static PyObject*  dump(PyJPMethod* self, PyObject* arg);
 
-	JPMethod* m_Method;
+	JPMethodDispatch* m_Method;
 	PyObject* m_Instance;
 
 } ;

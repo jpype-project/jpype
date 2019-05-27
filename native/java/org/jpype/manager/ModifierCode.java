@@ -36,28 +36,30 @@ public enum ModifierCode
   PROTECTED(Modifier.PROTECTED),
   STATIC(Modifier.STATIC),
   FINAL(Modifier.FINAL),
-  VARARGS(128),
-  ENUM(16384),
+  VARARGS(0x0080),
+  ENUM(0x4000),
+  ABSTRACT(0x0400),
   
   // Special flags for classes required for JPype
-  SPECIAL      (0x000100000000l),
-  THROWABLE    (0x000200000000l),
-  ABSTRACT     (0x000400000000l),
-  SERIALIZABLE (0x000800000000l),
-  ANONYMOUS    (0x001000000000l),
-  FUNCTIONAL   (0x002000000000l),
-  CTOR         (0x100000000000l);
+  SPECIAL      (0x00010000),
+  THROWABLE    (0x00020000),
+  SERIALIZABLE (0x00040000),
+  ANONYMOUS    (0x00080000),
+  FUNCTIONAL   (0x00100000),
+  CTOR         (0x10000000),
+  BEAN_ACCESSOR(0x20000000),
+  BEAN_MUTATOR (0x40000000);
   
   
-  final public long value;
-  ModifierCode(long value)
+  final public int value;
+  ModifierCode(int value)
   {
     this.value = value;
   }
 
-  public long get(EnumSet<ModifierCode> set)
+  public int get(EnumSet<ModifierCode> set)
   {
-    long out = 0;
+    int out = 0;
     for (ModifierCode m : set)
     {
       out |= m.value;

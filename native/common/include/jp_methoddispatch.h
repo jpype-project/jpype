@@ -14,37 +14,41 @@
    limitations under the License.
    
  *****************************************************************************/
-#ifndef _JPMETHOD_H_
-#define _JPMETHOD_H_
+#ifndef _JPMETHODDISPATCH_H_
+#define _JPMETHODDISPATCH_H_
 
-class JPMethod: public JPResource
+class JPMethodDispatch: public JPResource
 {
 public:
-	typedef list<JPMethodOverload*> OverloadList;
 
 	/**
 	 * Create a new method based on class and a name;
 	 */
-	JPMethod(JPClass *clazz, const string& name, bool isConstructor);
-	virtual ~JPMethod();
+	JPMethodDispatch(JPClass *clazz, const string& name, bool isConstructor);
+	virtual ~JPMethodDispatch();
 
 private:
-	JPMethod(const JPMethod& method);
-	JPMethod& operator=(const JPMethod& method);
+	JPMethodDispatch(const JPMethodDispatch& method);
+	JPMethodDispatch& operator=(const JPMethodDispatch& method);
 
 public:
 	const string& getName() const;
 	string getClassName() const;
 
-	void addOverload(JPClass* clazz, jobject mth);
-
-	bool hasStatic()
+	bool hasStatic() const
 	{
-		return m_hasStatic;
+		return JPModifier::isStatic(m_Modifiers);
 	}
 
-	bool isBeanMutator();
-	bool isBeanAccessor();
+	bool isBeanMutator() const
+	{
+		return JPModifier::isBeanMutator(m_Modifiers);
+	}
+
+	bool isBeanAccessor() const
+	{
+		return JPModifier::isBeanAccessor(m_Modifiers);
+	}
 
 	JPPyObject invoke(JPPyObjectVector& vargs, bool instance);
 	JPValue invokeConstructor(JPPyObjectVector& vargs);
@@ -52,7 +56,7 @@ public:
 	string matchReport(JPPyObjectVector& sequence);
 	string dump();
 
-	const OverloadList& getMethodOverloads()
+	const JPMethodList& getMethodOverloads()
 	{
 		return m_Overloads;
 	}
@@ -64,16 +68,12 @@ private:
 	 * when matching with a non-static.
 	 */
 	JPMatch findOverload(JPPyObjectVector& vargs, bool searchInstance);
-	void ensureOverloadCache();
 	void dumpOverloads();
 
 	JPClass*      m_Class;
 	string        m_Name;
-	OverloadList  m_Overloads;
-	bool          m_IsConstructor;
-	bool          m_hasStatic;
-	bool          m_Cached;
+	JPMethodList  m_Overloads;
+	jlong         m_Modifiers;
 } ;
 
-#endif // _JPMETHOD_H_
-
+#endif // _JPMETHODDISPATCH_H_

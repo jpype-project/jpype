@@ -53,7 +53,12 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(JNIEnv *env, jobject self, jlongArr
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(JNIEnv *env, jobject self, jlong cls, jstring name, jlongArray overloadList, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(JNIEnv *env, 
+		jobject self, 
+		jlong cls, 
+		jstring name, 
+		jlongArray overloadList, 
+		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethodDispatch");
 	JPJavaFrame frame(env);
@@ -70,7 +75,13 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(JNIEnv *env, jobject 
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(JNIEnv *env, jobject self, jclass cls, jstring name, jlong superClass, jlong componentPtr, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(JNIEnv *env, 
+		jobject self, 
+		jclass cls, 
+		jstring name, 
+		jlong superClass, 
+		jlong componentPtr, 
+		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineArrayClass");
 	JPJavaFrame frame(env);
@@ -87,7 +98,13 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(JNIEnv *env, jobject self
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, jobject self, jclass cls, jstring name, jlong superClass, jlongArray interfaces, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, 
+		jobject self, 
+		jclass cls, 
+		jstring name, 
+		jlong superClass, 
+		jlongArray interfaces, 
+		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineObjectClass");
 	JPJavaFrame frame(env);
@@ -104,7 +121,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, jobject sel
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(JNIEnv *env, jobject self, jint code, jclass cls, jlong boxedPtr, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(JNIEnv *env, 
+		jobject self, jint code, jclass cls, jlong boxedPtr, jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_definePrimitive");
 	JPJavaFrame frame(env);
@@ -121,7 +139,11 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(JNIEnv *env, jobject self,
 }
 
 
-JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self, jlong cls, jlong ctorMethod, jlongArray methodList, jlongArray fieldList)
+JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, 
+		jobject self, jlong cls, 
+		jlong ctorMethod, 
+		jlongArray methodList, 
+		jlongArray fieldList)
 {
 	JP_TRACE_IN("JPTypeFactory_assignMembers");
 	JPJavaFrame frame(env);
@@ -138,7 +160,13 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self, jl
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env, jobject self, jlong cls, jstring name, jobject field, jlong fieldType, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env, 
+		jobject self, 
+		jlong cls, 
+		jstring name, 
+		jobject field, 
+		jlong fieldType, 
+		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineField");
 	JPJavaFrame frame(env);
@@ -155,7 +183,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env, jobject self, jlo
 }
 
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(JNIEnv *env, jobject self, jlong cls, jstring name, jobject method, jlong returnType, jlongArray argumentTypes, jlongArray overloadList, jlong modifiers)
+JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(JNIEnv *env, 
+		jobject self, jlong cls, jstring name, 
+		jobject method, 
+		jlong returnType, 
+		jlongArray argumentTypes, 
+		jlongArray overloadList, jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethod");
 	JPJavaFrame frame(env);
@@ -187,19 +220,19 @@ void JPTypeFactory::init()
 	method[0].fnPtr = (void*) &JPTypeFactory_destroy;
 
 	method[1].name = (char*) "defineMethodDispatch";
-	method[1].signature = (char*) "(JLjava.lang.String;[JJ)J";
+	method[1].signature = (char*) "(JLjava.lang.String;[JI)J";
 	method[1].fnPtr = (void*) &JPTypeFactory_defineMethodDispatch;
 
 	method[2].name = (char*) "defineArrayClass";
-	method[2].signature = (char*) "(Ljava.lang.Class;Ljava.lang.String;JJJ)J";
+	method[2].signature = (char*) "(Ljava.lang.Class;Ljava.lang.String;JJI)J";
 	method[2].fnPtr = (void*) &JPTypeFactory_defineArrayClass;
 
 	method[3].name = (char*) "defineObjectClass";
-	method[3].signature = (char*) "(Ljava.lang.Class;Ljava.lang.String;J[JJ)J";
+	method[3].signature = (char*) "(Ljava.lang.Class;Ljava.lang.String;J[JI)J";
 	method[3].fnPtr = (void*) &JPTypeFactory_defineObjectClass;
 
 	method[4].name = (char*) "definePrimitive";
-	method[4].signature = (char*) "(ILjava.lang.Class;JJ)J";
+	method[4].signature = (char*) "(ILjava.lang.Class;JI)J";
 	method[4].fnPtr = (void*) &JPTypeFactory_definePrimitive;
 
 	method[5].name = (char*) "assignMembers";
@@ -207,11 +240,11 @@ void JPTypeFactory::init()
 	method[5].fnPtr = (void*) &JPTypeFactory_assignMembers;
 
 	method[6].name = (char*) "defineField";
-	method[6].signature = (char*) "(JLjava.lang.String;Ljava.lang.reflect.Field;JJ)J";
+	method[6].signature = (char*) "(JLjava.lang.String;Ljava.lang.reflect.Field;JI)J";
 	method[6].fnPtr = (void*) &JPTypeFactory_defineField;
 
 	method[7].name = (char*) "defineMethod";
-	method[7].signature = (char*) "(JLjava.lang.String;Ljava.lang.reflect.Executable;J[J[JJ)J";
+	method[7].signature = (char*) "(JLjava.lang.String;Ljava.lang.reflect.Executable;J[J[JI)J";
 	method[7].fnPtr = (void*) &JPTypeFactory_defineMethod;
 
 

@@ -20,8 +20,8 @@
 class JPClass: public JPResource
 {
 public:
-	typedef map<string, JPMethod*> MethodMap;
-	typedef vector<JPMethod*> MethodList;
+	typedef map<string, JPMethodDispatch*> MethodMap;
+	typedef vector<JPMethodDispatch*> MethodList;
 	typedef vector<JPField*> FieldList;
 	typedef vector<JPClass*> ClassList;
 
@@ -156,13 +156,14 @@ protected:
 	ClassList    m_SuperInterfaces;
 	FieldList    m_Fields;
 	MethodList   m_Methods;
-	JPMethod*    m_Constructors;
+	JPMethodDispatch*    m_Constructors;
 	string       m_CanonicalName;
-	bool         m_InterfacesLoaded;
-	bool         m_IsInterface;
-	bool         m_IsThrowable;
-	bool         m_IsAbstract;
-	bool         m_IsFinal;
+	jint         m_Modifiers;
+//	bool         m_InterfacesLoaded;
+//	bool         m_IsInterface;
+//	bool         m_IsThrowable;
+//	bool         m_IsAbstract;
+//	bool         m_IsFinal;
 
 } ;
 

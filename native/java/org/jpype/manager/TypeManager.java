@@ -234,7 +234,7 @@ public class TypeManager
     }
 
     // Set up the modifiers
-    long modifiers = cls.getModifiers();
+    int modifiers = cls.getModifiers() & 0xffff;
     if (special)
       modifiers |= ModifierCode.SPECIAL.value;
     if (Throwable.class.isAssignableFrom(cls))
@@ -284,7 +284,7 @@ public class TypeManager
             .defineArrayClass(cls,
                     cls.getCanonicalName(), this.java_lang_Object.classPtr,
                     componentTypePtr,
-                    cls.getModifiers());
+                    cls.getModifiers() & 0xffff);
 
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
     this.classMap.put(cls, out);
@@ -303,7 +303,7 @@ public class TypeManager
     long classPtr = typeFactory.definePrimitive(code,
             cls,
             this.getClass(boxed).classPtr,
-            cls.getModifiers());
+            cls.getModifiers() & 0xffff);
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
   }
 
@@ -342,7 +342,7 @@ public class TypeManager
               field.getName(),
               field,
               getClass(field.getType()).classPtr,
-              field.getModifiers());
+              field.getModifiers() & 0xffff);
     }
     desc.fields = fieldPtr;
   }
@@ -412,7 +412,8 @@ public class TypeManager
         precedencePtrs[i++] = ch.ptr;
       }
 
-      long modifiers = constructor.getModifiers() | ModifierCode.CTOR.value;
+      int modifiers = constructor.getModifiers() & 0xffff;
+      modifiers |= ModifierCode.CTOR.value;
       ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               constructor.toString(),
@@ -486,7 +487,7 @@ public class TypeManager
     List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
     long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    long modifiers = 0;
+    int modifiers = 0;
     if (hasStatic)
       modifiers |= ModifierCode.STATIC.value;
     long methodContainer = typeFactory.defineMethodDispatch(
@@ -552,7 +553,7 @@ public class TypeManager
         precedencePtrs[i++] = ch.ptr;
       }
 
-      long modifiers = method.getModifiers();
+      int modifiers = method.getModifiers()&0xffff;
       ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               method.toString(),

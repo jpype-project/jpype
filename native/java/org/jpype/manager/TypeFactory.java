@@ -44,7 +44,7 @@ public interface TypeFactory
           String name, 
           long superClass, 
           long componentPtr, 
-          long modifiers);
+          int modifiers);
   
   /**
    * Create a class type.  
@@ -61,7 +61,7 @@ public interface TypeFactory
           String name, 
           long superClass, 
           long[] interfaces, 
-          long modifiers);
+          int modifiers);
   
   /** 
    * Define a primitive types.
@@ -70,13 +70,14 @@ public interface TypeFactory
    *      primitive this will attach to.
    * @param cls is the Java class for this primitive.
    * @param boxedPtr is the JPClass for the boxed class.
+   * @param modifiers
    * @return 
    */
   long definePrimitive(
           int code, 
           Class cls, 
           long boxedPtr, 
-          long modifiers);
+          int modifiers);
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
@@ -109,7 +110,7 @@ public interface TypeFactory
           String name,
           Field field, // This will convert to a field id
           long fieldType,
-          long modifiers);
+          int modifiers);
   
   /**
    * Create a Method.
@@ -130,7 +131,7 @@ public interface TypeFactory
           long returnType,
           long[] argumentTypes,
           long[] overloadList,
-          long modifiers);
+          int modifiers);
   
   /** 
    * Create a Method dispatch for Python by name.
@@ -145,7 +146,7 @@ public interface TypeFactory
           long cls,
           String name,
           long[] overloadList,
-          long modifiers);
+          int modifiers);
   
 //</editor-fold>
 //<editor-fold desc="destroy" defaultstate="collapsed">

@@ -473,11 +473,11 @@ void JPClass::loadMethods()
 	for (vector<jobject>::iterator iter1 = methods.begin(); iter1 != methods.end(); iter1++)
 	{
 		const string& name = JPJni::getMemberName(*iter1);
-		JPMethod* method = NULL;
+		JPMethodDispatch* method = NULL;
 		MethodMap::iterator iter2 = methodMap.find(name);
 		if (iter2 == methodMap.end())
 		{
-			method = new JPMethod(this, name, false);
+			method = new JPMethodDispatch(this, name, false);
 			methodMap[name] = method;
 		}
 		else
@@ -499,7 +499,7 @@ void JPClass::loadConstructors()
 {
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPClass::loadMethods");
-	m_Constructors = new JPMethod(this, "[init", true);
+	m_Constructors = new JPMethodDispatch(this, "[init", true);
 
 	if (isAbstract())
 	{
@@ -578,8 +578,8 @@ string JPClass::describe()
 	// Constructors
 	out << "  // Accessible Constructors" << endl;
 	{
-		JPMethod* f = m_Constructors;
-		for (JPMethod::OverloadList::const_iterator iter = f->getMethodOverloads().begin();
+		JPMethodDispatch* f = m_Constructors;
+		for (JPMethodDispatch::JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
@@ -587,8 +587,8 @@ string JPClass::describe()
 	out << "  // Accessible Methods" << endl;
 	for (MethodList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
 	{
-		JPMethod* f = *curMethod;
-		for (JPMethod::OverloadList::const_iterator iter = f->getMethodOverloads().begin();
+		JPMethodDispatch* f = *curMethod;
+		for (JPMethodDispatch::JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}

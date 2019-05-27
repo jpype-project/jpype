@@ -14,10 +14,10 @@
    limitations under the License.
    
  *****************************************************************************/
-#ifndef _JPMETHODOVERLOAD_H_
-#define _JPMETHODOVERLOAD_H_
-
-class JPMethodOverload;
+#ifndef _JPMETHOD_H_
+#define _JPMETHOD_H_
+#include "jp_modifier.h"
+class JPMethod;
 
 class JPMatch
 {
@@ -34,7 +34,7 @@ public:
 	Type type;
 	bool isVarDirect;
 	bool isVarIndirect;
-	JPMethodOverload* overload;
+	JPMethod* overload;
 	char offset;
 	char skip;
 
@@ -49,14 +49,14 @@ public:
 	}
 } ;
 
-class JPMethodOverload: public JPResource
+class JPMethod: public JPResource
 {
-	friend class JPMethod;
+	friend class JPMethodDispatch;
 public:
-	JPMethodOverload();
-	JPMethodOverload(JPClass* claz, jobject mth);
+	JPMethod();
+	JPMethod(JPClass* claz, jobject mth);
 
-	virtual ~JPMethodOverload();
+	virtual ~JPMethod();
 
 	/** Check to see if this overload matches the argument list.
 	 *
@@ -64,33 +64,33 @@ public:
 	 * @param args is a list of arguments including the instance.
 	 * 
 	 */
-	JPMatch matches(bool isInstance, JPPyObjectVector& args) ;
+	JPMatch matches(bool isInstance, JPPyObjectVector& args);
 	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg);
 	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
 
 	bool isStatic() const
 	{
-		return m_IsStatic;
+		return JPModifier::isStatic(m_Modifiers);
 	}
 
 	bool isConstructor() const
 	{
-		return m_IsConstructor;
+		return JPModifier::isConstructor(m_Modifiers);
 	}
 
 	bool isInstance() const
 	{
-		return !m_IsStatic && !m_IsConstructor;
+		return !JPModifier::isStatic(m_Modifiers) && !JPModifier::isConstructor(m_Modifiers);
 	}
 
 	bool isFinal() const
 	{
-		return m_IsFinal;
+		return JPModifier::isFinal(m_Modifiers);
 	}
 
 	bool isVarArgs() const
 	{
-		return m_IsVarArgs;
+		return JPModifier::isVarArgs(m_Modifiers);
 	}
 
 	unsigned char getArgumentCount() const
@@ -100,53 +100,35 @@ public:
 
 	string toString() const;
 
-	bool isSameOverload(JPMethodOverload& o);
-
 	/** Determine if a method is more specific than another. */
-	bool isMoreSpecificThan(JPMethodOverload& other) const;
+	bool isMoreSpecificThan(JPMethod& other) const;
 
 	/** Consult the cache to determine if a method is more specific
 	 * than another.
 	 */
-	bool checkMoreSpecificThan(JPMethodOverload* other) const;
-
-	/** Used to determine if a bean get property should be added to the class.
-	 * 
-	 * FIXME This does not check for begins with "get" 
-	 */
-	bool isBeanAccessor();
-
-	/** Used to determine if a bean set property should be added to the class.
-	 * 
-	 * FIXME This does not check for begins with "set" or "is" 
-	 */
-	bool isBeanMutator();
+	bool checkMoreSpecificThan(JPMethod* other) const;
 
 	string matchReport(JPPyObjectVector& args);
 
 private:
 	void packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg);
-	void ensureTypeCache() const;
 
-	JPMethodOverload(const JPMethodOverload& o);
-	JPMethodOverload& operator=(const JPMethodOverload&) ;
+	JPMethod(const JPMethod& o);
+	JPMethod& operator=(const JPMethod&) ;
 
 private:
-	typedef list<JPMethodOverload*> OverloadList;
+	typedef list<JPMethod*> OverloadList;
 
 	JPClass*                 m_Class;
 	JPObjectRef              m_Method;
 	jmethodID                m_MethodID;
-	JPClassRef               m_ReturnType;
-	vector<JPClassRef>       m_Arguments;
-	mutable JPClass*         m_ReturnTypeCache;
-	mutable vector<JPClass*> m_ArgumentsTypeCache;
-	bool                     m_IsStatic;
-	bool                     m_IsFinal;
-	bool                     m_IsVarArgs;
-	bool                     m_IsConstructor;
+	JPClass*                 m_ReturnTypeCache;
+	JPClassList              m_ArgumentsTypeCache;
 	OverloadList             m_MoreSpecificOverloads;
-	bool                     m_Ordered;
+	jint                     m_Modifiers;
 } ;
+
+typedef vector<JPMethod*> JPMethodList;
+
 
 #endif // _JPMETHODOVERLOAD_H_
