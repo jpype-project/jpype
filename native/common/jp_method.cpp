@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve Mï¿½nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,303 +12,404 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
+   
  *****************************************************************************/
 #include <jpype.h>
-#include <algorithm>
 
-JPMethod::JPMethod(JPClass* clazz, const string& name, bool isConstructor) : m_Name(name)
+JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth) : m_Method(mth)
 {
-	m_Class = clazz;
-	m_hasStatic = false;
-	m_Cached = false;
-	m_IsConstructor = isConstructor;
-}
+	JPJavaFrame frame;
+	m_Class = claz;
+	m_ReturnTypeCache = NULL;
 
-JPMethod::~JPMethod()
-{
-	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
-		delete *it;
-}
+	// static
+	m_IsStatic = JPJni::isMemberStatic(mth);
+	m_IsFinal = JPJni::isMemberFinal(mth);
+	m_IsVarArgs = JPJni::isMethodVarArgs(mth);
 
-const string& JPMethod::getName() const
-{
-	return m_Name;
-}
+	// Method ID
+	m_MethodID = frame.FromReflectedMethod(m_Method.get());
 
-string JPMethod::getClassName() const
-{
-	return m_Class->getCanonicalName();
-}
+	m_IsConstructor = JPJni::isConstructor(mth);
 
-void JPMethod::addOverload(JPClass* claz, jobject mth)
-{
-	//	printf("JPMethodOverload %s\n", JPJni::toStringC(mth));
-	JPMethodOverload* over = new JPMethodOverload(claz, mth);
-
-	// The same overload can be repeated each time it is overriden. 
-	bool found = false;
-	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+	// return type
+	if (!m_IsConstructor)
 	{
-		if (over->isSameOverload(**it))
-		{
-			found = true;
-			break;
-		}
-	}
-	if (found)
-	{
-		delete over;
-		return;
+		m_ReturnType = JPJni::getMethodReturnType(mth);
 	}
 
-	m_Overloads.push_back(over);
-	m_Cached = false;
-
-	// Cache if this method has a static method
-	if (over->isStatic())
+	// arguments
+	m_Arguments = JPJni::getMethodParameterTypes(mth, m_IsConstructor);
+	// Add the implicit "this" argument
+	if (!m_IsStatic && !m_IsConstructor)
 	{
-		m_hasStatic = true;
-	}
-
-	//	if (over->isBeanAccessor())
-	//	{
-	//		m_BeanAccessor = true;
-	//	}
-	//
-	//	if (over->isBeanAccessor())
-	//	{
-	//		m_BeanMutator = true;
-	//	}
-
-	// We can't check the order of specificity here because we do not want to 
-	// load the argument types here.  Thus we need to wait for the first
-	// used. 
-}
-
-void JPMethod::ensureOverloadCache()
-{
-	if (m_Cached)
-		return;
-	m_Cached = true;
-
-	for (OverloadList::iterator iter2 = m_Overloads.begin(); iter2 != m_Overloads.end(); ++iter2)
-	{
-		JPMethodOverload* over = *iter2;
-		over->m_Ordered = false;
-		for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
-		{
-			if (it == iter2)
-				continue;
-			JPMethodOverload* current = *it;
-
-			if (over->isMoreSpecificThan(*current) && !current->isMoreSpecificThan(*over))
-			{
-				over->m_MoreSpecificOverloads.push_back(current);
-			}
-		}
-	}
-
-	// Execute a graph sort problem so that the most specific are always on the front
-	OverloadList unsorted(m_Overloads);
-	m_Overloads.clear();
-	while (!unsorted.empty())
-	{
-		// Remove the first unsorted element
-		JPMethodOverload* front = unsorted.front();
-		unsorted.pop_front();
-
-		// Check to see if all dependencies are already ordered
-		int good = true;
-		for (OverloadList::iterator it = front->m_MoreSpecificOverloads.begin();
-				it != front->m_MoreSpecificOverloads.end(); ++it)
-		{
-			JPMethodOverload* current = *it;
-			if (!current->m_Ordered)
-			{
-				good = false;
-				break;
-			}
-		}
-
-		// If all dependencies are included
-		if (good)
-		{
-			// We can put it at the front of the ordered list
-			front->m_Ordered = true;
-			m_Overloads.push_front(front);
-		}
-		else
-		{
-			// Otherwsie, we will defer it
-			unsorted.push_back(front);
-		}
+		m_Arguments.insert(m_Arguments.begin(), 1, claz->getJavaClass());
 	}
 }
 
-JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
+JPMethodOverload::~JPMethodOverload()
 {
-	JP_TRACE_IN("JPMethod::findOverload");
-	JP_TRACE("Checking overload", m_Name);
-	JP_TRACE("Got overloads to check", m_Overloads.size());
-	ensureOverloadCache();
-	vector<JPMethodOverload*> ambiguous;
-	JPMatch bestMatch;
-	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+}
+
+string JPMethodOverload::toString() const
+{
+	return JPJni::toString(m_Method.get());
+}
+
+bool JPMethodOverload::isSameOverload(JPMethodOverload& o)
+{
+	if (isStatic() != o.isStatic())
 	{
-		JPMethodOverload* current = *it;
+		return false;
+	}
 
-		JP_TRACE("Trying to match", current->toString());
-		JPMatch match = current->matches(callInstance, arg);
+	if (m_Arguments.size() != o.m_Arguments.size())
+	{
+		return false;
+	}
 
-		JP_TRACE("  match ended", match.type);
-		if (match.type == JPMatch::_exact)
+	//	JP_TRACE_IN("JPMethodOverload::isSameOverload");
+	int start = 0;
+	if (!isStatic() && !m_IsConstructor)
+	{
+		start = 1;
+	}
+	for (unsigned int i = start; i < m_Arguments.size() && i < o.m_Arguments.size(); i++)
+	{
+		if (!JPJni::equalsObject(m_Arguments[i].get(), o.m_Arguments[i].get()))
+		{
+			return false;
+		}
+	}
+	return true;
+	//	JP_TRACE_OUT;
+}
+
+JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
+{
+	JP_TRACE_IN("JPMethodOverload::matchVars");
+	JPArrayClass* arraytype = (JPArrayClass*) vartype;
+	JPClass* type = arraytype->getComponentType();
+	size_t len = arg.size();
+
+	JPMatch::Type lastMatch = JPMatch::_exact;
+	for (size_t i = start; i < len; i++)
+	{
+		JPMatch::Type match = type->canConvertToJava(arg[i]);
+
+		if (match < JPMatch::_implicit)
+		{
+			return JPMatch::_none;
+		}
+		if (match < lastMatch)
+		{
+			lastMatch = match;
+		}
+	}
+
+	return lastMatch;
+	JP_TRACE_OUT;
+}
+
+JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
+{
+	JP_TRACE_IN("JPMethodOverload::matches");
+	JPMatch match;
+	match.overload = this;
+
+	ensureTypeCache();
+	size_t len = arg.size();
+	size_t tlen = m_Arguments.size();
+	JP_TRACE("arguments length", len);
+	JP_TRACE("types length", tlen);
+	if (callInstance && isStatic())
+	{
+		len--;
+		match.offset = 1;
+	}
+
+	if (callInstance || isInstance())
+	{
+		match.skip = 1;
+	}
+
+	JPMatch::Type lastMatch = JPMatch::_exact;
+	if (!m_IsVarArgs)
+	{
+		if (len != tlen)
+		{
+			JP_TRACE("Argument length mismatch", len, tlen);
+			return match; // JPMatch::_none
+		}
+	}
+	else
+	{
+		JP_TRACE("Match vargs");
+		JPClass* type = m_ArgumentsTypeCache[tlen - 1];
+		if (len < tlen - 1)
 		{
 			return match;
 		}
-		if (match.type < JPMatch::_implicit)
-			continue;
 
-		if (bestMatch.overload == 0)
+		// Hard, could be direct array or an array.
+		if (len == tlen)
 		{
-			bestMatch = match;
-			continue;
+			// Try direct
+			size_t last = tlen - 1 - match.offset;
+			PyObject* obj = arg[last];
+			--len;
+			lastMatch = type->canConvertToJava(obj);
+			if (lastMatch < JPMatch::_implicit)
+			{
+				// Try indirect
+				lastMatch = matchVars(arg, last, type);
+				match.isVarIndirect = true;
+				JP_TRACE("Match vargs indirect", lastMatch);
+			}
+			else
+			{
+				match.isVarDirect = true;
+				JP_TRACE("Match vargs direct", lastMatch);
+			}
 		}
 
-		if (callInstance && !current->isStatic() && bestMatch.overload->isStatic())
+		else if (len > tlen)
 		{
-			bestMatch = match;
-			continue;
+			// Must match the array type
+			len = tlen - 1;
+			lastMatch = matchVars(arg, tlen - 1 + match.offset, type);
+			match.isVarIndirect = true;
+			JP_TRACE("Match vargs indirect", lastMatch);
 		}
 
-		if (!callInstance && current->isStatic() && !bestMatch.overload->isStatic())
+		else if (len < tlen)
 		{
-			bestMatch = match;
-			continue;
+			match.isVarIndirect = true;
+			JP_TRACE("Match vargs empty");
 		}
 
-		if (!(bestMatch.overload->checkMoreSpecificThan(current)))
+		if (lastMatch < JPMatch::_implicit)
 		{
-			ambiguous.push_back(*it);
+			return match;
 		}
 	}
 
-	// If we have an ambiguous overload report an error.
-	if (!ambiguous.empty())
+	JP_TRACE("Start match");
+	for (size_t i = 0; i < len; i++)
 	{
-		ambiguous.push_back(bestMatch.overload);
-
-		// We have two possible overloads so we declare an error
-		std::stringstream ss;
-		if (m_IsConstructor)
-			ss << "Ambiguous overloads found for constructor " << m_Class->getCanonicalName() << "(";
-		else
-			ss << "Ambiguous overloads found for " << m_Class->getCanonicalName() << "." << getName() << "(";
-		size_t start = callInstance ? 1 : 0;
-		for (size_t i = start; i < arg.size(); ++i)
+		JPClass* type = m_ArgumentsTypeCache[i];
+		JPMatch::Type ematch = type->canConvertToJava(arg[i + match.offset]);
+		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[i + match.offset]));
+		if (ematch < JPMatch::_implicit)
 		{
-			if (i != start)
-				ss << ",";
-			ss << JPPyObject::getTypeName(arg[i]);
+			return match;
 		}
-		ss << ")" << " between:" << std::endl;
-		for (vector<JPMethodOverload*>::iterator it = ambiguous.begin(); it != ambiguous.end(); ++it)
+		if (ematch < lastMatch)
 		{
-			ss << "\t" << (*it)->toString() << std::endl;
+			lastMatch = ematch;
 		}
-		JP_RAISE_RUNTIME_ERROR(ss.str());
-		JP_TRACE(ss.str());
 	}
 
-	// If we can't find a matching overload throw an error.
-	if (!bestMatch.overload)
-	{
-		std::stringstream ss;
-		if (m_IsConstructor)
-			ss << "No matching overloads found for constructor " << m_Class->getCanonicalName() << "(";
-		else
-			ss << "No matching overloads found for " << m_Class->getCanonicalName() << "." << getName() << "(";
-		size_t start = callInstance ? 1 : 0;
-		for (size_t i = start; i < arg.size(); ++i)
-		{
-			if (i != start)
-				ss << ",";
-			ss << JPPyObject::getTypeName(arg[i]);
-		}
-		ss << ")" << ", options are:" << std::endl;
-		for (OverloadList::iterator it = m_Overloads.begin();
-				it != m_Overloads.end();
-				++it)
-		{
-			JPMethodOverload* current = *it;
-			ss << "\t" << current->toString();
-			ss << std::endl;
-		}
-		JP_RAISE_RUNTIME_ERROR(ss.str());
-	}
-	return bestMatch;
+
+	match.type = lastMatch;
+	return match;
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethod::invoke(JPPyObjectVector& args, bool instance)
+void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
 {
-	JP_TRACE_IN("JPMethod::invoke");
-	JPMatch match = findOverload(args, instance);
-	return match.overload->invoke(match, args);
+	JP_TRACE_IN("JPMethodOverload::packArgs");
+	size_t len = arg.size();
+	size_t tlen = m_Arguments.size();
+	JP_TRACE("skip", match.skip == 1);
+	JP_TRACE("offset", match.offset == 1);
+	JP_TRACE("arguments length", len);
+	JP_TRACE("types length", tlen);
+	if (match.isVarIndirect)
+	{
+		JP_TRACE("Pack varargs");
+		len = tlen - 1;
+		JPArrayClass* type = (JPArrayClass*) m_ArgumentsTypeCache[tlen - 1];
+		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, arg.size());
+	}
+
+	JP_TRACE("Pack fixed total=", len - match.offset);
+	for (size_t i = match.skip; i < len; i++)
+	{
+		JPClass* type = m_ArgumentsTypeCache[i - match.offset];
+		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName());
+		v[i - match.skip] = type->convertToJava(arg[i]);
+	}
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethod::invokeConstructor(JPPyObjectVector& arg)
+JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg)
 {
-	JPMatch currentMatch = findOverload(arg, false);
-	return currentMatch.overload->invokeConstructor(currentMatch, arg);
+	JP_TRACE_IN("JPMethodOverload::invoke");
+	ensureTypeCache();
+	size_t alen = m_Arguments.size();
+	JPJavaFrame frame(8 + alen);
+
+	JPClass* retType = m_ReturnTypeCache;
+
+	// Pack the arguments
+	vector<jvalue> v(alen + 1);
+	packArgs(match, v, arg);
+
+	// Invoke the method (arg[0] = this)
+	if (m_IsStatic)
+	{
+		jclass claz = m_Class->getJavaClass();
+		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
+	}
+	else
+	{
+		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
+		jobject c = selfObj->getJavaObject();
+		jclass clazz = m_Class->getJavaClass();
+		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
+	}
+	JP_TRACE_OUT;
 }
 
-bool JPMethod::isBeanMutator()
+JPValue JPMethodOverload::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 {
-	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+	JP_TRACE_IN("JPMethodOverload::invokeConstructor");
+	ensureTypeCache();
+	size_t alen = m_Arguments.size();
+	JPJavaFrame frame(8 + alen);
+
+	vector<jvalue> v(alen + 1);
+	packArgs(match, v, arg);
+
+	jvalue val;
 	{
-		if ((*it)->isBeanMutator())
+		JPPyCallRelease call;
+		val.l = frame.keep(frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
+	}
+	return JPValue(m_Class, val);
+
+	JP_TRACE_OUT;
+}
+
+string JPMethodOverload::matchReport(JPPyObjectVector& sequence)
+{
+	ensureTypeCache();
+	stringstream res;
+
+	res << m_ReturnTypeCache->getCanonicalName() << " (";
+
+	bool isFirst = true;
+	for (vector<JPClass*>::iterator it = m_ArgumentsTypeCache.begin(); it != m_ArgumentsTypeCache.end(); it++)
+	{
+		if (isFirst && !isStatic())
+		{
+			isFirst = false;
+			continue;
+		}
+		isFirst = false;
+		res << (*it)->getCanonicalName();
+	}
+
+	res << ") ==> ";
+
+	JPMatch match = matches(!isStatic(), sequence);
+	switch (match.type)
+	{
+		case JPMatch::_none:
+			res << "NONE";
+			break;
+		case JPMatch::_explicit:
+			res << "EXPLICIT";
+			break;
+		case JPMatch::_implicit:
+			res << "IMPLICIT";
+			break;
+		case JPMatch::_exact:
+			res << "EXACT";
+			break;
+		default:
+			res << "UNKNOWN";
+			break;
+	}
+
+	res << endl;
+
+	return res.str();
+
+}
+
+bool JPMethodOverload::isMoreSpecificThan(JPMethodOverload& other) const
+{
+	ensureTypeCache();
+	other.ensureTypeCache();
+	// see http://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.2.5
+
+	// fixed-arity methods
+	size_t startThis = isStatic() || m_IsConstructor ? 0 : 1;
+	size_t startOther = other.isStatic() || m_IsConstructor ? 0 : 1;
+	size_t numParametersThis = m_Arguments.size() - startThis;
+	size_t numParametersOther = other.m_Arguments.size() - startOther;
+	if (numParametersOther != numParametersThis)
+	{
+		return false;
+	}
+	for (size_t i = 0; i < numParametersThis; ++i)
+	{
+		JPClass* thisArgType = m_ArgumentsTypeCache[startThis + i];
+		JPClass* otherArgType = other.m_ArgumentsTypeCache[startOther + i];
+		if (!thisArgType->isSubTypeOf(otherArgType))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool JPMethodOverload::checkMoreSpecificThan(JPMethodOverload* other) const
+{
+	for (OverloadList::const_iterator it = m_MoreSpecificOverloads.begin();
+			it != m_MoreSpecificOverloads.end();
+			++it)
+	{
+		if (other == *it)
 			return true;
 	}
 	return false;
 }
 
-bool JPMethod::isBeanAccessor()
+void JPMethodOverload::ensureTypeCache() const
 {
-	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+	if (m_Arguments.size() == m_ArgumentsTypeCache.size() && (m_ReturnTypeCache || m_IsConstructor))
 	{
-		if ((*it)->isBeanAccessor())
-			return true;
+		return;
 	}
-	return false;
+	JP_TRACE_IN("JPMethodOverload::ensureTypeCache");
+	// There was a bug in the previous condition, best to be safe and clear list
+	m_ArgumentsTypeCache.clear();
+	for (size_t i = 0; i < m_Arguments.size(); ++i)
+	{
+		m_ArgumentsTypeCache.push_back(JPTypeManager::findClass(m_Arguments[i].get()));
+	}
+	if (!m_IsConstructor)
+	{
+		m_ReturnTypeCache = JPTypeManager::findClass(m_ReturnType.get());
+	}
+	JP_TRACE_OUT;
 }
 
-string JPMethod::matchReport(JPPyObjectVector& args)
+bool JPMethodOverload::isBeanAccessor()
 {
-	stringstream res;
-	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << endl;
-
-	for (OverloadList::iterator cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
-	{
-		JPMethodOverload* current = *cur;
-		res << "  " << current->matchReport(args);
-	}
-	return res.str();
+	ensureTypeCache();
+	return !isStatic()
+			&& m_ReturnTypeCache != JPTypeManager::_void
+			&& getArgumentCount() == 1;
 }
 
-string JPMethod::dump()
+bool JPMethodOverload::isBeanMutator()
 {
-	stringstream res;
-	for (OverloadList::iterator cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
-	{
-		JPMethodOverload *u = *cur;
-		res << u->toString() << std::endl;
-		for (OverloadList::iterator iter = u->m_MoreSpecificOverloads.begin();
-				iter != u->m_MoreSpecificOverloads.end(); ++iter)
-		{
-			res << "   " << (*iter)->toString() << std::endl;
-		}
-	}
-	return res.str();
+	ensureTypeCache();
+	return !isStatic()
+			&& m_ReturnTypeCache == JPTypeManager::_void
+			&& getArgumentCount() == 2;
 }
