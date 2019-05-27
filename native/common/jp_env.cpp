@@ -47,6 +47,9 @@ namespace
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
+JPResource::~JPResource()
+{}
+
 namespace
 {
 
@@ -169,6 +172,7 @@ void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringV
 
 	JP_TRACE("Initialize");
 	JPJni::init();
+	JPTypeFactory::init();
 	JPClassLoader::init();
 	JPTypeManager::init();
 	JPReferenceQueue::init();

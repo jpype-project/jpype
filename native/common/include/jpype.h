@@ -132,6 +132,12 @@ class JPField;
 #include "jp_typemanager.h"
 #include "jp_encoding.h"
 
+class JPResource
+{
+	public:
+		virtual ~JPResource()=0;
+};
+
 // Other header files
 #include "jp_methodoverload.h"
 #include "jp_value.h"

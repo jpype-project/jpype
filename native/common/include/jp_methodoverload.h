@@ -49,7 +49,7 @@ public:
 	}
 } ;
 
-class JPMethodOverload
+class JPMethodOverload: public JPResource
 {
 	friend class JPMethod;
 public:

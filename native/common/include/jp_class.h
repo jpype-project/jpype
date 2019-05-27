@@ -17,7 +17,7 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
-class JPClass
+class JPClass: public JPResource
 {
 public:
 	typedef map<string, JPMethod*> MethodMap;

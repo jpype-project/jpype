@@ -17,7 +17,7 @@
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
 
-class JPMethod
+class JPMethod: public JPResource
 {
 public:
 	typedef list<JPMethodOverload*> OverloadList;

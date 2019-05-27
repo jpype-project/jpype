@@ -16,6 +16,7 @@
 package org.jpype.manager;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
@@ -40,8 +41,7 @@ public class TypeManager
   public List<Action> deferred = new LinkedList<>();
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
-  public Class functionalAnnotation =null;
-  = Class.forName("java.lang.FunctionalInterface");
+  public Class<? extends Annotation> functionalAnnotation = null;
 
 //<editor-fold desc="interface">
   public synchronized void init()
@@ -50,10 +50,11 @@ public class TypeManager
       throw new RuntimeException("Cannot be restarted");
     isStarted = true;
     isShutdown = false;
-    
+
     try
     {
-      this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface");
+      this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
+              .asSubclass(Annotation.class);
     } catch (ClassNotFoundException ex)
     {
       // It is okay if we don't find this
@@ -207,15 +208,15 @@ public class TypeManager
    * @param cls
    * @return a C++ wrapper handle for a jp_classtype
    */
-  private ClassDescriptor createClass(Class cls, boolean special)
+  private ClassDescriptor createClass(Class<?> cls, boolean special)
   {
     if (cls.isArray())
       return this.createArrayClass(cls);
 
     // Object classes are more work as we need the super information as well.
     // Make sure all base classes are loaded
-    Class superClass = cls.getSuperclass();
-    Class[] interfaces = cls.getInterfaces();
+    Class<?> superClass = cls.getSuperclass();
+    Class<?>[] interfaces = cls.getInterfaces();
     ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
     long[] interfacesPtr = new long[interfaces.length];
     long superClassPtr = 0;
@@ -240,8 +241,8 @@ public class TypeManager
       modifiers |= ModifierCode.THROWABLE.value;
     if (Serializable.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.SERIALIZABLE.value;
-    if (this.functionalAnnotation!=null &&
-            cls.getAnnotation(this.functionalAnnotation)!=null)
+    if (this.functionalAnnotation != null
+            && cls.getAnnotation(this.functionalAnnotation) != null)
       modifiers |= ModifierCode.FUNCTIONAL.value;
 
     // FIXME watch out for anonyous and lambda here.
@@ -263,12 +264,12 @@ public class TypeManager
 
   private long createAnonymous(ClassDescriptor parent)
   {
-    if (parent.anonymous !=0)
+    if (parent.anonymous != 0)
       return parent.anonymous;
-    
-    parent.anonymous = typeFactory.defineObjectClass(parent.cls, parent.cls.getCanonicalName()+"$Anonymous", 
-            parent.classPtr, 
-            null, 
+
+    parent.anonymous = typeFactory.defineObjectClass(parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
+            parent.classPtr,
+            null,
             ModifierCode.ANONYMOUS.value);
     return parent.anonymous;
   }
@@ -282,7 +283,7 @@ public class TypeManager
     long classPtr = typeFactory
             .defineArrayClass(cls,
                     cls.getCanonicalName(), this.java_lang_Object.classPtr,
-                    componentTypePtr, 
+                    componentTypePtr,
                     cls.getModifiers());
 
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
@@ -301,7 +302,7 @@ public class TypeManager
   {
     long classPtr = typeFactory.definePrimitive(code,
             cls,
-            this.getClass(boxed).classPtr, 
+            this.getClass(boxed).classPtr,
             cls.getModifiers());
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
   }
@@ -434,7 +435,7 @@ public class TypeManager
    */
   public void createMethodDispatches(ClassDescriptor desc)
   {
-    Class cls = desc.cls;
+    Class<?> cls = desc.cls;
 
     // Get the list of all public, non-overrided methods we will process
     LinkedList<Method> methods = filterOverridden(cls, cls.getMethods());
@@ -600,7 +601,7 @@ public class TypeManager
    * @param methods
    * @return a new list containing only public members that are not overridden.
    */
-  public static LinkedList<Method> filterOverridden(Class cls, Method[] methods)
+  public static LinkedList<Method> filterOverridden(Class<?> cls, Method[] methods)
   {
     LinkedList<Method> out = new LinkedList<>();
     for (Method method : methods)
@@ -621,7 +622,7 @@ public class TypeManager
    * @param method is a method that applies to the class.
    * @return true if the method is hidden by another method.
    */
-  public static boolean isOverridden(Class cls, Method method)
+  public static boolean isOverridden(Class<?> cls, Method method)
   {
     try
     {

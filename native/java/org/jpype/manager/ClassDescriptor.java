@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
  */
 public class ClassDescriptor
 {
-  public Class cls;
+  public Class<?> cls;
 
   /**
    * JPClass pointer for this class.

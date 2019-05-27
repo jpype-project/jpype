@@ -20,6 +20,11 @@
 /**
  * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.
  */
+namespace JPTypeFactory
+{
+	void init();
+}
+
 namespace JPTypeManager
 {
 	extern JPVoidType* _void;
