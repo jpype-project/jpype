@@ -37,7 +37,7 @@ from . import _jinit
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM', 'synchronized'
+    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path'
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -258,7 +258,9 @@ def getDefaultJVMPath():
 
 
 # Naming compatibility
-get_default_jvm_path = getDefaultJVMPath
+@deprecated("getDefaultJVMPath")
+def get_default_jvm_path(*args, **kwargs):
+    return getDefaultJVMPath(*args, **kwargs)
 
 
 def getJVMVersion():
