@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPLongType::JPLongType() : JPPrimitiveType(JPTypeManager::_java_lang_Long)
+JPLongType::JPLongType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

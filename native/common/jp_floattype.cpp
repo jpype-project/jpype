@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPFloatType::JPFloatType() : JPPrimitiveType(JPTypeManager::_java_lang_Float)
+JPFloatType::JPFloatType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

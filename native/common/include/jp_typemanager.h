@@ -22,7 +22,7 @@
  */
 namespace JPTypeFactory
 {
-	void init();
+	void init(JPContext* content);
 }
 
 namespace JPTypeManager

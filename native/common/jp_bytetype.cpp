@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPByteType::JPByteType() : JPPrimitiveType(JPTypeManager::_java_lang_Byte)
+JPByteType::JPByteType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

@@ -46,11 +46,13 @@ template <class T> convert(JPJavaFrame& frame, jlongArray array, vector<T>& out)
 	return;
 }
 
-JNIEXPORT void JNICALL JPTypeFactory_destroy(JNIEnv *env, jobject self,
+JNIEXPORT void JNICALL JPTypeFactory_destroy(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jlongArray resources,
 		jint sz)
 {
 	JP_TRACE_IN("JPTypeFactory_destroy");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -70,13 +72,14 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(JNIEnv *env, jobject self,
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(JNIEnv *env, jobject self,
-		jlong clsPtr,
+JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jstring nameJString,
 		jlongArray overloadPtrs,
 		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethodDispatch");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -94,14 +97,15 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(JNIEnv *env, jobject 
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(JNIEnv *env, jobject self,
-		jclass cls,
+JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jstring name,
 		jlong superClass,
 		jlong componentClass,
 		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineArrayClass");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -120,8 +124,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(JNIEnv *env, jobject self
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, jobject self,
-		jlong context,
+JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jclass cls,
 		jstring name,
 		jlong superClass,
@@ -129,6 +133,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, jobject sel
 		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineObjectClass");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -184,14 +189,15 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(JNIEnv *env, jobject sel
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(JNIEnv *env, jobject self,
-		jlong context,
+JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jstring name,
 		jclass cls,
 		jlong boxedPtr,
 		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_definePrimitive");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -224,13 +230,14 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(JNIEnv *env, jobject self,
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
-		jlong context,
+		jlong contextPtr,
 		jlong clsPtr,
 		jlong ctorMethod,
 		jlongArray methodPtrs,
 		jlongArray fieldPtrs)
 {
 	JP_TRACE_IN("JPTypeFactory_assignMembers");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -255,9 +262,8 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env,
-		jlong context,
-		jobject self,
+JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong cls,
 		jstring name,
 		jobject field,
@@ -265,6 +271,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env,
 		jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineField");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -279,9 +286,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(JNIEnv *env,
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(JNIEnv *env,
-		jobject self, 
-		jlong context,
+JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
+		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong cls, jstring name,
 		jobject method,
 		jlong returnType,
@@ -289,6 +295,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(JNIEnv *env,
 		jlongArray overloadList, jint modifiers)
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethod");
+	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(env);
 	try
 	{
@@ -303,7 +310,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(JNIEnv *env,
 	JP_TRACE_OUT;
 }
 
-void JPTypeFactory::init()
+void JPTypeFactory::init(JPContext* context)
 {
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPTypeFactory::init");

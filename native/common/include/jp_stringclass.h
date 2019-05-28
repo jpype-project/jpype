@@ -21,7 +21,11 @@ class JPStringClass : public JPClass
 {
 public:
 
-	JPStringClass();
+	JPStringClass(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers);
 	virtual ~JPStringClass();
 
 public:

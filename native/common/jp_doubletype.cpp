@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPDoubleType::JPDoubleType() : JPPrimitiveType(JPTypeManager::_java_lang_Double)
+JPDoubleType::JPDoubleType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

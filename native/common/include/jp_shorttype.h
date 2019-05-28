@@ -21,7 +21,7 @@ class JPShortType : public JPPrimitiveType
 {
 public:
 
-	JPShortType();
+	JPShortType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPShortType();
 
 public:

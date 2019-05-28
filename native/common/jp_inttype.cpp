@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPIntType::JPIntType() : JPPrimitiveType(JPTypeManager::_java_lang_Integer)
+JPIntType::JPIntType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

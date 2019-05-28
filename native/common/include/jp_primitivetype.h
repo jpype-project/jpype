@@ -20,7 +20,10 @@
 class JPPrimitiveType : public JPClass
 {
 protected:
-	JPPrimitiveType(JPBoxedClass* cls);
+	JPPrimitiveType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers);
 	virtual ~JPPrimitiveType();
 
 protected:

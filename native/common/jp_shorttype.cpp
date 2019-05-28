@@ -16,8 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPShortType::JPShortType()
-: JPPrimitiveType(JPTypeManager::_java_lang_Short)
+JPShortType::JPShortType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

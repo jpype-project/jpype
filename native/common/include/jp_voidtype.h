@@ -21,7 +21,7 @@ class JPVoidType : public JPPrimitiveType
 {
 public:
 
-	JPVoidType();
+	JPVoidType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPVoidType();
 
 public:

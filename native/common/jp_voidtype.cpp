@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPVoidType::JPVoidType() : JPPrimitiveType(JPTypeManager::_java_lang_Void)
+JPVoidType::JPVoidType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

@@ -62,7 +62,7 @@ public:
 	 * created in this scope without additional overhead.
 	 *
 	 */
-	explicit JPJavaFrame(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
+//	explicit JPJavaFrame(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
 
 	/** Create a new JavaFrame.
 	 *
@@ -75,7 +75,7 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	JPJavaFrame(int size = LOCAL_FRAME_DEFAULT);
+//	JPJavaFrame(int size = LOCAL_FRAME_DEFAULT);
 
 	/** Exit the local scope and clean up all java
 	 * objects.  

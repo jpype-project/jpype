@@ -34,7 +34,7 @@ JPObjectType::~JPObjectType()
 JPMatch::Type JPObjectType::canConvertToJava(PyObject* pyobj)
 {
 	// Implicit rules for java.lang.Object
-	JP_TRACE_IN("JPObjectBaseClass::canConvertToJava");
+	JP_TRACE_IN("JPObjectType::canConvertToJava");
 	if (JPPyObject::isNone(pyobj))
 	{
 		return JPMatch::_implicit;
@@ -95,7 +95,7 @@ JPMatch::Type JPObjectType::canConvertToJava(PyObject* pyobj)
 
 jvalue JPObjectType::convertToJava(PyObject* pyobj)
 {
-	JP_TRACE_IN("JPObjectBaseClass::convertToJava");
+	JP_TRACE_IN("JPObjectType::convertToJava");
 	JPJavaFrame frame;
 	jvalue res;
 	res.l = NULL;
@@ -206,7 +206,7 @@ JPClassType::~JPClassType()
 
 JPMatch::Type JPClassType::canConvertToJava(PyObject* pyobj)
 {
-	JP_TRACE_IN("JPClassBaseClass::convertToJava");
+	JP_TRACE_IN("JPObjectType::convertToJava");
 	if (JPPyObject::isNone(pyobj))
 		return JPMatch::_implicit;
 
@@ -228,7 +228,7 @@ JPMatch::Type JPClassType::canConvertToJava(PyObject* pyobj)
 
 jvalue JPClassType::convertToJava(PyObject* pyobj)
 {
-	JP_TRACE_IN("JPClassBaseClass::convertToJava");
+	JP_TRACE_IN("JPObjectType::convertToJava");
 	JP_TRACE(JPPyObject::getTypeName(pyobj));
 
 	jvalue res;

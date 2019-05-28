@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPBooleanType::JPBooleanType() : JPPrimitiveType(JPTypeManager::_java_lang_Boolean)
+JPBooleanType::JPBooleanType(jclass clss,
+		const string& name,
+		JPBoxedClass* boxedClass,
+		jint modifiers)
+: JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
 }
 

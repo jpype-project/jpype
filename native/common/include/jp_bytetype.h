@@ -21,7 +21,7 @@ class JPByteType : public JPPrimitiveType
 {
 public:
 
-	JPByteType();
+	JPByteType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPByteType();
 
 public:
