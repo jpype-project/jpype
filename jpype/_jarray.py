@@ -172,6 +172,9 @@ class _JArray(object):
         except TypeError:
             return True
 
+    def clone(self):
+        return _jclass.JClass("java.util.Arrays").copyOf(self, len(self))
+
 
 JArray = _jobject.defineJObjectFactory("JArray", None, _JArray)
 
