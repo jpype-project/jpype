@@ -22,68 +22,76 @@ import java.lang.reflect.Field;
  * This is the interface for creating C++ object in JPype.
  * <p>
  * These methods are all native.
- *
+ * <p>
  */
 public class TypeFactoryNative implements TypeFactory
 {
+  public long context;
+
   @Override
   public native long defineArrayClass(
-          Class cls, 
-          String name, 
-          long superClass, 
-          long componentPtr, 
-          int modifiers);
- 
-  @Override
-  public native long defineObjectClass(
-          Class cls, 
-          String name, 
-          long superClass, 
-          long[] interfaces, 
-          int modifiers);
-  
-  @Override
-  public native long definePrimitive(
-          int code, 
-          Class cls, 
-          long boxedPtr, 
+          long context,
+          Class cls,
+          String name,
+          long superClass,
+          long componentPtr,
           int modifiers);
 
+  @Override
+  public native long defineObjectClass(
+          long context,
+          Class cls,
+          String name,
+          long superClass,
+          long[] interfaces,
+          int modifiers);
+
+  @Override
+  public native long definePrimitive(
+          long context,
+          String name,
+          Class cls,
+          long boxedPtr,
+          int modifiers);
 
   @Override
   public native void assignMembers(
-          long cls, 
-          long ctorMethod, 
-          long[] methodList, 
+          long context,
+          long cls,
+          long ctorMethod,
+          long[] methodList,
           long[] fieldList);
-  
+
   @Override
   public native long defineField(
-          long cls, 
-          String name, 
-          Field field, 
-          long fieldType, 
+          long context,
+          long cls,
+          String name,
+          Field field,
+          long fieldType,
           int modifiers);
-  
+
   @Override
   public native long defineMethod(
-          long cls, 
-          String name, 
-          Executable method, 
-          long returnType, 
-          long[] argumentTypes, 
-          long[] overloadList, 
+          long context,
+          long cls,
+          String name,
+          Executable method,
+          long returnType,
+          long[] argumentTypes,
+          long[] overloadList,
           int modifiers);
- 
+
   @Override
   public native long defineMethodDispatch(
-          long cls, 
-          String name, 
-          long[] overloadList, 
+          long context,
+          long cls,
+          String name,
+          long[] overloadList,
           int modifiers);
-  
+
   @Override
-  public native void destroy(long[] resources, int sz);
-
-
+  public native void destroy(
+          long context,
+          long[] resources, int sz);
 }

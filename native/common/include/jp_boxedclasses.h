@@ -30,7 +30,7 @@
 class JPBoxedClass : public JPClass
 {
 public:
-	JPBoxedClass(jclass c);
+	JPBoxedClass(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
 	virtual ~JPBoxedClass();
 
 	void setPrimitiveType(JPPrimitiveType* primitiveType);
@@ -40,67 +40,67 @@ protected:
 	JPPrimitiveType* m_PrimitiveType;
 } ;
 
-class JPBoxedVoidClass : public JPBoxedClass
+class JPBoxedVoidType : public JPBoxedClass
 {
 public:
-	JPBoxedVoidClass();
-	virtual~ JPBoxedVoidClass();
+	JPBoxedVoidType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedVoidType();
 } ;
 
-class JPBoxedBooleanClass : public JPBoxedClass
+class JPBoxedBooleanType : public JPBoxedClass
 {
 public:
-	JPBoxedBooleanClass();
-	virtual~ JPBoxedBooleanClass();
+	JPBoxedBooleanType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedBooleanType();
 } ;
 
-class JPBoxedByteClass : public JPBoxedClass
+class JPBoxedByteType : public JPBoxedClass
 {
 public:
-	JPBoxedByteClass();
-	virtual~ JPBoxedByteClass();
+	JPBoxedByteType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedByteType();
 } ;
 
-class JPBoxedCharacterClass : public JPBoxedClass
+class JPBoxedCharacterType : public JPBoxedClass
 {
 public:
-	JPBoxedCharacterClass();
-	virtual~ JPBoxedCharacterClass();
+	JPBoxedCharacterType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedCharacterType();
 } ;
 
-class JPBoxedShortClass : public JPBoxedClass
+class JPBoxedShortType : public JPBoxedClass
 {
 public:
-	JPBoxedShortClass();
-	virtual~ JPBoxedShortClass();
+	JPBoxedShortType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedShortType();
 } ;
 
-class JPBoxedIntegerClass : public JPBoxedClass
+class JPBoxedIntegerType : public JPBoxedClass
 {
 public:
-	JPBoxedIntegerClass();
-	virtual~ JPBoxedIntegerClass();
+	JPBoxedIntegerType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedIntegerType();
 } ;
 
-class JPBoxedLongClass : public JPBoxedClass
+class JPBoxedLongType : public JPBoxedClass
 {
 public:
-	JPBoxedLongClass();
-	virtual~ JPBoxedLongClass();
+	JPBoxedLongType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedLongType();
 } ;
 
-class JPBoxedFloatClass : public JPBoxedClass
+class JPBoxedFloatType : public JPBoxedClass
 {
 public:
-	JPBoxedFloatClass();
-	virtual~ JPBoxedFloatClass();
+	JPBoxedFloatType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedFloatType();
 } ;
 
-class JPBoxedDoubleClass : public JPBoxedClass
+class JPBoxedDoubleType : public JPBoxedClass
 {
 public:
-	JPBoxedDoubleClass();
-	virtual~ JPBoxedDoubleClass();
+	JPBoxedDoubleType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual~ JPBoxedDoubleType();
 } ;
 
 #endif // _JPBOXEDCLASS_H_

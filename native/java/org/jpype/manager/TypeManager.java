@@ -34,6 +34,7 @@ import java.util.TreeSet;
 public class TypeManager
 {
 //  private static TypeManager INSTANCE = new TypeManager();
+  public long context = 0;
   public boolean isStarted = false;
   public boolean isShutdown = false;
   public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
@@ -80,15 +81,15 @@ public class TypeManager
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.
-    createPrimitive(0, Void.TYPE, Void.class);
-    createPrimitive(1, Boolean.TYPE, Boolean.class);
-    createPrimitive(2, Byte.TYPE, Byte.class);
-    createPrimitive(3, Character.TYPE, Character.class);
-    createPrimitive(4, Short.TYPE, Short.class);
-    createPrimitive(5, Integer.TYPE, Integer.class);
-    createPrimitive(6, Long.TYPE, Long.class);
-    createPrimitive(7, Float.TYPE, Float.class);
-    createPrimitive(8, Double.TYPE, Double.class);
+    createPrimitive("void", Void.TYPE, Void.class);
+    createPrimitive("boolean", Boolean.TYPE, Boolean.class);
+    createPrimitive("byte", Byte.TYPE, Byte.class);
+    createPrimitive("char", Character.TYPE, Character.class);
+    createPrimitive("short", Short.TYPE, Short.class);
+    createPrimitive("int", Integer.TYPE, Integer.class);
+    createPrimitive("long", Long.TYPE, Long.class);
+    createPrimitive("float", Float.TYPE, Float.class);
+    createPrimitive("double", Double.TYPE, Double.class);
     this.executeDeferred();
   }
 
@@ -249,7 +250,7 @@ public class TypeManager
     String name = cls.getCanonicalName();
 
     // Create the JPClass
-    long classPtr = typeFactory.defineObjectClass(cls, name,
+    long classPtr = typeFactory.defineObjectClass(context, cls, name,
             superClassPtr,
             interfacesPtr,
             modifiers);
@@ -267,7 +268,7 @@ public class TypeManager
     if (parent.anonymous != 0)
       return parent.anonymous;
 
-    parent.anonymous = typeFactory.defineObjectClass(parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
+    parent.anonymous = typeFactory.defineObjectClass(context, parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
             ModifierCode.ANONYMOUS.value);
@@ -281,7 +282,7 @@ public class TypeManager
     long componentTypePtr = this.getClass(componentType).classPtr;
 
     long classPtr = typeFactory
-            .defineArrayClass(cls,
+            .defineArrayClass(context, cls,
                     cls.getCanonicalName(), this.java_lang_Object.classPtr,
                     componentTypePtr,
                     cls.getModifiers() & 0xffff);
@@ -294,13 +295,14 @@ public class TypeManager
   /**
    * Tell JPype to make a primitive Class.
    *
-   * @param code
+   * @param name
    * @param cls
    * @param boxed
    */
-  private void createPrimitive(int code, Class cls, Class boxed)
+  private void createPrimitive(String name, Class cls, Class boxed)
   {
-    long classPtr = typeFactory.definePrimitive(code,
+    long classPtr = typeFactory.definePrimitive(context, 
+            name,
             cls,
             this.getClass(boxed).classPtr,
             cls.getModifiers() & 0xffff);
@@ -320,7 +322,8 @@ public class TypeManager
       audit.verifyMembers(desc);
 
     // Pass this to JPype      
-    this.typeFactory.assignMembers(desc.classPtr,
+    this.typeFactory.assignMembers(context,
+            desc.classPtr,
             desc.constructorDispatch,
             desc.methodDispatch,
             desc.fields);
@@ -337,7 +340,7 @@ public class TypeManager
     int i = 0;
     for (Field field : fields)
     {
-      fieldPtr[i++] = this.typeFactory.defineField(
+      fieldPtr[i++] = this.typeFactory.defineField(context,
               desc.classPtr,
               field.getName(),
               field,
@@ -373,7 +376,7 @@ public class TypeManager
 
     // Create the dispatch for it
     desc.constructorDispatch = typeFactory
-            .defineMethodDispatch(
+            .defineMethodDispatch(context,
                     desc.classPtr,
                     "<init>",
                     desc.constructors,
@@ -414,7 +417,7 @@ public class TypeManager
 
       int modifiers = constructor.getModifiers() & 0xffff;
       modifiers |= ModifierCode.CTOR.value;
-      ov.ptr = typeFactory.defineMethod(
+      ov.ptr = typeFactory.defineMethod(context,
               desc.classPtr,
               constructor.toString(),
               constructor,
@@ -471,7 +474,8 @@ public class TypeManager
     // Find all the methods that match the key 
     LinkedList<Method> methods = new LinkedList<>();
     Iterator<Method> iter = candidates.iterator();
-    boolean hasStatic = false;
+
+    int modifiers = 0;
     while (iter.hasNext())
     {
       Method next = iter.next();
@@ -480,17 +484,18 @@ public class TypeManager
       iter.remove();
       methods.add(next);
       if (Modifier.isStatic(next.getModifiers()))
-        hasStatic = true;
+        modifiers |= ModifierCode.STATIC.value;
+      if (isBeanAccessor(next))
+        modifiers |= ModifierCode.BEAN_ACCESSOR.value;
+      if (isBeanMutator(next))
+        modifiers |= ModifierCode.BEAN_MUTATOR.value;
     }
 
     // Convert overload list to a list of overloads pointers
     List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
     long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    int modifiers = 0;
-    if (hasStatic)
-      modifiers |= ModifierCode.STATIC.value;
-    long methodContainer = typeFactory.defineMethodDispatch(
+    long methodContainer = typeFactory.defineMethodDispatch(context,
             desc.classPtr,
             key,
             overloadPtrs,
@@ -553,8 +558,13 @@ public class TypeManager
         precedencePtrs[i++] = ch.ptr;
       }
 
-      int modifiers = method.getModifiers()&0xffff;
-      ov.ptr = typeFactory.defineMethod(
+      int modifiers = method.getModifiers() & 0xffff;
+      if (isBeanMutator(method))
+        modifiers |= ModifierCode.BEAN_MUTATOR.value;
+      if (isBeanAccessor(method))
+        modifiers |= ModifierCode.BEAN_ACCESSOR.value;
+
+      ov.ptr = typeFactory.defineMethod(context,
               desc.classPtr,
               method.toString(),
               method,
@@ -633,8 +643,49 @@ public class TypeManager
       return false;
     }
   }
+  
+  /** Bean accessor is flag is used for property
+   * module.
+   * 
+   * Accessors need 
+   * 
+   * @param method
+   * @return 
+   */
+  private boolean isBeanAccessor(Method method)
+  {
+    if (Modifier.isStatic(method.getModifiers()))
+      return false;
+    if (method.getReturnType().equals(void.class))
+      return false;
+    if (method.getParameterCount() > 0)
+      return false;
+    if (method.getName().length() < 4)
+      return false;
+    return (method.getName().startsWith("get"));
+  }
+
+  /** Bean mutator is flag is used for property
+   * module.
+   * 
+   * @param method
+   * @return 
+   */
+  private boolean isBeanMutator(Method method)
+  {
+    if (Modifier.isStatic(method.getModifiers()))
+      return false;
+    if (!method.getReturnType().equals(void.class))
+      return false;
+    if (method.getParameterCount() != 1)
+      return false;
+    if (method.getName().length() < 4)
+      return false;
+    return (method.getName().startsWith("set"));
+  }
 
 //</editor-fold>
+//<editor-fold desc="inner" defaultstate="collapsed">
   private interface Action
   {
     void execute();
@@ -675,7 +726,7 @@ public class TypeManager
         return;
       if (v.length > BLOCK_SIZE / 2)
       {
-        typeFactory.destroy(v, v.length);
+        typeFactory.destroy(context, v, v.length);
         return;
       }
       if (index + v.length > BLOCK_SIZE)
@@ -692,8 +743,9 @@ public class TypeManager
 
     void flush()
     {
-      typeFactory.destroy(queue, index);
+      typeFactory.destroy(context, queue, index);
       index = 0;
     }
   }
+//</editor-fold>
 }

@@ -17,14 +17,18 @@
 #ifndef _JPMETHODDISPATCH_H_
 #define _JPMETHODDISPATCH_H_
 
-class JPMethodDispatch: public JPResource
+class JPMethodDispatch : public JPResource
 {
 public:
 
 	/**
 	 * Create a new method based on class and a name;
 	 */
-	JPMethodDispatch(JPClass *clazz, const string& name, bool isConstructor);
+	JPMethodDispatch(JPClass *clazz,
+			const string& name,
+			JPMethodList& overloads,
+			jint modifiers);
+
 	virtual ~JPMethodDispatch();
 
 private:
@@ -75,5 +79,7 @@ private:
 	JPMethodList  m_Overloads;
 	jlong         m_Modifiers;
 } ;
+
+typedef vector<JPMethodDispatch> JPMethodDispatchList;
 
 #endif // _JPMETHODDISPATCH_H_

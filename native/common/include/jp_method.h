@@ -49,12 +49,18 @@ public:
 	}
 } ;
 
-class JPMethod: public JPResource
+class JPMethod : public JPResource
 {
 	friend class JPMethodDispatch;
 public:
 	JPMethod();
-	JPMethod(JPClass* claz, jobject mth);
+	JPMethod(JPClass* claz,
+			const string& name,
+			jobject mth,
+			JPClass *returnType,
+			JPClassList parameterTypes,
+			JPMethodList& moreSpecific,
+			jint modifiers);
 
 	virtual ~JPMethod();
 
@@ -93,20 +99,7 @@ public:
 		return JPModifier::isVarArgs(m_Modifiers);
 	}
 
-	unsigned char getArgumentCount() const
-	{
-		return (unsigned char) m_Arguments.size();
-	}
-
 	string toString() const;
-
-	/** Determine if a method is more specific than another. */
-	bool isMoreSpecificThan(JPMethod& other) const;
-
-	/** Consult the cache to determine if a method is more specific
-	 * than another.
-	 */
-	bool checkMoreSpecificThan(JPMethod* other) const;
 
 	string matchReport(JPPyObjectVector& args);
 
@@ -117,14 +110,13 @@ private:
 	JPMethod& operator=(const JPMethod&) ;
 
 private:
-	typedef list<JPMethod*> OverloadList;
-
 	JPClass*                 m_Class;
+	string                   m_Name;
 	JPObjectRef              m_Method;
 	jmethodID                m_MethodID;
-	JPClass*                 m_ReturnTypeCache;
-	JPClassList              m_ArgumentsTypeCache;
-	OverloadList             m_MoreSpecificOverloads;
+	JPClass*                 m_ReturnType;
+	JPClassList              m_ParameterTypes;
+	JPMethodList             m_MoreSpecificOverloads;
 	jint                     m_Modifiers;
 } ;
 

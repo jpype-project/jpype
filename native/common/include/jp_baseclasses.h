@@ -26,11 +26,16 @@
  * the JPTypeManager.
  *
  */
-class JPObjectBaseClass : public JPClass
+class JPObjectType : public JPClass
 {
 public:
-	JPObjectBaseClass();
-	virtual~ JPObjectBaseClass();
+	JPObjectType(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers);
+	
+	virtual~ JPObjectType();
 
 public: // JPClass implementation
 	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
@@ -45,11 +50,16 @@ public: // JPClass implementation
  * This class should not be used outside of
  * the JPTypeManager.
  */
-class JPClassBaseClass : public JPClass
+class JPClassType : public JPClass
 {
 public:
-	JPClassBaseClass();
-	virtual~ JPClassBaseClass();
+	JPClassType(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers);
+	
+	virtual~ JPClassType();
 
 public: // JPClass implementation
 	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;

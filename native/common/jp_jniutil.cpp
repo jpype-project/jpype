@@ -20,8 +20,6 @@ namespace
 { // impl detail
 	jmethodID s_Object_GetClassID;
 	jmethodID s_Object_ToStringID;
-	jmethodID s_Object_HashCodeID;
-	jmethodID s_Object_EqualsID;
 
 	jmethodID s_Class_GetNameID;
 	jmethodID s_Class_GetComponentTypeID;
@@ -117,8 +115,6 @@ void JPJni::init()
 	s_ObjectClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Object"));
 	s_Object_GetClassID = frame.GetMethodID(s_ObjectClass, "getClass", "()Ljava/lang/Class;");
 	s_Object_ToStringID = frame.GetMethodID(s_ObjectClass, "toString", "()Ljava/lang/String;");
-	s_Object_HashCodeID = frame.GetMethodID(s_ObjectClass, "hashCode", "()I");
-	s_Object_EqualsID = frame.GetMethodID(s_ObjectClass, "equals", "(Ljava/lang/Object;)Z");
 
 	s_StringClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/String"));
 	s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
@@ -220,13 +216,8 @@ void JPJni::init()
 	JP_TRACE_OUT;
 }
 
-bool JPJni::equalsObject(jobject obj1, jobject obj2)
-{
-	JPJavaFrame frame;
-	jvalue v;
-	v.l = obj2;
-	return frame.CallBooleanMethodA(obj1, s_Object_EqualsID, &v) != 0;
-}
+
+// Used by array conversion
 
 jobject JPJni::stringToCharArray(jstring str)
 {
@@ -234,18 +225,6 @@ jobject JPJni::stringToCharArray(jstring str)
 	jobject res = frame.CallObjectMethod(str, s_String_ToCharArrayID);
 	return frame.keep(res);
 }
-
-//JPTypeName JPJni::getTypeNameForObject(jobject o)
-//{
-//	if (o == NULL)
-//	{
-//		return JPTypeName::fromSimpleName("java.lang.Object");
-//	}
-//
-//	JPJavaFrame frame;
-//	jclass c = getClass(o);
-//	return getTypeNameForClass(c);
-//}
 
 jclass JPJni::getClass(jobject o)
 {
@@ -579,12 +558,6 @@ bool JPJni::isMemberAbstract(jobject o)
 	jboolean res = frame.CallStaticBooleanMethodA(s_ModifierClass, s_Modifier_IsAbstractID, &modif);
 
 	return (res ? true : false);
-}
-
-jint JPJni::hashCode(jobject obj)
-{
-	JPJavaFrame frame;
-	return frame.CallIntMethod(obj, s_Object_HashCodeID);
 }
 
 jclass JPJni::getFieldType(jobject fld)

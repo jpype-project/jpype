@@ -16,7 +16,12 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringClass::JPStringClass() : JPClass(JPJni::s_StringClass)
+JPStringClass::JPStringClass(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
+: JPClass(clss, name, super, interfaces, modifiers)
 {
 }
 

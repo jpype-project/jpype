@@ -68,5 +68,7 @@ private:
 	JPClass*         m_TypeCache;
 } ;
 
+typedef vector<JPField> JPFieldList;
+
 #endif // _JPFIELD_H_
 

@@ -16,41 +16,21 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPClass::JPClass(jclass clss) : m_Class(clss)
+JPClass::JPClass(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers) : m_Class(clss)
 {
-	m_IsInterface = JPJni::isInterface(m_Class.get());
-	m_IsThrowable = JPJni::isThrowable(m_Class.get());
-	m_IsAbstract = JPJni::isAbstract(m_Class.get());
-	m_IsFinal = JPJni::isFinal(m_Class.get());
-	m_InterfacesLoaded = false;
-	m_SuperClass = NULL;
-	m_Constructors = NULL;
-	m_CanonicalName = JPJni::getCanonicalName(m_Class.get());
+	m_Class = clss;
+	m_CanonicalName = name;
+	m_SuperClass = super;
+	m_Interfaces = interfaces;
+	m_Modifiers = modifiers;
 }
 
 JPClass::~JPClass()
 {
-	JP_TRACE("~JPClass");
-	try
-	{
-		delete m_Constructors;
-
-		// interfaces of this cannot be simply deleted here, since they may be also
-		// super types of other classes, which would be invalidated by doing so.
-
-		for (MethodList::iterator mthit = m_Methods.begin(); mthit != m_Methods.end(); mthit++)
-		{
-			delete *mthit;
-		}
-
-		for (FieldList::iterator fldit = m_Fields.begin(); fldit != m_Fields.end(); fldit++)
-		{
-			delete *fldit;
-		}
-	} catch (...)
-	{
-		// This should not happen
-	}
 }
 
 //<editor-fold desc="new" defaultstate="collapsed">
@@ -76,36 +56,6 @@ string JPClass::toString() const
 string JPClass::getCanonicalName() const
 {
 	return m_CanonicalName;
-}
-
-bool JPClass::isAbstract()
-{
-	return m_IsAbstract;
-}
-
-bool JPClass::isFinal()
-{
-	return m_IsFinal;
-}
-
-bool JPClass::isThrowable()
-{
-	return m_IsThrowable;
-}
-
-bool JPClass::isInterface()
-{
-	return m_IsInterface;
-}
-
-const JPClass::MethodList& JPClass::getMethods()
-{
-	return this->m_Methods;
-}
-
-const JPClass::FieldList& JPClass::getFields()
-{
-	return m_Fields;
 }
 
 //</editor-fold>
@@ -179,9 +129,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmeth
 void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setStaticValue");
-
 	jobject val = convertToJava(obj).l;
-
 	frame.SetStaticObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -189,9 +137,7 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setInstanceValue");
-
 	jobject val = convertToJava(obj).l;
-
 	frame.SetObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -398,127 +344,6 @@ bool JPClass::isSubTypeOf(JPClass* other) const
 	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass()) != 0;
 }
 
-JPClass* JPClass::getSuperClass()
-{
-	if (m_SuperClass != NULL)
-		return m_SuperClass;
-
-	JPJavaFrame frame;
-	// base class .. if any
-	if (!m_IsInterface && this != JPTypeManager::_java_lang_Object)
-	{
-		jclass baseClass = frame.GetSuperclass(m_Class.get());
-		m_SuperClass = JPTypeManager::findClass(baseClass);
-	}
-	return m_SuperClass;
-}
-
-const JPClass::ClassList& JPClass::getInterfaces()
-{
-	if (m_InterfacesLoaded)
-		return m_SuperInterfaces;
-
-	m_InterfacesLoaded = true;
-	JPJavaFrame frame;
-	JP_TRACE_IN("JPClass::loadInterfaces");
-	// Super interfaces
-	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class.get());
-
-	for (vector<jclass>::iterator it = intf.begin(); it != intf.end(); it++)
-	{
-		JPClass* interface = JPTypeManager::findClass(*it);
-		m_SuperInterfaces.push_back(interface);
-	}
-	return m_SuperInterfaces;
-	JP_TRACE_OUT;
-}
-//</editor-fold>
-//<editor-fold desc="loading" defaultstate="collapsed">
-
-void JPClass::postLoad()
-{
-	JP_TRACE_IN("JPClass::postLoad");
-	loadFields();
-	loadMethods();
-	loadConstructors();
-	JP_TRACE_OUT;
-}
-
-void JPClass::loadFields()
-{
-	JPJavaFrame frame(32);
-	JP_TRACE_IN("JPClass::loadFields");
-	// fields
-	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class.get());
-
-	for (vector<jobject>::iterator it = fields.begin(); it != fields.end(); it++)
-	{
-		// Skip private fields
-		if (!JPJni::isFieldPublic(*it))
-			continue;
-		m_Fields.push_back(new JPField(this, *it));
-	}
-	JP_TRACE_OUT;
-}
-
-void JPClass::loadMethods()
-{
-	JPJavaFrame frame(32);
-	JP_TRACE_IN("JPClass::loadMethods");
-
-	// methods
-	MethodMap methodMap;
-	vector<jobject> methods = JPJni::getMethods(frame, m_Class.get());
-
-	for (vector<jobject>::iterator iter1 = methods.begin(); iter1 != methods.end(); iter1++)
-	{
-		const string& name = JPJni::getMemberName(*iter1);
-		JPMethodDispatch* method = NULL;
-		MethodMap::iterator iter2 = methodMap.find(name);
-		if (iter2 == methodMap.end())
-		{
-			method = new JPMethodDispatch(this, name, false);
-			methodMap[name] = method;
-		}
-		else
-		{
-			method = iter2->second;
-		}
-		method->addOverload(this, *iter1);
-	}
-
-	int i = 0;
-	m_Methods.resize(methodMap.size());
-	for (MethodMap::iterator iter3 = methodMap.begin(); iter3 != methodMap.end(); ++iter3)
-		m_Methods[i++] = iter3->second;
-
-	JP_TRACE_OUT;
-}
-
-void JPClass::loadConstructors()
-{
-	JPJavaFrame frame(32);
-	JP_TRACE_IN("JPClass::loadMethods");
-	m_Constructors = new JPMethodDispatch(this, "[init", true);
-
-	if (isAbstract())
-	{
-		// NO constructor ...
-		return;
-	}
-
-
-	vector<jobject> methods = JPJni::getDeclaredConstructors(frame, m_Class.get());
-
-	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
-	{
-		if (JPJni::isMemberPublic(*it))
-		{
-			m_Constructors->addOverload(this, *it);
-		}
-	}
-	JP_TRACE_OUT;
-}
 //</editor-fold>
 //<editor-fold desc="utility">
 
@@ -543,12 +368,12 @@ string JPClass::describe()
 		out << " extends " << super->getCanonicalName();
 	}
 
-	const ClassList& interfaces = this->getInterfaces();
+	const JPClassList& interfaces = this->getInterfaces();
 	if (interfaces.size() > 0)
 	{
 		out << " implements";
 		bool first = true;
-		for (ClassList::const_iterator itf = interfaces.begin(); itf != interfaces.end(); itf++)
+		for (JPClassList::const_iterator itf = interfaces.begin(); itf != interfaces.end(); itf++)
 		{
 			if (!first)
 			{
@@ -566,7 +391,7 @@ string JPClass::describe()
 
 	// Fields
 	out << "  // Accessible Instance Fields" << endl;
-	for (FieldList::const_iterator curInstField = m_Fields.begin();
+	for (JPFieldList::const_iterator curInstField = m_Fields.begin();
 			curInstField != m_Fields.end();
 			curInstField++)
 	{
@@ -579,16 +404,16 @@ string JPClass::describe()
 	out << "  // Accessible Constructors" << endl;
 	{
 		JPMethodDispatch* f = m_Constructors;
-		for (JPMethodDispatch::JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
+		for (JPMethodDispatchList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
 
 	out << "  // Accessible Methods" << endl;
-	for (MethodList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
+	for (JPMethodList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
 	{
 		JPMethodDispatch* f = *curMethod;
-		for (JPMethodDispatch::JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
+		for (JPMethodDispatchList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
@@ -606,7 +431,5 @@ bool JPClass::isInstance(JPValue& val)
 	JPJavaFrame frame;
 	return frame.IsInstanceOf(val.getValue().l, m_Class.get());
 }
-
-
 
 //</editor-fold>

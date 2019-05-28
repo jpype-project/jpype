@@ -17,15 +17,17 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
-class JPClass: public JPResource
+#include "jp_modifier.h"
+
+class JPClass : public JPResource
 {
 public:
-	typedef map<string, JPMethodDispatch*> MethodMap;
-	typedef vector<JPMethodDispatch*> MethodList;
-	typedef vector<JPField*> FieldList;
-	typedef vector<JPClass*> ClassList;
 
-	JPClass(jclass clss);
+	JPClass(jclass clss,
+			const string& name,
+			JPClass* super,
+			const JPClassList& interfaces,
+			jint modifiers);
 	virtual ~JPClass();
 
 public:
@@ -35,14 +37,46 @@ public:
 		return m_Class.get();
 	}
 
+	void assignMembers(JPMethodDispatch ctor,
+			JPMethodDispatchList& methods,
+			JPFieldList& fields);
+
 	string toString() const;
-	string getCanonicalName() const;
-	bool isAbstract();
-	bool isFinal();
-	bool isThrowable();
-	bool isInterface();
-	const MethodList& getMethods();
-	const FieldList&  getFields();
+
+	string getCanonicalName() const
+	{
+		return m_CanonicalName;
+	}
+
+	bool isAbstract() const
+	{
+		return JPModifier::isAbstract(m_Modifiers);
+	}
+
+	bool isFinal() const
+	{
+		return JPModifier::isFinal(m_Modifiers);
+	}
+
+	bool isThrowable() const
+	{
+		return JPModifier::isThrowable(m_Modifiers);
+	}
+
+	bool isInterface() const
+	{
+		return JPModifier::isInterface(m_Modifiers);
+	}
+
+	const JPMethodDispatchList& getMethods()
+	{
+		return m_Methods;
+	}
+
+	const JPFieldList&  getFields()
+	{
+		return m_Fields;
+	}
 
 	/**
 	 * Determine if a Python object will convert to this java type. 
@@ -135,9 +169,14 @@ public:
 	bool isAssignableFrom(JPClass* o);
 
 	// Object properties
-	JPClass* getSuperClass();
+
+	JPClass* getSuperClass()
+	{
+		return m_SuperClass;
+	}
+
 	virtual JPValue newInstance(JPPyObjectVector& args);
-	const ClassList& getInterfaces();
+	const JPClassList& getInterfaces();
 
 	string describe();
 
@@ -145,26 +184,18 @@ public:
 	bool isInstance(JPValue& val);
 
 	virtual void postLoad();
-private:
-	void loadFields();
-	void loadMethods();
-	void loadConstructors();
 
 protected:
-	JPClassRef   m_Class;
-	JPClass*     m_SuperClass;
-	ClassList    m_SuperInterfaces;
-	FieldList    m_Fields;
-	MethodList   m_Methods;
+	JPClassRef           m_Class;
+	JPClass*             m_SuperClass;
+	JPClassList          m_Interfaces;
 	JPMethodDispatch*    m_Constructors;
-	string       m_CanonicalName;
-	jint         m_Modifiers;
-//	bool         m_InterfacesLoaded;
-//	bool         m_IsInterface;
-//	bool         m_IsThrowable;
-//	bool         m_IsAbstract;
-//	bool         m_IsFinal;
-
+	JPMethodDispatchList m_Methods;
+	JPFieldList          m_Fields;
+	string               m_CanonicalName;
+	jint                 m_Modifiers;
 } ;
+
+typedef vector<JPClass*> JPClassList;
 
 #endif // _JPPOBJECTTYPE_H_

@@ -48,7 +48,8 @@ namespace
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
 JPResource::~JPResource()
-{}
+{
+}
 
 namespace
 {

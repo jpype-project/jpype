@@ -17,27 +17,14 @@ import java.util.Set;
  */
 public class JPypeReferenceQueue extends ReferenceQueue
 {
-  static private JPypeReferenceQueue mInstance;
   private Set mHostReferences = new HashSet();
   private boolean mStopped = false;
   private Thread mQueueThread;
   private Object mQueueStopMutex = new Object();
 
-  private JPypeReferenceQueue()
+  public JPypeReferenceQueue()
   {
     super();
-  }
-
-  /**
-   * Get the reference queue.
-   *
-   * @return the singleton instance.
-   */
-  static public JPypeReferenceQueue getInstance()
-  {
-    if (mInstance == null)
-      mInstance = new JPypeReferenceQueue();
-    return mInstance;
   }
 
   /**
@@ -57,9 +44,6 @@ public class JPypeReferenceQueue extends ReferenceQueue
 
   /**
    * Start the threading queue.
-   * <p>
-   * This method is long running. It will return only if the queue gets stopped.
-   * <p>
    */
   public void start()
   {

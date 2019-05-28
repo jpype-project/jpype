@@ -47,8 +47,7 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 	JP_TRACE_IN("JPMethod::findOverload");
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
-	ensureOverloadCache();
-	vector<JPMethod*> ambiguous;
+	JPMethodList ambiguous;
 	JPMatch bestMatch;
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
@@ -158,26 +157,6 @@ JPValue JPMethodDispatch::invokeConstructor(JPPyObjectVector& arg)
 {
 	JPMatch currentMatch = findOverload(arg, false);
 	return currentMatch.overload->invokeConstructor(currentMatch, arg);
-}
-
-bool JPMethodDispatch::isBeanMutator()
-{
-	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
-	{
-		if ((*it)->isBeanMutator())
-			return true;
-	}
-	return false;
-}
-
-bool JPMethodDispatch::isBeanAccessor()
-{
-	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
-	{
-		if ((*it)->isBeanAccessor())
-			return true;
-	}
-	return false;
 }
 
 string JPMethodDispatch::matchReport(JPPyObjectVector& args)

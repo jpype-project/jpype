@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright ${date?date?string("yyyy")} ${project.organization!user}
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -12,32 +12,5 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
+   
  *****************************************************************************/
-#include <jpype.h>
-
-JPPrimitiveType::JPPrimitiveType(jclass clss,
-		const string& name,
-		JPBoxedClass* boxedClass,
-		jint modifiers
-		)
-: JPClass(clss, name, NULL, JPClassList(), modifiers), m_BoxedClass(cls)
-{
-	m_BoxedClass->setPrimitiveType(this);
-}
-
-JPPrimitiveType::~JPPrimitiveType()
-{
-}
-
-//jobject JPPrimitiveType::convertToJavaObject(PyObject obj)
-//{
-//	JPJavaFrame frame;
-//
-//	JPPyTuple tuple(JPPyTuple::newTuple(1));
-//	tuple.setItem(0, obj);
-//
-//	JPValue o = m_BoxedClass->newInstance(tuple);
-//	jobject res = o.getJavaObject();
-//	return frame.keep(res);
-//}

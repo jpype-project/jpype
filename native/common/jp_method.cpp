@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Mï¿½nard
+   Copyright 2004 Steve Menard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,35 +17,22 @@
 #include <jpype.h>
 #include <jp_method.h>
 
-JPMethod::JPMethod(JPClass* claz, jobject mth) : m_Method(mth)
+JPMethod::JPMethod(JPClass* claz,
+		const string& name,
+		jobject mth,
+		JPClass *returnType,
+		JPClassList parameterTypes,
+		JPMethodList& moreSpecific,
+		jint modifiers)
+: m_Method(mth)
 {
-	JPJavaFrame frame;
-	m_Class = claz;
-	m_ReturnTypeCache = NULL;
-
-	// static
-	m_IsStatic = JPJni::isMemberStatic(mth);
-	m_IsFinal = JPJni::isMemberFinal(mth);
-	m_IsVarArgs = JPJni::isMethodVarArgs(mth);
-
-	// Method ID
-	m_MethodID = frame.FromReflectedMethod(m_Method.get());
-
-	m_IsConstructor = JPJni::isConstructor(mth);
-
-	// return type
-	if (!m_IsConstructor)
-	{
-		m_ReturnType = JPJni::getMethodReturnType(mth);
-	}
-
-	// arguments
-	m_Arguments = JPJni::getMethodParameterTypes(mth, m_IsConstructor);
-	// Add the implicit "this" argument
-	if (!m_IsStatic && !m_IsConstructor)
-	{
-		m_Arguments.insert(m_Arguments.begin(), 1, claz->getJavaClass());
-	}
+	this->m_Class = claz;
+	this->m_Method = mth;
+	this->m_Name = name;
+	this->m_ReturnType = returnType;
+	this->m_ParameterTypes = parameterTypes;
+	this->m_MoreSpecificOverloads = moreSpecific;
+	this->m_Modifiers = modifiers;
 }
 
 JPMethod::~JPMethod()
@@ -54,9 +41,8 @@ JPMethod::~JPMethod()
 
 string JPMethod::toString() const
 {
-	return JPJni::toString(m_Method.get());
+	return m_Name;
 }
-
 
 JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 {
@@ -90,9 +76,8 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 	JPMatch match;
 	match.overload = this;
 
-	ensureTypeCache();
 	size_t len = arg.size();
-	size_t tlen = m_Arguments.size();
+	size_t tlen = m_ParameterTypes.size();
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
 	if (callInstance && isStatic())
@@ -107,7 +92,7 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 	}
 
 	JPMatch::Type lastMatch = JPMatch::_exact;
-	if (!m_IsVarArgs)
+	if (!JPModifier::isVarArgs(m_Modifiers))
 	{
 		if (len != tlen)
 		{
@@ -118,7 +103,7 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 	else
 	{
 		JP_TRACE("Match vargs");
-		JPClass* type = m_ArgumentsTypeCache[tlen - 1];
+		JPClass* type = m_ParameterTypes[tlen - 1];
 		if (len < tlen - 1)
 		{
 			return match;
@@ -170,7 +155,7 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 	JP_TRACE("Start match");
 	for (size_t i = 0; i < len; i++)
 	{
-		JPClass* type = m_ArgumentsTypeCache[i];
+		JPClass* type = m_ParameterTypes[i];
 		JPMatch::Type ematch = type->canConvertToJava(arg[i + match.offset]);
 		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[i + match.offset]));
 		if (ematch < JPMatch::_implicit)
@@ -183,17 +168,16 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 		}
 	}
 
-
 	match.type = lastMatch;
 	return match;
 	JP_TRACE_OUT;
 }
 
-void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
+void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::packArgs");
 	size_t len = arg.size();
-	size_t tlen = m_Arguments.size();
+	size_t tlen = m_ParameterTypes.size();
 	JP_TRACE("skip", match.skip == 1);
 	JP_TRACE("offset", match.offset == 1);
 	JP_TRACE("arguments length", len);
@@ -202,14 +186,14 @@ void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVec
 	{
 		JP_TRACE("Pack varargs");
 		len = tlen - 1;
-		JPArrayClass* type = (JPArrayClass*) m_ArgumentsTypeCache[tlen - 1];
+		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
 		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, arg.size());
 	}
 
 	JP_TRACE("Pack fixed total=", len - match.offset);
 	for (size_t i = match.skip; i < len; i++)
 	{
-		JPClass* type = m_ArgumentsTypeCache[i - match.offset];
+		JPClass* type = m_ParameterTypes[i - match.offset];
 		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName());
 		v[i - match.skip] = type->convertToJava(arg[i]);
 	}
@@ -219,18 +203,17 @@ void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVec
 JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::invoke");
-	ensureTypeCache();
-	size_t alen = m_Arguments.size();
+	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(8 + alen);
 
-	JPClass* retType = m_ReturnTypeCache;
+	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
 
 	// Invoke the method (arg[0] = this)
-	if (m_IsStatic)
+	if (JPModifier::isStatic(m_Modifiers))
 	{
 		jclass claz = m_Class->getJavaClass();
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
@@ -248,8 +231,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
 JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::invokeConstructor");
-	ensureTypeCache();
-	size_t alen = m_Arguments.size();
+	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(8 + alen);
 
 	vector<jvalue> v(alen + 1);
@@ -267,13 +249,12 @@ JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 
 string JPMethod::matchReport(JPPyObjectVector& sequence)
 {
-	ensureTypeCache();
 	stringstream res;
 
-	res << m_ReturnTypeCache->getCanonicalName() << " (";
+	res << m_ReturnType->getCanonicalName() << " (";
 
 	bool isFirst = true;
-	for (vector<JPClass*>::iterator it = m_ArgumentsTypeCache.begin(); it != m_ArgumentsTypeCache.end(); it++)
+	for (vector<JPClass*>::iterator it = m_ParameterTypes.begin(); it != m_ParameterTypes.end(); it++)
 	{
 		if (isFirst && !isStatic())
 		{
@@ -309,34 +290,4 @@ string JPMethod::matchReport(JPPyObjectVector& sequence)
 	res << endl;
 
 	return res.str();
-
-}
-
-bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
-{
-	for (OverloadList::const_iterator it = m_MoreSpecificOverloads.begin();
-			it != m_MoreSpecificOverloads.end();
-			++it)
-	{
-		if (other == *it)
-			return true;
-	}
-	return false;
-}
-
-
-bool JPMethod::isBeanAccessor()
-{
-	ensureTypeCache();
-	return !isStatic()
-			&& m_ReturnTypeCache != JPTypeManager::_void
-			&& getArgumentCount() == 1;
-}
-
-bool JPMethod::isBeanMutator()
-{
-	ensureTypeCache();
-	return !isStatic()
-			&& m_ReturnTypeCache == JPTypeManager::_void
-			&& getArgumentCount() == 2;
 }

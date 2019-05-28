@@ -18,15 +18,20 @@
 
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 
-JPObjectBaseClass::JPObjectBaseClass() : JPClass(JPJni::s_ObjectClass)
+JPObjectType::JPObjectType(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
+: JPClass(clss, name, super, interfaces, modifiers)
 {
 }
 
-JPObjectBaseClass::~JPObjectBaseClass()
+JPObjectType::~JPObjectType()
 {
 }
 
-JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
+JPMatch::Type JPObjectType::canConvertToJava(PyObject* pyobj)
 {
 	// Implicit rules for java.lang.Object
 	JP_TRACE_IN("JPObjectBaseClass::canConvertToJava");
@@ -88,7 +93,7 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 // java.lang.Object can be converted to from all object classes, 
 // all primitive types (via boxing), strings, arrays, and python bridge classes
 
-jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
+jvalue JPObjectType::convertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPObjectBaseClass::convertToJava");
 	JPJavaFrame frame;
@@ -186,15 +191,20 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 
 //=======================================================
 
-JPClassBaseClass::JPClassBaseClass() : JPClass(JPJni::s_ClassClass)
+JPClassType::JPClassType(jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
+: JPClass(clss, name, super, interfaces, modifiers)
 {
 }
 
-JPClassBaseClass::~JPClassBaseClass()
+JPClassType::~JPClassType()
 {
 }
 
-JPMatch::Type JPClassBaseClass::canConvertToJava(PyObject* pyobj)
+JPMatch::Type JPClassType::canConvertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClassBaseClass::convertToJava");
 	if (JPPyObject::isNone(pyobj))
@@ -216,7 +226,7 @@ JPMatch::Type JPClassBaseClass::canConvertToJava(PyObject* pyobj)
 	JP_TRACE_OUT;
 }
 
-jvalue JPClassBaseClass::convertToJava(PyObject* pyobj)
+jvalue JPClassType::convertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClassBaseClass::convertToJava");
 	JP_TRACE(JPPyObject::getTypeName(pyobj));

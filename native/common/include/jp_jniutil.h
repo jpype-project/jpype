@@ -41,8 +41,6 @@ namespace JPJni
 	// Object
 	jclass getClass(jobject obj);
 	string toString(jobject obj);
-	bool equalsObject(jobject obj1, jobject obj2);
-	jint hashCode(jobject obj);
 
 	// String
 	string toStringUTF8(jstring str);

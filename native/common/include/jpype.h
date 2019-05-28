@@ -135,9 +135,9 @@ class JPField;
 
 class JPResource
 {
-	public:
-		virtual ~JPResource()=0;
-};
+public:
+	virtual ~JPResource() = 0;
+} ;
 
 // Other header files
 #include "jp_method.h"

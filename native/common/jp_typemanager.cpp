@@ -96,19 +96,19 @@ void JPTypeManager::init()
 	// Everything that requires specialization must be created here.
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPTypeManager::init");
-	registerClass(_java_lang_Object = new JPObjectBaseClass());
-	registerClass(_java_lang_Class = new JPClassBaseClass());
+	registerClass(_java_lang_Object = new JPObjectType());
+	registerClass(_java_lang_Class = new JPClassType());
 	registerClass(_java_lang_String = new JPStringClass());
 
-	registerClass(_java_lang_Void = new JPBoxedVoidClass());
-	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass());
-	registerClass(_java_lang_Byte = new JPBoxedByteClass());
-	registerClass(_java_lang_Char = new JPBoxedCharacterClass());
-	registerClass(_java_lang_Short = new JPBoxedShortClass());
-	registerClass(_java_lang_Integer = new JPBoxedIntegerClass());
-	registerClass(_java_lang_Long = new JPBoxedLongClass());
-	registerClass(_java_lang_Float = new JPBoxedFloatClass());
-	registerClass(_java_lang_Double = new JPBoxedDoubleClass());
+	registerClass(_java_lang_Void = new JPBoxedVoidType());
+	registerClass(_java_lang_Boolean = new JPBoxedBooleanType());
+	registerClass(_java_lang_Byte = new JPBoxedByteType());
+	registerClass(_java_lang_Char = new JPBoxedCharacterType());
+	registerClass(_java_lang_Short = new JPBoxedShortType());
+	registerClass(_java_lang_Integer = new JPBoxedIntegerType());
+	registerClass(_java_lang_Long = new JPBoxedLongType());
+	registerClass(_java_lang_Float = new JPBoxedFloatType());
+	registerClass(_java_lang_Double = new JPBoxedDoubleType());
 
 	registerClass(_void = new JPVoidType());
 	registerClass(_boolean = new JPBooleanType());

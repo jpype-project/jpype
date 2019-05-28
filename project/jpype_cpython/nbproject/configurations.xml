@@ -26,7 +26,8 @@
           <itemPath>../../native/common/include/jp_jniutil.h</itemPath>
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
           <itemPath>../../native/common/include/jp_method.h</itemPath>
-          <itemPath>../../native/common/include/jp_methodoverload.h</itemPath>
+          <itemPath>../../native/common/include/jp_methoddispatch.h</itemPath>
+          <itemPath>../../native/common/include/jp_modifier.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
@@ -78,6 +79,7 @@
         <itemPath>../../native/common/jp_chartype.cpp</itemPath>
         <itemPath>../../native/common/jp_class.cpp</itemPath>
         <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_context.cpp</itemPath>
         <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
         <itemPath>../../native/common/jp_encoding.cpp</itemPath>
         <itemPath>../../native/common/jp_env.cpp</itemPath>
@@ -88,7 +90,7 @@
         <itemPath>../../native/common/jp_jniutil.cpp</itemPath>
         <itemPath>../../native/common/jp_longtype.cpp</itemPath>
         <itemPath>../../native/common/jp_method.cpp</itemPath>
-        <itemPath>../../native/common/jp_methodoverload.cpp</itemPath>
+        <itemPath>../../native/common/jp_methoddispatch.cpp</itemPath>
         <itemPath>../../native/common/jp_monitor.cpp</itemPath>
         <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
         <itemPath>../../native/common/jp_proxy.cpp</itemPath>
@@ -96,6 +98,7 @@
         <itemPath>../../native/common/jp_shorttype.cpp</itemPath>
         <itemPath>../../native/common/jp_stringclass.cpp</itemPath>
         <itemPath>../../native/common/jp_tracer.cpp</itemPath>
+        <itemPath>../../native/common/jp_typefactory.cpp</itemPath>
         <itemPath>../../native/common/jp_typemanager.cpp</itemPath>
         <itemPath>../../native/common/jp_value.cpp</itemPath>
         <itemPath>../../native/common/jp_voidtype.cpp</itemPath>
@@ -260,7 +263,12 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_methodoverload.h"
+      <item path="../../native/common/include/jp_methoddispatch.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_modifier.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -379,6 +387,8 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="../../native/common/jp_context.cpp" ex="false" tool="0" flavor2="0">
+      </item>
       <item path="../../native/common/jp_doubletype.cpp"
             ex="false"
             tool="1"
@@ -414,7 +424,7 @@
       </item>
       <item path="../../native/common/jp_method.cpp" ex="false" tool="1" flavor2="0">
       </item>
-      <item path="../../native/common/jp_methodoverload.cpp"
+      <item path="../../native/common/jp_methoddispatch.cpp"
             ex="false"
             tool="1"
             flavor2="0">
@@ -444,6 +454,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/jp_tracer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_typefactory.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../native/common/jp_typemanager.cpp"
             ex="false"
