@@ -16,11 +16,11 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPCharType::JPCharType(jclass clss,
+JPCharType::JPCharType(JPContext* context, jclass clss,
 		const string& name,
 		JPBoxedClass* boxedClass,
 		jint modifiers)
-: JPPrimitiveType(clss, name, boxedClass, modifiers)
+: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 }
 

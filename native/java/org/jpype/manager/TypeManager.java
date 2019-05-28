@@ -101,7 +101,7 @@ public class TypeManager
    * @param cls
    * @return the JPClass, or 0 it one cannot be created.
    */
-  public synchronized long findClass(Class cls)
+  public synchronized long findClass(Class<?> cls)
   {
     if (this.isShutdown)
       return 0;
@@ -135,6 +135,25 @@ public class TypeManager
     executeDeferred();
 
     return out;
+  }
+  
+  public long findClassByName(String str)
+  {
+    try
+    {
+      Class<?> cls = Class.forName(str);
+      return this.findClass(cls);
+    } catch (ClassNotFoundException ex)
+    {
+      return 0;
+    }
+  }
+  
+  public long findClassForObject(Object obj)
+  {
+    if (obj == null)
+      return 0;
+    return this.findClass(obj.getClass());
   }
 
   /**

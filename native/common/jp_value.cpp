@@ -29,4 +29,3 @@ jclass JPValue::getJavaClass() const
 		JP_RAISE_RUNTIME_ERROR("Null class");
 	return m_Class->getJavaClass();
 }
-

@@ -17,6 +17,7 @@ import java.util.Set;
  */
 public class JPypeReferenceQueue extends ReferenceQueue
 {
+  public long context = 0;
   private Set mHostReferences = new HashSet();
   private boolean mStopped = false;
   private Thread mQueueThread;
@@ -105,7 +106,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    *
    * @param hostRef is the address of the python object (cast to PyObject*).
    */
-  private static native void removeHostReference(long hostRef);
+  private static native void removeHostReference(long context, long hostRef);
 
   /**
    * Thread to monitor the queue and delete resources.
@@ -130,7 +131,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
             }
             long hostRef = ref.mHostReference;
             ref.mHostReference = -1;
-            removeHostReference(hostRef);
+            removeHostReference(context, hostRef);
           }
         } catch (InterruptedException ex)
         {

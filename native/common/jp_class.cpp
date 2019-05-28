@@ -16,12 +16,14 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPClass::JPClass(jclass clss,
+JPClass::JPClass(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers) : m_Class(clss)
 {
+	m_Context = context;
 	m_Class = clss;
 	m_CanonicalName = name;
 	m_SuperClass = super;

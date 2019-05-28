@@ -126,6 +126,27 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized, const St
 	JPReferenceQueue::init();
 	JPProxy::init();
 	JPReferenceQueue::startJPypeReferenceQueue(true);
+	
+	{
+		JPJavaFrame frame(this);
+	// Launch the context
+	jclass cls = JPClassLoader::findClass("org.jpype.JPypeContext");
+	jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext", 
+			"(JLjava.lang.ClassLoader;)Lorg.jpype.JPypeContext;");
+	
+	jvalue val[2];
+	val[0].j = (jlong) this;
+	val[1].l = 0;
+	m_JavaContext = frame.CallStaticObjectMethodA(cls, startMethod, val);
+	
+	jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager", 
+			"()Lorg.jpype.manager.TypeManager;");
+	m_TypeManager.m_TypeManager = frame.CallObjectMethod(m_JavaContext.get(), getTypeManager);
+
+//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
+
+	frame.CallVoidMethod(cls, startMethod);
+	}
 	JP_TRACE_OUT;
 }
 
@@ -193,4 +214,30 @@ bool JPContext::isThreadAttached()
 void JPContext::detachCurrentThread()
 {
 	m_JavaVM->functions->DetachCurrentThread(m_JavaVM);
+}
+
+
+//	s_ReferenceQueueStartMethod = frame.GetMethodID(cls, "start", "()V");
+//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
+
+	JP_TRACE_OUT;
+}
+
+
+// FIXME move the loader for the custom class from jp_proxy.cpp
+
+void JPContext::startJPypeReferenceQueue(bool useJavaThread)
+{
+	JP_TRACE_IN("JPReferenceQueue::startJPypeReferenceQueue");
+	JPJavaFrame frame;
+	frame.CallVoidMethod(m_JavaContext, m_ContextStartMethod);
+	JP_TRACE_OUT;
+}
+
+void JPContext::shutdown()
+{
+	JP_TRACE_IN("JPReferenceQueue::shutdown");
+	JPJavaFrame frame;
+	frame.CallVoidMethod(m_JavaContext, m_ContextShutdownMethod);
+	JP_TRACE_OUT;
 }

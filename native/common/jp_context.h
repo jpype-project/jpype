@@ -68,7 +68,12 @@ public:
 	JPBoxedClass* _java_lang_Long;
 	JPBoxedClass* _java_lang_Float;
 	JPBoxedClass* _java_lang_Double;
-
+private:
+	JPObjectRef m_JavaContext;
+	JPTypeFactory m_TypeFactory;
+	JPTypeManager m_TypeManager;
+	JPReferenceQueue m_ReferenceQueue;
+	
 } ;
 
 #endif /* JP_CONTEXT_H */

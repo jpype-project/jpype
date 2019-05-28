@@ -23,7 +23,8 @@ class JPClass : public JPResource
 {
 public:
 
-	JPClass(jclass clss,
+	JPClass(JPContext* context,
+			jclass clss,
 			const string& name,
 			JPClass* super,
 			const JPClassList& interfaces,
@@ -186,6 +187,7 @@ public:
 	virtual void postLoad();
 
 protected:
+	JPContext*           m_Context;
 	JPClassRef           m_Class;
 	JPClass*             m_SuperClass;
 	JPClassList          m_Interfaces;

@@ -17,12 +17,12 @@
 #include <jpype.h>
 #include <jp_boxedclasses.h>
 
-JPBoxedClass::JPBoxedClass(jclass clss,
+JPBoxedClass::JPBoxedClass(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPClass(clss, name, super, interfaces, modifiers)
+: JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -82,25 +82,14 @@ JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
 	JP_TRACE_OUT;
 }
 
-// Specializations for each of the boxed types.  
-// This sets up the table of conversions that we allow
-
 //============================================================
 
-jclass findClass(const string& str)
-{
-	JPJavaFrame frame;
-	return frame.FindClass(str);
-}
-
-//============================================================
-
-JPBoxedVoidType::JPBoxedVoidType(jclass clss,
+JPBoxedVoidType::JPBoxedVoidType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -110,12 +99,12 @@ JPBoxedVoidType::~JPBoxedVoidType()
 
 //============================================================
 
-JPBoxedBooleanType::JPBoxedBooleanType(jclass clss,
+JPBoxedBooleanType::JPBoxedBooleanType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -125,12 +114,12 @@ JPBoxedBooleanType::~JPBoxedBooleanType()
 
 //============================================================
 
-JPBoxedByteType::JPBoxedByteType(jclass clss,
+JPBoxedByteType::JPBoxedByteType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -141,12 +130,12 @@ JPBoxedByteType::~JPBoxedByteType()
 
 //============================================================
 
-JPBoxedCharacterType::JPBoxedCharacterType(jclass clss,
+JPBoxedCharacterType::JPBoxedCharacterType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -157,12 +146,12 @@ JPBoxedCharacterType::~JPBoxedCharacterType()
 
 //============================================================
 
-JPBoxedShortType::JPBoxedShortType(jclass clss,
+JPBoxedShortType::JPBoxedShortType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -172,12 +161,12 @@ JPBoxedShortType::~JPBoxedShortType()
 
 //============================================================
 
-JPBoxedIntegerType::JPBoxedIntegerType(jclass clss,
+JPBoxedIntegerType::JPBoxedIntegerType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -187,12 +176,12 @@ JPBoxedIntegerType::~JPBoxedIntegerType()
 
 //============================================================
 
-JPBoxedLongType::JPBoxedLongType(jclass clss,
+JPBoxedLongType::JPBoxedLongType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -202,12 +191,12 @@ JPBoxedLongType::~JPBoxedLongType()
 
 //============================================================
 
-JPBoxedFloatType::JPBoxedFloatType(jclass clss,
+JPBoxedFloatType::JPBoxedFloatType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -217,12 +206,12 @@ JPBoxedFloatType::~JPBoxedFloatType()
 
 //============================================================
 
-JPBoxedDoubleType::JPBoxedDoubleType(jclass clss,
+JPBoxedDoubleType::JPBoxedDoubleType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPBoxedClass(clss, name, super, interfaces, modifiers)
+: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 

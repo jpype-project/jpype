@@ -71,7 +71,7 @@ public class JPypeContext
    *
    * @param context
    */
-  public void creatContext(long context, ClassLoader classLoader)
+  public void createContext(long context, ClassLoader classLoader)
   {
     instance = new JPypeContext();
     

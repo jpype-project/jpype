@@ -312,7 +312,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 
 void JPTypeFactory::init(JPContext* context)
 {
-	JPJavaFrame frame(32);
+	JPJavaFrame frame(context, 32);
 	JP_TRACE_IN("JPTypeFactory::init");
 
 	jclass cls = JPClassLoader::findClass("org.jpype.manager.TypeFactoryNative");

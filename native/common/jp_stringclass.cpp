@@ -16,12 +16,13 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringClass::JPStringClass(jclass clss,
+JPStringClass::JPStringClass(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPClass(clss, name, super, interfaces, modifiers)
+: JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -74,7 +75,7 @@ JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 jvalue JPStringClass::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPStringType::convertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue res;
 	res.l = NULL;
 

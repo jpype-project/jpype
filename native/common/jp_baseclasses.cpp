@@ -18,12 +18,13 @@
 
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 
-JPObjectType::JPObjectType(jclass clss,
+JPObjectType::JPObjectType(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPClass(clss, name, super, interfaces, modifiers)
+: JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -96,7 +97,7 @@ JPMatch::Type JPObjectType::canConvertToJava(PyObject* pyobj)
 jvalue JPObjectType::convertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPObjectType::convertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue res;
 	res.l = NULL;
 
@@ -191,12 +192,13 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 
 //=======================================================
 
-JPClassType::JPClassType(jclass clss,
+JPClassType::JPClassType(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPClass(clss, name, super, interfaces, modifiers)
+: JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }
 
@@ -232,7 +234,7 @@ jvalue JPClassType::convertToJava(PyObject* pyobj)
 	JP_TRACE(JPPyObject::getTypeName(pyobj));
 
 	jvalue res;
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 
 	res.l = NULL;
 

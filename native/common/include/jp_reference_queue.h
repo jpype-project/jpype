@@ -21,14 +21,19 @@
 //extern jbyte JPypeReferenceQueue[];
 //jsize getJPypeReferenceQueueLength();
 
-namespace JPReferenceQueue
+class JPReferenceQueue
 {
-
-	void init();
-	void startJPypeReferenceQueue(bool useJavaThread);
-	void shutdown();
+public:
+	void init(JPContext* context);
+//	void startJPypeReferenceQueue(bool useJavaThread);
+//	void shutdown();
 	void registerRef( jobject obj, PyObject*  targetRef);
 	void registerRef(PyObject* ref, PyObject* targetRef);
+	
+private:
+	JPContext* m_Context;
+	JPObjectRef m_ReferenceQueue;
+	jmethodID m_ReferenceQueueRegisterMethod;
 
 } // end of namespace JPReferenceQueue
 

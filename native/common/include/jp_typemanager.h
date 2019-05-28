@@ -20,45 +20,20 @@
 /**
  * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.
  */
-namespace JPTypeFactory
+class JPTypeFactory
 {
+public:
 	void init(JPContext* content);
-}
+} ;
 
-namespace JPTypeManager
+class JPTypeManager
 {
-	extern JPVoidType* _void;
-	extern JPBooleanType* _boolean;
-	extern JPByteType* _byte;
-	extern JPCharType* _char;
-	extern JPShortType* _short;
-	extern JPIntType* _int;
-	extern JPLongType* _long;
-	extern JPFloatType* _float;
-	extern JPDoubleType* _double;
-	extern JPClass* _java_lang_Object;
-	extern JPClass* _java_lang_Class;
-	extern JPStringClass* _java_lang_String;
-
-	extern JPBoxedClass* _java_lang_Void;
-	extern JPBoxedClass* _java_lang_Boolean;
-	extern JPBoxedClass* _java_lang_Byte;
-	extern JPBoxedClass* _java_lang_Char;
-	extern JPBoxedClass* _java_lang_Short;
-	extern JPBoxedClass* _java_lang_Integer;
-	extern JPBoxedClass* _java_lang_Long;
-	extern JPBoxedClass* _java_lang_Float;
-	extern JPBoxedClass* _java_lang_Double;
+public:
 
 	/**
 	 * Initialize the type manager caches
 	 */
-	void init();
-
-	/**
-	 * delete allocated typenames, should only be called at program termination
-	 */
-	void shutdown();
+	void init(JPContext* content);
 
 	/**
 	 * Find a class using a native name.
@@ -68,10 +43,14 @@ namespace JPTypeManager
 	JPClass* findClass(const string& str);
 	JPClass* findClass(jclass cls);
 	JPClass* findClassForObject(jobject obj);
-
-	void flushCache();
-
-	int getLoadedClasses();
-} // namespace
+	
+private:
+	JPContext* m_Context;
+	JPObjectRef m_TypeManager;
+	
+	jmethodID m_FindClass;
+	jmethodID m_FindClassByName;
+	jmethodID m_FindClassForObject;	
+} ;
 
 #endif // _JPCLASS_H_

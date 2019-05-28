@@ -21,7 +21,8 @@ class JPStringClass : public JPClass
 {
 public:
 
-	JPStringClass(jclass clss,
+	JPStringClass(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,

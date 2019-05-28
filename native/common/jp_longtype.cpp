@@ -16,7 +16,7 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPLongType::JPLongType(jclass clss,
+JPLongType::JPLongType(JPContext* context, jclass clss,
 		const string& name,
 		JPBoxedClass* boxedClass,
 		jint modifiers)
