@@ -95,12 +95,13 @@ def _hasClassPath(args):
 
 _JVM_started = False
 
-def startJVM(*args, ignoreUnrecognized=False, **kwargs):
+def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
-    the JVM with the default classpath and jvm.  The default classpath
-    will be determined by ``jpype.getClassPath()``.  The default JVM is 
-    determined by ``jpype.getDefaultJVMPath()``.
+    the JVM with the default classpath and jvmpath.  
+
+    The default classpath is determined by ``jpype.getClassPath()``.
+    The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
 
     Parameters:
      *args (Optional, str[]): Arguments to give to the JVM.
@@ -109,10 +110,10 @@ def startJVM(*args, ignoreUnrecognized=False, **kwargs):
     Keyword Arguments:
       jvmpath (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
-        Default of None will use ``jpype.getDefaultJVMPath()``
+        Using None will apply the default jvmpath.
       classpath (str,[str]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
-        list. Default will use ``jpype.getClassPath``
+        list. A value of None will give no classpath to JVM.
       ignoreUnrecognized (bool): Option to JVM to ignore
         invalid JVM arguments. Default is False.
 
@@ -145,20 +146,28 @@ def startJVM(*args, ignoreUnrecognized=False, **kwargs):
         jvmpath = getDefaultJVMPath()
 
     # Classpath handling
-    classpath = None
-    if 'classpath' in kwargs:
-        if _hasClassPath(args):
+    if _hasClassPath(args):
+        # Old style, specified in the arguments
+        if 'classpath' in kwargs:
+            # Cannot apply both styles, conflict
             raise TypeError('classpath specified twice')
+        classpath = None
+    elif 'classpath' in kwargs:
+        # New style, as a keywork
         classpath = kwargs.pop('classpath')
-    elif not _hasClassPath(args):
+    else:
+        # Not speficied at all, use the default classpath
         classpath = _classpath.getClassPath()
 
+    # Handle strings and list of strings.
     if classpath:
         if isinstance(classpath, (str, _jtypes._unicode)):
             args.append('-Djava.class.path=%s' % classpath)
         else:
             args.append('-Djava.class.path=%s' %
                         (_classpath._SEP.join(classpath)))
+
+    ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
