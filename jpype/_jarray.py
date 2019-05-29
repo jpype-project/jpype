@@ -45,21 +45,43 @@ class _JArray(object):
     """ Create a java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.
+    The resulting Java array class can be used to construct a new
+    array with a given size or members.
+
+    JPype arrays support Python operators for iterating, length, equals, 
+    not equals, subscripting, and limited slicing. They also support Java
+    object methods, clone, and length property. Java arrays may not
+    be resized, thus elements cannot be added nor deleted. Currently,
+    applying the slice operator produces a new Python sequence.
 
     Example:
         .. code-block:: python
 
+          # Define a new array class for ``int[]``
           IntArrayCls = JArray(JInt)
-          intArray = IntArrayCls([1,2,3])
 
-          if isinstance(intArray, JArray):
+          # Create an array holding 10 elements 
+          #   equivalent to Java ``int[] x=new int[10]``
+          x = IntArrayCls(10)
+
+          # Create a length 3 array initialized with [1,2,3]
+          #   equivalent to Java ``int[] x = new int[]{1,2,3};``
+          x = IntArrayCls([1,2,3])
+
+          # Operate on an array
+          print(len(x))
+          print(x[0])
+          print(x[:-2])
+          x[1:]=(5,6)
+
+          if isinstance(x, JArray):
                print("object is a java array")
 
           if issubclass(IntArrayCls, JArray):
                print("class is a java array type.")
 
     Args:
-      javaClass (str,type): Is the type of element in to hold in 
+      javaClass (str,type): Is the type of element to hold in 
         the array.
       ndims (Optional,int): the number of dimensions of the array 
         (default=1)
@@ -117,6 +139,11 @@ class _JArray(object):
 
     @property
     def length(self):
+        """ Get the length of a Java array
+
+        This method is provided for compatiblity with Java syntax.
+        Generally, the Python style ``len(array)`` should be preferred.
+        """
         return self.__len__()
 
     def __len__(self):
@@ -175,12 +202,11 @@ class _JArray(object):
     def clone(self):
         """ Clone the Java array.
 
-        Copy the aray and return a new copy. The copy is "shallow" and
-        thus the new array points to the same contents as before. For
+        Create a "shallow" copy of a Java array. For a
         single dimensional array of primitives, the cloned array is
-        completely independent of the original. For objects or 
-        multidimensional arrays, the new and old array point to the
-        same objects.
+        complete independent copy of the original. For objects or 
+        multidimensional arrays, the new array is a copy which points
+        to the same members as the original.
 
         To obtain a deep copy of a Java array, use Java serialize and
         deserialize operations to duplicate the entire array and 
