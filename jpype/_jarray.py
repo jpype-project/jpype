@@ -173,6 +173,23 @@ class _JArray(object):
             return True
 
     def clone(self):
+        """ Clone the Java array.
+
+        Copy the aray and return a new copy. The copy is "shallow" and
+        thus the new array points to the same contents as before. For
+        single dimensional array of primitives, the cloned array is
+        completely independent of the original. For objects or 
+        multidimensional arrays, the new and old array point to the
+        same objects.
+
+        To obtain a deep copy of a Java array, use Java serialize and
+        deserialize operations to duplicate the entire array and 
+        contents. In order to deep copy, the objects must be 
+        Serializable.
+
+        Returns:
+            A shallow copy of the array.
+        """
         return _jclass.JClass("java.util.Arrays").copyOf(self, len(self))
 
 
