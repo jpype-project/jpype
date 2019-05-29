@@ -17,6 +17,9 @@
 #ifndef _JPFIELD_H_
 #define _JPFIELD_H_
 
+#include "jp_modifier.h"
+#include "jp_class.h"
+
 /**
  * Field object
  */
@@ -26,7 +29,11 @@ public:
 	/**
 	 * Create a new field based on class and java.lang.Field object
 	 */
-	JPField(JPClass* clazz, jobject fld);
+	JPField(JPClass* cls,
+			const string& name,
+			jobject field,
+			JPClass* fieldType,
+			jint modifiers);
 
 	/**
 	 * destructor
@@ -34,11 +41,18 @@ public:
 	virtual ~JPField();
 
 public:
-	bool isStatic() const;
+	JPContext* getContext()
+	{
+		return m_Class->getContext();
+	}
 
 	string toString() const;
 
-	const string& getName() const;
+	const string& getName() const
+	{
+		return m_Name;
+	}
+
 
 	JPPyObject getStaticField();
 	void     setStaticField(PyObject* val);
@@ -48,7 +62,12 @@ public:
 
 	bool isFinal() const
 	{
-		return m_IsFinal;
+		return JPModifier::isFinal(m_Modifiers);
+	}
+
+	bool isStatic() const
+	{
+		return JPModifier::isStatic(m_Modifiers);
 	}
 
 private:
@@ -60,12 +79,10 @@ private:
 private:
 	string           m_Name;
 	JPClass*         m_Class;
-	bool             m_IsStatic;
-	bool             m_IsFinal;
 	JPObjectRef      m_Field;
 	jfieldID         m_FieldID;
-	JPClassRef       m_Type;
-	JPClass*         m_TypeCache;
+	JPClass*         m_Type;
+	jint             m_Modifiers;
 } ;
 
 typedef vector<JPField> JPFieldList;

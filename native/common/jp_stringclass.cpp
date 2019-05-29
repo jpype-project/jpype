@@ -24,10 +24,19 @@ JPStringClass::JPStringClass(JPContext* context,
 		jint modifiers)
 : JPClass(context, clss, name, super, interfaces, modifiers)
 {
+	JPJavaFrame frame(context);
+	m_String_ToCharArrayID = frame.GetMethodID(clss, "toCharArray", "()[C");
 }
 
 JPStringClass::~JPStringClass()
 {
+}
+
+jobject JPStringClass::stringToCharArray(jstring str)
+{
+	JPJavaFrame frame(m_Context);
+	jobject res = frame.CallObjectMethod(str, m_String_ToCharArrayID);
+	return frame.keep(res);
 }
 
 JPPyObject JPStringClass::convertToPythonObject(jvalue val)
@@ -101,7 +110,7 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 	if (JPPyString::check(obj))
 	{
 		string str = JPPyString::asStringUTF8(obj);
-		jstring jstr = JPJni::fromStringUTF8(str);
+		jstring jstr = m_Context->fromStringUTF8(str);
 		res.l = frame.keep(jstr);
 		return res;
 	}
@@ -119,7 +128,7 @@ JPValue JPStringClass::newInstance(JPPyObjectVector& args)
 		JP_TRACE("Direct");
 		string str = JPPyString::asStringUTF8(args[0]);
 		jvalue res;
-		res.l = JPJni::fromStringUTF8(str);
+		res.l = m_Context->fromStringUTF8(str);
 		return JPValue(this, res);
 	}
 	return JPClass::newInstance(args);

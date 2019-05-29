@@ -16,14 +16,14 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPPrimitiveType::JPPrimitiveType(jclass clss,
+JPPrimitiveType::JPPrimitiveType(JPContext* context, jclass clss,
 		const string& name,
 		JPBoxedClass* boxedClass,
 		jint modifiers
 		)
-: JPClass(clss, name, NULL, JPClassList(), modifiers), m_BoxedClass(cls)
+: JPClass(context, clss, name, NULL, JPClassList(), modifiers), m_BoxedClass(boxedClass)
 {
-	m_BoxedClass->setPrimitiveType(this);
+	boxedClass->setPrimitiveType(this);
 }
 
 JPPrimitiveType::~JPPrimitiveType()

@@ -22,6 +22,8 @@ JPDoubleType::JPDoubleType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	_DoubleValueID = frame.GetMethodID(boxedClass->getJavaClass(), "intValue", "()D");
 }
 
 JPDoubleType::~JPDoubleType()
@@ -30,7 +32,7 @@ JPDoubleType::~JPDoubleType()
 
 bool JPDoubleType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_double;
+	return other == m_Context->_double;
 }
 
 JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
@@ -40,8 +42,9 @@ JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
 
 JPValue JPDoubleType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::doubleValue(obj);
+	field(v) = frame.CallDoubleMethod(obj, _DoubleValueID);
 	return JPValue(this, v);
 }
 

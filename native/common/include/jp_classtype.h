@@ -14,33 +14,8 @@
    limitations under the License.
    
  *****************************************************************************/
-#ifndef _JPBASECLASS_H_
-#define _JPBASECLASS_H_
-
-/**
- * Wrapper for Class<java.lang.Object>
- *
- * Primitive types can implicitely cast to this type as
- * well as class wrappers, thus we need a specialized
- * wrapper.  This class should not be used outside of
- * the JPTypeManager.
- *
- */
-class JPObjectType : public JPClass
-{
-public:
-	JPObjectType(jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
-	
-	virtual~ JPObjectType();
-
-public: // JPClass implementation
-	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
-	virtual jvalue     convertToJava(PyObject* obj) override;
-} ;
+#ifndef _JPCLASSTYPE_H_
+#define _JPCLASSTYPE_H_
 
 /**
  * Wrapper for Class<java.lang.Class>
@@ -66,4 +41,4 @@ public: // JPClass implementation
 	virtual jvalue     convertToJava(PyObject* obj) override;
 } ;
 
-#endif // _JPBASECLASS_H_
+#endif // _JPCLASSTYPE_H_

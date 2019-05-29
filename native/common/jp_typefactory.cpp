@@ -18,6 +18,8 @@
 //#include <jp_thunk.h>
 #include <jp_primitive_common.h>
 
+#include "jp_context.h"
+
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
 	try
@@ -25,10 +27,11 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 		throw;
 	} catch (JPypeException& ex)
 	{
-		ex.toJava();
+		ex.toJava(frame.getContext());
 	} catch (...)
 	{
-		frame.ThrowNew(JPJni::s_RuntimeExceptionClass, "unknown error occurred");
+		frame.ThrowNew(frame.getContext()->_java_lang_RuntimeException.get(), 
+				"unknown error occurred");
 	}
 }
 
@@ -74,6 +77,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		JNIEnv *env, jobject self, jlong contextPtr,
+		jlong clsPtr,
 		jstring nameJString,
 		jlongArray overloadPtrs,
 		jint modifiers)
@@ -86,7 +90,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		JPClass* cls = (JPClass*) clsPtr;
 		JPMethodList overloadList;
 		convert(overloadPtrs, overloadList);
-		string name = JPJni::toStringUTF8(nameJString);
+		string name = context->toStringUTF8(nameJString);
 		JPMethodDispatch* dispatch = new JPMethodDispatch(cls, name, overloadList, modifiers);
 		return (jlong) dispatch;
 	} catch (...)
@@ -99,6 +103,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 		JNIEnv *env, jobject self, jlong contextPtr,
+		jclass cls,
 		jstring name,
 		jlong superClass,
 		jlong componentClass,
@@ -109,8 +114,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 	JPJavaFrame frame(env);
 	try
 	{
-		string className = JPJni::toStringUTF8(name);
-		JPArrayClass* result = new JPArrayClass(cls,
+		string className = context->toStringUTF8(name);
+		JPArrayClass* result = new JPArrayClass(context, cls,
 				className,
 				(JPClass*) superClass,
 				(JPClass*) componentClass,
@@ -137,7 +142,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 	JPJavaFrame frame(env);
 	try
 	{
-		string className = JPJni::toStringUTF8(name);
+		string className = context->toStringUTF8(name);
 		JPMethodList interfaces;
 		convert(interfacePtrs, interfaces);
 		JPClass* result = NULL;
@@ -145,37 +150,38 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		{
 			// Certain classes require special implementations
 			if (className == "java.lang.Object")
-				return (jlong) (JPTypeManager::_java_lang_Object
+				return (jlong) (context->_java_lang_Object
 					= new JPObjectType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Class")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Class
 					= new JPClassType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Void")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Void
 					= new JPBoxedVoidType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Boolean")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Boolean
 					= new JPBoxedBooleanType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Byte")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Byte
 					= new JPBoxedByteType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Character")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Char
 					= new JPBoxedCharacterType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Short")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Short
 					= new JPBoxedShortType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Integer")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Integer
 					= new JPBoxedIntegerType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Long")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Long
 					= new JPBoxedLongType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Float")
-				return (jlong) (JPTypeManager::_java_lang_Class
+				return (jlong) (context->_java_lang_Float
 					= new JPBoxedFloatType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Double")
-				return (jlong) new JPBoxedDoubleType(cls, className, (JPClass*) superClass, interfaces, modifiers);
+				return (jlong) (context->_java_lang_Double
+					= new JPBoxedDoubleType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 		}
 		else
 			// Otherwise create a normal class
@@ -201,25 +207,25 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 	JPJavaFrame frame(env);
 	try
 	{
-		string className = JPJni::toStringUTF8(name);
+		string className = context->toStringUTF8(name);
 		if (className == "void")
-			return (jlong) (JPTypeManager::_void = new JPVoidType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_void = new JPVoidType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "byte")
-			return (jlong) (JPTypeManager::_byte = new JPByteType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_byte = new JPByteType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "boolean")
-			return (jlong) (JPTypeManager::_boolean = new JPBooleanType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_boolean = new JPBooleanType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "char")
-			return (jlong) (JPTypeManager::_char = new JPCharType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_char = new JPCharType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "short")
-			return (jlong) (JPTypeManager::_short = new JPShortType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_short = new JPShortType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "int")
-			return (jlong) (JPTypeManager::_int = new JPIntType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_int = new JPIntType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "long")
-			return (jlong) (JPTypeManager::_long = new JPLongType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_long = new JPLongType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "float")
-			return (jlong) (JPTypeManager::_float = new JPFloatType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_float = new JPFloatType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		if (className == "double")
-			return (jlong) (JPTypeManager::_double = new JPDoubleType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_double = new JPDoubleType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
 		return 0;
 	} catch (...)
 	{
@@ -310,7 +316,11 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 	JP_TRACE_OUT;
 }
 
-void JPTypeFactory::init(JPContext* context)
+JPTypeFactory::~JPTypeFactory()
+{
+}
+
+JPTypeFactory::JPTypeFactory(JPContext* context)
 {
 	JPJavaFrame frame(context, 32);
 	JP_TRACE_IN("JPTypeFactory::init");

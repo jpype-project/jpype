@@ -23,7 +23,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 /**
- * Specialized class loader for jpype resources.
+ * Specialized class loader for JPype resources.
  * <p>
  * Loader to convert the internally stored resources into java classes. This
  * prevents class load order problems when there are class dependencies.

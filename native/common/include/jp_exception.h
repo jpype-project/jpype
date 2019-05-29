@@ -138,7 +138,7 @@ typedef list<JPStackInfo> JPStackTrace;
 class JPypeException
 {
 public:
-	JPypeException(jthrowable, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(JPContext* context, jthrowable, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
@@ -152,7 +152,7 @@ public:
 	string getJavaMessage();
 
 	void convertJavaToPython();
-	void convertPythonToJava();
+	void convertPythonToJava(JPContext* context);
 
 	/** Transfer handling of this exception to python. 
 	 * 
@@ -162,7 +162,7 @@ public:
 	void toPython();
 
 	/** Transfer handling of this exception to java. */
-	void toJava();
+	void toJava(JPContext* context);
 
 	jthrowable getJavaException();
 
@@ -171,6 +171,7 @@ private:
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
+	JPContext* m_Context;
 } ;
 
 /**

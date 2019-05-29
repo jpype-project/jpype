@@ -23,34 +23,36 @@
 class JPTypeFactory
 {
 public:
-	void init(JPContext* content);
+	JPTypeFactory(JPContext* content);
+	~JPTypeFactory();
 } ;
 
 class JPTypeManager
 {
+	friend class JPContext;
 public:
 
 	/**
 	 * Initialize the type manager caches
 	 */
-	void init(JPContext* content);
+	JPTypeManager(JPContext* content);
+	~JPTypeManager();
 
 	/**
 	 * Find a class using a native name.
 	 * 
 	 * The pointer returned is NOT owned by the caller
 	 */
-	JPClass* findClass(const string& str);
 	JPClass* findClass(jclass cls);
+	JPClass* findClassByName(const string& str);
 	JPClass* findClassForObject(jobject obj);
 	
 private:
-	JPContext* m_Context;
-	JPObjectRef m_TypeManager;
-	
-	jmethodID m_FindClass;
-	jmethodID m_FindClassByName;
-	jmethodID m_FindClassForObject;	
+	JPContext*  m_Context;
+	JPObjectRef m_JavaTypeManager;
+	jmethodID   m_FindClass;
+	jmethodID   m_FindClassByName;
+	jmethodID   m_FindClassForObject;	
 } ;
 
 #endif // _JPCLASS_H_

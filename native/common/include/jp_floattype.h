@@ -59,6 +59,9 @@ public:
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
+private:
+	jdouble _Float_Max;
+	jmethodID _FloatValueID;
 } ;
 
 #endif // _JP_FLOAT_TYPE_H_

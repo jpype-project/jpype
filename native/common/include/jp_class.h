@@ -185,6 +185,11 @@ public:
 	bool isInstance(JPValue& val);
 
 	virtual void postLoad();
+	
+	JPContext* getContext() const
+	{
+		return m_Context;
+	}
 
 protected:
 	JPContext*           m_Context;

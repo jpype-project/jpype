@@ -22,6 +22,8 @@ JPCharType::JPCharType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	_CharValueID = frame.GetMethodID(boxedClass->getJavaClass(), "charValue", "()C");
 }
 
 JPCharType::~JPCharType()
@@ -30,12 +32,7 @@ JPCharType::~JPCharType()
 
 bool JPCharType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_char;
-	// FIXME this wss wrong.  Java char is not an integer type.
-	//			|| other == JPTypeManager::_int
-	//			|| other == JPTypeManager::_long
-	//			|| other == JPTypeManager::_float
-	//			|| other == JPTypeManager::_double;
+	return other == m_Context->_char;
 }
 
 JPPyObject JPCharType::convertToPythonObject(jvalue val)
@@ -45,8 +42,9 @@ JPPyObject JPCharType::convertToPythonObject(jvalue val)
 
 JPValue JPCharType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::charValue(obj);
+	field(v) = frame.CallCharMethod(obj, _CharValueID);
 	return JPValue(this, v);
 }
 

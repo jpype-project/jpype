@@ -86,7 +86,7 @@ bool PyJPArray::check(PyObject* o)
 
 JPPyObject PyJPArray::alloc(JPArray* obj)
 {
-	JPJavaFrame fame;
+	JPJavaFrame frame(obj->getClass()->getContext());
 	JP_TRACE_IN("PyJPArray::alloc");
 	PyJPArray* res = PyObject_New(PyJPArray, &PyJPArray::Type);
 	JP_PY_CHECK();
@@ -104,11 +104,11 @@ PyObject* PyJPArray::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 
 int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 {
+	JPContext* context = NULL;
 	JP_TRACE_IN("PyJPArray::__init__");
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPArray::__init__");
-		JPJavaFrame frame;
 
 		PyObject* v;
 		if (!PyArg_ParseTuple(args, "O!", &PyJPValue::Type, &v))
@@ -118,6 +118,8 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 		JPValue& val = ((PyJPValue*) v)->m_Value;
 
 		JPArrayClass* arrayClass = dynamic_cast<JPArrayClass*> (val.getClass());
+		context = arrayClass->getContext();
+		JPJavaFrame frame(context);
 		if (arrayClass == NULL)
 		{
 			PyErr_SetString(PyExc_TypeError, "Class must be array type");
@@ -134,10 +136,11 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 
 PyObject* PyJPArray::__str__(PyJPArray* self)
 {
+	JPContext* context = self->m_Array->getClass()->getContext();
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPArray::__str__");
-		JPJavaFrame frame;
+		JPJavaFrame frame(context);
 		stringstream sout;
 
 		// FIXME way too hard to get this type name.
@@ -162,7 +165,7 @@ PyObject* PyJPArray::getArrayLength(PyJPArray* self, PyObject* arg)
 	try
 	{
 		ASSERT_JVM_RUNNING("JPypeJavaArray::getArrayLength");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Array->getClass()->getContext());
 		return PyInt_FromLong(self->m_Array->getLength());
 	}
 	PY_STANDARD_CATCH
@@ -175,7 +178,7 @@ PyObject* PyJPArray::getArrayItem(PyJPArray* self, PyObject* arg)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPArray::getArrayItem");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Array->getClass()->getContext());
 		int ndx;
 		PyArg_ParseTuple(arg, "i", &ndx);
 		JP_PY_CHECK();
@@ -192,7 +195,7 @@ PyObject* PyJPArray::getArraySlice(PyJPArray* self, PyObject* arg)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPArray::getArraySlice");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Array->getClass()->getContext());
 
 		PyArg_ParseTuple(arg, "ii", &lo, &hi);
 		JP_PY_CHECK();
@@ -221,7 +224,7 @@ PyObject* PyJPArray::setArraySlice(PyJPArray* self, PyObject* arg)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPArray::setArraySlice");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Array->getClass()->getContext());
 
 		// Parse arguments
 		PyObject* sequence;
@@ -259,7 +262,7 @@ PyObject* PyJPArray::setArrayItem(PyJPArray* self, PyObject* arg)
 	try
 	{
 		ASSERT_JVM_RUNNING("JPypeJavaArray::setArrayItem");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Array->getClass()->getContext());
 
 		int ndx;
 		PyObject* value;

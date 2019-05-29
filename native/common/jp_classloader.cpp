@@ -16,45 +16,61 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
+#include <jp_classloader.h>
 #include <jp_thunk.h>
 
-namespace
-{ // impl detail, gets initialized by JPProxy::init()
-	jobject classLoader;
-	jmethodID findClassID;
+jobject JPClassLoader::getSystemClassLoader()
+{
+	return m_SystemClassLoader.get();
 }
 
-void JPClassLoader::init()
+jobject JPClassLoader::getBootLoader()
 {
-	JPJavaFrame frame;
+	return m_BootLoader.get();
+}
+
+JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
+{
+	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPClassLoader::init");
 
 	// Define the class loader
-	jobject cl = JPJni::getSystemClassLoader();
-	jclass cls = frame.DefineClass("org/jpype/classloader/JPypeClassLoader", cl,
-			JPThunk::_org_jpype_classloader_JPypeClassLoader,
-			JPThunk::_org_jpype_classloader_JPypeClassLoader_size);
-
-	jvalue v;
-
-	// Set up class loader
-	jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
-	//v.l = cl;
-
-	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
-	classLoader = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
-
-	// Load the jar
-	jbyteArray jar = frame.NewByteArray(JPThunk::_org_jpype_size);
-	frame.SetByteArrayRegion(jar, 0, JPThunk::_org_jpype_size, JPThunk::_org_jpype);
-	v.l = jar;
-
-	jmethodID importJarID = frame.GetMethodID(cls, "importJar", "([B)V");
-	frame.CallVoidMethodA(classLoader, importJarID, &v);
-
+	jclass classLoaderClass = (jclass) frame.FindClass("java/lang/ClassLoader");
+	jmethodID getSystemClassLoader
+			= frame.GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+	m_SystemClassLoader = frame.CallStaticObjectMethod(classLoaderClass, getSystemClassLoader);
+	m_UseSystem = useSystem;
 	// Set up the loader
-	findClassID = frame.GetMethodID(cls, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	m_FindClass = frame.GetMethodID(m_SystemClassLoader, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	if (useSystem)
+	{
+		m_BootLoader = m_SystemClassLoader;
+		return;
+	}
+	else
+	{
+		jclass cls = frame.DefineClass("org/jpype/classloader/JPypeClassLoader", m_SystemClassLoader,
+				JPThunk::_org_jpype_classloader_JPypeClassLoader,
+				JPThunk::_org_jpype_classloader_JPypeClassLoader_size);
 
+		jvalue v;
+
+		// Set up class loader
+		jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
+		//v.l = cl;
+
+		jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
+		m_BootLoader = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
+
+		// Load the jar
+		jbyteArray jar = frame.NewByteArray(JPThunk::_org_jpype_size);
+		frame.SetByteArrayRegion(jar, 0, JPThunk::_org_jpype_size, JPThunk::_org_jpype);
+		v.l = jar;
+
+		jmethodID importJarID = frame.GetMethodID(cls, "importJar", "([B)V");
+		frame.CallVoidMethodA(m_BootLoader, importJarID, &v);
+
+	}
 	JP_TRACE_OUT;
 }
 
@@ -63,5 +79,5 @@ jclass JPClassLoader::findClass(string name)
 	JPJavaFrame frame;
 	jvalue v;
 	v.l = frame.NewStringUTF(name.c_str());
-	return (jclass) frame.keep(frame.CallObjectMethodA(classLoader, findClassID, &v));
+	return (jclass) frame.keep(frame.CallObjectMethodA(m_BootLoader.get(), m_FindClass, &v));
 }

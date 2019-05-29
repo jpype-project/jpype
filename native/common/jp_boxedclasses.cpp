@@ -60,7 +60,7 @@ jvalue JPBoxedClass::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy());
+		res.l = frame.keep(proxy->getProxy(m_Context));
 		return res;
 	}
 

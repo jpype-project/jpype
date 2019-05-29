@@ -20,13 +20,19 @@
 class JPMonitor
 {
 public:
-	JPMonitor(jobject obj);
+	JPMonitor(JPContext* context, jobject obj);
 	virtual ~JPMonitor();
 
 	void enter();
 	void exit();
+	
+	JPContext* getContext()
+	{
+		return m_Context();
+	}
 
 private:
+	JPContext* m_Context;
 	JPObjectRef m_Value;
 } ;
 

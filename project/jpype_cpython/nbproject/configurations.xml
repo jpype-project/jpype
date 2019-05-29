@@ -8,12 +8,12 @@
         <logicalFolder name="include" displayName="include" projectFiles="true">
           <itemPath>../../native/common/include/jp_array.h</itemPath>
           <itemPath>../../native/common/include/jp_arrayclass.h</itemPath>
-          <itemPath>../../native/common/include/jp_baseclasses.h</itemPath>
           <itemPath>../../native/common/include/jp_booleantype.h</itemPath>
           <itemPath>../../native/common/include/jp_boxedclasses.h</itemPath>
           <itemPath>../../native/common/include/jp_bytetype.h</itemPath>
           <itemPath>../../native/common/include/jp_chartype.h</itemPath>
           <itemPath>../../native/common/include/jp_class.h</itemPath>
+          <itemPath>../../native/common/include/jp_classtype.h</itemPath>
           <itemPath>../../native/common/include/jp_doubletype.h</itemPath>
           <itemPath>../../native/common/include/jp_encoding.h</itemPath>
           <itemPath>../../native/common/include/jp_env.h</itemPath>
@@ -29,6 +29,7 @@
           <itemPath>../../native/common/include/jp_methoddispatch.h</itemPath>
           <itemPath>../../native/common/include/jp_modifier.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
+          <itemPath>../../native/common/include/jp_objecttype.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
           <itemPath>../../native/common/include/jp_primitive_common.h</itemPath>
@@ -72,14 +73,15 @@
       <logicalFolder name="common" displayName="common" projectFiles="true">
         <itemPath>../../native/common/jp_array.cpp</itemPath>
         <itemPath>../../native/common/jp_arrayclass.cpp</itemPath>
-        <itemPath>../../native/common/jp_baseclasses.cpp</itemPath>
         <itemPath>../../native/common/jp_booleantype.cpp</itemPath>
         <itemPath>../../native/common/jp_boxedclasses.cpp</itemPath>
         <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
         <itemPath>../../native/common/jp_chartype.cpp</itemPath>
         <itemPath>../../native/common/jp_class.cpp</itemPath>
         <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_classtype.cpp</itemPath>
         <itemPath>../../native/common/jp_context.cpp</itemPath>
+        <itemPath>../../native/common/jp_context.h</itemPath>
         <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
         <itemPath>../../native/common/jp_encoding.cpp</itemPath>
         <itemPath>../../native/common/jp_env.cpp</itemPath>
@@ -92,6 +94,7 @@
         <itemPath>../../native/common/jp_method.cpp</itemPath>
         <itemPath>../../native/common/jp_methoddispatch.cpp</itemPath>
         <itemPath>../../native/common/jp_monitor.cpp</itemPath>
+        <itemPath>../../native/common/jp_objecttype.cpp</itemPath>
         <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
         <itemPath>../../native/common/jp_proxy.cpp</itemPath>
         <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
@@ -173,11 +176,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_baseclasses.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_booleantype.h"
             ex="false"
             tool="3"
@@ -199,6 +197,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_class.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_classtype.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -274,6 +277,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_monitor.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_objecttype.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -355,11 +363,6 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="../../native/common/jp_baseclasses.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="../../native/common/jp_booleantype.cpp"
             ex="false"
             tool="1"
@@ -387,7 +390,14 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="../../native/common/jp_context.cpp" ex="false" tool="0" flavor2="0">
+      <item path="../../native/common/jp_classtype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_context.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_context.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../../native/common/jp_doubletype.cpp"
             ex="false"
@@ -430,6 +440,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/jp_monitor.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_objecttype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../native/common/jp_primitivetype.cpp"
             ex="false"

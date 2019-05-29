@@ -52,7 +52,7 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 
 string JPClass::toString() const
 {
-	return JPJni::toString(m_Class.get());
+	return m_Context->toString(m_Class.get());
 }
 
 string JPClass::getCanonicalName() const
@@ -320,7 +320,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy());
+		res.l = frame.keep(proxy->getProxy(m_Context));
 		return res;
 	}
 
@@ -398,7 +398,7 @@ string JPClass::describe()
 			curInstField++)
 	{
 		JPField* f = *curInstField;
-		out << "  " << f->toString() << endl;
+		out << "  " << f->getName() << endl;
 	}
 	out << endl;
 

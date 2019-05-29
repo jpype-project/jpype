@@ -21,7 +21,7 @@ class JPIntType : public JPPrimitiveType
 {
 public:
 
-	JPIntType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPIntType(JPContext* context, jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPIntType();
 
 public:
@@ -62,12 +62,16 @@ public:
 
 	template <class T> T assertRange(const T& l)
 	{
-		if (l < JPJni::s_Int_Min || l > JPJni::s_Int_Max)
+		if (l < _Int_Min || l > _Int_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java int");
 		}
 		return l;
 	}
+private:
+	jlong _Int_Min;
+	jlong _Int_Max;
+	jmethodID _IntValueID;
 } ;
 
 #endif // _JP_INT_TYPE_H_

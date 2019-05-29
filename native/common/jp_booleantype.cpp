@@ -22,6 +22,8 @@ JPBooleanType::JPBooleanType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	s_BooleanValueID = frame.GetMethodID(boxedClass->getJavaClass(), "booleanValue", "()Z");
 }
 
 JPBooleanType::~JPBooleanType()
@@ -30,7 +32,7 @@ JPBooleanType::~JPBooleanType()
 
 bool JPBooleanType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_boolean;
+	return other == m_Context->_boolean;
 }
 
 JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
@@ -40,8 +42,9 @@ JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
 
 JPValue JPBooleanType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::booleanValue(obj);
+	field(v) = frame.CallBooleanMethod(obj, s_BooleanValueID) ? true : false;
 	return JPValue(this, v);
 }
 

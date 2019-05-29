@@ -90,7 +90,7 @@ JPPyObject PyJPValue::alloc(const JPValue& value)
 
 JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(cls->getContext());
 	JP_TRACE_IN("PyJPValue::alloc");
 	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
 	JP_PY_CHECK();
@@ -124,7 +124,6 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPValue::__init__");
-		JPJavaFrame frame;
 		self->m_Cache = NULL;
 
 		PyObject* claz;
@@ -138,6 +137,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		JPClass* type = ((PyJPClass*) claz)->m_Class;
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
+		JPJavaFrame frame(type->getContext());
 
 		// If it is already a Java object, then let Java decide
 		// if the cast is possible
@@ -175,7 +175,8 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPValue::__str__");
-		JPJavaFrame frame;
+		JPContext* context = self->m_Value.getClass()->getContext()
+				JPJavaFrame frame(context);
 		stringstream sout;
 		sout << "<java value " << self->m_Value.getClass()->toString();
 
@@ -185,7 +186,7 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 		else
 		{
 			jobject jo = self->m_Value.getJavaObject();
-			sout << "  value = " << jo << " " << JPJni::toString(jo);
+			sout << "  value = " << jo << " " << context->toString(jo);
 		}
 
 		sout << ">";
@@ -237,9 +238,10 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPValue::toString");
-		JPJavaFrame frame;
 		JPClass* cls = self->m_Value.getClass();
-		if (cls == JPTypeManager::_java_lang_String)
+		JPContext* context = cls->getContext();
+		JPJavaFrame frame(context);
+		if (cls == context->_java_lang_String)
 		{
 			// Java strings are immutable so we will cache them.
 			ensureCache(self);
@@ -250,7 +252,8 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 				jstring str = (jstring) self->m_Value.getValue().l;
 				if (str == NULL)
 					JP_RAISE_VALUE_ERROR("null string");
-				PyDict_SetItemString(self->m_Cache, "str", out = JPPyString::fromStringUTF8(JPJni::toStringUTF8(str)).keep());
+				string cstring = context->toStringUTF8(str);
+				PyDict_SetItemString(self->m_Cache, "str", out = JPPyString::fromStringUTF8(cstring).keep());
 			}
 			Py_INCREF(out);
 			return out;
@@ -262,7 +265,7 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 			JP_RAISE_VALUE_ERROR("toString called with null class");
 
 		// In general toString is not immutable, so we won't cache it.
-		return JPPyString::fromStringUTF8(JPJni::toString(self->m_Value.getValue().l)).keep();
+		return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l)).keep();
 	}
 	PY_STANDARD_CATCH;
 	return 0;
@@ -276,9 +279,10 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPValue::toUnicode");
-		JPJavaFrame frame;
 		JPClass* cls = self->m_Value.getClass();
-		if (cls == JPTypeManager::_java_lang_String)
+		JPContext* context = cls->getContext();
+		JPJavaFrame frame(context);
+		if (cls == context->_java_lang_String)
 		{
 			// Java strings are immutable so we will cache them.
 			ensureCache(self);
@@ -289,7 +293,8 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 				jstring str = (jstring) self->m_Value.getValue().l;
 				if (str == NULL)
 					JP_RAISE_VALUE_ERROR("null string");
-				PyDict_SetItemString(self->m_Cache, "unicode", out = JPPyString::fromStringUTF8(JPJni::toStringUTF8(str), true).keep());
+				string cstring = context->toStringUTF8(str);
+				PyDict_SetItemString(self->m_Cache, "unicode", out = JPPyString::fromStringUTF8(cstring, true).keep());
 			}
 			Py_INCREF(out);
 			return out;
@@ -301,7 +306,7 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 			JP_RAISE_VALUE_ERROR("toUnicode called with null class");
 
 		// In general toString is not immutable, so we won't cache it.
-		return JPPyString::fromStringUTF8(JPJni::toString(self->m_Value.getValue().l), true).keep();
+		return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l), true).keep();
 	}
 	PY_STANDARD_CATCH;
 	return 0;

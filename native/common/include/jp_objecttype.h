@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve M�nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,31 +14,32 @@
    limitations under the License.
    
  *****************************************************************************/
-#ifndef JP_STRINGCLASS_H
-#define JP_STRINGCLASS_H
+#ifndef _JPOBJECTTYPE_H_
+#define _JPOBJECTTYPE_H_
 
-class JPStringClass : public JPClass
+/**
+ * Wrapper for Class<java.lang.Object>
+ *
+ * Primitive types can implicitely cast to this type as
+ * well as class wrappers, thus we need a specialized
+ * wrapper.  This class should not be used outside of
+ * the JPTypeManager.
+ *
+ */
+class JPObjectType : public JPClass
 {
 public:
-
-	JPStringClass(JPContext* context,
-		jclass clss,
+	JPObjectType(jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers);
-	virtual ~JPStringClass();
-
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue newInstance(JPPyObjectVector& args) override;
 	
-	// Use by arrays
-	jobject stringToCharArray(jstring str);
-private:
-	jmethodID m_String_ToCharArrayID;
+	virtual~ JPObjectType();
+
+public: // JPClass implementation
+	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
+	virtual jvalue     convertToJava(PyObject* obj) override;
 } ;
 
-#endif /* JP_STRINGTYPE_H */
+#endif // _JPOBJECTTYPE_H_

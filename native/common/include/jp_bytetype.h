@@ -21,7 +21,7 @@ class JPByteType : public JPPrimitiveType
 {
 public:
 
-	JPByteType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPByteType(JPContext* context, jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPByteType();
 
 public:
@@ -65,12 +65,17 @@ public:
 
 	template <class T> T assertRange(const T& l)
 	{
-		if (l < JPJni::s_Byte_Min || l > JPJni::s_Byte_Max)
+		if (l < _Byte_Min || l > _Byte_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
 		}
 		return l;
 	}
+	
+private:
+	jlong _Byte_Min;
+	jlong _Byte_Max;
+	jmethodID _ByteValueID;
 } ;
 
 #endif // _JPBYTE_TYPE_H_

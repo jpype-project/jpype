@@ -17,6 +17,8 @@
 #ifndef _JPMETHODDISPATCH_H_
 #define _JPMETHODDISPATCH_H_
 
+#include "jp_class.h"
+
 class JPMethodDispatch : public JPResource
 {
 public:
@@ -36,6 +38,12 @@ private:
 	JPMethodDispatch& operator=(const JPMethodDispatch& method);
 
 public:
+
+	JPContext* getContext()
+	{
+		return m_Class->getContext();
+	}
+
 	const string& getName() const;
 	string getClassName() const;
 

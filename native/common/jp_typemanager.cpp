@@ -17,38 +17,24 @@
 #include <jpype.h>
 #include <jp_typemanager.h>
 
-void JPTypeManager::init(JPContext* context)
+JPTypeManager::JPTypeManager(JPContext* context)
 {
 	m_Context = context;
 	// Everything that requires specialization must be created here.
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPTypeManager::init");
-	
+
 	jclass cls = JPClassLoader::findClass("org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
-	
+
 	// The object instance will be loaded later
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClass(const string& name)
+JPTypeManager::~JPTypeManager()
 {
-	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame(m_Context);
-	jvalue val;
-	val.l = (jobject) JPJni::fromStringUTF8(name);
-	return (JPClass*) (frame.CallLongMethodA(m_TypeManager.get(), m_FindClassByName, &val));
-}
-
-JPClass* JPTypeManager::findClassForObject(jobject obj)
-{
-	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame(m_Context);
-	jvalue val;
-	val.l = obj;
-	return (JPClass*) (frame.CallLongMethodA(m_TypeManager.get(), m_FindClassForObject, &val));
 }
 
 JPClass* JPTypeManager::findClass(jclass obj)
@@ -57,5 +43,24 @@ JPClass* JPTypeManager::findClass(jclass obj)
 	JPJavaFrame frame(m_Context);
 	jvalue val;
 	val.l = obj;
-	return (JPClass*) (frame.CallLongMethodA(m_TypeManager.get(), m_FindClass, &val));
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
 }
+
+JPClass* JPTypeManager::findClassByName(const string& name)
+{
+	JP_TRACE_IN("JPTypeManager::findClassByName");
+	JPJavaFrame frame(m_Context);
+	jvalue val;
+	val.l = (jobject) m_Context->fromStringUTF8(name);
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+}
+
+JPClass* JPTypeManager::findClassForObject(jobject obj)
+{
+	JP_TRACE_IN("JPTypeManager::findClass");
+	JPJavaFrame frame(m_Context);
+	jvalue val;
+	val.l = obj;
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+}
+

@@ -39,16 +39,13 @@ namespace JPJni
 	void init();
 
 	// Object
-	jclass getClass(jobject obj);
 	string toString(jobject obj);
 
 	// String
 	string toStringUTF8(jstring str);
 	jstring fromStringUTF8(const string& str);
-	jobject stringToCharArray(jstring str);
-
+	
 	// Class	
-	jclass getComponentType(jclass cls);
 	string convertToSimpleName(jclass cls);
 	string getCanonicalName(jclass cls);
 	bool isArray(jclass cls);
@@ -69,123 +66,10 @@ namespace JPJni
 	 */
 	bool            isFinal(jclass cls);
 
-	/**
-	 * java.lang.Class.getInterfaces()
-	 */
-	vector<jclass>  getInterfaces(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getDeclaredFields()
-	 */
-	vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass cls);
-
-
-	/**
-	 * java.lang.Class.getConstructors()
-	 */
-	vector<jobject> getConstructors(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getFields()
-	 */
-	vector<jobject> getFields(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getDeclaredMethods()
-	 */
-	vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getDeclaredMethods()
-	 */
-	vector<jobject> getMethods(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getDeclaredMethods()
-	 */
-	vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass cls);
-
-	/**
-	 * java.lang.Class.getModifiers()
-	 */
-	long getClassModifiers(jclass cls);
-
 	jobject getSystemClassLoader();
-
-	/**
-	 * java.lang.reflect.Member.getName()
-	 */
-	string getMemberName(jobject member);
-
-	/**
-	 * java.lang.reflect.Modifier.isPublic(java.lang.reflect.member.getModifiers())
-	 */
-	bool isMemberPublic(jobject member);
-
-	/**
-	 * java.lang.reflect.Modifier.is(java.lang.reflect.member.getModifiers())
-	 */
-	bool isMemberStatic(jobject member);
-
-	/**
-	 * java.lang.reflect.Modifier.isFinal(java.lang.reflect.member.getModifiers())
-	 */
-	bool isMemberFinal(jobject member);
-
-	/**
-	 * java.lang.reflect.Modifier.isAbstract(java.lang.reflect.member.getModifiers())
-	 */
-	bool isMemberAbstract(jobject member);
-
-	// Field
-	/**
-	 * java.lang.reflect.Modifier.isPublic(java.lang.reflect.Field.getModifiers()
-	 */
-	bool isFieldPublic(jobject field);
-
-	/**
-	 * java.lang.reflect.Field.getType
-	 */
-	jclass getFieldType(jobject field);
-
-	// Method
-	/**
-	 * java.lang.reflect.Method.getReturnType
-	 */
-	jclass getMethodReturnType(jobject method);
-
-	/**
-	 * java.lang.reflect.Method.isSynthetic()
-	 */
-	bool isMethodSynthetic(jobject method);
-
-	/**
-	 * java.lang.reflect.Method.isSynthetic()
-	 */
-	bool isMethodVarArgs(jobject);
-
-	/**
-	 * java.lang.reflect.Method.getParameterTypes
-	 */
-	vector<JPClassRef> getMethodParameterTypes(jobject, bool);
-
-	bool isConstructor(jobject);
 
 	string getStackTrace(jthrowable th);
 	string getMessage(jthrowable th);
-
-	// Boxed class methods
-	long intValue(jobject);
-	jlong longValue(jobject);
-	double doubleValue(jobject);
-	bool booleanValue(jobject);
-	jchar charValue(jobject);
-
-	/** Look up the class for a java primitive.
-	 * @param name is the name of the Boxed type in native format.
-	 */
-	jclass getPrimitiveClass(jclass cls);
-
 };
 
 #endif // _JPJNIUTIL_H_

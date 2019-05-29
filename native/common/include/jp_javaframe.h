@@ -46,23 +46,12 @@ static const int LOCAL_FRAME_DEFAULT = 8;
 
 class JPJavaFrame
 {
-	JNIEnv* env;
+	JNIEnv* m_Env;
+	JPContext* m_Context;
 	bool attached;
 	bool popped;
 
 public:
-	/** Create a new JavaFrame from an existing JNIEnv.
-	 *
-	 * This is used when a JPype method is called by the java
-	 * virtual machine.  In this case we are supplied with a
-	 * JNIEnv from the machine to use. This method cannot
-	 * fail.
-	 *
-	 * @param size determines how many objects can be
-	 * created in this scope without additional overhead.
-	 *
-	 */
-//	explicit JPJavaFrame(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
 
 	/** Create a new JavaFrame.
 	 *
@@ -75,7 +64,7 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-//	JPJavaFrame(int size = LOCAL_FRAME_DEFAULT);
+	JPJavaFrame(JPContext* context, int size = LOCAL_FRAME_DEFAULT);
 
 	/** Exit the local scope and clean up all java
 	 * objects.  
@@ -133,7 +122,12 @@ public:
 
 	JNIEnv* getEnv() const
 	{
-		return env;
+		return m_Env;
+	}
+	
+	JPContext* getContext() const
+	{
+		return m_Context;
 	}
 
 private:

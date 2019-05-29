@@ -30,7 +30,7 @@ JPVoidType::~JPVoidType()
 
 bool JPVoidType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_void;
+	return other == m_Context->_void;
 }
 
 JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)

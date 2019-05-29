@@ -15,7 +15,7 @@
 
  *****************************************************************************/
 #include <jpype.h>
-
+#include <jp_objecttype.h>
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 
 JPObjectType::JPObjectType(JPContext* context,
@@ -128,28 +128,28 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 
 	if (JPPyString::check(pyobj))
 	{
-		res = JPTypeManager::_java_lang_String->convertToJava(pyobj);
+		res = m_Context->_java_lang_String->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
 
 	if (JPPyBool::check(pyobj))
 	{
-		res = JPTypeManager::_boolean->getBoxedClass()->convertToJava(pyobj);
+		res = m_Context->_boolean->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
 
 	if (JPPyFloat::check(pyobj))
 	{
-		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
+		res = m_Context->_double->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
 
 	if (JPPyLong::check(pyobj))
 	{
-		res = JPTypeManager::_long->getBoxedClass()->convertToJava(pyobj);
+		res = m_Context->_long->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
@@ -157,7 +157,7 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 	// It is only an integer type if it can be used as a slice PEP-357
 	if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
 	{
-		res = JPTypeManager::_long->getBoxedClass()->convertToJava(pyobj);
+		res = m_Context->_long->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
@@ -165,7 +165,7 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 	// Okay so if it does not have bit operations we will go to float
 	if (JPPyFloat::checkConvertable(pyobj))
 	{
-		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
+		res = m_Context->_double->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
@@ -181,89 +181,11 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy());
+		res.l = frame.keep(proxy->getProxy(m_Context));
 		return res;
 	}
 
 	JP_RAISE_TYPE_ERROR("Unable to convert to object");
-	return res;
-	JP_TRACE_OUT;
-}
-
-//=======================================================
-
-JPClassType::JPClassType(JPContext* context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPClassType::~JPClassType()
-{
-}
-
-JPMatch::Type JPClassType::canConvertToJava(PyObject* pyobj)
-{
-	JP_TRACE_IN("JPObjectType::convertToJava");
-	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_implicit;
-
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-			return JPMatch::_exact;
-		return JPMatch::_none;
-	}
-
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
-	if (cls != NULL)
-		return JPMatch::_exact;
-
-	return JPMatch::_none;
-	JP_TRACE_OUT;
-}
-
-jvalue JPClassType::convertToJava(PyObject* pyobj)
-{
-	JP_TRACE_IN("JPObjectType::convertToJava");
-	JP_TRACE(JPPyObject::getTypeName(pyobj));
-
-	jvalue res;
-	JPJavaFrame frame(m_Context);
-
-	res.l = NULL;
-
-	// assume it is convertible;
-	if (JPPyObject::isNone(pyobj))
-	{
-		return res;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			res.l = frame.NewLocalRef(value->getValue().l);
-			res.l = frame.keep(res.l);
-			return res;
-		}
-		JP_RAISE_TYPE_ERROR("Unable to convert to java class");
-	}
-
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
-	if (cls != NULL)
-	{
-		res.l = frame.NewLocalRef(cls->getJavaClass());
-		res.l = frame.keep(res.l);
-		return res;
-	}
-	JP_RAISE_TYPE_ERROR("Unable to convert to java class");
 	return res;
 	JP_TRACE_OUT;
 }

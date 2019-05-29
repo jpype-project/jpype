@@ -21,7 +21,7 @@ class JPShortType : public JPPrimitiveType
 {
 public:
 
-	JPShortType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPShortType(JPContext* context, jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
 	virtual ~JPShortType();
 
 public:
@@ -62,13 +62,16 @@ public:
 
 	template <class T> T assertRange(const T& l)
 	{
-		if (l < JPJni::s_Short_Min || l > JPJni::s_Short_Max)
+		if (l < JPJni::_Short_Min || l > JPJni::_Short_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java short");
 		}
 		return l;
 	}
-
+private:
+	jlong _Short_Min;
+	jlong _Short_Max;
+    jmethodID _ShortValueID;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

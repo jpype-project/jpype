@@ -59,6 +59,8 @@ public:
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
+private:
+	jmethodID _CharValueID;
 } ;
 
 #endif // _JP-CHAR_TYPE_H_

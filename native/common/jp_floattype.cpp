@@ -22,6 +22,11 @@ JPFloatType::JPFloatType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	jfieldID fid;
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "F");
+	_Float_Max = frame.GetStaticFloatField(boxedClass->getJavaClass(), fid);
+	_FloatValueID = frame.GetMethodID(boxedClass->getJavaClass(), "floatValue", "()F");
 }
 
 JPFloatType::~JPFloatType()
@@ -30,8 +35,8 @@ JPFloatType::~JPFloatType()
 
 bool JPFloatType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
+	return other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPFloatType::convertToPythonObject(jvalue val)
@@ -41,8 +46,9 @@ JPPyObject JPFloatType::convertToPythonObject(jvalue val)
 
 JPValue JPFloatType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = (type_t) JPJni::doubleValue(obj);
+	field(v) = (type_t) frame.CallFloatMethod(obj, _FloatValueID);
 	return JPValue(this, v);
 }
 
@@ -109,11 +115,11 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 		double l = JPPyFloat::asDouble(obj);
 		// FIXME the check for s_minFloat seems wrong.
 		// Java would trim to 0 rather than giving an error.
-		if (l >= 0 && l > JPJni::s_Float_Max)
+		if (l >= 0 && l > _Float_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
 		}
-		else if (l < 0 && l < -JPJni::s_Float_Max)
+		else if (l < 0 && l < -_Float_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
 		}

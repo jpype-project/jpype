@@ -19,26 +19,45 @@
 
 #include "jp_class.h"
 
-class JPProxy
+class JPProxyFactory
 {
 public:
-	JPProxy(PyObject* inst, JPClass::ClassList& intf);
-
+	void init(JPContext* context);
+	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
+	
+private:
+	JPContext* m_Context;
+	jclass handlerClass;
+	jmethodID invocationHandlerConstructorID;
+	jfieldID hostObjectID;
+	jfieldID contextID;
+};
+	
+class JPProxy
+{
+	friend class JPProxyFactory;
+	JPProxy(JPContext* context, PyObject* inst, JPClassList& intf);
+	
+public:
 	virtual ~JPProxy();
 
-	static void init();
-
-	const JPClass::ClassList& getInterfaces() const
+	const JPClassList& getInterfaces() const
 	{
 		return m_InterfaceClasses;
 	}
 
 	jobject getProxy();
 
+	JPContext* getContext()
+	{
+		return m_Context;
+	}
+
 private:
+	JPContext*    m_Context;
 	jobject	      m_Handler;
 	PyObject*     m_Instance; // This is a PyJPProxy
-	JPClass::ClassList m_InterfaceClasses;
+	JPClassList   m_InterfaceClasses;
 	JPObjectRef   m_Interfaces;
 } ;
 

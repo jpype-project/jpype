@@ -49,7 +49,6 @@ namespace
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
-
 JPContext::JPContext()
 {
 }
@@ -79,7 +78,6 @@ void JPContext::assertJVMRunning(const char* function, const JPStackInfo& info)
 	}
 }
 
-
 void JPContext::loadEntryPoints(const string& path)
 {
 	// Load symbols from the shared library	
@@ -88,7 +86,8 @@ void JPContext::loadEntryPoints(const string& path)
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
-void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args)
+void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
+		const StringVector& args)
 {
 	JP_TRACE_IN("JPEnv::loadJVM");
 
@@ -118,49 +117,84 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized, const St
 		JP_RAISE_RUNTIME_ERROR("Unable to start JVM");
 	}
 
-	JP_TRACE("Initialize");
-	JPJni::init();
-	JPTypeFactory::init();
-	JPClassLoader::init();
-	JPTypeManager::init();
-	JPReferenceQueue::init();
-	JPProxy::init();
-	JPReferenceQueue::startJPypeReferenceQueue(true);
-	
 	{
 		JPJavaFrame frame(this);
-	// Launch the context
-	jclass cls = JPClassLoader::findClass("org.jpype.JPypeContext");
-	jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext", 
-			"(JLjava.lang.ClassLoader;)Lorg.jpype.JPypeContext;");
-	
-	jvalue val[2];
-	val[0].j = (jlong) this;
-	val[1].l = 0;
-	m_JavaContext = frame.CallStaticObjectMethodA(cls, startMethod, val);
-	
-	jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager", 
-			"()Lorg.jpype.manager.TypeManager;");
-	m_TypeManager.m_TypeManager = frame.CallObjectMethod(m_JavaContext.get(), getTypeManager);
+		// After the JVM is created but before the context is started, we need 
+		// lo set up all the services that the context will need.
+		JP_TRACE("Initialize");
+		
+		// We need these first because if anything goes south this is the first
+		// thing that will get hit.
+		_java_lang_NoSuchMethodError = (jclass) frame.FindClass("java/lang/NoSuchMethodError");
+		_java_lang_RuntimeException = (jclass) frame.FindClass("java/lang/RuntimeException");
 
-//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
+		// Bootloader needs to go first so we can load classes
+		m_ClassLoader = new JPClassLoader(this, false);
 
-	frame.CallVoidMethod(cls, startMethod);
+		// Start the rest of the services
+		m_TypeFactory = new JPTypeFactory(this);
+		m_TypeManager = new JPTypeManager(this);
+		m_ReferenceQueue = new JPReferenceQueue(this);
+		m_ProxyFactory = new JPProxyFactory(this);
+
+		// Launch the Java context
+		jclass cls = JPClassLoader::findClass("org.jpype.JPypeContext");
+		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
+				"(JLjava.lang.ClassLoader;)Lorg.jpype.JPypeContext;");
+		m_ContextShutdownMethod = frame.GetMethodID(cls, "shutdown", "()V");
+
+		jvalue val[2];
+		val[0].j = (jlong) this;
+		val[1].l = 0;
+		m_JavaContext = frame.CallStaticObjectMethodA(cls, startMethod, val);
+
+		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
+				"()Lorg.jpype.manager.TypeManager;");
+		m_TypeManager->m_TypeManager = frame.CallObjectMethod(m_JavaContext.get(), getTypeManager);
+
+		// Once we return from start method all Java objects are populated.
+		// Thus we can now access the Java classes.
+
+		//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
+		m_Object_ToStringID = frame.GetMethodID(_java_lang_Object->getJavaClass(), "toString", "()Ljava/lang/String;");
+		s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
+
+		s_NoSuchMethodErrorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError"));
+		s_RuntimeExceptionClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException"));
+
+		s_ProxyClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Proxy"));
+		s_NewProxyInstanceID = frame.GetStaticMethodID(s_ProxyClass, "newProxyInstance",
+				"(Ljava/lang/ClassLoader;[Ljava/lang/Class;Ljava/lang/reflect/InvocationHandler;)Ljava/lang/Object;");
+
+		s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
+		s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
+		s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
+
+		s_StringWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
+		s_PrintWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
+		s_StringWriterID = frame.GetMethodID(s_StringWriterClass, "<init>", "()V");
+		s_PrintWriterID = frame.GetMethodID(s_PrintWriterClass, "<init>", "(Ljava/io/Writer;)V");
+		s_FlushID = frame.GetMethodID(s_PrintWriterClass, "flush", "()V");
+
+		frame.CallVoidMethod(cls, startMethod);
 	}
+
+
 	JP_TRACE_OUT;
 }
 
 void JPContext::shutdownJVM()
 {
+
 	JP_TRACE_IN("JPEnv::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE_RUNTIME_ERROR("Attempt to shutdown without a live JVM");
 
-	// Reference queue has to be be shutdown first as we need to close resources
-	JPReferenceQueue::shutdown();
-
-	// Then the type manager has to be shut down so that we can't create any more classes
-	JPTypeManager::shutdown();
+	{
+		JPJavaFrame frame(this);
+		// Tell Java to shutdown the context
+		frame.CallVoidMethod(m_JavaContext, m_ContextShutdownMethod);
+	}
 
 	// Wait for all non-demon threads to terminate
 	// DestroyJVM is rather misnamed.  It is simply a wait call
@@ -216,28 +250,51 @@ void JPContext::detachCurrentThread()
 	m_JavaVM->functions->DetachCurrentThread(m_JavaVM);
 }
 
-
-//	s_ReferenceQueueStartMethod = frame.GetMethodID(cls, "start", "()V");
-//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
-
-	JP_TRACE_OUT;
-}
+// Java functions
 
 
-// FIXME move the loader for the custom class from jp_proxy.cpp
-
-void JPContext::startJPypeReferenceQueue(bool useJavaThread)
+class JPStringAccessor
 {
-	JP_TRACE_IN("JPReferenceQueue::startJPypeReferenceQueue");
+	JPJavaFrame& frame_;
+	jboolean isCopy;
+
+public:
+	const char* cstr;
+	int length;
+	jstring jstr_;
+
+	JPStringAccessor(JPJavaFrame& frame, jstring jstr)
+	: frame_(frame), jstr_(jstr)
+	{
+		cstr = frame_.GetStringUTFChars(jstr, &isCopy);
+		length = frame_.GetStringUTFLength(jstr);
+	}
+
+	~JPStringAccessor()
+	{
+		frame_.ReleaseStringUTFChars(jstr_, cstr);
+	}
+};
+
+string JPContext::toString(jobject o)
+{
 	JPJavaFrame frame;
-	frame.CallVoidMethod(m_JavaContext, m_ContextStartMethod);
-	JP_TRACE_OUT;
+	jstring str = (jstring) frame.CallObjectMethod(o, m_Object_ToStringID);
+	JPStringAccessor contents(frame, str);
+	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 }
 
-void JPContext::shutdown()
+string JPContext::toStringUTF8(jstring str)
 {
-	JP_TRACE_IN("JPReferenceQueue::shutdown");
-	JPJavaFrame frame;
-	frame.CallVoidMethod(m_JavaContext, m_ContextShutdownMethod);
-	JP_TRACE_OUT;
+	JPJavaFrame frame(this);
+	JPStringAccessor contents(frame, str);
+	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 }
+
+jstring JPContext::fromStringUTF8(const string& str)
+{
+	JPJavaFrame frame(this);
+	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
+	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
+}
+

@@ -22,6 +22,12 @@ JPByteType::JPByteType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	jfieldID fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "B");
+	_Byte_Min = frame.GetStaticByteField(boxedClass->getJavaClass(), fid);
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "B");
+	_Byte_Max = frame.GetStaticByteField(boxedClass->getJavaClass(), fid);
+	_ByteValueID = frame.GetMethodID(boxedClass->getJavaClass(), "byteValue", "()B");
 }
 
 JPByteType::~JPByteType()
@@ -30,12 +36,12 @@ JPByteType::~JPByteType()
 
 bool JPByteType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_byte
-			|| other == JPTypeManager::_short
-			|| other == JPTypeManager::_int
-			|| other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
+	return other == m_Context->_byte
+			|| other == m_Context->_short
+			|| other == m_Context->_int
+			|| other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 jobject JPByteType::convertToDirectBuffer(PyObject* src)
@@ -63,8 +69,9 @@ JPPyObject JPByteType::convertToPythonObject(jvalue val)
 
 JPValue JPByteType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = (type_t) JPJni::intValue(obj);
+	field(v) = frame.CallByteMethod(obj, _ByteValueID);
 	return JPValue(this, v);
 }
 

@@ -22,6 +22,14 @@ JPIntType::JPIntType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	jfieldID fid;
+
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "I");
+	_Int_Min = frame.GetStaticIntField(boxedClass->getJavaClass(), fid);
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "I");
+	_Int_Max = frame.GetStaticIntField(boxedClass->getJavaClass(), fid);
+	_IntValueID = frame.GetMethodID(boxedClass->getJavaClass(), "intValue", "()I");
 }
 
 JPIntType::~JPIntType()
@@ -30,10 +38,10 @@ JPIntType::~JPIntType()
 
 bool JPIntType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_int
-			|| other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
+	return other == m_Context->_int
+			|| other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPIntType::convertToPythonObject(jvalue val)
@@ -43,8 +51,9 @@ JPPyObject JPIntType::convertToPythonObject(jvalue val)
 
 JPValue JPIntType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::intValue(obj);
+	field(v) = frame.CallIntMethod(obj, _IntValueID);
 	return JPValue(this, v);
 }
 

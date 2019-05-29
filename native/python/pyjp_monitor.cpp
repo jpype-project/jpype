@@ -123,7 +123,7 @@ void PyJPMonitor::__dealloc__(PyJPMonitor* self)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPMonitor::__dealloc__");
-		JPJavaFrame frame;
+		JPJavaFrame frame(self->m_Monitor->getContext());
 		delete self->m_Monitor;
 		Py_TYPE(self)->tp_free(self);
 	}
@@ -166,5 +166,3 @@ PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
 	PY_STANDARD_CATCH
 	return NULL;
 }
-
-

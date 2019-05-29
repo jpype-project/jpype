@@ -17,9 +17,16 @@
 #include <Python.h> // FIXME work on bytes, remove when complete
 #include <jpype.h>
 
-JPArrayClass::JPArrayClass(jclass c) : JPClass(c)
+#include "jp_context.h"
+
+JPArrayClass::JPArrayClass(JPContext* context,
+		jclass cls,
+		const string& name,
+		JPContext* superClass,
+		JPContext* componentType,
+		jint modifiers) : JPClass(context, cls, name, superClass, JPClassList(), modifiers)
 {
-	m_ComponentType = JPTypeManager::findClass(JPJni::getComponentType(c));
+	m_ComponentType = componentType;
 }
 
 JPArrayClass::~JPArrayClass()
@@ -51,7 +58,7 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	if (JPPyString::check(obj) && m_ComponentType == JPTypeManager::_char)
+	if (JPPyString::check(obj) && m_ComponentType == m_Context->_char)
 	{
 		JP_TRACE("char[]");
 		// Strings are also char[]
@@ -60,19 +67,19 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 
 #if PY_MAJOR_VERSION >= 3 
 	// Bytes are byte[]
-	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	if (PyBytes_Check(obj) && m_ComponentType == m_Context->_byte)
 	{
 		return JPMatch::_implicit;
 	}
 #else
 	// Bytes are byte[]
-	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	if (PyString_Check(obj) && m_ComponentType == m_Context->_byte)
 	{
 		return JPMatch::_implicit;
 	}
 #endif
 
-	//	if (JPPyString::checkBytes(o) && m_ComponentType == JPTypeManager::_byte)
+	//	if (JPPyString::checkBytes(o) && m_ComponentType == m_Context->_byte)
 	//	{
 	//		TRACE1("char[]");
 	//		// Strings are also char[]
@@ -126,7 +133,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 	}
 
 	if (JPPyString::check(obj)
-			&& m_ComponentType == JPTypeManager::_char)
+			&& m_ComponentType == m_Context->_char)
 	{
 		JP_TRACE("char[]");
 
@@ -134,16 +141,16 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		string str = JPPyString::asStringUTF8(obj);
 
 		// Convert to new java string
-		jstring jstr = JPJni::fromStringUTF8(str);
+		jstring jstr = m_Context->fromStringUTF8(str);
 
 		// call toCharArray()
-		jobject charArray = JPJni::stringToCharArray(jstr);
+		jobject charArray = m_Context->_java_lang_String->stringToCharArray(jstr);
 		res.l = frame.keep(charArray);
 		return res;
 	}
 
 #if PY_MAJOR_VERSION >= 3 
-	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	if (PyBytes_Check(obj) && m_ComponentType == m_Context->_byte)
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
@@ -154,7 +161,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		return res;
 	}
 #else
-	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
+	if (PyString_Check(obj) && m_ComponentType == m_Context->_byte)
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;

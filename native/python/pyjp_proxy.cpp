@@ -85,7 +85,6 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPProxy::__init__");
-		JPJavaFrame frame;
 
 		// Parse arguments
 		PyObject* target;
@@ -103,9 +102,15 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 			return -1;
 		}
 
-		JPClass::ClassList interfaces;
+		JPClassList interfaces;
 		JPPySequence intf(JPPyRef::_use, pyintf);
 		jlong len = intf.size();
+		if (len<1)
+		{
+			PyErr_SetString(PyExc_TypeError, "at least one interface is required");
+			return -1;
+		}
+
 		for (jlong i = 0; i < len; i++)
 		{
 			JPClass* cls = JPPythonEnv::getJavaClass(intf[i].get());
@@ -116,8 +121,14 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 			}
 			interfaces.push_back(cls);
 		}
-
-		self->m_Proxy = new JPProxy((PyObject*) self, interfaces);
+		
+		JPContext* context = interfaces[0]->getContext();
+		
+		// FIXME if we have multiple context someone has to check that all the interfaces
+		// belong to the same context.
+		
+		JPJavaFrame frame(context);
+		self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
 		self->m_Target = target;
 		Py_INCREF(target);
 		self->m_Callable = callable;

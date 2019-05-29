@@ -59,6 +59,8 @@ public:
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
+private:
+	jmethodID _LongValueID;
 } ;
 
 #endif // _JP_LONG_TYPE_H_

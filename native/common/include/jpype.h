@@ -164,7 +164,8 @@ public:
 // Object classes
 #include "jp_arrayclass.h"
 #include "jp_stringclass.h"
-#include "jp_baseclasses.h"
+#include "jp_objecttype.h"
+#include "jp_classtype.h"
 #include "jp_boxedclasses.h"
 
 // Services

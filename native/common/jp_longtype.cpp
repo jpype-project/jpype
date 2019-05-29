@@ -22,6 +22,8 @@ JPLongType::JPLongType(JPContext* context, jclass clss,
 		jint modifiers)
 : JPPrimitiveType(clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	_LongValueID = frame.GetMethodID(boxedClass->getJavaClass(), "longValue", "()J");
 }
 
 JPLongType::~JPLongType()
@@ -30,9 +32,9 @@ JPLongType::~JPLongType()
 
 bool JPLongType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
+	return other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPLongType::convertToPythonObject(jvalue val)
@@ -42,8 +44,9 @@ JPPyObject JPLongType::convertToPythonObject(jvalue val)
 
 JPValue JPLongType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::longValue(obj);
+	field(v) = frame.CallLongMethod(obj, _LongValueID);
 	return JPValue(this, v);
 }
 

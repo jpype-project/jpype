@@ -16,12 +16,19 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPShortType::JPShortType(jclass clss,
+JPShortType::JPShortType(JPContext* context, jclass clss,
 		const string& name,
 		JPBoxedClass* boxedClass,
 		jint modifiers)
-: JPPrimitiveType(clss, name, boxedClass, modifiers)
+: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
+	JPJavaFrame frame(context);
+	jfieldID fid;
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "S");
+	_Short_Min = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
+	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "S");
+	_Short_Max = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
+	_ShortValueID = frame.GetMethodID(boxedClass->getJavaClass(), "shortValue", "()S");
 }
 
 JPShortType::~JPShortType()
@@ -30,11 +37,11 @@ JPShortType::~JPShortType()
 
 bool JPShortType::isSubTypeOf(JPClass* other) const
 {
-	return other == JPTypeManager::_short
-			|| other == JPTypeManager::_int
-			|| other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
+	return other == m_Context->_short
+			|| other == m_Context->_int
+			|| other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPShortType::convertToPythonObject(jvalue val)
@@ -44,8 +51,9 @@ JPPyObject JPShortType::convertToPythonObject(jvalue val)
 
 JPValue JPShortType::getValueFromObject(jobject obj)
 {
+	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = JPJni::intValue(obj);
+	field(v) = frame.CallShortMethod(obj, _ShortValueID);
 	return JPValue(this, v);
 }
 
