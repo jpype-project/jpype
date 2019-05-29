@@ -95,7 +95,7 @@ def _hasClassPath(args):
 
 _JVM_started = False
 
-def startJVM(*args, **kwargs):
+def startJVM(*args, ignoreUnrecognized=False, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
     the JVM with the default classpath and jvm.  The default classpath
@@ -107,7 +107,7 @@ def startJVM(*args, **kwargs):
         The first argument may be the path the JVM.
 
     Keyword Arguments:
-      jvm (str):  Path to the jvm library file,
+      jvmpath (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
         Default of None will use ``jpype.getDefaultJVMPath()``
       classpath (str,[str]): Set the classpath for the jvm.
@@ -132,26 +132,24 @@ def startJVM(*args, **kwargs):
     args = list(args)
 
     # JVM path
-    jvm = None
+    jvmpath = None
     if args:
         # jvm is the first argument the first argument is a path or None
         if not args[0] or not args[0].startswith('-'):
-            jvm = args.pop(0)
-    if 'jvm' in kwargs:
-        if jvm:
-            raise TypeError('jvm path specified twice')
-        jvm = kwargs['jvm']
-        del kwargs['jvm']
-    if not jvm:
-        jvm = getDefaultJVMPath()
+            jvmpath = args.pop(0)
+    if 'jvmpath' in kwargs:
+        if jvmpath:
+            raise TypeError('jvmpath specified twice')
+        jvmpath = kwargs.pop('jvmpath')
+    if not jvmpath:
+        jvmpath = getDefaultJVMPath()
 
     # Classpath handling
     classpath = None
     if 'classpath' in kwargs:
         if _hasClassPath(args):
             raise TypeError('classpath specified twice')
-        classpath = kwargs['classpath']
-        del kwargs['classpath']
+        classpath = kwargs.pop('classpath')
     elif not _hasClassPath(args):
         classpath = _classpath.getClassPath()
 
@@ -162,17 +160,11 @@ def startJVM(*args, **kwargs):
             args.append('-Djava.class.path=%s' %
                         (_classpath._SEP.join(classpath)))
 
-    # Handle ignoreUnrecognized
-    ignoreUnrecognized = False
-    if 'ignoreUnrecognized' in kwargs:
-        ignoreUnrecognized = kwargs['ignoreUnrecognized']
-        del kwargs['ignoreUnrecognized']
-
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
-    _jpype.startup(jvm, tuple(args), ignoreUnrecognized)
+    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized)
     _initialize()
 
 

@@ -63,3 +63,4 @@ target/
 *.stackdump
 tmp
 doc/html
+native/jars
