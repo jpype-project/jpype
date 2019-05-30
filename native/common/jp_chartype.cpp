@@ -18,7 +18,7 @@
 
 JPCharType::JPCharType(JPContext* context, jclass clss,
 		const string& name,
-		JPBoxedClass* boxedClass,
+		JPBoxedType* boxedClass,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {

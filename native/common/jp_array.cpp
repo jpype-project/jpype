@@ -48,7 +48,7 @@ jsize JPArray::getLength()
 
 JPPyObject JPArray::getRange(jsize start, jsize stop)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JP_TRACE_IN("JPArray::getRange");
 	JPClass* compType = m_Class->getComponentType();
 	JP_TRACE("Component type", compType->getCanonicalName());

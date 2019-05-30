@@ -56,7 +56,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 {
 	JP_TRACE_IN("JPTypeFactory_destroy");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
@@ -84,7 +84,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethodDispatch");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		JPClass* cls = (JPClass*) clsPtr;
@@ -111,7 +111,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 {
 	JP_TRACE_IN("JPTypeFactory_defineArrayClass");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		string className = context->toStringUTF8(name);
@@ -139,7 +139,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 {
 	JP_TRACE_IN("JPTypeFactory_defineObjectClass");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		string className = context->toStringUTF8(name);
@@ -157,31 +157,31 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 					= new JPClassType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Void")
 				return (jlong) (context->_java_lang_Void
-					= new JPBoxedVoidType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Boolean")
 				return (jlong) (context->_java_lang_Boolean
-					= new JPBoxedBooleanType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Byte")
 				return (jlong) (context->_java_lang_Byte
-					= new JPBoxedByteType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Character")
 				return (jlong) (context->_java_lang_Char
-					= new JPBoxedCharacterType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Short")
 				return (jlong) (context->_java_lang_Short
-					= new JPBoxedShortType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Integer")
 				return (jlong) (context->_java_lang_Integer
-					= new JPBoxedIntegerType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Long")
 				return (jlong) (context->_java_lang_Long
-					= new JPBoxedLongType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Float")
 				return (jlong) (context->_java_lang_Float
-					= new JPBoxedFloatType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Double")
 				return (jlong) (context->_java_lang_Double
-					= new JPBoxedDoubleType(cls, className, (JPClass*) superClass, interfaces, modifiers));
+					= new JPBoxedType(cls, className, (JPClass*) superClass, interfaces, modifiers));
 		}
 		else
 			// Otherwise create a normal class
@@ -204,28 +204,28 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 {
 	JP_TRACE_IN("JPTypeFactory_definePrimitive");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		string className = context->toStringUTF8(name);
 		if (className == "void")
-			return (jlong) (context->_void = new JPVoidType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_void = new JPVoidType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "byte")
-			return (jlong) (context->_byte = new JPByteType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_byte = new JPByteType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "boolean")
-			return (jlong) (context->_boolean = new JPBooleanType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_boolean = new JPBooleanType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "char")
-			return (jlong) (context->_char = new JPCharType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_char = new JPCharType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "short")
-			return (jlong) (context->_short = new JPShortType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_short = new JPShortType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "int")
-			return (jlong) (context->_int = new JPIntType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_int = new JPIntType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "long")
-			return (jlong) (context->_long = new JPLongType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_long = new JPLongType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "float")
-			return (jlong) (context->_float = new JPFloatType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_float = new JPFloatType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		if (className == "double")
-			return (jlong) (context->_double = new JPDoubleType(name, cls, (JPBoxedClass*) boxedPtr, modifiers));
+			return (jlong) (context->_double = new JPDoubleType(name, cls, (JPBoxedType*) boxedPtr, modifiers));
 		return 0;
 	} catch (...)
 	{
@@ -244,7 +244,7 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 {
 	JP_TRACE_IN("JPTypeFactory_assignMembers");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 		JPClass* cls = (JPClass*) clsPtr;
@@ -278,7 +278,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 {
 	JP_TRACE_IN("JPTypeFactory_defineField");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 
@@ -302,7 +302,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 {
 	JP_TRACE_IN("JPTypeFactory_defineMethod");
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(env);
+	JPJavaFrame frame(context, env);
 	try
 	{
 
@@ -360,7 +360,6 @@ JPTypeFactory::JPTypeFactory(JPContext* context)
 	method[7].name = (char*) "defineMethod";
 	method[7].signature = (char*) "(JJLjava.lang.String;Ljava.lang.reflect.Executable;J[J[JI)J";
 	method[7].fnPtr = (void*) &JPTypeFactory_defineMethod;
-
 
 	frame.GetMethodID(cls, "<init>", "()V");
 	frame.RegisterNatives(cls, method, 8);

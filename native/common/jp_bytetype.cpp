@@ -18,7 +18,7 @@
 
 JPByteType::JPByteType(JPContext* context, jclass clss,
 		const string& name,
-		JPBoxedClass* boxedClass,
+		JPBoxedType* boxedClass,
 		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
@@ -46,7 +46,7 @@ bool JPByteType::isSubTypeOf(JPClass* other) const
 
 jobject JPByteType::convertToDirectBuffer(PyObject* src)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPByteType::convertToDirectBuffer");
 
 	if (JPPyMemoryView::check(src))

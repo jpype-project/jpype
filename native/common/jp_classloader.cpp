@@ -31,6 +31,7 @@ jobject JPClassLoader::getBootLoader()
 
 JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 {
+	m_Context = context;
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPClassLoader::init");
 
@@ -44,6 +45,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 	m_FindClass = frame.GetMethodID(m_SystemClassLoader, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 	if (useSystem)
 	{
+		// Boot loader and system class loader are now the same
 		m_BootLoader = m_SystemClassLoader;
 		return;
 	}
@@ -76,7 +78,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 
 jclass JPClassLoader::findClass(string name)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue v;
 	v.l = frame.NewStringUTF(name.c_str());
 	return (jclass) frame.keep(frame.CallObjectMethodA(m_BootLoader.get(), m_FindClass, &v));

@@ -48,6 +48,7 @@ public:
 	jobject getBootLoader();
 	
 private:
+	JPContext* m_Context;
 	JPObjectRef m_SystemClassLoader;
 	JPObjectRef m_BootLoader;
 	jmethodID m_FindClass;

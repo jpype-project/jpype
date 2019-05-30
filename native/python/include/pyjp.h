@@ -29,9 +29,10 @@
 #include <pyjp_module.h>
 #include <pyjp_monitor.h>
 #include <pyjp_value.h>
+#include <pyjp_context.h>
 #include <pyjp_proxy.h>
 
-#define ASSERT_JVM_RUNNING(X) JPEnv::assertJVMRunning(X, JP_STACKINFO())
+#define ASSERT_JVM_RUNNING(context, X) context->assertJVMRunning(X, JP_STACKINFO())
 #define PY_STANDARD_CATCH catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); }
 
 #endif /* PYJP_H */

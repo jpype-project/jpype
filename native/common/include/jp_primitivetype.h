@@ -22,9 +22,10 @@ class JPPrimitiveType : public JPClass
 protected:
 	JPPrimitiveType(JPContext* context, jclass clss,
 		const string& name,
-		JPBoxedClass* boxedClass,
+		JPBoxedType* boxedClass,
 		jint modifiers);
 	virtual ~JPPrimitiveType();
+	jobject convertToJavaObject(PyObject obj);
 
 protected:
 	JPClass* m_BoxedClass;
@@ -36,7 +37,7 @@ public:
 		return m_BoxedClass;
 	}
 
-	void setBoxedClass(JPBoxedClass* boxedClass);
+	void setBoxedClass(JPBoxedType* boxedClass);
 
 } ;
 

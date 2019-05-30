@@ -21,7 +21,7 @@ class JPLongType : public JPPrimitiveType
 {
 public:
 
-	JPLongType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPLongType(jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPLongType();
 
 public:

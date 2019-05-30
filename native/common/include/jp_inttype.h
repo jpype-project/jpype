@@ -21,7 +21,7 @@ class JPIntType : public JPPrimitiveType
 {
 public:
 
-	JPIntType(JPContext* context, jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPIntType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPIntType();
 
 public:

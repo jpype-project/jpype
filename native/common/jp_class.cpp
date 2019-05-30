@@ -250,7 +250,7 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPClass::canConvertToJava");
 	if (JPPyObject::isNone(obj))
 	{
@@ -297,7 +297,7 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 jvalue JPClass::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::convertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue res;
 
 	res.l = NULL;
@@ -333,7 +333,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 
 bool JPClass::isAssignableFrom(JPClass* o)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
 }
 
@@ -342,7 +342,7 @@ bool JPClass::isAssignableFrom(JPClass* o)
 bool JPClass::isSubTypeOf(JPClass* other) const
 {
 	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass()) != 0;
 }
 
@@ -351,7 +351,7 @@ bool JPClass::isSubTypeOf(JPClass* other) const
 
 string JPClass::describe()
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	stringstream out;
 	out << "public ";
 	if (isAbstract())
@@ -430,7 +430,7 @@ bool JPClass::isInstance(JPValue& val)
 	if (dynamic_cast<JPPrimitiveType*> (cls) == cls)
 		return false;
 
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	return frame.IsInstanceOf(val.getValue().l, m_Class.get());
 }
 

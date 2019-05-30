@@ -35,7 +35,7 @@
  * created, but this has overhead.  For most cases the default
  * will be fine.  However, when working with an array in which
  * the number of items in scope can be known in advance, it is
- * good to size the frame appropraitely.
+ * good to size the frame appropriately.
  *
  * A JavaFrame should not be used in a destructor as it can
  * throw. The most common use of JavaFrame is to delete a
@@ -98,14 +98,6 @@ public:
 	 */
 	void DeleteGlobalRef(jobject obj);
 
-	/** Release a global reference checking for shutdown.
-	 *
-	 * This should be used in any calls to release resources
-	 * from a destructor.  It cannot fail even if the 
-	 * JVM is no longer operating.
-	 */
-	static void ReleaseGlobalRef(jobject obj);
-
 	/** Create a new local reference.
 	 *
 	 * This is only used when promoting a WeakReference to
@@ -124,7 +116,7 @@ public:
 	{
 		return m_Env;
 	}
-	
+
 	JPContext* getContext() const
 	{
 		return m_Context;
@@ -360,43 +352,56 @@ template <class jref>
 class JPRef
 {
 private:
+	JPContext* m_Context;
 	jref m_Ref;
 
 public:
 
 	JPRef()
 	{
+		m_Context = 0;
 		m_Ref = 0;
 	}
 
-	JPRef(jref obj)
+	JPRef(JPContext* context, jref obj)
 	{
-		JPJavaFrame frame;
+		m_Context = context;
+		JPJavaFrame frame(m_Context);
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
 
 	JPRef(const JPRef& other)
 	{
-		JPJavaFrame frame;
+		m_Context = other.m_Context;
+		JPJavaFrame frame(m_Context);
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
 	}
 
 	~JPRef()
 	{
-		if (m_Ref != 0)
-			JPJavaFrame::ReleaseGlobalRef((jobject) m_Ref);
+		if (m_Ref != 0 && m_Context != 0)
+		{
+			m_Context->ReleaseGlobalRef((jobject) m_Ref);
+		}
 	}
 
 	JPRef& operator=(const JPRef& other)
 	{
 		if (other.m_Ref == m_Ref)
 			return *this;
-		JPJavaFrame frame;
-		if (m_Ref != 0)
-			frame.DeleteGlobalRef((jobject) m_Ref);
+		if (m_Context != 0 && m_Ref != 0)
+		{
+			JPJavaFrame frame(m_Context);
+			if (m_Ref != 0)
+				frame.DeleteGlobalRef((jobject) m_Ref);
+		}
+		m_Context = other.m_Ref;
 		m_Ref = other.m_Ref;
-		if (m_Ref != 0)
+		if (m_Context != 0 && m_Ref != 0)
+		{
+			JPJavaFrame frame(m_Context);
 			m_Ref = (jclass) frame.NewGlobalRef((jobject) m_Ref);
+		}
 		return *this;
 	}
 

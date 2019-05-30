@@ -106,7 +106,7 @@ class JPArrayClass;
 class JPValue;
 class JPProxy;
 class JPArray;
-class JPBoxedClass;
+class JPBoxedType;
 class JPVoidType;
 class JPBooleanType;
 class JPByteType;

@@ -21,7 +21,7 @@ class JPDoubleType : public JPPrimitiveType
 {
 public:
 
-	JPDoubleType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPDoubleType(jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPDoubleType();
 
 public:

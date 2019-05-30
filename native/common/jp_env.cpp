@@ -197,16 +197,6 @@ jobject JPJavaFrame::NewGlobalRef(jobject a0)
 	return res;
 }
 
-void JPJavaFrame::ReleaseGlobalRef(jobject a0)
-{
-	XXXXXXXXXXXXXXXXXXXX
-	// Check if the JVM is already shutdown
-	if (s_JavaVM == NULL)
-		return;
-	JPJavaFrame frame;
-	frame.DeleteGlobalRef(a0);
-}
-
 /*****************************************************************************/
 // Exceptions
 

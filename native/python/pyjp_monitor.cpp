@@ -78,8 +78,6 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 	try
 	{
 		self->m_Monitor = NULL;
-		ASSERT_JVM_RUNNING("PyJPMonitor::__init__");
-		JPJavaFrame frame;
 
 		PyObject* value;
 
@@ -89,10 +87,13 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 		}
 
 		JPValue& v1 = ((PyJPValue*) value)->m_Value;
+		JPContext* context = v1.getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__init__");
+		JPJavaFrame frame;
 
 		// FIXME should these be runtime or type error.
 		// it is legitimately the wrong "type" of object.
-		if (v1.getClass() == JPTypeManager::_java_lang_String)
+		if (v1.getClass() == context->_java_lang_String)
 		{
 			PyErr_SetString(PyExc_TypeError, "Strings cannot be used to synchronize.");
 			return -1;
@@ -122,8 +123,6 @@ void PyJPMonitor::__dealloc__(PyJPMonitor* self)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__dealloc__");
-		JPJavaFrame frame(self->m_Monitor->getContext());
 		delete self->m_Monitor;
 		Py_TYPE(self)->tp_free(self);
 	}
@@ -134,7 +133,8 @@ PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__str__");
+		JPContext *context = self->m_Monitor->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__str__");
 		stringstream ss;
 		ss << "<java monitor>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
@@ -147,7 +147,8 @@ PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__enter__");
+		JPContext *context = self->m_Monitor->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__enter__");
 		self->m_Monitor->enter();
 		Py_RETURN_NONE;
 	}
@@ -159,7 +160,8 @@ PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__exit__");
+		JPContext *context = self->m_Monitor->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__exit__");
 		self->m_Monitor->exit();
 		Py_RETURN_NONE;
 	}

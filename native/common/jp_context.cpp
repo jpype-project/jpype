@@ -122,7 +122,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		// After the JVM is created but before the context is started, we need 
 		// lo set up all the services that the context will need.
 		JP_TRACE("Initialize");
-		
+
 		// We need these first because if anything goes south this is the first
 		// thing that will get hit.
 		_java_lang_NoSuchMethodError = (jclass) frame.FindClass("java/lang/NoSuchMethodError");
@@ -185,6 +185,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 
 void JPContext::shutdownJVM()
 {
+	m_Shutdown = true;
 
 	JP_TRACE_IN("JPEnv::shutdown");
 	if (m_JavaVM == NULL)
@@ -219,6 +220,20 @@ void JPContext::createJVM(void* arg)
 	JP_TRACE_OUT;
 }
 
+void JPContext::ReleaseGlobalRef(jobject obj)
+{
+	// Check if the JVM is already shutdown
+	if (m_JavaVM == NULL)
+		return;
+
+	// Get the environment and release the resource if we can.
+	// Do not attach the thread if called from an unattached thread it is
+	// likely a shutdown anyway.
+	JNIEnv* env;
+	jint res = m_JavaVM->functions->GetEnv(m_JavaVM, (void**) &, USE_JNI_VERSION);
+	if (res != JNI_EDETACHED)
+		env->functions->DeleteGlobalRef(env, obj);
+}
 
 /*****************************************************************************/
 // Thread code
@@ -252,7 +267,6 @@ void JPContext::detachCurrentThread()
 
 // Java functions
 
-
 class JPStringAccessor
 {
 	JPJavaFrame& frame_;
@@ -278,7 +292,7 @@ public:
 
 string JPContext::toString(jobject o)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(this);
 	jstring str = (jstring) frame.CallObjectMethod(o, m_Object_ToStringID);
 	JPStringAccessor contents(frame, str);
 	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());

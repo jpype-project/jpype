@@ -92,8 +92,9 @@ PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)
 	JP_TRACE_IN("PyJPField::getName");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPField::getName");
-		JPJavaFrame frame(self->m_Field->getContext());
+		JPContext* context = self->m_Field->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPField::getName");
+		JPJavaFrame frame(context);
 		return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
 	}
 	PY_STANDARD_CATCH;
@@ -106,8 +107,9 @@ PyObject* PyJPField::__get__(PyJPField* self, PyObject* obj, PyObject* type)
 	JP_TRACE_IN("PyJPField::__get__");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPField::__get__");
-		JPJavaFrame frame(self->m_Field->getContext());
+		JPContext* context = self->m_Field->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPField::__get__");
+		JPJavaFrame frame(context);
 		if (self->m_Field->isStatic())
 			return self->m_Field->getStaticField().keep();
 		if (obj == NULL)
@@ -128,8 +130,9 @@ int PyJPField::__set__(PyJPField* self, PyObject* obj, PyObject* pyvalue)
 	JP_TRACE_IN("PyJPField::__set__");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPField::__set__");
-		JPJavaFrame frame(self->m_Field->getContext());
+		JPContext* context = self->m_Field->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPField::__set__");
+		JPJavaFrame frame(context);
 		if (self->m_Field->isFinal())
 			JP_RAISE_ATTRIBUTE_ERROR("Field is final");
 		if (self->m_Field->isStatic())
@@ -154,8 +157,9 @@ PyObject* PyJPField::isStatic(PyJPField* self, PyObject* arg)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPField::isStatic");
-		JPJavaFrame frame(self->m_Field->getContext());
+		JPContext* context = self->m_Field->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPField::isStatic");
+		JPJavaFrame frame(context);
 		return PyBool_FromLong(self->m_Field->isStatic());
 	}
 	PY_STANDARD_CATCH;
@@ -166,8 +170,9 @@ PyObject* PyJPField::isFinal(PyJPField* self, PyObject* arg)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPField::isFinal");
-		JPJavaFrame frame(self->m_Field->getContext());
+		JPContext* context = self->m_Field->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPField::isFinal");
+		JPJavaFrame frame(context);
 		return PyBool_FromLong(self->m_Field->isFinal());
 	}
 	PY_STANDARD_CATCH;

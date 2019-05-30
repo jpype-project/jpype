@@ -108,8 +108,6 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_IN("PyJPArray::__init__");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPArray::__init__");
-
 		PyObject* v;
 		if (!PyArg_ParseTuple(args, "O!", &PyJPValue::Type, &v))
 		{
@@ -119,6 +117,7 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 
 		JPArrayClass* arrayClass = dynamic_cast<JPArrayClass*> (val.getClass());
 		context = arrayClass->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPArray::__init__");
 		JPJavaFrame frame(context);
 		if (arrayClass == NULL)
 		{
@@ -129,7 +128,7 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 		self->m_Array = new JPArray(arrayClass, (jarray) (val.getJavaObject()));
 		return 0;
 	}
-	PY_STANDARD_CATCH;
+	PY_STANDARD_CATCH
 	return -1;
 	JP_TRACE_OUT;
 }
@@ -139,7 +138,7 @@ PyObject* PyJPArray::__str__(PyJPArray* self)
 	JPContext* context = self->m_Array->getClass()->getContext();
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPArray::__str__");
+		ASSERT_JVM_RUNNING(context, "PyJPArray::__str__");
 		JPJavaFrame frame(context);
 		stringstream sout;
 
@@ -147,7 +146,7 @@ PyObject* PyJPArray::__str__(PyJPArray* self)
 		sout << "<java array " << self->m_Array->getClass()->toString() << ">";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
-	PY_STANDARD_CATCH;
+	PY_STANDARD_CATCH
 	Py_RETURN_NONE;
 }
 
@@ -164,12 +163,12 @@ PyObject* PyJPArray::getArrayLength(PyJPArray* self, PyObject* arg)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("JPypeJavaArray::getArrayLength");
-		JPJavaFrame frame(self->m_Array->getClass()->getContext());
+		JPContext* context= self->m_Array->getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::getArrayLength");
+		JPJavaFrame frame(context);
 		return PyInt_FromLong(self->m_Array->getLength());
 	}
 	PY_STANDARD_CATCH
-
 	return NULL;
 }
 
@@ -177,14 +176,15 @@ PyObject* PyJPArray::getArrayItem(PyJPArray* self, PyObject* arg)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPArray::getArrayItem");
-		JPJavaFrame frame(self->m_Array->getClass()->getContext());
+		JPContext* context= self->m_Array->getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPArray::getArrayItem");
+		JPJavaFrame frame(context);
 		int ndx;
 		PyArg_ParseTuple(arg, "i", &ndx);
 		JP_PY_CHECK();
 		return self->m_Array->getItem(ndx).keep();
 	}
-	PY_STANDARD_CATCH;
+	PY_STANDARD_CATCH
 	return NULL;
 }
 
@@ -194,9 +194,10 @@ PyObject* PyJPArray::getArraySlice(PyJPArray* self, PyObject* arg)
 	int hi = -1;
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPArray::getArraySlice");
-		JPJavaFrame frame(self->m_Array->getClass()->getContext());
-
+		JPContext* context= self->m_Array->getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPArray::getArraySlice");
+		JPJavaFrame frame(context);
+		
 		PyArg_ParseTuple(arg, "ii", &lo, &hi);
 		JP_PY_CHECK();
 
@@ -214,18 +215,19 @@ PyObject* PyJPArray::getArraySlice(PyJPArray* self, PyObject* arg)
 
 		return a->getRange(lo, hi).keep();
 	}
-	PY_STANDARD_CATCH;
+	PY_STANDARD_CATCH
 	return NULL;
 }
 
 PyObject* PyJPArray::setArraySlice(PyJPArray* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPArray::setArraySlice")
+	JP_TRACE_IN("PyJPArray::setArraySlice");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPArray::setArraySlice");
-		JPJavaFrame frame(self->m_Array->getClass()->getContext());
-
+		JPContext* context= self->m_Array->getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPArray::setArraySlice");
+		JPJavaFrame frame(context);
+		
 		// Parse arguments
 		PyObject* sequence;
 		int lo = -1;
@@ -261,8 +263,9 @@ PyObject* PyJPArray::setArrayItem(PyJPArray* self, PyObject* arg)
 	JP_TRACE_IN("JPypeJavaArray::setArrayItem");
 	try
 	{
-		ASSERT_JVM_RUNNING("JPypeJavaArray::setArrayItem");
-		JPJavaFrame frame(self->m_Array->getClass()->getContext());
+		JPContext* context = self->m_Array->getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::setArrayItem");
+		JPJavaFrame frame(context);
 
 		int ndx;
 		PyObject* value;

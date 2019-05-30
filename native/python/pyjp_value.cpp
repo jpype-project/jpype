@@ -123,7 +123,6 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_IN("PyJPValue::__init__");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPValue::__init__");
 		self->m_Cache = NULL;
 
 		PyObject* claz;
@@ -137,7 +136,9 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		JPClass* type = ((PyJPClass*) claz)->m_Class;
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
-		JPJavaFrame frame(type->getContext());
+		JPContext *context = type->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPValue::__init__");
+		JPJavaFrame frame(context);
 
 		// If it is already a Java object, then let Java decide
 		// if the cast is possible
@@ -174,9 +175,9 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 {
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPValue::__str__");
-		JPContext* context = self->m_Value.getClass()->getContext()
-				JPJavaFrame frame(context);
+		JPContext* context = self->m_Value.getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPValue::__str__");
+		JPJavaFrame frame(context);
 		stringstream sout;
 		sout << "<java value " << self->m_Value.getClass()->toString();
 
@@ -201,6 +202,7 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::__dealloc__");
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
+	JPContext* context = cls->getContext();
 	JP_TRACE("Value", cls, &(value.getValue()));
 	if (self->m_Cache != NULL)
 	{
@@ -209,7 +211,7 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	}
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
-	if (cls != NULL && JPEnv::isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+	if (cls != NULL && context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
 	{
 		// If the JVM has shutdown then we don't need to free the resource
 		// FIXME there is a problem with initializing the sytem twice.
@@ -217,7 +219,7 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 		// we then reinitialize we will access this bad resource.  Not sure
 		// of an easy solution.
 		JP_TRACE("Dereference object");
-		JPJavaFrame::ReleaseGlobalRef(value.getValue().l);
+		context->ReleaseGlobalRef(value.getValue().l);
 	}
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	Py_TYPE(self)->tp_free(self);
@@ -237,9 +239,9 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::toString");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPValue::toString");
 		JPClass* cls = self->m_Value.getClass();
 		JPContext* context = cls->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPValue::toString");
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{
@@ -278,9 +280,9 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::toUnicode");
 	try
 	{
-		ASSERT_JVM_RUNNING("PyJPValue::toUnicode");
 		JPClass* cls = self->m_Value.getClass();
 		JPContext* context = cls->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPValue::toUnicode");
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{

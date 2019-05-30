@@ -21,7 +21,7 @@ class JPBooleanType : public JPPrimitiveType
 {
 public:
 
-	JPBooleanType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPBooleanType(jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPBooleanType();
 
 public:

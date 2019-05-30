@@ -32,36 +32,4 @@ public:
 	virtual void* getSymbol(const char* name) = 0;
 } ;
 
-
-namespace JPEnv
-{
-	/**
-	 * Initialize the JPype subs-system. Does NOT load the JVM
-	 */
-	void init();
-
-	/**
-	 * Load the JVM
-	 * TODO : add the non-string parameters, for possible callbacks
-	 */
-	void loadJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
-
-	void attachJVM(const string& vmPath);
-
-	void detachCurrentThread();
-	void attachCurrentThread();
-	void attachCurrentThreadAsDaemon();
-	bool isThreadAttached();
-	void assertJVMRunning(const char* function, const JPStackInfo& info);
-	void shutdown();
-
-	/**
-	 * Check if the JPype environment has been initialized
-	 */
-	bool isInitialized();
-
-	void CreateJavaVM(void* arg);
-	void GetCreatedJavaVM();
-}
-
 #endif // _JPENV_H_

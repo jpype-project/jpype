@@ -17,7 +17,7 @@
 #include <jpype.h>
 #include <jp_boxedclasses.h>
 
-JPBoxedClass::JPBoxedClass(JPContext* context, jclass clss,
+JPBoxedType::JPBoxedType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
@@ -26,16 +26,16 @@ JPBoxedClass::JPBoxedClass(JPContext* context, jclass clss,
 {
 }
 
-JPBoxedClass::~JPBoxedClass()
+JPBoxedType::~JPBoxedType()
 {
 }
 
-void JPBoxedClass::setPrimitiveType(JPPrimitiveType* primitiveType)
+void JPBoxedType::setPrimitiveType(JPPrimitiveType* primitiveType)
 {
 	m_PrimitiveType = primitiveType;
 }
 
-jvalue JPBoxedClass::convertToJava(PyObject* obj)
+jvalue JPBoxedType::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPBoxedClass::convertToJava");
 	JPJavaFrame frame;
@@ -72,7 +72,7 @@ jvalue JPBoxedClass::convertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
+JPMatch::Type JPBoxedType::canConvertToJava(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPBoxedClass::canConvertToJava");
 	JPMatch::Type base = JPClass::canConvertToJava(pyobj);
@@ -82,139 +82,3 @@ JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
 	JP_TRACE_OUT;
 }
 
-//============================================================
-
-JPBoxedVoidType::JPBoxedVoidType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedVoidType::~JPBoxedVoidType()
-{
-}
-
-//============================================================
-
-JPBoxedBooleanType::JPBoxedBooleanType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedBooleanType::~JPBoxedBooleanType()
-{
-}
-
-//============================================================
-
-JPBoxedByteType::JPBoxedByteType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedByteType::~JPBoxedByteType()
-{
-}
-
-
-//============================================================
-
-JPBoxedCharacterType::JPBoxedCharacterType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedCharacterType::~JPBoxedCharacterType()
-{
-}
-
-
-//============================================================
-
-JPBoxedShortType::JPBoxedShortType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedShortType::~JPBoxedShortType()
-{
-}
-
-//============================================================
-
-JPBoxedIntegerType::JPBoxedIntegerType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedIntegerType::~JPBoxedIntegerType()
-{
-}
-
-//============================================================
-
-JPBoxedLongType::JPBoxedLongType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedLongType::~JPBoxedLongType()
-{
-}
-
-//============================================================
-
-JPBoxedFloatType::JPBoxedFloatType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedFloatType::~JPBoxedFloatType()
-{
-}
-
-//============================================================
-
-JPBoxedDoubleType::JPBoxedDoubleType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
-: JPBoxedClass(context, clss, name, super, interfaces, modifiers)
-{
-}
-
-JPBoxedDoubleType::~JPBoxedDoubleType()
-{
-}

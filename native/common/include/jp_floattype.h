@@ -21,7 +21,7 @@ class JPFloatType : public JPPrimitiveType
 {
 public:
 
-	JPFloatType(jclass clss, const string& name, JPBoxedClass* boxedClass, jint modifiers);
+	JPFloatType(jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPFloatType();
 
 public:

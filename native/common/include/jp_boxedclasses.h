@@ -27,80 +27,17 @@
  * These are linked to primitives.
  * They specialize the conversion rules to set up our table for conversion.
  */
-class JPBoxedClass : public JPClass
+class JPBoxedType : public JPClass
 {
 public:
-	JPBoxedClass(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual ~JPBoxedClass();
+	JPBoxedType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	virtual ~JPBoxedType();
 
 	void setPrimitiveType(JPPrimitiveType* primitiveType);
 	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue     convertToJava(PyObject* obj) override;
 protected:
 	JPPrimitiveType* m_PrimitiveType;
-} ;
-
-class JPBoxedVoidType : public JPBoxedClass
-{
-public:
-	JPBoxedVoidType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedVoidType();
-} ;
-
-class JPBoxedBooleanType : public JPBoxedClass
-{
-public:
-	JPBoxedBooleanType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedBooleanType();
-} ;
-
-class JPBoxedByteType : public JPBoxedClass
-{
-public:
-	JPBoxedByteType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedByteType();
-} ;
-
-class JPBoxedCharacterType : public JPBoxedClass
-{
-public:
-	JPBoxedCharacterType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedCharacterType();
-} ;
-
-class JPBoxedShortType : public JPBoxedClass
-{
-public:
-	JPBoxedShortType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedShortType();
-} ;
-
-class JPBoxedIntegerType : public JPBoxedClass
-{
-public:
-	JPBoxedIntegerType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedIntegerType();
-} ;
-
-class JPBoxedLongType : public JPBoxedClass
-{
-public:
-	JPBoxedLongType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedLongType();
-} ;
-
-class JPBoxedFloatType : public JPBoxedClass
-{
-public:
-	JPBoxedFloatType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedFloatType();
-} ;
-
-class JPBoxedDoubleType : public JPBoxedClass
-{
-public:
-	JPBoxedDoubleType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
-	virtual~ JPBoxedDoubleType();
 } ;
 
 #endif // _JPBOXEDCLASS_H_

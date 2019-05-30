@@ -19,17 +19,6 @@
 
 namespace PyJPModule
 {
-	PyObject* startup(PyObject* obj, PyObject* args);
-	PyObject* attach(PyObject* obj, PyObject* args);
-	PyObject* dumpJVMStats(PyObject* obj);
-	PyObject* shutdown(PyObject* obj);
-	PyObject* isStarted(PyObject* obj);
-	PyObject* attachThread(PyObject* obj);
-	PyObject* detachThread(PyObject* obj);
-	PyObject* isThreadAttached(PyObject* obj);
-	PyObject* getJException(PyObject* obj, PyObject* args);
-	PyObject* attachThreadAsDaemon(PyObject* obj);
-
 	/** Set a JPype Resource.
 	 *
 	 * JPype needs to know about a number of python objects to function
@@ -37,11 +26,6 @@ namespace PyJPModule
 	 * as those resources are created in python. 
 	 */
 	PyObject* setResource(PyObject* obj, PyObject* args);
-
-	/** Memory map a byte buffer betten java and python, so 
-	 * that both have direct access.  This is mainly used for io classes.
-	 */
-	PyObject* convertToDirectByteBuffer(PyObject* self, PyObject* args);
 }
 
 #endif /* PYJP_MODULE_H */

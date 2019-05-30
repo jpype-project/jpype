@@ -63,6 +63,17 @@ public:
 	bool isThreadAttached();
 	void detachCurrentThread();
 	JavaVM* getJavaVM();
+	bool isShutdown()
+	{
+		return m_IsShutdown;
+	}
+	
+	/** Release a global reference checking for shutdown.
+	 *
+	 * This should be used in any calls to release resources from a destructor. 
+	 * It cannot fail even if the JVM is no longer operating.
+	 */
+	void ReleaseGlobalRef(jobject obj);
 
 	// JPype services
 	JPProxyFactory* getProxyFactory();
@@ -93,15 +104,15 @@ public:
 	JPFloatType* _float;
 	JPDoubleType* _double;
 
-	JPBoxedClass* _java_lang_Void;
-	JPBoxedClass* _java_lang_Boolean;
-	JPBoxedClass* _java_lang_Byte;
-	JPBoxedClass* _java_lang_Char;
-	JPBoxedClass* _java_lang_Short;
-	JPBoxedClass* _java_lang_Integer;
-	JPBoxedClass* _java_lang_Long;
-	JPBoxedClass* _java_lang_Float;
-	JPBoxedClass* _java_lang_Double;
+	JPBoxedType* _java_lang_Void;
+	JPBoxedType* _java_lang_Boolean;
+	JPBoxedType* _java_lang_Byte;
+	JPBoxedType* _java_lang_Char;
+	JPBoxedType* _java_lang_Short;
+	JPBoxedType* _java_lang_Integer;
+	JPBoxedType* _java_lang_Long;
+	JPBoxedType* _java_lang_Float;
+	JPBoxedType* _java_lang_Double;
 
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
@@ -134,6 +145,7 @@ private:
 	// Java Functions
 	jmethodID m_Object_ToStringID;
 	jmethodID m_ContextShutdownMethod;
+	bool m_IsShutdown;
 } ;
 
 #endif /* JP_CONTEXT_H */
