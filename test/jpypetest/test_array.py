@@ -154,6 +154,17 @@ class ArrayTestCase(common.JPypeTestCase):
         # with self.assertRaises(jpype._):
         #    jpype.JArray(jpype.JShort)([2**16/2])
 
+    def testJArrayConversionFail(self):
+        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        with self.assertRaises(TypeError):
+            jarr[1] = 'a'
+
+    def testJArraySliceLength(self):
+        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        jarr[1:2] = [1]
+        with self.assertRaises(ValueError):
+            jarr[1:2] = [1,2,3]
+
     def testJArrayConversionInt(self):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         result = jarr[0: len(jarr)]

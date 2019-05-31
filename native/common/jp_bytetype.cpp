@@ -48,7 +48,7 @@ jobject JPByteType::convertToDirectBuffer(PyObject* src)
 		return frame.keep(frame.NewDirectByteBuffer(rawData, size));
 	}
 
-	JP_RAISE_RUNTIME_ERROR("Unable to convert to Direct Buffer");
+	JP_RAISE_TYPE_ERROR("Unable to convert to Direct Buffer");
 	JP_TRACE_OUT;
 }
 
