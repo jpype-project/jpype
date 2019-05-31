@@ -89,7 +89,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
-		JP_RAISE_RUNTIME_ERROR(out.str());
+		JP_RAISE_VALUE_ERROR(out.str());
 	}
 
 	JP_TRACE("Call component set range");
@@ -111,7 +111,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 
 	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
 	{
-		JP_RAISE_RUNTIME_ERROR("Unable to convert.");
+		JP_RAISE_TYPE_ERROR("Unable to convert.");
 	}
 
 	compType->setArrayItem(frame, m_Object.get(), ndx, val);
