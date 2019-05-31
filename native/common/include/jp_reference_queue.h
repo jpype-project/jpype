@@ -21,7 +21,8 @@
 class JPReferenceQueue
 {
 public:
-	void init(JPContext* context);
+	JPReferenceQueue(JPContext* context);
+	~JPReferenceQueue();
 	//	void startJPypeReferenceQueue(bool useJavaThread);
 	//	void shutdown();
 	void registerRef( jobject obj, PyObject*  targetRef);

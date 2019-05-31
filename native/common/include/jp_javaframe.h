@@ -389,12 +389,12 @@ public:
 			if (m_Ref != 0)
 				frame.DeleteGlobalRef((jobject) m_Ref);
 		}
-		m_Context = other.m_Ref;
+		m_Context = other.m_Context;
 		m_Ref = other.m_Ref;
 		if (m_Context != 0 && m_Ref != 0)
 		{
 			JPJavaFrame frame(m_Context);
-			m_Ref = (jclass) frame.NewGlobalRef((jobject) m_Ref);
+			m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
 		}
 		return *this;
 	}

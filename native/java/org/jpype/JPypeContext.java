@@ -60,6 +60,7 @@ public class JPypeContext
   private TypeFactory typeFactory;
   private TypeManager typeManager;
   private JPypeReferenceQueue referenceQueue;
+  private ClassLoader bootLoader;
 
   static public JPypeContext getInstance()
   {
@@ -71,13 +72,14 @@ public class JPypeContext
    *
    * @param context
    */
-  public void createContext(long context, ClassLoader classLoader)
+  public void createContext(long context, ClassLoader bootLoader)
   {
     instance = new JPypeContext();
     
     instance.typeFactory = new TypeFactoryNative();
     instance.typeManager = new TypeManager();
     instance.typeManager.typeFactory = instance.typeFactory;
+    instance.bootLoader = bootLoader;
       
     instance.referenceQueue = new JPypeReferenceQueue();
     
@@ -96,6 +98,11 @@ public class JPypeContext
     return context;
   }
 
+  public ClassLoader getBootLoader()
+  {
+    return this.bootLoader;
+  }
+  
   public TypeFactory getTypeFactory()
   {
     return this.typeFactory;

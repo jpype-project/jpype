@@ -34,7 +34,10 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 	JP_TRACE_OUT;
 }
 
-void JPReferenceQueue::init(JPContext* context)
+JPReferenceQueue::JPReferenceQueue()
+{}
+
+void JPReferenceQueue::JPReferenceQueue(JPContext* context)
 {
 	m_Context = context;
 	JPJavaFrame frame(context, 32);

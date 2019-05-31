@@ -25,7 +25,6 @@ JPClass::JPClass(JPContext* context,
 : m_Class(context, clss)
 {
 	m_Context = context;
-	m_Class = clss;
 	m_CanonicalName = name;
 	m_SuperClass = super;
 	m_Interfaces = interfaces;
@@ -316,7 +315,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy(m_Context));
+		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 
@@ -408,7 +407,7 @@ string JPClass::describe()
 	}
 
 	out << "  // Accessible Methods" << endl;
-	for (JPMethodList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
+	for (JPMethodDispatchList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
 	{
 		JPMethodDispatch* f = *curMethod;
 		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();

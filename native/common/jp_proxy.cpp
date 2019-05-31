@@ -103,24 +103,29 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	JP_TRACE_OUT;
 }
 
-void JPProxy::init(JPContext* context)
+JPProxyFactory::JPProxyFactory(JPContext* context)
 {
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPProxy::init");
 
-	jclass handler = JPClassLoader::findClass("org.jpype.proxy.JPypeInvocationHandler");
-	handlerClass = (jclass) frame.NewGlobalRef(handler);
+	jclass handlerClass = JPClassLoader::findClass("org.jpype.proxy.JPypeInvocationHandler");
 
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
 	method[0].signature = (char*) "(Ljava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
 	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
 
-	hostObjectID = frame.GetFieldID(handler, "hostObject", "J");
-	contextID = frame.GetFieldID(handler, "context", "J");
-	invocationHandlerConstructorID = frame.GetMethodID(handler, "<init>", "()V");
+	hostObjectID = frame.GetFieldID(handlerClass, "hostObject", "J");
+	contextID = frame.GetFieldID(handlerClass, "context", "J");
+	invocationHandlerConstructorID = frame.GetMethodID(handlerClass, "<init>", "()V");
 
 	frame.RegisterNatives(handlerClass, method, 1);
+	
+	m_HandlerClass = JPClassRef(context, handlerClass);
+	m_ProxyClass = JPClassRef(context, (jclass) frame.FindClass("java/lang/reflect/Proxy")));
+	m_NewProxyInstanceID = frame.GetStaticMethodID(m_ProxyClass.get(), 
+			"newProxyInstance",
+			"(Ljava/lang/ClassLoader;[Ljava/lang/Class;Ljava/lang/reflect/InvocationHandler;)Ljava/lang/Object;");
 
 	JP_TRACE_OUT;
 }
@@ -148,7 +153,7 @@ JPProxy::~JPProxy()
 jobject JPProxy::getProxy()
 {
 	JPJavaFrame frame(m_Context);
-	jobject cl = m_Context->getSystemClassLoader();
+	jobject cl = m_Context->getClassLoader()->getSystemClassLoader();
 
 	jobject m_Handler = frame.NewObject(handlerClass, invocationHandlerConstructorID);
 	frame.SetLongField(m_Handler, hostObjectID, (jlong) m_Instance);

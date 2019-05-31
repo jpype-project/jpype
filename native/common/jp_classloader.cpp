@@ -39,10 +39,10 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 	jclass classLoaderClass = (jclass) frame.FindClass("java/lang/ClassLoader");
 	jmethodID getSystemClassLoader
 			= frame.GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
-	m_SystemClassLoader = frame.CallStaticObjectMethod(classLoaderClass, getSystemClassLoader);
+	m_SystemClassLoader = JPObjectRef(context, frame.CallStaticObjectMethod(classLoaderClass, getSystemClassLoader));
 	m_UseSystem = useSystem;
 	// Set up the loader
-	m_FindClass = frame.GetMethodID(m_SystemClassLoader, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	m_FindClass = frame.GetMethodID(classLoaderClass, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 	if (useSystem)
 	{
 		// Boot loader and system class loader are now the same
@@ -51,7 +51,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 	}
 	else
 	{
-		jclass cls = frame.DefineClass("org/jpype/classloader/JPypeClassLoader", m_SystemClassLoader,
+		jclass cls = frame.DefineClass("org/jpype/classloader/JPypeClassLoader", m_SystemClassLoader.get(),
 				JPThunk::_org_jpype_classloader_JPypeClassLoader,
 				JPThunk::_org_jpype_classloader_JPypeClassLoader_size);
 
@@ -62,7 +62,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 		//v.l = cl;
 
 		jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
-		m_BootLoader = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
+		m_BootLoader = JPObjectRef(context, frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID)));
 
 		// Load the jar
 		jbyteArray jar = frame.NewByteArray(JPThunk::_org_jpype_size);
@@ -70,7 +70,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 		v.l = jar;
 
 		jmethodID importJarID = frame.GetMethodID(cls, "importJar", "([B)V");
-		frame.CallVoidMethodA(m_BootLoader, importJarID, &v);
+		frame.CallVoidMethodA(m_BootLoader.get(), importJarID, &v);
 
 	}
 	JP_TRACE_OUT;

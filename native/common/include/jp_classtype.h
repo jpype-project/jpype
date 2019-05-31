@@ -28,7 +28,8 @@
 class JPClassType : public JPClass
 {
 public:
-	JPClassType(jclass clss,
+	JPClassType(JPContext* context,
+		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,

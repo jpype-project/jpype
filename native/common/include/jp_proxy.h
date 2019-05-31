@@ -22,12 +22,11 @@
 class JPProxyFactory
 {
 public:
-	void init(JPContext* context);
+	JPProxyFactory(JPContext* context);
 	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
 	
 private:
 	JPContext* m_Context;
-	jclass handlerClass;
 	jmethodID invocationHandlerConstructorID;
 	jfieldID hostObjectID;
 	jfieldID contextID;
