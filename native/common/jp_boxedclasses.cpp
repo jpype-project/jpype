@@ -38,7 +38,7 @@ void JPBoxedType::setPrimitiveType(JPPrimitiveType* primitiveType)
 jvalue JPBoxedType::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPBoxedClass::convertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue res;
 
 	res.l = NULL;
@@ -60,7 +60,7 @@ jvalue JPBoxedType::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy(m_Context));
+		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 

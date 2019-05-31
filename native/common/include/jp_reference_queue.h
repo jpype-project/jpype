@@ -18,23 +18,20 @@
 #define JP_REFERENCE_QUEUE_H__
 #include <jpype.h>
 
-//extern jbyte JPypeReferenceQueue[];
-//jsize getJPypeReferenceQueueLength();
-
 class JPReferenceQueue
 {
 public:
 	void init(JPContext* context);
-//	void startJPypeReferenceQueue(bool useJavaThread);
-//	void shutdown();
+	//	void startJPypeReferenceQueue(bool useJavaThread);
+	//	void shutdown();
 	void registerRef( jobject obj, PyObject*  targetRef);
 	void registerRef(PyObject* ref, PyObject* targetRef);
-	
+
 private:
 	JPContext* m_Context;
 	JPObjectRef m_ReferenceQueue;
 	jmethodID m_ReferenceQueueRegisterMethod;
 
-} // end of namespace JPReferenceQueue
+} ; // end of namespace JPReferenceQueue
 
 #endif

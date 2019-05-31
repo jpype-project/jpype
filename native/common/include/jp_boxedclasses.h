@@ -30,7 +30,7 @@
 class JPBoxedType : public JPClass
 {
 public:
-	JPBoxedType(jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	JPBoxedType(JPContext* context, jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
 	virtual ~JPBoxedType();
 
 	void setPrimitiveType(JPPrimitiveType* primitiveType);

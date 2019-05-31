@@ -20,8 +20,9 @@ JPClass::JPClass(JPContext* context,
 		jclass clss,
 		const string& name,
 		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers) : m_Class(clss)
+		const JPClassList& interfaces,
+		jint modifiers) 
+: m_Class(context, clss)
 {
 	m_Context = context;
 	m_Class = clss;
@@ -55,11 +56,6 @@ string JPClass::toString() const
 	return m_Context->toString(m_Class.get());
 }
 
-string JPClass::getCanonicalName() const
-{
-	return m_CanonicalName;
-}
-
 //</editor-fold>
 //<editor-fold desc="as return type" defaultstate="collapsed">
 
@@ -69,7 +65,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 	jobject r = frame.GetStaticObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
-		type = JPTypeManager::findClassForObject(r);
+		type = m_Context->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
 	return type->convertToPythonObject(v);
@@ -82,7 +78,7 @@ JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	jobject r = frame.GetObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
-		type = JPTypeManager::findClassForObject(r);
+		type = m_Context->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
 	return type->convertToPythonObject(v);
@@ -100,7 +96,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 
 	JPClass* type = this;
 	if (v.l != NULL)
-		type = JPTypeManager::findClassForObject(v.l);
+		type = m_Context->getTypeManager()->findClassForObject(v.l);
 
 	return type->convertToPythonObject(v);
 
@@ -121,7 +117,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmeth
 	// Get the return type
 	JPClass* type = this;
 	if (v.l != NULL)
-		type = JPTypeManager::findClassForObject(v.l);
+		type = m_Context->getTypeManager()->findClassForObject(v.l);
 
 	return type->convertToPythonObject(v);
 
@@ -154,7 +150,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	for (int i = 0; i < length; i++)
 	{
 		v.l = frame.GetObjectArrayElement(array, i + start);
-		JPClass* t = JPTypeManager::findClassForObject(v.l);
+		JPClass* t = m_Context->getTypeManager()->findClassForObject(v.l);
 		res.setItem(i, t->convertToPythonObject(v).get());
 	}
 
@@ -203,7 +199,7 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	jvalue v;
 	v.l = obj;
 	if (obj != NULL)
-		retType = JPTypeManager::findClassForObject(v.l);
+		retType = m_Context->getTypeManager()->findClassForObject(v.l);
 	return retType->convertToPythonObject(v);
 	JP_TRACE_OUT;
 }
@@ -242,7 +238,7 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 		return JPPyObject::getNone();
 	}
 
-	JPClass* cls = JPTypeManager::findClassForObject(obj.l);
+	JPClass* cls = m_Context->getTypeManager()->findClassForObject(obj.l);
 	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
 	JP_TRACE_OUT;
 }
@@ -406,7 +402,7 @@ string JPClass::describe()
 	out << "  // Accessible Constructors" << endl;
 	{
 		JPMethodDispatch* f = m_Constructors;
-		for (JPMethodDispatchList::const_iterator iter = f->getMethodOverloads().begin();
+		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
@@ -415,7 +411,7 @@ string JPClass::describe()
 	for (JPMethodList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
 	{
 		JPMethodDispatch* f = *curMethod;
-		for (JPMethodDispatchList::const_iterator iter = f->getMethodOverloads().begin();
+		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
 				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}

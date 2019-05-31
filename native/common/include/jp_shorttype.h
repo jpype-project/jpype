@@ -62,16 +62,16 @@ public:
 
 	template <class T> T assertRange(const T& l)
 	{
-		if (l < JPJni::_Short_Min || l > JPJni::_Short_Max)
+		if (l < m_Short_Min || l > m_Short_Max)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java short");
 		}
 		return l;
 	}
 private:
-	jlong _Short_Min;
-	jlong _Short_Max;
-    jmethodID _ShortValueID;
+	jlong m_Short_Min;
+	jlong m_Short_Max;
+    jmethodID m_ShortValueID;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

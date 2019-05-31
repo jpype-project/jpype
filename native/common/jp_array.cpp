@@ -20,9 +20,10 @@
 // need to be careful to handle these properly.  We need to 
 // carry them around so that we can match types.
 
-JPArray::JPArray(JPClass* cls, jarray inst) : m_Object(inst)
+JPArray::JPArray(JPClass* cls, jarray inst) 
+: m_Object(cls->getContext(), inst)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(cls->getContext());
 	JP_TRACE_IN("JPArray::JPArray");
 	m_Class = (JPArrayClass*) cls;
 	ASSERT_NOT_NULL(m_Class);
@@ -71,7 +72,7 @@ JPPyObject JPArray::getRange(jsize start, jsize stop)
 void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 {
 	JP_TRACE_IN("JPArray::setRange");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 	unsigned int len = stop - start;
 	JPPySequence seq(JPPyRef::_use, val);
@@ -94,7 +95,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 
 void JPArray::setItem(jsize ndx, PyObject* val)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 	if (ndx > m_Length)
 	{
@@ -114,7 +115,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 
 JPPyObject JPArray::getItem(jsize ndx)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx > m_Length)

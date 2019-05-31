@@ -28,7 +28,7 @@ public:
 	
 	JPContext* getContext()
 	{
-		return m_Context();
+		return m_Context;
 	}
 
 private:

@@ -52,6 +52,14 @@ JPResource::~JPResource()
 {
 }
 
+JPRef::~JPRef()
+{
+	if (m_Ref != 0 && m_Context != 0)
+	{
+		m_Context->ReleaseGlobalRef((jobject) m_Ref);
+	}
+}
+
 namespace
 {
 
@@ -126,7 +134,7 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 {
 	JavaVM* javaVM = context->getJavaVM();
 	m_Context = context;
-	
+
 	jint res;
 	attached = false;
 	if (javaVM == NULL)

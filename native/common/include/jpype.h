@@ -101,6 +101,7 @@ using std::list;
 /** Definition of commonly used template types */
 typedef vector<string> StringVector;
 
+// Types
 class JPClass;
 class JPArrayClass;
 class JPValue;
@@ -117,21 +118,25 @@ class JPLongType;
 class JPFloatType;
 class JPDoubleType;
 class JPStringClass;
+
+// Members
+class JPMethod;
 class JPMethodDispatch;
 class JPField;
 
-// Base utility headers
-#include "jp_javaframe.h"
-#include "jp_exception.h"
-#include "jp_pythontypes.h"
-#include "jp_pythonenv.h"
-#include "jp_tracer.h"
-#include "jp_typename.h"
-#include "jp_env.h"
-#include "jp_jniutil.h"
-#include "jp_typemanager.h"
-#include "jp_encoding.h"
-#include "jp_modifier.h"
+// Services
+class JPTypeFactory;
+class JPTypeManager;
+class JPClassLoader;
+class JPReferenceQueue;
+class JPProxyFactory;
+class JPContext;
+
+typedef vector<JPClass*> JPClassList;
+typedef vector<JPField*> JPFieldList;
+typedef vector<JPMethodDispatch*> JPMethodDispatchList;
+typedef vector<JPMethod*> JPMethodList;
+
 
 class JPResource
 {
@@ -139,10 +144,22 @@ public:
 	virtual ~JPResource() = 0;
 } ;
 
+// Base utility headers
+#include "jp_javaframe.h"
+#include "jp_env.h"
+#include "jp_exception.h"
+#include "jp_context.h"
+#include "jp_pythontypes.h"
+#include "jp_pythonenv.h"
+#include "jp_tracer.h"
+#include "jp_typename.h"
+#include "jp_typemanager.h"
+#include "jp_encoding.h"
+#include "jp_modifier.h"
+
 // Other header files
 #include "jp_method.h"
 #include "jp_value.h"
-#include "jp_class.h"
 
 // Primitives classes
 #include "jp_primitivetype.h"
@@ -160,6 +177,7 @@ public:
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_array.h"
+#include "jp_class.h"
 
 // Object classes
 #include "jp_arrayclass.h"

@@ -22,9 +22,10 @@
 JPArrayClass::JPArrayClass(JPContext* context,
 		jclass cls,
 		const string& name,
-		JPContext* superClass,
-		JPContext* componentType,
-		jint modifiers) : JPClass(context, cls, name, superClass, JPClassList(), modifiers)
+		JPClass* superClass,
+		JPClass* componentType,
+		jint modifiers) 
+: JPClass(context, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;
 }
@@ -36,7 +37,7 @@ JPArrayClass::~JPArrayClass()
 JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPArrayClass::canConvertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 
 	if (JPPyObject::isNone(obj))
 	{
@@ -117,7 +118,7 @@ JPPyObject JPArrayClass::convertToPythonObject(jvalue val)
 jvalue JPArrayClass::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPArrayClass::convertToJava");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue res;
 	res.l = NULL;
 
@@ -199,7 +200,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 
 jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
 	jsize length = (jsize) (end - start);
 
@@ -216,7 +217,7 @@ jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, js
 
 JPValue JPArrayClass::newInstance(int length)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jvalue v;
 	v.l = m_ComponentType->newArrayInstance(frame, length);
 	return JPValue(this, v);

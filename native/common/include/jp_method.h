@@ -120,7 +120,5 @@ private:
 	jint                     m_Modifiers;
 } ;
 
-typedef vector<JPMethod*> JPMethodList;
-
 
 #endif // _JPMETHODOVERLOAD_H_

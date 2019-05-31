@@ -88,6 +88,4 @@ private:
 	jlong         m_Modifiers;
 } ;
 
-typedef vector<JPMethodDispatch> JPMethodDispatchList;
-
 #endif // _JPMETHODDISPATCH_H_

@@ -203,6 +203,5 @@ protected:
 	jint                 m_Modifiers;
 } ;
 
-typedef vector<JPClass*> JPClassList;
 
 #endif // _JPPOBJECTTYPE_H_

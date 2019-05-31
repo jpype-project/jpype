@@ -25,10 +25,10 @@ JPShortType::JPShortType(JPContext* context, jclass clss,
 	JPJavaFrame frame(context);
 	jfieldID fid;
 	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "S");
-	_Short_Min = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
+	m_Short_Min = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
 	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "S");
-	_Short_Max = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
-	_ShortValueID = frame.GetMethodID(boxedClass->getJavaClass(), "shortValue", "()S");
+	m_Short_Max = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
+	m_ShortValueID = frame.GetMethodID(boxedClass->getJavaClass(), "shortValue", "()S");
 }
 
 JPShortType::~JPShortType()
@@ -53,7 +53,7 @@ JPValue JPShortType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallShortMethod(obj, _ShortValueID);
+	field(v) = frame.CallShortMethod(obj, m_ShortValueID);
 	return JPValue(this, v);
 }
 

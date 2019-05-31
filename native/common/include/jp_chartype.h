@@ -21,7 +21,7 @@ class JPCharType : public JPPrimitiveType
 {
 public:
 
-	JPCharType(jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPCharType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
 	virtual ~JPCharType();
 
 public:

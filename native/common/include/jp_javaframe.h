@@ -377,13 +377,7 @@ public:
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
 	}
 
-	~JPRef()
-	{
-		if (m_Ref != 0 && m_Context != 0)
-		{
-			m_Context->ReleaseGlobalRef((jobject) m_Ref);
-		}
-	}
+	~JPRef();
 
 	JPRef& operator=(const JPRef& other)
 	{

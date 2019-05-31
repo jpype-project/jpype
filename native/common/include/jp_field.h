@@ -85,7 +85,5 @@ private:
 	jint             m_Modifiers;
 } ;
 
-typedef vector<JPField> JPFieldList;
-
 #endif // _JPFIELD_H_
 

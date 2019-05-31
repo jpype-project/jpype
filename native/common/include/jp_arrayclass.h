@@ -23,7 +23,12 @@
 class JPArrayClass : public JPClass
 {
 public:
-	JPArrayClass(jclass c);
+	JPArrayClass(JPContext* context,
+		jclass cls,
+		const string& name,
+		JPClass* superClass,
+		JPClass* componentType,
+		jint modifiers);
 	virtual~ JPArrayClass();
 
 public:
