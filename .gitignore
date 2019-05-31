@@ -1,6 +1,7 @@
 MANIFEST
 *~
 /test/classes/
+/test/jars/
 */build*/
 
 # Byte-compiled / optimized / DLL files
