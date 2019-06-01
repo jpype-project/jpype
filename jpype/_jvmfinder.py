@@ -126,8 +126,9 @@ class JVMFinder(object):
         Retrieves the path to the default or first found JVM library
 
         :return: The path to the JVM shared library file
-        :raise ValueError: No JVM library found
+        :raise ValueError: No JVM library found or No Support JVM found
         """
+        jvm_notsupport_ext = None
         for method in self._methods:
             try:
                 jvm = method()
@@ -141,14 +142,16 @@ class JVMFinder(object):
             except JVMNotFoundException:
                 # Ignore not successful methods
                 pass
-            except JVMNotSupportedException:
-                pass
+            except JVMNotSupportedException as e:
+                jvm_notsupport_ext= e
 
             else:
                 if jvm is not None:
                     return jvm
 
         else:
+            if jvm_notsupport_ext is not None:
+                raise jvm_notsupport_ext
             raise JVMNotFoundException("No JVM shared library file ({0}) "
                                        "found. Try setting up the JAVA_HOME "
                                        "environment variable properly."
