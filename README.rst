@@ -7,6 +7,11 @@ JPype
 .. image:: https://img.shields.io/appveyor/ci/jpype-project/jpype.svg
    :target: https://ci.appveyor.com/project/jpype-project/jpype
 
+.. image:: https://badge.fury.io/py/JPype1.svg
+   :target: https://badge.fury.io/py/JPype1
+
+.. image:: https://img.shields.io/pypi/pyversions/JPype1.svg
+   :target: https://pypi.python.org/pypi/JPype1
 
 JPype is a Python module to provide full access to Java from 
 within Python. It allows Python to make use of Java only libraries,
@@ -17,7 +22,7 @@ for strong typed production code, JPype provides a powerful environment
 for engineering and code development.  
 
 This is achieved not through re-implementing Python, as
-Jython/JPython has done, but rather through interfacing at the native
+Jython has done, but rather through interfacing at the native
 level in both virtual machines. This shared memory based 
 approach achieves decent computing preformance, while providing the
 access to the entirety of CPython and Java libraries.
