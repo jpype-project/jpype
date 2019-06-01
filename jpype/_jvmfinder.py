@@ -21,11 +21,26 @@ import sys
 # ------------------------------------------------------------------------------
 
 
-class JVMNotFoundException(RuntimeError):
+class JVMNotFoundException(ValueError):
+    """ Exception raised when no JVM was found in the search path.
+
+    This exception is raised when the all of the places searched did not 
+    contain a JVM. The locations searched depend on the machine architecture. 
+    To avoid this exception specify the JAVA_HOME environment variable as a 
+    valid jre or jdk root directory.
+    """
     pass
 
 
-class JVMNotSupportedException(RuntimeError):
+class JVMNotSupportedException(ValueError):
+    """ Exception raised when the JVM is not supported.
+
+    This exception is raised after a search found a valid Java home directory
+    was found, but the JVM shared library found is not supported. Typically
+    this occures when the JVM does not match the architecture of Python
+    32 vs 64 bit, or the JVM is older than the version used to compile
+    JPype.
+    """
     pass
 
 
@@ -52,9 +67,12 @@ class JVMFinder(object):
         """
         Recursively looks for the given file
 
-        :param java_home: A Java home folder
-        :param filename: Name of the file to find
-        :return: The first found file path, or None
+        Parameters:
+            java_home(str): A Java home folder
+            filename(str): filename: Name of the file to find
+
+        Returns:
+            The first found file path, or None
         """
         found_jamvm = False
         non_supported_jvm = ('cacao', 'jamvm')
@@ -89,8 +107,11 @@ class JVMFinder(object):
         Generator that looks for the first-level children folders that could be
         Java installations, according to their name
 
-        :param parents: A list of parent directories
-        :return: The possible JVM installation folders
+        Parameters:
+            parents (str[]): A list of parent directories
+
+        Returns:
+            A list of the possible JVM installation folders
         """
         homes = []
         java_names = ('jre', 'jdk', 'java')
@@ -117,7 +138,9 @@ class JVMFinder(object):
         Check if the jvm is valid for this architecture.
 
         This method should be overriden for each architecture.
-        :raise JVMNotSupportedException: If the jvm is not supported.
+
+        Raises:
+            JVMNotSupportedException: If the jvm is not supported.
         """
         pass
 
@@ -125,8 +148,11 @@ class JVMFinder(object):
         """
         Retrieves the path to the default or first found JVM library
 
-        :return: The path to the JVM shared library file
-        :raise ValueError: No JVM library found or No Support JVM found
+        Returns:
+            The path to the JVM shared library file
+
+        Raises:
+            ValueError: No JVM library found or No Support JVM found
         """
         jvm_notsupport_ext = None
         for method in self._methods:
@@ -143,7 +169,7 @@ class JVMFinder(object):
                 # Ignore not successful methods
                 pass
             except JVMNotSupportedException as e:
-                jvm_notsupport_ext= e
+                jvm_notsupport_ext = e
 
             else:
                 if jvm is not None:
@@ -162,7 +188,8 @@ class JVMFinder(object):
         Retrieves the Java library path according to the JAVA_HOME environment
         variable
 
-        :return: The path to the JVM library, or None
+        Returns:
+            The path to the JVM library, or None
         """
         # Get the environment variable
         java_home = os.getenv("JAVA_HOME")
@@ -182,7 +209,8 @@ class JVMFinder(object):
         Retrieves the first existing Java library path in the predefined known
         locations
 
-        :return: The path to the JVM library, or None
+        Returns:
+            The path to the JVM library, or None
         """
         for home in self.find_possible_homes(self._locations):
             jvm = self.find_libjvm(home)
