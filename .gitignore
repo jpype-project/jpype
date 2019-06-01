@@ -63,3 +63,5 @@ target/
 *.swp
 *.stackdump
 tmp
+doc/html
+native/jars

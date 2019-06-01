@@ -44,6 +44,15 @@ JPypeException::JPypeException(JPError::Type errType, const string& msn, const J
 	from(stackInfo);
 }
 
+JPypeException::JPypeException(JPError::Type errType, int err, const string& msn, const JPStackInfo& stackInfo)
+{
+	JP_TRACE("EXCEPTION THROWN", errType, msn);
+	m_Type = errType;
+	m_Message = msn;
+	m_Error = err;
+	from(stackInfo);
+}
+
 JPypeException::JPypeException(const JPypeException& ex)
 : m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
@@ -284,6 +293,38 @@ void JPypeException::toPython()
 				JP_TRACE("Attribute error");
 				PyErr_SetString(PyExc_AttributeError, mesg.c_str());
 				return;
+
+			case JPError::_os_error_unix:
+			{
+				PyObject* val = Py_BuildValue("(iz)", m_Error, (string("JVM DLL not found: ") + mesg).c_str());
+				if (val != NULL)
+				{
+					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+					Py_DECREF(val);
+					if (exc != NULL)
+					{
+						PyErr_SetObject(PyExc_OSError, exc);
+						Py_DECREF(exc);
+					}
+				}
+				return;
+			}
+
+			case JPError::_os_error_windows:
+			{
+				PyObject* val = Py_BuildValue("(izzi)", 2, (string("JVM DLL not found: ") + mesg).c_str(), NULL, m_Error);
+				if (val != NULL)
+				{
+					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+					Py_DECREF(val);
+					if (exc != NULL)
+					{
+						PyErr_SetObject(PyExc_OSError, exc);
+						Py_DECREF(exc);
+					}
+				}
+				return;
+			}
 
 			default:
 				JP_TRACE("Unknown Error");
