@@ -1,10 +1,7 @@
 JPype
 =====
-
-.. image:: https://img.shields.io/pypi/implementation/jpype1.svg
-.. image:: https://img.shields.io/pypi/pyversions/jpype1.svg
-.. image:: https://img.shields.io/conda/pn/conda-forge/jpype1.svg
-.. image:: https://img.shields.io/github/license/jpype-project/jpype.svg
+   
+   |implementation| |pyversions| |platform| |license|
 
 JPype is a Python module to provide full access to Java from 
 within Python. It allows Python to make use of Java only libraries,
@@ -47,6 +44,11 @@ access to the entirety of CPython and Java libraries.
     .. |Docs| image:: https://img.shields.io/readthedocs/jpype.svg
     .. _Docs: http://jpype.readthedocs.org/en/latest/
 
+   
+.. |implementation| image:: https://img.shields.io/pypi/implementation/jpype1.svg
+.. |pyversions| image:: https://img.shields.io/pypi/pyversions/jpype1.svg
+.. |platform| image:: https://img.shields.io/conda/pn/conda-forge/jpype1.svg
+.. |license| image:: https://img.shields.io/github/license/jpype-project/jpype.svg
 .. _Apache 2 License: https://github.com/jpype-project/jpype/blob/master/LICENSE
 .. _Python Docs: http://jpype.readthedocs.org/en/latest/
 
