@@ -1,11 +1,11 @@
 JPype
 =====
 
-.. image:: https://travis-ci.org/originell/jpype.png?branch=master
-   :target: https://travis-ci.org/originell/jpype
+.. image:: https://api.travis-ci.org/jpype-project/jpype.png?branch=master
+   :target: https://travis-ci.org/jpype-project/jpype
 
-.. image:: https://img.shields.io/appveyor/ci/originell/jpype.svg
-   :target: https://ci.appveyor.com/project/originell/jpype
+.. image:: https://img.shields.io/appveyor/ci/jpype-project/jpype.svg
+   :target: https://ci.appveyor.com/project/jpype-project/jpype
 
 
 JPype is a Python module to provide full access to Java from 
@@ -24,6 +24,6 @@ access to the entirety of CPython and Java libraries.
 
 Find the `documentation at Read the Docs
 <http://jpype.readthedocs.org>`__.  Current development is done in
-`the github project <https://github.com/originell/jpype>`__. The work
+`the github project <https://github.com/jpype-project/jpype>`__. The work
 on this project began on `Sourceforge
 <http://sourceforge.net/projects/jpype/>`__.
