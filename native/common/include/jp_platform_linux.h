@@ -23,6 +23,7 @@
 #else
 #include <dlfcn.h>
 #endif // HPUX
+#include <errno.h>
 
 class LinuxPlatformAdapter : public JPPlatformAdapter
 {
@@ -41,9 +42,7 @@ public:
 
 		if (jvmLibrary == NULL)
 		{
-			std::stringstream msg;
-			msg << "Unable to load DLL [" << path << "], error = " << dlerror();
-			JP_RAISE_RUNTIME_ERROR( msg.str().c_str());
+			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
 	}
 
