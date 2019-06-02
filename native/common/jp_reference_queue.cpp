@@ -48,9 +48,7 @@ void JPReferenceQueue::JPReferenceQueue(JPContext* context)
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	jmethodID ctor = frame.GetMethodID(cls, "<init>", "()V");
-	if (ctor == NULL)
-		JP_RAISE_RUNTIME_ERROR("ctor not found.");
+	frame.GetMethodID(cls, "<init>", "()V");
 
 	JNINativeMethod method2[1];
 	method2[0].name = (char*) "removeHostReference";

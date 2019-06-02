@@ -69,11 +69,14 @@ JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 	return JPPyObject::getNone();
 }
 
-JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
 {
 	{
 		JPPyCallRelease call;
-		frame.CallVoidMethodA(claz, mth, val);
+		if (clazz == NULL)
+			frame.CallVoidMethodA(obj, mth, val);
+		else
+			frame.CallNonvirtualVoidMethodA(obj, clazz, mth, val);
 	}
 	return JPPyObject::getNone();
 }

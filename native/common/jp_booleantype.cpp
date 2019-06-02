@@ -155,7 +155,10 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallBooleanMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

@@ -75,23 +75,23 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callBoolean(np.uint64(123)), True)
 
     def testBooleanFromFloat(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callBoolean(float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat32(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float32(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat64(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float64(2))

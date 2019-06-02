@@ -55,13 +55,9 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 				JPThunk::_org_jpype_classloader_JPypeClassLoader,
 				JPThunk::_org_jpype_classloader_JPypeClassLoader_size);
 
-		jvalue v;
 
 		// Set up class loader
-		jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
-		if (ctorID == 0)
-			JP_RAISE_RUNTIME_ERROR("Boot loader ctor not found.");
-		//v.l = cl;
+		frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
 
 		jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
 		m_BootLoader = JPObjectRef(context, frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID)));
@@ -69,8 +65,9 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 		// Load the jar
 		jbyteArray jar = frame.NewByteArray(JPThunk::_org_jpype_size);
 		frame.SetByteArrayRegion(jar, 0, JPThunk::_org_jpype_size, JPThunk::_org_jpype);
-		v.l = jar;
 
+		jvalue v;
+		v.l = jar;
 		jmethodID importJarID = frame.GetMethodID(cls, "importJar", "([B)V");
 		frame.CallVoidMethodA(m_BootLoader.get(), importJarID, &v);
 

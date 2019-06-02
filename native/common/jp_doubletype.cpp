@@ -159,7 +159,10 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallDoubleMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

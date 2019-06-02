@@ -59,7 +59,7 @@ void JPField::setStaticField(PyObject* val)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_RUNTIME_ERROR(err.str().c_str());
+		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
 	}
 
 	if (m_Type->canConvertToJava(val) <= JPMatch::_explicit)
@@ -92,7 +92,7 @@ void JPField::setField(jobject inst, PyObject* val)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_RUNTIME_ERROR(err.str().c_str());
+		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
 	}
 
 	if (m_Type->canConvertToJava(val) <= JPMatch::_explicit)

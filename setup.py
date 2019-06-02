@@ -11,9 +11,7 @@ setup(
     name='JPype1',
     version='0.7.0',
     description='A Python to Java bridge.',
-    long_description=(setupext.utils.read_utf8(__file__, 'README.rst') + '\n\n' +
-                      setupext.utils.read_utf8(__file__, 'doc/CHANGELOG.rst') + '\n\n' +
-                      setupext.utils.read_utf8(__file__, 'AUTHORS.rst')),
+    long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
     author='Steve Menard',
     author_email='devilwolf@users.sourceforge.net',
@@ -27,12 +25,15 @@ setup(
         'Operating System :: POSIX :: Linux',
     ],
     classifiers=[
-        'Programming Language :: Java',
-        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Java :: 8',
+        'Programming Language :: Java :: 9',
+        'Programming Language :: Java :: 11',
+        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     packages=[
         'jpype'],

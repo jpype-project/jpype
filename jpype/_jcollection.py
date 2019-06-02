@@ -18,6 +18,7 @@ import collections
 
 from . import _jclass
 from . import _jcustomizer
+from . import _jtypes
 
 JOverride = _jclass.JOverride
 
@@ -59,33 +60,20 @@ class _JCollection(object):
     @JOverride(sticky=True)
     def addAll(self, v):
         if isPythonSequence(v):
-            r = False
-            for i in v:
-                r = self.add(i) or r
-            return r
-        else:
-            return self._addAll(v)
+            v = _jclass.JClass('java.util.Arrays').asList(v)
+        return self._addAll(v)
 
     @JOverride(sticky=True)
     def removeAll(self, v):
         if isPythonSequence(v):
-            r = False
-            for i in v:
-                r = self.remove(i) or r
-            return r
-        else:
-            return self._removeAll(v)
+            v = _jclass.JClass('java.util.Arrays').asList(v)
+        return self._removeAll(v)
 
     @JOverride(sticky=True)
     def retainAll(self, v):
         if isPythonSequence(v):
-            r = _jclass.JClass("java.util.ArrayList")(len(v))
-            for i in v:
-                r.add(i)
-        else:
-            r = v
-
-        return self._retainAll(r)
+            v = _jclass.JClass('java.util.Arrays').asList(v)
+        return self._retainAll(v)
 
 
 @_jcustomizer.JImplementationFor('java.util.List')
@@ -95,8 +83,6 @@ class _JList(object):
     This customizer adds the Python list operator to function on classes
     that implement the Java List interface.
     """
-#    def __jclass_init__(cls):
-    #        type.__setattr__(cls, 'addAll', _JList.addAll)
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
@@ -114,37 +100,37 @@ class _JList(object):
 
     def __setitem__(self, ndx, v):
         if isinstance(ndx, slice):
-            start = ndx.start
-            stop = ndx.stop
-            if start < 0:
-                start = self.size() + start
-            if stop < 0:
-                stop = self.size() + stop
-            for i in range(start, stop):
-                self.remove(start)
-            if isinstance(v, collections.Sequence):
-                ndx = start
-                for i in v:
-                    self.add(ndx, i)
-                    ndx += 1
+            if isPythonSequence(v):
+                v = _jclass.JClass('java.util.Arrays').asList(v)
+            self[ndx.start:ndx.stop].clear()
+            self.addAll(start, v)
         else:
             if ndx < 0:
                 ndx = self.size() + ndx
             self.set(ndx, v)
 
-    @JOverride(sticky=True)
-    def addAll(self, v, v2=None):
-        if isPythonSequence(v):
-            r = False
-            if v2 is not None:  # assume form (int, values)
-                for i in range(len(v2)):
-                    r = r or self.add(v + i, v2[i])
-            else:
-                for i in v:
-                    r = self.add(i) or r
-            return r
+    def __delitem__(self, ndx):
+        if isinstance(ndx, slice):
+            self[ndx.start:ndx.stop].clear()
+        elif hasattr(ndx, '__index__'):
+            return self.remove(_jtypes.JInt(ndx))
         else:
-            return self._addAll(v)
+            raise TypeError("Incorrect arguments to del")
+
+    @JOverride(sticky=True)
+    def addAll(self, *args):
+        if len(args) == 1:
+            v = args[0]
+            if isPythonSequence(v):
+                v = _jclass.JClass('java.util.Arrays').asList(v)
+            self._addAll(v)
+        elif len(args) == 2 and hasattr(args[0], '__index__'):
+            v = args[1]
+            if isPythonSequence(v):
+                v = _jclass.JClass('java.util.Arrays').asList(v)
+            self._addAll(args[0], v)
+        else:
+            raise TypeError("Incorrect arguments to addAll")
 
 
 def isPythonMapping(v):

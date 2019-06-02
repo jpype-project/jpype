@@ -81,7 +81,7 @@ void PyJPArray::initType(PyObject* module)
 
 bool PyJPArray::check(PyObject* o)
 {
-	return o->ob_type == &PyJPArray::Type;
+	return Py_TYPE(o) == &PyJPArray::Type;
 }
 
 JPPyObject PyJPArray::alloc(JPArray* obj)

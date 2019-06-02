@@ -94,7 +94,7 @@ void PyJPClass::initType(PyObject* module)
 
 bool PyJPClass::check(PyObject* o)
 {
-	return o->ob_type == &PyJPClass::Type;
+	return Py_TYPE(o) == &PyJPClass::Type;
 }
 
 JPPyObject PyJPClass::alloc(JPClass* cls)

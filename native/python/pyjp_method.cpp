@@ -147,7 +147,6 @@ PyObject* PyJPMethod::__call__(PyJPMethod* self, PyObject* args, PyObject* kwarg
 
 void PyJPMethod::__dealloc__(PyJPMethod* self)
 {
-	JP_TRACE_IN("PyJPMethod::__dealloc__");
 	if (self->m_Instance != NULL)
 	{
 		JP_TRACE_PY("method dealloc (dec)", self->m_Instance);
@@ -156,7 +155,6 @@ void PyJPMethod::__dealloc__(PyJPMethod* self)
 	self->m_Instance = NULL;
 	self->m_Method = NULL;
 	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::__str__(PyJPMethod* self)

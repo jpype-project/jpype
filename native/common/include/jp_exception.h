@@ -65,7 +65,9 @@ namespace JPError
 		_value_error = 4,
 		_overflow_error = 5,
 		_index_error = 6,
-		_attribute_error = 7
+		_attribute_error = 7,
+		_os_error_unix = 8,
+		_os_error_windows = 9
 	} ;
 }
 
@@ -79,6 +81,8 @@ namespace JPError
 //   have a lot for facitilies to make this easy.
 #define JP_RAISE_PYTHON(msg)         { throw JPypeException(JPError::_python_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_RUNTIME_ERROR(msg)  { throw JPypeException(JPError::_runtime_error, msg, JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_UNIX(err, msg)  { throw JPypeException(JPError::_os_error_unix, err, msg, JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_WINDOWS(err, msg)  { throw JPypeException(JPError::_os_error_windows, err, msg, JP_STACKINFO()); }
 #define JP_RAISE_TYPE_ERROR(msg)     { throw JPypeException(JPError::_type_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_VALUE_ERROR(msg)    { throw JPypeException(JPError::_value_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_OVERFLOW_ERROR(msg) { throw JPypeException(JPError::_overflow_error, msg, JP_STACKINFO()); }
@@ -141,6 +145,7 @@ public:
 	JPypeException(JPContext* context, jthrowable, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(JPError::Type errorType, int err, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
 
 	~JPypeException();
@@ -167,11 +172,12 @@ public:
 	jthrowable getJavaException();
 
 private:
+	JPContext* m_Context;
 	JPError::Type m_Type;
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
-	JPContext* m_Context;
+	int m_Error;
 } ;
 
 /**

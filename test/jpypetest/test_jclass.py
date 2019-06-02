@@ -142,7 +142,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testMethod(self):
         cls = jpype.JClass('jpype.types.MethodsTest')
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             cls.callObject(jpype.JObject())
         cls.callObject(cls(), jpype.JObject())
 

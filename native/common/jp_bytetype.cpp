@@ -58,7 +58,7 @@ jobject JPByteType::convertToDirectBuffer(PyObject* src)
 		return frame.keep(frame.NewDirectByteBuffer(rawData, size));
 	}
 
-	JP_RAISE_RUNTIME_ERROR("Unable to convert to Direct Buffer");
+	JP_RAISE_TYPE_ERROR("Unable to convert to Direct Buffer");
 	JP_TRACE_OUT;
 }
 
@@ -179,7 +179,10 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallByteMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }

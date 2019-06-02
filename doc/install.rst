@@ -99,7 +99,11 @@ The setup script recognizes several arguments.
 After building, JPype can be tested using the test bench. The test
 bench requires ant and JDK to build.
 
-**3. Install JPype with:** ::
+**3. Test JPype with (optional):** ::
+
+    python setup.py test
+
+**4. Install JPype with:** ::
 
     python setup.py install
 
@@ -126,7 +130,7 @@ In case this happens, please do two things:
 Specific requirements
 ~~~~~~~~~~~~~~~~~~~~~
 
-JPype is know to work on Linx, OSX, Windows, and Cygwin.  To make it easier to
+JPype is known to work on Linx, OSX, Windows, and Cygwin.  To make it easier to
 those who have not build CPython modules before here are some helpful tips for
 different machines.
 
