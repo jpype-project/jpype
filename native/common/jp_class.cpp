@@ -21,7 +21,7 @@ JPClass::JPClass(JPContext* context,
 		const string& name,
 		JPClass* super,
 		const JPClassList& interfaces,
-		jint modifiers) 
+		jint modifiers)
 : m_Class(context, clss)
 {
 	m_Context = context;
@@ -33,6 +33,15 @@ JPClass::JPClass(JPContext* context,
 
 JPClass::~JPClass()
 {
+}
+
+void JPClass::assignMembers(JPMethodDispatch* ctor,
+		JPMethodDispatchList& methods,
+		JPFieldList& fields)
+{
+	m_Constructors = ctor;
+	m_Methods = methods;
+	m_Fields = fields;
 }
 
 //<editor-fold desc="new" defaultstate="collapsed">

@@ -40,7 +40,7 @@ setup(
     package_dir={
         'jpype': 'jpype',
     },
-    tests_requires=['pytest'],
+    tests_require=['pytest'],
     extras_require={'numpy': ['numpy>=1.6']},
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,

@@ -1094,7 +1094,7 @@ void JPJavaFrame::CallVoidMethodA(jobject a0, jmethodID a1, jvalue* a2)
 void JPJavaFrame::CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2, jvalue* a3)
 {
 	JPCall call(*this, "CallVoidMethodA");
-	env->functions->CallNonvirtualVoidMethodA(env, a0, a1, a2, a3);
+	m_Env->functions->CallNonvirtualVoidMethodA(m_Env, a0, a1, a2, a3);
 }
 
 void JPJavaFrame::CallVoidMethod(jobject a0, jmethodID a1)

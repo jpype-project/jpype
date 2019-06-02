@@ -23,7 +23,7 @@ JPTypeManager::JPTypeManager(JPContext* context)
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPTypeManager::init");
 
-	jclass cls = JPClassLoader::findClass("org.jpype.manager.TypeManager");
+	jclass cls = context->getClassLoader()->findClass("org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClass", "(Ljava/lang/String;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Object;)J");
@@ -43,6 +43,7 @@ JPClass* JPTypeManager::findClass(jclass obj)
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
+	JP_TRACE_OUT;
 }
 
 JPClass* JPTypeManager::findClassByName(const string& name)
@@ -52,6 +53,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	jvalue val;
 	val.l = (jobject) m_Context->fromStringUTF8(name);
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	JP_TRACE_OUT;
 }
 
 JPClass* JPTypeManager::findClassForObject(jobject obj)
@@ -61,5 +63,6 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+	JP_TRACE_OUT;
 }
 

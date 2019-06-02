@@ -34,17 +34,14 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 	JP_TRACE_OUT;
 }
 
-JPReferenceQueue::JPReferenceQueue()
-{}
-
-void JPReferenceQueue::JPReferenceQueue(JPContext* context)
+JPReferenceQueue::JPReferenceQueue(JPContext* context)
 {
 	m_Context = context;
 	JPJavaFrame frame(context, 32);
 	JP_TRACE_IN("JPReferenceQueue::init");
 
 	// build the ReferenceQueue class ...
-	jclass cls = JPClassLoader::findClass("org.jpype.ref.JPypeReferenceQueue");
+	jclass cls = context->getClassLoader()->findClass("org/jpype/ref/JPypeReferenceQueue");
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
@@ -76,7 +73,7 @@ void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 	Py_INCREF(hostRef);
 
 	JP_TRACE("Register reference");
-	frame.CallVoidMethodA(m_ReferenceQueue, m_ReferenceQueueRegisterMethod, args);
+	frame.CallVoidMethodA(m_ReferenceQueue.get(), m_ReferenceQueueRegisterMethod, args);
 	JP_TRACE_OUT;
 }
 

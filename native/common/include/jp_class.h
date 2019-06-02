@@ -38,7 +38,7 @@ public:
 		return m_Class.get();
 	}
 
-	void assignMembers(JPMethodDispatch ctor,
+	void assignMembers(JPMethodDispatch* ctor,
 			JPMethodDispatchList& methods,
 			JPFieldList& fields);
 
