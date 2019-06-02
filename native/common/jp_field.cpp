@@ -21,7 +21,7 @@ JPField::JPField(JPClass* cls,
 		jobject field,
 		JPClass* fieldType,
 		jint modifiers)
-: m_Field(field)
+: m_Field(cls->getContext(), field)
 {
 	JPJavaFrame frame(cls->getContext());
 	this->m_Class = cls;
@@ -35,7 +35,7 @@ JPField::~JPField()
 {
 }
 
-string JPField::toString() const
+string JPField::toString()
 {
 	return getContext()->toString(m_Field.get());
 }

@@ -17,25 +17,25 @@
 #ifndef _JPPROXY_H_
 #define _JPPROXY_H_
 
-#include "jp_class.h"
-
+class JPProxy;
 class JPProxyFactory
 {
+	friend class JPProxy;
 public:
 	JPProxyFactory(JPContext* context);
 	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
 	
 private:
 	JPContext* m_Context;
-	jmethodID invocationHandlerConstructorID;
-	jfieldID hostObjectID;
-	jfieldID contextID;
+	JPClassRef m_ProxyClass;
+	jmethodID m_NewProxyID;
+	jmethodID m_NewInstanceID;
 };
 	
 class JPProxy
 {
 	friend class JPProxyFactory;
-	JPProxy(JPContext* context, PyObject* inst, JPClassList& intf);
+	JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf);
 	
 public:
 	virtual ~JPProxy();
@@ -49,15 +49,14 @@ public:
 
 	JPContext* getContext()
 	{
-		return m_Context;
+		return m_Factory->m_Context;
 	}
 
 private:
-	JPContext*    m_Context;
-	jobject	      m_Handler;
+	JPProxyFactory* m_Factory;
 	PyObject*     m_Instance; // This is a PyJPProxy
+	JPObjectRef   m_Proxy;
 	JPClassList   m_InterfaceClasses;
-	JPObjectRef   m_Interfaces;
 } ;
 
 #endif // JPPROXY_H

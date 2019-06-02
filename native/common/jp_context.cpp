@@ -14,16 +14,11 @@
    limitations under the License.
    
  *****************************************************************************/
+#include <jpype.h>
 
-/* 
- * File:   jp_context.cpp
- * Author: Karl Einar Nelson
- * 
- * Created on May 28, 2019, 12:15 AM
- */
-
-#include "jp_context.h"
-
+JPResource::~JPResource()
+{
+}
 
 /*****************************************************************************/
 // Platform handles the differences in dealing with shared libraries 

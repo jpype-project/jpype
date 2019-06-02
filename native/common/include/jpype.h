@@ -146,9 +146,9 @@ public:
 
 // Base utility headers
 #include "jp_javaframe.h"
-#include "jp_env.h"
-#include "jp_exception.h"
 #include "jp_context.h"
+#include "jp_exception.h"
+#include "jp_env.h"
 #include "jp_pythontypes.h"
 #include "jp_pythonenv.h"
 #include "jp_tracer.h"

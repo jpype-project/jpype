@@ -16,8 +16,9 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPMonitor::JPMonitor(jobject value) : m_Value(value)
+JPMonitor::JPMonitor(JPContext* context, jobject value) : m_Value(context, value)
 {
+	m_Context = context;
 }
 
 JPMonitor::~JPMonitor()

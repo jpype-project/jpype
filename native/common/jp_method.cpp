@@ -24,10 +24,9 @@ JPMethod::JPMethod(JPClass* claz,
 		JPClassList parameterTypes,
 		JPMethodList& moreSpecific,
 		jint modifiers)
-: m_Method(mth)
+: m_Method(claz->getContext(), mth)
 {
 	this->m_Class = claz;
-	this->m_Method = mth;
 	this->m_Name = name;
 	this->m_ReturnType = returnType;
 	this->m_ParameterTypes = parameterTypes;
@@ -204,7 +203,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::invoke");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(8 + alen);
+	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 
 	JPClass* retType = m_ReturnType;
 
@@ -232,7 +231,7 @@ JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::invokeConstructor");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(8 + alen);
+	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
@@ -290,4 +289,16 @@ string JPMethod::matchReport(JPPyObjectVector& sequence)
 	res << endl;
 
 	return res.str();
+}
+
+bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
+{
+	for (JPMethodList::const_iterator it = m_MoreSpecificOverloads.begin();
+			it != m_MoreSpecificOverloads.end();
+			++it)
+	{
+		if (other == *it)
+			return true;
+	}
+	return false;
 }

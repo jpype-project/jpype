@@ -181,7 +181,7 @@ jvalue JPObjectType::convertToJava(PyObject* pyobj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
 	if (proxy != NULL)
 	{
-		res.l = frame.keep(proxy->getProxy(m_Context));
+		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 

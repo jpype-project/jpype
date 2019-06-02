@@ -18,6 +18,75 @@
 #define JP_CONTEXT_H
 #include <jpype.h>
 
+
+/** JPClass is a bit heavy when we just need to hold a 
+ * class reference.  It causes issues during bootstrap. Thus we
+ * need a lightweight reference to a jclass.
+ */
+template <class jref>
+class JPRef
+{
+private:
+	JPContext* m_Context;
+	jref m_Ref;
+
+public:
+
+	JPRef()
+	{
+		m_Context = 0;
+		m_Ref = 0;
+	}
+
+	JPRef(JPContext* context, jref obj)
+	{
+		m_Context = context;
+		JPJavaFrame frame(m_Context);
+		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
+	}
+
+	JPRef(const JPRef& other)
+	{
+		m_Context = other.m_Context;
+		JPJavaFrame frame(m_Context);
+		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
+	}
+
+	~JPRef();
+
+	JPRef& operator=(const JPRef& other)
+	{
+		if (other.m_Ref == m_Ref)
+			return *this;
+		if (m_Context != 0 && m_Ref != 0)
+		{
+			JPJavaFrame frame(m_Context);
+			if (m_Ref != 0)
+				frame.DeleteGlobalRef((jobject) m_Ref);
+		}
+		m_Context = other.m_Context;
+		m_Ref = other.m_Ref;
+		if (m_Context != 0 && m_Ref != 0)
+		{
+			JPJavaFrame frame(m_Context);
+			m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
+		}
+		return *this;
+	}
+
+	jref get() const
+	{
+		return m_Ref;
+	}
+} ;
+
+typedef JPRef<jclass> JPClassRef;
+typedef JPRef<jobject> JPObjectRef;
+typedef JPRef<jarray> JPArrayRef;
+typedef JPRef<jthrowable> JPThrowableRef;
+
+class JPStackInfo;
+
 /**
  * A Context encapsulates the Java virtual machine, the Java classes required 
  * to function, and the JPype services created for that machine.
@@ -79,6 +148,7 @@ public:
 	JPProxyFactory* getProxyFactory();
 	JPTypeManager* getTypeManager();
 	JPClassLoader* getClassLoader();
+	JPReferenceQueue* getReferenceQueue();
 
 	// Java functions
 	string toString(jobject o);
@@ -147,6 +217,16 @@ private:
 	jmethodID m_ContextShutdownMethod;
 	bool m_IsShutdown;
 } ;
+
+
+template<class jref> 
+JPRef<jref>::~JPRef()
+{
+	if (m_Ref != 0 && m_Context != 0)
+	{
+		m_Context->ReleaseGlobalRef((jobject) m_Ref);
+	}
+}
 
 #endif /* JP_CONTEXT_H */
 

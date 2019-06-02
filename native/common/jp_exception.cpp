@@ -21,10 +21,10 @@
 #include "jp_context.h"
 
 JPypeException::JPypeException(JPContext* context, jthrowable th, const char* msn, const JPStackInfo& stackInfo)
+: m_Throwable(context, th)
 {
 	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
 	m_Context = context;
-	m_Throwable = th;
 	m_Type = JPError::_java_error;
 	m_Message = msn;
 	from(stackInfo);
@@ -133,9 +133,9 @@ string JPypeException::getJavaMessage()
 	try
 	{
 		if (m_Context == NULL)
-			return "Unable to access Java exception, context is null"
+			return "Unable to access Java exception, context is null";
 		JPJavaFrame frame(m_Context);
-		return JPJni::toString((jobject) frame.ExceptionOccurred());
+		return m_Context->toString((jobject) frame.ExceptionOccurred());
 	} catch (...)
 	{
 		return "unknown error";
@@ -376,7 +376,7 @@ void JPypeException::toJava(JPContext *context)
 		}
 
 		JP_TRACE("String exception");
-		frame.ThrowNew(context->_java_lang_RuntimeException, mesg.c_str());
+		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
 	} catch (JPypeException ex)
 	{
 		// Print our parting words.

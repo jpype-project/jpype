@@ -21,23 +21,12 @@ JPPrimitiveType::JPPrimitiveType(JPContext* context, jclass clss,
 		JPBoxedType* boxedClass,
 		jint modifiers
 		)
-: JPClass(context, clss, name, NULL, JPClassList(), modifiers), m_BoxedClass(boxedClass)
+: JPClass(context, clss, name, NULL, JPClassList(), modifiers), 
+		m_BoxedClass(boxedClass)
 {
 	boxedClass->setPrimitiveType(this);
 }
 
 JPPrimitiveType::~JPPrimitiveType()
 {
-}
-
-jobject JPPrimitiveType::convertToJavaObject(PyObject obj)
-{
-	JPJavaFrame frame(m_Context);
-
-	JPPyTuple tuple(JPPyTuple::newTuple(1));
-	tuple.setItem(0, obj);
-
-	JPValue o = m_BoxedClass->newInstance(tuple);
-	jobject res = o.getJavaObject();
-	return frame.keep(res);
 }

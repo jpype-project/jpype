@@ -44,6 +44,7 @@
  */
 static const int LOCAL_FRAME_DEFAULT = 8;
 
+class JPContext;
 class JPJavaFrame
 {
 	JNIEnv* m_Env;
@@ -65,6 +66,14 @@ public:
 	 * acquire an env handle to work with jvm.
 	 */
 	JPJavaFrame(JPContext* context, int size = LOCAL_FRAME_DEFAULT);
+
+	/** Create a new JavaFrame with a specified env.
+	 *
+	 * @param size determines how many objects can be
+	 * created in this scope without additional overhead.
+	 *
+	 */
+	JPJavaFrame(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
 
 	/** Exit the local scope and clean up all java
 	 * objects.  
@@ -343,72 +352,5 @@ public:
 	jsize GetStringLength(jstring a0);
 	jsize GetStringUTFLength(jstring a0);
 } ;
-
-/** JPClass is a bit heavy when we just need to hold a 
- * class reference.  It causes issues during bootstrap. Thus we
- * need a lightweight reference to a jclass.
- */
-template <class jref>
-class JPRef
-{
-private:
-	JPContext* m_Context;
-	jref m_Ref;
-
-public:
-
-	JPRef()
-	{
-		m_Context = 0;
-		m_Ref = 0;
-	}
-
-	JPRef(JPContext* context, jref obj)
-	{
-		m_Context = context;
-		JPJavaFrame frame(m_Context);
-		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
-	}
-
-	JPRef(const JPRef& other)
-	{
-		m_Context = other.m_Context;
-		JPJavaFrame frame(m_Context);
-		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
-	}
-
-	~JPRef();
-
-	JPRef& operator=(const JPRef& other)
-	{
-		if (other.m_Ref == m_Ref)
-			return *this;
-		if (m_Context != 0 && m_Ref != 0)
-		{
-			JPJavaFrame frame(m_Context);
-			if (m_Ref != 0)
-				frame.DeleteGlobalRef((jobject) m_Ref);
-		}
-		m_Context = other.m_Context;
-		m_Ref = other.m_Ref;
-		if (m_Context != 0 && m_Ref != 0)
-		{
-			JPJavaFrame frame(m_Context);
-			m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
-		}
-		return *this;
-	}
-
-	jref get() const
-	{
-		return m_Ref;
-	}
-} ;
-
-typedef JPRef<jclass> JPClassRef;
-typedef JPRef<jobject> JPObjectRef;
-typedef JPRef<jarray> JPArrayRef;
-typedef JPRef<jthrowable> JPThrowableRef;
-
 
 #endif // _JP_JAVA_FRAME_H_

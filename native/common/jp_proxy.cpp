@@ -16,9 +16,6 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
-#include <jp_thunk.h>
-
-#include "jp_context.h"
 
 JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		JNIEnv *env, jclass clazz, jlong contextPtr, jstring name,
@@ -108,41 +105,53 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPProxy::init");
 
-	jclass handlerClass = JPClassLoader::findClass("org.jpype.proxy.JPypeInvocationHandler");
+    jclass proxyClass = context->getClassLoader()->findClass("org/jpype/proxy/JPypeProxy");
 
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
-	method[0].signature = (char*) "(Ljava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
+	method[0].signature = (char*) "(JLjava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
 	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
-
-	hostObjectID = frame.GetFieldID(handlerClass, "hostObject", "J");
-	contextID = frame.GetFieldID(handlerClass, "context", "J");
-	invocationHandlerConstructorID = frame.GetMethodID(handlerClass, "<init>", "()V");
-
-	frame.RegisterNatives(handlerClass, method, 1);
+	frame.GetMethodID(proxyClass, "<init>", "()V");
+	frame.RegisterNatives(proxyClass, method, 1);
 	
-	m_HandlerClass = JPClassRef(context, handlerClass);
-	m_ProxyClass = JPClassRef(context, (jclass) frame.FindClass("java/lang/reflect/Proxy")));
-	m_NewProxyInstanceID = frame.GetStaticMethodID(m_ProxyClass.get(), 
-			"newProxyInstance",
-			"(Ljava/lang/ClassLoader;[Ljava/lang/Class;Ljava/lang/reflect/InvocationHandler;)Ljava/lang/Object;");
+	m_ProxyClass = JPClassRef(context, proxyClass);
+	m_NewProxyID = frame.GetStaticMethodID(m_ProxyClass.get(),
+			"newProxy",
+			"(JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
+	m_NewInstanceID = frame.GetStaticMethodID(m_ProxyClass.get(),
+			"newInstance",
+			"()Ljava/lang/Object;");
 
 	JP_TRACE_OUT;
 }
 
-JPProxy::JPProxy(JPContext* context, PyObject* inst, JPClassList& intf)
-: m_Instance(inst), m_InterfaceClasses(intf), m_Context(context)
+JPProxy* JPProxyFactory::newProxy(PyObject* inst, JPClassList& intf)
+{
+	return new JPProxy(this, inst, intf);
+}
+
+JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
+: m_Factory(factory), m_Instance(inst), m_InterfaceClasses(intf)
 {
 	JP_TRACE_IN("JPProxy::JPProxy");
-	JPJavaFrame frame(context);
+	JPJavaFrame frame(m_Factory->m_Context);
 
-	jobjectArray ar = frame.NewObjectArray((int) intf.size(), m_Context->_java_lang_Class->getJavaClass(), NULL);
-
+	// Convert the interfaces to a Class[]
+	jobjectArray ar = frame.NewObjectArray((int) intf.size(),
+			m_Factory->m_Context->_java_lang_Class->getJavaClass(), NULL);
 	for (unsigned int i = 0; i < intf.size(); i++)
 	{
 		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
-	}
-	m_Interfaces = ar;
+	}	
+	jvalue v[3];
+	v[0].j = (jlong)m_Factory->m_Context;
+	v[1].j = (jlong)inst;
+	v[2].l = ar;
+
+	// Create the proxy
+	jobject proxy = frame.CallStaticObjectMethodA(m_Factory->m_ProxyClass.get(),
+			m_Factory->m_NewProxyID, v);
+	m_Proxy = JPObjectRef(m_Factory->m_Context, proxy);
 	JP_TRACE_OUT;
 }
 
@@ -152,19 +161,15 @@ JPProxy::~JPProxy()
 
 jobject JPProxy::getProxy()
 {
-	JPJavaFrame frame(m_Context);
-	jobject cl = m_Context->getClassLoader()->getSystemClassLoader();
-
-	jobject m_Handler = frame.NewObject(handlerClass, invocationHandlerConstructorID);
-	frame.SetLongField(m_Handler, hostObjectID, (jlong) m_Instance);
-	frame.SetLongField(m_Handler, contextID, (jlong) m_Context);
-
-	jvalue v[3];
-	v[0].l = cl;
-	v[1].l = m_Interfaces.get();
-	v[2].l = m_Handler;
-
-	jobject proxy = frame.CallStaticObjectMethodA(JPJni::s_ProxyClass, JPJni::s_NewProxyInstanceID, v);
-	JPReferenceQueue::registerRef(proxy, this->m_Instance);
-	return frame.keep(proxy);
+	JPContext* context = getContext();
+	JPJavaFrame frame(context);
+	
+	// Use the proxy to make an instance
+	jvalue v[1];
+	jobject instance = frame.CallObjectMethodA(m_Factory->m_ProxyClass.get(),
+			m_Factory->m_NewInstanceID, v);
+	
+	// The instance and the python object lifespans are bound
+	context->getReferenceQueue()->registerRef(instance, this->m_Instance);
+	return frame.keep(instance);
 }

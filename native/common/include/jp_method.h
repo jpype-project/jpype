@@ -102,6 +102,7 @@ public:
 	string toString() const;
 
 	string matchReport(JPPyObjectVector& args);
+	bool checkMoreSpecificThan(JPMethod* other) const;
 
 private:
 	void packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg);

@@ -20,7 +20,7 @@ JPLongType::JPLongType(JPContext* context, jclass clss,
 		const string& name,
 		JPBoxedType* boxedClass,
 		jint modifiers)
-: JPPrimitiveType(clss, name, boxedClass, modifiers)
+: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
 	_LongValueID = frame.GetMethodID(boxedClass->getJavaClass(), "longValue", "()J");

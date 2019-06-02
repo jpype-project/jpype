@@ -12,63 +12,15 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+ 
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
 
-//AT's on porting:
-//  1) the original definition of global static object leads to crashing
-//on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
-//
-//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-//Therefore, they must be guarded with a mutex.
-namespace
-{ // impl details
-	JavaVM* s_JavaVM = NULL;
-
-	jint(JNICALL *CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
-	jint(JNICALL *GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
-
-}
-
-/*****************************************************************************/
-// Platform handles the differences in dealing with shared libraries 
-// on windows and unix variants.
-
-#ifdef WIN32
-#include "jp_platform_win32.h"
-#define  PLATFORM_ADAPTER Win32PlatformAdapter
-#else
-#include "jp_platform_linux.h"
-#include "jp_context.h"
-#define  PLATFORM_ADAPTER LinuxPlatformAdapter  
-#endif
-
-
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
-JPResource::~JPResource()
-{
-}
-
-JPRef::~JPRef()
-{
-	if (m_Ref != 0 && m_Context != 0)
-	{
-		m_Context->ReleaseGlobalRef((jobject) m_Ref);
-	}
-}
-
 namespace
 {
-
-	JPPlatformAdapter* GetAdapter()
-	{
-		static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
-		return adapter;
-	}
-
 
 	/*****************************************************************************/
 	// Helper classes
@@ -111,7 +63,7 @@ namespace
 				jthrowable th = _env->functions->ExceptionOccurred(_env);
 				_env->functions->ExceptionClear(_env);
 				_env = 0;
-				throw JPypeException(th, _msg, JP_STACKINFO());
+				throw JPypeException(_context, th, _msg, JP_STACKINFO());
 			}
 		}
 	};
@@ -123,7 +75,7 @@ namespace
 // resources should be created within them.
 //
 
-JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int i)
+JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
 : m_Env(p_env), attached(false), popped(false)
 {
 	// Create a memory management frame to live in	

@@ -59,6 +59,8 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 
 		// Set up class loader
 		jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
+		if (ctorID == 0)
+			JP_RAISE_RUNTIME_ERROR("Boot loader ctor not found.");
 		//v.l = cl;
 
 		jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");

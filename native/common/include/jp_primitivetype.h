@@ -25,7 +25,6 @@ protected:
 		JPBoxedType* boxedClass,
 		jint modifiers);
 	virtual ~JPPrimitiveType();
-	jobject convertToJavaObject(PyObject obj);
 
 protected:
 	JPClass* m_BoxedClass;
