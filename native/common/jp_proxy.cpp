@@ -51,13 +51,13 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		for (int i = 0; i < argLen; i++)
 		{
 			jclass c = (jclass) frame.GetObjectArrayElement(types, i);
-			JPClass* type = JPTypeManager::findClassByName(c);
+			JPClass* type = context->getTypeManager()->findClass(c);
 			JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
 			pyargs.setItem(i, type->convertToPythonObject(val).get());
 		}
 
 		JPPyObject returnValue(callable.call(pyargs.get(), NULL));
-		JPClass* returnClass = JPTypeManager::findClassByName(returnType);
+		JPClass* returnClass = context->getTypeManager()->findClass(returnType);
 
 		if (returnValue.isNull() || returnValue.isNone())
 		{

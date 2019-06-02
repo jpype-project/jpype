@@ -15,7 +15,6 @@
 
  *****************************************************************************/
 #include <jpype.h>
-#include <jp_typemanager.h>
 
 JPTypeManager::JPTypeManager(JPContext* context)
 {
@@ -26,8 +25,8 @@ JPTypeManager::JPTypeManager(JPContext* context)
 
 	jclass cls = JPClassLoader::findClass("org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
-	m_FindClassByName = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
-	m_FindClassForObject = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
+	m_FindClassByName = frame.GetMethodID(cls, "findClass", "(Ljava/lang/String;)J");
+	m_FindClassForObject = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Object;)J");
 
 	// The object instance will be loaded later
 	JP_TRACE_OUT;

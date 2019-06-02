@@ -18,8 +18,6 @@
 //#include <jp_thunk.h>
 #include <jp_primitive_common.h>
 
-#include "jp_context.h"
-
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
 	try
@@ -30,7 +28,7 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 		ex.toJava(frame.getContext());
 	} catch (...)
 	{
-		frame.ThrowNew(frame.getContext()->_java_lang_RuntimeException.get(), 
+		frame.ThrowNew(frame.getContext()->_java_lang_RuntimeException.get(),
 				"unknown error occurred");
 	}
 }
@@ -257,8 +255,6 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 				(JPMethodDispatch*) ctorMethod,
 				methodList,
 				fieldList);
-
-
 		return;
 	} catch (...)
 	{
@@ -281,9 +277,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 	JPJavaFrame frame(context, env);
 	try
 	{
-
-
-		return 0;
+		return (jlong) (new JPField(
+				(JPClass*) cls,
+				context->toStringUTF8(name),
+				field,
+				(JPClass*) fieldType,
+				modifiers));
 	} catch (...)
 	{
 		JPTypeFactory_rethrow(frame);
@@ -305,9 +304,18 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 	JPJavaFrame frame(context, env);
 	try
 	{
-
-
-		return 0;
+		JPClassList cargs;
+		convert(argumentTypes, cargs);
+		JPMethodList cover;
+		convert(overloadList, cover);
+		return (jlong) (new JPMethod(
+				(JPClass*) cls,
+				context->toStringUTF8(name),
+				method,
+				(JPClass*) returnType,
+				cargs,
+				cover,
+				modifiers));
 	} catch (...)
 	{
 		JPTypeFactory_rethrow(frame);
