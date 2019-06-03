@@ -22,11 +22,11 @@ class JPStringClass : public JPClass
 public:
 
 	JPStringClass(JPContext* context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 	virtual ~JPStringClass();
 
 public:
@@ -34,7 +34,7 @@ public:
 	virtual jvalue      convertToJava(PyObject* obj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue newInstance(JPPyObjectVector& args) override;
-	
+
 	// Use by arrays
 	jobject stringToCharArray(jstring str);
 private:

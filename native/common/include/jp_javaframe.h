@@ -45,6 +45,7 @@
 static const int LOCAL_FRAME_DEFAULT = 8;
 
 class JPContext;
+
 class JPJavaFrame
 {
 	JNIEnv* m_Env;

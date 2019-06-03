@@ -177,15 +177,16 @@ public:
 	}
 
 	virtual JPValue newInstance(JPPyObjectVector& args);
-	const JPClassList& getInterfaces();
+	const JPClassList& getInterfaces()
+	{
+		return m_Interfaces;
+	}
 
 	string describe();
 
 	// Check if a value is an instance of this class
 	bool isInstance(JPValue& val);
 
-	virtual void postLoad();
-	
 	JPContext* getContext() const
 	{
 		return m_Context;

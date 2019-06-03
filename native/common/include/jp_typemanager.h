@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -46,13 +46,13 @@ public:
 	JPClass* findClass(jclass cls);
 	JPClass* findClassByName(const string& str);
 	JPClass* findClassForObject(jobject obj);
-	
+
 private:
 	JPContext*  m_Context;
 	JPObjectRef m_JavaTypeManager;
 	jmethodID   m_FindClass;
 	jmethodID   m_FindClassByName;
-	jmethodID   m_FindClassForObject;	
+	jmethodID   m_FindClassForObject;
 } ;
 
 #endif // _JPCLASS_H_

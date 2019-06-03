@@ -30,7 +30,7 @@ static PyMethodDef classMethods[] = {
 	{"attachThreadToJVM", (PyCFunction) (&PyJPContext::attachThread), METH_NOARGS, ""},
 	{"detachThreadFromJVM", (PyCFunction) (&PyJPContext::detachThread), METH_NOARGS, ""},
 	{"attachThreadAsDaemon", (PyCFunction) (&PyJPContext::attachThreadAsDaemon), METH_NOARGS, ""},
-	
+
 	// ByteBuffer
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPContext::convertToDirectByteBuffer), METH_VARARGS, ""},
 
@@ -97,7 +97,6 @@ bool PyJPContext::check(PyObject* o)
 PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPContext* self = (PyJPContext*) type->tp_alloc(type, 0);
-	jvalue v;
 	self->m_Context = NULL;
 	return (PyObject*) self;
 }
@@ -110,6 +109,7 @@ int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 	try
 	{
 		self->m_Context = new JPContext();
+		self->m_Context->setHost((PyObject*)self);
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -142,7 +142,6 @@ PyObject* PyJPContext::__str__(PyJPContext* self)
 	PY_STANDARD_CATCH;
 	return 0;
 }
-
 
 PyObject* PyJPContext::startup(PyJPContext* self, PyObject* args)
 {
@@ -323,7 +322,7 @@ PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext* self, PyObject* ar
 
 		JP_RAISE_RUNTIME_ERROR("Do not know how to convert to direct byte buffer, only memory view supported");
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 	return NULL;
 	JP_TRACE_OUT;
 }

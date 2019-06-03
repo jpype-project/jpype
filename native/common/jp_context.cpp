@@ -104,7 +104,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 	{
 		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
-	
+
 	// Launch the JVM
 	JNIEnv* env;
 	CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
@@ -148,35 +148,35 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();
 		m_JavaContext = JPObjectRef(this, frame.CallStaticObjectMethodA(cls, startMethod, val));
-		
+
 		// Hook up the type manager
 		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
 				"()Lorg/jpype/manager/TypeManager;");
-		m_TypeManager->m_JavaTypeManager = JPObjectRef(this, 
+		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
 				frame.CallObjectMethod(m_JavaContext.get(), getTypeManager));
-		
+
 		// Once we return from start method all Java objects are populated.
 		// Thus we can now access the Java classes.
 
 		//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
 		m_Object_ToStringID = frame.GetMethodID(_java_lang_Object->getJavaClass(), "toString", "()Ljava/lang/String;");
-//		s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
-//
-//		s_NoSuchMethodErrorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError"));
-//		s_RuntimeExceptionClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException"));
-//
-//
-//		s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
-//		s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
-//		s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
-//
-//		s_StringWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
-//		s_PrintWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
-//		s_StringWriterID = frame.GetMethodID(s_StringWriterClass, "<init>", "()V");
-//		s_PrintWriterID = frame.GetMethodID(s_PrintWriterClass, "<init>", "(Ljava/io/Writer;)V");
-//		s_FlushID = frame.GetMethodID(s_PrintWriterClass, "flush", "()V");
+		//		s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
+		//
+		//		s_NoSuchMethodErrorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError"));
+		//		s_RuntimeExceptionClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException"));
+		//
+		//
+		//		s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
+		//		s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
+		//		s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
+		//
+		//		s_StringWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
+		//		s_PrintWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
+		//		s_StringWriterID = frame.GetMethodID(s_StringWriterClass, "<init>", "()V");
+		//		s_PrintWriterID = frame.GetMethodID(s_PrintWriterClass, "<init>", "(Ljava/io/Writer;)V");
+		//		s_FlushID = frame.GetMethodID(s_PrintWriterClass, "flush", "()V");
 
-//		frame.CallVoidMethod(cls, startMethod);
+		//		frame.CallVoidMethod(cls, startMethod);
 	}
 
 	JP_TRACE_OUT;

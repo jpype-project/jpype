@@ -17,9 +17,6 @@
 #include <Python.h>
 #include <jpype.h>
 
-#include "pyjp_value.h"
-#include "jp_context.h"
-
 JPypeException::JPypeException(JPContext* context, jthrowable th, const char* msn, const JPStackInfo& stackInfo)
 : m_Throwable(context, th)
 {
@@ -197,7 +194,7 @@ void JPypeException::convertJavaToPython()
 		PyErr_SetString(PyExc_RuntimeError, "Unable to convert java error, typemanager is null.");
 		return;
 	}
-	
+
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context);
 	jthrowable th = m_Throwable.get();

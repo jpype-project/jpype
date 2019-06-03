@@ -76,6 +76,7 @@ PyObject* PyJPProxy::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
 	self->m_Callable = NULL;
+	self->m_Context = NULL;
 	return (PyObject*) self;
 }
 
@@ -134,6 +135,9 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 		self->m_Callable = callable;
 		Py_INCREF(callable);
 
+		self->m_Context = (PyJPContext*) (context->getHost());
+		Py_INCREF(self->m_Context);
+
 		JP_TRACE("Proxy", self);
 		JP_TRACE("Target", target);
 		JP_TRACE("Callable", callable);
@@ -150,7 +154,7 @@ PyObject* PyJPProxy::__str__(PyJPProxy* self)
 	{
 		JPContext *context = self->m_Proxy->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPProxy::__init__");
-		JPJavaFrame frame;
+		JPJavaFrame frame(context);
 		stringstream sout;
 		sout << "<java proxy>";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
@@ -167,6 +171,8 @@ void PyJPProxy::__dealloc__(PyJPProxy* self)
 		Py_DECREF(self->m_Target);
 	if (self->m_Callable != NULL)
 		Py_DECREF(self->m_Callable);
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
 	self->m_Target = NULL;
 	self->m_Callable = NULL;
 	Py_TYPE(self)->tp_free(self);

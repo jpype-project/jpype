@@ -69,6 +69,7 @@ PyMODINIT_FUNC init_jpype()
 	// Initialize each of the python extension types
 	PyJPArray::initType(module);
 	PyJPClass::initType(module);
+	PyJPContext::initType(module);
 	PyJPField::initType(module);
 	PyJPMethod::initType(module);
 	PyJPMonitor::initType(module);
@@ -85,4 +86,22 @@ PyMODINIT_FUNC init_jpype()
 #if PY_MAJOR_VERSION >= 3
 	return module;
 #endif
+}
+
+PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
+{
+       JP_TRACE_IN("PyJPModule::setResource");
+       try
+       {
+               char* tname;
+               PyObject* value;
+               PyArg_ParseTuple(arg, "sO", &tname, &value);
+               JP_PY_CHECK();
+               JPPythonEnv::setResource(tname, value);
+               Py_RETURN_NONE;
+       }
+       PY_STANDARD_CATCH
+
+       return NULL;
+       JP_TRACE_OUT;
 }

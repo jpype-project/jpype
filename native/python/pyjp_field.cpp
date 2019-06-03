@@ -76,15 +76,18 @@ void PyJPField::initType(PyObject* module)
 
 JPPyObject PyJPField::alloc(JPField* m)
 {
-	PyJPField* res = PyObject_New(PyJPField, &PyJPField::Type);
+	PyJPField* self = PyObject_New(PyJPField, &PyJPField::Type);
 	JP_PY_CHECK();
-	res->m_Field = m;
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Field = m;
+	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
+	Py_INCREF(self->m_Context);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 }
 
 void PyJPField::__dealloc__(PyJPField* self)
 {
 	Py_TYPE(self)->tp_free(self);
+	Py_INCREF(self->m_Context);
 }
 
 PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)

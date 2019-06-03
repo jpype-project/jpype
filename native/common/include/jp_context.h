@@ -18,6 +18,10 @@
 #define JP_CONTEXT_H
 #include <jpype.h>
 
+#ifndef PyObject_HEAD
+struct _object;
+typedef _object PyObject;
+#endif
 
 /** JPClass is a bit heavy when we just need to hold a 
  * class reference.  It causes issues during bootstrap. Thus we
@@ -131,12 +135,17 @@ public:
 	void attachCurrentThreadAsDaemon();
 	bool isThreadAttached();
 	void detachCurrentThread();
-	JavaVM* getJavaVM();
+
+	JavaVM* getJavaVM()
+	{
+		return m_JavaVM;
+	}
+
 	bool isShutdown()
 	{
 		return m_IsShutdown;
 	}
-	
+
 	/** Release a global reference checking for shutdown.
 	 *
 	 * This should be used in any calls to release resources from a destructor. 
@@ -145,15 +154,31 @@ public:
 	void ReleaseGlobalRef(jobject obj);
 
 	// JPype services
-	JPProxyFactory* getProxyFactory();
-	JPTypeManager* getTypeManager();
-	JPClassLoader* getClassLoader();
-	JPReferenceQueue* getReferenceQueue();
+
+	JPProxyFactory* getProxyFactory()
+	{
+		return m_ProxyFactory;
+	}
+
+	JPTypeManager* getTypeManager()
+	{
+		return m_TypeManager;
+	}
+
+	JPClassLoader* getClassLoader()
+	{
+		return m_ClassLoader;
+	}
+
+	JPReferenceQueue* getReferenceQueue()
+	{
+		return m_ReferenceQueue;
+	}
 
 	// Java functions
 	string toString(jobject o);
 	string toStringUTF8(jstring str);
-	
+
 	/**
 	 * Convert a UTF8 encoded string into Java.
 	 * 
@@ -162,7 +187,7 @@ public:
 	 * @return 
 	 */
 	jstring fromStringUTF8(const string& str);
-	
+
 	// Java type resources
 	JPVoidType* _void;
 	JPBooleanType* _boolean;
@@ -190,7 +215,17 @@ public:
 
 	JPClassRef _java_lang_RuntimeException;
 	JPClassRef _java_lang_NoSuchMethodError;
-	
+
+	void setHost(PyObject* host)
+	{
+		m_Host = host;
+	}
+
+	PyObject* getHost()
+	{
+		return m_Host;
+	}
+
 private:
 
 	void loadEntryPoints(const string& path);
@@ -205,7 +240,7 @@ private:
 	// Java half
 	JPObjectRef m_JavaContext;
 
-	// Serives
+	// Services
 	JPTypeFactory* m_TypeFactory;
 	JPTypeManager* m_TypeManager;
 	JPClassLoader* m_ClassLoader;
@@ -216,10 +251,10 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_ContextShutdownMethod;
 	bool m_IsShutdown;
+	PyObject* m_Host;
 } ;
 
-
-template<class jref> 
+template<class jref>
 JPRef<jref>::~JPRef()
 {
 	if (m_Ref != 0 && m_Context != 0)

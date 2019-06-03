@@ -36,6 +36,7 @@ struct PyJPMonitor
 	static PyObject*  __exit__(PyJPMonitor* self, PyObject* args);
 
 	JPMonitor* m_Monitor;
+	PyJPContext* m_Context;
 } ;
 
 #endif // _PYMONITOR_H_

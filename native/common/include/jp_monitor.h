@@ -25,7 +25,7 @@ public:
 
 	void enter();
 	void exit();
-	
+
 	JPContext* getContext()
 	{
 		return m_Context;

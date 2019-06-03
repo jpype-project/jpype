@@ -21,8 +21,8 @@ JPPrimitiveType::JPPrimitiveType(JPContext* context, jclass clss,
 		JPBoxedType* boxedClass,
 		jint modifiers
 		)
-: JPClass(context, clss, name, NULL, JPClassList(), modifiers), 
-		m_BoxedClass(boxedClass)
+: JPClass(context, clss, name, NULL, JPClassList(), modifiers),
+m_BoxedClass(boxedClass)
 {
 	boxedClass->setPrimitiveType(this);
 }

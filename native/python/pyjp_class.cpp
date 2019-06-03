@@ -14,7 +14,7 @@
    limitations under the License.
    
  *****************************************************************************/
-
+#include <jpype.h>
 #include <pyjp.h>
 
 static PyMethodDef classMethods[] = {
@@ -99,10 +99,12 @@ bool PyJPClass::check(PyObject* o)
 
 JPPyObject PyJPClass::alloc(JPClass* cls)
 {
-	PyJPClass* res = PyObject_New(PyJPClass, &PyJPClass::Type);
+	PyJPClass* self = PyObject_New(PyJPClass, &PyJPClass::Type);
 	JP_PY_CHECK();
-	res->m_Class = cls;
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Class = cls;
+	self->m_Context = (PyJPContext*) (cls->getContext()->getHost());
+	Py_INCREF(self->m_Context);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 }
 
 PyObject* PyJPClass::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
@@ -123,35 +125,46 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 			PyErr_SetString(PyExc_TypeError, "Classes must have one argument.");
 			return (-1);
 		}
+		PyObject* arg0;
+		PyObject* jvm;
 
-		// FIXME how do I get a context if all I have is a string??
-		JPContext* context =XXXXXXXXXXXX;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
-		JPJavaFrame frame(context);
-		JPClass* claz = NULL;
-		PyObject* arg0 = tuple.getItem(0);
+		if (!PyArg_ParseTuple(args, "O|O", &arg0, &jvm))
+		{
+			return -1;
+		}
+
+		JPContext* context;
+		JPClass* cls;
 		JPValue* jpvalue = JPPythonEnv::getJavaValue(arg0);
 		if (jpvalue != NULL && jpvalue->getClass() == context->_java_lang_Class)
 		{
-			claz = context->getTypeManager()->findClass((jclass) jpvalue->getJavaObject());
+			context = jpvalue->getClass()->getContext();
+			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
+			JPJavaFrame frame(context);
+			cls = context->getTypeManager()->findClass((jclass) jpvalue->getJavaObject());
 		}
 		else if (JPPyString::check(arg0))
 		{
+			if (!PyJPContext::check(jvm))
+			{
+				PyErr_SetString(PyExc_TypeError, "Classes from string require a Java context.");
+				return (-1);
+			}
+			context = ((PyJPContext*) jvm)->m_Context;
+			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
+			JPJavaFrame frame(context);
 			string cname = JPPyString::asStringUTF8(arg0);
-			claz = context->getTypeManager()->findClassByName(cname);
+			cls = context->getTypeManager()->findClassByName(cname);
 		}
 		else
 		{
 			PyErr_SetString(PyExc_TypeError, "Classes require str or java.lang.Class object.");
 			return (-1);
 		}
-
-		if (claz == NULL)
-		{
-			return -1;
-		}
-		self->m_Class = claz;
-		return 0;
+		self->m_Class = cls;
+		self->m_Context = (PyJPContext*) (context->getHost());
+		Py_INCREF(self->m_Context);
+		return (self->m_Class == NULL) ? -1 : 0;
 	}
 	PY_STANDARD_CATCH;
 	return -1;
@@ -161,6 +174,7 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 void PyJPClass::__dealloc__(PyJPClass* self)
 {
 	Py_TYPE(self)->tp_free((PyObject*) self);
+	Py_DECREF(self->m_Context);
 }
 
 PyObject* PyJPClass::getCanonicalName(PyJPClass* self, PyObject* arg)
@@ -182,7 +196,7 @@ PyObject* PyJPClass::getCanonicalName(PyJPClass* self, PyObject* arg)
 
 PyObject* PyJPClass::getSuperClass(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN(context, "PyJPClass::getSuperClass");
+	JP_TRACE_IN("PyJPClass::getSuperClass");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -232,7 +246,7 @@ PyObject* PyJPClass::getClassFields(PyJPClass* self, PyObject* arg)
 		JPContext* context = self->m_Class->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPClass::getClassFields");
 		JPJavaFrame frame(context);
-		
+
 		int i = 0;
 		const JPFieldList& instFields = self->m_Class->getFields();
 		JPPyTuple result(JPPyTuple::newTuple(instFields.size()));
@@ -256,10 +270,10 @@ PyObject* PyJPClass::getClassMethods(PyJPClass* self, PyObject* arg)
 		ASSERT_JVM_RUNNING(context, "PyJPClass::getClassMethods");
 		JPJavaFrame frame(context);
 
-		const JPMethodList& m_Methods = self->m_Class->getMethods();
+		const JPMethodDispatchList& m_Methods = self->m_Class->getMethods();
 		int i = 0;
 		JPPyTuple result(JPPyTuple::newTuple(m_Methods.size()));
-		for (JPMethodList::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
+		for (JPMethodDispatchList::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
 		{
 			JP_TRACE("method ", *cur);
 			result.setItem(i++, PyJPMethod::alloc(*cur, NULL).get());
@@ -316,7 +330,7 @@ PyObject* PyJPClass::isAssignableFrom(PyJPClass* self, PyObject* arg)
 		JPContext* context = self->m_Class->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPClass::isSubClass");
 		JPJavaFrame frame(context);
-		
+
 		// We have to lookup the name by string here because the 
 		// class wrapper may not exist.  This is used by the
 		// customizers.

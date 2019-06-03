@@ -42,11 +42,11 @@ public:
 	 * @throws RuntimeException if the class is not found.
 	 */
 	jclass findClass(string name);
-	
+
 	// Classloader for Proxy
 	jobject getSystemClassLoader();
 	jobject getBootLoader();
-	
+
 private:
 	JPContext* m_Context;
 	JPObjectRef m_SystemClassLoader;

@@ -24,7 +24,7 @@ JPArrayClass::JPArrayClass(JPContext* context,
 		const string& name,
 		JPClass* superClass,
 		JPClass* componentType,
-		jint modifiers) 
+		jint modifiers)
 : JPClass(context, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;

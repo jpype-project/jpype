@@ -113,6 +113,7 @@ PyObject* PyJPValue::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 	jvalue v;
 	self->m_Value = JPValue(NULL, v);
 	self->m_Cache = NULL;
+	self->m_Context = NULL;
 	return (PyObject*) self;
 }
 
@@ -148,6 +149,8 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 			jvalue v = jval->getValue();
 			v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);
+			self->m_Context = (PyJPContext*) (context->getHost());
+			Py_INCREF(self->m_Context);
 			return 0;
 		}
 
@@ -164,6 +167,8 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		if (dynamic_cast<JPPrimitiveType*> (type) != type)
 			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
+		self->m_Context = (PyJPContext*) (context->getHost());
+		Py_INCREF(self->m_Context);
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -223,6 +228,8 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	}
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	Py_TYPE(self)->tp_free(self);
+	Py_DECREF(self->m_Context);
+	self->m_Context = NULL;
 	JP_TRACE_OUT;
 }
 

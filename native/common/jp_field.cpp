@@ -42,7 +42,6 @@ string JPField::toString()
 
 JPPyObject JPField::getStaticField()
 {
-	ensureTypeCache();
 	JP_TRACE_IN("JPField::getStaticAttribute");
 	JPJavaFrame frame(m_Class->getContext());
 	jclass claz = m_Class->getJavaClass();

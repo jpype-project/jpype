@@ -21,9 +21,9 @@ class JPPrimitiveType : public JPClass
 {
 protected:
 	JPPrimitiveType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers);
+			const string& name,
+			JPBoxedType* boxedClass,
+			jint modifiers);
 	virtual ~JPPrimitiveType();
 
 protected:

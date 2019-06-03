@@ -221,9 +221,9 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
 	{
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c = selfObj->getJavaObject();
-    jclass clazz = NULL;
+		jclass clazz = NULL;
 		if (!m_Class->isAbstract())
-        clazz = m_Class->getJavaClass();
+			clazz = m_Class->getJavaClass();
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}
 	JP_TRACE_OUT;

@@ -71,7 +71,7 @@ public:
 		}
 		return l;
 	}
-	
+
 private:
 	jlong _Byte_Min;
 	jlong _Byte_Max;

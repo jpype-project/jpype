@@ -137,7 +137,6 @@ typedef vector<JPField*> JPFieldList;
 typedef vector<JPMethodDispatch*> JPMethodDispatchList;
 typedef vector<JPMethod*> JPMethodList;
 
-
 class JPResource
 {
 public:

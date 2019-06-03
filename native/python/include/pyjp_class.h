@@ -73,6 +73,7 @@ struct PyJPClass
 	static PyObject* convertToJava(PyJPClass* self, PyObject* args);
 
 	JPClass* m_Class;
+	PyJPContext* m_Context;
 } ;
 
 #endif // _PYCLASS_H_

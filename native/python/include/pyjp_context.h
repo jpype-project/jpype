@@ -30,21 +30,21 @@ struct PyJPContext
 	static int         __init__(PyJPContext* self, PyObject* args, PyObject* kwargs);
 	static void        __dealloc__(PyJPContext* self);
 	static PyObject*   __str__(PyJPContext* self);
-//	static PyObject*   toString(PyJPContext* self);
-//	static PyObject*   toUnicode(PyJPContext* self);
-	
-	PyObject* startup(PyJPContext* obj, PyObject* args);
-	PyObject* shutdown(PyJPContext* obj);
-	PyObject* isStarted(PyJPContext* obj);
-	PyObject* attachThread(PyJPContext* obj);
-	PyObject* detachThread(PyJPContext* obj);
-	PyObject* isThreadAttached(PyJPContext* obj);
-	PyObject* attachThreadAsDaemon(PyJPContext* obj);
+	//	static PyObject*   toString(PyJPContext* self);
+	//	static PyObject*   toUnicode(PyJPContext* self);
+
+	static PyObject* startup(PyJPContext* obj, PyObject* args);
+	static PyObject* shutdown(PyJPContext* obj);
+	static PyObject* isStarted(PyJPContext* obj);
+	static PyObject* attachThread(PyJPContext* obj);
+	static PyObject* detachThread(PyJPContext* obj);
+	static PyObject* isThreadAttached(PyJPContext* obj);
+	static PyObject* attachThreadAsDaemon(PyJPContext* obj);
 
 	/** Memory map a byte buffer between java and python, so 
 	 * that both have direct access.  This is mainly used for io classes.
 	 */
-	PyObject* convertToDirectByteBuffer(PyJPContext* self, PyObject* args);
+	static PyObject* convertToDirectByteBuffer(PyJPContext* self, PyObject* args);
 
 	JPContext* m_Context;
 } ;

@@ -41,6 +41,7 @@ struct PyJPMethod
 
 	JPMethodDispatch* m_Method;
 	PyObject* m_Instance;
+	PyJPContext* m_Context;
 
 } ;
 

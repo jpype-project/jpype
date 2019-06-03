@@ -45,6 +45,7 @@ struct PyJPArray
 	static PyObject* setArraySlice(PyJPArray* self, PyObject* arg);
 
 	JPArray* m_Array;
+	PyJPContext* m_Context;
 } ;
 
 #endif // _PYJP_ARRAY_H_

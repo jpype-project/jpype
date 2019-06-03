@@ -17,11 +17,6 @@
 #ifndef _JPARRAY_H_
 #define _JPARRAY_H_
 
-#ifndef PyObject_HEAD
-struct _object;
-typedef _object PyObject;
-#endif
-
 /**
  * Class to wrap Java Class and provide low-level behavior
  */

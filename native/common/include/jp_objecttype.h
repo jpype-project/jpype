@@ -30,11 +30,11 @@ class JPObjectType : public JPClass
 {
 public:
 	JPObjectType(JPContext* context, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
-	
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
+
 	virtual~ JPObjectType();
 
 public: // JPClass implementation

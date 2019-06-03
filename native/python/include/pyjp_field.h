@@ -35,6 +35,7 @@ struct PyJPField
 	static PyObject*  isFinal(PyJPField* self, PyObject* arg);
 
 	JPField* m_Field;
+	PyJPContext* m_Context;
 } ;
 
 #endif // _PYFIELD_H_

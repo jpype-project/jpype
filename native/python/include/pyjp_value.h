@@ -38,6 +38,7 @@ struct PyJPValue
 
 	JPValue m_Value;
 	PyObject* m_Cache;
+	PyJPContext* m_Context;
 } ;
 
 #endif // _PYJP_VALUE_H_2

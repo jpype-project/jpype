@@ -89,7 +89,7 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 		JPValue& v1 = ((PyJPValue*) value)->m_Value;
 		JPContext* context = v1.getClass()->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__init__");
-		JPJavaFrame frame;
+		JPJavaFrame frame(context);
 
 		// FIXME should these be runtime or type error.
 		// it is legitimately the wrong "type" of object.
@@ -111,7 +111,9 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 			return -1;
 		}
 
-		self->m_Monitor = new JPMonitor(v1.getValue().l);
+		self->m_Monitor = new JPMonitor(context, v1.getValue().l);
+		self->m_Context = (PyJPContext*) (context->getHost());
+		Py_INCREF(self->m_Context);
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -125,6 +127,8 @@ void PyJPMonitor::__dealloc__(PyJPMonitor* self)
 	{
 		delete self->m_Monitor;
 		Py_TYPE(self)->tp_free(self);
+		Py_DECREF(self->m_Context);
+		self->m_Context = NULL;
 	}
 	PY_STANDARD_CATCH
 }

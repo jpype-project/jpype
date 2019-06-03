@@ -71,7 +71,7 @@ public:
 private:
 	jlong m_Short_Min;
 	jlong m_Short_Max;
-    jmethodID m_ShortValueID;
+	jmethodID m_ShortValueID;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

@@ -41,6 +41,7 @@ public:
 	virtual ~JPField();
 
 public:
+
 	JPContext* getContext()
 	{
 		return m_Class->getContext();
@@ -73,9 +74,6 @@ public:
 private:
 	JPField(const JPField&);
 	JPField& operator=(const JPField&) ;
-
-	void ensureTypeCache();
-
 private:
 	string           m_Name;
 	JPClass*         m_Class;

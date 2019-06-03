@@ -78,16 +78,18 @@ void PyJPMethod::initType(PyObject* module)
 JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
 {
 	JP_TRACE_IN("PyJPMethod::alloc");
-	PyJPMethod* res = PyObject_New(PyJPMethod, &PyJPMethod::Type);
+	PyJPMethod* self = PyObject_New(PyJPMethod, &PyJPMethod::Type);
 	JP_PY_CHECK();
-	res->m_Method = m;
-	res->m_Instance = instance;
+	self->m_Method = m;
+	self->m_Instance = instance;
 	if (instance != NULL)
 	{
 		JP_TRACE_PY("method alloc (inc)", instance);
 		Py_INCREF(instance);
 	}
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
+	Py_INCREF(self->m_Context);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
 }
 
@@ -96,6 +98,7 @@ PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwar
 	PyJPMethod* self = (PyJPMethod*) type->tp_alloc(type, 0);
 	self->m_Method = 0;
 	self->m_Instance = 0;
+	self->m_Context = 0;
 	return (PyObject*) self;
 }
 
@@ -154,6 +157,8 @@ void PyJPMethod::__dealloc__(PyJPMethod* self)
 	}
 	self->m_Instance = NULL;
 	self->m_Method = NULL;
+	Py_DECREF(self->m_Context);
+	self->m_Context = NULL;
 	Py_TYPE(self)->tp_free(self);
 }
 

@@ -20,7 +20,7 @@
 // need to be careful to handle these properly.  We need to 
 // carry them around so that we can match types.
 
-JPArray::JPArray(JPClass* cls, jarray inst) 
+JPArray::JPArray(JPClass* cls, jarray inst)
 : m_Object(cls->getContext(), inst)
 {
 	JPJavaFrame frame(cls->getContext());

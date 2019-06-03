@@ -18,25 +18,26 @@
 #define _JPPROXY_H_
 
 class JPProxy;
+
 class JPProxyFactory
 {
 	friend class JPProxy;
 public:
 	JPProxyFactory(JPContext* context);
 	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
-	
+
 private:
 	JPContext* m_Context;
 	JPClassRef m_ProxyClass;
 	jmethodID m_NewProxyID;
 	jmethodID m_NewInstanceID;
-};
-	
+} ;
+
 class JPProxy
 {
 	friend class JPProxyFactory;
 	JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf);
-	
+
 public:
 	virtual ~JPProxy();
 
