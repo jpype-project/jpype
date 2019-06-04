@@ -46,6 +46,41 @@ namespace
 
 JPContext::JPContext()
 {
+	m_JavaVM = 0;
+	_void = 0;
+	_boolean = 0;
+	_byte = 0;
+	_char = 0;
+	_short = 0;
+	_int = 0;
+	_long = 0;
+	_float = 0;
+	_double = 0;
+
+	_java_lang_Void = 0;
+	_java_lang_Boolean = 0;
+	_java_lang_Byte = 0;
+	_java_lang_Char = 0;
+	_java_lang_Short = 0;
+	_java_lang_Integer = 0;
+	_java_lang_Long = 0;
+	_java_lang_Float = 0;
+	_java_lang_Double = 0;
+
+	_java_lang_Object = 0;
+	_java_lang_Class = 0;
+	_java_lang_String = 0;
+
+	m_TypeFactory = 0;
+	m_TypeManager = 0;
+	m_ClassLoader = 0;
+	m_ReferenceQueue = 0;
+	m_ProxyFactory = 0;
+
+	m_Object_ToStringID = 0;
+	m_ContextShutdownMethod = 0;
+	m_IsShutdown = false;
+	m_Host = 0;
 }
 
 JPContext::JPContext(const JPContext& orig)
@@ -119,12 +154,15 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 	// Connect our resources to the JVM
 	{
 		JPJavaFrame frame(this);
+		
 		// After the JVM is created but before the context is started, we need 
 		// lo set up all the services that the context will need.
 		JP_TRACE("Initialize");
 
 		// We need these first because if anything goes south this is the first
 		// thing that will get hit.
+		jclass object = frame.FindClass("java/lang/Object");
+		m_Object_ToStringID = frame.GetMethodID(object, "toString", "()Ljava/lang/String;");
 		_java_lang_NoSuchMethodError = JPClassRef(this, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
 		_java_lang_RuntimeException = JPClassRef(this, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
@@ -154,31 +192,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 				"()Lorg/jpype/manager/TypeManager;");
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
 				frame.CallObjectMethod(m_JavaContext.get(), getTypeManager));
-
-		// Once we return from start method all Java objects are populated.
-		// Thus we can now access the Java classes.
-
-		//	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
-		m_Object_ToStringID = frame.GetMethodID(_java_lang_Object->getJavaClass(), "toString", "()Ljava/lang/String;");
-		//		s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
-		//
-		//		s_NoSuchMethodErrorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/NoSuchMethodError"));
-		//		s_RuntimeExceptionClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/RuntimeException"));
-		//
-		//
-		//		s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
-		//		s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
-		//		s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
-		//
-		//		s_StringWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/StringWriter"));
-		//		s_PrintWriterClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/io/PrintWriter"));
-		//		s_StringWriterID = frame.GetMethodID(s_StringWriterClass, "<init>", "()V");
-		//		s_PrintWriterID = frame.GetMethodID(s_PrintWriterClass, "<init>", "(Ljava/io/Writer;)V");
-		//		s_FlushID = frame.GetMethodID(s_PrintWriterClass, "flush", "()V");
-
-		//		frame.CallVoidMethod(cls, startMethod);
 	}
-
 	JP_TRACE_OUT;
 }
 
@@ -186,14 +200,19 @@ void JPContext::shutdownJVM()
 {
 	m_IsShutdown = true;
 
-	JP_TRACE_IN("JPEnv::shutdown");
+	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE_RUNTIME_ERROR("Attempt to shutdown without a live JVM");
 
 	{
 		JPJavaFrame frame(this);
+		JP_TRACE("Shutdown services");
+		JP_TRACE(m_JavaContext.get());
+		JP_TRACE(m_ContextShutdownMethod);
+		
 		// Tell Java to shutdown the context
-		frame.CallVoidMethod(m_JavaContext.get(), m_ContextShutdownMethod);
+		if (m_JavaContext.get()!=0)
+			frame.CallVoidMethod(m_JavaContext.get(), m_ContextShutdownMethod);
 	}
 
 	// Wait for all non-demon threads to terminate

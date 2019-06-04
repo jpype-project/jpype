@@ -53,7 +53,7 @@ JPypeException::JPypeException(JPError::Type errType, int err, const string& msn
 }
 
 JPypeException::JPypeException(const JPypeException& ex)
-: m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable), m_Context(ex.m_Context)
+: m_Context(ex.m_Context), m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
 	m_Type = ex.m_Type;
 	m_Message = ex.m_Message;
@@ -189,15 +189,16 @@ void JPypeException::convertJavaToPython()
 		PyErr_SetString(PyExc_RuntimeError, "Unable to convert java error, context is null.");
 		return;
 	}
-	if (m_Context->getTypeManager() == NULL)
-	{
-		PyErr_SetString(PyExc_RuntimeError, "Unable to convert java error, typemanager is null.");
-		return;
-	}
 
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context);
 	jthrowable th = m_Throwable.get();
+	
+	if (m_Context->getTypeManager() == NULL)
+	{
+		PyErr_SetString(PyExc_RuntimeError, m_Context->toString((jobject)th).c_str());
+		return;
+	}
 
 	// Convert to Python object
 	JPClass* cls = m_Context->getTypeManager()->findClassForObject((jobject) th);

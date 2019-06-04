@@ -123,7 +123,6 @@ class JPContext
 {
 public:
 	JPContext();
-	JPContext(const JPContext& orig);
 	virtual ~JPContext();
 
 	// JVM control functions
@@ -231,12 +230,15 @@ private:
 	void loadEntryPoints(const string& path);
 	void createJVM(void* arg);	// JVM
 
-	JavaVM* m_JavaVM;
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
 private:
+	JPContext(const JPContext& orig);
+	
+	JavaVM* m_JavaVM;
+	
 	// Java half
 	JPObjectRef m_JavaContext;
 

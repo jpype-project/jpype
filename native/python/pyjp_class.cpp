@@ -136,9 +136,14 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 		JPContext* context;
 		JPClass* cls;
 		JPValue* jpvalue = JPPythonEnv::getJavaValue(arg0);
-		if (jpvalue != NULL && jpvalue->getClass() == context->_java_lang_Class)
+		if (jpvalue != NULL) 
 		{
 			context = jpvalue->getClass()->getContext();
+			if (jpvalue->getClass() != context->_java_lang_Class)
+			{
+				PyErr_SetString(PyExc_TypeError, "Incorrect type");	
+				return -1;
+			}
 			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
 			JPJavaFrame frame(context);
 			cls = context->getTypeManager()->findClass((jclass) jpvalue->getJavaObject());
@@ -148,7 +153,7 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 			if (!PyJPContext::check(jvm))
 			{
 				PyErr_SetString(PyExc_TypeError, "Classes from string require a Java context.");
-				return (-1);
+				return -1;
 			}
 			context = ((PyJPContext*) jvm)->m_Context;
 			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
