@@ -75,7 +75,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong clsPtr,
-		jstring nameJString,
+		jstring name,
 		jlongArray overloadPtrs,
 		jint modifiers)
 {
@@ -87,8 +87,9 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		JPClass* cls = (JPClass*) clsPtr;
 		JPMethodList overloadList;
 		convert(frame, overloadPtrs, overloadList);
-		string name = context->toStringUTF8(nameJString);
-		JPMethodDispatch* dispatch = new JPMethodDispatch(cls, name, overloadList, modifiers);
+		string cname = context->toStringUTF8(name);
+		JP_TRACE(cname);
+		JPMethodDispatch* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
 		return (jlong) dispatch;
 	} catch (...)
 	{
@@ -111,9 +112,10 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 	JPJavaFrame frame(context, env);
 	try
 	{
-		string className = context->toStringUTF8(name);
+		string cname = context->toStringUTF8(name);
+		JP_TRACE(cname);
 		JPArrayClass* result = new JPArrayClass(context, cls,
-				className,
+				cname,
 				(JPClass*) superClass,
 				(JPClass*) componentClass,
 				modifiers);
@@ -138,14 +140,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 	JPContext* context = (JPContext*) contextPtr;
 	JP_TRACE("got context", context);
 	JPJavaFrame frame(context, env);
-	JP_TRACE("frame started");
 	try
 	{
 		string className = context->toStringUTF8(name);
-		JP_TRACE("got class name", className);
+		JP_TRACE(className);
 		JPClassList interfaces;
 		convert(frame, interfacePtrs, interfaces);
-		JP_TRACE("convert interfaces");
 		JPClass* result = NULL;
 		if (JPModifier::isSpecial(modifiers))
 		{
@@ -156,6 +156,9 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			if (className == "java.lang.Class")
 				return (jlong) (context->_java_lang_Class
 					= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			if (className == "java.lang.String")
+				return (jlong) (context->_java_lang_Class
+					= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Void")
 				return (jlong) (context->_java_lang_Void
 					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
@@ -183,6 +186,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			if (className == "java.lang.Double")
 				return (jlong) (context->_java_lang_Double
 					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			JP_RAISE_RUNTIME_ERROR("Special class not defined");
 		}
 		else
 			// Otherwise create a normal class
@@ -209,6 +213,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 	try
 	{
 		string cname = context->toStringUTF8(name);
+		JP_TRACE(cname);
 		if (cname == "void")
 			return (jlong) (context->_void = new JPVoidType(context, cls, cname, (JPBoxedType*) boxedPtr, modifiers));
 		if (cname == "byte")
@@ -280,10 +285,14 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 	JPJavaFrame frame(context, env);
 	try
 	{
+		string cname = context->toStringUTF8(name);
+		JP_TRACE("class",cls);
+		JP_TRACE(cname);
+		jfieldID fid = frame.FromReflectedField(field);
 		return (jlong) (new JPField(
 				(JPClass*) cls,
-				context->toStringUTF8(name),
-				field,
+				cname,
+				field, fid,
 				(JPClass*) fieldType,
 				modifiers));
 	} catch (...)
@@ -307,14 +316,17 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 	JPJavaFrame frame(context, env);
 	try
 	{
+		jmethodID mid = frame.FromReflectedMethod(method);
 		JPClassList cargs;
 		convert(frame, argumentTypes, cargs);
 		JPMethodList cover;
 		convert(frame, overloadList, cover);
+		string cname = context->toStringUTF8(name);
+		JP_TRACE(cname);
 		return (jlong) (new JPMethod(
 				(JPClass*) cls,
-				context->toStringUTF8(name),
-				method,
+				cname,
+				method, mid,
 				(JPClass*) returnType,
 				cargs,
 				cover,

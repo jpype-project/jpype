@@ -210,7 +210,7 @@ public:
 
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
-	JPStringClass* _java_lang_String;
+	JPStringType* _java_lang_String;
 
 	JPClassRef _java_lang_RuntimeException;
 	JPClassRef _java_lang_NoSuchMethodError;

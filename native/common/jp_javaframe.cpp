@@ -78,14 +78,15 @@ namespace
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
 : m_Env(p_env), attached(false), popped(false)
 {
+	m_Context = context;
 	// Create a memory management frame to live in	
 	m_Env->functions->PushLocalFrame(m_Env, i);
 }
 
 JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 {
-	JavaVM* javaVM = context->getJavaVM();
 	m_Context = context;
+	JavaVM* javaVM = context->getJavaVM();
 
 	jint res;
 	attached = false;

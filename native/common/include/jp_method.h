@@ -57,6 +57,7 @@ public:
 	JPMethod(JPClass* claz,
 			const string& name,
 			jobject mth,
+			jmethodID mid,
 			JPClass *returnType,
 			JPClassList parameterTypes,
 			JPMethodList& moreSpecific,

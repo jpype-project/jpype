@@ -23,7 +23,7 @@ JPDoubleType::JPDoubleType(JPContext* context, jclass clss,
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
-	_DoubleValueID = frame.GetMethodID(boxedClass->getJavaClass(), "intValue", "()D");
+	_DoubleValueID = frame.GetMethodID(boxedClass->getJavaClass(), "doubleValue", "()D");
 }
 
 JPDoubleType::~JPDoubleType()

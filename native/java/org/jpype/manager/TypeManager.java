@@ -44,6 +44,9 @@ public class TypeManager
   private ClassDescriptor java_lang_Object;
   public Class<? extends Annotation> functionalAnnotation = null;
 
+  public TypeManager()
+  {}
+  
   public TypeManager(long context, TypeFactory typeFactory)
   {
     this.context = context;
@@ -58,8 +61,6 @@ public class TypeManager
     isStarted = true;
     isShutdown = false;
     
-    System.out.println("init");
-
     try
     {
       this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
@@ -69,10 +70,8 @@ public class TypeManager
       // It is okay if we don't find this
     }
 
-    System.out.println("create object");
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
-    System.out.println("create class");
     createClass(Class.class, true);
 
     // Create the boxed types

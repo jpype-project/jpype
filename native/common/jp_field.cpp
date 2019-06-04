@@ -19,14 +19,14 @@
 JPField::JPField(JPClass* cls,
 		const string& name,
 		jobject field,
+		jfieldID fid,
 		JPClass* fieldType,
 		jint modifiers)
 : m_Field(cls->getContext(), field)
 {
-	JPJavaFrame frame(cls->getContext());
 	this->m_Class = cls;
 	this->m_Name = name;
-	this->m_FieldID = frame.FromReflectedField(field);
+	this->m_FieldID = fid;
 	this->m_Type = fieldType;
 	this->m_Modifiers = modifiers;
 }

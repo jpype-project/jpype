@@ -392,7 +392,6 @@ void JPypeException::toJava(JPContext *context)
 	try
 	{
 		string mesg = getMessage();
-		JP_TRACE(mesg);
 		JPJavaFrame frame(context);
 		switch (m_Type)
 		{
@@ -405,11 +404,12 @@ void JPypeException::toJava(JPContext *context)
 			case JPError::_java_error:
 				// Java errors are already registered
 				JP_TRACE("Java exception");
-				JP_TRACE(context->toString((jobject) frame.ExceptionOccurred()));
+				//JP_TRACE(context->toString((jobject) frame.ExceptionOccurred()));
 				if (m_Throwable.get() != 0)
 				{
+					JP_TRACE("Java rethrow");
 					frame.Throw(m_Throwable.get());
-					return;
+  					return;
 				}
 
 			default:

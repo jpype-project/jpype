@@ -32,6 +32,7 @@ public:
 	JPField(JPClass* cls,
 			const string& name,
 			jobject field,
+			jfieldID fid,
 			JPClass* fieldType,
 			jint modifiers);
 
@@ -53,7 +54,6 @@ public:
 	{
 		return m_Name;
 	}
-
 
 	JPPyObject getStaticField();
 	void     setStaticField(PyObject* val);

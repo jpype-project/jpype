@@ -16,7 +16,7 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringClass::JPStringClass(JPContext* context,
+JPStringType::JPStringType(JPContext* context,
 		jclass clss,
 		const string& name,
 		JPClass* super,
@@ -28,18 +28,18 @@ JPStringClass::JPStringClass(JPContext* context,
 	m_String_ToCharArrayID = frame.GetMethodID(clss, "toCharArray", "()[C");
 }
 
-JPStringClass::~JPStringClass()
+JPStringType::~JPStringType()
 {
 }
 
-jobject JPStringClass::stringToCharArray(jstring str)
+jobject JPStringType::stringToCharArray(jstring str)
 {
 	JPJavaFrame frame(m_Context);
 	jobject res = frame.CallObjectMethod(str, m_String_ToCharArrayID);
 	return frame.keep(res);
 }
 
-JPPyObject JPStringClass::convertToPythonObject(jvalue val)
+JPPyObject JPStringType::convertToPythonObject(jvalue val)
 {
 	JP_TRACE_IN("JPStringType::asHostObject");
 
@@ -52,7 +52,7 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPStringType::canConvertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPStringType::canConvertToJava");
 	ASSERT_NOT_NULL(obj);
@@ -81,7 +81,7 @@ JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-jvalue JPStringClass::convertToJava(PyObject* obj)
+jvalue JPStringType::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPStringType::convertToJava");
 	JPJavaFrame frame(m_Context);
@@ -119,7 +119,7 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 	JP_TRACE_OUT;
 }
 
-JPValue JPStringClass::newInstance(JPPyObjectVector& args)
+JPValue JPStringType::newInstance(JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPStringClass::newInstance");
 	if (args.size() == 1 && JPPyString::check(args[0]))

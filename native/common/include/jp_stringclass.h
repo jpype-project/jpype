@@ -17,17 +17,17 @@
 #ifndef JP_STRINGCLASS_H
 #define JP_STRINGCLASS_H
 
-class JPStringClass : public JPClass
+class JPStringType : public JPClass
 {
 public:
 
-	JPStringClass(JPContext* context,
+	JPStringType(JPContext* context,
 			jclass clss,
 			const string& name,
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	virtual ~JPStringClass();
+	virtual ~JPStringType();
 
 public:
 	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;

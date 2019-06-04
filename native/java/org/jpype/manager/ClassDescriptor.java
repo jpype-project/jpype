@@ -52,6 +52,8 @@ public class ClassDescriptor
   {
     this.cls = cls;
     this.classPtr = classPtr;
+    if (this.classPtr == 0)
+      throw new NullPointerException("Class pointer is null for "+cls);
   }
 
   long getMethod(Method requestedMethod)

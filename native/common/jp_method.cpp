@@ -20,6 +20,7 @@
 JPMethod::JPMethod(JPClass* claz,
 		const string& name,
 		jobject mth,
+		jmethodID mid,
 		JPClass *returnType,
 		JPClassList parameterTypes,
 		JPMethodList& moreSpecific,
@@ -28,6 +29,7 @@ JPMethod::JPMethod(JPClass* claz,
 {
 	this->m_Class = claz;
 	this->m_Name = name;
+	this->m_MethodID = mid;
 	this->m_ReturnType = returnType;
 	this->m_ParameterTypes = parameterTypes;
 	this->m_MoreSpecificOverloads = moreSpecific;

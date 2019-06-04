@@ -117,7 +117,7 @@ class JPIntType;
 class JPLongType;
 class JPFloatType;
 class JPDoubleType;
-class JPStringClass;
+class JPStringType;
 
 // Members
 class JPMethod;
