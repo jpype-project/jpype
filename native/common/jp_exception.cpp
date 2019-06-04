@@ -193,15 +193,17 @@ void JPypeException::convertJavaToPython()
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context);
 	jthrowable th = m_Throwable.get();
-	
-	if (m_Context->getTypeManager() == NULL)
+	JP_TRACE("Check typemanager");
+	if (!m_Context->isInitialized())
 	{
-		PyErr_SetString(PyExc_RuntimeError, m_Context->toString((jobject)th).c_str());
+		PyErr_SetString(PyExc_RuntimeError, m_Context->toString((jobject) th).c_str());
 		return;
 	}
 
 	// Convert to Python object
-	JPClass* cls = m_Context->getTypeManager()->findClassForObject((jobject) th);
+	JP_TRACE("Convert to python");
+	JPClass* cls = NULL;
+	cls = m_Context->getTypeManager()->findClassForObject((jobject) th);
 	if (cls == NULL)
 	{
 		// Nope, no class found
@@ -210,6 +212,7 @@ void JPypeException::convertJavaToPython()
 	}
 
 	// Start converting object by converting class
+	JP_TRACE("Create Java exception class");
 	JPPyObject pycls = JPPythonEnv::newJavaClass(cls);
 	if (pycls.isNull())
 	{
@@ -219,6 +222,7 @@ void JPypeException::convertJavaToPython()
 	}
 
 	// Okay, now we just need to make the PyJPValue
+	JP_TRACE("Create Java exception object");
 	jvalue v;
 	v.l = th;
 	JPPyObject pyvalue = JPPythonEnv::newJavaObject(JPValue(cls, v));

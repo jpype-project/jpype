@@ -41,7 +41,7 @@ JPReferenceQueue::JPReferenceQueue(JPContext* context)
 	JP_TRACE_IN("JPReferenceQueue::init");
 
 	// build the ReferenceQueue class ...
-	jclass cls = context->getClassLoader()->findClass("org/jpype/ref/JPypeReferenceQueue");
+	jclass cls = context->getClassLoader()->findClass("org.jpype.ref.JPypeReferenceQueue");
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522

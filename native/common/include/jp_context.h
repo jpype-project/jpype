@@ -253,6 +253,7 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_ContextShutdownMethod;
 	bool m_IsShutdown;
+	bool m_IsInitialized;
 	PyObject* m_Host;
 } ;
 

@@ -15,7 +15,6 @@
 
  *****************************************************************************/
 #include <jpype.h>
-//#include <jp_thunk.h>
 #include <jp_primitive_common.h>
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
@@ -333,7 +332,7 @@ JPTypeFactory::JPTypeFactory(JPContext* context)
 	JPJavaFrame frame(context, 32);
 	JP_TRACE_IN("JPTypeFactory::init");
 
-	jclass cls = context->getClassLoader()->findClass("org/jpype/manager/TypeFactoryNative");
+	jclass cls = context->getClassLoader()->findClass("org.jpype.manager.TypeFactoryNative");
 
 	JNINativeMethod method[8];
 

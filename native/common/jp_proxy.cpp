@@ -105,7 +105,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPProxy::init");
 
-	jclass proxyClass = context->getClassLoader()->findClass("org/jpype/proxy/JPypeProxy");
+	jclass proxyClass = context->getClassLoader()->findClass("org.jpype.proxy.JPypeProxy");
 
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
@@ -118,7 +118,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	m_NewProxyID = frame.GetStaticMethodID(m_ProxyClass.get(),
 			"newProxy",
 			"(JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
-	m_NewInstanceID = frame.GetStaticMethodID(m_ProxyClass.get(),
+	m_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
 			"newInstance",
 			"()Ljava/lang/Object;");
 

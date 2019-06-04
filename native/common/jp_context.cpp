@@ -80,6 +80,7 @@ JPContext::JPContext()
 	m_Object_ToStringID = 0;
 	m_ContextShutdownMethod = 0;
 	m_IsShutdown = false;
+	m_IsInitialized = false;
 	m_Host = 0;
 }
 
@@ -93,7 +94,7 @@ JPContext::~JPContext()
 
 bool JPContext::isInitialized()
 {
-	return m_JavaVM != NULL;
+	return m_JavaVM != NULL && m_IsInitialized;
 }
 
 /**
@@ -119,7 +120,7 @@ void JPContext::loadEntryPoints(const string& path)
 void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		const StringVector& args)
 {
-	JP_TRACE_IN("JPEnv::loadJVM");
+	JP_TRACE_IN("JPContext::startJVM");
 
 	// Get the entry points in the shared library
 	loadEntryPoints(vmPath);
@@ -176,7 +177,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		m_ProxyFactory = new JPProxyFactory(this);
 
 		// Launch the Java context
-		jclass cls = m_ClassLoader->findClass("org/jpype/JPypeContext");
+		jclass cls = m_ClassLoader->findClass("org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
 		m_ContextShutdownMethod = frame.GetMethodID(cls, "shutdown", "()V");
@@ -193,6 +194,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
 				frame.CallObjectMethod(m_JavaContext.get(), getTypeManager));
 	}
+	m_IsInitialized = true;
 	JP_TRACE_OUT;
 }
 

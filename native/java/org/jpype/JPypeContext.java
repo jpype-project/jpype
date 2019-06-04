@@ -72,7 +72,7 @@ public class JPypeContext
    *
    * @param context
    */
-  public void createContext(long context, ClassLoader bootLoader)
+  public JPypeContext createContext(long context, ClassLoader bootLoader)
   {
     instance = new JPypeContext();
     
@@ -86,6 +86,8 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
+    
+    return this;
   }
 
   /**

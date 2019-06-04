@@ -42,7 +42,7 @@ JPClassLoader::JPClassLoader(JPContext* context, bool useSystem)
 	m_SystemClassLoader = JPObjectRef(context, frame.CallStaticObjectMethod(classLoaderClass, getSystemClassLoader));
 	m_UseSystem = useSystem;
 	// Set up the loader
-	m_FindClass = frame.GetMethodID(classLoaderClass, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	m_FindClass = frame.GetMethodID(classLoaderClass, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 	if (useSystem)
 	{
 		// Boot loader and system class loader are now the same
