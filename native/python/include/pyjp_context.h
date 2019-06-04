@@ -34,12 +34,12 @@ struct PyJPContext
 	//	static PyObject*   toUnicode(PyJPContext* self);
 
 	static PyObject* startup(PyJPContext* obj, PyObject* args);
-	static PyObject* shutdown(PyJPContext* obj);
-	static PyObject* isStarted(PyJPContext* obj);
-	static PyObject* attachThread(PyJPContext* obj);
-	static PyObject* detachThread(PyJPContext* obj);
-	static PyObject* isThreadAttached(PyJPContext* obj);
-	static PyObject* attachThreadAsDaemon(PyJPContext* obj);
+	static PyObject* shutdown(PyJPContext* obj, PyObject* args);
+	static PyObject* isStarted(PyJPContext* obj, PyObject* args);
+	static PyObject* attachThread(PyJPContext* obj, PyObject* args);
+	static PyObject* detachThread(PyJPContext* obj, PyObject* args);
+	static PyObject* isThreadAttached(PyJPContext* obj, PyObject* args);
+	static PyObject* attachThreadAsDaemon(PyJPContext* obj, PyObject* args);
 
 	/** Memory map a byte buffer between java and python, so 
 	 * that both have direct access.  This is mainly used for io classes.

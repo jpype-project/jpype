@@ -74,8 +74,7 @@ from . import _jclass
 from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
-_exportTypes = ()
-_modifier = None
+_exportTypes = (property, _jclass.JClass, _JImport, _jpype.PyJPMethod)
 
 # %% Utility
 
@@ -110,10 +109,9 @@ def _copyProperties(out, mc):
 
 
 def _getStaticMethods(cls):
-    global _modifier
     static = {}
     for u in cls.class_.getMethods():
-        if not _modifier.isStatic(u.getModifiers()):
+        if u.getModifiers()&8==0:
             continue
         name = _keywordWrap(str(u.getName()))
         static[name] = getattr(cls, name)
@@ -365,15 +363,3 @@ registerDomain('gov')
 registerDomain('java')
 registerDomain('org')
 
-# %% Initialize
-
-
-def _initialize():
-    global _exportTypes
-    global _modifier
-    _JMethod = type(_jclass.JClass('java.lang.Class').forName)
-    _modifier = _jclass.JClass('java.lang.reflect.Modifier')
-    _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
-
-
-_jinit.registerJVMInitializer(_initialize)

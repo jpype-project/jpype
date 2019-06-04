@@ -196,10 +196,10 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     # Create a new class
     res = _jclass.JClass(name, bases, members)
 
-    if jclass != None:
-        # Register this class to be initialized when jvm starts
-        def jinit():
-            type.__setattr__(res, '__javaclass__', _jpype.PyJPClass(jclass))
-        _jinit.registerJVMInitializer(jinit)
+#    if jclass != None:
+#        # Register this class to be initialized when jvm starts
+#        def jinit():
+#            type.__setattr__(res, '__javaclass__', _jpype.PyJPClass(jclass))
+#        _jinit.registerJVMInitializer(jinit)
 
     return res

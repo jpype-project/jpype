@@ -92,16 +92,12 @@ bool PyJPContext::check(PyObject* o)
 	return o->ob_type == &PyJPContext::Type;
 }
 
-// These are from the internal methods when we alreayd have the jvalue
-
 PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPContext* self = (PyJPContext*) type->tp_alloc(type, 0);
 	self->m_Context = NULL;
 	return (PyObject*) self;
 }
-
-// Replacement for convertToJava.
 
 int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 {
@@ -203,7 +199,7 @@ PyObject* PyJPContext::startup(PyJPContext* self, PyObject* args)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPContext::shutdown(PyJPContext* self)
+PyObject* PyJPContext::shutdown(PyJPContext* self, PyObject* args)
 {
 	JP_TRACE_IN("PyJPContext::shutdown");
 	try
@@ -217,12 +213,12 @@ PyObject* PyJPContext::shutdown(PyJPContext* self)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPContext::isStarted(PyJPContext* self)
+PyObject* PyJPContext::isStarted(PyJPContext* self, PyObject* args)
 {
 	return PyBool_FromLong(self->m_Context->isInitialized());
 }
 
-PyObject* PyJPContext::attachThread(PyJPContext* self)
+PyObject* PyJPContext::attachThread(PyJPContext* self, PyObject* args)
 {
 	JP_TRACE_IN("PyJPContext::attachThread");
 	try
@@ -238,7 +234,7 @@ PyObject* PyJPContext::attachThread(PyJPContext* self)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext* self)
+PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext* self, PyObject* args)
 {
 	JP_TRACE_IN("PyJPContext::attachThreadAsDaemon");
 	try
@@ -254,7 +250,7 @@ PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext* self)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPContext::detachThread(PyJPContext* self)
+PyObject* PyJPContext::detachThread(PyJPContext* self, PyObject* args)
 {
 	JP_TRACE_IN("PyJPContext::detachThread");
 	try
@@ -269,7 +265,7 @@ PyObject* PyJPContext::detachThread(PyJPContext* self)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPContext::isThreadAttached(PyJPContext* self)
+PyObject* PyJPContext::isThreadAttached(PyJPContext* self, PyObject* args)
 {
 	try
 	{

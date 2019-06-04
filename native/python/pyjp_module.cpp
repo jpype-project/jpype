@@ -62,7 +62,6 @@ PyMODINIT_FUNC init_jpype()
 	Py_INCREF(module);
 	PyModule_AddStringConstant(module, "__version__", "0.7.0");
 
-
 	// Initialize the Python static resources
 	JPPythonEnv::init();
 

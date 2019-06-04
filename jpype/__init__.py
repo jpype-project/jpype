@@ -14,6 +14,10 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+
+import _jpype
+_jpype._jvm = _jpype.PyJPContext()
+
 from ._jpackage import *
 from ._jproxy import *
 from ._core import *

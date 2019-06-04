@@ -32,16 +32,17 @@ from . import _jexception
 from . import _jcollection
 from . import _jcomparable
 from . import _jio
-from . import _jinit
+#from . import _jinit
 
 __all__ = [
-    'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
+    'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path'
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
 
+_JVM_started = False
 
 def deprecated(*args):
     """ Marks a function a deprecated when used as decorator.
@@ -80,11 +81,11 @@ def _initialize():
     _jclass._initialize()
     _jobject._initialize()
     _jtypes._initialize()
-    _jinit.runJVMInitializers()
+    #_jinit.runJVMInitializers()
 
 
-def isJVMStarted():
-    return _jpype.isStarted()
+def isJVMStarted(jvm=_jpype._jvm):
+    return jvm.isStarted()
 
 
 def _hasClassPath(args):
@@ -93,7 +94,6 @@ def _hasClassPath(args):
             return True
     return False
 
-_JVM_started = False
 
 def startJVM(*args, **kwargs):
     """
@@ -123,7 +123,9 @@ def startJVM(*args, **kwargs):
         or a keyword argument conflicts with the arguments.
 
      """
-    if _jpype.isStarted():
+    jvm = kwargs.pop("jvm", _jpype._jvm)
+
+    if jvm.isStarted():
          raise OSError('JVM is already started')
     global _JVM_started
     if _JVM_started:
@@ -173,26 +175,22 @@ def startJVM(*args, **kwargs):
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
-    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized)
+    jvm.startup(jvmpath, tuple(args), ignoreUnrecognized)
     _initialize()
 
 
-def attachToJVM(jvm):
-    _jpype.attach(jvm)
-    _initialize()
 
-
-def shutdownJVM():
+def shutdownJVM(jvm=_jpype._jvm):
     """ Shuts down the JVM.
 
     This method shuts down the JVM and thus disables access to existing 
     Java objects. Due to limitations in the JPype, it is not possible to 
     restart the JVM after being terminated.
     """
-    _jpype.shutdown()
+    jvm.shutdown()
 
 
-def isThreadAttachedToJVM():
+def isThreadAttachedToJVM(jvm=_jpype._jvm):
     """ Checks if a thread is attached to the JVM.
 
     Python automatically attaches threads when a Java method is called. 
@@ -204,10 +202,10 @@ def isThreadAttachedToJVM():
       True if the thread is attached to the JVM, False if the thread is
       not attached or the JVM is not running.
     """
-    return _jpype.isThreadAttachedToJVM()
+    return jvm.isThreadAttachedToJVM()
 
 
-def attachThreadToJVM():
+def attachThreadToJVM(jvm=_jpype._jvm):
     """ Attaches a thread to the JVM.
 
     The function manually connects a thread to the JVM to allow access to 
@@ -217,10 +215,10 @@ def attachThreadToJVM():
     Raises:
       RuntimeError: If the JVM is not running.
     """
-    _jpype.attachThreadToJVM()
+    jvm.attachThreadToJVM()
 
 
-def detachThreadFromJVM():
+def detachThreadFromJVM(jvm=_jpype._jvm):
     """ Detaches a thread from the JVM.
 
     This function detaches the thread and frees the associated resource in
@@ -229,7 +227,7 @@ def detachThreadFromJVM():
     is no harm in detaching early or more than once. This method cannot fail
     and there is no harm in calling it when the JVM is not running.
     """
-    _jpype.detachThreadFromJVM()
+    jvm.detachThreadFromJVM()
 
 
 def synchronized(obj):
@@ -300,7 +298,7 @@ def get_default_jvm_path(*args, **kwargs):
     return getDefaultJVMPath(*args, **kwargs)
 
 
-def getJVMVersion():
+def getJVMVersion(jvm=None):
     """ Get the JVM version if the JVM is started.
 
     This function can be used to determine the version of the JVM. It is 
@@ -309,7 +307,10 @@ def getJVMVersion():
     Returns:
       A typle with the (major, minor, revison) of the JVM if running.
     """
-    if not _jpype.isStarted():
+    if not jvm:
+        global _jvm
+        jvm = _jvm
+    if not jvm.isStarted():
         return (0, 0, 0)
     version = str(_jclass.JClass(
         'java.lang.Runtime').class_.getPackage().getImplementationVersion())
