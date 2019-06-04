@@ -24,8 +24,12 @@ public class JPypeReferenceQueue extends ReferenceQueue
   private Object mQueueStopMutex = new Object();
 
   public JPypeReferenceQueue()
+  {}
+  
+  public JPypeReferenceQueue(long context)
   {
     super();
+    this.context = context;
   }
 
   /**

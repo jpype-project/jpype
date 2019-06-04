@@ -170,6 +170,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		// Bootloader needs to go first so we can load classes
 		m_ClassLoader = new JPClassLoader(this, false);
 
+		JP_TRACE("Install native");
 		// Start the rest of the services
 		m_TypeFactory = new JPTypeFactory(this);
 		m_TypeManager = new JPTypeManager(this);
@@ -177,17 +178,18 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		m_ProxyFactory = new JPProxyFactory(this);
 
 		// Launch the Java context
+		JP_TRACE("Start Context");
 		jclass cls = m_ClassLoader->findClass("org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
 		m_ContextShutdownMethod = frame.GetMethodID(cls, "shutdown", "()V");
-
-		// Start the Java portion of the context
 		jvalue val[2];
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();
 		m_JavaContext = JPObjectRef(this, frame.CallStaticObjectMethodA(cls, startMethod, val));
 
+		// Post launch
+		JP_TRACE("Connect resources");
 		// Hook up the type manager
 		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
 				"()Lorg/jpype/manager/TypeManager;");

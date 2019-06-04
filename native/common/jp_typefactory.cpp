@@ -136,12 +136,16 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 {
 	JP_TRACE_IN("JPTypeFactory_defineObjectClass");
 	JPContext* context = (JPContext*) contextPtr;
+	JP_TRACE("got context", context);
 	JPJavaFrame frame(context, env);
+	JP_TRACE("frame started");
 	try
 	{
 		string className = context->toStringUTF8(name);
+		JP_TRACE("got class name", className);
 		JPClassList interfaces;
 		convert(frame, interfacePtrs, interfaces);
+		JP_TRACE("convert interfaces");
 		JPClass* result = NULL;
 		if (JPModifier::isSpecial(modifiers))
 		{

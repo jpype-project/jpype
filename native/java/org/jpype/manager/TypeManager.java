@@ -44,6 +44,12 @@ public class TypeManager
   private ClassDescriptor java_lang_Object;
   public Class<? extends Annotation> functionalAnnotation = null;
 
+  public TypeManager(long context, TypeFactory typeFactory)
+  {
+    this.context = context;
+    this.typeFactory = typeFactory;
+  }
+  
 //<editor-fold desc="interface">
   public synchronized void init()
   {
@@ -51,6 +57,8 @@ public class TypeManager
       throw new RuntimeException("Cannot be restarted");
     isStarted = true;
     isShutdown = false;
+    
+    System.out.println("init");
 
     try
     {
@@ -61,8 +69,10 @@ public class TypeManager
       // It is okay if we don't find this
     }
 
+    System.out.println("create object");
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
+    System.out.println("create class");
     createClass(Class.class, true);
 
     // Create the boxed types

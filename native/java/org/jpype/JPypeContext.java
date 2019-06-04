@@ -72,22 +72,28 @@ public class JPypeContext
    *
    * @param context
    */
-  public JPypeContext createContext(long context, ClassLoader bootLoader)
+  public static JPypeContext createContext(long context, ClassLoader bootLoader)
   {
     instance = new JPypeContext();
     
-    instance.typeFactory = new TypeFactoryNative();
-    instance.typeManager = new TypeManager();
-    instance.typeManager.typeFactory = instance.typeFactory;
     instance.bootLoader = bootLoader;
+    instance.typeFactory = new TypeFactoryNative();
+    instance.typeManager = new TypeManager(context, instance.typeFactory);
+    instance.typeManager.typeFactory = instance.typeFactory;
       
-    instance.referenceQueue = new JPypeReferenceQueue();
+    instance.referenceQueue = new JPypeReferenceQueue(context);
     
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
     
-    return this;
+    return instance;
+  }
+  
+  public void shutdown()
+  {
+    this.referenceQueue.stop();
+    this.typeManager.shutdown();
   }
 
   /**
