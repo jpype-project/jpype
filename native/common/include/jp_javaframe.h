@@ -190,7 +190,6 @@ public:
 	void CallStaticVoidMethodA(jclass a0, jmethodID a1, jvalue* a2);
 	void CallVoidMethodA(jobject a0, jmethodID a1, jvalue* a2);
 	void CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2, jvalue* a3);
-	void CallVoidMethod(jobject a0, jmethodID a1);
 
 	// Bool
 	jboolean GetStaticBooleanField(jclass clazz, jfieldID fid);
@@ -198,11 +197,8 @@ public:
 	void SetStaticBooleanField(jclass clazz, jfieldID fid, jboolean val);
 	void SetBooleanField(jobject clazz, jfieldID fid, jboolean val);
 	jboolean CallStaticBooleanMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jboolean CallStaticBooleanMethod(jclass clazz, jmethodID mid);
 	jboolean CallBooleanMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jboolean CallBooleanMethod(jobject obj, jmethodID mid);
 	jboolean CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jboolean CallNonvirtualBooleanMethod(jobject obj, jclass claz, jmethodID mid);
 	jbooleanArray NewBooleanArray(jsize len);
 	void SetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals);
 	void GetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals);
@@ -215,11 +211,8 @@ public:
 	void SetStaticByteField(jclass clazz, jfieldID fid, jbyte val);
 	void SetByteField(jobject clazz, jfieldID fid, jbyte val);
 	jbyte CallStaticByteMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jbyte CallStaticByteMethod(jclass clazz, jmethodID mid);
 	jbyte CallByteMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jbyte CallByteMethod(jobject obj, jmethodID mid);
 	jbyte CallNonvirtualByteMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jbyte CallNonvirtualByteMethod(jobject obj, jclass claz, jmethodID mid);
 	jbyteArray NewByteArray(jsize len);
 	void SetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals);
 	void GetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals);
@@ -232,11 +225,8 @@ public:
 	void SetStaticCharField(jclass clazz, jfieldID fid, jchar val);
 	void SetCharField(jobject clazz, jfieldID fid, jchar val);
 	jchar CallStaticCharMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jchar CallStaticCharMethod(jclass clazz, jmethodID mid);
 	jchar CallCharMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jchar CallCharMethod(jobject obj, jmethodID mid);
 	jchar CallNonvirtualCharMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jchar CallNonvirtualCharMethod(jobject obj, jclass claz, jmethodID mid);
 	jcharArray NewCharArray(jsize len);
 	void SetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals);
 	void GetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals);
@@ -249,11 +239,8 @@ public:
 	void SetStaticShortField(jclass clazz, jfieldID fid, jshort val);
 	void SetShortField(jobject clazz, jfieldID fid, jshort val);
 	jshort CallStaticShortMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jshort CallStaticShortMethod(jclass clazz, jmethodID mid);
 	jshort CallShortMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jshort CallShortMethod(jobject obj, jmethodID mid);
 	jshort CallNonvirtualShortMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jshort CallNonvirtualShortMethod(jobject obj, jclass claz, jmethodID mid);
 	jshortArray NewShortArray(jsize len);
 	void SetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals);
 	void GetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals);
@@ -266,11 +253,8 @@ public:
 	void SetStaticIntField(jclass clazz, jfieldID fid, jint val);
 	void SetIntField(jobject clazz, jfieldID fid, jint val);
 	jint CallStaticIntMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jint CallStaticIntMethod(jclass clazz, jmethodID mid);
 	jint CallIntMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jint CallIntMethod(jobject obj, jmethodID mid);
 	jint CallNonvirtualIntMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jint CallNonvirtualIntMethod(jobject obj, jclass claz, jmethodID mid);
 	jintArray NewIntArray(jsize len);
 	void SetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals);
 	void GetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals);
@@ -283,11 +267,8 @@ public:
 	void SetStaticLongField(jclass clazz, jfieldID fid, jlong val);
 	void SetLongField(jobject clazz, jfieldID fid, jlong val);
 	jlong CallStaticLongMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jlong CallStaticLongMethod(jclass clazz, jmethodID mid);
 	jlong CallLongMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jlong CallLongMethod(jobject obj, jmethodID mid);
 	jlong CallNonvirtualLongMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jlong CallNonvirtualLongMethod(jobject obj, jclass claz, jmethodID mid);
 	jfloat GetStaticFloatField(jclass clazz, jfieldID fid);
 	jlongArray NewLongArray(jsize len);
 	void SetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals);
@@ -300,11 +281,8 @@ public:
 	void SetStaticFloatField(jclass clazz, jfieldID fid, jfloat val);
 	void SetFloatField(jobject clazz, jfieldID fid, jfloat val);
 	jfloat CallStaticFloatMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jfloat CallStaticFloatMethod(jclass clazz, jmethodID mid);
 	jfloat CallFloatMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jfloat CallFloatMethod(jobject obj, jmethodID mid);
 	jfloat CallNonvirtualFloatMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jfloat CallNonvirtualFloatMethod(jobject obj, jclass claz, jmethodID mid);
 	jfloatArray NewFloatArray(jsize len);
 	void SetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals);
 	void GetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals);
@@ -317,11 +295,8 @@ public:
 	void SetStaticDoubleField(jclass clazz, jfieldID fid, jdouble val);
 	void SetDoubleField(jobject clazz, jfieldID fid, jdouble val);
 	jdouble CallStaticDoubleMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jdouble CallStaticDoubleMethod(jclass clazz, jmethodID mid);
 	jdouble CallDoubleMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jdouble CallDoubleMethod(jobject obj, jmethodID mid);
 	jdouble CallNonvirtualDoubleMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jdouble CallNonvirtualDoubleMethod(jobject obj, jclass claz, jmethodID mid);
 	jdoubleArray NewDoubleArray(jsize len);
 	void SetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals);
 	void GetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals);
@@ -334,11 +309,8 @@ public:
 	void SetStaticObjectField(jclass clazz, jfieldID fid, jobject val);
 	void SetObjectField(jobject clazz, jfieldID fid, jobject val);
 	jobject CallStaticObjectMethodA(jclass clazz, jmethodID mid, jvalue* val);
-	jobject CallStaticObjectMethod(jclass clazz, jmethodID mid);
 	jobject CallObjectMethodA(jobject obj, jmethodID mid, jvalue* val);
-	jobject CallObjectMethod(jobject obj, jmethodID mid);
 	jobject CallNonvirtualObjectMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val);
-	jobject CallNonvirtualObjectMethod(jobject obj, jclass claz, jmethodID mid);
 	jobjectArray NewObjectArray(jsize a0, jclass a1, jobject a2);
 	void SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2);
 

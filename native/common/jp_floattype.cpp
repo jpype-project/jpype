@@ -48,7 +48,7 @@ JPValue JPFloatType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = (type_t) frame.CallFloatMethod(obj, _FloatValueID);
+	field(v) = (type_t) frame.CallFloatMethodA(obj, _FloatValueID, 0);
 	return JPValue(this, v);
 }
 

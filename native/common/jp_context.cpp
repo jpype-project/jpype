@@ -194,7 +194,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
 				"()Lorg/jpype/manager/TypeManager;");
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
-				frame.CallObjectMethod(m_JavaContext.get(), getTypeManager));
+				frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
 	}
 	m_IsInitialized = true;
 	JP_TRACE_OUT;
@@ -216,7 +216,7 @@ void JPContext::shutdownJVM()
 		
 		// Tell Java to shutdown the context
 		if (m_JavaContext.get()!=0)
-			frame.CallVoidMethod(m_JavaContext.get(), m_ContextShutdownMethod);
+			frame.CallVoidMethodA(m_JavaContext.get(), m_ContextShutdownMethod, 0);
 	}
 
 	// Wait for all non-demon threads to terminate
@@ -315,7 +315,7 @@ public:
 string JPContext::toString(jobject o)
 {
 	JPJavaFrame frame(this);
-	jstring str = (jstring) frame.CallObjectMethod(o, m_Object_ToStringID);
+	jstring str = (jstring) frame.CallObjectMethodA(o, m_Object_ToStringID, 0);
 	JPStringAccessor contents(frame, str);
 	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 }

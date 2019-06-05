@@ -71,7 +71,7 @@ JPValue JPByteType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallByteMethod(obj, _ByteValueID);
+	field(v) = frame.CallByteMethodA(obj, _ByteValueID, 0);
 	return JPValue(this, v);
 }
 

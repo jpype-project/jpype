@@ -44,7 +44,7 @@ JPValue JPCharType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallCharMethod(obj, _CharValueID);
+	field(v) = frame.CallCharMethodA(obj, _CharValueID, 0);
 	return JPValue(this, v);
 }
 

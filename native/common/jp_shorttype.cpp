@@ -53,7 +53,7 @@ JPValue JPShortType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallShortMethod(obj, m_ShortValueID);
+	field(v) = frame.CallShortMethodA(obj, m_ShortValueID, 0);
 	return JPValue(this, v);
 }
 

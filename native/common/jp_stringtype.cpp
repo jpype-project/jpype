@@ -35,7 +35,7 @@ JPStringType::~JPStringType()
 jobject JPStringType::stringToCharArray(jstring str)
 {
 	JPJavaFrame frame(m_Context);
-	jobject res = frame.CallObjectMethod(str, m_String_ToCharArrayID);
+	jobject res = frame.CallObjectMethodA(str, m_String_ToCharArrayID, 0);
 	return frame.keep(res);
 }
 

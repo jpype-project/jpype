@@ -25,13 +25,17 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		jclass returnType)
 {
 	JP_TRACE_IN("Java_jpype_JPypeInvocationHandler_hostInvoke");
-
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context);
+	JP_TRACE("Context", context);
+	JP_TRACE("Env", env);
+	if (true)
+		return  0;
+	JPJavaFrame frame(context, env);
 	JPPyCallAcquire callback;
 
 	try
 	{
+		JP_TRACE("Get callable");
 		string cname = context->toStringUTF8(name);
 
 		// Get the callable object
@@ -40,11 +44,13 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		// If method can't be called, throw an exception
 		if (callable.isNull() || callable.isNone())
 		{
+			JP_TRACE("Callable not found");
 			frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), cname.c_str());
 			return NULL;
 		}
 
 		// convert the arguments into a python list
+		JP_TRACE("Convert arguments");
 		jsize argLen = frame.GetArrayLength(types);
 		vector<JPPyObject> hostArgs;
 		JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
@@ -56,14 +62,17 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			pyargs.setItem(i, type->convertToPythonObject(val).get());
 		}
 
+		JP_TRACE("Call python");
 		JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 		JPClass* returnClass = context->getTypeManager()->findClass(returnType);
 
+		JP_TRACE("Handle return");
 		if (returnValue.isNull() || returnValue.isNone())
 		{
 			if (returnClass != context->_void) // && returnT.getType() < JPTypeName::_object)
 			{
-				frame.ThrowNew(context->_java_lang_RuntimeException.get(), "Return value is None when it cannot be");
+				frame.ThrowNew(context->_java_lang_RuntimeException.get(), 
+						"Return value is None when it cannot be");
 				return NULL;
 			}
 		}
@@ -82,6 +91,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		// We must box here.
 		if (dynamic_cast<JPPrimitiveType*> (returnClass) == returnClass)
 		{
+			JP_TRACE("Box return");
 			returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
 		}
 
@@ -89,9 +99,11 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		return frame.keep(res.l);
 	} catch (JPypeException& ex)
 	{
+		JP_TRACE("JPypeException raised");
 		ex.toJava(context);
 	} catch (...)
 	{
+		JP_TRACE("Other Exception raised");
 		frame.ThrowNew(context->_java_lang_RuntimeException.get(), "unknown error occurred");
 	}
 
@@ -102,7 +114,8 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 
 JPProxyFactory::JPProxyFactory(JPContext* context)
 {
-	JPJavaFrame frame(context);
+	m_Context = context;
+	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPProxy::init");
 
 	jclass proxyClass = context->getClassLoader()->findClass("org.jpype.proxy.JPypeProxy");
@@ -134,6 +147,7 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 : m_Factory(factory), m_Instance(inst), m_InterfaceClasses(intf)
 {
 	JP_TRACE_IN("JPProxy::JPProxy");
+	JP_TRACE("Context", m_Factory->m_Context);
 	JPJavaFrame frame(m_Factory->m_Context);
 
 	// Convert the interfaces to a Class[]
@@ -161,15 +175,20 @@ JPProxy::~JPProxy()
 
 jobject JPProxy::getProxy()
 {
+	JP_TRACE_IN("JPProxy::getProxy");
 	JPContext* context = getContext();
+	JP_TRACE("Context", context);
 	JPJavaFrame frame(context);
 
+	JP_TRACE("Factory", m_Factory);
 	// Use the proxy to make an instance
-	jvalue v[1];
-	jobject instance = frame.CallObjectMethodA(m_Factory->m_ProxyClass.get(),
-			m_Factory->m_NewInstanceID, v);
+	JP_TRACE("Create handler");
+	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
+			m_Factory->m_NewInstanceID, 0);
 
 	// The instance and the python object lifespans are bound
+	JP_TRACE("Register reference");
 	context->getReferenceQueue()->registerRef(instance, this->m_Instance);
 	return frame.keep(instance);
+	JP_TRACE_OUT;
 }

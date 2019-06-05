@@ -35,14 +35,13 @@ else:
 # unify to got the the same types regardless of version.
 
 # Set up all the tables
-_maxFloat = 0
-_maxDouble = 0
+_maxFloat = 3.4028234663852886E38
+_maxDouble = 1.7976931348623157E308
 
 
 def _initialize():
     _JP_TYPE_CLASSES = _jclass._JP_TYPE_CLASSES
     _JCLASSES = _jclass._JCLASSES
-    global _maxFloat, _maxDouble
 
     # Place the jvalue types for primitives
     _JPrimitiveLoad(JBoolean, _jclass.JClass("java.lang.Boolean"))
@@ -63,9 +62,6 @@ def _initialize():
     _JP_TYPE_CLASSES[_unicode] = _jclass.JClass("java.lang.String")
     _JP_TYPE_CLASSES[type] = _jclass.JClass("java.lang.Class")
     _JP_TYPE_CLASSES[object] = _jclass.JClass("java.lang.Object")
-
-    _maxFloat = _jclass.JClass("java.lang.Float").MAX_VALUE
-    _maxDouble = _jclass.JClass("java.lang.Double").MAX_VALUE
 
 
 def _JPrimitiveLoad(cls, boxedType):

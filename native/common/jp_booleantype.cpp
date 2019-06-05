@@ -44,7 +44,7 @@ JPValue JPBooleanType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethod(obj, s_BooleanValueID) ? true : false;
+	field(v) = frame.CallBooleanMethodA(obj, s_BooleanValueID, 0) ? true : false;
 	return JPValue(this, v);
 }
 

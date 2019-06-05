@@ -304,9 +304,11 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 jvalue JPClass::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::convertToJava");
+	JP_TRACE("Context", m_Context);
 	JPJavaFrame frame(m_Context);
 	jvalue res;
-
+	JP_TRACE("Post frame");
+	
 	res.l = NULL;
 
 	// assume it is convertible;
@@ -319,6 +321,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
 	{
+		JP_TRACE("Java Value");
 		res.l = frame.NewLocalRef(value->getJavaObject());
 		res.l = frame.keep(res.l);
 		return res;
@@ -327,6 +330,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
+		JP_TRACE("Java Proxy");
 		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}

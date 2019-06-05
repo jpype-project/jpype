@@ -282,34 +282,16 @@ jbyte JPJavaFrame::CallStaticByteMethodA(jclass clazz, jmethodID mid, jvalue* va
 	return m_Env->functions->CallStaticByteMethodA(m_Env, clazz, mid, val);
 }
 
-jbyte JPJavaFrame::CallStaticByteMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticByteMethodA");
-	return m_Env->functions->CallStaticByteMethod(m_Env, clazz, mid);
-}
-
 jbyte JPJavaFrame::CallByteMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallByteMethodA");
 	return m_Env->functions->CallByteMethodA(m_Env, obj, mid, val);
 }
 
-jbyte JPJavaFrame::CallByteMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallByteMethod");
-	return m_Env->functions->CallByteMethod(m_Env, obj, mid);
-}
-
 jbyte JPJavaFrame::CallNonvirtualByteMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualByteMethodA");
 	return m_Env->functions->CallNonvirtualByteMethodA(m_Env, obj, claz, mid, val);
-}
-
-jbyte JPJavaFrame::CallNonvirtualByteMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualByteMethod");
-	return m_Env->functions->CallNonvirtualByteMethod(m_Env, obj, claz, mid);
 }
 
 jshort JPJavaFrame::GetStaticShortField(jclass clazz, jfieldID fid)
@@ -342,34 +324,16 @@ jshort JPJavaFrame::CallStaticShortMethodA(jclass clazz, jmethodID mid, jvalue* 
 	return m_Env->functions->CallStaticShortMethodA(m_Env, clazz, mid, val);
 }
 
-jshort JPJavaFrame::CallStaticShortMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticShortMethod");
-	return m_Env->functions->CallStaticShortMethod(m_Env, clazz, mid);
-}
-
 jshort JPJavaFrame::CallShortMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallShortMethodA");
 	return m_Env->functions->CallShortMethodA(m_Env, obj, mid, val);
 }
 
-jshort JPJavaFrame::CallShortMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallShortMethod");
-	return m_Env->functions->CallShortMethod(m_Env, obj, mid);
-}
-
 jshort JPJavaFrame::CallNonvirtualShortMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualShortMethodA");
 	return m_Env->functions->CallNonvirtualShortMethodA(m_Env, obj, claz, mid, val);
-}
-
-jshort JPJavaFrame::CallNonvirtualShortMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualShortMethod");
-	return m_Env->functions->CallNonvirtualShortMethod(m_Env, obj, claz, mid);
 }
 
 jint JPJavaFrame::GetStaticIntField(jclass clazz, jfieldID fid)
@@ -402,34 +366,16 @@ jint JPJavaFrame::CallStaticIntMethodA(jclass clazz, jmethodID mid, jvalue* val)
 	return m_Env->functions->CallStaticIntMethodA(m_Env, clazz, mid, val);
 }
 
-jint JPJavaFrame::CallStaticIntMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticIntMethod");
-	return m_Env->functions->CallStaticIntMethod(m_Env, clazz, mid);
-}
-
 jint JPJavaFrame::CallIntMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallIntMethodA");
 	return m_Env->functions->CallIntMethodA(m_Env, obj, mid, val);
 }
 
-jint JPJavaFrame::CallIntMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallIntMethod");
-	return m_Env->functions->CallIntMethod(m_Env, obj, mid);
-}
-
 jint JPJavaFrame::CallNonvirtualIntMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualIntMethodA");
 	return m_Env->functions->CallNonvirtualIntMethodA(m_Env, obj, claz, mid, val);
-}
-
-jint JPJavaFrame::CallNonvirtualIntMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualIntMethod");
-	return m_Env->functions->CallNonvirtualIntMethod(m_Env, obj, claz, mid);
 }
 
 jlong JPJavaFrame::GetStaticLongField(jclass clazz, jfieldID fid)
@@ -462,34 +408,16 @@ jlong JPJavaFrame::CallStaticLongMethodA(jclass clazz, jmethodID mid, jvalue* va
 	return m_Env->functions->CallStaticLongMethodA(m_Env, clazz, mid, val);
 }
 
-jlong JPJavaFrame::CallStaticLongMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticLongMethod");
-	return m_Env->functions->CallStaticLongMethod(m_Env, clazz, mid);
-}
-
 jlong JPJavaFrame::CallLongMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallLongMethodA");
 	return m_Env->functions->CallLongMethodA(m_Env, obj, mid, val);
 }
 
-jlong JPJavaFrame::CallLongMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallLongMethod");
-	return m_Env->functions->CallLongMethod(m_Env, obj, mid);
-}
-
 jlong JPJavaFrame::CallNonvirtualLongMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualLongMethodA");
 	return m_Env->functions->CallNonvirtualLongMethodA(m_Env, obj, claz, mid, val);
-}
-
-jlong JPJavaFrame::CallNonvirtualLongMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualLongMethod");
-	return m_Env->functions->CallNonvirtualLongMethod(m_Env, obj, claz, mid);
 }
 
 jfloat JPJavaFrame::GetStaticFloatField(jclass clazz, jfieldID fid)
@@ -522,34 +450,16 @@ jfloat JPJavaFrame::CallStaticFloatMethodA(jclass clazz, jmethodID mid, jvalue* 
 	return m_Env->functions->CallStaticFloatMethodA(m_Env, clazz, mid, val);
 }
 
-jfloat JPJavaFrame::CallStaticFloatMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticFloatMethod");
-	return m_Env->functions->CallStaticFloatMethod(m_Env, clazz, mid);
-}
-
 jfloat JPJavaFrame::CallFloatMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallFloatMethodA");
 	return m_Env->functions->CallFloatMethodA(m_Env, obj, mid, val);
 }
 
-jfloat JPJavaFrame::CallFloatMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallFloatMethod");
-	return m_Env->functions->CallFloatMethod(m_Env, obj, mid);
-}
-
 jfloat JPJavaFrame::CallNonvirtualFloatMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualFloatMethodA");
 	return m_Env->functions->CallNonvirtualFloatMethodA(m_Env, obj, claz, mid, val);
-}
-
-jfloat JPJavaFrame::CallNonvirtualFloatMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualFloatMethod");
-	return m_Env->functions->CallNonvirtualFloatMethod(m_Env, obj, claz, mid);
 }
 
 jdouble JPJavaFrame::GetStaticDoubleField(jclass clazz, jfieldID fid)
@@ -582,34 +492,16 @@ jdouble JPJavaFrame::CallStaticDoubleMethodA(jclass clazz, jmethodID mid, jvalue
 	return m_Env->functions->CallStaticDoubleMethodA(m_Env, clazz, mid, val);
 }
 
-jdouble JPJavaFrame::CallStaticDoubleMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticDoubleMethod");
-	return m_Env->functions->CallStaticDoubleMethod(m_Env, clazz, mid);
-}
-
 jdouble JPJavaFrame::CallDoubleMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallDoubleMethodA");
 	return m_Env->functions->CallDoubleMethodA(m_Env, obj, mid, val);
 }
 
-jdouble JPJavaFrame::CallDoubleMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallDoubleMethod");
-	return m_Env->functions->CallDoubleMethod(m_Env, obj, mid);
-}
-
 jdouble JPJavaFrame::CallNonvirtualDoubleMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualDoubleMethodA");
 	return m_Env->functions->CallNonvirtualDoubleMethodA(m_Env, obj, claz, mid, val);
-}
-
-jdouble JPJavaFrame::CallNonvirtualDoubleMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualDoubleMethod");
-	return m_Env->functions->CallNonvirtualDoubleMethod(m_Env, obj, claz, mid);
 }
 
 jchar JPJavaFrame::GetStaticCharField(jclass clazz, jfieldID fid)
@@ -642,34 +534,16 @@ jchar JPJavaFrame::CallStaticCharMethodA(jclass clazz, jmethodID mid, jvalue* va
 	return m_Env->functions->CallStaticCharMethodA(m_Env, clazz, mid, val);
 }
 
-jchar JPJavaFrame::CallStaticCharMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticCharMethod");
-	return m_Env->functions->CallStaticCharMethod(m_Env, clazz, mid);
-}
-
 jchar JPJavaFrame::CallCharMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallCharMethodA");
 	return m_Env->functions->CallCharMethodA(m_Env, obj, mid, val);
 }
 
-jchar JPJavaFrame::CallCharMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallCharMethod");
-	return m_Env->functions->CallCharMethod(m_Env, obj, mid);
-}
-
 jchar JPJavaFrame::CallNonvirtualCharMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualCharMethodA");
 	return m_Env->functions->CallNonvirtualCharMethodA(m_Env, obj, claz, mid, val);
-}
-
-jchar JPJavaFrame::CallNonvirtualCharMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualCharMethod");
-	return m_Env->functions->CallNonvirtualCharMethod(m_Env, obj, claz, mid);
 }
 
 jboolean JPJavaFrame::GetStaticBooleanField(jclass clazz, jfieldID fid)
@@ -702,34 +576,16 @@ jboolean JPJavaFrame::CallStaticBooleanMethodA(jclass clazz, jmethodID mid, jval
 	return m_Env->functions->CallStaticBooleanMethodA(m_Env, clazz, mid, val);
 }
 
-jboolean JPJavaFrame::CallStaticBooleanMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticBooleanMethod");
-	return m_Env->functions->CallStaticBooleanMethod(m_Env, clazz, mid);
-}
-
 jboolean JPJavaFrame::CallBooleanMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallBooleanMethodA");
 	return m_Env->functions->CallBooleanMethodA(m_Env, obj, mid, val);
 }
 
-jboolean JPJavaFrame::CallBooleanMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallBooleanMethod");
-	return m_Env->functions->CallBooleanMethod(m_Env, obj, mid);
-}
-
 jboolean JPJavaFrame::CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualBooleanMethodA");
 	return m_Env->functions->CallNonvirtualBooleanMethodA(m_Env, obj, claz, mid, val);
-}
-
-jboolean JPJavaFrame::CallNonvirtualBooleanMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualBooleanMethod");
-	return m_Env->functions->CallNonvirtualBooleanMethod(m_Env, obj, claz, mid);
 }
 
 jobject JPJavaFrame::GetStaticObjectField(jclass clazz, jfieldID fid)
@@ -762,34 +618,16 @@ jobject JPJavaFrame::CallStaticObjectMethodA(jclass clazz, jmethodID mid, jvalue
 	return m_Env->functions->CallStaticObjectMethodA(m_Env, clazz, mid, val);
 }
 
-jobject JPJavaFrame::CallStaticObjectMethod(jclass clazz, jmethodID mid)
-{
-	JPCall call(*this, "CallStaticObjectMethod");
-	return m_Env->functions->CallStaticObjectMethod(m_Env, clazz, mid);
-}
-
 jobject JPJavaFrame::CallObjectMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallObjectMethodA");
 	return m_Env->functions->CallObjectMethodA(m_Env, obj, mid, val);
 }
 
-jobject JPJavaFrame::CallObjectMethod(jobject obj, jmethodID mid)
-{
-	JPCall call(*this, "CallObjectMethod");
-	return m_Env->functions->CallObjectMethod(m_Env, obj, mid);
-}
-
 jobject JPJavaFrame::CallNonvirtualObjectMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
 	JPCall call(*this, "CallNonvirtualObjectMethodA");
 	return m_Env->functions->CallNonvirtualObjectMethodA(m_Env, obj, claz, mid, val);
-}
-
-jobject JPJavaFrame::CallNonvirtualObjectMethod(jobject obj, jclass claz, jmethodID mid)
-{
-	JPCall call(*this, "CallNonvirtualObjectMethod");
-	return m_Env->functions->CallNonvirtualObjectMethod(m_Env, obj, claz, mid);
 }
 
 jbyteArray JPJavaFrame::NewByteArray(jsize len)
@@ -1096,12 +934,6 @@ void JPJavaFrame::CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2,
 {
 	JPCall call(*this, "CallVoidMethodA");
 	m_Env->functions->CallNonvirtualVoidMethodA(m_Env, a0, a1, a2, a3);
-}
-
-void JPJavaFrame::CallVoidMethod(jobject a0, jmethodID a1)
-{
-	JPCall call(*this, "CallVoidMethod");
-	m_Env->functions->CallVoidMethod(m_Env, a0, a1);
 }
 
 jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)

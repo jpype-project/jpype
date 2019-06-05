@@ -202,11 +202,12 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 		JP_TRACE("Dereference object");
 		context->ReleaseGlobalRef(value.getValue().l);
 	}
-	JP_TRACE("free", Py_TYPE(self)->tp_free);
-	Py_TYPE(self)->tp_free(self);
+	JP_TRACE("free context", self->m_Context);
 	if (self->m_Context != NULL)
 		Py_DECREF(self->m_Context);
 	self->m_Context = NULL;
+	JP_TRACE("free", Py_TYPE(self)->tp_free);
+	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT;
 }
 

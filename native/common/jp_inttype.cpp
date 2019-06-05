@@ -53,7 +53,7 @@ JPValue JPIntType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallIntMethod(obj, _IntValueID);
+	field(v) = frame.CallIntMethodA(obj, _IntValueID, 0);
 	return JPValue(this, v);
 }
 

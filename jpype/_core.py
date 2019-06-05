@@ -32,7 +32,7 @@ from . import _jexception
 from . import _jcollection
 from . import _jcomparable
 from . import _jio
-#from . import _jinit
+from . import _jinit
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
@@ -81,7 +81,7 @@ def _initialize():
     _jclass._initialize()
     _jobject._initialize()
     _jtypes._initialize()
-    #_jinit.runJVMInitializers()
+    _jinit.runJVMInitializers()
 
 
 def isJVMStarted(jvm=_jpype._jvm):

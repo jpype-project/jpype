@@ -44,7 +44,7 @@ JPValue JPDoubleType::getValueFromObject(jobject obj)
 {
 	JPJavaFrame frame(m_Context);
 	jvalue v;
-	field(v) = frame.CallDoubleMethod(obj, _DoubleValueID);
+	field(v) = frame.CallDoubleMethodA(obj, _DoubleValueID, 0);
 	return JPValue(this, v);
 }
 
