@@ -69,7 +69,7 @@ def _initialize():
 
 
 def _JPrimitiveLoad(cls, boxedType):
-    type.__setattr__(cls, '__javaclass__', _jpype.PyJPClass(cls.__name__))
+    type.__setattr__(cls, '__javaclass__', _jpype.PyJPClass(cls.__name__, _jpype._jvm))
     type.__setattr__(cls, '_java_boxed_class', boxedType)
 
 

@@ -20,6 +20,8 @@
 struct PyJPContext
 {
 	PyObject_HEAD
+	JPContext* m_Context;
+	PyObject* m_Dict;
 
 	static PyTypeObject Type;
 	static void        initType(PyObject* module);
@@ -46,7 +48,6 @@ struct PyJPContext
 	 */
 	static PyObject* convertToDirectByteBuffer(PyJPContext* self, PyObject* args);
 
-	JPContext* m_Context;
 } ;
 
 #endif // _PYJP_CONTEXT_H_2

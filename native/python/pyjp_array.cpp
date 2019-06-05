@@ -81,7 +81,7 @@ void PyJPArray::initType(PyObject* module)
 
 bool PyJPArray::check(PyObject* o)
 {
-	return Py_TYPE(o) == &PyJPArray::Type;
+	return o != NULL && Py_TYPE(o) == &PyJPArray::Type;
 }
 
 JPPyObject PyJPArray::alloc(JPArray* obj)
@@ -102,6 +102,7 @@ PyObject* PyJPArray::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 {
 	PyJPArray* self = (PyJPArray*) type->tp_alloc(type, 0);
 	self->m_Array = 0;
+	self->m_Context = 0;
 	return (PyObject*) self;
 }
 
@@ -138,6 +139,18 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_OUT;
 }
 
+void PyJPArray::__dealloc__(PyJPArray* self)
+{
+	JP_TRACE_IN("PyJPArray::dealloc");
+	JPArray* array = self->m_Array;
+	Py_TYPE(self)->tp_free(self);
+	delete array;
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
+	self->m_Context = NULL;
+	JP_TRACE_OUT;
+}
+
 PyObject* PyJPArray::__str__(PyJPArray* self)
 {
 	JPContext* context = self->m_Array->getClass()->getContext();
@@ -155,16 +168,6 @@ PyObject* PyJPArray::__str__(PyJPArray* self)
 	Py_RETURN_NONE;
 }
 
-void PyJPArray::__dealloc__(PyJPArray* self)
-{
-	JP_TRACE_IN("PyJPArray::dealloc");
-	JPArray* array = self->m_Array;
-	Py_TYPE(self)->tp_free(self);
-	delete array;
-	Py_DECREF(self->m_Context);
-	JP_TRACE_OUT;
-}
-
 PyObject* PyJPArray::getArrayLength(PyJPArray* self, PyObject* arg)
 {
 	try
@@ -174,7 +177,7 @@ PyObject* PyJPArray::getArrayLength(PyJPArray* self, PyObject* arg)
 		JPJavaFrame frame(context);
 		return PyInt_FromLong(self->m_Array->getLength());
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 	return NULL;
 }
 
@@ -190,7 +193,7 @@ PyObject* PyJPArray::getArrayItem(PyJPArray* self, PyObject* arg)
 		JP_PY_CHECK();
 		return self->m_Array->getItem(ndx).keep();
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 	return NULL;
 }
 
@@ -221,7 +224,7 @@ PyObject* PyJPArray::getArraySlice(PyJPArray* self, PyObject* arg)
 
 		return a->getRange(lo, hi).keep();
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 	return NULL;
 }
 
@@ -258,10 +261,9 @@ PyObject* PyJPArray::setArraySlice(PyJPArray* self, PyObject* arg)
 		a->setRange(lo, hi, sequence);
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
-
+	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT
+	JP_TRACE_OUT;
 }
 
 PyObject* PyJPArray::setArrayItem(PyJPArray* self, PyObject* arg)
@@ -281,8 +283,7 @@ PyObject* PyJPArray::setArrayItem(PyJPArray* self, PyObject* arg)
 		self->m_Array->setItem(ndx, value);
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
-
+	PY_STANDARD_CATCH;
 	return NULL;
 	JP_TRACE_OUT;
 }

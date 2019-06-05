@@ -98,7 +98,7 @@
         <itemPath>../../native/common/jp_proxy.cpp</itemPath>
         <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
         <itemPath>../../native/common/jp_shorttype.cpp</itemPath>
-        <itemPath>../../native/common/jp_stringclass.cpp</itemPath>
+        <itemPath>../../native/common/jp_stringtype.cpp</itemPath>
         <itemPath>../../native/common/jp_tracer.cpp</itemPath>
         <itemPath>../../native/common/jp_typefactory.cpp</itemPath>
         <itemPath>../../native/common/jp_typemanager.cpp</itemPath>
@@ -462,7 +462,7 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="../../native/common/jp_stringclass.cpp"
+      <item path="../../native/common/jp_stringtype.cpp"
             ex="false"
             tool="1"
             flavor2="0">

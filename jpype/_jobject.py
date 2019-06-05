@@ -35,7 +35,7 @@ else:
 
 def _initialize():
     type.__setattr__(JObject, '__javaclass__',
-                     _jpype.PyJPClass('java.lang.Object'))
+                     _jpype.PyJPClass('java.lang.Object', _jpype._jvm))
 
 
 class JObject(object):

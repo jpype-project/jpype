@@ -14,6 +14,7 @@
    limitations under the License.
    
  *****************************************************************************/
+#include <stddef.h>
 #include <pyjp.h>
 #include <pyjp_context.h>
 
@@ -54,8 +55,8 @@ PyTypeObject PyJPContext::Type = {
 	/* tp_hash           */ 0,
 	/* tp_call           */ 0,
 	/* tp_str            */ (reprfunc) PyJPContext::__str__,
-	/* tp_getattro       */ 0,
-	/* tp_setattro       */ 0,
+	/* tp_getattro       */ PyObject_GenericGetAttr,
+	/* tp_setattro       */ PyObject_GenericSetAttr,
 	/* tp_as_buffer      */ 0,
 	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
 	/* tp_doc            */ 0,
@@ -72,7 +73,7 @@ PyTypeObject PyJPContext::Type = {
 	/* tp_dict           */ 0,
 	/* tp_descr_get      */ 0,
 	/* tp_descr_set      */ 0,
-	/* tp_dictoffset     */ 0,
+	/* tp_dictoffset     */ offsetof(PyJPContext, m_Dict),
 	/* tp_init           */ (initproc) PyJPContext::__init__,
 	/* tp_alloc          */ 0,
 	/* tp_new            */ PyJPContext::__new__
@@ -89,7 +90,7 @@ void PyJPContext::initType(PyObject* module)
 
 bool PyJPContext::check(PyObject* o)
 {
-	return o->ob_type == &PyJPContext::Type;
+	return o != NULL && Py_TYPE(o) == &PyJPContext::Type;
 }
 
 PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
@@ -105,7 +106,7 @@ int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 	try
 	{
 		self->m_Context = new JPContext();
-		self->m_Context->setHost((PyObject*)self);
+		self->m_Context->setHost((PyObject*) self);
 		return 0;
 	}
 	PY_STANDARD_CATCH;

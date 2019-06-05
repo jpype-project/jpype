@@ -157,7 +157,8 @@ void PyJPMethod::__dealloc__(PyJPMethod* self)
 	}
 	self->m_Instance = NULL;
 	self->m_Method = NULL;
-	Py_DECREF(self->m_Context);
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
 	self->m_Context = NULL;
 	Py_TYPE(self)->tp_free(self);
 }
@@ -183,7 +184,6 @@ PyObject* PyJPMethod::__str__(PyJPMethod* self)
 
 PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPMethod::isBeanAccessor");
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -191,14 +191,11 @@ PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
 		return PyBool_FromLong(self->m_Method->isBeanAccessor());
 	}
 	PY_STANDARD_CATCH;
-
 	return NULL;
-	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::isBeanMutator(PyJPMethod* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPMethod::isBeanMutator");
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -206,14 +203,11 @@ PyObject* PyJPMethod::isBeanMutator(PyJPMethod* self, PyObject* arg)
 		return PyBool_FromLong(self->m_Method->isBeanMutator());
 	}
 	PY_STANDARD_CATCH;
-
 	return NULL;
-	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::getName(PyJPMethod* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPMethod::getName");
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -222,9 +216,7 @@ PyObject* PyJPMethod::getName(PyJPMethod* self, PyObject* arg)
 		return JPPyString::fromStringUTF8(name).keep();
 	}
 	PY_STANDARD_CATCH;
-
 	return NULL;
-	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::matchReport(PyJPMethod* self, PyObject* args)

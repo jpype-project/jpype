@@ -203,14 +203,14 @@ class JClass(type):
         return out
 
 
-def _JClassNew(arg, loader=None, initialize=True):
+def _JClassNew(arg, loader=None, initialize=True, jvm=_jpype._jvm):
     if loader and isinstance(arg, str):
         arg = _java_lang_Class.forName(arg, initialize, loader)
 
     if isinstance(arg, _jpype.PyJPClass):
         javaClass = arg
     else:
-        javaClass = _jpype.PyJPClass(arg)
+        javaClass = _jpype.PyJPClass(arg, jvm)
 
     if javaClass is None:
         raise _java_lang_RuntimeException("Java class '%s' not found" % name)

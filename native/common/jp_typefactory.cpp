@@ -157,7 +157,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 				return (jlong) (context->_java_lang_Class
 					= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.String")
-				return (jlong) (context->_java_lang_Class
+				return (jlong) (context->_java_lang_String
 					= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Void")
 				return (jlong) (context->_java_lang_Void

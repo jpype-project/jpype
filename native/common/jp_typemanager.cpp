@@ -52,7 +52,14 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JPJavaFrame frame(m_Context);
 	jvalue val;
 	val.l = (jobject) m_Context->fromStringUTF8(name);
-	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	JPClass* out= (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	if (out==NULL)
+	{
+		stringstream err;
+		err << "Class " << name << " is not found";
+		JP_RAISE_TYPE_ERROR(err.str().c_str());
+	}
+	return out;
 	JP_TRACE_OUT;
 }
 
@@ -65,4 +72,3 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
 	JP_TRACE_OUT;
 }
-

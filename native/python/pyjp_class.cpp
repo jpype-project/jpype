@@ -94,7 +94,7 @@ void PyJPClass::initType(PyObject* module)
 
 bool PyJPClass::check(PyObject* o)
 {
-	return Py_TYPE(o) == &PyJPClass::Type;
+	return o != NULL && Py_TYPE(o) == &PyJPClass::Type;
 }
 
 JPPyObject PyJPClass::alloc(JPClass* cls)
@@ -119,14 +119,8 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_IN("PyJPClass::__init__");
 	try
 	{
-		JPPyTuple tuple(JPPyRef::_use, args);
-		if (tuple.size() != 1)
-		{
-			PyErr_SetString(PyExc_TypeError, "Classes must have one argument.");
-			return (-1);
-		}
 		PyObject* arg0;
-		PyObject* jvm;
+		PyObject* jvm = 0;
 
 		if (!PyArg_ParseTuple(args, "O|O", &arg0, &jvm))
 		{
@@ -136,12 +130,15 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 		JPContext* context;
 		JPClass* cls;
 		JPValue* jpvalue = JPPythonEnv::getJavaValue(arg0);
-		if (jpvalue != NULL) 
+		if (jpvalue != NULL)
 		{
 			context = jpvalue->getClass()->getContext();
 			if (jpvalue->getClass() != context->_java_lang_Class)
 			{
-				PyErr_SetString(PyExc_TypeError, "Incorrect type");	
+				stringstream err;
+				err << "Incorrect Java class " << jpvalue->getClass()->toString() 
+						<< " vs " << context->_java_lang_Class->toString();
+				PyErr_SetString(PyExc_TypeError, err.str().c_str());
 				return -1;
 			}
 			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
@@ -169,7 +166,7 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 		self->m_Class = cls;
 		self->m_Context = (PyJPContext*) (context->getHost());
 		Py_INCREF(self->m_Context);
-		return (self->m_Class == NULL) ? -1 : 0;
+		return 0;
 	}
 	PY_STANDARD_CATCH;
 	return -1;
@@ -179,7 +176,9 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 void PyJPClass::__dealloc__(PyJPClass* self)
 {
 	Py_TYPE(self)->tp_free((PyObject*) self);
-	Py_DECREF(self->m_Context);
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
+	self->m_Context = NULL;
 }
 
 PyObject* PyJPClass::getCanonicalName(PyJPClass* self, PyObject* arg)

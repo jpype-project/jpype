@@ -87,7 +87,9 @@ JPPyObject PyJPField::alloc(JPField* m)
 void PyJPField::__dealloc__(PyJPField* self)
 {
 	Py_TYPE(self)->tp_free(self);
-	Py_INCREF(self->m_Context);
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
+	self->m_Context = NULL;
 }
 
 PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)

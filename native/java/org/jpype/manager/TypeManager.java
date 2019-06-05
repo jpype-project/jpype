@@ -45,14 +45,15 @@ public class TypeManager
   public Class<? extends Annotation> functionalAnnotation = null;
 
   public TypeManager()
-  {}
-  
+  {
+  }
+
   public TypeManager(long context, TypeFactory typeFactory)
   {
     this.context = context;
     this.typeFactory = typeFactory;
   }
-  
+
 //<editor-fold desc="interface">
   public synchronized void init()
   {
@@ -60,7 +61,7 @@ public class TypeManager
       throw new RuntimeException("Cannot be restarted");
     isStarted = true;
     isShutdown = false;
-    
+
     try
     {
       this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
@@ -112,6 +113,8 @@ public class TypeManager
    */
   public synchronized long findClass(Class<?> cls)
   {
+    if (cls == null)
+      return 0;
     if (this.isShutdown)
       return 0;
 
@@ -145,19 +148,39 @@ public class TypeManager
 
     return out;
   }
-  
+
   public long findClassByName(String str)
   {
+    Class<?> cls = null;
     try
     {
-      Class<?> cls = Class.forName(str);
-      return this.findClass(cls);
+      cls = Class.forName(str);
     } catch (ClassNotFoundException ex)
     {
-      return 0;
     }
+    
+    if (cls == null && !str.contains("."))
+    {
+      if ("boolean".equals(str))
+        cls = Boolean.TYPE;
+      if ("byte".equals(str))
+        cls = Byte.TYPE;
+      if ("char".equals(str))
+        cls = Character.TYPE;
+      if ("short".equals(str))
+        cls = Short.TYPE;
+      if ("long".equals(str))
+        cls = Long.TYPE;
+      if ("int".equals(str))
+        cls = Integer.TYPE;
+      if ("float".equals(str))
+        cls = Float.TYPE;
+      if ("double".equals(str))
+        cls = Double.TYPE;
+    }
+    return this.findClass(cls);
   }
-  
+
   public long findClassForObject(Object obj)
   {
     if (obj == null)
@@ -329,7 +352,7 @@ public class TypeManager
    */
   private void createPrimitive(String name, Class cls, Class boxed)
   {
-    long classPtr = typeFactory.definePrimitive(context, 
+    long classPtr = typeFactory.definePrimitive(context,
             name,
             cls,
             this.getClass(boxed).classPtr,
@@ -571,11 +594,20 @@ public class TypeManager
 
       // Convert the executable parameters
       Class<?>[] params = method.getParameterTypes();
-      long[] paramPtrs = new long[params.length];
       int i = 0;
+      long[] paramPtrs = null;
+      if (!Modifier.isStatic(method.getModifiers()))
+      {
+        paramPtrs = new long[params.length + 1];
+        paramPtrs[0] = getClass(method.getDeclaringClass()).classPtr;
+        i++;
+      } else
+      {
+        paramPtrs = new long[params.length];
+      }
       for (Class<?> p : params)
       {
-        paramPtrs[i++] = this.getClass(p).classPtr;
+        paramPtrs[i++] = getClass(p).classPtr;
       }
 
       // Determine what takes precedence
@@ -671,14 +703,14 @@ public class TypeManager
       return false;
     }
   }
-  
-  /** Bean accessor is flag is used for property
-   * module.
-   * 
-   * Accessors need 
-   * 
+
+  /**
+   * Bean accessor is flag is used for property module.
+   * <p>
+   * Accessors need
+   *
    * @param method
-   * @return 
+   * @return
    */
   private boolean isBeanAccessor(Method method)
   {
@@ -693,11 +725,11 @@ public class TypeManager
     return (method.getName().startsWith("get"));
   }
 
-  /** Bean mutator is flag is used for property
-   * module.
-   * 
+  /**
+   * Bean mutator is flag is used for property module.
+   *
    * @param method
-   * @return 
+   * @return
    */
   private boolean isBeanMutator(Method method)
   {

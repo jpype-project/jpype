@@ -78,7 +78,7 @@ void PyJPValue::initType(PyObject* module)
 
 bool PyJPValue::check(PyObject* o)
 {
-	return Py_TYPE(o) == &PyJPValue::Type;
+	return o != NULL && Py_TYPE(o) == &PyJPValue::Type;
 }
 
 // These are from the internal methods when we alreayd have the jvalue
@@ -90,7 +90,8 @@ JPPyObject PyJPValue::alloc(const JPValue& value)
 
 JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 {
-	JPJavaFrame frame(cls->getContext());
+	JPContext* context = cls->getContext();
+	JPJavaFrame frame(context);
 	JP_TRACE_IN("PyJPValue::alloc");
 	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
 	JP_PY_CHECK();
@@ -102,6 +103,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	// New value instance
 	self->m_Value = JPValue(cls, value);
 	self->m_Cache = NULL;
+	self->m_Context = (PyJPContext*) (context->getHost());
 	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
@@ -176,32 +178,6 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPValue::__str__(PyJPValue* self)
-{
-	try
-	{
-		JPContext* context = self->m_Value.getClass()->getContext();
-		ASSERT_JVM_RUNNING(context, "PyJPValue::__str__");
-		JPJavaFrame frame(context);
-		stringstream sout;
-		sout << "<java value " << self->m_Value.getClass()->toString();
-
-		// FIXME Remove these extra diagnostic values
-		if (dynamic_cast<JPPrimitiveType*> (self->m_Value.getClass()) != NULL)
-			sout << endl << "  value = primitive";
-		else
-		{
-			jobject jo = self->m_Value.getJavaObject();
-			sout << "  value = " << jo << " " << context->toString(jo);
-		}
-
-		sout << ">";
-		return JPPyString::fromStringUTF8(sout.str()).keep();
-	}
-	PY_STANDARD_CATCH;
-	return 0;
-}
-
 void PyJPValue::__dealloc__(PyJPValue* self)
 {
 	JP_TRACE_IN("PyJPValue::__dealloc__");
@@ -228,9 +204,36 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	}
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	Py_TYPE(self)->tp_free(self);
-	Py_DECREF(self->m_Context);
+	if (self->m_Context != NULL)
+		Py_DECREF(self->m_Context);
 	self->m_Context = NULL;
 	JP_TRACE_OUT;
+}
+
+PyObject* PyJPValue::__str__(PyJPValue* self)
+{
+	try
+	{
+		JPContext* context = self->m_Value.getClass()->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPValue::__str__");
+		JPJavaFrame frame(context);
+		stringstream sout;
+		sout << "<java value " << self->m_Value.getClass()->toString();
+
+		// FIXME Remove these extra diagnostic values
+		if (dynamic_cast<JPPrimitiveType*> (self->m_Value.getClass()) != NULL)
+			sout << endl << "  value = primitive";
+		else
+		{
+			jobject jo = self->m_Value.getJavaObject();
+			sout << "  value = " << jo << " " << context->toString(jo);
+		}
+
+		sout << ">";
+		return JPPyString::fromStringUTF8(sout.str()).keep();
+	}
+	PY_STANDARD_CATCH;
+	return 0;
 }
 
 void ensureCache(PyJPValue* self)
