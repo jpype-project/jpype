@@ -281,12 +281,14 @@ def _JClassFactory(name, jc):
         bases.append(_JObject)
     elif jc.isArray():
         bases.append(_jarray.JArray)
-    elif jc.isPrimitive():
+
+    if jc.isPrimitive():
         bases.append(object)
     elif bjc is not None:
         bases.append(JClass(bjc))
     elif bjc is None:
         bases.append(JInterface)
+
     itf = jc.getInterfaces()
     for ic in itf:
         bases.append(JClass(ic))

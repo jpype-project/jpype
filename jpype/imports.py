@@ -74,7 +74,6 @@ from . import _jclass
 from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
-_exportTypes = (property, _jclass.JClass, _JImport, _jpype.PyJPMethod)
 
 # %% Utility
 
@@ -295,7 +294,7 @@ class _JImportLoader:
     """ (internal) Loader hook for importlib. """
 
     def create_module(self, spec):
-        if not _jpype.isStarted():
+        if not _jpype._jvm.isStarted():
             raise ImportError("Attempt to create java modules without jvm")
 
         # Handle creating the java name based on the path
@@ -362,4 +361,6 @@ registerDomain('com')
 registerDomain('gov')
 registerDomain('java')
 registerDomain('org')
+
+_exportTypes = (property, _jclass.JClass, _JImport, _jpype.PyJPMethod)
 
