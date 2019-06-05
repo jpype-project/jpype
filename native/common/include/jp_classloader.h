@@ -31,7 +31,7 @@ class JPClassLoader
 public:
 	/** Initialize the class loader.
 	 */
-	JPClassLoader(JPContext* context, bool UseSystem);
+	JPClassLoader(JPContext* context);
 
 	/** Load a class by name from the jpype.jar.
 	 * 
@@ -52,7 +52,6 @@ private:
 	JPObjectRef m_SystemClassLoader;
 	JPObjectRef m_BootLoader;
 	jmethodID m_FindClass;
-	bool m_UseSystem;
 } ;
 
 #endif // _JPCLASSLOADER_H_

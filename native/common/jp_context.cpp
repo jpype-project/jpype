@@ -168,7 +168,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 		_java_lang_RuntimeException = JPClassRef(this, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
 		// Bootloader needs to go first so we can load classes
-		m_ClassLoader = new JPClassLoader(this, false);
+		m_ClassLoader = new JPClassLoader(this);
 
 		JP_TRACE("Install native");
 		// Start the rest of the services
@@ -195,6 +195,13 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 				"()Lorg/jpype/manager/TypeManager;");
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
 				frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
+		
+				// Hook up the reference queue
+		jmethodID getReferenceQueue = frame.GetMethodID(cls, "getReferenceQueue",
+				"()Lorg/jpype/ref/JPypeReferenceQueue;");
+		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(this,
+				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
+
 	}
 	m_IsInitialized = true;
 	JP_TRACE_OUT;

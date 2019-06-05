@@ -43,6 +43,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void registerRef(Object javaObject, long pythonObject)
   {
+    System.out.println("REGISTER REFERENCE");
     JPypeReference ref = new JPypeReference(this, javaObject, pythonObject);
     mHostReferences.add(ref);
   }

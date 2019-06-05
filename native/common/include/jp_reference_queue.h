@@ -20,6 +20,7 @@
 
 class JPReferenceQueue
 {
+	friend class JPContext;
 public:
 	JPReferenceQueue(JPContext* context);
 	~JPReferenceQueue();
