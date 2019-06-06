@@ -49,6 +49,7 @@ cases1 = [
     ("float(12.3)", float(12.3)),
 
     ("JBoolean(True)", JBoolean(True)),
+    ("JByte(1)", JByte(1)),
     ("JChar(1)", JChar(1)),
     ("JShort(1)", JShort(1)),
     ("JInt(1)", JInt(1)),
@@ -57,6 +58,7 @@ cases1 = [
     ("JDouble(3.5)", JDouble(3.5)),
 
     ("java.lang.Boolean(True)", java.lang.Boolean(True)),
+    ("java.lang.Byte(1)", java.lang.Byte(1)),
     ("java.lang.Character(1)", java.lang.Character(1)),
     ("java.lang.Short(1)", java.lang.Short(1)),
     ("java.lang.Integer(1)", java.lang.Integer(1)),
@@ -95,14 +97,15 @@ cases2 = [
 
 types1 = [
     JBoolean,
+    JByte,
     JChar,
     JShort,
     JInt,
     JLong,
     JFloat,
     JDouble,
-    java.lang.Character,
     java.lang.Byte,
+    java.lang.Character,
     java.lang.Short,
     java.lang.Integer,
     java.lang.Long,

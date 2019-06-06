@@ -140,6 +140,8 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
 		JPContext *context = type->getContext();
+		self->m_Context = (PyJPContext*) (context->getHost());
+		Py_INCREF(self->m_Context);
 		ASSERT_JVM_RUNNING(context, "PyJPValue::__init__");
 		JPJavaFrame frame(context);
 
@@ -148,11 +150,10 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		JPValue* jval = JPPythonEnv::getJavaValue(value);
 		if (jval != NULL && type->isInstance(*jval))
 		{
+
 			jvalue v = jval->getValue();
 			v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);
-			self->m_Context = (PyJPContext*) (context->getHost());
-			Py_INCREF(self->m_Context);
 			return 0;
 		}
 
@@ -169,8 +170,6 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		if (dynamic_cast<JPPrimitiveType*> (type) != type)
 			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
-		self->m_Context = (PyJPContext*) (context->getHost());
-		Py_INCREF(self->m_Context);
 		return 0;
 	}
 	PY_STANDARD_CATCH;
@@ -180,32 +179,36 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 
 void PyJPValue::__dealloc__(PyJPValue* self)
 {
+	// We have to handle partially constructed objects that result from 
+	// fails in __init__, thus lots of inits
 	JP_TRACE_IN("PyJPValue::__dealloc__");
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
-	JPContext* context = cls->getContext();
 	JP_TRACE("Value", cls, &(value.getValue()));
 	if (self->m_Cache != NULL)
 	{
 		Py_DECREF(self->m_Cache);
 		self->m_Cache = NULL;
 	}
-	// This one can't check for initialized because we may need to delete a stale
-	// resource after shutdown.
-	if (cls != NULL && context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
-	{
-		// If the JVM has shutdown then we don't need to free the resource
-		// FIXME there is a problem with initializing the sytem twice.
-		// Once we shut down the cls type goes away so this will fail.  If
-		// we then reinitialize we will access this bad resource.  Not sure
-		// of an easy solution.
-		JP_TRACE("Dereference object");
-		context->ReleaseGlobalRef(value.getValue().l);
-	}
-	JP_TRACE("free context", self->m_Context);
 	if (self->m_Context != NULL)
+	{
+		JPContext* context = self->m_Context->m_Context;
+		// This one can't check for initialized because we may need to delete a stale
+		// resource after shutdown.
+		if (cls != NULL && context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+		{
+			// If the JVM has shutdown then we don't need to free the resource
+			// FIXME there is a problem with initializing the sytem twice.
+			// Once we shut down the cls type goes away so this will fail.  If
+			// we then reinitialize we will access this bad resource.  Not sure
+			// of an easy solution.
+			JP_TRACE("Dereference object");
+			context->ReleaseGlobalRef(value.getValue().l);
+		}
+		JP_TRACE("free context", self->m_Context);
 		Py_DECREF(self->m_Context);
-	self->m_Context = NULL;
+		self->m_Context = NULL;
+	}
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT;

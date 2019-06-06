@@ -68,6 +68,11 @@ public:
 	{
 		return JPModifier::isInterface(m_Modifiers);
 	}
+	
+	JPMethodDispatch* getCtor()
+	{
+		return m_Constructors;
+	}
 
 	const JPMethodDispatchList& getMethods()
 	{

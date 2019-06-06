@@ -17,6 +17,7 @@ package org.jpype.manager;
 
 import java.lang.reflect.Executable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -108,6 +109,46 @@ public class MethodResolution
     return out;
   }
 
+  // Table for primitive rules
+  static Class[] of(Class ... l) { return l; }
+  static HashMap<Class, Class[]> CONVERSION = new HashMap<>();
+  {
+    CONVERSION.put(Byte.TYPE, 
+            of(Byte.TYPE, Byte.class, Short.TYPE, Short.class, 
+              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
+              Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Character.TYPE, 
+            of(Character.TYPE, Character.class, Short.TYPE, Short.class, 
+              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
+              Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Short.TYPE, 
+            of(Short.TYPE, Short.class, 
+              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
+              Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Integer.TYPE, 
+            of(Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
+              Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Long.TYPE, 
+            of(Long.TYPE, Long.class, 
+              Float.TYPE, Float.class, Double.TYPE, Double.class));
+     CONVERSION.put(Float.TYPE, 
+            of(Float.TYPE, Float.class, Double.TYPE, Double.class));
+     CONVERSION.put(Double.TYPE, 
+            of(Double.TYPE, Double.class));
+  }
+  static boolean isAssignable(Class c1, Class c2)
+  {
+    if (!c1.isPrimitive())
+      return c1.isAssignableFrom(c2);
+    Class[] cl = CONVERSION.get(c1);
+    if (cl==null)
+      return false;
+    for (Class c3:cl)
+      if (c2.equals(c3))
+        return true;
+    return false;
+  }
+
   /**
    * Determine is a executable is more specific than another.
    * <p>
@@ -127,7 +168,7 @@ public class MethodResolution
 
     for (int i = 0; i < param1.length; ++i)
     {
-      if (!param1[i].isAssignableFrom(param2[i]))
+      if (!isAssignable(param1[i], param2[i]))
         return false;
     }
     return true;

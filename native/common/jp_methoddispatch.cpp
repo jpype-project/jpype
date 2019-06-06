@@ -182,7 +182,8 @@ string JPMethodDispatch::dump()
 		for (JPMethodList::iterator iter = u->m_MoreSpecificOverloads.begin();
 				iter != u->m_MoreSpecificOverloads.end(); ++iter)
 		{
-			res << "   " << (*iter)->toString() << std::endl;
+//			res << "   " << (*iter)->toString() << std::endl;
+			res << "   " << *iter << std::endl;
 		}
 	}
 	return res.str();

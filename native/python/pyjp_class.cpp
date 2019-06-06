@@ -34,6 +34,7 @@ static PyMethodDef classMethods[] = {
 	{"asJavaValue", (PyCFunction) (&PyJPClass::asJavaValue), METH_NOARGS, ""},
 	{"canConvertToJava", (PyCFunction) (&PyJPClass::canConvertToJava), METH_VARARGS, ""},
 	{"convertToJava", (PyCFunction) (&PyJPClass::convertToJava), METH_VARARGS, ""},
+	{"dumpCtor", (PyCFunction) (&PyJPClass::dumpCtor), METH_VARARGS, ""},
 
 	{NULL},
 };
@@ -509,6 +510,20 @@ PyObject* PyJPClass::convertToJava(PyJPClass* self, PyObject* args)
 		// Otherwise give back a PyJPValue
 		jvalue v = cls->convertToJava(other);
 		return PyJPValue::alloc(cls, v).keep();
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+}
+
+PyObject* PyJPClass::dumpCtor(PyJPClass* self, PyObject* args)
+{
+	try
+	{
+		JPContext *context = self->m_Class->getContext();
+		ASSERT_JVM_RUNNING(context, "PyJPClass::dump");
+		JPJavaFrame frame(context);
+		string report = self->m_Class->getCtor()->dump();
+		return JPPyString::fromStringUTF8(report).keep();
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
