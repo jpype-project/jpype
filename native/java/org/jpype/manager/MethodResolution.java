@@ -104,7 +104,6 @@ public class MethodResolution
       {
         unsorted.add(front);
       }
-
     }
     return out;
   }

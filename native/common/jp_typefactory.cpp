@@ -145,7 +145,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		string className = context->toStringUTF8(name);
 		JP_TRACE(className);
 		JPClassList interfaces;
-		convert(frame, interfacePtrs, interfaces);
+		if (interfacePtrs != NULL)
+			convert(frame, interfacePtrs, interfaces);
 		JPClass* result = NULL;
 		if (JPModifier::isSpecial(modifiers))
 		{
@@ -286,7 +287,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 	try
 	{
 		string cname = context->toStringUTF8(name);
-		JP_TRACE("class",cls);
+		JP_TRACE("class", cls);
 		JP_TRACE(cname);
 		jfieldID fid = frame.FromReflectedField(field);
 		return (jlong) (new JPField(

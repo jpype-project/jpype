@@ -68,7 +68,7 @@ public:
 	{
 		return JPModifier::isInterface(m_Modifiers);
 	}
-	
+
 	JPMethodDispatch* getCtor()
 	{
 		return m_Constructors;
@@ -182,6 +182,7 @@ public:
 	}
 
 	virtual JPValue newInstance(JPPyObjectVector& args);
+
 	const JPClassList& getInterfaces()
 	{
 		return m_Interfaces;

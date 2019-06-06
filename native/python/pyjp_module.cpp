@@ -89,18 +89,18 @@ PyMODINIT_FUNC init_jpype()
 
 PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
 {
-       JP_TRACE_IN("PyJPModule::setResource");
-       try
-       {
-               char* tname;
-               PyObject* value;
-               PyArg_ParseTuple(arg, "sO", &tname, &value);
-               JP_PY_CHECK();
-               JPPythonEnv::setResource(tname, value);
-               Py_RETURN_NONE;
-       }
-       PY_STANDARD_CATCH
+	JP_TRACE_IN("PyJPModule::setResource");
+	try
+	{
+		char* tname;
+		PyObject* value;
+		PyArg_ParseTuple(arg, "sO", &tname, &value);
+		JP_PY_CHECK();
+		JPPythonEnv::setResource(tname, value);
+		Py_RETURN_NONE;
+	}
+	PY_STANDARD_CATCH
 
-       return NULL;
-       JP_TRACE_OUT;
+	return NULL;
+	JP_TRACE_OUT;
 }

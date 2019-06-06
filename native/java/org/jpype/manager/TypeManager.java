@@ -319,7 +319,8 @@ public class TypeManager
     if (parent.anonymous != 0)
       return parent.anonymous;
 
-    parent.anonymous = typeFactory.defineObjectClass(context, parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
+    parent.anonymous = typeFactory.defineObjectClass(context, 
+            parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
             ModifierCode.ANONYMOUS.value);

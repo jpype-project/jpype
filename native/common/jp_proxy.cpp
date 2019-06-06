@@ -29,7 +29,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 	JP_TRACE("Context", context);
 	JP_TRACE("Env", env);
 	if (true)
-		return  0;
+		return 0;
 	JPJavaFrame frame(context, env);
 	JPPyCallAcquire callback;
 
@@ -71,7 +71,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		{
 			if (returnClass != context->_void) // && returnT.getType() < JPTypeName::_object)
 			{
-				frame.ThrowNew(context->_java_lang_RuntimeException.get(), 
+				frame.ThrowNew(context->_java_lang_RuntimeException.get(),
 						"Return value is None when it cannot be");
 				return NULL;
 			}

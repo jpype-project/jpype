@@ -236,9 +236,9 @@ private:
 
 private:
 	JPContext(const JPContext& orig);
-	
+
 	JavaVM* m_JavaVM;
-	
+
 	// Java half
 	JPObjectRef m_JavaContext;
 

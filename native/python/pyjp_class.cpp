@@ -137,7 +137,7 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 			if (jpvalue->getClass() != context->_java_lang_Class)
 			{
 				stringstream err;
-				err << "Incorrect Java class " << jpvalue->getClass()->toString() 
+				err << "Incorrect Java class " << jpvalue->getClass()->toString()
 						<< " vs " << context->_java_lang_Class->toString();
 				PyErr_SetString(PyExc_TypeError, err.str().c_str());
 				return -1;

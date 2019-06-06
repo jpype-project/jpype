@@ -409,7 +409,7 @@ void JPypeException::toJava(JPContext *context)
 				{
 					JP_TRACE("Java rethrow");
 					frame.Throw(m_Throwable.get());
-  					return;
+					return;
 				}
 
 			default:

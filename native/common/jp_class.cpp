@@ -308,7 +308,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPJavaFrame frame(m_Context);
 	jvalue res;
 	JP_TRACE("Post frame");
-	
+
 	res.l = NULL;
 
 	// assume it is convertible;

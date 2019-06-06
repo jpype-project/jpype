@@ -155,7 +155,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 	// Connect our resources to the JVM
 	{
 		JPJavaFrame frame(this);
-		
+
 		// After the JVM is created but before the context is started, we need 
 		// lo set up all the services that the context will need.
 		JP_TRACE("Initialize");
@@ -195,8 +195,8 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 				"()Lorg/jpype/manager/TypeManager;");
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
 				frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
-		
-				// Hook up the reference queue
+
+		// Hook up the reference queue
 		jmethodID getReferenceQueue = frame.GetMethodID(cls, "getReferenceQueue",
 				"()Lorg/jpype/ref/JPypeReferenceQueue;");
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(this,
@@ -220,9 +220,9 @@ void JPContext::shutdownJVM()
 		JP_TRACE("Shutdown services");
 		JP_TRACE(m_JavaContext.get());
 		JP_TRACE(m_ContextShutdownMethod);
-		
+
 		// Tell Java to shutdown the context
-		if (m_JavaContext.get()!=0)
+		if (m_JavaContext.get() != 0)
 			frame.CallVoidMethodA(m_JavaContext.get(), m_ContextShutdownMethod, 0);
 	}
 
