@@ -200,5 +200,15 @@ public class Test1 {
     public static class DefaultC implements IDefaultC {
     }
     //*/
+		//
+
+    public static String testMixed(Object o, int i)
+		{
+			return "static";
+		}
     
+    public String testMixed(int i)
+		{
+			return "method";
+		}
 }

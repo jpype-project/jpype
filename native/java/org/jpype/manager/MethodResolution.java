@@ -16,7 +16,9 @@
 package org.jpype.manager;
 
 import java.lang.reflect.Executable;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -135,10 +137,10 @@ public class MethodResolution
      CONVERSION.put(Double.TYPE, 
             of(Double.TYPE, Double.class));
   }
-  static boolean isAssignable(Class c1, Class c2)
+  static boolean isAssignableTo(Class c1, Class c2)
   {
     if (!c1.isPrimitive())
-      return c1.isAssignableFrom(c2);
+      return c2.isAssignableFrom(c1);
     Class[] cl = CONVERSION.get(c1);
     if (cl==null)
       return false;
@@ -159,15 +161,22 @@ public class MethodResolution
    */
   public static boolean isMoreSpecificThan(Executable method1, Executable method2)
   {
-    Class<?>[] param1 = method1.getParameterTypes();
-    Class<?>[] param2 = method2.getParameterTypes();
+    List<Class<?>> param1 = new ArrayList<>(Arrays.asList(method1.getParameterTypes()));
+    List<Class<?>> param2 = new ArrayList<>(Arrays.asList(method2.getParameterTypes()));
 
-    if (param1.length != param2.length)
+    if (!Modifier.isStatic(method1.getModifiers()))
+      param1.add(0, method1.getDeclaringClass());
+    if (!Modifier.isStatic(method2.getModifiers()))
+      param2.add(0, method2.getDeclaringClass());
+    
+    // FIXME need to consider resolving mixing of static and non-static
+    // Methods here.
+    if (param1.size() != param2.size())
       return false;
 
-    for (int i = 0; i < param1.length; ++i)
+    for (int i = 0; i < param1.size(); ++i)
     {
-      if (!isAssignable(param1[i], param2[i]))
+      if (!isAssignableTo(param1.get(i), param2.get(i)))
         return false;
     }
     return true;

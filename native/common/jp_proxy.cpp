@@ -17,19 +17,18 @@
 #include <Python.h>
 #include <jpype.h>
 
-JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
-		JNIEnv *env, jclass clazz, jlong contextPtr, jstring name,
+JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
+		JNIEnv *env, jclass clazz, 
+		jlong contextPtr, jstring name,
 		jlong hostObj,
 		jobjectArray args,
 		jobjectArray types,
 		jclass returnType)
 {
-	JP_TRACE_IN("Java_jpype_JPypeInvocationHandler_hostInvoke");
+	JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 	JPContext* context = (JPContext*) contextPtr;
 	JP_TRACE("Context", context);
 	JP_TRACE("Env", env);
-	if (true)
-		return 0;
 	JPJavaFrame frame(context, env);
 	JPPyCallAcquire callback;
 
@@ -62,7 +61,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			pyargs.setItem(i, type->convertToPythonObject(val).get());
 		}
 
-		JP_TRACE("Call python");
+		JP_TRACE("Call Python");
 		JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 		JPClass* returnClass = context->getTypeManager()->findClass(returnType);
 
@@ -123,7 +122,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
 	method[0].signature = (char*) "(JLjava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
-	method[0].fnPtr = (void*) &Java_jpype_JPypeInvocationHandler_hostInvoke;
+	method[0].fnPtr = (void*) &JPype_InvocationHandler_hostInvoke;
 	frame.GetMethodID(proxyClass, "<init>", "()V");
 	frame.RegisterNatives(proxyClass, method, 1);
 
@@ -177,10 +176,8 @@ jobject JPProxy::getProxy()
 {
 	JP_TRACE_IN("JPProxy::getProxy");
 	JPContext* context = getContext();
-	JP_TRACE("Context", context);
 	JPJavaFrame frame(context);
 
-	JP_TRACE("Factory", m_Factory);
 	// Use the proxy to make an instance
 	JP_TRACE("Create handler");
 	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),

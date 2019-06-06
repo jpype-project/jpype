@@ -15,7 +15,7 @@
 #
 # *****************************************************************************
 import jpype
-from jpype import JString, java, JArray, JClass, JByte, JShort, JInt, JLong, JFloat, JDouble, JChar, JBoolean, JObject
+from jpype.types import *
 import sys
 import time
 import common
@@ -44,10 +44,11 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testMostSpecificInstanceMethod(self):
         test1 = self.__jp.Test1()
-        self.assertEqual('A', test1.testMostSpecific(self._a))
-        self.assertEqual('B', test1.testMostSpecific(self._b))
-        self.assertEqual('B', test1.testMostSpecific(self._c))
-        self.assertEqual('B', test1.testMostSpecific(None))
+        print(test1.testMostSpecific.dump())
+        self.assertEqual('A', str(test1.testMostSpecific(self._a)))
+        self.assertEqual('B', str(test1.testMostSpecific(self._b)))
+        self.assertEqual('B', str(test1.testMostSpecific(self._c)))
+        self.assertEqual('B', str(test1.testMostSpecific(None)))
 
     def testForceOverloadResolution(self):
         test1 = self.__jp.Test1()
@@ -66,7 +67,7 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testVarArgsCall(self):
         test1 = self.__jp.Test1()
-        self.assertEqual('A,B...', test1.testVarArgs(self._a, []))
+        self.assertEqual('A,B...', str(test1.testVarArgs(self._a, [])))
         self.assertEqual('A,B...', test1.testVarArgs(self._a, None))
         self.assertEqual('A,B...', test1.testVarArgs(self._a, [self._b]))
         self.assertEqual('A,A...', test1.testVarArgs(self._a, [self._a]))
@@ -154,13 +155,13 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testClassVsObject(self):
         test1 = self.__jp.Test1()
-        self.assertEqual('Object', test1.testClassVsObject(self._i4impl))
-        self.assertEqual('Object', test1.testClassVsObject(1))
-        self.assertEqual('Class', test1.testClassVsObject(None))
-        self.assertEqual('Class', test1.testClassVsObject(
-            JClass('jpype.overloads.Test1$I4Impl')))
-        self.assertEqual('Class', test1.testClassVsObject(
-            JClass('jpype.overloads.Test1$I3')))
+        self.assertEqual('Object', str(test1.testClassVsObject(self._i4impl)))
+        self.assertEqual('Object', str(test1.testClassVsObject(1)))
+        self.assertEqual('Class', str(test1.testClassVsObject(None)))
+        self.assertEqual('Class', str(test1.testClassVsObject(
+            JClass('jpype.overloads.Test1$I4Impl'))))
+        self.assertEqual('Class', str(test1.testClassVsObject(
+            JClass('jpype.overloads.Test1$I3'))))
 
     def testStringArray(self):
         test1 = self.__jp.Test1()
@@ -189,3 +190,9 @@ class OverloadTestCase(common.JPypeTestCase):
             pass
         else:
             self.assertEqual('B', testdefault.defaultMethod())
+
+    def testMixed(self):
+        test1 = self.__jp.Test1()
+        self.assertEqual("static", str(test1.testMixed(JObject(), 1)))
+        self.assertEqual("method", str(test1.testMixed(test1, 1)))
+ 

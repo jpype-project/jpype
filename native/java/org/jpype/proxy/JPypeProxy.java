@@ -31,7 +31,6 @@ public class JPypeProxy
 
   public static JPypeProxy newProxy(long context, long instance, Class<?>[] interfaces)
   {
-    System.out.println("NEW PROXY "+context+" "+instance);
     JPypeProxy proxy = new JPypeProxy();
     proxy.context = context;
     proxy.instance = instance;
@@ -41,7 +40,6 @@ public class JPypeProxy
 
   public Object newInstance()
   {
-    System.out.println("NEW INSTANCE "+context+" "+instance);
     ClassLoader cl = ClassLoader.getSystemClassLoader();
     InvocationHandler ih = new InvocationHandler()
     {
