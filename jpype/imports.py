@@ -244,16 +244,16 @@ class _JImport(object):
             return jtype
 
         # If the java class does not exist, throw a ClassNotFound exception
-        raise ImportError("Unable to find java class " + jname)
+        raise ImportError("Unable to find java class '%s'"%jname)
 
     def __setattr__(self, name, value):
         if name.startswith('__'):
-            raise AttributeError("Module does not allow setting of %s" % name)
+            raise AttributeError("Module does not allow setting of '%s'" % name)
         if hasattr(value, '__javaclass__'):
             return object.__setattr__(self, name, getattr(value, '__javaclass__'))
         if isinstance(value, (_JImport, _ModuleType)):
             return object.__setattr__(self, name, value)
-        raise AttributeError("JImport may not set attribute %s" % name)
+        raise AttributeError("JImport may not set attribute '%s'" % name)
 
 
 # In order to get properties to be attached to the _JImport class,
