@@ -201,7 +201,7 @@ void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
+JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethodOverload::invoke");
 	size_t alen = m_ParameterTypes.size();
@@ -224,7 +224,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg)
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c = selfObj->getJavaObject();
 		jclass clazz = NULL;
-		if (!m_Class->isAbstract())
+		if (!m_Class->isAbstract() && !instance)
 			clazz = m_Class->getJavaClass();
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}

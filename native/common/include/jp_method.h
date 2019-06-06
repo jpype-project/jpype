@@ -72,7 +72,7 @@ public:
 	 * 
 	 */
 	JPMatch matches(bool isInstance, JPPyObjectVector& args);
-	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg);
+	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
 	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
 
 	bool isStatic() const

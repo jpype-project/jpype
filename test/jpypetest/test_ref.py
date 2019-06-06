@@ -27,23 +27,17 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.classLoader = jpype.JClass(
-            'org.jpype.classloader.JPypeClassLoader').getInstance()
+            'org.jpype.JPypeContext').getInstance().getBootLoader()
+        self.refqueue = jpype.JClass(
+            'org.jpype.JPypeContext').getInstance().getReferenceQueue()
 
     def testAccess(self):
-        # Access the reference queue using the private class loader
-        JPypeReferenceQueue = jpype.JClass(
-            'org.jpype.ref.JPypeReferenceQueue', loader=self.classLoader)
         # Make sure we can get the instance
-        self.assertTrue(JPypeReferenceQueue.getInstance() != None)
+        self.assertTrue(self.refqueue != None)
 
     def testRunning(self):
-        # Access the reference queue using the private class loader
-        JPypeReferenceQueue = jpype.JClass(
-            'org.jpype.ref.JPypeReferenceQueue', loader=self.classLoader)
-
         # Get the queue instance
-        queue = JPypeReferenceQueue.getInstance()
-        self.assertTrue(queue.isRunning())
+        self.assertTrue(self.refqueue.isRunning())
 
 
 if __name__ == '__main__':
