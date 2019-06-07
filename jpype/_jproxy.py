@@ -30,7 +30,7 @@ if sys.version > '3':
 # so we can properly handle name mangling on the override.
 
 
-def _createJProxy(cls, intf, **kwargs):
+def _createJProxy(cls, *intf, **kwargs):
     """ (internal) Create a proxy from a python class with
     @JOverride notation on methods.
     """
@@ -52,7 +52,7 @@ def _createJProxy(cls, intf, **kwargs):
             if method.getModifiers() & 1024 == 0:
                 continue
             if not str(method.getName()) in overrides:
-                raise NotImplementedError("Interface %s requires method %s to be implemented." % (
+                raise NotImplementedError("Interface '%s' requires method '%s' to be implemented." % (
                     interface.class_.getName(), method.getName()))
 
     # Define a lookup interface
@@ -90,53 +90,64 @@ def JImplements(*args, **kwargs):
     should have a @JOverride annotation.
 
     Args:
-      interfaces (str): Strings for each Java interface this proxy is to
-        implement.
+      interfaces (str*,JClass*): Strings or JClasses for each Java interface
+        this proxy is to implement.
 
     Example:
 
       .. code-block:: python
 
-          @JImplement("org.my.Interface")
+          @JImplement("java.lang.Runnable")
+          class MyImpl(object):
+             @JOverride
+             def run(self, arg):
+               pass
+
+          @JImplement("org.my.Interface1", "org.my.Interface2")
           class MyImpl(object):
              @JOverride
              def method(self, arg):
                pass
 
     """
-    def f(cls):
-        return _createJProxy(cls, args, **kwargs)
-    return f
+    def JProxyCreator(cls):
+        return _createJProxy(cls, *args, **kwargs)
+    return JProxyCreator
 
 
 def _convertInterfaces(intf):
     """ (internal) Convert a list of interface names into
     a list of interfaces suitable for a proxy.
     """
-    # We operate on lists of interfaces, so a single element is promoted
-    # to a list. Python considers strings to be sequences, so need
-    # special handling for that case.
-    if isinstance(intf, (str, unicode)) or not isinstance(intf, collections.Sequence):
-        intf = [intf]
-
-    # Verify that the list contains the required types
-    actualIntf = []
-    for i in intf:
-        if isinstance(i, str) or isinstance(i, unicode):
-            actualIntf.append(_jclass.JClass(i))
-        elif isinstance(i, _jclass.JClass):
-            actualIntf.append(i)
+    # Flatten the list
+    intflist = []
+    for item in intf:
+        if isinstance(item, (str, unicode)) or not hasattr(item, '__iter__'):
+            intflist.append(item)
         else:
-            raise TypeError("JProxy requires java interface classes "
-                            "or the names of java interfaces classes: {0}".format(i.__name))
-    # Check that all are interfaces
-    for i in actualIntf:
-        if not issubclass(i, _jclass.JInterface):
-            raise TypeError("JProxy requires java interface classes "
-                            "or the names of java interfaces classes: {0}"
-                            .format(i.__name__))
+            intflist.extend(item)
 
-    return actualIntf
+    # Look up the classes if given as a string
+    actualIntf = set()
+    for item in intflist:
+        if isinstance(item, (str, unicode)):
+            actualIntf.add(_jclass.JClass(item))
+        else:
+            actualIntf.add(item)
+
+    # Check that all are interfaces
+    if not actualIntf:
+        raise TypeError("At least one Java interface must be specified")
+
+    for cls in actualIntf:
+        # If it isn't a JClass, then it cannot be a Java interface
+        if not isinstance(cls, _jclass.JClass):
+            raise TypeError("'%s' is not a Java interface"%type(cls).__name__)
+        # Java concrete and abstract classes cannot be proxied
+        if not issubclass(cls, _jclass.JInterface):
+            raise TypeError("'%s' is not a Java interface"%cls.__name__)
+
+    return tuple(actualIntf)
 
 
 class JProxy(object):
@@ -164,7 +175,7 @@ class JProxy(object):
             whose names matches the java interfaces methods.
     """
 
-    def __init__(self, intf, dict=None, inst=None):
+    def __init__(self, *intf, dict=None, inst=None):
         # Convert the interfaces
         actualIntf = _convertInterfaces(intf)
 
@@ -187,4 +198,4 @@ class JProxy(object):
             # create a proxy
             self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)
             return
-        raise TypeError("a dict or instance must be supplied")
+        raise TypeError("a dict or inst must be specified")
