@@ -26,6 +26,7 @@
 namespace
 { // impl details
 	JavaVM* s_JavaVM = NULL;
+	bool s_ConvertStrings = false;
 
 	jint(JNICALL *CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL *GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
@@ -137,9 +138,10 @@ void loadEntryPoints(const string& path)
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
-void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args)
+void JPEnv::loadJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings)
 {
 	JP_TRACE_IN("JPEnv::loadJVM");
+        s_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
 	loadEntryPoints(vmPath);
@@ -175,6 +177,11 @@ void JPEnv::loadJVM(const string& vmPath, char ignoreUnrecognized, const StringV
 	JPProxy::init();
 	JPReferenceQueue::startJPypeReferenceQueue(true);
 	JP_TRACE_OUT;
+}
+
+bool JPEnv::getConvertStrings()
+{
+  return s_ConvertStrings;
 }
 
 void JPEnv::shutdown()

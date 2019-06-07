@@ -101,7 +101,7 @@ _JVM_started = False
 def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
-    the JVM with the default classpath and jvmpath.  
+    the JVM with the default classpath and jvmpath.
 
     The default classpath is determined by ``jpype.getClassPath()``.
     The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
@@ -112,17 +112,23 @@ def startJVM(*args, **kwargs):
 
     Keyword Arguments:
       jvmpath (str):  Path to the jvm library file,
-        Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
+        Typically one of (``libjvm.so``, ``jvm.dll``, ...)
         Using None will apply the default jvmpath.
       classpath (str,[str]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
       ignoreUnrecognized (bool): Option to JVM to ignore
         invalid JVM arguments. Default is False.
+      convertStrings (bool): Option to JPype to force Java strings to
+        cast to Python strings. This option is to support legacy code
+        for which conversion of Python strings was the default. This
+        will globally change the behavior of all calls using
+        strings, and is not recommended for newly developed
+        code.
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
-      TypeError: if an invalid keyword argument is supplied 
+      TypeError: if an invalid keyword argument is supplied
         or a keyword argument conflicts with the arguments.
 
      """
@@ -171,12 +177,13 @@ def startJVM(*args, **kwargs):
                         (_classpath._SEP.join(classpath)))
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
+    convertStrings = kwargs.pop('convertStrings', False)
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
-    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized)
+    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
     _initialize()
 
 
@@ -188,8 +195,8 @@ def attachToJVM(jvm):
 def shutdownJVM():
     """ Shuts down the JVM.
 
-    This method shuts down the JVM and thus disables access to existing 
-    Java objects. Due to limitations in the JPype, it is not possible to 
+    This method shuts down the JVM and thus disables access to existing
+    Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
     _jpype.shutdown()
@@ -198,10 +205,10 @@ def shutdownJVM():
 def isThreadAttachedToJVM():
     """ Checks if a thread is attached to the JVM.
 
-    Python automatically attaches threads when a Java method is called. 
-    This creates a resource in Java for the Python thread. This method 
-    can be used to check if a Python thread is currently attached so that 
-    it can be disconnected prior to thread termination to prevent leaks.  
+    Python automatically attaches threads when a Java method is called.
+    This creates a resource in Java for the Python thread. This method
+    can be used to check if a Python thread is currently attached so that
+    it can be disconnected prior to thread termination to prevent leaks.
 
     Returns:
       True if the thread is attached to the JVM, False if the thread is
@@ -213,8 +220,8 @@ def isThreadAttachedToJVM():
 def attachThreadToJVM():
     """ Attaches a thread to the JVM.
 
-    The function manually connects a thread to the JVM to allow access to 
-    Java objects and methods. JPype automaticatlly attaches when a Java 
+    The function manually connects a thread to the JVM to allow access to
+    Java objects and methods. JPype automaticatlly attaches when a Java
     resource is used, so a call to this is usually not needed.
 
     Raises:
@@ -228,7 +235,7 @@ def detachThreadFromJVM():
 
     This function detaches the thread and frees the associated resource in
     the JVM. For codes making heavy use of threading this should be used
-    to prevent resource leaks. The thread can be reattached, so there 
+    to prevent resource leaks. The thread can be reattached, so there
     is no harm in detaching early or more than once. This method cannot fail
     and there is no harm in calling it when the JVM is not running.
     """
@@ -239,7 +246,7 @@ def synchronized(obj):
     """ Creates a resource lock for a Java object.
 
     Produces a monitor object. During the lifespan of the monitor the Java
-    will not be able to acquire a thread lock on the object. This will 
+    will not be able to acquire a thread lock on the object. This will
     prevent multiple threads from modifying a shared resource.
 
     This should always be used as part of a Python ``with`` startment.
@@ -306,8 +313,8 @@ def get_default_jvm_path(*args, **kwargs):
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
 
-    This function can be used to determine the version of the JVM. It is 
-    useful to help determine why a Jar has failed to load.  
+    This function can be used to determine the version of the JVM. It is
+    useful to help determine why a Jar has failed to load.
 
     Returns:
       A typle with the (major, minor, revison) of the JVM if running.

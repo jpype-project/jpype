@@ -33,6 +33,12 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 		return JPPyObject::getNone();
 	}
 
+        if (JPEnv::getConvertStrings())
+        {
+		string str = JPJni::toStringUTF8((jstring)(val.l));
+		return JPPyString::fromStringUTF8(str);
+        }
+
 	return JPPythonEnv::newJavaObject(JPValue(this, val));
 	JP_TRACE_OUT;
 }
