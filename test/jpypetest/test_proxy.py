@@ -64,6 +64,22 @@ class ProxyTestCase(common.JPypeTestCase):
         self.package = JPackage("jpype.proxy")
         self._triggers = self.package.ProxyTriggers
 
+    def testProxyDecl(self):
+        d = {
+            'testMethod1': _testMethod1,
+            'testMethod2': _testMethod2,
+        }
+        itf1 = self.package.TestInterface1
+        proxy = JProxy(itf1, dict=d)
+        proxy = JProxy([itf1], dict=d)
+        proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
+        proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
+
+    def testProxyDeclFail(self):
+        itf1 = self.package.TestInterface1
+        with self.assertRaises(TypeError):
+            proxy = JProxy(itf1)
+
     def testProxyWithDict(self):
         d = {
             'testMethod1': _testMethod1,

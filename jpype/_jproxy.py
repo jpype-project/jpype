@@ -114,8 +114,9 @@ def _convertInterfaces(intf):
     a list of interfaces suitable for a proxy.
     """
     # We operate on lists of interfaces, so a single element is promoted
-    # to a list
-    if not isinstance(intf, collections.Sequence):
+    # to a list. Python considers strings to be sequences, so need
+    # special handling for that case.
+    if isinstance(intf, (str, unicode)) or not isinstance(intf, collections.Sequence):
         intf = [intf]
 
     # Verify that the list contains the required types
@@ -177,6 +178,7 @@ class JProxy(object):
                 return d[name]
             # create a proxy
             self.__javaproxy__ = _jpype.PyJPProxy(dict, lookup, actualIntf)
+            return
 
         if inst is not None:
             # Define the lookup function based for a object instance
@@ -184,3 +186,5 @@ class JProxy(object):
                 return getattr(d, name)
             # create a proxy
             self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)
+            return
+        raise TypeError("a dict or instance must be supplied")
