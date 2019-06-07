@@ -90,7 +90,7 @@ class ProxyTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, "is not a Java interface"):
             proxy = JProxy(int(1), dict={})
 
-    def testProxyImplements(self):
+    def testProxyImplementsForm1(self):
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
 
@@ -100,18 +100,9 @@ class ProxyTestCase(common.JPypeTestCase):
             def testMethod1(self):
               pass
 
-        @JImplements([itf1,itf2])
-        class MyImpl(object):
-            @JOverride
-            def testMethod1(self):
-              pass
-            @JOverride
-            def testMethod2(self):
-              pass
-            @JOverride
-            def write(self):
-              pass
-
+    def testProxyImplementsForm2(self):
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
         @JImplements(itf1,itf2)
         class MyImpl(object):
             @JOverride
@@ -124,24 +115,14 @@ class ProxyTestCase(common.JPypeTestCase):
             def write(self):
               pass
 
+    def testProxyImplementsForm3(self):
         @JImplements("jpype.proxy.TestInterface1")
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
               pass
 
-        @JImplements(["jpype.proxy.TestInterface1","jpype.proxy.TestInterface2"])
-        class MyImpl(object):
-            @JOverride
-            def testMethod1(self):
-              pass
-            @JOverride
-            def testMethod2(self):
-              pass
-            @JOverride
-            def write(self):
-              pass
-
+    def testProxyImplementsForm4(self):
         @JImplements("jpype.proxy.TestInterface1","jpype.proxy.TestInterface2")
         class MyImpl(object):
             @JOverride
