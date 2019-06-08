@@ -73,7 +73,6 @@ class ProxyTestCase(common.JPypeTestCase):
         itf2 = self.package.TestInterface2
         proxy = JProxy(itf1, dict=d)
         proxy = JProxy([itf1], dict=d)
-        proxy = JProxy(itf1, itf2, dict=d)
         proxy = JProxy([itf1, itf2], dict=d)
         proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
         proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)

@@ -175,9 +175,9 @@ class JProxy(object):
             whose names matches the java interfaces methods.
     """
 
-    def __init__(self, *intf, dict=None, inst=None):
+    def __init__(self, intf, dict=None, inst=None):
         # Convert the interfaces
-        actualIntf = _convertInterfaces(intf)
+        actualIntf = _convertInterfaces([intf])
 
         # Verify that one of the options has been selected
         if dict is not None and inst is not None:
