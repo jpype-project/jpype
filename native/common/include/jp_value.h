@@ -19,7 +19,7 @@
 
 #include "jp_class.h"
 
-/** Lightwieght representative of a jvalue with its corresponding class.
+/** Lightweight representative of a jvalue with its corresponding class.
  * This should not have any memory management.  The user of the class
  * must take a global reference if needed.
  */

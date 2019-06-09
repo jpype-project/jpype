@@ -115,7 +115,7 @@ void JPypeTracer::trace2(const char* msg1, const char* msg2)
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
-void JPypeTracer::traceGIL(const string& msg, int ref)
+void JPypeTracer::traceLocks(const string& msg, void* ref)
 {
 	std::lock_guard<std::mutex> guard(trace_lock);
 	JPYPE_TRACING_OUTPUT << "<M>" << msg << ": " << ref << "</M>" << endl;

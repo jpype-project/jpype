@@ -22,6 +22,7 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 {
 	JPJavaFrame frame((JPContext*) context, env);
 	JP_TRACE_IN_C("JPype_ReferenceQueue_removeHostReference");
+	printf("Kill reference %x\n", (long)hostObj);
 
 	JPPyCallAcquire callback;
 	if (hostObj > 0)

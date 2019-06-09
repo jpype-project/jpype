@@ -113,7 +113,6 @@ public class TypeManager
    */
   public synchronized long findClass(Class<?> cls)
   {
-    System.out.println("FIND CLASS "+cls);
     if (cls == null)
       return 0;
     if (this.isShutdown)

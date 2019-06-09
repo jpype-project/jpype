@@ -16,6 +16,55 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
+#include <pythread.h>
+
+#include "jp_primitive_common.h"
+
+PyThread_type_lock lock;
+
+class JPThreadLock
+{
+public:
+
+	JPThreadLock()
+	{
+		JP_TRACE_LOCKS("Thread attempt lock", this);
+		if (!PyThread_acquire_lock(lock, NOWAIT_LOCK))
+		{
+			JP_TRACE_LOCKS("Thread wait lock", this);
+			Py_BEGIN_ALLOW_THREADS
+			PyThread_acquire_lock(lock, WAIT_LOCK);
+			Py_END_ALLOW_THREADS
+		}
+		JP_TRACE_LOCKS("Thread locked", this);
+	}
+
+	~JPThreadLock()
+	{
+		JP_TRACE_LOCKS("Thread release", this);
+		PyThread_release_lock(lock);
+	}
+
+};
+
+JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
+		jobjectArray args)
+{
+	JPJavaFrame frame(context);
+	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
+	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
+	JPPrimitiveArrayAccessor<jlongArray, long*> accessor(frame, parameterTypePtrs,
+			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+
+	jlong* types = accessor.get();
+	for (jsize i = 0; i < argLen; i++)
+	{
+		JPClass* type = (JPClass*) types[i];
+		JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
+		pyargs.setItem(i, type->convertToPythonObject(val).get());
+	}
+	return pyargs;
+}
 
 JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		JNIEnv *env, jclass clazz,
@@ -25,10 +74,19 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
+	JPContext* context = (JPContext*) contextPtr;
+
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
-	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+
+	// Python has a bug that is corrupting the stack if a 
+	// second thread passes this point.  I don't particularly
+	// like this solution as it prevents a Proxy from calling
+	// code that itself issues a proxy.  But after 2 weeks of debugging,
+	// trying random formulations, stripping it down, trying again...
+	// well this is the only thing that works. Perhaps there is some
+	// other bug that once fixed will correct this problem.
+	JPThreadLock guard;
 	{
 		JP_TRACE_IN_C("JPype_InvocationHandler_hostInvoke");
 		try
@@ -53,19 +111,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			jsize argLen = frame.GetArrayLength(parameterTypePtrs);
-			JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
-			jlong* types = frame.GetLongArrayElements(parameterTypePtrs, NULL);
-			for (int i = 0; i < argLen; i++)
-			{
-				JPClass* type = (JPClass*) types[i];
-				JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
-				pyargs.setItem(i, type->convertToPythonObject(val).get());
-			}
-			frame.ReleaseLongArrayElements(parameterTypePtrs, types, JNI_ABORT);
+			JPPyTuple pyargs(getArgs(context, parameterTypePtrs, args));
 
-			return NULL;
-			
 			JP_TRACE("Call Python");
 			JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 
@@ -98,9 +145,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			JP_TRACE("Convert return");
-			return NULL;
-//			jvalue res = returnClass->convertToJava(returnValue.get());
-//			return frame.keep(res.l);
+			jvalue res = returnClass->convertToJava(returnValue.get());
+			return res.l;
 		} catch (JPypeException& ex)
 		{
 			JP_TRACE("JPypeException raised");
@@ -121,6 +167,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	m_Context = context;
 	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPProxy::init");
+	lock = PyThread_allocate_lock();
 
 	jclass proxyClass = context->getClassLoader()->findClass("org.jpype.proxy.JPypeProxy");
 

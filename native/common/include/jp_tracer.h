@@ -30,7 +30,7 @@
   } \
   catch(...) { printf("***EXE**\n"); _trace.gotError(JP_STACKINFO()); throw; }
 #define JP_TRACE(...) JPTracer::trace(__VA_ARGS__)
-#define JP_TRACE_GIL(...) JPypeTracer::traceGIL(__VA_ARGS__)
+#define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
 #define JP_TRACE_IN_C(n)  try {
@@ -41,7 +41,7 @@
 #define JP_TRACE_OUT } \
   catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
-#define JP_TRACE_GIL(...)
+#define JP_TRACE_LOCKS(...)
 #define JP_TRACE_PY(m, obj) 
 #endif
 
@@ -74,7 +74,7 @@ public:
 	}
 
 	static void tracePythonObject(const char* msg, PyObject* ref);
-	static void traceGIL(const string& msg, int ref);
+	static void traceLocks(const string& msg, void* ref);
 
 	static void trace1(const char* msg);
 	static void trace2(const char* msg1, const char* msg2);

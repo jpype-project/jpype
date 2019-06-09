@@ -18,14 +18,15 @@ import java.util.Set;
 public class JPypeReferenceQueue extends ReferenceQueue
 {
   public long context = 0;
-  private Set mHostReferences = new HashSet();
-  private boolean mStopped = false;
-  private Thread mQueueThread;
-  private Object mQueueStopMutex = new Object();
+  private Set<JPypeReference> hostReferences = new HashSet();
+  private boolean isStopped = false;
+  private Thread queueThread;
+  private Object queueStopMutex = new Object();
 
   public JPypeReferenceQueue()
-  {}
-  
+  {
+  }
+
   public JPypeReferenceQueue(long context)
   {
     super();
@@ -45,7 +46,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
   {
     System.out.println("REGISTER REFERENCE");
     JPypeReference ref = new JPypeReference(this, javaObject, pythonObject);
-    mHostReferences.add(ref);
+    hostReferences.add(ref);
   }
 
   /**
@@ -53,10 +54,11 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void start()
   {
-    mStopped = false;
-    mQueueThread = new Thread(new Worker());
-    mQueueThread.setDaemon(true);
-    mQueueThread.start();
+    System.out.println("Reference Queue start");
+    isStopped = false;
+    queueThread = new Thread(new Worker());
+    queueThread.setDaemon(true);
+    queueThread.start();
   }
 
   /**
@@ -66,13 +68,14 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void stop()
   {
+    System.out.println("Reference Queue stop");
     try
     {
       // wait for the thread to finish ...
-      synchronized (mQueueStopMutex)
+      synchronized (queueStopMutex)
       {
-        mStopped = true;
-        mQueueStopMutex.wait(5000);
+        isStopped = true;
+        queueStopMutex.wait(5000);
 
         // FIXME what happens to any references that are outstanding after
         // the queue is stopped.  They will never be cleared so that means
@@ -92,7 +95,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public boolean isRunning()
   {
-    return !mStopped;
+    return !isStopped;
   }
 
   /**
@@ -102,7 +105,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public int getQueueSize()
   {
-    return this.mHostReferences.size();
+    return this.hostReferences.size();
   }
 
 //<editor-fold desc="internal" defaultstate="collapsed">
@@ -121,7 +124,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
     @Override
     public void run()
     {
-      while (!mStopped)
+      while (!isStopped)
       {
         try
         {
@@ -130,13 +133,13 @@ public class JPypeReferenceQueue extends ReferenceQueue
           JPypeReference ref = (JPypeReference) remove(250);
           if (ref != null)
           {
-            synchronized (mHostReferences)
+            synchronized (hostReferences)
             {
-              mHostReferences.remove(ref);
+              hostReferences.remove(ref);
             }
-            long hostRef = ref.mHostReference;
-            ref.mHostReference = -1;
-            System.out.println("REMOVE REFERENCE"+hostRef);
+            long hostRef = ref.hostReference;
+            ref.hostReference = -1;
+            System.out.println("REMOVE REFERENCE" + hostRef);
             removeHostReference(context, hostRef);
           }
         } catch (InterruptedException ex)
@@ -144,10 +147,20 @@ public class JPypeReferenceQueue extends ReferenceQueue
           // don't know why ... don't really care ...
         }
       }
-      mHostReferences = null;
-      synchronized (mQueueStopMutex)
+
+      System.out.println("Kill remaining references");
+      // We have references into Python which will never be freed if we don't 
+      // remove them now
+      for (JPypeReference ref : hostReferences)
       {
-        mQueueStopMutex.notifyAll();
+        removeHostReference(context, ref.hostReference);
+      }
+      System.out.println("Kill remaining references done");
+
+      hostReferences = null;
+      synchronized (queueStopMutex)
+      {
+        queueStopMutex.notifyAll();
       }
     }
   }

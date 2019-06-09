@@ -48,7 +48,6 @@ public class JPypeProxy implements InvocationHandler
 
   public Object invoke(Object proxy, Method method, Object[] args)
   {
-    System.out.println("PROXY INVOKE " + method);
     try
     {
       // We can save a lot of effort on the C++ side by doing all the 

@@ -117,9 +117,10 @@ int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 void PyJPContext::__dealloc__(PyJPContext* self)
 {
 	JP_TRACE_IN_C("PyJPContext::__dealloc__");
-	if (self->m_Context->isInitialized())
-		self->m_Context->shutdownJVM();
-	delete self->m_Context;
+// FIXME reference counting bug on PyJPContext
+//	if (self->m_Context->isInitialized())
+//		self->m_Context->shutdownJVM();
+//	delete self->m_Context;
 	self->m_Context = NULL;
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
 	// Free self

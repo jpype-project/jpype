@@ -108,6 +108,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	self->m_Value = JPValue(cls, value);
 	self->m_Cache = NULL;
 	self->m_Context = (PyJPContext*) (context->getHost());
+	Py_INCREF(self->m_Context);
 	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
@@ -148,14 +149,13 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		self->m_Context = (PyJPContext*) (context->getHost());
 		Py_INCREF(self->m_Context);
 		ASSERT_JVM_RUNNING(context, "PyJPValue::__init__");
-		JPJavaFrame frame(context);
 
 		// If it is already a Java object, then let Java decide
 		// if the cast is possible
 		JPValue* jval = JPPythonEnv::getJavaValue(value);
 		if (jval != NULL && type->isInstance(*jval))
 		{
-
+			JPJavaFrame frame(context);
 			jvalue v = jval->getValue();
 			v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);
@@ -172,12 +172,15 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 			return -1;
 		}
 
-		jvalue v = type->convertToJava(value);
-		if (dynamic_cast<JPPrimitiveType*> (type) != type)
-			v.l = frame.NewGlobalRef(v.l);
-		self->m_Value = JPValue(type, v);
-		JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
-		return 0;
+		{
+			JPJavaFrame frame(context);
+			jvalue v = type->convertToJava(value);
+			if (dynamic_cast<JPPrimitiveType*> (type) != type)
+				v.l = frame.NewGlobalRef(v.l);
+			self->m_Value = JPValue(type, v);
+			JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
+			return 0;
+		}
 	}
 	PY_STANDARD_CATCH;
 	return -1;
@@ -191,30 +194,25 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JP_TRACE_IN_C("PyJPValue::__dealloc__");
 	JP_TRACE("Cache", self->m_Cache);
 	Py_XDECREF(self->m_Cache);
-	
+
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
 	JP_TRACE("Value", cls, &(value.getValue()));
-	if (self->m_Context != NULL)
+	if (self->m_Context != NULL && cls != NULL)
 	{
 		JPContext* context = self->m_Context->m_Context;
-		// This one can't check for initialized because we may need to delete a stale
-		// resource after shutdown.
-		if (cls != NULL && context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+		if (context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
 		{
 			// If the JVM has shutdown then we don't need to free the resource
-			// FIXME there is a problem with initializing the sytem twice.
+			// FIXME there is a problem with initializing the syxtem twice.
 			// Once we shut down the cls type goes away so this will fail.  If
 			// we then reinitialize we will access this bad resource.  Not sure
 			// of an easy solution.
 			JP_TRACE("Dereference object", cls->getCanonicalName());
 			context->ReleaseGlobalRef(value.getValue().l);
 		}
-		JP_TRACE("free context", self->m_Context);
-		Py_DECREF(self->m_Context);
-		self->m_Context = NULL;
 	}
-	JP_TRACE("free", self);
+	Py_XDECREF(self->m_Context);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;

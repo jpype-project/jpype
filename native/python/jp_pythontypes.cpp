@@ -759,18 +759,16 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keep(), exceptionValue.keep(), exceptionTrace.keep());
 }
 
-int count=0;
 JPPyCallAcquire::JPPyCallAcquire()
 {
-	audit = count++;
 	state1 = PyThreadState_New(PyJPModule::s_Interpreter);
 	PyEval_AcquireThread((PyThreadState*)state1);
-	JP_TRACE_GIL("GIL ACQUIRE", audit);
+	JP_TRACE_LOCKS("GIL ACQUIRE", this);
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	JP_TRACE_GIL("GIL ACQUIRE DONE", audit);
+	JP_TRACE_LOCKS("GIL ACQUIRE DONE", this);
 	PyThreadState_Clear((PyThreadState*) state1);
 	PyEval_ReleaseThread((PyThreadState*) state1);
 	PyThreadState_Delete((PyThreadState*) state1);
@@ -780,8 +778,7 @@ JPPyCallAcquire::~JPPyCallAcquire()
 
 JPPyCallRelease::JPPyCallRelease()
 {
-	audit = count++;
-	JP_TRACE_GIL("GIL RELEASE", audit);
+	JP_TRACE_LOCKS("GIL RELEASE", this);
 	// Release the lock and set the thread state to NULL
 	state1 = (void*) PyEval_SaveThread();
 }
@@ -791,6 +788,6 @@ JPPyCallRelease::~JPPyCallRelease()
 	// Reacquire the lock
 	PyThreadState *save = (PyThreadState *) state1;
 	PyEval_RestoreThread(save);
-	JP_TRACE_GIL("GIL RELEASE DONE", audit);
+	JP_TRACE_LOCKS("GIL RELEASE DONE", this);
 }
 
