@@ -40,10 +40,10 @@ PyTypeObject PyJPProxy::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Proxy",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPProxy::traverse,
+	/* tp_clear          */ (inquiry) PyJPProxy::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -63,16 +63,16 @@ PyTypeObject PyJPProxy::Type = {
 
 // Static methods
 
-void PyJPProxy::initType(PyObject* module)
+void PyJPProxy::initType(PyObject *module)
 {
 	PyType_Ready(&PyJPProxy::Type);
 	Py_INCREF(&PyJPProxy::Type);
 	PyModule_AddObject(module, "PyJPProxy", (PyObject*) (&PyJPProxy::Type));
 }
 
-PyObject* PyJPProxy::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
+PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	PyJPProxy* self = (PyJPProxy*) type->tp_alloc(type, 0);
+	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
 	self->m_Callable = NULL;
@@ -80,16 +80,15 @@ PyObject* PyJPProxy::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 	return (PyObject*) self;
 }
 
-int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
+int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN_C("PyJPProxy::init");
 	try
 	{
-
 		// Parse arguments
-		PyObject* target;
-		PyObject* callable;
-		PyObject* pyintf;
+		PyObject *target;
+		PyObject *callable;
+		PyObject *pyintf;
 		if (!PyArg_ParseTuple(args, "OOO", &target, &callable, &pyintf))
 		{
 			return -1;
@@ -113,7 +112,7 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 
 		for (jlong i = 0; i < len; i++)
 		{
-			JPClass* cls = JPPythonEnv::getJavaClass(intf[i].get());
+			JPClass *cls = JPPythonEnv::getJavaClass(intf[i].get());
 			if (cls == NULL)
 			{
 				PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
@@ -122,7 +121,7 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 			interfaces.push_back(cls);
 		}
 
-		JPContext* context = interfaces[0]->getContext();
+		JPContext *context = interfaces[0]->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPProxy::__init__");
 
 		// FIXME if we have multiple context someone has to check that all the interfaces
@@ -130,6 +129,7 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 
 		JPJavaFrame frame(context);
 		self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
+		
 		self->m_Target = target;
 		Py_INCREF(target);
 		self->m_Callable = callable;
@@ -148,7 +148,7 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPProxy::__str__(PyJPProxy* self)
+PyObject *PyJPProxy::__str__(PyJPProxy *self)
 {
 	try
 	{
@@ -163,9 +163,10 @@ PyObject* PyJPProxy::__str__(PyJPProxy* self)
 	return NULL;
 }
 
-void PyJPProxy::__dealloc__(PyJPProxy* self)
+void PyJPProxy::__dealloc__(PyJPProxy *self)
 {
 	JP_TRACE_IN_C("PyJPProxy::dealloc");
+	printf("~PROXY");
 	delete self->m_Proxy;
 	
 	if (self->m_Target != NULL)
@@ -182,7 +183,21 @@ void PyJPProxy::__dealloc__(PyJPProxy* self)
 	JP_TRACE_OUT_C;
 }
 
-bool PyJPProxy::check(PyObject* o)
+int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
+{
+    Py_VISIT(self->m_Callable);
+    Py_VISIT(self->m_Target);
+    return 0;
+}
+
+int PyJPProxy::clear(PyJPProxy *self)
+{
+    Py_CLEAR(self->m_Callable);
+    Py_CLEAR(self->m_Target);
+    return 0;
+}
+
+bool PyJPProxy::check(PyObject *o)
 {
 	return Py_TYPE(o) == &PyJPProxy::Type;
 }

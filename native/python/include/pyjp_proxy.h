@@ -23,18 +23,20 @@ struct PyJPProxy
 	PyObject_HEAD
 
 	static PyTypeObject Type;
-	static void initType(PyObject* module);
-	static bool check(PyObject* o);
+	static void initType(PyObject *module);
+	static bool check(PyObject *o);
 
-	static PyObject*   __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
-	static int __init__(PyJPProxy* self, PyObject* args, PyObject* kwargs);
-	static void __dealloc__(PyJPProxy* self);
-	static PyObject* __str__(PyJPProxy* self);
+	static PyObject *  __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static int __init__(PyJPProxy *self, PyObject *args, PyObject *kwargs);
+	static void __dealloc__(PyJPProxy *self);
+	static PyObject *__str__(PyJPProxy *self);
+    static int traverse(PyJPProxy *self, visitproc visit, void *arg);
+	static int clear(PyJPProxy *self);
 
-	JPProxy* m_Proxy;
-	PyObject* m_Target;
-	PyObject* m_Callable;
-	PyJPContext* m_Context;
+	JPProxy *m_Proxy;
+	PyObject *m_Target;
+	PyObject *m_Callable;
+	PyJPContext *m_Context;
 } ;
 
 #endif // _PYJPROXY_H_

@@ -44,7 +44,6 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void registerRef(Object javaObject, long pythonObject)
   {
-    System.out.println("REGISTER REFERENCE");
     JPypeReference ref = new JPypeReference(this, javaObject, pythonObject);
     hostReferences.add(ref);
   }
@@ -54,7 +53,6 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void start()
   {
-    System.out.println("Reference Queue start");
     isStopped = false;
     queueThread = new Thread(new Worker());
     queueThread.setDaemon(true);
@@ -153,7 +151,9 @@ public class JPypeReferenceQueue extends ReferenceQueue
       // remove them now
       for (JPypeReference ref : hostReferences)
       {
+        System.out.println("Call "+ref.hostReference);
         removeHostReference(context, ref.hostReference);
+        System.out.println("Call done");
       }
       System.out.println("Kill remaining references done");
 
