@@ -18,97 +18,102 @@
 #include <jpype.h>
 
 JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
-		JNIEnv *env, jclass clazz, 
+		JNIEnv *env, jclass clazz,
 		jlong contextPtr, jstring name,
 		jlong hostObj,
-		jobjectArray args,
-		jobjectArray types,
-		jclass returnType)
+		jlong returnTypePtr,
+		jlongArray parameterTypePtrs,
+		jobjectArray args)
 {
-	JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
-	JPContext* context = (JPContext*) contextPtr;
-	JP_TRACE("Context", context);
-	JP_TRACE("Env", env);
-	JPJavaFrame frame(context, env);
+	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
-
-	try
+	JPContext* context = (JPContext*) contextPtr;
+	JPJavaFrame frame(context, env);
 	{
-		JP_TRACE("Get callable");
-		string cname = context->toStringUTF8(name);
-
-		// Get the callable object
-		JPPyObject callable(JPPythonEnv::getJavaProxyCallable((PyObject*) hostObj, cname));
-
-		// If method can't be called, throw an exception
-		if (callable.isNull() || callable.isNone())
+		JP_TRACE_IN_C("JPype_InvocationHandler_hostInvoke");
+		try
 		{
-			JP_TRACE("Callable not found");
-			frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), cname.c_str());
-			return NULL;
-		}
+			string cname = context->toStringUTF8(name);
+			JP_TRACE("Get callable for", cname);
 
-		// convert the arguments into a python list
-		JP_TRACE("Convert arguments");
-		jsize argLen = frame.GetArrayLength(types);
-		vector<JPPyObject> hostArgs;
-		JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
-		for (int i = 0; i < argLen; i++)
-		{
-			jclass c = (jclass) frame.GetObjectArrayElement(types, i);
-			JPClass* type = context->getTypeManager()->findClass(c);
-			JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
-			pyargs.setItem(i, type->convertToPythonObject(val).get());
-		}
+			// Get the callable object
+			JPPyObject callable(JPPythonEnv::getJavaProxyCallable((PyObject*) hostObj, cname));
 
-		JP_TRACE("Call Python");
-		JPPyObject returnValue(callable.call(pyargs.get(), NULL));
-		JPClass* returnClass = context->getTypeManager()->findClass(returnType);
-
-		JP_TRACE("Handle return");
-		if (returnValue.isNull() || returnValue.isNone())
-		{
-			if (returnClass != context->_void) // && returnT.getType() < JPTypeName::_object)
+			// If method can't be called, throw an exception
+			if (callable.isNull() || callable.isNone())
 			{
-				frame.ThrowNew(context->_java_lang_RuntimeException.get(),
-						"Return value is None when it cannot be");
+				JP_TRACE("Callable not found");
+				JP_RAISE_METHOD_NOT_FOUND(cname);
 				return NULL;
 			}
-		}
 
-		if (returnClass == context->_void)
-		{
+			// Find the return type
+			JP_TRACE("Get return type");
+			JPClass* returnClass = (JPClass*) returnTypePtr;
+
+			// convert the arguments into a python list
+			JP_TRACE("Convert arguments");
+			jsize argLen = frame.GetArrayLength(parameterTypePtrs);
+			JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
+			jlong* types = frame.GetLongArrayElements(parameterTypePtrs, NULL);
+			for (int i = 0; i < argLen; i++)
+			{
+				JPClass* type = (JPClass*) types[i];
+				JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
+				pyargs.setItem(i, type->convertToPythonObject(val).get());
+			}
+			frame.ReleaseLongArrayElements(parameterTypePtrs, types, JNI_ABORT);
+
 			return NULL;
-		}
+			
+			JP_TRACE("Call Python");
+			JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 
-		if (returnClass->canConvertToJava(returnValue.get()) == JPMatch::_none)
-		{
-			frame.ThrowNew(context->_java_lang_RuntimeException.get(), "Return value is not compatible with required type.");
+			JP_TRACE("Handle return");
+			if (returnClass == context->_void)
+			{
+				JP_TRACE("Void return");
+				return NULL;
+			}
+
+			// This should not be able to happen.  The call checks
+			// for an error and throws, thus this condition cannot be hit.
+			if (returnValue.isNull())
+			{
+				JP_TRACE("Null return");
+				JP_RAISE_TYPE_ERROR("Return value is None when it cannot be");
+			}
+
+			if (returnClass->canConvertToJava(returnValue.get()) == JPMatch::_none)
+			{
+				JP_TRACE("Cannot convert");
+				JP_RAISE_TYPE_ERROR("Return value is not compatible with required type.");
+			}
+
+			// We must box here.
+			if (dynamic_cast<JPPrimitiveType*> (returnClass) == returnClass)
+			{
+				JP_TRACE("Box return");
+				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
+			}
+
+			JP_TRACE("Convert return");
 			return NULL;
-		}
-
-		// We must box here.
-		if (dynamic_cast<JPPrimitiveType*> (returnClass) == returnClass)
+//			jvalue res = returnClass->convertToJava(returnValue.get());
+//			return frame.keep(res.l);
+		} catch (JPypeException& ex)
 		{
-			JP_TRACE("Box return");
-			returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
+			JP_TRACE("JPypeException raised");
+			ex.toJava(context);
+		} catch (...)
+		{
+			JP_TRACE("Other Exception raised");
+			env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+					"unknown error occurred");
 		}
-
-		jvalue res = returnClass->convertToJava(returnValue.get());
-		return frame.keep(res.l);
-	} catch (JPypeException& ex)
-	{
-		JP_TRACE("JPypeException raised");
-		ex.toJava(context);
-	} catch (...)
-	{
-		JP_TRACE("Other Exception raised");
-		frame.ThrowNew(context->_java_lang_RuntimeException.get(), "unknown error occurred");
+		return NULL;
+		JP_TRACE_OUT_C;
 	}
-
-	return NULL;
-
-	JP_TRACE_OUT;
 }
 
 JPProxyFactory::JPProxyFactory(JPContext* context)
@@ -121,7 +126,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 
 	JNINativeMethod method[1];
 	method[0].name = (char*) "hostInvoke";
-	method[0].signature = (char*) "(JLjava/lang/String;J[Ljava/lang/Object;[Ljava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;";
+	method[0].signature = (char*) "(JLjava/lang/String;JJ[J[Ljava/lang/Object;)Ljava/lang/Object;";
 	method[0].fnPtr = (void*) &JPype_InvocationHandler_hostInvoke;
 	frame.GetMethodID(proxyClass, "<init>", "()V");
 	frame.RegisterNatives(proxyClass, method, 1);
@@ -129,7 +134,7 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 	m_ProxyClass = JPClassRef(context, proxyClass);
 	m_NewProxyID = frame.GetStaticMethodID(m_ProxyClass.get(),
 			"newProxy",
-			"(JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
+			"(Lorg/jpype/JPypeContext;J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
 	m_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
 			"newInstance",
 			"()Ljava/lang/Object;");
@@ -157,7 +162,7 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
 	}
 	jvalue v[3];
-	v[0].j = (jlong) m_Factory->m_Context;
+	v[0].l = m_Factory->m_Context->getJavaContext();
 	v[1].j = (jlong) inst;
 	v[2].l = ar;
 

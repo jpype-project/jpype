@@ -16,9 +16,12 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
+#include <mutex>
 
 static int jpype_traceLevel = 0;
 static JPypeTracer* jpype_tracer_last = NULL;
+
+std::mutex trace_lock;
 
 #define JPYPE_TRACING_OUTPUT cerr
 
@@ -27,10 +30,10 @@ static JPypeTracer* jpype_tracer_last = NULL;
 
 JPypeTracer::JPypeTracer(const char* name) : m_Name(name)
 {
-	traceIn(name);
 	m_Error = false;
 	m_Last = jpype_tracer_last;
 	jpype_tracer_last = this;
+	traceIn(name);
 }
 
 JPypeTracer::~JPypeTracer()
@@ -41,6 +44,7 @@ JPypeTracer::~JPypeTracer()
 
 void JPypeTracer::traceIn(const char* msg)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
 		JPYPE_TRACING_OUTPUT << "  ";
@@ -52,6 +56,7 @@ void JPypeTracer::traceIn(const char* msg)
 
 void JPypeTracer::traceOut(const char* msg, bool error)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	jpype_traceLevel--;
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
@@ -71,18 +76,16 @@ void JPypeTracer::traceOut(const char* msg, bool error)
 void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 {
 #ifdef JP_ENABLE_TRACE_PY
-	stringstream ss;
-	ss << msg << " " << (void*) ref;
 	if (ref != NULL)
-	{
-		ss << " " << ref->ob_refcnt << " " << ref->ob_type->tp_name;
-	}
-	trace1(ss.str());
+		JPTracer::trace(msg, (void*) ref, ref->ob_refcnt, Py_TYPE(ref)->tp_name);
+	else
+		JPTracer::trace(msg, (void*) ref);
 #endif
 }
 
-void JPypeTracer::trace1(const string& msg)
+void JPypeTracer::trace1(const char* msg)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	string name = "unknown";
 
 	if (jpype_tracer_last != NULL)
@@ -93,6 +96,29 @@ void JPypeTracer::trace1(const string& msg)
 		JPYPE_TRACING_OUTPUT << "  ";
 	}
 	JPYPE_TRACING_OUTPUT << "<M>" << name << " : " << msg << "</M>" << endl;
+	JPYPE_TRACING_OUTPUT.flush();
+}
+
+void JPypeTracer::trace2(const char* msg1, const char* msg2)
+{
+	std::lock_guard<std::mutex> guard(trace_lock);
+	string name = "unknown";
+
+	if (jpype_tracer_last != NULL)
+		name = jpype_tracer_last->m_Name;
+
+	for (int i = 0; i < jpype_traceLevel; i++)
+	{
+		JPYPE_TRACING_OUTPUT << "  ";
+	}
+	JPYPE_TRACING_OUTPUT << "<M>" << name << " : " << msg1 << " " << msg2 << "</M>" << endl;
+	JPYPE_TRACING_OUTPUT.flush();
+}
+
+void JPypeTracer::traceGIL(const string& msg, int ref)
+{
+	std::lock_guard<std::mutex> guard(trace_lock);
+	JPYPE_TRACING_OUTPUT << "<M>" << msg << ": " << ref << "</M>" << endl;
 	JPYPE_TRACING_OUTPUT.flush();
 }
 

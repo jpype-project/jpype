@@ -92,13 +92,17 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 {
 	JPContext* context = cls->getContext();
 	JPJavaFrame frame(context);
-	JP_TRACE_IN("PyJPValue::alloc");
+	JP_TRACE_IN_C("PyJPValue::alloc");
 	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
+	JP_TRACE("alloc", self);
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
 	if (dynamic_cast<JPPrimitiveType*> (cls) != cls)
+	{
 		value.l = frame.NewGlobalRef(value.l);
+		JP_TRACE("type", cls->getCanonicalName());
+	}
 
 	// New value instance
 	self->m_Value = JPValue(cls, value);
@@ -106,7 +110,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	self->m_Context = (PyJPContext*) (context->getHost());
 	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPValue::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
@@ -123,7 +127,8 @@ PyObject* PyJPValue::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 
 int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 {
-	JP_TRACE_IN("PyJPValue::__init__");
+	JP_TRACE_IN_C("PyJPValue::__init__");
+	JP_TRACE("init", self);
 	try
 	{
 		self->m_Cache = NULL;
@@ -154,6 +159,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 			jvalue v = jval->getValue();
 			v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);
+			JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
 			return 0;
 		}
 
@@ -170,26 +176,25 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		if (dynamic_cast<JPPrimitiveType*> (type) != type)
 			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
+		JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
 		return 0;
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 void PyJPValue::__dealloc__(PyJPValue* self)
 {
 	// We have to handle partially constructed objects that result from 
 	// fails in __init__, thus lots of inits
-	JP_TRACE_IN("PyJPValue::__dealloc__");
+	JP_TRACE_IN_C("PyJPValue::__dealloc__");
+	JP_TRACE("Cache", self->m_Cache);
+	Py_XDECREF(self->m_Cache);
+	
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
 	JP_TRACE("Value", cls, &(value.getValue()));
-	if (self->m_Cache != NULL)
-	{
-		Py_DECREF(self->m_Cache);
-		self->m_Cache = NULL;
-	}
 	if (self->m_Context != NULL)
 	{
 		JPContext* context = self->m_Context->m_Context;
@@ -202,16 +207,17 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 			// Once we shut down the cls type goes away so this will fail.  If
 			// we then reinitialize we will access this bad resource.  Not sure
 			// of an easy solution.
-			JP_TRACE("Dereference object");
+			JP_TRACE("Dereference object", cls->getCanonicalName());
 			context->ReleaseGlobalRef(value.getValue().l);
 		}
 		JP_TRACE("free context", self->m_Context);
 		Py_DECREF(self->m_Context);
 		self->m_Context = NULL;
 	}
-	JP_TRACE("free", Py_TYPE(self)->tp_free);
+	JP_TRACE("free", self);
+	// Free self
 	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPValue::__str__(PyJPValue* self)
@@ -250,7 +256,7 @@ void ensureCache(PyJPValue* self)
 /** This is the way to convert an object into a python string. */
 PyObject* PyJPValue::toString(PyJPValue* self)
 {
-	JP_TRACE_IN("PyJPValue::toString");
+	JP_TRACE_IN_C("PyJPValue::toString");
 	try
 	{
 		JPClass* cls = self->m_Value.getClass();
@@ -285,13 +291,13 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 	}
 	PY_STANDARD_CATCH;
 	return 0;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 /** This is the way to convert an object into a python string. */
 PyObject* PyJPValue::toUnicode(PyJPValue* self)
 {
-	JP_TRACE_IN("PyJPValue::toUnicode");
+	JP_TRACE_IN_C("PyJPValue::toUnicode");
 	try
 	{
 		JPClass* cls = self->m_Value.getClass();
@@ -326,7 +332,7 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 	}
 	PY_STANDARD_CATCH;
 	return 0;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 

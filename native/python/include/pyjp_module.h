@@ -26,6 +26,7 @@ namespace PyJPModule
 	 * as those resources are created in python. 
 	 */
 	PyObject* setResource(PyObject* obj, PyObject* args);
+	extern PyInterpreterState *s_Interpreter; 
 }
 
 #endif /* PYJP_MODULE_H */

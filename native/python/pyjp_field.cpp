@@ -86,15 +86,14 @@ JPPyObject PyJPField::alloc(JPField* m)
 
 void PyJPField::__dealloc__(PyJPField* self)
 {
+	Py_XDECREF(self->m_Context);
+	// Free self
 	Py_TYPE(self)->tp_free(self);
-	if (self->m_Context != NULL)
-		Py_DECREF(self->m_Context);
-	self->m_Context = NULL;
 }
 
 PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPField::getName");
+	JP_TRACE_IN_C("PyJPField::getName");
 	try
 	{
 		JPContext* context = self->m_Field->getContext();
@@ -104,12 +103,12 @@ PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPField::__get__(PyJPField* self, PyObject* obj, PyObject* type)
 {
-	JP_TRACE_IN("PyJPField::__get__");
+	JP_TRACE_IN_C("PyJPField::__get__");
 	try
 	{
 		JPContext* context = self->m_Field->getContext();
@@ -127,12 +126,12 @@ PyObject* PyJPField::__get__(PyJPField* self, PyObject* obj, PyObject* type)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 int PyJPField::__set__(PyJPField* self, PyObject* obj, PyObject* pyvalue)
 {
-	JP_TRACE_IN("PyJPField::__set__");
+	JP_TRACE_IN_C("PyJPField::__set__");
 	try
 	{
 		JPContext* context = self->m_Field->getContext();
@@ -155,7 +154,7 @@ int PyJPField::__set__(PyJPField* self, PyObject* obj, PyObject* pyvalue)
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPField::isStatic(PyJPField* self, PyObject* arg)

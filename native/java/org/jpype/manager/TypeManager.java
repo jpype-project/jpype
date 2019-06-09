@@ -113,6 +113,7 @@ public class TypeManager
    */
   public synchronized long findClass(Class<?> cls)
   {
+    System.out.println("FIND CLASS "+cls);
     if (cls == null)
       return 0;
     if (this.isShutdown)
@@ -770,7 +771,7 @@ public class TypeManager
 
   private class Destroyer
   {
-    final int BLOCK_SIZE = 256;
+    final int BLOCK_SIZE = 1024;
     long[] queue = new long[BLOCK_SIZE];
     int index = 0;
 

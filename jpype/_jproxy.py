@@ -127,7 +127,7 @@ def _convertInterfaces(intf):
             actualIntf.append(i)
         else:
             raise TypeError("JProxy requires java interface classes "
-                            "or the names of java interfaces classes: {0}".format(i.__name))
+                            "or the names of java interfaces classes: {0}".format(i.__name__))
     # Check that all are interfaces
     for i in actualIntf:
         if not issubclass(i, _jclass.JInterface):

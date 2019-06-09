@@ -44,7 +44,7 @@ string JPMethodDispatch::getClassName() const
 
 JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 {
-	JP_TRACE_IN("JPMethod::findOverload");
+	JP_TRACE_IN("JPMethodDispatch::findOverload");
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
@@ -147,7 +147,7 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 
 JPPyObject JPMethodDispatch::invoke(JPPyObjectVector& args, bool instance)
 {
-	JP_TRACE_IN("JPMethod::invoke");
+	JP_TRACE_IN("JPMethodDispatch::invoke");
 	JPMatch match = findOverload(args, instance);
 	return match.overload->invoke(match, args, instance);
 	JP_TRACE_OUT;
@@ -155,8 +155,10 @@ JPPyObject JPMethodDispatch::invoke(JPPyObjectVector& args, bool instance)
 
 JPValue JPMethodDispatch::invokeConstructor(JPPyObjectVector& arg)
 {
+	JP_TRACE_IN("JPMethodDispatch::invokeConstructor");
 	JPMatch currentMatch = findOverload(arg, false);
 	return currentMatch.overload->invokeConstructor(currentMatch, arg);
+	JP_TRACE_OUT;
 }
 
 string JPMethodDispatch::matchReport(JPPyObjectVector& args)

@@ -18,18 +18,21 @@ package org.jpype.proxy;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import org.jpype.JPypeContext;
+import org.jpype.manager.TypeManager;
 
 /**
  *
  * @author Karl Einar Nelson
  */
-public class JPypeProxy
+public class JPypeProxy implements InvocationHandler
 {
-  Class<?>[] interfaces;
-  long context;
+  JPypeContext context;
   long instance;
+  Class<?>[] interfaces;
+  ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-  public static JPypeProxy newProxy(long context, long instance, Class<?>[] interfaces)
+  public static JPypeProxy newProxy(JPypeContext context, long instance, Class<?>[] interfaces)
   {
     JPypeProxy proxy = new JPypeProxy();
     proxy.context = context;
@@ -40,16 +43,38 @@ public class JPypeProxy
 
   public Object newInstance()
   {
-    ClassLoader cl = ClassLoader.getSystemClassLoader();
-    InvocationHandler ih = new InvocationHandler()
-    {
-      public Object invoke(Object proxy, Method method, Object[] args)
-      {
-        return hostInvoke(context, method.getName(), instance, args, method.getParameterTypes(), method.getReturnType());
-      }
-    };
-    return Proxy.newProxyInstance(cl, interfaces, ih);
+    return Proxy.newProxyInstance(cl, interfaces, this);
   }
 
-  private static native Object hostInvoke(long context, String name, long pyObject, Object[] args, Class[] argTypes, Class returnType);
+  public Object invoke(Object proxy, Method method, Object[] args)
+  {
+    System.out.println("PROXY INVOKE " + method);
+    try
+    {
+      // We can save a lot of effort on the C++ side by doing all the 
+      // type lookup work here.
+      TypeManager typeManager = context.getTypeManager();
+      long returnType;
+      long[] parameterTypes;
+      synchronized (typeManager)
+      {
+        returnType = typeManager.findClass(method.getReturnType());
+        Class<?>[] types = method.getParameterTypes();
+        parameterTypes = new long[types.length];
+        for (int i = 0; i < types.length; ++i)
+        {
+          parameterTypes[i] = typeManager.findClass(types[i]);
+        }
+      }
+
+      return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
+    } catch (Throwable ex)
+    {
+      System.out.println("THROWABLE " + ex);
+      throw ex;
+    }
+  }
+
+  private static native Object hostInvoke(long context, String name, long pyObject,
+          long returnType, long[] argsTypes, Object[] args);
 }

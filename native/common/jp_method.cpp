@@ -47,7 +47,7 @@ string JPMethod::toString() const
 
 JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 {
-	JP_TRACE_IN("JPMethodOverload::matchVars");
+	JP_TRACE_IN_C("JPMethod::matchVars");
 	JPArrayClass* arraytype = (JPArrayClass*) vartype;
 	JPClass* type = arraytype->getComponentType();
 	size_t len = arg.size();
@@ -68,12 +68,12 @@ JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 	}
 
 	return lastMatch;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 {
-	JP_TRACE_IN("JPMethodOverload::matches");
+	JP_TRACE_IN("JPMethod::matches");
 	JPMatch match;
 	match.overload = this;
 
@@ -176,7 +176,7 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 
 void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
 {
-	JP_TRACE_IN("JPMethodOverload::packArgs");
+	JP_TRACE_IN("JPMethod::packArgs");
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
 	JP_TRACE("skip", match.skip == 1);
@@ -203,7 +203,7 @@ void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg
 
 JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance)
 {
-	JP_TRACE_IN("JPMethodOverload::invoke");
+	JP_TRACE_IN("JPMethod::invoke");
 	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 
@@ -216,6 +216,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance
 	// Invoke the method (arg[0] = this)
 	if (JPModifier::isStatic(m_Modifiers))
 	{
+		JP_TRACE("invoke static", m_Name);
 		jclass claz = m_Class->getJavaClass();
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
 	}
@@ -225,7 +226,14 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance
 		jobject c = selfObj->getJavaObject();
 		jclass clazz = NULL;
 		if (!m_Class->isAbstract() && !instance)
+		{
 			clazz = m_Class->getJavaClass();
+		    JP_TRACE("invoke nonvirtual", m_Name);
+		}
+		else
+		{
+		    JP_TRACE("invoke virtual", m_Name);
+		}
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}
 	JP_TRACE_OUT;
@@ -233,7 +241,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance
 
 JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 {
-	JP_TRACE_IN("JPMethodOverload::invokeConstructor");
+	JP_TRACE_IN("JPMethod::invokeConstructor");
 	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 
@@ -246,7 +254,6 @@ JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
 		val.l = frame.keep(frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
 	}
 	return JPValue(m_Class, val);
-
 	JP_TRACE_OUT;
 }
 

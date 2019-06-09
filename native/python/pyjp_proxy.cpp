@@ -82,7 +82,7 @@ PyObject* PyJPProxy::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 
 int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 {
-	JP_TRACE_IN("PyJPProxy::init");
+	JP_TRACE_IN_C("PyJPProxy::init");
 	try
 	{
 
@@ -145,7 +145,7 @@ int PyJPProxy::__init__(PyJPProxy* self, PyObject* args, PyObject* kwargs)
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPProxy::__str__(PyJPProxy* self)
@@ -165,18 +165,21 @@ PyObject* PyJPProxy::__str__(PyJPProxy* self)
 
 void PyJPProxy::__dealloc__(PyJPProxy* self)
 {
-	JP_TRACE_IN("PyJPProxy::dealloc");
+	JP_TRACE_IN_C("PyJPProxy::dealloc");
 	delete self->m_Proxy;
+	
 	if (self->m_Target != NULL)
 		Py_DECREF(self->m_Target);
 	if (self->m_Callable != NULL)
 		Py_DECREF(self->m_Callable);
 	if (self->m_Context != NULL)
 		Py_DECREF(self->m_Context);
+	
 	self->m_Target = NULL;
 	self->m_Callable = NULL;
+	// Free self
 	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 bool PyJPProxy::check(PyObject* o)

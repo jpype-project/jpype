@@ -67,7 +67,8 @@ namespace JPError
 		_index_error = 6,
 		_attribute_error = 7,
 		_os_error_unix = 8,
-		_os_error_windows = 9
+		_os_error_windows = 9,
+		_method_not_found = 10,
 	} ;
 }
 
@@ -88,6 +89,7 @@ namespace JPError
 #define JP_RAISE_OVERFLOW_ERROR(msg) { throw JPypeException(JPError::_overflow_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_INDEX_ERROR(msg)    { throw JPypeException(JPError::_index_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_ATTRIBUTE_ERROR(msg) { throw JPypeException(JPError::_attribute_error, msg, JP_STACKINFO()); }
+#define JP_RAISE_METHOD_NOT_FOUND(msg) { throw JPypeException(JPError::_method_not_found, msg, JP_STACKINFO()); }
 
 // Macro to all after excuting a Python command that can result in
 // a failure to convert it to an exception.

@@ -2,7 +2,7 @@
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
-        <property name="version" value="${ant.java.version}"/>
+	<property name="version" value="1.7" /> <!-- ${ant.java.version}"/> -->
 
 	<target name="test" depends="compile">
 	</target>

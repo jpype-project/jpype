@@ -3,6 +3,7 @@ package jpype.proxy;
 import java.util.List;
 
 public interface TestInterface4 {
+    void testMethodVoid();
 
     ReturnObject testMethodObject();
 

@@ -47,11 +47,15 @@ class BuildExtCommand(build_ext):
         }
         tracing = self.distribution.enable_tracing
         if tracing:
+            replacement['-O2'] = '-O0'
             replacement['-O3'] = '-O0'
 
         for k, v in cfg_vars.items():
             for r, t in replacement.items():
                 if isinstance(v, str) and k.find("FLAGS") != -1 and v.find(r) != -1:
+                    v = v.replace(r, t)
+                    cfg_vars[k] = v
+                if isinstance(v, str) and k.find("OPT") != -1 and v.find(r) != -1:
                     v = v.replace(r, t)
                     cfg_vars[k] = v
         build_ext.initialize_options(self)

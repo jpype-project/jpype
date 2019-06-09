@@ -30,7 +30,7 @@ void JPPythonEnv::init()
 
 void JPPythonEnv::setResource(const string& name, PyObject* resource)
 {
-	JP_TRACE_IN("JPPythonEnv::setResource");
+	JP_TRACE_IN_C("JPPythonEnv::setResource");
 	JP_TRACE(name);
 	JP_TRACE_PY("hold", resource);
 	if (name == "GetClassMethod")
@@ -41,13 +41,13 @@ void JPPythonEnv::setResource(const string& name, PyObject* resource)
 		ss << "Unknown jpype resource " << name;
 		JP_RAISE_RUNTIME_ERROR(ss.str());
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 /** Construct a Python wrapper for a Java object. */
 JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)
 {
-	JP_TRACE_IN("JPPythonEnv::newJavaObject");
+	JP_TRACE_IN_C("JPPythonEnv::newJavaObject");
 	JPClass* javaClass = value.getClass();
 	JPPyObject javaClassWrapper = newJavaClass(javaClass);
 
@@ -63,12 +63,12 @@ JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)
 
 	JP_TRACE("Call python");
 	return javaClassWrapper.call(args.get(), NULL);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 {
-	JP_TRACE_IN("JPPythonEnv::newJavaClass");
+	JP_TRACE_IN_C("JPPythonEnv::newJavaClass");
 	ASSERT_NOT_NULL(javaClass);
 
 	JP_TRACE(javaClass->toString());
@@ -82,22 +82,25 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 		return JPPyObject();
 	}
 	return s_Resources->s_GetClassMethod.call(args.get(), NULL);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 JPValue* JPPythonEnv::getJavaValue(PyObject* obj)
 {
-	JPPyObject vobj(JPPyRef::_use, obj);
+	JP_TRACE_IN_C("JPPythonEnv::getJavaValue");
+//	JPPyObject vobj(JPPyRef::_use, obj);
 	if (Py_TYPE(obj) == &PyJPValue::Type)
 		return &((PyJPValue*) obj)->m_Value;
 	if (!JPPyObject::hasAttrString(obj, __javavalue__))
 		return 0;
+	
 	JPPyObject self(JPPyObject::getAttrString(obj, __javavalue__));
 	if (Py_TYPE(self.get()) == &PyJPValue::Type)
 	{
 		return &(((PyJPValue*) self.get())->m_Value);
 	}
 	return NULL;
+	JP_TRACE_OUT_C;
 }
 
 JPClass* JPPythonEnv::getJavaClass(PyObject* obj)
@@ -131,7 +134,7 @@ JPProxy* JPPythonEnv::getJavaProxy(PyObject* obj)
 
 JPPyObject JPPythonEnv::getJavaProxyCallable(PyObject* obj, const string& name)
 {
-	JP_TRACE_IN("JPythonEnv::getJavaProxyCallable");
+	JP_TRACE_IN_C("JPythonEnv::getJavaProxyCallable");
 	PyJPProxy* proxy = (PyJPProxy*) obj;
 	PyObject* callable = proxy->m_Callable;
 	PyObject* target = proxy->m_Target;
@@ -146,12 +149,12 @@ JPPyObject JPPythonEnv::getJavaProxyCallable(PyObject* obj, const string& name)
 
 	// Lookup function must be "def lookup(target, name)"
 	return JPPyObject(JPPyRef::_call, PyObject_Call(callable, args.get(), NULL));
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 void JPPythonEnv::rethrow(const JPStackInfo& info)
 {
-	JP_TRACE_IN("JPythonEnv::rethrow");
+	JP_TRACE_IN_C("JPythonEnv::rethrow");
 	JP_TRACE(info.getFile(), info.getLine());
 	try
 	{
@@ -162,6 +165,6 @@ void JPPythonEnv::rethrow(const JPStackInfo& info)
 		ex.toPython();
 		return;
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 

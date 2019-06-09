@@ -74,7 +74,7 @@ void PyJPMonitor::initType(PyObject* module)
 
 int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPMonitor::__init__");
+	JP_TRACE_IN_C("PyJPMonitor::__init__");
 	try
 	{
 		self->m_Monitor = NULL;
@@ -118,23 +118,26 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 void PyJPMonitor::__dealloc__(PyJPMonitor* self)
 {
+	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
 	{
 		delete self->m_Monitor;
+		Py_XDECREF(self->m_Context);
+		// Free self
 		Py_TYPE(self)->tp_free(self);
-		Py_DECREF(self->m_Context);
-		self->m_Context = NULL;
 	}
 	PY_STANDARD_CATCH
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
 {
+	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
 	{
 		JPContext *context = self->m_Monitor->getContext();
@@ -145,6 +148,7 @@ PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
 	}
 	PY_STANDARD_CATCH
 	return NULL;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)

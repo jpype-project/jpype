@@ -75,7 +75,8 @@ public class JPypeContext
   public static JPypeContext createContext(long context, ClassLoader bootLoader)
   {
     instance = new JPypeContext();
-    
+  
+    instance.context = context;
     instance.bootLoader = bootLoader;
     instance.typeFactory = new TypeFactoryNative();
     instance.typeManager = new TypeManager(context, instance.typeFactory);

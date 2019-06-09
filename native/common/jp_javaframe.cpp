@@ -76,20 +76,18 @@ namespace
 //
 
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
-: m_Env(p_env), attached(false), popped(false)
+: m_Context(context), m_Env(p_env), popped(false)
 {
-	m_Context = context;
 	// Create a memory management frame to live in	
 	m_Env->functions->PushLocalFrame(m_Env, i);
 }
 
 JPJavaFrame::JPJavaFrame(JPContext* context, int i)
+: m_Context(context), popped(false)
 {
-	m_Context = context;
 	JavaVM* javaVM = context->getJavaVM();
 
 	jint res;
-	attached = false;
 	if (javaVM == NULL)
 	{
 		JP_RAISE_RUNTIME_ERROR("JVM is null");
@@ -104,13 +102,9 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 		res = javaVM->functions->AttachCurrentThread(javaVM, (void**) &m_Env, NULL);
 		if (res != JNI_OK)
 			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
-
-		attached = true;
 	}
 
-	popped = false;
-
-	// Create a memory managment frame to live in	
+	// Create a memory management frame to live in	
 	m_Env->functions->PushLocalFrame(m_Env, i);
 }
 
@@ -128,12 +122,8 @@ JPJavaFrame::~JPJavaFrame()
 		m_Env->functions->PopLocalFrame(m_Env, NULL);
 	}
 
-	// Check if we were created from an detached thread
-	if (attached)
-	{
-		// This is unfortunately not safe to do as this will lose all local references including those we want to return.
-		//		s_JavaVM->functions->DetachCurrentThread(s_JavaVM);
-	}
+	// It is not safe to detach as we would loss all local references including
+	// any we want to keep.
 }
 
 void JPJavaFrame::DeleteLocalRef(jobject obj)

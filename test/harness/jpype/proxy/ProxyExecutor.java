@@ -105,7 +105,8 @@ public class ProxyExecutor {
             int result = 0;
 
             try {
-                int intValue = proxy.testMethodInt();
+                proxy.testMethodVoid();
+                //int intValue = proxy.testMethodInt();
                 ReturnObject objectValue = proxy.testMethodObject();
                 String stringValue = proxy.testMethodString();
                 List<ReturnObject> listValue = proxy.testMethodList(5);

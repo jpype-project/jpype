@@ -566,6 +566,7 @@ public:
 	~JPPyCallAcquire();
 private:
 	void* state1;
+	int audit;
 } ;
 
 /** Used when leaving python to an external potentially
@@ -580,7 +581,7 @@ public:
 	~JPPyCallRelease();
 private:
 	void* state1;
-	void* state2;
+	int audit;
 } ;
 
 

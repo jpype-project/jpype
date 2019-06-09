@@ -102,7 +102,7 @@ PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwa
 
 int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 {
-	JP_TRACE_IN("PyJPContext::__init__");
+	JP_TRACE_IN_C("PyJPContext::__init__");
 	try
 	{
 		self->m_Context = new JPContext();
@@ -111,19 +111,20 @@ int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 void PyJPContext::__dealloc__(PyJPContext* self)
 {
-	JP_TRACE_IN("PyJPContext::__dealloc__");
+	JP_TRACE_IN_C("PyJPContext::__dealloc__");
 	if (self->m_Context->isInitialized())
 		self->m_Context->shutdownJVM();
 	delete self->m_Context;
 	self->m_Context = NULL;
 	JP_TRACE("free", Py_TYPE(self)->tp_free);
+	// Free self
 	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::__str__(PyJPContext* self)
@@ -142,7 +143,7 @@ PyObject* PyJPContext::__str__(PyJPContext* self)
 
 PyObject* PyJPContext::startup(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::startup");
+	JP_TRACE_IN_C("PyJPContext::startup");
 	if (self->m_Context->isInitialized())
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
@@ -197,12 +198,12 @@ PyObject* PyJPContext::startup(PyJPContext* self, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::shutdown(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::shutdown");
+	JP_TRACE_IN_C("PyJPContext::shutdown");
 	try
 	{
 		self->m_Context->shutdownJVM();
@@ -211,7 +212,7 @@ PyObject* PyJPContext::shutdown(PyJPContext* self, PyObject* args)
 	PY_STANDARD_CATCH;
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::isStarted(PyJPContext* self, PyObject* args)
@@ -221,7 +222,7 @@ PyObject* PyJPContext::isStarted(PyJPContext* self, PyObject* args)
 
 PyObject* PyJPContext::attachThread(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::attachThread");
+	JP_TRACE_IN_C("PyJPContext::attachThread");
 	try
 	{
 		JPContext* context = self->m_Context;
@@ -232,12 +233,12 @@ PyObject* PyJPContext::attachThread(PyJPContext* self, PyObject* args)
 	PY_STANDARD_CATCH;
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::attachThreadAsDaemon");
+	JP_TRACE_IN_C("PyJPContext::attachThreadAsDaemon");
 	try
 	{
 		JPContext* context = self->m_Context;
@@ -248,12 +249,12 @@ PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext* self, PyObject* args)
 	PY_STANDARD_CATCH;
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::detachThread(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::detachThread");
+	JP_TRACE_IN_C("PyJPContext::detachThread");
 	try
 	{
 		if (self->m_Context->isInitialized())
@@ -263,7 +264,7 @@ PyObject* PyJPContext::detachThread(PyJPContext* self, PyObject* args)
 	PY_STANDARD_CATCH;
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPContext::isThreadAttached(PyJPContext* self, PyObject* args)
@@ -282,7 +283,7 @@ PyObject* PyJPContext::isThreadAttached(PyJPContext* self, PyObject* args)
 
 PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext* self, PyObject* args)
 {
-	JP_TRACE_IN("PyJPContext::convertToDirectByteBuffer");
+	JP_TRACE_IN_C("PyJPContext::convertToDirectByteBuffer");
 	try
 	{
 		JPContext* context = self->m_Context;
@@ -321,6 +322,6 @@ PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext* self, PyObject* ar
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 

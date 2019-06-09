@@ -136,6 +136,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
             }
             long hostRef = ref.mHostReference;
             ref.mHostReference = -1;
+            System.out.println("REMOVE REFERENCE"+hostRef);
             removeHostReference(context, hostRef);
           }
         } catch (InterruptedException ex)

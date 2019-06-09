@@ -139,6 +139,11 @@ public:
 	{
 		return m_JavaVM;
 	}
+	
+	jobject getJavaContext()
+	{
+		return m_JavaContext.get();
+	}
 
 	bool isShutdown()
 	{

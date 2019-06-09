@@ -117,7 +117,7 @@ PyObject* PyJPClass::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 
 int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 {
-	JP_TRACE_IN("PyJPClass::__init__");
+	JP_TRACE_IN_C("PyJPClass::__init__");
 	try
 	{
 		PyObject* arg0;
@@ -171,20 +171,21 @@ int PyJPClass::__init__(PyJPClass* self, PyObject* args, PyObject* kwargs)
 	}
 	PY_STANDARD_CATCH;
 	return -1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 void PyJPClass::__dealloc__(PyJPClass* self)
 {
+	JP_TRACE_IN_C("PyJPClass::__dealloc__");
+	Py_XDECREF(self->m_Context);
+	// Free self
 	Py_TYPE(self)->tp_free((PyObject*) self);
-	if (self->m_Context != NULL)
-		Py_DECREF(self->m_Context);
-	self->m_Context = NULL;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::getCanonicalName(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::getCanonicalName");
+	JP_TRACE_IN_C("PyJPClass::getCanonicalName");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -196,12 +197,12 @@ PyObject* PyJPClass::getCanonicalName(PyJPClass* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::getSuperClass(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::getSuperClass");
+	JP_TRACE_IN_C("PyJPClass::getSuperClass");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -217,12 +218,12 @@ PyObject* PyJPClass::getSuperClass(PyJPClass* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::getInterfaces(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::getInterfaces");
+	JP_TRACE_IN_C("PyJPClass::getInterfaces");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -240,12 +241,12 @@ PyObject* PyJPClass::getInterfaces(PyJPClass* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::getClassFields(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::getClassFields");
+	JP_TRACE_IN_C("PyJPClass::getClassFields");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -263,12 +264,12 @@ PyObject* PyJPClass::getClassFields(PyJPClass* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::getClassMethods(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::getClassMethods");
+	JP_TRACE_IN_C("PyJPClass::getClassMethods");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -289,12 +290,12 @@ PyObject* PyJPClass::getClassMethods(PyJPClass* self, PyObject* arg)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::newInstance(PyJPClass* self, PyObject* pyargs)
 {
-	JP_TRACE_IN("PyJPClass::newInstance");
+	JP_TRACE_IN_C("PyJPClass::newInstance");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -324,12 +325,12 @@ PyObject* PyJPClass::newInstance(PyJPClass* self, PyObject* pyargs)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::isAssignableFrom(PyJPClass* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPClass::isSubclass");
+	JP_TRACE_IN_C("PyJPClass::isSubclass");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -364,7 +365,7 @@ PyObject* PyJPClass::isAssignableFrom(PyJPClass* self, PyObject* arg)
 	PY_STANDARD_CATCH;
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::isInterface(PyJPClass* self, PyObject* arg)
@@ -376,7 +377,6 @@ PyObject* PyJPClass::isInterface(PyJPClass* self, PyObject* arg)
 		return PyBool_FromLong(self->m_Class->isInterface());
 	}
 	PY_STANDARD_CATCH;
-
 	return NULL;
 }
 
@@ -447,6 +447,7 @@ PyObject* PyJPClass::asJavaValue(PyJPClass* self, PyObject* args)
 
 PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 {
+	JP_TRACE_IN_C("PyJPClass::canConvertToJava");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -478,12 +479,14 @@ PyObject* PyJPClass::canConvertToJava(PyJPClass* self, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
+	JP_TRACE_OUT_C;
 }
 
 // Added for auditing
 
 PyObject* PyJPClass::convertToJava(PyJPClass* self, PyObject* args)
 {
+	JP_TRACE_IN_C("PyJPClass::convertToJava");
 	try
 	{
 		JPContext* context = self->m_Class->getContext();
@@ -513,6 +516,7 @@ PyObject* PyJPClass::convertToJava(PyJPClass* self, PyObject* args)
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
+	JP_TRACE_OUT_C;
 }
 
 PyObject* PyJPClass::dumpCtor(PyJPClass* self, PyObject* args)

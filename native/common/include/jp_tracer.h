@@ -19,19 +19,34 @@
 
 
 #ifdef JP_TRACING_ENABLE
-#define JP_TRACE_IN(n) JPypeTracer _trace(n); try {
-#define JP_TRACE_OUT } catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
-#define JP_TRACE(...) JPypeTracer::trace(__VA_ARGS__)
+#define JP_TRACE_IN_C(n) \
+  JPypeTracer _trace(n); try {
+#define JP_TRACE_OUT_C } \
+  catch(...) { printf("***EXE**\n");  _trace.gotError(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN(n) \
+  JPypeTracer _trace(n); \
+  try {
+#define JP_TRACE_OUT \
+  } \
+  catch(...) { printf("***EXE**\n"); _trace.gotError(JP_STACKINFO()); throw; }
+#define JP_TRACE(...) JPTracer::trace(__VA_ARGS__)
+#define JP_TRACE_GIL(...) JPypeTracer::traceGIL(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
-#define JP_TRACE_IN(n)  try {
-#define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN_C(n)  try {
+#define JP_TRACE_OUT_C } \
+  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }  
+#define JP_TRACE_IN(n) \
+  try { 
+#define JP_TRACE_OUT } \
+  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
+#define JP_TRACE_GIL(...)
 #define JP_TRACE_PY(m, obj) 
 #endif
 
 // Enable this option to get all the py referencing information
-//#define JP_ENABLE_TRACE_PY
+#define JP_ENABLE_TRACE_PY
 
 class JPypeTracer
 {
@@ -58,52 +73,69 @@ public:
 		}
 	}
 
-	template <class T>
-	static void trace(const T& msg)
-	{
-		stringstream str;
-		str << msg;
-		trace1(str.str());
-	}
-
-	template <class T1, class T2>
-	static void trace(const T1& msg1, const T2& msg2)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2;
-		trace1(str.str());
-	}
-
-	template <class T1, class T2, class T3>
-	static void trace(const T1& msg1, const T2& msg2, const T3& msg3)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3;
-		trace1(str.str());
-	}
-
-	template <class T1, class T2, class T3, class T4>
-	static void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
-		trace1(str.str());
-	}
-
-	template <class T1, class T2, class T3, class T4, class T5>
-	static void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5& msg5)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
-		trace1(str.str());
-	}
-
 	static void tracePythonObject(const char* msg, PyObject* ref);
+	static void traceGIL(const string& msg, int ref);
 
+	static void trace1(const char* msg);
+	static void trace2(const char* msg1, const char* msg2);
 private:
 	static void traceIn(const char* msg);
 	static void traceOut(const char* msg, bool error);
-	static void trace1(const string& msg);
 } ;
+
+
+namespace JPTracer
+{
+
+	template <class T>
+	inline void trace(const T& msg)
+	{
+		stringstream str;
+		str << msg;
+		JPypeTracer::trace1(str.str().c_str());
+	}
+
+	inline void trace(const char* msg)
+	{
+		JPypeTracer::trace1(msg);
+	}
+
+	template <class T1, class T2>
+	inline void trace(const T1& msg1, const T2 & msg2)
+	{
+		stringstream str;
+		str << msg1 << " " << msg2;
+		JPypeTracer::trace1(str.str().c_str());
+	}
+
+	inline void trace(const char* msg1, const char* msg2)
+	{
+		JPypeTracer::trace2(msg1, msg2);
+	}
+
+	template <class T1, class T2, class T3>
+	inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
+	{
+		stringstream str;
+		str << msg1 << " " << msg2 << " " << msg3;
+		JPypeTracer::trace1(str.str().c_str());
+	}
+
+	template <class T1, class T2, class T3, class T4>
+	inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg4)
+	{
+		stringstream str;
+		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
+		JPypeTracer::trace1(str.str().c_str());
+	}
+
+	template <class T1, class T2, class T3, class T4, class T5>
+	inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5 & msg5)
+	{
+		stringstream str;
+		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
+		JPypeTracer::trace1(str.str().c_str());
+	}
+}
 
 #endif // _JP_TRACER_H__

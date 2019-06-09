@@ -2,6 +2,8 @@
 #include <jpype.h>
 #include <jpype_memory_view.h>
 
+#include "pyjp_module.h"
+
 /****************************************************************************
  * Base object
  ***************************************************************************/
@@ -100,7 +102,7 @@ void JPPyObject::decref()
 		// python calls later with a nearly untracable fault, thus
 		// rather than waiting for the inevitable, we chose to take 
 		// a noble death here.
-		JPypeTracer::trace("Python referencing fault");
+		JPTracer::trace("Python referencing fault");
 		int *i = 0;
 		*i = 0;
 	}
@@ -348,7 +350,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 
 bool JPPyString::checkCharUTF16(PyObject* pyobj)
 {
-	JP_TRACE_IN("JPPyString::checkCharUTF16");
+	JP_TRACE_IN_C("JPPyString::checkCharUTF16");
 	if (JPPyLong::checkIndexable(pyobj))
 		return true;
 #if PY_MAJOR_VERSION < 3
@@ -363,7 +365,7 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 		return true;
 #endif
 	return false;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 jchar JPPyString::asCharUTF16(PyObject* pyobj)
@@ -473,6 +475,7 @@ bool JPPyString::check(PyObject* obj)
  */
 JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 {
+	JP_TRACE_IN_C("JPPyString::fromStringUTF8");
 	size_t len = str.size();
 
 #if PY_MAJOR_VERSION < 3
@@ -490,11 +493,12 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 #endif
+	JP_TRACE_OUT_C;
 }
 
 string JPPyString::asStringUTF8(PyObject* pyobj)
 {
-	JP_TRACE_IN("JPPyUnicode::asStringUTF8");
+	JP_TRACE_IN_C("JPPyUnicode::asStringUTF8");
 	ASSERT_NOT_NULL(pyobj);
 
 #if PY_MAJOR_VERSION < 3
@@ -540,7 +544,7 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 #endif
 	JP_RAISE_RUNTIME_ERROR("Failed to convert to string.");
 	return string();
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 bool JPPyMemoryView::check(PyObject* obj)
@@ -550,11 +554,11 @@ bool JPPyMemoryView::check(PyObject* obj)
 
 void JPPyMemoryView::getByteBufferSize(PyObject* obj, char** outBuffer, long& outSize)
 {
-	JP_TRACE_IN("JPPyMemoryView::getByteBufferPtr");
+	JP_TRACE_IN_C("JPPyMemoryView::getByteBufferPtr");
 	Py_buffer* py_buf = PyMemoryView_GET_BUFFER(obj); // macro, does no checks
 	*outBuffer = (char*) py_buf->buf;
 	outSize = (long) py_buf->len;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 
@@ -755,32 +759,38 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keep(), exceptionValue.keep(), exceptionTrace.keep());
 }
 
+int count=0;
 JPPyCallAcquire::JPPyCallAcquire()
 {
-	PyGILState_STATE* save = new PyGILState_STATE;
-	*save = PyGILState_Ensure();
-	state1 = (void*) save;
+	audit = count++;
+	state1 = PyThreadState_New(PyJPModule::s_Interpreter);
+	PyEval_AcquireThread((PyThreadState*)state1);
+	JP_TRACE_GIL("GIL ACQUIRE", audit);
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	PyGILState_STATE* save = (PyGILState_STATE*) state1;
-	PyGILState_Release(*save);
-	delete save;
+	JP_TRACE_GIL("GIL ACQUIRE DONE", audit);
+	PyThreadState_Clear((PyThreadState*) state1);
+	PyEval_ReleaseThread((PyThreadState*) state1);
+	PyThreadState_Delete((PyThreadState*) state1);
 }
 
 // This is used when leaving python from to perform some 
 
 JPPyCallRelease::JPPyCallRelease()
 {
+	audit = count++;
+	JP_TRACE_GIL("GIL RELEASE", audit);
 	// Release the lock and set the thread state to NULL
 	state1 = (void*) PyEval_SaveThread();
 }
 
 JPPyCallRelease::~JPPyCallRelease()
 {
-	// Reaquire the lock
+	// Reacquire the lock
 	PyThreadState *save = (PyThreadState *) state1;
 	PyEval_RestoreThread(save);
+	JP_TRACE_GIL("GIL RELEASE DONE", audit);
 }
 

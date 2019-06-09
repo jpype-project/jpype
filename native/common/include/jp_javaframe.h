@@ -48,9 +48,8 @@ class JPContext;
 
 class JPJavaFrame
 {
-	JNIEnv* m_Env;
 	JPContext* m_Context;
-	bool attached;
+	JNIEnv* m_Env;
 	bool popped;
 
 public:

@@ -272,6 +272,8 @@ void JPypeException::toPython()
 	try
 	{
 		mesg = getMessage();
+		JP_TRACE(m_Type);
+		JP_TRACE(mesg.c_str());
 		switch (m_Type)
 		{
 			case JPError::_java_error:
@@ -317,7 +319,10 @@ void JPypeException::toPython()
 
 			case JPError::_os_error_unix:
 			{
-				PyObject* val = Py_BuildValue("(iz)", m_Error, (string("JVM DLL not found: ") + mesg).c_str());
+				std::stringstream ss;
+				ss << "JVM DLL not found: " << mesg;
+				PyObject* val = Py_BuildValue("(iz)", m_Error, 
+						ss.str().c_str());
 				if (val != NULL)
 				{
 					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
@@ -333,7 +338,10 @@ void JPypeException::toPython()
 
 			case JPError::_os_error_windows:
 			{
-				PyObject* val = Py_BuildValue("(izzi)", 2, (string("JVM DLL not found: ") + mesg).c_str(), NULL, m_Error);
+				std::stringstream ss;
+				ss << "JVM DLL not found: " << mesg;
+				PyObject* val = Py_BuildValue("(izzi)", 2, 
+						ss.str().c_str(), NULL, m_Error);
 				if (val != NULL)
 				{
 					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
@@ -355,18 +363,18 @@ void JPypeException::toPython()
 	} catch (JPypeException& ex)
 	{
 		// Print our parting words
-		JPypeTracer::trace("Fatal error in exception handling");
-		JPypeTracer::trace("Handling:", mesg);
-		JPypeTracer::trace("Type:", m_Type);
+		JPTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Handling:", mesg);
+		JPTracer::trace("Type:", m_Type);
 		if (ex.m_Type == JPError::_python_error)
-			JPypeTracer::trace("Inner Python:", ex.getPythonMessage());
+			JPTracer::trace("Inner Python:", ex.getPythonMessage());
 		else if (ex.m_Type == JPError::_java_error)
-			JPypeTracer::trace("Inner Java:", ex.getJavaMessage());
+			JPTracer::trace("Inner Java:", ex.getJavaMessage());
 		else
-			JPypeTracer::trace("Inner:", ex.getMessage());
+			JPTracer::trace("Inner:", ex.getMessage());
 
 		JPStackInfo info = ex.m_Trace.front();
-		JPypeTracer::trace(info.getFile(), info.getFunction(), info.getLine());
+		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
 		// Heghlu'meH QaQ jajvam!
 		PyErr_SetString(PyExc_RuntimeError, "Fatal error occurred");
@@ -377,7 +385,7 @@ void JPypeException::toPython()
 	} catch (...)
 	{
 		// urp?!
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 
 		// You shall not pass!
 		int *i = 0;
@@ -411,7 +419,9 @@ void JPypeException::toJava(JPContext *context)
 					frame.Throw(m_Throwable.get());
 					return;
 				}
-
+			case JPError::_method_not_found:
+				frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), mesg.c_str());
+			
 			default:
 				// All others are issued as RuntimeExceptions
 				JP_TRACE("JPype Error");
@@ -423,9 +433,9 @@ void JPypeException::toJava(JPContext *context)
 	} catch (JPypeException ex)
 	{
 		// Print our parting words.
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 		JPStackInfo info = ex.m_Trace.front();
-		JPypeTracer::trace(info.getFile(), info.getFunction(), info.getLine());
+		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
 		// Take one for the team.
 		int *i = 0;
@@ -433,7 +443,7 @@ void JPypeException::toJava(JPContext *context)
 	} catch (...)
 	{
 		// urp?!
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 
 		// It is pointless, I can't go on.
 		int *i = 0;

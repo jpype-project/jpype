@@ -41,10 +41,11 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
+PyInterpreterState* PyJPModule::s_Interpreter = NULL;
+
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit__jpype()
 #else
-
 PyMODINIT_FUNC init_jpype()
 #endif
 {
@@ -52,8 +53,10 @@ PyMODINIT_FUNC init_jpype()
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
 	PyEval_InitThreads();
+	PyThreadState *mainThreadState = PyThreadState_Get();
+	PyJPModule::s_Interpreter = mainThreadState->interp;
 
-	// Initalize the module (depends on python version)
+	// Initialize the module (depends on python version)
 #if PY_MAJOR_VERSION >= 3
 	PyObject* module = PyModule_Create(&moduledef);
 #else
@@ -89,7 +92,7 @@ PyMODINIT_FUNC init_jpype()
 
 PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
 {
-	JP_TRACE_IN("PyJPModule::setResource");
+	JP_TRACE_IN_C("PyJPModule::setResource");
 	try
 	{
 		char* tname;
@@ -102,5 +105,5 @@ PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
 	PY_STANDARD_CATCH
 
 	return NULL;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }

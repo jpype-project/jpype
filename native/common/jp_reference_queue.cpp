@@ -21,7 +21,7 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 		JNIEnv *env, jclass clazz, jlong context, jlong hostObj)
 {
 	JPJavaFrame frame((JPContext*) context, env);
-	JP_TRACE_IN("JPype_ReferenceQueue_removeHostReference");
+	JP_TRACE_IN_C("JPype_ReferenceQueue_removeHostReference");
 
 	JPPyCallAcquire callback;
 	if (hostObj > 0)
@@ -30,7 +30,7 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 		Py_DECREF(hostObjRef);
 	}
 
-	JP_TRACE_OUT;
+	JP_TRACE_OUT_C;
 }
 
 JPReferenceQueue::JPReferenceQueue(JPContext* context)

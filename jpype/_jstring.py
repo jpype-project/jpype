@@ -75,6 +75,9 @@ class _JString(object):
     def __hash__(self):
         return self.__str__().__hash__()
 
+    def __repr__(self):
+        return "'%s'"%self.__str__()
+
 
 JString = _jobject.defineJObjectFactory(
     "JString", "java.lang.String", _JString)
