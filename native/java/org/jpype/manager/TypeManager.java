@@ -1,18 +1,19 @@
-/*
- *    Copyright 2019 Karl Einar Nelson
- *   
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *  
- *     http://www.apache.org/licenses/LICENSE-2.0
- *  
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
- */
+/* ****************************************************************************
+  Copyright 2019, Karl Einar Nelson
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+ *****************************************************************************/
 package org.jpype.manager;
 
 import java.io.Serializable;
@@ -76,7 +77,7 @@ public class TypeManager
     createClass(Class.class, true);
 
     // Create the boxed types
-    // These require special rules in the C++ layer so we will tag them 
+    // These require special rules in the C++ layer so we will tag them
     // as being different.
     createClass(Void.class, true);
     createClass(Boolean.class, true);
@@ -142,7 +143,7 @@ public class TypeManager
       out = getClass(cls).classPtr;
     }
 
-    // Before we can leave, we need to make sure all classes that were 
+    // Before we can leave, we need to make sure all classes that were
     // loaded in the process have methods.
     executeDeferred();
 
@@ -193,7 +194,7 @@ public class TypeManager
    */
   public synchronized void shutdown()
   {
-    // First and most important, we can't operate from this 
+    // First and most important, we can't operate from this
     // point forward.
     this.isShutdown = true;
 
@@ -215,11 +216,11 @@ public class TypeManager
     }
     dest.flush();
 
-    // FIXME. If someone was to try the wild ass stunt of 
+    // FIXME. If someone was to try the wild ass stunt of
     // shutting down the JVM from within a python proxy method
     // it would likely all go to hell. We would lose the class
     // that is calling things and the ability to throw exceptions.
-    // Most likely this will go splat. We need to catch this 
+    // Most likely this will go splat. We need to catch this
     // from within JPype and hard fault our way to safety.
     this.classMap.clear();
   }
@@ -373,7 +374,7 @@ public class TypeManager
     if (audit != null)
       audit.verifyMembers(desc);
 
-    // Pass this to JPype      
+    // Pass this to JPype
     this.typeFactory.assignMembers(context,
             desc.classPtr,
             desc.constructorDispatch,
@@ -523,7 +524,7 @@ public class TypeManager
           String key,
           LinkedList<Method> candidates)
   {
-    // Find all the methods that match the key 
+    // Find all the methods that match the key
     LinkedList<Method> methods = new LinkedList<>();
     Iterator<Method> iter = candidates.iterator();
 
