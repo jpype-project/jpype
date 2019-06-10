@@ -18,5 +18,5 @@ package jpype.proxy;
 
 public interface TestInterface3 extends TestInterface2
 {
-    String testMethod3();
+  String testMethod3();
 }

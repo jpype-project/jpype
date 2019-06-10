@@ -16,14 +16,25 @@
 //*****************************************************************************
 package jpype.mro;
 
-interface IA {}
-interface IB {}
+interface IA
+{
+}
 
+interface IB
+{
+}
 
-interface ICombined1 extends IA,IB {}
-interface ICombined2 extends IB,IA {}
+interface ICombined1 extends IA, IB
+{
+}
 
+interface ICombined2 extends IB, IA
+{
+}
 
-public class MultipleInterfaces implements ICombined1, ICombined2 {
-    public MultipleInterfaces() {}
+public class MultipleInterfaces implements ICombined1, ICombined2
+{
+  public MultipleInterfaces()
+  {
+  }
 }

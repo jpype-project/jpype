@@ -31,7 +31,7 @@ public class JPypeProxy implements InvocationHandler
   long instance;
   Class<?>[] interfaces;
   ClassLoader cl = ClassLoader.getSystemClassLoader();
-
+  
   public static JPypeProxy newProxy(JPypeContext context, long instance, Class<?>[] interfaces)
   {
     JPypeProxy proxy = new JPypeProxy();
@@ -40,14 +40,14 @@ public class JPypeProxy implements InvocationHandler
     proxy.interfaces = interfaces;
     return proxy;
   }
-
+  
   public Object newInstance()
   {
     Object out = Proxy.newProxyInstance(cl, interfaces, this);
     context.getReferenceQueue().registerRef(out, instance);
     return out;
   }
-
+  
   public Object invoke(Object proxy, Method method, Object[] args)
   {
     try
@@ -67,7 +67,7 @@ public class JPypeProxy implements InvocationHandler
           parameterTypes[i] = typeManager.findClass(types[i]);
         }
       }
-
+      
       return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
     } catch (Throwable ex)
     {
@@ -75,7 +75,7 @@ public class JPypeProxy implements InvocationHandler
       throw ex;
     }
   }
-
+  
   private static native Object hostInvoke(long context, String name, long pyObject,
           long returnType, long[] argsTypes, Object[] args);
 }

@@ -27,7 +27,6 @@ import java.lang.reflect.Method;
 public class ClassDescriptor
 {
   public Class<?> cls;
-
   /**
    * JPClass pointer for this class.
    */
@@ -37,7 +36,6 @@ public class ClassDescriptor
    */
   public long constructorDispatch;
   public long[] constructors;
-  
   /**
    * Resources needed by the class
    */
@@ -53,7 +51,7 @@ public class ClassDescriptor
     this.cls = cls;
     this.classPtr = classPtr;
     if (this.classPtr == 0)
-      throw new NullPointerException("Class pointer is null for "+cls);
+      throw new NullPointerException("Class pointer is null for " + cls);
   }
 
   long getMethod(Method requestedMethod)

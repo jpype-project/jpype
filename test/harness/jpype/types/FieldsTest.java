@@ -1,19 +1,18 @@
 package jpype.types;
 
-public class FieldsTest 
+public class FieldsTest
 {
-	// Tests for access
+  // Tests for access
   private static Object staticPrivateObjectField
-		= new String("private static object field");
+          = new String("private static object field");
   private Object privateObjectField
-		= new String("private object field");
+          = new String("private object field");
   public static Object staticObjectField;
   public final static Object finalStaticObjectField
-		= new String("final static object field");
+          = new String("final static object field");
   public final Object finalObjectField
-		= new String("final object field");
-  
-	// Tests for type conversion
+          = new String("final object field");
+  // Tests for type conversion
   public boolean booleanField;
   public char charField;
   public short shortField;

@@ -35,17 +35,16 @@ public class TestMethodResolution
   static void foo(float b)
   {
   }
-  
+
   static void foo(double d)
   {
-    
-  }
 
+  }
 
   static public void main(String[] args) throws NoSuchMethodException
   {
     foo(1.0);
-    
+
     List<MethodResolution> foo = MethodResolution.sortMethods(Arrays.asList(TestMethodResolution.class.getDeclaredMethods()));
 
     for (MethodResolution m : foo)

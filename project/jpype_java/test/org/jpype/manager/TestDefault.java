@@ -27,37 +27,41 @@ public class TestDefault
   public interface Foo
   {
     default void fred()
-    {}
+    {
+    }
+
     void george();
+
     static void bob()
-    {}
+    {
+    }
   }
+
   static public void main(String[] args)
   {
     System.out.println("declared:");
-    for (Method method:int[].class.getDeclaredMethods())
-      System.out.println("  "+ method);
-    
+    for (Method method : int[].class.getDeclaredMethods())
+      System.out.println("  " + method);
+
     System.out.println("methods:");
-    for (Method method:int[].class.getMethods())
+    for (Method method : int[].class.getMethods())
     {
-      System.out.println("  "+ method);
+      System.out.println("  " + method);
     }
-    
+
     System.out.println(int[][][].class.getCanonicalName());
     System.out.println(int[][][].class.getName());
     System.out.println(int[][][].class.getSimpleName());
- 
+
     System.out.println(Object[][][].class.getCanonicalName());
     System.out.println(Object[][][].class.getName());
     System.out.println(Object[][][].class.getSimpleName());
-    
+
     System.out.println(Object.class.getSimpleName());
     System.out.println(Object.class.getName());
     System.out.println(Object.class.getCanonicalName());
-  
-    EnumSet<ModifierCode> set=EnumSet.of(ModifierCode.PUBLIC, ModifierCode.CTOR);
+
+    EnumSet<ModifierCode> set = EnumSet.of(ModifierCode.PUBLIC, ModifierCode.CTOR);
     System.out.println(set);
   }
-          
 }

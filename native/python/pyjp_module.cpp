@@ -46,6 +46,7 @@ PyInterpreterState* PyJPModule::s_Interpreter = NULL;
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit__jpype()
 #else
+
 PyMODINIT_FUNC init_jpype()
 #endif
 {

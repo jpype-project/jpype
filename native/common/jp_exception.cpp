@@ -321,7 +321,7 @@ void JPypeException::toPython()
 			{
 				std::stringstream ss;
 				ss << "JVM DLL not found: " << mesg;
-				PyObject* val = Py_BuildValue("(iz)", m_Error, 
+				PyObject* val = Py_BuildValue("(iz)", m_Error,
 						ss.str().c_str());
 				if (val != NULL)
 				{
@@ -340,7 +340,7 @@ void JPypeException::toPython()
 			{
 				std::stringstream ss;
 				ss << "JVM DLL not found: " << mesg;
-				PyObject* val = Py_BuildValue("(izzi)", 2, 
+				PyObject* val = Py_BuildValue("(izzi)", 2,
 						ss.str().c_str(), NULL, m_Error);
 				if (val != NULL)
 				{
@@ -421,7 +421,7 @@ void JPypeException::toJava(JPContext *context)
 				}
 			case JPError::_method_not_found:
 				frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), mesg.c_str());
-			
+
 			default:
 				// All others are issued as RuntimeExceptions
 				JP_TRACE("JPype Error");

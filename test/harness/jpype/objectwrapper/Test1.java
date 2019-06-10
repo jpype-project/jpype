@@ -18,33 +18,32 @@ package jpype.objectwrapper;
 
 public class Test1
 {
-	public Test1()
-	{
-	}
-	
-	public int Method1(Number n)
-	{
-		return 1;
-	}
-	
-	public int Method1(Integer n)
-	{
-		return 2;
-	}
+  public Test1()
+  {
+  }
 
-	public int Method1(Object n)
-	{
-		return 3;
-	}
+  public int Method1(Number n)
+  {
+    return 1;
+  }
 
-	public int Method1(String n)
-	{
-		return 4;
-	}
+  public int Method1(Integer n)
+  {
+    return 2;
+  }
 
-	public Object ReturnObject(Object o)
-	{
-		return o;
-	}
-	
+  public int Method1(Object n)
+  {
+    return 3;
+  }
+
+  public int Method1(String n)
+  {
+    return 4;
+  }
+
+  public Object ReturnObject(Object o)
+  {
+    return o;
+  }
 }

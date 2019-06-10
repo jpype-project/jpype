@@ -60,7 +60,6 @@ public class VirtualTest
 //  {
 //    return () -> "lambda";
 //  }
-
 //<editor-fold desc="int" defaultstate="collapsed">
   public interface IntegerSupplier
   {
@@ -116,6 +115,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="short" defaultstate="collapsed">
+
   public interface ShortSupplier
   {
     short get();
@@ -170,6 +170,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="long" defaultstate="collapsed">
+
   public interface LongSupplier
   {
     long get();
@@ -224,6 +225,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="float" defaultstate="collapsed">
+
   public interface FloatSupplier
   {
     float get();
@@ -278,6 +280,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="double" defaultstate="collapsed">
+
   public interface DoubleSupplier
   {
     double get();
@@ -332,6 +335,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="byte" defaultstate="collapsed">
+
   public interface ByteSupplier
   {
     byte get();
@@ -386,6 +390,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="char" defaultstate="collapsed">
+
   public interface CharSupplier
   {
     char get();
@@ -440,6 +445,7 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="boolean" defaultstate="collapsed">
+
   public interface BooleanSupplier
   {
     boolean get();
@@ -495,6 +501,7 @@ public class VirtualTest
 //</editor-fold>
 //<editor-fold desc="void" defaultstate="collapsed">
 // Yes, we have to do this one as well. All paths need exercise.
+
   public interface VoidSupplier
   {
     void get();

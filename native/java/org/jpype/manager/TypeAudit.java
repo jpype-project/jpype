@@ -19,7 +19,7 @@ import java.lang.reflect.Method;
 
 /**
  * Auditing class for TypeManager used during testing.
- * 
+ * <p>
  * This is not used during operation.
  *
  * @author nelson85

@@ -18,5 +18,5 @@ package jpype.attr;
 
 public class Holder
 {
-    public String f;
+  public String f;
 }

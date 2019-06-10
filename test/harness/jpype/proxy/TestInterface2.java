@@ -19,7 +19,6 @@ package jpype.proxy;
 public interface TestInterface2
 {
   int testMethod2();
-  
+
   Object[] write(byte[] bytes, int pos, int length);
- 
 }

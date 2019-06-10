@@ -2,10 +2,10 @@ package jpype.closeable;
 
 class CloseableTest implements java.io.Closeable
 {
-  public static boolean closed=false;
-  public static String printed="";
-  public static boolean willfail=false;
-  public static boolean failed=false;
+  public static boolean closed = false;
+  public static String printed = "";
+  public static boolean willfail = false;
+  public static boolean failed = false;
 
   public static void reset()
   {
@@ -38,5 +38,4 @@ class CloseableTest implements java.io.Closeable
       throw new java.io.IOException("oh my?");
     }
   }
-
 }

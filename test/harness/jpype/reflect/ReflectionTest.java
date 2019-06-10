@@ -2,26 +2,25 @@ package jpype.reflect;
 
 public class ReflectionTest
 {
-	public String publicField = "public";
-	private String privateField ="private";
+  public String publicField = "public";
+  private String privateField = "private";
 
-	public ReflectionTest()
-	{
-	}
+  public ReflectionTest()
+  {
+  }
 
-	public String publicMethod()
-	{
-		return "public";
-	}
+  public String publicMethod()
+  {
+    return "public";
+  }
 
-	private String privateMethod()
-	{
-		return "private";
-	}
+  private String privateMethod()
+  {
+    return "private";
+  }
 
-	@Annotation("annotation")
-	public void annotatedMethod()
-	{
-	}
+  @Annotation("annotation")
+  public void annotatedMethod()
+  {
+  }
 }
-

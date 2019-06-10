@@ -18,8 +18,8 @@ package jpype.numeric;
 
 class NumericTest
 {
-	public static boolean doubleIsTwiceMaxFloat(double d)
-	{
-		return d == (Float.MAX_VALUE*2.0);	
-	}
+  public static boolean doubleIsTwiceMaxFloat(double d)
+  {
+    return d == (Float.MAX_VALUE * 2.0);
+  }
 }

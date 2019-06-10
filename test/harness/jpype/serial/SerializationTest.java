@@ -17,5 +17,4 @@ package jpype.serial;
 
 public class SerializationTest implements java.io.Serializable
 {
- 
 }

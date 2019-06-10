@@ -18,21 +18,21 @@ package jpype.attr;
 
 public class Test2 extends Test1
 {
-	public Test2()
-	{
-		super();  
-	}
+  public Test2()
+  {
+    super();
+  }
 
-	public void test2Method()
-	{
-		
-	}
-	
-	public String toString(String foo)
-	{
-		return foo;
-	}
-	
+  public void test2Method()
+  {
+
+  }
+
+  public String toString(String foo)
+  {
+    return foo;
+  }
+
   public Test1 delete(String arg1, String arg2)
   {
     System.out.println("Overloaded test 2 called");

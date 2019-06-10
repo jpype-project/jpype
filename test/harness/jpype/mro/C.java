@@ -18,6 +18,7 @@ package jpype.mro;
 
 class C implements A, B
 {
-	public void foo()
-	{}
+  public void foo()
+  {
+  }
 }

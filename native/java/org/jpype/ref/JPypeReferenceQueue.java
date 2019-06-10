@@ -66,7 +66,6 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void stop()
   {
-    System.out.println("Reference Queue stop");
     try
     {
       synchronized (queueStopMutex)
@@ -78,9 +77,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
         }
 
         // wait for the thread to finish ...
-        System.out.println("wait");
         queueStopMutex.wait(10000);
-        System.out.println("wait done");
       }
     } catch (InterruptedException ex)
     {
@@ -142,7 +139,6 @@ public class JPypeReferenceQueue extends ReferenceQueue
           removeHostReference(context, hostRef);
         } catch (InterruptedException ex)
         {
-          System.out.println("BROKE");
           // don't know why ... don't really care ...
         }
       }

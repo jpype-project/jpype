@@ -18,13 +18,13 @@ package jpype.nio;
 
 import java.nio.*;
 
-class NioReceive 
+class NioReceive
 {
   public static void receiveBuffer(ByteBuffer buffer)
   {
-      System.out.println("Received a buffer of "+buffer.toString());
+    System.out.println("Received a buffer of " + buffer.toString());
   }
-  
+
   public static void allocSomeMemory()
   {
     byte[] b = new byte[10000];
@@ -32,7 +32,7 @@ class NioReceive
 
   public static void receiveBufferWithException(ByteBuffer buffer)
   {
-      System.out.println("Received a buffer of "+buffer.toString());
-      throw new RuntimeException("hello!");
+    System.out.println("Received a buffer of " + buffer.toString());
+    throw new RuntimeException("hello!");
   }
 }

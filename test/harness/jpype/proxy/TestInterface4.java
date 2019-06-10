@@ -2,14 +2,15 @@ package jpype.proxy;
 
 import java.util.List;
 
-public interface TestInterface4 {
-    void testMethodVoid();
+public interface TestInterface4
+{
+  void testMethodVoid();
 
-    ReturnObject testMethodObject();
+  ReturnObject testMethodObject();
 
-    int testMethodInt();
+  int testMethodInt();
 
-    String testMethodString();
+  String testMethodString();
 
-    List<ReturnObject> testMethodList(int noOfValues);
+  List<ReturnObject> testMethodList(int noOfValues);
 }

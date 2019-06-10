@@ -228,11 +228,11 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance
 		if (!m_Class->isAbstract() && !instance)
 		{
 			clazz = m_Class->getJavaClass();
-		    JP_TRACE("invoke nonvirtual", m_Name);
+			JP_TRACE("invoke nonvirtual", m_Name);
 		}
 		else
 		{
-		    JP_TRACE("invoke virtual", m_Name);
+			JP_TRACE("invoke virtual", m_Name);
 		}
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}

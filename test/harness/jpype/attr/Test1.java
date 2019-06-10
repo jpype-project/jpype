@@ -18,116 +18,119 @@ package jpype.attr;
 
 public class Test1
 {
-	private String mBigString;
-	
-	public Test1()
-	{
-		StringBuffer sb = new StringBuffer(4001);
-		for (int i = 0; i < 4000; i++)
-		{
-			sb.append("A");			
-		}
-		mBigString = sb.toString();
-	}
-	
-	public String getBigString()
-	{
-		return mBigString;
-	}
-	
-	public String toString()
-	{
-		return "aaa";
-	}
-	
+  private String mBigString;
+
+  public Test1()
+  {
+    StringBuffer sb = new StringBuffer(4001);
+    for (int i = 0; i < 4000; i++)
+    {
+      sb.append("A");
+    }
+    mBigString = sb.toString();
+  }
+
+  public String getBigString()
+  {
+    return mBigString;
+  }
+
+  public String toString()
+  {
+    return "aaa";
+  }
+
   public static String[] testStaticString(String s1, String s2)
-	{
-	    return new String[] { s1, s2};
-	}
-	
-	public static String testStaticHolder(Holder h)
-	{
-	    return h.f;
-	}
+  {
+    return new String[]
+    {
+      s1, s2
+    };
+  }
 
-	public String[] testString(String s1, String s2)
-	{
-		return new String[] { s1, s2};
-	}
+  public static String testStaticHolder(Holder h)
+  {
+    return h.f;
+  }
 
-	public String[] testStringArray(String[] vals)
-	{
-		return vals;
-	}
-	
-	public String stringValue = "Foo";
-	public char charValue = 'a';
-	public static Object objectValue= new Integer(234);
-	
-	public static void reset()
-	{
-	    objectValue= new Integer(234);
-	}
-	
-	public Object getSubClass()
-	{
-	  return new SubHolder();
-	}
-	
-	public void callWithClass(Class c)
-	{	
-	}
-	
-	public void test1Method()
-	{
-		
-	}
-	
-	public boolean mBooleanValue = false;
-	public void setBoolean(boolean b)
-	{
-		mBooleanValue = b;
-	}
-	
-	public byte mByteValue;
-	public void setByte(byte b)
-	{
-		mByteValue = b;
-	}
+  public String[] testString(String s1, String s2)
+  {
+    return new String[]
+    {
+      s1, s2
+    };
+  }
 
-	public short mShortValue = 0;
-	public void setShort(short s)
-	{
-		mShortValue = s;
-	}
+  public String[] testStringArray(String[] vals)
+  {
+    return vals;
+  }
+  public String stringValue = "Foo";
+  public char charValue = 'a';
+  public static Object objectValue = new Integer(234);
 
-	public int mIntValue = 0;
-	public void setInt(int i)
-	{
-		mIntValue = i;
-	}
+  public static void reset()
+  {
+    objectValue = new Integer(234);
+  }
 
-	public long mLongValue = 0;
-	public void setLong(long l)
-	{
-		mLongValue = l;
-	}
-	
-	
-	public String callWithSomething(Object obj)
-	{
-		return "Object";
-	}
+  public Object getSubClass()
+  {
+    return new SubHolder();
+  }
 
-	public String callWithSomething(Class obj)
-	{
-		return "Class";
-	}
-  
+  public void callWithClass(Class c)
+  {
+  }
+
+  public void test1Method()
+  {
+
+  }
+  public boolean mBooleanValue = false;
+
+  public void setBoolean(boolean b)
+  {
+    mBooleanValue = b;
+  }
+  public byte mByteValue;
+
+  public void setByte(byte b)
+  {
+    mByteValue = b;
+  }
+  public short mShortValue = 0;
+
+  public void setShort(short s)
+  {
+    mShortValue = s;
+  }
+  public int mIntValue = 0;
+
+  public void setInt(int i)
+  {
+    mIntValue = i;
+  }
+  public long mLongValue = 0;
+
+  public void setLong(long l)
+  {
+    mLongValue = l;
+  }
+
+  public String callWithSomething(Object obj)
+  {
+    return "Object";
+  }
+
+  public String callWithSomething(Class obj)
+  {
+    return "Class";
+  }
+
   public Test1 delete(String arg1, String arg2)
   {
     System.out.println("Overloaded test 1 called");
     return null;
   }
-  
 }

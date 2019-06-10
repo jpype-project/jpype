@@ -20,9 +20,9 @@ import java.util.EnumSet;
 
 /**
  * Definitions for JPype modifiers.
- * 
+ * <p>
  * These pretty much match Java plus a few codes we need.
- * 
+ *
  * @author nelson85
  */
 public enum ModifierCode
@@ -39,19 +39,17 @@ public enum ModifierCode
   VARARGS(0x0080),
   ENUM(0x4000),
   ABSTRACT(0x0400),
-  
   // Special flags for classes required for JPype
-  SPECIAL      (0x00010000),
-  THROWABLE    (0x00020000),
-  SERIALIZABLE (0x00040000),
-  ANONYMOUS    (0x00080000),
-  FUNCTIONAL   (0x00100000),
-  CTOR         (0x10000000),
+  SPECIAL(0x00010000),
+  THROWABLE(0x00020000),
+  SERIALIZABLE(0x00040000),
+  ANONYMOUS(0x00080000),
+  FUNCTIONAL(0x00100000),
+  CTOR(0x10000000),
   BEAN_ACCESSOR(0x20000000),
-  BEAN_MUTATOR (0x40000000);
-  
-  
+  BEAN_MUTATOR(0x40000000);
   final public int value;
+
   ModifierCode(int value)
   {
     this.value = value;
@@ -66,15 +64,15 @@ public enum ModifierCode
     }
     return out;
   }
+
   static EnumSet<ModifierCode> decode(long modifiers)
   {
-    EnumSet<ModifierCode> out=EnumSet.noneOf(ModifierCode.class);
-    for (ModifierCode code:ModifierCode.values())
+    EnumSet<ModifierCode> out = EnumSet.noneOf(ModifierCode.class);
+    for (ModifierCode code : ModifierCode.values())
     {
-      if ((modifiers&code.value)==code.value)
+      if ((modifiers & code.value) == code.value)
         out.add(code);
     }
     return out;
   }
-
 }

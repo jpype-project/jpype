@@ -15,7 +15,7 @@
 #
 # *****************************************************************************
 
-import collections
+import collections.abc
 import sys
 
 __all__ = ["JProxy", "JImplements"]
@@ -107,7 +107,7 @@ def _convertInterfaces(intf):
     """
     # We operate on lists of interfaces, so a single element is promoted
     # to a list
-    if not isinstance(intf, collections.Sequence):
+    if not isinstance(intf, collections.abc.Sequence):
         intf = [intf]
 
     # Verify that the list contains the required types

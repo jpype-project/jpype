@@ -18,5 +18,5 @@ package jpype.exc;
 
 interface ExceptionThrower
 {
-	void throwIOException() throws java.io.IOException;
+  void throwIOException() throws java.io.IOException;
 }

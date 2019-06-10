@@ -24,8 +24,8 @@ import java.util.HashSet;
 
 /**
  * A special version of the TypeFactory for debugging and testing.
- * 
- * This harness operates like JPype C++ layer with checks for problems and 
+ * <p>
+ * This harness operates like JPype C++ layer with checks for problems and
  * inconsistencies that may indicate a problem with the TypeManager.
  *
  * @author nelson85
@@ -154,7 +154,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
     resourceMap.put(value, new FieldResource(value, "field " + field.getName(), field));
     return value;
   }
-  
+
   @Override
   public long defineMethod(
           long context,

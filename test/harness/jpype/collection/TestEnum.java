@@ -1,5 +1,6 @@
 package jpype.collection;
 
-enum TestEnum {
-A,B
+enum TestEnum
+{
+  A, B
 }

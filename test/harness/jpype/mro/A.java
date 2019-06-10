@@ -18,5 +18,5 @@ package jpype.mro;
 
 interface A extends E, F
 {
-	void foo();
+  void foo();
 }

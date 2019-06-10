@@ -88,12 +88,12 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 JPValue* JPPythonEnv::getJavaValue(PyObject* obj)
 {
 	JP_TRACE_IN_C("JPPythonEnv::getJavaValue");
-//	JPPyObject vobj(JPPyRef::_use, obj);
+	//	JPPyObject vobj(JPPyRef::_use, obj);
 	if (Py_TYPE(obj) == &PyJPValue::Type)
 		return &((PyJPValue*) obj)->m_Value;
 	if (!JPPyObject::hasAttrString(obj, __javavalue__))
 		return 0;
-	
+
 	JPPyObject self(JPPyObject::getAttrString(obj, __javavalue__));
 	if (Py_TYPE(self.get()) == &PyJPValue::Type)
 	{
@@ -137,10 +137,6 @@ JPPyObject JPPythonEnv::getJavaProxyCallable(PyObject* obj, const string& name)
 	JP_TRACE_IN_C("JPythonEnv::getJavaProxyCallable");
 	PyObject* target = obj;
 	JP_TRACE("Target", target);
-	printf("object %p\n", obj);
-	printf("object %s\n", Py_TYPE(obj)->tp_name);
-	printf("name %s\n", name.c_str());
-	
 	return JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(target, name.c_str()));
 	JP_TRACE_OUT_C;
 }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="jpype_java" default="default" basedir=".">
-    <description>Builds, tests, and runs the project jpype_java.</description>
-		<!--
-				 This will be a non-standard project, so we will need to place rules for 
-		 whatever functionality we will be needing. -->
+  <description>Builds, tests, and runs the project jpype_java.</description>
+  <!--
+                  This will be a non-standard project, so we will need to place rules for 
+  whatever functionality we will be needing. -->
 
-    <import file="nbproject/build-impl.xml"/>
+  <import file="nbproject/build-impl.xml"/>
 </project>

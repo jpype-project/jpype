@@ -6,7 +6,8 @@ public class ClassWithBuffer
 {
   public BufferStrategy bufferStrategy;
 
-  public void foo() {
-      System.out.println("foo");
+  public void foo()
+  {
+    System.out.println("foo");
   }
 }

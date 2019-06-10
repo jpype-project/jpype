@@ -16,110 +16,109 @@
 //*****************************************************************************
 package jpype.xml;
 
-import org.xml.sax.helpers.*;
 import org.xml.sax.*;
+import org.xml.sax.helpers.*;
 
 public class DelegateHandler extends DefaultHandler
 {
-    private EntityResolver er;
-    private DTDHandler dh;
-    private ContentHandler ch;
-    private ErrorHandler eh;
-    
-    public DelegateHandler(EntityResolver er, DTDHandler dh, ContentHandler ch, ErrorHandler eh)
-    {
-        this.er = er;
-        this.dh = dh;
-        this.ch = ch;
-        this.eh = eh;
-    }
-    
-    public void characters(char[] ch, int start, int length) throws SAXException
-    {
-        if (ch != null)
-        {
-            this.ch.characters(ch, start, length);
-        }
-    }
+  private EntityResolver er;
+  private DTDHandler dh;
+  private ContentHandler ch;
+  private ErrorHandler eh;
 
-    public void endDocument() throws SAXException
-    {
-        if (ch != null)
-        {
-            ch.endDocument();
-        }
-    }
+  public DelegateHandler(EntityResolver er, DTDHandler dh, ContentHandler ch, ErrorHandler eh)
+  {
+    this.er = er;
+    this.dh = dh;
+    this.ch = ch;
+    this.eh = eh;
+  }
 
-    public void endElement(String namespaceURI, String localName, String qName) throws SAXException
+  public void characters(char[] ch, int start, int length) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.endElement(namespaceURI, localName, qName);
-        }
+      this.ch.characters(ch, start, length);
     }
+  }
 
-    public void endPrefixMapping(String prefix) throws SAXException
+  public void endDocument() throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.endPrefixMapping(prefix);
-        }
+      ch.endDocument();
     }
+  }
 
-    public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException
+  public void endElement(String namespaceURI, String localName, String qName) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            this.ch.ignorableWhitespace(ch, start, length);
-        }
+      ch.endElement(namespaceURI, localName, qName);
     }
+  }
 
-    public void processingInstruction(String target, String data) throws SAXException
+  public void endPrefixMapping(String prefix) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.processingInstruction(target, data);
-        }
+      ch.endPrefixMapping(prefix);
     }
+  }
 
-    public void setDocumentLocator(Locator locator)
+  public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-           ch.setDocumentLocator(locator); 
-        }
+      this.ch.ignorableWhitespace(ch, start, length);
     }
+  }
 
-    public void skippedEntity(String name) throws SAXException
+  public void processingInstruction(String target, String data) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.skippedEntity(name);
-        }
+      ch.processingInstruction(target, data);
     }
+  }
 
-    public void startDocument() throws SAXException
+  public void setDocumentLocator(Locator locator)
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.startDocument();
-        }
+      ch.setDocumentLocator(locator);
     }
+  }
 
-    public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException
+  public void skippedEntity(String name) throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.startElement(namespaceURI, localName, qName, atts);
-        }
+      ch.skippedEntity(name);
     }
+  }
 
-    public void startPrefixMapping(String prefix, String uri) throws SAXException 
+  public void startDocument() throws SAXException
+  {
+    if (ch != null)
     {
-        if (ch != null)
-        {
-            ch.startPrefixMapping(prefix, uri);
-        }
+      ch.startDocument();
     }
+  }
 
+  public void startElement(String namespaceURI, String localName, String qName, Attributes atts) throws SAXException
+  {
+    if (ch != null)
+    {
+      ch.startElement(namespaceURI, localName, qName, atts);
+    }
+  }
+
+  public void startPrefixMapping(String prefix, String uri) throws SAXException
+  {
+    if (ch != null)
+    {
+      ch.startPrefixMapping(prefix, uri);
+    }
+  }
 }

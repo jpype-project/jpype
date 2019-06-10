@@ -21,50 +21,56 @@ import java.util.List;
 
 public class ProxyTriggers
 {
-    public static String[] testProxy(Object itf)
+  public static String[] testProxy(Object itf)
+  {
+    List<String> methods = new LinkedList<>();
+    if (itf instanceof TestInterface1)
     {
-        List<String> methods = new LinkedList<>();
-        if (itf instanceof TestInterface1)
-        {
-            methods.add("Test Method1 = "+((TestInterface1)itf).testMethod1());
-        }
-        if (itf instanceof TestInterface2)
-        {
-          methods.add("Test Method2 = "+((TestInterface2)itf).testMethod2());
-        }
-        if (itf instanceof TestInterface3)
-        {
-            methods.add("Test Method3 = "+((TestInterface3)itf).testMethod3());
-        }
-        return methods.toArray(new String[0]);
+      methods.add("Test Method1 = " + ((TestInterface1) itf).testMethod1());
     }
-    
-    public void testProxyWithThread(final TestThreadCallback itf)
+    if (itf instanceof TestInterface2)
     {
-        itf.notifyValue("Waiting for thread start");
-        Thread t = new Thread(new Runnable() {
-            public void run()
-            {
-                for (int i = 1; i <= 3; i++)
-                {
-                    itf.notifyValue(String.valueOf(i));
-                }
+      methods.add("Test Method2 = " + ((TestInterface2) itf).testMethod2());
+    }
+    if (itf instanceof TestInterface3)
+    {
+      methods.add("Test Method3 = " + ((TestInterface3) itf).testMethod3());
+    }
+    return methods.toArray(new String[0]);
+  }
 
-            }
-        });
-        t.start();
-        try {
-            t.join();
-            itf.notifyValue("Thread finished");
-        } catch(InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            itf.notifyValue("Thread has been interrupted");
-        }        
-    }
-    
-    public Object[] testCallbackWithParameters(TestInterface2 itf)
+  public void testProxyWithThread(final TestThreadCallback itf)
+  {
+    itf.notifyValue("Waiting for thread start");
+    Thread t = new Thread(new Runnable()
     {
-    	byte[] vals = { 1, 2, 3, 4};
-    	return itf.write(vals , 12, 13);
+      public void run()
+      {
+        for (int i = 1; i <= 3; i++)
+        {
+          itf.notifyValue(String.valueOf(i));
+        }
+
+      }
+    });
+    t.start();
+    try
+    {
+      t.join();
+      itf.notifyValue("Thread finished");
+    } catch (InterruptedException ex)
+    {
+      Thread.currentThread().interrupt();
+      itf.notifyValue("Thread has been interrupted");
     }
+  }
+
+  public Object[] testCallbackWithParameters(TestInterface2 itf)
+  {
+    byte[] vals =
+    {
+      1, 2, 3, 4
+    };
+    return itf.write(vals, 12, 13);
+  }
 }

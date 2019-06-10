@@ -20,5 +20,5 @@ import java.rmi.*;
 
 interface IServer extends Remote
 {
-    void callRemote() throws RemoteException;
+  void callRemote() throws RemoteException;
 }

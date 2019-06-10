@@ -30,7 +30,7 @@ import java.util.List;
  * overload applies. JPype requires that the methods appear in order from most
  * to least specific. And each method overload requires a list of methods that
  * are more general. If two or more methods match and one is not more specific
- * than the other.  
+ * than the other.
  *
  * @author nelson85
  */
@@ -111,40 +111,46 @@ public class MethodResolution
   }
 
   // Table for primitive rules
-  static Class[] of(Class ... l) { return l; }
-  static HashMap<Class, Class[]> CONVERSION = new HashMap<>();
+  static Class[] of(Class... l)
   {
-    CONVERSION.put(Byte.TYPE, 
-            of(Byte.TYPE, Byte.class, Short.TYPE, Short.class, 
-              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
-              Float.TYPE, Float.class, Double.TYPE, Double.class));
-    CONVERSION.put(Character.TYPE, 
-            of(Character.TYPE, Character.class, Short.TYPE, Short.class, 
-              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
-              Float.TYPE, Float.class, Double.TYPE, Double.class));
-    CONVERSION.put(Short.TYPE, 
-            of(Short.TYPE, Short.class, 
-              Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
-              Float.TYPE, Float.class, Double.TYPE, Double.class));
-    CONVERSION.put(Integer.TYPE, 
-            of(Integer.TYPE, Integer.class, Long.TYPE, Long.class, 
-              Float.TYPE, Float.class, Double.TYPE, Double.class));
-    CONVERSION.put(Long.TYPE, 
-            of(Long.TYPE, Long.class, 
-              Float.TYPE, Float.class, Double.TYPE, Double.class));
-     CONVERSION.put(Float.TYPE, 
+    return l;
+  }
+  static HashMap<Class, Class[]> CONVERSION = new HashMap<>();
+
+  
+  {
+    CONVERSION.put(Byte.TYPE,
+            of(Byte.TYPE, Byte.class, Short.TYPE, Short.class,
+                    Integer.TYPE, Integer.class, Long.TYPE, Long.class,
+                    Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Character.TYPE,
+            of(Character.TYPE, Character.class, Short.TYPE, Short.class,
+                    Integer.TYPE, Integer.class, Long.TYPE, Long.class,
+                    Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Short.TYPE,
+            of(Short.TYPE, Short.class,
+                    Integer.TYPE, Integer.class, Long.TYPE, Long.class,
+                    Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Integer.TYPE,
+            of(Integer.TYPE, Integer.class, Long.TYPE, Long.class,
+                    Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Long.TYPE,
+            of(Long.TYPE, Long.class,
+                    Float.TYPE, Float.class, Double.TYPE, Double.class));
+    CONVERSION.put(Float.TYPE,
             of(Float.TYPE, Float.class, Double.TYPE, Double.class));
-     CONVERSION.put(Double.TYPE, 
+    CONVERSION.put(Double.TYPE,
             of(Double.TYPE, Double.class));
   }
+
   static boolean isAssignableTo(Class c1, Class c2)
   {
     if (!c1.isPrimitive())
       return c2.isAssignableFrom(c1);
     Class[] cl = CONVERSION.get(c1);
-    if (cl==null)
+    if (cl == null)
       return false;
-    for (Class c3:cl)
+    for (Class c3 : cl)
       if (c2.equals(c3))
         return true;
     return false;
@@ -168,7 +174,7 @@ public class MethodResolution
       param1.add(0, method1.getDeclaringClass());
     if (!Modifier.isStatic(method2.getModifiers()))
       param2.add(0, method2.getDeclaringClass());
-    
+
     // FIXME need to consider resolving mixing of static and non-static
     // Methods here.
     if (param1.size() != param2.size())

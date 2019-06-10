@@ -18,31 +18,42 @@ package jpype.array;
 
 public class TestArray
 {
-    public TestArray()
-    {
-        
-    }
-    
-    public int[] i = {12234,1234,234,1324,424,234,234,142,5,251,242,35,235,62,1235,46,245132,51, 2, 3, 4};
-    
-    public Object[] getSubClassArray()
-    {
-      return new String[] { "aaa", "bbb" };
-    }
+  public TestArray()
+  {
 
-    public Object getArrayAsObject()
-    {
-      return new String[] { "aaa", "bbb" };
-    }
-    
-    public char[] getCharArray()
-    {
-    	return new char[] { 'a', 'v', 'c', 'd' };
-    }
+  }
+  public int[] i =
+  {
+    12234, 1234, 234, 1324, 424, 234, 234, 142, 5, 251, 242, 35, 235, 62, 1235, 46, 245132, 51, 2, 3, 4
+  };
 
-    public byte[] getByteArray()
+  public Object[] getSubClassArray()
+  {
+    return new String[]
     {
-    	String s = "avcd";
-    	return s.getBytes();
-    }
+      "aaa", "bbb"
+    };
+  }
+
+  public Object getArrayAsObject()
+  {
+    return new String[]
+    {
+      "aaa", "bbb"
+    };
+  }
+
+  public char[] getCharArray()
+  {
+    return new char[]
+    {
+      'a', 'v', 'c', 'd'
+    };
+  }
+
+  public byte[] getByteArray()
+  {
+    String s = "avcd";
+    return s.getBytes();
+  }
 }

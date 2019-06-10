@@ -75,22 +75,22 @@ public class JPypeContext
   public static JPypeContext createContext(long context, ClassLoader bootLoader)
   {
     instance = new JPypeContext();
-  
+
     instance.context = context;
     instance.bootLoader = bootLoader;
     instance.typeFactory = new TypeFactoryNative();
     instance.typeManager = new TypeManager(context, instance.typeFactory);
     instance.typeManager.typeFactory = instance.typeFactory;
-      
+
     instance.referenceQueue = new JPypeReferenceQueue(context);
-    
+
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
-    
+
     return instance;
   }
-  
+
   public void shutdown()
   {
     this.referenceQueue.stop();
@@ -111,7 +111,7 @@ public class JPypeContext
   {
     return this.bootLoader;
   }
-  
+
   public TypeFactory getTypeFactory()
   {
     return this.typeFactory;

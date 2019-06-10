@@ -33,12 +33,10 @@ class ExceptionTest
     try
     {
       th.throwIOException();
-    } 
-    catch (java.io.IOException ex)
+    } catch (java.io.IOException ex)
     {
       return true;
-    } 
-    catch (Throwable ex)
+    } catch (Throwable ex)
     {
       System.out.println("Unexpected Exception during delegateThrow");
       ex.printStackTrace();

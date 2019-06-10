@@ -126,7 +126,7 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 		// belong to the same context.
 
 		JPJavaFrame frame(context);
-		
+
 		Py_INCREF(target);
 		self->m_Target = target;
 		self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
@@ -162,12 +162,12 @@ void PyJPProxy::__dealloc__(PyJPProxy *self)
 {
 	JP_TRACE_IN_C("PyJPProxy::dealloc");
 	delete self->m_Proxy;
-	
+
 	if (self->m_Target != NULL)
 		Py_DECREF(self->m_Target);
 	if (self->m_Context != NULL)
 		Py_DECREF(self->m_Context);
-	
+
 	self->m_Target = NULL;
 	// Free self
 	Py_TYPE(self)->tp_free(self);
@@ -176,14 +176,14 @@ void PyJPProxy::__dealloc__(PyJPProxy *self)
 
 int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->m_Target);
-    return 0;
+	Py_VISIT(self->m_Target);
+	return 0;
 }
 
 int PyJPProxy::clear(PyJPProxy *self)
 {
-    Py_CLEAR(self->m_Target);
-    return 0;
+	Py_CLEAR(self->m_Target);
+	return 0;
 }
 
 bool PyJPProxy::check(PyObject *o)

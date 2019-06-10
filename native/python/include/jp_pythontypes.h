@@ -66,7 +66,7 @@ namespace JPPyRef
 		 */
 		_borrowed = 1,
 
-	    /**
+		/**
 		 * This policy is used when we are given a new reference that we must
 		 * destroy.  This will steal a reference.
 		 * 

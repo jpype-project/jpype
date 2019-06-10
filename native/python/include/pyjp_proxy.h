@@ -30,7 +30,7 @@ struct PyJPProxy
 	static int __init__(PyJPProxy *self, PyObject *args, PyObject *kwargs);
 	static void __dealloc__(PyJPProxy *self);
 	static PyObject *__str__(PyJPProxy *self);
-    static int traverse(PyJPProxy *self, visitproc visit, void *arg);
+	static int traverse(PyJPProxy *self, visitproc visit, void *arg);
 	static int clear(PyJPProxy *self);
 
 	JPProxy *m_Proxy;

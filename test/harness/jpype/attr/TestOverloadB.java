@@ -1,4 +1,5 @@
 package jpype.attr;
 
-public class TestOverloadB extends TestOverloadA {
+public class TestOverloadB extends TestOverloadA
+{
 }

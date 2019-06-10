@@ -158,7 +158,7 @@ public class TypeManager
     } catch (ClassNotFoundException ex)
     {
     }
-    
+
     if (cls == null && !str.contains("."))
     {
       if ("boolean".equals(str))
@@ -319,7 +319,7 @@ public class TypeManager
     if (parent.anonymous != 0)
       return parent.anonymous;
 
-    parent.anonymous = typeFactory.defineObjectClass(context, 
+    parent.anonymous = typeFactory.defineObjectClass(context,
             parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,

@@ -16,16 +16,17 @@
 //*****************************************************************************
 package jpype.proxy;
 
+public class ReturnObject
+{
+  private int number;
 
-public class ReturnObject {
-    private int number;
+  public ReturnObject(int number)
+  {
+    this.number = number;
+  }
 
-    public ReturnObject(int number){
-        this.number = number;
-    }
-
-    public int getNumber(){
-        return number;
-    }
-
+  public int getNumber()
+  {
+    return number;
+  }
 }

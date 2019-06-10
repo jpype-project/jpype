@@ -14,4 +14,3 @@ public @interface Annotation
 {
   public String value();
 }
-
