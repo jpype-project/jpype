@@ -1,3 +1,8 @@
+.. image:: doc/logo.png
+   :scale: 50 %
+   :alt: JPype logo
+   :align: center
+
 JPype
 =====
    
