@@ -69,15 +69,18 @@ public class JPypeReferenceQueue extends ReferenceQueue
     System.out.println("Reference Queue stop");
     try
     {
-      // wait for the thread to finish ...
       synchronized (queueStopMutex)
       {
-        isStopped = true;
-        queueStopMutex.wait(5000);
+        synchronized (this)
+        {
+          isStopped = true;
+          queueThread.interrupt();
+        }
 
-        // FIXME what happens to any references that are outstanding after
-        // the queue is stopped.  They will never be cleared so that means
-        // they can never be collected.
+        // wait for the thread to finish ...
+        System.out.println("wait");
+        queueStopMutex.wait(10000);
+        System.out.println("wait done");
       }
     } catch (InterruptedException ex)
     {
@@ -126,38 +129,37 @@ public class JPypeReferenceQueue extends ReferenceQueue
       {
         try
         {
-          // Check if a ref has been queued. and check if the thread has been
-          // stopped every 0.25 seconds
-          JPypeReference ref = (JPypeReference) remove(250);
-          if (ref != null)
+          JPypeReference ref = (JPypeReference) remove();
+          if (ref == null)
+            continue;
+
+          synchronized (hostReferences)
           {
-            synchronized (hostReferences)
-            {
-              hostReferences.remove(ref);
-            }
-            long hostRef = ref.hostReference;
-            ref.hostReference = -1;
-            System.out.println("REMOVE REFERENCE" + hostRef);
-            removeHostReference(context, hostRef);
+            hostReferences.remove(ref);
           }
+          long hostRef = ref.hostReference;
+          ref.hostReference = 0;
+          removeHostReference(context, hostRef);
         } catch (InterruptedException ex)
         {
+          System.out.println("BROKE");
           // don't know why ... don't really care ...
         }
       }
 
-      System.out.println("Kill remaining references");
-      // We have references into Python which will never be freed if we don't 
-      // remove them now
-      for (JPypeReference ref : hostReferences)
+      synchronized (hostReferences)
       {
-        System.out.println("Call "+ref.hostReference);
-        removeHostReference(context, ref.hostReference);
-        System.out.println("Call done");
+        // We have references into Python which will never be freed if we don't 
+        // remove them now
+        for (JPypeReference ref : hostReferences)
+        {
+          long hostRef = ref.hostReference;
+          ref.hostReference = 0;
+          removeHostReference(context, hostRef);
+        }
+        hostReferences = null;
       }
-      System.out.println("Kill remaining references done");
 
-      hostReferences = null;
       synchronized (queueStopMutex)
       {
         queueStopMutex.notifyAll();

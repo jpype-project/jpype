@@ -43,7 +43,9 @@ public class JPypeProxy implements InvocationHandler
 
   public Object newInstance()
   {
-    return Proxy.newProxyInstance(cl, interfaces, this);
+    Object out = Proxy.newProxyInstance(cl, interfaces, this);
+    context.getReferenceQueue().registerRef(out, instance);
+    return out;
   }
 
   public Object invoke(Object proxy, Method method, Object[] args)

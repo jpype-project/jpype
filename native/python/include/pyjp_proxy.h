@@ -35,7 +35,6 @@ struct PyJPProxy
 
 	JPProxy *m_Proxy;
 	PyObject *m_Target;
-	PyObject *m_Callable;
 	PyJPContext *m_Context;
 } ;
 

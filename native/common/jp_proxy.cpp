@@ -91,11 +91,19 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		JP_TRACE_IN_C("JPype_InvocationHandler_hostInvoke");
 		try
 		{
+			if (hostObj == 0)
+			{
+				env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+						"host reference is null");
+				return NULL;
+			}
+
 			string cname = context->toStringUTF8(name);
 			JP_TRACE("Get callable for", cname);
 
 			// Get the callable object
 			JPPyObject callable(JPPythonEnv::getJavaProxyCallable((PyObject*) hostObj, cname));
+			PyErr_Clear();
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.isNone())
@@ -232,12 +240,10 @@ jobject JPProxy::getProxy()
 
 	// Use the proxy to make an instance
 	JP_TRACE("Create handler");
+	Py_INCREF(m_Instance);
 	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
 			m_Factory->m_NewInstanceID, 0);
 
-	// The instance and the python object lifespans are bound
-	JP_TRACE("Register reference");
-	context->getReferenceQueue()->registerRef(instance, this->m_Instance);
 	return frame.keep(instance);
 	JP_TRACE_OUT;
 }

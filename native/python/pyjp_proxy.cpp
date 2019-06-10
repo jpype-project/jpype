@@ -75,7 +75,6 @@ PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwarg
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
-	self->m_Callable = NULL;
 	self->m_Context = NULL;
 	return (PyObject*) self;
 }
@@ -87,9 +86,8 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	{
 		// Parse arguments
 		PyObject *target;
-		PyObject *callable;
 		PyObject *pyintf;
-		if (!PyArg_ParseTuple(args, "OOO", &target, &callable, &pyintf))
+		if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
 		{
 			return -1;
 		}
@@ -128,13 +126,10 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 		// belong to the same context.
 
 		JPJavaFrame frame(context);
-		self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
 		
-		self->m_Target = target;
 		Py_INCREF(target);
-		self->m_Callable = callable;
-		Py_INCREF(callable);
-
+		self->m_Target = target;
+		self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
 		self->m_Context = (PyJPContext*) (context->getHost());
 		Py_INCREF(self->m_Context);
 
@@ -166,18 +161,14 @@ PyObject *PyJPProxy::__str__(PyJPProxy *self)
 void PyJPProxy::__dealloc__(PyJPProxy *self)
 {
 	JP_TRACE_IN_C("PyJPProxy::dealloc");
-	printf("~PROXY");
 	delete self->m_Proxy;
 	
 	if (self->m_Target != NULL)
 		Py_DECREF(self->m_Target);
-	if (self->m_Callable != NULL)
-		Py_DECREF(self->m_Callable);
 	if (self->m_Context != NULL)
 		Py_DECREF(self->m_Context);
 	
 	self->m_Target = NULL;
-	self->m_Callable = NULL;
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;
@@ -185,14 +176,12 @@ void PyJPProxy::__dealloc__(PyJPProxy *self)
 
 int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
-    Py_VISIT(self->m_Callable);
     Py_VISIT(self->m_Target);
     return 0;
 }
 
 int PyJPProxy::clear(PyJPProxy *self)
 {
-    Py_CLEAR(self->m_Callable);
     Py_CLEAR(self->m_Target);
     return 0;
 }

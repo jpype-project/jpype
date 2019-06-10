@@ -222,8 +222,11 @@ void JPContext::shutdownJVM()
 		JP_TRACE(m_ContextShutdownMethod);
 
 		// Tell Java to shutdown the context
-		if (m_JavaContext.get() != 0)
-			frame.CallVoidMethodA(m_JavaContext.get(), m_ContextShutdownMethod, 0);
+		{
+			JPPyCallRelease release;
+			if (m_JavaContext.get() != 0)
+				frame.CallVoidMethodA(m_JavaContext.get(), m_ContextShutdownMethod, 0);
+		}
 	}
 
 	// Wait for all non-demon threads to terminate

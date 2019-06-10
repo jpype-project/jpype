@@ -16,8 +16,14 @@ JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
 
 	if ((usage & 2) == 2)
 	{
+		if ((usage & 4) == 4)
+		{
+			ASSERT_NOT_NULL(obj);
+		}
+		else if (obj == NULL)
+			PyErr_Clear();
+
 		// Claim it by stealing a references
-		ASSERT_NOT_NULL(obj);
 		pyobj = obj;
 		JP_TRACE_PY("pyref new(claim)", pyobj);
 	}
@@ -762,7 +768,7 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 JPPyCallAcquire::JPPyCallAcquire()
 {
 	state1 = PyThreadState_New(PyJPModule::s_Interpreter);
-	PyEval_AcquireThread((PyThreadState*)state1);
+	PyEval_AcquireThread((PyThreadState*) state1);
 	JP_TRACE_LOCKS("GIL ACQUIRE", this);
 }
 

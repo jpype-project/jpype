@@ -55,23 +55,15 @@ def _createJProxy(cls, intf, **kwargs):
                 raise NotImplementedError("Interface %s requires method %s to be implemented." % (
                     interface.class_.getName(), method.getName()))
 
-    # Define a lookup interface
-    def lookup(self, name):
-        # Get the override from the override dictionary
-        over = overrides[name]
-
-        # We need convert the method to a bound method using descriptor interface
-        return over[0].__get__(self)
-
     # Construct a new init method
     init = cls.__dict__.get('__init__', None)
     if init:
         def init2(self, *args, **kwargs):
             init(self, *args, **kwargs)
-            self.__javaproxy__ = _jpype.PyJPProxy(self, lookup, actualIntf)
+            self.__javaproxy__ = _jpype.PyJPProxy(self, actualIntf)
     else:
         def init2(self, *args, **kwargs):
-            self.__javaproxy__ = _jpype.PyJPProxy(self, lookup, actualIntf)
+            self.__javaproxy__ = _jpype.PyJPProxy(self, actualIntf)
 
     # Replace the init with the proxy init
     type.__setattr__(cls, '__init__', init2)
@@ -137,6 +129,16 @@ def _convertInterfaces(intf):
 
     return actualIntf
 
+class _JFromDict(object):
+    def __init__(self, dict):
+        self.dict = dict
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self,'dict')[name]
+        except KeyError:
+            pass
+        raise AttributeError("attribute not found")
+
 
 class JProxy(object):
     """ Define a proxy for a Java interface.
@@ -172,15 +174,7 @@ class JProxy(object):
             raise RuntimeError("Specify only one of dict and inst")
 
         if dict is not None:
-            # Define the lookup function based for a dict
-            def lookup(d, name):
-                return d[name]
-            # create a proxy
-            self.__javaproxy__ = _jpype.PyJPProxy(dict, lookup, actualIntf)
+            self.__javaproxy__ = _jpype.PyJPProxy(_JFromDict(dict), actualIntf)
 
         if inst is not None:
-            # Define the lookup function based for a object instance
-            def lookup(d, name):
-                return getattr(d, name)
-            # create a proxy
-            self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)
+            self.__javaproxy__ = _jpype.PyJPProxy(inst, actualIntf)

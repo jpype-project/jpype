@@ -66,6 +66,14 @@ namespace JPPyRef
 		 */
 		_borrowed = 1,
 
+	    /**
+		 * This policy is used when we are given a new reference that we must
+		 * destroy.  This will steal a reference.
+		 * 
+		 * claim reference, and decremented when done. Clears errors if NULL.
+		 */
+		_accept = 2,
+
 		/**
 		 * This policy is used when we are given a new reference that we must
 		 * destroy.  This will steal a reference.
@@ -73,7 +81,7 @@ namespace JPPyRef
 		 * Assert not null, claim reference, and decremented when done.
 		 * Will throw an exception in the object is null.
 		 */
-		_claim = 2,
+		_claim = 6,
 
 		/**
 		 * This policy is used when we are capturing an object returned from a python
@@ -82,7 +90,7 @@ namespace JPPyRef
 		 * Check for errors, assert not null, then claim.
 		 * Will throw an exception an error occurs.
 		 */
-		_call = 3
+		_call = 7
 	} ;
 }
 

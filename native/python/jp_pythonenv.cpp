@@ -135,20 +135,13 @@ JPProxy* JPPythonEnv::getJavaProxy(PyObject* obj)
 JPPyObject JPPythonEnv::getJavaProxyCallable(PyObject* obj, const string& name)
 {
 	JP_TRACE_IN_C("JPythonEnv::getJavaProxyCallable");
-	PyJPProxy* proxy = (PyJPProxy*) obj;
-	PyObject* callable = proxy->m_Callable;
-	PyObject* target = proxy->m_Target;
-	JP_TRACE("Proxy", proxy);
-	JP_TRACE("Callable", callable);
+	PyObject* target = obj;
 	JP_TRACE("Target", target);
-
-	// Pack arguments
-	JPPyTuple args(JPPyTuple::newTuple(2));
-	args.setItem(0, target);
-	args.setItem(1, JPPyString::fromStringUTF8(name).get());
-
-	// Lookup function must be "def lookup(target, name)"
-	return JPPyObject(JPPyRef::_call, PyObject_Call(callable, args.get(), NULL));
+	printf("object %p\n", obj);
+	printf("object %s\n", Py_TYPE(obj)->tp_name);
+	printf("name %s\n", name.c_str());
+	
+	return JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(target, name.c_str()));
 	JP_TRACE_OUT_C;
 }
 
