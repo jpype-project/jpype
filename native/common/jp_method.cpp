@@ -216,7 +216,7 @@ JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
 		{
 			ss << "\t" << (*it)->toString() << std::endl;
 		}
-		JP_RAISE_RUNTIME_ERROR(ss.str());
+		JP_RAISE_TYPE_ERROR(ss.str());
 		JP_TRACE(ss.str());
 	}
 
@@ -244,7 +244,7 @@ JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
 			ss << "\t" << current->toString();
 			ss << std::endl;
 		}
-		JP_RAISE_RUNTIME_ERROR(ss.str());
+		JP_RAISE_TYPE_ERROR(ss.str());
 	}
 	return bestMatch;
 	JP_TRACE_OUT;

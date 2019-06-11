@@ -53,6 +53,11 @@ def _checkJVMArch(jvmPath):
         raise JVMNotSupportedException("Unable to deterime JVM Type")
 
 
+reg_keys = [r"SOFTWARE\JavaSoft\Java Runtime Environment",
+            r"SOFTWARE\JavaSoft\JRE",
+            ]
+
+
 class WindowsJVMFinder(_jvmfinder.JVMFinder):
     """
     Windows JVM library finder class
@@ -70,7 +75,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         # Search methods
         winreg = self._get_winreg()
-        if winreg != None:
+        if winreg is not None:
             self._methods = (self._get_from_java_home, self._get_from_registry)
         else:
             self._methods = (self._get_from_java_home, )
@@ -101,22 +106,20 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         :return: The path found in the registry, or None
         """
-        try:
-            # Winreg is an optional package in cygwin
-            winreg = self._get_winreg()
-            if not winreg:
-                return None
-
-            jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                                    r"SOFTWARE\JavaSoft\Java Runtime Environment")
-            cv = winreg.QueryValueEx(jreKey, "CurrentVersion")
-            versionKey = winreg.OpenKey(jreKey, cv[0])
-            winreg.CloseKey(jreKey)
-
-            cv = winreg.QueryValueEx(versionKey, "RuntimeLib")
-            winreg.CloseKey(versionKey)
-
-            return cv[0]
-
-        except WindowsError:
+        # Winreg is an optional package in cygwin
+        winreg = self._get_winreg()
+        if not winreg:
             return None
+        for location in reg_keys:
+            try:
+                jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, location)
+                cv = winreg.QueryValueEx(jreKey, "CurrentVersion")
+                versionKey = winreg.OpenKey(jreKey, cv[0])
+                winreg.CloseKey(jreKey)
+
+                cv = winreg.QueryValueEx(versionKey, "RuntimeLib")
+                winreg.CloseKey(versionKey)
+
+                return cv[0]
+            except WindowsError:
+                pass

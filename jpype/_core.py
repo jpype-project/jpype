@@ -33,11 +33,13 @@ from . import _jcollection
 from . import _jcomparable
 from . import _jio
 from . import _jinit
+from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM', 'synchronized'
+    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
+    'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -86,47 +88,95 @@ def _initialize():
 def isJVMStarted():
     return _jpype.isStarted()
 
+
 def _hasClassPath(args):
     for i in args:
         if i.startswith('-Djava.class.path'):
             return True
     return False
 
-def startJVM(jvm=None, *args, **kwargs):
+
+_JVM_started = False
+
+def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
-    the JVM with the default classpath and jvm.  The default classpath
-    will be determined by ``jpype.getClassPath()``.  The default JVM is 
-    determined by ``jpype.getDefaultJVMPath()``.
+    the JVM with the default classpath and jvmpath.  
 
-    Args:
-      jvm (Optional, str):  Path to the jvm library file,
-        The default of None will use ``jpype.getDefaultJVMPath()``
+    The default classpath is determined by ``jpype.getClassPath()``.
+    The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
+
+    Parameters:
+     *args (Optional, str[]): Arguments to give to the JVM.
+        The first argument may be the path the JVM.
+
+    Keyword Arguments:
+      jvmpath (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...) 
-      *args (Optional, str[]): Arguments to give to the JVM
-      classpath (Optional[string]): Set the classpath for the jvm.
+        Using None will apply the default jvmpath.
+      classpath (str,[str]): Set the classpath for the jvm.
         This will override any classpath supplied in the arguments
-        list.  Default will use ``jpype.getClassPath``
-      ignoreUnrecognized (Optional, [bool]): Option to JVM to ignore
-        invalid JVM arguments.  Default is False.
-    """
-    if jvm is None:
-        jvm = getDefaultJVMPath()
+        list. A value of None will give no classpath to JVM.
+      ignoreUnrecognized (bool): Option to JVM to ignore
+        invalid JVM arguments. Default is False.
 
-        # Check to see that the user has not set the classpath
-        # Otherwise use the default if not specified
-        if not _hasClassPath(args) and 'classpath' not in kwargs:
-           kwargs['classpath']=_classpath.getClassPath()
+    Raises:
+      OSError: if the JVM cannot be started or is already running.
+      TypeError: if an invalid keyword argument is supplied 
+        or a keyword argument conflicts with the arguments.
 
-    if 'ignoreUnrecognized' not in kwargs:
-        kwargs['ignoreUnrecognized']=False
+     """
+    if _jpype.isStarted():
+        raise OSError('JVM is already started')
+    global _JVM_started
+    if _JVM_started:
+        raise OSError('JVM cannot be restarted')
+    _JVM_started = True
+
+    args = list(args)
+
+    # JVM path
+    jvmpath = None
+    if args:
+        # jvm is the first argument the first argument is a path or None
+        if not args[0] or not args[0].startswith('-'):
+            jvmpath = args.pop(0)
+    if 'jvmpath' in kwargs:
+        if jvmpath:
+            raise TypeError('jvmpath specified twice')
+        jvmpath = kwargs.pop('jvmpath')
+    if not jvmpath:
+        jvmpath = getDefaultJVMPath()
 
     # Classpath handling
-    args = list(args)
-    if 'classpath' in kwargs and kwargs['classpath']!=None:
-        args.append('-Djava.class.path=%s'%(kwargs['classpath']))
+    if _hasClassPath(args):
+        # Old style, specified in the arguments
+        if 'classpath' in kwargs:
+            # Cannot apply both styles, conflict
+            raise TypeError('classpath specified twice')
+        classpath = None
+    elif 'classpath' in kwargs:
+        # New style, as a keywork
+        classpath = kwargs.pop('classpath')
+    else:
+        # Not speficied at all, use the default classpath
+        classpath = _classpath.getClassPath()
 
-    _jpype.startup(jvm, tuple(args), kwargs['ignoreUnrecognized'])
+    # Handle strings and list of strings.
+    if classpath:
+        if isinstance(classpath, (str, _jtypes._unicode)):
+            args.append('-Djava.class.path=%s' % classpath)
+        else:
+            args.append('-Djava.class.path=%s' %
+                        (_classpath._SEP.join(classpath)))
+
+    ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
+
+    if kwargs:
+        raise TypeError("startJVM() got an unexpected keyword argument '%s'"
+                        % (','.join([str(i) for i in kwargs])))
+
+    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized)
     _initialize()
 
 
@@ -203,7 +253,7 @@ def synchronized(obj):
 
       with synchronized(obj):
          # modify obj values
-         
+
       # lock is freed when with block ends
 
     """
@@ -220,7 +270,7 @@ def getDefaultJVMPath():
 
     Returns:
       The path to the JVM shared library file
-    
+
     Raises:
       JVMNotFoundException: If there was no JVM found in the search path.
       JVMNotSupportedException: If the JVM was found was not compatible with
@@ -248,12 +298,14 @@ def getDefaultJVMPath():
 
 
 # Naming compatibility
-get_default_jvm_path = getDefaultJVMPath
+@deprecated("getDefaultJVMPath")
+def get_default_jvm_path(*args, **kwargs):
+    return getDefaultJVMPath(*args, **kwargs)
 
 
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
-    
+
     This function can be used to determine the version of the JVM. It is 
     useful to help determine why a Jar has failed to load.  
 

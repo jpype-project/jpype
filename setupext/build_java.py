@@ -4,6 +4,7 @@ import subprocess
 import distutils.cmd
 import distutils.log
 from distutils.errors import DistutilsPlatformError
+from distutils.dir_util import copy_tree, remove_tree
 
 
 class BuildJavaCommand(distutils.cmd.Command):
@@ -22,6 +23,20 @@ class BuildJavaCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+        java = self.distribution.enable_build_jar
+
+        # Try to use the cach if we are not requested build
+        if not java:
+            src = os.path.join('native','jars')
+            dest = os.path.join('build','lib')
+            if os.path.exists(src):
+                distutils.log.info("Using Jar cache")
+                copy_tree(src, dest)
+                return
+
+        distutils.log.info("Jar cache is missing, using --enable-build-jar to recreate it.")
+
+        # build the jar
         buildDir = os.path.join("..", "build")
         buildXmlFile = os.path.join("native", "build.xml")
         command = [self.distribution.ant, '-Dbuild=%s' %
@@ -33,3 +48,5 @@ class BuildJavaCommand(distutils.cmd.Command):
         except subprocess.CalledProcessError as exc:
             distutils.log.error(exc.output)
             raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
+
+

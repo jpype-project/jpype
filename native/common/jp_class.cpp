@@ -155,7 +155,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
 {
 	JP_TRACE_IN("JPClass::invoke");
 	jvalue v;
@@ -163,7 +163,10 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject claz, jclass clazz, jmeth
 	// Call method
 	{
 		JPPyCallRelease call;
-		v.l = frame.CallNonvirtualObjectMethodA(claz, clazz, mth, val);
+		if (clazz == NULL)
+			v.l = frame.CallObjectMethodA(obj, mth, val);
+		else
+			v.l = frame.CallNonvirtualObjectMethodA(obj, clazz, mth, val);
 	}
 
 	// Get the return type

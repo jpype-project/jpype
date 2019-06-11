@@ -1,6 +1,7 @@
 MANIFEST
 *~
 /test/classes/
+/test/jars/
 */build*/
 
 # Byte-compiled / optimized / DLL files
@@ -62,3 +63,5 @@ target/
 *.swp
 *.stackdump
 tmp
+doc/html
+native/jars

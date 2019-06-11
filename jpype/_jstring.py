@@ -73,7 +73,7 @@ class _JString(object):
         return self.contains(other)
 
     def __hash__(self):
-        return self.hashCode()
+        return self.__str__().__hash__()
 
 
 JString = _jobject.defineJObjectFactory(

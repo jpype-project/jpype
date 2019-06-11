@@ -54,9 +54,7 @@ public:
 		jvmLibrary = LoadLibrary(path);
 		if (jvmLibrary == NULL)
 		{
-			std::stringstream msg;
-			msg << "Unable to load DLL [" << path << "], error = " << formatMessage(GetLastError());
-			JP_RAISE_RUNTIME_ERROR( msg.str());
+			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
 		}
 	}
 

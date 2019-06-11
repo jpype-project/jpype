@@ -71,20 +71,25 @@ JPPyObject JPArray::getRange(jsize start, jsize stop)
 void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 {
 	JP_TRACE_IN("JPArray::setRange");
+
+	// Make sure it is an iterable before we start
+	if (!JPPySequence::check(val))
+		JP_RAISE_TYPE_ERROR("can only assign a sequence");
+
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();
 	unsigned int len = stop - start;
 	JPPySequence seq(JPPyRef::_use, val);
-	size_t plength = seq.size();
+	long plength = seq.size();
 
 	JP_TRACE("Verify lengths", len, plength);
-	if (len != plength)
+	if ((long) len != plength)
 	{
 		// Python would allow mismatching size by growing or shrinking 
 		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
-		JP_RAISE_RUNTIME_ERROR(out.str());
+		JP_RAISE_VALUE_ERROR(out.str());
 	}
 
 	JP_TRACE("Call component set range");
@@ -106,7 +111,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 
 	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
 	{
-		JP_RAISE_RUNTIME_ERROR("Unable to convert.");
+		JP_RAISE_TYPE_ERROR("Unable to convert.");
 	}
 
 	compType->setArrayItem(frame, m_Object.get(), ndx, val);

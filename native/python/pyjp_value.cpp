@@ -78,7 +78,7 @@ void PyJPValue::initType(PyObject* module)
 
 bool PyJPValue::check(PyObject* o)
 {
-	return o->ob_type == &PyJPValue::Type;
+	return Py_TYPE(o) == &PyJPValue::Type;
 }
 
 // These are from the internal methods when we alreayd have the jvalue
@@ -154,7 +154,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		if (type->canConvertToJava(value) == JPMatch::_none)
 		{
 			stringstream ss;
-			ss << "Unable to convert " << value->ob_type->tp_name << " to java type " << type->toString();
+			ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();
 			PyErr_SetString(PyExc_TypeError, ss.str().c_str());
 			return -1;
 		}

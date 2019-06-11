@@ -4,47 +4,100 @@ os:
 language: python
 
 python:
-  - '2.6'
   - '2.7'
-  - '3.3'
   - '3.4'
   - '3.5'
   - '3.6'
+  - 'nightly'
   - 'pypy'
   - 'pypy3'
-  - "nightly"
+
+env:
+  global:
+    - PYTHON=python
+    - PIP=pip
+    - INST=""
+    # Moved numpy testing to Xenial
+    #   Testing with and without numpy on more than 2.7/3.7 for each arch
+    #   is likely a waste.  The paths to a CPython module do not really
+    #   change, but byte order and major version may make a difference.
 
 addons:
   apt:
     packages:
     - ant
 
-env:
-  # one build with and without numpy support (opt numpy out)
-  - NUMPY="--global-option=--disable-numpy"
-  - NUMPY=""
-
 matrix:
   allow_failures:
-    - python: 'pypy'
-      env: NUMPY="--global-option=--disable-numpy"
-    - python: 'pypy3'
-      env: NUMPY="--global-option=--disable-numpy"
-    - python: 'pypy'
-      env: NUMPY=""
-    - python: 'pypy3'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY=""
-    - python: 'nightly'
-      env: NUMPY="--global-option=--disable-numpy"
-  
+    - python: nightly
+    - python: pypy
+    - python: pypy3
+    - os: osx
+
+  include:
+    - name: "Python 2.7 on Xenial Linux (w/o NUMPY)"
+      python: 2.7
+      dist: xenial
+      language: python
+      env:
+        - NUMPY="--global-option=--disable-numpy"
+
+    - name: "Python 2.7 on Xenial Linux"
+      python: 2.7
+      dist: xenial
+      language: python
+
+    - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
+      python: 3.7
+      dist: xenial
+      language: python
+      env:
+        - PYTHON=python3
+        - PIP=pip3
+        - NUMPY="--global-option=--disable-numpy"
+
+    - name: "Python 3.7 on Xenial Linux"
+      python: 3.7
+      dist: xenial
+      language: python
+      env:
+        - PYTHON=python3
+        - PIP=pip3
+
+    ## This pattern is good, but something is broken in openJDK 12
+    ## Deal with in another pull
+    - name: "Python 2.7 on macOS"
+      os: osx
+      osx_image: xcode10.2
+      language: java
+      env:
+        - PYTHON=python
+        - INST=--user
+      addons:
+        homebrew:
+          packages:
+            - ant
+
+    - name: "Python 3.7 on macOS"
+      os: osx
+      osx_image: xcode10.2
+      language: java
+      env:
+        - PYTHON=python3
+        - INST=--user
+        - PIP=pip3
+      addons:
+        homebrew:
+          packages:
+            - ant
+
 install:
-  - python setup.py sdist
-  - pip install dist/* $NUMPY
-  - pip install -r test-requirements.txt
+  - echo $PYTHON $INST
+  - $PYTHON setup.py sdist
+  - $PIP install $INST dist/* $NUMPY
+  - $PIP install $INST -r test-requirements.txt
   - ant -f test/build.xml
 
 script:
-  - python -c "import jpype"
-  - python test/testsuite.py
+  - $PYTHON -c "import jpype"
+  - $PYTHON -m pytest -v test/jpypetest

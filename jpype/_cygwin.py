@@ -16,9 +16,6 @@
 # *****************************************************************************
 
 from . import _jvmfinder
-from ._jvmfinder import JVMNotSupportedException
-import struct as _struct
-import sys as _sys
 
 # ------------------------------------------------------------------------------
 
@@ -72,6 +69,7 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         self._methods = (self._get_from_java_home, self._get_from_registry)
 
     def check(self, jvm):
+        from ._windows import _checkJVMArch
         _checkJVMArch(jvm)
 
     def _get_from_registry(self):
@@ -81,16 +79,20 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
         :return: The path found in the registry, or None
         """
-        try:
-            jreKey = "/proc/registry/HKEY_LOCAL_MACHINE/SOFTWARE/JavaSoft/Java Runtime Environment"
-            with open(jreKey + "/CurrentVersion") as f:
-                cv = f.read().split('\x00')
-            versionKey = jreKey + "/" + cv[0]
+        from ._windows import reg_keys
+        for location in reg_keys:
+            location = location.replace('\\', '/')
+            jreKey = "/proc/registry/HKEY_LOCAL_MACHINE/{}".format(location)
+            try:
+                with open(jreKey + "/CurrentVersion") as f:
+                    cv = f.read().split('\x00')
+                versionKey = jreKey + "/" + cv[0]
 
-            with open(versionKey + "/RunTimeLib") as f:
-                cv = f.read().split('\x00')
+                with open(versionKey + "/RunTimeLib") as f:
+                    cv = f.read().split('\x00')
 
-            return cv[0]
+                return cv[0]
 
-        except OSError:
-            return None
+            except OSError:
+                pass
+        return None

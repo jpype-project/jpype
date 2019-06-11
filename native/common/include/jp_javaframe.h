@@ -193,6 +193,7 @@ public:
 	// Void
 	void CallStaticVoidMethodA(jclass a0, jmethodID a1, jvalue* a2);
 	void CallVoidMethodA(jobject a0, jmethodID a1, jvalue* a2);
+	void CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2, jvalue* a3);
 	void CallVoidMethod(jobject a0, jmethodID a1);
 
 	// Bool
