@@ -64,12 +64,13 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 		if (match.type < JPMatch::_implicit)
 			continue;
 
+		// If this is the first match then make it the best.
 		if (bestMatch.overload == 0)
 		{
 			bestMatch = match;
 			continue;
 		}
-
+		/*
 		if (callInstance && !current->isStatic() && bestMatch.overload->isStatic())
 		{
 			bestMatch = match;
@@ -81,9 +82,31 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 			bestMatch = match;
 			continue;
 		}
+		 */
 
+		// If the best does not hide the other, than we have ambiguity.
 		if (!(bestMatch.overload->checkMoreSpecificThan(current)))
 		{
+			// See if we can match based on instance
+			if (callInstance == !current->isStatic())
+			{
+				// if current matches instance and best does not switch
+				if (callInstance == bestMatch.overload->isStatic())
+				{
+					bestMatch = match;
+					continue;
+				}
+			}
+			else
+			{
+				// if best matches instance and current does not, no ambiguity
+				if (callInstance == !bestMatch.overload->isStatic())
+				{
+					continue;
+				}
+			}
+
+			JP_TRACE("Adding to ambiguous list");
 			ambiguous.push_back(*it);
 		}
 	}
@@ -141,6 +164,8 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 		}
 		JP_RAISE_TYPE_ERROR(ss.str());
 	}
+
+	JP_TRACE("Best match", bestMatch.overload->toString());
 	return bestMatch;
 	JP_TRACE_OUT;
 }

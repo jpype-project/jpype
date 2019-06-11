@@ -245,7 +245,7 @@ def _JArrayNewClass(cls, ndims=1):
 # Cannot be Mutable because java arrays are fixed in length
 
 def _isIterable(obj):
-    if isinstance(obj, collections.Sequence):
+    if isinstance(obj, collections.abc.Sequence):
         return True
     if hasattr(obj, '__len__') and hasattr(obj, '__iter__'):
         return True

@@ -25,28 +25,20 @@ import java.util.List;
  */
 public class TestMethodResolution
 {
-  static void foo(Double b)
+  static class Foo
   {
-  }
+    public static void bar(Object obj, int i)
+    {}
 
-  static void foo(Float b)
-  {
-  }
-
-  static void foo(float b)
-  {
-  }
-
-  static void foo(double d)
-  {
-
+    public void bar(int i)
+    {}
   }
 
   static public void main(String[] args) throws NoSuchMethodException
   {
-    foo(1.0);
 
-    List<MethodResolution> foo = MethodResolution.sortMethods(Arrays.asList(TestMethodResolution.class.getDeclaredMethods()));
+    List<MethodResolution> foo = MethodResolution
+            .sortMethods(Arrays.asList(TestMethodResolution.Foo.class.getDeclaredMethods()));
 
     for (MethodResolution m : foo)
     {

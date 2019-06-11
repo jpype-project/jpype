@@ -192,7 +192,32 @@ class OverloadTestCase(common.JPypeTestCase):
             self.assertEqual('B', testdefault.defaultMethod())
 
     def testMixed(self):
-        test1 = self.__jp.Test1()
+        # This test is just to see if we handle some very horrible
+        # cases gracefully. This test detects if the the behavior
+        # changes.  The actual result is rather arbitrary.
+        Test1 = self.__jp.Test1
+        test1 = Test1()
+
+	# Object can only match static method, so no conflict.
+        self.assertEqual("static", str(Test1.testMixed(JObject(), 1)))
         self.assertEqual("static", str(test1.testMixed(JObject(), 1)))
-        self.assertEqual("method", str(test1.testMixed(test1, 1)))
- 
+
+        # Called as a Python class method, Python does not differentiate
+        # between these cases and either static or method could fit.
+        # But the method version is a better match. This is arbitrary.
+        self.assertEqual("method", str(Test1.testMixed(test1, 1)))
+
+        # Called with 3 arguments (hidden this) the only match is the static 
+        # method. This matches Java rules.
+        self.assertEqual("static", str(test1.testMixed(test1, 1)))
+
+        # Called as a method should match a method, Java rules.
+        self.assertEqual("method", str(test1.testMixed(1)))
+
+    def testMixed2(self):
+        # Handle arbiguous static and method overloads 
+        Test1 = self.__jp.Test1
+        test1 = Test1()
+        self.assertEqual("static", str(Test1.testMixed2(test1, 1)))
+        self.assertEqual("method", str(test1.testMixed2(1)))
+  

@@ -24,7 +24,7 @@ JOverride = _jclass.JOverride
 
 
 def isPythonSequence(v):
-    if isinstance(v, collections.Sequence):
+    if isinstance(v, collections.abc.Sequence):
         if not hasattr(v.__class__, '__metaclass__') \
            or v.__class__.__metaclass__ is _jclass._JavaClass:
             return True

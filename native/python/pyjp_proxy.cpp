@@ -135,7 +135,6 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 
 		JP_TRACE("Proxy", self);
 		JP_TRACE("Target", target);
-		JP_TRACE("Callable", callable);
 		return 0;
 	}
 	PY_STANDARD_CATCH;

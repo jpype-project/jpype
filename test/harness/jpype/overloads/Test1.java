@@ -347,4 +347,14 @@ public class Test1
   {
     return "method";
   }
+
+  public static String testMixed2(Test1 o, int i)
+  {
+    return "static";
+  }
+
+  public String testMixed2(int i)
+  {
+    return "method";
+  }
 }

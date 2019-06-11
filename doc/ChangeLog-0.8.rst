@@ -68,10 +68,16 @@ new Java layer are so tightly linked some changes are noted in both places.
 * Renamed the ``jp_env`` file to ``jp_javaframe`` as that was the only
   material left after conversion.
 
-* Many changes to the logging system made as part of the effort to track
-  down the stack corruption. Most are positive changes either to expand
-  capabilities or ensure that the tracing system can't create its own 
-  issues.
+* Renamed ``JPMethodOverload`` to method because it actually maps to 
+  ``java.lang.reflect.Method``.  This forces a rename of the existing
+  ``JPMethod`` to ``JPMethodDispatch`` which better reflects its function.
+  This can be carried through to ``PyJPMethod`` so we can expose both using
+  the reflection API at some point in the future. Allowing calling of a 
+  specific method would make it more reliable in some cases.
+
+* Many changes to the logging system made as part of the effort to track down
+  the stack corruption. Most are positive changes either to expand capabilities
+  or ensure that the tracing system can't create its own issues.
 
 * **issue** after two weeks of struggling, I have no clue why the stack 
   is getting corrupted when calling a proxy from multiple threads. Trying
@@ -174,9 +180,9 @@ in the future.
 ``jpype`` Module
 ----------------
 
-These are broken down by **bug**, **enhance**, **internal**.
+These are broken down by **bug**, **enhance**, **internal**, **change**.
 The goal for the 0.8 series is no API breakage, thus most changes
-need to be under level of documented
+need to be under level of documented.
 
 * **bug** Corrected an issue with circular references on JProxy. New style
   proxies reference the ``__javaproxy__`` within the creating class.
@@ -202,6 +208,25 @@ need to be under level of documented
   Java language. Looking up a well known constant is just adding to
   the complexity of the boot up sequence and adds no real advantage.
 
+* **bug** Worked to try to get resolution when static and member 
+  methods in which both resolved to the same signature.  For
+  example ``static void method(Object o, int i)`` and nonstatic
+  ``void method(int i)`` both resolve to Python ``Type.method(o, i)``
+  Therefore, the method resolution needs to handle mixed static
+  functions and member methods. 
+
+* **change** The type resolution between static functions and methods
+  was over agressive. It was chosing static or method
+  even when there was no ambiguity. This would prevent calling the
+  non-virtual version should it be requested. But this is a rare
+  case.
+
+
+Setup changes
+-------------
+
+* **bug** added mock to ``tests_require`` to so that mock will be
+  automatically installed as part of ``python setup.py test``.
 
 
 Notes

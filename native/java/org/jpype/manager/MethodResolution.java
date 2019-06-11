@@ -1,19 +1,19 @@
-/** ***************************************************************************
- * Copyright 2019, Karl Einar Nelson
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- **************************************************************************** */
+/* ****************************************************************************
+  Copyright 2019, Karl Einar Nelson
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+ *****************************************************************************/
 package org.jpype.manager;
 
 import java.lang.reflect.Executable;
@@ -82,7 +82,8 @@ public class MethodResolution
         if (m1 == m2)
           continue;
 
-        if (isMoreSpecificThan(m1.executable, m2.executable) && !isMoreSpecificThan(m2.executable, m1.executable))
+        if (isMoreSpecificThan(m1.executable, m2.executable)
+                && !isMoreSpecificThan(m2.executable, m1.executable))
         {
           m1.children.add(m2);
         }
@@ -170,6 +171,11 @@ public class MethodResolution
   {
     List<Class<?>> param1 = new ArrayList<>(Arrays.asList(method1.getParameterTypes()));
     List<Class<?>> param2 = new ArrayList<>(Arrays.asList(method2.getParameterTypes()));
+
+    // This line prevents ambiguity resolution both static and method forms.
+//    if (Modifier.isStatic(method1.getModifiers())
+//            != Modifier.isStatic(method2.getModifiers()))
+//      return false;
 
     if (!Modifier.isStatic(method1.getModifiers()))
       param1.add(0, method1.getDeclaringClass());
