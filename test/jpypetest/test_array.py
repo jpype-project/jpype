@@ -154,6 +154,17 @@ class ArrayTestCase(common.JPypeTestCase):
         # with self.assertRaises(jpype._):
         #    jpype.JArray(jpype.JShort)([2**16/2])
 
+    def testJArrayConversionFail(self):
+        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        with self.assertRaises(TypeError):
+            jarr[1] = 'a'
+
+    def testJArraySliceLength(self):
+        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        jarr[1:2] = [1]
+        with self.assertRaises(ValueError):
+            jarr[1:2] = [1,2,3]
+
     def testJArrayConversionInt(self):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         result = jarr[0: len(jarr)]
@@ -370,3 +381,11 @@ class ArrayTestCase(common.JPypeTestCase):
         jarray = jpype.JArray(jarray0)
         self.assertTrue(issubclass(jarray, jpype.JArray))
         self.assertTrue(isinstance(jarray(10), jpype.JArray))
+
+    def testArrayClone(self):
+        array = jpype.JArray(jpype.JInt, 2)([[1,2],[3,4]])
+        carray = array.clone()
+        # Verify the first dimension is cloned
+        self.assertFalse(array.equals(carray))
+        # Copy is shallow
+        self.assertTrue(array[0].equals(carray[0]))

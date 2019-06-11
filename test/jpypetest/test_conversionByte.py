@@ -74,25 +74,25 @@ class ConversionByteTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callByte(np.uint64(123)), 123)
 
     def testByteFromFloat(self):
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callByte(float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callByte(np.float(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat32(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callByte(np.float32(2))
 
     @unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat64(self):
         import numpy as np
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(TypeError):
             self.Test.callByte(np.float64(2))
 
     def testByteRange(self):

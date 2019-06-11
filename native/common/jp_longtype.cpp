@@ -147,7 +147,10 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);
+		if (clazz == NULL)
+			field(v) = frame.CallLongMethodA(obj, mth, val);
+		else
+			field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);
 	}
 	return convertToPythonObject(v);
 }
