@@ -33,11 +33,13 @@ from . import _jcollection
 from . import _jcomparable
 from . import _jio
 from . import _jinit
+from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path'
+    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
+    'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -94,6 +96,7 @@ def _hasClassPath(args):
             return True
     return False
 
+_JVM_started = False
 
 def startJVM(*args, **kwargs):
     """
@@ -127,9 +130,11 @@ def startJVM(*args, **kwargs):
 
     if jvm.isStarted():
          raise OSError('JVM is already started')
+
+    # FIXME this needs to be tied to JVM
     global _JVM_started
     if _JVM_started:
-         raise OSError('JVM cannot be restarted')
+        raise OSError('JVM cannot be restarted')
     _JVM_started = True
 
     args = list(args)
