@@ -3,7 +3,9 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **Next version - unreleased**
+- **0.8.0**
+  - Complete rewrite of core to deal with global variables and move core
+    logic to Java. Preliminary work on support of multiple JVMs.
 
 - **0.7.0 - 2019**
 
