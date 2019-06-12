@@ -16,7 +16,23 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
+
+#if defined(_MSC_VER) && _MSC_VER<1700
+
+// Welcome to the year 2008!
+namespace std {
+	class mutex {};
+
+	template <class T> class lock_guard
+	{
+	public:
+		lock_guard(const T& mutex_type);
+	};
+}
+
+#else
 #include <mutex>
+#endif
 
 static int jpype_traceLevel = 0;
 static JPypeTracer* jpype_tracer_last = NULL;
