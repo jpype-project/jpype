@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
@@ -53,7 +53,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	JPJavaFrame frame(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
-	JPPrimitiveArrayAccessor<jlongArray, long*> accessor(frame, parameterTypePtrs,
+	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
 	jlong* types = accessor.get();
@@ -79,7 +79,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
 
-	// Python has a bug that is corrupting the stack if a 
+	// Python has a bug that is corrupting the stack if a
 	// second thread passes this point.  I don't particularly
 	// like this solution as it prevents a Proxy from calling
 	// code that itself issues a proxy.  But after 2 weeks of debugging,
