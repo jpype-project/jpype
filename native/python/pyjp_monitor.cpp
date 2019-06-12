@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -42,10 +42,10 @@ PyTypeObject PyJPMonitor::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Monitor",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPMonitor::traverse,
+	/* tp_clear          */ (inquiry) PyJPMonitor::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -116,26 +116,42 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 		Py_INCREF(self->m_Context);
 		return 0;
 	}
-	PY_STANDARD_CATCH;
-	return -1;
+	PY_STANDARD_CATCH(-1);
 	JP_TRACE_OUT_C;
 }
 
-void PyJPMonitor::__dealloc__(PyJPMonitor* self)
+void PyJPMonitor::__dealloc__(PyJPMonitor *self)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
 	{
+		clear(self);
 		delete self->m_Monitor;
-		Py_XDECREF(self->m_Context);
-		// Free self
+		PyObject_GC_UnTrack(self);
+		clear(self);
 		Py_TYPE(self)->tp_free(self);
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH();
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
+int PyJPMonitor::traverse(PyJPMonitor *self, visitproc visit, void *arg)
+{
+	JP_TRACE_IN_C("PyJPMonitor::traverse");
+	Py_VISIT(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+int PyJPMonitor::clear(PyJPMonitor *self)
+{
+	JP_TRACE_IN_C("PyJPMonitor::clear");
+	Py_CLEAR(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+PyObject *PyJPMonitor::__str__(PyJPMonitor *self)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
@@ -146,12 +162,11 @@ PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
 		ss << "<java monitor>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
 	}
-	PY_STANDARD_CATCH
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
+PyObject *PyJPMonitor::__enter__(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
@@ -160,11 +175,10 @@ PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
 		self->m_Monitor->enter();
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
+PyObject *PyJPMonitor::__exit__(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
@@ -173,6 +187,5 @@ PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
 		self->m_Monitor->exit();
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }

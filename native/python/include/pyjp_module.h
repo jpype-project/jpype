@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef PYJP_MODULE_H
 #define PYJP_MODULE_H
@@ -23,9 +23,9 @@ namespace PyJPModule
 	 *
 	 * JPype needs to know about a number of python objects to function
 	 * properly. These resources are set in the initialization methods
-	 * as those resources are created in python. 
+	 * as those resources are created in python.
 	 */
-	PyObject* setResource(PyObject* obj, PyObject* args);
+	PyObject* setResource(PyObject *obj, PyObject *args);
 	extern PyInterpreterState *s_Interpreter;
 }
 

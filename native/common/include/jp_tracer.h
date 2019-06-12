@@ -12,37 +12,37 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
 
 
 #ifdef JP_TRACING_ENABLE
-#define JP_TRACE_IN_C(n) \
-  JPypeTracer _trace(n); try {
+#define JP_TRACE_IN_C(...) \
+  JPypeTracer _trace(__VA_ARGS__); try {
 #define JP_TRACE_OUT_C } \
-  catch(...) { printf("***EXE**\n");  _trace.gotError(JP_STACKINFO()); throw; }
-#define JP_TRACE_IN(n) \
-  JPypeTracer _trace(n); \
+  catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN(...) \
+  JPypeTracer _trace(__VA_ARGS__); \
   try {
 #define JP_TRACE_OUT \
   } \
-  catch(...) { printf("***EXE**\n"); _trace.gotError(JP_STACKINFO()); throw; }
+  catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
 #define JP_TRACE(...) JPTracer::trace(__VA_ARGS__)
 #define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
-#define JP_TRACE_IN_C(n)  try {
+#define JP_TRACE_IN_C(...)  try {
 #define JP_TRACE_OUT_C } \
-  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }  
-#define JP_TRACE_IN(n) \
-  try { 
+  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN(...) \
+  try {
 #define JP_TRACE_OUT } \
   catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
 #define JP_TRACE_LOCKS(...)
-#define JP_TRACE_PY(m, obj) 
+#define JP_TRACE_PY(m, obj)
 #endif
 
 // Enable this option to get all the py referencing information
@@ -53,11 +53,11 @@ class JPypeTracer
 private:
 	string m_Name;
 	bool m_Error;
-	JPypeTracer* m_Last;
+	JPypeTracer *m_Last;
 
 public:
 
-	JPypeTracer(const char* name);
+	JPypeTracer(const char *name, void *ref = 0);
 	~JPypeTracer();
 
 	void gotError(const JPStackInfo& info)
@@ -73,14 +73,14 @@ public:
 		}
 	}
 
-	static void tracePythonObject(const char* msg, PyObject* ref);
-	static void traceLocks(const string& msg, void* ref);
+	static void tracePythonObject(const char *msg, PyObject *ref);
+	static void traceLocks(const string& msg, void *ref);
 
-	static void trace1(const char* msg);
-	static void trace2(const char* msg1, const char* msg2);
+	static void trace1(const char *msg);
+	static void trace2(const char *msg1, const char *msg2);
 private:
-	static void traceIn(const char* msg);
-	static void traceOut(const char* msg, bool error);
+	static void traceIn(const char *msg, void *ref);
+	static void traceOut(const char *msg, bool error);
 } ;
 
 
@@ -95,7 +95,7 @@ namespace JPTracer
 		JPypeTracer::trace1(str.str().c_str());
 	}
 
-	inline void trace(const char* msg)
+	inline void trace(const char *msg)
 	{
 		JPypeTracer::trace1(msg);
 	}
@@ -108,7 +108,7 @@ namespace JPTracer
 		JPypeTracer::trace1(str.str().c_str());
 	}
 
-	inline void trace(const char* msg1, const char* msg2)
+	inline void trace(const char *msg1, const char *msg2)
 	{
 		JPypeTracer::trace2(msg1, msg2);
 	}

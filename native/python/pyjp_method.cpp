@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -45,10 +45,10 @@ PyTypeObject PyJPMethod::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Method",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPMethod::traverse,
+	/* tp_clear          */ (inquiry) PyJPMethod::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -78,7 +78,7 @@ void PyJPMethod::initType(PyObject* module)
 JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
 {
 	JP_TRACE_IN_C("PyJPMethod::alloc");
-	PyJPMethod* self = PyObject_New(PyJPMethod, &PyJPMethod::Type);
+	PyJPMethod *self = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);
 	JP_PY_CHECK();
 	self->m_Method = m;
 	self->m_Instance = instance;
@@ -89,6 +89,7 @@ JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
 	}
 	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
 	Py_INCREF(self->m_Context);
+	JP_TRACE("self", self);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
 }
@@ -102,9 +103,36 @@ PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwar
 	return (PyObject*) self;
 }
 
-PyObject* PyJPMethod::__get__(PyJPMethod* self, PyObject* obj, PyObject* type)
+void PyJPMethod::__dealloc__(PyJPMethod* self)
 {
-	JP_TRACE_IN_C("PyJPMethod::__get__");
+	JP_TRACE_IN_C("PyJPMethod::__dealloc__", self);
+	PyObject_GC_UnTrack(self);
+	clear(self);
+	Py_TYPE(self)->tp_free(self);
+	JP_TRACE_OUT_C;
+}
+
+int PyJPMethod::traverse(PyJPMethod *self, visitproc visit, void *arg)
+{
+	JP_TRACE_IN_C("PyJPMethod::traverse", self);
+	Py_VISIT(self->m_Instance);
+	Py_VISIT(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+int PyJPMethod::clear(PyJPMethod *self)
+{
+	JP_TRACE_IN_C("PyJPMethod::clear", self);
+	Py_CLEAR(self->m_Instance);
+	Py_CLEAR(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+PyObject *PyJPMethod::__get__(PyJPMethod *self, PyObject *obj, PyObject *type)
+{
+	JP_TRACE_IN_C("PyJPMethod::__get__", self);
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -117,14 +145,13 @@ PyObject* PyJPMethod::__get__(PyJPMethod* self, PyObject* obj, PyObject* type)
 		}
 		return PyJPMethod::alloc(self->m_Method, obj).keep();
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMethod::__call__(PyJPMethod* self, PyObject* args, PyObject* kwargs)
+PyObject* PyJPMethod::__call__(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPMethod::__call__");
+	JP_TRACE_IN_C("PyJPMethod::__call__", self);
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -142,29 +169,11 @@ PyObject* PyJPMethod::__call__(PyJPMethod* self, PyObject* args, PyObject* kwarg
 			return self->m_Method->invoke(vargs, true).keep();
 		}
 	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-void PyJPMethod::__dealloc__(PyJPMethod* self)
-{
-	JP_TRACE_IN_C("PyJPMethod::__dealloc__");
-	if (self->m_Instance != NULL)
-	{
-		JP_TRACE_PY("method dealloc (dec)", self->m_Instance);
-	}
-
-	Py_XDECREF(self->m_Instance);
-	Py_XDECREF(self->m_Context);
-
-	// Free self	
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
-}
-
-PyObject* PyJPMethod::__str__(PyJPMethod* self)
+PyObject* PyJPMethod::__str__(PyJPMethod *self)
 {
 	try
 	{
@@ -178,12 +187,10 @@ PyObject* PyJPMethod::__str__(PyJPMethod* self)
 		sout << self->m_Method->getClassName() << "." << self->m_Method->getName() << ">";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
+PyObject* PyJPMethod::isBeanAccessor(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
@@ -191,11 +198,10 @@ PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::isBeanAccessor");
 		return PyBool_FromLong(self->m_Method->isBeanAccessor());
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::isBeanMutator(PyJPMethod* self, PyObject* arg)
+PyObject* PyJPMethod::isBeanMutator(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
@@ -203,13 +209,12 @@ PyObject* PyJPMethod::isBeanMutator(PyJPMethod* self, PyObject* arg)
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::isBeanMutator");
 		return PyBool_FromLong(self->m_Method->isBeanMutator());
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::getName(PyJPMethod* self, PyObject* arg)
+PyObject* PyJPMethod::getName(PyJPMethod *self, PyObject *arg)
 {
-	JP_TRACE_IN_C("PyJPMethod::getName");
+	JP_TRACE_IN_C("PyJPMethod::getName", self);
 	try
 	{
 		JPContext *context = self->m_Method->getContext();
@@ -217,12 +222,11 @@ PyObject* PyJPMethod::getName(PyJPMethod* self, PyObject* arg)
 		string name = self->m_Method->getName();
 		return JPPyString::fromStringUTF8(name).keep();
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMethod::matchReport(PyJPMethod* self, PyObject* args)
+PyObject* PyJPMethod::matchReport(PyJPMethod *self, PyObject *args)
 {
 	try
 	{
@@ -233,12 +237,10 @@ PyObject* PyJPMethod::matchReport(PyJPMethod* self, PyObject* args)
 		string report = self->m_Method->matchReport(vargs);
 		return JPPyString::fromStringUTF8(report).keep();
 	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::dump(PyJPMethod* self, PyObject* args)
+PyObject* PyJPMethod::dump(PyJPMethod *self, PyObject *args)
 {
 	try
 	{
@@ -248,6 +250,5 @@ PyObject* PyJPMethod::dump(PyJPMethod* self, PyObject* args)
 		string report = self->m_Method->dump();
 		return JPPyString::fromStringUTF8(report).keep();
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 }

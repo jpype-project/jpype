@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYCLASS_H_
 #define _PYCLASS_H_
@@ -20,61 +20,63 @@
 struct PyJPClass
 {
 	//AT's comments on porting:
-	//  1) Some Unix compilers do not tolerate the semicolumn after PyObject_HEAD	
+	//  1) Some Unix compilers do not tolerate the semicolumn after PyObject_HEAD
 	//PyObject_HEAD;
 	PyObject_HEAD
 	static PyTypeObject Type;
 
 	// Python-visible methods
-	static void         initType(PyObject* module);
+	static void         initType(PyObject *module);
 
 	/** Create a PyJPClass instance from within the module.
 	 */
-	static JPPyObject   alloc(JPClass* cls);
+	static JPPyObject   alloc(JPClass *cls);
 
 	/**
 	 * Check if the Object is a PyJPClass
-	 *  
+	 *
 	 * @param o
-	 * @return true if the object is PyJPClass, otherwise false. 
+	 * @return true if the object is PyJPClass, otherwise false.
 	 */
-	static bool   check(PyObject* o);
+	static bool   check(PyObject *o);
 
-	static PyObject*  __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
-	static int __init__(PyJPClass* self, PyObject* args, PyObject* kwargs);
-	static void __dealloc__(PyJPClass* o);
+	static PyObject*  __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static int __init__(PyJPClass *self, PyObject *args, PyObject *kwargs);
+	static void __dealloc__(PyJPClass *o);
+	static int traverse(PyJPClass *self, visitproc visit, void *arg);
+	static int clear(PyJPClass *self);
 
 	/** Create a new instance of this class.
-	 * 
-	 * Operates on either object or array classes. 
+	 *
+	 * Operates on either object or array classes.
 	 */
-	static PyObject* newInstance(PyJPClass* self, PyObject* arg);
+	static PyObject* newInstance(PyJPClass *self, PyObject *arg);
 
 	/** Get the java name for this class. */
-	static PyObject* getCanonicalName(PyJPClass* self, PyObject* arg);
+	static PyObject* getCanonicalName(PyJPClass *self, PyObject *arg);
 
-	static PyObject* getSuperClass(PyJPClass* self, PyObject* arg);
-	static PyObject* getInterfaces(PyJPClass* self, PyObject* arg);
-	static PyObject* getClassMethods(PyJPClass* self, PyObject* arg);
-	static PyObject* getClassFields(PyJPClass* self, PyObject* arg);
+	static PyObject* getSuperClass(PyJPClass *self, PyObject *arg);
+	static PyObject* getInterfaces(PyJPClass *self, PyObject *arg);
+	static PyObject* getClassMethods(PyJPClass *self, PyObject *arg);
+	static PyObject* getClassFields(PyJPClass *self, PyObject *arg);
 
-	static PyObject* isInterface(PyJPClass* self, PyObject* arg);
-	static PyObject* isPrimitive(PyJPClass* self, PyObject* arg);
-	static PyObject* isThrowable(PyJPClass* self, PyObject* arg);
-	static PyObject* isArray(PyJPClass* self, PyObject* arg);
-	static PyObject* isAbstract(PyJPClass* self, PyObject* arg);
-	static PyObject* isAssignableFrom(PyJPClass* self, PyObject* arg);
+	static PyObject* isInterface(PyJPClass *self, PyObject *arg);
+	static PyObject* isPrimitive(PyJPClass *self, PyObject *arg);
+	static PyObject* isThrowable(PyJPClass *self, PyObject *arg);
+	static PyObject* isArray(PyJPClass *self, PyObject *arg);
+	static PyObject* isAbstract(PyJPClass *self, PyObject *arg);
+	static PyObject* isAssignableFrom(PyJPClass *self, PyObject *arg);
 
 	/** Create an new PyJPValue with this class as the object. */
-	static PyObject* asJavaValue(PyJPClass* self, PyObject* arg);
+	static PyObject* asJavaValue(PyJPClass *self, PyObject* arg);
 
 	/** For diagnostics */
-	static PyObject* canConvertToJava(PyJPClass* self, PyObject* args);
-	static PyObject* convertToJava(PyJPClass* self, PyObject* args);
-	static PyObject* dumpCtor(PyJPClass* self, PyObject* args);
+	static PyObject* canConvertToJava(PyJPClass *self, PyObject *args);
+	static PyObject* convertToJava(PyJPClass *self, PyObject *args);
+	static PyObject* dumpCtor(PyJPClass *self, PyObject *args);
 
-	JPClass* m_Class;
-	PyJPContext* m_Context;
+	JPClass *m_Class;
+	PyJPContext *m_Context;
 } ;
 
 #endif // _PYCLASS_H_

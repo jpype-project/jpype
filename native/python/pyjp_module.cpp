@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 
 #include <pyjp.h>
@@ -50,7 +50,7 @@ PyMODINIT_FUNC PyInit__jpype()
 PyMODINIT_FUNC init_jpype()
 #endif
 {
-	// This is required for python versions prior to 3.7.  
+	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
 	PyEval_InitThreads();
@@ -91,20 +91,18 @@ PyMODINIT_FUNC init_jpype()
 #endif
 }
 
-PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
+PyObject* PyJPModule::setResource(PyObject *self, PyObject *arg)
 {
 	JP_TRACE_IN_C("PyJPModule::setResource");
 	try
 	{
-		char* tname;
-		PyObject* value;
+		char *tname;
+		PyObject *value;
 		PyArg_ParseTuple(arg, "sO", &tname, &value);
 		JP_PY_CHECK();
 		JPPythonEnv::setResource(tname, value);
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
-
-	return NULL;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }

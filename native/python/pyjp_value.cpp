@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -42,14 +42,14 @@ PyTypeObject PyJPValue::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */
 	"Wrapper of a java value which holds a class and instance of an object \n"
 	"or a primitive.  This object is always stored as the attributed \n"
 	"__javavalue__.  Anything with this type with that attribute will be\n"
 	"considered a java object wrapper.",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPValue::traverse,
+	/* tp_clear          */ (inquiry) PyJPValue::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -93,8 +93,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	JPContext* context = cls->getContext();
 	JPJavaFrame frame(context);
 	JP_TRACE_IN_C("PyJPValue::alloc");
-	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
-	JP_TRACE("alloc", self);
+	PyJPValue *self = (PyJPValue*) PyJPValue::Type.tp_alloc(&PyJPValue::Type, 0);
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
@@ -110,13 +109,14 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	self->m_Context = (PyJPContext*) (context->getHost());
 	Py_INCREF(self->m_Context);
 	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
+	JP_TRACE("self", self);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPValue::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
+PyObject *PyJPValue::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	PyJPValue* self = (PyJPValue*) type->tp_alloc(type, 0);
+	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
 	jvalue v;
 	self->m_Value = JPValue(NULL, v);
 	self->m_Cache = NULL;
@@ -126,23 +126,23 @@ PyObject* PyJPValue::__new__(PyTypeObject* type, PyObject* args, PyObject* kwarg
 
 // Replacement for convertToJava.
 
-int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
+int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPValue::__init__");
+	JP_TRACE_IN_C("PyJPValue::__init__", self);
 	JP_TRACE("init", self);
 	try
 	{
 		self->m_Cache = NULL;
 
-		PyObject* claz;
-		PyObject* value;
+		PyObject *claz;
+		PyObject *value;
 
 		if (!PyArg_ParseTuple(args, "O!O", &PyJPClass::Type, &claz, &value))
 		{
 			return -1;
 		}
 
-		JPClass* type = ((PyJPClass*) claz)->m_Class;
+		JPClass *type = ((PyJPClass*) claz)->m_Class;
 		ASSERT_NOT_NULL(value);
 		ASSERT_NOT_NULL(type);
 		JPContext *context = type->getContext();
@@ -152,7 +152,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 
 		// If it is already a Java object, then let Java decide
 		// if the cast is possible
-		JPValue* jval = JPPythonEnv::getJavaValue(value);
+		JPValue *jval = JPPythonEnv::getJavaValue(value);
 		if (jval != NULL && type->isInstance(*jval))
 		{
 			JPJavaFrame frame(context);
@@ -182,25 +182,21 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 			return 0;
 		}
 	}
-	PY_STANDARD_CATCH;
-	return -1;
+	PY_STANDARD_CATCH(-1);
 	JP_TRACE_OUT_C;
 }
 
-void PyJPValue::__dealloc__(PyJPValue* self)
+void PyJPValue::__dealloc__(PyJPValue *self)
 {
-	// We have to handle partially constructed objects that result from 
+	// We have to handle partially constructed objects that result from
 	// fails in __init__, thus lots of inits
-	JP_TRACE_IN_C("PyJPValue::__dealloc__");
-	JP_TRACE("Cache", self->m_Cache);
-	Py_XDECREF(self->m_Cache);
-
+	JP_TRACE_IN_C("PyJPValue::__dealloc__", self);
 	JPValue& value = self->m_Value;
-	JPClass* cls = value.getClass();
+	JPClass *cls = value.getClass();
 	JP_TRACE("Value", cls, &(value.getValue()));
 	if (self->m_Context != NULL && cls != NULL)
 	{
-		JPContext* context = self->m_Context->m_Context;
+		JPContext *context = self->m_Context->m_Context;
 		if (context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
 		{
 			// If the JVM has shutdown then we don't need to free the resource
@@ -212,17 +208,38 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 			context->ReleaseGlobalRef(value.getValue().l);
 		}
 	}
-	Py_XDECREF(self->m_Context);
+
+	PyObject_GC_UnTrack(self);
+	clear(self);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPValue::__str__(PyJPValue* self)
+int PyJPValue::traverse(PyJPValue *self, visitproc visit, void *arg)
 {
+	JP_TRACE_IN_C("PyJPValue::traverse", self);
+	Py_VISIT(self->m_Cache);
+	Py_VISIT(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+int PyJPValue::clear(PyJPValue *self)
+{
+	JP_TRACE_IN_C("PyJPValue::clear", self);
+	Py_CLEAR(self->m_Cache);
+	Py_CLEAR(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+PyObject *PyJPValue::__str__(PyJPValue *self)
+{
+	JP_TRACE_IN_C("PyJPValue::__str__", self);
 	try
 	{
-		JPContext* context = self->m_Value.getClass()->getContext();
+		JPContext *context = self->m_Value.getClass()->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPValue::__str__");
 		JPJavaFrame frame(context);
 		stringstream sout;
@@ -240,32 +257,32 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 		sout << ">";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
-	PY_STANDARD_CATCH;
-	return 0;
+	PY_STANDARD_CATCH(NULL);
+	JP_TRACE_OUT_C;
 }
 
-void ensureCache(PyJPValue* self)
+void ensureCache(PyJPValue *self)
 {
 	if (self->m_Cache != NULL)
 		return;
 	self->m_Cache = PyDict_New();
 }
 
-/** This is the way to convert an object into a python string. */
-PyObject* PyJPValue::toString(PyJPValue* self)
+/* *This is the way to convert an object into a python string. */
+PyObject *PyJPValue::toString(PyJPValue *self)
 {
-	JP_TRACE_IN_C("PyJPValue::toString");
+	JP_TRACE_IN_C("PyJPValue::toString", self);
 	try
 	{
-		JPClass* cls = self->m_Value.getClass();
-		JPContext* context = cls->getContext();
+		JPClass *cls = self->m_Value.getClass();
+		JPContext *context = cls->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPValue::toString");
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{
 			// Java strings are immutable so we will cache them.
 			ensureCache(self);
-			PyObject* out;
+			PyObject *out;
 			out = PyDict_GetItemString(self->m_Cache, "str"); // Borrowed reference
 			if (out == NULL)
 			{
@@ -287,26 +304,25 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 		// In general toString is not immutable, so we won't cache it.
 		return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l)).keep();
 	}
-	PY_STANDARD_CATCH;
-	return 0;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-/** This is the way to convert an object into a python string. */
-PyObject* PyJPValue::toUnicode(PyJPValue* self)
+/* *This is the way to convert an object into a python string. */
+PyObject *PyJPValue::toUnicode(PyJPValue *self)
 {
-	JP_TRACE_IN_C("PyJPValue::toUnicode");
+	JP_TRACE_IN_C("PyJPValue::toUnicode", self);
 	try
 	{
-		JPClass* cls = self->m_Value.getClass();
-		JPContext* context = cls->getContext();
+		JPClass *cls = self->m_Value.getClass();
+		JPContext *context = cls->getContext();
 		ASSERT_JVM_RUNNING(context, "PyJPValue::toUnicode");
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{
 			// Java strings are immutable so we will cache them.
 			ensureCache(self);
-			PyObject* out;
+			PyObject *out;
 			out = PyDict_GetItemString(self->m_Cache, "unicode"); // Borrowed reference
 			if (out == NULL)
 			{
@@ -328,9 +344,6 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 		// In general toString is not immutable, so we won't cache it.
 		return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l), true).keep();
 	}
-	PY_STANDARD_CATCH;
-	return 0;
+	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
-
-

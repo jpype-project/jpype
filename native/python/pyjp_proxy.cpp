@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -81,7 +81,7 @@ PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwarg
 
 int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPProxy::init");
+	JP_TRACE_IN_C("PyJPProxy::init", self);
 	try
 	{
 		// Parse arguments
@@ -137,8 +137,36 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 		JP_TRACE("Target", target);
 		return 0;
 	}
-	PY_STANDARD_CATCH;
-	return -1;
+	PY_STANDARD_CATCH(-1);
+	JP_TRACE_OUT_C;
+}
+void PyJPProxy::__dealloc__(PyJPProxy *self)
+{
+	JP_TRACE_IN_C("PyJPProxy::dealloc", self);
+	delete self->m_Proxy;
+
+	PyObject_GC_UnTrack(self);
+	clear(self);
+	// Free self
+	Py_TYPE(self)->tp_free(self);
+	JP_TRACE_OUT_C;
+}
+
+int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
+{
+	JP_TRACE_IN_C("PyJPProxy::traverse", self);
+	Py_VISIT(self->m_Target);
+	Py_VISIT(self->m_Context);
+	return 0;
+	JP_TRACE_OUT_C;
+}
+
+int PyJPProxy::clear(PyJPProxy *self)
+{
+	JP_TRACE_IN_C("PyJPProxy::clear", self);
+	Py_CLEAR(self->m_Target);
+	Py_CLEAR(self->m_Context);
+	return 0;
 	JP_TRACE_OUT_C;
 }
 
@@ -153,36 +181,7 @@ PyObject *PyJPProxy::__str__(PyJPProxy *self)
 		sout << "<java proxy>";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
-	PY_STANDARD_CATCH;
-	return NULL;
-}
-
-void PyJPProxy::__dealloc__(PyJPProxy *self)
-{
-	JP_TRACE_IN_C("PyJPProxy::dealloc");
-	delete self->m_Proxy;
-
-	if (self->m_Target != NULL)
-		Py_DECREF(self->m_Target);
-	if (self->m_Context != NULL)
-		Py_DECREF(self->m_Context);
-
-	self->m_Target = NULL;
-	// Free self
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
-}
-
-int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
-{
-	Py_VISIT(self->m_Target);
-	return 0;
-}
-
-int PyJPProxy::clear(PyJPProxy *self)
-{
-	Py_CLEAR(self->m_Target);
-	return 0;
+	PY_STANDARD_CATCH(NULL);
 }
 
 bool PyJPProxy::check(PyObject *o)

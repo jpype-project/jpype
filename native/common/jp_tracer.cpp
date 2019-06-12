@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
@@ -28,12 +28,12 @@ std::mutex trace_lock;
 //This code is not thread safe, thus tracing a multithreaded code is likely
 // to result in crashes.
 
-JPypeTracer::JPypeTracer(const char* name) : m_Name(name)
+JPypeTracer::JPypeTracer(const char* name, void* reference) : m_Name(name)
 {
 	m_Error = false;
 	m_Last = jpype_tracer_last;
 	jpype_tracer_last = this;
-	traceIn(name);
+	traceIn(name, reference);
 }
 
 JPypeTracer::~JPypeTracer()
@@ -42,14 +42,17 @@ JPypeTracer::~JPypeTracer()
 	jpype_tracer_last = m_Last;
 }
 
-void JPypeTracer::traceIn(const char* msg)
+void JPypeTracer::traceIn(const char* msg, void* ref)
 {
 	std::lock_guard<std::mutex> guard(trace_lock);
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
 		JPYPE_TRACING_OUTPUT << "  ";
 	}
-	JPYPE_TRACING_OUTPUT << "<B msg=\"" << msg << "\" >" << endl;
+	JPYPE_TRACING_OUTPUT << "<B msg=\"" << msg << "\"";
+	if (ref != NULL)
+		JPYPE_TRACING_OUTPUT << " id=\"" << ref << "\"";
+	JPYPE_TRACING_OUTPUT << " >" << endl;
 	JPYPE_TRACING_OUTPUT.flush();
 	jpype_traceLevel++;
 }

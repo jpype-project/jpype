@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYMONITOR_H_
 #define _PYMONITOR_H_
@@ -28,15 +28,17 @@ struct PyJPMonitor
 	static PyTypeObject Type;
 
 	// Python-visible methods
-	static void       initType(PyObject* module);
-	static int        __init__(PyJPMonitor* self, PyObject* args);
-	static void       __dealloc__(PyJPMonitor* o);
-	static PyObject*  __str__(PyJPMonitor* o);
-	static PyObject*  __enter__(PyJPMonitor* self, PyObject* args);
-	static PyObject*  __exit__(PyJPMonitor* self, PyObject* args);
+	static void       initType(PyObject *module);
+	static int        __init__(PyJPMonitor *self, PyObject *args);
+	static void       __dealloc__(PyJPMonitor *o);
+	static PyObject*  __str__(PyJPMonitor *o);
+	static PyObject*  __enter__(PyJPMonitor *self, PyObject *args);
+	static PyObject*  __exit__(PyJPMonitor *self, PyObject *args);
+	static int traverse(PyJPMonitor *self, visitproc visit, void *arg);
+	static int clear(PyJPMonitor *self);
 
-	JPMonitor* m_Monitor;
-	PyJPContext* m_Context;
+	JPMonitor *m_Monitor;
+	PyJPContext *m_Context;
 } ;
 
 #endif // _PYMONITOR_H_
