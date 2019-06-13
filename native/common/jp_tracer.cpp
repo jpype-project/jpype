@@ -26,7 +26,8 @@ namespace std {
 	template <class T> class lock_guard
 	{
 	public:
-		lock_guard(const T& mutex_type);
+		lock_guard(const T& mutex_type)
+		{}
 	};
 }
 
