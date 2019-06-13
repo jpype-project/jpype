@@ -36,17 +36,12 @@ const string& JPMethod::getName() const
 	return m_Name;
 }
 
-string JPMethod::getClassName() const
-{
-	return m_Class->getCanonicalName();
-}
-
 void JPMethod::addOverload(JPClass* claz, jobject mth)
 {
 	//	printf("JPMethodOverload %s\n", JPJni::toStringC(mth));
 	JPMethodOverload* over = new JPMethodOverload(claz, mth);
 
-	// The same overload can be repeated each time it is overriden. 
+	// The same overload can be repeated each time it is overriden.
 	bool found = false;
 	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
@@ -81,9 +76,9 @@ void JPMethod::addOverload(JPClass* claz, jobject mth)
 	//		m_BeanMutator = true;
 	//	}
 
-	// We can't check the order of specificity here because we do not want to 
+	// We can't check the order of specificity here because we do not want to
 	// load the argument types here.  Thus we need to wait for the first
-	// used. 
+	// used.
 }
 
 void JPMethod::ensureOverloadCache()

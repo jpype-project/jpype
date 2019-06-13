@@ -44,7 +44,6 @@ _jcustomizer._JCLASSES = _JCLASSES
 def _initialize():
     global _java_ClassLoader
 
-    _jpype.setResource('GetClassMethod', _JClassNew)
 
     # Due to bootstrapping, Object and Class must be defined first.
     global _java_lang_Object, _java_lang_Class
@@ -222,6 +221,7 @@ def _JClassNew(arg, loader=None, initialize=True):
     if name in _JCLASSES:
         return _JCLASSES[name]
     return _JClassFactory(name, javaClass)
+
 
 
 class JInterface(object):
@@ -429,3 +429,27 @@ def typeLookup(tp, name):
 
     cache[name] = None
     return None
+
+def _jmethodDoc(method, cls, overloads):
+    """ Method hook for PyJPMethod.__doc__ property
+
+    Parameters:
+       method (PyJPMethod): method to generate doc string for.
+       cls (java.lang.Class): Class holding this method dispatch.
+       overloads (java.lang.reflect.Method[]): tuple holding all the methods that
+         are served by this method dispatch.
+
+    Returns:
+      the doc string for the method dispatch.
+    """
+    out = []
+    out.append("Java method dispatch '%s' for '%s'"%(method.getName(),cls.getName()))
+    out.append("")
+    out.append("Overloads:")
+    for ov in overloads:
+        out.append("   %s"%ov.toString())
+    out.append("")
+    return "\n".join(out)
+
+_jpype.setResource('GetClassMethod', _JClassNew)
+_jpype.setResource('GetMethodDoc', _jmethodDoc)

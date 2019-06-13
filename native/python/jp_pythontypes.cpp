@@ -95,10 +95,10 @@ void JPPyObject::decref()
 {
 	if (pyobj->ob_refcnt <= 0)
 	{
-		// At this point our car has traveled beyond the end of the 
+		// At this point our car has traveled beyond the end of the
 		// cliff and it will hit the ground some twenty
 		// python calls later with a nearly untracable fault, thus
-		// rather than waiting for the inevitable, we chose to take 
+		// rather than waiting for the inevitable, we chose to take
 		// a noble death here.
 		JPypeTracer::trace("Python referencing fault");
 		int *i = 0;
@@ -199,7 +199,7 @@ JPPyObject JPPyBool::fromLong(jlong value)
 
 JPPyObject JPPyInt::fromInt(jint l)
 {
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 	return JPPyObject(JPPyRef::_call, PyLong_FromLong(l));
 #else
 	return JPPyObject(JPPyRef::_call, PyInt_FromLong(l));
@@ -208,7 +208,7 @@ JPPyObject JPPyInt::fromInt(jint l)
 
 JPPyObject JPPyInt::fromLong(jlong l)
 {
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 #else
 	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int) l));
@@ -378,7 +378,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		return (jchar) val;
 	}
 
-#if PY_MAJOR_VERSION < 3 
+#if PY_MAJOR_VERSION < 3
 	if (PyString_Check(pyobj))
 	{
 		Py_ssize_t sz = PyString_Size(pyobj);
@@ -456,7 +456,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 }
 
 /** Check if the object is a bytes or unicode.
- * 
+ *
  * @returns true if the object is bytes or unicode.
  */
 bool JPPyString::check(PyObject* obj)
@@ -578,11 +578,9 @@ bool JPPyTuple::check(PyObject* obj)
 void JPPyTuple::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
+	Py_INCREF(val);
 	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
 	JP_PY_CHECK();
-
-	// Return the stolen reference, but only after transfer has been completed.
-	Py_INCREF(val);
 }
 
 PyObject* JPPyTuple::getItem(jlong ndx)
@@ -769,7 +767,7 @@ JPPyCallAcquire::~JPPyCallAcquire()
 	delete save;
 }
 
-// This is used when leaving python from to perform some 
+// This is used when leaving python from to perform some
 
 JPPyCallRelease::JPPyCallRelease()
 {

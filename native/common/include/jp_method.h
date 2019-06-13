@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
@@ -34,7 +34,11 @@ private:
 
 public:
 	const string& getName() const;
-	string getClassName() const;
+
+	JPClass* getClass() const
+	{
+		return m_Class;
+	}
 
 	void addOverload(JPClass* clazz, jobject mth);
 
@@ -59,7 +63,7 @@ public:
 
 private:
 	/** Search for a matching overload.
-	 * 
+	 *
 	 * @param searchInstance is true if the first argument is to be skipped
 	 * when matching with a non-static.
 	 */

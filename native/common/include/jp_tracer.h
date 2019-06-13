@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
@@ -27,7 +27,7 @@
 #define JP_TRACE_IN(n)  try {
 #define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
-#define JP_TRACE_PY(m, obj) 
+#define JP_TRACE_PY(m, obj)
 #endif
 
 // Enable this option to get all the py referencing information
