@@ -44,7 +44,6 @@ _jcustomizer._JCLASSES = _JCLASSES
 def _initialize():
     global _java_ClassLoader
 
-
     # Due to bootstrapping, Object and Class must be defined first.
     global _java_lang_Object, _java_lang_Class
     _java_lang_Object = JClass("java.lang.Object")
@@ -138,6 +137,8 @@ class JClass(type):
 
     def __getattribute__(self, name):
         if name.startswith('_'):
+            if name == "__doc__":
+                return _jclassDoc(self)
             return type.__getattribute__(self, name)
         attr = type.__getattribute__(self, name)
         if isinstance(attr, _jpype.PyJPMethod):
@@ -221,7 +222,6 @@ def _JClassNew(arg, loader=None, initialize=True):
     if name in _JCLASSES:
         return _JCLASSES[name]
     return _JClassFactory(name, javaClass)
-
 
 
 class JInterface(object):
@@ -430,26 +430,97 @@ def typeLookup(tp, name):
     cache[name] = None
     return None
 
-def _jmethodDoc(method, cls, overloads):
-    """ Method hook for PyJPMethod.__doc__ property
+
+def _jclassDoc(cls):
+    """ Generator for JClass.__doc__ property 
 
     Parameters:
-       method (PyJPMethod): method to generate doc string for.
-       cls (java.lang.Class): Class holding this method dispatch.
-       overloads (java.lang.reflect.Method[]): tuple holding all the methods that
-         are served by this method dispatch.
+       cls (JClass): class to document.
 
     Returns:
-      the doc string for the method dispatch.
+      The doc string for the class.
+    """
+    jclass = cls.class_
+    out = []
+    out.append("Java class '%s'" % (jclass.getName()))
+    out.append("")
+
+    sup = jclass.getSuperclass()
+    if sup:
+        out.append("Derived from ``%s``" % sup.getName())
+
+    intfs = jclass.getInterfaces()
+    if intfs:
+        out.append("Interfaces:")
+        for intf in intfs:
+            out.append("  ``%s``" % intf.getName())
+        out.append("")
+
+    ctors = jclass.getDeclaredConstructors()
+    if ctors:
+        exceptions = []
+        name = jclass.getSimpleName()
+        out.append("Constructors:")
+        for ctor in ctors:
+            modifiers = ctor.getModifiers()
+            if not modifiers & 1:
+                continue
+            params = ", ".join([str(i.getCanonicalName()) for i in ctor.getParameterTypes()])
+            out.append("  %s(%s)" % (name, params))
+            exceptions.extend(ctor.getExceptionTypes())
+        out.append("")
+        if exceptions:
+            out.append("Raises:")
+            for exc in set(exceptions):
+                out.append("  ``%s``" % exc.getName())
+            out.append("")
+
+    fields = jclass.getDeclaredFields()
+    if fields:
+        out.append("Attributes:")
+        for field in fields:
+            modifiers = field.getModifiers()
+            if not modifiers & 1:
+                continue
+            fieldInfo = []
+            if modifiers & 16:
+                fieldInfo.append("final")
+            if modifiers & 8:
+                fieldInfo.append("static")
+            if field.isEnumConstant():
+                fieldnfo.append("enum constant")
+            else:
+                fieldInfo.append("field")
+            out.append("  %s (%s): %s" % (field.getName(),
+                                          field.getType().getName(),
+                                          " ".join(fieldInfo)))
+            out.append("")
+
+    return "\n".join(out)
+
+
+def _jmethodDoc(method, cls, overloads):
+    """ Generator for PyJPMethod.__doc__ property
+
+    Parameters:
+      method (PyJPMethod): method to generate doc string for.
+      cls (java.lang.Class): Class holding this method dispatch.
+      overloads (java.lang.reflect.Method[]): tuple holding all the methods 
+        that are served by this method dispatch.
+
+    Returns:
+      The doc string for the method dispatch.
     """
     out = []
-    out.append("Java method dispatch '%s' for '%s'"%(method.getName(),cls.getName()))
+    out.append("Java method dispatch '%s' for '%s'" %
+               (method.getName(), cls.getName()))
     out.append("")
     out.append("Overloads:")
     for ov in overloads:
-        out.append("   %s"%ov.toString())
+        out.append("   %s" % ov.toString())
     out.append("")
     return "\n".join(out)
+
 
 _jpype.setResource('GetClassMethod', _JClassNew)
 _jpype.setResource('GetMethodDoc', _jmethodDoc)

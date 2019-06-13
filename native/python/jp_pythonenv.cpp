@@ -185,7 +185,7 @@ JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 	JPPyTuple ov(JPPyTuple::newTuple(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = JPTypeManager::findClass("java.lang.reflect.Method");
-	for (JPMethod::OverloadList::const_iterator iter = overloads.cbegin(); iter != overloads.cend(); ++iter)
+	for (JPMethod::OverloadList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
