@@ -292,14 +292,9 @@ def _JClassFactory(name, jc):
         bases.append(JClass(ic))
 
     # Set up members
-    pkg = ""
-    cname = name
-    if '.' in cname:
-        (pkg, cname) = cname.rsplit('.', 1)
     members = {
         "__javaclass__": jc,
-        "__name__": cname,
-        "__module__": pkg,
+        "__name__": name,
     }
     fields = jc.getClassFields()
     for i in fields:
@@ -310,7 +305,7 @@ def _JClassFactory(name, jc):
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = JClass(cname, tuple(bases), members)
+    res = JClass(name, tuple(bases), members)
     _JCLASSES[name] = res
 
     # Post customizers
