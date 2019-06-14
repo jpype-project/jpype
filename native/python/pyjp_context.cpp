@@ -116,7 +116,7 @@ int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
 void PyJPContext::__dealloc__(PyJPContext *self)
 {
 	JP_TRACE_IN_C("PyJPContext::__dealloc__", self);
-	if (self->m_Context->isInitialized())
+	if (self->m_Context->isRunning())
 		self->m_Context->shutdownJVM();
 	delete self->m_Context;
 	self->m_Context = NULL;
@@ -155,7 +155,7 @@ PyObject* PyJPContext::__str__(PyJPContext *self)
 PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::startup", self);
-	if (self->m_Context->isInitialized())
+	if (self->m_Context->isRunning())
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
 		return NULL;
@@ -225,7 +225,7 @@ PyObject* PyJPContext::shutdown(PyJPContext *self, PyObject *args)
 
 PyObject* PyJPContext::isStarted(PyJPContext *self, PyObject *args)
 {
-	return PyBool_FromLong(self->m_Context->isInitialized());
+	return PyBool_FromLong(self->m_Context->isRunning());
 }
 
 PyObject* PyJPContext::attachThread(PyJPContext *self, PyObject *args)
@@ -261,7 +261,7 @@ PyObject* PyJPContext::detachThread(PyJPContext *self, PyObject *args)
 	JP_TRACE_IN_C("PyJPContext::detachThread", self);
 	try
 	{
-		if (self->m_Context->isInitialized())
+		if (self->m_Context->isRunning())
 			self->m_Context->detachCurrentThread();
 		Py_RETURN_NONE;
 	}
@@ -273,7 +273,7 @@ PyObject* PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
 {
 	try
 	{
-		if (!self->m_Context->isInitialized())
+		if (!self->m_Context->isRunning())
 			return PyBool_FromLong(0);
 		return PyBool_FromLong(self->m_Context->isThreadAttached());
 	}

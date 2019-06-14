@@ -126,7 +126,7 @@ public:
 	virtual ~JPContext();
 
 	// JVM control functions
-	bool isInitialized();
+	bool isRunning();
 	void assertJVMRunning(const char* function, const JPStackInfo& info);
 	void startJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
 	void shutdownJVM();

@@ -194,7 +194,7 @@ void JPypeException::convertJavaToPython()
 	JPJavaFrame frame(m_Context);
 	jthrowable th = m_Throwable.get();
 	JP_TRACE("Check typemanager");
-	if (!m_Context->isInitialized())
+	if (!m_Context->isRunning())
 	{
 		PyErr_SetString(PyExc_RuntimeError, m_Context->toString((jobject) th).c_str());
 		return;

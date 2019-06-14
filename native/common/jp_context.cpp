@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -21,7 +21,7 @@ JPResource::~JPResource()
 }
 
 /*****************************************************************************/
-// Platform handles the differences in dealing with shared libraries 
+// Platform handles the differences in dealing with shared libraries
 // on windows and unix variants.
 
 #ifdef WIN32
@@ -29,7 +29,7 @@ JPResource::~JPResource()
 #define  PLATFORM_ADAPTER Win32PlatformAdapter
 #else
 #include "jp_platform_linux.h"
-#define  PLATFORM_ADAPTER LinuxPlatformAdapter  
+#define  PLATFORM_ADAPTER LinuxPlatformAdapter
 #endif
 namespace
 {
@@ -46,6 +46,7 @@ namespace
 
 JPContext::JPContext()
 {
+	printf("New JVM %p\n",this);
 	m_JavaVM = 0;
 	_void = 0;
 	_boolean = 0;
@@ -84,17 +85,18 @@ JPContext::JPContext()
 	m_Host = 0;
 }
 
-JPContext::JPContext(const JPContext& orig)
-{
-}
-
 JPContext::~JPContext()
 {
 }
 
-bool JPContext::isInitialized()
+bool JPContext::isRunning()
 {
-	return m_JavaVM != NULL && m_IsInitialized;
+	if (m_JavaVM == NULL || !m_IsInitialized)
+	{
+		printf("Return false");
+		return false;
+	}
+	return true;
 }
 
 /**
@@ -102,16 +104,20 @@ bool JPContext::isInitialized()
  */
 void JPContext::assertJVMRunning(const char* function, const JPStackInfo& info)
 {
+	printf("Context %p\n", this);
+	printf("JVM %p\n", this->m_JavaVM);
+	printf("m_Initialized %x\n", m_IsInitialized);
 	// FIXME fit function names into raise
-	if (!isInitialized())
+	if (m_JavaVM == NULL || !m_IsInitialized)
 	{
+		printf("THROW\n");
 		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
 	}
 }
 
 void JPContext::loadEntryPoints(const string& path)
 {
-	// Load symbols from the shared library	
+	// Load symbols from the shared library
 	GetAdapter()->loadLibrary((char*) path.c_str());
 	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *))GetAdapter()->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
@@ -156,7 +162,7 @@ void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
 	{
 		JPJavaFrame frame(this);
 
-		// After the JVM is created but before the context is started, we need 
+		// After the JVM is created but before the context is started, we need
 		// lo set up all the services that the context will need.
 		JP_TRACE("Initialize");
 
@@ -231,15 +237,15 @@ void JPContext::shutdownJVM()
 
 	// Wait for all non-demon threads to terminate
 	// DestroyJVM is rather misnamed.  It is simply a wait call
-	// FIXME our reference queue thunk does not appear to have properly set 
+	// FIXME our reference queue thunk does not appear to have properly set
 	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
 	//	s_JavaVM->functions->DestroyJavaVM(s_JavaVM);
 
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
-	GetAdapter()->unloadLibrary();
 	m_JavaVM = NULL;
+	GetAdapter()->unloadLibrary();
 	JP_TRACE_OUT;
 }
 

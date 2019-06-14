@@ -174,7 +174,7 @@ PyObject *PyJPProxy::__str__(PyJPProxy *self)
 {
 	try
 	{
-		JPContext *context = self->m_Proxy->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPProxy::__init__");
 		JPJavaFrame frame(context);
 		stringstream sout;

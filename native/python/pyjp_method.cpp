@@ -135,7 +135,7 @@ PyObject *PyJPMethod::__get__(PyJPMethod *self, PyObject *obj, PyObject *type)
 	JP_TRACE_IN_C("PyJPMethod::__get__", self);
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::__get__");
 		if (obj == NULL)
 		{
@@ -154,7 +154,7 @@ PyObject* PyJPMethod::__call__(PyJPMethod *self, PyObject *args, PyObject *kwarg
 	JP_TRACE_IN_C("PyJPMethod::__call__", self);
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::__call__");
 		JPJavaFrame frame(context);
 		JP_TRACE(self->m_Method->getName());
@@ -177,7 +177,7 @@ PyObject* PyJPMethod::__str__(PyJPMethod *self)
 {
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::__str__");
 		stringstream sout;
 		if (self->m_Instance == NULL)
@@ -194,7 +194,7 @@ PyObject* PyJPMethod::isBeanAccessor(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::isBeanAccessor");
 		return PyBool_FromLong(self->m_Method->isBeanAccessor());
 	}
@@ -205,7 +205,7 @@ PyObject* PyJPMethod::isBeanMutator(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::isBeanMutator");
 		return PyBool_FromLong(self->m_Method->isBeanMutator());
 	}
@@ -217,7 +217,7 @@ PyObject* PyJPMethod::getName(PyJPMethod *self, PyObject *arg)
 	JP_TRACE_IN_C("PyJPMethod::getName", self);
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::getName");
 		string name = self->m_Method->getName();
 		return JPPyString::fromStringUTF8(name).keep();
@@ -230,7 +230,7 @@ PyObject* PyJPMethod::matchReport(PyJPMethod *self, PyObject *args)
 {
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::matchReport");
 		JPJavaFrame frame(context);
 		JPPyObjectVector vargs(args);
@@ -244,7 +244,7 @@ PyObject* PyJPMethod::dump(PyJPMethod *self, PyObject *args)
 {
 	try
 	{
-		JPContext *context = self->m_Method->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPMethod::matchReport");
 		JPJavaFrame frame(context);
 		string report = self->m_Method->dump();

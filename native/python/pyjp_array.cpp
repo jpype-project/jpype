@@ -167,7 +167,7 @@ int PyJPArray::clear(PyJPArray *self)
 PyObject* PyJPArray::__str__(PyJPArray *self)
 {
 	JP_TRACE_IN_C("PyJPArray::__str__");
-	JPContext *context = self->m_Array->getClass()->getContext();
+	JPContext *context = self->m_Context->m_Context;
 	try
 	{
 		ASSERT_JVM_RUNNING(context, "PyJPArray::__str__");
@@ -186,7 +186,7 @@ PyObject* PyJPArray::getArrayLength(PyJPArray *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Array->getClass()->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::getArrayLength");
 		JPJavaFrame frame(context);
 		return PyInt_FromLong(self->m_Array->getLength());
@@ -199,7 +199,7 @@ PyObject* PyJPArray::getArrayItem(PyJPArray *self, PyObject *arg)
 	JP_TRACE_IN_C("PyJPArray::getArrayItem");
 	try
 	{
-		JPContext *context = self->m_Array->getClass()->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPArray::getArrayItem");
 		JPJavaFrame frame(context);
 		int ndx;
@@ -218,7 +218,7 @@ PyObject* PyJPArray::getArraySlice(PyJPArray *self, PyObject *arg)
 	int hi = -1;
 	try
 	{
-		JPContext *context = self->m_Array->getClass()->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPArray::getArraySlice");
 		JPJavaFrame frame(context);
 
@@ -248,7 +248,7 @@ PyObject* PyJPArray::setArraySlice(PyJPArray *self, PyObject *arg)
 	JP_TRACE_IN_C("PyJPArray::setArraySlice");
 	try
 	{
-		JPContext *context = self->m_Array->getClass()->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPArray::setArraySlice");
 		JPJavaFrame frame(context);
 
@@ -285,7 +285,7 @@ PyObject* PyJPArray::setArrayItem(PyJPArray *self, PyObject *arg)
 	JP_TRACE_IN_C("PyJPArray::setArrayItem");
 	try
 	{
-		JPContext *context = self->m_Array->getClass()->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::setArrayItem");
 		JPJavaFrame frame(context);
 

@@ -197,7 +197,7 @@ void PyJPValue::__dealloc__(PyJPValue *self)
 	if (self->m_Context != NULL && cls != NULL)
 	{
 		JPContext *context = self->m_Context->m_Context;
-		if (context->isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+		if (context->isRunning() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
 		{
 			// If the JVM has shutdown then we don't need to free the resource
 			// FIXME there is a problem with initializing the syxtem twice.
@@ -274,9 +274,9 @@ PyObject *PyJPValue::toString(PyJPValue *self)
 	JP_TRACE_IN_C("PyJPValue::toString", self);
 	try
 	{
-		JPClass *cls = self->m_Value.getClass();
-		JPContext *context = cls->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPValue::toString");
+		JPClass *cls = self->m_Value.getClass();
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{
@@ -314,9 +314,9 @@ PyObject *PyJPValue::toUnicode(PyJPValue *self)
 	JP_TRACE_IN_C("PyJPValue::toUnicode", self);
 	try
 	{
-		JPClass *cls = self->m_Value.getClass();
-		JPContext *context = cls->getContext();
+		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context, "PyJPValue::toUnicode");
+		JPClass *cls = self->m_Value.getClass();
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
 		{
