@@ -74,11 +74,11 @@ def _initialize():
 
 
 def JOverride(*args, **kwargs):
-    """ Annotation to denote a method as overriding a Java method.
+    """Annotation to denote a method as overriding a Java method.
 
     This annotation applies to customizers, proxies, and extension
     to Java class. Apply it to methods to mark them as implementing
-    or overriding Java methods.  Keyword arguments are passed to the 
+    or overriding Java methods.  Keyword arguments are passed to the
     corresponding implementation factory.
 
     Args:
@@ -98,9 +98,9 @@ def JOverride(*args, **kwargs):
 
 
 class JClass(type):
-    """ Meta class for all java class instances.
+    """Meta class for all java class instances.
 
-    JClass when called as an object will contruct a new java Class wrapper. 
+    JClass when called as an object will contruct a new java Class wrapper.
 
     All python wrappers for java classes derived from this type.
     To test if a python class is a java wrapper use
@@ -225,12 +225,12 @@ def _JClassNew(arg, loader=None, initialize=True):
 
 
 class JInterface(object):
-    """ Base class for all Java Interfaces. 
+    """Base class for all Java Interfaces.
 
-    ``JInterface`` is serves as the base class for any java class that is 
-    a pure interface without implementation. It is not possible to create 
+    ``JInterface`` is serves as the base class for any java class that is
+    a pure interface without implementation. It is not possible to create
     a instance of a java interface. The ``mro`` is hacked such that
-    ``JInterface`` does not appear in the tree of objects implement an 
+    ``JInterface`` does not appear in the tree of objects implement an
     interface.
 
     Example:
@@ -292,9 +292,14 @@ def _JClassFactory(name, jc):
         bases.append(JClass(ic))
 
     # Set up members
+    pkg = ""
+    cname = name
+    if '.' in cname:
+        (pkg, cname) = cname.rsplit('.', 1)
     members = {
         "__javaclass__": jc,
-        "__name__": name,
+        "__name__": cname,
+        "__module__": pkg,
     }
     fields = jc.getClassFields()
     for i in fields:
@@ -305,7 +310,7 @@ def _JClassFactory(name, jc):
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = JClass(name, tuple(bases), members)
+    res = JClass(cname, tuple(bases), members)
     _JCLASSES[name] = res
 
     # Post customizers
@@ -327,7 +332,7 @@ def _JClassFactory(name, jc):
 
 
 def _toJavaClass(tp):
-    """ (internal) Converts a class type in python into a internal java class.
+    """(internal) Converts a class type in python into a internal java class.
 
     Used mainly to support JArray.
 
@@ -404,9 +409,9 @@ class _JavaLangClass(object):
 
 
 def typeLookup(tp, name):
-    """ Fetch a descriptor from the inheritance tree.
+    """Fetch a descriptor from the inheritance tree.
 
-    This uses a cache to avoid additional cost when accessing items deep in 
+    This uses a cache to avoid additional cost when accessing items deep in
     the tree multiple times.
     """
     # TODO this cache may have interactions with retroactive
@@ -432,7 +437,7 @@ def typeLookup(tp, name):
 
 
 def _jclassDoc(cls):
-    """ Generator for JClass.__doc__ property 
+    """Generator for JClass.__doc__ property
 
     Parameters:
        cls (JClass): class to document.
@@ -440,6 +445,7 @@ def _jclassDoc(cls):
     Returns:
       The doc string for the class.
     """
+    from textwrap import wrap, indent
     jclass = cls.class_
     out = []
     out.append("Java class '%s'" % (jclass.getName()))
@@ -447,37 +453,44 @@ def _jclassDoc(cls):
 
     sup = jclass.getSuperclass()
     if sup:
-        out.append("Derived from ``%s``" % sup.getName())
+        out.append("  Extends:")
+        out.append("    %s" % sup.getName())
+        out.append("")
 
     intfs = jclass.getInterfaces()
     if intfs:
-        out.append("Interfaces:")
-        for intf in intfs:
-            out.append("  ``%s``" % intf.getName())
+        out.append("  Interfaces:")
+        words = "".join(
+            wrap(", ".join([str(i.getCanonicalName()) for i in intfs])))
+        out.append(indent(words, '        '))
         out.append("")
 
     ctors = jclass.getDeclaredConstructors()
     if ctors:
         exceptions = []
         name = jclass.getSimpleName()
-        out.append("Constructors:")
+        ctordecl = []
         for ctor in ctors:
             modifiers = ctor.getModifiers()
             if not modifiers & 1:
                 continue
-            params = ", ".join([str(i.getCanonicalName()) for i in ctor.getParameterTypes()])
-            out.append("  %s(%s)" % (name, params))
+            params = ", ".join([str(i.getCanonicalName())
+                                for i in ctor.getParameterTypes()])
+            ctordecl.append("    * %s(%s)" % (name, params))
             exceptions.extend(ctor.getExceptionTypes())
-        out.append("")
+        if ctordecl:
+            out.append("  Constructors:")
+            out.extend(ctordecl)
+            out.append("")
         if exceptions:
-            out.append("Raises:")
+            out.append("  Raises:")
             for exc in set(exceptions):
-                out.append("  ``%s``" % exc.getName())
+                out.append("    %s: from java" % exc.getCanonicalName())
             out.append("")
 
     fields = jclass.getDeclaredFields()
     if fields:
-        out.append("Attributes:")
+        fielddesc = []
         for field in fields:
             modifiers = field.getModifiers()
             if not modifiers & 1:
@@ -491,34 +504,74 @@ def _jclassDoc(cls):
                 fieldnfo.append("enum constant")
             else:
                 fieldInfo.append("field")
-            out.append("  %s (%s): %s" % (field.getName(),
-                                          field.getType().getName(),
-                                          " ".join(fieldInfo)))
+            fielddesc.append("    %s (%s): %s" % (field.getName(),
+                                                  field.getType().getName(),
+                                                  " ".join(fieldInfo)))
+        if fielddesc:
+            out.append("  Attributes:")
+            out.extend(fielddesc)
             out.append("")
 
     return "\n".join(out)
 
 
 def _jmethodDoc(method, cls, overloads):
-    """ Generator for PyJPMethod.__doc__ property
+    """Generator for PyJPMethod.__doc__ property
 
     Parameters:
       method (PyJPMethod): method to generate doc string for.
       cls (java.lang.Class): Class holding this method dispatch.
-      overloads (java.lang.reflect.Method[]): tuple holding all the methods 
+      overloads (java.lang.reflect.Method[]): tuple holding all the methods
         that are served by this method dispatch.
 
     Returns:
       The doc string for the method dispatch.
     """
+    from textwrap import wrap, indent
     out = []
     out.append("Java method dispatch '%s' for '%s'" %
                (method.getName(), cls.getName()))
     out.append("")
-    out.append("Overloads:")
+    exceptions = []
+    returns = []
+    methods = []
+    classmethods = []
     for ov in overloads:
-        out.append("   %s" % ov.toString())
-    out.append("")
+        modifiers = ov.getModifiers()
+        exceptions.extend(ov.getExceptionTypes())
+        returnName = ov.getReturnType().getCanonicalName()
+        params = ", ".join([str(i.getCanonicalName())
+                            for i in ov.getParameterTypes()])
+        if returnName != "void":
+            returns.append(returnName)
+        if modifiers & 8:
+            classmethods.append("    * %s %s(%s)" %
+                                (returnName, ov.getName(), params))
+        else:
+            methods.append("    * %s %s(%s)" %
+                           (returnName, ov.getName(), params))
+    if classmethods:
+        out.append("  Static Methods:")
+        out.extend(classmethods)
+        out.append("")
+
+    if methods:
+        out.append("  Virtual Methods:")
+        out.extend(methods)
+        out.append("")
+
+    if exceptions:
+        out.append("  Raises:")
+        for exc in set(exceptions):
+            out.append("    %s: from java" % exc.getCanonicalName())
+        out.append("")
+
+    if returns:
+        out.append("  Returns:")
+        words = "".join(wrap(", ".join([str(i) for i in set(returns)])))
+        out.append(indent(words, '    '))
+        out.append("")
+
     return "\n".join(out)
 
 

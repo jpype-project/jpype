@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
 # it here solved the problem.
+import _jpype
 import jpype
 import jpype.imports
 
@@ -58,13 +59,14 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 #
 # The short X.Y version.
 import mock
-mock_modules = ('_jpype',
-        )
+mock_modules = ('_jpype',)
 for m in mock_modules:
     sys.modules[m] = mock.MagicMock()
 
 import jpype
-print(jpype.__path__)
+import java.lang
+import java.util
+import java.io
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
@@ -286,3 +288,5 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+napoleon_custom_sections = ["Static Methods","Virtual Methods","Constructors"]
