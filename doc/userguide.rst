@@ -698,3 +698,83 @@ of Java memory and deletes the Python objects will still be holding the
 Java memory until Python is garbage collected. This means that out of
 memory failures can be issued during heavy operation.
 
+Advanced Topics
+---------------
+
+Using JPype for debugging Java code
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+One common use of JPype is not to develop programs in Python, but rather to 
+function as a Read-Eval-Print Loop for Java. When operating Java though
+Python as a method of developing or debugging Java there are a few tricks
+that can be used to simplify the job, beyond being able to probe and plot the 
+Java data structures interactively. These methods include:
+
+1) Attaching a debugger to the Java JVM being run under JPype.
+2) Attaching debugging information to a Java exception.
+3) Serializing the state of a Java process to be evaluated at a later point.
+
+We will briefly discuss each of these methods.
+
+
+Attaching a Debugger
+::::::::::::::::::::
+
+Interacting with Java through a shell is great, but sometimes it is necessary
+to drop down to a debugger. To make this happen we need to start the JVM
+with options to support remote debugging. 
+
+.. code-block:: python
+
+    jpype.startJVM("-Xint", "-Xdebug", "-Xnoagent", 
+      "-Xrunjdwp:transport=dt_socket,server=y,address=12999,suspend=n")
+
+Then add a marker in your program when it is time to attach the debugger
+in the form of a pause statement.
+
+.. code-block:: python
+    
+    input("pause to attach debugger")
+    myobj.callProblematicMethod()
+
+When Python reaches that point during execution, switch to a Java IDE such as
+Netbeans and select Debug : Attach Debugger. That brings up a window (see
+example below).  After attaching (and setting desired break points) go back to
+Python and hit enter to continue.  Netbeans should come to the foreground when
+a breakpoint is hit.
+
+.. image:: attach_debugger.png
+
+
+Attach data to an Exception
+:::::::::::::::::::::::::::
+
+Sometimes getting to the level of a debugger is challenging especially if the 
+code is large and error occurs rarely. In this case it is often benefitial to
+simply attach data to an exception. To do this, we need to write a small
+utility class. Java exceptions are not strictly speaking expandable, but 
+they can be chained. Thus, it we create a dummy exception holding a 
+``java.util.Map`` and attach it to as the cause of the exception, it will be
+passed back down the call stack until it reaches Python. We can then use
+``getCause()`` to retrieve the map containing the relevant data.
+
+
+Capturing the state
+:::::::::::::::::::
+
+If the program is not running in an interactive shell or the program run time
+is long, we may not want to deal with the problem during execution. In this
+case, we can serialize the state of the relevant classes and variables. To
+use this option, we simply make sure all of the classes in Java that we are
+using are Serializable, then add a condition that detects the faulty algorithm
+state. When the fault occurs, we create a ``java.util.HashMap`` and populate
+it with the values we wish to be able to examine from within Python. We then
+use Java serialization to write this state file to disk. We then execute the 
+program and collect the resulting state files.
+
+We can then return later with an interactive Python shell, and launch JPype
+with a classpath for the jars and possibly a connection to debugger.
+We load the state file into memory and we can then probe or execute the 
+methods that lead up to the fault.
+
+
