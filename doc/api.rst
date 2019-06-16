@@ -112,6 +112,10 @@ imported to add additional functionality.
 .. autofunction:: jpype.imports.registerImportCustomizer
 .. autoclass:: jpype.imports.JImportCustomizer
 
+.. automodule:: jpype.pickle
+.. autoclass:: jpype.pickle.JPickler
+.. autoclass:: jpype.pickle.JUnpickler
+
 .. automodule:: jpype.beans
 
 .. automodule:: jpype.types
