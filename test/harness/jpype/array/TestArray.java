@@ -27,7 +27,7 @@ public class TestArray
     
     public Object[] getSubClassArray()
     {
-      return new String[] { "aaa", "bbb" };
+      return new Integer[] { 1, 2 };
     }
 
     public Object getArrayAsObject()

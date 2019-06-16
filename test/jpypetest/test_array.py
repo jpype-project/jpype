@@ -91,7 +91,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testGetSubclass(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getSubClassArray()
-        self.assertTrue(isinstance(v[0], jpype.JString))
+        self.assertTrue(isinstance(v[0], jpype.java.lang.Integer))
 
     def testGetArrayAsObject(self):
         t = JClass("jpype.array.TestArray")()
