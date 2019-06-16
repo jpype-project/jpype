@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -40,10 +40,10 @@ PyTypeObject PyJPProxy::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Proxy",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPProxy::traverse,
+	/* tp_clear          */ (inquiry) PyJPProxy::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -151,13 +151,28 @@ void PyJPProxy::__dealloc__(PyJPProxy* self)
 {
 	JP_TRACE_IN("PyJPProxy::dealloc");
 	delete self->m_Proxy;
-	if (self->m_Target != NULL)
-		Py_DECREF(self->m_Target);
-	if (self->m_Callable != NULL)
-		Py_DECREF(self->m_Callable);
-	self->m_Target = NULL;
-	self->m_Callable = NULL;
+	PyObject_GC_UnTrack(self);
+	clear(self);
+	// Free self
 	Py_TYPE(self)->tp_free(self);
+	JP_TRACE_OUT;
+}
+
+int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
+{
+	JP_TRACE_IN("PyJPProxy::traverse");
+	Py_VISIT(self->m_Target);
+	Py_VISIT(self->m_Callable);
+	return 0;
+	JP_TRACE_OUT;
+}
+
+int PyJPProxy::clear(PyJPProxy *self)
+{
+	JP_TRACE_IN("PyJPProxy::clear");
+	Py_CLEAR(self->m_Target);
+	Py_CLEAR(self->m_Callable);
+	return 0;
 	JP_TRACE_OUT;
 }
 

@@ -12,10 +12,10 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 
-// FIXME PyJPArray should inherit from PyJPValue so that arrays are 
+// FIXME PyJPArray should inherit from PyJPValue so that arrays are
 // properly specializations of value types.
 
 #include <pyjp.h>
@@ -88,7 +88,7 @@ JPPyObject PyJPArray::alloc(JPArray* obj)
 {
 	JPJavaFrame fame;
 	JP_TRACE_IN("PyJPArray::alloc");
-	PyJPArray* res = PyObject_New(PyJPArray, &PyJPArray::Type);
+	PyJPArray* res = (PyJPArray*) PyJPArray::Type.tp_alloc(&PyJPArray::Type, 0);
 	JP_PY_CHECK();
 	res->m_Array = obj;
 	return JPPyObject(JPPyRef::_claim, (PyObject*) res);

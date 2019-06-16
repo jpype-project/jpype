@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -45,10 +45,10 @@ PyTypeObject PyJPMethod::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Method",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPProxy::traverse,
+	/* tp_clear          */ (inquiry) PyJPProxy::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -78,7 +78,7 @@ void PyJPMethod::initType(PyObject* module)
 JPPyObject PyJPMethod::alloc(JPMethod* m, PyObject* instance)
 {
 	JP_TRACE_IN("PyJPMethod::alloc");
-	PyJPMethod* res = PyObject_New(PyJPMethod, &PyJPMethod::Type);
+	PyJPMethod* res = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);;
 	JP_PY_CHECK();
 	res->m_Method = m;
 	res->m_Instance = instance;
@@ -145,14 +145,22 @@ PyObject* PyJPMethod::__call__(PyJPMethod* self, PyObject* args, PyObject* kwarg
 
 void PyJPMethod::__dealloc__(PyJPMethod* self)
 {
-	if (self->m_Instance != NULL)
-	{
-		JP_TRACE_PY("method dealloc (dec)", self->m_Instance);
-		Py_DECREF(self->m_Instance);
-	}
-	self->m_Instance = NULL;
+	PyObject_GC_UnTrack(self);
+	clear(self);
 	self->m_Method = NULL;
 	Py_TYPE(self)->tp_free(self);
+}
+
+int PyJPMethod::traverse(PyJPMethod *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->m_Instance);
+	return 0;
+}
+
+int PyJPMethod::clear(PyJPMethod *self)
+{
+	Py_CLEAR(self->m_Instance);
+	return 0;
 }
 
 PyObject* PyJPMethod::__str__(PyJPMethod* self)
