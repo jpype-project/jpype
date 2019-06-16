@@ -123,8 +123,14 @@ def startJVM(*args, **kwargs):
         cast to Python strings. This option is to support legacy code
         for which conversion of Python strings was the default. This
         will globally change the behavior of all calls using
-        strings, and is not recommended for newly developed
-        code.
+        strings, and a value of True is NOT recommended for newly 
+        developed code.
+
+        The default value for this option during 0.7 series is 
+        True.  The option will be False starting in 0.8. A
+        warning will be issued if this option is not specified
+        during the transition period.
+
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
@@ -177,7 +183,21 @@ def startJVM(*args, **kwargs):
                         (_classpath._SEP.join(classpath)))
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
-    convertStrings = kwargs.pop('convertStrings', False)
+
+    if not "convertStrings" in kwargs:
+        import warnings
+        warnings.warn("""
+-------------------------------------------------------------------------------
+Deprecated: convertStrings was not specified when starting the JVM. The default
+behavior in JPype will be False starting in JPype 0.8. The recommended setting
+for new code is convertStrings=False.  The legacy value of True was assumed for
+this session. If you are a user of an application that reported this warning,
+please file a ticket with the developer.
+-------------------------------------------------------------------------------
+""")
+
+    convertStrings = kwargs.pop('convertStrings', True)
+
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
