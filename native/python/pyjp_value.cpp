@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -42,14 +42,14 @@ PyTypeObject PyJPValue::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */
 	"Wrapper of a java value which holds a class and instance of an object \n"
 	"or a primitive.  This object is always stored as the attributed \n"
 	"__javavalue__.  Anything with this type with that attribute will be\n"
 	"considered a java object wrapper.",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPValue::traverse,
+	/* tp_clear          */ (inquiry) PyJPValue::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -92,7 +92,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 {
 	JPJavaFrame frame;
 	JP_TRACE_IN("PyJPValue::alloc");
-	PyJPValue* self = PyObject_New(PyJPValue, &PyJPValue::Type);
+	PyJPValue* self = (PyJPValue*) PyJPValue::Type.tp_alloc(&PyJPValue::Type, 0);
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
@@ -200,12 +200,7 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::__dealloc__");
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
-	JP_TRACE("Value", cls, &(value.getValue()));
-	if (self->m_Cache != NULL)
-	{
-		Py_DECREF(self->m_Cache);
-		self->m_Cache = NULL;
-	}
+
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
 	if (cls != NULL && JPEnv::isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
@@ -218,9 +213,22 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 		JP_TRACE("Dereference object");
 		JPJavaFrame::ReleaseGlobalRef(value.getValue().l);
 	}
-	JP_TRACE("free", Py_TYPE(self)->tp_free);
+	PyObject_GC_UnTrack(self);
+	clear(self);
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT;
+}
+
+int PyJPValue::traverse(PyJPValue *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->m_Cache);
+	return 0;
+}
+
+int PyJPValue::clear(PyJPValue *self)
+{
+	Py_CLEAR(self->m_Cache);
+	return 0;
 }
 
 void ensureCache(PyJPValue* self)

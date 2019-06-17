@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYJP_VALUE_H_
 #define _PYJP_VALUE_H_
@@ -32,6 +32,9 @@ struct PyJPValue
 	static PyObject*   __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
 	static int         __init__(PyJPValue* self, PyObject* args, PyObject* kwargs);
 	static void        __dealloc__(PyJPValue* self);
+	static int         traverse(PyJPValue *self, visitproc visit, void *arg);
+	static int         clear(PyJPValue *self);
+
 	static PyObject*   __str__(PyJPValue* self);
 	static PyObject*   toString(PyJPValue* self);
 	static PyObject*   toUnicode(PyJPValue* self);

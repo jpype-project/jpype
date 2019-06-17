@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPMETHODOVERLOAD_H_
 #define _JPMETHODOVERLOAD_H_
@@ -62,10 +62,10 @@ public:
 	 *
 	 * @param isInstance is true if the first argument is an instance object.
 	 * @param args is a list of arguments including the instance.
-	 * 
+	 *
 	 */
 	JPMatch matches(bool isInstance, JPPyObjectVector& args) ;
-	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg);
+	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
 	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
 
 	bool isStatic() const
@@ -111,14 +111,14 @@ public:
 	bool checkMoreSpecificThan(JPMethodOverload* other) const;
 
 	/** Used to determine if a bean get property should be added to the class.
-	 * 
-	 * FIXME This does not check for begins with "get" 
+	 *
+	 * FIXME This does not check for begins with "get"
 	 */
 	bool isBeanAccessor();
 
 	/** Used to determine if a bean set property should be added to the class.
-	 * 
-	 * FIXME This does not check for begins with "set" or "is" 
+	 *
+	 * FIXME This does not check for begins with "set" or "is"
 	 */
 	bool isBeanMutator();
 

@@ -14,7 +14,10 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import collections
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 from . import _jclass
 from . import _jcustomizer
@@ -24,7 +27,7 @@ JOverride = _jclass.JOverride
 
 
 def isPythonSequence(v):
-    if isinstance(v, collections.Sequence):
+    if isinstance(v, Sequence):
         if not hasattr(v.__class__, '__metaclass__') \
            or v.__class__.__metaclass__ is _jclass._JavaClass:
             return True

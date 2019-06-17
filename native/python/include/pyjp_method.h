@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYMETHOD_H_
 #define _PYMETHOD_H_
@@ -30,6 +30,9 @@ struct PyJPMethod
 
 	static PyObject*  __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
 	static void       __dealloc__(PyJPMethod* o);
+	static int        traverse(PyJPMethod *self, visitproc visit, void *arg);
+	static int        clear(PyJPMethod *self);
+
 	static PyObject*  __get__(PyJPMethod* self, PyObject* obj, PyObject* type);
 	static PyObject*  __str__(PyJPMethod* o);
 	static PyObject*  __call__(PyJPMethod* self, PyObject* args, PyObject* kwargs);

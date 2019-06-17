@@ -14,8 +14,12 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import collections
 import sys as _sys
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
+
 
 import _jpype
 from . import _jclass
@@ -245,7 +249,7 @@ def _JArrayNewClass(cls, ndims=1):
 # Cannot be Mutable because java arrays are fixed in length
 
 def _isIterable(obj):
-    if isinstance(obj, collections.Sequence):
+    if isinstance(obj, Sequence):
         return True
     if hasattr(obj, '__len__') and hasattr(obj, '__iter__'):
         return True
