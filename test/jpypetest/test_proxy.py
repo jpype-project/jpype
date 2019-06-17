@@ -64,6 +64,110 @@ class ProxyTestCase(common.JPypeTestCase):
         self.package = JPackage("jpype.proxy")
         self._triggers = self.package.ProxyTriggers
 
+    def testProxyDecl(self):
+        d = {
+            'testMethod1': _testMethod1,
+            'testMethod2': _testMethod2,
+        }
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
+        proxy = JProxy(itf1, dict=d)
+        proxy = JProxy([itf1], dict=d)
+        proxy = JProxy([itf1, itf2], dict=d)
+        proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
+        proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
+
+    def testProxyDeclFail1(self):
+        itf1 = self.package.TestInterface1
+        # Missing required arguments
+        with self.assertRaisesRegex(TypeError, "must be specified"):
+            proxy = JProxy(itf1)
+
+    def testProxyDeclFail2(self):
+        itf1 = self.package.TestInterface1
+        # Not a str, JClass, or str
+        with self.assertRaisesRegex(TypeError, "is not a Java interface"):
+            proxy = JProxy(int(1), dict={})
+
+    def testProxyImplementsForm1(self):
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
+
+        @JImplements(itf1)
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+              pass
+
+    def testProxyImplementsForm2(self):
+        itf1 = self.package.TestInterface1
+        itf2 = self.package.TestInterface2
+        @JImplements(itf1,itf2)
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+              pass
+            @JOverride
+            def testMethod2(self):
+              pass
+            @JOverride
+            def write(self):
+              pass
+
+    def testProxyImplementsForm3(self):
+        @JImplements("jpype.proxy.TestInterface1")
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+              pass
+
+    def testProxyImplementsForm4(self):
+        @JImplements("jpype.proxy.TestInterface1","jpype.proxy.TestInterface2")
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+              pass
+            @JOverride
+            def testMethod2(self):
+              pass
+            @JOverride
+            def write(self):
+              pass
+
+    def testProxyImplementsFail1(self):
+        with self.assertRaisesRegex(TypeError, "least one Java interface"):
+            # Empty interfaces
+            @JImplements()
+            class MyImpl(object):
+                @JOverride
+                def testMethod1(self):
+                  pass
+
+    def testProxyImplementsFail2(self):
+        with self.assertRaisesRegex(TypeError, "is not a Java interface"):
+            # Wrong type
+            @JImplements(int(1))
+            class MyImpl(object):
+                @JOverride
+                def testMethod1(self):
+                  pass
+
+    def testProxyImplementsFail3(self):
+        with self.assertRaisesRegex(NotImplementedError, "requires method"):
+            # Missing implementation
+            @JImplements("jpype.proxy.TestInterface1")
+            class MyImpl(object):
+                def testMethod1(self):
+                  pass
+
+    def testProxyImplementsFail4(self):
+        with self.assertRaisesRegex(TypeError, "is not a Java interface"):
+            # extends
+            @JImplements("java.lang.StringBuilder")
+            class MyImpl(object):
+                def testMethod1(self):
+                  pass
+
     def testProxyWithDict(self):
         d = {
             'testMethod1': _testMethod1,

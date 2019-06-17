@@ -254,7 +254,7 @@ JPPyObject JPMethod::invoke(JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
 	JPMatch match = findOverload(args, instance);
-	return match.overload->invoke(match, args);
+	return match.overload->invoke(match, args, instance);
 	JP_TRACE_OUT;
 }
 

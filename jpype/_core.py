@@ -95,6 +95,18 @@ def _hasClassPath(args):
             return True
     return False
 
+def _handleClassPath(clsList):
+    out = []
+    for s in clsList:
+        if not isinstance(s, (str, _jtypes._unicode)):
+            raise TypeError("Classpath elements must be strings")
+        if s.endswith('*'):
+            import glob
+            out.extend(glob.glob(s+'.jar'))
+        else:
+            out.append(s)
+    return _classpath._SEP.join(out)
+
 
 _JVM_started = False
 
@@ -177,10 +189,11 @@ def startJVM(*args, **kwargs):
     # Handle strings and list of strings.
     if classpath:
         if isinstance(classpath, (str, _jtypes._unicode)):
-            args.append('-Djava.class.path=%s' % classpath)
+            args.append('-Djava.class.path=%s' % _handleClassPath([classpath]))
+        elif hasattr(classpath, '__iter__'):
+            args.append('-Djava.class.path=%s' % _handleClassPath(classpath))
         else:
-            args.append('-Djava.class.path=%s' %
-                        (_classpath._SEP.join(classpath)))
+            raise TypeError("Unknown class path element")
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
 

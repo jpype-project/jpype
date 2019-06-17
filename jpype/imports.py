@@ -94,11 +94,44 @@ def _keywordWrap(name):
     return name
 
 
+_java_lang_Class = None
+_java_lang_NoClassDefFoundError = None
+_java_lang_ClassNotFoundException = None
+_java_lang_UnsupportedClassVersionError = None
 def _getJavaClass(javaname):
+    global _java_lang_Class
+    global _java_lang_NoClassDefFoundError
+    global _java_lang_ClassNotFoundException
+    global _java_lang_UnsupportedClassVersionError
+    if not _java_lang_Class:
+      _java_lang_Class = _jclass.JClass("java.lang.Class")
+      _java_lang_ClassNotFoundException = _jclass.JClass("java.lang.ClassNotFoundException")
+      _java_lang_NoClassDefFoundError = _jclass.JClass("java.lang.NoClassDefFoundError")
+      _java_lang_UnsupportedClassVersionError = _jclass.JClass("java.lang.UnsupportedClassVersionError")
+
+    err = None
     try:
-        return _jclass.JClass(javaname)
-    except Exception:
+        # Use forname because it give better diagnostics
+        cls = _java_lang_Class.forName(javaname)
+        return _jclass.JClass(cls)
+
+    # Not found is acceptable
+    except _java_lang_ClassNotFoundException:
         return None
+
+    # Missing dependency
+    except _java_lang_NoClassDefFoundError as ex:
+        missing = str(ex).replace('/','.')
+        err = "Unable to import '%s' due to missing dependency '%s'"%(javaname, missing)
+
+    # Wrong Java version
+    except _java_lang_UnsupportedClassVersionError as ex:
+        err = "Unable to import '%s' due to incorrect Java version"%(javaname)
+
+    # Otherwise!?
+    except Exception as ex:
+        err = "Unable to import '%s' due to unexpected exception"
+    raise ImportError(err)
 
 # FIXME imports of static fields not working for now.
 
@@ -211,16 +244,16 @@ class _JImport(object):
             return jtype
 
         # If the java class does not exist, throw a ClassNotFound exception
-        raise ImportError("Unable to find java class " + jname)
+        raise ImportError("Unable to find java class '%s'"%jname)
 
     def __setattr__(self, name, value):
         if name.startswith('__'):
-            raise AttributeError("Module does not allow setting of %s" % name)
+            raise AttributeError("Module does not allow setting of '%s'" % name)
         if hasattr(value, '__javaclass__'):
             return object.__setattr__(self, name, getattr(value, '__javaclass__'))
         if isinstance(value, (_JImport, _ModuleType)):
             return object.__setattr__(self, name, value)
-        raise AttributeError("JImport may not set attribute %s" % name)
+        raise AttributeError("JImport may not set attribute '%s'" % name)
 
 
 # In order to get properties to be attached to the _JImport class,

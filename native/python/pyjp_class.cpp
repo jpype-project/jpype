@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 
 #include <pyjp.h>
@@ -99,7 +99,7 @@ bool PyJPClass::check(PyObject* o)
 
 JPPyObject PyJPClass::alloc(JPClass* cls)
 {
-	PyJPClass* res = PyObject_New(PyJPClass, &PyJPClass::Type);
+	PyJPClass* res = (PyJPClass*) PyJPClass::Type.tp_alloc(&PyJPClass::Type, 0);
 	JP_PY_CHECK();
 	res->m_Class = cls;
 	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
@@ -108,7 +108,7 @@ JPPyObject PyJPClass::alloc(JPClass* cls)
 PyObject* PyJPClass::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPClass* self = (PyJPClass*) type->tp_alloc(type, 0);
-	self->m_Class = 0;
+	self->m_Class = NULL;
 	return (PyObject*) self;
 }
 
@@ -310,7 +310,7 @@ PyObject* PyJPClass::isAssignableFrom(PyJPClass* self, PyObject* arg)
 		ASSERT_JVM_RUNNING("PyJPClass::isSubClass");
 		JPJavaFrame frame;
 
-		// We have to lookup the name by string here because the 
+		// We have to lookup the name by string here because the
 		// class wrapper may not exist.  This is used by the
 		// customizers.
 		PyObject* other;
