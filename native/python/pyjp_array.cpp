@@ -12,10 +12,10 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 
-// FIXME PyJPArray should inherit from PyJPValue so that arrays are 
+// FIXME PyJPArray should inherit from PyJPValue so that arrays are
 // properly specializations of value types.
 
 #include <pyjp.h>
@@ -26,6 +26,7 @@ static PyMethodDef classMethods[] = {
 	{"setArrayItem", (PyCFunction) (&PyJPArray::setArrayItem), METH_VARARGS, ""},
 	{"getArraySlice", (PyCFunction) (&PyJPArray::getArraySlice), METH_VARARGS, ""},
 	{"setArraySlice", (PyCFunction) (&PyJPArray::setArraySlice), METH_VARARGS, ""},
+	{"toBytes", (PyCFunction) (&PyJPArray::toBytes), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -274,3 +275,22 @@ PyObject* PyJPArray::setArrayItem(PyJPArray* self, PyObject* arg)
 	return NULL;
 	JP_TRACE_OUT;
 }
+
+PyObject* PyJPArray::toBytes(PyJPArray* self, PyObject* arg)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPArray::toBytes");
+		JPJavaFrame frame;
+		JPClass* cls = self->m_Array->getClass()->getComponentType();
+		if (dynamic_cast<JPByteType*>(cls)==0)
+		{
+			PyErr_SetString(PyExc_TypeError, "Only byte[] supports toBytes");
+			return 0;
+		}
+		return ((JPByteType*)cls)->toBytes(frame, self->m_Array->getJava()).keep();
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+}
+

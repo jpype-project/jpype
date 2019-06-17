@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYJP_ARRAY_H_
 #define _PYJP_ARRAY_H_
@@ -43,6 +43,9 @@ struct PyJPArray
 	static PyObject* setArrayItem(PyJPArray* self, PyObject* arg);
 	static PyObject* getArraySlice(PyJPArray* self, PyObject* arg);
 	static PyObject* setArraySlice(PyJPArray* self, PyObject* arg);
+
+	// Special method for byte[]
+    static PyObject* toBytes(PyJPArray* self, PyObject* arg);
 
 	JPArray* m_Array;
 } ;

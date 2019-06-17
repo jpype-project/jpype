@@ -54,20 +54,28 @@ Requires:
     Python 2.7 or 3.6 or later
 
 """
+from __future__ import absolute_import
+import sys as _sys
 from . import _jclass
 from . import _jobject
 import pickle
-from copyreg import dispatch_table
+try:
+    from copyreg import dispatch_table
+except ImportError:
+    from copy_reg import dispatch_table
 
 # TODO: Support use of a custom classloader with the unpickler.
 # TODO: Use copyreg to pickle a JProxy
 
-__ALL__=['JPickler','JUnpickler']
+__ALL__ = ['JPickler', 'JUnpickler']
 
 # This must exist as a global, the real unserializer is created by the JUnpickler
+
+
 class JUnserializer(object):
     def __call__(self, *args):
         raise pickle.UnpicklingError("Unpickling Java requires JUnpickler")
+
 
 class _JDispatch(object):
     """Dispatch for Java classes and objects.
@@ -76,22 +84,43 @@ class _JDispatch(object):
     many classes, thus we will substitute the usual dictionary with a 
     class that can produce reducers as needed.
     """
-    def __init__(self):
-        cl = _jclass.JClass('org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._encoder = _jclass.JClass(cl.loadClass('org.jpype.pickle.Encoder'))()
+
+    def __init__(self, dispatch):
+        cl = _jclass.JClass(
+            'org.jpype.classloader.JPypeClassLoader').getInstance()
+        self._encoder = _jclass.JClass(
+            cl.loadClass('org.jpype.pickle.Encoder'))()
         self._builder = JUnserializer()
+        self._dispatch = dispatch
+        if _sys.version_info > (3,):
+            # Extension dispatch table holds reduce method
+            self._call = self.reduce
+        else:
+            # Internal dispatch table holds save method
+            self._call = self.save
 
-    def get(self, type):
-        return self.__getitem__(type)
+    # Python2 and Python3 _Pickler use get()
+    def get(self, cls):
+        if not issubclass(cls, (_jclass.JClass, _jobject.JObject)):
+            return self._dispatch.get(cls)
+        return self._call
 
+    # Python3 cPickler uses __getitem__()
     def __getitem__(self, cls):
         if not issubclass(cls, (_jclass.JClass, _jobject.JObject)):
-            return dispatch_table[cls]
-        return self.reduce
+            return self._dispatch[cls]
+        return self._call
 
+    # For Python3
     def reduce(self, obj):
-        byte = self._encoder.pack(obj)[:].tobytes()
+        byte = self._encoder.pack(obj).__javaarray__.toBytes()
         return (self._builder, (byte, ))
+
+    # For Python2
+    def save(self, pickler, obj):
+        rv = self.reduce(obj)
+        pickler.save_reduce(obj=obj, *rv)
+
 
 class JPickler(pickle.Pickler):
     """Pickler overloaded to support Java objects
@@ -107,9 +136,16 @@ class JPickler(pickle.Pickler):
             serialization.
 
     """
+
     def __init__(self, file, *args, **kwargs):
-        self.dispatch_table = _JDispatch()
         pickle.Pickler.__init__(self, file, *args, **kwargs)
+        if _sys.version_info > (3,):
+            # In Python3 we need to hook into the dispatch table for extensions
+            self.dispatch_table = _JDispatch(dispatch_table)
+        else:
+            # In Python2 we must connect to the internal dispatch
+            self.dispatch = _JDispatch(self.dispatch)
+
 
 class JUnpickler(pickle.Unpickler):
     """Unpickler overloaded to support Java objects
@@ -128,9 +164,12 @@ class JUnpickler(pickle.Unpickler):
             altered or corrupted.
 
     """
+
     def __init__(self, file, *args, **kwargs):
-        cl = _jclass.JClass('org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._decoder = _jclass.JClass(cl.loadClass('org.jpype.pickle.Decoder'))()
+        cl = _jclass.JClass(
+            'org.jpype.classloader.JPypeClassLoader').getInstance()
+        self._decoder = _jclass.JClass(
+            cl.loadClass('org.jpype.pickle.Decoder'))()
         pickle.Unpickler.__init__(self, file, *args, **kwargs)
 
     def find_class(self, module, cls):
@@ -139,8 +178,9 @@ class JUnpickler(pickle.Unpickler):
         We just need to substitute the stub class for a real
         one which points to our decoder instance.
         """
-        if cls=="JUnserializer":
+        if cls == "JUnserializer":
             decoder = self._decoder
+
             class JUnserializer(object):
                 def __call__(self, *args):
                     return decoder.unpack(args[0])

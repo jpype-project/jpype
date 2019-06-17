@@ -12,10 +12,13 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPARRAY_H_
 #define _JPARRAY_H_
+
+#include "jp_javaframe.h"
+
 
 #ifndef PyObject_HEAD
 struct _object;
@@ -43,6 +46,11 @@ public:
 	void       setRange(jsize start, jsize stop, PyObject* val);
 	JPPyObject getItem(jsize ndx);
 	void       setItem(jsize ndx, PyObject*);
+
+	jarray     getJava()
+	{
+		return m_Object.get();
+	}
 
 	jobject getObject()
 	{
