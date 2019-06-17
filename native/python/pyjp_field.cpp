@@ -76,14 +76,15 @@ void PyJPField::initType(PyObject* module)
 
 JPPyObject PyJPField::alloc(JPField* m)
 {
-	PyJPField* res = (PyJPField*) PyJPField::Type.tp_alloc(&PyJPField::Type, 0);;
+	PyJPField* self = (PyJPField*) PyJPField::Type.tp_alloc(&PyJPField::Type, 0);;
 	JP_PY_CHECK();
-	res->m_Field = m;
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Field = m;
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 }
 
 void PyJPField::__dealloc__(PyJPField* self)
 {
+	self->m_Field = NULL;
 	Py_TYPE(self)->tp_free(self);
 }
 

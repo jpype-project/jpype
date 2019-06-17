@@ -108,7 +108,7 @@ JPPyObject PyJPClass::alloc(JPClass* cls)
 PyObject* PyJPClass::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPClass* self = (PyJPClass*) type->tp_alloc(type, 0);
-	self->m_Class = 0;
+	self->m_Class = NULL;
 	return (PyObject*) self;
 }
 

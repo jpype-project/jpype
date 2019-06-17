@@ -47,8 +47,8 @@ PyTypeObject PyJPMethod::Type = {
 	/* tp_as_buffer      */ 0,
 	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Method",
-	/* tp_traverse       */ (traverseproc) PyJPProxy::traverse,
-	/* tp_clear          */ (inquiry) PyJPProxy::clear,
+	/* tp_traverse       */ (traverseproc) PyJPMethod::traverse,
+	/* tp_clear          */ (inquiry) PyJPMethod::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -78,24 +78,20 @@ void PyJPMethod::initType(PyObject* module)
 JPPyObject PyJPMethod::alloc(JPMethod* m, PyObject* instance)
 {
 	JP_TRACE_IN("PyJPMethod::alloc");
-	PyJPMethod* res = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);;
+	PyJPMethod* self = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);;
 	JP_PY_CHECK();
-	res->m_Method = m;
-	res->m_Instance = instance;
-	if (instance != NULL)
-	{
-		JP_TRACE_PY("method alloc (inc)", instance);
-		Py_INCREF(instance);
-	}
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Method = m;
+	self->m_Instance = instance;
+	Py_XINCREF(self->m_Instance);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPMethod* self = (PyJPMethod*) type->tp_alloc(type, 0);
-	self->m_Method = 0;
-	self->m_Instance = 0;
+	self->m_Method = NULL;
+	self->m_Instance = NULL;
 	return (PyObject*) self;
 }
 
