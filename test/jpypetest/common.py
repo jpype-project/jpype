@@ -38,14 +38,28 @@ class JPypeTestCase(unittest.TestCase):
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= jpype.getClassPath()
-            self.__class__.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
+            JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, "-ea",
                            # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
                            #"-Xcheck:jni",
-                           "-Xmx256M", "-Xms16M", classpath_arg, convertStrings=self.__class__.str_conversion)
+                           "-Xmx256M", "-Xms16M", classpath_arg, convertStrings=self.str_conversion)
         self.jpype = jpype.JPackage('jpype')
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual
 
     def tearDown(self):
         pass
+
+class test_a(JPypeTestCase):
+    def test(self):
+        assert True
+
+
+class test_fuck(JPypeTestCase):
+
+    def test(self):
+        assert hasattr(self, 'str_conversion')
+
+
+if __name__ == '__main__':
+    unittest.main()
