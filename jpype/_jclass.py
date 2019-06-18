@@ -573,5 +573,27 @@ def _jmethodDoc(method, cls, overloads):
     return "\n".join(out)
 
 
+def _jmethodAnnotation(method, cls, overloads):
+    """Generator for ``PyJPMethod.__annotation__`` property
+
+    Parameters:
+      method (PyJPMethod): method to generate annotations for.
+      cls (java.lang.Class): Class holding this method dispatch.
+      overloads (java.lang.reflect.Method[]): tuple holding all the methods
+        that are served by this method dispatch.
+
+    Returns:
+      The dict to use for type annotations.
+    """
+    returns = []
+    for ov in overloads:
+        returns.append(ov.getReturnType())
+    returns = set(returns)
+    if len(returns) == 1:
+        return {"return": JClass([i for i in returns][0])}
+    return {}
+
+
 _jpype.setResource('GetClassMethod', _JClassNew)
 _jpype.setResource('GetMethodDoc', _jmethodDoc)
+_jpype.setResource('GetMethodAnnotations', _jmethodAnnotation)

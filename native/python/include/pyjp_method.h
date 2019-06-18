@@ -43,9 +43,11 @@ struct PyJPMethod
 	static PyObject*  matchReport(PyJPMethod* self, PyObject* arg);
 	static PyObject*  dump(PyJPMethod* self, PyObject* arg);
 	static PyObject*  __doc__(PyJPMethod *method, void *context);
+	static PyObject*  __annotations__(PyJPMethod *method, void *context);
 
 	JPMethod* m_Method;
 	PyObject* m_Instance;
+	PyObject* m_Annotations;
 
 } ;
 
