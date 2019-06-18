@@ -496,7 +496,7 @@ def _jclassDoc(cls):
             if modifiers & 8:
                 fieldInfo.append("static")
             if field.isEnumConstant():
-                fieldnfo.append("enum constant")
+                fieldInfo.append("enum constant")
             else:
                 fieldInfo.append("field")
             fielddesc.append("    %s (%s): %s" % (field.getName(),
