@@ -17,6 +17,7 @@
 
 import jpype
 import logging
+import os
 from os import path
 import sys
 try:
@@ -37,9 +38,10 @@ class JPypeTestCase(unittest.TestCase):
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= jpype.getClassPath()
+            str_conversion = os.getenv('JPYPE_STR_CONVERSION', True) == 'False'
             jpype.startJVM(jvm_path, "-ea",
                            # "-Xcheck:jni",
-                           "-Xmx256M", "-Xms16M", classpath_arg)
+                           "-Xmx256M", "-Xms16M", classpath_arg, convertStrings=str_conversion)
         self.jpype = jpype.JPackage('jpype')
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual
