@@ -440,7 +440,7 @@ def _jclassDoc(cls):
     Returns:
       The doc string for the class.
     """
-    from textwrap import wrap, indent
+    from textwrap import TextWrapper
     jclass = cls.class_
     out = []
     out.append("Java class '%s'" % (jclass.getName()))
@@ -455,9 +455,10 @@ def _jclassDoc(cls):
     intfs = jclass.getInterfaces()
     if intfs:
         out.append("  Interfaces:")
-        words = "".join(
-            wrap(", ".join([str(i.getCanonicalName()) for i in intfs])))
-        out.append(indent(words, '        '))
+        words = ", ".join([str(i.getCanonicalName()) for i in intfs])
+        wrapper = TextWrapper(initial_indent='        ',
+                              subsequent_indent='        ')
+        out.extend(wrapper.wrap(words))
         out.append("")
 
     ctors = jclass.getDeclaredConstructors()
@@ -522,7 +523,7 @@ def _jmethodDoc(method, cls, overloads):
     Returns:
       The doc string for the method dispatch.
     """
-    from textwrap import wrap, indent
+    from textwrap import TextWrapper
     out = []
     out.append("Java method dispatch '%s' for '%s'" %
                (method.getName(), cls.getName()))
@@ -563,8 +564,10 @@ def _jmethodDoc(method, cls, overloads):
 
     if returns:
         out.append("  Returns:")
-        words = "".join(wrap(", ".join([str(i) for i in set(returns)])))
-        out.append(indent(words, '    '))
+        words = ", ".join([str(i) for i in set(returns)])
+        wrapper = TextWrapper(initial_indent='    ',
+                              subsequent_indent='    ')
+        out.extend(wrapper.wrap(words))
         out.append("")
 
     return "\n".join(out)
