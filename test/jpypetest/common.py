@@ -38,7 +38,7 @@ class JPypeTestCase(unittest.TestCase):
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
             classpath_arg %= jpype.getClassPath()
-            self.__class__.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', True))
+            self.__class__.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, "-ea",
                            # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
                            #"-Xcheck:jni",
