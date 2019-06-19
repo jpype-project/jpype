@@ -42,11 +42,17 @@ struct PyJPMethod
 	static PyObject*  getName(PyJPMethod* self, PyObject* arg);
 	static PyObject*  matchReport(PyJPMethod* self, PyObject* arg);
 	static PyObject*  dump(PyJPMethod* self, PyObject* arg);
-	static PyObject*  __doc__(PyJPMethod *method, void *context);
-	static PyObject*  __annotations__(PyJPMethod *method, void *context);
+
+	static PyObject*  getName(PyJPMethod *self, void *context);
+    static PyObject*  getQualName(PyJPMethod *self, void *context);
+    static PyObject*  getDoc(PyJPMethod *self, void *context);
+    static int        setDoc(PyJPMethod *self, PyObject* obj, void *context);
+	static PyObject*  getAnnotations(PyJPMethod *self, void *context);
+    static int        setAnnotations(PyJPMethod *self, PyObject* obj, void *context);
 
 	JPMethod* m_Method;
 	PyObject* m_Instance;
+	PyObject* m_Doc;
 	PyObject* m_Annotations;
 
 } ;
