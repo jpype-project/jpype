@@ -202,6 +202,9 @@ class JClass(type):
 
         return out
 
+    def __repr__(self):
+        return "<java class '%s'>"%(self.__name__)
+
 
 def _JClassNew(arg, loader=None, initialize=True):
     if loader and isinstance(arg, str):
@@ -586,6 +589,17 @@ def _jmethodAnnotation(method, cls, overloads):
       The dict to use for type annotations.
     """
     returns = []
+
+    # Special handling if we have 1 overload
+    if len(overloads)==1:
+        ov = overloads[0]
+        out = {}
+        for i,p in enumerate(ov.getParameterTypes()):
+            out['arg%d'%i] = JClass(p)
+        out['return'] = JClass(ov.getReturnType())
+        return out
+
+    # Otherwise, we only get the return
     for ov in overloads:
         returns.append(ov.getReturnType())
     returns = set(returns)

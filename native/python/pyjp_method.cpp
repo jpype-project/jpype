@@ -89,7 +89,7 @@ JPPyObject PyJPMethod::alloc(JPMethod* m, PyObject* instance)
 	JP_PY_CHECK();
 	self->m_Method = m;
 	self->m_Instance = instance;
-	res->m_Annotations = NULL;
+	self->m_Annotations = NULL;
 	Py_XINCREF(self->m_Instance);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
