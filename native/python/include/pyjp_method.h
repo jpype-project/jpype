@@ -39,7 +39,6 @@ struct PyJPMethod
 	static PyObject*  __call__(PyJPMethod* self, PyObject* args, PyObject* kwargs);
 	static PyObject*  isBeanMutator(PyJPMethod* self, PyObject* arg);
 	static PyObject*  isBeanAccessor(PyJPMethod* self, PyObject* arg);
-	static PyObject*  getName(PyJPMethod* self, PyObject* arg);
 	static PyObject*  matchReport(PyJPMethod* self, PyObject* arg);
 	static PyObject*  dump(PyJPMethod* self, PyObject* arg);
 

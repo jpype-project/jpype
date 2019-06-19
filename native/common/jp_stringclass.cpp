@@ -38,7 +38,7 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 		bool unicode = false;
 		string str = JPJni::toStringUTF8((jstring) (val.l));
 #if PY_MAJOR_VERSION < 3
-		for (int i = 0; i < str.size(); ++i)
+		for (size_t i = 0; i < str.size(); ++i)
 		{
 			if (str[i]&0x80)
 			{

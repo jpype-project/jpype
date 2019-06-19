@@ -17,7 +17,6 @@
 #include <pyjp.h>
 
 static PyMethodDef methodMethods[] = {
-	{"getName", (PyCFunction) (&PyJPMethod::getName), METH_NOARGS, ""},
 	{"isBeanAccessor", (PyCFunction) (&PyJPMethod::isBeanAccessor), METH_NOARGS, ""},
 	{"isBeanMutator", (PyCFunction) (&PyJPMethod::isBeanMutator), METH_NOARGS, ""},
 	{"matchReport", (PyCFunction) (&PyJPMethod::matchReport), METH_VARARGS, ""},
@@ -214,7 +213,7 @@ PyObject *PyJPMethod::getName(PyJPMethod *self, void *context)
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPMethod::getName");
-		return JPPyString::fromStringUTF8(self->m_Method->getName(), false).get();
+		return JPPyString::fromStringUTF8(self->m_Method->getName(), false).keep();
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
@@ -230,7 +229,7 @@ PyObject *PyJPMethod::getQualName(PyJPMethod *self, void *context)
 		stringstream str;
 		str << self->m_Method->getClass()->getCanonicalName() << '.'
 				<< self->m_Method->getName();
-		return JPPyString::fromStringUTF8(str.str(), false).get();
+		return JPPyString::fromStringUTF8(str.str(), false).keep();
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
@@ -322,22 +321,6 @@ PyObject* PyJPMethod::isBeanMutator(PyJPMethod* self, PyObject* arg)
 		ASSERT_JVM_RUNNING("PyJPMethod::isBeanMutator");
 		JPJavaFrame frame;
 		return PyBool_FromLong(self->m_Method->isBeanMutator());
-	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
-	JP_TRACE_OUT;
-}
-
-PyObject* PyJPMethod::getName(PyJPMethod* self, PyObject* arg)
-{
-	JP_TRACE_IN("PyJPMethod::getName");
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPMethod::getName");
-		JPJavaFrame frame;
-		string name = self->m_Method->getName();
-		return JPPyString::fromStringUTF8(name).keep();
 	}
 	PY_STANDARD_CATCH;
 

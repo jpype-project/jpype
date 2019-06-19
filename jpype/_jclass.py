@@ -304,7 +304,7 @@ def _JClassFactory(name, jc):
         fname = pysafe(i.getName())
         members[fname] = i
     for jm in jc.getClassMethods():
-        members[pysafe(jm.getName())] = jm
+        members[pysafe(jm.__name__)] = jm
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
@@ -529,7 +529,7 @@ def _jmethodDoc(method, cls, overloads):
     from textwrap import TextWrapper
     out = []
     out.append("Java method dispatch '%s' for '%s'" %
-               (method.getName(), cls.getName()))
+               (method.__name__, cls.getName()))
     out.append("")
     exceptions = []
     returns = []
