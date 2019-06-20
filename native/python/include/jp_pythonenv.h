@@ -68,6 +68,7 @@ namespace JPPythonEnv
 
 	JPPyObject getMethodDoc(PyJPMethod* javaMethod);
 	JPPyObject getMethodAnnotations(PyJPMethod* javaMethod);
+	JPPyObject getMethodCode(PyJPMethod* javaMethod);
 }
 
 #endif

@@ -13,6 +13,7 @@ public:
 	JPPyObject s_GetClassMethod;
 	JPPyObject s_GetMethodDoc;
 	JPPyObject s_GetMethodAnnotations;
+	JPPyObject s_GetMethodCode;
 };
 
 namespace
@@ -41,6 +42,8 @@ void JPPythonEnv::setResource(const string& name, PyObject* resource)
 		s_Resources->s_GetMethodDoc = JPPyObject(JPPyRef::_use, resource);
 	else if (name == "GetMethodAnnotations")
 		s_Resources->s_GetMethodAnnotations = JPPyObject(JPPyRef::_use, resource);
+	else if (name == "GetMethodCode")
+		s_Resources->s_GetMethodCode = JPPyObject(JPPyRef::_use, resource);
 	else
 	{
 		stringstream ss;
@@ -257,3 +260,26 @@ JPPyObject JPPythonEnv::getMethodAnnotations(PyJPMethod* javaMethod)
 	JP_TRACE_OUT;
 }
 
+
+JPPyObject JPPythonEnv::getMethodCode(PyJPMethod* javaMethod)
+{
+	JP_TRACE_IN("JPPythonEnv::getMethodCode");
+	if (s_Resources->s_GetMethodCode.isNull())
+	{
+		JP_TRACE("Resource not set.");
+		return JPPyObject();
+	}
+
+	ASSERT_NOT_NULL(javaMethod);
+
+	// Pack the arguments
+	{
+		JP_TRACE("Pack arguments");
+		JPPyTuple args(JPPyTuple::newTuple(1));
+		args.setItem(0, (PyObject*) javaMethod);
+		JP_TRACE("Call Python");
+		return s_Resources->s_GetMethodCode.call(args.get(), NULL);
+	}
+
+	JP_TRACE_OUT;
+}
