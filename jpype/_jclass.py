@@ -610,7 +610,7 @@ def _jmethodAnnotation(method, cls, overloads):
 def _jmethodCode(method):
     def call(*args):
        return method.__call__(*args)
-    return call.__code__
+    return call
 
 _jpype.setResource('GetClassMethod', _JClassNew)
 _jpype.setResource('GetMethodDoc', _jmethodDoc)

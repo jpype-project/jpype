@@ -50,7 +50,11 @@ struct PyJPMethod
 	static PyObject*  getAnnotations(PyJPMethod *self, void *context);
     static int        setAnnotations(PyJPMethod *self, PyObject* obj, void *context);
     static PyObject*  getNone(PyJPMethod *self, void *context);
+
+    static PyObject*  getCodeAttr(PyJPMethod *self, void *context, const char* attr);
     static PyObject*  getCode(PyJPMethod *self, void *context);
+    static PyObject*  getClosure(PyJPMethod *self, void *context);
+    static PyObject*  getGlobals(PyJPMethod *self, void *context);
 
 	JPMethod* m_Method;
 	PyObject* m_Instance;

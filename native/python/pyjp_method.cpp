@@ -33,6 +33,8 @@ struct PyGetSetDef methodGetSet[] = {
 	{"__defaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
 	{"__kwdefaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
 	{"__code__", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
+	{"__globals__", (getter) (&PyJPMethod::getGlobals), NULL, NULL, NULL},
+	{"__closure__", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
 	{NULL},
 };
 
@@ -235,7 +237,6 @@ PyObject *PyJPMethod::getNone(PyJPMethod *self, void *context)
 	Py_RETURN_NONE;
 }
 
-
 PyObject *PyJPMethod::getName(PyJPMethod *self, void *context)
 {
 	JP_TRACE_IN("PyJPMethod::getName");
@@ -327,25 +328,38 @@ int PyJPMethod::setAnnotations(PyJPMethod *self, PyObject* obj, void *context)
 	JP_TRACE_OUT;
 }
 
-PyObject *PyJPMethod::getCode(PyJPMethod *self, void *context)
+PyObject *PyJPMethod::getCodeAttr(PyJPMethod *self, void *context, const char* attr)
 {
 	JP_TRACE_IN("PyJPMethod::getCode");
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPMethod::getCode");
-		if (self->m_Code)
+		if (self->m_Code == NULL)
 		{
-			Py_INCREF(self->m_Code);
-			return self->m_Code;
+			JPPyObject out(JPPythonEnv::getMethodCode(self));
+			self->m_Code = out.get();
+			Py_XINCREF(self->m_Code);
 		}
-		JPPyObject out(JPPythonEnv::getMethodCode(self));
-		self->m_Code = out.get();
-		Py_XINCREF(self->m_Code);
-		return out.keep();
+		return PyObject_GetAttrString(self->m_Code, attr);
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
 	JP_TRACE_OUT;
+}
+
+PyObject *PyJPMethod::getCode(PyJPMethod *self, void *context)
+{
+	return getCodeAttr(self, context, "__code__");
+}
+
+PyObject *PyJPMethod::getClosure(PyJPMethod *self, void *context)
+{
+	return getCodeAttr(self, context, "__closure__");
+}
+
+PyObject *PyJPMethod::getGlobals(PyJPMethod *self, void *context)
+{
+	return getCodeAttr(self, context, "__globals__");
 }
 
 PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
