@@ -14,6 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import _jpype
 from ._jpackage import *
 from ._jproxy import *
 from ._core import *
@@ -53,3 +54,7 @@ def JIterator(it):
 #  these two are going to have to go away.
 java = JPackage("java", strict=True)
 javax = JPackage("javax", strict=True)
+
+JMethod = _jpype.PyJPMethod
+JField = _jpype.PyJPField
+

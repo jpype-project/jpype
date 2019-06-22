@@ -42,9 +42,16 @@ __all__ = [
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
+
+# Activate jedi tab completion
+try:
+    import jedi as _jedi
+    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += ( _jpype.PyJPMethod, )
+except:
+    pass
+
+
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
-
-
 def deprecated(*args):
     """ Marks a function a deprecated when used as decorator.
 
