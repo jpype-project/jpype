@@ -20,8 +20,8 @@
 
 struct PyJPMethod
 {
-	PyObject_HEAD
-
+	PyFunctionObject func;
+	
 	static PyTypeObject Type;
 
 	// Python-visible methods
@@ -60,7 +60,7 @@ struct PyJPMethod
 	PyObject* m_Instance;
 	PyObject* m_Doc;
 	PyObject* m_Annotations;
-	PyObject* m_Code;
+	PyObject* m_CodeRep;
 
 } ;
 

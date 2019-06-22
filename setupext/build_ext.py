@@ -39,8 +39,6 @@ class BuildExtCommand(build_ext):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
-#        if 'CFLAGS' in cfg_vars:
-#            cfg_vars['CFLAGS'] = cfg_vars['CFLAGS'].replace('-Wstrict-prototypes', '')
         replacement = {
             '-Wstrict-prototypes': '',
             '-Wimplicit-function-declaration': '',
@@ -50,8 +48,12 @@ class BuildExtCommand(build_ext):
             replacement['-O3'] = '-O0'
 
         for k, v in cfg_vars.items():
+            if not isinstance(v, str):
+                continue
+            if not k=="OPT" and not "FLAGS" in k:
+                continue
             for r, t in replacement.items():
-                if isinstance(v, str) and k.find("FLAGS") != -1 and v.find(r) != -1:
+                if v.find(r) != -1:
                     v = v.replace(r, t)
                     cfg_vars[k] = v
         build_ext.initialize_options(self)

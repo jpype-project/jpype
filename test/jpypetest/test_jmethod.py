@@ -22,14 +22,22 @@ import functools
 import inspect
 
 # Code from stackoverflow
+# Reference http://stackoverflow.com/questions/13503079/how-to-create-a-copy-of-a-python-function
 def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
-    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
-                           argdefs=f.__defaults__,
-                           closure=f.__closure__)
+    if sys.version_info[0] < 3:
+        g = types.FunctionType(f.func_code, f.func_globals, name=f.func_name,
+                               argdefs=f.func_defaults,
+                               closure=f.func_closure)
+    else:
+        g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                               argdefs=f.__defaults__,
+                               closure=f.__closure__)
+        g.__kwdefaults__ = f.__kwdefaults__
+    
     g = functools.update_wrapper(g, f)
-    g.__kwdefaults__ = f.__kwdefaults__
     return g
+
 
 class JMethodTestCase(common.JPypeTestCase):
     """ Test for methods of JMethod (_jpype.PyJPMethod)
@@ -66,6 +74,7 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertEqual(self.cls.substring.__name__, "substring")
         self.assertEqual(self.obj.substring.__name__, "substring")
 
+    @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodQualName(self):
         self.assertEqual(self.cls.substring.__qualname__, "java.lang.String.substring")
         self.assertEqual(self.obj.substring.__qualname__, "java.lang.String.substring")
@@ -91,18 +100,13 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertIsInstance(inspect.signature(self.obj.substring), inspect.Signature)
         self.assertEqual(inspect.signature(self.obj.substring).return_annotation, self.cls)
 
-    @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodInspectFunction(self):
-        self.assertTrue(inspect._signature_isfunctionlike(self.cls.substring))
-        self.assertTrue(inspect._signature_isfunctionlike(self.obj.substring))
+        self.assertTrue(inspect.isfunction(self.cls.substring))
+        self.assertTrue(inspect.isfunction(self.obj.substring))
 
     def testMethodInspectRoutine(self):
         self.assertTrue(inspect.isroutine(self.cls.substring))
         self.assertTrue(inspect.isroutine(self.obj.substring))
-
-    def testMethodInspectMethodDesc(self):
-        self.assertTrue(inspect.ismethoddescriptor(self.cls.substring))
-        self.assertTrue(inspect.ismethoddescriptor(self.obj.substring))
 
     def testMethodClassCall(self):
         self.assertEqual(self.cls.substring(self.obj, 1), "oo")
@@ -117,7 +121,6 @@ class JMethodTestCase(common.JPypeTestCase):
     def testMethodCall(self):
         self.assertEqual(self.obj.substring(1), "oo")
 
-    @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodClone(self):
         a = copy_func(self.cls.substring)
         self.assertEqual(a(self.obj, 1), "oo")

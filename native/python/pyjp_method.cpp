@@ -27,14 +27,23 @@ static PyMethodDef methodMethods[] = {
 struct PyGetSetDef methodGetSet[] = {
 	{"__self__", (getter) (&PyJPMethod::getSelf), NULL, NULL, NULL},
 	{"__name__", (getter) (&PyJPMethod::getName), NULL, NULL, NULL},
-	{"__qualname__", (getter) (&PyJPMethod::getQualName), NULL, NULL, NULL},
 	{"__doc__", (getter) (&PyJPMethod::getDoc), (setter) (&PyJPMethod::setDoc), NULL, NULL},
 	{"__annotations__", (getter) (&PyJPMethod::getAnnotations), (setter) (&PyJPMethod::setAnnotations), NULL, NULL},
+#if PY_MAJOR_VERSION >= 3
+	{"__closure__", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
+	{"__code__", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
 	{"__defaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
 	{"__kwdefaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
-	{"__code__", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
 	{"__globals__", (getter) (&PyJPMethod::getGlobals), NULL, NULL, NULL},
-	{"__closure__", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
+	{"__qualname__", (getter) (&PyJPMethod::getQualName), NULL, NULL, NULL},
+#else
+	{"func_closure", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
+	{"func_code", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
+	{"func_defaults", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
+	{"func_doc", (getter) (&PyJPMethod::getDoc), (setter) (&PyJPMethod::setDoc), NULL, NULL},
+	{"func_globals", (getter) (&PyJPMethod::getGlobals), NULL, NULL, NULL},
+	{"func_name", (getter) (&PyJPMethod::getName), NULL, NULL, NULL},
+#endif
 	{NULL},
 };
 
@@ -84,6 +93,10 @@ PyTypeObject PyJPMethod::Type = {
 
 void PyJPMethod::initType(PyObject* module)
 {
+	// We inherit from PyFunction_Type just so we are an instatnce
+	// for purposes of inspect and tab completion tools.  But
+	// we will just ignore their memory layout as we have our own.
+	PyJPMethod::Type.tp_base = &PyFunction_Type;
 	PyType_Ready(&PyJPMethod::Type);
 	Py_INCREF(&PyJPMethod::Type);
 	PyModule_AddObject(module, "PyJPMethod", (PyObject*) (&PyJPMethod::Type));
@@ -109,7 +122,7 @@ PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwar
 	self->m_Instance = NULL;
 	self->m_Doc = NULL;
 	self->m_Annotations = NULL;
-	self->m_Code = NULL;
+	self->m_CodeRep = NULL;
 	return (PyObject*) self;
 }
 
@@ -170,7 +183,7 @@ int PyJPMethod::traverse(PyJPMethod *self, visitproc visit, void *arg)
 	Py_VISIT(self->m_Instance);
 	Py_VISIT(self->m_Doc);
 	Py_VISIT(self->m_Annotations);
-	Py_VISIT(self->m_Code);
+	Py_VISIT(self->m_CodeRep);
 	return 0;
 }
 
@@ -179,7 +192,7 @@ int PyJPMethod::clear(PyJPMethod *self)
 	Py_CLEAR(self->m_Instance);
 	Py_CLEAR(self->m_Doc);
 	Py_CLEAR(self->m_Annotations);
-	Py_CLEAR(self->m_Code);
+	Py_CLEAR(self->m_CodeRep);
 	return 0;
 }
 
@@ -334,13 +347,13 @@ PyObject *PyJPMethod::getCodeAttr(PyJPMethod *self, void *context, const char* a
 	try
 	{
 		ASSERT_JVM_RUNNING("PyJPMethod::getCode");
-		if (self->m_Code == NULL)
+		if (self->m_CodeRep == NULL)
 		{
 			JPPyObject out(JPPythonEnv::getMethodCode(self));
-			self->m_Code = out.get();
-			Py_XINCREF(self->m_Code);
+			self->m_CodeRep = out.get();
+			Py_XINCREF(self->m_CodeRep);
 		}
-		return PyObject_GetAttrString(self->m_Code, attr);
+		return PyObject_GetAttrString(self->m_CodeRep, attr);
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
@@ -349,17 +362,29 @@ PyObject *PyJPMethod::getCodeAttr(PyJPMethod *self, void *context, const char* a
 
 PyObject *PyJPMethod::getCode(PyJPMethod *self, void *context)
 {
+#if PY_MAJOR_VERSION >= 3
 	return getCodeAttr(self, context, "__code__");
+#else
+	return getCodeAttr(self, context, "func_code");
+#endif
 }
 
 PyObject *PyJPMethod::getClosure(PyJPMethod *self, void *context)
 {
+#if PY_MAJOR_VERSION >= 3
 	return getCodeAttr(self, context, "__closure__");
+#else
+	return getCodeAttr(self, context, "func_closure");
+#endif
 }
 
 PyObject *PyJPMethod::getGlobals(PyJPMethod *self, void *context)
 {
+#if PY_MAJOR_VERSION >= 3
 	return getCodeAttr(self, context, "__globals__");
+#else
+	return getCodeAttr(self, context, "func_globals");
+#endif
 }
 
 PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)
