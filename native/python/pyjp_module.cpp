@@ -106,3 +106,4 @@ PyObject* PyJPModule::setResource(PyObject *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
+

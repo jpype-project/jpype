@@ -108,8 +108,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	self->m_Cache = NULL;
 	self->m_Context = (PyJPContext*) (context->getHost());
 	Py_INCREF(self->m_Context);
-	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
-	JP_TRACE("self", self);
+	JP_TRACE("Value", self->m_Value.getClass()->getCanonicalName(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
 }

@@ -29,15 +29,15 @@ struct PyJPValue
 	static bool        check(PyObject *o);
 
 	// Object A
-	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int       __init__(PyJPValue *self, PyObject *args, PyObject *kwargs);
-	static void      __dealloc__(PyJPValue *self);
-	static int       traverse(PyJPValue *self, visitproc visit, void *arg);
-	static int       clear(PyJPValue *self);
+	static PyObject*   __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static int         __init__(PyJPValue *self, PyObject *args, PyObject *kwargs);
+	static void        __dealloc__(PyJPValue *self);
+	static int         traverse(PyJPValue *self, visitproc visit, void *arg);
+	static int         clear(PyJPValue *self);
 
-	static PyObject* __str__(PyJPValue *self);
-	static PyObject* toString(PyJPValue *self);
-	static PyObject* toUnicode(PyJPValue *self);
+	static PyObject*   __str__(PyJPValue *self);
+	static PyObject*   toString(PyJPValue *self);
+	static PyObject*   toUnicode(PyJPValue *self);
 
 	JPValue m_Value;
 	PyObject *m_Cache;

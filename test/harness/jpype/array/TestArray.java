@@ -26,13 +26,10 @@ public class TestArray
   {
     12234, 1234, 234, 1324, 424, 234, 234, 142, 5, 251, 242, 35, 235, 62, 1235, 46, 245132, 51, 2, 3, 4
   };
-
+    
   public Object[] getSubClassArray()
   {
-    return new String[]
-    {
-      "aaa", "bbb"
-    };
+    return new Integer[] { 1, 2 };
   }
 
   public Object getArrayAsObject()

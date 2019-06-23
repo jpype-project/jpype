@@ -101,8 +101,8 @@ JPPyObject PyJPArray::alloc(JPArray* obj)
 PyObject* PyJPArray::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPArray* self = (PyJPArray*) type->tp_alloc(type, 0);
-	self->m_Array = 0;
-	self->m_Context = 0;
+	self->m_Array = NULL;
+	self->m_Context = NULL;
 	return (PyObject*) self;
 }
 

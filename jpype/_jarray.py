@@ -15,6 +15,11 @@
 #
 # *****************************************************************************
 import sys as _sys
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
+
 
 import _jpype
 from . import _jclass

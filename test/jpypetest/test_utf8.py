@@ -193,7 +193,7 @@ class Utf8TestCase(common.JPypeTestCase):
         """
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(val)
-            res = utf8_test.get().__unicode__()
-          #  res = unicode(utf8_test.get())
+          #  res = utf8_test.get().__unicode__()
+            res = unicode(utf8_test.get())
             self.assertEqual(
                 val, res, "Utf8Test.java string upload for: " + lbl)

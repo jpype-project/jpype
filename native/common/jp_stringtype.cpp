@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -46,6 +46,23 @@ JPPyObject JPStringType::convertToPythonObject(jvalue val)
 	if (val.l == NULL)
 	{
 		return JPPyObject::getNone();
+	}
+
+	if (JPEnv::getConvertStrings())
+	{
+		bool unicode = false;
+		string str = JPJni::toStringUTF8((jstring) (val.l));
+#if PY_MAJOR_VERSION < 3
+		for (int i = 0; i < str.size(); ++i)
+		{
+			if (str[i]&0x80)
+			{
+				unicode = true;
+				break;
+			}
+		}
+#endif
+		return JPPyString::fromStringUTF8(str, unicode);
 	}
 
 	return JPPythonEnv::newJavaObject(JPValue(this, val));
@@ -93,7 +110,7 @@ jvalue JPStringType::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	// java.lang.string is already a global object 
+	// java.lang.string is already a global object
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
 	{
