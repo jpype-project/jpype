@@ -43,7 +43,7 @@ struct PyJPMethod
 	static PyObject*  getName(PyJPMethod *self, PyObject *arg);
 	static PyObject*  matchReport(PyJPMethod *self, PyObject *arg);
 	static PyObject*  dump(PyJPMethod *self, PyObject *arg);
-	static PyObject*  __doc__(PyJPMethod *method, void *context);
+	static PyObject*  __doc__(PyJPMethod *self, void *context);
 
 	JPMethodDispatch *m_Method;
 	PyObject *m_Instance;

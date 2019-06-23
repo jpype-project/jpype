@@ -162,6 +162,7 @@ void JPPythonEnv::rethrow(const JPStackInfo& info)
 
 JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 {
+	JPContext *context = javaMethod->m_Context->m_Context;
 	JP_TRACE_IN("JPPythonEnv::getMethodDoc");
 	if (s_Resources->s_GetMethodDoc.isNull())
 	{
@@ -173,11 +174,11 @@ JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
-	const JPMethod::OverloadList& overloads = javaMethod->m_Method->getMethodOverloads();
+	const JPMethodList& overloads = javaMethod->m_Method->getMethodOverloads();
 	JPPyTuple ov(JPPyTuple::newTuple(overloads.size()));
 	int i = 0;
-	JPClass* methodClass = JPTypeManager::findClass("java.lang.reflect.Method");
-	for (JPMethod::OverloadList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
+	JPClass* methodClass = context->getTypeManager()->findClassByName("java.lang.reflect.Method");
+	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
@@ -193,7 +194,7 @@ JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 		args.setItem(0, (PyObject*) javaMethod);
 		jvalue v;
 		v.l = (jobject) javaMethod->m_Method->getClass()->getJavaClass();
-		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(JPTypeManager::_java_lang_Class, v)));
+		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(context->_java_lang_Class, v)));
 		args.setItem(1, obj.get());
 		args.setItem(2, ov.get());
 		JP_TRACE("Call Python");

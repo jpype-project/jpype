@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPMETHODDISPATCH_H_
 #define _JPMETHODDISPATCH_H_
@@ -38,6 +38,10 @@ private:
 	JPMethodDispatch& operator=(const JPMethodDispatch& method);
 
 public:
+	JPClass* getClass()
+	{
+		return m_Class;
+	}
 
 	JPContext* getContext()
 	{
@@ -75,7 +79,7 @@ public:
 
 private:
 	/** Search for a matching overload.
-	 * 
+	 *
 	 * @param searchInstance is true if the first argument is to be skipped
 	 * when matching with a non-static.
 	 */

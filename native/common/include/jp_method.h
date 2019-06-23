@@ -69,7 +69,7 @@ public:
 	 *
 	 * @param isInstance is true if the first argument is an instance object.
 	 * @param args is a list of arguments including the instance.
-	 * 
+	 *
 	 */
 	JPMatch matches(bool isInstance, JPPyObjectVector& args);
 	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
@@ -104,6 +104,11 @@ public:
 
 	string matchReport(JPPyObjectVector& args);
 	bool checkMoreSpecificThan(JPMethod* other) const;
+
+	jobject getJava()
+	{
+		return m_Method.get();
+	}
 
 private:
 	void packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg);
