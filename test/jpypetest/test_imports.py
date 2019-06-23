@@ -19,11 +19,6 @@ import sys
 import logging
 import time
 import common
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
 
 def haveJImports():
     try:
@@ -48,39 +43,39 @@ class ImportsTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         self.__jp = self.jpype.attr
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportPackage(self):
         import java.lang
         self.assertTrue(isJavaClass(java.lang.String))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportClass(self):
         from java.lang import String
         self.assertTrue(isJavaClass(String))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportClassAs(self):
         from java.lang import String as Str
         self.assertTrue(isJavaClass(Str))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportClassMultiple(self):
         from java.lang import Number, Integer, Double
         self.assertTrue(isJavaClass(Number))
         self.assertTrue(isJavaClass(Integer))
         self.assertTrue(isJavaClass(Double))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportStatic(self):
         from java.lang.ProcessBuilder import Redirect
         self.assertTrue(isJavaClass(Redirect))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportInner(self):
         from java.lang import Character
         self.assertTrue(isJavaClass(Character.UnicodeScript))
 
-    @unittest.skipUnless(haveJImports(), "jpype.imports not available")
+    @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportInnerEnum(self):
         from java.lang import Character
         self.assertTrue(isJavaEnum(Character.UnicodeScript))

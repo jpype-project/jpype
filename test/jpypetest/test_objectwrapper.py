@@ -14,11 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
 import jpype
 from jpype.types import *
 from jpype import java, JPackage

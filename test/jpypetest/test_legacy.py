@@ -16,10 +16,6 @@
 # *****************************************************************************
 import jpype
 import common
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 def proxy(s):
     if not isinstance(s, str):
@@ -34,7 +30,7 @@ class LegacyTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         # TODO: remove in 0.8
         if not self.str_conversion:
-            raise unittest.SkipTest
+            raise common.unittest.SkipTest
         self._test = jpype.JClass("jpype.str.Test")
         self._intf = jpype.JClass("jpype.str.StringFunction")
 

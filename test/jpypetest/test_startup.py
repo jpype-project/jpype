@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import subprocess
 import sys
 import os
@@ -61,10 +57,10 @@ class StartJVMCase(common.JPypeTestCase):
         jpype.JClass("java.lang.String")
 
 
-class TestNewJVMInstance(unittest.TestCase):
+class TestNewJVMInstance(common.unittest.TestCase):
     def test_invalid_args(self):
         if sys.platform == 'cygwin':
-            raise unittest.SkipTest("not tested on cygwin")
+            raise common.unittest.SkipTest("not tested on cygwin")
         inv_arg = '-for_sure_InVaLiD'
         script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=False)'.format(arg=inv_arg)
         with self.assertRaises(subprocess.CalledProcessError) as cpe:
@@ -75,7 +71,7 @@ class TestNewJVMInstance(unittest.TestCase):
 
     def test_invalid_args2(self):
         if sys.platform == 'cygwin':
-            raise unittest.SkipTest("not tested on cygwin")
+            raise common.unittest.SkipTest("not tested on cygwin")
         inv_arg = '-for_sure_InVaLiD'
         script = 'import jpype; jpype.startJVM(None, "{arg}", ignoreUnrecognized=True)'.format(arg=inv_arg)
         check_output([sys.executable, '-c', script], stderr=subprocess.STDOUT)
@@ -85,7 +81,7 @@ class TestNewJVMInstance(unittest.TestCase):
         This only works if the classpath argument is handled correctly.
         """
         if sys.platform == 'cygwin':
-            raise unittest.SkipTest("not tested on cygwin")
+            raise common.unittest.SkipTest("not tested on cygwin")
         import os
         root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         cp = os.path.join(root, 'classes').replace('\\','/')

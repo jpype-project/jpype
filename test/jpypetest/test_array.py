@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import sys
 import jpype
 from jpype import JPackage, JArray, JByte, java, JClass
@@ -87,7 +83,6 @@ class ArrayTestCase(common.JPypeTestCase):
         for i in t.i:
             self.assertNotEqual(i, 0)
 
-    # @unittest.skip
     def testGetSubclass(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getSubClassArray()
@@ -242,7 +237,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(l2, jarr[1])
         self.assertEqual(l3, jarr[2])
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPBoolArray(self):
         import numpy as np
         n = 100
@@ -251,7 +246,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPByteArray(self):
         import numpy as np
         n = 100
@@ -260,7 +255,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPShortArray(self):
         import numpy as np
         n = 100
@@ -269,7 +264,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPIntArray(self):
         import numpy as np
         n = 100
@@ -278,7 +273,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPLongArray(self):
         import numpy as np
         n = 100
@@ -289,7 +284,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPFloatArray(self):
         import numpy as np
         n = 100
@@ -298,7 +293,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPDoubleArray(self):
         import numpy as np
         n = 100
@@ -307,7 +302,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr[:] = a
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testInitFromNPIntArray(self):
         import numpy as np
         n = 100
@@ -315,7 +310,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JInt)(a)
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testInitFromNPDoubleArray(self):
         import numpy as np
         n = 100
@@ -323,7 +318,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(a)
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testInitFromNPDoubleArrayFloat32(self):
         import numpy as np
         n = 100
@@ -331,7 +326,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(a)
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testInitFromNPDoubleArrayFloat64(self):
         import numpy as np
         n = 100
@@ -339,14 +334,14 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JDouble)(a)
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testInitFromNPFloatArrayInt(self):
         import numpy as np
         a = np.array([1, 2, 3], dtype=np.int32)
         jarr = jpype.JArray(jpype.JFloat)(a)
         self.assertCountEqual(a, jarr)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSetFromNPFloatArrayInt(self):
         import numpy as np
         a = np.array([1, 2, 3], np.int32)
