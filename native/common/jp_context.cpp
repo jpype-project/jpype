@@ -123,10 +123,12 @@ void JPContext::loadEntryPoints(const string& path)
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
-void JPContext::startJVM(const string& vmPath, char ignoreUnrecognized,
-		const StringVector& args)
+void JPContext::startJVM(const string& vmPath, const StringVector& args,
+		char ignoreUnrecognized, char convertStrings)
 {
 	JP_TRACE_IN("JPContext::startJVM");
+
+	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
 	loadEntryPoints(vmPath);

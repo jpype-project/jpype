@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef JP_CONTEXT_H
 #define JP_CONTEXT_H
@@ -23,7 +23,7 @@ struct _object;
 typedef _object PyObject;
 #endif
 
-/** JPClass is a bit heavy when we just need to hold a 
+/** JPClass is a bit heavy when we just need to hold a
  * class reference.  It causes issues during bootstrap. Thus we
  * need a lightweight reference to a jclass.
  */
@@ -92,32 +92,32 @@ typedef JPRef<jthrowable> JPThrowableRef;
 class JPStackInfo;
 
 /**
- * A Context encapsulates the Java virtual machine, the Java classes required 
+ * A Context encapsulates the Java virtual machine, the Java classes required
  * to function, and the JPype services created for that machine.
- * 
+ *
  * Environments and Contexts are different concepts. A separate Java environment
  * exists for each thread for each machine. The Java context is shared with
  * all objects that share the same virtual machine.
- * 
+ *
  * The members in the Context are broken into
  * - JVM control functions
  * - JPype services
  * - Java functions
  * - Java type resources
- * 
+ *
  * There are two critical phases in the context lifespan where things
  * are most likely to go wrong. During JVM startup, many vital functions are
  * not yet fully configured and thus an exception issued during that period
  * can lead to using a resource that is not yet configured.
- * 
+ *
  * Second shutdown is a vital period. If the user calls shutdown from within
- * a callback in which there are still JPype context elements on the call 
- * stack, it can lead to a crash. 
- * 
+ * a callback in which there are still JPype context elements on the call
+ * stack, it can lead to a crash.
+ *
  * After shutdown, the JVM is set to NULL and all actions should assert that
  * it is running and thus fail. Aside from the context and the services, all
  * other JPype C++ resources are owned by Java. Java will delete them as needed.
- * The context itself belongs to Python.    
+ * The context itself belongs to Python.
  */
 class JPContext
 {
@@ -128,7 +128,7 @@ public:
 	// JVM control functions
 	bool isRunning();
 	void assertJVMRunning(const char* function, const JPStackInfo& info);
-	void startJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
+	void startJVM(const string& vmPath, const StringVector& args, char ignoreUnrecognized, char convertStrings);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();
@@ -152,7 +152,7 @@ public:
 
 	/** Release a global reference checking for shutdown.
 	 *
-	 * This should be used in any calls to release resources from a destructor. 
+	 * This should be used in any calls to release resources from a destructor.
 	 * It cannot fail even if the JVM is no longer operating.
 	 */
 	void ReleaseGlobalRef(jobject obj);
@@ -179,16 +179,21 @@ public:
 		return m_ReferenceQueue;
 	}
 
+	bool getConvertStrings() const
+	{
+		return m_ConvertStrings;
+	}
+
 	// Java functions
 	string toString(jobject o);
 	string toStringUTF8(jstring str);
 
 	/**
 	 * Convert a UTF8 encoded string into Java.
-	 * 
-	 * This returns a local reference. 
+	 *
+	 * This returns a local reference.
 	 * @param str
-	 * @return 
+	 * @return
 	 */
 	jstring fromStringUTF8(const string& str);
 
@@ -260,6 +265,7 @@ private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;
 	PyObject* m_Host;
+	bool m_ConvertStrings;
 } ;
 
 template<class jref>

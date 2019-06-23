@@ -170,8 +170,10 @@ PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 		PyObject *vmOpt;
 		PyObject *vmPath;
 		char ignoreUnrecognized = true;
+		char convertStrings = true;
 
-		if (!PyArg_ParseTuple(args, "OO!b|", &vmPath, &PyTuple_Type, &vmOpt, &ignoreUnrecognized))
+		if (!PyArg_ParseTuple(args, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
+                      &ignoreUnrecognized, &convertStrings))
 		{
 			return NULL;
 		}
@@ -204,7 +206,7 @@ PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 			}
 		}
 
-		self->m_Context->startJVM(cVmPath, ignoreUnrecognized, args);
+		self->m_Context->startJVM(cVmPath, args, ignoreUnrecognized, convertStrings);
 		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH(NULL);

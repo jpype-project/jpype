@@ -48,10 +48,10 @@ JPPyObject JPStringType::convertToPythonObject(jvalue val)
 		return JPPyObject::getNone();
 	}
 
-	if (JPEnv::getConvertStrings())
+	if (m_Context->getConvertStrings())
 	{
 		bool unicode = false;
-		string str = JPJni::toStringUTF8((jstring) (val.l));
+		string str = m_Context->toStringUTF8((jstring) (val.l));
 #if PY_MAJOR_VERSION < 3
 		for (int i = 0; i < str.size(); ++i)
 		{
