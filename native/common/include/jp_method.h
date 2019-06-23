@@ -75,9 +75,9 @@ public:
 	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
 	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
 
-	bool isStatic() const
+	bool isAbstract() const
 	{
-		return JPModifier::isStatic(m_Modifiers);
+		return JPModifier::isAbstract(m_Modifiers);
 	}
 
 	bool isConstructor() const
@@ -93,6 +93,11 @@ public:
 	bool isFinal() const
 	{
 		return JPModifier::isFinal(m_Modifiers);
+	}
+
+	bool isStatic() const
+	{
+		return JPModifier::isStatic(m_Modifiers);
 	}
 
 	bool isVarArgs() const

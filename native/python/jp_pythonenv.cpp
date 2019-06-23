@@ -12,6 +12,8 @@ class JPResources
 public:
 	JPPyObject s_GetClassMethod;
 	JPPyObject s_GetMethodDoc;
+	JPPyObject s_GetMethodAnnotations;
+	JPPyObject s_GetMethodCode;
 };
 
 namespace
@@ -38,6 +40,10 @@ void JPPythonEnv::setResource(const string& name, PyObject* resource)
 		s_Resources->s_GetClassMethod = JPPyObject(JPPyRef::_use, resource);
 	else if (name == "GetMethodDoc")
 		s_Resources->s_GetMethodDoc = JPPyObject(JPPyRef::_use, resource);
+	else if (name == "GetMethodAnnotations")
+		s_Resources->s_GetMethodAnnotations = JPPyObject(JPPyRef::_use, resource);
+	else if (name == "GetMethodCode")
+		s_Resources->s_GetMethodCode = JPPyObject(JPPyRef::_use, resource);
 	else
 	{
 		stringstream ss;
@@ -199,6 +205,73 @@ JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 		args.setItem(2, ov.get());
 		JP_TRACE("Call Python");
 		return s_Resources->s_GetMethodDoc.call(args.get(), NULL);
+	}
+
+	JP_TRACE_OUT;
+}
+
+JPPyObject JPPythonEnv::getMethodAnnotations(PyJPMethod* javaMethod)
+{
+	JP_TRACE_IN("JPPythonEnv::getMethodAnnotations");
+	if (s_Resources->s_GetMethodDoc.isNull())
+	{
+		JP_TRACE("Resource not set.");
+		return JPPyObject();
+	}
+
+	ASSERT_NOT_NULL(javaMethod);
+
+	// Convert the overloads
+	JP_TRACE("Convert overloads");
+	const JPMethod::OverloadList& overloads = javaMethod->m_Method->getMethodOverloads();
+	JPPyTuple ov(JPPyTuple::newTuple(overloads.size()));
+	int i = 0;
+	JPClass* methodClass = JPTypeManager::findClass("java.lang.reflect.Method");
+	for (JPMethod::OverloadList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
+	{
+		JP_TRACE("Set overload", i);
+		jvalue v;
+		v.l = (*iter)->getJava();
+		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(methodClass, v)));
+		ov.setItem(i++, obj.get());
+	}
+
+	// Pack the arguments
+	{
+		JP_TRACE("Pack arguments");
+		JPPyTuple args(JPPyTuple::newTuple(3));
+		args.setItem(0, (PyObject*) javaMethod);
+		jvalue v;
+		v.l = (jobject) javaMethod->m_Method->getClass()->getJavaClass();
+		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(JPTypeManager::_java_lang_Class, v)));
+		args.setItem(1, obj.get());
+		args.setItem(2, ov.get());
+		JP_TRACE("Call Python");
+		return s_Resources->s_GetMethodAnnotations.call(args.get(), NULL);
+	}
+
+	JP_TRACE_OUT;
+}
+
+
+JPPyObject JPPythonEnv::getMethodCode(PyJPMethod* javaMethod)
+{
+	JP_TRACE_IN("JPPythonEnv::getMethodCode");
+	if (s_Resources->s_GetMethodCode.isNull())
+	{
+		JP_TRACE("Resource not set.");
+		return JPPyObject();
+	}
+
+	ASSERT_NOT_NULL(javaMethod);
+
+	// Pack the arguments
+	{
+		JP_TRACE("Pack arguments");
+		JPPyTuple args(JPPyTuple::newTuple(1));
+		args.setItem(0, (PyObject*) javaMethod);
+		JP_TRACE("Call Python");
+		return s_Resources->s_GetMethodCode.call(args.get(), NULL);
 	}
 
 	JP_TRACE_OUT;

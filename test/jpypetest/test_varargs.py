@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import sys
 import jpype
 import common
@@ -117,6 +113,3 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(var.callString1("a", "b", "c"), 2)
 
 
-if __name__ == '__main__':
-    jpype.startJVM(jpype.getDefaultJVMPath())
-    unittest.main()

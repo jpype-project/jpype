@@ -146,7 +146,7 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 				PyErr_SetString(PyExc_TypeError, err.str().c_str());
 				return -1;
 			}
-			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
+			ASSERT_JVM_RUNNING(context);
 			JPJavaFrame frame(context);
 			cls = context->getTypeManager()->findClass((jclass) jpvalue->getJavaObject());
 		}
@@ -158,7 +158,7 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 				return -1;
 			}
 			context = ((PyJPContext*) jvm)->m_Context;
-			ASSERT_JVM_RUNNING(context, "PyJPClass::__init__");
+			ASSERT_JVM_RUNNING(context);
 			JPJavaFrame frame(context);
 			string cname = JPPyString::asStringUTF8(arg0);
 			cls = context->getTypeManager()->findClassByName(cname);
@@ -210,7 +210,7 @@ PyObject *PyJPClass::getCanonicalName(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::getName");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		string name = self->m_Class->getCanonicalName();
 		PyObject *res = JPPyString::fromStringUTF8(name).keep();
@@ -226,7 +226,7 @@ PyObject *PyJPClass::getSuperClass(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::getBaseClass");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		JPClass *base = self->m_Class->getSuperClass();
 		if (base == NULL)
@@ -246,7 +246,7 @@ PyObject *PyJPClass::getInterfaces(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::getInterfaces");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		const JPClassList& baseItf = self->m_Class->getInterfaces();
 
@@ -268,7 +268,7 @@ PyObject *PyJPClass::getClassFields(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::getClassFields");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		int i = 0;
@@ -290,7 +290,7 @@ PyObject *PyJPClass::getClassMethods(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::getClassMethods");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		const JPMethodDispatchList& m_Methods = self->m_Class->getMethods();
@@ -315,7 +315,7 @@ PyObject *PyJPClass::newInstance(PyJPClass *self, PyObject *pyargs)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::newInstance");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		if (dynamic_cast<JPArrayClass*> (self->m_Class) != NULL)
@@ -349,7 +349,7 @@ PyObject *PyJPClass::isAssignableFrom(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isSubClass");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		// We have to lookup the name by string here because the
@@ -386,7 +386,7 @@ PyObject *PyJPClass::isInterface(PyJPClass *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isInterface");
+		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(self->m_Class->isInterface());
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -397,7 +397,7 @@ PyObject *PyJPClass::isThrowable(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isException");
+		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(self->m_Class->isThrowable());
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -408,7 +408,7 @@ PyObject *PyJPClass::isPrimitive(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isPrimitive");
+		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(dynamic_cast<JPPrimitiveType*> (self->m_Class) == self->m_Class);
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -419,7 +419,7 @@ PyObject *PyJPClass::isArray(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isArray");
+		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class);
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -430,7 +430,7 @@ PyObject *PyJPClass::isAbstract(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::isAbstract");
+		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(self->m_Class->isAbstract());
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -441,7 +441,7 @@ PyObject *PyJPClass::asJavaValue(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::asJavaValue");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		jvalue v;
 		v.l = self->m_Class->getJavaClass();
@@ -458,7 +458,7 @@ PyObject *PyJPClass::canConvertToJava(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::asJavaValue");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		PyObject *other;
@@ -496,7 +496,7 @@ PyObject *PyJPClass::convertToJava(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::asJavaValue");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		PyObject *other;
@@ -529,7 +529,7 @@ PyObject *PyJPClass::dumpCtor(PyJPClass *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPClass::dump");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		string report = self->m_Class->getCtor()->dump();
 		return JPPyString::fromStringUTF8(report).keep();

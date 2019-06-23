@@ -19,10 +19,6 @@ import sys
 import logging
 import time
 import common
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 if sys.version > '3':
     long = int
@@ -44,30 +40,30 @@ class ConversionByteTestCase(common.JPypeTestCase):
     def testByteFromInt(self):
         self.assertEqual(self.Test.callByte(int(123)), 123)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt(self):
         import numpy as np
         self.assertEqual(self.Test.callByte(np.int(123)), 123)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt8(self):
         import numpy as np
         self.assertEqual(self.Test.callByte(np.int8(123)), 123)
         self.assertEqual(self.Test.callByte(np.uint8(123)), 123)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt16(self):
         import numpy as np
         self.assertEqual(self.Test.callByte(np.int16(123)), 123)
         self.assertEqual(self.Test.callByte(np.uint16(123)), 123)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt32(self):
         import numpy as np
         self.assertEqual(self.Test.callByte(np.int32(123)), 123)
         self.assertEqual(self.Test.callByte(np.uint32(123)), 123)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPInt64(self):
         import numpy as np
         self.assertEqual(self.Test.callByte(np.int64(123)), 123)
@@ -77,19 +73,19 @@ class ConversionByteTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             self.Test.callByte(float(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat(self):
         import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callByte(np.float(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat32(self):
         import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callByte(np.float32(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteFromNPFloat64(self):
         import numpy as np
         with self.assertRaises(TypeError):

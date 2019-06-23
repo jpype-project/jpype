@@ -33,7 +33,7 @@
 #include <pyjp_context.h>
 #include <pyjp_proxy.h>
 
-#define ASSERT_JVM_RUNNING(context, X) context->assertJVMRunning(X, JP_STACKINFO())
+#define ASSERT_JVM_RUNNING(context) context->assertJVMRunning(JP_STACKINFO())
 #define PY_STANDARD_CATCH(...) catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
 
 #endif /* PYJP_H */

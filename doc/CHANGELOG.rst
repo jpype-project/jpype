@@ -7,7 +7,17 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Complete rewrite of core to deal with global variables and move core
     logic to Java. Preliminary work on support of multiple JVMs.
 
+  - PyJPMethod now supports the FunctionType API.
+
+  - Tab completion with Jedi is supported.  Jedi is the engine behind
+    tab completion in many popular editors and shells such as IPython.
+    Jedi version 0.14.1 is required for tab completion as earlier versions 
+    did not support annotations on compiled classes.  Tab completion
+    with older versions requires use of the IPython greedy method.
+
+
 - **0.7.0 - 2019**
+
   - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,

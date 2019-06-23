@@ -19,10 +19,6 @@ import sys
 import logging
 import time
 import common
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 
 class LambdasTestCase(common.JPypeTestCase):
@@ -33,7 +29,7 @@ class LambdasTestCase(common.JPypeTestCase):
             return
         except:
             pass
-        raise unittest.SkipTest
+        raise common.unittest.SkipTest
 
     def testLambdasFunction(self):
         self.assertEqual(self.lambdas.getFunction().apply(1.0), 2.0)

@@ -122,7 +122,7 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 		}
 
 		JPContext *context = interfaces[0]->getContext();
-		ASSERT_JVM_RUNNING(context, "PyJPProxy::__init__");
+		ASSERT_JVM_RUNNING(context);
 
 		// FIXME if we have multiple context someone has to check that all the interfaces
 		// belong to the same context.
@@ -178,7 +178,7 @@ PyObject *PyJPProxy::__str__(PyJPProxy *self)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPProxy::__init__");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		stringstream sout;
 		sout << "<java proxy>";

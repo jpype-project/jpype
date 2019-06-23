@@ -14,7 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-
 import _jpype
 _jpype._jvm = _jpype.PyJPContext()
 
@@ -57,3 +56,7 @@ def JIterator(it):
 #  these two are going to have to go away.
 java = JPackage("java", strict=True)
 javax = JPackage("javax", strict=True)
+
+JMethod = _jpype.PyJPMethod
+JField = _jpype.PyJPField
+

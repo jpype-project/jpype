@@ -102,12 +102,8 @@ bool JPContext::isRunning()
 /**
 	throw a JPypeException if the JVM is not started
  */
-void JPContext::assertJVMRunning(const char* function, const JPStackInfo& info)
+void JPContext::assertJVMRunning(const JPStackInfo& info)
 {
-	printf("Context %p\n", this);
-	printf("JVM %p\n", this->m_JavaVM);
-	printf("m_Initialized %x\n", m_IsInitialized);
-	// FIXME fit function names into raise
 	if (m_JavaVM == NULL || !m_IsInitialized)
 	{
 		printf("THROW\n");

@@ -147,7 +147,7 @@ int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 		JPContext *context = type->getContext();
 		self->m_Context = (PyJPContext*) (context->getHost());
 		Py_INCREF(self->m_Context);
-		ASSERT_JVM_RUNNING(context, "PyJPValue::__init__");
+		ASSERT_JVM_RUNNING(context);
 
 		// If it is already a Java object, then let Java decide
 		// if the cast is possible
@@ -239,7 +239,7 @@ PyObject *PyJPValue::__str__(PyJPValue *self)
 	try
 	{
 		JPContext *context = self->m_Value.getClass()->getContext();
-		ASSERT_JVM_RUNNING(context, "PyJPValue::__str__");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		stringstream sout;
 		sout << "<java value " << self->m_Value.getClass()->toString();
@@ -274,7 +274,7 @@ PyObject *PyJPValue::toString(PyJPValue *self)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPValue::toString");
+		ASSERT_JVM_RUNNING(context);
 		JPClass *cls = self->m_Value.getClass();
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)
@@ -314,7 +314,7 @@ PyObject *PyJPValue::toUnicode(PyJPValue *self)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPValue::toUnicode");
+		ASSERT_JVM_RUNNING(context);
 		JPClass *cls = self->m_Value.getClass();
 		JPJavaFrame frame(context);
 		if (cls == context->_java_lang_String)

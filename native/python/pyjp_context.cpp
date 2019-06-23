@@ -144,7 +144,7 @@ PyObject* PyJPContext::__str__(PyJPContext *self)
 	try
 	{
 		JPContext *context = self->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPContext::__str__");
+		ASSERT_JVM_RUNNING(context);
 		stringstream sout;
 		sout << "<java context>";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
@@ -236,7 +236,7 @@ PyObject* PyJPContext::attachThread(PyJPContext *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context;
-		ASSERT_JVM_RUNNING(context, "JPypeContext::attachThread");
+		ASSERT_JVM_RUNNING(context);
 		context->attachCurrentThread();
 		Py_RETURN_NONE;
 	}
@@ -250,7 +250,7 @@ PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 	try
 	{
 		JPContext *context = self->m_Context;
-		ASSERT_JVM_RUNNING(context, "JPypeContext::attachThreadAsDaemon");
+		ASSERT_JVM_RUNNING(context);
 		context->attachCurrentThreadAsDaemon();
 		Py_RETURN_NONE;
 	}
@@ -288,7 +288,7 @@ PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *ar
 	try
 	{
 		JPContext *context = self->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPContext::convertToDirectByteBuffer");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		// Use special method defined on the TypeConverter interface ...

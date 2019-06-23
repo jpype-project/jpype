@@ -19,10 +19,6 @@ import sys
 import logging
 import time
 import common
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 
 if sys.version > '3':
     long = int
@@ -45,30 +41,30 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callBoolean(int(123)), True)
         self.assertEqual(self.Test.callBoolean(int(0)), False)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt(self):
         import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int(123)), True)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt8(self):
         import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int8(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint8(123)), True)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt16(self):
         import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int16(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint16(123)), True)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt32(self):
         import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int32(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint32(123)), True)
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPInt64(self):
         import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int64(123)), True)
@@ -78,19 +74,19 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             self.Test.callBoolean(float(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat(self):
         import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat32(self):
         import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float32(2))
 
-    @unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanFromNPFloat64(self):
         import numpy as np
         with self.assertRaises(TypeError):

@@ -121,7 +121,7 @@ int PyJPArray::__init__(PyJPArray* self, PyObject* args, PyObject* kwargs)
 
 		JPArrayClass *arrayClass = dynamic_cast<JPArrayClass*> (val.getClass());
 		context = arrayClass->getContext();
-		ASSERT_JVM_RUNNING(context, "PyJPArray::__init__");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		if (arrayClass == NULL)
 		{
@@ -170,7 +170,7 @@ PyObject* PyJPArray::__str__(PyJPArray *self)
 	JPContext *context = self->m_Context->m_Context;
 	try
 	{
-		ASSERT_JVM_RUNNING(context, "PyJPArray::__str__");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		stringstream sout;
 
@@ -187,7 +187,7 @@ PyObject* PyJPArray::getArrayLength(PyJPArray *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::getArrayLength");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		return PyInt_FromLong(self->m_Array->getLength());
 	}
@@ -200,7 +200,7 @@ PyObject* PyJPArray::getArrayItem(PyJPArray *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPArray::getArrayItem");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		int ndx;
 		PyArg_ParseTuple(arg, "i", &ndx);
@@ -219,7 +219,7 @@ PyObject* PyJPArray::getArraySlice(PyJPArray *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPArray::getArraySlice");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		PyArg_ParseTuple(arg, "ii", &lo, &hi);
@@ -249,7 +249,7 @@ PyObject* PyJPArray::setArraySlice(PyJPArray *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPArray::setArraySlice");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		// Parse arguments
@@ -286,7 +286,7 @@ PyObject* PyJPArray::setArrayItem(PyJPArray *self, PyObject *arg)
 	try
 	{
 		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "JPypeJavaArray::setArrayItem");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		int ndx;

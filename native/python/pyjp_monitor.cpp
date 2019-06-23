@@ -88,7 +88,7 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 
 		JPValue& v1 = ((PyJPValue*) value)->m_Value;
 		JPContext* context = v1.getClass()->getContext();
-		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__init__");
+		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 
 		// FIXME should these be runtime or type error.
@@ -153,11 +153,11 @@ int PyJPMonitor::clear(PyJPMonitor *self)
 
 PyObject *PyJPMonitor::__str__(PyJPMonitor *self)
 {
-	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
+	JP_TRACE_IN_C("PyJPMonitor::__str__");
 	try
 	{
-			JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__str__");
+		JPContext *context = self->m_Context->m_Context;
+		ASSERT_JVM_RUNNING(context);
 		stringstream ss;
 		ss << "<java monitor>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
@@ -170,8 +170,8 @@ PyObject *PyJPMonitor::__enter__(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
-			JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__enter__");
+		JPContext *context = self->m_Context->m_Context;
+		ASSERT_JVM_RUNNING(context);
 		self->m_Monitor->enter();
 		Py_RETURN_NONE;
 	}
@@ -182,8 +182,8 @@ PyObject *PyJPMonitor::__exit__(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
-			JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context, "PyJPMonitor::__exit__");
+		JPContext *context = self->m_Context->m_Context;
+		ASSERT_JVM_RUNNING(context);
 		self->m_Monitor->exit();
 		Py_RETURN_NONE;
 	}

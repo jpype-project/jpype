@@ -56,10 +56,6 @@
     UnicodeEncodeError: 'utf-8' codec can't encode characters in position xxx-xxx: surrogates not allowed
 '''
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import sys
 
 from jpype import JPackage

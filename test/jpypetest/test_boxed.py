@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import sys
 import jpype
 import common
@@ -100,7 +96,7 @@ class BoxedTestCase(common.JPypeTestCase):
     def testDoubleFromInt(self):
         self.Double(1)
 
-    @unittest.skip
+    @common.unittest.skip
     def testBoxed2(self):
         self.Short(self.Integer(1))
         self.Integer(self.Integer(1))
@@ -166,6 +162,3 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.Boxed.whichDouble(self.Double(1.0)), 2)
 
 
-if __name__ == '__main__':
-    jpype.startJVM(jpype.getDefaultJVMPath())
-    unittest.main()

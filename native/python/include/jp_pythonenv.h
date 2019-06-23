@@ -67,6 +67,8 @@ namespace JPPythonEnv
 	void rethrow(const JPStackInfo& info);
 
 	JPPyObject getMethodDoc(PyJPMethod* javaMethod);
+	JPPyObject getMethodAnnotations(PyJPMethod* javaMethod);
+	JPPyObject getMethodCode(PyJPMethod* javaMethod);
 }
 
 #endif
