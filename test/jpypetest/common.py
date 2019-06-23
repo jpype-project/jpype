@@ -27,6 +27,9 @@ except ImportError:
 
 CLASSPATH = None
 
+def version(v):
+    return tuple([int(i) for i in v.split('.')])
+
 
 class JPypeTestCase(unittest.TestCase):
     def setUp(self):

@@ -46,7 +46,8 @@ __all__ = [
 # Activate jedi tab completion
 try:
     import jedi as _jedi
-    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += ( _jpype.PyJPMethod, )
+    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += \
+       ( _jpype.PyJPMethod, _jpype.PyJPField)
 except:
     pass
 

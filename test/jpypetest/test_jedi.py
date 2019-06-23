@@ -25,10 +25,10 @@ import inspect
 have_jedi = False
 try:
     import jedi
-    if jedi.__version__>(0,14,0):
-       have_jedi = True
+    have_jedi = (common.version(jedi.__version__)>(0,14))
 except:
     pass
+
 
 class JediTestCase(common.JPypeTestCase):
     """Test tab completion on JPype objects
@@ -54,10 +54,18 @@ class JediTestCase(common.JPypeTestCase):
         compl = [i.name for i in script.completions()]
         self.assertEqual(compl, ['concat', 'contains', 'contentEquals'] )
 
-#  Does not work yet
-#    def testCompleteField(self):
-#        src='self.obj.CASE_INSENSITIVE_ORDER.'
-#        script = jedi.Interpreter(src,[locals()])
-#        compl = [i.name for i in script.completions()]
-#        self.assertEqual(compl, None)
+    @common.unittest.skipUnless(have_jedi, "jedi not available")
+    def testCompleteField(self):
+        src='self.obj.CASE_INSENSITIVE_ORDER.wa'
+        script = jedi.Interpreter(src,[locals()])
+        compl = [i.name for i in script.completions()]
+        self.assertEqual(compl, ['wait'])
+
+    @common.unittest.skipUnless(have_jedi, "jedi not available")
+    def testCompleteMethodField(self):
+        src='self.obj.substring(1).CAS'
+        script = jedi.Interpreter(src,[locals()])
+        compl = [i.name for i in script.completions()]
+        self.assertEqual(compl, ['CASE_INSENSITIVE_ORDER'])
+
 
