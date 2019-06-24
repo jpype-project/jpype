@@ -102,7 +102,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	// New value instance
 	self->m_Value = JPValue(cls, value);
 	self->m_Cache = NULL;
-	JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
+	JP_TRACE("Value", self->m_Value.getClass()->getCanonicalName(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
 }
@@ -200,11 +200,11 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JP_TRACE_IN("PyJPValue::__dealloc__");
 	JPValue& value = self->m_Value;
 	JPClass* cls = value.getClass();
-
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
 	if (cls != NULL && JPEnv::isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
 	{
+		JP_TRACE("Value", cls->getCanonicalName(), &(value.getValue()));
 		// If the JVM has shutdown then we don't need to free the resource
 		// FIXME there is a problem with initializing the sytem twice.
 		// Once we shut down the cls type goes away so this will fail.  If

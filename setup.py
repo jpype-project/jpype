@@ -40,7 +40,6 @@ setup(
     package_dir={
         'jpype': 'jpype',
     },
-    #setup_requires=['setuptools_scm'],
     tests_require=['pytest', 'mock', 'unittest2'],
     extras_require={'numpy': ['numpy>=1.6']},
     cmdclass={

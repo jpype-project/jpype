@@ -68,6 +68,11 @@ public:
 	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
 	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
 
+	jobject getJava() const
+	{
+		return m_Method.get();
+	}
+
 	bool isStatic() const
 	{
 		return m_IsStatic;
