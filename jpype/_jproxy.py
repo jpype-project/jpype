@@ -192,7 +192,10 @@ class JProxy(object):
 
         if dict is not None:
             self.__javaproxy__ = _jpype.PyJPProxy(_JFromDict(dict), actualIntf)
+            return
 
         if inst is not None:
             self.__javaproxy__ = _jpype.PyJPProxy(inst, actualIntf)
+            return
+
         raise TypeError("a dict or inst must be specified")

@@ -93,7 +93,6 @@ bool JPContext::isRunning()
 {
 	if (m_JavaVM == NULL || !m_IsInitialized)
 	{
-		printf("Return false");
 		return false;
 	}
 	return true;

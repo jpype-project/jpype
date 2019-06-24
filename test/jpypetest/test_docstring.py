@@ -32,6 +32,6 @@ class DocStringTestCase(common.JPypeTestCase):
         self.assertIsNotNone( cls.substring.__doc__)
 
     def testDocEnumClass(self):
-        cls = jpype.JClass('java.lang.Character.UnicodeScript')
+        cls = jpype.JClass('java.lang.Character$UnicodeScript')
         self.assertIsNotNone( cls.__doc__)
 
