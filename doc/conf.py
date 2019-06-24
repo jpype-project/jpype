@@ -53,10 +53,26 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # built documents.
 #
 # The short X.Y version.
-import mock
-mock_modules = ('_jpype',)
-for m in mock_modules:
-    sys.modules[m] = mock.MagicMock()
+
+class JPypeFake(object):
+    def setResource(*args):
+        pass
+    def isStarted(*args):
+        return False
+    class PyJPClass(object):
+        pass
+    class PyJPMethod(object):
+        pass
+    class PyJPField(object):
+        pass
+    class PyJPArray(object):
+        pass
+sys.modules['_jpype'] = JPypeFake()
+
+# For some reason jpype.imports does not work if called in sphinx. Importing
+# it here solved the problem.
+import jpype
+import jpype.imports
 
 import jpype
 # TODO: reconsider this
