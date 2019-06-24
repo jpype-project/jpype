@@ -54,17 +54,33 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 #
 # The short X.Y version.
 import mock
-mock_modules = ('_jpype',)
-for m in mock_modules:
-    sys.modules[m] = mock.MagicMock()
+class TypeMock(type):
+    def __new__(cls, name, bases=None, methods={}):
+        if not bases:
+            bases = tuple()
+        methods['__init__'] = TypeMock._init
+        methods['__getattr__'] = TypeMock.__getattr__
+        return type.__new__(cls, name, bases, methods)
 
+    def __init__(self, name, bases=None, methods={}):
+        pass
+
+    def _init(self, *args):
+        pass
+
+    def __getattr__(self, key):
+        print("get",key)
+        return mock.Mock()
+
+mockModule = mock.MagicMock()
+mockModule.isStarted = mock.Mock(return_value=False)
+mockModule.PyJPClass = TypeMock("PyJPClass")
+sys.modules['_jpype']=mockModule
+
+# For some reason jpype.imports does not work if called in sphinx. Importing
+# it here solved the problem.
 import jpype
-# TODO: reconsider this
-#import jpype.imports
-
-#import java.lang
-#import java.util
-#import java.io
+import jpype.imports
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
