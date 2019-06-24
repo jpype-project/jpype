@@ -22,7 +22,6 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
 # it here solved the problem.
-import _jpype
 import jpype
 import jpype.imports
 
@@ -64,9 +63,9 @@ for m in mock_modules:
     sys.modules[m] = mock.MagicMock()
 
 import jpype
-import java.lang
-import java.util
-import java.io
+#import java.lang
+#import java.util
+#import java.io
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
