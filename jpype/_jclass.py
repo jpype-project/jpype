@@ -384,6 +384,9 @@ def _getDefaultJavaObject(obj):
     if hasattr(obj, '__javaclass__'):
         return _java_lang_Class
 
+    if hasattr(obj, '__javaproxy__'):
+        return _java_lang_Object
+
     if obj == None:
         return _java_lang_Object
 

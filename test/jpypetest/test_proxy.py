@@ -254,3 +254,15 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertSequenceEqual(bytes, [1, 2, 3, 4])
         self.assertEqual(start, 12)
         self.assertEqual(length, 13)
+
+    def testProxyJObjectCast(self):
+        jrun = JClass('java.lang.Runnable')
+        jobj = JClass("java.lang.Object")
+
+        @JImplements(jrun)
+        class MyClass(object):
+            @JOverride
+            def run(self):
+                pass
+        self.assertIsInstance(JObject(MyClass(), jrun), jrun)
+        self.assertIsInstance(JObject(MyClass()), jobj)
