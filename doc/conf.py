@@ -54,23 +54,36 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 #
 # The short X.Y version.
 import mock
+
+def TypeMock_init(self, *args, **kwargs):
+    object.__init__(self)
+
+def TypeMock_getattr(self, key):
+    kwargs = self._kwargs
+    m = self._to(**kwargs)
+    object.__setattr__(self, key, m)
+    return m
+
 class TypeMock(type):
-    def __new__(cls, name, bases=None, methods={}):
+    def __new__(cls, name, bases=None, members={}, to=mock.Mock, **kwargs):
         if not bases:
-            bases = tuple()
-        methods['__init__'] = TypeMock._init
-        methods['__getattr__'] = TypeMock.__getattr__
-        return type.__new__(cls, name, bases, methods)
+            bases = tuple([])
 
-    def __init__(self, name, bases=None, methods={}):
-        pass
+        members['__init__'] =  TypeMock_init
+        members['__getattr__'] =  TypeMock_getattr
+        members['_kwargs'] = kwargs
+        members['_to'] = to
+        return type.__new__(cls, name, bases, members)
 
-    def _init(self, *args):
-        pass
+    def __init__(self, *args, **kwargs):
+        return type.__init__(self, *args)
 
     def __getattr__(self, key):
-        print("get",key)
-        return mock.Mock()
+        kwargs = self._kwargs
+        m = self._to(**kwargs)
+        type.__setattr__(self, key, m)
+        return m
+
 
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
