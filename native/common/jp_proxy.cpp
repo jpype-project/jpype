@@ -177,7 +177,7 @@ jobject JPProxy::getProxy()
 	return frame.keep(proxy);
 }
 
-JPProxyType::JPProxyType() : JPClass(proxyClass)
+JPProxyType::JPProxyType() : JPClass(handlerClass)
 {
 }
 

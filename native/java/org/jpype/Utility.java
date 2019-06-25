@@ -17,6 +17,7 @@
 package org.jpype;
 
 import java.lang.reflect.Proxy;
+import org.jpype.proxy.JPypeInvocationHandler;
 
 /**
  *
@@ -39,7 +40,7 @@ public class Utility
     Class cls = obj.getClass();
     if (Proxy.isProxyClass(cls) && (Proxy.getInvocationHandler(obj) instanceof org.jpype.proxy.JPypeInvocationHandler))
     {
-      return Proxy.class;
+      return JPypeInvocationHandler.class;
     }
 
     if (cls.isSynthetic())
