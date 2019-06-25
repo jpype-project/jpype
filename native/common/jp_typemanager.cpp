@@ -26,6 +26,8 @@ namespace
 	typedef map<string, JPClass* > JavaClassMap;
 
 	JavaClassMap javaClassMap;
+	jclass utility;
+	jmethodID getClassForID;
 
 	//	TypeMap typeMap;
 	//	JavaClassMap javaClassMap;
@@ -58,7 +60,7 @@ namespace JPTypeManager
 	JPBoxedClass* _java_lang_Double;
 }
 
-JPClass* registerClass(JPClass* classWrapper)
+JPClass* JPTypeManager::registerClass(JPClass* classWrapper)
 {
 	JP_TRACE_IN("JPTypeManager::registerClass (specialized)");
 	const string& simple = classWrapper->getCanonicalName();
@@ -91,11 +93,25 @@ JPClass* registerObjectClass(string name, jclass jc)
 	JP_TRACE_OUT;
 }
 
+
+jclass JPTypeManager::getClassFor(jobject obj)
+{
+	JPJavaFrame frame;
+	jvalue v;
+	v.l = obj;
+	return (jclass) frame.keep(frame.CallStaticObjectMethodA(utility, getClassForID, &v));
+}
+
+
 void JPTypeManager::init()
 {
 	// Everything that requires specialization must be created here.
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPTypeManager::init");
+
+	utility = (jclass) frame.NewGlobalRef(JPClassLoader::findClass("org.jpype.Utility"));
+	getClassForID = frame.GetStaticMethodID(utility, "getClassFor", "(Ljava/lang/Object;)Ljava/lang/Class;");
+
 	registerClass(_java_lang_Object = new JPObjectBaseClass());
 	registerClass(_java_lang_Class = new JPClassBaseClass());
 	registerClass(_java_lang_String = new JPStringClass());
@@ -160,7 +176,7 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 {
 	if (obj == NULL)
 		return NULL;
-	return findClass(JPJni::getClass(obj));
+	return findClass(getClassFor(obj));
 }
 
 JPClass* JPTypeManager::findClass(jclass cls)

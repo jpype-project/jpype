@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPTYPE_MANAGER_H_
 #define _JPTYPE_MANAGER_H_
@@ -57,7 +57,7 @@ namespace JPTypeManager
 
 	/**
 	 * Find a class using a native name.
-	 * 
+	 *
 	 * The pointer returned is NOT owned by the caller
 	 */
 	JPClass* findClass(const string& str);
@@ -67,6 +67,17 @@ namespace JPTypeManager
 	void flushCache();
 
 	int getLoadedClasses();
+
+	/**
+	 * Special class registry for primary types.
+	 *
+	 * @param classWrapper
+	 * @return
+	 */
+	JPClass* registerClass(JPClass* classWrapper);
+
+	jclass getClassFor(jobject obj);
+
 } // namespace
 
 #endif // _JPCLASS_H_

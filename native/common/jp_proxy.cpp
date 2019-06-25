@@ -12,17 +12,21 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
-#include <jp_thunk.h>
+
+#include "pyjp_proxy.h"
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()
 	jclass handlerClass;
 	jmethodID invocationHandlerConstructorID;
 	jfieldID hostObjectID;
+
+	jclass proxyClass;
+	jmethodID getInvocationHandlerID;
 }
 
 JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
@@ -112,6 +116,11 @@ void JPProxy::init()
 	JPJavaFrame frame(32);
 	JP_TRACE_IN("JPProxy::init");
 
+	jclass proxy = frame.FindClass("java/lang/reflect/Proxy");
+	proxyClass = (jclass) frame.NewGlobalRef(proxy);
+	getInvocationHandlerID = frame.GetStaticMethodID(proxy, "getInvocationHandler",
+			"(Ljava/lang/Object;)Ljava/lang/reflect/InvocationHandler;");
+
 	jclass handler = JPClassLoader::findClass("org.jpype.proxy.JPypeInvocationHandler");
 	handlerClass = (jclass) frame.NewGlobalRef(handler);
 
@@ -155,6 +164,8 @@ jobject JPProxy::getProxy()
 
 	jobject m_Handler = frame.NewObject(handlerClass, invocationHandlerConstructorID);
 	frame.SetLongField(m_Handler, hostObjectID, (jlong) m_Instance);
+	JPTypeManager::registerClass(new JPProxyType());
+
 
 	jvalue v[3];
 	v[0].l = cl;
@@ -165,3 +176,20 @@ jobject JPProxy::getProxy()
 	JPReferenceQueue::registerRef(proxy, this->m_Instance);
 	return frame.keep(proxy);
 }
+
+JPProxyType::JPProxyType() : JPClass(proxyClass)
+{
+}
+
+JPProxyType::~JPProxyType()
+{
+}
+
+JPPyObject JPProxyType::convertToPythonObject(jvalue val)
+{
+	JPJavaFrame frame;
+	jobject ih = frame.CallStaticObjectMethodA(proxyClass, getInvocationHandlerID, &val);
+	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, hostObjectID);
+	return JPPyObject(JPPyRef::_use, proxy->m_Target);
+}
+

@@ -5,6 +5,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 
+  - JProxy objects now are returned from Java as the Python objects 
+    that originate from. Older style proxy classes return the 
+    inst or dict. New style return the proxy class instance.
+    Thus proxy classes can be stored on generic Java containers
+    and retrieved as Python objects.
+
 - **0.7.0 - 2019**
   - Doc strings are generated for classes and methods.
 
