@@ -92,7 +92,7 @@ The setup script recognizes several arguments.
                      when ant is not in the path.
 --enable-build-jar   Force setup to recreate the jar from scratch. 
 --enable-tracing     Build a verison of JPype with full logging to the 
-                     console. This can be used to diagnose trick JNI
+                     console. This can be used to diagnose tricky JNI
                      issues.
 --disable-numpy      Do not compile with numpy extenstions.
 
@@ -131,7 +131,7 @@ Specific requirements
 ~~~~~~~~~~~~~~~~~~~~~
 
 JPype is known to work on Linx, OSX, Windows, and Cygwin.  To make it easier to
-those who have not build CPython modules before here are some helpful tips for
+those who have not built CPython modules before here are some helpful tips for
 different machines.
 
 Debian/Ubuntu
