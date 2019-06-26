@@ -34,7 +34,7 @@ Java
   Python 3+).  JPype source distribution includes a copy of the Java JNI header
   and precompiled Java code, so the development kit is not required from the
   source distribution. JPype has been used with Java versions from 
-  Java 1.6 to Java 11.
+  Java 1.7 to Java 11.
 
 C++
   A C++ compiler which matches the ABI used to build CPython.
@@ -91,7 +91,7 @@ The setup script recognizes several arguments.
                      ``--ant=path``.  This option is useful when building 
                      when ant is not in the path.
 --enable-build-jar   Force setup to recreate the jar from scratch. 
---enable-tracting    Build a verison of JPype with full logging to the 
+--enable-tracing     Build a verison of JPype with full logging to the 
                      console. This can be used to diagnose trick JNI
                      issues.
 --disable-numpy      Do not compile with numpy extenstions.
