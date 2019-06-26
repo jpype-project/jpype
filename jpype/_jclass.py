@@ -204,6 +204,18 @@ class JClass(type):
 
 
 def _JClassNew(arg, loader=None, initialize=True):
+    params = None
+    if isinstance(arg, str):
+        if arg.endswith(">"):
+            i = arg.find("<")
+            params = arg[i+1:-1]
+            arg = arg[:i]
+            if params:
+                params = params.split(',')
+            else:
+                params = []
+            # FIXME we can check the geneic parameters better.
+
     if loader and isinstance(arg, str):
         arg = _java_lang_Class.forName(arg, initialize, loader)
 
@@ -220,8 +232,19 @@ def _JClassNew(arg, loader=None, initialize=True):
 
     # See if we have an existing class in the cache
     if name in _JCLASSES:
-        return _JCLASSES[name]
-    return _JClassFactory(name, javaClass)
+        cls = _JCLASSES[name]
+    else:
+        cls = _JClassFactory(name, javaClass)
+
+    if params is not None:
+        acceptParams = len(cls.class_.getTypeParameters())
+        if acceptParams == 0:
+            raise TypeError(
+                "Java class '%s' does not take parameters" % (cls.__name__))
+        if len(params) > 0 and len(params) != len(cls.class_.getTypeParameters()):
+            raise TypeError(
+                "Java generic class '%s' length mismatch" % (cls.__name__))
+    return cls
 
 
 class JInterface(object):
