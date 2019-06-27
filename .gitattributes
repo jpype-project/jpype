@@ -6,6 +6,20 @@
 *.c text eol=lf
 *.h text eol=lf
 *.java text eol=lf
+*.rst text eol=lf
+*.sh text eol=lf
+*.cfg text eol=lf
+*.yml text eol=lf
+*.xsl text eol=lf
+*.css text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.properties text eol=crlf
+README text eol=lf
+LICENSE text eol=lf
+Makefile text eol=lf
+Manifest.in text eol=lf
 
 *.xml text eol=lf
 *.md text
