@@ -201,6 +201,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 
 JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
 {
+	JP_TRACE_IN("JPClass::getArrayRange");
 	jobjectArray array = (jobjectArray) a;
 
 	JPPyTuple res(JPPyTuple::newTuple(length));
@@ -209,11 +210,14 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	for (int i = 0; i < length; i++)
 	{
 		v.l = frame.GetObjectArrayElement(array, i + start);
-		JPClass* t = JPTypeManager::findClassForObject(v.l);
-		res.setItem(i, t->convertToPythonObject(v).get());
+		JPClass* type = this;
+		if (v.l != NULL)
+			type = JPTypeManager::findClassForObject(v.l);
+		res.setItem(i, type->convertToPythonObject(v).get());
 	}
 
 	return res;
+	JP_TRACE_OUT;
 }
 
 void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* vals)
