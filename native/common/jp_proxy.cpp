@@ -48,13 +48,13 @@ public:
 };
 
 JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
-		jobjectArray args)
+		  jobjectArray args)
 {
 	JPJavaFrame frame(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
-			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+							&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
 	jlong* types = accessor.get();
 	for (jsize i = 0; i < argLen; i++)
@@ -67,12 +67,12 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 }
 
 JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
-		JNIEnv *env, jclass clazz,
-		jlong contextPtr, jstring name,
-		jlong hostObj,
-		jlong returnTypePtr,
-		jlongArray parameterTypePtrs,
-		jobjectArray args)
+							     JNIEnv *env, jclass clazz,
+							     jlong contextPtr, jstring name,
+							     jlong hostObj,
+							     jlong returnTypePtr,
+							     jlongArray parameterTypePtrs,
+							     jobjectArray args)
 {
 	JPContext* context = (JPContext*) contextPtr;
 
@@ -94,7 +94,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			if (hostObj == 0)
 			{
 				env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
-						"host reference is null");
+							"host reference is null");
 				return NULL;
 			}
 
@@ -163,7 +163,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		{
 			JP_TRACE("Other Exception raised");
 			env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
-					"unknown error occurred");
+						"unknown error occurred");
 		}
 		return NULL;
 		JP_TRACE_OUT_C;
@@ -188,11 +188,11 @@ JPProxyFactory::JPProxyFactory(JPContext* context)
 
 	m_ProxyClass = JPClassRef(context, proxyClass);
 	m_NewProxyID = frame.GetStaticMethodID(m_ProxyClass.get(),
-			"newProxy",
-			"(Lorg/jpype/JPypeContext;J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
+					"newProxy",
+					"(Lorg/jpype/JPypeContext;J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
 	m_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
-			"newInstance",
-			"()Ljava/lang/Object;");
+					"newInstance",
+					"()Ljava/lang/Object;");
 
 	JP_TRACE_OUT;
 }
@@ -211,7 +211,7 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 
 	// Convert the interfaces to a Class[]
 	jobjectArray ar = frame.NewObjectArray((int) intf.size(),
-			m_Factory->m_Context->_java_lang_Class->getJavaClass(), NULL);
+					m_Factory->m_Context->_java_lang_Class->getJavaClass(), NULL);
 	for (unsigned int i = 0; i < intf.size(); i++)
 	{
 		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
@@ -223,7 +223,7 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 
 	// Create the proxy
 	jobject proxy = frame.CallStaticObjectMethodA(m_Factory->m_ProxyClass.get(),
-			m_Factory->m_NewProxyID, v);
+						m_Factory->m_NewProxyID, v);
 	m_Proxy = JPObjectRef(m_Factory->m_Context, proxy);
 	JP_TRACE_OUT;
 }
@@ -242,7 +242,7 @@ jobject JPProxy::getProxy()
 	JP_TRACE("Create handler");
 	Py_INCREF(m_Instance);
 	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
-			m_Factory->m_NewInstanceID, 0);
+						m_Factory->m_NewInstanceID, 0);
 
 	return frame.keep(instance);
 	JP_TRACE_OUT;

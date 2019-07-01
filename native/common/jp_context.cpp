@@ -46,7 +46,7 @@ namespace
 
 JPContext::JPContext()
 {
-	printf("New JVM %p\n",this);
+	printf("New JVM %p\n", this);
 	m_JavaVM = 0;
 	_void = 0;
 	_boolean = 0;
@@ -119,7 +119,7 @@ void JPContext::loadEntryPoints(const string& path)
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
-		char ignoreUnrecognized, char convertStrings)
+			 char ignoreUnrecognized, char convertStrings)
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
@@ -184,7 +184,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_TRACE("Start Context");
 		jclass cls = m_ClassLoader->findClass("org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
-				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
+								"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
 		m_ContextShutdownMethod = frame.GetMethodID(cls, "shutdown", "()V");
 		jvalue val[2];
 		val[0].j = (jlong) this;
@@ -195,15 +195,15 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_TRACE("Connect resources");
 		// Hook up the type manager
 		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
-				"()Lorg/jpype/manager/TypeManager;");
+							"()Lorg/jpype/manager/TypeManager;");
 		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
-				frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
+							frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
 
 		// Hook up the reference queue
 		jmethodID getReferenceQueue = frame.GetMethodID(cls, "getReferenceQueue",
-				"()Lorg/jpype/ref/JPypeReferenceQueue;");
+								"()Lorg/jpype/ref/JPypeReferenceQueue;");
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(this,
-				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
+								frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
 
 	}
 	m_IsInitialized = true;

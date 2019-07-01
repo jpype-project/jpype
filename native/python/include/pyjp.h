@@ -25,6 +25,7 @@
 #include <pyjp_context.h>
 #include <pyjp_array.h>
 #include <pyjp_class.h>
+#include <pyjp_classhints.h>
 #include <pyjp_field.h>
 #include <pyjp_method.h>
 #include <pyjp_module.h>

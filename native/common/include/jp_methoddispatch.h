@@ -38,6 +38,7 @@ private:
 	JPMethodDispatch& operator=(const JPMethodDispatch& method);
 
 public:
+
 	JPClass* getClass()
 	{
 		return m_Class;

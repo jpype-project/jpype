@@ -20,11 +20,11 @@
 #include "jp_context.h"
 
 JPArrayClass::JPArrayClass(JPContext* context,
-		jclass cls,
-		const string& name,
-		JPClass* superClass,
-		JPClass* componentType,
-		jint modifiers)
+			   jclass cls,
+			   const string& name,
+			   JPClass* superClass,
+			   JPClass* componentType,
+			   jint modifiers)
 : JPClass(context, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;
@@ -134,7 +134,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 	}
 
 	if (JPPyString::check(obj)
-			&& m_ComponentType == m_Context->_char)
+		&& m_ComponentType == m_Context->_char)
 	{
 		JP_TRACE("char[]");
 
@@ -192,7 +192,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 
 	stringstream ss;
 	ss << "Cannot convert value of type " << JPPyObject::getTypeName(obj)
-			<< " to Java array type " << this->m_CanonicalName;
+		<< " to Java array type " << this->m_CanonicalName;
 	JP_RAISE_TYPE_ERROR(ss.str());
 	return res;
 	JP_TRACE_OUT;

@@ -17,11 +17,11 @@
 #include <jpype.h>
 
 JPField::JPField(JPClass* cls,
-		const string& name,
-		jobject field,
-		jfieldID fid,
-		JPClass* fieldType,
-		jint modifiers)
+		 const string& name,
+		 jobject field,
+		 jfieldID fid,
+		 JPClass* fieldType,
+		 jint modifiers)
 : m_Field(cls->getContext(), field)
 {
 	this->m_Class = cls;

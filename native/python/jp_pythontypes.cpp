@@ -134,9 +134,7 @@ string JPPyObject::str()
 
 bool JPPyObject::hasAttrString(PyObject* pyobj, const char* k)
 {
-	int res = PyObject_HasAttrString(pyobj, (char*) k);
-	JP_PY_CHECK();
-	return res != 0;
+	return PyObject_HasAttrString(pyobj, (char*) k) != 0;
 }
 
 JPPyObject JPPyObject::getAttrString(const char* k)
@@ -253,7 +251,7 @@ bool JPPyLong::check(PyObject* obj)
 	return PyLong_Check(obj);
 #else
 	return PyInt_Check(obj)
-			|| PyLong_Check(obj);
+		|| PyLong_Check(obj);
 #endif
 }
 
@@ -261,12 +259,12 @@ bool JPPyLong::checkConvertable(PyObject* obj)
 {
 #if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj)
-			|| PyObject_HasAttrString(obj, "__int__");
+		|| PyObject_HasAttrString(obj, "__int__");
 #else
 	return PyInt_Check(obj)
-			|| PyLong_Check(obj)
-			|| PyObject_HasAttrString(obj, "__int__")
-			|| PyObject_HasAttrString(obj, "__long__");
+		|| PyLong_Check(obj)
+		|| PyObject_HasAttrString(obj, "__int__")
+		|| PyObject_HasAttrString(obj, "__long__");
 #endif
 }
 

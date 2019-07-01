@@ -28,14 +28,14 @@ struct PyJPArray
 	static JPPyObject alloc(JPArray *value);
 
 	static PyTypeObject Type;
-	static void        initType(PyObject *module);
-	static bool        check(PyObject *o);
+	static void initType(PyObject *module);
+	static bool check(PyObject *o);
 
 	// Object A
-	static PyObject*   __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int         __init__(PyJPArray *self, PyObject *args, PyObject *kwargs);
-	static void        __dealloc__(PyJPArray *self);
-	static PyObject*   __str__(PyJPArray *self);
+	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static int __init__(PyJPArray *self, PyObject *args, PyObject *kwargs);
+	static void __dealloc__(PyJPArray *self);
+	static PyObject* __str__(PyJPArray *self);
 
 	// Python-visible methods
 	static PyObject* getArrayLength(PyJPArray *self, PyObject *arg);

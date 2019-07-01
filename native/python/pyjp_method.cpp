@@ -237,7 +237,7 @@ PyObject* PyJPMethod::__repr__(PyJPMethod* self)
 		else
 			ss << "<java bound method `";
 		ss << self->m_Method->getName() << "' of '" <<
-				self->m_Method->getClass()->getCanonicalName() << "'>";
+			self->m_Method->getClass()->getCanonicalName() << "'>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -287,7 +287,7 @@ PyObject *PyJPMethod::getQualName(PyJPMethod *self, void *context)
 		ASSERT_JVM_RUNNING(context);
 		stringstream str;
 		str << self->m_Method->getClass()->getCanonicalName() << '.'
-				<< self->m_Method->getName();
+			<< self->m_Method->getName();
 		return JPPyString::fromStringUTF8(str.str(), false).keep();
 	}
 	PY_STANDARD_CATCH(NULL);

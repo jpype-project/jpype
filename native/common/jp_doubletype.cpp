@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPDoubleType::JPDoubleType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+			   const string& name,
+			   JPBoxedType* boxedClass,
+			   jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -48,81 +48,79 @@ JPValue JPDoubleType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
+class JPConversionAsDouble : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPDoubleType base_t;
+public:
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) JPPyFloat::asDouble(pyobj);
+		return res;
+	}
+} asDoubleConversion;
+
+class JPConversionAsDoubleLong : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) JPPyLong::asLong(pyobj);
+		return res;
+	}
+} asDoubleLongConversion;
+
+JPMatch::Type JPDoubleType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+{
+	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (JPPyObject::isNone(pyobj))
+		return JPMatch::_none;
+
+	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
 
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		return match.type;
 	}
 
-	if (JPPyFloat::check(obj))
+	if (JPPyFloat::check(pyobj))
 	{
-		return JPMatch::_exact;
+		match.conversion = &asDoubleConversion;
+		return match.type = JPMatch::_exact;
+	}
+	
+	if (JPPyFloat::checkConvertable(pyobj))
+	{
+		match.conversion = &asDoubleConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	// Java allows conversion to any type with a longer range even if lossy
-	// Does it quack?
-	if (JPPyFloat::checkConvertable(obj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = &asDoubleLongConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	return JPMatch::_none;
-}
-
-jvalue JPDoubleType::convertToJava(PyObject* obj)
-{
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
-	}
-	else if (JPPyFloat::check(obj))
-	{
-		field(res) = (type_t) JPPyFloat::asDouble(obj);
-		return res;
-	}
-	else if (JPPyLong::check(obj))
-	{
-		field(res) = (type_t) JPPyLong::asLong(obj);
-		return res;
-	}
-	else if (JPPyObject::hasAttrString(obj, "__float__"))
-	{
-		field(res) = (type_t) JPPyFloat::asDouble(obj);
-		return res;
-	}
-
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
-	return res;
+	return match.type;
+	JP_TRACE_OUT;
 }
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -188,11 +186,11 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsiz
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT64,
-			&JPJavaFrame::SetDoubleArrayRegion))
+		&JPJavaFrame::SetDoubleArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
+							&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);

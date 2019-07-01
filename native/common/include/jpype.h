@@ -157,6 +157,7 @@ public:
 #include "jp_modifier.h"
 
 // Other header files
+#include "jp_classhints.h"
 #include "jp_method.h"
 #include "jp_value.h"
 

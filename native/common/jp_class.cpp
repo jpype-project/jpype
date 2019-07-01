@@ -17,11 +17,11 @@
 #include <jpype.h>
 
 JPClass::JPClass(JPContext* context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		const JPClassList& interfaces,
-		jint modifiers)
+		 jclass clss,
+		 const string& name,
+		 JPClass* super,
+		 const JPClassList& interfaces,
+		 jint modifiers)
 : m_Class(context, clss)
 {
 	m_Context = context;
@@ -36,8 +36,8 @@ JPClass::~JPClass()
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
-		JPMethodDispatchList& methods,
-		JPFieldList& fields)
+			    JPMethodDispatchList& methods,
+			    JPFieldList& fields)
 {
 	m_Constructors = ctor;
 	m_Methods = methods;
@@ -138,7 +138,12 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setStaticValue");
-	jobject val = convertToJava(obj).l;
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	{
+		JP_RAISE_TYPE_ERROR("Unable to convert");
+	}
+	jobject val = match.conversion->convert(frame, this, obj).l;
 	frame.SetStaticObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -146,7 +151,12 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setInstanceValue");
-	jobject val = convertToJava(obj).l;
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	{
+		JP_RAISE_TYPE_ERROR("Unable to convert");
+	}
+	jobject val = match.conversion->convert(frame, this, obj).l;
 	frame.SetObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -177,26 +187,34 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	// to abort once we start
 	JPPySequence seq(JPPyRef::_use, vals);
 	JP_TRACE("Verify argument types");
+	JPMatch match;
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		if (this->canConvertToJava(v) <= JPMatch::_explicit)
+		if (getJavaConversion(match, frame, v) < JPMatch::_implicit)
 		{
-			JP_RAISE_TYPE_ERROR("Unable to convert.");
+			JP_RAISE_TYPE_ERROR("Unable to convert");
 		}
 	}
 
 	JP_TRACE("Copy");
 	for (int i = 0; i < length; i++)
 	{
-		frame.SetObjectArrayElement(array, i + start, convertToJava(seq[i].get()).l);
+		PyObject* v = seq[i].get();
+		getJavaConversion(match, frame, v);
+		frame.SetObjectArrayElement(array, i + start, match.conversion->convert(frame, this, v).l);
 	}
 	JP_TRACE_OUT;
 }
 
 void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
 {
-	jvalue v = convertToJava(val);
+	JPMatch match;
+	if (getJavaConversion(match, frame, val) < JPMatch::_implicit)
+	{
+		JP_RAISE_TYPE_ERROR("Unable to convert");
+	}
+	jvalue v = match.conversion->convert(frame, this, val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);
 }
 
@@ -254,88 +272,19 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	ASSERT_NOT_NULL(obj);
-	JPJavaFrame frame(m_Context);
-	JP_TRACE_IN("JPClass::canConvertToJava");
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_implicit;
-	}
+	JP_TRACE_IN("JPClass::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (proxyConversion->matches(m_Context, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		JPClass* oc = value->getClass();
-		JP_TRACE("Match name", oc->toString());
-
-		if (oc == this)
-		{
-			// hey, this is me! :)
-			return JPMatch::_exact;
-		}
-
-		if (frame.IsAssignableFrom(oc->getJavaClass(), m_Class.get()))
-		{
-			return JPMatch::_implicit;
-		}
-	}
-
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
-	if (proxy != NULL)
-	{
-		// Check if any of the interfaces matches ...
-		vector<JPClass*> itf = proxy->getInterfaces();
-		for (unsigned int i = 0; i < itf.size(); i++)
-		{
-			if (frame.IsAssignableFrom(itf[i]->getJavaClass(), m_Class.get()))
-			{
-				JP_TRACE("implicit proxy");
-				return JPMatch::_implicit;
-			}
-		}
-	}
-
-	return JPMatch::_none;
-	JP_TRACE_OUT;
-}
-
-jvalue JPClass::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPClass::convertToJava");
-	JP_TRACE("Context", m_Context);
-	JPJavaFrame frame(m_Context);
-	jvalue res;
-	JP_TRACE("Post frame");
-
-	res.l = NULL;
-
-	// assume it is convertible;
-	if (JPPyObject::isNone(obj))
-	{
-		res.l = NULL;
-		return res;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		JP_TRACE("Java Value");
-		res.l = frame.NewLocalRef(value->getJavaObject());
-		res.l = frame.keep(res.l);
-		return res;
-	}
-
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
-	if (proxy != NULL)
-	{
-		JP_TRACE("Java Proxy");
-		res.l = frame.keep(proxy->getProxy());
-		return res;
-	}
-
-	return res;
+	// APPLY USER SUPPLIED CONVERSIONS
+	return match.type;
 	JP_TRACE_OUT;
 }
 
@@ -405,8 +354,8 @@ string JPClass::describe()
 	// Fields
 	out << "  // Accessible Instance Fields" << endl;
 	for (JPFieldList::const_iterator curInstField = m_Fields.begin();
-			curInstField != m_Fields.end();
-			curInstField++)
+		curInstField != m_Fields.end();
+		curInstField++)
 	{
 		JPField* f = *curInstField;
 		out << "  " << f->getName() << endl;
@@ -418,7 +367,7 @@ string JPClass::describe()
 	{
 		JPMethodDispatch* f = m_Constructors;
 		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-				iter != f->getMethodOverloads().end(); ++iter)
+			iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
 
@@ -427,7 +376,7 @@ string JPClass::describe()
 	{
 		JPMethodDispatch* f = *curMethod;
 		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-				iter != f->getMethodOverloads().end(); ++iter)
+			iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
 	out << "}";

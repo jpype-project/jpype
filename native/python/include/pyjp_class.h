@@ -26,11 +26,11 @@ struct PyJPClass
 	static PyTypeObject Type;
 
 	// Python-visible methods
-	static void         initType(PyObject *module);
+	static void initType(PyObject *module);
 
 	/** Create a PyJPClass instance from within the module.
 	 */
-	static JPPyObject   alloc(JPClass *cls);
+	static JPPyObject alloc(JPClass *cls);
 
 	/**
 	 * Check if the Object is a PyJPClass
@@ -38,9 +38,9 @@ struct PyJPClass
 	 * @param o
 	 * @return true if the object is PyJPClass, otherwise false.
 	 */
-	static bool   check(PyObject *o);
+	static bool check(PyObject *o);
 
-	static PyObject*  __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
 	static int __init__(PyJPClass *self, PyObject *args, PyObject *kwargs);
 	static void __dealloc__(PyJPClass *o);
 	static int traverse(PyJPClass *self, visitproc visit, void *arg);

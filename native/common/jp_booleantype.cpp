@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPBooleanType::JPBooleanType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+			     const string& name,
+			     JPBoxedType* boxedClass,
+			     jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -48,77 +48,62 @@ JPValue JPBooleanType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
+class JPConversionAsBoolean : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
 	{
-		return JPMatch::_none;
+		jvalue res;
+		res.z = JPPyLong::asLong(pyobj) != 0;
+		return res;
 	}
+} asBooleanConversion;
 
-	// Exact Python match
-	if (JPPyBool::check(obj))
-	{
-		return JPMatch::_exact;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		// Wrapper
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-		// Implicit conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == this->m_BoxedClass)
-		{
-			return JPMatch::_implicit;
-		}
-		return JPMatch::_none;
-	}
-
-	if (JPPyBool::check(obj))
-	{
-		return JPMatch::_exact;
-	}
-
-	// Java does not consider ints to be bools, but we may need
-	// it when returning from a proxy.
-	if (JPPyLong::checkConvertable(obj))
-	{
-		// If it implements logical operations it is an integer type
-		if (JPPyLong::checkIndexable(obj))
-			return JPMatch::_implicit;
-			// Otherwise it may be a float or list.  
-		else
-			return JPMatch::_explicit;
-	}
-
-	return JPMatch::_none;
-}
-
-jvalue JPBooleanType::convertToJava(PyObject* obj)
+JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	jvalue res;
+	match.type = JPMatch::_none;
+	if (JPPyObject::isNone(pyobj))
+		return JPMatch::_none;
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (JPPyBool::check(pyobj))
+	{
+		match.conversion = &asBooleanConversion;
+		return match.type = JPMatch::_exact;
+	}
+
+	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
-			return *value;
+		{
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
+		}
+
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			if (value->getJavaObject() == NULL)
-				JP_RAISE_RUNTIME_ERROR("Null pointer in implicit conversion from boxed.");
-			return getValueFromObject(value->getJavaObject());
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		return match.type;
 	}
-	else if (JPPyLong::checkConvertable(obj))
+
+	if (JPPyLong::check(pyobj))
 	{
-		res.z = (jboolean) JPPyLong::asLong(obj) != 0;
+		match.conversion = &asBooleanConversion;
+		return match.type = JPMatch::_implicit;
 	}
-	return res;
+
+	if (JPPyLong::checkConvertable(pyobj))
+	{
+		match.conversion = &asBooleanConversion;
+		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
+		return match.type;
+	}
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -184,11 +169,11 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 {
 	JP_TRACE_IN("JPBooleanType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_BOOL,
-			&JPJavaFrame::SetBooleanArrayRegion))
+		&JPJavaFrame::SetBooleanArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
+							&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);

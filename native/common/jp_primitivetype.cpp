@@ -17,10 +17,10 @@
 #include <jpype.h>
 
 JPPrimitiveType::JPPrimitiveType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers
-		)
+				 const string& name,
+				 JPBoxedType* boxedClass,
+				 jint modifiers
+				 )
 : JPClass(context, clss, name, NULL, JPClassList(), modifiers),
 m_BoxedClass(boxedClass)
 {

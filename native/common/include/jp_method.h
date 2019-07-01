@@ -19,49 +19,19 @@
 #include "jp_modifier.h"
 class JPMethod;
 
-class JPMatch
-{
-public:
-
-	enum Type
-	{
-		_none = 0,
-		_explicit = 1,
-		_implicit = 2,
-		_exact = 3
-	} ;
-
-	Type type;
-	bool isVarDirect;
-	bool isVarIndirect;
-	JPMethod* overload;
-	char offset;
-	char skip;
-
-	JPMatch()
-	{
-		type = JPMatch::_none;
-		isVarDirect = false;
-		isVarIndirect = false;
-		overload = NULL;
-		offset = 0;
-		skip = 0;
-	}
-} ;
-
 class JPMethod : public JPResource
 {
 	friend class JPMethodDispatch;
 public:
 	JPMethod();
 	JPMethod(JPClass* claz,
-			const string& name,
-			jobject mth,
-			jmethodID mid,
-			JPClass *returnType,
-			JPClassList parameterTypes,
-			JPMethodList& moreSpecific,
-			jint modifiers);
+		const string& name,
+		jobject mth,
+		jmethodID mid,
+		JPClass *returnType,
+		JPClassList parameterTypes,
+		JPMethodList& moreSpecific,
+		jint modifiers);
 
 	virtual ~JPMethod();
 
@@ -71,9 +41,9 @@ public:
 	 * @param args is a list of arguments including the instance.
 	 *
 	 */
-	JPMatch matches(bool isInstance, JPPyObjectVector& args);
-	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
-	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
+	JPMatch::Type matches(JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
+	JPPyObject invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
+	JPValue invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg);
 
 	bool isAbstract() const
 	{

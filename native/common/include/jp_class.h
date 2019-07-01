@@ -24,11 +24,11 @@ class JPClass : public JPResource
 public:
 
 	JPClass(JPContext* context,
-			jclass clss,
-			const string& name,
-			JPClass* super,
-			const JPClassList& interfaces,
-			jint modifiers);
+		jclass clss,
+		const string& name,
+		JPClass* super,
+		const JPClassList& interfaces,
+		jint modifiers);
 	virtual ~JPClass();
 
 public:
@@ -89,21 +89,10 @@ public:
 	 * 
 	 * This is used to determine which overload is the best match.
 	 * 
-	 * @param obj is the Python object.
+	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type canConvertToJava(PyObject* obj);
-
-	/**
-	 * Execute a conversion from Python to java.
-	 * 
-	 * This should only be called if canConvertToJava returned
-	 * a valid conversion.
-	 * 
-	 * @param obj is the Python object.
-	 * @return a jvalue holding the converted python object.
-	 */
-	virtual jvalue convertToJava(PyObject* obj);
+	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj);
 
 	/** Create a new Python object to wrap a Java value. 
 	 * 

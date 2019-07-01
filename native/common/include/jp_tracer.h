@@ -66,7 +66,8 @@ public:
 		try
 		{
 			throw;
-		} catch (JPypeException& ex)
+		}
+		catch (JPypeException& ex)
 		{
 			ex.from(info);
 			throw;

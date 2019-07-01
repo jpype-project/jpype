@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPCharType::JPCharType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+		       const string& name,
+		       JPBoxedType* boxedClass,
+		       jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -48,66 +48,53 @@ JPValue JPCharType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
+class JPConversionAsChar : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
+	typedef JPIntType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
 	{
-		return JPMatch::_none;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-
-		if (value->getClass() == m_BoxedClass)
-		{
-			return JPMatch::_implicit;
-		}
-
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
-	}
-
-	if (JPPyString::checkCharUTF16(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	return JPMatch::_none;
-}
-
-jvalue JPCharType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPCharType::convertToJava");
-	JP_TRACE(JPPyObject::getTypeName(obj));
-	jvalue res;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		JP_TRACE("Java Value");
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java char");
-	}
-	else if (JPPyString::checkCharUTF16(obj))
-	{
-		res.c = JPPyString::asCharUTF16(obj);
+		jvalue res;
+		res.c = JPPyString::asCharUTF16(pyobj);
 		return res;
 	}
+} asCharConversion;
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java char");
-	return res;
+JPMatch::Type JPCharType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+{
+	JP_TRACE_IN("JPCharType::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (JPPyObject::isNone(pyobj))
+		return JPMatch::_none;
+
+	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	if (value != NULL)
+	{
+		if (value->getClass() == this)
+		{
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
+		}
+
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (value->getClass() == m_BoxedClass)
+		{
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		return match.type;
+	}
+
+	if (JPPyString::checkCharUTF16(pyobj))
+	{
+		match.conversion = &asCharConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	return match.type;
 	JP_TRACE_OUT;
 }
 
@@ -170,7 +157,7 @@ JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, 
 	JP_TRACE_IN("JPCharType::getArrayRange");
 	// FIXME this section is not exception safe.
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+							&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
 	// FIXME this is an error, the encoding used by JAVA does not match standard UTF16.
@@ -188,11 +175,11 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize 
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_SHORT,
-			&JPJavaFrame::SetCharArrayRegion))
+		&JPJavaFrame::SetCharArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+							&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);

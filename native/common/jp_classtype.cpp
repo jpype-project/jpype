@@ -20,11 +20,11 @@
 // Class<java.lang.Class> has special rules
 
 JPClassType::JPClassType(JPContext* context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
+			 jclass clss,
+			 const string& name,
+			 JPClass* super,
+			 JPClassList& interfaces,
+			 jint modifiers)
 : JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }

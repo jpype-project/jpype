@@ -55,7 +55,7 @@ namespace JPPyRef
 		 * 
 		 * Increment reference count if not null, and decrement when done.
 		 */
-		_use =  0,
+		_use = 0,
 
 		/**
 		 * This policy is used when we are given a borrowed reference and we
@@ -376,7 +376,7 @@ public:
 
 	/** Get the size of the tuple.
 	 */
-	jlong	size();
+	jlong size();
 
 } ;
 
@@ -479,8 +479,8 @@ public:
 	}
 
 private:
-	JPPyObjectVector& operator= (const JPPyObjectVector& ) ;
-	JPPyObjectVector(const JPPyObjectVector& );
+	JPPyObjectVector& operator=(const JPPyObjectVector&) ;
+	JPPyObjectVector(const JPPyObjectVector&);
 
 private:
 	JPPyObject instance;
@@ -513,7 +513,7 @@ public:
 
 	// item remains with the scope of JPPyDict
 	PyObject* getItem(PyObject* k);
-	void setItemString( PyObject* o, const char* n);
+	void setItemString(PyObject* o, const char* n);
 } ;
 
 

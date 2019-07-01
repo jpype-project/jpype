@@ -17,11 +17,11 @@
 #include <jpype.h>
 
 JPStringType::JPStringType(JPContext* context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers)
+			   jclass clss,
+			   const string& name,
+			   JPClass* super,
+			   JPClassList& interfaces,
+			   jint modifiers)
 : JPClass(context, clss, name, super, interfaces, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -69,70 +69,19 @@ JPPyObject JPStringType::convertToPythonObject(jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPStringType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	JP_TRACE_IN("JPStringType::canConvertToJava");
-	ASSERT_NOT_NULL(obj);
-
-	if (obj == NULL || JPPyObject::isNone(obj))
+	JP_TRACE_IN("JPStringType::getJavaConversion");
+	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (JPPyString::check(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = stringConversion;
+		return match.type = JPMatch::_exact;
 	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-		return JPMatch::_none;
-	}
-
-	if (JPPyString::check(obj))
-	{
-		return JPMatch::_exact;
-	}
-
-	return JPMatch::_none;
-	JP_TRACE_OUT;
-}
-
-jvalue JPStringType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPStringType::convertToJava");
-	JPJavaFrame frame(m_Context);
-	jvalue res;
-	res.l = NULL;
-
-	if (JPPyObject::isNone(obj))
-	{
-		return res;
-	}
-
-	// java.lang.string is already a global object
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			res.l = frame.NewLocalRef(value->getJavaObject());
-			res.l = frame.keep(res.l);
-			return res;
-		}
-		JP_RAISE_TYPE_ERROR("Attempt to convert a non string java object");
-	}
-
-	// Otherwise convert the string
-	if (JPPyString::check(obj))
-	{
-		string str = JPPyString::asStringUTF8(obj);
-		jstring jstr = m_Context->fromStringUTF8(str);
-		res.l = frame.keep(jstr);
-		return res;
-	}
-	JP_RAISE_TYPE_ERROR("Unable to convert to java string");
-	return res;
+	return NULL;
 	JP_TRACE_OUT;
 }
 

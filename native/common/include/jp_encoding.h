@@ -44,7 +44,7 @@ public:
 } ;
 
 std::string transcribe(const char* in, size_t len,
-		const JPEncoding& sourceEncoding,
-		const JPEncoding& targetEncoding);
+		       const JPEncoding& sourceEncoding,
+		       const JPEncoding& targetEncoding);
 
 #endif // _JP_ENCODING_H_

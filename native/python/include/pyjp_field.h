@@ -24,15 +24,15 @@ struct PyJPField
 	static PyTypeObject Type;
 
 	// Python-visible methods
-	static void       initType(PyObject *module);
+	static void initType(PyObject *module);
 	static JPPyObject alloc(JPField *mth);
 
-	static void       __dealloc__(PyJPField *o);
-	static PyObject*  getName(PyJPField *self, PyObject *arg);
-	static PyObject*  __get__(PyJPField *self, PyObject *obj, PyObject *type);
-	static int        __set__(PyJPField *self, PyObject *obj, PyObject *val);
-	static PyObject*  isStatic(PyJPField *self, PyObject *arg);
-	static PyObject*  isFinal(PyJPField *self, PyObject *arg);
+	static void __dealloc__(PyJPField *o);
+	static PyObject* getName(PyJPField *self, PyObject *arg);
+	static PyObject* __get__(PyJPField *self, PyObject *obj, PyObject *type);
+	static int __set__(PyJPField *self, PyObject *obj, PyObject *val);
+	static PyObject* isStatic(PyJPField *self, PyObject *arg);
+	static PyObject* isFinal(PyJPField *self, PyObject *arg);
 	static int traverse(PyJPField *self, visitproc visit, void *arg);
 	static int clear(PyJPField *self);
 

@@ -24,14 +24,14 @@ struct PyJPContext
 	PyObject *m_Dict;
 
 	static PyTypeObject Type;
-	static void        initType(PyObject *module);
-	static bool        check(PyObject *o);
+	static void initType(PyObject *module);
+	static bool check(PyObject *o);
 
 	// Object A
-	static PyObject*   __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int         __init__(PyJPContext *self, PyObject *args, PyObject *kwargs);
-	static void        __dealloc__(PyJPContext *self);
-	static PyObject*   __str__(PyJPContext *self);
+	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	static int __init__(PyJPContext *self, PyObject *args, PyObject *kwargs);
+	static void __dealloc__(PyJPContext *self);
+	static PyObject* __str__(PyJPContext *self);
 	static int traverse(PyJPContext *self, visitproc visit, void *arg);
 	static int clear(PyJPContext *self);
 

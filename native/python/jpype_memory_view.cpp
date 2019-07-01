@@ -30,7 +30,7 @@ extern "C"
 
 	static int
 	memorysimpleview_traverse(PyMemorySimpleViewObject *self,
-			visitproc visit, void *arg)
+				  visitproc visit, void *arg)
 	{
 		if (self->base != NULL)
 			Py_VISIT(self->base);
@@ -67,7 +67,7 @@ extern "C"
 		PyObject *obj;
 		static char *kwlist[] = {"object", NULL};
 		if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:memoryview", kwlist,
-				&obj))
+						 &obj))
 		{
 			return NULL;
 		}
@@ -80,14 +80,14 @@ extern "C"
 
 	static int
 	memorysimpleview_getbuffer(PyMemorySimpleViewObject *self,
-			Py_buffer *view, int flags)
+				   Py_buffer *view, int flags)
 	{
 		return PyObject_GetBuffer(self->base, view, flags);
 	}
 
 	static void
 	memorysimpleview_releasebuffer(PyMemorySimpleViewObject *self,
-			Py_buffer *view)
+				       Py_buffer *view)
 	{
 		PyBuffer_Release(view);
 	}
@@ -249,7 +249,7 @@ extern "C"
 		Py_buffer view;
 
 		if (Py_TYPE(base)->tp_as_buffer == NULL ||
-				Py_TYPE(base)->tp_as_buffer->bf_getbuffer == NULL)
+			Py_TYPE(base)->tp_as_buffer->bf_getbuffer == NULL)
 		{
 
 			PyErr_SetString(PyExc_TypeError,
@@ -263,7 +263,7 @@ extern "C"
 			return NULL;
 
 		mview = (PyMemorySimpleViewObject *)
-				PyObject_GC_New(PyMemorySimpleViewObject, &PyMemorySimpleView_Type);
+			PyObject_GC_New(PyMemorySimpleViewObject, &PyMemorySimpleView_Type);
 		if (mview == NULL)
 		{
 			PyBuffer_Release(&view);

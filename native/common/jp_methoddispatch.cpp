@@ -18,9 +18,9 @@
 #include <algorithm>
 
 JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
-		const string& name,
-		JPMethodList& overloads,
-		jint modifiers)
+				   const string& name,
+				   JPMethodList& overloads,
+				   jint modifiers)
 : m_Name(name)
 {
 	m_Class = clazz;
@@ -42,13 +42,13 @@ string JPMethodDispatch::getClassName() const
 	return m_Class->getCanonicalName();
 }
 
-JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
+void JPMethodDispatch::findOverload(JPMatch bestMatch, JPPyObjectVector& arg, bool callInstance)
 {
 	JP_TRACE_IN("JPMethodDispatch::findOverload");
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
-	JPMatch bestMatch;
+	JPMatch match(arg.size());
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
@@ -70,19 +70,6 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 			bestMatch = match;
 			continue;
 		}
-		/*
-		if (callInstance && !current->isStatic() && bestMatch.overload->isStatic())
-		{
-			bestMatch = match;
-			continue;
-		}
-
-		if (!callInstance && current->isStatic() && !bestMatch.overload->isStatic())
-		{
-			bestMatch = match;
-			continue;
-		}
-		 */
 
 		// If the best does not hide the other, than we have ambiguity.
 		if (!(bestMatch.overload->checkMoreSpecificThan(current)))
@@ -155,8 +142,8 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 		}
 		ss << ")" << ", options are:" << std::endl;
 		for (JPMethodList::iterator it = m_Overloads.begin();
-				it != m_Overloads.end();
-				++it)
+			it != m_Overloads.end();
+			++it)
 		{
 			JPMethod* current = *it;
 			ss << "\t" << current->toString();
@@ -173,16 +160,18 @@ JPMatch JPMethodDispatch::findOverload(JPPyObjectVector& arg, bool callInstance)
 JPPyObject JPMethodDispatch::invoke(JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
-	JPMatch match = findOverload(args, instance);
+	JPMethodMatch match(args.size());
+	findOverload(match, args, instance);
 	return match.overload->invoke(match, args, instance);
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethodDispatch::invokeConstructor(JPPyObjectVector& arg)
+JPValue JPMethodDispatch::invokeConstructor(JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPMethodDispatch::invokeConstructor");
-	JPMatch currentMatch = findOverload(arg, false);
-	return currentMatch.overload->invokeConstructor(currentMatch, arg);
+	JPMethodMatch match(args.size());
+	findOverload(match, args, false);
+	return match.overload->invokeConstructor(match, args);
 	JP_TRACE_OUT;
 }
 
@@ -207,7 +196,7 @@ string JPMethodDispatch::dump()
 		JPMethod *u = *cur;
 		res << u->toString() << std::endl;
 		for (JPMethodList::iterator iter = u->m_MoreSpecificOverloads.begin();
-				iter != u->m_MoreSpecificOverloads.end(); ++iter)
+			iter != u->m_MoreSpecificOverloads.end(); ++iter)
 		{
 			res << "   " << (*iter)->toString() << std::endl;
 		}

@@ -29,11 +29,11 @@ class JPClassType : public JPClass
 {
 public:
 	JPClassType(JPContext* context,
-			jclass clss,
-			const string& name,
-			JPClass* super,
-			JPClassList& interfaces,
-			jint modifiers);
+		jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers);
 
 	virtual~ JPClassType();
 

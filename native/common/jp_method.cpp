@@ -18,13 +18,13 @@
 #include <jp_method.h>
 
 JPMethod::JPMethod(JPClass* claz,
-		const string& name,
-		jobject mth,
-		jmethodID mid,
-		JPClass *returnType,
-		JPClassList parameterTypes,
-		JPMethodList& moreSpecific,
-		jint modifiers)
+		   const string& name,
+		   jobject mth,
+		   jmethodID mid,
+		   JPClass *returnType,
+		   JPClassList parameterTypes,
+		   JPMethodList& moreSpecific,
+		   jint modifiers)
 : m_Method(claz->getContext(), mth)
 {
 	this->m_Class = claz;
@@ -71,10 +71,9 @@ JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 	JP_TRACE_OUT_C;
 }
 
-JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
+JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::matches");
-	JPMatch match;
 	match.overload = this;
 
 	size_t len = arg.size();
@@ -174,7 +173,7 @@ JPMatch JPMethod::matches(bool callInstance, JPPyObjectVector& arg)
 	JP_TRACE_OUT;
 }
 
-void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
+void JPMethod::packArgs(JPMethodMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::packArgs");
 	size_t len = arg.size();
@@ -201,7 +200,7 @@ void JPMethod::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance)
+JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
 	size_t alen = m_ParameterTypes.size();
@@ -250,7 +249,7 @@ JPPyObject JPMethod::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethod::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
+JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::invokeConstructor");
 	size_t alen = m_ParameterTypes.size();
@@ -316,8 +315,8 @@ string JPMethod::matchReport(JPPyObjectVector& sequence)
 bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 {
 	for (JPMethodList::const_iterator it = m_MoreSpecificOverloads.begin();
-			it != m_MoreSpecificOverloads.end();
-			++it)
+		it != m_MoreSpecificOverloads.end();
+		++it)
 	{
 		if (other == *it)
 			return true;

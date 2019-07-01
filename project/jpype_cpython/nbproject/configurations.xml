@@ -13,6 +13,7 @@
           <itemPath>../../native/common/include/jp_bytetype.h</itemPath>
           <itemPath>../../native/common/include/jp_chartype.h</itemPath>
           <itemPath>../../native/common/include/jp_class.h</itemPath>
+          <itemPath>../../native/common/include/jp_classhints.h</itemPath>
           <itemPath>../../native/common/include/jp_classtype.h</itemPath>
           <itemPath>../../native/common/include/jp_context.h</itemPath>
           <itemPath>../../native/common/include/jp_doubletype.h</itemPath>
@@ -54,6 +55,7 @@
           <itemPath>../../native/python/include/pyjp.h</itemPath>
           <itemPath>../../native/python/include/pyjp_array.h</itemPath>
           <itemPath>../../native/python/include/pyjp_class.h</itemPath>
+          <itemPath>../../native/python/include/pyjp_classhints.h</itemPath>
           <itemPath>../../native/python/include/pyjp_context.h</itemPath>
           <itemPath>../../native/python/include/pyjp_field.h</itemPath>
           <itemPath>../../native/python/include/pyjp_method.h</itemPath>
@@ -79,6 +81,7 @@
         <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
         <itemPath>../../native/common/jp_chartype.cpp</itemPath>
         <itemPath>../../native/common/jp_class.cpp</itemPath>
+        <itemPath>../../native/common/jp_classhints.cpp</itemPath>
         <itemPath>../../native/common/jp_classloader.cpp</itemPath>
         <itemPath>../../native/common/jp_classtype.cpp</itemPath>
         <itemPath>../../native/common/jp_context.cpp</itemPath>
@@ -111,6 +114,7 @@
         <itemPath>../../native/python/jpype_memory_view.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
         <itemPath>../../native/python/pyjp_context.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
@@ -197,6 +201,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_class.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_classhints.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -385,6 +394,11 @@
       </item>
       <item path="../../native/common/jp_class.cpp" ex="false" tool="1" flavor2="0">
       </item>
+      <item path="../../native/common/jp_classhints.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="../../native/common/jp_classloader.cpp"
             ex="false"
             tool="1"
@@ -513,6 +527,11 @@
             tool="3"
             flavor2="0">
       </item>
+      <item path="../../native/python/include/pyjp_classhints.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../../native/python/include/pyjp_context.h"
             ex="false"
             tool="3"
@@ -566,6 +585,11 @@
       <item path="../../native/python/pyjp_array.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_classhints.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../native/python/pyjp_context.cpp"
             ex="false"

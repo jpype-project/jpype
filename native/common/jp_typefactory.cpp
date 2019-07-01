@@ -28,14 +28,14 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 	} catch (...)
 	{
 		frame.ThrowNew(frame.getContext()->_java_lang_RuntimeException.get(),
-				"unknown error occurred");
+			"unknown error occurred");
 	}
 }
 
 template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>& out)
 {
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, array,
-			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+							&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 	jlong* values = accessor.get();
 	jsize sz = frame.GetArrayLength(array);
 	out.resize(sz);
@@ -47,9 +47,9 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_destroy(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jlongArray resources,
-		jint sz)
+					     JNIEnv *env, jobject self, jlong contextPtr,
+					     jlongArray resources,
+					     jint sz)
 {
 	JP_TRACE_IN_C("JPTypeFactory_destroy");
 	JPContext* context = (JPContext*) contextPtr;
@@ -57,7 +57,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 	try
 	{
 		JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
-				&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+								&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 		jlong* values = accessor.get();
 		for (int i = 0; i < sz; ++i)
 		{
@@ -73,11 +73,11 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jlong clsPtr,
-		jstring name,
-		jlongArray overloadPtrs,
-		jint modifiers)
+							   JNIEnv *env, jobject self, jlong contextPtr,
+							   jlong clsPtr,
+							   jstring name,
+							   jlongArray overloadPtrs,
+							   jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_defineMethodDispatch");
 	JPContext* context = (JPContext*) contextPtr;
@@ -100,12 +100,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jclass cls,
-		jstring name,
-		jlong superClass,
-		jlong componentClass,
-		jint modifiers)
+						       JNIEnv *env, jobject self, jlong contextPtr,
+						       jclass cls,
+						       jstring name,
+						       jlong superClass,
+						       jlong componentClass,
+						       jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_defineArrayClass");
 	JPContext* context = (JPContext*) contextPtr;
@@ -115,10 +115,10 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 		string cname = context->toStringUTF8(name);
 		JP_TRACE(cname);
 		JPArrayClass* result = new JPArrayClass(context, cls,
-				cname,
-				(JPClass*) superClass,
-				(JPClass*) componentClass,
-				modifiers);
+							cname,
+							(JPClass*) superClass,
+							(JPClass*) componentClass,
+							modifiers);
 		return (jlong) result;
 	} catch (...)
 	{
@@ -129,12 +129,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jclass cls,
-		jstring name,
-		jlong superClass,
-		jlongArray interfacePtrs,
-		jint modifiers)
+							JNIEnv *env, jobject self, jlong contextPtr,
+							jclass cls,
+							jstring name,
+							jlong superClass,
+							jlongArray interfacePtrs,
+							jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_defineObjectClass");
 	JPContext* context = (JPContext*) contextPtr;
@@ -153,40 +153,40 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			// Certain classes require special implementations
 			if (className == "java.lang.Object")
 				return (jlong) (context->_java_lang_Object
-					= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Class")
 				return (jlong) (context->_java_lang_Class
-					= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.String")
 				return (jlong) (context->_java_lang_String
-					= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Void")
 				return (jlong) (context->_java_lang_Void
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Boolean")
 				return (jlong) (context->_java_lang_Boolean
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Byte")
 				return (jlong) (context->_java_lang_Byte
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Character")
 				return (jlong) (context->_java_lang_Char
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Short")
 				return (jlong) (context->_java_lang_Short
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Integer")
 				return (jlong) (context->_java_lang_Integer
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Long")
 				return (jlong) (context->_java_lang_Long
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Float")
 				return (jlong) (context->_java_lang_Float
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Double")
 				return (jlong) (context->_java_lang_Double
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			JP_RAISE_RUNTIME_ERROR("Special class not defined");
 		}
 		else
@@ -202,11 +202,11 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jstring name,
-		jclass cls,
-		jlong boxedPtr,
-		jint modifiers)
+						      JNIEnv *env, jobject self, jlong contextPtr,
+						      jstring name,
+						      jclass cls,
+						      jlong boxedPtr,
+						      jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_definePrimitive");
 	JPContext* context = (JPContext*) contextPtr;
@@ -243,11 +243,11 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
-		jlong contextPtr,
-		jlong clsPtr,
-		jlong ctorMethod,
-		jlongArray methodPtrs,
-		jlongArray fieldPtrs)
+						   jlong contextPtr,
+						   jlong clsPtr,
+						   jlong ctorMethod,
+						   jlongArray methodPtrs,
+						   jlongArray fieldPtrs)
 {
 	JP_TRACE_IN_C("JPTypeFactory_assignMembers");
 	JPContext* context = (JPContext*) contextPtr;
@@ -274,12 +274,12 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jlong cls,
-		jstring name,
-		jobject field,
-		jlong fieldType,
-		jint modifiers)
+						  JNIEnv *env, jobject self, jlong contextPtr,
+						  jlong cls,
+						  jstring name,
+						  jobject field,
+						  jlong fieldType,
+						  jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_defineField");
 	JPContext* context = (JPContext*) contextPtr;
@@ -291,11 +291,11 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 		JP_TRACE(cname);
 		jfieldID fid = frame.FromReflectedField(field);
 		return (jlong) (new JPField(
-				(JPClass*) cls,
-				cname,
-				field, fid,
-				(JPClass*) fieldType,
-				modifiers));
+					(JPClass*) cls,
+					cname,
+					field, fid,
+					(JPClass*) fieldType,
+					modifiers));
 	} catch (...)
 	{
 		JPTypeFactory_rethrow(frame);
@@ -305,12 +305,12 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
-		JNIEnv *env, jobject self, jlong contextPtr,
-		jlong cls, jstring name,
-		jobject method,
-		jlong returnType,
-		jlongArray argumentTypes,
-		jlongArray overloadList, jint modifiers)
+						   JNIEnv *env, jobject self, jlong contextPtr,
+						   jlong cls, jstring name,
+						   jobject method,
+						   jlong returnType,
+						   jlongArray argumentTypes,
+						   jlongArray overloadList, jint modifiers)
 {
 	JP_TRACE_IN_C("JPTypeFactory_defineMethod");
 	JPContext* context = (JPContext*) contextPtr;
@@ -325,13 +325,13 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 		string cname = context->toStringUTF8(name);
 		JP_TRACE(cname);
 		return (jlong) (new JPMethod(
-				(JPClass*) cls,
-				cname,
-				method, mid,
-				(JPClass*) returnType,
-				cargs,
-				cover,
-				modifiers));
+					(JPClass*) cls,
+					cname,
+					method, mid,
+					(JPClass*) returnType,
+					cargs,
+					cover,
+					modifiers));
 	} catch (...)
 	{
 		JPTypeFactory_rethrow(frame);

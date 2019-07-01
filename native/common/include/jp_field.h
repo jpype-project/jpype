@@ -30,11 +30,11 @@ public:
 	 * Create a new field based on class and java.lang.Field object
 	 */
 	JPField(JPClass* cls,
-			const string& name,
-			jobject field,
-			jfieldID fid,
-			JPClass* fieldType,
-			jint modifiers);
+		const string& name,
+		jobject field,
+		jfieldID fid,
+		JPClass* fieldType,
+		jint modifiers);
 
 	/**
 	 * destructor

@@ -142,7 +142,7 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 			{
 				stringstream err;
 				err << "Incorrect Java class " << jpvalue->getClass()->toString()
-						<< " vs " << context->_java_lang_Class->toString();
+					<< " vs " << context->_java_lang_Class->toString();
 				PyErr_SetString(PyExc_TypeError, err.str().c_str());
 				return -1;
 			}
@@ -370,7 +370,7 @@ PyObject *PyJPClass::isAssignableFrom(PyJPClass *self, PyObject *arg)
 		if (JPPyString::check(other))
 		{
 			JPClass *otherClass = context->getTypeManager()
-					->findClassByName(JPPyString::asStringUTF8(other));
+				->findClassByName(JPPyString::asStringUTF8(other));
 			return PyBool_FromLong(self->m_Class->isAssignableFrom(otherClass));
 		}
 

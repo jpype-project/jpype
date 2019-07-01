@@ -121,7 +121,7 @@ void PyJPContext::__dealloc__(PyJPContext *self)
 	delete self->m_Context;
 	self->m_Context = NULL;
 	PyObject_GC_UnTrack(self);
-    clear(self);
+	clear(self);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;
@@ -173,7 +173,7 @@ PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 		char convertStrings = true;
 
 		if (!PyArg_ParseTuple(args, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
-                      &ignoreUnrecognized, &convertStrings))
+				&ignoreUnrecognized, &convertStrings))
 		{
 			return NULL;
 		}

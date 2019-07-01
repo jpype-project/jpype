@@ -20,15 +20,21 @@
 #if defined(_MSC_VER) && _MSC_VER<1700
 
 // Welcome to the year 2008!
-namespace std {
-	class mutex {};
+namespace std
+{
+
+	class mutex
+	{
+	} ;
 
 	template <class T> class lock_guard
 	{
 	public:
+
 		lock_guard(const T& mutex_type)
-		{}
-	};
+		{
+		}
+	} ;
 }
 
 #else

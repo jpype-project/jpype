@@ -15,10 +15,10 @@
    limitations under the License.
 
  *****************************************************************************/
-#ifndef _PYJPPROXY_H_
-#define _PYJPPROXY_H_
+#ifndef _PYJPCLASSHINTS_H_
+#define _PYJPCLASSHINTS_H_
 
-struct PyJPProxy
+struct PyJPClassHints
 {
 	PyObject_HEAD
 
@@ -27,15 +27,12 @@ struct PyJPProxy
 	static bool check(PyObject *o);
 
 	static PyObject * __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int __init__(PyJPProxy *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPProxy *self);
-	static PyObject *__str__(PyJPProxy *self);
-	static int traverse(PyJPProxy *self, visitproc visit, void *arg);
-	static int clear(PyJPProxy *self);
+	static int __init__(PyJPClassHints *self, PyObject *args, PyObject *kwargs);
+	static void __dealloc__(PyJPClassHints *self);
+	static PyObject *__str__(PyJPClassHints *self);
+	static int traverse(PyJPClassHints *self, visitproc visit, void *arg);
+	static int clear(PyJPClassHints *self);
 
-	JPProxy *m_Proxy;
-	PyObject *m_Target;
-	PyJPContext *m_Context;
 } ;
 
-#endif // _PYJPROXY_H_
+#endif // _PYJPCLASSHINTS_H_

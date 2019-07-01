@@ -17,9 +17,9 @@
 #include <jpype.h>
 
 JPVoidType::JPVoidType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+		       const string& name,
+		       JPBoxedType* boxedClass,
+		       jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 }
@@ -48,16 +48,9 @@ JPPyObject JPVoidType::convertToPythonObject(jvalue val)
 	return JPPyObject::getNone();
 }
 
-JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPVoidType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	return JPMatch::_none;
-}
-
-jvalue JPVoidType::convertToJava(PyObject* obj)
-{
-	jvalue res;
-	res.l = NULL;
-	return res;
 }
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)

@@ -20,7 +20,10 @@
                 </confElem>
             </confList>
             <formatting>
-                <project-formatting-style>false</project-formatting-style>
+                <project-formatting-style>true</project-formatting-style>
+                <c-style>Apache|Apache</c-style>
+                <cpp-style>ANSI_0|JPype</cpp-style>
+                <header-style>Apache_1|JPype</header-style>
             </formatting>
         </data>
     </configuration>

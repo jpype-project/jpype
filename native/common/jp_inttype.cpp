@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPIntType::JPIntType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+		     const string& name,
+		     JPBoxedType* boxedClass,
+		     jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -39,9 +39,9 @@ JPIntType::~JPIntType()
 bool JPIntType::isSubTypeOf(JPClass* other) const
 {
 	return other == m_Context->_int
-			|| other == m_Context->_long
-			|| other == m_Context->_float
-			|| other == m_Context->_double;
+		|| other == m_Context->_long
+		|| other == m_Context->_float
+		|| other == m_Context->_double;
 }
 
 JPPyObject JPIntType::convertToPythonObject(jvalue val)
@@ -57,74 +57,61 @@ JPValue JPIntType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
+class JPConversionAsInt : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPIntType base_t;
+public:
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) ((base_t*) cls)->assertRange(JPPyLong::asLong(pyobj));
+		return res;
+	}
+} asIntConversion;
+
+JPMatch::Type JPIntType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+{
+	JP_TRACE_IN("JPIntType::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (JPPyObject::isNone(pyobj))
+		return JPMatch::_none;
+
+	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return JPMatch::_none;
+		return match.type;
 	}
 
-	if (JPPyLong::check(obj))
+	if (JPPyLong::check(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = &asIntConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(obj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
-		// If it has integer operations then we will call it an int
-		if (JPPyLong::checkIndexable(obj))
-			return JPMatch::_implicit;
-		else
-			return JPMatch::_explicit;
+		match.conversion = &asIntConversion;
+		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
+		return match.type;
 	}
 
-	return JPMatch::_none;
-}
-
-jvalue JPIntType::convertToJava(PyObject* obj)
-{
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java int");
-	}
-	else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
-		return res;
-	}
-
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java int");
-	return res; // never reached
+	return match.type;
+	JP_TRACE_OUT;
 }
 
 jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -190,11 +177,11 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize l
 {
 	JP_TRACE_IN("JPIntType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT,
-			&JPJavaFrame::SetIntArrayRegion))
+		&JPJavaFrame::SetIntArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+							&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);

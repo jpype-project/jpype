@@ -63,8 +63,8 @@ struct membuf : std::streambuf
 // a template to handle wider character sets.
 
 std::string transcribe(const char* in, size_t len,
-		const JPEncoding& sourceEncoding,
-		const JPEncoding& targetEncoding)
+		       const JPEncoding& sourceEncoding,
+		       const JPEncoding& targetEncoding)
 {
 	// ASCII bypass
 	bool ascii = true;

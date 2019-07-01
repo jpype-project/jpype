@@ -48,11 +48,11 @@ public:
 	JPClass* findClassForObject(jobject obj);
 
 private:
-	JPContext*  m_Context;
+	JPContext* m_Context;
 	JPObjectRef m_JavaTypeManager;
-	jmethodID   m_FindClass;
-	jmethodID   m_FindClassByName;
-	jmethodID   m_FindClassForObject;
+	jmethodID m_FindClass;
+	jmethodID m_FindClassByName;
+	jmethodID m_FindClassForObject;
 } ;
 
 #endif // _JPCLASS_H_

@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPFloatType::JPFloatType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
+			 const string& name,
+			 JPBoxedType* boxedClass,
+			 jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -36,7 +36,7 @@ JPFloatType::~JPFloatType()
 bool JPFloatType::isSubTypeOf(JPClass* other) const
 {
 	return other == m_Context->_float
-			|| other == m_Context->_double;
+		|| other == m_Context->_double;
 }
 
 JPPyObject JPFloatType::convertToPythonObject(jvalue val)
@@ -52,91 +52,73 @@ JPValue JPFloatType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
+class JPConversionAsFloat : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPFloatType base_t;
+public:
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) ((base_t*) cls)->assertRange(JPPyFloat::asDouble(pyobj));
+		return res;
+	}
+} asFloatConversion;
+
+class JPConversionAsFloatLong : public JPConversion
+{
+	typedef JPFloatType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) ((base_t*) cls)->assertRange(JPPyLong::asLong(pyobj));
+		return res;
+	}
+} asFloatLongConversion;
+
+JPMatch::Type JPFloatType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+{
+	JP_TRACE_IN("JPIntType::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (JPPyObject::isNone(pyobj))
+		return JPMatch::_none;
+
+	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (value->getClass() == m_BoxedClass)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
 
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		return match.type;
 	}
 
-	if (JPPyFloat::check(obj))
+	if (JPPyFloat::check(pyobj) || JPPyFloat::checkConvertable(pyobj))
 	{
-		// This next line is a puzzle.  It seems like it should be JPMatch::_exact.
-		return JPMatch::_implicit;
+		match.conversion = &asFloatConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	// Java allows conversion to any type with a longer range even if lossy
-	if (JPPyFloat::checkConvertable(obj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = &asFloatLongConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	return JPMatch::_none;
-}
-
-jvalue JPFloatType::convertToJava(PyObject* obj)
-{
-	jvalue res;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return value->getValue();
-		}
-
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-
-		JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
-	}
-	else if (JPPyFloat::checkConvertable(obj))
-	{
-		double l = JPPyFloat::asDouble(obj);
-		// FIXME the check for s_minFloat seems wrong.
-		// Java would trim to 0 rather than giving an error.
-		if (l >= 0 && l > _Float_Max)
-		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
-		}
-		else if (l < 0 && l < -_Float_Max)
-		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
-		}
-		res.f = (jfloat) l;
-		return res;
-	}
-		// We should never reach here as an int because we should
-		// have hit the float conversion.  But we are leaving it for the odd
-		// duck with __int__ but no __float__
-	else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) JPPyLong::asLong(obj);
-		return res;
-	}
-
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java float");
-	return res;
+	return match.type;
+	JP_TRACE_OUT;
 }
 
 jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -202,11 +184,11 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize
 {
 	JP_TRACE_IN("JPFloatType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT32,
-			&JPJavaFrame::SetFloatArrayRegion))
+		&JPJavaFrame::SetFloatArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetFloatArrayElements, &JPJavaFrame::ReleaseFloatArrayElements);
+							&JPJavaFrame::GetFloatArrayElements, &JPJavaFrame::ReleaseFloatArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);

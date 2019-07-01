@@ -62,7 +62,7 @@ public:
 #endif
 
 		// check for TypeError, if no underlying py_buff exists.
-		if (memview == NULL  || PyErr_Occurred())
+		if (memview == NULL || PyErr_Occurred())
 		{
 			PyErr_Clear();
 			return;
