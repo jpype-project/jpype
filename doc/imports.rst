@@ -97,7 +97,7 @@ Keyword naming
 ~~~~~~~~~~~~~~
 
 Occasionally a java class may contain a python keyword.
-Python keywords as automatically remapped using training underscore.
+Python keywords as automatically remapped using trailing underscore.
 
 Example::
 
