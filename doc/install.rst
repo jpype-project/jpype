@@ -58,6 +58,13 @@ To install the latest JPype using the source distribute use: ::
 
   pip install JPype1
 
+On some systems (e.g. Fedora Linux), this installation was found
+not to enable numpy support.
+If this happens, the following forces compilation and enables numpy
+support if it is available: ::
+
+  pip install --no-binary :all: JPype1
+
 To install from the current github master use: ::
 
   pip install git+https://github.com/jpype-project/jpype.git
