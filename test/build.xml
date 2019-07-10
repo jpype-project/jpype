@@ -7,9 +7,27 @@
 	<target name="test" depends="compile">
 	</target>
 
-	<condition property="build-8">
-		<equals arg1="${version}" arg2="1.8"/>
+	<condition property="build-9">
+		<javaversion atleast="9" />
 	</condition>
+
+	<condition property="build-8">
+		<javaversion atleast="1.8" />
+	</condition>
+
+	<target name="compile-9" if="build-9">
+		<javac destdir="${build}"
+			source="${version}"
+			target="${version}"
+			>
+			<compilerarg value="--add-exports"/>
+			<compilerarg value="java.base/jdk.internal.reflect=ALL-UNNAMED"/>
+			<src>
+				<pathelement location="${src}/java9"/>
+			</src>
+			<include name="jpype/**/*"/>
+		</javac>
+	</target>
 
 	<target name="compile-8" if="build-8">
 		<javac destdir="${build}"
@@ -40,7 +58,7 @@
   -->
 	</target>
 
-	<target name="compile" depends="compile-main,compile-8"/>
+	<target name="compile" depends="compile-main,compile-8,compile-9"/>
 
 	<target name="clean">
 		<delete dir="${build}"/>
