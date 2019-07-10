@@ -256,7 +256,7 @@ class JInterface(object):
         elif not hasattr(self, '__javavalue__'):
             raise JClass("java.lang.InstantiationException")(
                 "`%s` is an interface." % str(self.class_.getName()))
-        super(JObject, self).__init__()
+        super(JInterface, self).__init__()
 
     def __str__(self):
         return self.toString()

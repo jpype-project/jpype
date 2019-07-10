@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
@@ -55,7 +55,7 @@ void JPClassLoader::init()
 	frame.CallVoidMethodA(classLoader, importJarID, &v);
 
 	// Set up the loader
-	findClassID = frame.GetMethodID(cls, "findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	findClassID = frame.GetMethodID(cls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 
 	JP_TRACE_OUT;
 }

@@ -17,12 +17,11 @@
 package org.jpype;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import org.jpype.proxy.JPypeInvocationHandler;
 
-/**
- *
- * @author nelson85
- */
 public class Utility
 {
   public static boolean isCallerSensitive(Method method)
@@ -34,10 +33,38 @@ public class Utility
     }
     return false;
   }
-  
-  public static void main(String[] args) throws NoSuchMethodException
+
+  public Object callMethod(Method method, Object obj, Object[] args)
+          throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
   {
-      Method method = StackWalker.class.getDeclaredMethod("getCallerClass", null);
-      System.out.println(isCallerSensitive(method));
+    return method.invoke(obj, args);
+  }
+  
+  /**
+   * Get the class for an object.
+   * <p>
+   * This method is somewhat misplaced, but we don't have a good place for it in
+   * JPype 0.7. This prevents generation of pointless wrappers for lambda and
+   * other synthetic classes. This functionality moves to TypeManager in 0.8.
+   *
+   * @param obj is the object to probe.
+   * @return the class to use for JPype
+   */
+  public static Class<?> getClassFor(Object obj)
+  {
+    Class cls = obj.getClass();
+    if (Proxy.isProxyClass(cls) && (Proxy.getInvocationHandler(obj) instanceof org.jpype.proxy.JPypeInvocationHandler))
+    {
+      return JPypeInvocationHandler.class;
+    }
+
+    if (cls.isSynthetic())
+    {
+      // We may be a lambda or a Proxy.
+
+      // We are a lambda (Lambda can only have one interface.
+      return cls.getInterfaces()[0];
+    }
+    return cls;
   }
 }

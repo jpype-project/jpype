@@ -16,6 +16,7 @@
 # *****************************************************************************
 from jpype import *
 import common
+import sys
 
 try:
     import unittest2 as unittest
@@ -76,6 +77,36 @@ class ProxyTestCase(common.JPypeTestCase):
         proxy = JProxy([itf1, itf2], dict=d)
         proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
         proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
+
+    def testProxyRoundTrip(self):
+        
+        @JImplements(java.lang.Runnable)
+        class MyRun(object):
+            @JOverride
+            def run(self):
+                pass
+
+        al = JClass('java.util.ArrayList')()
+        runner = MyRun()
+        al.add(runner)
+        self.assertIs(al.get(0), runner)
+
+    def testProxyLeak(self):
+ 
+        @JImplements(java.lang.Runnable)
+        class MyRun(object):
+            @JOverride
+            def run(self):
+                pass
+
+        al = JClass('java.util.ArrayList')()
+        runner = MyRun()
+        al.add(runner)
+        initial = sys.getrefcount(runner)
+        for i in range(0,10):
+            self.assertIs(al.get(0), runner)
+        final = sys.getrefcount(runner)
+        self.assertEqual(initial, final)
 
     def testProxyDeclFail1(self):
         itf1 = self.package.TestInterface1
