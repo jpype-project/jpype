@@ -24,22 +24,25 @@ import org.jpype.proxy.JPypeInvocationHandler;
 
 public class Utility
 {
+
   public static boolean isCallerSensitive(Method method)
   {
-    for (Annotation annotation:method.getAnnotations())
+    for (Annotation annotation : method.getAnnotations())
     {
-        if (annotation.toString().equals("@jdk.internal.reflect.CallerSensitive"))
-            return true;
+      if ("@jdk.internal.reflect.CallerSensitive()".equals(annotation.toString()))
+      {
+        return true;
+      }
     }
     return false;
   }
 
-  public Object callMethod(Method method, Object obj, Object[] args)
+  public static Object callMethod(Method method, Object obj, Object[] args)
           throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
   {
     return method.invoke(obj, args);
   }
-  
+
   /**
    * Get the class for an object.
    * <p>

@@ -62,8 +62,10 @@ void JPClassLoader::init()
 
 jclass JPClassLoader::findClass(string name)
 {
+	JP_TRACE_IN("JPClassLoader::findClass");
 	JPJavaFrame frame;
 	jvalue v;
 	v.l = frame.NewStringUTF(name.c_str());
 	return (jclass) frame.keep(frame.CallObjectMethodA(classLoader, findClassID, &v));
+	JP_TRACE_OUT;
 }

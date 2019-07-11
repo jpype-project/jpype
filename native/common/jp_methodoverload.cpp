@@ -46,6 +46,9 @@ JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth) : m_Method(mth)
 	{
 		m_Arguments.insert(m_Arguments.begin(), 1, claz->getJavaClass());
 	}
+        
+        m_CallerSensitive = JPTypeManager::isCallerSensitive(m_Method.get());
+
 }
 
 JPMethodOverload::~JPMethodOverload()
@@ -250,6 +253,10 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	ensureTypeCache();
 	size_t alen = m_Arguments.size();
 	JPJavaFrame frame(8 + alen);
+        if (m_CallerSensitive)
+        {
+            JP_RAISE_TYPE_ERROR("Not supported");
+        }
 
 	JPClass* retType = m_ReturnTypeCache;
 
