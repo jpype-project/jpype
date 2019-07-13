@@ -37,7 +37,7 @@ public:
 	JPMethodOverload* overload;
 	char offset;
 	char skip;
-
+	
 	JPMatch()
 	{
 		type = JPMatch::_none;

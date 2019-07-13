@@ -41,12 +41,6 @@ JPValue JPBooleanType::getValueFromObject(jobject obj)
 	return JPValue(this, v);
 }
 
-jobject JPBooleanType::getBoxedObject(jvalue v)
-{
-	return this->m_BoxedClass->newInstance()   
-}
-
-
 JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);

@@ -176,7 +176,6 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 				JP_TRACE("Match vargs direct", lastMatch);
 			}
 		}
-
 		else if (len > tlen)
 		{
 			// Must match the array type
@@ -259,7 +258,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
 
-	// Check if it is caller sensative
+	// Check if it is caller sensitive
 	if (m_CallerSensitive)
 	{
 		//public static Object callMethod(Method method, Object obj, Object[] args)
@@ -269,30 +268,35 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 			JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 			self = selfObj->getJavaObject();
 		}
-		
+
 		// Convert arguments
-		jarray ja = frame.NewObjectArray(v.size(), JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
-		for (jsize i = 0; i < (jsize) v.size(); ++i)
+		jobjectArray ja = frame.NewObjectArray(v.size(), JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
+		for (jsize i = match.skip; i < (jsize) alen; ++i)
 		{
-			// need to deal with match skip and match 
-			if (m_ArgumentsTypeCache[i]->isPrimitive())
+			JPClass *cls = m_ArgumentsTypeCache[i - match.offset];
+			// need to deal with match skip and offset 
+			if (cls->isPrimitive())
 			{
-				JPPrimitiveType* type = (JPPrimitiveType*) m_ArgumentsTypeCache[i];
-				v[i].l = type->getBoxedClass()->convertToJava(arg[i]).l;
+				JPPrimitiveType* type = (JPPrimitiveType*) cls;
+				frame.SetObjectArrayElement(ja, i, type->getBoxedClass()->convertToJava(arg[i]).l);
+			} else
+			{
+				frame.SetObjectArrayElement(ja, i, v[i - match.skip].l);
 			}
-			frame.SetObjectArrayElement(ja, i, v[i].l);
 		}
-		
+
 		// Call the method
 		jobject o = JPTypeManager::callMethod(m_Method.get(), self, ja);
-		
+
 		// Deal with the return
 		if (retType->isPrimitive())
 		{
 			JPValue out = retType->getValueFromObject(o);
 			return retType->convertToPythonObject(out.getValue());
 		}
-		return retType->convertToPythonObject(o);
+		jvalue v;
+		v.l = o;
+		return retType->convertToPythonObject(v);
 		JP_RAISE_TYPE_ERROR("Not supported");
 	}
 
