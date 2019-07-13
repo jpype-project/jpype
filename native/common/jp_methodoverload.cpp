@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Mï¿½nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@ JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth) : m_Method(mth)
 	{
 		m_Arguments.insert(m_Arguments.begin(), 1, claz->getJavaClass());
 	}
-        
-        m_CallerSensitive = JPTypeManager::isCallerSensitive(m_Method.get());
+
+	m_CallerSensitive = JPTypeManager::isCallerSensitive(m_Method.get());
 
 }
 
@@ -253,24 +253,55 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	ensureTypeCache();
 	size_t alen = m_Arguments.size();
 	JPJavaFrame frame(8 + alen);
-        if (m_CallerSensitive)
-        {
-            JP_RAISE_TYPE_ERROR("Not supported");
-        }
-
 	JPClass* retType = m_ReturnTypeCache;
 
 	// Pack the arguments
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
 
+	// Check if it is caller sensative
+	if (m_CallerSensitive)
+	{
+		//public static Object callMethod(Method method, Object obj, Object[] args)
+		jobject self = NULL;
+		if (!m_IsStatic)
+		{
+			JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
+			self = selfObj->getJavaObject();
+		}
+		
+		// Convert arguments
+		jarray ja = frame.NewObjectArray(v.size(), JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
+		for (jsize i = 0; i < (jsize) v.size(); ++i)
+		{
+			// need to deal with match skip and match 
+			if (m_ArgumentsTypeCache[i]->isPrimitive())
+			{
+				JPPrimitiveType* type = (JPPrimitiveType*) m_ArgumentsTypeCache[i];
+				v[i].l = type->getBoxedClass()->convertToJava(arg[i]).l;
+			}
+			frame.SetObjectArrayElement(ja, i, v[i].l);
+		}
+		
+		// Call the method
+		jobject o = JPTypeManager::callMethod(m_Method.get(), self, ja);
+		
+		// Deal with the return
+		if (retType->isPrimitive())
+		{
+			JPValue out = retType->getValueFromObject(o);
+			return retType->convertToPythonObject(out.getValue());
+		}
+		return retType->convertToPythonObject(o);
+		JP_RAISE_TYPE_ERROR("Not supported");
+	}
+
 	// Invoke the method (arg[0] = this)
 	if (m_IsStatic)
 	{
 		jclass claz = m_Class->getJavaClass();
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
-	}
-	else
+	} else
 	{
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c = selfObj->getJavaObject();

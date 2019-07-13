@@ -25,6 +25,14 @@ import org.jpype.proxy.JPypeInvocationHandler;
 public class Utility
 {
 
+  /** Checks to see if the method is caller sensitive.
+   *
+   * As the annotation is a private internal, we must
+   * check by name.
+   *
+   * @param method is the method to be probed.
+   * @return true if caller sensitive.
+   */
   public static boolean isCallerSensitive(Method method)
   {
     for (Annotation annotation : method.getAnnotations())
@@ -37,6 +45,21 @@ public class Utility
     return false;
   }
 
+  /**
+   * Call a method using reflection.
+   *
+   * This method creates a stackframe so that caller sensitive methods
+   * will execute properly.
+   *
+   * @param method is the method to call.
+   * @param obj is the object to operate on, it will be null if the method is
+   * static.
+   * @param args the arguments to method.
+   * @return the object that results form the invocation.
+   * @throws IllegalAccessException
+   * @throws IllegalArgumentException
+   * @throws InvocationTargetException
+   */
   public static Object callMethod(Method method, Object obj, Object[] args)
           throws IllegalAccessException, IllegalArgumentException, InvocationTargetException
   {

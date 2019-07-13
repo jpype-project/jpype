@@ -26,14 +26,7 @@ JPPrimitiveType::~JPPrimitiveType()
 {
 }
 
-//jobject JPPrimitiveType::convertToJavaObject(PyObject obj)
-//{
-//	JPJavaFrame frame;
-//
-//	JPPyTuple tuple(JPPyTuple::newTuple(1));
-//	tuple.setItem(0, obj);
-//
-//	JPValue o = m_BoxedClass->newInstance(tuple);
-//	jobject res = o.getJavaObject();
-//	return frame.keep(res);
-//}
+bool JPPrimitiveType::isPrimitive() const
+{
+	return true;
+}

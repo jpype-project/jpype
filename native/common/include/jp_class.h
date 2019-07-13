@@ -34,13 +34,14 @@ public:
 	{
 		return m_Class.get();
 	}
-
+        
 	string toString() const;
 	string getCanonicalName() const;
 	bool isAbstract();
 	bool isFinal();
 	bool isThrowable();
 	bool isInterface();
+	virtual bool isPrimitive() const;
 	const MethodList& getMethods();
 	const FieldList&  getFields();
 
@@ -143,7 +144,7 @@ public:
 
 	// Check if a value is an instance of this class
 	bool isInstance(JPValue& val);
-
+	
 	virtual void postLoad();
 private:
 	void loadFields();

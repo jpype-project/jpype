@@ -2,22 +2,51 @@ package jpype.bug;
 
 import jdk.internal.reflect.CallerSensitive;
 
+/** Caller sensitive methods need special handling.
+ *
+ * So we need to test each possible path
+ * (different return types and arguments).
+ *
+ * We will pretend our methods are also CallerSensitive.
+ */
 public class Caller
 {
     @CallerSensitive
-    public static Class callStatic()
+    public static Object callObjectStatic()
     {
-	return null;
+	return new Caller();
     }
 
     @CallerSensitive
-    public Class callMember()
+    public Object callObjectMember()
     {
-	return null;
+	return new Caller();
     }
 
     @CallerSensitive
-    public Class call(Object a, Object b)
+    public static Void callVoidStatic()
+    {
+    }
+
+    @CallerSensitive
+    public void callVoidMember()
+    {
+    }
+
+    @CallerSensitive
+    public static int callIntegerStatic()
+    {
+	return 123;
+    }
+
+    @CallerSensitive
+    public int callIntegerMember()
+    {
+	return 123;
+    }
+
+    @CallerSensitive
+    public Object callArgs(Object a, Object b)
     {
 	return null;
     }

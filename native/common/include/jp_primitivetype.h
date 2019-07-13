@@ -23,10 +23,8 @@ protected:
 	JPPrimitiveType(JPBoxedClass* cls);
 	virtual ~JPPrimitiveType();
 
-protected:
-	JPClass* m_BoxedClass;
-
 public:
+	virtual bool isPrimitive() const override;
 
 	JPClass* getBoxedClass() const
 	{
@@ -34,6 +32,9 @@ public:
 	}
 
 	void setBoxedClass(JPBoxedClass* boxedClass);
+
+protected:
+	JPClass* m_BoxedClass;
 
 } ;
 

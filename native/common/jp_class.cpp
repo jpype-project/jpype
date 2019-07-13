@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+ 
  *****************************************************************************/
 #include <jpype.h>
 
@@ -67,6 +67,11 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 }
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
+
+bool JPClass::isPrimitive() const
+{
+	return false;
+}
 
 string JPClass::toString() const
 {
@@ -607,7 +612,7 @@ string JPClass::describe()
 bool JPClass::isInstance(JPValue& val)
 {
 	JPClass* cls = val.getClass();
-	if (dynamic_cast<JPPrimitiveType*> (cls) == cls)
+	if (cls->isPrimitive())
 		return false;
 
 	JPJavaFrame frame;
