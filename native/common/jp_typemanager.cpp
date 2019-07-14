@@ -28,8 +28,8 @@ namespace
 	JavaClassMap javaClassMap;
 	jclass utility;
 	jmethodID getClassForID;
-        jmethodID callMethodID;
-        jmethodID isCallerSensitiveID;
+	jmethodID callMethodID;
+	jmethodID isCallerSensitiveID;
 
 	//	TypeMap typeMap;
 	//	JavaClassMap javaClassMap;
@@ -95,7 +95,6 @@ JPClass* registerObjectClass(string name, jclass jc)
 	JP_TRACE_OUT;
 }
 
-
 jclass JPTypeManager::getClassFor(jobject obj)
 {
 	if (getClassForID == 0)
@@ -113,11 +112,12 @@ bool JPTypeManager::isCallerSensitive(jobject obj)
 	JPJavaFrame frame;
 	jvalue v;
 	v.l = obj;
-	return frame.CallStaticBooleanMethodA(utility, isCallerSensitiveID, &v);
+	return frame.CallStaticBooleanMethodA(utility, isCallerSensitiveID, &v) != 0;
 }
 
 jobject JPTypeManager::callMethod(jobject method, jobject obj, jobject args)
 {
+	JP_TRACE_IN("JPTypeManager::callMethod");
 	if (callMethodID == 0)
 		return NULL;
 	JPJavaFrame frame;
@@ -125,7 +125,8 @@ jobject JPTypeManager::callMethod(jobject method, jobject obj, jobject args)
 	v[0].l = method;
 	v[1].l = obj;
 	v[2].l = args;
-	return (jclass) frame.keep(frame.CallStaticObjectMethodA(utility, callMethodID, v));
+	return frame.keep(frame.CallStaticObjectMethodA(utility, callMethodID, v));
+	JP_TRACE_OUT;
 }
 
 void JPTypeManager::init()
@@ -138,14 +139,14 @@ void JPTypeManager::init()
 	utility = (jclass) frame.NewGlobalRef(JPClassLoader::findClass("org.jpype.Utility"));
 
 	// Get support methods
-        callMethodID = frame.GetStaticMethodID(utility, "callMethod",
-                "(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+	callMethodID = frame.GetStaticMethodID(utility, "callMethod",
+			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
 
-        isCallerSensitiveID = frame.GetStaticMethodID(utility, "isCallerSensitive",
-                "(Ljava/lang/reflect/Method;)Z");
+	isCallerSensitiveID = frame.GetStaticMethodID(utility, "isCallerSensitive",
+			"(Ljava/lang/reflect/Method;)Z");
 
 	getClassForID = frame.GetStaticMethodID(utility, "getClassFor",
-                "(Ljava/lang/Object;)Ljava/lang/Class;");
+			"(Ljava/lang/Object;)Ljava/lang/Class;");
 
 	registerClass(_java_lang_Object = new JPObjectBaseClass());
 	registerClass(_java_lang_Class = new JPClassBaseClass());
@@ -237,8 +238,7 @@ JPClass* JPTypeManager::findClass(jclass cls)
 	if (JPJni::isArray(cls))
 	{
 		return registerArrayClass(name, cls);
-	}
-	else
+	} else
 	{
 		return registerObjectClass(name, cls);
 	}

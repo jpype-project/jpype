@@ -28,7 +28,6 @@ else:
 
 _JObject = None
 
-_java_lang_throwable = None
 _java_lang_RuntimeException = None
 _java_ClassLoader = None
 _java_lang_Class = None
@@ -50,9 +49,10 @@ def _initialize():
     _java_lang_Class = JClass("java.lang.Class")
 
     _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
+    if not _java_ClassLoader:
+        raise RuntimeError("Unable to load Java SystemClassLoader")
 
-    global _java_lang_throwable, _java_lang_RuntimeException
-    _java_lang_throwable = JClass("java.lang.Throwable")
+    global _java_lang_RuntimeException
     _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
 
     # Preload needed classes

@@ -60,6 +60,7 @@ class ReflectCase(common.JPypeTestCase):
 
     def testCallPrivateMethod(self):
         method = self.Reflect.class_.getDeclaredMethod('privateMethod')
+        method.setAccessible(True)
         obj = self.Reflect()
         self.assertIsNotNone(obj)
         self.assertIsNotNone(method)
@@ -75,6 +76,7 @@ class ReflectCase(common.JPypeTestCase):
     def testAccessPrivateField(self):
         field = self.Reflect.class_.getDeclaredField('privateField')
         obj = self.Reflect()
+        field.setAccessible(True)
         self.assertIsNotNone(obj)
         self.assertIsNotNone(field)
         self.assertEqual('private', field.get(obj))

@@ -261,27 +261,30 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	// Check if it is caller sensitive
 	if (m_CallerSensitive)
 	{
+		JP_TRACE("Caller sensitive method");
 		//public static Object callMethod(Method method, Object obj, Object[] args)
 		jobject self = NULL;
+		size_t len = alen;
 		if (!m_IsStatic)
 		{
-			JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
+			JP_TRACE("Call instance");
+			len--;
+			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
 			self = selfObj->getJavaObject();
 		}
 
 		// Convert arguments
-		jobjectArray ja = frame.NewObjectArray(v.size(), JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
-		for (jsize i = match.skip; i < (jsize) alen; ++i)
+		jobjectArray ja = frame.NewObjectArray(len, JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
+		for (jsize i = 0; i < (jsize) len; ++i)
 		{
-			JPClass *cls = m_ArgumentsTypeCache[i - match.offset];
-			// need to deal with match skip and offset 
+			JPClass *cls = m_ArgumentsTypeCache[i + match.skip - match.offset];
 			if (cls->isPrimitive())
 			{
 				JPPrimitiveType* type = (JPPrimitiveType*) cls;
-				frame.SetObjectArrayElement(ja, i, type->getBoxedClass()->convertToJava(arg[i]).l);
+				frame.SetObjectArrayElement(ja, i, type->getBoxedClass()->convertToJava(arg[i + match.skip]).l);
 			} else
 			{
-				frame.SetObjectArrayElement(ja, i, v[i - match.skip].l);
+				frame.SetObjectArrayElement(ja, i, v[i].l);
 			}
 		}
 
@@ -291,13 +294,17 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 		// Deal with the return
 		if (retType->isPrimitive())
 		{
+			JP_TRACE("Return primitive");
 			JPValue out = retType->getValueFromObject(o);
 			return retType->convertToPythonObject(out.getValue());
 		}
-		jvalue v;
-		v.l = o;
-		return retType->convertToPythonObject(v);
-		JP_RAISE_TYPE_ERROR("Not supported");
+		else
+		{
+			JP_TRACE("Return object");
+			jvalue v;
+			v.l = o;
+			return retType->convertToPythonObject(v);
+		}
 	}
 
 	// Invoke the method (arg[0] = this)

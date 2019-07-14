@@ -1,4 +1,4 @@
-package jpype.bug;
+package jpype.method;
 
 import jdk.internal.reflect.CallerSensitive;
 
@@ -24,7 +24,7 @@ public class Caller
     }
 
     @CallerSensitive
-    public static Void callVoidStatic()
+    public static void callVoidStatic()
     {
     }
 
@@ -48,7 +48,19 @@ public class Caller
     @CallerSensitive
     public Object callArgs(Object a, Object b)
     {
-	return null;
+	return b;
+    }
+
+    @CallerSensitive
+    public int callArg1(int a)
+    {
+	return a;
+    }
+
+    @CallerSensitive
+    public Object callVarArgs(Object a, Object... b)
+    {
+	return b;
     }
  
 };

@@ -26,7 +26,7 @@ JPStringClass::~JPStringClass()
 
 JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 {
-	JP_TRACE_IN("JPStringType::asHostObject");
+	JP_TRACE_IN("JPStringType::convertToPythonObject");
 
 	if (val.l == NULL)
 	{
