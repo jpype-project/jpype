@@ -62,5 +62,16 @@ public class Caller
     {
 	return b;
     }
+
+    public Class callStackWalker1()
+    {
+       return StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).getCallerClass();
+    }
+
+    @CallerSensitive
+    public Class callStackWalker2()
+    {
+       return StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE).getCallerClass();
+    }
  
 };

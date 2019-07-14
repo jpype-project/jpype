@@ -390,18 +390,6 @@ def _getDefaultJavaObject(obj):
     raise TypeError(
         "Unable to determine the default type of `{0}`".format(obj.__class__))
 
-# Patch for forName
-
-
-@_jcustomizer.JImplementationFor('java.lang.Class')
-class _JavaLangClass(object):
-    @classmethod
-    def forName(cls, *args):
-        if len(args) == 1 and isinstance(args[0], str):
-            return cls._forName(args[0], True, _java_ClassLoader)
-        else:
-            return cls._forName(*args)
-
 
 def typeLookup(tp, name):
     """Fetch a descriptor from the inheritance tree.

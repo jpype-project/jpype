@@ -4,8 +4,16 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+
+  - Fixed an issue with JDK 12 regarding calling methods with reflection.
   
-  - Corrected segfault when converting null elements while accessing a slice
+  - Removed limitations having to do with CallerSensitive methods. Methods
+    affected are listed in :doc:`caller-sensitive`. Caller sensitive 
+    methods now receive an internal JPype class as the desut
+
+  - Fixed incorrect change with exceptions ``str()``
+  
+  - Fixed segfault when converting null elements while accessing a slice
     from a Java object array.
 
   - JProxy objects now are returned from Java as the Python objects 
@@ -15,6 +23,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     and retrieved as Python objects.
 
 - **0.7.0 - 2019**
+
   - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,

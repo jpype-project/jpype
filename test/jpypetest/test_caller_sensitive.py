@@ -95,3 +95,11 @@ class JCallerSensitiveCase(common.JPypeTestCase):
     def testDeclaredMethod(self):
         self.assertIsInstance(jpype.java.lang.Object.class_.getDeclaredMethod('wait'), jpype.java.lang.reflect.Method)
 
+    def testStackWalker1(self):
+        with self.assertRaises(jpype.java.lang.IllegalCallerException):
+            self.obj.callStackWalker1()
+
+    def testStackWalker2(self):
+        self.assertEqual(self.obj.callStackWalker2(), jpype.JClass(jpype.java.lang.Class.forName("org.jpype.Utility")).class_)
+
+
