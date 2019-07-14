@@ -14,6 +14,7 @@ if [ ! -d "$JAVA_HOME" ]; then
 	exit -1
 fi
 
+
 # Make sure the jvm.dll is where it should be
 find "$JAVA_HOME" -name "jvm.dll"
 
@@ -24,22 +25,24 @@ SETUP=/setup-$ARCH
 echo "==== update gcc"
 $SETUP -q -P gcc-core,gcc-g++,libcrypt-devel
 echo "==== update python"
-$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools
+if [ $PYTHON = "python3.7" ]; then
+	$SETUP -q -P python37,python37-numpy,python37-devel
+fi
 echo "==== get modules"
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 $PYTHON get-pip.py
+$PYTHON -m pip install setuptools
+$PYTHON -m pip install mock
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
 $PYTHON ./bootstrap.py
 $PYTHON -m pip install ./
 cd ..
 rm -r ./setuptools
-
 git clone --depth=1 https://github.com/pypa/wheel.git
 git clone --depth=1 https://github.com/pypa/pip.git
 git clone --depth=1 https://github.com/pypa/setuptools_scm.git
 
-$PYTHON -m pip install mock
 $PYTHON -m pip install --upgrade ./pip ./wheel ./setuptools_scm
 $PYTHON -m pip install pytest==4.5.0
 
