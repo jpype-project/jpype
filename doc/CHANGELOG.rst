@@ -5,6 +5,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 
+  - Updated getJVMVersion to work with JDK 9+.
+
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
   
   - Removed limitations having to do with CallerSensitive methods. Methods

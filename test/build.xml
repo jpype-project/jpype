@@ -8,11 +8,14 @@
 	</target>
 
 	<condition property="build-9">
-		<javaversion atleast="9" />
+		<not><or>
+		<equals arg1="${version}" arg2="1.8"/>
+		<equals arg1="${version}" arg2="1.7"/>
+		</or></not>
 	</condition>
 
 	<condition property="build-8">
-		<javaversion atleast="1.8" />
+		<not><equals arg1="${version}" arg2="1.7"/></not>
 	</condition>
 
 	<target name="compile-9" if="build-9">
