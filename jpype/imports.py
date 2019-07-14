@@ -128,7 +128,7 @@ def _getJavaClass(javaname):
 
     # Otherwise!?
     except Exception as ex:
-        err = "Unable to import '%s' due to unexpected exception"
+        err = "Unable to import '%s' due to unexpected exception, '%s'"%(javaname, ex)
     raise ImportError(err)
 
 # FIXME imports of static fields not working for now.

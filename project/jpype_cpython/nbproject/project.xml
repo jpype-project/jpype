@@ -21,9 +21,9 @@
             </confList>
             <formatting>
                 <project-formatting-style>true</project-formatting-style>
-                <c-style>Apache|Apache</c-style>
-                <cpp-style>ANSI_0|JPype</cpp-style>
-                <header-style>Apache_1|JPype</header-style>
+                <c-style>ANSI|ANSI</c-style>
+                <cpp-style>Default_0|JPype</cpp-style>
+                <header-style>Default_1|JPype</header-style>
             </formatting>
         </data>
     </configuration>

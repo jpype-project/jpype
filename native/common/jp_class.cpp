@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+ 
  *****************************************************************************/
 #include <jpype.h>
 
@@ -58,6 +58,11 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 }
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
+
+bool JPClass::isPrimitive() const
+{
+	return false;
+}
 
 string JPClass::toString() const
 {
@@ -163,6 +168,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 
 JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
 {
+	JP_TRACE_IN("JPClass::getArrayRange");
 	jobjectArray array = (jobjectArray) a;
 
 	JPPyTuple res(JPPyTuple::newTuple(length));
@@ -176,6 +182,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	}
 
 	return res;
+	JP_TRACE_OUT;
 }
 
 void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* vals)
@@ -387,7 +394,7 @@ string JPClass::describe()
 bool JPClass::isInstance(JPValue& val)
 {
 	JPClass* cls = val.getClass();
-	if (dynamic_cast<JPPrimitiveType*> (cls) == cls)
+	if (cls->isPrimitive())
 		return false;
 
 	JPJavaFrame frame(m_Context);

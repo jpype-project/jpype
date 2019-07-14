@@ -270,7 +270,7 @@ bool JPPyLong::checkConvertable(PyObject* obj)
 
 bool JPPyLong::checkIndexable(PyObject* obj)
 {
-	return PyObject_HasAttrString(obj, "__index__");
+	return PyObject_HasAttrString(obj, "__index__")!=0;
 }
 
 jlong JPPyLong::asLong(PyObject* obj)
@@ -340,7 +340,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #else
 	if (c < 128)
 	{
-		char c1 = c;
+		char c1 = (char)c;
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(&c1, 1));
 	}
 	JPPyObject buf(JPPyRef::_call, PyUnicode_New(1, 65535));
@@ -434,7 +434,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 #else
 	if (PyBytes_Check(pyobj))
 	{
-		int sz = PyBytes_Size(pyobj);
+		Py_ssize_t sz = PyBytes_Size(pyobj);
 		if (sz != 1)
 			JP_RAISE_VALUE_ERROR("Char must be length 1");
 

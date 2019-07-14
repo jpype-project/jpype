@@ -111,6 +111,35 @@ JPMatch::Type JPShortType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 	}
 
 	return match.type;
+}
+
+jvalue JPShortType::convertToJava(PyObject* obj)
+{
+	JP_TRACE_IN("JPShortType::convertToJava");
+	jvalue res;
+	field(res) = 0;
+	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	if (value != NULL)
+	{
+		if (value->getClass() == this)
+		{
+			return *value;
+		}
+		if (value->getClass() == m_BoxedClass)
+		{
+			return getValueFromObject(value->getJavaObject());
+		}
+		JP_RAISE_TYPE_ERROR("Cannot convert value to Java short");
+	}
+	else if (JPPyLong::checkConvertable(obj))
+	{
+		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
+		return res;
+	}
+
+	JP_RAISE_TYPE_ERROR("Cannot convert value to Java short");
+	return res; // never reached
+>>>>>>> caller_sensitive
 	JP_TRACE_OUT;
 }
 

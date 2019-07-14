@@ -97,7 +97,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
-	if (dynamic_cast<JPPrimitiveType*> (cls) != cls)
+	if (!cls->isPrimitive())
 	{
 		value.l = frame.NewGlobalRef(value.l);
 		JP_TRACE("type", cls->getCanonicalName());
@@ -174,7 +174,7 @@ int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 		{
 			JPJavaFrame frame(context);
 			jvalue v = type->convertToJava(value);
-			if (dynamic_cast<JPPrimitiveType*> (type) != type)
+			if (!type->isPrimitive())
 				v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);
 			JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
@@ -192,11 +192,10 @@ void PyJPValue::__dealloc__(PyJPValue *self)
 	JP_TRACE_IN_C("PyJPValue::__dealloc__", self);
 	JPValue& value = self->m_Value;
 	JPClass *cls = value.getClass();
-	JP_TRACE("Value", cls, &(value.getValue()));
 	if (self->m_Context != NULL && cls != NULL)
 	{
 		JPContext *context = self->m_Context->m_Context;
-		if (context->isRunning() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+		if (context->isRunning() && !cls->isPrimitive())
 		{
 			// If the JVM has shutdown then we don't need to free the resource
 			// FIXME there is a problem with initializing the syxtem twice.
@@ -295,7 +294,7 @@ PyObject *PyJPValue::toString(PyJPValue *self)
 			return out;
 
 		}
-		if (dynamic_cast<JPPrimitiveType*> (cls) != 0)
+		if (cls->isPrimitive())
 			JP_RAISE_VALUE_ERROR("toString requires a java object");
 		if (cls == NULL)
 			JP_RAISE_VALUE_ERROR("toString called with null class");
@@ -335,7 +334,7 @@ PyObject *PyJPValue::toUnicode(PyJPValue *self)
 			return out;
 
 		}
-		if (dynamic_cast<JPPrimitiveType*> (cls) != 0)
+		if (cls->isPrimitive())
 			JP_RAISE_VALUE_ERROR("toUnicode requires a java object");
 		if (cls == NULL)
 			JP_RAISE_VALUE_ERROR("toUnicode called with null class");

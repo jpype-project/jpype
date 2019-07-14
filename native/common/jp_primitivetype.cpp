@@ -30,3 +30,8 @@ m_BoxedClass(boxedClass)
 JPPrimitiveType::~JPPrimitiveType()
 {
 }
+
+bool JPPrimitiveType::isPrimitive() const
+{
+	return true;
+}

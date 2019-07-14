@@ -62,7 +62,7 @@ class _JException(object):
         super(Exception, self.__class__).__init__(self)
 
     def __str__(self):
-        return str(self.getMessage())
+        return str(self.toString())
 
     # Included for compatibility with JPype 0.6.3
     def message(self):

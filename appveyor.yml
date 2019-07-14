@@ -42,6 +42,11 @@ environment:
     #      ARCH: x86_64
     #      CYGSH: C:\Cygwin64\bin\bash -c
 
+    - PYTHON: "python3.7"
+      CYGWIN: "C:\\cygwin64"
+      ARCH: x86_64
+      CYGSH: C:\Cygwin64\bin\bash -c
+
     - PYTHON: "C:\\Miniconda"
       ARCH: x86
       CONDA_PY: "2-latest"
@@ -49,11 +54,6 @@ environment:
     - PYTHON: "C:\\Miniconda-x64"
       ARCH: x86_64
       CONDA_PY: "2-latest"
-
-    - PYTHON: "python3"
-      CYGWIN: "C:\\cygwin64"
-      ARCH: x86_64
-      CYGSH: C:\Cygwin64\bin\bash -c
 
     - PYTHON: "C:\\Miniconda3"
       ARCH: x86

@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPTYPE_MANAGER_H_
 #define _JPTYPE_MANAGER_H_
@@ -40,7 +40,7 @@ public:
 
 	/**
 	 * Find a class using a native name.
-	 * 
+	 *
 	 * The pointer returned is NOT owned by the caller
 	 */
 	JPClass* findClass(jclass cls);

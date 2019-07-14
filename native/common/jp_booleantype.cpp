@@ -104,6 +104,8 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& fram
 		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 		return match.type;
 	}
+
+	return match.type;
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

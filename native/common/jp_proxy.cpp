@@ -146,7 +146,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			// We must box here.
-			if (dynamic_cast<JPPrimitiveType*> (returnClass) == returnClass)
+			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");
 				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
@@ -247,3 +247,20 @@ jobject JPProxy::getProxy()
 	return frame.keep(instance);
 	JP_TRACE_OUT;
 }
+
+JPProxyType::JPProxyType() : JPClass(handlerClass)
+{
+}
+
+JPProxyType::~JPProxyType()
+{
+}
+
+JPPyObject JPProxyType::convertToPythonObject(jvalue val)
+{
+	JPJavaFrame frame;
+	jobject ih = frame.CallStaticObjectMethodA(proxyClass, getInvocationHandlerID, &val);
+	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, hostObjectID);
+	return JPPyObject(JPPyRef::_use, proxy->m_Target);
+}
+

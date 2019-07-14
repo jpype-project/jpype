@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPPROXY_H_
 #define _JPPROXY_H_
@@ -59,5 +59,17 @@ private:
 	JPObjectRef   m_Proxy;
 	JPClassList   m_InterfaceClasses;
 } ;
+
+// Special wrapper for round trip returns
+class JPProxyType : public JPClass
+{
+public:
+	JPProxyType();
+	virtual~ JPProxyType();
+
+public: // JPClass implementation
+	virtual JPPyObject convertToPythonObject(jvalue val) override;
+} ;
+
 
 #endif // JPPROXY_H

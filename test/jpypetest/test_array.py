@@ -384,3 +384,8 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertFalse(array.equals(carray))
         # Copy is shallow
         self.assertTrue(array[0].equals(carray[0]))
+
+    def testObjectNullArraySlice(self):
+        # Check for bug in 0.7.0
+        array = jpype.JArray(jpype.JObject)([None,])
+        self.assertEqual(array[:], (None,))

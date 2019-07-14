@@ -212,6 +212,55 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
 
+	// Check if it is caller sensitive
+	if (m_CallerSensitive)
+	{
+		JP_TRACE("Caller sensitive method");
+		//public static Object callMethod(Method method, Object obj, Object[] args)
+		jobject self = NULL;
+		size_t len = alen;
+		if (!m_IsStatic)
+		{
+			JP_TRACE("Call instance");
+			len--;
+			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
+			self = selfObj->getJavaObject();
+		}
+
+		// Convert arguments
+		jobjectArray ja = frame.NewObjectArray(len, JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
+		for (jsize i = 0; i < (jsize) len; ++i)
+		{
+			JPClass *cls = m_ArgumentsTypeCache[i + match.skip - match.offset];
+			if (cls->isPrimitive())
+			{
+				JPPrimitiveType* type = (JPPrimitiveType*) cls;
+				frame.SetObjectArrayElement(ja, i, type->getBoxedClass()->convertToJava(arg[i + match.skip]).l);
+			} else
+			{
+				frame.SetObjectArrayElement(ja, i, v[i].l);
+			}
+		}
+
+		// Call the method
+		jobject o = JPTypeManager::callMethod(m_Method.get(), self, ja);
+
+		// Deal with the return
+		if (retType->isPrimitive())
+		{
+			JP_TRACE("Return primitive");
+			JPValue out = retType->getValueFromObject(o);
+			return retType->convertToPythonObject(out.getValue());
+		}
+		else
+		{
+			JP_TRACE("Return object");
+			jvalue v;
+			v.l = o;
+			return retType->convertToPythonObject(v);
+		}
+	}
+
 	// Invoke the method (arg[0] = this)
 	if (JPModifier::isStatic(m_Modifiers))
 	{

@@ -26,10 +26,8 @@ protected:
 			jint modifiers);
 	virtual ~JPPrimitiveType();
 
-protected:
-	JPClass* m_BoxedClass;
-
 public:
+	virtual bool isPrimitive() const override;
 
 	JPClass* getBoxedClass() const
 	{
@@ -37,6 +35,9 @@ public:
 	}
 
 	void setBoxedClass(JPBoxedType* boxedClass);
+
+protected:
+	JPClass* m_BoxedClass;
 
 } ;
 

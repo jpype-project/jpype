@@ -16,6 +16,31 @@
  *****************************************************************************/
 #include <jpype.h>
 
+bool JPTypeManager::isCallerSensitive(jobject obj)
+{
+	if (isCallerSensitiveID == 0)
+		return false;
+	JPJavaFrame frame;
+	jvalue v;
+	v.l = obj;
+	return frame.CallStaticBooleanMethodA(utility, isCallerSensitiveID, &v) != 0;
+}
+
+jobject JPTypeManager::callMethod(jobject method, jobject obj, jobject args)
+{
+	JP_TRACE_IN("JPTypeManager::callMethod");
+	if (callMethodID == 0)
+		return NULL;
+	JPJavaFrame frame;
+	jvalue v[3];
+	v[0].l = method;
+	v[1].l = obj;
+	v[2].l = args;
+	return frame.keep(frame.CallStaticObjectMethodA(utility, callMethodID, v));
+	JP_TRACE_OUT;
+}
+
+
 JPTypeManager::JPTypeManager(JPContext* context)
 {
 	m_Context = context;

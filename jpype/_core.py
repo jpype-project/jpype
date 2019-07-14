@@ -367,10 +367,14 @@ def getJVMVersion(jvm=None):
         jvm = _jvm
     if not jvm.isStarted():
         return (0, 0, 0)
-    version = str(_jclass.JClass(
-        'java.lang.Runtime').class_.getPackage().getImplementationVersion())
-    if version.find('_') != -1:
-        parts = version.split('_')
-        version = parts[0]
+
+    import re
+    runtime = _jclass.JClass('java.lang.Runtime')
+    version = runtime.class_.getPackage().getImplementationVersion()
+
+    # Java 9+ has a version method 
+    if not version:
+        version = runtime.version()
+    version = (re.match("([0-9.]+)", str(version)).group(1))
     return tuple([int(i) for i in version.split('.')])
 

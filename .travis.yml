@@ -32,7 +32,6 @@ matrix:
     - python: nightly
     - python: pypy
     - python: pypy3
-    - os: osx
 
   include:
     - name: "Python 2.7 on Xenial Linux (w/o NUMPY)"
@@ -82,8 +81,6 @@ matrix:
         - PIP=pip3
         - JPYPE_STR_CONVERSION=False
 
-    ## This pattern is good, but something is broken in openJDK 12
-    ## Deal with in another pull
     - name: "Python 2.7 on macOS"
       os: osx
       osx_image: xcode10.2

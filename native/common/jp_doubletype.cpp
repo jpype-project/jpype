@@ -81,7 +81,7 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 	if (JPPyObject::isNone(pyobj))
 		return JPMatch::_none;
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
