@@ -22,8 +22,36 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.jpype.proxy.JPypeInvocationHandler;
 
+/**
+ * Support for JPype TypeManager.
+ *
+ * This is an internal class containing backported functionality from JPype 0.8.
+ * All functionality in this class will be moved in JPype 0.8 when the type
+ * manager functionality moved into the Java layer.
+ *
+ * @author nelson85
+ */
 public class Utility
 {
+
+  static boolean hasCallerSensitive = false;
+
+  static
+  {
+    try
+    {
+      java.lang.reflect.Method method = java.lang.Class.class.getDeclaredMethod("forName", String.class);
+      for (Annotation annotation : method.getAnnotations())
+      {
+        if ("@jdk.internal.reflect.CallerSensitive()".equals(annotation.toString()))
+        {
+          hasCallerSensitive = true;
+        }
+      }
+    } catch (NoSuchMethodException | SecurityException ex)
+    {
+    }
+  }
 
   /**
    * Checks to see if the method is caller sensitive.
@@ -35,9 +63,24 @@ public class Utility
    */
   public static boolean isCallerSensitive(Method method)
   {
-    for (Annotation annotation : method.getAnnotations())
+    if (hasCallerSensitive)
     {
-      if ("@jdk.internal.reflect.CallerSensitive()".equals(annotation.toString()))
+      for (Annotation annotation : method.getAnnotations())
+      {
+        if ("@jdk.internal.reflect.CallerSensitive()".equals(annotation.toString()))
+        {
+          return true;
+        }
+      }
+    } else
+    {
+      // JDK prior versions prior to 9 do not annotate methods that
+      // require special handling, thus we will just blanket those
+      // classes known to have issues.
+      Class<?> cls = method.getDeclaringClass();
+      if (cls.equals(java.lang.Class.class)
+              || cls.equals(java.lang.ClassLoader.class)
+              || cls.equals(java.sql.DriverManager.class))
       {
         return true;
       }
