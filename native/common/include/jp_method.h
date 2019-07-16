@@ -37,11 +37,15 @@ public:
 
 	/** Check to see if this overload matches the argument list.
 	 *
+	 * @param frame is the scope to hold Java local variables.
+	 * @param match holds the details of the match that is found.
 	 * @param isInstance is true if the first argument is an instance object.
 	 * @param args is a list of arguments including the instance.
+	 * 
+	 * @return the quality of the match.
 	 *
 	 */
-	JPMatch::Type matches(JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
+	JPMatch::Type matches(JPJavaFrame &frame, JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
 	JPPyObject invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPValue invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg);
 
@@ -74,6 +78,11 @@ public:
 	{
 		return JPModifier::isVarArgs(m_Modifiers);
 	}
+	
+	bool isCallerSensitive() const
+	{
+		return JPModifier::isCallerSensitive(m_Modifiers);
+	}
 
 	string toString() const;
 
@@ -86,7 +95,7 @@ public:
 	}
 
 private:
-	void packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVector& arg);
+	void packArgs(JPJavaFrame &frame, JPMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
 
 	JPMethod(const JPMethod& o);
 	JPMethod& operator=(const JPMethod&) ;

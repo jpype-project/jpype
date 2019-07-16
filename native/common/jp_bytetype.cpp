@@ -176,13 +176,19 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticByteField(c, fid, val);
 }
 
 void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetByteField(c, fid, val);
 }
 
@@ -232,8 +238,10 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetByteArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(frame, this, obj));
+	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 

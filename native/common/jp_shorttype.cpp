@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPShortType::JPShortType(JPContext* context, jclass clss,
-			 const string& name,
-			 JPBoxedType* boxedClass,
-			 jint modifiers)
+		const string& name,
+		JPBoxedType* boxedClass,
+		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -38,10 +38,10 @@ JPShortType::~JPShortType()
 bool JPShortType::isSubTypeOf(JPClass* other) const
 {
 	return other == m_Context->_short
-		|| other == m_Context->_int
-		|| other == m_Context->_long
-		|| other == m_Context->_float
-		|| other == m_Context->_double;
+			|| other == m_Context->_int
+			|| other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPShortType::convertToPythonObject(jvalue val)
@@ -113,36 +113,6 @@ JPMatch::Type JPShortType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 	return match.type;
 }
 
-jvalue JPShortType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPShortType::convertToJava");
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java short");
-	}
-	else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
-		return res;
-	}
-
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java short");
-	return res; // never reached
->>>>>>> caller_sensitive
-	JP_TRACE_OUT;
-}
-
 jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewShortArray(sz);
@@ -187,13 +157,19 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticShortField(c, fid, val);
 }
 
 void JPShortType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetShortField(c, fid, val);
 }
 
@@ -206,11 +182,11 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize
 {
 	JP_TRACE_IN("JPShortType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_SHORT,
-		&JPJavaFrame::SetShortArrayRegion))
+			&JPJavaFrame::SetShortArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetShortArrayElements, &JPJavaFrame::ReleaseShortArrayElements);
+			&JPJavaFrame::GetShortArrayElements, &JPJavaFrame::ReleaseShortArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
@@ -239,8 +215,10 @@ JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetShortArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
+	type_t val = field(match.conversion->convert(frame, this, obj));
+	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);
 }
 

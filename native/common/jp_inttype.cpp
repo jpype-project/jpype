@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPIntType::JPIntType(JPContext* context, jclass clss,
-		     const string& name,
-		     JPBoxedType* boxedClass,
-		     jint modifiers)
+		const string& name,
+		JPBoxedType* boxedClass,
+		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -39,9 +39,9 @@ JPIntType::~JPIntType()
 bool JPIntType::isSubTypeOf(JPClass* other) const
 {
 	return other == m_Context->_int
-		|| other == m_Context->_long
-		|| other == m_Context->_float
-		|| other == m_Context->_double;
+			|| other == m_Context->_long
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPIntType::convertToPythonObject(jvalue val)
@@ -158,13 +158,19 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 
 void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticIntField(c, fid, val);
 }
 
 void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetIntField(c, fid, val);
 }
 
@@ -177,11 +183,11 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize l
 {
 	JP_TRACE_IN("JPIntType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT,
-		&JPJavaFrame::SetIntArrayRegion))
+			&JPJavaFrame::SetIntArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
@@ -210,8 +216,10 @@ JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetIntArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
+	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }
 

@@ -110,11 +110,6 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 		JP_RAISE_INDEX_ERROR(ss.str());
 	}
 
-	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
-	{
-		JP_RAISE_TYPE_ERROR("Unable to convert.");
-	}
-
 	compType->setArrayItem(frame, m_Object.get(), ndx, val);
 }
 

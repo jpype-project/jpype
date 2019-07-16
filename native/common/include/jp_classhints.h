@@ -44,15 +44,15 @@ public:
 	JPMethod* overload;
 	char offset;
 	char skip;
-	std::vector<JPMatch> conversion;
+	std::vector<JPMatch> argument;
 
 	JPMatch operator[](size_t i)
 	{
-		return conversion[i];
+		return argument[i];
 	}
 
 	JPMethodMatch(size_t size)
-	: conversion(size)
+	: argument(size)
 	{
 		type = JPMatch::_none;
 		isVarDirect = false;

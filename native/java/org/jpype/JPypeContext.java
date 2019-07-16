@@ -16,6 +16,9 @@
  *****************************************************************************/
 package org.jpype;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -71,7 +74,9 @@ public class JPypeContext
   /**
    * Start the JPype system.
    *
-   * @param context
+   * @param context is the C++ portion of the context.
+   * @param bootLoader is the classloader holding JPype resources.
+   * @return the created context.
    */
   public static JPypeContext createContext(long context, ClassLoader bootLoader)
   {
@@ -92,6 +97,10 @@ public class JPypeContext
     return instance;
   }
 
+  /** 
+   * Stop all JPype resources.
+   * 
+   */
   public void shutdown()
   {
     this.referenceQueue.stop();
@@ -127,4 +136,30 @@ public class JPypeContext
   {
     return this.referenceQueue;
   }
+
+  /**
+   * Call a method using reflection.This method creates a stackframe so that
+   * caller sensitive methods will execute properly.
+   *
+   *
+   * @param method is the method to call.
+   * @param obj is the object to operate on, it will be null if the method is
+   * static.
+   * @param args the arguments to method.
+   * @return the object that results form the invocation.
+   * @throws java.lang.Throwable throws whatever type the called method
+   * produces.
+   */
+  public Object callMethod(Method method, Object obj, Object[] args)
+          throws Throwable
+  {
+    try
+    {
+      return method.invoke(obj, args);
+    } catch (InvocationTargetException ex)
+    {
+      throw ex.getCause();
+    }
+  }
+
 }

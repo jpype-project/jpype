@@ -29,11 +29,11 @@ public:
 	/**
 	 * Create a new field based on class and java.lang.Field object
 	 */
-	JPField(JPClass* cls,
+	JPField(JPClass *cls,
 		const string& name,
 		jobject field,
 		jfieldID fid,
-		JPClass* fieldType,
+		JPClass *fieldType,
 		jint modifiers);
 
 	/**
@@ -56,10 +56,10 @@ public:
 	}
 
 	JPPyObject getStaticField();
-	void     setStaticField(PyObject* val);
+	void     setStaticField(PyObject *pyobj);
 
 	JPPyObject getField(jobject inst);
-	void     setField(jobject inst, PyObject* val);
+	void     setField(jobject inst, PyObject *pyobj);
 
 	bool isFinal() const
 	{

@@ -69,6 +69,11 @@ public:
 
 public: // JPClass implementation
 	virtual JPPyObject convertToPythonObject(jvalue val) override;
+
+private:
+	JPClassRef m_ProxyClass;
+	jmethodID  m_GetInvocationHandlerID;
+	jfieldID   m_InstanceID;
 } ;
 
 

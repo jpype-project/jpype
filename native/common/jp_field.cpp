@@ -49,7 +49,7 @@ JPPyObject JPField::getStaticField()
 	JP_TRACE_OUT;
 }
 
-void JPField::setStaticField(PyObject* val)
+void JPField::setStaticField(PyObject *pyobj)
 {
 	JP_TRACE_IN("JPField::setStaticAttribute");
 	JPJavaFrame frame(m_Class->getContext());
@@ -61,7 +61,8 @@ void JPField::setStaticField(PyObject* val)
 		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
 	}
 
-	if (m_Type->canConvertToJava(val) <= JPMatch::_explicit)
+	JPMatch match;
+	if (m_Type->getJavaConversion(match, frame, pyobj) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_Type->getCanonicalName();
@@ -69,7 +70,7 @@ void JPField::setStaticField(PyObject* val)
 	}
 
 	jclass claz = m_Class->getJavaClass();
-	m_Type->setStaticField(frame, claz, m_FieldID, val);
+	m_Type->setStaticField(frame, claz, m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
 
@@ -83,7 +84,7 @@ JPPyObject JPField::getField(jobject inst)
 	JP_TRACE_OUT;
 }
 
-void JPField::setField(jobject inst, PyObject* val)
+void JPField::setField(jobject inst, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPField::setAttribute");
 	JPJavaFrame frame(m_Class->getContext());
@@ -94,13 +95,14 @@ void JPField::setField(jobject inst, PyObject* val)
 		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
 	}
 
-	if (m_Type->canConvertToJava(val) <= JPMatch::_explicit)
+	JPMatch match;
+	if (m_Type->getJavaConversion(match, frame, pyobj) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_Type->getCanonicalName();
 		JP_RAISE_TYPE_ERROR(err.str());
 	}
 
-	m_Type->setField(frame, inst, m_FieldID, val);
+	m_Type->setField(frame, inst, m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }

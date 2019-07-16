@@ -75,6 +75,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 							     jobjectArray args)
 {
 	JPContext* context = (JPContext*) contextPtr;
+	JPJavaFrame frame(context, env);
 
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
@@ -139,7 +140,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 				JP_RAISE_TYPE_ERROR("Return value is None when it cannot be");
 			}
 
-			if (returnClass->canConvertToJava(returnValue.get()) == JPMatch::_none)
+			JPMatch returnMatch;
+			if (returnClass->getJavaConversion(returnMatch, frame, returnValue.get()) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");
 				JP_RAISE_TYPE_ERROR("Return value is not compatible with required type.");
@@ -153,8 +155,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			JP_TRACE("Convert return");
-			jvalue res = returnClass->convertToJava(returnValue.get());
-			return res.l;
+			jvalue res = returnMatch->conversion(frame, returnClass, returnValue.get());
+			return frame.keep(res.l);
 		} catch (JPypeException& ex)
 		{
 			JP_TRACE("JPypeException raised");
@@ -248,8 +250,20 @@ jobject JPProxy::getProxy()
 	JP_TRACE_OUT;
 }
 
-JPProxyType::JPProxyType() : JPClass(handlerClass)
+JPProxyType::JPProxyType(JPContext* context,
+			   jclass clss,
+			   const string& name,
+			   JPClass* super,
+			   JPClassList& interfaces,
+			   jint modifiers)
+: JPClass(context, clss, name, super, interfaces, modifiers)
 {
+	JPJavaFrame frame(context);
+	jclass proxyClass = frame.FindClass("java/lang/reflect/Proxy");
+	m_ProxyClass = JPClassRef(context, proxyClass);
+	m_GetInvocationHandlerID = frame.GetStaticMethodID(proxy, "getInvocationHandler",
+			"(Ljava/lang/Object;)Ljava/lang/reflect/InvocationHandler;");
+	m_InstanceID = frame.GetFieldID(clss, "instance", "J");
 }
 
 JPProxyType::~JPProxyType()
@@ -259,8 +273,8 @@ JPProxyType::~JPProxyType()
 JPPyObject JPProxyType::convertToPythonObject(jvalue val)
 {
 	JPJavaFrame frame;
-	jobject ih = frame.CallStaticObjectMethodA(proxyClass, getInvocationHandlerID, &val);
-	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, hostObjectID);
+	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(), m_GetInvocationHandlerID, &val);
+	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, m_InstanceID);
 	return JPPyObject(JPPyRef::_use, proxy->m_Target);
 }
 

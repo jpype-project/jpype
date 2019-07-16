@@ -68,6 +68,11 @@ public:
 	{
 		return JPModifier::isInterface(m_Modifiers);
 	}
+	
+	virtual bool isPrimitive() const
+	{
+		return false;
+	}
 
 	JPMethodDispatch* getCtor()
 	{

@@ -42,19 +42,20 @@ string JPMethodDispatch::getClassName() const
 	return m_Class->getCanonicalName();
 }
 
-void JPMethodDispatch::findOverload(JPMatch bestMatch, JPPyObjectVector& arg, bool callInstance)
+void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& arg, bool callInstance)
 {
 	JP_TRACE_IN("JPMethodDispatch::findOverload");
+	JPJavaFrame frame(m_Class->getContext());
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
-	JPMatch match(arg.size());
+	JPMethodMatch match(arg.size());
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
 
 		JP_TRACE("Trying to match", current->toString());
-		JPMatch match = current->matches(callInstance, arg);
+		JPMatch match = current->matches(frame, callInstance, arg);
 
 		JP_TRACE("  match ended", match.type);
 		if (match.type == JPMatch::_exact)

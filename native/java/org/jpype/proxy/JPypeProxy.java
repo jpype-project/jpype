@@ -29,7 +29,7 @@ import org.jpype.manager.TypeManager;
 public class JPypeProxy implements InvocationHandler
 {
   JPypeContext context;
-  long instance;
+  public long instance;
   Class<?>[] interfaces;
   ClassLoader cl = ClassLoader.getSystemClassLoader();
 

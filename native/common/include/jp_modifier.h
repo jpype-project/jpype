@@ -74,12 +74,12 @@ extern "C"
 		inline bool isTransient(jlong modifier)
 		{
 			return (modifier & 0x0080) == 0x0080;
-		}  // fields
+		} // fields
 
 		inline bool isVarArgs(jlong modifier)
 		{
 			return (modifier & 0x0080) == 0x0080;
-		}  //methods
+		} //methods
 
 		inline bool isNative(jlong modifier)
 		{
@@ -146,6 +146,11 @@ extern "C"
 		inline bool isFunctional(jlong modifier)
 		{
 			return (modifier & 0x00100000) == 0x00100000;
+		}
+
+		inline bool isCallerSensitive(jlong modifier)
+		{
+			return (modifier & 0x00200000) == 0x00200000;
 		}
 
 		inline bool isConstructor(jlong modifier)

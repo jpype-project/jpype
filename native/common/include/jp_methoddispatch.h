@@ -84,7 +84,7 @@ private:
 	 * @param searchInstance is true if the first argument is to be skipped
 	 * when matching with a non-static.
 	 */
-	JPMatch findOverload(JPPyObjectVector& vargs, bool searchInstance);
+	void findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance);
 	void dumpOverloads();
 
 	JPClass*      m_Class;

@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPDoubleType::JPDoubleType(JPContext* context, jclass clss,
-			   const string& name,
-			   JPBoxedType* boxedClass,
-			   jint modifiers)
+		const string& name,
+		JPBoxedType* boxedClass,
+		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -106,7 +106,7 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 		match.conversion = &asDoubleConversion;
 		return match.type = JPMatch::_exact;
 	}
-	
+
 	if (JPPyFloat::checkConvertable(pyobj))
 	{
 		match.conversion = &asDoubleConversion;
@@ -167,13 +167,19 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetDoubleField(c, fid, val);
 }
 
@@ -186,11 +192,11 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsiz
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT64,
-		&JPJavaFrame::SetDoubleArrayRegion))
+			&JPJavaFrame::SetDoubleArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
+			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
@@ -219,8 +225,10 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetDoubleArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(frame, this, obj));
+	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 

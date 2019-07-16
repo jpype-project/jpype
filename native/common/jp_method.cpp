@@ -45,25 +45,25 @@ string JPMethod::toString() const
 	return m_Name;
 }
 
-JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
+JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
 	JP_TRACE_IN_C("JPMethod::matchVars");
-	JPArrayClass* arraytype = (JPArrayClass*) vartype;
-	JPClass* type = arraytype->getComponentType();
+	JPArrayClass *arraytype = (JPArrayClass*) vartype;
+	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
 
 	JPMatch::Type lastMatch = JPMatch::_exact;
 	for (size_t i = start; i < len; i++)
 	{
-		JPMatch::Type match = type->canConvertToJava(arg[i]);
+		JPMatch::Type quality = type->getJavaConversion(match[i], frame, arg[i]);
 
-		if (match < JPMatch::_implicit)
+		if (quality < JPMatch::_implicit)
 		{
 			return JPMatch::_none;
 		}
-		if (match < lastMatch)
+		if (quality < lastMatch)
 		{
-			lastMatch = match;
+			lastMatch = quality;
 		}
 	}
 
@@ -71,7 +71,8 @@ JPMatch::Type matchVars(JPPyObjectVector& arg, size_t start, JPClass* vartype)
 	JP_TRACE_OUT_C;
 }
 
-JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObjectVector& arg)
+JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance, 
+		JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::matches");
 	match.overload = this;
@@ -116,11 +117,11 @@ JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObj
 			size_t last = tlen - 1 - match.offset;
 			PyObject* obj = arg[last];
 			--len;
-			lastMatch = type->canConvertToJava(obj);
+			lastMatch = type->getJavaConversion(match.argument[last], frame, obj);
 			if (lastMatch < JPMatch::_implicit)
 			{
 				// Try indirect
-				lastMatch = matchVars(arg, last, type);
+				lastMatch = matchVars(frame, match, arg, last, type);
 				match.isVarIndirect = true;
 				JP_TRACE("Match vargs indirect", lastMatch);
 			}
@@ -135,7 +136,7 @@ JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObj
 		{
 			// Must match the array type
 			len = tlen - 1;
-			lastMatch = matchVars(arg, tlen - 1 + match.offset, type);
+			lastMatch = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
 			match.isVarIndirect = true;
 			JP_TRACE("Match vargs indirect", lastMatch);
 		}
@@ -155,9 +156,10 @@ JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObj
 	JP_TRACE("Start match");
 	for (size_t i = 0; i < len; i++)
 	{
+		size_t j = i+match.offset;
 		JPClass* type = m_ParameterTypes[i];
-		JPMatch::Type ematch = type->canConvertToJava(arg[i + match.offset]);
-		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[i + match.offset]));
+		JPMatch::Type ematch = type->getJavaConversion(frame, match.argument[j], arg[j]);
+		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[j]));
 		if (ematch < JPMatch::_implicit)
 		{
 			return match;
@@ -173,7 +175,8 @@ JPMatch::Type JPMethod::matches(JPMethodMatch& match, bool callInstance, JPPyObj
 	JP_TRACE_OUT;
 }
 
-void JPMethod::packArgs(JPMethodMatch& match, vector<jvalue>& v, JPPyObjectVector& arg)
+void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match, 
+		vector<jvalue> &v, JPPyObjectVector &arg)
 {
 	JP_TRACE_IN("JPMethod::packArgs");
 	size_t len = arg.size();
@@ -195,16 +198,17 @@ void JPMethod::packArgs(JPMethodMatch& match, vector<jvalue>& v, JPPyObjectVecto
 	{
 		JPClass* type = m_ParameterTypes[i - match.offset];
 		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName());
-		v[i - match.skip] = type->convertToJava(arg[i]);
+		v[i - match.skip] = match->argument[i]->conversion->convert(frame, type, arg[i]);
 	}
 	JP_TRACE_OUT;
 }
 
 JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
+	JPContext *context = m_Class->getContext();
 	JP_TRACE_IN("JPMethod::invoke");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
+	JPJavaFrame frame(context, 8 + alen);
 
 	JPClass* retType = m_ReturnType;
 
@@ -213,13 +217,13 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 	packArgs(match, v, arg);
 
 	// Check if it is caller sensitive
-	if (m_CallerSensitive)
+	if (isCallerSensitive())
 	{
 		JP_TRACE("Caller sensitive method");
 		//public static Object callMethod(Method method, Object obj, Object[] args)
 		jobject self = NULL;
 		size_t len = alen;
-		if (!m_IsStatic)
+		if (!isStatic())
 		{
 			JP_TRACE("Call instance");
 			len--;
@@ -228,14 +232,17 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		}
 
 		// Convert arguments
-		jobjectArray ja = frame.NewObjectArray(len, JPTypeManager::_java_lang_Object->getJavaClass(), NULL);
+		jobjectArray ja = frame.NewObjectArray(len, context->_java_lang_Object->getJavaClass(), NULL);
 		for (jsize i = 0; i < (jsize) len; ++i)
 		{
-			JPClass *cls = m_ArgumentsTypeCache[i + match.skip - match.offset];
+			JPClass *cls = m_ParameterTypes[i + match.skip - match.offset];
 			if (cls->isPrimitive())
 			{
 				JPPrimitiveType* type = (JPPrimitiveType*) cls;
-				frame.SetObjectArrayElement(ja, i, type->getBoxedClass()->convertToJava(arg[i + match.skip]).l);
+				JPMatch conv;
+				type->getBoxedClass()->getJavaConversion(conv, frame, arg[i + match.skip]);
+				frame.SetObjectArrayElement(ja, i, 
+						conv.conversion->convert(frame, type->getBoxedClass(), arg[i + match.skip]).l);
 			} else
 			{
 				frame.SetObjectArrayElement(ja, i, v[i].l);
@@ -243,7 +250,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		}
 
 		// Call the method
-		jobject o = JPTypeManager::callMethod(m_Method.get(), self, ja);
+		jobject o = context->callMethod(m_Method.get(), self, ja);
 
 		// Deal with the return
 		if (retType->isPrimitive())
@@ -276,7 +283,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = this->m_Class->convertToJava(arg[0]);
+			jvalue  v = match.argument[0]->conversion->convert(frame, m_Class, arg[0]);
 			c = v.l;
 		}
 		else

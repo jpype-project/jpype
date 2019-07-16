@@ -79,7 +79,7 @@ JPContext::JPContext()
 	m_ProxyFactory = 0;
 
 	m_Object_ToStringID = 0;
-	m_ContextShutdownMethod = 0;
+	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
 	m_Host = 0;
@@ -185,7 +185,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		jclass cls = m_ClassLoader->findClass("org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 								"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
-		m_ContextShutdownMethod = frame.GetMethodID(cls, "shutdown", "()V");
+		m_ShutdownMethodID = frame.GetMethodID(cls, "shutdown", "()V");
+	    m_CallMethodID = frame.GetMethodID(cls, "callMethod",
+			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+		
 		jvalue val[2];
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();
@@ -222,13 +225,13 @@ void JPContext::shutdownJVM()
 		JPJavaFrame frame(this);
 		JP_TRACE("Shutdown services");
 		JP_TRACE(m_JavaContext.get());
-		JP_TRACE(m_ContextShutdownMethod);
+		JP_TRACE(m_ShutdownMethodID);
 
 		// Tell Java to shutdown the context
 		{
 			JPPyCallRelease release;
 			if (m_JavaContext.get() != 0)
-				frame.CallVoidMethodA(m_JavaContext.get(), m_ContextShutdownMethod, 0);
+				frame.CallVoidMethodA(m_JavaContext.get(), m_ShutdownMethodID, 0);
 		}
 	}
 
@@ -248,7 +251,7 @@ void JPContext::shutdownJVM()
 
 void JPContext::createJVM(void* arg)
 {
-	JP_TRACE_IN("JPEnv::CreateJavaVM");
+	JP_TRACE_IN("JPContext::CreateJavaVM");
 	m_JavaVM = NULL;
 	JNIEnv* env;
 	CreateJVM_Method(&m_JavaVM, (void**) &env, arg);
@@ -347,3 +350,16 @@ jstring JPContext::fromStringUTF8(const string& str)
 	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
 }
 
+jobject JPContext::callMethod(jobject method, jobject obj, jobject args)
+{
+	JP_TRACE_IN("JPContext::callMethod");
+	if (m_CallMethodID == 0)
+		return NULL;
+	JPJavaFrame frame;
+	jvalue v[3];
+	v[0].l = method;
+	v[1].l = obj;
+	v[2].l = args;
+	return frame.keep(frame.CallObjectMethodA(m_JavaContext.get(), m_CallMethodID, v));
+	JP_TRACE_OUT;
+}

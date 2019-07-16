@@ -187,6 +187,7 @@ public:
 	// Java functions
 	string toString(jobject o);
 	string toStringUTF8(jstring str);
+	jobject callMethod(jobject method, jobject obj, jobject args);
 
 	/**
 	 * Convert a UTF8 encoded string into Java.
@@ -247,24 +248,26 @@ private:
 private:
 	JPContext(const JPContext& orig);
 
-	JavaVM* m_JavaVM;
+	JavaVM *m_JavaVM;
 
 	// Java half
 	JPObjectRef m_JavaContext;
 
 	// Services
-	JPTypeFactory* m_TypeFactory;
-	JPTypeManager* m_TypeManager;
-	JPClassLoader* m_ClassLoader;
-	JPReferenceQueue* m_ReferenceQueue;
-	JPProxyFactory* m_ProxyFactory;
+	JPTypeFactory *m_TypeFactory;
+	JPTypeManager *m_TypeManager;
+	JPClassLoader *m_ClassLoader;
+	JPReferenceQueue *m_ReferenceQueue;
+	JPProxyFactory *m_ProxyFactory;
 
 	// Java Functions
 	jmethodID m_Object_ToStringID;
-	jmethodID m_ContextShutdownMethod;
+	jmethodID m_ShutdownMethodID;
+	jmethodID m_CallMethodID;
+	
 	bool m_IsShutdown;
 	bool m_IsInitialized;
-	PyObject* m_Host;
+	PyObject *m_Host;
 	bool m_ConvertStrings;
 } ;
 
