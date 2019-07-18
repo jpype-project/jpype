@@ -111,6 +111,7 @@ JPMatch::Type JPShortType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 	}
 
 	return match.type;
+	JP_TRACE_OUT;
 }
 
 jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)

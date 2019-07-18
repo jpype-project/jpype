@@ -29,7 +29,7 @@ protected:
 public:
 	virtual bool isPrimitive() const override;
 
-	JPClass* getBoxedClass() const
+	JPBoxedType* getBoxedClass() const
 	{
 		return m_BoxedClass;
 	}
@@ -37,7 +37,7 @@ public:
 	void setBoxedClass(JPBoxedType* boxedClass);
 
 protected:
-	JPClass* m_BoxedClass;
+	JPBoxedType* m_BoxedClass;
 
 } ;
 

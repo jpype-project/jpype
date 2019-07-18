@@ -469,16 +469,17 @@ PyObject *PyJPClass::canConvertToJava(PyJPClass *self, PyObject *args)
 		JPClass *cls = self->m_Class;
 
 		// Test the conversion
-		JPMatch::Type match = cls->canConvertToJava(other);
+		JPMatch match;
+		cls->getJavaConversion(match, frame, other);
 
 		// Report to user
-		if (match == JPMatch::_none)
+		if (match.type == JPMatch::_none)
 			return JPPyString::fromStringUTF8("none", false).keep();
-		if (match == JPMatch::_explicit)
+		if (match.type == JPMatch::_explicit)
 			return JPPyString::fromStringUTF8("explicit", false).keep();
-		if (match == JPMatch::_implicit)
+		if (match.type == JPMatch::_implicit)
 			return JPPyString::fromStringUTF8("implicit", false).keep();
-		if (match == JPMatch::_exact)
+		if (match.type == JPMatch::_exact)
 			return JPPyString::fromStringUTF8("exact", false).keep();
 
 		// Not sure how this could happen
@@ -507,17 +508,18 @@ PyObject *PyJPClass::convertToJava(PyJPClass *self, PyObject *args)
 		JPClass *cls = self->m_Class;
 
 		// Test the conversion
-		JPMatch::Type match = cls->canConvertToJava(other);
+		JPMatch match;
+		cls->getJavaConversion(match, frame, other);
 
 		// If there is no conversion report a failure
-		if (match == JPMatch::_none)
+		if (match.type == JPMatch::_none)
 		{
 			PyErr_SetString(PyExc_TypeError, "Unable to create an instance.");
 			return 0;
 		}
 
 		// Otherwise give back a PyJPValue
-		jvalue v = cls->convertToJava(other);
+		jvalue v = match.conversion->convert(frame, cls, other);
 		return PyJPValue::alloc(cls, v).keep();
 	}
 	PY_STANDARD_CATCH(NULL);

@@ -33,64 +33,57 @@ JPClassType::~JPClassType()
 {
 }
 
-JPMatch::Type JPClassType::canConvertToJava(PyObject* pyobj)
+JPMatch::Type JPClassType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	JP_TRACE_IN("JPObjectType::convertToJava");
-	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_implicit;
-
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-			return JPMatch::_exact;
-		return JPMatch::_none;
-	}
-
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
-	if (cls != NULL)
-		return JPMatch::_exact;
-
-	return JPMatch::_none;
+	JP_TRACE_IN("JPClass::getJavaConversion");
+	match.type = JPMatch::_none;
+	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (classConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	return match.type;
 	JP_TRACE_OUT;
 }
 
-jvalue JPClassType::convertToJava(PyObject* pyobj)
-{
-	JP_TRACE_IN("JPObjectType::convertToJava");
-	JP_TRACE(JPPyObject::getTypeName(pyobj));
-
-	jvalue res;
-	JPJavaFrame frame(m_Context);
-
-	res.l = NULL;
-
-	// assume it is convertible;
-	if (JPPyObject::isNone(pyobj))
-	{
-		return res;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			res.l = frame.NewLocalRef(value->getValue().l);
-			res.l = frame.keep(res.l);
-			return res;
-		}
-		JP_RAISE_TYPE_ERROR("Unable to convert to java class");
-	}
-
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
-	if (cls != NULL)
-	{
-		res.l = frame.NewLocalRef(cls->getJavaClass());
-		res.l = frame.keep(res.l);
-		return res;
-	}
-	JP_RAISE_TYPE_ERROR("Unable to convert to java class");
-	return res;
-	JP_TRACE_OUT;
-}
+//
+//jvalue JPClassType::convertToJava(PyObject* pyobj)
+//{
+//	JP_TRACE_IN("JPObjectType::convertToJava");
+//	JP_TRACE(JPPyObject::getTypeName(pyobj));
+//
+//	jvalue res;
+//	JPJavaFrame frame(m_Context);
+//
+//	res.l = NULL;
+//
+//	// assume it is convertible;
+//	if (JPPyObject::isNone(pyobj))
+//	{
+//		return res;
+//	}
+//
+//	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+//	if (value != NULL)
+//	{
+//		if (value->getClass() == this)
+//		{
+//			res.l = frame.NewLocalRef(value->getValue().l);
+//			res.l = frame.keep(res.l);
+//			return res;
+//		}
+//		JP_RAISE_TYPE_ERROR("Unable to convert to java class");
+//	}
+//
+//	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
+//	if (cls != NULL)
+//	{
+//		res.l = frame.NewLocalRef(cls->getJavaClass());
+//		res.l = frame.keep(res.l);
+//		return res;
+//	}
+//	JP_RAISE_TYPE_ERROR("Unable to convert to java class");
+//	return res;
+//	JP_TRACE_OUT;
+//}

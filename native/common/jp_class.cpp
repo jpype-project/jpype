@@ -59,11 +59,6 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
 
-bool JPClass::isPrimitive() const
-{
-	return false;
-}
-
 string JPClass::toString() const
 {
 	return m_Context->toString(m_Class.get());
@@ -287,7 +282,7 @@ JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyO
 		return match.type;
 	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 		return match.type;
-	if (proxyConversion->matches(m_Context, frame, this, pyobj) != JPMatch::_none)
+	if (proxyConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 		return match.type;
 
 	// APPLY USER SUPPLIED CONVERSIONS

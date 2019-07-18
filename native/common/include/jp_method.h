@@ -95,7 +95,7 @@ public:
 	}
 
 private:
-	void packArgs(JPJavaFrame &frame, JPMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
+	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
 
 	JPMethod(const JPMethod& o);
 	JPMethod& operator=(const JPMethod&) ;

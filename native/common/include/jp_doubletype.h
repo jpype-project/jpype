@@ -28,12 +28,7 @@ public:
 	typedef jdouble type_t;
 	typedef jdoubleArray array_t;
 
-	inline jdouble& field(jvalue& v)
-	{
-		return v.d;
-	}
-
-	inline jdouble field(const jvalue& v) const
+	static inline jdouble& field(jvalue& v)
 	{
 		return v.d;
 	}

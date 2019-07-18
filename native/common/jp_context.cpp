@@ -119,7 +119,7 @@ void JPContext::loadEntryPoints(const string& path)
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
-			 char ignoreUnrecognized, char convertStrings)
+			 bool ignoreUnrecognized, bool convertStrings)
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
@@ -355,7 +355,7 @@ jobject JPContext::callMethod(jobject method, jobject obj, jobject args)
 	JP_TRACE_IN("JPContext::callMethod");
 	if (m_CallMethodID == 0)
 		return NULL;
-	JPJavaFrame frame;
+	JPJavaFrame frame(this);
 	jvalue v[3];
 	v[0].l = method;
 	v[1].l = obj;

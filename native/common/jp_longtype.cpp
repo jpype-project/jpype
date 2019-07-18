@@ -17,9 +17,9 @@
 #include <jp_primitive_common.h>
 
 JPLongType::JPLongType(JPContext* context, jclass clss,
-		       const string& name,
-		       JPBoxedType* boxedClass,
-		       jint modifiers)
+		const string& name,
+		JPBoxedType* boxedClass,
+		jint modifiers)
 : JPPrimitiveType(context, clss, name, boxedClass, modifiers)
 {
 	JPJavaFrame frame(context);
@@ -33,8 +33,8 @@ JPLongType::~JPLongType()
 bool JPLongType::isSubTypeOf(JPClass* other) const
 {
 	return other == m_Context->_long
-		|| other == m_Context->_float
-		|| other == m_Context->_double;
+			|| other == m_Context->_float
+			|| other == m_Context->_double;
 }
 
 JPPyObject JPLongType::convertToPythonObject(jvalue val)
@@ -92,7 +92,7 @@ JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 
 	if (JPPyLong::check(pyobj))
 	{
-		match.conversion = &JPLongType;
+		match.conversion = &asLongConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
@@ -151,13 +151,19 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticLongField(c, fid, val);
 }
 
 void JPLongType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetLongField(c, fid, val);
 }
 
@@ -170,11 +176,11 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize 
 {
 	JP_TRACE_IN("JPLongType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT64,
-		&JPJavaFrame::SetLongArrayRegion))
+			&JPJavaFrame::SetLongArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
@@ -203,8 +209,10 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetLongArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(frame, this, obj));
+	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);
 }
 

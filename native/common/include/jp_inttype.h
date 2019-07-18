@@ -28,12 +28,7 @@ public:
 	typedef jint type_t;
 	typedef jintArray array_t;
 
-	inline jint& field(jvalue& v)
-	{
-		return v.i;
-	}
-
-	inline jint field(const jvalue& v) const
+	static inline jint& field(jvalue& v)
 	{
 		return v.i;
 	}

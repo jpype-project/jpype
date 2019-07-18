@@ -28,12 +28,7 @@ public:
 	typedef jlong type_t;
 	typedef jlongArray array_t;
 
-	inline jlong& field(jvalue& v)
-	{
-		return v.j;
-	}
-
-	inline jlong field(const jvalue& v) const
+	static inline jlong& field(jvalue& v)
 	{
 		return v.j;
 	}

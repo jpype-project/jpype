@@ -18,13 +18,13 @@
 #include <jp_method.h>
 
 JPMethod::JPMethod(JPClass* claz,
-		   const string& name,
-		   jobject mth,
-		   jmethodID mid,
-		   JPClass *returnType,
-		   JPClassList parameterTypes,
-		   JPMethodList& moreSpecific,
-		   jint modifiers)
+		const string& name,
+		jobject mth,
+		jmethodID mid,
+		JPClass *returnType,
+		JPClassList parameterTypes,
+		JPMethodList& moreSpecific,
+		jint modifiers)
 : m_Method(claz->getContext(), mth)
 {
 	this->m_Class = claz;
@@ -71,7 +71,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	JP_TRACE_OUT_C;
 }
 
-JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance, 
+JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance,
 		JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::matches");
@@ -92,22 +92,21 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		match.skip = 1;
 	}
 
-	JPMatch::Type lastMatch = JPMatch::_exact;
+	match.type = JPMatch::_exact;
 	if (!JPModifier::isVarArgs(m_Modifiers))
 	{
 		if (len != tlen)
 		{
 			JP_TRACE("Argument length mismatch", len, tlen);
-			return match; // JPMatch::_none
+			return match.type = JPMatch::_none;
 		}
-	}
-	else
+	} else
 	{
 		JP_TRACE("Match vargs");
 		JPClass* type = m_ParameterTypes[tlen - 1];
 		if (len < tlen - 1)
 		{
-			return match;
+			return match.type = JPMatch::_none;
 		}
 
 		// Hard, could be direct array or an array.
@@ -117,65 +116,59 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 			size_t last = tlen - 1 - match.offset;
 			PyObject* obj = arg[last];
 			--len;
-			lastMatch = type->getJavaConversion(match.argument[last], frame, obj);
-			if (lastMatch < JPMatch::_implicit)
+			match.type = type->getJavaConversion(match.argument[last], frame, obj);
+			if (match.type < JPMatch::_implicit)
 			{
 				// Try indirect
-				lastMatch = matchVars(frame, match, arg, last, type);
+				match.type = matchVars(frame, match, arg, last, type);
 				match.isVarIndirect = true;
 				JP_TRACE("Match vargs indirect", lastMatch);
-			}
-			else
+			} else
 			{
 				match.isVarDirect = true;
 				JP_TRACE("Match vargs direct", lastMatch);
 			}
-		}
-
-		else if (len > tlen)
+		} else if (len > tlen)
 		{
 			// Must match the array type
 			len = tlen - 1;
-			lastMatch = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
+			match.type = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
 			match.isVarIndirect = true;
 			JP_TRACE("Match vargs indirect", lastMatch);
-		}
-
-		else if (len < tlen)
+		} else if (len < tlen)
 		{
 			match.isVarIndirect = true;
 			JP_TRACE("Match vargs empty");
 		}
 
-		if (lastMatch < JPMatch::_implicit)
+		if (match.type < JPMatch::_implicit)
 		{
-			return match;
+			return match.type;
 		}
 	}
 
 	JP_TRACE("Start match");
 	for (size_t i = 0; i < len; i++)
 	{
-		size_t j = i+match.offset;
+		size_t j = i + match.offset;
 		JPClass* type = m_ParameterTypes[i];
-		JPMatch::Type ematch = type->getJavaConversion(frame, match.argument[j], arg[j]);
+		JPMatch::Type ematch = type->getJavaConversion( match.argument[j], frame, arg[j]);
 		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[j]));
 		if (ematch < JPMatch::_implicit)
 		{
-			return match;
+			return match.type;
 		}
-		if (ematch < lastMatch)
+		if (ematch < match.type)
 		{
-			lastMatch = ematch;
+			match.type = ematch;
 		}
 	}
 
-	match.type = lastMatch;
-	return match;
+	return match.type;
 	JP_TRACE_OUT;
 }
 
-void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match, 
+void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 		vector<jvalue> &v, JPPyObjectVector &arg)
 {
 	JP_TRACE_IN("JPMethod::packArgs");
@@ -190,7 +183,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 		JP_TRACE("Pack varargs");
 		len = tlen - 1;
 		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
-		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, arg.size());
+		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, (jsize) arg.size());
 	}
 
 	JP_TRACE("Pack fixed total=", len - match.offset);
@@ -198,7 +191,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	{
 		JPClass* type = m_ParameterTypes[i - match.offset];
 		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName());
-		v[i - match.skip] = match->argument[i]->conversion->convert(frame, type, arg[i]);
+		v[i - match.skip] = match.argument[i].conversion->convert(frame, type, arg[i]);
 	}
 	JP_TRACE_OUT;
 }
@@ -208,13 +201,13 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 	JPContext *context = m_Class->getContext();
 	JP_TRACE_IN("JPMethod::invoke");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(context, 8 + alen);
+	JPJavaFrame frame(context, (int) (8 + alen));
 
 	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
 	vector<jvalue> v(alen + 1);
-	packArgs(match, v, arg);
+	packArgs(frame, match, v, arg);
 
 	// Check if it is caller sensitive
 	if (isCallerSensitive())
@@ -241,7 +234,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 				JPPrimitiveType* type = (JPPrimitiveType*) cls;
 				JPMatch conv;
 				type->getBoxedClass()->getJavaConversion(conv, frame, arg[i + match.skip]);
-				frame.SetObjectArrayElement(ja, i, 
+				frame.SetObjectArrayElement(ja, i,
 						conv.conversion->convert(frame, type->getBoxedClass(), arg[i + match.skip]).l);
 			} else
 			{
@@ -258,8 +251,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 			JP_TRACE("Return primitive");
 			JPValue out = retType->getValueFromObject(o);
 			return retType->convertToPythonObject(out.getValue());
-		}
-		else
+		} else
 		{
 			JP_TRACE("Return object");
 			jvalue v;
@@ -274,8 +266,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		JP_TRACE("invoke static", m_Name);
 		jclass claz = m_Class->getJavaClass();
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
-	}
-	else
+	} else
 	{
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c;
@@ -283,10 +274,9 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = match.argument[0]->conversion->convert(frame, m_Class, arg[0]);
+			jvalue  v = match.argument[0].conversion->convert(frame, m_Class, arg[0]);
 			c = v.l;
-		}
-		else
+		} else
 		{
 			c = selfObj->getJavaObject();
 		}
@@ -295,8 +285,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		{
 			clazz = m_Class->getJavaClass();
 			JP_TRACE("invoke nonvirtual", m_Name);
-		}
-		else
+		} else
 		{
 			JP_TRACE("invoke virtual", m_Name);
 		}
@@ -312,7 +301,7 @@ JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
 	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 
 	vector<jvalue> v(alen + 1);
-	packArgs(match, v, arg);
+	packArgs(frame, match, v, arg);
 
 	jvalue val;
 	{
@@ -323,8 +312,10 @@ JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
 	JP_TRACE_OUT;
 }
 
-string JPMethod::matchReport(JPPyObjectVector& sequence)
+string JPMethod::matchReport(JPPyObjectVector& args)
 {
+	JPContext *context = m_Class->getContext();
+	JPJavaFrame frame(context);
 	stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
@@ -343,8 +334,9 @@ string JPMethod::matchReport(JPPyObjectVector& sequence)
 
 	res << ") ==> ";
 
-	JPMatch match = matches(!isStatic(), sequence);
-	switch (match.type)
+	JPMethodMatch methodMatch(args.size());
+	matches(frame, methodMatch, !isStatic(), args);
+	switch (methodMatch.type)
 	{
 		case JPMatch::_none:
 			res << "NONE";
@@ -371,8 +363,8 @@ string JPMethod::matchReport(JPPyObjectVector& sequence)
 bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 {
 	for (JPMethodList::const_iterator it = m_MoreSpecificOverloads.begin();
-		it != m_MoreSpecificOverloads.end();
-		++it)
+			it != m_MoreSpecificOverloads.end();
+			++it)
 	{
 		if (other == *it)
 			return true;

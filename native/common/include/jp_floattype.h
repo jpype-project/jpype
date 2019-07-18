@@ -28,12 +28,7 @@ public:
 	typedef jfloat type_t;
 	typedef jfloatArray array_t;
 
-	inline jfloat& field(jvalue& v)
-	{
-		return v.f;
-	}
-
-	inline jfloat field(const jvalue& v) const
+	static inline jfloat& field(jvalue& v)
 	{
 		return v.f;
 	}

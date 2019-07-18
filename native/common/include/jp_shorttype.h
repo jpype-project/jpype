@@ -28,12 +28,7 @@ public:
 	typedef jshort type_t;
 	typedef jshortArray array_t;
 
-	inline jshort& field(jvalue& v)
-	{
-		return v.s;
-	}
-
-	inline jshort field(const jvalue& v) const
+	static inline jshort& field(jvalue& v)
 	{
 		return v.s;
 	}

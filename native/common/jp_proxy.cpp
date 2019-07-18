@@ -17,6 +17,7 @@
 #include <Python.h>
 #include <jpype.h>
 #include <pythread.h>
+#include <pyjp.h>
 
 #include "jp_primitive_common.h"
 
@@ -155,7 +156,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			JP_TRACE("Convert return");
-			jvalue res = returnMatch->conversion(frame, returnClass, returnValue.get());
+			jvalue res = returnMatch.conversion->convert(frame, returnClass, returnValue.get());
 			return frame.keep(res.l);
 		} catch (JPypeException& ex)
 		{
@@ -261,7 +262,7 @@ JPProxyType::JPProxyType(JPContext* context,
 	JPJavaFrame frame(context);
 	jclass proxyClass = frame.FindClass("java/lang/reflect/Proxy");
 	m_ProxyClass = JPClassRef(context, proxyClass);
-	m_GetInvocationHandlerID = frame.GetStaticMethodID(proxy, "getInvocationHandler",
+	m_GetInvocationHandlerID = frame.GetStaticMethodID(proxyClass, "getInvocationHandler",
 			"(Ljava/lang/Object;)Ljava/lang/reflect/InvocationHandler;");
 	m_InstanceID = frame.GetFieldID(clss, "instance", "J");
 }
@@ -272,7 +273,7 @@ JPProxyType::~JPProxyType()
 
 JPPyObject JPProxyType::convertToPythonObject(jvalue val)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(), m_GetInvocationHandlerID, &val);
 	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, m_InstanceID);
 	return JPPyObject(JPPyRef::_use, proxy->m_Target);

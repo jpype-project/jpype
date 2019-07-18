@@ -128,7 +128,7 @@ public:
 	// JVM control functions
 	bool isRunning();
 	void assertJVMRunning(const JPStackInfo& info);
-	void startJVM(const string& vmPath, const StringVector& args, char ignoreUnrecognized, char convertStrings);
+	void startJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();

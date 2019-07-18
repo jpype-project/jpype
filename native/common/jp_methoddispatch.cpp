@@ -55,12 +55,13 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 		JPMethod* current = *it;
 
 		JP_TRACE("Trying to match", current->toString());
-		JPMatch match = current->matches(frame, callInstance, arg);
+		current->matches(frame, match, callInstance, arg);
 
 		JP_TRACE("  match ended", match.type);
 		if (match.type == JPMatch::_exact)
 		{
-			return match;
+			bestMatch = match;
+			return;
 		}
 		if (match.type < JPMatch::_implicit)
 			continue;
@@ -154,7 +155,7 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 	}
 
 	JP_TRACE("Best match", bestMatch.overload->toString());
-	return bestMatch;
+	return;
 	JP_TRACE_OUT;
 }
 

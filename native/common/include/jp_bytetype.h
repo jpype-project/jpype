@@ -28,7 +28,7 @@ public:
 	typedef jbyte type_t;
 	typedef jbyteArray array_t;
 
-	inline jbyte& field(jvalue& v)
+	static inline jbyte& field(jvalue& v)
 	{
 		return v.b;
 	}

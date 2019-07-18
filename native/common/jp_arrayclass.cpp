@@ -20,11 +20,11 @@
 #include "jp_context.h"
 
 JPArrayClass::JPArrayClass(JPContext* context,
-			   jclass cls,
-			   const string& name,
-			   JPClass* superClass,
-			   JPClass* componentType,
-			   jint modifiers)
+		jclass cls,
+		const string& name,
+		JPClass* superClass,
+		JPClass* componentType,
+		jint modifiers)
 : JPClass(context, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;
@@ -34,77 +34,116 @@ JPArrayClass::~JPArrayClass()
 {
 }
 
-JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
+class JPConversionCharArray : public JPConversion
 {
-	JP_TRACE_IN("JPArrayClass::canConvertToJava");
-	JPJavaFrame frame(m_Context);
+public:
 
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-
-		if (frame.IsAssignableFrom(value->getJavaClass(), m_Class.get()))
-		{
-			return JPMatch::_implicit;
-		}
-		return JPMatch::_none;
-	}
-
-	if (JPPyString::check(obj) && m_ComponentType == m_Context->_char)
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
 	{
 		JP_TRACE("char[]");
-		// Strings are also char[]
-		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit under java rules.
+		jvalue res;
+
+		// Convert to a string
+		string str = JPPyString::asStringUTF8(pyobj);
+
+		// Convert to new java string
+		jstring jstr = frame.getContext()->fromStringUTF8(str);
+
+		// call toCharArray()
+		jobject charArray = frame.getContext()->_java_lang_String->stringToCharArray(jstr);
+		res.l = charArray;
+		return res;
+	}
+} charArrayConversion;
+
+class JPConversionByteArray : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		Py_ssize_t size = 0;
+		char *buffer = NULL;
+
+#if PY_MAJOR_VERSION >= 3 
+		if (PyBytes_Check(pyobj))
+		{
+			PyBytes_AsStringAndSize(pyobj, &buffer, &size); // internal reference
+		}
+#else
+		if (PyString_Check(pyobj))
+		{
+			PyString_AsStringAndSize(pyobj, &buffer, &size); // internal reference
+		}
+#endif
+		jbyteArray byteArray = frame.NewByteArray((jsize)size);
+		frame.SetByteArrayRegion(byteArray, 0, (jsize) size, (jbyte*) buffer);
+		res.l = frame.keep(byteArray);
+		return res;
+	}
+} byteArrayConversion;
+
+class JPConversionSequence : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		JPArrayClass *acls = (JPArrayClass *)cls;
+		JP_TRACE("sequence");
+		JPPySequence seq(JPPyRef::_use, pyobj);
+		jsize length = (jsize) seq.size();
+
+		jarray array = acls->m_ComponentType->newArrayInstance(frame, (jsize) length);
+		for (jsize i = 0; i < length; i++)
+		{
+			acls->m_ComponentType->setArrayItem(frame, array, i, seq[i].get());
+		}
+		res.l = frame.keep(array);
+		return res;
+	}
+} sequenceConversion;
+
+JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+{
+	JP_TRACE_IN("JPArrayClass::canConvertToJava");
+	match.type = JPMatch::_none;
+	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
+
+	if (JPPyString::check(pyobj) && m_ComponentType == m_Context->_char)
+	{
+		match.conversion = &charArrayConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
 #if PY_MAJOR_VERSION >= 3 
 	// Bytes are byte[]
-	if (PyBytes_Check(obj) && m_ComponentType == m_Context->_byte)
+	if (PyBytes_Check(pyobj) && m_ComponentType == m_Context->_byte)
 	{
-		return JPMatch::_implicit;
+		match.conversion = &byteArrayConversion;
+		return match.type = JPMatch::_implicit;
 	}
 #else
 	// Bytes are byte[]
-	if (PyString_Check(obj) && m_ComponentType == m_Context->_byte)
+	if (PyString_Check(pyobj) && m_ComponentType == m_Context->_byte)
 	{
-		return JPMatch::_implicit;
+		match.conversion = &byteArrayConversion;
+		return match.type = JPMatch::_implicit;
 	}
 #endif
 
-	//	if (JPPyString::checkBytes(o) && m_ComponentType == m_Context->_byte)
-	//	{
-	//		TRACE1("char[]");
-	//		// Strings are also char[]
-	//		return JPMatch::_implicit;
-	//	}
-
-	JPPySequence seq(JPPyRef::_use, obj);
-	if (JPPyObject::isSequenceOfItems(obj))
+	if (JPPyObject::isSequenceOfItems(pyobj))
 	{
-		JP_TRACE("Sequence");
-		JPMatch::Type match = JPMatch::_implicit;
-		jlong length = seq.size();
-		for (jlong i = 0; i < length && match > JPMatch::_none; i++)
-		{
-			JPMatch::Type newMatch = m_ComponentType->canConvertToJava(seq[i].get());
-			if (newMatch < match)
-			{
-				match = newMatch;
-			}
-		}
-		return match;
+		match.conversion = &sequenceConversion;
+		return match.type = JPMatch::_implicit;
 	}
-
-	return JPMatch::_none;
+	
+	return match.type;
 	JP_TRACE_OUT;
 }
 
@@ -112,89 +151,6 @@ JPPyObject JPArrayClass::convertToPythonObject(jvalue val)
 {
 	JP_TRACE_IN("JPArrayClass::convertToPythonObject")
 	return JPPythonEnv::newJavaObject(JPValue(this, val));
-	JP_TRACE_OUT;
-}
-
-jvalue JPArrayClass::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPArrayClass::convertToJava");
-	JPJavaFrame frame(m_Context);
-	jvalue res;
-	res.l = NULL;
-
-	if (JPPyObject::isNone(obj))
-	{
-		return res;
-	}
-
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
-	if (value != NULL)
-	{
-		return *value;
-	}
-
-	if (JPPyString::check(obj)
-		&& m_ComponentType == m_Context->_char)
-	{
-		JP_TRACE("char[]");
-
-		// Convert to a string
-		string str = JPPyString::asStringUTF8(obj);
-
-		// Convert to new java string
-		jstring jstr = m_Context->fromStringUTF8(str);
-
-		// call toCharArray()
-		jobject charArray = m_Context->_java_lang_String->stringToCharArray(jstr);
-		res.l = frame.keep(charArray);
-		return res;
-	}
-
-#if PY_MAJOR_VERSION >= 3 
-	if (PyBytes_Check(obj) && m_ComponentType == m_Context->_byte)
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		PyBytes_AsStringAndSize(obj, &buffer, &size); // internal reference
-		jbyteArray byteArray = frame.NewByteArray(size);
-		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
-		res.l = frame.keep(byteArray);
-		return res;
-	}
-#else
-	if (PyString_Check(obj) && m_ComponentType == m_Context->_byte)
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		PyString_AsStringAndSize(obj, &buffer, &size); // internal reference
-		jbyteArray byteArray = frame.NewByteArray(size);
-		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
-		res.l = frame.keep(byteArray);
-		return res;
-	}
-#endif
-
-	if (JPPyObject::isSequenceOfItems(obj))
-	{
-		JP_TRACE("sequence");
-		JPPySequence seq(JPPyRef::_use, obj);
-		jsize length = (jsize) seq.size();
-
-		jarray array = m_ComponentType->newArrayInstance(frame, (jsize) length);
-
-		for (jsize i = 0; i < length; i++)
-		{
-			m_ComponentType->setArrayItem(frame, array, i, seq[i].get());
-		}
-		res.l = frame.keep(array);
-		return res;
-	}
-
-	stringstream ss;
-	ss << "Cannot convert value of type " << JPPyObject::getTypeName(obj)
-		<< " to Java array type " << this->m_CanonicalName;
-	JP_RAISE_TYPE_ERROR(ss.str());
-	return res;
 	JP_TRACE_OUT;
 }
 

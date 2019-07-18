@@ -68,12 +68,12 @@ class JPConversion
 public:
 	virtual ~JPConversion() = 0;
 
-	virtual JPMatch::Type matches(JPMatch& match, JPJavaFrame& frame, JPClass* cls, PyObject* pyobj)
+	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame &frame, JPClass *cls, PyObject *pyobj)
 	{
 		return JPMatch::_none;
 	}
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) = 0;
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject*pyobj) = 0;
 } ;
 
 class JPClassHints
@@ -89,7 +89,7 @@ public:
 	 * 
 	 * @returns the best match or null.
 	 */
-	JPConversion* getConversion(JPContext* context, JPClass* cls, PyObject* obj);
+	JPConversion* getConversion(JPJavaFrame &context, JPClass *cls, PyObject *obj);
 
 	/**
 	 * Add a conversion based on a specified attribute.  
@@ -123,13 +123,19 @@ private:
 	std::list<JPConversion*> conversions;
 } ;
 
-extern JPConversion* nullConversion;
-extern JPConversion* proxyConversion;
-extern JPConversion* classConversion;
-extern JPConversion* objectConversion;
-extern JPConversion* stringConversion;
-extern JPConversion* unboxConversion;
-extern JPConversion* javaValueConversion;
+
+extern JPConversion *nullConversion;
+extern JPConversion *classConversion;
+extern JPConversion *objectConversion;
+extern JPConversion *javaObjectAnyConversion;
+extern JPConversion *javaValueConversion;
+extern JPConversion *stringConversion;
+extern JPConversion *boxConversion;
+extern JPConversion *boxBooleanConversion;
+extern JPConversion *boxLongConversion;
+extern JPConversion *boxDoubleConversion;
+extern JPConversion *unboxConversion;
+extern JPConversion *proxyConversion;
 
 #endif /* JP_CLASSHINTS_H */
 

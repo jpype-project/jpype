@@ -35,21 +35,6 @@ void JPBoxedType::setPrimitiveType(JPPrimitiveType* primitiveType)
 	m_PrimitiveType = primitiveType;
 }
 
-class JPConversionBox : public JPConversion
-{
-	typedef JPIntType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
-	{
-		jvalue res;
-		JPPyObjectVector args(pyobj, NULL);
-		JPValue pobj = cls->newInstance(args);
-		res.l = pobj.getJavaObject();
-		return res;
-	}
-} boxConversion;
-
 JPMatch::Type JPBoxedType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JPClass::getJavaConversion(match, frame, pyobj);
@@ -57,7 +42,7 @@ JPMatch::Type JPBoxedType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 		return match.type;
 	if (this->m_PrimitiveType->getJavaConversion(match, frame, pyobj) != JPMatch::_none)
 	{
-		match.conversion = &boxConversion;
+		match.conversion = boxConversion;
 		return match.type = JPMatch::_explicit;
 	}
 	return match.type;

@@ -60,11 +60,17 @@ private:
 	JPClassList   m_InterfaceClasses;
 } ;
 
-// Special wrapper for round trip returns
+/** Special wrapper for round trip returns
+ */
 class JPProxyType : public JPClass
 {
 public:
-	JPProxyType();
+	JPProxyType::JPProxyType(JPContext* context,
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 	virtual~ JPProxyType();
 
 public: // JPClass implementation
