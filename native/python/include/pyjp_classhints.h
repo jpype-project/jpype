@@ -30,8 +30,10 @@ struct PyJPClassHints
 	static int __init__(PyJPClassHints *self, PyObject *args, PyObject *kwargs);
 	static void __dealloc__(PyJPClassHints *self);
 	static PyObject *__str__(PyJPClassHints *self);
-	static int traverse(PyJPClassHints *self, visitproc visit, void *arg);
-	static int clear(PyJPClassHints *self);
+//	static int traverse(PyJPClassHints *self, visitproc visit, void *arg);
+//	static int clear(PyJPClassHints *self);
+	
+	JPClassHints *m_Hints;
 
 } ;
 

@@ -32,6 +32,11 @@ public:
 	{
 		return v.d;
 	}
+	
+	static inline const jdouble& field(const jvalue& v)
+	{
+		return v.d;
+	}
 
 public:
 	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;

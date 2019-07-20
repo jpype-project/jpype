@@ -32,6 +32,12 @@ public:
 	{
 		return v.f;
 	}
+	
+	static inline const jfloat& field(const jvalue& v)
+	{
+		return v.f;
+	}
+
 
 public:
 	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;

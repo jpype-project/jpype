@@ -18,6 +18,9 @@
 #include <jp_classhints.h>
 #include <Python.h>
 
+JPConversion::~JPConversion()
+{}
+
 JPClassHints::JPClassHints()
 {
 }

@@ -41,10 +41,10 @@ PyTypeObject PyJPClassHints::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT, // | Py_TPFLAGS_HAVE_GC,
 	/* tp_doc            */ "Java Class Hints",
-	/* tp_traverse       */ (traverseproc) PyJPClassHints::traverse,
-	/* tp_clear          */ (inquiry) PyJPClassHints::clear,
+	/* tp_traverse       */ 0,  // (traverseproc) PyJPClassHints::traverse,
+	/* tp_clear          */ 0,  //(inquiry) PyJPClassHints::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -74,17 +74,15 @@ void PyJPClassHints::initType(PyObject *module)
 PyObject *PyJPClassHints::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN("PyJPProxy::new");
-	PyJPProxy* self = (PyJPProxy*) type->tp_alloc(type, 0);
-	self->m_Proxy = NULL;
-	self->m_Target = NULL;
-	self->m_Context = NULL;
+	PyJPClassHints* self = (PyJPClassHints*) type->tp_alloc(type, 0);
+	self->m_Hints = NULL;
 	return (PyObject*) self;
 	JP_TRACE_OUT;
 }
 
 int PyJPClassHints::__init__(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPProxy::init", self);
+	JP_TRACE_IN_C("PyJPClassHints::init", self);
 	try
 	{
 		// Parse arguments
@@ -95,94 +93,47 @@ int PyJPClassHints::__init__(PyJPClassHints *self, PyObject *args, PyObject *kwa
 			return -1;
 		}
 
-		//		// Pack interfaces
-		//		if (!JPPySequence::check(pyintf))
-		//		{
-		//			PyErr_SetString(PyExc_TypeError, "third argument must be a list of interface");
-		//			return -1;
-		//		}
-		//
-		//		JPClassList interfaces;
-		//		JPPySequence intf(JPPyRef::_use, pyintf);
-		//		jlong len = intf.size();
-		//		if (len < 1)
-		//		{
-		//			PyErr_SetString(PyExc_TypeError, "at least one interface is required");
-		//			return -1;
-		//		}
-		//
-		//		for (jlong i = 0; i < len; i++)
-		//		{
-		//			JPClass *cls = JPPythonEnv::getJavaClass(intf[i].get());
-		//			if (cls == NULL)
-		//			{
-		//				PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
-		//				return -1;
-		//			}
-		//			interfaces.push_back(cls);
-		//		}
-		//
-		//		JPContext *context = interfaces[0]->getContext();
-		//		ASSERT_JVM_RUNNING(context);
-		//
-		//		// FIXME if we have multiple context someone has to check that all the interfaces
-		//		// belong to the same context.
-		//
-		//		JPJavaFrame frame(context);
-		//
-		//		Py_INCREF(target);
-		//		self->m_Target = target;
-		//		self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
-		//		self->m_Context = (PyJPContext*) (context->getHost());
-		//		Py_INCREF(self->m_Context);
-
-		JP_TRACE("Proxy", self);
-		JP_TRACE("Target", target);
 		return 0;
 	}
 	PY_STANDARD_CATCH(-1);
 	JP_TRACE_OUT_C;
 }
 
-void PyJPClassHints::__dealloc__(PyJPProxy *self)
+void PyJPClassHints::__dealloc__(PyJPClassHints *self)
 {
-	JP_TRACE_IN_C("PyJPProxy::dealloc", self);
-	delete self->m_Proxy;
+	JP_TRACE_IN_C("PyJPClassHints::dealloc", self);
+	delete self->m_Hints;
 
-	PyObject_GC_UnTrack(self);
-	clear(self);
+//	PyObject_GC_UnTrack(self);
+//	clear(self);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;
 }
 
-int PyJPClassHints::traverse(PyJPProxy *self, visitproc visit, void *arg)
-{
-	JP_TRACE_IN_C("PyJPProxy::traverse", self);
-	Py_VISIT(self->m_Target);
-	Py_VISIT(self->m_Context);
-	return 0;
-	JP_TRACE_OUT_C;
-}
+//int PyJPClassHints::traverse(PyJPClassHints *self, visitproc visit, void *arg)
+//{
+//	JP_TRACE_IN_C("PyJPClassHints::traverse", self);
+//	return 0;
+//	JP_TRACE_OUT_C;
+//}
+//
+//int PyJPClassHints::clear(PyJPClassHints *self)
+//{
+//	JP_TRACE_IN_C("PyJPClassHints::clear", self);
+//	return 0;
+//	JP_TRACE_OUT_C;
+//}
 
-int PyJPClassHints::clear(PyJPProxy *self)
-{
-	JP_TRACE_IN_C("PyJPProxy::clear", self);
-	Py_CLEAR(self->m_Target);
-	Py_CLEAR(self->m_Context);
-	return 0;
-	JP_TRACE_OUT_C;
-}
-
-PyObject *PyJPClassHints::__str__(PyJPProxy *self)
+PyObject *PyJPClassHints::__str__(PyJPClassHints *self)
 {
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
+//		JPContext *context = self->m_Context->m_Context;
+//		ASSERT_JVM_RUNNING(context);
+//		JPJavaFrame frame(context);
 		stringstream sout;
-		sout << "<java proxy>";
+		sout << "<java class hints>";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
 	PY_STANDARD_CATCH(NULL);

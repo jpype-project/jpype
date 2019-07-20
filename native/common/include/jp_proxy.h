@@ -65,7 +65,7 @@ private:
 class JPProxyType : public JPClass
 {
 public:
-	JPProxyType::JPProxyType(JPContext* context,
+	JPProxyType(JPContext* context,
 			jclass clss,
 			const string& name,
 			JPClass* super,

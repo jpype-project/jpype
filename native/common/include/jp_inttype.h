@@ -32,6 +32,11 @@ public:
 	{
 		return v.i;
 	}
+	
+	static inline const jint& field(const jvalue& v)
+	{
+		return v.i;
+	}
 
 public:
 	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;

@@ -94,7 +94,8 @@ def _initialize():
     _jinit.runJVMInitializers()
 
 
-def isJVMStarted(jvm=_jpype._jvm):
+def isJVMStarted(jvm=None):
+    if not jvm: jvm = _jpype._jvm
     return jvm.isStarted()
 
 
@@ -235,17 +236,18 @@ please file a ticket with the developer.
 
 
 
-def shutdownJVM(jvm=_jpype._jvm):
+def shutdownJVM(jvm=None):
     """ Shuts down the JVM.
 
     This method shuts down the JVM and thus disables access to existing
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
+    if not jvm: jvm = _jpype._jvm
     jvm.shutdown()
 
 
-def isThreadAttachedToJVM(jvm=_jpype._jvm):
+def isThreadAttachedToJVM(jvm=None):
     """ Checks if a thread is attached to the JVM.
 
     Python automatically attaches threads when a Java method is called.
@@ -257,10 +259,11 @@ def isThreadAttachedToJVM(jvm=_jpype._jvm):
       True if the thread is attached to the JVM, False if the thread is
       not attached or the JVM is not running.
     """
+    if not jvm: jvm = _jpype._jvm
     return jvm.isThreadAttachedToJVM()
 
 
-def attachThreadToJVM(jvm=_jpype._jvm):
+def attachThreadToJVM(jvm=None):
     """ Attaches a thread to the JVM.
 
     The function manually connects a thread to the JVM to allow access to
@@ -270,10 +273,11 @@ def attachThreadToJVM(jvm=_jpype._jvm):
     Raises:
       RuntimeError: If the JVM is not running.
     """
+    if not jvm: jvm = _jpype._jvm
     jvm.attachThreadToJVM()
 
 
-def detachThreadFromJVM(jvm=_jpype._jvm):
+def detachThreadFromJVM(jvm=None):
     """ Detaches a thread from the JVM.
 
     This function detaches the thread and frees the associated resource in
@@ -282,6 +286,7 @@ def detachThreadFromJVM(jvm=_jpype._jvm):
     is no harm in detaching early or more than once. This method cannot fail
     and there is no harm in calling it when the JVM is not running.
     """
+    if not jvm: jvm = _jpype._jvm
     jvm.detachThreadFromJVM()
 
 
@@ -362,9 +367,7 @@ def getJVMVersion(jvm=None):
     Returns:
       A typle with the (major, minor, revison) of the JVM if running.
     """
-    if not jvm:
-        global _jvm
-        jvm = _jvm
+    if not jvm: jvm = _jpype._jvm
     if not jvm.isStarted():
         return (0, 0, 0)
 

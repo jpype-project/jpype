@@ -46,7 +46,12 @@ public:
 	char skip;
 	std::vector<JPMatch> argument;
 
-	JPMatch operator[](size_t i)
+	JPMatch& operator[](size_t i)
+	{
+		return argument[i];
+	}
+	
+	const JPMatch& operator[](size_t i) const
 	{
 		return argument[i];
 	}
@@ -66,7 +71,7 @@ public:
 class JPConversion
 {
 public:
-	virtual ~JPConversion() = 0;
+	virtual ~JPConversion();
 
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame &frame, JPClass *cls, PyObject *pyobj)
 	{

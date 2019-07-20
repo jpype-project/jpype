@@ -163,17 +163,19 @@ int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 		}
 
 		// Otherwise, see if we can convert it
-		if (type->canConvertToJava(value) == JPMatch::_none)
-		{
-			stringstream ss;
-			ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();
-			PyErr_SetString(PyExc_TypeError, ss.str().c_str());
-			return -1;
-		}
-
 		{
 			JPJavaFrame frame(context);
-			jvalue v = type->convertToJava(value);
+			JPMatch match;
+			type->getJavaConversion(match, frame, value);
+			if (match.type == JPMatch::_none)
+			{
+				stringstream ss;
+				ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();
+				PyErr_SetString(PyExc_TypeError, ss.str().c_str());
+				return -1;
+			}
+
+			jvalue v = match.conversion->convert(frame, type, value);
 			if (!type->isPrimitive())
 				v.l = frame.NewGlobalRef(v.l);
 			self->m_Value = JPValue(type, v);

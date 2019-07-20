@@ -32,8 +32,8 @@ public:
 	{
 		return v.b;
 	}
-
-	inline jbyte field(const jvalue& v) const
+	
+	static inline const jbyte& field(const jvalue& v)
 	{
 		return v.b;
 	}

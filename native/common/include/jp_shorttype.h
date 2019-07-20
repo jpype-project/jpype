@@ -32,6 +32,10 @@ public:
 	{
 		return v.s;
 	}
+	static inline const jshort& field(const jvalue& v)
+	{
+		return v.s;
+	}
 
 public:
 	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;

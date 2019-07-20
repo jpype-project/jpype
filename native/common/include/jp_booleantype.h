@@ -28,12 +28,12 @@ public:
 	typedef jboolean type_t;
 	typedef jbooleanArray array_t;
 
-	inline jboolean& field(jvalue& v)
+	static inline jboolean& field(jvalue& v)
 	{
 		return v.z;
 	}
-
-	inline jboolean field(const jvalue& v) const
+	
+	static inline const jboolean& field(const jvalue& v)
 	{
 		return v.z;
 	}
