@@ -91,7 +91,7 @@ namespace JPError
 #define JP_RAISE_ATTRIBUTE_ERROR(msg) { throw JPypeException(JPError::_attribute_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_METHOD_NOT_FOUND(msg) { throw JPypeException(JPError::_method_not_found, msg, JP_STACKINFO()); }
 
-// Macro to all after excuting a Python command that can result in
+// Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
 #define JP_PY_CHECK()               { if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__); }
 

@@ -279,13 +279,23 @@ JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyO
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	match.type = JPMatch::_none;
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	{
+		JP_TRACE("Match null conversion");
 		return match.type;
+	}
 	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	{
+		JP_TRACE("Match object conversion");
 		return match.type;
+	}
 	if (proxyConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	{
+		JP_TRACE("Match proxy conversion");
 		return match.type;
+	}
 
 	// APPLY USER SUPPLIED CONVERSIONS
+	JP_TRACE("No match");
 	return match.type;
 	JP_TRACE_OUT;
 }

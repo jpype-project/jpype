@@ -122,11 +122,11 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 				// Try indirect
 				match.type = matchVars(frame, match, arg, last, type);
 				match.isVarIndirect = true;
-				JP_TRACE("Match vargs indirect", lastMatch);
+				JP_TRACE("Match vargs indirect", match.type);
 			} else
 			{
 				match.isVarDirect = true;
-				JP_TRACE("Match vargs direct", lastMatch);
+				JP_TRACE("Match vargs direct", match.type);
 			}
 		} else if (len > tlen)
 		{
@@ -134,7 +134,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 			len = tlen - 1;
 			match.type = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
 			match.isVarIndirect = true;
-			JP_TRACE("Match vargs indirect", lastMatch);
+			JP_TRACE("Match vargs indirect", match.type);
 		} else if (len < tlen)
 		{
 			match.isVarIndirect = true;
@@ -154,13 +154,13 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		JPClass* type = m_ParameterTypes[i];
 		JPMatch::Type ematch = type->getJavaConversion( match.argument[j], frame, arg[j]);
 		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[j]));
-		if (ematch < JPMatch::_implicit)
-		{
-			return match.type;
-		}
 		if (ematch < match.type)
 		{
 			match.type = ematch;
+		}
+		if (match.type < JPMatch::_implicit)
+		{
+			return match.type;
 		}
 	}
 
@@ -190,8 +190,11 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	for (size_t i = match.skip; i < len; i++)
 	{
 		JPClass* type = m_ParameterTypes[i - match.offset];
-		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName());
-		v[i - match.skip] = match.argument[i].conversion->convert(frame, type, arg[i]);
+		JPConversion *conversion = match.argument[i].conversion;
+		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName(), conversion);
+		if (conversion == NULL)
+			JP_RAISE_RUNTIME_ERROR("Conversion is null");
+		v[i - match.skip] = conversion->convert(frame, type, arg[i]);
 	}
 	JP_TRACE_OUT;
 }

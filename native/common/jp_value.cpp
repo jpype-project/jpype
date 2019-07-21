@@ -24,7 +24,7 @@ jobject JPValue::getJavaObject() const
 	// This method is only used internally, thus it requires a logical code
 	// error to trigger. We will use type error in case there is some
 	// way a user can trigger it.
-	JP_RAISE_TYPE_ERROR("access Java primitive value as Java object");
+	JP_RAISE_TYPE_ERROR("cannot access Java primitive value as Java object");
 }
 
 jclass JPValue::getJavaClass() const

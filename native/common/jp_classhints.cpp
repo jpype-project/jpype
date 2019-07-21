@@ -191,6 +191,7 @@ public:
 			res.l = frame.NewLocalRef(cls2->getJavaClass());
 			return res;
 		}
+		JP_RAISE_TYPE_ERROR("Python object is not a Java class");
 	}
 } _classConversion;
 
@@ -225,6 +226,7 @@ public:
 			res.l = frame.NewLocalRef(value->getValue().l);
 			return res;
 		}
+		JP_RAISE_TYPE_ERROR("Python object is not a Java value");
 	}
 } _objectConversion;
 
@@ -246,7 +248,9 @@ public:
 	{
 		jvalue res;
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
-		if (dynamic_cast<JPPrimitiveType*> (value->getClass()) == NULL)
+		if (value == NULL)
+			JP_RAISE_TYPE_ERROR("Python object is not a Java value")
+		if (!value->getClass()->isPrimitive())
 		{
 			res.l = frame.NewLocalRef(value->getJavaObject());
 			return res;
