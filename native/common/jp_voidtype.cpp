@@ -28,11 +28,6 @@ JPVoidType::~JPVoidType()
 {
 }
 
-bool JPVoidType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_void;
-}
-
 JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a static field.");

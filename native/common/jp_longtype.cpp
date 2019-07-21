@@ -30,13 +30,6 @@ JPLongType::~JPLongType()
 {
 }
 
-bool JPLongType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_long
-			|| other == m_Context->_float
-			|| other == m_Context->_double;
-}
-
 JPPyObject JPLongType::convertToPythonObject(jvalue val)
 {
 	return JPPyLong::fromLong(field(val));
@@ -63,6 +56,20 @@ public:
 	}
 } asLongConversion;
 
+class JPConversionLongWiden : public JPConversion
+{
+	typedef JPLongType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		jvalue ret;
+		ret.j = ((JPPrimitiveType*)value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+} longWidenConversion;
+
 JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPLongType::getJavaConversion");
@@ -73,17 +80,39 @@ JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JP_TRACE("Java value");
+		JPClass *cls = value->getClass();
+		if (cls == this)
 		{
+			JP_TRACE("Exact");
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (cls == m_BoxedClass)
 		{
+			JP_TRACE("Boxed");
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
+		}
+
+		// Consider widening
+		if (cls->isPrimitive())
+		{
+			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			switch (prim->getTypeCode())
+			{
+				case 'I':
+				case 'C':
+				case 'S':
+				case 'B':
+					match.conversion = &longWidenConversion;
+					return match.type = JPMatch::_implicit;
+				default:
+					return match.type;
+			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 

@@ -58,8 +58,6 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
-
 	template <class T> T assertRange(const T& l)
 	{
 		if (l < -_Float_Max || l > _Float_Max)
@@ -68,6 +66,22 @@ public:
 		}
 		return l;
 	}
+
+	virtual char getTypeCode() override
+	{
+		return 'F';
+	}
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
+
 private:
 	jdouble _Float_Max;
 	jmethodID _FloatValueID;

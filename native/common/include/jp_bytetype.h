@@ -22,7 +22,7 @@ class JPByteType : public JPPrimitiveType
 public:
 
 	JPByteType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
-	virtual ~JPByteType();
+	virtual ~JPByteType() override;
 
 public:
 	typedef jbyte type_t;
@@ -60,8 +60,6 @@ public:
 	// Only Byte supports direct buffer convertion
 	virtual jobject   convertToDirectBuffer(PyObject* src);
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
-
 	template <class T> T assertRange(const T& l)
 	{
 		if (l < _Byte_Min || l > _Byte_Max)
@@ -69,6 +67,21 @@ public:
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
 		}
 		return l;
+	}
+
+	virtual char getTypeCode() override
+	{
+		return 'B';
+	}
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
 	}
 
 private:

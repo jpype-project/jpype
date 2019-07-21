@@ -35,6 +35,10 @@ public:
 	}
 
 	void setBoxedClass(JPBoxedType* boxedClass);
+	
+	virtual char getTypeCode()=0;
+	virtual jlong getAsLong(jvalue v)=0;
+	virtual jdouble getAsDouble(jvalue v)=0;
 
 protected:
 	JPBoxedType* m_BoxedClass;

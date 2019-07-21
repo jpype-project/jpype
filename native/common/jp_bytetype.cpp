@@ -34,16 +34,6 @@ JPByteType::~JPByteType()
 {
 }
 
-bool JPByteType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_byte
-		|| other == m_Context->_short
-		|| other == m_Context->_int
-		|| other == m_Context->_long
-		|| other == m_Context->_float
-		|| other == m_Context->_double;
-}
-
 jobject JPByteType::convertToDirectBuffer(PyObject* src)
 {
 	JPJavaFrame frame(m_Context);

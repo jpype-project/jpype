@@ -30,11 +30,6 @@ JPDoubleType::~JPDoubleType()
 {
 }
 
-bool JPDoubleType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_double;
-}
-
 JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
 {
 	return JPPyFloat::fromDouble(field(val));
@@ -74,6 +69,34 @@ public:
 	}
 } asDoubleLongConversion;
 
+class JPConversionDoubleWidenInt : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		jvalue ret;
+		ret.d = (jdouble) ((JPPrimitiveType*)value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+} doubleIntWidenConversion;
+
+class JPConversionDoubleWidenFloat : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	{
+		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		jvalue ret;
+		ret.d = (jdouble) ((JPPrimitiveType*)value->getClass())->getAsDouble(value->getValue());
+		return ret;
+	}
+} doubleFloatWidenConversion;
+
 JPMatch::Type JPDoubleType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPDoubleType::getJavaConversion");
@@ -84,17 +107,40 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JPClass *cls = value->getClass();
+		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (cls == m_BoxedClass)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
+		}
+
+		// Consider widening
+		if (cls->isPrimitive())
+		{
+			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			switch (prim->getTypeCode())
+			{
+				case 'B':
+				case 'S':
+				case 'C':
+				case 'I':
+				case 'J':
+					match.conversion = &doubleIntWidenConversion;
+					return match.type = JPMatch::_implicit;
+				case 'F':
+					match.conversion = &doubleFloatWidenConversion;
+					return match.type = JPMatch::_implicit;
+				default:
+					return match.type;
+			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 

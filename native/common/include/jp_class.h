@@ -144,22 +144,6 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
-	/** Determine if this class is a super or implements another class.
-	 * 
-	 * This is used specifically in the method overload to determine 
-	 * if a method will cover another.  For objects this is the same as
-	 * IsAssignableFrom.  For primitive type, then this will be true
-	 * if this primitive can be converted to other without a cast.
-	 * 
-	 * In the sense of
-	 *  http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
-	 * 
-	 * @param other is the class to to assign to.
-	 * @return true if this class is the same, a super class, or implements
-	 * the other class.
-	 */
-	virtual bool isSubTypeOf(JPClass* other) const;
-
 	/**
 	 * Expose IsAssignableFrom to python. 
 	 * 

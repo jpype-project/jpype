@@ -30,11 +30,6 @@ JPCharType::~JPCharType()
 {
 }
 
-bool JPCharType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_char;
-}
-
 JPPyObject JPCharType::convertToPythonObject(jvalue val)
 {
 	return JPPyString::fromCharUTF16(val.c);

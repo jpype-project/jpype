@@ -30,11 +30,6 @@ JPBooleanType::~JPBooleanType()
 {
 }
 
-bool JPBooleanType::isSubTypeOf(JPClass* other) const
-{
-	return other == m_Context->_boolean;
-}
-
 JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
 {
 	return JPPyBool::fromLong(val.z);

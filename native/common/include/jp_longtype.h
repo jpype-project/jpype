@@ -57,7 +57,21 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual char getTypeCode() override
+	{
+		return 'J';
+	}
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
+
 private:
 	jmethodID _LongValueID;
 } ;

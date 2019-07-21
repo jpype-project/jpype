@@ -42,7 +42,21 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual char getTypeCode() override
+	{
+		return 'V';
+	}
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return 0;
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return 0;
+	}
+
 } ;
 
 #endif // _JP_VOID_TYPE_H_

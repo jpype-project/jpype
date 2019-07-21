@@ -309,15 +309,6 @@ bool JPClass::isAssignableFrom(JPClass* o)
 	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
 }
 
-// FIXME one of these is a duplicate.
-
-bool JPClass::isSubTypeOf(JPClass* other) const
-{
-	// IsAssignableFrom is a jni method and the order of parameters is counterintuitive
-	JPJavaFrame frame(m_Context);
-	return frame.IsAssignableFrom(m_Class.get(), other->getJavaClass()) != 0;
-}
-
 //</editor-fold>
 //<editor-fold desc="utility">
 
