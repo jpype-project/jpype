@@ -45,6 +45,6 @@ JPMatch::Type JPBoxedType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 		match.conversion = boxConversion;
 		return match.type = JPMatch::_explicit;
 	}
-	return match.type;
+	return match.type = JPMatch::_none;
 }
 

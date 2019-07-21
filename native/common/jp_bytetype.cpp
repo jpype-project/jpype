@@ -81,9 +81,8 @@ public:
 JPMatch::Type JPByteType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPIntType::getJavaConversion");
-	match.type = JPMatch::_none;
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
@@ -102,7 +101,7 @@ JPMatch::Type JPByteType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return match.type;
+		return match.type = JPMatch::_none;
 	}
 
 	if (JPPyLong::check(pyobj))
@@ -114,11 +113,10 @@ JPMatch::Type JPByteType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 	if (JPPyLong::checkConvertable(pyobj))
 	{
 		match.conversion = &asByteConversion;
-		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
-		return match.type;
+		return match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 	}
 
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

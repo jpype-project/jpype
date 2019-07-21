@@ -57,9 +57,8 @@ public:
 
 JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	match.type = JPMatch::_none;
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 
 	if (JPPyBool::check(pyobj))
 	{
@@ -84,7 +83,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& fram
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return match.type;
+		return match.type = JPMatch::_none;
 	}
 
 	if (JPPyLong::check(pyobj))
@@ -100,7 +99,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& fram
 		return match.type;
 	}
 
-	return match.type;
+	return match.type = JPMatch::_none;
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

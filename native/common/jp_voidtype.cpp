@@ -45,7 +45,7 @@ JPPyObject JPVoidType::convertToPythonObject(jvalue val)
 
 JPMatch::Type JPVoidType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	return JPMatch::_none;
+	return match.type = JPMatch::_none;
 }
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)

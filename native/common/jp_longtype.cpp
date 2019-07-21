@@ -73,9 +73,8 @@ public:
 JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPLongType::getJavaConversion");
-	match.type = JPMatch::_none;
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
@@ -111,12 +110,12 @@ JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 					match.conversion = &longWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type;
+					return match.type = JPMatch::_none;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return match.type;
+		return match.type = JPMatch::_none;
 	}
 
 	if (JPPyLong::check(pyobj))
@@ -132,7 +131,7 @@ JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 		return match.type;
 	}
 
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

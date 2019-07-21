@@ -81,7 +81,7 @@ JPMatch::Type JPStringType::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 		match.conversion = stringConversion;
 		return match.type = JPMatch::_exact;
 	}
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

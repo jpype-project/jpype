@@ -89,9 +89,8 @@ public:
 JPMatch::Type JPFloatType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPIntType::getJavaConversion");
-	match.type = JPMatch::_none;
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 
 	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
@@ -125,12 +124,12 @@ JPMatch::Type JPFloatType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 					match.conversion = &floatIntWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type;
+					return match.type = JPMatch::_none;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return match.type;
+		return match.type = JPMatch::_none;
 	}
 
 	if (JPPyFloat::check(pyobj) || JPPyFloat::checkConvertable(pyobj))
@@ -145,7 +144,7 @@ JPMatch::Type JPFloatType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 		return match.type = JPMatch::_implicit;
 	}
 
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

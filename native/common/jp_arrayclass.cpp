@@ -109,7 +109,6 @@ public:
 JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::canConvertToJava");
-	match.type = JPMatch::_none;
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 		return match.type;
 	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
@@ -143,7 +142,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 		return match.type = JPMatch::_implicit;
 	}
 	
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

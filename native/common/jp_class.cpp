@@ -277,7 +277,6 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
-	match.type = JPMatch::_none;
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 	{
 		JP_TRACE("Match null conversion");
@@ -296,7 +295,7 @@ JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyO
 
 	// APPLY USER SUPPLIED CONVERSIONS
 	JP_TRACE("No match");
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

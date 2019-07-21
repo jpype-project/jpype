@@ -59,9 +59,8 @@ public:
 JPMatch::Type JPCharType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPCharType::getJavaConversion");
-	match.type = JPMatch::_none;
 	if (JPPyObject::isNone(pyobj))
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
@@ -80,7 +79,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
-		return match.type;
+		return match.type = JPMatch::_none;
 	}
 
 	if (JPPyString::checkCharUTF16(pyobj))
@@ -89,7 +88,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, 
 		return match.type = JPMatch::_implicit;
 	}
 
-	return match.type;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
