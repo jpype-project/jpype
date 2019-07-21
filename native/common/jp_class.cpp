@@ -171,9 +171,11 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 	jvalue v;
 	for (int i = 0; i < length; i++)
 	{
+		JPClass *type = this;
 		v.l = frame.GetObjectArrayElement(array, i + start);
-		JPClass* t = m_Context->getTypeManager()->findClassForObject(v.l);
-		res.setItem(i, t->convertToPythonObject(v).get());
+		if (v.l != NULL)
+			type = m_Context->getTypeManager()->findClassForObject(v.l);
+		res.setItem(i, type->convertToPythonObject(v).get());
 	}
 
 	return res;

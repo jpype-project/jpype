@@ -74,12 +74,12 @@ public:
 
 	virtual jlong getAsLong(jvalue v) override
 	{
-		return field(v);
+		return (jlong) field(v);
 	}
 
 	virtual jdouble getAsDouble(jvalue v) override
 	{
-		return field(v);
+		return (jdouble) field(v);
 	}
 
 private:

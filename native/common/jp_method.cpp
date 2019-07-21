@@ -76,19 +76,24 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 {
 	JP_TRACE_IN("JPMethod::matches");
 	match.overload = this;
+	match.offset = 0;
+	match.skip = 0;
 
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
+	JP_TRACE("Flags", isStatic(), isInstance(), callInstance);
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
 	if (callInstance && isStatic())
 	{
+		JP_TRACE("Skip this");
 		len--;
 		match.offset = 1;
 	}
 
 	if (callInstance || isInstance())
 	{
+		JP_TRACE("Take this");
 		match.skip = 1;
 	}
 
@@ -151,9 +156,10 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 	for (size_t i = 0; i < len; i++)
 	{
 		size_t j = i + match.offset;
-		JPClass* type = m_ParameterTypes[i];
+		JPClass *type = m_ParameterTypes[i];
+		JP_TRACE("compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
 		JPMatch::Type ematch = type->getJavaConversion( match.argument[j], frame, arg[j]);
-		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[j]));
+		JP_TRACE("result", ematch);
 		if (ematch < match.type)
 		{
 			match.type = ematch;
