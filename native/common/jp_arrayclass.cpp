@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h> // FIXME work on bytes, remove when complete
 #include <jpype.h>
@@ -66,7 +66,7 @@ public:
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
 
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 		if (PyBytes_Check(pyobj))
 		{
 			PyBytes_AsStringAndSize(pyobj, &buffer, &size); // internal reference
@@ -108,22 +108,30 @@ public:
 
 JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
 {
-	JP_TRACE_IN("JPArrayClass::canConvertToJava");
+	JP_TRACE_IN("JPArrayClass::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	{
+		JP_TRACE("Null", match.type);
 		return match.type;
+	}
 	if (objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	{
+		JP_TRACE("Object", match.type);
 		return match.type;
+	}
 
 	if (JPPyString::check(pyobj) && m_ComponentType == m_Context->_char)
 	{
+		JP_TRACE("String");
 		match.conversion = &charArrayConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 	// Bytes are byte[]
 	if (PyBytes_Check(pyobj) && m_ComponentType == m_Context->_byte)
 	{
+		JP_TRACE("Byte");
 		match.conversion = &byteArrayConversion;
 		return match.type = JPMatch::_implicit;
 	}
@@ -131,6 +139,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 	// Bytes are byte[]
 	if (PyString_Check(pyobj) && m_ComponentType == m_Context->_byte)
 	{
+		JP_TRACE("Byte");
 		match.conversion = &byteArrayConversion;
 		return match.type = JPMatch::_implicit;
 	}
@@ -138,10 +147,12 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 
 	if (JPPyObject::isSequenceOfItems(pyobj))
 	{
+		JP_TRACE("Sequence");
 		match.conversion = &sequenceConversion;
 		return match.type = JPMatch::_implicit;
 	}
-	
+
+	JP_TRACE("None");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

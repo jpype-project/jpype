@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 #include <jp_classhints.h>
@@ -95,7 +95,7 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame &frame, JPClass *cls, PyObject *obj) override
 	{
 		JP_TRACE_IN("JPAttributeConversion::matches");
-		if (JPPyObject::hasAttrString(obj, attribute_.c_str())) 
+		if (JPPyObject::hasAttrString(obj, attribute_.c_str()))
 		{
 			match.conversion = this;
 			return match.type = JPMatch::_implicit;
@@ -161,10 +161,9 @@ public:
 	{
 		JP_TRACE_IN("JPConversionNull::matches");
 		if (!JPPyObject::isNone(pyobj))
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
 		match.conversion = this;
-		match.type = JPMatch::_implicit;
-		return match.type;
+		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
 	}
 
@@ -184,7 +183,7 @@ public:
 	{
 		JP_TRACE_IN("JPConversionClass::matches");
 		if (JPPythonEnv::getJavaClass(pyobj) == NULL)
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
@@ -212,18 +211,23 @@ public:
 		JP_TRACE_IN("JPConversionObject::matches");
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		if (value == NULL)
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
+		match.conversion = this;
 		JPClass *oc = value->getClass();
 		if (oc == cls)
 		{
 			// hey, this is me! :)
-			match.conversion = this;
 			return match.type = JPMatch::_exact;
 		}
-		if (!frame.IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()))
-			return JPMatch::_none;
-		match.conversion = this;
-		return match.type = JPMatch::_implicit;
+		bool assignable = frame.IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass());
+		JP_TRACE("assignable", assignable, oc->getCanonicalName(), cls->getCanonicalName());
+		match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
+
+		// This is the one except to the conversion rule patterns.
+		// If it is a Java value then we must prevent it from proceeding
+		// through the conversion rules even if it was not a match.
+		// Thus the return result and the match type differ here.
+		return JPMatch::_implicit;
 		JP_TRACE_OUT;
 	}
 
@@ -249,7 +253,7 @@ public:
 		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		if (value == NULL)
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
 		match.conversion = this;
 		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
 		return match.type;
@@ -296,10 +300,9 @@ public:
 	{
 		JP_TRACE_IN("JPConversionString::matches");
 		if (!JPPyString::check(pyobj))
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
 		match.conversion = this;
-		match.type = JPMatch::_implicit;
-		return match.type;
+		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
 	}
 
@@ -348,9 +351,9 @@ public:
 		if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
 		{
 			match.conversion = this;
-			return JPMatch::_implicit;
+			return match.type = JPMatch::_implicit;
 		}
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
 	}
 
@@ -370,9 +373,9 @@ public:
 		if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
 		{
 			match.conversion = this;
-			return JPMatch::_implicit;
+			return match.type = JPMatch::_implicit;
 		}
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
 	}
 
@@ -402,7 +405,7 @@ public:
 		JP_TRACE_IN("JPConversionProxy::matches");
 		JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
 		if (proxy == NULL)
-			return JPMatch::_none;
+			return match.type = JPMatch::_none;
 
 		// Check if any of the interfaces matches ...
 		vector<JPClass*> itf = proxy->getInterfaces();
@@ -415,7 +418,7 @@ public:
 				return match.type = JPMatch::_implicit;
 			}
 		}
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
 	}
 
