@@ -166,7 +166,7 @@ int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 		{
 			JPJavaFrame frame(context);
 			JPMatch match;
-			type->getJavaConversion(match, frame, value);
+			type->getJavaConversion(frame, match, value);
 			if (match.type == JPMatch::_none)
 			{
 				stringstream ss;

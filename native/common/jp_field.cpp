@@ -62,7 +62,7 @@ void JPField::setStaticField(PyObject *pyobj)
 	}
 
 	JPMatch match;
-	if (m_Type->getJavaConversion(match, frame, pyobj) <= JPMatch::_explicit)
+	if (m_Type->getJavaConversion(frame, match, pyobj) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_Type->getCanonicalName();
@@ -96,7 +96,7 @@ void JPField::setField(jobject inst, PyObject *pyobj)
 	}
 
 	JPMatch match;
-	if (m_Type->getJavaConversion(match, frame, pyobj) <= JPMatch::_explicit)
+	if (m_Type->getJavaConversion(frame, match, pyobj) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_Type->getCanonicalName();

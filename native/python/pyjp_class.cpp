@@ -470,7 +470,7 @@ PyObject *PyJPClass::canConvertToJava(PyJPClass *self, PyObject *args)
 
 		// Test the conversion
 		JPMatch match;
-		cls->getJavaConversion(match, frame, other);
+		cls->getJavaConversion(frame, match, other);
 
 		// Report to user
 		if (match.type == JPMatch::_none)
@@ -509,7 +509,7 @@ PyObject *PyJPClass::convertToJava(PyJPClass *self, PyObject *args)
 
 		// Test the conversion
 		JPMatch match;
-		cls->getJavaConversion(match, frame, other);
+		cls->getJavaConversion(frame, match, other);
 
 		// If there is no conversion report a failure
 		if (match.type == JPMatch::_none)

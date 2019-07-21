@@ -126,7 +126,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			JP_TRACE("Call Python");
 			JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 
-			JP_TRACE("Handle return");
+			JP_TRACE("Handle return", returnValue.getTypeName());
 			if (returnClass == context->_void)
 			{
 				JP_TRACE("Void return");
@@ -141,13 +141,6 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 				JP_RAISE_TYPE_ERROR("Return value is None when it cannot be");
 			}
 
-			JPMatch returnMatch;
-			if (returnClass->getJavaConversion(returnMatch, frame, returnValue.get()) == JPMatch::_none)
-			{
-				JP_TRACE("Cannot convert");
-				JP_RAISE_TYPE_ERROR("Return value is not compatible with required type.");
-			}
-
 			// We must box here.
 			if (returnClass->isPrimitive())
 			{
@@ -155,7 +148,14 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
 			}
 
-			JP_TRACE("Convert return");
+			JPMatch returnMatch;
+			if (returnClass->getJavaConversion(frame, returnMatch, returnValue.get()) == JPMatch::_none)
+			{
+				JP_TRACE("Cannot convert");
+				JP_RAISE_TYPE_ERROR("Return value is not compatible with required type.");
+			}
+
+			JP_TRACE("Convert return to", returnClass->getCanonicalName());
 			jvalue res = returnMatch.conversion->convert(frame, returnClass, returnValue.get());
 			return frame.keep(res.l);
 		} catch (JPypeException& ex)

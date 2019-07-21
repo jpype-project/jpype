@@ -55,7 +55,7 @@ public:
 	}
 } asBooleanConversion;
 
-JPMatch::Type JPBooleanType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -153,7 +153,7 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticBooleanField(c, fid, val);
@@ -162,7 +162,7 @@ void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, P
 void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetBooleanField(c, fid, val);
@@ -212,7 +212,7 @@ JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);

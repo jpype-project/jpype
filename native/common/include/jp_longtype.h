@@ -39,7 +39,7 @@ public:
 	}
 
 public:
-	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue     getValueFromObject(jobject obj) override;
 

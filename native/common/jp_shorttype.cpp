@@ -1,6 +1,6 @@
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
-  
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- 
+
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
@@ -56,7 +56,7 @@ public:
 	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
 	{
 		jvalue res;
-		base_t::field(res) = (base_t::type_t) ((base_t*) cls)->assertRange(JPPyLong::asLong(pyobj));
+		base_t::field(res) = base_t::assertRange(JPPyLong::asLong(pyobj));
 		return res;
 	}
 } asShortConversion;
@@ -75,7 +75,7 @@ public:
 	}
 } shortWidenConversion;
 
-JPMatch::Type JPShortType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPShortType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
@@ -114,7 +114,7 @@ JPMatch::Type JPShortType::getJavaConversion(JPMatch& match, JPJavaFrame& frame,
 			}
 		}
 
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return match.type = JPMatch::_none;
 	}
 
@@ -180,7 +180,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticShortField(c, fid, val);
@@ -189,7 +189,7 @@ void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyO
 void JPShortType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetShortField(c, fid, val);
@@ -238,7 +238,7 @@ JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);

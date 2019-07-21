@@ -39,7 +39,7 @@ public:
 	}
 
 public:
-	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue     getValueFromObject(jobject obj) override;
 
@@ -60,9 +60,9 @@ public:
 	// Only Byte supports direct buffer convertion
 	virtual jobject   convertToDirectBuffer(PyObject* src);
 
-	template <class T> T assertRange(const T& l)
+	template <class T> static T assertRange(const T& l)
 	{
-		if (l < _Byte_Min || l > _Byte_Max)
+		if (l < -128 || l > 127)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
 		}

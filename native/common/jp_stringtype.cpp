@@ -69,7 +69,7 @@ JPPyObject JPStringType::convertToPythonObject(jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)

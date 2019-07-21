@@ -55,7 +55,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	JPMatch::Type lastMatch = JPMatch::_exact;
 	for (size_t i = start; i < len; i++)
 	{
-		JPMatch::Type quality = type->getJavaConversion(match[i], frame, arg[i]);
+		JPMatch::Type quality = type->getJavaConversion(frame, match[i], arg[i]);
 
 		if (quality < JPMatch::_implicit)
 		{
@@ -78,6 +78,8 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 	match.overload = this;
 	match.offset = 0;
 	match.skip = 0;
+	match.isVarIndirect = false;
+	match.type = JPMatch::_exact;
 
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
@@ -97,7 +99,6 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		match.skip = 1;
 	}
 
-	match.type = JPMatch::_exact;
 	if (!JPModifier::isVarArgs(m_Modifiers))
 	{
 		if (len != tlen)
@@ -108,43 +109,35 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 	} else
 	{
 		JP_TRACE("Match vargs");
-		JPClass* type = m_ParameterTypes[tlen - 1];
+		match.type = JPMatch::_none;
 		if (len < tlen - 1)
 		{
-			return match.type = JPMatch::_none;
+			return match.type;
 		}
 
+		JPClass* type = m_ParameterTypes[tlen - 1];
 		// Hard, could be direct array or an array.
 		if (len == tlen)
 		{
 			// Try direct
 			size_t last = tlen - 1 - match.offset;
-			PyObject* obj = arg[last];
-			--len;
-			match.type = type->getJavaConversion(match.argument[last], frame, obj);
-			if (match.type < JPMatch::_implicit)
-			{
-				// Try indirect
-				match.type = matchVars(frame, match, arg, last, type);
-				match.isVarIndirect = true;
-				JP_TRACE("Match vargs indirect", match.type);
-			} else
-			{
-				match.isVarDirect = true;
-				JP_TRACE("Match vargs direct", match.type);
-			}
-		} else if (len > tlen)
+			match.type = type->getJavaConversion(frame, match.argument[last], arg[last]);
+			JP_TRACE("Direct vargs", match.type);
+		}
+
+		if (match.type < JPMatch::_implicit && len >= tlen)
 		{
 			// Must match the array type
-			len = tlen - 1;
 			match.type = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
 			match.isVarIndirect = true;
-			JP_TRACE("Match vargs indirect", match.type);
+			JP_TRACE("Indirect vargs", match.type);
 		} else if (len < tlen)
 		{
 			match.isVarIndirect = true;
-			JP_TRACE("Match vargs empty");
+			match.type = JPMatch::_exact;
+			JP_TRACE("Empty vargs");
 		}
+		len = tlen - 1;
 
 		if (match.type < JPMatch::_implicit)
 		{
@@ -152,14 +145,14 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		}
 	}
 
-	JP_TRACE("Start match");
+	JP_TRACE("Match args");
 	for (size_t i = 0; i < len; i++)
 	{
 		size_t j = i + match.offset;
 		JPClass *type = m_ParameterTypes[i];
-		JP_TRACE("compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
-		JPMatch::Type ematch = type->getJavaConversion( match.argument[j], frame, arg[j]);
-		JP_TRACE("result", ematch);
+		JP_TRACE("Compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
+		JPMatch::Type ematch = type->getJavaConversion(frame, match.argument[j], arg[j]);
+		JP_TRACE("Result", ematch);
 		if (ematch < match.type)
 		{
 			match.type = ematch;
@@ -186,7 +179,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE("types length", tlen);
 	if (match.isVarIndirect)
 	{
-		JP_TRACE("Pack varargs");
+		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
 		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
 		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, (jsize) arg.size());
@@ -242,7 +235,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 			{
 				JPPrimitiveType* type = (JPPrimitiveType*) cls;
 				JPMatch conv;
-				type->getBoxedClass()->getJavaConversion(conv, frame, arg[i + match.skip]);
+				type->getBoxedClass()->getJavaConversion(frame, conv, arg[i + match.skip]);
 				frame.SetObjectArrayElement(ja, i,
 						conv.conversion->convert(frame, type->getBoxedClass(), arg[i + match.skip]).l);
 			} else

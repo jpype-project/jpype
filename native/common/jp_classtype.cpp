@@ -33,7 +33,7 @@ JPClassType::~JPClassType()
 {
 }
 
-JPMatch::Type JPClassType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPClassType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)

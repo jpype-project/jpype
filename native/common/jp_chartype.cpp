@@ -56,7 +56,7 @@ public:
 	}
 } asCharConversion;
 
-JPMatch::Type JPCharType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPCharType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
@@ -137,7 +137,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticCharField(c, fid, val);
@@ -146,7 +146,7 @@ void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetCharField(c, fid, val);
@@ -209,7 +209,7 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(match, frame, obj)<JPMatch::_implicit)
+    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);

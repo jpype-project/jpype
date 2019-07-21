@@ -40,7 +40,7 @@ public:
 
 
 public:
-	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue     getValueFromObject(jobject obj) override;
 
@@ -58,9 +58,9 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	template <class T> T assertRange(const T& l)
+	template <class T> static T assertRange(const T& l)
 	{
-		if (l < -_Float_Max || l > _Float_Max)
+		if (l < -3.40282346638528860e+38 || l > 3.40282346638528860e+38)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
 		}
@@ -83,7 +83,6 @@ public:
 	}
 
 private:
-	jdouble _Float_Max;
 	jmethodID _FloatValueID;
 } ;
 

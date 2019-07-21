@@ -34,7 +34,7 @@ public:
 	virtual ~JPBoxedType();
 
 	void setPrimitiveType(JPPrimitiveType* primitiveType);
-	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 protected:
 	JPPrimitiveType* m_PrimitiveType;
 } ;

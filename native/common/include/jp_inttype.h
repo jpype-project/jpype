@@ -39,7 +39,7 @@ public:
 	}
 
 public:
-	virtual JPMatch::Type getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
 	virtual JPValue     getValueFromObject(jobject obj) override;
 
@@ -72,17 +72,15 @@ public:
 		return field(v);
 	}
 
-	template <class T> T assertRange(const T& l)
+	template <class T> static T assertRange(const T& l)
 	{
-		if (l < _Int_Min || l > _Int_Max)
+		if (l < -2147483648 || l > 2147483647)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java int");
 		}
 		return l;
 	}
 private:
-	jlong _Int_Min;
-	jlong _Int_Max;
 	jmethodID _IntValueID;
 } ;
 

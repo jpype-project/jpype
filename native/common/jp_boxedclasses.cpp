@@ -18,10 +18,10 @@
 #include <jp_boxedclasses.h>
 
 JPBoxedType::JPBoxedType(JPContext* context, jclass clss,
-			 const string& name,
-			 JPClass* super,
-			 JPClassList& interfaces,
-			 jint modifiers)
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
 : JPClass(context, clss, name, super, interfaces, modifiers)
 {
 }
@@ -35,16 +35,19 @@ void JPBoxedType::setPrimitiveType(JPPrimitiveType* primitiveType)
 	m_PrimitiveType = primitiveType;
 }
 
-JPMatch::Type JPBoxedType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
-	JPClass::getJavaConversion(match, frame, pyobj);
+	JP_TRACE_IN("JPBoxedType::getJavaConversion");
+	JPClass::getJavaConversion(frame, match, pyobj);
 	if (match.type != JPMatch::_none)
 		return match.type;
-	if (this->m_PrimitiveType->getJavaConversion(match, frame, pyobj) != JPMatch::_none)
+	if (m_PrimitiveType->getJavaConversion(frame, match, pyobj) != JPMatch::_none)
 	{
+		JP_TRACE("Primitive", match.type);
 		match.conversion = boxConversion;
 		return match.type = JPMatch::_explicit;
 	}
 	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
 }
 

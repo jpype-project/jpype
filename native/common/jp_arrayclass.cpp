@@ -106,7 +106,7 @@ public:
 	}
 } sequenceConversion;
 
-JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
@@ -148,8 +148,20 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame
 	if (JPPyObject::isSequenceOfItems(pyobj))
 	{
 		JP_TRACE("Sequence");
+		JPPySequence seq(JPPyRef::_use, pyobj);
+		jlong length = seq.size();
+		match.type = JPMatch::_implicit;
+		JPMatch imatch;
+		for (jlong i = 0; i < length & match.type > JPMatch::_none; i++)
+		{
+			m_ComponentType->getJavaConversion(frame, imatch, seq[i].get());
+			if (imatch.type < match.type)
+			{
+				match.type = imatch.type;
+			}
+		}
 		match.conversion = &sequenceConversion;
-		return match.type = JPMatch::_implicit;
+		return match.type;
 	}
 
 	JP_TRACE("None");
@@ -168,6 +180,7 @@ jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, js
 {
 	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
+	JP_TRACE("component type", m_ComponentType->getCanonicalName());
 	jsize length = (jsize) (end - start);
 
 	jarray array = m_ComponentType->newArrayInstance(frame, length);

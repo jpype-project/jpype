@@ -70,7 +70,7 @@ public:
 	}
 } longWidenConversion;
 
-JPMatch::Type JPLongType::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPLongType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
@@ -180,7 +180,7 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetStaticLongField(c, fid, val);
@@ -189,7 +189,7 @@ void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 void JPLongType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetLongField(c, fid, val);
@@ -238,7 +238,7 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(frame, this, obj));
 	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);

@@ -39,7 +39,6 @@ class JPMethodMatch
 {
 public:
 	JPMatch::Type type;
-	bool isVarDirect;
 	bool isVarIndirect;
 	JPMethod* overload;
 	char offset;
@@ -60,7 +59,6 @@ public:
 	: argument(size)
 	{
 		type = JPMatch::_none;
-		isVarDirect = false;
 		isVarIndirect = false;
 		overload = 0;
 		offset = 0;

@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- 
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -139,7 +139,7 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 {
 	JP_TRACE_IN("JPClass::setStaticValue");
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 	{
 		JP_RAISE_TYPE_ERROR("Unable to convert");
 	}
@@ -152,7 +152,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 {
 	JP_TRACE_IN("JPClass::setInstanceValue");
 	JPMatch match;
-	if (getJavaConversion(match, frame, obj) < JPMatch::_implicit)
+	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
 	{
 		JP_RAISE_TYPE_ERROR("Unable to convert");
 	}
@@ -187,7 +187,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	JP_TRACE_IN("JPClass::setArrayRange");
 	jobjectArray array = (jobjectArray) a;
 
-	// Verify before we start the conversion, as we wont be able 
+	// Verify before we start the conversion, as we wont be able
 	// to abort once we start
 	JPPySequence seq(JPPyRef::_use, vals);
 	JP_TRACE("Verify argument types");
@@ -195,7 +195,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		if (getJavaConversion(match, frame, v) < JPMatch::_implicit)
+		if (getJavaConversion(frame, match, v) < JPMatch::_implicit)
 		{
 			JP_RAISE_TYPE_ERROR("Unable to convert");
 		}
@@ -205,7 +205,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		getJavaConversion(match, frame, v);
+		getJavaConversion(frame, match, v);
 		frame.SetObjectArrayElement(array, i + start, match.conversion->convert(frame, this, v).l);
 	}
 	JP_TRACE_OUT;
@@ -213,13 +213,17 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 
 void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
 {
+	JP_TRACE_IN("JPClass::setArrayItem");
 	JPMatch match;
-	if (getJavaConversion(match, frame, val) < JPMatch::_implicit)
+	getJavaConversion(frame, match, val);
+	JP_TRACE("Type", getCanonicalName());
+	if ( match.type < JPMatch::_implicit)
 	{
 		JP_RAISE_TYPE_ERROR("Unable to convert");
 	}
 	jvalue v = match.conversion->convert(frame, this, val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);
+	JP_TRACE_OUT;
 }
 
 JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
@@ -251,17 +255,17 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 
-	// FIXME returning None likely incorrect from java prospective.  
-	//  Java still knows the type of null objects thus 
-	//  converting to None would pose a problem as we lose type.  
-	//  We would need subclass None for this to make sense so we 
+	// FIXME returning None likely incorrect from java prospective.
+	//  Java still knows the type of null objects thus
+	//  converting to None would pose a problem as we lose type.
+	//  We would need subclass None for this to make sense so we
 	//  can carry both the type and the null, but Python considers
-	//  None a singleton so this is not an option. 
-	// 
+	//  None a singleton so this is not an option.
+	//
 	//  Of course if we don't mind that "Object is None" would
 	//  fail, but "Object == None" would be true, the we
 	//  could support null objects properly.  However, this would
-	//  need to work as "None == Object" which may be hard to 
+	//  need to work as "None == Object" which may be hard to
 	//  achieve.
 	//
 	// We will still need to have the concept of null objects
@@ -276,9 +280,10 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::getJavaConversion(JPMatch& match, JPJavaFrame& frame, PyObject* pyobj)
+JPMatch::Type JPClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
+	JP_TRACE("Python", JPPyObject::getTypeName(pyobj));
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 	{
 		JP_TRACE("Match null conversion");
