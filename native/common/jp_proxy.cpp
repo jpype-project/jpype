@@ -278,4 +278,3 @@ JPPyObject JPProxyType::convertToPythonObject(jvalue val)
 	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, m_InstanceID);
 	return JPPyObject(JPPyRef::_use, proxy->m_Target);
 }
-

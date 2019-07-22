@@ -186,8 +186,14 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 			if (className == "java.lang.Double")
 				return (jlong) (context->_java_lang_Double
-				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-			JP_RAISE_RUNTIME_ERROR("Special class not defined");
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			if (className == "org.jpype.proxy.JPypeProxy")
+				return (jlong)
+				new JPProxyType(context, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
+			stringstream ss;
+			ss << "Special class not defined for " << className;
+			JP_RAISE_RUNTIME_ERROR(ss.str());
 		}
 		else
 			// Otherwise create a normal class

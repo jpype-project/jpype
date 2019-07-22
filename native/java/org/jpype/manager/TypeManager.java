@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+import org.jpype.proxy.JPypeProxy;
 
 /**
  *
@@ -89,6 +90,7 @@ public class TypeManager
     createClass(Float.class, true);
     createClass(Double.class, true);
     createClass(String.class, true);
+    createClass(JPypeProxy.class, true);
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.
