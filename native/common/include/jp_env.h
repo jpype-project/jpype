@@ -44,7 +44,7 @@ namespace JPEnv
 	 * Load the JVM
 	 * TODO : add the non-string parameters, for possible callbacks
 	 */
-	void loadJVM(const string& vmPath, char ignoreUnrecognized, const StringVector& args);
+	void loadJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
 
 	void attachJVM(const string& vmPath);
 
@@ -62,6 +62,8 @@ namespace JPEnv
 
 	void CreateJavaVM(void* arg);
 	void GetCreatedJavaVM();
+
+        bool getConvertStrings();
 }
 
 #endif // _JPENV_H_

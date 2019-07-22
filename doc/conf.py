@@ -15,6 +15,12 @@
 import sys
 import os
 
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+sys.path.insert(0, os.path.abspath('..'))
+
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -48,21 +54,46 @@ copyright = u'2014-19, Steve Menard, Luis Nell and others'
 #
 # The short X.Y version.
 import mock
-mock_modules = ('_jpype',
-                'jpype._jinit',
-        )
-for m in mock_modules:
-    sys.modules[m] = mock.MagicMock()
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('..'))
+def TypeMock_init(self, *args, **kwargs):
+    object.__init__(self)
 
+def TypeMock_getattr(self, key):
+    kwargs = self._kwargs
+    m = self._to(**kwargs)
+    object.__setattr__(self, key, m)
+    return m
+
+class TypeMock(type):
+    def __new__(cls, name, bases=None, members={}, to=mock.Mock, **kwargs):
+        if not bases:
+            bases = tuple([])
+
+        members['__init__'] =  TypeMock_init
+        members['__getattr__'] =  TypeMock_getattr
+        members['_kwargs'] = kwargs
+        members['_to'] = to
+        return type.__new__(cls, name, bases, members)
+
+    def __init__(self, *args, **kwargs):
+        return type.__init__(self, *args)
+
+    def __getattr__(self, key):
+        kwargs = self._kwargs
+        m = self._to(**kwargs)
+        type.__setattr__(self, key, m)
+        return m
+
+
+mockModule = mock.MagicMock()
+mockModule.isStarted = mock.Mock(return_value=False)
+mockModule.PyJPClass = TypeMock("PyJPClass")
+sys.modules['_jpype']=mockModule
+
+# For some reason jpype.imports does not work if called in sphinx. Importing
+# it here solved the problem.
 import jpype
 import jpype.imports
-print(jpype.__path__)
-
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__
@@ -139,7 +170,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = 'logo.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -284,3 +315,5 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+napoleon_custom_sections = ["Static Methods","Virtual Methods","Constructors"]

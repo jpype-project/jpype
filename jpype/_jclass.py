@@ -44,8 +44,6 @@ _jcustomizer._JCLASSES = _JCLASSES
 def _initialize():
     global _java_ClassLoader
 
-    _jpype.setResource('GetClassMethod', _JClassNew)
-
     # Due to bootstrapping, Object and Class must be defined first.
     global _java_lang_Object, _java_lang_Class
     _java_lang_Object = JClass("java.lang.Object")
@@ -76,11 +74,11 @@ def _initialize():
 
 
 def JOverride(*args, **kwargs):
-    """ Annotation to denote a method as overriding a Java method.
+    """Annotation to denote a method as overriding a Java method.
 
     This annotation applies to customizers, proxies, and extension
     to Java class. Apply it to methods to mark them as implementing
-    or overriding Java methods.  Keyword arguments are passed to the 
+    or overriding Java methods.  Keyword arguments are passed to the
     corresponding implementation factory.
 
     Args:
@@ -100,9 +98,9 @@ def JOverride(*args, **kwargs):
 
 
 class JClass(type):
-    """ Meta class for all java class instances.
+    """Meta class for all java class instances.
 
-    JClass when called as an object will contruct a new java Class wrapper. 
+    JClass when called as an object will contruct a new java Class wrapper.
 
     All python wrappers for java classes derived from this type.
     To test if a python class is a java wrapper use
@@ -139,6 +137,8 @@ class JClass(type):
 
     def __getattribute__(self, name):
         if name.startswith('_'):
+            if name == "__doc__":
+                return _jclassDoc(self)
             return type.__getattribute__(self, name)
         attr = type.__getattribute__(self, name)
         if isinstance(attr, _jpype.PyJPMethod):
@@ -225,12 +225,12 @@ def _JClassNew(arg, loader=None, initialize=True):
 
 
 class JInterface(object):
-    """ Base class for all Java Interfaces. 
+    """Base class for all Java Interfaces.
 
-    ``JInterface`` is serves as the base class for any java class that is 
-    a pure interface without implementation. It is not possible to create 
+    ``JInterface`` is serves as the base class for any java class that is
+    a pure interface without implementation. It is not possible to create
     a instance of a java interface. The ``mro`` is hacked such that
-    ``JInterface`` does not appear in the tree of objects implement an 
+    ``JInterface`` does not appear in the tree of objects implement an
     interface.
 
     Example:
@@ -327,7 +327,7 @@ def _JClassFactory(name, jc):
 
 
 def _toJavaClass(tp):
-    """ (internal) Converts a class type in python into a internal java class.
+    """(internal) Converts a class type in python into a internal java class.
 
     Used mainly to support JArray.
 
@@ -404,9 +404,9 @@ class _JavaLangClass(object):
 
 
 def typeLookup(tp, name):
-    """ Fetch a descriptor from the inheritance tree.
+    """Fetch a descriptor from the inheritance tree.
 
-    This uses a cache to avoid additional cost when accessing items deep in 
+    This uses a cache to avoid additional cost when accessing items deep in
     the tree multiple times.
     """
     # TODO this cache may have interactions with retroactive
@@ -429,3 +429,149 @@ def typeLookup(tp, name):
 
     cache[name] = None
     return None
+
+
+def _jclassDoc(cls):
+    """Generator for JClass.__doc__ property
+
+    Parameters:
+       cls (JClass): class to document.
+
+    Returns:
+      The doc string for the class.
+    """
+    from textwrap import TextWrapper
+    jclass = cls.class_
+    out = []
+    out.append("Java class '%s'" % (jclass.getName()))
+    out.append("")
+
+    sup = jclass.getSuperclass()
+    if sup:
+        out.append("  Extends:")
+        out.append("    %s" % sup.getName())
+        out.append("")
+
+    intfs = jclass.getInterfaces()
+    if intfs:
+        out.append("  Interfaces:")
+        words = ", ".join([str(i.getCanonicalName()) for i in intfs])
+        wrapper = TextWrapper(initial_indent='        ',
+                              subsequent_indent='        ')
+        out.extend(wrapper.wrap(words))
+        out.append("")
+
+    ctors = jclass.getDeclaredConstructors()
+    if ctors:
+        exceptions = []
+        name = jclass.getSimpleName()
+        ctordecl = []
+        for ctor in ctors:
+            modifiers = ctor.getModifiers()
+            if not modifiers & 1:
+                continue
+            params = ", ".join([str(i.getCanonicalName())
+                                for i in ctor.getParameterTypes()])
+            ctordecl.append("    * %s(%s)" % (name, params))
+            exceptions.extend(ctor.getExceptionTypes())
+        if ctordecl:
+            out.append("  Constructors:")
+            out.extend(ctordecl)
+            out.append("")
+        if exceptions:
+            out.append("  Raises:")
+            for exc in set(exceptions):
+                out.append("    %s: from java" % exc.getCanonicalName())
+            out.append("")
+
+    fields = jclass.getDeclaredFields()
+    if fields:
+        fielddesc = []
+        for field in fields:
+            modifiers = field.getModifiers()
+            if not modifiers & 1:
+                continue
+            fieldInfo = []
+            if modifiers & 16:
+                fieldInfo.append("final")
+            if modifiers & 8:
+                fieldInfo.append("static")
+            if field.isEnumConstant():
+                fieldInfo.append("enum constant")
+            else:
+                fieldInfo.append("field")
+            fielddesc.append("    %s (%s): %s" % (field.getName(),
+                                                  field.getType().getName(),
+                                                  " ".join(fieldInfo)))
+        if fielddesc:
+            out.append("  Attributes:")
+            out.extend(fielddesc)
+            out.append("")
+
+    return "\n".join(out)
+
+
+def _jmethodDoc(method, cls, overloads):
+    """Generator for PyJPMethod.__doc__ property
+
+    Parameters:
+      method (PyJPMethod): method to generate doc string for.
+      cls (java.lang.Class): Class holding this method dispatch.
+      overloads (java.lang.reflect.Method[]): tuple holding all the methods
+        that are served by this method dispatch.
+
+    Returns:
+      The doc string for the method dispatch.
+    """
+    from textwrap import TextWrapper
+    out = []
+    out.append("Java method dispatch '%s' for '%s'" %
+               (method.getName(), cls.getName()))
+    out.append("")
+    exceptions = []
+    returns = []
+    methods = []
+    classmethods = []
+    for ov in overloads:
+        modifiers = ov.getModifiers()
+        exceptions.extend(ov.getExceptionTypes())
+        returnName = ov.getReturnType().getCanonicalName()
+        params = ", ".join([str(i.getCanonicalName())
+                            for i in ov.getParameterTypes()])
+        if returnName != "void":
+            returns.append(returnName)
+        if modifiers & 8:
+            classmethods.append("    * %s %s(%s)" %
+                                (returnName, ov.getName(), params))
+        else:
+            methods.append("    * %s %s(%s)" %
+                           (returnName, ov.getName(), params))
+    if classmethods:
+        out.append("  Static Methods:")
+        out.extend(classmethods)
+        out.append("")
+
+    if methods:
+        out.append("  Virtual Methods:")
+        out.extend(methods)
+        out.append("")
+
+    if exceptions:
+        out.append("  Raises:")
+        for exc in set(exceptions):
+            out.append("    %s: from java" % exc.getCanonicalName())
+        out.append("")
+
+    if returns:
+        out.append("  Returns:")
+        words = ", ".join([str(i) for i in set(returns)])
+        wrapper = TextWrapper(initial_indent='    ',
+                              subsequent_indent='    ')
+        out.extend(wrapper.wrap(words))
+        out.append("")
+
+    return "\n".join(out)
+
+
+_jpype.setResource('GetClassMethod', _JClassNew)
+_jpype.setResource('GetMethodDoc', _jmethodDoc)

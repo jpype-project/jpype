@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 
 #include <pyjp.h>
@@ -62,7 +62,7 @@ PyMODINIT_FUNC PyInit__jpype()
 PyMODINIT_FUNC init_jpype()
 #endif
 {
-	// This is required for python versions prior to 3.7.  
+	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
 	PyEval_InitThreads();
@@ -117,8 +117,10 @@ PyObject* PyJPModule::startup(PyObject* obj, PyObject* args)
 		PyObject* vmOpt;
 		PyObject* vmPath;
 		char ignoreUnrecognized = true;
+		char convertStrings = false;
 
-		if (!PyArg_ParseTuple(args, "OO!b|", &vmPath, &PyTuple_Type, &vmOpt, &ignoreUnrecognized))
+		if (!PyArg_ParseTuple(args, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
+                      &ignoreUnrecognized, &convertStrings))
 		{
 			return NULL;
 		}
@@ -151,7 +153,7 @@ PyObject* PyJPModule::startup(PyObject* obj, PyObject* args)
 			}
 		}
 
-		JPEnv::loadJVM(cVmPath, ignoreUnrecognized, args);
+		JPEnv::loadJVM(cVmPath, args, ignoreUnrecognized, convertStrings);
 		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
@@ -324,7 +326,7 @@ PyObject* PyJPModule::convertToDirectByteBuffer(PyObject* self, PyObject* args)
 			// Bind lifespan of the python to the java object.
 			JPReferenceQueue::registerRef(ref, src);
 
-			// Convert to python object 
+			// Convert to python object
 
 			jvalue v;
 			v.l = ref;

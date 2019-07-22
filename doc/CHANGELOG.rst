@@ -4,8 +4,12 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  
+  - Corrected segfault when converting null elements while accessing a slice
+    from a Java object array.
 
 - **0.7.0 - 2019**
+  - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,
     improved hardening, and member management.  Massive number of internal 
@@ -14,28 +18,30 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - API breakage:
 
-     - Java strings no longer convert automatically to Python strings.
-       The previous behavior was switchable, but only the default
-       convert to Python was working. Converting to automatically
-       lead to problems in which is was impossible to work with
-       classes like StringBuilder in Java. To convert a Java
-       string use ``str()``.
+     - Java strings conversion behavior has changed.  The previous behavior was
+       switchable, but only the default convert to Python was working.
+       Converting to automatically lead to problems in which is was impossible
+       to work with classes like StringBuilder in Java. To convert a Java
+       string use ``str()``. Therefore, string conversion is currently selected
+       by a switch at the start of the JVM.  The default shall be False
+       starting in JPype 0.8.  New code is encouraged to use the future default
+       of False.  For the transition period the default will be True with a
+       warning if not policy was selected to encourage developers to pick the
+       string conversion policy that best applies to their application.
 
-     - Java exceptions are now derived from Python exception. The
-       old wrapper types have been removed. Catch the exception
-       with the actual Java exception type rather than ``JException``.
+     - Java exceptions are now derived from Python exception. The old wrapper
+       types have been removed. Catch the exception with the actual Java
+       exception type rather than ``JException``.
        
-     - Undocumented exceptions issued from within JPype have
-       been mapped to the corresponding Python exception types
-       such as ``TypeError`` and ``ValueError`` appropriately.
-       Code catching exceptions from previous versions should 
-       be checked to make sure all exception paths are being
+     - Undocumented exceptions issued from within JPype have been mapped to the
+       corresponding Python exception types such as ``TypeError`` and
+       ``ValueError`` appropriately.  Code catching exceptions from previous
+       versions should be checked to make sure all exception paths are being
        handled.
 
-     - Undocumented property import of Java bean pattern
-       get/set accessors was removed as the default. It is 
-       available with ``import jpype.beans``, but its
-       use is discouraged.
+     - Undocumented property import of Java bean pattern get/set accessors was
+       removed as the default. It is available with ``import jpype.beans``, but
+       its use is discouraged.
 
   - API rework:
 

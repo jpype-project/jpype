@@ -40,7 +40,7 @@ class ExceptionTestCase(common.JPypeTestCase):
             self.assertIs(type(ex), java.lang.RuntimeException)
             self.assertEqual('Foo', ex.message())
             trace = ex.stacktrace()
-            self.assertTrue(trace.startsWith(
+            self.assertTrue(str(trace).startswith(
                 'java.lang.RuntimeException: Foo'))
 
     def testExceptionByJavaClass(self):
@@ -51,7 +51,7 @@ class ExceptionTestCase(common.JPypeTestCase):
             self.assertIs(type(ex), java.lang.RuntimeException)
             self.assertEqual('Foo', ex.message())
             trace = ex.stacktrace()
-            self.assertTrue(trace.startsWith(
+            self.assertTrue(str(trace).startswith(
                 'java.lang.RuntimeException: Foo'))
 
     def testThrowException(self):

@@ -13,7 +13,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYJPPROXY_H_
 #define _PYJPPROXY_H_
@@ -29,6 +29,8 @@ struct PyJPProxy
 	static PyObject*   __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
 	static int __init__(PyJPProxy* self, PyObject* args, PyObject* kwargs);
 	static void __dealloc__(PyJPProxy* self);
+	static int traverse(PyJPProxy *self, visitproc visit, void *arg);
+	static int clear(PyJPProxy *self);
 	static PyObject* __str__(PyJPProxy* self);
 
 	JPProxy* m_Proxy;
