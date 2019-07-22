@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -188,7 +189,15 @@ public class TypeManager
   {
     if (obj == null)
       return 0;
-    return this.findClass(obj.getClass());
+    
+    Class cls = obj.getClass();
+    if (Proxy.isProxyClass(cls) 
+            && (Proxy.getInvocationHandler(obj) instanceof JPypeProxy))
+    {
+      return this.findClass(JPypeProxy.class);
+    }
+  
+    return this.findClass(cls);
   }
 
   /**
