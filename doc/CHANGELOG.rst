@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **0.8.0**
+
   - Complete rewrite of core to deal with global variables and move core
     logic to Java. Preliminary work on support of multiple JVMs.
 
@@ -15,7 +16,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     did not support annotations on compiled classes.  Tab completion
     with older versions requires use of the IPython greedy method.
 
-
   - Updated getJVMVersion to work with JDK 9+.
 
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
@@ -26,14 +26,16 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Fixed incorrect change with exceptions ``str()``
   
-  - Fixed segfault when converting null elements while accessing a slice
-    from a Java object array.
-
   - JProxy objects now are returned from Java as the Python objects 
     that originate from. Older style proxy classes return the 
     inst or dict. New style return the proxy class instance.
     Thus proxy classes can be stored on generic Java containers
     and retrieved as Python objects.
+
+- **Next version - unreleased**
+
+  - Fixed segfault when converting null elements while accessing a slice
+    from a Java object array.
 
 - **0.7.0 - 2019**
 
