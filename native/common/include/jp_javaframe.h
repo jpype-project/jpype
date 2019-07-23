@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_JAVA_FRAME_H_
 #define _JP_JAVA_FRAME_H_
@@ -24,13 +24,13 @@
  * deallocated at when the frame falls out of scope unless captured
  * by a global reference.
  *
- * This should be used around all entry points from python that 
+ * This should be used around all entry points from python that
  * call java code.  Failure may lead to local references not being
- * released.  Methods will large numbers of local references 
- * should allocate a local frame.  At most one local reference 
+ * released.  Methods will large numbers of local references
+ * should allocate a local frame.  At most one local reference
  * from a local frame can be kept.  Addition must use global referencing.
  *
- * JavaFrames are created to hold a certain number of items in 
+ * JavaFrames are created to hold a certain number of items in
  * scope at time.  They will grow automatically if more items are
  * created, but this has overhead.  For most cases the default
  * will be fine.  However, when working with an array in which
@@ -39,7 +39,7 @@
  *
  * A JavaFrame should not be used in a destructor as it can
  * throw. The most common use of JavaFrame is to delete a
- * global reference.  See the ReleaseGlobalReference for 
+ * global reference.  See the ReleaseGlobalReference for
  * this purpose.
  */
 static const int LOCAL_FRAME_DEFAULT = 8;
@@ -76,28 +76,28 @@ public:
 	JPJavaFrame(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
 
 	/** Exit the local scope and clean up all java
-	 * objects.  
+	 * objects.
 	 *
 	 * Only the one local object passed to outer scope
 	 * by the keep method will be kept alive.
 	 */
 	~JPJavaFrame();
 
-	/** Exit the local frame and keep a local reference to an object 
+	/** Exit the local frame and keep a local reference to an object
 	 *
-	 * This must be called only once when the frame is about to leave 
+	 * This must be called only once when the frame is about to leave
 	 * scope. Any local references other than the one that is kept
 	 * are destroyed.  If the next line is not "return", you are using
 	 * this incorrectly.
 	 *
-	 * Further calls to the frame will still suceed as we do not 
+	 * Further calls to the frame will still suceed as we do not
 	 * check for operation on a closed frame, but is not advised.
 	 */
 	jobject keep(jobject);
 
 	/** Create a new global reference to a java object.
 	 *
-	 * This java reference may be held in a class until the object is 
+	 * This java reference may be held in a class until the object is
 	 * no longer needed.  It should be deleted with DeleteGlobalRef
 	 * or ReleaseGlobalRef.
 	 */

@@ -21,8 +21,6 @@ JPMethod::JPMethod(JPClass* claz,
 		const string& name,
 		jobject mth,
 		jmethodID mid,
-		JPClass *returnType,
-		JPClassList parameterTypes,
 		JPMethodList& moreSpecific,
 		jint modifiers)
 : m_Method(claz->getContext(), mth)
@@ -30,14 +28,21 @@ JPMethod::JPMethod(JPClass* claz,
 	this->m_Class = claz;
 	this->m_Name = name;
 	this->m_MethodID = mid;
-	this->m_ReturnType = returnType;
-	this->m_ParameterTypes = parameterTypes;
 	this->m_MoreSpecificOverloads = moreSpecific;
 	this->m_Modifiers = modifiers;
+	this->m_ReturnType = (JPClass*) (-1);
 }
 
 JPMethod::~JPMethod()
 {
+}
+
+void JPMethod::setParameters(
+		JPClass *returnType,
+		JPClassList parameterTypes)
+{
+	this->m_ReturnType = returnType;
+	this->m_ParameterTypes = parameterTypes;
 }
 
 string JPMethod::toString() const
@@ -74,6 +79,8 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance,
 		JPPyObjectVector& arg)
 {
+	ensureTypeCache();
+
 	JP_TRACE_IN("JPMethod::matches");
 	match.overload = this;
 	match.offset = 0;
@@ -316,6 +323,7 @@ JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
 
 string JPMethod::matchReport(JPPyObjectVector& args)
 {
+	ensureTypeCache();
 	JPContext *context = m_Class->getContext();
 	JPJavaFrame frame(context);
 	stringstream res;
@@ -372,4 +380,12 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 			return true;
 	}
 	return false;
+}
+
+void JPMethod::ensureTypeCache()
+{
+	if (this->m_ReturnType != (JPClass*) (-1))
+		return;
+
+	m_Class->getContext()->getTypeManager()->populateMethod(this, this->m_Method.get());
 }

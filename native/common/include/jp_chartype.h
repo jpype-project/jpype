@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_CHAR_TYPE_H_
 #define _JP_CHAR_TYPE_H_
@@ -56,9 +56,7 @@ public:
 	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
- 
-	
-	
+
 	virtual char getTypeCode() override
 	{
 		return 'C';

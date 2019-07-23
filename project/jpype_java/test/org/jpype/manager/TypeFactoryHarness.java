@@ -33,7 +33,7 @@ import java.util.HashSet;
  */
 public class TypeFactoryHarness implements TypeFactory, TypeAudit
 {
-  long value = 0;
+  public long value = 0;
   HashMap<Long, Resource> resourceMap = new HashMap<>();
   private final TypeManager typeManager;
 
@@ -160,17 +160,11 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
   public long defineMethod(
           long context,
           long classId, String name, Executable method,
-          long returnType,
-          long[] argumentTypes,
           long[] overloadList,
           int modifiers)
   {
     // Verify resources
     assertResource(classId, ClassResource.class);
-    if (returnType != 0)
-      assertResource(returnType, ClassResource.class);
-    for (int i = 0; i < argumentTypes.length; ++i)
-      assertResource(argumentTypes[i], ClassResource.class);
     for (int i = 0; i < overloadList.length; ++i)
       assertResource(overloadList[i], MethodResource.class);
     value++;
@@ -180,6 +174,17 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
 
     resourceMap.put(value, new MethodResource(value, "method " + method.toString(), method));
     return value;
+  }
+
+  @Override
+  public void populateMethod(
+          long context, long method, long returnType, long[] argumentTypes)
+  {
+    assertResource(returnType, MethodResource.class);
+    if (returnType != 0)
+      assertResource(returnType, ClassResource.class);
+    for (int i = 0; i < argumentTypes.length; ++i)
+      assertResource(argumentTypes[i], ClassResource.class);
   }
 
   @Override

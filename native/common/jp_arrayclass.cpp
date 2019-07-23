@@ -152,7 +152,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 		jlong length = seq.size();
 		match.type = JPMatch::_implicit;
 		JPMatch imatch;
-		for (jlong i = 0; i < length & match.type > JPMatch::_none; i++)
+		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
 			m_ComponentType->getJavaConversion(frame, imatch, seq[i].get());
 			if (imatch.type < match.type)

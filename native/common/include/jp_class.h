@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
@@ -68,7 +68,7 @@ public:
 	{
 		return JPModifier::isInterface(m_Modifiers);
 	}
-	
+
 	virtual bool isPrimitive() const
 	{
 		return false;
@@ -90,47 +90,47 @@ public:
 	}
 
 	/**
-	 * Determine if a Python object will convert to this java type. 
-	 * 
+	 * Determine if a Python object will convert to this java type.
+	 *
 	 * This is used to determine which overload is the best match.
-	 * 
+	 *
 	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj);
 
-	/** Create a new Python object to wrap a Java value. 
-	 * 
+	/** Create a new Python object to wrap a Java value.
+	 *
 	 * @return a new Python object.
 	 */
 	virtual JPPyObject convertToPythonObject(jvalue val);
 
 	/**
 	 * Get the Java value representing as an object.
-	 * 
+	 *
 	 * This will unbox if the type is a primitive.
-	 *  
+	 *
 	 * @return a java value with class.
 	 */
 	virtual JPValue getValueFromObject(jobject obj);
 
-	/** 
-	 * Call a static method that returns this type of object. 
+	/**
+	 * Call a static method that returns this type of object.
 	 */
 	virtual JPPyObject invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*);
 
-	/** 
-	 * Call a method that returns this type of object. 
+	/**
+	 * Call a method that returns this type of object.
 	 */
 	virtual JPPyObject invoke(JPJavaFrame& frame, jobject, jclass clazz, jmethodID, jvalue*);
 
 	/**
 	 * Get a static field that returns this type.
-	 * 
+	 *
 	 * @param frame is the frame to hold the local reference.
 	 * @param cls is the class holding the static field.
 	 * @param fid is the field id.
-	 * @return 
+	 * @return
 	 */
 	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid);
 	virtual void        setStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid, PyObject* val);
@@ -145,10 +145,10 @@ public:
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
 	/**
-	 * Expose IsAssignableFrom to python. 
-	 * 
+	 * Expose IsAssignableFrom to python.
+	 *
 	 * FIXME this may be able to be replaced with isSubTypeOf.
-	 * They are doing the same thing. 
+	 * They are doing the same thing.
 	 */
 	bool isAssignableFrom(JPClass* o);
 

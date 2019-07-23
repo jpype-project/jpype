@@ -143,11 +143,15 @@ public interface TypeFactory
           long context,
           long cls,
           String name,
-          Executable method, // This will convert to a method id
-          long returnType,
-          long[] argumentTypes,
+          Executable method,
           long[] overloadList,
           int modifiers);
+
+  void populateMethod(
+          long context,
+          long method,
+          long returnType,
+          long[] argumentTypes);
 
   /**
    * Create a Method dispatch for Python by name.

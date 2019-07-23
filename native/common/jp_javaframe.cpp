@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- 
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
@@ -68,7 +68,7 @@ namespace
 		}
 	};
 
-} // default namespace 
+} // default namespace
 
 /*****************************************************************************/
 // Local frames represent the JNIEnv for memory handling all java
@@ -78,7 +78,7 @@ namespace
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
 : m_Context(context), m_Env(p_env), popped(false)
 {
-	// Create a memory management frame to live in	
+	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, i);
 }
 
@@ -93,7 +93,7 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 		JP_RAISE_RUNTIME_ERROR("JVM is null");
 	}
 
-	// Get the environment 
+	// Get the environment
 	res = javaVM->functions->GetEnv(javaVM, (void**) &m_Env, USE_JNI_VERSION);
 
 	// If we don't have an environment then we are in a thread, so we must attach
@@ -104,7 +104,7 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
 	}
 
-	// Create a memory management frame to live in	
+	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, i);
 }
 

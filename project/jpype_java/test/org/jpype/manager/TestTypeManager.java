@@ -23,7 +23,7 @@ import org.jpype.manager.TypeFactoryHarness.Resource;
  *
  * @author nelson85
  */
-public class Test
+public class TestTypeManager
 {
   public interface MyFunction
   {
@@ -83,6 +83,7 @@ public class Test
       System.out.println("  " + entry.getName());
       leaked++;
     }
+    System.out.println("Resource created " + tf.value); // was 8803, reduced to 1149
     System.out.println("Leaked total " + leaked);
     if (leaked > 0)
       throw new RuntimeException("Leaked resources");

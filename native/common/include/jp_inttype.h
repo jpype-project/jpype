@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_INT_TYPE_H_
 #define _JP_INT_TYPE_H_
@@ -32,7 +32,7 @@ public:
 	{
 		return v.i;
 	}
-	
+
 	static inline const jint& field(const jvalue& v)
 	{
 		return v.i;

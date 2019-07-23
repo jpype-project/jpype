@@ -28,12 +28,14 @@ public:
 		const string& name,
 		jobject mth,
 		jmethodID mid,
-		JPClass *returnType,
-		JPClassList parameterTypes,
 		JPMethodList& moreSpecific,
 		jint modifiers);
 
 	virtual ~JPMethod();
+
+	void setParameters(
+		JPClass *returnType,
+		JPClassList parameterTypes);
 
 	/** Check to see if this overload matches the argument list.
 	 *
@@ -41,7 +43,7 @@ public:
 	 * @param match holds the details of the match that is found.
 	 * @param isInstance is true if the first argument is an instance object.
 	 * @param args is a list of arguments including the instance.
-	 * 
+	 *
 	 * @return the quality of the match.
 	 *
 	 */
@@ -78,7 +80,7 @@ public:
 	{
 		return JPModifier::isVarArgs(m_Modifiers);
 	}
-	
+
 	bool isCallerSensitive() const
 	{
 		return JPModifier::isCallerSensitive(m_Modifiers);
@@ -96,6 +98,7 @@ public:
 
 private:
 	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
+	void ensureTypeCache();
 
 	JPMethod(const JPMethod& o);
 	JPMethod& operator=(const JPMethod&) ;

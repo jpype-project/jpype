@@ -78,7 +78,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, 
 			return match.type = JPMatch::_implicit;
 		}
 
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return match.type = JPMatch::_none;
 	}
 

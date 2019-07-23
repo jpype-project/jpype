@@ -12,12 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
 // Note: java represents arrays of zero length as null, thus we
-// need to be careful to handle these properly.  We need to 
+// need to be careful to handle these properly.  We need to
 // carry them around so that we can match types.
 
 JPArray::JPArray(JPClass* cls, jarray inst)
@@ -86,7 +86,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 	JP_TRACE("Verify lengths", len, plength);
 	if ((long) len != plength)
 	{
-		// Python would allow mismatching size by growing or shrinking 
+		// Python would allow mismatching size by growing or shrinking
 		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;

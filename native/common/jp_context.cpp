@@ -188,7 +188,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_ShutdownMethodID = frame.GetMethodID(cls, "shutdown", "()V");
 	    m_CallMethodID = frame.GetMethodID(cls, "callMethod",
 			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
-		
+
 		jvalue val[2];
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();

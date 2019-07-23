@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef JP_CLASSHINTS_H
 #define JP_CLASSHINTS_H
@@ -49,7 +49,7 @@ public:
 	{
 		return argument[i];
 	}
-	
+
 	const JPMatch& operator[](size_t i) const
 	{
 		return argument[i];
@@ -86,36 +86,36 @@ public:
 	~JPClassHints();
 
 	/** Get the conversion of this type.
-	 * 
-	 * Searches the list for a conversion. The first conversion better than 
+	 *
+	 * Searches the list for a conversion. The first conversion better than
 	 * explicit is returned immediately.
-	 * 
+	 *
 	 * @returns the best match or null.
 	 */
 	JPConversion* getConversion(JPJavaFrame &context, JPClass *cls, PyObject *obj);
 
 	/**
-	 * Add a conversion based on a specified attribute.  
-	 * 
+	 * Add a conversion based on a specified attribute.
+	 *
 	 * If the attribute is found in in the object, it is assumed to be a match.
 	 * This is for "duck type" conversions.  The Python routine must return
 	 * something that holds a __javavalue__ which will be used as the converted
 	 * object.
-	 *  
+	 *
 	 * @param attribute is the attribute to search for.
-	 * @param method is a Python routine to call to complete the conversion 
+	 * @param method is a Python routine to call to complete the conversion
 	 * process.
 	 */
 	void addAttributeConversion(const string& attribute, PyObject* method);
 
 	/**
 	 * Add a type conversion based on the Python type.
-	 * 
-	 * The Python routine must return something that holds a __javavalue__ 
+	 *
+	 * The Python routine must return something that holds a __javavalue__
 	 * which will be used as the converted object.
-	 * 
+	 *
 	 * @param type is a Python type object
-	 * @param method is a Python routine to call to complete the conversion 
+	 * @param method is a Python routine to call to complete the conversion
 	 * process.
 	 * @param exact require the type to be an exact match.
 	 */

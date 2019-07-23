@@ -78,10 +78,15 @@ public class TypeFactoryNative implements TypeFactory
           long cls,
           String name,
           Executable method,
-          long returnType,
-          long[] argumentTypes,
           long[] overloadList,
           int modifiers);
+
+  @Override
+  public native void populateMethod(
+          long context,
+          long method,
+          long returnType,
+          long[] argumentTypes);
 
   @Override
   public native long defineMethodDispatch(

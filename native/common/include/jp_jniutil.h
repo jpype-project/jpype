@@ -44,8 +44,8 @@
 //	// String
 //	string toStringUTF8(jstring str);
 //	jstring fromStringUTF8(const string& str);
-//	
-//	// Class	
+//
+//	// Class
 //	string convertToSimpleName(jclass cls);
 //	string getCanonicalName(jclass cls);
 //	bool isArray(jclass cls);

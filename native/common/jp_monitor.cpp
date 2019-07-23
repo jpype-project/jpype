@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -27,7 +27,7 @@ JPMonitor::~JPMonitor()
 
 void JPMonitor::enter()
 {
-	// This can hold off for a while so we need to release resource 
+	// This can hold off for a while so we need to release resource
 	// so that we don't dead lock.
 	JPPyCallRelease call;
 	JPJavaFrame frame(m_Context);

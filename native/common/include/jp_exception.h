@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_EXCEPTION_H_
 #define _JP_EXCEPTION_H_
@@ -27,8 +27,8 @@
  * We must throw the correct exception so that it can properly be handled
  * when returning back to the native code.
  *
- * If we are returning to python, and it is a 
- * - _python_error, then we assume that a python exception has already been 
+ * If we are returning to python, and it is a
+ * - _python_error, then we assume that a python exception has already been
  *   placed in the python virtual machine.
  * - _java_error, then we will covert it to a python object with the correct
  *   object type.
@@ -72,7 +72,7 @@ namespace JPError
 	} ;
 }
 
-// Create a stackinfo for a particular location in the code that can then 
+// Create a stackinfo for a particular location in the code that can then
 // be passed to the handler routine for auditing.
 #define JP_STACKINFO() JPStackInfo(__FUNCTION_NAME__, __FILE__, __LINE__)
 
@@ -96,7 +96,7 @@ namespace JPError
 #define JP_PY_CHECK()               { if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__); }
 
 // Macro to use when hardening code
-//   Most of these will be removed after core is debugged, but 
+//   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
 #define ASSERT_NOT_NULL(X) {if (X==NULL) JP_RAISE_RUNTIME_ERROR( "Null Pointer Exception"); }
 
@@ -136,10 +136,10 @@ typedef list<JPStackInfo> JPStackTrace;
 
 /**
  * Exception issued by JPype to indicate an internal problem.
- * 
+ *
  * This is primarily focused on transferring exception handling
  * to Python as the majority of errors are reported there.
- * 
+ *
  */
 class JPypeException
 {
@@ -161,10 +161,10 @@ public:
 	void convertJavaToPython();
 	void convertPythonToJava(JPContext* context);
 
-	/** Transfer handling of this exception to python. 
-	 * 
+	/** Transfer handling of this exception to python.
+	 *
 	 * This should appear in the catch block whenever we return to python.
-	 * 
+	 *
 	 */
 	void toPython();
 
@@ -184,7 +184,7 @@ private:
 
 /**
  * Exception issued with there was a Java exception issued after a java call.
- * 
+ *
  * This will just be held until it is converted to python or passed
  * back to java.
  */

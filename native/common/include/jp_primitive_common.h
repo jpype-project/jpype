@@ -1,7 +1,7 @@
 
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -13,7 +13,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef JP_PRIMITIVE_COMMON_H_
 #define JP_PRIMITIVE_COMMON_H_
@@ -80,14 +80,14 @@ public:
 #include <jpype_memory_view.h>
 
 /** Attempt to copy an entire range using direct buffer access.
- * 
+ *
  * @param frame is the java frame to hold references in.
  * @param array is the array to set
  * @param start is the first element to modify
  * @param length is the total length to set (from the sequence)
  * @param sequence is the python array with memory view access.
  * @param setter is a Java Set*ArrayRegion
- * 
+ *
  * @return true if the copy was successful, false if we need to fall back
  *   to elementwise copy.
  */
@@ -99,8 +99,8 @@ inline bool setRangeViaBuffer(JPJavaFrame& frame,
 #ifdef HAVE_NUMPY
 	JPPyObject ref;
 	// Arrays need to be checked
-	// FIXME This will still allow mismatched byte order and 
-	// irregular array types pass.  
+	// FIXME This will still allow mismatched byte order and
+	// irregular array types pass.
 	if (PyArray_Check(sequence) && PyArray_TYPE(sequence) != npy_type)
 	{
 		// If we can't cast then fall back to standard methods

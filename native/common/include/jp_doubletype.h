@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_DOUBLE_TYPE_H_
 #define _JP_DOUBLE_TYPE_H_
@@ -32,7 +32,7 @@ public:
 	{
 		return v.d;
 	}
-	
+
 	static inline const jdouble& field(const jvalue& v)
 	{
 		return v.d;

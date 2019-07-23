@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPPRIMITIVETYPE_H_
 #define _JPPRIMITIVETYPE_H_
@@ -35,7 +35,7 @@ public:
 	}
 
 	void setBoxedClass(JPBoxedType* boxedClass);
-	
+
 	virtual char getTypeCode()=0;
 	virtual jlong getAsLong(jvalue v)=0;
 	virtual jdouble getAsDouble(jvalue v)=0;
@@ -45,4 +45,4 @@ protected:
 
 } ;
 
-#endif 
+#endif

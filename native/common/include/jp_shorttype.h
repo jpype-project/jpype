@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_SHORT_TYPE_H_
 #define _JP_SHORT_TYPE_H_
@@ -60,12 +60,12 @@ public:
 	{
 		return 'S';
 	}
-	
+
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return field(v);
 	}
-	
+
 	virtual jdouble getAsDouble(jvalue v) override
 	{
 		return field(v);

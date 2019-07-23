@@ -27,6 +27,7 @@ JPTypeManager::JPTypeManager(JPContext* context)
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
+	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
 
 	// The object instance will be loaded later
 	JP_TRACE_OUT;
@@ -74,3 +75,16 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	return cls;
 	JP_TRACE_OUT;
 }
+
+void JPTypeManager::populateMethod(void* method, jobject obj)
+{
+	JP_TRACE_IN("JPTypeManager::populateMethod");
+	JPJavaFrame frame(m_Context);
+	jvalue val[2];
+	val[0].j = (jlong) method;
+	val[1].l = obj;
+	JP_TRACE("Method", method);
+	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMethod, val);
+	JP_TRACE_OUT;
+}
+

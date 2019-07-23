@@ -19,6 +19,7 @@ package org.jpype.manager;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -122,7 +123,7 @@ public class TypeManager
     if (this.isShutdown)
       return 0;
 
-    long out = 0;
+    long out;
     if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
     {
       // If is it lambda, we need a special wrapper
@@ -153,50 +154,102 @@ public class TypeManager
     return out;
   }
 
-  public long findClassByName(String str)
+  /**
+   * Get a class by name.
+   *
+   * @param name is the class name.
+   * @return the C++ portion.
+   */
+  public long findClassByName(String name)
   {
     Class<?> cls = null;
     try
     {
-      cls = Class.forName(str);
+      cls = Class.forName(name);
     } catch (ClassNotFoundException ex)
     {
     }
 
-    if (cls == null && !str.contains("."))
+    if (cls == null && !name.contains("."))
     {
-      if ("boolean".equals(str))
+      if ("boolean".equals(name))
         cls = Boolean.TYPE;
-      if ("byte".equals(str))
+      if ("byte".equals(name))
         cls = Byte.TYPE;
-      if ("char".equals(str))
+      if ("char".equals(name))
         cls = Character.TYPE;
-      if ("short".equals(str))
+      if ("short".equals(name))
         cls = Short.TYPE;
-      if ("long".equals(str))
+      if ("long".equals(name))
         cls = Long.TYPE;
-      if ("int".equals(str))
+      if ("int".equals(name))
         cls = Integer.TYPE;
-      if ("float".equals(str))
+      if ("float".equals(name))
         cls = Float.TYPE;
-      if ("double".equals(str))
+      if ("double".equals(name))
         cls = Double.TYPE;
     }
     return this.findClass(cls);
   }
 
-  public long findClassForObject(Object obj)
+  public synchronized void populateMethod(long wrapper, Executable method)
   {
-    if (obj == null)
+    if (method == null)
+      return;
+
+    long returnType = 0;
+    if (method instanceof Method)
+    {
+      returnType = getClass(((Method) method).getReturnType()).classPtr;
+    }
+
+    Class<?>[] params = method.getParameterTypes();
+    int i = 0;
+    long[] paramPtrs;
+    if (!Modifier.isStatic(method.getModifiers()) && !(method instanceof Constructor))
+    {
+      paramPtrs = new long[params.length + 1];
+      paramPtrs[0] = getClass(method.getDeclaringClass()).classPtr;
+      i++;
+    } else
+    {
+      paramPtrs = new long[params.length];
+    }
+
+    // Copy in the parameters
+    for (Class<?> p : params)
+    {
+      paramPtrs[i] = getClass(p).classPtr;
+      i++;
+    }
+
+    try
+    {
+      typeFactory.populateMethod(context, wrapper, returnType, paramPtrs);
+     } catch (Exception ex)
+    {
+      ex.printStackTrace();
+    }
+  }
+
+  /**
+   * Get a class for an object.
+   *
+   * @param object is the object to interrogate.
+   * @return the C++ portion or null if the object is null.
+   */
+  public long findClassForObject(Object object)
+  {
+    if (object == null)
       return 0;
-    
-    Class cls = obj.getClass();
-    if (Proxy.isProxyClass(cls) 
-            && (Proxy.getInvocationHandler(obj) instanceof JPypeProxy))
+
+    Class cls = object.getClass();
+    if (Proxy.isProxyClass(cls)
+            && (Proxy.getInvocationHandler(object) instanceof JPypeProxy))
     {
       return this.findClass(JPypeProxy.class);
     }
-  
+
     return this.findClass(cls);
   }
 
@@ -464,15 +517,8 @@ public class TypeManager
     for (MethodResolution ov : overloads)
     {
       Constructor constructor = (Constructor) ov.executable;
-      Class[] params = constructor.getParameterTypes();
-      long[] paramPtrs = new long[params.length];
-      int i = 0;
-      for (Class p : params)
-      {
-        paramPtrs[i++] = this.getClass(p).classPtr;
-      }
 
-      i = 0;
+      int i = 0;
       long[] precedencePtrs = new long[ov.children.size()];
       for (MethodResolution ch : ov.children)
       {
@@ -485,8 +531,6 @@ public class TypeManager
               desc.classPtr,
               constructor.toString(),
               constructor,
-              0, // no return type
-              paramPtrs,
               precedencePtrs,
               modifiers);
       overloadPtrs[--n] = ov.ptr;
@@ -603,28 +647,8 @@ public class TypeManager
         continue;
       }
 
-      long returnPtr = getClass(method.getReturnType()).classPtr;
-
-      // Convert the executable parameters
-      Class<?>[] params = method.getParameterTypes();
-      int i = 0;
-      long[] paramPtrs = null;
-      if (!Modifier.isStatic(method.getModifiers()))
-      {
-        paramPtrs = new long[params.length + 1];
-        paramPtrs[0] = getClass(method.getDeclaringClass()).classPtr;
-        i++;
-      } else
-      {
-        paramPtrs = new long[params.length];
-      }
-      for (Class<?> p : params)
-      {
-        paramPtrs[i++] = getClass(p).classPtr;
-      }
-
       // Determine what takes precedence
-      i = 0;
+      int i = 0;
       long[] precedencePtrs = new long[ov.children.size()];
       for (MethodResolution ch : ov.children)
       {
@@ -643,8 +667,6 @@ public class TypeManager
               desc.classPtr,
               method.toString(),
               method,
-              returnPtr,
-              paramPtrs,
               precedencePtrs,
               modifiers);
       overloadPtrs[--n] = ov.ptr;
@@ -654,7 +676,7 @@ public class TypeManager
     }
     return overloadPtrs;
   }
- 
+
   static boolean hasCallerSensitive = false;
 
   static

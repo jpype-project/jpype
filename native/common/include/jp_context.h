@@ -264,7 +264,7 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_ShutdownMethodID;
 	jmethodID m_CallMethodID;
-	
+
 	bool m_IsShutdown;
 	bool m_IsInitialized;
 	PyObject *m_Host;

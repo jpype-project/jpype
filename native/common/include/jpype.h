@@ -12,15 +12,15 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPYPE_H_
-#define _JPYPE_H_ 
+#define _JPYPE_H_
 
 // Define this to generate the trace calls
 
-// Define this to make the trace calls do their output. 
-//    use "setup.py --enable-tracing build" to enable 
+// Define this to make the trace calls do their output.
+//    use "setup.py --enable-tracing build" to enable
 //#define JP_TRACING_ENABLE
 
 #ifdef WIN32
@@ -59,7 +59,7 @@
 #endif
 
 // Define this and use to allow destructors to throw in C++11 or later
-#if defined(_MSC_VER)  
+#if defined(_MSC_VER)
 
 // Visual Studio C++ does not seem have changed __cplusplus since 1997
 #if (_MSVC_LAND >= 201402)
@@ -71,7 +71,7 @@
 #else
 
 // For all the compilers than understand standards
-#if (__cplusplus >= 201103L) 
+#if (__cplusplus >= 201103L)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
 #define NO_EXCEPT_FALSE throw(JPypeException)
