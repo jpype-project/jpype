@@ -2,7 +2,7 @@ package org.jpype.proxy;
 
 import java.lang.reflect.*;
 
-class JPypeInvocationHandler implements InvocationHandler
+public class JPypeInvocationHandler implements InvocationHandler
 {
   long hostObject;
 
