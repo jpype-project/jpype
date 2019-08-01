@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import sys
 import jpype
 import common
@@ -46,6 +42,3 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
         self.assertTrue(queue.isRunning())
 
 
-if __name__ == '__main__':
-    jpype.startJVM(jpype.getDefaultJVMPath())
-    unittest.main()

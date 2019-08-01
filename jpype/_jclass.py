@@ -202,6 +202,9 @@ class JClass(type):
 
         return out
 
+    def __repr__(self):
+        return "<java class '%s'>"%(self.__name__)
+
 
 def _JClassNew(arg, loader=None, initialize=True):
     if loader and isinstance(arg, str):
@@ -301,7 +304,7 @@ def _JClassFactory(name, jc):
         fname = pysafe(i.getName())
         members[fname] = i
     for jm in jc.getClassMethods():
-        members[pysafe(jm.getName())] = jm
+        members[pysafe(jm.__name__)] = jm
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
@@ -526,7 +529,7 @@ def _jmethodDoc(method, cls, overloads):
     from textwrap import TextWrapper
     out = []
     out.append("Java method dispatch '%s' for '%s'" %
-               (method.getName(), cls.getName()))
+               (method.__name__, cls.getName()))
     out.append("")
     exceptions = []
     returns = []
@@ -573,5 +576,43 @@ def _jmethodDoc(method, cls, overloads):
     return "\n".join(out)
 
 
+def _jmethodAnnotation(method, cls, overloads):
+    """Generator for ``PyJPMethod.__annotation__`` property
+
+    Parameters:
+      method (PyJPMethod): method to generate annotations for.
+      cls (java.lang.Class): Class holding this method dispatch.
+      overloads (java.lang.reflect.Method[]): tuple holding all the methods
+        that are served by this method dispatch.
+
+    Returns:
+      The dict to use for type annotations.
+    """
+    returns = []
+
+    # Special handling if we have 1 overload
+    if len(overloads)==1:
+        ov = overloads[0]
+        out = {}
+        for i,p in enumerate(ov.getParameterTypes()):
+            out['arg%d'%i] = JClass(p)
+        out['return'] = JClass(ov.getReturnType())
+        return out
+
+    # Otherwise, we only get the return
+    for ov in overloads:
+        returns.append(ov.getReturnType())
+    returns = set(returns)
+    if len(returns) == 1:
+        return {"return": JClass([i for i in returns][0])}
+    return {}
+
+def _jmethodCode(method):
+    def call(*args):
+       return method.__call__(*args)
+    return call
+
 _jpype.setResource('GetClassMethod', _JClassNew)
 _jpype.setResource('GetMethodDoc', _jmethodDoc)
+_jpype.setResource('GetMethodAnnotations', _jmethodAnnotation)
+_jpype.setResource('GetMethodCode', _jmethodCode)

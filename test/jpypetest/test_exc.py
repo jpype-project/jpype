@@ -16,10 +16,6 @@
 # *****************************************************************************
 from jpype import JException, java, JProxy, JPackage
 import traceback
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import common
 
 

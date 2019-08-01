@@ -266,7 +266,18 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	else
 	{
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
-		jobject c = selfObj->getJavaObject();
+		jobject c;
+		if (selfObj == NULL)
+		{
+			// This only can be hit by calling an instance method as a
+			// class object.  We already know it is safe to convert.
+			jvalue  v = this->m_Class->convertToJava(arg[0]);
+			c = v.l;
+		}
+		else
+		{
+			c = selfObj->getJavaObject();
+		}
 		jclass clazz = NULL;
 		if (!m_IsAbstract && !instance)
 			clazz = m_Class->getJavaClass();

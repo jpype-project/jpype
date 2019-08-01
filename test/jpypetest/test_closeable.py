@@ -14,10 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
 import jpype
 import common
 import sys
@@ -41,7 +37,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 1")
         self.assertTrue(CloseableTest.closed)
 
-    @unittest.skipUnless(pythonNewerThan(3, 0), "requires python 3")
+    @common.unittest.skipUnless(pythonNewerThan(3, 0), "requires python 3")
     def testCloseableFail(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()
@@ -75,7 +71,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 2")
         self.assertTrue(CloseableTest.closed)
 
-    @unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
+    @common.unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
     def testCloseablePyExceptFail(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()
@@ -108,7 +104,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 4")
         self.assertTrue(CloseableTest.closed)
 
-    @unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
+    @common.unittest.skipUnless(pythonNewerThan(2, 6), "Earlier python does not support stacked exceptions.")
     def testCloseableJExceptFail(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()

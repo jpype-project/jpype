@@ -20,8 +20,8 @@
 
 struct PyJPMethod
 {
-	PyObject_HEAD
-
+	PyFunctionObject func;
+	
 	static PyTypeObject Type;
 
 	// Python-visible methods
@@ -39,13 +39,28 @@ struct PyJPMethod
 	static PyObject*  __call__(PyJPMethod* self, PyObject* args, PyObject* kwargs);
 	static PyObject*  isBeanMutator(PyJPMethod* self, PyObject* arg);
 	static PyObject*  isBeanAccessor(PyJPMethod* self, PyObject* arg);
-	static PyObject*  getName(PyJPMethod* self, PyObject* arg);
 	static PyObject*  matchReport(PyJPMethod* self, PyObject* arg);
 	static PyObject*  dump(PyJPMethod* self, PyObject* arg);
-	static PyObject*  __doc__(PyJPMethod *method, void *context);
+
+	static PyObject*  getSelf(PyJPMethod *self, void *context);
+	static PyObject*  getName(PyJPMethod *self, void *context);
+    static PyObject*  getQualName(PyJPMethod *self, void *context);
+    static PyObject*  getDoc(PyJPMethod *self, void *context);
+    static int        setDoc(PyJPMethod *self, PyObject* obj, void *context);
+	static PyObject*  getAnnotations(PyJPMethod *self, void *context);
+    static int        setAnnotations(PyJPMethod *self, PyObject* obj, void *context);
+    static PyObject*  getNone(PyJPMethod *self, void *context);
+
+    static PyObject*  getCodeAttr(PyJPMethod *self, void *context, const char* attr);
+    static PyObject*  getCode(PyJPMethod *self, void *context);
+    static PyObject*  getClosure(PyJPMethod *self, void *context);
+    static PyObject*  getGlobals(PyJPMethod *self, void *context);
 
 	JPMethod* m_Method;
 	PyObject* m_Instance;
+	PyObject* m_Doc;
+	PyObject* m_Annotations;
+	PyObject* m_CodeRep;
 
 } ;
 
