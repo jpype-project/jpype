@@ -16,7 +16,10 @@
  */
 package org.jpype;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import org.jpype.proxy.JPypeInvocationHandler;
 
 /**
