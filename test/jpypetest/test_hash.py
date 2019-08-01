@@ -27,6 +27,7 @@ class HashTestCase(common.JPypeTestCase):
     def testHashString(self):
         self.assertIsNotNone(hash(jpype.java.lang.String("upside down")))
         self.assertIsNotNone(hash(jpype.JString("upside down")))
+        self.assertEqual(hash(jpype.JString("upside down")), hash("upside down"))
 
     def testHashArray(self):
         self.assertIsNotNone(hash(jpype.JArray(jpype.JInt)([1,2,3])))
@@ -36,21 +37,28 @@ class HashTestCase(common.JPypeTestCase):
 
     def testHashBoolean(self):
         self.assertIsNotNone(hash(jpype.java.lang.Boolean(True)))
+        self.assertEqual(hash(jpype.java.lang.Boolean(True)), hash(True))
 
     def testHashByte(self):
         self.assertIsNotNone(hash(jpype.java.lang.Byte(5)))
+        self.assertEqual(hash(jpype.java.lang.Byte(5)), hash(5))
 
     def testHashChar(self):
         self.assertIsNotNone(hash(jpype.java.lang.Character("a")))
+        # Differences in implementation yield different hashes currently.
+        #self.assertEqual(hash(jpype.java.lang.Character("a")), hash("a"))
 
     def testHashShort(self):
         self.assertIsNotNone(hash(jpype.java.lang.Short(1)))
+        self.assertEqual(hash(jpype.java.lang.Short(1)), hash(1))
 
     def testHashLong(self):
         self.assertIsNotNone(hash(jpype.java.lang.Long(55)))
+        self.assertEqual(hash(jpype.java.lang.Long(55)), hash(55))
 
     def testHashInteger(self):
         self.assertIsNotNone(hash(jpype.java.lang.Integer(123)))
+        self.assertEqual(hash(jpype.java.lang.Integer(123)), hash(123))
 
     def testHashFloat(self):
         self.assertIsNotNone(hash(jpype.java.lang.Float(3.141592)))
