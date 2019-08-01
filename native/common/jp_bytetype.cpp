@@ -1,6 +1,6 @@
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
-  
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  
+
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
@@ -86,7 +86,7 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 			return JPMatch::_implicit;
 		}
 
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return JPMatch::_none;
 	}
 
@@ -239,3 +239,14 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetByteArrayRegion(array, ndx, 1, &val);
 }
 
+JPPyObject JPByteType::toBytes(JPJavaFrame& frame, jarray array)
+{
+	JPPrimitiveArrayAccessor<jarray, void*> accessor(frame, array,
+		&JPJavaFrame::GetPrimitiveArrayCritical, &JPJavaFrame::ReleasePrimitiveArrayCritical);
+	jsize len = frame.GetArrayLength(array);
+#if PY_MAJOR_VERSION < 3
+		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize((char*)accessor.get(), len));
+#else
+	return JPPyObject(JPPyRef::_call, PyBytes_FromStringAndSize((char*)accessor.get(), len));
+#endif
+}

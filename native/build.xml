@@ -1,6 +1,8 @@
 <project default="all" name="JPype - Native">
 
-	<property name="JAVA_VERSION" value="1.7"/>
+	<!-- JAVA_VERSION must match the oldest supported Java version -->
+	<property name="JAVA_VERSION" value="1.7" />
+
 	<!-- src can't be "java" as it breaks nose tests -->
 	<property name="src" location="java"/>
 	<property name="build" location="build"/>
