@@ -77,6 +77,10 @@ namespace JPTypeManager
 	JPClass* registerClass(JPClass* classWrapper);
 
 	jclass getClassFor(jobject obj);
+        
+        // Support for caller sensitive methods
+	bool isCallerSensitive(jobject obj);
+	jobject callMethod(jobject method, jobject obj, jobject args);
 
 } // namespace
 

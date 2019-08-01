@@ -51,9 +51,11 @@ JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
 
 jvalue JPVoidType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPVoidType::convertToJava");
 	jvalue res;
 	res.l = NULL;
 	return res;
+	JP_TRACE_OUT;
 }
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)

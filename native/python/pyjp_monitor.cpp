@@ -98,7 +98,7 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 			return -1;
 		}
 
-		if (dynamic_cast<JPPrimitiveType*> (v1.getClass()) != 0)
+		if ((v1.getClass())->isPrimitive())
 		{
 			PyErr_SetString(PyExc_TypeError, "Primitives cannot be used to synchronize.");
 			return -1;

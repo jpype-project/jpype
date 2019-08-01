@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve M�nard
+   Copyright 2004 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		if (dynamic_cast<JPPrimitiveType*> (value->getClass()) == NULL)
+		if (!(value->getClass())->isPrimitive())
 		{
 			res.l = frame.NewLocalRef(value->getJavaObject());
 			res.l = frame.keep(res.l);

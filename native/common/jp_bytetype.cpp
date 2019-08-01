@@ -109,6 +109,7 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 
 jvalue JPByteType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPByteType::convertToJava");
 	jvalue res;
 	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -132,6 +133,7 @@ jvalue JPByteType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
 	return res;
+	JP_TRACE_OUT;
 }
 
 jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)

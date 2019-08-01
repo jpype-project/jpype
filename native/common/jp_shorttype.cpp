@@ -91,6 +91,7 @@ JPMatch::Type JPShortType::canConvertToJava(PyObject* obj)
 
 jvalue JPShortType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPShortType::convertToJava");
 	jvalue res;
 	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -114,6 +115,7 @@ jvalue JPShortType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java short");
 	return res; // never reached
+	JP_TRACE_OUT;
 }
 
 jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)
