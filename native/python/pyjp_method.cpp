@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <pyjp.h>
 
@@ -25,6 +25,12 @@ static PyMethodDef methodMethods[] = {
 	{NULL},
 };
 
+struct PyGetSetDef methodGetSet[] = {
+	{"__doc__", (getter) (&PyJPMethod::__doc__), NULL, NULL, NULL},
+	{NULL},
+};
+
+
 PyTypeObject PyJPMethod::Type = {
 	PyVarObject_HEAD_INIT(&PyType_Type, 0)
 	/* tp_name           */ "_jpype.PyJPMethod",
@@ -35,7 +41,7 @@ PyTypeObject PyJPMethod::Type = {
 	/* tp_getattr        */ 0,
 	/* tp_setattr        */ 0,
 	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
+	/* tp_repr           */ (reprfunc) PyJPMethod::__repr__,
 	/* tp_as_number      */ 0,
 	/* tp_as_sequence    */ 0,
 	/* tp_as_mapping     */ 0,
@@ -45,17 +51,17 @@ PyTypeObject PyJPMethod::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
-	/* tp_doc            */ "Java Method",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+	/* tp_doc            */ 0,
+	/* tp_traverse       */ (traverseproc) PyJPMethod::traverse,
+	/* tp_clear          */ (inquiry) PyJPMethod::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
 	/* tp_methods        */ methodMethods,
 	/* tp_members        */ 0,
-	/* tp_getset         */ 0,
+	/* tp_getset         */ methodGetSet,
 	/* tp_base           */ 0,
 	/* tp_dict           */ 0,
 	/* tp_descr_get      */ (descrgetfunc) PyJPMethod::__get__,
@@ -78,24 +84,20 @@ void PyJPMethod::initType(PyObject* module)
 JPPyObject PyJPMethod::alloc(JPMethod* m, PyObject* instance)
 {
 	JP_TRACE_IN("PyJPMethod::alloc");
-	PyJPMethod* res = PyObject_New(PyJPMethod, &PyJPMethod::Type);
+	PyJPMethod* self = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);;
 	JP_PY_CHECK();
-	res->m_Method = m;
-	res->m_Instance = instance;
-	if (instance != NULL)
-	{
-		JP_TRACE_PY("method alloc (inc)", instance);
-		Py_INCREF(instance);
-	}
-	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
+	self->m_Method = m;
+	self->m_Instance = instance;
+	Py_XINCREF(self->m_Instance);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPMethod* self = (PyJPMethod*) type->tp_alloc(type, 0);
-	self->m_Method = 0;
-	self->m_Instance = 0;
+	self->m_Method = NULL;
+	self->m_Instance = NULL;
 	return (PyObject*) self;
 }
 
@@ -145,14 +147,22 @@ PyObject* PyJPMethod::__call__(PyJPMethod* self, PyObject* args, PyObject* kwarg
 
 void PyJPMethod::__dealloc__(PyJPMethod* self)
 {
-	if (self->m_Instance != NULL)
-	{
-		JP_TRACE_PY("method dealloc (dec)", self->m_Instance);
-		Py_DECREF(self->m_Instance);
-	}
-	self->m_Instance = NULL;
+	PyObject_GC_UnTrack(self);
+	clear(self);
 	self->m_Method = NULL;
 	Py_TYPE(self)->tp_free(self);
+}
+
+int PyJPMethod::traverse(PyJPMethod *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->m_Instance);
+	return 0;
+}
+
+int PyJPMethod::clear(PyJPMethod *self)
+{
+	Py_CLEAR(self->m_Instance);
+	return 0;
 }
 
 PyObject* PyJPMethod::__str__(PyJPMethod* self)
@@ -162,16 +172,44 @@ PyObject* PyJPMethod::__str__(PyJPMethod* self)
 		ASSERT_JVM_RUNNING("PyJPMethod::__str__");
 		JPJavaFrame frame;
 		stringstream sout;
-		if (self->m_Instance == NULL)
-			sout << "<java method ";
-		else
-			sout << "<java bound method ";
-		sout << self->m_Method->getClassName() << "." << self->m_Method->getName() << ">";
+		sout << self->m_Method->getClass()->getCanonicalName() << "." << self->m_Method->getName();
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
 	PY_STANDARD_CATCH;
 
 	return NULL;
+}
+
+PyObject* PyJPMethod::__repr__(PyJPMethod* self)
+{
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPMethod::__repr__");
+		stringstream ss;
+		if (self->m_Instance == NULL)
+			ss << "<java method `";
+		else
+			ss << "<java bound method `";
+		ss << self->m_Method->getName() << "' of '" <<
+				self->m_Method->getClass()->getCanonicalName() << "'>";
+		return JPPyString::fromStringUTF8(ss.str()).keep();
+	}
+	PY_STANDARD_CATCH;
+
+	return NULL;
+}
+
+PyObject *PyJPMethod::__doc__(PyJPMethod *method, void *context)
+{
+	JP_TRACE_IN("PyJPMethod::__doc__");
+	try
+	{
+		ASSERT_JVM_RUNNING("PyJPMethod::__doc__");
+		return JPPythonEnv::getMethodDoc(method).keep();
+	}
+	PY_STANDARD_CATCH;
+	return NULL;
+	JP_TRACE_OUT;
 }
 
 PyObject* PyJPMethod::isBeanAccessor(PyJPMethod* self, PyObject* arg)

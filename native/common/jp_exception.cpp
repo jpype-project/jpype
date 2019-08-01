@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
@@ -70,16 +70,16 @@ void JPypeException::from(const JPStackInfo& info)
 	m_Trace.push_back(info);
 }
 
-// Okay from this point on we have to suit up in full Kevlar because 
+// Okay from this point on we have to suit up in full Kevlar because
 // this code must handle every conceivable and still reach a resolution.
 // Exceptions may be throws during initialization where only a fraction
 // of the resources are available, during the middle of normal operation,
 // or worst of all as the system is being yanked out from under us during
-// shutdown.  Each and every one of these cases must be considered.  
+// shutdown.  Each and every one of these cases must be considered.
 // Further each and every function called here must be hardened similarly
 // or they will become the weak link. And remember it is not paranoia if
 // they are actually out to get you.
-// 
+//
 // Onward my friends to victory or a glorious segfault!
 
 string JPypeException::getMessage()
@@ -213,7 +213,7 @@ void JPypeException::convertJavaToPython()
 
 void JPypeException::convertPythonToJava()
 {
-	JP_TRACE_IN("JPypeException::toPython");
+	JP_TRACE_IN("JPypeException::convertPythonToJava");
 	JPJavaFrame frame;
 	jthrowable th;
 	{
@@ -236,7 +236,7 @@ void JPypeException::convertPythonToJava()
 		}
 	}
 
-	// Otherwise 
+	// Otherwise
 	string pyMessage = "Python exception thrown: " + getPythonMessage();
 	JP_TRACE(pyMessage);
 	PyErr_Clear();
@@ -260,7 +260,6 @@ void JPypeException::toPython()
 
 			case JPError::_python_error:
 				JP_TRACE("Python exception");
-				JP_TRACE(getPythonMessage());
 				// Error is already in the stack
 				return;
 

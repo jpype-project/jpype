@@ -23,9 +23,9 @@ approach achieves decent computing preformance, while providing the
 access to the entirety of CPython and Java libraries.
 
 :Code: `GitHub
- <https://github.com/testing-cabal/mock>`_
+ <https://github.com/jpype-project/jpype>`_
 :Issue tracker: `GitHub Issues
- <https://github.com/testing-cabal/mock/issues>`_
+ <https://github.com/jpype-project/jpype/issues>`_
 :Documentation: `Python Docs`_
 :License: `Apache 2 License`_
 :Build status:  |travisCI|_ |appveyorCI|_ |Docs|_

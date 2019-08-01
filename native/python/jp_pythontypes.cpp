@@ -578,11 +578,9 @@ bool JPPyTuple::check(PyObject* obj)
 void JPPyTuple::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
+	Py_INCREF(val);
 	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
 	JP_PY_CHECK();
-
-	// Return the stolen reference, but only after transfer has been completed.
-	Py_INCREF(val);
 }
 
 PyObject* JPPyTuple::getItem(jlong ndx)

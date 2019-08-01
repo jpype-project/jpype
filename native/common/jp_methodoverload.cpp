@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -244,7 +244,7 @@ void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVec
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg)
+JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethodOverload::invoke");
 	ensureTypeCache();
@@ -268,7 +268,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg)
 		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
 		jobject c = selfObj->getJavaObject();
 		jclass clazz = NULL;
-		if (!m_IsAbstract)
+		if (!m_IsAbstract && !instance)
 			clazz = m_Class->getJavaClass();
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}

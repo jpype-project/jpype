@@ -34,7 +34,7 @@ Java
   Python 3+).  JPype source distribution includes a copy of the Java JNI header
   and precompiled Java code, so the development kit is not required from the
   source distribution. JPype has been used with Java versions from 
-  Java 1.6 to Java 11.
+  Java 1.7 to Java 11.
 
 C++
   A C++ compiler which matches the ABI used to build CPython.
@@ -57,6 +57,13 @@ JPype may be build and installed with one easy step using pip.
 To install the latest JPype using the source distribute use: ::
 
   pip install JPype1
+
+On some systems (e.g. Fedora Linux), this installation was found
+not to enable numpy support.
+If this happens, the following forces compilation and enables numpy
+support if it is available: ::
+
+  pip install --no-binary :all: JPype1
 
 To install from the current github master use: ::
 
@@ -91,8 +98,8 @@ The setup script recognizes several arguments.
                      ``--ant=path``.  This option is useful when building 
                      when ant is not in the path.
 --enable-build-jar   Force setup to recreate the jar from scratch. 
---enable-tracting    Build a verison of JPype with full logging to the 
-                     console. This can be used to diagnose trick JNI
+--enable-tracing     Build a verison of JPype with full logging to the 
+                     console. This can be used to diagnose tricky JNI
                      issues.
 --disable-numpy      Do not compile with numpy extenstions.
 
@@ -131,7 +138,7 @@ Specific requirements
 ~~~~~~~~~~~~~~~~~~~~~
 
 JPype is known to work on Linx, OSX, Windows, and Cygwin.  To make it easier to
-those who have not build CPython modules before here are some helpful tips for
+those who have not built CPython modules before here are some helpful tips for
 different machines.
 
 Debian/Ubuntu

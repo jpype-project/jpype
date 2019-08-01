@@ -89,7 +89,7 @@ JPPyObject PyJPArray::alloc(JPArray* obj)
 {
 	JPJavaFrame fame;
 	JP_TRACE_IN("PyJPArray::alloc");
-	PyJPArray* res = PyObject_New(PyJPArray, &PyJPArray::Type);
+	PyJPArray* res = (PyJPArray*) PyJPArray::Type.tp_alloc(&PyJPArray::Type, 0);
 	JP_PY_CHECK();
 	res->m_Array = obj;
 	return JPPyObject(JPPyRef::_claim, (PyObject*) res);
@@ -99,7 +99,7 @@ JPPyObject PyJPArray::alloc(JPArray* obj)
 PyObject* PyJPArray::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
 {
 	PyJPArray* self = (PyJPArray*) type->tp_alloc(type, 0);
-	self->m_Array = 0;
+	self->m_Array = NULL;
 	return (PyObject*) self;
 }
 
