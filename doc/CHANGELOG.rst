@@ -4,11 +4,14 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+
+  - Fixed incorrect string conversion on exceptions.
   
   - Corrected segfault when converting null elements while accessing a slice
     from a Java object array.
 
 - **0.7.0 - 2019**
+
   - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,

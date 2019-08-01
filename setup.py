@@ -25,9 +25,6 @@ setup(
         'Operating System :: POSIX :: Linux',
     ],
     classifiers=[
-        'Programming Language :: Java :: 8',
-        'Programming Language :: Java :: 9',
-        'Programming Language :: Java :: 11',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
