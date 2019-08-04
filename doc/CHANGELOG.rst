@@ -14,12 +14,21 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     location as Python native types and thus may cause issues
     when used as dictionary keys. 
 
+  - Updated getJVMVersion to work with JDK 9+.
+
   - Added support for pickling of Java objects using optional module
     ``jpype.pickle``
 
-  - Fixed incorrect string conversion on exceptions.
+  - Fixed incorrect string conversion on exceptions.  `str()` was
+    incorrectly returning `getMessage` rather than `toString`.
+
+  - Fixed an issue with JDK 12 regarding calling methods with reflection.
   
-  - Corrected segfault when converting null elements while accessing a slice
+  - Removed limitations having to do with CallerSensitive methods. Methods
+    affected are listed in :doc:`caller-sensitive`. Caller sensitive 
+    methods now receive an internal JPype class as the desut
+
+  - Fixed segfault when converting null elements while accessing a slice
     from a Java object array.
 
   - PyJPMethod now supports the FunctionType API.

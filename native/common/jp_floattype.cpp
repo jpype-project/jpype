@@ -84,6 +84,7 @@ JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
 
 jvalue JPFloatType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPFloatType::convertToJava");
 	jvalue res;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
@@ -127,6 +128,7 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java float");
 	return res;
+	JP_TRACE_OUT;
 }
 
 jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)

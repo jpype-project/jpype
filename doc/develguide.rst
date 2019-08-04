@@ -542,6 +542,44 @@ passed as arguments operate like this, that means much of the API accepts
 bare ``PyObject*`` as arguments.  It is the job of the caller to hold the
 reference for its scope.
 
+On CPython extensions
+~~~~~~~~~~~~~~~~~~~~~
+
+CPython is somewhat of a nightmare to program in. It is not that they did not
+try to document the API, but it is darn complex. The problems extend well
+beyond the reference counting system that we have worked around.  In
+particular, the object model though well developed is very complex, often to
+get it to work you must follow letter for letter the example on the CPython
+user guide, and even then it may all go into the ditch.
+
+The key problem is that there are a lot of very bad examples of how to write
+CPython extension modules out there. Often the these examples bypass the
+appropriate macro and just call the field, or skip the virtual table and try to
+call the Python method directly. It is true that these things do not break
+there example, but they are conditioned on these methods they are calling
+directly to be the right one for the job, but depends a lot on what the
+behavior of the object is supposed to be. Get it wrong and you get really nasty
+segfault.
+
+CPython itself may be partly responsible for some of these problems.  They
+generally seem to trust the user and thus don't verify if the call makes sense.
+It is true that it will cost a little speed to be aggressive about checking the
+type flags and the allocator match, but not checking when the error happens,
+means that it fails far from the original problem source. I would hope that we
+have moved beyond the philosophy that the user should just to whatever they
+want so it runs as fast as possible, but that never appears to be the case. Of
+course, I am just opining from the outside of the tent and I am sure the issues
+are much more complicated it appears superficially. Then again if I can manage
+to provide a safe workspace while juggling the issues of multiple virtual
+machines, I am free to have opinions on the value of trading performance and
+safety.
+
+In short when working on the extension code, make sure you do everything by the
+book, and check that book twice. Always go through the types virtual table and
+use the propery macros to access the resources. Miss one line in some complex
+pattern even once and you are in for a world of hurt. There are very few guard
+rails in the CPython code.
+
 
 C++ JNI layer
 -------------
@@ -636,17 +674,15 @@ you always store only the global reference.
       }
     }
 
-But don't mistake this as an invitation to make global references
-everywhere. Global reference are global, thus will hold the member
-until the reference is destroyed. C++ exceptions can lead
-to missing the unreference, thus global references should only
-happen when you are placing the Java object into a class member
-variable or a global variable. 
+But don't mistake this as an invitation to make global references everywhere.
+Global reference are global, thus will hold the member until the reference is
+destroyed. C++ exceptions can lead to missing the unreference, thus global
+references should only happen when you are placing the Java object into a class
+member variable or a global variable. 
 
-To help manage global references, we have ``JPRef<>`` which
-holds a global reference for the duration of the C++ lifespace.
-This is the base class for each of the global reference types
-we use.
+To help manage global references, we have ``JPRef<>`` which holds a global
+reference for the duration of the C++ lifespace.  This is the base class for
+each of the global reference types we use.
 
 .. code-block:: cpp
 
@@ -672,19 +708,19 @@ than creating a new one.
         return obj;
     }
 
-Although the system we have set up is "safe by design", there are things that can 
-go wrong is misused.  If the caller fails to create a frame prior to calling a 
-function that returns a local reference, the reference will go into the program 
-scoped local references and thus leak. Thus, it is usually best to force the user 
-to make a scope with the frame extension pattern. Second, if any JNI references 
-that are not kept or converted to global, it becomes invalid. Further, since JNI 
-recycles the reference pointer fairly quickly, it most likely will be pointed to 
-another object whose type may not be expected. Thus, best case is using the stale 
-reference will crash and burn. Worse case, the reference will be a live reference 
-to another object and it will produce an error which seems completely irrelevant 
-to anything that was being called. Horrible case, the live object does not object 
-to bad call and it all silently proceeds down the road another two miles before 
-coming to flaming death. 
+Although the system we have set up is "safe by design", there are things that
+can go wrong is misused.  If the caller fails to create a frame prior to
+calling a function that returns a local reference, the reference will go into
+the program scoped local references and thus leak. Thus, it is usually best to
+force the user to make a scope with the frame extension pattern. Second, if any
+JNI references that are not kept or converted to global, it becomes invalid.
+Further, since JNI recycles the reference pointer fairly quickly, it most
+likely will be pointed to another object whose type may not be expected. Thus,
+best case is using the stale reference will crash and burn. Worse case, the
+reference will be a live reference to another object and it will produce an
+error which seems completely irrelevant to anything that was being called.
+Horrible case, the live object does not object to bad call and it all silently
+proceeds down the road another two miles before coming to flaming death. 
 
 Moral of the story, always create a local frame even if you are handling a global 
 reference. If passed or returned a reference of any kind, it is a borrowed reference 
@@ -852,8 +888,8 @@ which loads a class from the internal jar.
 
 Java concept of UTF is pretty much out of sync with the rest of the world. Java
 used 16 bits for its native characters. But this was inadequate for all of the
-unicode characters, thus longer unicode character had to be encoded in the
-16 bit space. Rather the directly providing methods to convert to a standard
+unicode characters, thus longer unicode character had to be encoded in the 16
+bit space. Rather the directly providing methods to convert to a standard
 encoding such as UTF8, Java used UTF16 encoded in 8 bits which they dub
 Modified-UTF8. ``JPEncoding`` deals with converting this unusual encoding into
 something that Python can understand.
@@ -878,13 +914,13 @@ converter only appears on ``java.io.DataInput`` and ``java.io.DataOutput``.
 Java native code
 ----------------
 
-At the lowest level of the onion is the native Java layer. Although this
-layer is most remote from Python, ironically it is the easiest layer to communicate
+At the lowest level of the onion is the native Java layer. Although this layer
+is most remote from Python, ironically it is the easiest layer to communicate
 with. As the point of jpype is to communicate with Java, it is possible to
-directly communicate with the jpype Java internals. These can be imported
-from the package ``org.jpype``. The code for the Java layer is located in
-``native/java``. It is compiled into a jar in the build directory and then converted
-to a C++ header to be compiled into the ``_jpype`` module.
+directly communicate with the jpype Java internals. These can be imported from
+the package ``org.jpype``. The code for the Java layer is located in
+``native/java``. It is compiled into a jar in the build directory and then
+converted to a C++ header to be compiled into the ``_jpype`` module.
 
 The Java layer currently houses the reference queue, a classloader which can
 load a Java class from a bytestream source, the proxy code for implementing
@@ -909,6 +945,69 @@ the fault to specific location where it failed.
 
 To use the logger in a function start the ``JP_TRACE_IN(function_name)`` which will
 open a ``try catch`` block.
+
+The JPype tracer can be augmented with the Python tracing module to give
+a very good picture of both JPype and Python states at the time of the crash.
+To use the Python tracing, start Python with... ::
+
+    python -m trace --trace myscript.py
+
+
+Debugging issues
+----------------
+
+If the tracing function proves inadequate to identify a problem, we often need
+to turn to a general purpose tool like gdb or valgrind.  The JPype core is not
+easy to debug. Python can be difficult to properly monitor especially with
+tools like valgrind due to its memory handling. Java is also challenging to
+debug. Put them together and you have the mother of all debugging issues. There
+are a number of complicating factors. Let us start with how to debug with gdb. 
+
+Gdb runs into two major issues, both tied to the signal handler.
+First, Java installs its own signal handlers that take over the entire process
+when a segfault occurs. This tends to cause very poor segfault stacktraces
+when examining a core file, which often is corrupt after the first user frame.
+Second, Java installs its signal handlers in such as way that attempting to run
+under a debugger like gdb will often immediately crash preventing one from
+catching the segfault before Java catches it. This makes for a catch 22,
+you can't capture a meaningful non-interactively produced core file, and you
+can't get an interactive session to work.
+
+Fortunately there are solutions to the interactive session issue. By disabling 
+the SIGSEGV handler, we can get past the initial failure and also we can catch
+the stack before it is altered by the JVM. ::
+
+    gdb -ex 'handle SIGSEGV nostop noprint pass' python
+
+Thus far I have not found any good solutions to prevent the JVM from altering
+the stack frames when dumping the core. Thus interactive debugging appears
+to be the best option. 
+
+There are additional issues that one should be aware of. Open-JDK 1.8 has had a
+number of problems with the debugger. Starting JPype under gdb may trigger, may
+trigger the following error. ::
+
+    gdb.error: No type named nmethod.
+
+There are supposed to be fixes for this problem, but none worked for me.
+Upgrading to Open-JDK 9 appears to fix the problem.
+
+Another complexity with debugging memory problems is that Python tends to
+hide the problem with its allocation pools. Rather than allocating memory
+when a new object is request, it will often recycle and existing object 
+which was collect earlier. The result is that an object which turns out is
+still live becomes recycled as a new object with a new type. Thus suddenly
+a method which was expected to produce some result instead vectors into
+the new type table, which may or may not send us into segfault land
+depending on whether the old and new objects have similar memory layouts.
+
+This can be partially overcome by forcing Python to use a different memory
+allocation scheme. This can avoid the recycling which means we are more likely
+to catch the error, but at the same time means we will be excuting different
+code paths so we may not reach a similar state. If the core dump is vectoring
+off into code that just does not make sense it is likely caused by the memory
+pools. Starting Python 3, it is possible to select the memory allocation policy
+through an enviroment variable.  See the ``PYTHONMALLOC`` setting for details.
 
 
 Future directions

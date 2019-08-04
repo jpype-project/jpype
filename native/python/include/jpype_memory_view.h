@@ -84,7 +84,7 @@ public:
 		return py_buff != 0;
 	}
 
-	int size()
+	Py_ssize_t size()
 	{
 		return py_buff->len;
 	}

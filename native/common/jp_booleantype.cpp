@@ -93,6 +93,7 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 
 jvalue JPBooleanType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPBooleanType::convertToJava");
 	jvalue res;
 
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -112,6 +113,7 @@ jvalue JPBooleanType::convertToJava(PyObject* obj)
 		res.z = (jboolean) JPPyLong::asLong(obj) != 0;
 	}
 	return res;
+	JP_TRACE_OUT;
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

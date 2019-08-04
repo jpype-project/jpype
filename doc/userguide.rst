@@ -645,26 +645,6 @@ advantage of it. As the time of writing, the latest stable Sun JVM was
 1.4.2_04.
 
 
-Methods dependent on "current" class
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are a few methods in the Java libraries that rely on finding
-information on the calling class. So these methods, if called directly from
-Python code, will fail because there is no calling Java class, and the JNI
-API does not provide methods to simulate one.
-
-At the moment, the methods known to fail are :
-
-
-java.sql.DriverManager.getConnection(...)
-:::::::::::::::::::::::::::::::::::::::::
-
-For some reason, this class verifies that the driver class as loaded in the
-"current" classloader is the same as previously registered. Since there is no
-"current" classloader, it defaults to the internal classloader, which
-typically does not find the driver. To remedy, simply instantiate the driver
-yourself and call its ``connect(...)`` method.
-
 Unsupported Python versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

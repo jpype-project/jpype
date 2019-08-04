@@ -91,7 +91,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		}
 
 		// We must box here.
-		if (dynamic_cast<JPPrimitiveType*> (returnClass) == returnClass)
+		if (returnClass->isPrimitive())
 		{
 			returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
 		}

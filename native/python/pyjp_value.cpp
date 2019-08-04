@@ -96,7 +96,7 @@ JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
-	if (dynamic_cast<JPPrimitiveType*> (cls) != cls)
+	if (!cls->isPrimitive())
 		value.l = frame.NewGlobalRef(value.l);
 
 	// New value instance
@@ -160,7 +160,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		}
 
 		jvalue v = type->convertToJava(value);
-		if (dynamic_cast<JPPrimitiveType*> (type) != type)
+		if (!type->isPrimitive())
 			v.l = frame.NewGlobalRef(v.l);
 		self->m_Value = JPValue(type, v);
 		return 0;
@@ -180,7 +180,7 @@ PyObject* PyJPValue::__str__(PyJPValue* self)
 		sout << "<java value " << self->m_Value.getClass()->toString();
 
 		// FIXME Remove these extra diagnostic values
-		if (dynamic_cast<JPPrimitiveType*> (self->m_Value.getClass()) != NULL)
+		if ((self->m_Value.getClass())->isPrimitive())
 			sout << endl << "  value = primitive";
 		else
 		{
@@ -202,7 +202,7 @@ void PyJPValue::__dealloc__(PyJPValue* self)
 	JPClass* cls = value.getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
-	if (cls != NULL && JPEnv::isInitialized() && dynamic_cast<JPPrimitiveType*> (cls) != cls)
+	if (cls != NULL && JPEnv::isInitialized() && !cls->isPrimitive())
 	{
 		JP_TRACE("Value", cls->getCanonicalName(), &(value.getValue()));
 		// If the JVM has shutdown then we don't need to free the resource
@@ -264,7 +264,7 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 			return out;
 
 		}
-		if (dynamic_cast<JPPrimitiveType*> (cls) != 0)
+		if (cls->isPrimitive())
 			JP_RAISE_VALUE_ERROR("toString requires a java object");
 		if (cls == NULL)
 			JP_RAISE_VALUE_ERROR("toString called with null class");
@@ -303,7 +303,7 @@ PyObject* PyJPValue::toUnicode(PyJPValue* self)
 			return out;
 
 		}
-		if (dynamic_cast<JPPrimitiveType*> (cls) != 0)
+		if (cls->isPrimitive())
 			JP_RAISE_VALUE_ERROR("toUnicode requires a java object");
 		if (cls == NULL)
 			JP_RAISE_VALUE_ERROR("toUnicode called with null class");

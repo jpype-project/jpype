@@ -89,6 +89,7 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 
 jvalue JPIntType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPIntType::convertToJava");
 	jvalue res;
 	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -112,6 +113,7 @@ jvalue JPIntType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java int");
 	return res; // never reached
+	JP_TRACE_OUT;
 }
 
 jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)

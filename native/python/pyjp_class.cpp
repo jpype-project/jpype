@@ -371,7 +371,7 @@ PyObject* PyJPClass::isPrimitive(PyJPClass* self, PyObject* args)
 	{
 		ASSERT_JVM_RUNNING("PyJPClass::isPrimitive");
 		JPJavaFrame frame;
-		return PyBool_FromLong(dynamic_cast<JPPrimitiveType*> (self->m_Class) == self->m_Class);
+		return PyBool_FromLong((self->m_Class)->isPrimitive());
 	}
 	PY_STANDARD_CATCH;
 	return NULL;

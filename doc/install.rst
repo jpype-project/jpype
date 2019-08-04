@@ -54,16 +54,17 @@ Build using pip
 
 JPype may be build and installed with one easy step using pip.
 
-To install the latest JPype using the source distribute use: ::
+To install the latest JPype, use: ::
 
   pip install JPype1
 
-On some systems (e.g. Fedora Linux), this installation was found
-not to enable numpy support.
-If this happens, the following forces compilation and enables numpy
-support if it is available: ::
+Which will install JPype either from source or binary distribution,
+depending on you operating system and pip version.
+If you need numpy support, it is recommended to force pip to install
+JPype from source (with numpy already installed on the system).
+Note both occurrences of "JPype1" are needed: ::
 
-  pip install --no-binary :all: JPype1
+  pip install --no-binary JPype1 JPype1
 
 To install from the current github master use: ::
 
@@ -191,7 +192,4 @@ Known Bugs/Limitations
    restart it.
 -  Structural issues prevent managing objects from more than one JVM
    at a time.
--  Some methods rely on the "current" class/caller. Since calls coming
-   directly from python code do not have a current class, these methods
-   do not work. The :doc:`userguide` lists all the known methods like that.
 -  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import jpype.

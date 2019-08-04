@@ -28,7 +28,6 @@ else:
 
 _JObject = None
 
-_java_lang_throwable = None
 _java_lang_RuntimeException = None
 _java_ClassLoader = None
 _java_lang_Class = None
@@ -50,9 +49,10 @@ def _initialize():
     _java_lang_Class = JClass("java.lang.Class")
 
     _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
+    if not _java_ClassLoader:
+        raise RuntimeError("Unable to load Java SystemClassLoader")
 
-    global _java_lang_throwable, _java_lang_RuntimeException
-    _java_lang_throwable = JClass("java.lang.Throwable")
+    global _java_lang_RuntimeException
     _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
 
     # Preload needed classes
@@ -207,6 +207,18 @@ class JClass(type):
 
 
 def _JClassNew(arg, loader=None, initialize=True):
+    params = None
+    if isinstance(arg, str):
+        if arg.endswith(">"):
+            i = arg.find("<")
+            params = arg[i+1:-1]
+            arg = arg[:i]
+            if params:
+                params = params.split(',')
+            else:
+                params = []
+            # FIXME we can check the geneic parameters better.
+
     if loader and isinstance(arg, str):
         arg = _java_lang_Class.forName(arg, initialize, loader)
 
@@ -223,8 +235,19 @@ def _JClassNew(arg, loader=None, initialize=True):
 
     # See if we have an existing class in the cache
     if name in _JCLASSES:
-        return _JCLASSES[name]
-    return _JClassFactory(name, javaClass)
+        cls = _JCLASSES[name]
+    else:
+        cls = _JClassFactory(name, javaClass)
+
+    if params is not None:
+        acceptParams = len(cls.class_.getTypeParameters())
+        if acceptParams == 0:
+            raise TypeError(
+                "Java class '%s' does not take parameters" % (cls.__name__))
+        if len(params) > 0 and len(params) != len(cls.class_.getTypeParameters()):
+            raise TypeError(
+                "Java generic class '%s' length mismatch" % (cls.__name__))
+    return cls
 
 
 class JInterface(object):
@@ -395,18 +418,6 @@ def _getDefaultJavaObject(obj):
 
     raise TypeError(
         "Unable to determine the default type of `{0}`".format(obj.__class__))
-
-# Patch for forName
-
-
-@_jcustomizer.JImplementationFor('java.lang.Class')
-class _JavaLangClass(object):
-    @classmethod
-    def forName(cls, *args):
-        if len(args) == 1 and isinstance(args[0], str):
-            return cls._forName(args[0], True, _java_ClassLoader)
-        else:
-            return cls._forName(*args)
 
 
 def typeLookup(tp, name):
