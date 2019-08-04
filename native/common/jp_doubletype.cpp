@@ -83,6 +83,7 @@ JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
 
 jvalue JPDoubleType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPDoubleType::convertToJava");
 	jvalue res;
 	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -116,6 +117,7 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
 	return res;
+	JP_TRACE_OUT;
 }
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)

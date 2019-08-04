@@ -14,35 +14,31 @@ if [ ! -d "$JAVA_HOME" ]; then
 	exit -1
 fi
 
+
 # Make sure the jvm.dll is where it should be
 find "$JAVA_HOME" -name "jvm.dll"
 
 # Define programs
 SETUP=/setup-$ARCH
-if [ $PYTHON = "python3" ]; then
-	PIP=pip3
-	EASYINSTALL=easy_install-3.6
-else
-	PIP=pip
-	EASYINSTALL=easy_install-2.7
-fi
 
 # Install prereqs
 echo "==== update gcc"
 $SETUP -q -P gcc-core,gcc-g++,libcrypt-devel
 echo "==== update python"
-$SETUP -q -P $PYTHON,$PYTHON-numpy,$PYTHON-devel,$PYTHON,$PYTHON-setuptools
+if [ $PYTHON = "python3.7" ]; then
+	$SETUP -q -P python37,python37-numpy,python37-devel
+fi
 echo "==== get modules"
-$EASYINSTALL pip
-$EASYINSTALL mock
-#$PIP install mock
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+$PYTHON get-pip.py
+$PYTHON -m pip install setuptools
+$PYTHON -m pip install mock
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
 $PYTHON ./bootstrap.py
 $PYTHON -m pip install ./
 cd ..
 rm -r ./setuptools
-
 git clone --depth=1 https://github.com/pypa/wheel.git
 git clone --depth=1 https://github.com/pypa/pip.git
 git clone --depth=1 https://github.com/pypa/setuptools_scm.git

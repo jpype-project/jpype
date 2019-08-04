@@ -88,6 +88,7 @@ JPMatch::Type JPLongType::canConvertToJava(PyObject* obj)
 
 jvalue JPLongType::convertToJava(PyObject* obj)
 {
+	JP_TRACE_IN("JPLongType::convertToJava");
 	jvalue res;
 	field(res) = 0;
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
@@ -111,6 +112,7 @@ jvalue JPLongType::convertToJava(PyObject* obj)
 
 	JP_RAISE_TYPE_ERROR("Cannot convert value to Java long");
 	return res; // never reached
+	JP_TRACE_OUT;
 }
 
 jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)

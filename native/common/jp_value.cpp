@@ -18,7 +18,7 @@
 
 jobject JPValue::getJavaObject() const
 {
-	if (dynamic_cast<JPPrimitiveType*> (m_Class) != m_Class)
+	if (!m_Class->isPrimitive())
 		return m_Value.l;
 
 	// This method is only used internally, thus it requires a logical code

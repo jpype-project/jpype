@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+ 
  *****************************************************************************/
 #include <jpype.h>
 
@@ -67,6 +67,11 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 }
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
+
+bool JPClass::isPrimitive() const
+{
+	return false;
+}
 
 string JPClass::toString() const
 {
@@ -364,6 +369,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	// assume it is convertible;
 	if (JPPyObject::isNone(obj))
 	{
+		JP_TRACE("Null");
 		res.l = NULL;
 		return res;
 	}
@@ -371,6 +377,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
 	{
+		JP_TRACE("Value");
 		res.l = frame.NewLocalRef(value->getJavaObject());
 		res.l = frame.keep(res.l);
 		return res;
@@ -379,10 +386,12 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
 	if (proxy != NULL)
 	{
+		JP_TRACE("Proxy");
 		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 
+	JP_TRACE("Miss");
 	return res;
 	JP_TRACE_OUT;
 }
@@ -607,11 +616,11 @@ string JPClass::describe()
 bool JPClass::isInstance(JPValue& val)
 {
 	JPClass* cls = val.getClass();
-	if (dynamic_cast<JPPrimitiveType*> (cls) == cls)
+	if (cls->isPrimitive())
 		return false;
 
 	JPJavaFrame frame;
-	return frame.IsInstanceOf(val.getValue().l, m_Class.get());
+	return frame.IsInstanceOf(val.getValue().l, m_Class.get()) != 0;
 }
 
 

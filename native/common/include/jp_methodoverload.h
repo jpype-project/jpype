@@ -37,7 +37,7 @@ public:
 	JPMethodOverload* overload;
 	char offset;
 	char skip;
-
+	
 	JPMatch()
 	{
 		type = JPMatch::_none;
@@ -153,6 +153,7 @@ private:
 	OverloadList             m_MoreSpecificOverloads;
 	bool                     m_Ordered;
 	bool                     m_IsAbstract;
+	bool                     m_CallerSensitive;
 } ;
 
 #endif // _JPMETHODOVERLOAD_H_

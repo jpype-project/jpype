@@ -192,7 +192,4 @@ Known Bugs/Limitations
    restart it.
 -  Structural issues prevent managing objects from more than one JVM
    at a time.
--  Some methods rely on the "current" class/caller. Since calls coming
-   directly from python code do not have a current class, these methods
-   do not work. The :doc:`userguide` lists all the known methods like that.
 -  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import jpype.

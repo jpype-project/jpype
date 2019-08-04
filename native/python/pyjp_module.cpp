@@ -153,7 +153,7 @@ PyObject* PyJPModule::startup(PyObject* obj, PyObject* args)
 			}
 		}
 
-		JPEnv::loadJVM(cVmPath, args, ignoreUnrecognized, convertStrings);
+		JPEnv::loadJVM(cVmPath, args, ignoreUnrecognized!=0, convertStrings!=0);
 		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH;
