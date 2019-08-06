@@ -26,6 +26,40 @@ else:
     _unicode = unicode
 
 
+from traceback import FrameSummary, StackSummary, TracebackException, _some_str
+
+def stack_trace_to_StackSummary(stack_trace):
+    res = []
+    for el in stack_trace:
+        ln = int(el.getLineNumber())
+        fn = el.getFileName()
+        if fn:
+            fn = str(fn)
+        else:
+            fn = None
+        res.append(FrameSummary(fn, ln, ".".join((str(el.getClassName()), str(el.getMethodName()))), lookup_line=False, locals=None, line=None))
+    res = StackSummary.from_list(res)
+    return res
+
+class JPypeTracebackException(TracebackException):
+    def __init__(self, exc_value):
+        exc_type = type(exc_value)
+        self.stack = stack_trace_to_StackSummary(exc_value.getStackTrace())
+        self.exc_type = exc_type
+        self._str = _some_str(exc_value)
+        cause = exc_value.getCause()
+        if cause:
+            self.__cause__ = self.__class__(cause)
+        else:
+            self.__cause__ = None
+        self.__context__ = None
+        self.exc_traceback = True
+    
+    @classmethod
+    def from_exception(cls, exc, *args, **kwargs):
+        return cls(exc, *args, **kwargs)
+
+
 class _JException(object):
     """ Base class for all ``java.lang.Throwable`` objects.
 
@@ -70,6 +104,14 @@ class _JException(object):
 
     # Included for compatibility with JPype 0.6.3
     def stacktrace(self):
+        """ Get a string listing the stack frame.
+
+        Returns:
+          A string from lines of ``traceback.TracebackException.format()`` result.
+        """
+        return "".join(l for l in JPypeTracebackException(self).format())
+
+    def java_stacktrace(self):
         """ Get a string listing the stack frame.
 
         Returns:
