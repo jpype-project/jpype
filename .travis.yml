@@ -81,10 +81,9 @@ matrix:
       install:
         - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
         - $PIP install -e .
-
-        - $PIP install gcovr
+        - $PIP install gcovr pytest-cov
       script:
-        - $PYTHON -m pytest -v test/jpypetest
+        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml
         - gcovr -r . --xml -o coverage.xml
         - bash <(curl -s https://codecov.io/bash) 
     
