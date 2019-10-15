@@ -26,7 +26,6 @@ addons:
   apt:
     packages:
     - ant
-    - openjdk9
 
 matrix:
   allow_failures:
