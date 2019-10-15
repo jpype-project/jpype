@@ -9,7 +9,9 @@ class Distribution(_Distribution):
         ('enable-build-jar', None, 'Build the java jar portion'),
         ('enable-tracing', None, 'Set for tracing for debugging'),
         ('ant=', None, 'Set the ant executable (default ant)', 1),
-        ('disable-numpy', None, 'Do not compile with numpy extenstions')
+        ('disable-numpy', None, 'Do not compile with numpy extenstions'),
+        ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
+
     ] + _Distribution.global_options
 
     def parse_command_line(self):
@@ -17,4 +19,5 @@ class Distribution(_Distribution):
         self.ant = "ant"
         self.enable_tracing = False
         self.enable_build_jar = False
+        self.enable_coverage = False
         return _Distribution.parse_command_line(self)

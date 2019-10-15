@@ -26,6 +26,7 @@ addons:
   apt:
     packages:
     - ant
+    - openjdk9
 
 matrix:
   allow_failures:
@@ -71,6 +72,22 @@ matrix:
         - PYTHON=python3
         - PIP=pip3
 
+    - name: "Python 3.7 on Xenial Linux coverage"
+      python: 3.7
+      dist: xenial
+      language: python
+      env:
+        - PYTHON=python3
+        - PIP=pip3
+      install:
+        - $PYTHON setup.py --enable-coverage build_ext --inplace
+        - $PIP install -e .
+        - $PIP install gcovr
+      script:
+        - $PYTHON -m pytest -v test/jpypetest
+        - gcovr -r . --xml -o coverage.xml
+        - bash <(curl -s https://codecov.io/bash) 
+    
     # TODO: remove in 0.8
     - name: "Python 3.7 on Xenial Linux"
       python: 3.7
