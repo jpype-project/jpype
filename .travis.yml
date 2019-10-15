@@ -80,11 +80,12 @@ matrix:
         - PIP=pip3
       install:
         - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
+        - $PYTHON setup.py install
         - $PIP install -e .
         - $PIP install gcovr pytest-cov
       script:
         - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml
-        - gcovr -r . --xml -o coverage.xml
+        - gcovr -r . --xml -o coverage.xml -d
         - bash <(curl -s https://codecov.io/bash) 
     
     # TODO: remove in 0.8
