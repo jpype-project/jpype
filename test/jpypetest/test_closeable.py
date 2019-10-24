@@ -122,3 +122,13 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 5")
         self.assertTrue(CloseableTest.closed)
         self.assertTrue(CloseableTest.failed)
+
+    def testCloseableAttr(self):
+        cls = jpype.JClass("java.io.Closeable")
+        self.assertTrue(hasattr(cls, '__enter__'))
+        self.assertTrue(hasattr(cls, '__exit__'))
+
+    def testAutoCloseableAttr(self):
+        cls = jpype.JClass("java.lang.AutoCloseable")
+        self.assertTrue(hasattr(cls, '__enter__'))
+        self.assertTrue(hasattr(cls, '__exit__'))

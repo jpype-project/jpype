@@ -25,12 +25,12 @@ if _sys.version_info > (3,):
     pass
 
 
-@_jcustomizer.JImplementationFor("java.io.Closeable")
+@_jcustomizer.JImplementationFor("java.lang.AutoCloseable")
 class _JCloseable(object):
-    """ Customizer for ``java.io.Closable``
+    """ Customizer for ``java.lang.AutoCloseable`` and ``java.io.Closeable``
 
     This customizer adds support of the `with` operator to all Java 
-    classes that implement Java Closable interface. 
+    classes that implement Java AutoCloseable interface. 
 
     Example:
 
