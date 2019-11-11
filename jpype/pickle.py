@@ -45,7 +45,7 @@ Example:
     JPickler(fd).dump(myobj)
 
   with open("test.pic", "rb") as fd:
-    newobj = JUnpickler.load(myobj)
+    newobj = JUnpickler.load(fd)
 
 
 Proxies and other JPype specific module resources cannot be pickled currently.
