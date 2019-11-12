@@ -72,9 +72,9 @@ public:
 		return field(v);
 	}
 
-	template <class T> static T assertRange(const T& l)
+	static jlong assertRange(const jlong& l)
 	{
-		if (l < -2147483648 || l > 2147483647)
+		if (l < -2147483648ll || l > 2147483647ll)
 		{
 			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java int");
 		}
