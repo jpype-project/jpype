@@ -21,7 +21,7 @@ class JPStringClass : public JPClass
 {
 public:
 
-	JPStringClass();
+	JPStringClass(jclass cls);
 	virtual ~JPStringClass();
 
 public:

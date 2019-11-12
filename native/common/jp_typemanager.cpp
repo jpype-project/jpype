@@ -50,6 +50,7 @@ namespace JPTypeManager
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
 	JPStringClass* _java_lang_String;
+	JPCharSequenceClass* _java_lang_CharSequence;
 
 	JPBoxedClass* _java_lang_Void;
 	JPBoxedClass* _java_lang_Boolean;
@@ -150,7 +151,8 @@ void JPTypeManager::init()
 
 	registerClass(_java_lang_Object = new JPObjectBaseClass());
 	registerClass(_java_lang_Class = new JPClassBaseClass());
-	registerClass(_java_lang_String = new JPStringClass());
+	registerClass(_java_lang_String = new JPStringClass(JPJni::s_StringClass));
+	registerClass(_java_lang_CharSequence = new JPStringClass(JPJni::s_CharSequenceClass));
 
 	registerClass(_java_lang_Void = new JPBoxedVoidClass());
 	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass());
