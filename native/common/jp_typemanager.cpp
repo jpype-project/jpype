@@ -50,7 +50,7 @@ namespace JPTypeManager
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
 	JPStringClass* _java_lang_String;
-	JPCharSequenceClass* _java_lang_CharSequence;
+	JPStringClass* _java_lang_CharSequence;
 
 	JPBoxedClass* _java_lang_Void;
 	JPBoxedClass* _java_lang_Boolean;
