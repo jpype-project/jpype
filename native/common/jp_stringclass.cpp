@@ -16,7 +16,8 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringClass::JPStringClass() : JPClass(JPJni::s_StringClass)
+JPStringClass::JPStringClass(jclass cls) : JPClass(cls) 
+					   // JPJni::s_StringClass)
 {
 }
 
@@ -56,6 +57,7 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 
 JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 {
+	JPJavaFrame frame;
 	JP_TRACE_IN("JPStringType::canConvertToJava");
 	ASSERT_NOT_NULL(obj);
 
@@ -70,6 +72,11 @@ JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 		if (value->getClass() == this)
 		{
 			return JPMatch::_exact;
+		}
+
+		if (frame.IsAssignableFrom(value->getJavaClass(), m_Class.get()))
+		{
+			return JPMatch::_implicit;
 		}
 		return JPMatch::_none;
 	}
@@ -99,7 +106,7 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 	JPValue* value = JPPythonEnv::getJavaValue(obj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		if (value->getClass() == this || frame.IsAssignableFrom(value->getJavaClass(), m_Class.get()))
 		{
 			res.l = frame.NewLocalRef(value->getJavaObject());
 			res.l = frame.keep(res.l);

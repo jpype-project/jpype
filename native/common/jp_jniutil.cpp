@@ -94,6 +94,7 @@ namespace JPJni
 	jclass s_ObjectClass;
 	jclass s_ClassClass;
 	jclass s_StringClass;
+	jclass s_CharSequenceClass;
 	jclass s_NoSuchMethodErrorClass;
 	jclass s_RuntimeExceptionClass;
 	jclass s_ProxyClass = 0;
@@ -121,6 +122,7 @@ void JPJni::init()
 	s_Object_EqualsID = frame.GetMethodID(s_ObjectClass, "equals", "(Ljava/lang/Object;)Z");
 
 	s_StringClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/String"));
+	s_CharSequenceClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/CharSequence"));
 	s_String_ToCharArrayID = frame.GetMethodID(s_StringClass, "toCharArray", "()[C");
 
 	s_ClassClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Class"));
