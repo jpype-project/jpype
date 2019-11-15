@@ -36,7 +36,7 @@ class _JString(object):
 
     def __new__(cls, *args, **kwargs):
         if cls == JString:
-            cls = _jclass.JClass(JString.__javaclass__)
+            cls = cls.__jvm__._java_lang_String
             return cls.__new__(cls, *args)
         return super(JString, cls).__new__(cls, *args, **kwargs)
 

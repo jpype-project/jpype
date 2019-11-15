@@ -116,7 +116,7 @@ class _JArray(object):
 
     def __new__(cls, *args, **kwargs):
         if cls == JArray:
-            return _JArrayNewClass(__jvm__, *args, **kwargs)
+            return _JArrayNewClass(cls.__jvm__, *args, **kwargs)
         return super(JArray, cls).__new__(cls)
 
     def __init__(self, *args, **kwargs):

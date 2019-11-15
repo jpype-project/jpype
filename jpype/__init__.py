@@ -26,7 +26,6 @@ from ._core import *
 from ._jproxy import *
 from ._jpackage import *
 import _jpype
-_jpype._jvm = None
 
 
 __all__ = ['java', 'javax', 'JException', 'JOverride']

@@ -20,6 +20,7 @@ import _jpype
 
 from . import _jclass
 from . import _jobject
+from . import _jstring
 from . import _jtypes
 from . import _classpath
 
@@ -188,6 +189,7 @@ class JContext(_jpype.PyJPContext):
         self._started = False
 
         # Create factories for these items
+        self.JString = type("JString", (_jstring.JString,), {'jvm': self})
         self.JArray = type("JArray", (_jarray.JArray,), {'jvm': self})
         self.JClass = type("JClass", (_jclass.JClass,), {'jvm': self})
         self.JObject = type("JObject", (_jobject.JObject,), {'jvm': self})
@@ -326,6 +328,7 @@ please file a ticket with the developer.
     def _initialize(self):
         self._java_lang_Object = self.JClass("java.lang.Object")
         self._java_lang_Class = self.JClass("java.lang.Class")
+        self._java_lang_String = self.JClass("java.lang.String")
 
         self._java_ClassLoader = self.JClass(
             'java.lang.ClassLoader').getSystemClassLoader()
@@ -339,14 +342,13 @@ please file a ticket with the developer.
         java_lang_Boolean = self.JClass("java.lang.Boolean")
         java_lang_Long = self.JClass("java.lang.Long")
         java_lang_Double = self.JClass("java.lang.Double")
-        java_lang_String = self.JClass("java.lang.String")
 
         self._object_classes[bool] = java_lang_Boolean
         self._object_classes[int] = java_lang_Long
         self._object_classes[_long] = java_lang_Long
         self._object_classes[float] = java_lang_Double
-        self._object_classes[str] = java_lang_String
-        self._object_classes[_unicode] = java_lang_String
+        self._object_classes[str] = self._java_lang_String
+        self._object_classes[_unicode] = self._java_lang_String
         self._object_classes[type] = self._java_lang_Class
         self._object_classes[_jpype.PyJPClass] = self._java_lang_Class
         self._object_classes[object] = self._java_lang_Object
