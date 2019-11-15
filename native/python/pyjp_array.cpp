@@ -20,7 +20,7 @@
 
 #include <pyjp.h>
 
-static PyMethodDef classMethods[] = {
+static PyMethodDef arrayMethods[] = {
 	{"getArrayLength", (PyCFunction) (&PyJPArray::getArrayLength), METH_NOARGS, ""},
 	{"getArrayItem", (PyCFunction) (&PyJPArray::getArrayItem), METH_VARARGS, ""},
 	{"setArrayItem", (PyCFunction) (&PyJPArray::setArrayItem), METH_VARARGS, ""},
@@ -57,7 +57,7 @@ PyTypeObject PyJPArray::Type = {
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
-	/* tp_methods        */ classMethods,
+	/* tp_methods        */ arrayMethods,
 	/* tp_members        */ 0,
 	/* tp_getset         */ 0,
 	/* tp_base           */ 0,

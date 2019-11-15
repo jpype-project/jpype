@@ -32,28 +32,35 @@ from . import _jexception
 from . import _jcollection
 from . import _jcomparable
 from . import _jio
-from . import _jinit
 from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
-    'JVMNotFoundException', 'JVMNotSupportedException'
-]
+    'JVMNotFoundException', 'JVMNotSupportedException',
+    'JBoolean', 'JByte', 'JChar', 'JShort',
+    'JInt', 'JLong', 'JFloat', 'JDouble']
+
+if _sys.version_info > (3,):
+    _unicode = str
+    _long = int
+else:
+    _unicode = unicode
+    _long = long
 
 
 # Activate jedi tab completion
 try:
     import jedi as _jedi
     _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += \
-       ( _jpype.PyJPMethod, _jpype.PyJPField)
+        (_jpype.PyJPMethod, _jpype.PyJPField)
 except:
     pass
 
-_JVM_started = False
-
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
+
+
 def deprecated(*args):
     """ Marks a function a deprecated when used as decorator.
 
@@ -87,18 +94,6 @@ def deprecated(*args):
         return func2
 
 
-def _initialize():
-    _jclass._initialize()
-    _jobject._initialize()
-    _jtypes._initialize()
-    _jinit.runJVMInitializers()
-
-
-def isJVMStarted(jvm=None):
-    if not jvm: jvm = _jpype._jvm
-    return jvm.isStarted()
-
-
 def _hasClassPath(args):
     for i in args:
         if i.startswith('-Djava.class.path'):
@@ -117,177 +112,6 @@ def _handleClassPath(clsList):
         else:
             out.append(s)
     return _classpath._SEP.join(out)
-
-
-_JVM_started = False
-
-def startJVM(*args, **kwargs):
-    """
-    Starts a Java Virtual Machine.  Without options it will start
-    the JVM with the default classpath and jvmpath.
-
-    The default classpath is determined by ``jpype.getClassPath()``.
-    The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
-
-    Parameters:
-     *args (Optional, str[]): Arguments to give to the JVM.
-        The first argument may be the path the JVM.
-
-    Keyword Arguments:
-      jvmpath (str):  Path to the jvm library file,
-        Typically one of (``libjvm.so``, ``jvm.dll``, ...)
-        Using None will apply the default jvmpath.
-      classpath (str,[str]): Set the classpath for the jvm.
-        This will override any classpath supplied in the arguments
-        list. A value of None will give no classpath to JVM.
-      ignoreUnrecognized (bool): Option to JVM to ignore
-        invalid JVM arguments. Default is False.
-      convertStrings (bool): Option to JPype to force Java strings to
-        cast to Python strings. This option is to support legacy code
-        for which conversion of Python strings was the default. This
-        will globally change the behavior of all calls using
-        strings, and a value of True is NOT recommended for newly 
-        developed code.
-
-        The default value for this option during 0.7 series is 
-        True.  The option will be False starting in 0.8. A
-        warning will be issued if this option is not specified
-        during the transition period.
-
-
-    Raises:
-      OSError: if the JVM cannot be started or is already running.
-      TypeError: if an invalid keyword argument is supplied
-        or a keyword argument conflicts with the arguments.
-
-     """
-    jvm = kwargs.pop("jvm", _jpype._jvm)
-
-    if jvm.isStarted():
-         raise OSError('JVM is already started')
-
-    # FIXME this needs to be tied to JVM
-    global _JVM_started
-    if _JVM_started:
-        raise OSError('JVM cannot be restarted')
-    _JVM_started = True
-
-    args = list(args)
-
-    # JVM path
-    jvmpath = None
-    if args:
-        # jvm is the first argument the first argument is a path or None
-        if not args[0] or not args[0].startswith('-'):
-            jvmpath = args.pop(0)
-    if 'jvmpath' in kwargs:
-        if jvmpath:
-            raise TypeError('jvmpath specified twice')
-        jvmpath = kwargs.pop('jvmpath')
-    if not jvmpath:
-        jvmpath = getDefaultJVMPath()
-
-    # Classpath handling
-    if _hasClassPath(args):
-        # Old style, specified in the arguments
-        if 'classpath' in kwargs:
-            # Cannot apply both styles, conflict
-            raise TypeError('classpath specified twice')
-        classpath = None
-    elif 'classpath' in kwargs:
-        # New style, as a keywork
-        classpath = kwargs.pop('classpath')
-    else:
-        # Not speficied at all, use the default classpath
-        classpath = _classpath.getClassPath()
-
-    # Handle strings and list of strings.
-    if classpath:
-        if isinstance(classpath, (str, _jtypes._unicode)):
-            args.append('-Djava.class.path=%s' % _handleClassPath([classpath]))
-        elif hasattr(classpath, '__iter__'):
-            args.append('-Djava.class.path=%s' % _handleClassPath(classpath))
-        else:
-            raise TypeError("Unknown class path element")
-
-    ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
-
-    if not "convertStrings" in kwargs:
-        import warnings
-        warnings.warn("""
--------------------------------------------------------------------------------
-Deprecated: convertStrings was not specified when starting the JVM. The default
-behavior in JPype will be False starting in JPype 0.8. The recommended setting
-for new code is convertStrings=False.  The legacy value of True was assumed for
-this session. If you are a user of an application that reported this warning,
-please file a ticket with the developer.
--------------------------------------------------------------------------------
-""")
-
-    convertStrings = kwargs.pop('convertStrings', True)
-
-
-    if kwargs:
-        raise TypeError("startJVM() got an unexpected keyword argument '%s'"
-                        % (','.join([str(i) for i in kwargs])))
-
-    jvm.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
-    _initialize()
-
-
-
-def shutdownJVM(jvm=None):
-    """ Shuts down the JVM.
-
-    This method shuts down the JVM and thus disables access to existing
-    Java objects. Due to limitations in the JPype, it is not possible to
-    restart the JVM after being terminated.
-    """
-    if not jvm: jvm = _jpype._jvm
-    jvm.shutdown()
-
-
-def isThreadAttachedToJVM(jvm=None):
-    """ Checks if a thread is attached to the JVM.
-
-    Python automatically attaches threads when a Java method is called.
-    This creates a resource in Java for the Python thread. This method
-    can be used to check if a Python thread is currently attached so that
-    it can be disconnected prior to thread termination to prevent leaks.
-
-    Returns:
-      True if the thread is attached to the JVM, False if the thread is
-      not attached or the JVM is not running.
-    """
-    if not jvm: jvm = _jpype._jvm
-    return jvm.isThreadAttachedToJVM()
-
-
-def attachThreadToJVM(jvm=None):
-    """ Attaches a thread to the JVM.
-
-    The function manually connects a thread to the JVM to allow access to
-    Java objects and methods. JPype automaticatlly attaches when a Java
-    resource is used, so a call to this is usually not needed.
-
-    Raises:
-      RuntimeError: If the JVM is not running.
-    """
-    if not jvm: jvm = _jpype._jvm
-    jvm.attachThreadToJVM()
-
-
-def detachThreadFromJVM(jvm=None):
-    """ Detaches a thread from the JVM.
-
-    This function detaches the thread and frees the associated resource in
-    the JVM. For codes making heavy use of threading this should be used
-    to prevent resource leaks. The thread can be reattached, so there
-    is no harm in detaching early or more than once. This method cannot fail
-    and there is no harm in calling it when the JVM is not running.
-    """
-    if not jvm: jvm = _jpype._jvm
-    jvm.detachThreadFromJVM()
 
 
 def synchronized(obj):
@@ -358,26 +182,239 @@ def get_default_jvm_path(*args, **kwargs):
     return getDefaultJVMPath(*args, **kwargs)
 
 
-def getJVMVersion(jvm=None):
-    """ Get the JVM version if the JVM is started.
+class JContext(_jpype.PyJPContext):
 
-    This function can be used to determine the version of the JVM. It is
-    useful to help determine why a Jar has failed to load.
+    def __init__(self):
+        self._started = False
 
-    Returns:
-      A typle with the (major, minor, revison) of the JVM if running.
-    """
-    if not jvm: jvm = _jpype._jvm
-    if not jvm.isStarted():
-        return (0, 0, 0)
+        # Create factories for these items
+        self.JArray = type("JArray", (_jarray.JArray,), {'jvm': self})
+        self.JClass = type("JClass", (_jclass.JClass,), {'jvm': self})
+        self.JObject = type("JObject", (_jobject.JObject,), {'jvm': self})
+        self.JException = type(
+            "JException", (_jexception.JException,), {'jvm': self})
 
-    import re
-    runtime = _jclass.JClass('java.lang.Runtime')
-    version = runtime.class_.getPackage().getImplementationVersion()
+        # Basic types
+        self.JBoolean = _jtypes._JPrimitiveClass(self, "boolean", int)
+        self.JByte = _jtypes._JPrimitiveClass(self, "byte", int)
+        self.JChar = _jtypes._JPrimitiveClass(self, "char", int)
+        self.JShort = _jtypes._JPrimitiveClass(self, "short", int)
+        self.JInt = _jtypes._JPrimitiveClass(self, "int", int)
+        self.JLong = _jtypes._JPrimitiveClass(self, "long", _long)
+        self.JFloat = _jtypes._JPrimitiveClass(self, "float", float)
+        self.JDouble = _jtypes._JPrimitiveClass(self, "double", float)
 
-    # Java 9+ has a version method 
-    if not version:
-        version = runtime.version()
-    version = (re.match("([0-9.]+)", str(version)).group(1))
-    return tuple([int(i) for i in version.split('.')])
+        # Forward declarations
+        self._type_classes = {}
+        self._object_classes = {}
 
+        self._java_lang_Object = None
+        self._java_lang_Class = None
+        _jpype.PyJPContext.__init__(self)
+
+    def startJVM(self, *args, **kwargs):
+        """
+        Starts a Java Virtual Machine.  Without options it will start
+        the JVM with the default classpath and jvmpath.
+
+        The default classpath is determined by ``jpype.getClassPath()``.
+        The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
+
+        Parameters:
+         *args (Optional, str[]): Arguments to give to the JVM.
+            The first argument may be the path the JVM.
+
+        Keyword Arguments:
+          jvmpath (str):  Path to the jvm library file,
+            Typically one of (``libjvm.so``, ``jvm.dll``, ...)
+            Using None will apply the default jvmpath.
+          classpath (str,[str]): Set the classpath for the jvm.
+            This will override any classpath supplied in the arguments
+            list. A value of None will give no classpath to JVM.
+          ignoreUnrecognized (bool): Option to JVM to ignore
+            invalid JVM arguments. Default is False.
+          convertStrings (bool): Option to JPype to force Java strings to
+            cast to Python strings. This option is to support legacy code
+            for which conversion of Python strings was the default. This
+            will globally change the behavior of all calls using
+            strings, and a value of True is NOT recommended for newly 
+            developed code.
+
+            The default value for this option during 0.7 series is 
+            True.  The option will be False starting in 0.8. A
+            warning will be issued if this option is not specified
+            during the transition period.
+
+
+        Raises:
+          OSError: if the JVM cannot be started or is already running.
+          TypeError: if an invalid keyword argument is supplied
+            or a keyword argument conflicts with the arguments.
+
+         """
+        if self.isStarted():
+            raise OSError('JVM is already started')
+
+        if self._started:
+            raise OSError('JVM cannot be restarted')
+        self._started = True
+
+        args = list(args)
+
+        # JVM path
+        jvmpath = None
+        if args:
+            # jvm is the first argument the first argument is a path or None
+            if not args[0] or not args[0].startswith('-'):
+                jvmpath = args.pop(0)
+        if 'jvmpath' in kwargs:
+            if jvmpath:
+                raise TypeError('jvmpath specified twice')
+            jvmpath = kwargs.pop('jvmpath')
+        if not jvmpath:
+            jvmpath = getDefaultJVMPath()
+
+        # Classpath handling
+        if _hasClassPath(args):
+            # Old style, specified in the arguments
+            if 'classpath' in kwargs:
+                # Cannot apply both styles, conflict
+                raise TypeError('classpath specified twice')
+            classpath = None
+        elif 'classpath' in kwargs:
+            # New style, as a keywork
+            classpath = kwargs.pop('classpath')
+        else:
+            # Not speficied at all, use the default classpath
+            classpath = _classpath.getClassPath()
+
+        # Handle strings and list of strings.
+        if classpath:
+            if isinstance(classpath, (str, _jtypes._unicode)):
+                args.append('-Djava.class.path=%s' %
+                            _handleClassPath([classpath]))
+            elif hasattr(classpath, '__iter__'):
+                args.append('-Djava.class.path=%s' %
+                            _handleClassPath(classpath))
+            else:
+                raise TypeError("Unknown class path element")
+
+        ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
+
+        if not "convertStrings" in kwargs:
+            import warnings
+            warnings.warn("""
+-------------------------------------------------------------------------------
+Deprecated: convertStrings was not specified when starting the JVM. The default
+behavior in JPype will be False starting in JPype 0.8. The recommended setting
+for new code is convertStrings=False.  The legacy value of True was assumed for
+this session. If you are a user of an application that reported this warning,
+please file a ticket with the developer.
+-------------------------------------------------------------------------------
+""")
+
+        convertStrings = kwargs.pop('convertStrings', True)
+
+        if kwargs:
+            raise TypeError("startJVM() got an unexpected keyword argument '%s'"
+                            % (','.join([str(i) for i in kwargs])))
+
+        self._startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
+        self._initialize()
+        return self
+
+    def _initialize(self):
+        self._java_lang_Object = self.JClass("java.lang.Object")
+        self._java_lang_Class = self.JClass("java.lang.Class")
+
+        self._java_ClassLoader = self.JClass(
+            'java.lang.ClassLoader').getSystemClassLoader()
+        if not self._java_ClassLoader:
+            raise RuntimeError("Unable to load Java SystemClassLoader")
+
+        self._java_lang_RuntimeException = self.JClass(
+            "java.lang.RuntimeException")
+
+        # Preload needed classes
+        java_lang_Boolean = self.JClass("java.lang.Boolean")
+        java_lang_Long = self.JClass("java.lang.Long")
+        java_lang_Double = self.JClass("java.lang.Double")
+        java_lang_String = self.JClass("java.lang.String")
+
+        self._object_classes[bool] = java_lang_Boolean
+        self._object_classes[int] = java_lang_Long
+        self._object_classes[_long] = java_lang_Long
+        self._object_classes[float] = java_lang_Double
+        self._object_classes[str] = java_lang_String
+        self._object_classes[_unicode] = java_lang_String
+        self._object_classes[type] = self._java_lang_Class
+        self._object_classes[_jpype.PyJPClass] = self._java_lang_Class
+        self._object_classes[object] = self._java_lang_Object
+
+        # Place the jvalue types for primitives
+        self.JBoolean._load(self.JClass("java.lang.Boolean"))
+        self.JByte._load(self.JClass("java.lang.Byte"))
+        self.JChar._load(self.JClass("java.lang.Character"))
+        self.JShort._load(self.JClass("java.lang.Short"))
+        self.JInt._load(self.JClass("java.lang.Integer"))
+        self.JLong._load(self.JClass("java.lang.Long"))
+        self.JFloat._load(self.JClass("java.lang.Float"))
+        self.JDouble._load(self.JClass("java.lang.Double"))
+
+        # Set up table of automatic conversions
+        self._type_classes[bool] = JBoolean
+        self._type_classes[int] = JLong
+        self._type_classes[_long] = JLong
+        self._type_classes[float] = JDouble
+        self._type_classes[str] = _jclass.JClass("java.lang.String")
+        self._type_classes[_unicode] = _jclass.JClass("java.lang.String")
+        self._type_classes[type] = _jclass.JClass("java.lang.Class")
+        self._type_classes[object] = _jclass.JClass("java.lang.Object")
+
+    def getJVMVersion(self):
+        """ Get the JVM version if the JVM is started.
+
+        This function can be used to determine the version of the JVM. It is
+        useful to help determine why a Jar has failed to load.
+
+        Returns:
+          A typle with the (major, minor, revison) of the JVM if running.
+        """
+        if not self.isStarted():
+            return (0, 0, 0)
+
+        import re
+        runtime = _jclass.JClass('java.lang.Runtime')
+        version = runtime.class_.getPackage().getImplementationVersion()
+
+        # Java 9+ has a version method
+        if not version:
+            version = runtime.version()
+        version = (re.match("([0-9.]+)", str(version)).group(1))
+        return tuple([int(i) for i in version.split('.')])
+
+
+_jpype._jvm = JContext()
+_jobject.JObject.__jvm__ = _jpype._jvm
+_jarray.JArray.__jvm__ = _jpype._jvm
+_jclass.JClass.__jvm__ = _jpype._jvm
+_jexception.JException.__jvm__ = _jpype._jvm
+
+# Export symbols
+startJVM = _jpype._jvm.startJVM
+shutdownJVM = _jpype._jvm.shutdown
+isJVMStarted = _jpype._jvm.isStarted
+getJVMVersion = _jpype._jvm.getJVMVersion
+attachThreadToJVM = _jpype._jvm.attachThread
+detachThreadFromJVM = _jpype._jvm.detachThread
+isThreadAttachedToJVM = _jpype._jvm.isThreadAttached
+
+# Expose the basic types
+JBoolean = _jpype._jvm.JBoolean
+JByte = _jpype._jvm.JByte
+JChar = _jpype._jvm.JChar
+JShort = _jpype._jvm.JShort
+JInt = _jpype._jvm.JInt
+JLong = _jpype._jvm.JLong
+JFloat = _jpype._jvm.JFloat
+JDouble = _jpype._jvm.JDouble

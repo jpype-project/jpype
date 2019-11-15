@@ -32,6 +32,8 @@ class _JString(object):
     using ``isinstance(obj, JString)``.
 
     """
+    __jvm__ = None
+
     def __new__(cls, *args, **kwargs):
         if cls == JString:
             cls = _jclass.JClass(JString.__javaclass__)
@@ -76,9 +78,9 @@ class _JString(object):
         return self.__str__().__hash__()
 
     def __repr__(self):
-        return "'%s'"%self.__str__()
+        return "'%s'" % self.__str__()
 
 
 JString = _jobject.defineJObjectFactory(
-    "JString", "java.lang.String", _JString)
+    "JString", None, _JString)
 _jcustomizer.registerClassBase('java.lang.String', JString)

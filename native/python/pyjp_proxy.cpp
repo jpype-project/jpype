@@ -15,9 +15,15 @@
 
  *****************************************************************************/
 #include <pyjp.h>
+#include <structmember.h>
 
-static PyMethodDef classMethods[] = {
+static PyMethodDef proxyMethods[] = {
 	{NULL},
+};
+
+static PyMemberDef proxyMembers[] = {
+	{"__jvm__", T_OBJECT, offsetof(PyJPProxy, m_Context), READONLY},
+	{0}
 };
 
 PyTypeObject PyJPProxy::Type = {
@@ -48,8 +54,8 @@ PyTypeObject PyJPProxy::Type = {
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
-	/* tp_methods        */ classMethods,
-	/* tp_members        */ 0,
+	/* tp_methods        */ proxyMethods,
+	/* tp_members        */ proxyMembers,
 	/* tp_getset         */ 0,
 	/* tp_base           */ 0,
 	/* tp_dict           */ 0,

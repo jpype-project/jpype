@@ -27,7 +27,7 @@ __all__ = ['JImplementationFor']
 
 # Forward declarations
 _JObject = None
-_JCLASSES = None
+_JCLASSES = {} # FIXME move to typehints
 
 
 def registerClassBase(name, cls):

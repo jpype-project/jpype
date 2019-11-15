@@ -28,49 +28,8 @@ else:
 
 _JObject = None
 
-_java_lang_RuntimeException = None
-_java_ClassLoader = None
-_java_lang_Class = None
-_java_lang_Object = None
-
-_JCLASSES = {}
-_JP_TYPE_CLASSES = {}
-_JP_OBJECT_CLASSES = {}
-
-_jcustomizer._JCLASSES = _JCLASSES
-
-
-def _initialize():
-    global _java_ClassLoader
-
-    # Due to bootstrapping, Object and Class must be defined first.
-    global _java_lang_Object, _java_lang_Class
-    _java_lang_Object = JClass("java.lang.Object")
-    _java_lang_Class = JClass("java.lang.Class")
-
-    _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
-    if not _java_ClassLoader:
-        raise RuntimeError("Unable to load Java SystemClassLoader")
-
-    global _java_lang_RuntimeException
-    _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
-
-    # Preload needed classes
-    java_lang_Boolean = JClass("java.lang.Boolean")
-    java_lang_Long = JClass("java.lang.Long")
-    java_lang_Double = JClass("java.lang.Double")
-    java_lang_String = JClass("java.lang.String")
-
-    global _JP_OBJECT_CLASSES
-    _JP_OBJECT_CLASSES[bool] = java_lang_Boolean
-    _JP_OBJECT_CLASSES[int] = java_lang_Long
-    _JP_OBJECT_CLASSES[_long] = java_lang_Long
-    _JP_OBJECT_CLASSES[float] = java_lang_Double
-    _JP_OBJECT_CLASSES[str] = java_lang_String
-    _JP_OBJECT_CLASSES[_unicode] = java_lang_String
-    _JP_OBJECT_CLASSES[type] = _java_lang_Class
-    _JP_OBJECT_CLASSES[_jpype.PyJPClass] = _java_lang_Class
-    _JP_OBJECT_CLASSES[object] = _java_lang_Object
+# FIXME reconnect customizers
+#_jcustomizer._JCLASSES = _JCLASSES
 
 
 def JOverride(*args, **kwargs):
@@ -121,13 +80,15 @@ class JClass(type):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
+    __jvm__ = None
+
     @property
     def class_(self):
         return _JObject(self.__javaclass__)
 
     def __new__(cls, *args, **kwargs):
         if len(args) == 1:
-            return _JClassNew(args[0], **kwargs)
+            return _JClassNew(cls.__jvm__, args[0], **kwargs)
         return super(JClass, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -203,12 +164,12 @@ class JClass(type):
         return out
 
     def __repr__(self):
-        return "<java class '%s'>"%(self.__name__)
+        return "<java class '%s'>" % (self.__name__)
 
 
-def _JClassNew(arg, loader=None, initialize=True, jvm=_jpype._jvm):
+def _JClassNew(jvm, arg, loader=None, initialize=True):
     if loader and isinstance(arg, str):
-        arg = _java_lang_Class.forName(arg, initialize, loader)
+        arg = jvm._java_lang_Class.forName(arg, initialize, loader)
 
     if isinstance(arg, _jpype.PyJPClass):
         javaClass = arg
@@ -216,12 +177,14 @@ def _JClassNew(arg, loader=None, initialize=True, jvm=_jpype._jvm):
         javaClass = _jpype.PyJPClass(arg, jvm)
 
     if javaClass is None:
-        raise _java_lang_RuntimeException("Java class '%s' not found" % name)
+        raise jvm._java_lang_RuntimeException(
+            "Java class '%s' not found" % name)
 
     # Lookup the class name
     name = javaClass.getCanonicalName()
 
     # See if we have an existing class in the cache
+    _JCLASSES = javaClass.__jvm__._classes
     if name in _JCLASSES:
         return _JCLASSES[name]
     return _JClassFactory(name, javaClass)
@@ -311,7 +274,7 @@ def _JClassFactory(name, jc):
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
     res = JClass(name, tuple(bases), members)
-    _JCLASSES[name] = res
+    jc.__jvm__._classes[name] = res
 
     # Post customizers
     _jcustomizer._applyInitializer(res)
@@ -319,7 +282,7 @@ def _JClassFactory(name, jc):
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
-    if _java_lang_Class:
+    if jc.__jvm__._java_lang_Class:
         for cls in res.class_.getDeclaredClasses():
             if cls.getModifiers() & 1 == 0:
                 continue
@@ -331,7 +294,7 @@ def _JClassFactory(name, jc):
 # **********************************************************
 
 
-def _toJavaClass(tp):
+def _toJavaClass(jvm, tp):
     """(internal) Converts a class type in python into a internal java class.
 
     Used mainly to support JArray.
@@ -343,7 +306,7 @@ def _toJavaClass(tp):
     """
     # if it a string
     if isinstance(tp, (str, _unicode)):
-        return JClass(tp).__javaclass__
+        return jvm.JClass(tp).__javaclass__
 
     if isinstance(tp, _jpype.PyJPClass):
         return tp
@@ -359,17 +322,16 @@ def _toJavaClass(tp):
         pass
 
     try:
-        return _JP_TYPE_CLASSES[tp].__javaclass__
+        return jvm._type_classes[tp].__javaclass__
     except KeyError:
         pass
 
     raise TypeError("Unable to find class for '%s'" % tp.__name__)
 
 
-def _getDefaultJavaObject(obj):
-    global _JP_OBJECT_CLASSES
+def _getDefaultJavaObject(jvm, obj):
     try:
-        return _JP_OBJECT_CLASSES[type(obj)]
+        return jvm._object_classes[type(obj)]
     except KeyError:
         pass
 
@@ -379,7 +341,7 @@ def _getDefaultJavaObject(obj):
         pass
 
     if isinstance(obj, _jpype.PyJPClass):
-        return _java_lang_Class
+        return jvm._java_lang_Class
 
     # We need to check this first as values have both
     # __javavalue__ and __javaclass__
@@ -387,10 +349,10 @@ def _getDefaultJavaObject(obj):
         return JClass(obj.__javaclass__)
 
     if hasattr(obj, '__javaclass__'):
-        return _java_lang_Class
+        return jvm._java_lang_Class
 
     if obj == None:
-        return _java_lang_Object
+        return jvm._java_lang_Object
 
     raise TypeError(
         "Unable to determine the default type of `{0}`".format(obj.__class__))
@@ -581,11 +543,11 @@ def _jmethodAnnotation(method, cls, overloads):
     returns = []
 
     # Special handling if we have 1 overload
-    if len(overloads)==1:
+    if len(overloads) == 1:
         ov = overloads[0]
         out = {}
-        for i,p in enumerate(ov.getParameterTypes()):
-            out['arg%d'%i] = JClass(p)
+        for i, p in enumerate(ov.getParameterTypes()):
+            out['arg%d' % i] = JClass(p)
         out['return'] = JClass(ov.getReturnType())
         return out
 
@@ -597,10 +559,12 @@ def _jmethodAnnotation(method, cls, overloads):
         return {"return": JClass([i for i in returns][0])}
     return {}
 
+
 def _jmethodCode(method):
     def call(*args):
-       return method.__call__(*args)
+        return method.__call__(*args)
     return call
+
 
 _jpype.setResource('GetClassMethod', _JClassNew)
 _jpype.setResource('GetMethodDoc', _jmethodDoc)

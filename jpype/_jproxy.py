@@ -139,19 +139,22 @@ def _convertInterfaces(intf):
     for cls in actualIntf:
         # If it isn't a JClass, then it cannot be a Java interface
         if not isinstance(cls, _jclass.JClass):
-            raise TypeError("'%s' is not a Java interface"%type(cls).__name__)
+            raise TypeError("'%s' is not a Java interface" %
+                            type(cls).__name__)
         # Java concrete and abstract classes cannot be proxied
         if not issubclass(cls, _jclass.JInterface):
-            raise TypeError("'%s' is not a Java interface"%cls.__name__)
+            raise TypeError("'%s' is not a Java interface" % cls.__name__)
 
     return tuple(actualIntf)
+
 
 class _JFromDict(object):
     def __init__(self, dict):
         self.dict = dict
+
     def __getattribute__(self, name):
         try:
-            return object.__getattribute__(self,'dict')[name]
+            return object.__getattribute__(self, 'dict')[name]
         except KeyError:
             pass
         raise AttributeError("attribute not found")

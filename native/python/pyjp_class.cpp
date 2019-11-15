@@ -14,6 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
+#include <Python.h>
+#include <structmember.h>
 #include <jpype.h>
 #include <pyjp.h>
 
@@ -37,6 +39,11 @@ static PyMethodDef classMethods[] = {
 	{"dumpCtor", (PyCFunction) (&PyJPClass::dumpCtor), METH_VARARGS, ""},
 
 	{NULL},
+};
+
+static PyMemberDef classMembers[] = {
+	{"__jvm__", T_OBJECT, offsetof(PyJPClass, m_Context), READONLY},
+	{0}
 };
 
 PyTypeObject PyJPClass::Type = {
@@ -71,7 +78,7 @@ PyTypeObject PyJPClass::Type = {
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
 	/* tp_methods        */ classMethods,
-	/* tp_members        */ 0,
+	/* tp_members        */ classMembers,
 	/* tp_getset         */ 0,
 	/* tp_base           */ 0,
 	/* tp_dict           */ 0,

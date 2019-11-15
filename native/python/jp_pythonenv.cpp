@@ -80,9 +80,12 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 	JP_TRACE_IN_C("JPPythonEnv::newJavaClass");
 	ASSERT_NOT_NULL(javaClass);
 
+	PyJPContext* context = (PyJPContext*) (javaClass->getContext()->getHost());
+
 	JP_TRACE(javaClass->toString());
-	JPPyTuple args(JPPyTuple::newTuple(1));
-	args.setItem(0, PyJPClass::alloc(javaClass).get());
+	JPPyTuple args(JPPyTuple::newTuple(2));
+	args.setItem(0, (PyObject*) context);
+	args.setItem(1, PyJPClass::alloc(javaClass).get());
 
 	// calls jpype._jclass._getClassFor(_jpype.PyJPClass)
 	if (s_Resources->s_GetClassMethod.isNull())

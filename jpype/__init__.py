@@ -14,21 +14,19 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import _jpype
-_jpype._jvm = _jpype.PyJPContext()
-
-from ._jpackage import *
-from ._jproxy import *
-from ._core import *
-from ._gui import *
-from ._classpath import *
-from ._jclass import *
-from .types import *
-from ._jcustomizer import *
-from . import reflect
-from . import nio
 from . import types
+from . import nio
+from . import reflect
 from ._jcustomizer import *
+from .types import *
+from ._jclass import *
+from ._classpath import *
+from ._gui import *
+from ._core import *
+from ._jproxy import *
+from ._jpackage import *
+import _jpype
+_jpype._jvm = None
 
 
 __all__ = ['java', 'javax', 'JException', 'JOverride']
@@ -59,4 +57,3 @@ javax = JPackage("javax", strict=True)
 
 JMethod = _jpype.PyJPMethod
 JField = _jpype.PyJPField
-

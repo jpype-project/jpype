@@ -22,6 +22,7 @@ struct PyJPContext
 	PyObject_HEAD
 	JPContext *m_Context;
 	PyObject *m_Dict;
+	PyObject *m_Classes;
 
 	static PyTypeObject Type;
 	static void initType(PyObject *module);

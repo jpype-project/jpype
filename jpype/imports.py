@@ -71,7 +71,6 @@ import _jpype
 import sys as _sys
 from . import _pykeywords
 from . import _jclass
-from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
 
@@ -96,16 +95,21 @@ _java_lang_Class = None
 _java_lang_NoClassDefFoundError = None
 _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
+
+
 def _getJavaClass(javaname):
     global _java_lang_Class
     global _java_lang_NoClassDefFoundError
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
     if not _java_lang_Class:
-      _java_lang_Class = _jclass.JClass("java.lang.Class")
-      _java_lang_ClassNotFoundException = _jclass.JClass("java.lang.ClassNotFoundException")
-      _java_lang_NoClassDefFoundError = _jclass.JClass("java.lang.NoClassDefFoundError")
-      _java_lang_UnsupportedClassVersionError = _jclass.JClass("java.lang.UnsupportedClassVersionError")
+        _java_lang_Class = _jclass.JClass("java.lang.Class")
+        _java_lang_ClassNotFoundException = _jclass.JClass(
+            "java.lang.ClassNotFoundException")
+        _java_lang_NoClassDefFoundError = _jclass.JClass(
+            "java.lang.NoClassDefFoundError")
+        _java_lang_UnsupportedClassVersionError = _jclass.JClass(
+            "java.lang.UnsupportedClassVersionError")
 
     err = None
     try:
@@ -119,16 +123,19 @@ def _getJavaClass(javaname):
 
     # Missing dependency
     except _java_lang_NoClassDefFoundError as ex:
-        missing = str(ex).replace('/','.')
-        err = "Unable to import '%s' due to missing dependency '%s'"%(javaname, missing)
+        missing = str(ex).replace('/', '.')
+        err = "Unable to import '%s' due to missing dependency '%s'" % (
+            javaname, missing)
 
     # Wrong Java version
     except _java_lang_UnsupportedClassVersionError as ex:
-        err = "Unable to import '%s' due to incorrect Java version"%(javaname)
+        err = "Unable to import '%s' due to incorrect Java version" % (
+            javaname)
 
     # Otherwise!?
     except Exception as ex:
-        err = "Unable to import '%s' due to unexpected exception, '%s'"%(javaname, ex)
+        err = "Unable to import '%s' due to unexpected exception, '%s'" % (
+            javaname, ex)
     raise ImportError(err)
 
 # FIXME imports of static fields not working for now.
@@ -143,7 +150,7 @@ def _copyProperties(out, mc):
 def _getStaticMethods(cls):
     static = {}
     for u in cls.class_.getMethods():
-        if u.getModifiers()&8==0:
+        if u.getModifiers() & 8 == 0:
             continue
         name = _keywordWrap(str(u.getName()))
         static[name] = getattr(cls, name)
@@ -241,11 +248,12 @@ class _JImport(object):
             return jtype
 
         # If the java class does not exist, throw a ClassNotFound exception
-        raise ImportError("Unable to find java class '%s'"%jname)
+        raise ImportError("Unable to find java class '%s'" % jname)
 
     def __setattr__(self, name, value):
         if name.startswith('__'):
-            raise AttributeError("Module does not allow setting of '%s'" % name)
+            raise AttributeError(
+                "Module does not allow setting of '%s'" % name)
         if hasattr(value, '__javaclass__'):
             return object.__setattr__(self, name, getattr(value, '__javaclass__'))
         if isinstance(value, (_JImport, _ModuleType)):
@@ -399,4 +407,3 @@ registerDomain('net')
 registerDomain('org')
 
 _exportTypes = (property, _jclass.JClass, _JImport, _jpype.PyJPMethod)
-

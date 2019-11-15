@@ -21,15 +21,7 @@ from . import _jclass
 from . import _jobject
 from . import _jcustomizer
 
-__all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
-           'JInt', 'JLong', 'JFloat', 'JDouble']
 
-if _sys.version_info > (3,):
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
 
 # FIXME python2 and python3 get different conversions on int and long.  Likely we should
 # unify to got the the same types regardless of version.
@@ -37,36 +29,6 @@ else:
 # Set up all the tables
 _maxFloat = 3.4028234663852886E38
 _maxDouble = 1.7976931348623157E308
-
-
-def _initialize():
-    _JP_TYPE_CLASSES = _jclass._JP_TYPE_CLASSES
-    _JCLASSES = _jclass._JCLASSES
-
-    # Place the jvalue types for primitives
-    _JPrimitiveLoad(JBoolean, _jclass.JClass("java.lang.Boolean"))
-    _JPrimitiveLoad(JByte, _jclass.JClass("java.lang.Byte"))
-    _JPrimitiveLoad(JChar, _jclass.JClass("java.lang.Character"))
-    _JPrimitiveLoad(JShort, _jclass.JClass("java.lang.Short"))
-    _JPrimitiveLoad(JInt, _jclass.JClass("java.lang.Integer"))
-    _JPrimitiveLoad(JLong, _jclass.JClass("java.lang.Long"))
-    _JPrimitiveLoad(JFloat, _jclass.JClass("java.lang.Float"))
-    _JPrimitiveLoad(JDouble, _jclass.JClass("java.lang.Double"))
-
-    # Set up table of automatic conversions
-    _JP_TYPE_CLASSES[bool] = JBoolean
-    _JP_TYPE_CLASSES[int] = JLong
-    _JP_TYPE_CLASSES[_long] = JLong
-    _JP_TYPE_CLASSES[float] = JDouble
-    _JP_TYPE_CLASSES[str] = _jclass.JClass("java.lang.String")
-    _JP_TYPE_CLASSES[_unicode] = _jclass.JClass("java.lang.String")
-    _JP_TYPE_CLASSES[type] = _jclass.JClass("java.lang.Class")
-    _JP_TYPE_CLASSES[object] = _jclass.JClass("java.lang.Object")
-
-
-def _JPrimitiveLoad(cls, boxedType):
-    type.__setattr__(cls, '__javaclass__', _jpype.PyJPClass(cls.__name__, _jpype._jvm))
-    type.__setattr__(cls, '_java_boxed_class', boxedType)
 
 
 class _JPrimitiveClass(_jclass.JClass):
@@ -80,22 +42,23 @@ class _JPrimitiveClass(_jclass.JClass):
      - __javavalue__ - the instance of the java value.
 
     """
-    def __new__(cls, name, basetype):
+    def __new__(cls, jvm, name, basetype):
         members = {
             "__init__": _JPrimitive.init,
             "__setattr__": object.__setattr__,
             "__javaclass__": None,
+            "__jvm__": jvm,
             "_java_boxed_class": None,
         }
         return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, _JPrimitive), members)
 
-    def __init__(self, *args):
-        _jclass._JCLASSES[args[0]] = self
+    def __init__(self, jvm, *args):
+        jvm._classes[args[0]] = self
         super(_JPrimitive, self).__init__(self)
 
     def _load(self, boxed):
         type.__setattr__(self, '__javaclass__',
-                         _jpype.PyJPClass(self.__name__))
+                         _jpype.PyJPClass(self.__name__, self.__jvm__))
         type.__setattr__(self, '_java_boxed_class', boxed)
 
 
@@ -140,13 +103,3 @@ class _JPrimitive(object):
         if self._pyv < -_maxDouble or self._pyv > _maxDouble:
             raise OverFlowError("Cannot convert to double value")
         return float(self._pyv)
-
-
-JBoolean = _JPrimitiveClass("boolean", int)
-JByte = _JPrimitiveClass("byte", int)
-JChar = _JPrimitiveClass("char", int)
-JShort = _JPrimitiveClass("short", int)
-JInt = _JPrimitiveClass("int", int)
-JLong = _JPrimitiveClass("long", _long)
-JFloat = _JPrimitiveClass("float", float)
-JDouble = _JPrimitiveClass("double", float)

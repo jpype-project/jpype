@@ -20,6 +20,8 @@ try:
 except ImportError:
     from collections import Sequence
 
+# FIXME add special handling for JArray(JString) and JArray(JException) as we
+# have removed the __javaclass__ member
 
 import _jpype
 from . import _jclass
@@ -110,9 +112,11 @@ class _JArray(object):
 
 
     """
+    __jvm__ = None
+
     def __new__(cls, *args, **kwargs):
         if cls == JArray:
-            return _JArrayNewClass(*args, **kwargs)
+            return _JArrayNewClass(__jvm__, *args, **kwargs)
         return super(JArray, cls).__new__(cls)
 
     def __init__(self, *args, **kwargs):
@@ -225,15 +229,15 @@ class _JArray(object):
         Returns:
             A shallow copy of the array.
         """
-        return _jclass.JClass("java.util.Arrays").copyOf(self, len(self))
+        return self.__jvm__.JClass("java.util.Arrays").copyOf(self, len(self))
 
 
 JArray = _jobject.defineJObjectFactory("JArray", None, _JArray)
 
 
-def _JArrayNewClass(cls, ndims=1):
+def _JArrayNewClass(jvm, cls, ndims=1):
     """ Convert a array class description into a JArray class."""
-    jc = _jclass._toJavaClass(cls)
+    jc = _jclass._toJavaClass(jvm, cls)
 
     if jc.isPrimitive():
         # primitives need special handling
@@ -243,7 +247,7 @@ def _JArrayNewClass(cls, ndims=1):
     else:
         typename = ('['*ndims)+'L'+str(_jobject.JObject(jc).getName())+';'
 
-    return _jclass.JClass(typename)
+    return jvm.JClass(typename)
 
 
 # FIXME JavaArrayClass likely should be exposed for isinstance, issubtype

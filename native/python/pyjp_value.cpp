@@ -15,11 +15,17 @@
 
  *****************************************************************************/
 #include <pyjp.h>
+#include <structmember.h>
 
-static PyMethodDef classMethods[] = {
+static PyMethodDef valueMethods[] = {
 	{"toString", (PyCFunction) (&PyJPValue::toString), METH_NOARGS, ""},
 	{"toUnicode", (PyCFunction) (&PyJPValue::toUnicode), METH_NOARGS, ""},
 	{NULL},
+};
+
+static PyMemberDef valueMembers[] = {
+	{"__jvm__", T_OBJECT, offsetof(PyJPValue, m_Context), READONLY},
+	{0}
 };
 
 PyTypeObject PyJPValue::Type = {
@@ -54,8 +60,8 @@ PyTypeObject PyJPValue::Type = {
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
-	/* tp_methods        */ classMethods,
-	/* tp_members        */ 0,
+	/* tp_methods        */ valueMethods,
+	/* tp_members        */ valueMembers,
 	/* tp_getset         */ 0,
 	/* tp_base           */ 0,
 	/* tp_dict           */ 0,
@@ -81,7 +87,7 @@ bool PyJPValue::check(PyObject* o)
 	return o != NULL && Py_TYPE(o) == &PyJPValue::Type;
 }
 
-// These are from the internal methods when we alreayd have the jvalue
+// These are from the internal methods when we already have the jvalue
 
 JPPyObject PyJPValue::alloc(const JPValue& value)
 {

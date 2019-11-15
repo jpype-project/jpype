@@ -21,7 +21,6 @@ import inspect
 import _jpype
 from . import _jclass
 from . import _jcustomizer
-from . import _jinit
 
 __all__ = ['JObject']
 
@@ -33,9 +32,9 @@ else:
     _long = long
 
 
-def _initialize():
-    type.__setattr__(JObject, '__javaclass__',
-                     _jpype.PyJPClass('java.lang.Object', _jpype._jvm))
+#def _initialize():
+#    type.__setattr__(JObject, '__javaclass__',
+#                     _jpype.PyJPClass('java.lang.Object', _jpype._jvm))
 
 
 class JObject(object):
@@ -75,13 +74,14 @@ class JObject(object):
          the requested type is not a Java class or primitive.
 
     """
+    __jvm__ = None
     def __new__(cls, *args, **kwargs):
         if cls != JObject:
             return super(JObject, cls).__new__(cls)
         # Create a null pointer object
         if len(args) == 0:
             args = [None]
-        cls = _JObjectFactory(*args, **kwargs)
+        cls = _JObjectFactory(cls.__jvm__, *args, **kwargs)
         self = cls.__new__(cls, args[0])
         self.__javavalue__ = _jpype.PyJPValue(cls.__javaclass__, args[0])
         return self
@@ -134,7 +134,7 @@ _jclass._JObject = JObject
 _jcustomizer._JObject = JObject
 
 
-def _JObjectFactory(v=None, tp=None):
+def _JObjectFactory(jvm, v=None, tp=None):
     """ Creates a Java object.
 
     If not specified type is determined based on the object.
@@ -150,11 +150,11 @@ def _JObjectFactory(v=None, tp=None):
 
     # Automatically look up the type if not specified,
     if tp is None:
-        return _jclass._getDefaultJavaObject(v)
+        return _jclass._getDefaultJavaObject(jvm, v)
 
     # If it is a string look up the class name,
     elif isinstance(tp, (str, _unicode)):
-        return _jclass.JClass(tp)
+        return jvm.JClass(tp)
 
     # Check if we are to box it,
     elif isinstance(tp, type):
@@ -196,10 +196,11 @@ def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
     # Create a new class
     res = _jclass.JClass(name, bases, members)
 
-    if jclass != None:
-        # Register this class to be initialized when jvm starts
-        def jinit():
-            type.__setattr__(res, '__javaclass__', _jpype.PyJPClass(jclass, _jpype._jvm))
-        _jinit.registerJVMInitializer(jinit)
+#    if jclass != None:
+#        # Register this class to be initialized when jvm starts
+#        def jinit():
+#            type.__setattr__(res, '__javaclass__',
+#                             _jpype.PyJPClass(jclass, _jpype._jvm))
+#        _jinit.registerJVMInitializer(jinit)
 
     return res
