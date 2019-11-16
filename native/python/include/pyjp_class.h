@@ -19,10 +19,9 @@
 
 struct PyJPClass
 {
-	//AT's comments on porting:
-	//  1) Some Unix compilers do not tolerate the semicolumn after PyObject_HEAD
-	//PyObject_HEAD;
-	PyObject_HEAD
+	PyJPValue m_Value;
+	JPClass *m_Class;
+	//	PyJPContext *m_Context;
 	static PyTypeObject Type;
 
 	// Python-visible methods
@@ -75,8 +74,6 @@ struct PyJPClass
 	static PyObject* convertToJava(PyJPClass *self, PyObject *args);
 	static PyObject* dumpCtor(PyJPClass *self, PyObject *args);
 
-	JPClass *m_Class;
-	PyJPContext *m_Context;
 } ;
 
 #endif // _PYCLASS_H_

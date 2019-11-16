@@ -58,7 +58,7 @@ class _JPrimitiveClass(_jclass.JClass):
 
     def _load(self, boxed):
         type.__setattr__(self, '__javaclass__',
-                         _jpype.PyJPClass(self.__name__, self.__jvm__))
+                         _jpype.PyJPClass(self.__jvm__, self.__name__))
         type.__setattr__(self, '_java_boxed_class', boxed)
 
 

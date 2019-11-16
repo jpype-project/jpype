@@ -69,7 +69,7 @@ static PyMethodDef contextMethods[] = {
 	{"isThreadAttached", (PyCFunction) (&PyJPContext::isThreadAttached), METH_NOARGS, check_doc},
 	{"attachThread", (PyCFunction) (&PyJPContext::attachThread), METH_NOARGS, attach_doc},
 	{"detachThread", (PyCFunction) (&PyJPContext::detachThread), METH_NOARGS, detach_doc},
-	//	{"attachThreadAsDaemon", (PyCFunction) (&PyJPContext::attachThreadAsDaemon), METH_NOARGS, ""},
+	{"attachThreadAsDaemon", (PyCFunction) (&PyJPContext::attachThreadAsDaemon), METH_NOARGS, ""},
 
 	// ByteBuffer
 	{"_convertToDirectBuffer", (PyCFunction) (&PyJPContext::convertToDirectByteBuffer), METH_VARARGS, ""},
@@ -189,9 +189,8 @@ PyObject* PyJPContext::__str__(PyJPContext *self)
 	try
 	{
 		JPContext *context = self->m_Context;
-		ASSERT_JVM_RUNNING(context);
 		stringstream sout;
-		sout << "<java context>";
+		sout << "<java context " << context << ">";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
 	PY_STANDARD_CATCH(NULL);

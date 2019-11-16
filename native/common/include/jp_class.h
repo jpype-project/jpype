@@ -31,6 +31,17 @@ public:
 		jint modifiers);
 	virtual ~JPClass();
 
+	void setHost(PyObject* host)
+	{
+		m_Host = JPPyObject(JPPyRef::_use, host);
+	}
+
+	PyObject* getHost()
+	{
+		return m_Host.get();
+	}
+
+
 public:
 
 	jclass getJavaClass() const
@@ -186,6 +197,7 @@ protected:
 	JPFieldList          m_Fields;
 	string               m_CanonicalName;
 	jint                 m_Modifiers;
+	JPPyObject           m_Host;
 } ;
 
 

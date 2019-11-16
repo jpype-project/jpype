@@ -84,7 +84,7 @@ class JClass(type):
 
     @property
     def class_(self):
-        return _JObject(self.__javaclass__)
+        return self.__jvm__.JObject(self.__javaclass__)
 
     def __new__(cls, *args, **kwargs):
         if len(args) == 1:
@@ -173,8 +173,10 @@ def _JClassNew(jvm, arg, loader=None, initialize=True):
 
     if isinstance(arg, _jpype.PyJPClass):
         javaClass = arg
+    elif jvm._java_lang_Class and isinstance(arg, jvm._java_lang_Class):
+        javaClass = arg.__javavalue__
     else:
-        javaClass = _jpype.PyJPClass(arg, jvm)
+        javaClass = _jpype.PyJPClass(jvm, arg)
 
     if javaClass is None:
         raise jvm._java_lang_RuntimeException(
@@ -220,7 +222,8 @@ class JInterface(object):
         if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             object.__setattr__(self, '__javavalue__', args[0])
         elif not hasattr(self, '__javavalue__'):
-            raise JClass("java.lang.InstantiationException")(
+            raise RuntimeException(
+#            raise JClass("java.lang.InstantiationException")(
                 "`%s` is an interface." % str(self.class_.getName()))
         super(JInterface, self).__init__()
 
@@ -241,28 +244,30 @@ def _JClassFactory(name, jc):
     from . import _jarray
 
     # Set up bases
+    jvm = jc.__jvm__
     bases = []
     bjc = jc.getSuperClass()
     if name == 'java.lang.Object':
-        bases.append(_JObject)
+        bases.append(jvm.JObject)
     elif jc.isArray():
         bases.append(_jarray.JArray)
 
     if jc.isPrimitive():
         bases.append(object)
     elif bjc is not None:
-        bases.append(JClass(bjc))
+        bases.append(jvm.JClass(bjc))
     elif bjc is None:
         bases.append(JInterface)
 
     itf = jc.getInterfaces()
     for ic in itf:
-        bases.append(JClass(ic))
+        bases.append(jvm.JClass(ic))
 
     # Set up members
     members = {
         "__javaclass__": jc,
         "__name__": name,
+        "__jvm__": jvm,
     }
     fields = jc.getClassFields()
     for i in fields:
@@ -273,8 +278,8 @@ def _JClassFactory(name, jc):
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = JClass(name, tuple(bases), members)
-    jc.__jvm__._classes[name] = res
+    res = jvm.JClass(name, tuple(bases), members)
+    jvm._classes[name] = res
 
     # Post customizers
     _jcustomizer._applyInitializer(res)
@@ -282,11 +287,11 @@ def _JClassFactory(name, jc):
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
-    if jc.__jvm__._java_lang_Class:
+    if jvm._java_lang_Class:
         for cls in res.class_.getDeclaredClasses():
             if cls.getModifiers() & 1 == 0:
                 continue
-            cls2 = JClass(cls)
+            cls2 = jvm.JClass(cls)
             type.__setattr__(res, str(cls.getSimpleName()), cls2)
 
     return res

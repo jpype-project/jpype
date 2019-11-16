@@ -46,7 +46,6 @@ namespace
 
 JPContext::JPContext()
 {
-	printf("New JVM %p\n", this);
 	m_JavaVM = 0;
 	_void = 0;
 	_boolean = 0;

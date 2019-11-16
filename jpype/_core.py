@@ -189,12 +189,12 @@ class JContext(_jpype.PyJPContext):
         self._started = False
 
         # Create factories for these items
-        self.JString = type("JString", (_jstring.JString,), {'jvm': self})
-        self.JArray = type("JArray", (_jarray.JArray,), {'jvm': self})
-        self.JClass = type("JClass", (_jclass.JClass,), {'jvm': self})
-        self.JObject = type("JObject", (_jobject.JObject,), {'jvm': self})
+        self.JString = type("JString", (_jstring.JString,), {'__jvm__': self})
+        self.JArray = type("JArray", (_jarray.JArray,), {'__jvm__': self})
+        self.JClass = type("JClass", (_jclass.JClass,), {'__jvm__': self})
+        self.JObject = type("JObject", (_jobject.JObject,), {'__jvm__': self})
         self.JException = type(
-            "JException", (_jexception.JException,), {'jvm': self})
+            "JException", (_jexception.JException,), {'__jvm__': self})
 
         # Basic types
         self.JBoolean = _jtypes._JPrimitiveClass(self, "boolean", int)
@@ -368,10 +368,10 @@ please file a ticket with the developer.
         self._type_classes[int] = JLong
         self._type_classes[_long] = JLong
         self._type_classes[float] = JDouble
-        self._type_classes[str] = _jclass.JClass("java.lang.String")
-        self._type_classes[_unicode] = _jclass.JClass("java.lang.String")
-        self._type_classes[type] = _jclass.JClass("java.lang.Class")
-        self._type_classes[object] = _jclass.JClass("java.lang.Object")
+        self._type_classes[str] = self._java_lang_String
+        self._type_classes[_unicode] = self._java_lang_String
+        self._type_classes[type] = self._java_lang_Class
+        self._type_classes[object] = self._java_lang_Object
 
     def getJVMVersion(self):
         """ Get the JVM version if the JVM is started.

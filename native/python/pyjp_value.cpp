@@ -48,7 +48,7 @@ PyTypeObject PyJPValue::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
 	/* tp_doc            */
 	"Wrapper of a java value which holds a class and instance of an object \n"
 	"or a primitive.  This object is always stored as the attributed \n"
@@ -91,12 +91,16 @@ bool PyJPValue::check(PyObject* o)
 
 JPPyObject PyJPValue::alloc(const JPValue& value)
 {
-	return alloc(value.getClass(), value.getValue());
+	return alloc(value.getClass()->getContext(), value.getClass(), value.getValue());
 }
 
-JPPyObject PyJPValue::alloc(JPClass* cls, jvalue value)
+JPPyObject PyJPValue::alloc(JPContext* context, JPClass* cls, jvalue value)
 {
-	JPContext* context = cls->getContext();
+	// Promote to PyJPClass
+	if (cls == context->_java_lang_Class)
+		return PyJPClass::alloc(context->getTypeManager()->findClass((jclass) value.l));
+	// FIXME do the same with JPArray
+
 	JPJavaFrame frame(context);
 	JP_TRACE_IN_C("PyJPValue::alloc");
 	PyJPValue *self = (PyJPValue*) PyJPValue::Type.tp_alloc(&PyJPValue::Type, 0);
@@ -130,7 +134,7 @@ PyObject *PyJPValue::__new__(PyTypeObject *type, PyObject *args, PyObject *kwarg
 }
 
 // Replacement for convertToJava.
-
+//   (class, object)
 int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN_C("PyJPValue::__init__", self);

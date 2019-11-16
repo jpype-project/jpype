@@ -20,9 +20,12 @@
 struct PyJPValue
 {
 	PyObject_HEAD
+	JPValue m_Value;
+	PyObject *m_Cache;
+	PyJPContext *m_Context;
 
 	static JPPyObject alloc(const JPValue& value);
-	static JPPyObject alloc(JPClass *cls, jvalue value);
+	static JPPyObject alloc(JPContext *context, JPClass *cls, jvalue value);
 
 	static PyTypeObject Type;
 	static void initType(PyObject *module);
@@ -39,9 +42,6 @@ struct PyJPValue
 	static PyObject* toString(PyJPValue *self);
 	static PyObject* toUnicode(PyJPValue *self);
 
-	JPValue m_Value;
-	PyObject *m_Cache;
-	PyJPContext *m_Context;
 } ;
 
 #endif // _PYJP_VALUE_H_2

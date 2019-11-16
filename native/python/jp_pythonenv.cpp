@@ -14,7 +14,7 @@ public:
 	JPPyObject s_GetMethodDoc;
 	JPPyObject s_GetMethodAnnotations;
 	JPPyObject s_GetMethodCode;
-};
+} ;
 
 namespace
 {
@@ -80,6 +80,12 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 	JP_TRACE_IN_C("JPPythonEnv::newJavaClass");
 	ASSERT_NOT_NULL(javaClass);
 
+	// Check the cache
+	if (javaClass->getHost() != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, javaClass->getHost());
+	}
+
 	PyJPContext* context = (PyJPContext*) (javaClass->getContext()->getHost());
 
 	JP_TRACE(javaClass->toString());
@@ -93,14 +99,17 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 		JP_TRACE("Resource not set.");
 		return JPPyObject();
 	}
-	return s_Resources->s_GetClassMethod.call(args.get(), NULL);
+	JPPyObject ret = s_Resources->s_GetClassMethod.call(args.get(), NULL);
+
+	// Keep a cache in the C++ layer
+	javaClass->setHost(ret.get());
+	return ret;
 	JP_TRACE_OUT_C;
 }
 
 JPValue* JPPythonEnv::getJavaValue(PyObject* obj)
 {
 	JP_TRACE_IN_C("JPPythonEnv::getJavaValue");
-	//	JPPyObject vobj(JPPyRef::_use, obj);
 	if (Py_TYPE(obj) == &PyJPValue::Type)
 		return &((PyJPValue*) obj)->m_Value;
 	if (!JPPyObject::hasAttrString(obj, __javavalue__))
@@ -256,7 +265,6 @@ JPPyObject JPPythonEnv::getMethodAnnotations(PyJPMethod* javaMethod)
 
 	JP_TRACE_OUT;
 }
-
 
 JPPyObject JPPythonEnv::getMethodCode(PyJPMethod* javaMethod)
 {

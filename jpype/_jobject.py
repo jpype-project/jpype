@@ -76,7 +76,7 @@ class JObject(object):
     """
     __jvm__ = None
     def __new__(cls, *args, **kwargs):
-        if cls != JObject:
+        if cls != cls.__jvm__.JObject:
             return super(JObject, cls).__new__(cls)
         # Create a null pointer object
         if len(args) == 0:
@@ -91,7 +91,7 @@ class JObject(object):
             pass
         elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
             object.__setattr__(self, '__javavalue__', args[0])
-        elif not hasattr(self, '__javavalue__'):
+        else:
             jv = self.__class__.__javaclass__.newInstance(*args)
             object.__setattr__(self, '__javavalue__', jv)
         super(JObject, self).__init__()
