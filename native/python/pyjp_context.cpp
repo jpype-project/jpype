@@ -21,7 +21,7 @@
 
 #include "jp_context.h"
 
-const char* check_doc =
+const char *check_doc =
 		"Checks if a thread is attached to the JVM.\n"
 		"\n"
 		"Python automatically attaches threads when a Java method is called.\n"
@@ -33,14 +33,14 @@ const char* check_doc =
 		"  True if the thread is attached to the JVM, False if the thread is\n"
 		"  not attached or the JVM is not running.\n";
 
-const char* shutdown_doc =
+const char *shutdown_doc =
 		"Shuts down the JVM.\n"
 		"\n"
 		"This method shuts down the JVM and thus disables access to existing\n"
 		"Java objects. Due to limitations in the JPype, it is not possible to\n"
 		"restart the JVM after being terminated.\n";
 
-const char* attach_doc =
+const char *attach_doc =
 		"Attaches a thread to the JVM.\n"
 		"\n"
 		"The function manually connects a thread to the JVM to allow access to\n"
@@ -50,7 +50,7 @@ const char* attach_doc =
 		"Raises:\n"
 		"  RuntimeError: If the JVM is not running.\n";
 
-const char* detach_doc =
+const char *detach_doc =
 		"Detaches a thread from the JVM.\n"
 		"\n"
 		"This function detaches the thread and frees the associated resource in\n"
@@ -125,21 +125,21 @@ PyTypeObject PyJPContext::Type = {
 
 // Static methods
 
-void PyJPContext::initType(PyObject* module)
+void PyJPContext::initType(PyObject *module)
 {
 	PyType_Ready(&PyJPContext::Type);
 	Py_INCREF(&PyJPContext::Type);
 	PyModule_AddObject(module, "PyJPContext", (PyObject*) (&PyJPContext::Type));
 }
 
-bool PyJPContext::check(PyObject* o)
+bool PyJPContext::check(PyObject *o)
 {
 	return o != NULL && PyObject_TypeCheck(o, &PyJPContext::Type);
 }
 
-PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
+PyObject *PyJPContext::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	PyJPContext* self = (PyJPContext*) type->tp_alloc(type, 0);
+	PyJPContext *self = (PyJPContext*) type->tp_alloc(type, 0);
 	self->m_Context = NULL;
 	self->m_Classes = PyDict_New();
 	self->m_Context = new JPContext();
@@ -147,7 +147,7 @@ PyObject* PyJPContext::__new__(PyTypeObject* type, PyObject* args, PyObject* kwa
 	return (PyObject*) self;
 }
 
-int PyJPContext::__init__(PyJPContext* self, PyObject* args, PyObject* kwargs)
+int PyJPContext::__init__(PyJPContext *self, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN_C("PyJPContext::__init__", self);
 	try
@@ -184,7 +184,7 @@ int PyJPContext::clear(PyJPContext *self)
 	return 0;
 }
 
-PyObject* PyJPContext::__str__(PyJPContext *self)
+PyObject *PyJPContext::__str__(PyJPContext *self)
 {
 	try
 	{
@@ -196,7 +196,7 @@ PyObject* PyJPContext::__str__(PyJPContext *self)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::startup(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::startup", self);
 	if (self->m_Context->isRunning())
@@ -213,8 +213,8 @@ PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 	{
 		PyObject *vmOpt;
 		PyObject *vmPath;
-		char ignoreUnrecognized = true;
-		char convertStrings = true;
+		bool ignoreUnrecognized = true;
+		bool convertStrings = true;
 
 		if (!PyArg_ParseTuple(args, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
 				&ignoreUnrecognized, &convertStrings))
@@ -256,7 +256,7 @@ PyObject* PyJPContext::startup(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPContext::shutdown(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::shutdown(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::shutdown", self);
 	try
@@ -268,12 +268,12 @@ PyObject* PyJPContext::shutdown(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPContext::isStarted(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::isStarted(PyJPContext *self, PyObject *args)
 {
 	return PyBool_FromLong(self->m_Context->isRunning());
 }
 
-PyObject* PyJPContext::attachThread(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::attachThread(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::attachThread", self);
 	try
@@ -287,7 +287,7 @@ PyObject* PyJPContext::attachThread(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::attachThreadAsDaemon", self);
 	try
@@ -301,7 +301,7 @@ PyObject* PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPContext::detachThread(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::detachThread(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::detachThread", self);
 	try
@@ -314,7 +314,7 @@ PyObject* PyJPContext::detachThread(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
 {
 	try
 	{
@@ -325,7 +325,7 @@ PyObject* PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::convertToDirectByteBuffer", self);
 	try
@@ -344,7 +344,7 @@ PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *ar
 		if (JPPyMemoryView::check(src))
 		{
 			JP_TRACE("Converting");
-			jobject ref = self->m_Context->_byte->convertToDirectBuffer(src);
+			jobject ref = self->m_Context->_byte->convertToDirectBuffer(frame, src);
 
 			// Bind lifespan of the python to the java object.
 			context->getReferenceQueue()->registerRef(ref, src);
@@ -354,7 +354,7 @@ PyObject* PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *ar
 			jvalue v;
 			v.l = ref;
 			JPClass *type = context->getTypeManager()->findClassForObject(ref);
-			res = type->convertToPythonObject(v).keep();
+			res = type->convertToPythonObject(frame, v).keep();
 		}
 
 		if (res != NULL)

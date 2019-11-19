@@ -46,7 +46,10 @@ public:
 
 	jclass getJavaClass() const
 	{
-		return m_Class.get();
+		jclass cls = m_Class.get();
+		if (cls == 0)
+			JP_RAISE_RUNTIME_ERROR("Class is null");
+		return cls;
 	}
 
 	void assignMembers(JPMethodDispatch* ctor,
@@ -114,7 +117,7 @@ public:
 	 *
 	 * @return a new Python object.
 	 */
-	virtual JPPyObject convertToPythonObject(jvalue val);
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val);
 
 	/**
 	 * Get the Java value representing as an object.
@@ -123,7 +126,7 @@ public:
 	 *
 	 * @return a java value with class.
 	 */
-	virtual JPValue getValueFromObject(jobject obj);
+	virtual JPValue getValueFromObject(const JPValue& obj);
 
 	/**
 	 * Call a static method that returns this type of object.
@@ -161,7 +164,7 @@ public:
 	 * FIXME this may be able to be replaced with isSubTypeOf.
 	 * They are doing the same thing.
 	 */
-	bool isAssignableFrom(JPClass* o);
+	virtual bool isAssignableFrom(JPClass* o);
 
 	// Object properties
 
@@ -177,13 +180,15 @@ public:
 		return m_Interfaces;
 	}
 
-	string describe();
+	virtual string describe();
 
 	// Check if a value is an instance of this class
 	bool isInstance(JPValue& val);
 
 	JPContext* getContext() const
 	{
+		if (m_Context == 0)
+			JP_RAISE_RUNTIME_ERROR("Null context");
 		return m_Context;
 	}
 

@@ -21,7 +21,7 @@ class JPCharType : public JPPrimitiveType
 {
 public:
 
-	JPCharType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPCharType();
 	virtual ~JPCharType();
 
 public:
@@ -38,10 +38,14 @@ public:
 		return v.c;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Char;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -72,9 +76,6 @@ public:
 		return field(v);
 	}
 
-private:
-	jmethodID _CharValueID;
 } ;
 
 #endif // _JP-CHAR_TYPE_H_
-

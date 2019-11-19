@@ -65,21 +65,21 @@ PyTypeObject PyJPMonitor::Type = {
 
 // Static methods
 
-void PyJPMonitor::initType(PyObject* module)
+void PyJPMonitor::initType(PyObject *module)
 {
 	PyType_Ready(&PyJPMonitor::Type);
 	Py_INCREF(&PyJPMonitor::Type);
 	PyModule_AddObject(module, "PyJPMonitor", (PyObject*) (&PyJPMonitor::Type));
 }
 
-int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
+int PyJPMonitor::__init__(PyJPMonitor *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__init__");
 	try
 	{
 		self->m_Monitor = NULL;
 
-		PyObject* value;
+		PyObject *value;
 
 		if (!PyArg_ParseTuple(args, "O!", &PyJPValue::Type, &value))
 		{
@@ -87,7 +87,7 @@ int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
 		}
 
 		JPValue& v1 = ((PyJPValue*) value)->m_Value;
-		JPContext* context = v1.getClass()->getContext();
+		JPContext *context = v1.getClass()->getContext();
 		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 

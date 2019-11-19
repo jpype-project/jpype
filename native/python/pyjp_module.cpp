@@ -41,7 +41,7 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
-PyInterpreterState* PyJPModule::s_Interpreter = NULL;
+PyInterpreterState *PyJPModule::s_Interpreter = NULL;
 
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit__jpype()
@@ -59,9 +59,9 @@ PyMODINIT_FUNC init_jpype()
 
 	// Initialize the module (depends on python version)
 #if PY_MAJOR_VERSION >= 3
-	PyObject* module = PyModule_Create(&moduledef);
+	PyObject *module = PyModule_Create(&moduledef);
 #else
-	PyObject* module = Py_InitModule("_jpype", jpype_methods);
+	PyObject *module = Py_InitModule("_jpype", jpype_methods);
 #endif
 	Py_INCREF(module);
 	PyModule_AddStringConstant(module, "__version__", "0.7.0");
@@ -91,7 +91,7 @@ PyMODINIT_FUNC init_jpype()
 #endif
 }
 
-PyObject* PyJPModule::setResource(PyObject *self, PyObject *arg)
+PyObject *PyJPModule::setResource(PyObject *self, PyObject *arg)
 {
 	JP_TRACE_IN_C("PyJPModule::setResource");
 	try

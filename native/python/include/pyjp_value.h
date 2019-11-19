@@ -24,12 +24,11 @@ struct PyJPValue
 	PyObject *m_Cache;
 	PyJPContext *m_Context;
 
-	static JPPyObject alloc(const JPValue& value);
-	static JPPyObject alloc(JPContext *context, JPClass *cls, jvalue value);
+	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, JPClass* cls, jvalue value);
+	static JPPyObject alloc(PyTypeObject* wrapper, JPContext *context, JPClass *cls, jvalue value);
 
 	static PyTypeObject Type;
 	static void initType(PyObject *module);
-	static bool check(PyObject *o);
 
 	// Object A
 	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
@@ -38,7 +37,7 @@ struct PyJPValue
 	static int traverse(PyJPValue *self, visitproc visit, void *arg);
 	static int clear(PyJPValue *self);
 
-	static PyObject* __str__(PyJPValue *self);
+	static PyObject* __repr__(PyJPValue *self);
 	static PyObject* toString(PyJPValue *self);
 	static PyObject* toUnicode(PyJPValue *self);
 

@@ -24,7 +24,6 @@
           <itemPath>../../native/common/include/jp_floattype.h</itemPath>
           <itemPath>../../native/common/include/jp_inttype.h</itemPath>
           <itemPath>../../native/common/include/jp_javaframe.h</itemPath>
-          <itemPath>../../native/common/include/jp_jniutil.h</itemPath>
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
           <itemPath>../../native/common/include/jp_method.h</itemPath>
           <itemPath>../../native/common/include/jp_methoddispatch.h</itemPath>
@@ -41,7 +40,6 @@
           <itemPath>../../native/common/include/jp_stringclass.h</itemPath>
           <itemPath>../../native/common/include/jp_tracer.h</itemPath>
           <itemPath>../../native/common/include/jp_typemanager.h</itemPath>
-          <itemPath>../../native/common/include/jp_typename.h</itemPath>
           <itemPath>../../native/common/include/jp_value.h</itemPath>
           <itemPath>../../native/common/include/jp_voidtype.h</itemPath>
           <itemPath>../../native/common/include/jpype.h</itemPath>
@@ -260,11 +258,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_jniutil.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_longtype.h"
             ex="false"
             tool="3"
@@ -341,11 +334,6 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_typemanager.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/common/include/jp_typename.h"
             ex="false"
             tool="3"
             flavor2="0">

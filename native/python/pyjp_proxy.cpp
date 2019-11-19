@@ -79,7 +79,7 @@ void PyJPProxy::initType(PyObject *module)
 PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN("PyJPProxy::new");
-	PyJPProxy* self = (PyJPProxy*) type->tp_alloc(type, 0);
+	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
 	self->m_Context = NULL;

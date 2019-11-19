@@ -14,7 +14,6 @@
    limitations under the License.
 
  *****************************************************************************/
-
 #ifndef JP_MODIFIER_H
 #define JP_MODIFIER_H
 
@@ -173,4 +172,3 @@ extern "C"
 }
 #endif
 #endif /* JP_MODIFIER_H */
-

@@ -21,7 +21,7 @@ class JPByteType : public JPPrimitiveType
 {
 public:
 
-	JPByteType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPByteType();
 	virtual ~JPByteType() override;
 
 public:
@@ -38,10 +38,14 @@ public:
 		return v.b;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Byte;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -57,8 +61,8 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	// Only Byte supports direct buffer convertion
-	virtual jobject   convertToDirectBuffer(PyObject* src);
+	// Only Byte supports direct buffer conversion
+	virtual jobject   convertToDirectBuffer(JPJavaFrame& frame, PyObject* src);
 
 	template <class T> static T assertRange(const T& l)
 	{
@@ -85,10 +89,8 @@ public:
 	}
 
 private:
-	jlong _Byte_Min;
-	jlong _Byte_Max;
-	jmethodID _ByteValueID;
+	static const jlong _Byte_Min = 127;
+	static const jlong _Byte_Max = -128;
 } ;
 
 #endif // _JPBYTE_TYPE_H_
-

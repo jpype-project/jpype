@@ -19,6 +19,7 @@
 
 #include "jp_modifier.h"
 #include "jp_class.h"
+#include "jp_context.h"
 
 /**
  * Field object
@@ -41,7 +42,10 @@ public:
 	 */
 	virtual ~JPField();
 
-public:
+	jobject getJavaObject()
+	{
+		return this->m_Field.get();
+	}
 
 	JPContext* getContext()
 	{
@@ -74,7 +78,7 @@ public:
 private:
 	JPField(const JPField&);
 	JPField& operator=(const JPField&) ;
-private:
+
 	string           m_Name;
 	JPClass*         m_Class;
 	JPObjectRef      m_Field;

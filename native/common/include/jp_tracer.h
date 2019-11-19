@@ -17,7 +17,6 @@
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
 
-
 #ifdef JP_TRACING_ENABLE
 #define JP_TRACE_IN_C(...) \
   JPypeTracer _trace(__VA_ARGS__); try {

@@ -20,25 +20,21 @@
 class JPPrimitiveType : public JPClass
 {
 protected:
-	JPPrimitiveType(JPContext* context, jclass clss,
-			const string& name,
-			JPBoxedType* boxedClass,
-			jint modifiers);
+	JPPrimitiveType(const string& name);
 	virtual ~JPPrimitiveType();
 
 public:
 	virtual bool isPrimitive() const override;
 
-	JPBoxedType* getBoxedClass() const
-	{
-		return m_BoxedClass;
-	}
-
-	void setBoxedClass(JPBoxedType* boxedClass);
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const = 0;
 
 	virtual char getTypeCode()=0;
 	virtual jlong getAsLong(jvalue v)=0;
 	virtual jdouble getAsDouble(jvalue v)=0;
+
+	virtual bool isAssignableFrom(JPClass* o);
+
+	virtual string describe();
 
 protected:
 	JPBoxedType* m_BoxedClass;

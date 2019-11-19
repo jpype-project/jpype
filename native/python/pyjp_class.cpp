@@ -20,23 +20,23 @@
 #include <pyjp.h>
 
 static PyMethodDef classMethods[] = {
-	{"getCanonicalName", (PyCFunction) (&PyJPClass::getCanonicalName), METH_NOARGS, ""},
-	{"getSuperClass", (PyCFunction) (&PyJPClass::getSuperClass), METH_NOARGS, ""},
-	{"getClassFields", (PyCFunction) (&PyJPClass::getClassFields), METH_NOARGS, ""},
-	{"getClassMethods", (PyCFunction) (&PyJPClass::getClassMethods), METH_NOARGS, ""},
-	{"newInstance", (PyCFunction) (&PyJPClass::newInstance), METH_VARARGS, ""},
-	{"getSuperclass", (PyCFunction) (&PyJPClass::getSuperClass), METH_NOARGS, ""},
-	{"getInterfaces", (PyCFunction) (&PyJPClass::getInterfaces), METH_NOARGS, ""},
-	{"isInterface", (PyCFunction) (&PyJPClass::isInterface), METH_NOARGS, ""},
-	{"isPrimitive", (PyCFunction) (&PyJPClass::isPrimitive), METH_NOARGS, ""},
-	{"isThrowable", (PyCFunction) (&PyJPClass::isThrowable), METH_NOARGS, ""},
-	{"isArray", (PyCFunction) (&PyJPClass::isArray), METH_NOARGS, ""},
-	{"isAbstract", (PyCFunction) (&PyJPClass::isAbstract), METH_NOARGS, ""},
-	{"isAssignableFrom", (PyCFunction) (&PyJPClass::isAssignableFrom), METH_VARARGS, ""},
-	{"asJavaValue", (PyCFunction) (&PyJPClass::asJavaValue), METH_NOARGS, ""},
-	{"canConvertToJava", (PyCFunction) (&PyJPClass::canConvertToJava), METH_VARARGS, ""},
-	{"convertToJava", (PyCFunction) (&PyJPClass::convertToJava), METH_VARARGS, ""},
-	{"dumpCtor", (PyCFunction) (&PyJPClass::dumpCtor), METH_VARARGS, ""},
+	{"_getCanonicalName", (PyCFunction) (&PyJPClass::getCanonicalName), METH_NOARGS, ""},
+	{"_getSuperClass", (PyCFunction) (&PyJPClass::getSuperClass), METH_NOARGS, ""},
+	{"_getClassFields", (PyCFunction) (&PyJPClass::getClassFields), METH_NOARGS, ""},
+	{"_getClassMethods", (PyCFunction) (&PyJPClass::getClassMethods), METH_NOARGS, ""},
+	{"_cast", (PyCFunction) (&PyJPClass::cast), METH_VARARGS, ""},
+	{"_getSuperclass", (PyCFunction) (&PyJPClass::getSuperClass), METH_NOARGS, ""},
+	{"_getInterfaces", (PyCFunction) (&PyJPClass::getInterfaces), METH_NOARGS, ""},
+	{"_isInterface", (PyCFunction) (&PyJPClass::isInterface), METH_NOARGS, ""},
+	{"_isPrimitive", (PyCFunction) (&PyJPClass::isPrimitive), METH_NOARGS, ""},
+	{"_isThrowable", (PyCFunction) (&PyJPClass::isThrowable), METH_NOARGS, ""},
+	{"_isArray", (PyCFunction) (&PyJPClass::isArray), METH_NOARGS, ""},
+	{"_isAbstract", (PyCFunction) (&PyJPClass::isAbstract), METH_NOARGS, ""},
+	{"_isAssignableFrom", (PyCFunction) (&PyJPClass::isAssignableFrom), METH_VARARGS, ""},
+	//	{"_asJavaValue", (PyCFunction) (&PyJPClass::asJavaValue), METH_NOARGS, ""},
+	{"_canConvertToJava", (PyCFunction) (&PyJPClass::canConvertToJava), METH_VARARGS, ""},
+	{"_convertToJava", (PyCFunction) (&PyJPClass::convertToJava), METH_VARARGS, ""},
+	{"_dumpCtor", (PyCFunction) (&PyJPClass::dumpCtor), METH_VARARGS, ""},
 
 	{NULL},
 };
@@ -46,7 +46,7 @@ PyTypeObject PyJPClass::Type = {
 	/* tp_name           */ "_jpype.PyJPClass",
 	/* tp_basicsize      */ sizeof (PyJPClass),
 	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPClass::__dealloc__,
+	/* tp_dealloc        */ (destructor) PyJPValue::__dealloc__,
 	/* tp_print          */ 0,
 	/* tp_getattr        */ 0,
 	/* tp_setattr        */ 0,
@@ -66,8 +66,8 @@ PyTypeObject PyJPClass::Type = {
 	"Internal representation of a Java Class.  This class can represent\n"
 	"either an object, an array, or a primitive.  This type is stored as\n"
 	"__javaclass__ in any wrapper Python classes or instances.",
-	/* tp_traverse       */ (traverseproc) PyJPClass::traverse,
-	/* tp_clear          */ (inquiry) PyJPClass::clear,
+	/* tp_traverse       */ 0,
+	/* tp_clear          */ 0,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
@@ -75,7 +75,7 @@ PyTypeObject PyJPClass::Type = {
 	/* tp_methods        */ classMethods,
 	/* tp_members        */ 0,
 	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
+	/* tp_base           */ &PyJPValue::Type,
 	/* tp_dict           */ 0,
 	/* tp_descr_get      */ 0,
 	/* tp_descr_set      */ 0,
@@ -96,37 +96,21 @@ void PyJPClass::initType(PyObject *module)
 	PyModule_AddObject(module, "PyJPClass", (PyObject*) (&PyJPClass::Type));
 }
 
-bool PyJPClass::check(PyObject *o)
+JPPyObject PyJPClass::alloc(PyTypeObject *type, JPContext *context, JPClass *cls)
 {
-	return o != NULL && Py_TYPE(o) == &PyJPClass::Type;
-}
-
-JPPyObject PyJPClass::alloc(JPClass *cls)
-{
-	JPContext* context = cls->getContext();
-	JPJavaFrame frame(context);
-
 	JP_TRACE_IN_C("PyJPClass::alloc");
-	PyJPClass *self = (PyJPClass*) PyJPClass::Type.tp_alloc(&PyJPClass::Type, 0);
-	JP_PY_CHECK();
-	self->m_Value.m_Cache = NULL;
-	self->m_Class = cls;
-	self->m_Value.m_Context = (PyJPContext*) (context->getHost());
+	JPJavaFrame frame(context);
 	jvalue value;
-	value.l = frame.NewGlobalRef((jobject) cls->getJavaClass());
-	self->m_Value.m_Value = JPValue(context->_java_lang_Class, value);
-	Py_INCREF(self->m_Value.m_Context);
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	value.l = (jobject) cls->getJavaClass();
+	JPPyObject self = PyJPValue::alloc(type, context, context->_java_lang_Class, value);
+	((PyJPClass*) self.get())->m_Class = cls;
+	return self;
 	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPClass::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	PyJPClass *self = (PyJPClass*) type->tp_alloc(type, 0);
-	self->m_Value.m_Context = NULL;
-	self->m_Value.m_Cache = NULL;
-	jvalue v;
-	self->m_Value.m_Value = JPValue(NULL, v);
+	PyJPClass *self = (PyJPClass*) PyJPValue::__new__(type, args, kwargs);
 	self->m_Class = NULL;
 	return (PyObject*) self;
 }
@@ -140,6 +124,10 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	JP_TRACE_IN_C("PyJPClass::__init__", self);
 	try
 	{
+		// Check if we are already initialized.
+		if ((PyJPValue*) self->m_Class != 0)
+			return 0;
+
 		PyObject *arg0;
 		PyObject *jvm = 0;
 
@@ -160,25 +148,6 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 
 		JPClass *cls;
 		JPValue *jpvalue = JPPythonEnv::getJavaValue(arg0);
-		//		if (jpvalue != NULL)
-		//		{
-		//			// FIXME this path is likely to be dropped.
-		//			// We will not need to promote it once we have working inheritance
-		//			if (jpvalue->getClass()->getContext() != context)
-		//			{
-		//				PyErr_SetString(PyExc_TypeError, "JContext does not match");
-		//				return -1;
-		//			}
-		//			if (jpvalue->getClass() != context->_java_lang_Class)
-		//			{
-		//				stringstream err;
-		//				err << "Incorrect Java class " << jpvalue->getClass()->toString()
-		//						<< " vs " << context->_java_lang_Class->toString();
-		//				PyErr_SetString(PyExc_TypeError, err.str().c_str());
-		//				return -1;
-		//			}
-		//			cls = context->getTypeManager()->findClass((jclass) jpvalue->getJavaObject());
-		//		} else
 		if (JPPyString::check(arg0))
 		{
 			if (!PyJPContext::check(jvm))
@@ -205,41 +174,6 @@ int PyJPClass::__init__(PyJPClass *self, PyObject *args, PyObject *kwargs)
 		return 0;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
-}
-
-void PyJPClass::__dealloc__(PyJPClass *self)
-{
-	JP_TRACE_IN_C("PyJPClass::__dealloc__", self)	//
-	//	JPContext *context = self->m_Value.m_Context->m_Context;
-	//	jobject obj = self->m_Value.m_Value.getValue().l;
-	//	if (context != NULL && context->isRunning() && obj!=0)
-	//	{
-	//		context->ReleaseGlobalRef(obj);
-	//	}
-	//
-	PyObject_GC_UnTrack(self);
-	clear(self);
-	Py_TYPE(self)->tp_free((PyObject*) self);
-	JP_TRACE_OUT_C;
-}
-
-int PyJPClass::traverse(PyJPClass *self, visitproc visit, void *arg)
-{
-	JP_TRACE_IN_C("PyJPClass::traverse", self);
-	Py_VISIT(self->m_Value.m_Cache);
-	Py_VISIT(self->m_Value.m_Context);
-	return 0;
-	JP_TRACE_OUT_C;
-}
-
-int PyJPClass::clear(PyJPClass *self)
-{
-	JP_TRACE_IN_C("PyJPClass::clear", self);
-	//	JP_TRACE("context", self->m_Context);
-	Py_CLEAR(self->m_Value.m_Cache);
-	Py_CLEAR(self->m_Value.m_Context);
-	return 0;
 	JP_TRACE_OUT_C;
 }
 
@@ -273,7 +207,7 @@ PyObject *PyJPClass::getSuperClass(PyJPClass *self, PyObject *arg)
 			Py_RETURN_NONE;
 		}
 
-		return PyJPClass::alloc(base).keep();
+		return PyJPClass::alloc(&PyJPClass::Type, context, base).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
@@ -293,7 +227,7 @@ PyObject *PyJPClass::getInterfaces(PyJPClass *self, PyObject *arg)
 		JPPyTuple result(JPPyTuple::newTuple(baseItf.size()));
 		for (unsigned int i = 0; i < baseItf.size(); i++)
 		{
-			result.setItem(i, PyJPClass::alloc(baseItf[i]).get());
+			result.setItem(i, PyJPClass::alloc(&PyJPClass::Type, context, baseItf[i]).get());
 		}
 		return result.keep();
 	}
@@ -348,6 +282,54 @@ PyObject *PyJPClass::getClassMethods(PyJPClass *self, PyObject *arg)
 	JP_TRACE_OUT_C;
 }
 
+PyObject *PyJPClass::cast(PyJPClass *self, PyObject *args)
+{
+	JP_TRACE_IN_C("PyJPClass::cast", self);
+	try
+	{
+		JPContext *context = self->m_Value.m_Context->m_Context;
+		ASSERT_JVM_RUNNING(context);
+
+		PyObject *value;
+		if (!PyArg_ParseTuple(args, "O", &value))
+		{
+			return 0;
+		}
+
+		JPClass *type = self->m_Class;
+		ASSERT_NOT_NULL(value);
+		ASSERT_NOT_NULL(type);
+		JPPyObject wrapper = JPPythonEnv::newJavaClass(type);
+
+		// If it is already a Java object, then let Java decide
+		// if the cast is possible
+		JPValue *jval = JPPythonEnv::getJavaValue(value);
+		if (jval != NULL && type->isInstance(*jval))
+		{
+			return PyJPValue::create((PyTypeObject*) wrapper.get(), context, type, jval->getValue()).keep();
+		}
+
+		// Otherwise, see if we can convert it
+		{
+			JPJavaFrame frame(context);
+			JPMatch match;
+			type->getJavaConversion(frame, match, value);
+			if (match.type == JPMatch::_none)
+			{
+				stringstream ss;
+				ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();
+				PyErr_SetString(PyExc_TypeError, ss.str().c_str());
+				return 0;
+			}
+
+			jvalue v = match.conversion->convert(frame, type, value);
+			return PyJPValue::create((PyTypeObject*) wrapper.get(), context, type, v).keep();
+		}
+	}
+	PY_STANDARD_CATCH(NULL);
+	JP_TRACE_OUT_C;
+}
+
 PyObject *PyJPClass::newInstance(PyJPClass *self, PyObject *pyargs)
 {
 	JP_TRACE_IN_C("PyJPClass::newInstance", self);
@@ -365,7 +347,8 @@ PyObject *PyJPClass::newInstance(PyJPClass *self, PyObject *pyargs)
 				return NULL;
 			}
 			JPArrayClass *cls = (JPArrayClass*) (self->m_Class);
-			return PyJPValue::alloc(cls->newInstance(sz)).keep();
+			JPValue value = cls->newInstance(sz);
+			return JPPythonEnv::newJavaObject(value).keep();
 		}
 
 		JPPyObjectVector args(pyargs); // DEBUG
@@ -374,7 +357,8 @@ PyObject *PyJPClass::newInstance(PyJPClass *self, PyObject *pyargs)
 			ASSERT_NOT_NULL(args[i]);
 		}
 		JPClass *cls = (JPClass*) (self->m_Class);
-		return PyJPValue::alloc(cls->newInstance(args)).keep();
+		JPValue value = cls->newInstance(args);
+		return JPPythonEnv::newJavaObject(value).keep();
 
 		PyErr_SetString(PyExc_TypeError, "Unable to create an instance.");
 	}
@@ -475,19 +459,19 @@ PyObject *PyJPClass::isAbstract(PyJPClass *self, PyObject *args)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPClass::asJavaValue(PyJPClass *self, PyObject *args)
-{
-	try
-	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
-		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
-		jvalue v;
-		v.l = self->m_Class->getJavaClass();
-		return PyJPValue::alloc(context, context->_java_lang_Class, v).keep();
-	}
-	PY_STANDARD_CATCH(NULL);
-}
+//PyObject *PyJPClass::asJavaValue(PyJPClass *self, PyObject *args)
+//{
+//	try
+//	{
+//		JPContext *context = self->m_Value.m_Context->m_Context;
+//		ASSERT_JVM_RUNNING(context);
+//		JPJavaFrame frame(context);
+//		jvalue v;
+//		v.l = self->m_Class->getJavaClass();
+//		return PyJPValue::alloc(context, context->_java_lang_Class, v).keep();
+//	}
+//	PY_STANDARD_CATCH(NULL);
+//}
 
 // Added for auditing
 
@@ -559,7 +543,7 @@ PyObject *PyJPClass::convertToJava(PyJPClass *self, PyObject *args)
 
 		// Otherwise give back a PyJPValue
 		jvalue v = match.conversion->convert(frame, cls, other);
-		return PyJPValue::alloc(context, cls, v).keep();
+		return PyJPValue::alloc(&PyJPValue::Type, context, cls, v).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;

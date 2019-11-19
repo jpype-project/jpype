@@ -12,15 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
-JPVoidType::JPVoidType(JPContext* context, jclass clss,
-		       const string& name,
-		       JPBoxedType* boxedClass,
-		       jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPVoidType::JPVoidType()
+: JPPrimitiveType("void")
 {
 }
 
@@ -38,7 +35,7 @@ JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
 }
 
-JPPyObject JPVoidType::convertToPythonObject(jvalue val)
+JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyObject::getNone();
 }

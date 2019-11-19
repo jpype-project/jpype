@@ -320,6 +320,9 @@ def _toJavaClass(jvm, tp):
         raise TypeError(
             "Argument must be a class, java class, or string representing a java class")
 
+    if tp is _JObject:
+        return jvm._java_lang_Object.__javaclass__
+
     # See if it a class type
     try:
         return tp.__javaclass__

@@ -44,8 +44,7 @@ JPPyObject JPField::getStaticField()
 {
 	JP_TRACE_IN("JPField::getStaticAttribute");
 	JPJavaFrame frame(m_Class->getContext());
-	jclass claz = m_Class->getJavaClass();
-	return m_Type->getStaticField(frame, claz, m_FieldID);
+	return m_Type->getStaticField(frame, m_Class->getJavaClass(), m_FieldID);
 	JP_TRACE_OUT;
 }
 
@@ -69,8 +68,7 @@ void JPField::setStaticField(PyObject *pyobj)
 		JP_RAISE_TYPE_ERROR(err.str().c_str());
 	}
 
-	jclass claz = m_Class->getJavaClass();
-	m_Type->setStaticField(frame, claz, m_FieldID, pyobj);
+	m_Type->setStaticField(frame, m_Class->getJavaClass(), m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
 

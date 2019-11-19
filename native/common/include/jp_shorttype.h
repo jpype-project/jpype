@@ -21,10 +21,9 @@ class JPShortType : public JPPrimitiveType
 {
 public:
 
-	JPShortType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPShortType();
 	virtual ~JPShortType();
 
-public:
 	typedef jshort type_t;
 	typedef jshortArray array_t;
 
@@ -37,10 +36,14 @@ public:
 		return v.s;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Short;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -79,10 +82,10 @@ public:
 		}
 		return l;
 	}
+
 private:
-	jlong m_Short_Min;
-	jlong m_Short_Max;
-	jmethodID m_ShortValueID;
+	static const jlong m_Short_Min = 32767;
+	static const jlong m_Short_Max = -32768;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef JP_STRINGCLASS_H
 #define JP_STRINGCLASS_H
@@ -30,12 +30,12 @@ public:
 	virtual ~JPStringType();
 
 public:
-	virtual JPPyObject convertToPythonObject(jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPValue newInstance(JPPyObjectVector& args) override;
 
 	// Use by arrays
-	jobject stringToCharArray(jstring str);
+	jobject stringToCharArray(JPJavaFrame& frame, jstring str);
 private:
 	jmethodID m_String_ToCharArrayID;
 } ;

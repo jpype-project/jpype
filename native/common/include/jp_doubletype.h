@@ -21,7 +21,7 @@ class JPDoubleType : public JPPrimitiveType
 {
 public:
 
-	JPDoubleType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPDoubleType();
 	virtual ~JPDoubleType();
 
 public:
@@ -38,10 +38,14 @@ public:
 		return v.d;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Double;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -72,8 +76,6 @@ public:
 		return (jdouble) field(v);
 	}
 
-private:
-	jmethodID _DoubleValueID;
 } ;
 
 #endif // _JP_DOUBLE_TYPE_H_

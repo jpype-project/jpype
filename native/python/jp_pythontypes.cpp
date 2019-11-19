@@ -7,7 +7,7 @@
 /****************************************************************************
  * Base object
  ***************************************************************************/
-JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
+JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject *obj)
 : pyobj(NULL)
 {
 	// See if we are to check the result.
@@ -82,7 +82,7 @@ JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 	return *this;
 }
 
-PyObject* JPPyObject::keep()
+PyObject *JPPyObject::keep()
 {
 	if (pyobj == NULL)
 	{
@@ -116,12 +116,12 @@ void JPPyObject::decref()
 	pyobj = 0;
 }
 
-bool JPPyObject::isNone(PyObject* pyobj)
+bool JPPyObject::isNone(PyObject *pyobj)
 {
 	return pyobj == Py_None;
 }
 
-bool JPPyObject::isSequenceOfItems(PyObject* obj)
+bool JPPyObject::isSequenceOfItems(PyObject *obj)
 {
 	return JPPySequence::check(obj) && !JPPyString::check(obj);
 }
@@ -132,54 +132,54 @@ string JPPyObject::str()
 	return JPPyString::asStringUTF8(s.get());
 }
 
-bool JPPyObject::hasAttrString(PyObject* pyobj, const char* k)
+bool JPPyObject::hasAttrString(PyObject *pyobj, const char *k)
 {
 	return PyObject_HasAttrString(pyobj, (char*) k) != 0;
 }
 
-JPPyObject JPPyObject::getAttrString(const char* k)
+JPPyObject JPPyObject::getAttrString(const char *k)
 {
 	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
 }
 
-JPPyObject JPPyObject::getAttrString(PyObject* pyobj, const char* k)
+JPPyObject JPPyObject::getAttrString(PyObject *pyobj, const char *k)
 {
 	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
 }
 
-const char* JPPyObject::getTypeName()
+const char *JPPyObject::getTypeName()
 {
 	return Py_TYPE(pyobj)->tp_name;
 }
 
-const char* JPPyObject::getTypeName(PyObject* obj)
+const char *JPPyObject::getTypeName(PyObject *obj)
 {
 	if (obj == NULL)
 		return "null";
 	return Py_TYPE(obj)->tp_name;
 }
 
-JPPyObject JPPyObject::call(PyObject* args, PyObject* kwargs)
+JPPyObject JPPyObject::call(PyObject *args, PyObject *kwargs)
 {
 	ASSERT_NOT_NULL(pyobj);
 	ASSERT_NOT_NULL(args);
 	return JPPyObject(JPPyRef::_call, PyObject_Call(pyobj, args, kwargs));
 }
 
-bool JPPyObject::isInstance(PyObject* pyobj, PyObject* type)
+bool JPPyObject::isInstance(PyObject *pyobj, PyObject *type)
 {
 	int res = PyObject_IsInstance(pyobj, type);
 	JP_PY_CHECK();
 	return res != 0;
 }
 
-bool JPPyObject::isSubclass(PyObject* pycls, PyObject* type)
+bool JPPyObject::isSubclass(PyObject *pycls, PyObject *type)
 {
 	int res = PyObject_IsSubclass(pycls, type);
 	return res != 0;
 }
 
-bool JPPyType::check(PyObject* obj)
+bool JPPyType::check(PyObject *obj)
 {
 	return PyType_Check(obj);
 }
@@ -193,7 +193,7 @@ JPPyObject JPPyObject::getNone()
  * Number types
  ***************************************************************************/
 
-bool JPPyBool::check(PyObject* obj)
+bool JPPyBool::check(PyObject *obj)
 {
 	return PyBool_Check(obj);
 }
@@ -221,7 +221,7 @@ JPPyObject JPPyInt::fromLong(jlong l)
 #endif
 }
 
-bool JPPyInt::check(PyObject* obj)
+bool JPPyInt::check(PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3 || LONG_MAX > 2147483647
 	return false;
@@ -230,7 +230,7 @@ bool JPPyInt::check(PyObject* obj)
 #endif
 }
 
-jint JPPyInt::asInt(PyObject* obj)
+jint JPPyInt::asInt(PyObject *obj)
 {
 	jint res = PyInt_AsLong(obj);
 	JP_PY_CHECK();
@@ -245,7 +245,7 @@ JPPyObject JPPyLong::fromLong(jlong l)
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 }
 
-bool JPPyLong::check(PyObject* obj)
+bool JPPyLong::check(PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj);
@@ -255,7 +255,7 @@ bool JPPyLong::check(PyObject* obj)
 #endif
 }
 
-bool JPPyLong::checkConvertable(PyObject* obj)
+bool JPPyLong::checkConvertable(PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj)
@@ -268,12 +268,12 @@ bool JPPyLong::checkConvertable(PyObject* obj)
 #endif
 }
 
-bool JPPyLong::checkIndexable(PyObject* obj)
+bool JPPyLong::checkIndexable(PyObject *obj)
 {
 	return PyObject_HasAttrString(obj, "__index__")!=0;
 }
 
-jlong JPPyLong::asLong(PyObject* obj)
+jlong JPPyLong::asLong(PyObject * obj)
 {
 	jlong res;
 #if PY_MAJOR_VERSION >= 3
@@ -300,17 +300,17 @@ JPPyObject JPPyFloat::fromDouble(jdouble l)
 	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(l));
 }
 
-bool JPPyFloat::check(PyObject* obj)
+bool JPPyFloat::check(PyObject *obj)
 {
 	return PyFloat_Check(obj);
 }
 
-bool JPPyFloat::checkConvertable(PyObject* obj)
+bool JPPyFloat::checkConvertable(PyObject *obj)
 {
 	return PyFloat_Check(obj) || PyObject_HasAttrString(obj, "__float__");
 }
 
-jdouble JPPyFloat::asDouble(PyObject* obj)
+jdouble JPPyFloat::asDouble(PyObject *obj)
 {
 	jdouble res = PyFloat_AsDouble(obj);
 	JP_PY_CHECK();
@@ -352,7 +352,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #endif
 }
 
-bool JPPyString::checkCharUTF16(PyObject* pyobj)
+bool JPPyString::checkCharUTF16(PyObject *pyobj)
 {
 	JP_TRACE_IN_C("JPPyString::checkCharUTF16");
 	if (JPPyLong::checkIndexable(pyobj))
@@ -372,7 +372,7 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 	JP_TRACE_OUT_C;
 }
 
-jchar JPPyString::asCharUTF16(PyObject* pyobj)
+jchar JPPyString::asCharUTF16(PyObject *pyobj)
 {
 	if (JPPyLong::checkConvertable(pyobj))
 	{
@@ -465,7 +465,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
  *
  * @returns true if the object is bytes or unicode.
  */
-bool JPPyString::check(PyObject* obj)
+bool JPPyString::check(PyObject *obj)
 {
 #if PY_MAJOR_VERSION < 3
 	return PyUnicode_Check(obj) || PyString_Check(obj);
@@ -500,7 +500,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 	JP_TRACE_OUT_C;
 }
 
-string JPPyString::asStringUTF8(PyObject* pyobj)
+string JPPyString::asStringUTF8(PyObject *pyobj)
 {
 	JP_TRACE_IN_C("JPPyUnicode::asStringUTF8");
 	ASSERT_NOT_NULL(pyobj);
@@ -551,15 +551,15 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	JP_TRACE_OUT_C;
 }
 
-bool JPPyMemoryView::check(PyObject* obj)
+bool JPPyMemoryView::check(PyObject *obj)
 {
 	return PyMemoryView_Check(obj); // macro, cannot fail
 }
 
-void JPPyMemoryView::getByteBufferSize(PyObject* obj, char** outBuffer, long& outSize)
+void JPPyMemoryView::getByteBufferSize(PyObject *obj, char** outBuffer, long& outSize)
 {
 	JP_TRACE_IN_C("JPPyMemoryView::getByteBufferPtr");
-	Py_buffer* py_buf = PyMemoryView_GET_BUFFER(obj); // macro, does no checks
+	Py_buffer *py_buf = PyMemoryView_GET_BUFFER(obj); // macro, does no checks
 	*outBuffer = (char*) py_buf->buf;
 	outSize = (long) py_buf->len;
 	JP_TRACE_OUT_C;
@@ -578,12 +578,12 @@ JPPyTuple JPPyTuple::newTuple(jlong sz)
 	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
 }
 
-bool JPPyTuple::check(PyObject* obj)
+bool JPPyTuple::check(PyObject *obj)
 {
 	return (PyTuple_Check(obj)) ? true : false;
 }
 
-void JPPyTuple::setItem(jlong ndx, PyObject* val)
+void JPPyTuple::setItem(jlong ndx, PyObject *val)
 {
 	ASSERT_NOT_NULL(val);
 	Py_INCREF(val);
@@ -591,9 +591,9 @@ void JPPyTuple::setItem(jlong ndx, PyObject* val)
 	JP_PY_CHECK();
 }
 
-PyObject* JPPyTuple::getItem(jlong ndx)
+PyObject *JPPyTuple::getItem(jlong ndx)
 {
-	PyObject* res = PyTuple_GetItem(pyobj, (Py_ssize_t) ndx);
+	PyObject *res = PyTuple_GetItem(pyobj, (Py_ssize_t) ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -613,21 +613,21 @@ JPPyList JPPyList::newList(jlong sz)
 	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t) sz));
 }
 
-bool JPPyList::check(PyObject* obj)
+bool JPPyList::check(PyObject *obj)
 {
 	return (PyList_Check(obj)) ? true : false;
 }
 
-void JPPyList::setItem(jlong ndx, PyObject* val)
+void JPPyList::setItem(jlong ndx, PyObject *val)
 {
 	ASSERT_NOT_NULL(val);
 	PySequence_SetItem(pyobj, (Py_ssize_t) ndx, val); // Does not steal
 	JP_PY_CHECK();
 }
 
-PyObject* JPPyList::getItem(jlong ndx)
+PyObject *JPPyList::getItem(jlong ndx)
 {
-	PyObject* res = PyList_GetItem(pyobj, (Py_ssize_t) ndx);
+	PyObject *res = PyList_GetItem(pyobj, (Py_ssize_t) ndx);
 	JP_PY_CHECK();
 	return res;
 }
@@ -642,7 +642,7 @@ bool JPPySequence::check()
 	return (PySequence_Check(pyobj)) ? true : false;
 }
 
-bool JPPySequence::check(PyObject* obj)
+bool JPPySequence::check(PyObject *obj)
 {
 	return (PySequence_Check(obj)) ? true : false;
 }
@@ -665,7 +665,7 @@ JPPyObjectVector::JPPyObjectVector(int i)
 	contents.resize(i);
 }
 
-JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
+JPPyObjectVector::JPPyObjectVector(PyObject *sequence)
 : seq(JPPyRef::_use, sequence)
 {
 	if (!JPPySequence::check(sequence))
@@ -678,7 +678,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 	}
 }
 
-JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
+JPPyObjectVector::JPPyObjectVector(PyObject *inst, PyObject *sequence)
 : instance(JPPyRef::_use, inst), seq(JPPyRef::_use, sequence)
 {
 	size_t n = seq.size();
@@ -694,21 +694,21 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 //=====================================================================
 // JPPyDict
 
-bool JPPyDict::contains(PyObject* k)
+bool JPPyDict::contains(PyObject *k)
 {
 	int res = PyMapping_HasKey(pyobj, k);
 	JP_PY_CHECK();
 	return res != 0;
 }
 
-PyObject* JPPyDict::getItem(PyObject* k)
+PyObject *JPPyDict::getItem(PyObject *k)
 {
-	PyObject* res = PyDict_GetItem(pyobj, k);
+	PyObject *res = PyDict_GetItem(pyobj, k);
 	JP_PY_CHECK();
 	return res;
 }
 
-bool JPPyDict::check(PyObject* obj)
+bool JPPyDict::check(PyObject *obj)
 {
 	return PyDict_Check(obj);
 }
@@ -718,7 +718,7 @@ JPPyObject JPPyDict::getKeys()
 	return JPPyObject(JPPyRef::_call, PyDict_Keys(pyobj));
 }
 
-JPPyObject JPPyDict::copy(PyObject* m)
+JPPyObject JPPyDict::copy(PyObject *m)
 {
 	return JPPyObject(JPPyRef::_call, PyDict_Copy(m));
 }
@@ -728,7 +728,7 @@ JPPyDict JPPyDict::newDict()
 	return JPPyObject(JPPyRef::_call, PyDict_New());
 }
 
-void JPPyDict::setItemString(PyObject* o, const char* n)
+void JPPyDict::setItemString(PyObject *o, const char *n)
 {
 	PyDict_SetItemString(pyobj, n, o);
 	JP_PY_CHECK();

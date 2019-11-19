@@ -16,30 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPDoubleType::JPDoubleType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPDoubleType::JPDoubleType()
+: JPPrimitiveType("double")
 {
-	JPJavaFrame frame(context);
-	_DoubleValueID = frame.GetMethodID(boxedClass->getJavaClass(), "doubleValue", "()D");
 }
 
 JPDoubleType::~JPDoubleType()
 {
 }
 
-JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
+JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyFloat::fromDouble(field(val));
 }
 
-JPValue JPDoubleType::getValueFromObject(jobject obj)
+JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallDoubleMethodA(obj, _DoubleValueID, 0);
+	field(v) = frame.CallDoubleMethodA(obj.getJavaObject(), context->m_DoubleValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -99,6 +95,7 @@ public:
 
 JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPDoubleType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -114,7 +111,7 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == m_BoxedClass)
+		if (cls == context->_java_lang_Double)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -177,14 +174,14 @@ JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID f
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -194,7 +191,7 @@ JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -207,7 +204,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -265,7 +262,7 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

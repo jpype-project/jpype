@@ -29,26 +29,16 @@ struct PyJPClass
 
 	/** Create a PyJPClass instance from within the module.
 	 */
-	static JPPyObject alloc(JPClass *cls);
-
-	/**
-	 * Check if the Object is a PyJPClass
-	 *
-	 * @param o
-	 * @return true if the object is PyJPClass, otherwise false.
-	 */
-	static bool check(PyObject *o);
+	static JPPyObject alloc(PyTypeObject* obj, JPContext* context, JPClass *cls);
 
 	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
 	static int __init__(PyJPClass *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPClass *o);
-	static int traverse(PyJPClass *self, visitproc visit, void *arg);
-	static int clear(PyJPClass *self);
 
 	/** Create a new instance of this class.
 	 *
 	 * Operates on either object or array classes.
 	 */
+	static PyObject* cast(PyJPClass *self, PyObject *args);
 	static PyObject* newInstance(PyJPClass *self, PyObject *arg);
 
 	/** Get the java name for this class. */
@@ -67,7 +57,7 @@ struct PyJPClass
 	static PyObject* isAssignableFrom(PyJPClass *self, PyObject *arg);
 
 	/** Create an new PyJPValue with this class as the object. */
-	static PyObject* asJavaValue(PyJPClass *self, PyObject* arg);
+	//static PyObject* asJavaValue(PyJPClass *self, PyObject* arg);
 
 	/** For diagnostics */
 	static PyObject* canConvertToJava(PyJPClass *self, PyObject *args);

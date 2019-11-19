@@ -35,11 +35,8 @@ class _JString(object):
     __jvm__ = None
 
     def __new__(cls, *args, **kwargs):
-        if not hasattr(cls, "__javaclass__"):
-            print("A", type(args[0]))
-            cls = cls.__jvm__._java_lang_String
-            return cls.__new__(cls, *args)
-        print("B", type(args[0]))
+        if cls == JString or cls == cls.__jvm__.JString:
+            return cls.__jvm__._java_lang_String.__new__(cls, *args)
         return super(JString, cls).__new__(cls, *args, **kwargs)
 
     def __add__(self, other):

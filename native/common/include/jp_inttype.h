@@ -21,7 +21,7 @@ class JPIntType : public JPPrimitiveType
 {
 public:
 
-	JPIntType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPIntType();
 	virtual ~JPIntType();
 
 public:
@@ -38,10 +38,14 @@ public:
 		return v.i;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Integer;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -80,8 +84,7 @@ public:
 		}
 		return l;
 	}
-private:
-	jmethodID _IntValueID;
+
 } ;
 
 #endif // _JP_INT_TYPE_H_

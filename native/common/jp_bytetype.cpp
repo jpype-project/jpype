@@ -16,27 +16,17 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPByteType::JPByteType(JPContext* context, jclass clss,
-		       const string& name,
-		       JPBoxedType* boxedClass,
-		       jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPByteType::JPByteType()
+: JPPrimitiveType("byte")
 {
-	JPJavaFrame frame(context);
-	jfieldID fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "B");
-	_Byte_Min = frame.GetStaticByteField(boxedClass->getJavaClass(), fid);
-	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "B");
-	_Byte_Max = frame.GetStaticByteField(boxedClass->getJavaClass(), fid);
-	_ByteValueID = frame.GetMethodID(boxedClass->getJavaClass(), "byteValue", "()B");
 }
 
 JPByteType::~JPByteType()
 {
 }
 
-jobject JPByteType::convertToDirectBuffer(PyObject* src)
+jobject JPByteType::convertToDirectBuffer(JPJavaFrame& frame, PyObject* src)
 {
-	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPByteType::convertToDirectBuffer");
 
 	if (JPPyMemoryView::check(src))
@@ -52,16 +42,17 @@ jobject JPByteType::convertToDirectBuffer(PyObject* src)
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPByteType::convertToPythonObject(jvalue val)
+JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyInt::fromInt(field(val));
 }
 
-JPValue JPByteType::getValueFromObject(jobject obj)
+JPValue JPByteType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallByteMethodA(obj, _ByteValueID, 0);
+	field(v) = frame.CallByteMethodA(obj.getJavaObject(), context->m_ByteValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -81,6 +72,7 @@ public:
 
 JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPIntType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -95,7 +87,7 @@ JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, 
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (value->getClass() == context->_java_lang_Byte)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -130,14 +122,14 @@ JPPyObject JPByteType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticByteField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetByteField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -147,7 +139,7 @@ JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticByteMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -160,7 +152,7 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -222,7 +214,7 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetByteArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

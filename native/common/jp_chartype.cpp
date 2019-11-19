@@ -16,30 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPCharType::JPCharType(JPContext* context, jclass clss,
-		       const string& name,
-		       JPBoxedType* boxedClass,
-		       jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPCharType::JPCharType()
+: JPPrimitiveType("char")
 {
-	JPJavaFrame frame(context);
-	_CharValueID = frame.GetMethodID(boxedClass->getJavaClass(), "charValue", "()C");
 }
 
 JPCharType::~JPCharType()
 {
 }
 
-JPPyObject JPCharType::convertToPythonObject(jvalue val)
+JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyString::fromCharUTF16(val.c);
 }
 
-JPValue JPCharType::getValueFromObject(jobject obj)
+JPValue JPCharType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallCharMethodA(obj, _CharValueID, 0);
+	field(v) = frame.CallCharMethodA(obj.getJavaObject(), context->m_CharValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -58,6 +54,7 @@ public:
 
 JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPCharType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -72,7 +69,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, 
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (value->getClass() == context->_java_lang_Char)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -101,14 +98,14 @@ JPPyObject JPCharType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticCharField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetCharField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -118,7 +115,7 @@ JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticCharMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -131,7 +128,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -203,7 +200,7 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetCharArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

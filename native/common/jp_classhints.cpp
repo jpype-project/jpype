@@ -19,7 +19,8 @@
 #include <Python.h>
 
 JPConversion::~JPConversion()
-{}
+{
+}
 
 JPClassHints::JPClassHints()
 {
@@ -132,7 +133,7 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame &frame, JPClass *cls, PyObject *pyobj) override
 	{
 		JP_TRACE_IN("JPTypeConversion::matches");
-		if ((exact_ && ((PyObject*)Py_TYPE(pyobj)) == type_.get())
+		if ((exact_ && ((PyObject*) Py_TYPE(pyobj)) == type_.get())
 				|| JPPyObject::isInstance(pyobj, type_.get()))
 		{
 			match.conversion = this;
@@ -219,7 +220,7 @@ public:
 			// hey, this is me! :)
 			return match.type = JPMatch::_exact;
 		}
-		bool assignable = frame.IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass());
+		bool assignable = frame.IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
 		JP_TRACE("assignable", assignable, oc->getCanonicalName(), cls->getCanonicalName());
 		match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
 
@@ -265,17 +266,16 @@ public:
 		jvalue res;
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		if (value == NULL)
-			JP_RAISE_TYPE_ERROR("Python object is not a Java value")
+			JP_RAISE_TYPE_ERROR("Python object is not a Java value");
 		if (!value->getClass()->isPrimitive())
 		{
 			res.l = frame.NewLocalRef(value->getJavaObject());
 			return res;
-		}
-		else
+		} else
 		{
 			// Okay we need to box it.
 			JPPrimitiveType* type = (JPPrimitiveType*) (value->getClass());
-			res = boxConversion->convert(frame, type->getBoxedClass(), pyobj);
+			res = boxConversion->convert(frame, type->getBoxedClass(frame.getContext()), pyobj);
 			return res;
 		}
 	}
@@ -314,7 +314,6 @@ public:
 		return res;
 	}
 } _stringConversion;
-
 
 class JPConversionBox : public JPConversion
 {
@@ -392,7 +391,7 @@ public:
 	virtual jvalue convert(JPJavaFrame &frame, JPClass *cls, PyObject *pyobj) override
 	{
 		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
-		return cls->getValueFromObject(value->getJavaObject());
+		return cls->getValueFromObject(*value);
 	}
 } _unboxConversion;
 

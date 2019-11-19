@@ -71,6 +71,9 @@ JPContext::JPContext()
 	_java_lang_Class = 0;
 	_java_lang_String = 0;
 
+	_java_lang_reflect_Method = 0;
+	_java_lang_reflect_Field = 0;
+
 	m_TypeFactory = 0;
 	m_TypeManager = 0;
 	m_ClassLoader = 0;

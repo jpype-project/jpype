@@ -32,12 +32,7 @@ else:
     _long = long
 
 
-#def _initialize():
-#    type.__setattr__(JObject, '__javaclass__',
-#                     _jpype.PyJPClass('java.lang.Object', _jpype._jvm))
-
-
-class JObject(object):
+class JObject(_jpype.PyJPValue):
     """ Base class for all object instances.
 
     It can be used to test if an object is a java object instance with
@@ -76,25 +71,18 @@ class JObject(object):
     """
     __jvm__ = None
     def __new__(cls, *args, **kwargs):
+         # Called from super
         if cls != cls.__jvm__.JObject:
+            # Control will pass to __init__
             return super(JObject, cls).__new__(cls)
-        # Create a null pointer object
+
+        # Create a null pointer object for JObject()
         if len(args) == 0:
             args = [None]
-        cls = _JObjectFactory(cls.__jvm__, *args, **kwargs)
-        self = cls.__new__(cls, args[0])
-        self.__javavalue__ = _jpype.PyJPValue(cls.__javaclass__, args[0])
-        return self
 
-    def __init__(self, *args):
-        if hasattr(self, '__javavalue__'):
-            pass
-        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            object.__setattr__(self, '__javavalue__', args[0])
-        else:
-            jv = self.__class__.__javaclass__.newInstance(*args)
-            object.__setattr__(self, '__javavalue__', jv)
-        super(JObject, self).__init__()
+        # Called to create or cast.
+        cls = _JObjectFactory(cls.__jvm__, *args, **kwargs)
+        return cls.__javaclass__._cast(*args)
 
     def __setattr__(self, name, value):
         if name.startswith('_'):
@@ -113,11 +101,8 @@ class JObject(object):
         raise AttributeError("Field '%s' is not settable on Java '%s' object" %
                              (name, self.__name__))
 
-    def __str__(self):
-        return self.__javavalue__.toString()
-
     def __unicode__(self):
-        return self.__javavalue__.toUnicode()
+        return self._toUnicode()
 
     def __hash__(self):
         return self.hashCode()
@@ -159,6 +144,7 @@ def _JObjectFactory(jvm, v=None, tp=None):
     # Check if we are to box it,
     elif isinstance(tp, type):
         if hasattr(tp, '_java_boxed_class'):
+            # FIXME we need to lookup the name in the jvm table.  
             return tp._java_boxed_class
         elif hasattr(tp, '__javaclass__'):
             return _jclass.JClass(tp.__javaclass__)
@@ -166,41 +152,3 @@ def _JObjectFactory(jvm, v=None, tp=None):
     raise TypeError("Invalid type conversion to %s requested." % tp)
 
 
-def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
-    """ Create a factory type such as JObject or JArray.
-
-    Args:
-        name (str): Name of the class to produce
-        jclass (str): Name of the java class this should shadow.
-        proto (type): Is a type from which the class methods will be based.
-        bases (tuple): Bases for this meta class factory.
-        members (dict): Any additional members for this class.
-
-    """
-    # Copy the members from the prototype
-    if members == None:
-        members = {}
-    for p, v in proto.__dict__.items():
-        if isinstance(v, (str, property)):
-            members[p] = v
-        elif callable(v):
-            members[p] = v
-        elif p == "__new__":
-            members[p] = v
-
-    res = None
-
-    if jclass != None:
-        members['__javaclass__'] = None
-
-    # Create a new class
-    res = _jclass.JClass(name, bases, members)
-
-#    if jclass != None:
-#        # Register this class to be initialized when jvm starts
-#        def jinit():
-#            type.__setattr__(res, '__javaclass__',
-#                             _jpype.PyJPClass(jclass, _jpype._jvm))
-#        _jinit.registerJVMInitializer(jinit)
-
-    return res

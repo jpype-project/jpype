@@ -17,10 +17,10 @@
 #include <pyjp.h>
 
 static PyMethodDef methodMethods[] = {
-	{"isBeanAccessor", (PyCFunction) (&PyJPMethod::isBeanAccessor), METH_NOARGS, ""},
-	{"isBeanMutator", (PyCFunction) (&PyJPMethod::isBeanMutator), METH_NOARGS, ""},
-	{"matchReport", (PyCFunction) (&PyJPMethod::matchReport), METH_VARARGS, ""},
-	{"dump", (PyCFunction) (&PyJPMethod::dump), METH_NOARGS, ""},
+	{"_isBeanAccessor", (PyCFunction) (&PyJPMethod::isBeanAccessor), METH_NOARGS, ""},
+	{"_isBeanMutator", (PyCFunction) (&PyJPMethod::isBeanMutator), METH_NOARGS, ""},
+	{"_matchReport", (PyCFunction) (&PyJPMethod::matchReport), METH_VARARGS, ""},
+	{"_dump", (PyCFunction) (&PyJPMethod::dump), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -91,9 +91,9 @@ PyTypeObject PyJPMethod::Type = {
 
 // Static methods
 
-void PyJPMethod::initType(PyObject* module)
+void PyJPMethod::initType(PyObject *module)
 {
-	// We inherit from PyFunction_Type just so we are an instatnce
+	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
 	PyJPMethod::Type.tp_base = &PyFunction_Type;
@@ -102,7 +102,7 @@ void PyJPMethod::initType(PyObject* module)
 	PyModule_AddObject(module, "PyJPMethod", (PyObject*) (&PyJPMethod::Type));
 }
 
-JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
+JPPyObject PyJPMethod::alloc(JPMethodDispatch *m, PyObject *instance)
 {
 	JP_TRACE_IN_C("PyJPMethod::alloc");
 	PyJPMethod *self = (PyJPMethod*) PyJPMethod::Type.tp_alloc(&PyJPMethod::Type, 0);
@@ -124,9 +124,9 @@ JPPyObject PyJPMethod::alloc(JPMethodDispatch* m, PyObject* instance)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwargs)
+PyObject *PyJPMethod::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	PyJPMethod* self = (PyJPMethod*) type->tp_alloc(type, 0);
+	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);
 	self->m_Method = NULL;
 	self->m_Instance = NULL;
 	self->m_Context = NULL;
@@ -136,7 +136,7 @@ PyObject* PyJPMethod::__new__(PyTypeObject* type, PyObject* args, PyObject* kwar
 	return (PyObject*) self;
 }
 
-void PyJPMethod::__dealloc__(PyJPMethod* self)
+void PyJPMethod::__dealloc__(PyJPMethod *self)
 {
 	JP_TRACE_IN_C("PyJPMethod::__dealloc__", self);
 	PyObject_GC_UnTrack(self);
@@ -188,7 +188,7 @@ PyObject *PyJPMethod::__get__(PyJPMethod *self, PyObject *obj, PyObject *type)
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMethod::__call__(PyJPMethod *self, PyObject *args, PyObject *kwargs)
+PyObject *PyJPMethod::__call__(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN_C("PyJPMethod::__call__", self);
 	try
@@ -212,7 +212,7 @@ PyObject* PyJPMethod::__call__(PyJPMethod *self, PyObject *args, PyObject *kwarg
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPMethod::__str__(PyJPMethod* self)
+PyObject *PyJPMethod::__str__(PyJPMethod *self)
 {
 	try
 	{
@@ -225,7 +225,7 @@ PyObject* PyJPMethod::__str__(PyJPMethod* self)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::__repr__(PyJPMethod* self)
+PyObject *PyJPMethod::__repr__(PyJPMethod *self)
 {
 	try
 	{
@@ -315,7 +315,7 @@ PyObject *PyJPMethod::getDoc(PyJPMethod *self, void *context)
 	JP_TRACE_OUT;
 }
 
-int PyJPMethod::setDoc(PyJPMethod *self, PyObject* obj, void *context)
+int PyJPMethod::setDoc(PyJPMethod *self, PyObject *obj, void *context)
 {
 	JP_TRACE_IN("PyJPMethod::getDoc");
 	Py_CLEAR(self->m_Doc);
@@ -346,7 +346,7 @@ PyObject *PyJPMethod::getAnnotations(PyJPMethod *self, void *context)
 	JP_TRACE_OUT;
 }
 
-int PyJPMethod::setAnnotations(PyJPMethod *self, PyObject* obj, void *context)
+int PyJPMethod::setAnnotations(PyJPMethod *self, PyObject *obj, void *context)
 {
 	JP_TRACE_IN_C("PyJPMethod::getAnnotations", self);
 	Py_CLEAR(self->m_Annotations);
@@ -356,7 +356,7 @@ int PyJPMethod::setAnnotations(PyJPMethod *self, PyObject* obj, void *context)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPMethod::getCodeAttr(PyJPMethod *self, void *context, const char* attr)
+PyObject *PyJPMethod::getCodeAttr(PyJPMethod *self, void *context, const char *attr)
 {
 	JP_TRACE_IN_C("PyJPMethod::getCode", self);
 	try
@@ -402,7 +402,7 @@ PyObject *PyJPMethod::getGlobals(PyJPMethod *self, void *context)
 #endif
 }
 
-PyObject* PyJPMethod::isBeanAccessor(PyJPMethod *self, PyObject *arg)
+PyObject *PyJPMethod::isBeanAccessor(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
@@ -413,7 +413,7 @@ PyObject* PyJPMethod::isBeanAccessor(PyJPMethod *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::isBeanMutator(PyJPMethod *self, PyObject *arg)
+PyObject *PyJPMethod::isBeanMutator(PyJPMethod *self, PyObject *arg)
 {
 	try
 	{
@@ -424,7 +424,7 @@ PyObject* PyJPMethod::isBeanMutator(PyJPMethod *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::matchReport(PyJPMethod *self, PyObject *args)
+PyObject *PyJPMethod::matchReport(PyJPMethod *self, PyObject *args)
 {
 	try
 	{
@@ -438,7 +438,7 @@ PyObject* PyJPMethod::matchReport(PyJPMethod *self, PyObject *args)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPMethod::dump(PyJPMethod *self, PyObject *args)
+PyObject *PyJPMethod::dump(PyJPMethod *self, PyObject *args)
 {
 	try
 	{

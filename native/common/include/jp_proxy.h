@@ -74,13 +74,12 @@ public:
 	virtual~ JPProxyType();
 
 public: // JPClass implementation
-	virtual JPPyObject convertToPythonObject(jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 
 private:
 	JPClassRef m_ProxyClass;
 	jmethodID  m_GetInvocationHandlerID;
 	jfieldID   m_InstanceID;
 } ;
-
 
 #endif // JPPROXY_H

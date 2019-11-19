@@ -16,15 +16,9 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPPrimitiveType::JPPrimitiveType(JPContext* context, jclass clss,
-				 const string& name,
-				 JPBoxedType* boxedClass,
-				 jint modifiers
-				 )
-: JPClass(context, clss, name, NULL, JPClassList(), modifiers),
-m_BoxedClass(boxedClass)
+JPPrimitiveType::JPPrimitiveType(const string& name)
+: JPClass(0, 0, name, NULL, JPClassList(), 0x411)
 {
-	boxedClass->setPrimitiveType(this);
 }
 
 JPPrimitiveType::~JPPrimitiveType()
@@ -34,4 +28,14 @@ JPPrimitiveType::~JPPrimitiveType()
 bool JPPrimitiveType::isPrimitive() const
 {
 	return true;
+}
+
+bool JPPrimitiveType::isAssignableFrom(JPClass* o)
+{
+	return this == o;
+}
+
+string JPPrimitiveType::describe()
+{
+	return "primitive " + this->m_CanonicalName;
 }

@@ -32,14 +32,12 @@ JPStringType::~JPStringType()
 {
 }
 
-jobject JPStringType::stringToCharArray(jstring str)
+jobject JPStringType::stringToCharArray(JPJavaFrame& frame, jstring str)
 {
-	JPJavaFrame frame(m_Context);
-	jobject res = frame.CallObjectMethodA(str, m_String_ToCharArrayID, 0);
-	return frame.keep(res);
+	return frame.CallObjectMethodA(str, m_String_ToCharArrayID, 0);
 }
 
-JPPyObject JPStringType::convertToPythonObject(jvalue val)
+JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	JP_TRACE_IN("JPStringType::asHostObject");
 

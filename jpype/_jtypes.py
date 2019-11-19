@@ -46,9 +46,9 @@ class _JPrimitiveClass(_jclass.JClass):
         members = {
             "__init__": _JPrimitive.init,
             "__setattr__": object.__setattr__,
-            "__javaclass__": None,
+           # "__javaclass__": None,
             "__jvm__": jvm,
-            "_java_boxed_class": None,
+           # "_java_boxed_class": None,
         }
         return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, _JPrimitive), members)
 
@@ -57,9 +57,10 @@ class _JPrimitiveClass(_jclass.JClass):
         super(_JPrimitive, self).__init__(self)
 
     def _load(self, boxed):
-        type.__setattr__(self, '__javaclass__',
-                         _jpype.PyJPClass(self.__jvm__, self.__name__))
-        type.__setattr__(self, '_java_boxed_class', boxed)
+        jvm = self.__jvm__
+        print("load", self.__name__)
+        jvm._primitive_types[self.__name__] = _jpype.PyJPClass(jvm, self.__name__)
+        jvm._boxed_types[self.__name__] =  boxed
 
 
 class _JPrimitive(object):
@@ -69,8 +70,9 @@ class _JPrimitive(object):
 
     def init(self, v):
         if v is not None:
+            jc = self.__jvm__._primitive_types[self.__class__.__name__]
             self._pyv = v
-            self.__javavalue__ = _jpype.PyJPValue(self.__javaclass__, v)
+            self.__javavalue__ = _jpype.PyJPValue(jc, v)
         else:
             self.__javavalue__ = None
 

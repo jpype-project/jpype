@@ -76,20 +76,6 @@ namespace JPError
 // be passed to the handler routine for auditing.
 #define JP_STACKINFO() JPStackInfo(__FUNCTION_NAME__, __FILE__, __LINE__)
 
-// Macros for raising an exception with jpype
-//   These must be macros so that we can update the pattern and
-//   maintain the appropraite auditing information.  C++ does not
-//   have a lot for facitilies to make this easy.
-#define JP_RAISE_PYTHON(msg)         { throw JPypeException(JPError::_python_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_RUNTIME_ERROR(msg)  { throw JPypeException(JPError::_runtime_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_UNIX(err, msg)  { throw JPypeException(JPError::_os_error_unix, err, msg, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_WINDOWS(err, msg)  { throw JPypeException(JPError::_os_error_windows, err, msg, JP_STACKINFO()); }
-#define JP_RAISE_TYPE_ERROR(msg)     { throw JPypeException(JPError::_type_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_VALUE_ERROR(msg)    { throw JPypeException(JPError::_value_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_OVERFLOW_ERROR(msg) { throw JPypeException(JPError::_overflow_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_INDEX_ERROR(msg)    { throw JPypeException(JPError::_index_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_ATTRIBUTE_ERROR(msg) { throw JPypeException(JPError::_attribute_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_METHOD_NOT_FOUND(msg) { throw JPypeException(JPError::_method_not_found, msg, JP_STACKINFO()); }
 
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.

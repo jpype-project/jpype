@@ -242,9 +242,10 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 			{
 				JPPrimitiveType* type = (JPPrimitiveType*) cls;
 				JPMatch conv;
-				type->getBoxedClass()->getJavaConversion(frame, conv, arg[i + match.skip]);
+				JPBoxedType *boxed = type->getBoxedClass(context);
+				boxed->getJavaConversion(frame, conv, arg[i + match.skip]);
 				frame.SetObjectArrayElement(ja, i,
-						conv.conversion->convert(frame, type->getBoxedClass(), arg[i + match.skip]).l);
+						conv.conversion->convert(frame, boxed, arg[i + match.skip]).l);
 			} else
 			{
 				frame.SetObjectArrayElement(ja, i, v[i].l);
@@ -258,14 +259,16 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		if (retType->isPrimitive())
 		{
 			JP_TRACE("Return primitive");
-			JPValue out = retType->getValueFromObject(o);
-			return retType->convertToPythonObject(out.getValue());
+			jvalue v;
+			v.l = o;
+			JPValue out = retType->getValueFromObject(JPValue(retType, v));
+			return retType->convertToPythonObject(frame, out.getValue());
 		} else
 		{
 			JP_TRACE("Return object");
 			jvalue v;
 			v.l = o;
-			return retType->convertToPythonObject(v);
+			return retType->convertToPythonObject(frame, v);
 		}
 	}
 

@@ -26,8 +26,6 @@ public:
 	JPArray(JPClass* cls, jarray inst);
 	virtual~ JPArray();
 
-public:
-
 	JPArrayClass* getClass()
 	{
 		return m_Class;
@@ -44,7 +42,6 @@ public:
 		return m_Object.get();
 	}
 
-public: // Wrapper
 	virtual JPClass* getType();
 	virtual jvalue  getValue();
 

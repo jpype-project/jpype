@@ -209,6 +209,8 @@ class JContext(_jpype.PyJPContext):
         # Forward declarations
         self._type_classes = {}
         self._object_classes = {}
+        self._primitive_types = {}
+        self._boxed_types = {}
 
         self._java_lang_Object = None
         self._java_lang_Class = None
@@ -343,6 +345,7 @@ please file a ticket with the developer.
         java_lang_Long = self.JClass("java.lang.Long")
         java_lang_Double = self.JClass("java.lang.Double")
 
+        # Table for automatic conversion to objects
         self._object_classes[bool] = java_lang_Boolean
         self._object_classes[int] = java_lang_Long
         self._object_classes[_long] = java_lang_Long
@@ -363,7 +366,7 @@ please file a ticket with the developer.
         self.JFloat._load(self.JClass("java.lang.Float"))
         self.JDouble._load(self.JClass("java.lang.Double"))
 
-        # Set up table of automatic conversions
+        # Set up table of automatic conversions to primitives
         self._type_classes[bool] = JBoolean
         self._type_classes[int] = JLong
         self._type_classes[_long] = JLong

@@ -30,10 +30,15 @@
 class JPBoxedType : public JPClass
 {
 public:
-	JPBoxedType(JPContext* context, jclass clss, const string& name, JPClass* super, JPClassList& interfaces, jint modifiers);
+	JPBoxedType(JPContext* context,
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers,
+			JPPrimitiveType* primitiveType);
 	virtual ~JPBoxedType();
 
-	void setPrimitiveType(JPPrimitiveType* primitiveType);
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 protected:
 	JPPrimitiveType* m_PrimitiveType;

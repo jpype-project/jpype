@@ -21,7 +21,7 @@ class JPFloatType : public JPPrimitiveType
 {
 public:
 
-	JPFloatType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPFloatType();
 	virtual ~JPFloatType();
 
 public:
@@ -38,11 +38,14 @@ public:
 		return v.f;
 	}
 
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Float;
+	}
 
-public:
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -82,8 +85,6 @@ public:
 		return (jdouble) field(v);
 	}
 
-private:
-	jmethodID _FloatValueID;
 } ;
 
 #endif // _JP_FLOAT_TYPE_H_

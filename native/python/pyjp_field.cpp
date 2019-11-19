@@ -16,11 +16,11 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-static PyMethodDef fieldMethods[] = {
-	{"getName", (PyCFunction) (&PyJPField::getName), METH_NOARGS, ""},
-	{"isFinal", (PyCFunction) (&PyJPField::isFinal), METH_NOARGS, ""},
-	{"isStatic", (PyCFunction) (&PyJPField::isStatic), METH_NOARGS, ""},
-	{NULL},
+static PyGetSetDef fieldGetSets[] = {
+	{"__name__", (getter) (&PyJPField::getName), NULL, ""},
+	{"_final", (getter) (&PyJPField::isFinal), NULL, ""},
+	{"_static", (getter) (&PyJPField::isStatic), NULL, ""},
+	{0}
 };
 
 PyTypeObject PyJPField::Type = {
@@ -28,7 +28,7 @@ PyTypeObject PyJPField::Type = {
 	/* tp_name           */ "_jpype.PyJPField",
 	/* tp_basicsize      */ sizeof (PyJPField),
 	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPField::__dealloc__,
+	/* tp_dealloc        */ (destructor) PyJPValue::__dealloc__,
 	/* tp_print          */ 0,
 	/* tp_getattr        */ 0,
 	/* tp_setattr        */ 0,
@@ -43,18 +43,18 @@ PyTypeObject PyJPField::Type = {
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
 	/* tp_doc            */ "Java Field",
-	/* tp_traverse       */ (traverseproc) PyJPField::traverse,
-	/* tp_clear          */ (inquiry) PyJPField::clear,
+	/* tp_traverse       */ (traverseproc) PyJPValue::traverse,
+	/* tp_clear          */ (inquiry) PyJPValue::clear,
 	/* tp_richcompare    */ 0,
 	/* tp_weaklistoffset */ 0,
 	/* tp_iter           */ 0,
 	/* tp_iternext       */ 0,
-	/* tp_methods        */ fieldMethods,
+	/* tp_methods        */ 0,
 	/* tp_members        */ 0,
-	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
+	/* tp_getset         */ fieldGetSets,
+	/* tp_base           */ &PyJPValue::Type,
 	/* tp_dict           */ 0,
 	/* tp_descr_get      */ (descrgetfunc) PyJPField::__get__,
 	/* tp_descr_set      */ (descrsetfunc) PyJPField::__set__,
@@ -67,73 +67,46 @@ PyTypeObject PyJPField::Type = {
 
 // Static methods
 
-void PyJPField::initType(PyObject* module)
+void PyJPField::initType(PyObject *module)
 {
 	PyType_Ready(&PyJPField::Type);
 	Py_INCREF(&PyJPField::Type);
 	PyModule_AddObject(module, "PyJPField", (PyObject*) (&PyJPField::Type));
 }
 
-JPPyObject PyJPField::alloc(JPField* m)
+JPPyObject PyJPField::alloc(JPField *field)
 {
 	JP_TRACE_IN_C("PyJPField::alloc");
-	PyJPField *self = (PyJPField*) PyJPField::Type.tp_alloc(&PyJPField::Type, 0);
-	JP_PY_CHECK();
-	self->m_Field = m;
-	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
-	Py_INCREF(self->m_Context);
-	JP_TRACE("self", self);
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	JPContext *context = field->getContext();
+	jvalue v;
+	v.l = field->getJavaObject();
+	JPPyObject self = PyJPValue::alloc(&PyJPField::Type, field->getContext(),
+			context->_java_lang_reflect_Method, v);
+	((PyJPField*) self.get())->m_Field = field;
+	return self;
 	JP_TRACE_OUT;
 }
 
-void PyJPField::__dealloc__(PyJPField* self)
-{
-	JP_TRACE_IN_C("PyJPField::__dealloc__", self);
-	PyObject_GC_UnTrack(self);
-	clear(self);
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
-}
-
-int PyJPField::traverse(PyJPField *self, visitproc visit, void *arg)
-{
-	JP_TRACE_IN_C("PyJPField::traverse", self);
-	Py_VISIT(self->m_Context);
-	return 0;
-	JP_TRACE_OUT_C;
-}
-
-int PyJPField::clear(PyJPField *self)
-{
-	JP_TRACE_IN_C("PyJPField::clear", self);
-	Py_CLEAR(self->m_Context);
-	return 0;
-	JP_TRACE_OUT_C;
-}
-
-PyObject* PyJPField::getName(PyJPField* self, PyObject* arg)
+PyObject *PyJPField::getName(PyJPField *self, PyObject *arg)
 {
 	JP_TRACE_IN_C("PyJPField::getName", self);
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
+		JPContext *context = self->m_Value.m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
 		return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-PyObject* PyJPField::__get__(PyJPField *self, PyObject *obj, PyObject *type)
+PyObject *PyJPField::__get__(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_TRACE_IN_C("PyJPField::__get__", self);
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
+		JPContext *context = self->m_Value.m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
 		if (self->m_Field->isStatic())
 			return self->m_Field->getStaticField().keep();
 		if (obj == NULL)
@@ -153,9 +126,8 @@ int PyJPField::__set__(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JP_TRACE_IN_C("PyJPField::__set__", self);
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
+		JPContext *context = self->m_Value.m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
 		if (self->m_Field->isFinal())
 			JP_RAISE_ATTRIBUTE_ERROR("Field is final");
 		if (self->m_Field->isStatic())
@@ -179,21 +151,19 @@ PyObject *PyJPField::isStatic(PyJPField *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
+		JPContext *context = self->m_Value.m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
 		return PyBool_FromLong(self->m_Field->isStatic());
 	}
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject* PyJPField::isFinal(PyJPField *self, PyObject *arg)
+PyObject *PyJPField::isFinal(PyJPField *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Context->m_Context;
+		JPContext *context = self->m_Value.m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
-		JPJavaFrame frame(context);
 		return PyBool_FromLong(self->m_Field->isFinal());
 	}
 	PY_STANDARD_CATCH(NULL);

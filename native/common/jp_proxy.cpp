@@ -61,8 +61,11 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	for (jsize i = 0; i < argLen; i++)
 	{
 		JPClass* type = (JPClass*) types[i];
-		JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
-		pyargs.setItem(i, type->convertToPythonObject(val).get());
+		jobject obj = frame.GetObjectArrayElement(args, i);
+		jvalue v;
+		v.l = obj;
+		JPValue val = type->getValueFromObject(JPValue(type, v));
+		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
 	}
 	return pyargs;
 }
@@ -145,7 +148,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");
-				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass();
+				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
 			}
 
 			JPMatch returnMatch;
@@ -271,7 +274,7 @@ JPProxyType::~JPProxyType()
 {
 }
 
-JPPyObject JPProxyType::convertToPythonObject(jvalue val)
+JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	JPJavaFrame frame(m_Context);

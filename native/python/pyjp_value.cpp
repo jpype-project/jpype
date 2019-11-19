@@ -18,8 +18,7 @@
 #include <structmember.h>
 
 static PyMethodDef valueMethods[] = {
-	{"toString", (PyCFunction) (&PyJPValue::toString), METH_NOARGS, ""},
-	{"toUnicode", (PyCFunction) (&PyJPValue::toUnicode), METH_NOARGS, ""},
+	{"_toUnicode", (PyCFunction) (&PyJPValue::toUnicode), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -38,21 +37,20 @@ PyTypeObject PyJPValue::Type = {
 	/* tp_getattr        */ 0,
 	/* tp_setattr        */ 0,
 	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
+	/* tp_repr           */ (reprfunc) PyJPValue::__repr__,
 	/* tp_as_number      */ 0,
 	/* tp_as_sequence    */ 0,
 	/* tp_as_mapping     */ 0,
 	/* tp_hash           */ 0,
 	/* tp_call           */ 0,
-	/* tp_str            */ (reprfunc) PyJPValue::__str__,
+	/* tp_str            */ (reprfunc) PyJPValue::__repr__,
 	/* tp_getattro       */ 0,
 	/* tp_setattro       */ 0,
 	/* tp_as_buffer      */ 0,
 	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
 	/* tp_doc            */
 	"Wrapper of a java value which holds a class and instance of an object \n"
-	"or a primitive.  This object is always stored as the attributed \n"
-	"__javavalue__.  Anything with this type with that attribute will be\n"
+	"or a primitive.  Anything inheriting from this will be\n"
 	"considered a java object wrapper.",
 	/* tp_traverse       */ (traverseproc) PyJPValue::traverse,
 	/* tp_clear          */ (inquiry) PyJPValue::clear,
@@ -75,35 +73,51 @@ PyTypeObject PyJPValue::Type = {
 
 // Static methods
 
-void PyJPValue::initType(PyObject* module)
+void PyJPValue::initType(PyObject *module)
 {
 	PyType_Ready(&PyJPValue::Type);
 	Py_INCREF(&PyJPValue::Type);
 	PyModule_AddObject(module, "PyJPValue", (PyObject*) (&PyJPValue::Type));
 }
 
-bool PyJPValue::check(PyObject* o)
-{
-	return o != NULL && Py_TYPE(o) == &PyJPValue::Type;
-}
-
 // These are from the internal methods when we already have the jvalue
 
-JPPyObject PyJPValue::alloc(const JPValue& value)
+/**
+ * Create a JPValue wrapper with the appropriate type.
+ *
+ * This method dodges the __new__ method, but does involve
+ * __init__.  It is called when returning a Java object back to
+ * Python.
+ *
+ * @param type
+ * @param context
+ * @param cls
+ * @param value
+ * @return
+ */
+JPPyObject PyJPValue::create(PyTypeObject *type, JPContext *context, JPClass *cls, jvalue value)
 {
-	return alloc(value.getClass()->getContext(), value.getClass(), value.getValue());
+	JPPyObject out;
+	if (cls == context->_java_lang_Class)
+		out = PyJPClass::alloc(type, context,
+			context->getTypeManager()->findClass((jclass) value.l)
+			);
+	if (dynamic_cast<JPArrayClass*> (cls) != 0)
+		out = PyJPArray::alloc(type, context, cls, value);
+	else
+		out = PyJPValue::alloc(type, context, cls, value);
+
+	// We may have custom __init__ methods on the Python wrappers
+	type->tp_init(out.get(), NULL, NULL);
+	return out;
 }
 
-JPPyObject PyJPValue::alloc(JPContext* context, JPClass* cls, jvalue value)
+JPPyObject PyJPValue::alloc(PyTypeObject *wrapper, JPContext *context, JPClass *cls, jvalue value)
 {
-	// Promote to PyJPClass
-	if (cls == context->_java_lang_Class)
-		return PyJPClass::alloc(context->getTypeManager()->findClass((jclass) value.l));
-	// FIXME do the same with JPArray
-
 	JPJavaFrame frame(context);
 	JP_TRACE_IN_C("PyJPValue::alloc");
-	PyJPValue *self = (PyJPValue*) PyJPValue::Type.tp_alloc(&PyJPValue::Type, 0);
+
+	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
 	JP_PY_CHECK();
 
 	// If it is not a primitive we need to reference it
@@ -118,7 +132,6 @@ JPPyObject PyJPValue::alloc(JPContext* context, JPClass* cls, jvalue value)
 	self->m_Cache = NULL;
 	self->m_Context = (PyJPContext*) (context->getHost());
 	Py_INCREF(self->m_Context);
-	JP_TRACE("Value", self->m_Value.getClass()->getCanonicalName(), &(self->m_Value.getValue()));
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
 }
@@ -135,63 +148,48 @@ PyObject *PyJPValue::__new__(PyTypeObject *type, PyObject *args, PyObject *kwarg
 
 // Replacement for convertToJava.
 //   (class, object)
-int PyJPValue::__init__(PyJPValue *self, PyObject *args, PyObject *kwargs)
+
+int PyJPValue::__init__(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_TRACE_IN_C("PyJPValue::__init__", self);
 	JP_TRACE("init", self);
 	try
 	{
-		self->m_Cache = NULL;
-
-		PyObject *claz;
-		PyObject *value;
-
-		if (!PyArg_ParseTuple(args, "O!O", &PyJPClass::Type, &claz, &value))
-		{
-			return -1;
-		}
-
-		JPClass *type = ((PyJPClass*) claz)->m_Class;
-		ASSERT_NOT_NULL(value);
-		ASSERT_NOT_NULL(type);
-		JPContext *context = type->getContext();
-		self->m_Context = (PyJPContext*) (context->getHost());
-		Py_INCREF(self->m_Context);
-		ASSERT_JVM_RUNNING(context);
-
-		// If it is already a Java object, then let Java decide
-		// if the cast is possible
-		JPValue *jval = JPPythonEnv::getJavaValue(value);
-		if (jval != NULL && type->isInstance(*jval))
-		{
-			JPJavaFrame frame(context);
-			jvalue v = jval->getValue();
-			v.l = frame.NewGlobalRef(v.l);
-			self->m_Value = JPValue(type, v);
-			JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
+		// Check if we are already initialized.
+		if (self->m_Value.getClass() != 0)
 			return 0;
-		}
 
-		// Otherwise, see if we can convert it
+		// Get the Java class from the type.
+		PyObject *obj = PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__");
+		JP_PY_CHECK();
+		if (!PyObject_IsInstance(obj, (PyObject*) & PyJPValue::Type))
 		{
-			JPJavaFrame frame(context);
-			JPMatch match;
-			type->getJavaConversion(frame, match, value);
-			if (match.type == JPMatch::_none)
+			Py_DECREF(obj);
+			JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
+		}
+		JPClass *cls = ((PyJPClass*) obj)->m_Class;
+		Py_DECREF(obj);
+
+		if (dynamic_cast<JPArrayClass*> (cls) != NULL)
+		{
+			int sz;
+			if (!PyArg_ParseTuple(pyargs, "i", &sz))
 			{
-				stringstream ss;
-				ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();
-				PyErr_SetString(PyExc_TypeError, ss.str().c_str());
-				return -1;
+				return NULL;
 			}
-
-			jvalue v = match.conversion->convert(frame, type, value);
-			if (!type->isPrimitive())
-				v.l = frame.NewGlobalRef(v.l);
-			self->m_Value = JPValue(type, v);
-			JP_TRACE("Value", self->m_Value.getClass(), &(self->m_Value.getValue()));
+			self->m_Value = ((JPArrayClass*) cls)->newInstance(sz);
 			return 0;
 		}
+
+		JPPyObjectVector args(pyargs);
+		// DEBUG
+		for (size_t i = 0; i < args.size(); ++i)
+		{
+			ASSERT_NOT_NULL(args[i]);
+		}
+		self->m_Value =  cls->newInstance(args);
+		return 0;
+
 	}
 	PY_STANDARD_CATCH(-1);
 	JP_TRACE_OUT_C;
@@ -210,7 +208,7 @@ void PyJPValue::__dealloc__(PyJPValue *self)
 		if (context->isRunning() && !cls->isPrimitive())
 		{
 			// If the JVM has shutdown then we don't need to free the resource
-			// FIXME there is a problem with initializing the syxtem twice.
+			// FIXME there is a problem with initializing the system twice.
 			// Once we shut down the cls type goes away so this will fail.  If
 			// we then reinitialize we will access this bad resource.  Not sure
 			// of an easy solution.
@@ -219,10 +217,10 @@ void PyJPValue::__dealloc__(PyJPValue *self)
 		}
 	}
 
+	PyTypeObject *type = Py_TYPE(self);
 	PyObject_GC_UnTrack(self);
-	clear(self);
-	// Free self
-	Py_TYPE(self)->tp_free(self);
+	type->tp_clear((PyObject*) self);
+	type->tp_free((PyObject*) self);
 	JP_TRACE_OUT_C;
 }
 
@@ -244,12 +242,15 @@ int PyJPValue::clear(PyJPValue *self)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPValue::__str__(PyJPValue *self)
+PyObject *PyJPValue::__repr__(PyJPValue *self)
 {
-	JP_TRACE_IN_C("PyJPValue::__str__", self);
+	JP_TRACE_IN_C("PyJPValue::__repr__", self);
 	try
 	{
-		JPContext *context = self->m_Value.getClass()->getContext();
+		if (self->m_Context == NULL)
+			JP_RAISE_RUNTIME_ERROR("Null context");
+
+		JPContext * context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
 		stringstream sout;
@@ -284,6 +285,9 @@ PyObject *PyJPValue::toString(PyJPValue *self)
 	JP_TRACE_IN_C("PyJPValue::toString", self);
 	try
 	{
+		if (self->m_Context == NULL)
+			JP_RAISE_RUNTIME_ERROR("Null context");
+
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		JPClass *cls = self->m_Value.getClass();
@@ -318,12 +322,17 @@ PyObject *PyJPValue::toString(PyJPValue *self)
 	JP_TRACE_OUT_C;
 }
 
+// FIXME Gut Python 2 stuff
+
 /* *This is the way to convert an object into a python string. */
 PyObject *PyJPValue::toUnicode(PyJPValue *self)
 {
 	JP_TRACE_IN_C("PyJPValue::toUnicode", self);
 	try
 	{
+		if (self->m_Context == NULL)
+			JP_RAISE_RUNTIME_ERROR("Null context");
+
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		JPClass *cls = self->m_Value.getClass();

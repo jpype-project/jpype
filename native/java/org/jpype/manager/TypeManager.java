@@ -93,6 +93,8 @@ public class TypeManager
     createClass(Double.class, true);
     createClass(String.class, true);
     createClass(JPypeProxy.class, true);
+    createClass(Method.class, true);
+    createClass(Field.class, true);
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.

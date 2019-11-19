@@ -74,7 +74,7 @@ void PyJPClassHints::initType(PyObject *module)
 PyObject *PyJPClassHints::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_TRACE_IN("PyJPProxy::new");
-	PyJPClassHints* self = (PyJPClassHints*) type->tp_alloc(type, 0);
+	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
 	self->m_Hints = NULL;
 	return (PyObject*) self;
 	JP_TRACE_OUT;

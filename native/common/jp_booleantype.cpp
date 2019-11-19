@@ -16,30 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPBooleanType::JPBooleanType(JPContext* context, jclass clss,
-			     const string& name,
-			     JPBoxedType* boxedClass,
-			     jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPBooleanType::JPBooleanType()
+: JPPrimitiveType("boolean")
 {
-	JPJavaFrame frame(context);
-	s_BooleanValueID = frame.GetMethodID(boxedClass->getJavaClass(), "booleanValue", "()Z");
 }
 
 JPBooleanType::~JPBooleanType()
 {
 }
 
-JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
+JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyBool::fromLong(val.z);
 }
 
-JPValue JPBooleanType::getValueFromObject(jobject obj)
+JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj, s_BooleanValueID, 0) ? true : false;
+	field(v) = frame.CallBooleanMethodA(obj.getJavaObject(), context->m_BooleanValueID, 0) ? true : false;
 	return JPValue(this, v);
 }
 
@@ -57,6 +53,7 @@ public:
 
 JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
 
@@ -76,7 +73,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame& frame, JPMatch& matc
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (value->getClass() == context->_java_lang_Boolean)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -117,14 +114,14 @@ JPPyObject JPBooleanType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID 
 {
 	jvalue v;
 	field(v) = frame.GetStaticBooleanField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPBooleanType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetBooleanField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -134,7 +131,7 @@ JPPyObject JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodI
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticBooleanMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -147,7 +144,7 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 		else
 			field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -206,7 +203,7 @@ JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetBooleanArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

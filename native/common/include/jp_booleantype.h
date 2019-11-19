@@ -17,14 +17,16 @@
 #ifndef _JP_BOOLEAN_TYPE_H_
 #define _JP_BOOLEAN_TYPE_H_
 
+#include "jp_context.h"
+
+
 class JPBooleanType : public JPPrimitiveType
 {
 public:
 
-	JPBooleanType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPBooleanType();
 	virtual ~JPBooleanType();
 
-public:
 	typedef jboolean type_t;
 	typedef jbooleanArray array_t;
 
@@ -38,10 +40,14 @@ public:
 		return v.z;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Boolean;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -72,9 +78,6 @@ public:
 		return field(v);
 	}
 
-private:
-	jmethodID s_BooleanValueID;
 } ;
 
 #endif // _JP_BOOLEAN_TYPE_H_
-

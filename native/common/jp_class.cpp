@@ -17,11 +17,11 @@
 #include <jpype.h>
 
 JPClass::JPClass(JPContext* context,
-		 jclass clss,
-		 const string& name,
-		 JPClass* super,
-		 const JPClassList& interfaces,
-		 jint modifiers)
+		jclass clss,
+		const string& name,
+		JPClass* super,
+		const JPClassList& interfaces,
+		jint modifiers)
 : m_Class(context, clss)
 {
 	m_Context = context;
@@ -36,8 +36,8 @@ JPClass::~JPClass()
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
-			    JPMethodDispatchList& methods,
-			    JPFieldList& fields)
+		JPMethodDispatchList& methods,
+		JPFieldList& fields)
 {
 	m_Constructors = ctor;
 	m_Methods = methods;
@@ -61,6 +61,8 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 
 string JPClass::toString() const
 {
+	if (m_Context == 0)
+		return m_CanonicalName;
 	return m_Context->toString(m_Class.get());
 }
 
@@ -76,7 +78,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 		type = m_Context->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
-	return type->convertToPythonObject(v);
+	return type->convertToPythonObject(frame, v);
 	JP_TRACE_OUT;
 }
 
@@ -89,7 +91,7 @@ JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 		type = m_Context->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
-	return type->convertToPythonObject(v);
+	return type->convertToPythonObject(frame, v);
 	JP_TRACE_OUT;
 }
 
@@ -102,11 +104,11 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 		v.l = frame.CallStaticObjectMethodA(claz, mth, val);
 	}
 
-	JPClass* type = this;
+	JPClass *type = this;
 	if (v.l != NULL)
 		type = m_Context->getTypeManager()->findClassForObject(v.l);
 
-	return type->convertToPythonObject(v);
+	return type->convertToPythonObject(frame, v);
 
 	JP_TRACE_OUT;
 }
@@ -126,11 +128,11 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	}
 
 	// Get the return type
-	JPClass* type = this;
+	JPClass *type = this;
 	if (v.l != NULL)
 		type = m_Context->getTypeManager()->findClassForObject(v.l);
 
-	return type->convertToPythonObject(v);
+	return type->convertToPythonObject(frame, v);
 
 	JP_TRACE_OUT;
 }
@@ -175,7 +177,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 		v.l = frame.GetObjectArrayElement(array, i + start);
 		if (v.l != NULL)
 			type = m_Context->getTypeManager()->findClassForObject(v.l);
-		res.setItem(i, type->convertToPythonObject(v).get());
+		res.setItem(i, type->convertToPythonObject(frame, v).get());
 	}
 
 	return res;
@@ -232,26 +234,26 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	jobjectArray array = (jobjectArray) a;
 
 	jobject obj = frame.GetObjectArrayElement(array, ndx);
-	JPClass* retType = this;
+	JPClass *retType = this;
 	jvalue v;
 	v.l = obj;
 	if (obj != NULL)
 		retType = m_Context->getTypeManager()->findClassForObject(v.l);
-	return retType->convertToPythonObject(v);
+	return retType->convertToPythonObject(frame, v);
 	JP_TRACE_OUT;
 }
 
 //</editor-fold>
 //<editor-fold desc="conversion" defaultstate="collapsed">
 
-JPValue JPClass::getValueFromObject(jobject obj)
+JPValue JPClass::getValueFromObject(const JPValue& obj)
 {
 	jvalue res;
-	res.l = obj;
+	res.l = obj.getJavaObject();
 	return JPValue(this, res);
 }
 
-JPPyObject JPClass::convertToPythonObject(jvalue obj)
+JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 
@@ -275,7 +277,7 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 		return JPPyObject::getNone();
 	}
 
-	JPClass* cls = m_Context->getTypeManager()->findClassForObject(obj.l);
+	JPClass *cls = m_Context->getTypeManager()->findClassForObject(obj.l);
 	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
 	JP_TRACE_OUT;
 }
@@ -349,8 +351,7 @@ string JPClass::describe()
 			if (!first)
 			{
 				out << ",";
-			}
-			else
+			} else
 			{
 				first = false;
 			}
@@ -363,8 +364,8 @@ string JPClass::describe()
 	// Fields
 	out << "  // Accessible Instance Fields" << endl;
 	for (JPFieldList::const_iterator curInstField = m_Fields.begin();
-		curInstField != m_Fields.end();
-		curInstField++)
+			curInstField != m_Fields.end();
+			curInstField++)
 	{
 		JPField* f = *curInstField;
 		out << "  " << f->getName() << endl;
@@ -376,7 +377,7 @@ string JPClass::describe()
 	{
 		JPMethodDispatch* f = m_Constructors;
 		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-			iter != f->getMethodOverloads().end(); ++iter)
+				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
 
@@ -385,7 +386,7 @@ string JPClass::describe()
 	{
 		JPMethodDispatch* f = *curMethod;
 		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-			iter != f->getMethodOverloads().end(); ++iter)
+				iter != f->getMethodOverloads().end(); ++iter)
 			out << "  " << (*iter)->toString() << endl;
 	}
 	out << "}";

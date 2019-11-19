@@ -21,10 +21,9 @@ class JPLongType : public JPPrimitiveType
 {
 public:
 
-	JPLongType(JPContext* context, jclass clss, const string& name, JPBoxedType* boxedClass, jint modifiers);
+	JPLongType();
 	virtual ~JPLongType();
 
-public:
 	typedef jlong type_t;
 	typedef jlongArray array_t;
 
@@ -38,10 +37,14 @@ public:
 		return v.j;
 	}
 
-public:
+	virtual JPBoxedType* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Long;
+	}
+
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -72,8 +75,6 @@ public:
 		return (jdouble) field(v);
 	}
 
-private:
-	jmethodID _LongValueID;
 } ;
 
 #endif // _JP_LONG_TYPE_H_

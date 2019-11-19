@@ -16,32 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPIntType::JPIntType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPIntType::JPIntType()
+: JPPrimitiveType("int")
 {
-	JP_TRACE_IN("JPIntType::JPIntType");
-	JPJavaFrame frame(context);
-	_IntValueID = frame.GetMethodID(boxedClass->getJavaClass(), "intValue", "()I");
-	JP_TRACE_OUT;
 }
 
 JPIntType::~JPIntType()
 {
 }
 
-JPPyObject JPIntType::convertToPythonObject(jvalue val)
+JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyInt::fromInt(field(val));
 }
 
-JPValue JPIntType::getValueFromObject(jobject obj)
+JPValue JPIntType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallIntMethodA(obj, _IntValueID, 0);
+	field(v) = frame.CallIntMethodA(obj.getJavaObject(), context->m_IntValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -76,6 +70,7 @@ public:
 
 JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPIntType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -92,7 +87,7 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, P
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == m_BoxedClass)
+		if (cls == context->_java_lang_Integer)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -128,7 +123,7 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, P
 
 	if (JPPyLong::checkConvertable(pyobj))
 	{
-		JP_TRACE("Python long convertable");
+		JP_TRACE("Python long convertible");
 		match.conversion = &asIntConversion;
 		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 		return match.type;
@@ -148,14 +143,14 @@ JPPyObject JPIntType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetStaticIntField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPIntType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetIntField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPIntType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -165,7 +160,7 @@ JPPyObject JPIntType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mt
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticIntMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -178,7 +173,7 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 		else
 			field(v) = frame.CallNonvirtualIntMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -236,7 +231,7 @@ JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetIntArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

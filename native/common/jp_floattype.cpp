@@ -16,30 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPFloatType::JPFloatType(JPContext *context, jclass clss,
-		const string& name,
-		JPBoxedType *boxedClass,
-		jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPFloatType::JPFloatType()
+: JPPrimitiveType("float")
 {
-	JPJavaFrame frame(context);
-	_FloatValueID = frame.GetMethodID(boxedClass->getJavaClass(), "floatValue", "()F");
 }
 
 JPFloatType::~JPFloatType()
 {
 }
 
-JPPyObject JPFloatType::convertToPythonObject(jvalue val)
+JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyFloat::fromFloat(field(val));
 }
 
-JPValue JPFloatType::getValueFromObject(jobject obj)
+JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = (type_t) frame.CallFloatMethodA(obj, _FloatValueID, 0);
+	field(v) = (type_t) frame.CallFloatMethodA(obj.getJavaObject(), context->m_FloatValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -85,6 +81,7 @@ public:
 
 JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject *pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPIntType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -100,7 +97,7 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame& frame, JPMatch& match,
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == m_BoxedClass)
+		if (cls == context->_java_lang_Float)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -154,14 +151,14 @@ JPPyObject JPFloatType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fi
 {
 	jvalue v;
 	field(v) = frame.GetStaticFloatField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPFloatType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetFloatField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue *val)
@@ -171,7 +168,7 @@ JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID 
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticFloatMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue *val)
@@ -184,7 +181,7 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 		else
 			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPFloatType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject *obj)
@@ -242,7 +239,7 @@ JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetFloatArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

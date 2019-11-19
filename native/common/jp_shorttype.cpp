@@ -16,35 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPShortType::JPShortType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPShortType::JPShortType()
+: JPPrimitiveType("short")
 {
-	JPJavaFrame frame(context);
-	jfieldID fid;
-	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MIN_VALUE", "S");
-	m_Short_Min = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
-	fid = frame.GetStaticFieldID(boxedClass->getJavaClass(), "MAX_VALUE", "S");
-	m_Short_Max = frame.GetStaticShortField(boxedClass->getJavaClass(), fid);
-	m_ShortValueID = frame.GetMethodID(boxedClass->getJavaClass(), "shortValue", "()S");
 }
 
 JPShortType::~JPShortType()
 {
 }
 
-JPPyObject JPShortType::convertToPythonObject(jvalue val)
+JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyInt::fromInt(field(val));
 }
 
-JPValue JPShortType::getValueFromObject(jobject obj)
+JPValue JPShortType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallShortMethodA(obj, m_ShortValueID, 0);
+	field(v) = frame.CallShortMethodA(obj.getJavaObject(), context->m_ShortValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -77,6 +68,7 @@ public:
 
 JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPShortType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -92,7 +84,7 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame& frame, JPMatch& match,
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == m_BoxedClass)
+		if (cls == context->_java_lang_Short)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -144,14 +136,14 @@ JPPyObject JPShortType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fi
 {
 	jvalue v;
 	field(v) = frame.GetStaticShortField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPShortType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetShortField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPShortType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -161,7 +153,7 @@ JPPyObject JPShortType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID 
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticShortMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -174,7 +166,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 		else
 			field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -232,7 +224,7 @@ JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetShortArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

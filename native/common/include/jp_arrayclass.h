@@ -24,19 +24,15 @@ class JPArrayClass : public JPClass
 {
 public:
 	JPArrayClass(JPContext* context,
-		jclass cls,
-		const string& name,
-		JPClass* superClass,
-		JPClass* componentType,
-		jint modifiers);
+			jclass cls,
+			const string& name,
+			JPClass* superClass,
+			JPClass* componentType,
+			jint modifiers);
 	virtual~ JPArrayClass();
 
-public:
-	virtual JPPyObject convertToPythonObject(jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj);
-
-//	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
-//	virtual jvalue convertToJava(PyObject* obj) override;
 
 	JPValue newInstance(int length);
 
@@ -58,8 +54,7 @@ public:
 		return m_ComponentType;
 	}
 
-
-public:
+private:
 	JPClass* m_ComponentType;
 } ;
 

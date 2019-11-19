@@ -40,6 +40,7 @@ public:
 
 	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
 	{
+		JPContext *context = frame.getContext();
 		JP_TRACE("char[]");
 		jvalue res;
 
@@ -47,11 +48,10 @@ public:
 		string str = JPPyString::asStringUTF8(pyobj);
 
 		// Convert to new java string
-		jstring jstr = frame.getContext()->fromStringUTF8(str);
+		jstring jstr = context->fromStringUTF8(str);
 
 		// call toCharArray()
-		jobject charArray = frame.getContext()->_java_lang_String->stringToCharArray(jstr);
-		res.l = charArray;
+		res.l = context->_java_lang_String->stringToCharArray(frame, jstr);
 		return res;
 	}
 } charArrayConversion;
@@ -96,10 +96,10 @@ public:
 		JPPySequence seq(JPPyRef::_use, pyobj);
 		jsize length = (jsize) seq.size();
 
-		jarray array = acls->m_ComponentType->newArrayInstance(frame, (jsize) length);
+		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);
 		for (jsize i = 0; i < length; i++)
 		{
-			acls->m_ComponentType->setArrayItem(frame, array, i, seq[i].get());
+			acls->getComponentType()->setArrayItem(frame, array, i, seq[i].get());
 		}
 		res.l = frame.keep(array);
 		return res;
@@ -169,7 +169,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPArrayClass::convertToPythonObject(jvalue val)
+JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	JP_TRACE_IN("JPArrayClass::convertToPythonObject")
 	return JPPythonEnv::newJavaObject(JPValue(this, val));

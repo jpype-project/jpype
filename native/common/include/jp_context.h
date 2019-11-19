@@ -45,6 +45,9 @@ public:
 	JPRef(JPContext* context, jref obj)
 	{
 		m_Context = context;
+		m_Ref = 0;
+		if (context == 0)
+			return;
 		JPJavaFrame frame(m_Context);
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
@@ -221,10 +224,23 @@ public:
 
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
+	JPClass* _java_lang_reflect_Field;
+	JPClass* _java_lang_reflect_Method;
 	JPStringType* _java_lang_String;
 
 	JPClassRef _java_lang_RuntimeException;
 	JPClassRef _java_lang_NoSuchMethodError;
+
+	jmethodID m_BooleanValueID;
+	jmethodID m_ByteValueID;
+	jmethodID m_CharValueID;
+	jmethodID m_ShortValueID;
+	jmethodID m_IntValueID;
+	jmethodID m_LongValueID;
+	jmethodID m_FloatValueID;
+	jmethodID m_DoubleValueID;
+
+
 
 	void setHost(PyObject* host)
 	{
@@ -281,4 +297,3 @@ JPRef<jref>::~JPRef()
 }
 
 #endif /* JP_CONTEXT_H */
-

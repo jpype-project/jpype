@@ -52,7 +52,7 @@ _JARRAY_TYPENAME_MAP = {
 }
 
 
-class _JArray(object):
+class JArray(_jpype.PyJPArray, _jpype.JObject):
     """ Create a java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.
@@ -115,37 +115,37 @@ class _JArray(object):
     __jvm__ = None
 
     def __new__(cls, *args, **kwargs):
-        if cls == JArray:
+        if cls == cls.__jvm__.JArray:
             return _JArrayNewClass(cls.__jvm__, *args, **kwargs)
-        return super(JArray, cls).__new__(cls)
+        return super(JArray, cls).__new__(cls, *args, **kwargs)
 
-    def __init__(self, *args, **kwargs):
-        if hasattr(self, '__javavalue__'):
-            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-            return
-
-        if len(args) != 1:
-            raise TypeError(
-                "Array classes only take 2 parameters, {0} given"
-                .format(len(args) + 1))
-
-        if isinstance(args[0], _jpype.PyJPValue):
-            self.__javavalue__ = args[0]
-            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-            return
-
-        values = None
-        if _isIterable(args[0]):
-            sz = len(args[0])
-            values = args[0]
-        else:
-            sz = args[0]
-
-        self.__javavalue__ = self.__class__.__javaclass__.newInstance(sz)
-        self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-
-        if values is not None:
-            self.__javaarray__.setArraySlice(0, sz, values)
+#    def __init__(self, *args, **kwargs):
+#        if hasattr(self, '__javavalue__'):
+#            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
+#            return
+#
+#        if len(args) != 1:
+#            raise TypeError(
+#                "Array classes only take 2 parameters, {0} given"
+#                .format(len(args) + 1))
+#
+#        if isinstance(args[0], _jpype.PyJPValue):
+#            self.__javavalue__ = args[0]
+#            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
+#            return
+#
+#        values = None
+#        if _isIterable(args[0]):
+#            sz = len(args[0])
+#            values = args[0]
+#        else:
+#            sz = args[0]
+#
+#        self.__javavalue__ = self.__class__.__javaclass__.newInstance(sz)
+#        self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
+#
+#        if values is not None:
+#            self.__javaarray__.setArraySlice(0, sz, values)
 
     def __str__(self):
         return str(tuple(self))
@@ -171,7 +171,7 @@ class _JArray(object):
             if step != 1:
                 raise NotImplementedError("Slicing with step unimplemented")
             return self.__getslice__(start, stop)
-        return self.__javaarray__.getArrayItem(ndx)
+        return self._getArrayItem(ndx)
 
     def __setitem__(self, ndx, val):
         if isinstance(ndx, slice):
@@ -184,20 +184,20 @@ class _JArray(object):
             else:
                 self.__setslice__(start, stop, val)
             return
-        self.__javaarray__.setArrayItem(ndx, val)
+        self._setArrayItem(ndx, val)
 
     def __getslice__(self, i, j):
         if j == _sys.maxsize:
-            j = self.__javaarray__.getArrayLength()
-        return self.__javaarray__.getArraySlice(i, j)
+            j = self.__len__()
+        return self._getArraySlice(i, j)
 
     def __setslice__(self, i, j, v):
         if j == _sys.maxsize:
-            j = self.__javaarray__.getArrayLength()
-        self.__javaarray__.setArraySlice(i, j, v)
+            j = self.__len__()
+        self._setArraySlice(i, j, v)
 
     def __eq__(self, other):
-        if hasattr(other, '__javavalue__'):
+        if isinstance(other, _jpype.PyJPValue):
             return self.equals(other)
         try:
             return self.equals(self.__class__(other))
@@ -205,7 +205,7 @@ class _JArray(object):
             return False
 
     def __ne__(self, other):
-        if hasattr(other, '__javavalue__'):
+        if isinstance(other, _jpype.PyJPValue):
             return not self.equals(other)
         try:
             return self.equals(self.__class__(other))
@@ -232,9 +232,6 @@ class _JArray(object):
         return self.__jvm__.JClass("java.util.Arrays").copyOf(self, len(self))
 
 
-JArray = _jobject.defineJObjectFactory("JArray", None, _JArray)
-
-
 def _JArrayNewClass(jvm, cls, ndims=1):
     """ Convert a array class description into a JArray class."""
     jc = _jclass._toJavaClass(jvm, cls)
@@ -243,9 +240,9 @@ def _JArrayNewClass(jvm, cls, ndims=1):
         # primitives need special handling
         typename = ('['*ndims)+_JARRAY_TYPENAME_MAP[jc.getCanonicalName()]
     elif jc.isArray():
-        typename = ('['*ndims)+str(_jobject.JObject(jc).getName())
+        typename = ('['*ndims)+str(jvm.JObject(jc).getName())
     else:
-        typename = ('['*ndims)+'L'+str(_jobject.JObject(jc).getName())+';'
+        typename = ('['*ndims)+'L'+str(jvm.JObject(jc).getName())+';'
 
     return jvm.JClass(typename)
 
@@ -295,7 +292,7 @@ class _JCharArray(object):
         return unicode(_jstring.JString(self))
 
     def __eq__(self, other):
-        if hasattr(other, '__javavalue__'):
+        if isinstance(other, _jpype.PyJPValue):
             return self.equals(other)
         elif isinstance(other, (str, unicode)):
             return self[:] == other

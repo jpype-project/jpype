@@ -44,7 +44,7 @@ class _JException(object):
     __jvm__ = None
 
     def __new__(cls, *args, **kwargs):
-        if cls == JException:
+        if cls == JException or cls == cls.__jvm__.JException: 
             import warnings
             if not hasattr(JException, '_warned'):
                 warnings.warn("Using JException to construct an exception type is deprecated.",
@@ -52,16 +52,6 @@ class _JException(object):
                 JException._warned = True
             return _JExceptionClassFactory(cls.__jvm__, *args, **kwargs)
         return super(JException, cls).__new__(cls)
-
-    def __init__(self, *args, **kwargs):
-        if hasattr(self, '__javavalue__'):
-            pass
-        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            self.__javavalue__ = args[0]
-        else:
-            self.__javavalue__ = self.__class__.__javaclass__.newInstance(
-                *args)
-        super(Exception, self.__class__).__init__(self)
 
     def __str__(self):
         return str(self.toString())

@@ -19,7 +19,8 @@
 
 struct PyJPField
 {
-	PyObject_HEAD
+	PyJPValue m_Value;
+	JPField *m_Field;
 
 	static PyTypeObject Type;
 
@@ -27,17 +28,11 @@ struct PyJPField
 	static void initType(PyObject *module);
 	static JPPyObject alloc(JPField *mth);
 
-	static void __dealloc__(PyJPField *o);
 	static PyObject* getName(PyJPField *self, PyObject *arg);
 	static PyObject* __get__(PyJPField *self, PyObject *obj, PyObject *type);
 	static int __set__(PyJPField *self, PyObject *obj, PyObject *val);
 	static PyObject* isStatic(PyJPField *self, PyObject *arg);
 	static PyObject* isFinal(PyJPField *self, PyObject *arg);
-	static int traverse(PyJPField *self, visitproc visit, void *arg);
-	static int clear(PyJPField *self);
-
-	JPField *m_Field;
-	PyJPContext *m_Context;
 } ;
 
 #endif // _PYFIELD_H_

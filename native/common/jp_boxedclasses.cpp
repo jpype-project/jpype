@@ -21,18 +21,15 @@ JPBoxedType::JPBoxedType(JPContext* context, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
-		jint modifiers)
-: JPClass(context, clss, name, super, interfaces, modifiers)
+		jint modifiers,
+		JPPrimitiveType* primitiveType)
+: JPClass(context, clss, name, super, interfaces, modifiers),
+m_PrimitiveType(primitiveType)
 {
 }
 
 JPBoxedType::~JPBoxedType()
 {
-}
-
-void JPBoxedType::setPrimitiveType(JPPrimitiveType* primitiveType)
-{
-	m_PrimitiveType = primitiveType;
 }
 
 JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)

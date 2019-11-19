@@ -16,30 +16,26 @@
  *****************************************************************************/
 #include <jp_primitive_common.h>
 
-JPLongType::JPLongType(JPContext* context, jclass clss,
-		const string& name,
-		JPBoxedType* boxedClass,
-		jint modifiers)
-: JPPrimitiveType(context, clss, name, boxedClass, modifiers)
+JPLongType::JPLongType()
+: JPPrimitiveType("long")
 {
-	JPJavaFrame frame(context);
-	_LongValueID = frame.GetMethodID(boxedClass->getJavaClass(), "longValue", "()J");
 }
 
 JPLongType::~JPLongType()
 {
 }
 
-JPPyObject JPLongType::convertToPythonObject(jvalue val)
+JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyLong::fromLong(field(val));
 }
 
-JPValue JPLongType::getValueFromObject(jobject obj)
+JPValue JPLongType::getValueFromObject(const JPValue& obj)
 {
-	JPJavaFrame frame(m_Context);
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallLongMethodA(obj, _LongValueID, 0);
+	field(v) = frame.CallLongMethodA(obj.getJavaObject(), context->m_LongValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -72,6 +68,7 @@ public:
 
 JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
+	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPLongType::getJavaConversion");
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
@@ -89,7 +86,7 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, 
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == m_BoxedClass)
+		if (cls == context->_java_lang_Long)
 		{
 			JP_TRACE("Boxed");
 			match.conversion = unboxConversion;
@@ -144,14 +141,14 @@ JPPyObject JPLongType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticLongField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetLongField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -161,7 +158,7 @@ JPPyObject JPLongType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticLongMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -174,7 +171,7 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -232,7 +229,7 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetLongArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

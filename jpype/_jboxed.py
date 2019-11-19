@@ -29,8 +29,9 @@ else:
 
 __all__ = []
 
+# FIXME disabling these customizers for now.
 
-@_jcustomizer.JImplementationFor("java.lang.Boolean", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Boolean", base=True)
 class _JBoxedBoolean(int, _jobject.JObject):
     # Boolean is special because in python True and False are singletons,
     # thus it is not possible to make a wrapper properly act as a bool
@@ -61,7 +62,7 @@ class _JBoxedBoolean(int, _jobject.JObject):
         return str(True)
 
 
-@_jcustomizer.JImplementationFor("java.lang.Byte", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Byte", base=True)
 class _JBoxedByte(int, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
@@ -85,7 +86,7 @@ class _JBoxedByte(int, _jobject.JObject):
         __ge__ = int.__ge__
 
 
-@_jcustomizer.JImplementationFor("java.lang.Short", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Short", base=True)
 class _JBoxedShort(int, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
@@ -109,7 +110,7 @@ class _JBoxedShort(int, _jobject.JObject):
         __ge__ = int.__ge__
 
 
-@_jcustomizer.JImplementationFor("java.lang.Integer", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Integer", base=True)
 class _JBoxedInteger(int, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
@@ -133,7 +134,7 @@ class _JBoxedInteger(int, _jobject.JObject):
         __ge__ = int.__ge__
 
 
-@_jcustomizer.JImplementationFor("java.lang.Long", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Long", base=True)
 class _JBoxedLong(_long, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
@@ -157,7 +158,7 @@ class _JBoxedLong(_long, _jobject.JObject):
         __ge__ = _long.__ge__
 
 
-@_jcustomizer.JImplementationFor("java.lang.Float", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Float", base=True)
 class _JBoxedFloat(float, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
@@ -173,7 +174,7 @@ class _JBoxedFloat(float, _jobject.JObject):
     __ne__ = float.__ne__
 
 
-@_jcustomizer.JImplementationFor("java.lang.Double", base=True)
+#@_jcustomizer.JImplementationFor("java.lang.Double", base=True)
 class _JBoxedDouble(float, _jobject.JObject):
     def __new__(cls, *args):
         if len(args) != 1:
