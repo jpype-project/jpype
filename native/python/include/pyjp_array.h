@@ -17,6 +17,7 @@
 #ifndef _PYJP_ARRAY_H_
 #define _PYJP_ARRAY_H_
 
+extern PyObject* PyJPArray_Type;
 /** This is a wrapper for accessing the array method.  It is structured to
  * be like a bound method.  It should not be the primary handle to the object.
  * That will be a PyJPValue.
@@ -26,22 +27,7 @@ struct PyJPArray
 	PyJPValue m_Value;
 	JPArray *m_Array;
 
-	static JPPyObject alloc(PyTypeObject* wrapper, JPContext* context, JPClass* cls, jvalue value);
-
-	static PyTypeObject Type;
 	static void initType(PyObject *module);
-
-	// Object A
-	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPArray *self);
-	static PyObject* __repr__(PyJPArray *self);
-
-	// Python-visible methods
-	static PyObject* getArrayLength(PyJPArray *self, PyObject *arg);
-	static PyObject* getArrayItem(PyJPArray *self, PyObject *arg);
-	static PyObject* setArrayItem(PyJPArray *self, PyObject *arg);
-	static PyObject* getArraySlice(PyJPArray *self, PyObject *arg);
-	static PyObject* setArraySlice(PyJPArray *self, PyObject *arg);
 } ;
 
 #endif // _PYJP_ARRAY_H_

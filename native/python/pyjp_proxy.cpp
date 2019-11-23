@@ -17,68 +17,48 @@
 #include <pyjp.h>
 #include <structmember.h>
 
-static PyMethodDef proxyMethods[] = {
-	{NULL},
-};
+PyObject *PyJPProxy_Type = NULL;
+PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs);
+void PyJPProxy_dealloc(PyJPProxy *self);
+int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg);
+int PyJPProxy_clear(PyJPProxy *self);
+PyObject *PyJPProxy_str(PyJPProxy *self);
 
 static PyMemberDef proxyMembers[] = {
 	{"__jvm__", T_OBJECT, offsetof(PyJPProxy, m_Context), READONLY},
 	{0}
 };
 
-PyTypeObject PyJPProxy::Type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	/* tp_name           */ "PyJPProxy",
-	/* tp_basicsize      */ sizeof (PyJPProxy),
-	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPProxy::__dealloc__,
-	/* tp_print          */ 0,
-	/* tp_getattr        */ 0,
-	/* tp_setattr        */ 0,
-	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
-	/* tp_as_number      */ 0,
-	/* tp_as_sequence    */ 0,
-	/* tp_as_mapping     */ 0,
-	/* tp_hash           */ 0,
-	/* tp_call           */ 0,
-	/* tp_str            */ (reprfunc) PyJPProxy::__str__,
-	/* tp_getattro       */ 0,
-	/* tp_setattro       */ 0,
-	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-	/* tp_doc            */ "Java Proxy",
-	/* tp_traverse       */ (traverseproc) PyJPProxy::traverse,
-	/* tp_clear          */ (inquiry) PyJPProxy::clear,
-	/* tp_richcompare    */ 0,
-	/* tp_weaklistoffset */ 0,
-	/* tp_iter           */ 0,
-	/* tp_iternext       */ 0,
-	/* tp_methods        */ proxyMethods,
-	/* tp_members        */ proxyMembers,
-	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
-	/* tp_dict           */ 0,
-	/* tp_descr_get      */ 0,
-	/* tp_descr_set      */ 0,
-	/* tp_dictoffset     */ 0,
-	/* tp_init           */ (initproc) PyJPProxy::__init__,
-	/* tp_alloc          */ 0,
-	/* tp_new            */ PyJPProxy::__new__
+static PyType_Slot proxySlots[] = {
+	{ Py_tp_new,      PyJPProxy_new},
+	{ Py_tp_init,     (initproc) PyJPProxy_init},
+	{ Py_tp_dealloc,  (destructor) PyJPProxy_dealloc},
+	{ Py_tp_str,      (reprfunc) PyJPProxy_str},
+	{ Py_tp_traverse, (traverseproc) PyJPProxy_traverse},
+	{ Py_tp_clear,    (inquiry) PyJPProxy_clear},
+	{ Py_tp_members,  proxyMembers},
+	{0}
 };
 
-// Static methods
+static PyType_Spec proxySpec = {
+	"_jpype.PyJPProxy",
+	sizeof (PyObject),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
+	proxySlots
+};
+
 
 void PyJPProxy::initType(PyObject *module)
 {
-	PyType_Ready(&PyJPProxy::Type);
-	Py_INCREF(&PyJPProxy::Type);
-	PyModule_AddObject(module, "PyJPProxy", (PyObject*) (&PyJPProxy::Type));
+	PyModule_AddObject(module, "PyJPProxy",
+			PyJPProxy_Type = PyType_FromSpec(&proxySpec));
 }
 
-PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN("PyJPProxy::new");
+	JP_TRACE_IN("PyJPProxy_new");
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
@@ -87,9 +67,9 @@ PyObject *PyJPProxy::__new__(PyTypeObject *type, PyObject *args, PyObject *kwarg
 	JP_TRACE_OUT;
 }
 
-int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
+int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPProxy::init", self);
+	JP_TRACE_IN_C("PyJPProxy_init", self);
 	try
 	{
 		// Parse arguments
@@ -149,19 +129,19 @@ int PyJPProxy::__init__(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	JP_TRACE_OUT_C;
 }
 
-void PyJPProxy::__dealloc__(PyJPProxy *self)
+void PyJPProxy_dealloc(PyJPProxy *self)
 {
 	JP_TRACE_IN_C("PyJPProxy::dealloc", self);
 	delete self->m_Proxy;
 
 	PyObject_GC_UnTrack(self);
-	clear(self);
+	PyJPProxy_clear(self);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;
 }
 
-int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
+int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
 	JP_TRACE_IN_C("PyJPProxy::traverse", self);
 	Py_VISIT(self->m_Target);
@@ -170,7 +150,7 @@ int PyJPProxy::traverse(PyJPProxy *self, visitproc visit, void *arg)
 	JP_TRACE_OUT_C;
 }
 
-int PyJPProxy::clear(PyJPProxy *self)
+int PyJPProxy_clear(PyJPProxy *self)
 {
 	JP_TRACE_IN_C("PyJPProxy::clear", self);
 	Py_CLEAR(self->m_Target);
@@ -179,7 +159,7 @@ int PyJPProxy::clear(PyJPProxy *self)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPProxy::__str__(PyJPProxy *self)
+PyObject *PyJPProxy_str(PyJPProxy *self)
 {
 	try
 	{
@@ -191,9 +171,4 @@ PyObject *PyJPProxy::__str__(PyJPProxy *self)
 		return JPPyString::fromStringUTF8(sout.str()).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
-}
-
-bool PyJPProxy::check(PyObject *o)
-{
-	return Py_TYPE(o) == &PyJPProxy::Type;
 }

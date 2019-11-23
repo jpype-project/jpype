@@ -17,12 +17,26 @@
 #ifndef _PYJP_VALUE_H_
 #define _PYJP_VALUE_H_
 
-extern PyObject *PyJPClassMeta_Type;
+#include "pyjp_context.h"
 
+
+extern PyObject *PyJPClassMeta_Type;
 extern PyObject *PyJPValueBase_Type;
 extern PyObject *PyJPValue_Type;
 extern PyObject *PyJPValueInt_Type;
 extern PyObject *PyJPValueExc_Type;
+
+inline JPContext* PyJPValue_getContext(PyJPValue* value)
+{
+	JPContext *context = value->m_Context->m_Context;
+	if (context == NULL)
+	{
+		JP_RAISE_RUNTIME_ERROR("Context is null");
+	}
+	ASSERT_JVM_RUNNING(context);
+	return;
+}
+#define PyJPValue_GET_CONTEXT(X) PyJPValue_getContext((PyJPValue*)X)
 
 struct PyJPValue
 {
@@ -32,23 +46,7 @@ struct PyJPValue
 
 	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, JPClass* cls, jvalue value);
 	static void initType(PyObject *module);
-	static JPValue* getValue(PyObject *self);
-
-	//	static JPPyObject alloc(PyTypeObject* wrapper, JPContext *context, JPClass *cls, jvalue value);
-	//
-	//	static PyTypeObject Type;
-	//
-	//	// Object A
-	//	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	//	static int __init__(PyJPValue *self, PyObject *args, PyObject *kwargs);
-	//	static void __dealloc__(PyJPValue *self);
-	//	static int traverse(PyJPValue *self, visitproc visit, void *arg);
-	//	static int clear(PyJPValue *self);
-	//
-	//	static PyObject* __repr__(PyJPValue *self);
-	//	static PyObject* toString(PyJPValue *self);
-	//	static PyObject* toUnicode(PyJPValue *self);
-
+	static PyJPValue* getValue(PyObject *self);
 } ;
 
 #endif // _PYJP_VALUE_H_2

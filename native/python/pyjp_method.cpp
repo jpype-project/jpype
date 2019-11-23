@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include <pyjp.h>
 
+PyObject* PyJPMethod_Type = NULL;
 PyObject* PyJPMethod_new(PyTypeObject *self, PyObject *args, PyObject *kwargs);
 void      PyJPMethod_dealloc(PyJPMethod *o);
 int       PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg);
@@ -40,7 +41,6 @@ PyObject* PyJPMethod_isBeanMutator(PyJPMethod* self, PyObject* arg);
 PyObject* PyJPMethod_isBeanAccessor(PyJPMethod* self, PyObject* arg);
 PyObject* PyJPMethod_matchReport(PyJPMethod* self, PyObject* arg);
 PyObject* PyJPMethod_dump(PyJPMethod* self, PyObject* arg);
-
 
 static PyMethodDef methodMethods[] = {
 	{"_isBeanAccessor", (PyCFunction) (&PyJPMethod_isBeanAccessor), METH_NOARGS, ""},

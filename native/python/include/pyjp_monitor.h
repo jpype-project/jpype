@@ -19,26 +19,18 @@
 
 #include "object.h"
 
+extern PyObject *PyJPMonitor_Type;
+
 /** Python object to support jpype.synchronized(object) command.
  */
 struct PyJPMonitor
 {
 	PyObject_HEAD
-
-	static PyTypeObject Type;
+	JPMonitor *m_Monitor;
+	PyJPContext *m_Context;
 
 	// Python-visible methods
 	static void initType(PyObject *module);
-	static int __init__(PyJPMonitor *self, PyObject *args);
-	static void __dealloc__(PyJPMonitor *o);
-	static PyObject* __str__(PyJPMonitor *o);
-	static PyObject* __enter__(PyJPMonitor *self, PyObject *args);
-	static PyObject* __exit__(PyJPMonitor *self, PyObject *args);
-	static int traverse(PyJPMonitor *self, visitproc visit, void *arg);
-	static int clear(PyJPMonitor *self);
-
-	JPMonitor *m_Monitor;
-	PyJPContext *m_Context;
 } ;
 
 #endif // _PYMONITOR_H_

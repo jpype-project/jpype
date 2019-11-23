@@ -18,24 +18,15 @@
 #ifndef _PYJPPROXY_H_
 #define _PYJPPROXY_H_
 
+extern PyObject *PyJPProxy_Type;
 struct PyJPProxy
 {
 	PyObject_HEAD
-
-	static PyTypeObject Type;
-	static void initType(PyObject *module);
-	static bool check(PyObject *o);
-
-	static PyObject * __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int __init__(PyJPProxy *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPProxy *self);
-	static PyObject *__str__(PyJPProxy *self);
-	static int traverse(PyJPProxy *self, visitproc visit, void *arg);
-	static int clear(PyJPProxy *self);
-
 	JPProxy *m_Proxy;
 	PyObject *m_Target;
 	PyJPContext *m_Context;
+
+	static void initType(PyObject *module);
 } ;
 
 #endif // _PYJPROXY_H_

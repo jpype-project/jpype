@@ -17,22 +17,15 @@
 #ifndef _PYFIELD_H_
 #define _PYFIELD_H_
 
+extern PyObject *PyJPField_Type;
 struct PyJPField
 {
 	PyJPValue m_Value;
 	JPField *m_Field;
 
-	static PyTypeObject Type;
-
 	// Python-visible methods
 	static void initType(PyObject *module);
 	static JPPyObject alloc(JPField *mth);
-
-	static PyObject* getName(PyJPField *self, PyObject *arg);
-	static PyObject* __get__(PyJPField *self, PyObject *obj, PyObject *type);
-	static int __set__(PyJPField *self, PyObject *obj, PyObject *val);
-	static PyObject* isStatic(PyJPField *self, PyObject *arg);
-	static PyObject* isFinal(PyJPField *self, PyObject *arg);
 } ;
 
 #endif // _PYFIELD_H_

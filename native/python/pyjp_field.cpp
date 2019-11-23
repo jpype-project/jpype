@@ -16,62 +16,44 @@
  *****************************************************************************/
 #include <pyjp.h>
 
+PyObject *PyJPField_Type = NULL;
+PyObject *PyJPField_name(PyJPField *self, PyObject *arg);
+PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type);
+int       PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue);
+PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg);
+PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg);
+
 static PyGetSetDef fieldGetSets[] = {
-	{"__name__", (getter) (&PyJPField::getName), NULL, ""},
-	{"_final", (getter) (&PyJPField::isFinal), NULL, ""},
-	{"_static", (getter) (&PyJPField::isStatic), NULL, ""},
+	{"__name__", (getter) (&PyJPField_name), NULL, ""},
+	{"_final", (getter) (&PyJPField_isFinal), NULL, ""},
+	{"_static", (getter) (&PyJPField_isStatic), NULL, ""},
 	{0}
 };
 
-PyTypeObject PyJPField::Type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	/* tp_name           */ "_jpype.PyJPField",
-	/* tp_basicsize      */ sizeof (PyJPField),
-	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPValue::__dealloc__,
-	/* tp_print          */ 0,
-	/* tp_getattr        */ 0,
-	/* tp_setattr        */ 0,
-	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
-	/* tp_as_number      */ 0,
-	/* tp_as_sequence    */ 0,
-	/* tp_as_mapping     */ 0,
-	/* tp_hash           */ 0,
-	/* tp_call           */ 0,
-	/* tp_str            */ 0,
-	/* tp_getattro       */ 0,
-	/* tp_setattro       */ 0,
-	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
-	/* tp_doc            */ "Java Field",
-	/* tp_traverse       */ (traverseproc) PyJPValue::traverse,
-	/* tp_clear          */ (inquiry) PyJPValue::clear,
-	/* tp_richcompare    */ 0,
-	/* tp_weaklistoffset */ 0,
-	/* tp_iter           */ 0,
-	/* tp_iternext       */ 0,
-	/* tp_methods        */ 0,
-	/* tp_members        */ 0,
-	/* tp_getset         */ fieldGetSets,
-	/* tp_base           */ &PyJPValue::Type,
-	/* tp_dict           */ 0,
-	/* tp_descr_get      */ (descrgetfunc) PyJPField::__get__,
-	/* tp_descr_set      */ (descrsetfunc) PyJPField::__set__,
-	/* tp_dictoffset     */ 0,
-	/* tp_init           */ 0,
-	/* tp_alloc          */ 0,
-	/* tp_new            */ PyType_GenericNew
-
+static PyType_Slot fieldSlots[] = {
+	{ Py_tp_dealloc,   (destructor) PyJPValue_dealloc},
+	{ Py_tp_traverse,  (traverseproc) PyJPValue_traverse},
+	{ Py_tp_clear,     (inquiry) PyJPValue_clear},
+	{ Py_tp_descr_get, (descrgetfunc) PyJPField_get},
+	{ Py_tp_descr_set, (descrsetfunc) PyJPField_set},
+	{ Py_tp_getset,    &fieldGetSets},
+	{0}
 };
 
-// Static methods
+static PyType_Spec fieldSpec = {
+	"_jpype.PyJPField",
+	sizeof (PyJPField),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
+	fieldSlots
+};
 
 void PyJPField::initType(PyObject *module)
 {
-	PyType_Ready(&PyJPField::Type);
-	Py_INCREF(&PyJPField::Type);
-	PyModule_AddObject(module, "PyJPField", (PyObject*) (&PyJPField::Type));
+	PyObject *bases = PyTuple_Pack(1, PyJPValue_Type);
+	PyModule_AddObject(module, "PyJPField",
+			PyJPField_Type = PyType_FromSpecWithBases(&fieldSpec, bases));
+	Py_DECREF(bases);
 }
 
 JPPyObject PyJPField::alloc(JPField *field)
@@ -80,19 +62,19 @@ JPPyObject PyJPField::alloc(JPField *field)
 	JPContext *context = field->getContext();
 	jvalue v;
 	v.l = field->getJavaObject();
-	JPPyObject self = PyJPValue::alloc(&PyJPField::Type, field->getContext(),
-			context->_java_lang_reflect_Method, v);
+	JPPyObject self = PyJPValue::create(PyJPField_Type, field->getContext(),
+			context->_java_lang_reflect_Field, v);
 	((PyJPField*) self.get())->m_Field = field;
 	return self;
 	JP_TRACE_OUT;
 }
 
-PyObject *PyJPField::getName(PyJPField *self, PyObject *arg)
+PyObject *PyJPField_name(PyJPField *self, PyObject *arg)
 {
 	JP_TRACE_IN_C("PyJPField::getName", self);
 	try
 	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
+		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
 	}
@@ -100,12 +82,12 @@ PyObject *PyJPField::getName(PyJPField *self, PyObject *arg)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPField::__get__(PyJPField *self, PyObject *obj, PyObject *type)
+PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
-	JP_TRACE_IN_C("PyJPField::__get__", self);
+	JP_TRACE_IN_C("PyJPField_get", self);
 	try
 	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
+		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Field->isStatic())
 			return self->m_Field->getStaticField().keep();
@@ -121,12 +103,12 @@ PyObject *PyJPField::__get__(PyJPField *self, PyObject *obj, PyObject *type)
 	JP_TRACE_OUT_C;
 }
 
-int PyJPField::__set__(PyJPField *self, PyObject *obj, PyObject *pyvalue)
+int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
-	JP_TRACE_IN_C("PyJPField::__set__", self);
+	JP_TRACE_IN_C("PyJPField_set", self);
 	try
 	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
+		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Field->isFinal())
 			JP_RAISE_ATTRIBUTE_ERROR("Field is final");
@@ -147,22 +129,22 @@ int PyJPField::__set__(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPField::isStatic(PyJPField *self, PyObject *arg)
+PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
+		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(self->m_Field->isStatic());
 	}
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPField::isFinal(PyJPField *self, PyObject *arg)
+PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg)
 {
 	try
 	{
-		JPContext *context = self->m_Value.m_Context->m_Context;
+		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		return PyBool_FromLong(self->m_Field->isFinal());
 	}

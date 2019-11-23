@@ -16,77 +16,65 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-static PyMethodDef methods[] = {
-	{"__enter__", (PyCFunction) (&PyJPMonitor::__enter__), METH_NOARGS, ""},
-	{"__exit__", (PyCFunction) (&PyJPMonitor::__exit__), METH_VARARGS, ""},
+PyObject *PyJPMonitor_Type = NULL;
+int PyJPMonitor_init(PyJPMonitor *self, PyObject *args);
+void PyJPMonitor_dealloc(PyJPMonitor *o);
+PyObject* PyJPMonitor_str(PyJPMonitor *o);
+PyObject* PyJPMonitor_enter(PyJPMonitor *self, PyObject *args);
+PyObject* PyJPMonitor_exit(PyJPMonitor *self, PyObject *args);
+int PyJPMonitor_traverse(PyJPMonitor *self, visitproc visit, void *arg);
+int PyJPMonitor_clear(PyJPMonitor *self);
+
+static PyMethodDef monitorMethods[] = {
+	{"__enter__", (PyCFunction) (&PyJPMonitor_enter), METH_NOARGS, ""},
+	{"__exit__", (PyCFunction) (&PyJPMonitor_exit), METH_VARARGS, ""},
 	{NULL},
 };
 
-PyTypeObject PyJPMonitor::Type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	/* tp_name           */ "_jpype.PyJPMonitor",
-	/* tp_basicsize      */ sizeof (PyJPMonitor),
-	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPMonitor::__dealloc__,
-	/* tp_print          */ 0,
-	/* tp_getattr        */ 0,
-	/* tp_setattr        */ 0,
-	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
-	/* tp_as_number      */ 0,
-	/* tp_as_sequence    */ 0,
-	/* tp_as_mapping     */ 0,
-	/* tp_hash           */ 0,
-	/* tp_call           */ 0,
-	/* tp_str            */ (reprfunc) PyJPMonitor::__str__,
-	/* tp_getattro       */ 0,
-	/* tp_setattro       */ 0,
-	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
-	/* tp_doc            */ "Java Monitor",
-	/* tp_traverse       */ (traverseproc) PyJPMonitor::traverse,
-	/* tp_clear          */ (inquiry) PyJPMonitor::clear,
-	/* tp_richcompare    */ 0,
-	/* tp_weaklistoffset */ 0,
-	/* tp_iter           */ 0,
-	/* tp_iternext       */ 0,
-	/* tp_methods        */ methods,
-	/* tp_members        */ 0,
-	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
-	/* tp_dict           */ 0,
-	/* tp_descr_get      */ 0,
-	/* tp_descr_set      */ 0,
-	/* tp_dictoffset     */ 0,
-	/* tp_init           */ (initproc) PyJPMonitor::__init__,
-	/* tp_alloc          */ 0,
-	/* tp_new            */ PyType_GenericNew
+static PyType_Slot monitorSlots[] = {
+	{ Py_tp_init,     (initproc) PyJPMonitor_init},
+	{ Py_tp_dealloc,  (destructor) PyJPMonitor_dealloc},
+	{ Py_tp_traverse, (traverseproc) PyJPMonitor_traverse},
+	{ Py_tp_clear,    (inquiry) PyJPMonitor_clear},
+	{ Py_tp_str,      (reprfunc) PyJPMonitor_str},
+	{ Py_tp_methods,  &monitorMethods},
+	{0}
+};
+
+static PyType_Spec monitorSpec = {
+	"_jpype.PyJPMonitor",
+	sizeof (PyJPMonitor),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
+	monitorSlots
 };
 
 // Static methods
 
 void PyJPMonitor::initType(PyObject *module)
 {
-	PyType_Ready(&PyJPMonitor::Type);
-	Py_INCREF(&PyJPMonitor::Type);
-	PyModule_AddObject(module, "PyJPMonitor", (PyObject*) (&PyJPMonitor::Type));
+	PyModule_AddObject(module, "PyJPMonitor",
+			PyJPMonitor_Type = PyType_FromSpec(&monitorSpec));
 }
 
-int PyJPMonitor::__init__(PyJPMonitor *self, PyObject *args)
+int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__init__");
 	try
 	{
 		self->m_Monitor = NULL;
 
-		PyObject *value;
-
-		if (!PyArg_ParseTuple(args, "O!", &PyJPValue::Type, &value))
+		PyObject *obj;
+		if (!PyArg_ParseTuple(args, "O", &obj))
 		{
 			return -1;
 		}
 
-		JPValue& v1 = ((PyJPValue*) value)->m_Value;
+		PyJPValue *value = PyJPValue_asValue(obj);
+		if (value == NULL)
+			JP_RAISE_TYPE_ERROR("Must be a Java Object");
+
+		JPValue& v1 = value->m_Value;
 		JPContext *context = v1.getClass()->getContext();
 		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
@@ -120,22 +108,21 @@ int PyJPMonitor::__init__(PyJPMonitor *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-void PyJPMonitor::__dealloc__(PyJPMonitor *self)
+void PyJPMonitor_dealloc(PyJPMonitor *self)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
 	{
-		clear(self);
 		delete self->m_Monitor;
 		PyObject_GC_UnTrack(self);
-		clear(self);
+		PyJPMonitor_clear(self);
 		Py_TYPE(self)->tp_free(self);
 	}
 	PY_STANDARD_CATCH();
 	JP_TRACE_OUT_C;
 }
 
-int PyJPMonitor::traverse(PyJPMonitor *self, visitproc visit, void *arg)
+int PyJPMonitor_traverse(PyJPMonitor *self, visitproc visit, void *arg)
 {
 	JP_TRACE_IN_C("PyJPMonitor::traverse");
 	Py_VISIT(self->m_Context);
@@ -143,7 +130,7 @@ int PyJPMonitor::traverse(PyJPMonitor *self, visitproc visit, void *arg)
 	JP_TRACE_OUT_C;
 }
 
-int PyJPMonitor::clear(PyJPMonitor *self)
+int PyJPMonitor_clear(PyJPMonitor *self)
 {
 	JP_TRACE_IN_C("PyJPMonitor::clear");
 	Py_CLEAR(self->m_Context);
@@ -151,7 +138,7 @@ int PyJPMonitor::clear(PyJPMonitor *self)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPMonitor::__str__(PyJPMonitor *self)
+PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
 	JP_TRACE_IN_C("PyJPMonitor::__str__");
 	try
@@ -166,7 +153,7 @@ PyObject *PyJPMonitor::__str__(PyJPMonitor *self)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPMonitor::__enter__(PyJPMonitor *self, PyObject *args)
+PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
@@ -178,7 +165,7 @@ PyObject *PyJPMonitor::__enter__(PyJPMonitor *self, PyObject *args)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPMonitor::__exit__(PyJPMonitor *self, PyObject *args)
+PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	try
 	{
