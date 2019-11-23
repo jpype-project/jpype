@@ -19,6 +19,7 @@
 
 namespace PyJPModule
 {
+	PyObject *module;
 	/** Set a JPype Resource.
 	 *
 	 * JPype needs to know about a number of python objects to function

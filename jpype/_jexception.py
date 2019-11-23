@@ -26,7 +26,7 @@ else:
     _unicode = unicode
 
 
-class _JException(object):
+class _JException(Exception, _jobject.JObject):
     """ Base class for all ``java.lang.Throwable`` objects.
 
     When called as an object ``JException`` will produce a new exception class.  
@@ -91,8 +91,8 @@ class _JException(object):
         return (str(self.getMessage()), cause,)
 
 
-JException = _jobject.defineJObjectFactory("JException", None,
-                                           _JException, bases=(Exception, _jobject.JObject))
+#JException = _jobject.defineJObjectFactory("JException", None,
+#                                           _JException, bases=(Exception, _jobject.JObject))
 _jcustomizer.registerClassBase('java.lang.Throwable', JException)
 
 

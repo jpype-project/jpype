@@ -101,9 +101,6 @@ class JObject(_jpype.PyJPValue):
         raise AttributeError("Field '%s' is not settable on Java '%s' object" %
                              (name, self.__name__))
 
-    def __unicode__(self):
-        return self._toUnicode()
-
     def __hash__(self):
         return self.hashCode()
 

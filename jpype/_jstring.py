@@ -24,7 +24,7 @@ from . import _jcustomizer
 __all__ = ['JString']
 
 
-class _JString(object):
+class JString(_jobject.JObject):
     """ Base class for ``java.lang.String`` objects
 
     When called as a function, this class will produce a ``java.lang.String`` 
@@ -80,6 +80,6 @@ class _JString(object):
         return "'%s'" % self.__str__()
 
 
-JString = _jobject.defineJObjectFactory(
-    "JString", None, _JString)
+#JString = _jobject.defineJObjectFactory(
+#    "JString", None, _JString)
 _jcustomizer.registerClassBase('java.lang.String', JString)

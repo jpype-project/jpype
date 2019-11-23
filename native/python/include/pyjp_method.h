@@ -18,52 +18,20 @@
 #define _PYMETHOD_H_
 #include <pyjp.h>
 
+extern PyObject *PyJPMethod_Type;
 struct PyJPMethod
 {
 	PyFunctionObject func;
-
-	static PyTypeObject Type;
-
-	// Python-visible methods
-	static void initType(PyObject *module);
-	static JPPyObject alloc(JPMethodDispatch *mth, PyObject *obj);
-
-	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPMethod *o);
-	static int traverse(PyJPMethod *self, visitproc visit, void *arg);
-	static int clear(PyJPMethod *self);
-
-	static PyObject* __get__(PyJPMethod *self, PyObject *obj, PyObject *type);
-	static PyObject* __str__(PyJPMethod *o);
-	static PyObject* __repr__(PyJPMethod *self);
-	static PyObject* __call__(PyJPMethod* self, PyObject* args, PyObject* kwargs);
-
-	static PyObject* getSelf(PyJPMethod *self, void *context);
-	static PyObject* getName(PyJPMethod *self, void *context);
-	static PyObject* getQualName(PyJPMethod *self, void *context);
-	static PyObject* getDoc(PyJPMethod *self, void *context);
-	static int setDoc(PyJPMethod *self, PyObject* obj, void *context);
-	static PyObject* getAnnotations(PyJPMethod *self, void *context);
-	static int setAnnotations(PyJPMethod *self, PyObject* obj, void *context);
-	static PyObject* getNone(PyJPMethod *self, void *context);
-
-	static PyObject* getCodeAttr(PyJPMethod *self, void *context, const char* attr);
-	static PyObject* getCode(PyJPMethod *self, void *context);
-	static PyObject* getClosure(PyJPMethod *self, void *context);
-	static PyObject* getGlobals(PyJPMethod *self, void *context);
-
-	static PyObject* isBeanMutator(PyJPMethod* self, PyObject* arg);
-	static PyObject* isBeanAccessor(PyJPMethod* self, PyObject* arg);
-	static PyObject* matchReport(PyJPMethod* self, PyObject* arg);
-	static PyObject* dump(PyJPMethod* self, PyObject* arg);
-
 	PyJPContext *m_Context;
 	JPMethodDispatch* m_Method;
-
 	PyObject* m_Instance;
 	PyObject* m_Doc;
 	PyObject* m_Annotations;
 	PyObject* m_CodeRep;
+
+	// Python-visible methods
+	static void initType(PyObject *module);
+	static JPPyObject alloc(JPMethodDispatch *mth, PyObject *obj);
 } ;
 
 #endif // _PYMETHOD_H_

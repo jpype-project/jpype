@@ -17,29 +17,37 @@
 #ifndef _PYJP_VALUE_H_
 #define _PYJP_VALUE_H_
 
+extern PyObject *PyJPClassMeta_Type;
+
+extern PyObject *PyJPValueBase_Type;
+extern PyObject *PyJPValue_Type;
+extern PyObject *PyJPValueInt_Type;
+extern PyObject *PyJPValueExc_Type;
+
 struct PyJPValue
 {
 	PyObject_HEAD
 	JPValue m_Value;
-	PyObject *m_Cache;
 	PyJPContext *m_Context;
 
 	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, JPClass* cls, jvalue value);
-	static JPPyObject alloc(PyTypeObject* wrapper, JPContext *context, JPClass *cls, jvalue value);
-
-	static PyTypeObject Type;
 	static void initType(PyObject *module);
+	static JPValue* getValue(PyObject *self);
 
-	// Object A
-	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
-	static int __init__(PyJPValue *self, PyObject *args, PyObject *kwargs);
-	static void __dealloc__(PyJPValue *self);
-	static int traverse(PyJPValue *self, visitproc visit, void *arg);
-	static int clear(PyJPValue *self);
-
-	static PyObject* __repr__(PyJPValue *self);
-	static PyObject* toString(PyJPValue *self);
-	static PyObject* toUnicode(PyJPValue *self);
+	//	static JPPyObject alloc(PyTypeObject* wrapper, JPContext *context, JPClass *cls, jvalue value);
+	//
+	//	static PyTypeObject Type;
+	//
+	//	// Object A
+	//	static PyObject* __new__(PyTypeObject *self, PyObject *args, PyObject *kwargs);
+	//	static int __init__(PyJPValue *self, PyObject *args, PyObject *kwargs);
+	//	static void __dealloc__(PyJPValue *self);
+	//	static int traverse(PyJPValue *self, visitproc visit, void *arg);
+	//	static int clear(PyJPValue *self);
+	//
+	//	static PyObject* __repr__(PyJPValue *self);
+	//	static PyObject* toString(PyJPValue *self);
+	//	static PyObject* toUnicode(PyJPValue *self);
 
 } ;
 

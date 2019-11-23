@@ -157,10 +157,6 @@ class JClass(type):
             # Include the remaining that we still need to consider
             parents.extend([b for b in prev if not b in parents])
 
-        # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance
-        if _JObject in out and JInterface in out:
-            out.remove(JInterface)
-
         return out
 
     def __repr__(self):
@@ -191,9 +187,16 @@ def _JClassNew(jvm, arg, loader=None, initialize=True):
         return _JCLASSES[name]
     return _JClassFactory(name, javaClass)
 
+class _JInterfaceMeta(type):
+    def __instancecheck__(self, cls):
+        if not isinstance(cls, JClass):
+            return false
+        if not hasattr(cls, '__javaclass__'):
+            return false
+        return cls.__javaclass__.isInterface()
 
-class JInterface(object):
-    """Base class for all Java Interfaces.
+class JInterface(metaclass=_JInterfaceMeta):
+    """Virtual Base class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any java class that is
     a pure interface without implementation. It is not possible to create
@@ -211,33 +214,7 @@ class JInterface(object):
 
         Use ``isinstance(obj, jpype.JavaInterface)`` to test for a interface.
     """
-    @property
-    def class_(self):
-        return _JObject(self.__javaclass__)
-
-    def __new__(cls, *args, **kwargs):
-        return super(JInterface, cls).__new__(cls)
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            object.__setattr__(self, '__javavalue__', args[0])
-        elif not hasattr(self, '__javavalue__'):
-            raise RuntimeException(
-#            raise JClass("java.lang.InstantiationException")(
-                "`%s` is an interface." % str(self.class_.getName()))
-        super(JInterface, self).__init__()
-
-    def __str__(self):
-        return self.toString()
-
-    def __hash__(self):
-        return self.hashCode()
-
-    def __eq__(self):
-        return self.equals(o)
-
-    def __ne__(self):
-        return not self.equals(o)
+    pass
 
 
 def _JClassFactory(name, jc):
@@ -256,8 +233,8 @@ def _JClassFactory(name, jc):
         bases.append(object)
     elif bjc is not None:
         bases.append(jvm.JClass(bjc))
-    elif bjc is None:
-        bases.append(JInterface)
+    #elif bjc is None:
+    #    bases.append(JInterface)
 
     itf = jc.getInterfaces()
     for ic in itf:

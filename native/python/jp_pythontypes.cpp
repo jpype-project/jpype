@@ -142,6 +142,13 @@ JPPyObject JPPyObject::getAttrString(const char *k)
 	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
 }
 
+int JPPyObject::setAttrString(const char* k, PyObject* value)
+{
+	if (PyObject_SetAttrString(pyobj, k, value) == -1)
+		JP_PY_CHECK;
+}
+
+
 JPPyObject JPPyObject::getAttrString(PyObject *pyobj, const char *k)
 {
 	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
