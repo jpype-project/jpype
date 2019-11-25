@@ -21,6 +21,21 @@
 
 #include "jp_context.h"
 
+PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs);
+void PyJPContext_dealloc(PyJPContext *self);
+int PyJPContext_traverse(PyJPContext *self, visitproc visit, void *arg);
+int PyJPContext_clear(PyJPContext *self);
+PyObject *PyJPContext_str(PyJPContext *self);
+PyObject *PyJPContext_startup(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_shutdown(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_isStarted(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_attachThread(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_attachThreadAsDaemon(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_detachThread(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_isThreadAttached(PyJPContext *self, PyObject *args);
+PyObject *PyJPContext_convertToDirectByteBuffer(PyJPContext *self, PyObject *args);
+
 const char *check_doc =
 		"Checks if a thread is attached to the JVM.\n"
 		"\n"
@@ -61,66 +76,49 @@ const char *detach_doc =
 
 static PyMethodDef contextMethods[] = {
 	// JVM control
-	{"isStarted", (PyCFunction) (&PyJPContext::isStarted), METH_NOARGS, ""},
-	{"_startup", (PyCFunction) (&PyJPContext::startup), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) (&PyJPContext::shutdown), METH_NOARGS, shutdown_doc},
+	{"isStarted", (PyCFunction) (&PyJPContext_isStarted), METH_NOARGS, ""},
+	{"_startup", (PyCFunction) (&PyJPContext_startup), METH_VARARGS, ""},
+	{"shutdown", (PyCFunction) (&PyJPContext_shutdown), METH_NOARGS, shutdown_doc},
 
 	// Threading
-	{"isThreadAttached", (PyCFunction) (&PyJPContext::isThreadAttached), METH_NOARGS, check_doc},
-	{"attachThread", (PyCFunction) (&PyJPContext::attachThread), METH_NOARGS, attach_doc},
-	{"detachThread", (PyCFunction) (&PyJPContext::detachThread), METH_NOARGS, detach_doc},
-	{"attachThreadAsDaemon", (PyCFunction) (&PyJPContext::attachThreadAsDaemon), METH_NOARGS, ""},
+	{"isThreadAttached", (PyCFunction) (&PyJPContext_isThreadAttached), METH_NOARGS, check_doc},
+	{"attachThread", (PyCFunction) (&PyJPContext_attachThread), METH_NOARGS, attach_doc},
+	{"detachThread", (PyCFunction) (&PyJPContext_detachThread), METH_NOARGS, detach_doc},
+	{"attachThreadAsDaemon", (PyCFunction) (&PyJPContext_attachThreadAsDaemon), METH_NOARGS, ""},
 
 	// ByteBuffer
-	{"_convertToDirectBuffer", (PyCFunction) (&PyJPContext::convertToDirectByteBuffer), METH_VARARGS, ""},
+	{"_convertToDirectBuffer", (PyCFunction) (&PyJPContext_convertToDirectByteBuffer), METH_VARARGS, ""},
 
 	{NULL},
 };
 
 static PyMemberDef contextMembers[] = {
 	{"_classes", T_OBJECT, offsetof(PyJPContext, m_Classes), READONLY},
+	{"__dictoffset__", T_PYSSIZET, offsetof(PyJPContext, m_Dict), READONLY},
 	{0}
 };
 
-PyTypeObject PyJPContext::Type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	/* tp_name           */ "_jpype.PyJPContext",
-	/* tp_basicsize      */ sizeof (PyJPContext),
-	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPContext::__dealloc__,
-	/* tp_print          */ 0,
-	/* tp_getattr        */ 0,
-	/* tp_setattr        */ 0,
-	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
-	/* tp_as_number      */ 0,
-	/* tp_as_sequence    */ 0,
-	/* tp_as_mapping     */ 0,
-	/* tp_hash           */ 0,
-	/* tp_call           */ 0,
-	/* tp_str            */ (reprfunc) PyJPContext::__str__,
-	/* tp_getattro       */ PyObject_GenericGetAttr,
-	/* tp_setattro       */ PyObject_GenericSetAttr,
-	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
-	/* tp_doc            */ "Java Virtual Machine Context",
-	/* tp_traverse       */ (traverseproc) PyJPContext::traverse,
-	/* tp_clear          */ (inquiry) PyJPContext::clear,
-	/* tp_richcompare    */ 0,
-	/* tp_weaklistoffset */ 0,
-	/* tp_iter           */ 0,
-	/* tp_iternext       */ 0,
-	/* tp_methods        */ contextMethods,
-	/* tp_members        */ contextMembers,
-	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
-	/* tp_dict           */ 0,
-	/* tp_descr_get      */ 0,
-	/* tp_descr_set      */ 0,
-	/* tp_dictoffset     */ offsetof(PyJPContext, m_Dict),
-	/* tp_init           */ (initproc) PyJPContext::__init__,
-	/* tp_alloc          */ 0,
-	/* tp_new            */ PyJPContext::__new__
+static PyType_Slot contextSlots[] = {
+	{ Py_tp_new,        PyJPContext_new},
+	{ Py_tp_init,       (initproc) PyJPContext_init},
+	{ Py_tp_dealloc,    (destructor) PyJPContext_dealloc},
+	{ Py_tp_traverse,   (traverseproc) PyJPContext_traverse},
+	{ Py_tp_clear,      (inquiry) PyJPContext_clear},
+	{ Py_tp_str,        (reprfunc) PyJPContext_str},
+	{ Py_tp_getattro,   PyObject_GenericGetAttr},
+	{ Py_tp_setattro,   PyObject_GenericSetAttr},
+	{ Py_tp_doc,        "Java Virtual Machine Context"},
+	{ Py_tp_methods,    contextMethods},
+	{ Py_tp_members,    contextMembers},
+	{0}
+};
+
+static PyType_Spec contextSpec = {
+	"_jpype.PyJPContext",
+	sizeof (PyJPContext),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
+	contextSlots
 };
 
 // Static methods
@@ -137,7 +135,7 @@ bool PyJPContext::check(PyObject *o)
 	return o != NULL && PyObject_TypeCheck(o, &PyJPContext::Type);
 }
 
-PyObject *PyJPContext::__new__(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	PyJPContext *self = (PyJPContext*) type->tp_alloc(type, 0);
 	self->m_Context = NULL;
@@ -147,9 +145,9 @@ PyObject *PyJPContext::__new__(PyTypeObject *type, PyObject *args, PyObject *kwa
 	return (PyObject*) self;
 }
 
-int PyJPContext::__init__(PyJPContext *self, PyObject *args, PyObject *kwargs)
+int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPContext::__init__", self);
+	JP_TRACE_IN_C("PyJPContext_init", self);
 	try
 	{
 		return 0;
@@ -158,9 +156,9 @@ int PyJPContext::__init__(PyJPContext *self, PyObject *args, PyObject *kwargs)
 	JP_TRACE_OUT_C;
 }
 
-void PyJPContext::__dealloc__(PyJPContext *self)
+void PyJPContext_dealloc(PyJPContext *self)
 {
-	JP_TRACE_IN_C("PyJPContext::__dealloc__", self);
+	JP_TRACE_IN_C("PyJPContext_dealloc", self);
 	if (self->m_Context->isRunning())
 		self->m_Context->shutdownJVM();
 	delete self->m_Context;
@@ -172,19 +170,19 @@ void PyJPContext::__dealloc__(PyJPContext *self)
 	JP_TRACE_OUT_C;
 }
 
-int PyJPContext::traverse(PyJPContext *self, visitproc visit, void *arg)
+int PyJPContext_traverse(PyJPContext *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Classes);
 	return 0;
 }
 
-int PyJPContext::clear(PyJPContext *self)
+int PyJPContext_clear(PyJPContext *self)
 {
 	Py_CLEAR(self->m_Classes);
 	return 0;
 }
 
-PyObject *PyJPContext::__str__(PyJPContext *self)
+PyObject *PyJPContext_str(PyJPContext *self)
 {
 	try
 	{
@@ -196,7 +194,7 @@ PyObject *PyJPContext::__str__(PyJPContext *self)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPContext::startup(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_startup(PyJPContext *self, PyObject *args)
 {
 	JP_TRACE_IN_C("PyJPContext::startup", self);
 	if (self->m_Context->isRunning())
@@ -256,26 +254,30 @@ PyObject *PyJPContext::startup(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPContext::shutdown(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_shutdown(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::shutdown", self);
+	JP_TRACE_IN_C("PyJPContext_shutdown", self);
 	try
 	{
+		// Stop the JVM
 		self->m_Context->shutdownJVM();
+
+		// Disconnect the classes
+		PyDict_Clear(self->m_Classes);
 		Py_RETURN_NONE;
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPContext::isStarted(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_isStarted(PyJPContext *self, PyObject *args)
 {
 	return PyBool_FromLong(self->m_Context->isRunning());
 }
 
-PyObject *PyJPContext::attachThread(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_attachThread(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::attachThread", self);
+	JP_TRACE_IN_C("PyJPContext_attachThread", self);
 	try
 	{
 		JPContext *context = self->m_Context;
@@ -287,9 +289,9 @@ PyObject *PyJPContext::attachThread(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::attachThreadAsDaemon", self);
+	JP_TRACE_IN_C("PyJPContext_attachThreadAsDaemon", self);
 	try
 	{
 		JPContext *context = self->m_Context;
@@ -301,9 +303,9 @@ PyObject *PyJPContext::attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPContext::detachThread(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_detachThread(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::detachThread", self);
+	JP_TRACE_IN_C("PyJPContext_detachThread", self);
 	try
 	{
 		if (self->m_Context->isRunning())
@@ -314,7 +316,8 @@ PyObject *PyJPContext::detachThread(PyJPContext *self, PyObject *args)
 	JP_TRACE_OUT_C;
 }
 
-PyObject *PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
+
+PyObject *PyJPContext_isThreadAttached(PyJPContext *self, PyObject *args)
 {
 	try
 	{
@@ -325,9 +328,9 @@ PyObject *PyJPContext::isThreadAttached(PyJPContext *self, PyObject *args)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPContext::convertToDirectByteBuffer(PyJPContext *self, PyObject *args)
+PyObject *PyJPContext_convertToDirectByteBuffer(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::convertToDirectByteBuffer", self);
+	JP_TRACE_IN_C("PyJPContext_convertToDirectByteBuffer", self);
 	try
 	{
 		JPContext *context = self->m_Context;
