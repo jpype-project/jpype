@@ -41,6 +41,7 @@ static struct PyModuleDef moduledef = {
 };
 #endif
 
+PyObject *PyJPModule::module = NULL;
 PyInterpreterState *PyJPModule::s_Interpreter = NULL;
 
 #if PY_MAJOR_VERSION >= 3

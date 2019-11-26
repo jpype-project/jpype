@@ -67,8 +67,7 @@ JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)
 
 	return PyJPValue::create((PyTypeObject*) javaClassWrapper.get(),
 			value.getClass()->getContext(),
-			value.getClass(),
-			value.getValue());
+			value);
 	JP_TRACE_OUT_C;
 }
 
@@ -88,7 +87,7 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 	JP_TRACE(javaClass->toString());
 	JPPyTuple args(JPPyTuple::newTuple(2));
 	args.setItem(0, (PyObject*) context);
-	args.setItem(1, PyJPClass::alloc(&PyJPClass::Type, javaClass->getContext(), javaClass).get());
+	args.setItem(1, PyJPClass::alloc((PyTypeObject*) PyJPClass_Type, javaClass->getContext(), javaClass).get());
 
 	// calls jpype._jclass._getClassFor(_jpype.PyJPClass)
 	if (s_Resources->s_GetClassMethod.isNull())
@@ -106,22 +105,21 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 
 JPValue *JPPythonEnv::getJavaValue(PyObject *obj)
 {
-	JP_TRACE_IN_C("JPPythonEnv::getJavaValue");
-	if (PyObject_IsInstance(obj, (PyObject*) & PyJPValue::Type))
-		return &((PyJPValue*) obj)->m_Value;
-	return NULL;
-	JP_TRACE_OUT_C;
+	PyJPValue *value = PyJPValue::getValue(obj);
+	if (value == NULL)
+		return NULL;
+	return &(value->m_Value);
 }
 
 JPClass *JPPythonEnv::getJavaClass(PyObject *obj)
 {
 	JPPyObject vobj(JPPyRef::_use, obj);
-	if (PyObject_IsInstance(obj, (PyObject*) & PyJPClass::Type))
+	if (PyObject_IsInstance(obj, (PyObject*) PyJPClass_Type))
 		return ((PyJPClass*) obj)->m_Class;
 	if (!JPPyObject::hasAttrString(obj, __javaclass__))
 		return NULL;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaclass__));
-	if (Py_TYPE(self.get()) == &PyJPClass::Type)
+	if (Py_TYPE(self.get()) == (PyTypeObject*) PyJPClassType)
 	{
 		return ((PyJPClass*) self.get())->m_Class;
 	}
@@ -130,12 +128,12 @@ JPClass *JPPythonEnv::getJavaClass(PyObject *obj)
 
 JPProxy *JPPythonEnv::getJavaProxy(PyObject *obj)
 {
-	if (Py_TYPE(obj) == &PyJPProxy::Type)
+	if (Py_TYPE(obj) == (PyTypeObject*) PyJPProxy_Type)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	if (!JPPyObject::hasAttrString(obj, __javaproxy__))
 		return 0;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaproxy__));
-	if (Py_TYPE(self.get()) == &PyJPProxy::Type)
+	if (Py_TYPE(self.get()) == (PyTypeObject*) PyJPProxy_Type)
 	{
 		return (((PyJPProxy*) self.get())->m_Proxy);
 	}

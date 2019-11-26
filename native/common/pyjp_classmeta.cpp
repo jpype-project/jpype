@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004-2008 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,21 +14,5 @@
    limitations under the License.
 
  *****************************************************************************/
-#ifndef PYJP_MODULE_H
-#define PYJP_MODULE_H
-
-namespace PyJPModule
-{
-	PyObject *module;
-	/** Set a JPype Resource.
-	 *
-	 * JPype needs to know about a number of python objects to function
-	 * properly. These resources are set in the initialization methods
-	 * as those resources are created in python.
-	 */
-	PyObject* setResource(PyObject *obj, PyObject *args);
-	extern PyInterpreterState *s_Interpreter;
-}
-
-#endif /* PYJP_MODULE_H */
-
+#include <pyjp.h>
+#include <structmember.h>

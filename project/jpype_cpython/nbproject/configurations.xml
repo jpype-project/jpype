@@ -51,8 +51,6 @@
           <itemPath>../../native/python/include/jp_pythontypes.h</itemPath>
           <itemPath>../../native/python/include/jpype_memory_view.h</itemPath>
           <itemPath>../../native/python/include/pyjp.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_classhints.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_module.h</itemPath>
         </logicalFolder>
       </logicalFolder>
     </logicalFolder>
@@ -105,6 +103,7 @@
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
+        <itemPath>../../native/common/pyjp_classmeta.cpp</itemPath>
         <itemPath>../../native/python/pyjp_context.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
@@ -480,6 +479,11 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="../../native/common/pyjp_classmeta.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="../../native/python/include/jp_pythonenv.h"
             ex="false"
             tool="3"
@@ -496,16 +500,6 @@
             flavor2="0">
       </item>
       <item path="../../native/python/include/pyjp.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_classhints.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_module.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
       </item>
       <item path="../../native/python/jp_pythonenv.cpp"
             ex="false"

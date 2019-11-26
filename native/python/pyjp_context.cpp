@@ -16,7 +16,6 @@
  *****************************************************************************/
 #include <stddef.h>
 #include <pyjp.h>
-#include <pyjp_context.h>
 #include <structmember.h>
 
 #include "jp_context.h"
@@ -125,14 +124,13 @@ static PyType_Spec contextSpec = {
 
 void PyJPContext::initType(PyObject *module)
 {
-	PyType_Ready(&PyJPContext::Type);
-	Py_INCREF(&PyJPContext::Type);
-	PyModule_AddObject(module, "PyJPContext", (PyObject*) (&PyJPContext::Type));
+	PyModule_AddObject(module, "PyJPContext",
+			PyJPContext_Type = PyType_FromSpec(&contextSpec));
 }
 
 bool PyJPContext::check(PyObject *o)
 {
-	return o != NULL && PyObject_TypeCheck(o, &PyJPContext::Type);
+	return o != NULL && PyObject_TypeCheck(o, (PyTypeObject*) PyJPContext_Type);
 }
 
 PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -164,7 +162,7 @@ void PyJPContext_dealloc(PyJPContext *self)
 	delete self->m_Context;
 	self->m_Context = NULL;
 	PyObject_GC_UnTrack(self);
-	clear(self);
+	PyJPContext_clear(self);
 	// Free self
 	Py_TYPE(self)->tp_free(self);
 	JP_TRACE_OUT_C;

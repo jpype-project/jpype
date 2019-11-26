@@ -14,11 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <Python.h>
-#include <structmember.h>
 #include <pyjp.h>
-
-const char* JAVA_VALUE = "__javavalue__";
+#include <structmember.h>
 
 /**
  * Search for a method in the tree.
@@ -31,7 +28,7 @@ const char* JAVA_VALUE = "__javavalue__";
  * @param attr_name
  * @return
  */
-PyObject* type_lookup(PyTypeObject *type, PyObject *attr_name)
+PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name)
 {
 	if (type->tp_mro == NULL)
 		return NULL;
@@ -61,8 +58,8 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs);
 
 static struct PyMethodDef metaMethods[] = {
 	{"_isinstance", (PyCFunction) & PyJPClassMeta_check, METH_VARARGS | METH_CLASS, ""},
-	{"__instancecheck__", XXXX, METH_VARARGS, ""},
-	{"__subclasscheck__", XXXX, METH_VARARGS, ""},
+	//	{"__instancecheck__", XXXX, METH_VARARGS, ""},
+	//	{"__subclasscheck__", XXXX, METH_VARARGS, ""},
 	{0}
 };
 
@@ -126,7 +123,7 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 		return attr;
 
 	// Methods
-	if (Py_TYPE(attr) == &PyJPMethod)
+	if (Py_TYPE(attr) == (PyTypeObject*) PyJPMethod_Type)
 		return attr;
 
 	// Don't allow properties to be rewritten
@@ -153,7 +150,7 @@ int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
 		return Py_TYPE(o)->tp_setattro(o, attr_name, v);
 
-	PyObject *f = type_lookup((PyTypeObject*) o, attr_name);
+	PyObject *f = PyType_Lookup((PyTypeObject*) o, attr_name);
 	if (f == NULL)
 	{
 		const char *name_str = PyUnicode_AsUTF8(attr_name);
@@ -197,19 +194,20 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	return PyBool_FromLong(ret);
 }
 
-//============================================================
-PyObject* PyJPValueBase = NULL;
-PyObject* PyJPValue = NULL;
-PyObject* PyJPValueExc = NULL;
-PyObject* PyJPValueLong = NULL;
-PyObject* PyJPValueFloat = NULL;
+const char* JAVA_VALUE = "__javavalue__";
 
+PyObject* PyJPValueBase_Type = NULL;
+PyObject* PyJPValue_Type = NULL;
+PyObject* PyJPValueExc_Type = NULL;
+PyObject* PyJPValueLong_Type = NULL;
+PyObject* PyJPValueFloat_Type = NULL;
 
 JPPyObject PyJPValue_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 JPPyObject PyJPValue_alloc_base(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+PyObject *PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs);
 void PyJPValue_dealloc(PyJPValue *self);
 int PyJPValue_clear(PyJPValue *self);
 int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg);
@@ -228,7 +226,7 @@ static struct PyMethodDef baseMethods[] = {
 };
 
 static struct PyMethodDef baseGetSet[] = {
-	{"__jvm__", PyJPValue_getJVM, NULL, ""},
+	{"__jvm__", (PyCFunction) PyJPValue_getJVM, NULL, ""},
 	{0}
 };
 
@@ -293,7 +291,7 @@ static PyType_Spec valueExcSpec = {
 //============================================================
 // Factory for Base classes
 
-JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, JPClass *cls, jvalue value);
+JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 JPPyObject PyJPClass_alloc(PyTypeObject *type, JPContext *context, JPClass *cls);
 
 /**
@@ -316,7 +314,7 @@ JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValu
 
 	if (type == (PyTypeObject *) PyJPValue_Type)
 	{
-		out = PyJPValue_alloc(type, context, cls, value);
+		out = PyJPValue_alloc(type, context, value);
 	} else if (cls->isThrowable())
 	{
 		out = PyJPValue_alloc_base(type, context, value);
@@ -332,7 +330,7 @@ JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValu
 		out = PyJPArray_alloc(type, context, value);
 	} else
 	{
-		out = PyJPValue_alloc(type, context, cls, value);
+		out = PyJPValue_alloc(type, context, value);
 	}
 
 	return out;
@@ -349,12 +347,14 @@ JPPyObject PyJPValue_alloc(PyTypeObject *wrapper, JPContext *context, const JPVa
 	// If it is not a primitive, we need to reference it
 	if (!value.getClass()->isPrimitive())
 	{
-		value.getValue().l = frame.NewGlobalRef(value.getValue().l);
-		JP_TRACE("type", cls->getCanonicalName());
+		jvalue v;
+		v.l = frame.NewGlobalRef(value.getValue().l);
+		self->m_Value = JPValue(value.getClass(), v);
+	} else
+	{
+		// New value instance
+		self->m_Value = value;
 	}
-
-	// New value instance
-	self->m_Value = value;
 	self->m_Context = (PyJPContext*) (context->getHost());
 	Py_INCREF(self->m_Context);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
@@ -395,7 +395,7 @@ JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, cons
 		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().i));
 	} else if (primitive == context->_long)
 	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().l));
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong((long) jcontents.getValue().j));
 	} else if (primitive == context->_float)
 	{
 		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().f));
@@ -407,18 +407,18 @@ JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, cons
 		return PyJPValue_alloc(wrapper, context, value);
 	}
 
-	JPPyTuple tuple = JPPyTuple.newTuple(1);
+	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, pycontents.get());
-	JPPyObject self(JPPyRef::_call, PyObject_Call(wrapper, tuple, NULL));
+	JPPyObject self(JPPyRef::_call, PyObject_Call((PyObject*) wrapper, tuple.get(), NULL));
 	self.setAttrString(JAVA_VALUE, PyJPValue_alloc((PyTypeObject*) PyJPValue_Type, context, value).get());
 	return self;
 }
 
-JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, JPClass *cls, jvalue value)
+JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
 {
 	JP_TRACE_IN_C("PyJPArray_alloc");
-	JPPyObject self = PyJPValue_alloc(wrapper, context, cls, value);
-	((PyJPArray*) self.get())->m_Array = new JPArray(cls, (jarray) value.l);
+	JPPyObject self = PyJPValue_alloc(wrapper, context, value);
+	((PyJPArray*) self.get())->m_Array = new JPArray(value.getClass(), (jarray) value.getValue().l);
 	return self;
 	JP_TRACE_OUT_C;
 }
@@ -429,7 +429,7 @@ JPPyObject PyJPClass_alloc(PyTypeObject *wrapper, JPContext *context, JPClass *c
 	JPJavaFrame frame(context);
 	jvalue value;
 	value.l = (jobject) cls->getJavaClass();
-	JPPyObject self = PyJPValue_alloc(wrapper, context, context->_java_lang_Class, value);
+	JPPyObject self = PyJPValue_alloc(wrapper, context, JPValue(context->_java_lang_Class, value));
 	((PyJPClass*) self.get())->m_Class = cls;
 	return self;
 	JP_TRACE_OUT_C;
@@ -447,11 +447,11 @@ PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	//	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
-	//	jvalue v;
-	//	self->m_Value = JPValue(NULL, v);
-	//	self->m_Context = NULL;
-	//	return (PyObject*) self;
+	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
+	jvalue v;
+	self->m_Value = JPValue(NULL, v);
+	self->m_Context = NULL;
+	return (PyObject*) self;
 }
 
 int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
@@ -463,8 +463,9 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 		// Check if we are already initialized.
 		if (PyObject_HasAttrString(self, JAVA_VALUE))
 			return 0;
-		JPPyObject value(JPPyRef::_call(PyJPValue_new(PyJPValue_Type, pyargs, kwargs)));
-		if (PyJPValue_init(value.get(), pyargs, kwargs) == -1)
+		JPPyObject value(JPPyRef::_call,
+				PyJPValue_new((PyTypeObject*) PyJPValue_Type, pyargs, kwargs));
+		if (PyJPValue_init((PyJPValue*) value.get(), pyargs, kwargs) == -1)
 			return -1;
 		return PyObject_SetAttrString(self, JAVA_VALUE, value.get());
 	}
@@ -650,7 +651,7 @@ int PyJPValue_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 		// Private members are accessed directly
 		if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
 			return PyObject_GenericSetAttr(o, attr_name, v);
-		PyObject *f = type_lookup(Py_TYPE(o), attr_name);
+		PyObject *f = PyType_Lookup(Py_TYPE(o), attr_name);
 		if (f == NULL)
 		{
 			const char *name_str = PyUnicode_AsUTF8(attr_name);
@@ -697,7 +698,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		{
 			// Java strings are immutable so we will cache them.
 			PyObject *out;
-			JPPyObject dict(JPPyRef::_call(PyObject_GenericGetDict(self, NULL)));
+			JPPyObject dict(JPPyRef::_call, PyObject_GenericGetDict((PyObject*) self, NULL));
 			PyObject *res = PyDict_GetItemString(dict.get(), "__jstr__");
 			if (res != NULL)
 			{

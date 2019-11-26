@@ -31,9 +31,6 @@ static PyGetSetDef fieldGetSets[] = {
 };
 
 static PyType_Slot fieldSlots[] = {
-	{ Py_tp_dealloc,   (destructor) PyJPValue_dealloc},
-	{ Py_tp_traverse,  (traverseproc) PyJPValue_traverse},
-	{ Py_tp_clear,     (inquiry) PyJPValue_clear},
 	{ Py_tp_descr_get, (descrgetfunc) PyJPField_get},
 	{ Py_tp_descr_set, (descrsetfunc) PyJPField_set},
 	{ Py_tp_getset,    &fieldGetSets},
@@ -62,8 +59,8 @@ JPPyObject PyJPField::alloc(JPField *field)
 	JPContext *context = field->getContext();
 	jvalue v;
 	v.l = field->getJavaObject();
-	JPPyObject self = PyJPValue::create(PyJPField_Type, field->getContext(),
-			context->_java_lang_reflect_Field, v);
+	JPPyObject self = PyJPValue::create((PyTypeObject*) PyJPField_Type, field->getContext(),
+			JPValue(context->_java_lang_reflect_Field, v));
 	((PyJPField*) self.get())->m_Field = field;
 	return self;
 	JP_TRACE_OUT;

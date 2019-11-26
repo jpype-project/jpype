@@ -17,18 +17,21 @@
 #ifndef PYJP_H
 #define PYJP_H
 
-#define ASSERT_JVM_RUNNING(context) (JPContext*)context->assertJVMRunning(JP_STACKINFO())
+#define ASSERT_JVM_RUNNING(context) ((JPContext*)context)->assertJVMRunning(JP_STACKINFO())
 #define PY_STANDARD_CATCH(...) catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
 
 /** This is the module specifically for the cpython modules to include.
  */
 #include <Python.h>
 #include <jpype.h>
-#include <pyjp_module.h>
+
+PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name);
 
 // Forward declare the types
+extern PyObject* PyJPArray_Type;
 extern PyObject* PyJPContext_Type;
 extern PyObject *PyJPClass_Type;
+extern PyObject *PyJPClassHints_Type;
 extern PyObject *PyJPClassMeta_Type;
 extern PyObject *PyJPField_Type;
 extern PyObject *PyJPMethod_Type;
@@ -50,18 +53,24 @@ struct PyJPContext
 	static bool check(PyObject *o);
 } ;
 
+struct PyJPClassHints
+{
+	PyObject_HEAD
+	JPClassHints *m_Hints;
+
+	static void initType(PyObject *module);
+} ;
+
 struct PyJPValue
 {
 	PyObject_HEAD
 	JPValue m_Value;
 	PyJPContext *m_Context;
 
-	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, JPClass* cls, jvalue value);
+	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, const JPValue& value);
 	static void initType(PyObject *module);
 	static PyJPValue* getValue(PyObject *self);
 } ;
-
-extern PyObject* PyJPArray_Type;
 
 /** This is a wrapper for accessing the array method.  It is structured to
  * be like a bound method.  It should not be the primary handle to the object.
@@ -146,11 +155,23 @@ inline JPContext* PyJPValue_getContext(PyJPValue* value)
 		JP_RAISE_RUNTIME_ERROR("Context is null");
 	}
 	ASSERT_JVM_RUNNING(context);
-	return;
+	return context;
 }
 #define PyJPValue_GET_CONTEXT(X) PyJPValue_getContext((PyJPValue*)X)
 
-#include <pyjp_classhints.h>
-#include <pyjp_module.h>
+namespace PyJPModule
+{
+	extern PyObject *module;
+	/** Set a JPype Resource.
+	 *
+	 * JPype needs to know about a number of python objects to function
+	 * properly. These resources are set in the initialization methods
+	 * as those resources are created in python.
+	 */
+	PyObject* setResource(PyObject *obj, PyObject *args);
+	extern PyInterpreterState *s_Interpreter;
+}
+
+PyJPValue* PyJPValue_asValue(PyObject *self);
 
 #endif /* PYJP_H */

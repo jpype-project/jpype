@@ -31,11 +31,11 @@ PyObject *PyJPArray_setArraySlice(PyJPArray *self, PyObject *arg);
 PyObject *PyJPArray_setArrayItem(PyJPArray *self, PyObject *arg);
 
 static PyMethodDef arrayMethods[] = {
-	{"__len__", (PyCFunction) (&PyJPArray::getArrayLength), METH_NOARGS, ""},
-	{"_getArrayItem", (PyCFunction) (&PyJPArray::getArrayItem), METH_VARARGS, ""},
-	{"_setArrayItem", (PyCFunction) (&PyJPArray::setArrayItem), METH_VARARGS, ""},
-	{"_getArraySlice", (PyCFunction) (&PyJPArray::getArraySlice), METH_VARARGS, ""},
-	{"_setArraySlice", (PyCFunction) (&PyJPArray::setArraySlice), METH_VARARGS, ""},
+	{"__len__", (PyCFunction) (&PyJPArray_getArrayLength), METH_NOARGS, ""},
+	{"_getArrayItem", (PyCFunction) (&PyJPArray_getArrayItem), METH_VARARGS, ""},
+	{"_setArrayItem", (PyCFunction) (&PyJPArray_setArrayItem), METH_VARARGS, ""},
+	{"_getArraySlice", (PyCFunction) (&PyJPArray_getArraySlice), METH_VARARGS, ""},
+	{"_setArraySlice", (PyCFunction) (&PyJPArray_setArraySlice), METH_VARARGS, ""},
 	{NULL},
 };
 

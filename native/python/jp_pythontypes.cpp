@@ -1,8 +1,8 @@
 #include <Python.h>
 #include <jpype.h>
+#include <pyjp.h>
 #include <jpype_memory_view.h>
 
-#include "pyjp_module.h"
 
 /****************************************************************************
  * Base object
@@ -145,7 +145,7 @@ JPPyObject JPPyObject::getAttrString(const char *k)
 int JPPyObject::setAttrString(const char* k, PyObject* value)
 {
 	if (PyObject_SetAttrString(pyobj, k, value) == -1)
-		JP_PY_CHECK;
+		JP_PY_CHECK();
 }
 
 

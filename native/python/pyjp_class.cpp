@@ -67,9 +67,9 @@ static PyMethodDef classMethods[] = {
 static PyType_Slot classSlots[] = {
 	{ Py_tp_new,     PyJPClass_new},
 	{ Py_tp_init,    (initproc) PyJPClass_init},
-	{ Py_tp_dealloc, (destructor) PyJPValue_dealloc},
+	//	{ Py_tp_dealloc, (destructor) PyJPValue_dealloc},
 	{ Py_tp_methods, classMethods},
-	{ Py_tp_doc,     classDoc},
+	{ Py_tp_doc,     (void*) classDoc},
 	{0}
 };
 
@@ -494,7 +494,7 @@ PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 
 		// Otherwise give back a PyJPValue
 		jvalue v = match.conversion->convert(frame, cls, other);
-		return PyJPValue::create(PyJPValue_Type, context, cls, v).keep();
+		return PyJPValue::create((PyTypeObject*) PyJPValue_Type, context, JPValue(cls, v)).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
