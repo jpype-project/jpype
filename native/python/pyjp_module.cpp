@@ -73,14 +73,14 @@ PyMODINIT_FUNC init_jpype()
 	JPPythonEnv::init();
 
 	// Initialize each of the python extension types
-	PyJPValue::initType(module);
-	PyJPArray::initType(module);
-	PyJPClass::initType(module);
-	PyJPContext::initType(module);
-	PyJPField::initType(module);
-	PyJPMethod::initType(module);
-	PyJPMonitor::initType(module);
-	PyJPProxy::initType(module);
+	PyJPValue_initType(module);
+	PyJPArray_initType(module);
+	PyJPClass_initType(module);
+	PyJPContext_initType(module);
+	PyJPField_initType(module);
+	PyJPMethod_initType(module);
+	PyJPMonitor_initType(module);
+	PyJPProxy_initType(module);
 
 #if (PY_VERSION_HEX < 0x02070000)
 	jpype_memoryview_init(module);

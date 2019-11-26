@@ -202,9 +202,9 @@ PyObject* PyJPValueExc_Type = NULL;
 PyObject* PyJPValueLong_Type = NULL;
 PyObject* PyJPValueFloat_Type = NULL;
 
-JPPyObject PyJPValue_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-JPPyObject PyJPValue_alloc_base(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 PyObject *PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs);
@@ -291,9 +291,6 @@ static PyType_Spec valueExcSpec = {
 //============================================================
 // Factory for Base classes
 
-JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-JPPyObject PyJPClass_alloc(PyTypeObject *type, JPContext *context, JPClass *cls);
-
 /**
  * Create a JPValue wrapper with the appropriate type.
  *
@@ -314,29 +311,29 @@ JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValu
 
 	if (type == (PyTypeObject *) PyJPValue_Type)
 	{
-		out = PyJPValue_alloc(type, context, value);
+		out = PyJPValue_createInstance(type, context, value);
 	} else if (cls->isThrowable())
 	{
-		out = PyJPValue_alloc_base(type, context, value);
+		out = PyJPValue_createBase(type, context, value);
 	} else if (cls == context->_java_lang_Class)
 	{
 		JPClass *cls2 = context->getTypeManager()->findClass((jclass) value.getValue().l);
-		out = PyJPClass_alloc(type, context, cls2);
+		out = PyJPClass_create(type, context, cls2);
 	} else if (dynamic_cast<JPBoxedType*> (cls) != 0)
 	{
-		out = PyJPValue_alloc_boxed(type, context, value);
+		out = PyJPValue_createBoxed(type, context, value);
 	} else if (dynamic_cast<JPArrayClass*> (cls) != 0)
 	{
-		out = PyJPArray_alloc(type, context, value);
+		out = PyJPArray_create(type, context, value);
 	} else
 	{
-		out = PyJPValue_alloc(type, context, value);
+		out = PyJPValue_createInstance(type, context, value);
 	}
 
 	return out;
 }
 
-JPPyObject PyJPValue_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
 {
 	JPJavaFrame frame(context);
 	JP_TRACE_IN_C("PyJPValue_alloc");
@@ -361,17 +358,17 @@ JPPyObject PyJPValue_alloc(PyTypeObject *wrapper, JPContext *context, const JPVa
 	JP_TRACE_OUT_C;
 }
 
-JPPyObject PyJPValue_alloc_base(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
 {
 	JPJavaFrame frame(context);
 	JP_TRACE_IN_C("PyJPValue_alloc_base");
 	JPPyObject self(JPPyRef::_claim, ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0));
-	self.setAttrString(JAVA_VALUE, PyJPValue_alloc((PyTypeObject*) PyJPValue_Type, context, value).get());
+	self.setAttrString(JAVA_VALUE, PyJPValue_createInstance((PyTypeObject*) PyJPValue_Type, context, value).get());
 	return self;
 	JP_TRACE_OUT_C;
 }
 
-JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
 {
 	// Find the primitive type
 	JPPrimitiveType *primitive = ((JPBoxedType*) value.getClass())->getPrimitive();
@@ -404,32 +401,33 @@ JPPyObject PyJPValue_alloc_boxed(PyTypeObject *wrapper, JPContext *context, cons
 		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().d));
 	} else if (primitive == context->_char)
 	{
-		return PyJPValue_alloc(wrapper, context, value);
+		return PyJPValue_createInstance(wrapper, context, value);
 	}
 
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, pycontents.get());
 	JPPyObject self(JPPyRef::_call, PyObject_Call((PyObject*) wrapper, tuple.get(), NULL));
-	self.setAttrString(JAVA_VALUE, PyJPValue_alloc((PyTypeObject*) PyJPValue_Type, context, value).get());
+	self.setAttrString(JAVA_VALUE, PyJPValue_createInstance((PyTypeObject*) PyJPValue_Type, context, value).get());
 	return self;
 }
 
-JPPyObject PyJPArray_alloc(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
 {
 	JP_TRACE_IN_C("PyJPArray_alloc");
-	JPPyObject self = PyJPValue_alloc(wrapper, context, value);
+	JPPyObject self = PyJPValue_createInstance(wrapper, context, value);
 	((PyJPArray*) self.get())->m_Array = new JPArray(value.getClass(), (jarray) value.getValue().l);
 	return self;
 	JP_TRACE_OUT_C;
 }
 
-JPPyObject PyJPClass_alloc(PyTypeObject *wrapper, JPContext *context, JPClass *cls, jvalue value)
+JPPyObject PyJPClass_create(PyTypeObject *wrapper, JPContext *context, JPClass *cls)
 {
 	JP_TRACE_IN_C("PyJPClass_alloc");
 	JPJavaFrame frame(context);
 	jvalue value;
 	value.l = (jobject) cls->getJavaClass();
-	JPPyObject self = PyJPValue_alloc(wrapper, context, JPValue(context->_java_lang_Class, value));
+	JPPyObject self = PyJPValue_createInstance(wrapper, context,
+			JPValue(context->_java_lang_Class, value));
 	((PyJPClass*) self.get())->m_Class = cls;
 	return self;
 	JP_TRACE_OUT_C;
@@ -486,7 +484,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 		// Get the Java class from the type.
 		PyObject *obj = PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__");
 		JP_PY_CHECK();
-		if (!PyObject_IsInstance(obj, (PyObject*) & PyJPClass::Type))
+		if (!PyObject_IsInstance(obj, (PyObject*) PyJPClass_Type))
 		{
 			Py_DECREF(obj);
 			JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
@@ -775,7 +773,7 @@ PyObject *PyJPValue_getJVM(PyObject *pyself, void *closure)
 
 //============================================================
 
-void PyJPValue::initType(PyObject* module)
+void PyJPValue_initType(PyObject* module)
 {
 	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
 	PyModule_AddObject(module, "PyJPClassMeta",
@@ -802,7 +800,7 @@ void PyJPValue::initType(PyObject* module)
 			PyTuple_Pack(2, &PyLong_Type, PyJPValueBase_Type),
 			PyDict_New());
 	PyModule_AddObject(module, "PyJPValueLong",
-			PyJPValueInt_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
+			PyJPValueLong_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
 	Py_DECREF(args);
 
 	args = Py_BuildValue("sNN",
@@ -810,7 +808,7 @@ void PyJPValue::initType(PyObject* module)
 			PyTuple_Pack(2, &PyLong_Type, PyJPValueBase_Type),
 			PyDict_New());
 	PyModule_AddObject(module, "PyJPValueFloat",
-			PyJPValueInt_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
+			PyJPValueFloat_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
 	Py_DECREF(args);
 }
 

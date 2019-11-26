@@ -97,7 +97,7 @@ static PyType_Spec methodSpec = {
 
 // Static methods
 
-void PyJPMethod::initType(PyObject *module)
+void PyJPMethod_initType(PyObject *module)
 {
 	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
@@ -108,9 +108,9 @@ void PyJPMethod::initType(PyObject *module)
 	Py_DECREF(bases);
 }
 
-JPPyObject PyJPMethod::alloc(JPMethodDispatch *m, PyObject *instance)
+JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 {
-	JP_TRACE_IN_C("PyJPMethod::alloc");
+	JP_TRACE_IN_C("PyJPMethod_create");
 	PyJPMethod *self = (PyJPMethod*) ((PyTypeObject*) PyJPMethod_Type)->tp_alloc((PyTypeObject*) PyJPMethod_Type, 0);
 	JP_PY_CHECK();
 	self->m_Method = m;
@@ -188,7 +188,7 @@ PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 			JP_TRACE_PY("method get (inc)", (PyObject*) self);
 			return (PyObject*) self;
 		}
-		return PyJPMethod::alloc(self->m_Method, obj).keep();
+		return PyJPMethod_create(self->m_Method, obj).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
@@ -425,7 +425,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 
 int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject *obj, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod::getAnnotations", self);
+	JP_TRACE_IN_C("PyJPMethod_setAnnotations", self);
 	Py_CLEAR(self->m_Annotations);
 	self->m_Annotations = obj;
 	Py_XINCREF(self->m_Annotations);

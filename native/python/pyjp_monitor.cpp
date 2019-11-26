@@ -51,7 +51,7 @@ static PyType_Spec monitorSpec = {
 
 // Static methods
 
-void PyJPMonitor::initType(PyObject *module)
+void PyJPMonitor_initType(PyObject *module)
 {
 	PyModule_AddObject(module, "PyJPMonitor",
 			PyJPMonitor_Type = PyType_FromSpec(&monitorSpec));

@@ -45,7 +45,7 @@ static PyType_Spec fieldSpec = {
 	fieldSlots
 };
 
-void PyJPField::initType(PyObject *module)
+void PyJPField_initType(PyObject *module)
 {
 	PyObject *bases = PyTuple_Pack(1, PyJPValue_Type);
 	PyModule_AddObject(module, "PyJPField",
@@ -53,13 +53,13 @@ void PyJPField::initType(PyObject *module)
 	Py_DECREF(bases);
 }
 
-JPPyObject PyJPField::alloc(JPField *field)
+JPPyObject PyJPField_alloc(JPField *field)
 {
 	JP_TRACE_IN_C("PyJPField::alloc");
 	JPContext *context = field->getContext();
 	jvalue v;
 	v.l = field->getJavaObject();
-	JPPyObject self = PyJPValue::create((PyTypeObject*) PyJPField_Type, field->getContext(),
+	JPPyObject self = PyJPValue_create((PyTypeObject*) PyJPField_Type, field->getContext(),
 			JPValue(context->_java_lang_reflect_Field, v));
 	((PyJPField*) self.get())->m_Field = field;
 	return self;

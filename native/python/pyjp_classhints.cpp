@@ -44,7 +44,7 @@ static PyType_Spec hintsSpec = {
 	hintsSlots
 };
 
-void PyJPClassHints::initType(PyObject *module)
+void PyJPClassHints_initType(PyObject *module)
 {
 	PyModule_AddObject(module, "PyJPClassHints",
 			PyJPClassHints_Type = PyType_FromSpec(&hintsSpec));

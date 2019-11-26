@@ -20,6 +20,7 @@
 
 #include "jp_context.h"
 
+PyObject *PyJPContext_Type = NULL;
 PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs);
 void PyJPContext_dealloc(PyJPContext *self);
@@ -122,13 +123,13 @@ static PyType_Spec contextSpec = {
 
 // Static methods
 
-void PyJPContext::initType(PyObject *module)
+void PyJPContext_initType(PyObject *module)
 {
 	PyModule_AddObject(module, "PyJPContext",
 			PyJPContext_Type = PyType_FromSpec(&contextSpec));
 }
 
-bool PyJPContext::check(PyObject *o)
+bool PyJPContext_check(PyObject *o)
 {
 	return o != NULL && PyObject_TypeCheck(o, (PyTypeObject*) PyJPContext_Type);
 }

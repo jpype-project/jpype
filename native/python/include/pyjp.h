@@ -39,7 +39,8 @@ extern PyObject *PyJPMonitor_Type;
 extern PyObject *PyJPProxy_Type;
 extern PyObject *PyJPValueBase_Type;
 extern PyObject *PyJPValue_Type;
-extern PyObject *PyJPValueInt_Type;
+extern PyObject *PyJPValueLong_Type;
+extern PyObject *PyJPValueFloat_Type;
 extern PyObject *PyJPValueExc_Type;
 
 struct PyJPContext
@@ -48,17 +49,12 @@ struct PyJPContext
 	JPContext *m_Context;
 	PyObject *m_Dict;
 	PyObject *m_Classes;
-
-	static void initType(PyObject *module);
-	static bool check(PyObject *o);
 } ;
 
 struct PyJPClassHints
 {
 	PyObject_HEAD
 	JPClassHints *m_Hints;
-
-	static void initType(PyObject *module);
 } ;
 
 struct PyJPValue
@@ -66,10 +62,6 @@ struct PyJPValue
 	PyObject_HEAD
 	JPValue m_Value;
 	PyJPContext *m_Context;
-
-	static JPPyObject create(PyTypeObject* wrapper, JPContext* context, const JPValue& value);
-	static void initType(PyObject *module);
-	static PyJPValue* getValue(PyObject *self);
 } ;
 
 /** This is a wrapper for accessing the array method.  It is structured to
@@ -80,24 +72,12 @@ struct PyJPArray
 {
 	PyJPValue m_Value;
 	JPArray *m_Array;
-
-	static void initType(PyObject *module);
 } ;
 
 struct PyJPClass
 {
 	PyJPValue m_Value;
 	JPClass *m_Class;
-	//	PyJPContext *m_Context;
-	static PyTypeObject Type;
-
-	// Python-visible methods
-	static void initType(PyObject *module);
-
-	/** Create a PyJPClass instance from within the module.
-	 */
-	static JPPyObject alloc(PyTypeObject* obj, JPContext* context, JPClass *cls);
-
 } ;
 
 struct PyJPMethod
@@ -109,20 +89,12 @@ struct PyJPMethod
 	PyObject* m_Doc;
 	PyObject* m_Annotations;
 	PyObject* m_CodeRep;
-
-	// Python-visible methods
-	static void initType(PyObject *module);
-	static JPPyObject alloc(JPMethodDispatch *mth, PyObject *obj);
 } ;
 
 struct PyJPField
 {
 	PyJPValue m_Value;
 	JPField *m_Field;
-
-	// Python-visible methods
-	static void initType(PyObject *module);
-	static JPPyObject alloc(JPField *mth);
 } ;
 
 /** Python object to support jpype.synchronized(object) command.
@@ -132,9 +104,6 @@ struct PyJPMonitor
 	PyObject_HEAD
 	JPMonitor *m_Monitor;
 	PyJPContext *m_Context;
-
-	// Python-visible methods
-	static void initType(PyObject *module);
 } ;
 
 struct PyJPProxy
@@ -143,8 +112,6 @@ struct PyJPProxy
 	JPProxy *m_Proxy;
 	PyObject *m_Target;
 	PyJPContext *m_Context;
-
-	static void initType(PyObject *module);
 } ;
 
 inline JPContext* PyJPValue_getContext(PyJPValue* value)
@@ -172,6 +139,24 @@ namespace PyJPModule
 	extern PyInterpreterState *s_Interpreter;
 }
 
+bool PyJPContext_check(PyObject *o);
+
+JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value);
+JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPClass_create(PyTypeObject *type, JPContext *context, JPClass *cls);
 PyJPValue* PyJPValue_asValue(PyObject *self);
+
+void PyJPMethod_initType(PyObject *module);
+void PyJPProxy_initType(PyObject *module);
+void PyJPContext_initType(PyObject *module);
+void PyJPClassHints_initType(PyObject *module);
+void PyJPValue_initType(PyObject* module);
+void PyJPArray_initType(PyObject *module);
+void PyJPClass_initType(PyObject *module);
+void PyJPMonitor_initType(PyObject *module);
+void PyJPField_initType(PyObject *module);
+
+JPPyObject PyJPField_alloc(JPField *field);
+JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
 #endif /* PYJP_H */

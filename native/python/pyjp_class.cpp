@@ -81,7 +81,7 @@ static PyType_Spec classSpec = {
 	classSlots
 };
 
-void PyJPClass::initType(PyObject *module)
+void PyJPClass_initType(PyObject *module)
 {
 	PyObject *bases = PyTuple_Pack(1, PyJPValue_Type);
 	PyModule_AddObject(module, "PyJPClass",
@@ -119,7 +119,7 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 			return -1;
 		}
 
-		if (!PyJPContext::check(jvm))
+		if (!PyJPContext_check(jvm))
 		{
 			PyErr_SetString(PyExc_TypeError, "JContext must be supplied as first argument");
 			return -1;
@@ -133,7 +133,7 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 		JPValue *jpvalue = JPPythonEnv::getJavaValue(arg0);
 		if (JPPyString::check(arg0))
 		{
-			if (!PyJPContext::check(jvm))
+			if (!PyJPContext_check(jvm))
 			{
 				PyErr_SetString(PyExc_TypeError, "Classes from string require a Java context.");
 				return -1;
@@ -187,7 +187,7 @@ PyObject *PyJPClass_getSuperClass(PyJPClass *self, PyObject *arg)
 			Py_RETURN_NONE;
 		}
 
-		return PyJPClass::alloc(&PyJPClass::Type, context, base).keep();
+		return PyJPClass_create((PyTypeObject*) PyJPClass_Type, context, base).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;
@@ -206,7 +206,7 @@ PyObject *PyJPClass_getInterfaces(PyJPClass *self, PyObject *arg)
 		JPPyTuple result(JPPyTuple::newTuple(baseItf.size()));
 		for (unsigned int i = 0; i < baseItf.size(); i++)
 		{
-			result.setItem(i, PyJPClass::alloc(&PyJPClass::Type, context, baseItf[i]).get());
+			result.setItem(i, PyJPClass_create((PyTypeObject*) PyJPClass_Type, context, baseItf[i]).get());
 		}
 		return result.keep();
 	}
@@ -227,7 +227,7 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, PyObject *arg)
 		JPPyTuple result(JPPyTuple::newTuple(instFields.size()));
 		for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
 		{
-			result.setItem(i++, PyJPField::alloc(*iter).get());
+			result.setItem(i++, PyJPField_alloc(*iter).get());
 		}
 		return result.keep();
 	}
@@ -249,7 +249,7 @@ PyObject *PyJPClass_getClassMethods(PyJPClass *self, PyObject *arg)
 		for (JPMethodDispatchList::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
 		{
 			JP_TRACE("method ", *cur);
-			result.setItem(i++, PyJPMethod::alloc(*cur, NULL).get());
+			result.setItem(i++, PyJPMethod_create(*cur, NULL).get());
 		}
 
 		return result.keep();
@@ -281,7 +281,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 		JPValue *jval = JPPythonEnv::getJavaValue(value);
 		if (jval != NULL && type->isInstance(*jval))
 		{
-			return PyJPValue::create((PyTypeObject*) wrapper.get(), context, JPValue(type, jval->getValue()))
+			return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, jval->getValue()))
 					.keep();
 		}
 
@@ -299,7 +299,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 			}
 
 			jvalue v = match.conversion->convert(frame, type, value);
-			return PyJPValue::create((PyTypeObject*) wrapper.get(), context, JPValue(type, v)).keep();
+			return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, v)).keep();
 		}
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -494,7 +494,7 @@ PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 
 		// Otherwise give back a PyJPValue
 		jvalue v = match.conversion->convert(frame, cls, other);
-		return PyJPValue::create((PyTypeObject*) PyJPValue_Type, context, JPValue(cls, v)).keep();
+		return PyJPValue_create((PyTypeObject*) PyJPValue_Type, context, JPValue(cls, v)).keep();
 	}
 	PY_STANDARD_CATCH(NULL);
 	JP_TRACE_OUT_C;

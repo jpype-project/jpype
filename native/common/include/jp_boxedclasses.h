@@ -41,7 +41,10 @@ public:
 
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
 
-	JPPrimitiveType* getPrimitive();
+	JPPrimitiveType* getPrimitive()
+	{
+		return m_PrimitiveType;
+	}
 
 protected:
 	JPPrimitiveType* m_PrimitiveType;

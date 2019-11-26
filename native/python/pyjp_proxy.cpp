@@ -50,7 +50,7 @@ static PyType_Spec proxySpec = {
 };
 
 
-void PyJPProxy::initType(PyObject *module)
+void PyJPProxy_initType(PyObject *module)
 {
 	PyModule_AddObject(module, "PyJPProxy",
 			PyJPProxy_Type = PyType_FromSpec(&proxySpec));

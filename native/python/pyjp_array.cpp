@@ -55,7 +55,7 @@ static PyType_Spec arraySpec = {
 	arraySlots
 };
 
-void PyJPArray::initType(PyObject *module)
+void PyJPArray_initType(PyObject *module)
 {
 	PyObject *bases = PyTuple_Pack(1, PyJPValue_Type);
 	PyModule_AddObject(module, "PyJPArray",
