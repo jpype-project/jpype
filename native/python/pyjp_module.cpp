@@ -51,6 +51,9 @@ PyMODINIT_FUNC PyInit__jpype()
 PyMODINIT_FUNC init_jpype()
 #endif
 {
+	JP_TRACE_IN_C("PyJPModule::init_jpype");
+	try
+	{
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
@@ -73,25 +76,46 @@ PyMODINIT_FUNC init_jpype()
 	JPPythonEnv::init();
 
 	// Initialize each of the python extension types
-	PyJPValue_initType(module);
+	printf("Value\n");
+		PyJPValue_initType(module);
+		JP_PY_CHECK();
+	printf("Array\n");
 	PyJPArray_initType(module);
+		JP_PY_CHECK();
+	printf("Class\n");
 	PyJPClass_initType(module);
+		JP_PY_CHECK();
+	printf("Context\n");
 	PyJPContext_initType(module);
+		JP_PY_CHECK();
+	printf("Field\n");
 	PyJPField_initType(module);
+		JP_PY_CHECK();
+	printf("Method\n");
 	PyJPMethod_initType(module);
+		JP_PY_CHECK();
+	printf("Monitor\n");
 	PyJPMonitor_initType(module);
+		JP_PY_CHECK();
+	printf("Proxy\n");
 	PyJPProxy_initType(module);
+	printf("Done\n");
+		JP_PY_CHECK();
 
 #if (PY_VERSION_HEX < 0x02070000)
 	jpype_memoryview_init(module);
 #endif
 
 #ifdef HAVE_NUMPY
+	printf("Numpy\n");
 	import_array();
 #endif
 #if PY_MAJOR_VERSION >= 3
 	return module;
 #endif
+	}
+	PY_STANDARD_CATCH(NULL);
+	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPModule::setResource(PyObject *self, PyObject *arg)

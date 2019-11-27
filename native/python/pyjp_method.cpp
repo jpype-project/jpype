@@ -103,8 +103,11 @@ void PyJPMethod_initType(PyObject *module)
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
 	PyObject *bases = PyTuple_Pack(1, &PyFunction_Type);
+	unsigned long flags = PyFunction_Type.tp_flags;
+	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyModule_AddObject(module, "PyJPMethod",
 			PyJPMethod_Type = PyType_FromSpecWithBases(&methodSpec, bases));
+	PyFunction_Type.tp_flags = flags;
 	Py_DECREF(bases);
 }
 
