@@ -17,39 +17,12 @@
 #include <pyjp.h>
 #include <structmember.h>
 
-/**
- * Search for a method in the tree.
- *
- * The regular method in Python always de-references the descriptor before
- * we can examine it.  We need to lookup it out without de-referencing it.
- * This will only searches the type dictionaries.
- *
- * @param type
- * @param attr_name
- * @return
- */
-PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name)
+#ifdef __cplusplus
+extern "C"
 {
-	if (type->tp_mro == NULL)
-		return NULL;
+#endif
 
-	PyObject *mro = type->tp_mro;
-	Py_ssize_t n = PyTuple_Size(mro);
-	for (Py_ssize_t i = 0; i < n; ++i)
-	{
-		type = (PyTypeObject*) PyTuple_GetItem(mro, i);
-		PyObject *res = PyDict_GetItem(type->tp_dict, attr_name);
-		if (res)
-		{
-			Py_INCREF(res);
-			return res;
-		}
-	}
-	return NULL;
-}
 
-//============================================================
-PyObject *PyJPClassMeta_Type = NULL;
 PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int       PyJPClassMeta_init(PyObject *self, PyObject *pyargs, PyObject *kwargs);
 PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name);
@@ -72,7 +45,7 @@ static PyType_Slot metaSlots[] = {
 	{0}
 };
 
-static PyType_Spec metaSpec = {
+PyType_Spec PyJPClassMetaSpec = {
 	"_jpype.PyJPClassMeta",
 	0,
 	0,
@@ -85,7 +58,8 @@ PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 	// Call the Factory
 	if (PyTuple_Size(args) == 1)
 	{
-		PyObject *factory = PyObject_GetAttrString(PyJPModule::module, "ClassFactory");
+		// We have to handle string, PyJPValue instances and point to a class
+		PyObject *factory = PyObject_GetAttrString(PyJPModule_global, "ClassFactory");
 		if (factory == NULL)
 			return NULL;
 		return PyObject_Call(factory, args, kwargs);
@@ -104,6 +78,7 @@ int PyJPClassMeta_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 {
+	PyJPModuleState *state = PyJPModuleState_global;
 	return PyType_Type.tp_getattro(obj, name);
 	if (!PyUnicode_Check(name))
 	{
@@ -123,7 +98,7 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 		return attr;
 
 	// Methods
-	if (Py_TYPE(attr) == (PyTypeObject*) PyJPMethod_Type)
+	if (Py_TYPE(attr) == (PyTypeObject*) state->PyJPMethod_Type)
 		return attr;
 
 	// Don't allow properties to be rewritten
@@ -178,6 +153,8 @@ int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 
 PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
+	PyJPModuleState *state = PyJPModuleState_global;
+
 	int ret = 0;
 
 	PyObject *other;
@@ -188,7 +165,7 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	Py_ssize_t n = PyTuple_Size(mro);
 	if (n >= 3)
 	{
-		ret = (PyTuple_GetItem(mro, n - 3) == PyJPClassMeta_Type);
+		ret = (PyTuple_GetItem(mro, n - 3) == state->PyJPClassMeta_Type);
 	}
 
 	return PyBool_FromLong(ret);
@@ -196,15 +173,6 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 
 const char* JAVA_VALUE = "__javavalue__";
 
-PyObject* PyJPValueBase_Type = NULL;
-PyObject* PyJPValue_Type = NULL;
-PyObject* PyJPValueExc_Type = NULL;
-PyObject* PyJPValueLong_Type = NULL;
-PyObject* PyJPValueFloat_Type = NULL;
-
-JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
-JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 PyObject *PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs);
@@ -240,7 +208,7 @@ static PyType_Slot baseSlots[] = {
 	{0}
 };
 
-static PyType_Spec baseSpec = {
+PyType_Spec PyJPValueBaseSpec = {
 	"_jpype.PyJPValueBase",
 	sizeof (PyObject),
 	0,
@@ -268,7 +236,7 @@ static PyType_Slot valueSlots[] = {
 	{0}
 };
 
-static PyType_Spec valueSpec = {
+PyType_Spec PyJPValueSpec = {
 	"_jpype.PyJPValue",
 	sizeof (PyJPValue),
 	0,
@@ -280,7 +248,7 @@ static PyType_Slot valueExcSlots[] = {
 	{0}
 };
 
-static PyType_Spec valueExcSpec = {
+PyType_Spec PyJPValueExceptionSpec = {
 	"_jpype.PyJPValueException",
 	sizeof (PyObject),
 	0,
@@ -288,158 +256,15 @@ static PyType_Spec valueExcSpec = {
 	valueExcSlots
 };
 
-//============================================================
-// Factory for Base classes
-
-/**
- * Create a JPValue wrapper with the appropriate type.
- *
- * This method dodges the __new__ method, but does involve
- * __init__.  It is called when returning a Java object back to
- * Python.
- *
- * @param type is the type of the resulting wrapper.
- * @param context is the java virtual machine.
- * @param value is the java value to wrap.
- * @return
- */
-JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value)
-{
-	// dispatch by type so we will create the right wrapper type
-	JPPyObject out;
-	JPClass* cls = value.getClass();
-
-	if (type == (PyTypeObject *) PyJPValue_Type)
-	{
-		out = PyJPValue_createInstance(type, context, value);
-	} else if (cls->isThrowable())
-	{
-		out = PyJPValue_createBase(type, context, value);
-	} else if (cls == context->_java_lang_Class)
-	{
-		JPClass *cls2 = context->getTypeManager()->findClass((jclass) value.getValue().l);
-		out = PyJPClass_create(type, context, cls2);
-	} else if (dynamic_cast<JPBoxedType*> (cls) != 0)
-	{
-		out = PyJPValue_createBoxed(type, context, value);
-	} else if (dynamic_cast<JPArrayClass*> (cls) != 0)
-	{
-		out = PyJPArray_create(type, context, value);
-	} else
-	{
-		out = PyJPValue_createInstance(type, context, value);
-	}
-
-	return out;
-}
-
-JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
-{
-	JPJavaFrame frame(context);
-	JP_TRACE_IN_C("PyJPValue_alloc");
-
-	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
-	JP_PY_CHECK();
-
-	// If it is not a primitive, we need to reference it
-	if (!value.getClass()->isPrimitive())
-	{
-		jvalue v;
-		v.l = frame.NewGlobalRef(value.getValue().l);
-		self->m_Value = JPValue(value.getClass(), v);
-	} else
-	{
-		// New value instance
-		self->m_Value = value;
-	}
-	self->m_Context = (PyJPContext*) (context->getHost());
-	Py_INCREF(self->m_Context);
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
-	JP_TRACE_OUT_C;
-}
-
-JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
-{
-	JPJavaFrame frame(context);
-	JP_TRACE_IN_C("PyJPValue_alloc_base");
-	JPPyObject self(JPPyRef::_claim, ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0));
-	self.setAttrString(JAVA_VALUE, PyJPValue_createInstance((PyTypeObject*) PyJPValue_Type, context, value).get());
-	return self;
-	JP_TRACE_OUT_C;
-}
-
-JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
-{
-	// Find the primitive type
-	JPPrimitiveType *primitive = ((JPBoxedType*) value.getClass())->getPrimitive();
-
-	// Convert object to primitive type
-	JPValue jcontents = primitive->getValueFromObject(value);
-	JPPyObject pycontents;
-
-	// Convert to python based on the type
-	if (primitive == context->_boolean)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().z));
-	} else if (primitive == context->_byte)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().b));
-	} else if (primitive == context->_short)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().s));
-	} else if (primitive == context->_int)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().i));
-	} else if (primitive == context->_long)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong((long) jcontents.getValue().j));
-	} else if (primitive == context->_float)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().f));
-	} else if (primitive == context->_double)
-	{
-		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().d));
-	} else if (primitive == context->_char)
-	{
-		return PyJPValue_createInstance(wrapper, context, value);
-	}
-
-	JPPyTuple tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, pycontents.get());
-	JPPyObject self(JPPyRef::_call, PyObject_Call((PyObject*) wrapper, tuple.get(), NULL));
-	self.setAttrString(JAVA_VALUE, PyJPValue_createInstance((PyTypeObject*) PyJPValue_Type, context, value).get());
-	return self;
-}
-
-JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
-{
-	JP_TRACE_IN_C("PyJPArray_alloc");
-	JPPyObject self = PyJPValue_createInstance(wrapper, context, value);
-	((PyJPArray*) self.get())->m_Array = new JPArray(value.getClass(), (jarray) value.getValue().l);
-	return self;
-	JP_TRACE_OUT_C;
-}
-
-JPPyObject PyJPClass_create(PyTypeObject *wrapper, JPContext *context, JPClass *cls)
-{
-	JP_TRACE_IN_C("PyJPClass_alloc");
-	JPJavaFrame frame(context);
-	jvalue value;
-	value.l = (jobject) cls->getJavaClass();
-	JPPyObject self = PyJPValue_createInstance(wrapper, context,
-			JPValue(context->_java_lang_Class, value));
-	((PyJPClass*) self.get())->m_Class = cls;
-	return self;
-	JP_TRACE_OUT_C;
-}
 
 //============================================================
 
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
+	PyJPModuleState *state = PyJPModuleState_global;
 	PyObject *self = type->tp_alloc(type, 0);
-	PyObject_SetAttrString(self, JAVA_VALUE,
-			PyJPValue_new((PyTypeObject*) PyJPValue_Type, args, kwargs));
+	PyObject_SetAttrString(self, __javavalue__,
+			PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, args, kwargs));
 	return (PyObject*) self;
 }
 
@@ -454,29 +279,29 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPValue_init", self);
-	JP_TRACE("init", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPValue_init", self);
+		PyJPModuleState *state = PyJPModuleState_global;
 		// Check if we are already initialized.
-		if (PyObject_HasAttrString(self, JAVA_VALUE))
+		if (PyObject_HasAttrString(self, __javavalue__))
 			return 0;
 		JPPyObject value(JPPyRef::_call,
-				PyJPValue_new((PyTypeObject*) PyJPValue_Type, pyargs, kwargs));
+				PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, pyargs, kwargs));
 		if (PyJPValue_init((PyJPValue*) value.get(), pyargs, kwargs) == -1)
 			return -1;
-		return PyObject_SetAttrString(self, JAVA_VALUE, value.get());
+		return PyObject_SetAttrString(self, __javavalue__, value.get());
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPValue_init", self);
-	JP_TRACE("init", self);
 	try
 	{
+		PyJPModuleState *state = PyJPModuleState_global;
+		JP_TRACE_IN_C("PyJPValue_init", self);
 		// Check if we are already initialized.
 		if (self->m_Value.getClass() != 0)
 			return 0;
@@ -484,7 +309,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 		// Get the Java class from the type.
 		PyObject *obj = PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__");
 		JP_PY_CHECK();
-		if (!PyObject_IsInstance(obj, (PyObject*) PyJPClass_Type))
+		if (!PyObject_IsInstance(obj, (PyObject*) state->PyJPClass_Type))
 		{
 			Py_DECREF(obj);
 			JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
@@ -511,54 +336,54 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 		}
 		self->m_Value =  cls->newInstance(args);
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 void PyJPValue_dealloc(PyJPValue *self)
 {
-	// We have to handle partially constructed objects that result from
-	// fails in __init__, thus lots of inits
-	JP_TRACE_IN_C("PyJPValue::__dealloc__", self);
-	JPValue& value = self->m_Value;
-	JPClass *cls = value.getClass();
-	if (self->m_Context != NULL && cls != NULL)
+	try
 	{
-		JPContext *context = self->m_Context->m_Context;
-		if (context->isRunning() && !cls->isPrimitive())
+		// We have to handle partially constructed objects that result from
+		// fails in __init__, thus lots of inits
+		JP_TRACE_IN_C("PyJPValue::__dealloc__", self);
+		JPValue& value = self->m_Value;
+		JPClass *cls = value.getClass();
+		if (self->m_Context != NULL && cls != NULL)
 		{
-			// If the JVM has shutdown then we don't need to free the resource
-			// FIXME there is a problem with initializing the system twice.
-			// Once we shut down the cls type goes away so this will fail.  If
-			// we then reinitialize we will access this bad resource.  Not sure
-			// of an easy solution.
-			JP_TRACE("Dereference object", cls->getCanonicalName());
-			context->ReleaseGlobalRef(value.getValue().l);
+			JPContext *context = self->m_Context->m_Context;
+			if (context->isRunning() && !cls->isPrimitive())
+			{
+				// If the JVM has shutdown then we don't need to free the resource
+				// FIXME there is a problem with initializing the system twice.
+				// Once we shut down the cls type goes away so this will fail.  If
+				// we then reinitialize we will access this bad resource.  Not sure
+				// of an easy solution.
+				JP_TRACE("Dereference object", cls->getCanonicalName());
+				context->ReleaseGlobalRef(value.getValue().l);
+			}
 		}
-	}
 
-	PyTypeObject *type = Py_TYPE(self);
-	PyObject_GC_UnTrack(self);
-	type->tp_clear((PyObject*) self);
-	type->tp_free((PyObject*) self);
-	JP_TRACE_OUT_C;
+		PyTypeObject *type = Py_TYPE(self);
+		PyObject_GC_UnTrack(self);
+		type->tp_clear((PyObject*) self);
+		type->tp_free((PyObject*) self);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH();
 }
 
 int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg)
 {
-	JP_TRACE_IN_C("PyJPValue_traverse", self);
 	Py_VISIT(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 int PyJPValue_clear(PyJPValue *self)
 {
-	JP_TRACE_IN_C("PyJPValue::clear", self);
 	Py_CLEAR(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 //============================================================
@@ -567,38 +392,52 @@ int PyJPValue_clear(PyJPValue *self)
 
 PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	int ret = 0;
+	try
+	{
+		JP_TRACE_IN_C("PyJPValueBase_check", pyself);
+		PyJPModuleState *state = PyJPModuleState_global;
+		int ret = 0;
 
-	PyObject *other;
-	if (!PyArg_ParseTuple(args, "O", &other))
-		return NULL;
+		PyObject *other;
+		if (!PyArg_ParseTuple(args, "O", &other))
+			return NULL;
 
-	PyObject *mro = Py_TYPE(other)->tp_mro;
-	Py_ssize_t n = PyTuple_Size(mro);
-	if (n >= 2)
-		ret = PyTuple_GetItem(mro, n - 2) == PyJPValueBase_Type;
+		PyObject *mro = Py_TYPE(other)->tp_mro;
+		Py_ssize_t n = PyTuple_Size(mro);
+		if (n >= 2)
+			ret = PyTuple_GetItem(mro, n - 2) == state->PyJPValueBase_Type;
 
-	return PyBool_FromLong(ret);
+		return PyBool_FromLong(ret);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
 // Test code
 
 PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	int ret = 0;
-
-	PyObject *other;
-	if (!PyArg_ParseTuple(args, "O", &other))
-		return NULL;
-
-	PyObject *mro = Py_TYPE(other)->tp_mro;
-	Py_ssize_t n = PyTuple_Size(mro);
-	if (n >= 3)
+	try
 	{
-		ret = PyTuple_GetItem(mro, n - 3) == PyJPValue_Type;
-	}
+		JP_TRACE_IN_C("PyJPValue_check", pyself);
+		PyJPModuleState *state = PyJPModuleState_global;
+		int ret = 0;
 
-	return PyBool_FromLong(ret);
+		PyObject *other;
+		if (!PyArg_ParseTuple(args, "O", &other))
+			return NULL;
+
+		PyObject *mro = Py_TYPE(other)->tp_mro;
+		Py_ssize_t n = PyTuple_Size(mro);
+		if (n >= 3)
+		{
+			ret = PyTuple_GetItem(mro, n - 3) == state->PyJPValue_Type;
+		}
+
+		return PyBool_FromLong(ret);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
 //============================================================
@@ -616,17 +455,18 @@ PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
  */
 PyJPValue* PyJPValue_asValue(PyObject *self)
 {
+	PyJPModuleState *state = PyJPModuleState_global;
 	PyObject* mro = Py_TYPE(self)->tp_mro;
 	if (mro == NULL)
 		return NULL;
 	Py_ssize_t n = PyTuple_Size(mro);
 
-	if (n >= 3 && PyTuple_GetItem(mro, n - 3) == PyJPValue_Type)
+	if (n >= 3 && PyTuple_GetItem(mro, n - 3) == state->PyJPValue_Type)
 		return (PyJPValue*) self;
-	if (n >= 2 && PyTuple_GetItem(mro, n - 2) == PyJPValueBase_Type)
+	if (n >= 2 && PyTuple_GetItem(mro, n - 2) == state->PyJPValueBase_Type)
 	{
 		PyObject* dict = PyObject_GenericGetDict(self, NULL);
-		PyObject* proxy = PyDict_GetItemString(dict, JAVA_VALUE); // borrowed
+		PyObject* proxy = PyDict_GetItemString(dict, __javavalue__); // borrowed
 		Py_DECREF(dict);
 		return (PyJPValue*) proxy;
 	}
@@ -635,9 +475,9 @@ PyJPValue* PyJPValue_asValue(PyObject *self)
 
 int PyJPValue_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 {
-	JP_TRACE_IN_C("PyJPValue_toString", pyself);
 	try
 	{
+		JP_TRACE_IN_C("PyJPValue_toString", pyself);
 		if (!PyUnicode_Check(attr_name))
 		{
 			PyErr_Format(PyExc_TypeError,
@@ -670,16 +510,16 @@ int PyJPValue_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 		PyErr_Format(PyExc_AttributeError,
 				"Field '%s' is not settable on Java '%s' object", name_str, Py_TYPE(o)->tp_name);
 		return -1;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPValue_str(PyObject *pyself)
 {
-	JP_TRACE_IN_C("PyJPValue_toString", pyself);
 	try
 	{
+		JP_TRACE_IN_C("PyJPValue_toString", pyself);
 		// Make this work for both PyJPValueBase and PyJPValue
 		PyJPValue* self = PyJPValue_asValue(pyself);
 		if (self == NULL)
@@ -721,16 +561,16 @@ PyObject *PyJPValue_str(PyObject *pyself)
 
 		// In general toString is not immutable, so we won't cache it.
 		return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l)).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPValue_repr(PyObject *pyself)
 {
-	JP_TRACE_IN_C("PyJPValue:_repr", pyself);
 	try
 	{
+		JP_TRACE_IN_C("PyJPValue_repr", pyself);
 		// Make this work for both PyJPValueBase and PyJPValue
 		PyJPValue *self = PyJPValue_asValue(pyself);
 		if (self == NULL)
@@ -756,60 +596,27 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 
 		sout << ">";
 		return JPPyString::fromStringUTF8(sout.str()).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPValue_getJVM(PyObject *pyself, void *closure)
 {
-	// Make this work for both PyJPValueBase and PyJPValue
-	PyJPValue *self = PyJPValue_asValue(pyself);
-	if (self->m_Context == NULL)
-		Py_RETURN_NONE;
-	Py_INCREF(self->m_Context);
-	return (PyObject *) (self->m_Context);
+	try
+	{
+		JP_TRACE_IN_C("PyJPValue_getJVM", pyself);
+		// Make this work for both PyJPValueBase and PyJPValue
+		PyJPValue *self = PyJPValue_asValue(pyself);
+		if (self->m_Context == NULL)
+			Py_RETURN_NONE;
+		Py_INCREF(self->m_Context);
+		return (PyObject *) (self->m_Context);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
-//============================================================
-
-void PyJPValue_initType(PyObject* module)
-{
-	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
-	PyModule_AddObject(module, "PyJPClassMeta",
-			PyJPClassMeta_Type = PyType_FromSpecWithBases(&metaSpec, bases));
-	Py_DECREF(bases);
-
-	PyModule_AddObject(module, "PyJPValueBase",
-			PyJPValueBase_Type = PyType_FromSpec(&baseSpec));
-
-	bases = PyTuple_Pack(1, PyJPValueBase_Type);
-	PyModule_AddObject(module, "PyJPValue",
-			PyJPValue_Type = PyType_FromSpecWithBases(&valueSpec, bases));
-	Py_DECREF(bases);
-
-	bases = PyTuple_Pack(2, PyExc_Exception, PyJPValueBase_Type);
-	PyModule_AddObject(module, "PyJPValueException",
-			PyJPValueExc_Type = PyType_FromSpecWithBases(&valueExcSpec, bases));
-	Py_DECREF(bases);
-
-	// Int is hard so we need to use the regular type process
-	PyObject *args;
-	args = Py_BuildValue("sNN",
-			"_jpype.PyJPValueLong",
-			PyTuple_Pack(2, &PyLong_Type, PyJPValueBase_Type),
-			PyDict_New());
-	PyModule_AddObject(module, "PyJPValueLong",
-			PyJPValueLong_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
-	Py_DECREF(args);
-
-	args = Py_BuildValue("sNN",
-			"_jpype.PyJPValueFloat",
-			PyTuple_Pack(2, &PyLong_Type, PyJPValueBase_Type),
-			PyDict_New());
-	PyModule_AddObject(module, "PyJPValueFloat",
-			PyJPValueFloat_Type = PyObject_Call((PyObject*) & PyType_Type, args, NULL));
-	Py_DECREF(args);
+#ifdef __cplusplus
 }
-
-
+#endif

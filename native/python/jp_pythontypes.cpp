@@ -3,7 +3,6 @@
 #include <pyjp.h>
 #include <jpype_memory_view.h>
 
-
 /****************************************************************************
  * Base object
  ***************************************************************************/
@@ -19,15 +18,13 @@ JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject *obj)
 		if ((usage & 4) == 4)
 		{
 			ASSERT_NOT_NULL(obj);
-		}
-		else if (obj == NULL)
+		} else if (obj == NULL)
 			PyErr_Clear();
 
 		// Claim it by stealing a references
 		pyobj = obj;
 		JP_TRACE_PY("pyref new(claim)", pyobj);
-	}
-	else
+	} else
 	{
 		pyobj = obj;
 		if (pyobj == NULL)
@@ -57,8 +54,7 @@ JPPyObject::~JPPyObject()
 	{
 		JP_TRACE_PY("pyref dtor(dec)", pyobj);
 		decref();
-	}
-	else
+	} else
 	{
 		JP_TRACE_PY("pyref dtor(null)", pyobj);
 	}
@@ -146,8 +142,8 @@ int JPPyObject::setAttrString(const char* k, PyObject* value)
 {
 	if (PyObject_SetAttrString(pyobj, k, value) == -1)
 		JP_PY_CHECK();
+	return 0;
 }
-
 
 JPPyObject JPPyObject::getAttrString(PyObject *pyobj, const char *k)
 {
@@ -258,7 +254,7 @@ bool JPPyLong::check(PyObject *obj)
 	return PyLong_Check(obj);
 #else
 	return PyInt_Check(obj)
-		|| PyLong_Check(obj);
+			|| PyLong_Check(obj);
 #endif
 }
 
@@ -266,18 +262,18 @@ bool JPPyLong::checkConvertable(PyObject *obj)
 {
 #if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj)
-		|| PyObject_HasAttrString(obj, "__int__");
+			|| PyObject_HasAttrString(obj, "__int__");
 #else
 	return PyInt_Check(obj)
-		|| PyLong_Check(obj)
-		|| PyObject_HasAttrString(obj, "__int__")
-		|| PyObject_HasAttrString(obj, "__long__");
+			|| PyLong_Check(obj)
+			|| PyObject_HasAttrString(obj, "__int__")
+			|| PyObject_HasAttrString(obj, "__long__");
 #endif
 }
 
 bool JPPyLong::checkIndexable(PyObject *obj)
 {
-	return PyObject_HasAttrString(obj, "__index__")!=0;
+	return PyObject_HasAttrString(obj, "__index__") != 0;
 }
 
 jlong JPPyLong::asLong(PyObject * obj)
@@ -347,7 +343,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #else
 	if (c < 128)
 	{
-		char c1 = (char)c;
+		char c1 = (char) c;
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(&c1, 1));
 	}
 	JPPyObject buf(JPPyRef::_call, PyUnicode_New(1, 65535));
@@ -494,8 +490,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 	if (unicode)
 	{
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(str.c_str(), len));
-	}
-	else
+	} else
 	{
 		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(str.c_str(), len));
 	}
@@ -524,8 +519,7 @@ string JPPyString::asStringUTF8(PyObject *pyobj)
 			return string(buffer, size);
 		else
 			return string();
-	}
-	else
+	} else
 	{
 		char *buffer = PyString_AsString(pyobj); // internal reference
 		JP_PY_CHECK();
@@ -543,8 +537,7 @@ string JPPyString::asStringUTF8(PyObject *pyobj)
 			return string(buffer, size);
 		else
 			return string();
-	}
-	else if (PyBytes_Check(pyobj))
+	} else if (PyBytes_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
@@ -770,7 +763,8 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 
 JPPyCallAcquire::JPPyCallAcquire()
 {
-	state1 = PyThreadState_New(PyJPModule::s_Interpreter);
+	PyThreadState *mainThreadState = PyThreadState_Get();
+	state1 = PyThreadState_New(mainThreadState->interp);
 	PyEval_AcquireThread((PyThreadState*) state1);
 	JP_TRACE_LOCKS("GIL ACQUIRE", this);
 }

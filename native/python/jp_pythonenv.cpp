@@ -1,56 +1,9 @@
-#include <pyjp.h>
 #include <jpype.h>
+#include <pyjp.h>
 
-/** Python seems to delete static variables after the Python resources
- * have already been claimed, so we need to make sure these objects
- * never get deleted.
- *
- * FIXME figure out how to connect to module unloading.
- */
-class JPResources
-{
-public:
-	JPPyObject s_GetClassMethod;
-	JPPyObject s_GetMethodDoc;
-	JPPyObject s_GetMethodAnnotations;
-	JPPyObject s_GetMethodCode;
-} ;
-
-namespace
-{
-	JPResources *s_Resources = NULL;
-	const char *__javaproxy__ = "__javaproxy__";
-	const char *__javaclass__ = "__javaclass__";
-}
-
-void JPPythonEnv::init()
-{
-	// Nothing frees this currently.  We lack a way to shutdown or reload
-	// this module.
-	s_Resources = new JPResources();
-}
-
-void JPPythonEnv::setResource(const string& name, PyObject *resource)
-{
-	JP_TRACE_IN_C("JPPythonEnv::setResource");
-	JP_TRACE(name);
-	JP_TRACE_PY("hold", resource);
-	if (name == "GetClassMethod")
-		s_Resources->s_GetClassMethod = JPPyObject(JPPyRef::_use, resource);
-	else if (name == "GetMethodDoc")
-		s_Resources->s_GetMethodDoc = JPPyObject(JPPyRef::_use, resource);
-	else if (name == "GetMethodAnnotations")
-		s_Resources->s_GetMethodAnnotations = JPPyObject(JPPyRef::_use, resource);
-	else if (name == "GetMethodCode")
-		s_Resources->s_GetMethodCode = JPPyObject(JPPyRef::_use, resource);
-	else
-	{
-		stringstream ss;
-		ss << "Unknown jpype resource " << name;
-		JP_RAISE_RUNTIME_ERROR(ss.str());
-	}
-	JP_TRACE_OUT_C;
-}
+const char *__javavalue__ = "__javavalue__";
+const char *__javaproxy__ = "__javaproxy__";
+const char *__javaclass__ = "__javaclass__";
 
 /** Construct a Python wrapper for a Java object. */
 JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)
@@ -71,38 +24,6 @@ JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)
 	JP_TRACE_OUT_C;
 }
 
-JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
-{
-	JP_TRACE_IN_C("JPPythonEnv::newJavaClass");
-	ASSERT_NOT_NULL(javaClass);
-
-	// Check the cache
-	if (javaClass->getHost() != NULL)
-	{
-		return JPPyObject(JPPyRef::_use, javaClass->getHost());
-	}
-
-	PyJPContext *context = (PyJPContext*) (javaClass->getContext()->getHost());
-
-	JP_TRACE(javaClass->toString());
-	JPPyTuple args(JPPyTuple::newTuple(2));
-	args.setItem(0, (PyObject*) context);
-	args.setItem(1, PyJPClass_create((PyTypeObject*) PyJPClass_Type, javaClass->getContext(), javaClass).get());
-
-	// calls jpype._jclass._getClassFor(_jpype.PyJPClass)
-	if (s_Resources->s_GetClassMethod.isNull())
-	{
-		JP_TRACE("Resource not set.");
-		return JPPyObject();
-	}
-	JPPyObject ret = s_Resources->s_GetClassMethod.call(args.get(), NULL);
-
-	// Keep a cache in the C++ layer
-	javaClass->setHost(ret.get());
-	return ret;
-	JP_TRACE_OUT_C;
-}
-
 JPValue *JPPythonEnv::getJavaValue(PyObject *obj)
 {
 	PyJPValue *value = PyJPValue_asValue(obj);
@@ -113,13 +34,14 @@ JPValue *JPPythonEnv::getJavaValue(PyObject *obj)
 
 JPClass *JPPythonEnv::getJavaClass(PyObject *obj)
 {
+	PyJPModuleState *state = PyJPModuleState_global;
 	JPPyObject vobj(JPPyRef::_use, obj);
-	if (PyObject_IsInstance(obj, (PyObject*) PyJPClass_Type))
+	if (PyObject_IsInstance(obj, (PyObject*) state->PyJPClass_Type))
 		return ((PyJPClass*) obj)->m_Class;
 	if (!JPPyObject::hasAttrString(obj, __javaclass__))
 		return NULL;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaclass__));
-	if (Py_TYPE(self.get()) == (PyTypeObject*) PyJPClass_Type)
+	if (Py_TYPE(self.get()) == (PyTypeObject*) state->PyJPClass_Type)
 	{
 		return ((PyJPClass*) self.get())->m_Class;
 	}
@@ -128,12 +50,13 @@ JPClass *JPPythonEnv::getJavaClass(PyObject *obj)
 
 JPProxy *JPPythonEnv::getJavaProxy(PyObject *obj)
 {
-	if (Py_TYPE(obj) == (PyTypeObject*) PyJPProxy_Type)
+	PyJPModuleState *state = PyJPModuleState_global;
+	if (Py_TYPE(obj) == (PyTypeObject*) state->PyJPProxy_Type)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	if (!JPPyObject::hasAttrString(obj, __javaproxy__))
 		return 0;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaproxy__));
-	if (Py_TYPE(self.get()) == (PyTypeObject*) PyJPProxy_Type)
+	if (Py_TYPE(self.get()) == (PyTypeObject*) state->PyJPProxy_Type)
 	{
 		return (((PyJPProxy*) self.get())->m_Proxy);
 	}
@@ -162,5 +85,211 @@ void JPPythonEnv::rethrow(const JPStackInfo& info)
 		ex.toPython();
 		return;
 	}
+	JP_TRACE_OUT_C;
+}
+
+PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name)
+{
+	if (type->tp_mro == NULL)
+		return NULL;
+
+	PyObject *mro = type->tp_mro;
+	Py_ssize_t n = PyTuple_Size(mro);
+	for (Py_ssize_t i = 0; i < n; ++i)
+	{
+		type = (PyTypeObject*) PyTuple_GetItem(mro, i);
+		PyObject *res = PyDict_GetItem(type->tp_dict, attr_name);
+		if (res)
+		{
+			Py_INCREF(res);
+			return res;
+		}
+	}
+	return NULL;
+}
+
+//============================================================
+// Factory for Base classes
+
+/**
+ * Create a JPValue wrapper with the appropriate type.
+ *
+ * This method dodges the __new__ method, but does involve
+ * __init__.  It is called when returning a Java object back to
+ * Python.
+ *
+ * @param type is the type of the resulting wrapper.
+ * @param context is the java virtual machine.
+ * @param value is the java value to wrap.
+ * @return
+ */
+JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	// dispatch by type so we will create the right wrapper type
+	JPPyObject out;
+	JPClass* cls = value.getClass();
+
+	if (type == (PyTypeObject *) state->PyJPValue_Type)
+	{
+		out = PyJPValue_createInstance(type, context, value);
+	} else if (cls->isThrowable())
+	{
+		out = PyJPValue_createBase(type, context, value);
+	} else if (cls == context->_java_lang_Class)
+	{
+		JPClass *cls2 = context->getTypeManager()->findClass((jclass) value.getValue().l);
+		out = PyJPClass_create(type, context, cls2);
+	} else if (dynamic_cast<JPBoxedType*> (cls) != 0)
+	{
+		out = PyJPValue_createBoxed(type, context, value);
+	} else if (dynamic_cast<JPArrayClass*> (cls) != 0)
+	{
+		out = PyJPArray_create(type, context, value);
+	} else
+	{
+		out = PyJPValue_createInstance(type, context, value);
+	}
+
+	return out;
+}
+
+JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	JPJavaFrame frame(context);
+	JP_TRACE_IN_C("PyJPValue_alloc");
+
+	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
+	JP_PY_CHECK();
+
+	// If it is not a primitive, we need to reference it
+	if (!value.getClass()->isPrimitive())
+	{
+		jvalue v;
+		v.l = frame.NewGlobalRef(value.getValue().l);
+		self->m_Value = JPValue(value.getClass(), v);
+	} else
+	{
+		// New value instance
+		self->m_Value = value;
+	}
+	self->m_Context = (PyJPContext*) (context->getHost());
+	Py_INCREF(self->m_Context);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	JP_TRACE_OUT_C;
+}
+
+JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPJavaFrame frame(context);
+	JP_TRACE_IN_C("PyJPValue_alloc_base");
+	JPPyObject self(JPPyRef::_claim, ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0));
+	self.setAttrString(__javavalue__, PyJPValue_createInstance((PyTypeObject*) state->PyJPValue_Type, context, value).get());
+	return self;
+	JP_TRACE_OUT_C;
+}
+
+JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	// Find the primitive type
+	JPPrimitiveType *primitive = ((JPBoxedType*) value.getClass())->getPrimitive();
+
+	// Convert object to primitive type
+	JPValue jcontents = primitive->getValueFromObject(value);
+	JPPyObject pycontents;
+
+	// Convert to python based on the type
+	if (primitive == context->_boolean)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().z));
+	} else if (primitive == context->_byte)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().b));
+	} else if (primitive == context->_short)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().s));
+	} else if (primitive == context->_int)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().i));
+	} else if (primitive == context->_long)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong((long) jcontents.getValue().j));
+	} else if (primitive == context->_float)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().f));
+	} else if (primitive == context->_double)
+	{
+		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().d));
+	} else if (primitive == context->_char)
+	{
+		return PyJPValue_createInstance(wrapper, context, value);
+	}
+
+	JPPyTuple tuple = JPPyTuple::newTuple(1);
+	tuple.setItem(0, pycontents.get());
+	JPPyObject self(JPPyRef::_call, PyObject_Call((PyObject*) wrapper, tuple.get(), NULL));
+	self.setAttrString(__javavalue__, PyJPValue_createInstance((PyTypeObject*) state->PyJPValue_Type, context, value).get());
+	return self;
+}
+
+JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	JP_TRACE_IN_C("PyJPArray_alloc");
+	JPPyObject self = PyJPValue_createInstance(wrapper, context, value);
+	((PyJPArray*) self.get())->m_Array = new JPArray(value.getClass(), (jarray) value.getValue().l);
+	return self;
+	JP_TRACE_OUT_C;
+}
+
+JPPyObject PyJPClass_create(PyTypeObject *wrapper, JPContext *context, JPClass *cls)
+{
+	JP_TRACE_IN_C("PyJPClass_alloc");
+	JPJavaFrame frame(context);
+	jvalue value;
+	value.l = (jobject) cls->getJavaClass();
+	JPPyObject self = PyJPValue_createInstance(wrapper, context,
+			JPValue(context->_java_lang_Class, value));
+	((PyJPClass*) self.get())->m_Class = cls;
+	return self;
+	JP_TRACE_OUT_C;
+}
+
+JPPyObject PyJPField_create(JPField *field)
+{
+	JP_TRACE_IN_C("PyJPField_create");
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext *context = field->getContext();
+	jvalue v;
+	v.l = field->getJavaObject();
+	JPPyObject self = PyJPValue_create((PyTypeObject*) state->PyJPField_Type, field->getContext(),
+			JPValue(context->_java_lang_reflect_Field, v));
+	((PyJPField*) self.get())->m_Field = field;
+	return self;
+	JP_TRACE_OUT;
+}
+
+JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
+{
+	JP_TRACE_IN_C("PyJPMethod_create");
+	PyJPModuleState *state = PyJPModuleState_global;
+	PyTypeObject *type = (PyTypeObject*) state->PyJPMethod_Type;
+	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);
+	JP_PY_CHECK();
+	self->m_Method = m;
+	self->m_Instance = instance;
+	if (instance != NULL)
+	{
+		JP_TRACE_PY("method alloc (inc)", instance);
+		Py_INCREF(instance);
+	}
+	self->m_Doc = NULL;
+	self->m_Annotations = NULL;
+	self->m_CodeRep = NULL;
+	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
+	Py_INCREF(self->m_Context);
+	JP_TRACE("self", self);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT_C;
 }

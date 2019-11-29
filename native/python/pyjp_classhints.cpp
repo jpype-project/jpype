@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-PyObject *PyJPClassHints_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs);
 void PyJPClassHints_dealloc(PyJPClassHints *self);
@@ -36,7 +40,7 @@ static PyType_Slot hintsSlots[] = {
 	{0}
 };
 
-static PyType_Spec hintsSpec = {
+PyType_Spec PyJPClassHintsSpec = {
 	"_jpype.PyJPClassHints",
 	sizeof (PyJPClassHints),
 	0,
@@ -44,26 +48,24 @@ static PyType_Spec hintsSpec = {
 	hintsSlots
 };
 
-void PyJPClassHints_initType(PyObject *module)
-{
-	PyModule_AddObject(module, "PyJPClassHints",
-			PyJPClassHints_Type = PyType_FromSpec(&hintsSpec));
-}
-
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN("PyJPProxy_new");
-	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
-	self->m_Hints = NULL;
-	return (PyObject*) self;
-	JP_TRACE_OUT;
+	try
+	{
+		JP_TRACE_IN_C("PyJPProxy_new");
+		PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
+		self->m_Hints = NULL;
+		return (PyObject*) self;
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
 int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPClassHints::init", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPClassHints_init", self);
 		// Parse arguments
 		PyObject *target;
 		PyObject *pyintf;
@@ -73,19 +75,23 @@ int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 		}
 
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 void PyJPClassHints_dealloc(PyJPClassHints *self)
 {
-	JP_TRACE_IN_C("PyJPClassHints_dealloc", self);
-	delete self->m_Hints;
+	try
+	{
+		JP_TRACE_IN_C("PyJPClassHints_dealloc", self);
+		delete self->m_Hints;
 
-	// Free self
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
+		// Free self
+		Py_TYPE(self)->tp_free(self);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH();
 }
 
 PyObject *PyJPClassHints_str(PyJPClassHints *self)
@@ -98,3 +104,7 @@ PyObject *PyJPClassHints_str(PyJPClassHints *self)
 	}
 	PY_STANDARD_CATCH(NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif

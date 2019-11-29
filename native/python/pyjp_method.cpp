@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-PyObject* PyJPMethod_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 PyObject* PyJPMethod_new(PyTypeObject *self, PyObject *args, PyObject *kwargs);
 void      PyJPMethod_dealloc(PyJPMethod *o);
 int       PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg);
@@ -87,7 +91,7 @@ static PyType_Slot methodSlots[] = {
 	{0}
 };
 
-static PyType_Spec methodSpec = {
+PyType_Spec PyJPMethodSpec = {
 	"_jpype.PyJPMethod",
 	sizeof (PyJPMethod),
 	0,
@@ -97,41 +101,6 @@ static PyType_Spec methodSpec = {
 
 // Static methods
 
-void PyJPMethod_initType(PyObject *module)
-{
-	// We inherit from PyFunction_Type just so we are an instance
-	// for purposes of inspect and tab completion tools.  But
-	// we will just ignore their memory layout as we have our own.
-	PyObject *bases = PyTuple_Pack(1, &PyFunction_Type);
-	unsigned long flags = PyFunction_Type.tp_flags;
-	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
-	PyModule_AddObject(module, "PyJPMethod",
-			PyJPMethod_Type = PyType_FromSpecWithBases(&methodSpec, bases));
-	PyFunction_Type.tp_flags = flags;
-	Py_DECREF(bases);
-}
-
-JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
-{
-	JP_TRACE_IN_C("PyJPMethod_create");
-	PyJPMethod *self = (PyJPMethod*) ((PyTypeObject*) PyJPMethod_Type)->tp_alloc((PyTypeObject*) PyJPMethod_Type, 0);
-	JP_PY_CHECK();
-	self->m_Method = m;
-	self->m_Instance = instance;
-	if (instance != NULL)
-	{
-		JP_TRACE_PY("method alloc (inc)", instance);
-		Py_INCREF(instance);
-	}
-	self->m_Doc = NULL;
-	self->m_Annotations = NULL;
-	self->m_CodeRep = NULL;
-	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
-	Py_INCREF(self->m_Context);
-	JP_TRACE("self", self);
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
-	JP_TRACE_OUT_C;
-}
 
 PyObject *PyJPMethod_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -147,42 +116,42 @@ PyObject *PyJPMethod_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 void PyJPMethod_dealloc(PyJPMethod *self)
 {
-	JP_TRACE_IN_C("PyJPMethod::__dealloc__", self);
-	PyObject_GC_UnTrack(self);
-	PyJPMethod_clear(self);
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
+	try
+	{
+		JP_TRACE_IN_C("PyJPMethod::__dealloc__", self);
+		PyObject_GC_UnTrack(self);
+		PyJPMethod_clear(self);
+		Py_TYPE(self)->tp_free(self);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH();
 }
 
 int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 {
-	JP_TRACE_IN_C("PyJPMethod::traverse", self);
 	Py_VISIT(self->m_Instance);
 	Py_VISIT(self->m_Context);
 	Py_VISIT(self->m_Doc);
 	Py_VISIT(self->m_Annotations);
 	Py_VISIT(self->m_CodeRep);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 int PyJPMethod_clear(PyJPMethod *self)
 {
-	JP_TRACE_IN_C("PyJPMethod::clear", self);
 	Py_CLEAR(self->m_Instance);
 	Py_CLEAR(self->m_Context);
 	Py_CLEAR(self->m_Doc);
 	Py_CLEAR(self->m_Annotations);
 	Py_CLEAR(self->m_CodeRep);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 {
-	JP_TRACE_IN_C("PyJPMethod::__get__", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::__get__", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		if (obj == NULL)
@@ -192,16 +161,16 @@ PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 			return (PyObject*) self;
 		}
 		return PyJPMethod_create(self->m_Method, obj).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPMethod::__call__", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod_call", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
@@ -215,9 +184,9 @@ PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 			JPPyObjectVector vargs(self->m_Instance, args);
 			return self->m_Method->invoke(vargs, true).keep();
 		}
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_str(PyJPMethod *self)
@@ -253,18 +222,18 @@ PyObject *PyJPMethod_repr(PyJPMethod *self)
 
 PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *context)
 {
-	JP_TRACE_IN("PyJPMethod::getSelf");
 	try
 	{
+		JP_TRACE_IN("PyJPMethod::getSelf");
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Instance == NULL)
 			Py_RETURN_NONE;
 		Py_INCREF(self->m_Instance);
 		return self->m_Instance;
+		JP_TRACE_OUT;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT;
 }
 
 PyObject *PyJPMethod_getNone(PyJPMethod *self, void *context)
@@ -274,38 +243,38 @@ PyObject *PyJPMethod_getNone(PyJPMethod *self, void *context)
 
 PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod::getName", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::getName", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		return JPPyString::fromStringUTF8(self->m_Method->getName(), false).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod::getQualName", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::getQualName", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		stringstream str;
 		str << self->m_Method->getClass()->getCanonicalName() << '.'
 				<< self->m_Method->getName();
 		return JPPyString::fromStringUTF8(str.str(), false).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod::getDoc", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::getDoc", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Doc)
@@ -315,12 +284,8 @@ PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 		}
 
 		// Get the resource
-		JPPyObject getMethodDoc(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule::module, "GetMethodDoc"));
-		if (getMethodDoc.isNull())
-		{
-			JP_TRACE("Resource not set.");
-			Py_RETURN_NONE;
-		}
+		JPPyObject getMethodDoc(JPPyRef::_claim,
+				PyObject_GetAttrString(PyJPModule_global, "_jmethodGetDoc"));
 
 		// Convert the overloads
 		JP_TRACE("Convert overloads");
@@ -353,26 +318,30 @@ PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 
 		Py_XINCREF(self->m_Doc);
 		return self->m_Doc;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT;
 }
 
 int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *context)
 {
-	JP_TRACE_IN("PyJPMethod::getDoc");
+	try
+	{
+		JP_TRACE_IN("PyJPMethod::getDoc");
 	Py_CLEAR(self->m_Doc);
 	self->m_Doc = obj;
 	Py_XINCREF(self->m_Doc);
 	return 0;
 	JP_TRACE_OUT;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
 PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod::getAnnotations", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::getAnnotations", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Annotations)
@@ -383,12 +352,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 
 		// Get the resource
 		JPPyObject getAnnotations(JPPyRef::_claim,
-				PyObject_GetAttrString(PyJPModule::module, "GetMethodAnnotations"));
-		if (getAnnotations.isNull())
-		{
-			JP_TRACE("Resource not set.");
-			Py_RETURN_NONE;
-		}
+				PyObject_GetAttrString(PyJPModule_global, "_jmethodGetAnnotations"));
 
 		// Convert the overloads
 		JP_TRACE("Convert overloads");
@@ -421,37 +385,30 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 
 		Py_XINCREF(self->m_Annotations);
 		return self->m_Annotations;
+		JP_TRACE_OUT;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT;
 }
 
 int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject *obj, void *context)
 {
-	JP_TRACE_IN_C("PyJPMethod_setAnnotations", self);
 	Py_CLEAR(self->m_Annotations);
 	self->m_Annotations = obj;
 	Py_XINCREF(self->m_Annotations);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *context, const char *attr)
 {
-	JP_TRACE_IN_C("PyJPMethod::getCode", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPMethod::getCode", self);
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_CodeRep == NULL)
 		{
 			JPPyObject getCode(JPPyRef::_claim,
-					PyObject_GetAttrString(PyJPModule::module, "GetMethodCode"));
-			if (getCode.isNull())
-			{
-				JP_TRACE("Resource not set.");
-				Py_RETURN_NONE;
-			}
+					PyObject_GetAttrString(PyJPModule_global, "_jmethodGetCode"));
 
 			// Pack the arguments
 			JP_TRACE("Pack arguments");
@@ -463,9 +420,9 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *context, const char *at
 			Py_XINCREF(self->m_CodeRep);
 		}
 		return PyObject_GetAttrString(self->m_CodeRep, attr);
+		JP_TRACE_OUT;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT;
 }
 
 PyObject *PyJPMethod_getCode(PyJPMethod *self, void *context)
@@ -543,3 +500,7 @@ PyObject *PyJPMethod_dump(PyJPMethod *self, PyObject *args)
 	}
 	PY_STANDARD_CATCH(NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif

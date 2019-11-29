@@ -20,7 +20,11 @@
 
 #include "jp_context.h"
 
-PyObject *PyJPContext_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs);
 void PyJPContext_dealloc(PyJPContext *self);
@@ -59,7 +63,7 @@ const char *attach_doc =
 		"Attaches a thread to the JVM.\n"
 		"\n"
 		"The function manually connects a thread to the JVM to allow access to\n"
-		"Java objects and methods. JPype automaticatlly attaches when a Java\n"
+		"Java objects and methods. JPype automatically attaches when a Java\n"
 		"resource is used, so a call to this is usually not needed.\n"
 		"\n"
 		"Raises:\n"
@@ -88,6 +92,7 @@ static PyMethodDef contextMethods[] = {
 
 	// ByteBuffer
 	{"_convertToDirectBuffer", (PyCFunction) (&PyJPContext_convertToDirectByteBuffer), METH_VARARGS, ""},
+	{"_getClass", (PyCFunction) (&PyJPContext_getClass), METH_VARARGS, ""},
 
 	{NULL},
 };
@@ -113,7 +118,7 @@ static PyType_Slot contextSlots[] = {
 	{0}
 };
 
-static PyType_Spec contextSpec = {
+PyType_Spec PyJPContextSpec = {
 	"_jpype.PyJPContext",
 	sizeof (PyJPContext),
 	0,
@@ -122,17 +127,6 @@ static PyType_Spec contextSpec = {
 };
 
 // Static methods
-
-void PyJPContext_initType(PyObject *module)
-{
-	PyModule_AddObject(module, "PyJPContext",
-			PyJPContext_Type = PyType_FromSpec(&contextSpec));
-}
-
-bool PyJPContext_check(PyObject *o)
-{
-	return o != NULL && PyObject_TypeCheck(o, (PyTypeObject*) PyJPContext_Type);
-}
 
 PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -146,27 +140,31 @@ PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPContext_init", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_init", self);
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 void PyJPContext_dealloc(PyJPContext *self)
 {
-	JP_TRACE_IN_C("PyJPContext_dealloc", self);
-	if (self->m_Context->isRunning())
-		self->m_Context->shutdownJVM();
-	delete self->m_Context;
-	self->m_Context = NULL;
-	PyObject_GC_UnTrack(self);
-	PyJPContext_clear(self);
-	// Free self
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
+	try
+	{
+		JP_TRACE_IN_C("PyJPContext_dealloc", self);
+		if (self->m_Context->isRunning())
+			self->m_Context->shutdownJVM();
+		delete self->m_Context;
+		self->m_Context = NULL;
+		PyObject_GC_UnTrack(self);
+		PyJPContext_clear(self);
+		// Free self
+		Py_TYPE(self)->tp_free(self);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH();
 }
 
 int PyJPContext_traverse(PyJPContext *self, visitproc visit, void *arg)
@@ -195,19 +193,19 @@ PyObject *PyJPContext_str(PyJPContext *self)
 
 PyObject *PyJPContext_startup(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext::startup", self);
-	if (self->m_Context->isRunning())
-	{
-		PyErr_SetString(PyExc_OSError, "JVM is already started");
-		return NULL;
-	}
-	if (self->m_Context->isShutdown())
-	{
-		PyErr_SetString(PyExc_OSError, "JVM cannot be restarted");
-		return NULL;
-	}
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_startup", self);
+		if (self->m_Context->isRunning())
+		{
+			PyErr_SetString(PyExc_OSError, "JVM is already started");
+			return NULL;
+		}
+		if (self->m_Context->isShutdown())
+		{
+			PyErr_SetString(PyExc_OSError, "JVM cannot be restarted");
+			return NULL;
+		}
 		PyObject *vmOpt;
 		PyObject *vmPath;
 		bool ignoreUnrecognized = true;
@@ -248,25 +246,25 @@ PyObject *PyJPContext_startup(PyJPContext *self, PyObject *args)
 
 		self->m_Context->startJVM(cVmPath, args, ignoreUnrecognized, convertStrings);
 		Py_RETURN_NONE;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPContext_shutdown(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext_shutdown", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_shutdown", self);
 		// Stop the JVM
 		self->m_Context->shutdownJVM();
 
 		// Disconnect the classes
 		PyDict_Clear(self->m_Classes);
 		Py_RETURN_NONE;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPContext_isStarted(PyJPContext *self, PyObject *args)
@@ -276,45 +274,44 @@ PyObject *PyJPContext_isStarted(PyJPContext *self, PyObject *args)
 
 PyObject *PyJPContext_attachThread(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext_attachThread", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_attachThread", self);
 		JPContext *context = self->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		context->attachCurrentThread();
 		Py_RETURN_NONE;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPContext_attachThreadAsDaemon(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext_attachThreadAsDaemon", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_attachThreadAsDaemon", self);
 		JPContext *context = self->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		context->attachCurrentThreadAsDaemon();
 		Py_RETURN_NONE;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPContext_detachThread(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext_detachThread", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_detachThread", self);
 		if (self->m_Context->isRunning())
 			self->m_Context->detachCurrentThread();
 		Py_RETURN_NONE;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
-
 
 PyObject *PyJPContext_isThreadAttached(PyJPContext *self, PyObject *args)
 {
@@ -329,9 +326,9 @@ PyObject *PyJPContext_isThreadAttached(PyJPContext *self, PyObject *args)
 
 PyObject *PyJPContext_convertToDirectByteBuffer(PyJPContext *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPContext_convertToDirectByteBuffer", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPContext_convertToDirectByteBuffer", self);
 		JPContext *context = self->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		JPJavaFrame frame(context);
@@ -365,7 +362,80 @@ PyObject *PyJPContext_convertToDirectByteBuffer(PyJPContext *self, PyObject *arg
 		}
 
 		JP_RAISE_RUNTIME_ERROR("Do not know how to convert to direct byte buffer, only memory view supported");
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
+}
+
+// Call from Python
+
+PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwargs)
+{
+	try
+	{
+		JP_TRACE_IN_C("PyJPContext_getClass", self);
+		PyJPModuleState *state = PyJPModuleState_global;
+
+		PyJPClass *cls = NULL;
+		if (!PyArg_ParseTuple(args, "O!", state->PyJPClass_Type, &cls))
+			return NULL;
+
+		JPClass *javaClass = cls->m_Class;
+		if (javaClass->getHost() != NULL)
+		{
+			PyObject* out = javaClass->getHost();
+			Py_INCREF(out);
+			return out;
+		}
+
+		// Get the type factory
+		PyObject* factory = PyDict_GetItemString(Py_TYPE(self)->tp_dict, "_JClassFactory");
+		if (factory == NULL)
+			JP_RAISE_RUNTIME_ERROR("Factory not set");
+
+		// Call the factory
+		PyObject* out = PyObject_Call(factory, args, kwargs);
+
+		// Store caches
+		javaClass ->setHost(out);
+		PyDict_SetItemString(self->m_Classes, javaClass->getCanonicalName().c_str(), out);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
+{
+	JP_TRACE_IN_C("JPPythonEnv::newJavaClass");
+	PyJPModuleState *state = PyJPModuleState_global;
+
+	ASSERT_NOT_NULL(javaClass);
+
+	// Check the cache
+	if (javaClass->getHost() != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, javaClass->getHost());
+	}
+
+	PyJPContext *context = (PyJPContext*) (javaClass->getContext()->getHost());
+
+	// Get the type factory
+	JPPyObject factory(JPPyRef::_claim,
+			PyObject_GetAttrString(PyJPModule_global, "_JClassFactory"));
+
+	// Pack the args
+	JPPyTuple args(JPPyTuple::newTuple(1));
+	args.setItem(0, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type,
+			context->m_Context, javaClass).get());
+
+	// Call the factory in Python
+	JPPyObject out = JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
+	javaClass ->setHost(out.get());
+	PyDict_SetItemString(context->m_Classes, javaClass->getCanonicalName().c_str(), out.get());
+	return out;
 	JP_TRACE_OUT_C;
 }

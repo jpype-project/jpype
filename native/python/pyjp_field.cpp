@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-PyObject *PyJPField_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 PyObject *PyJPField_name(PyJPField *self, PyObject *arg);
 PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type);
 int       PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue);
@@ -37,7 +41,7 @@ static PyType_Slot fieldSlots[] = {
 	{0}
 };
 
-static PyType_Spec fieldSpec = {
+PyType_Spec PyJPFieldSpec = {
 	"_jpype.PyJPField",
 	sizeof (PyJPField),
 	0,
@@ -45,45 +49,24 @@ static PyType_Spec fieldSpec = {
 	fieldSlots
 };
 
-void PyJPField_initType(PyObject *module)
-{
-	PyObject *bases = PyTuple_Pack(1, PyJPValue_Type);
-	PyModule_AddObject(module, "PyJPField",
-			PyJPField_Type = PyType_FromSpecWithBases(&fieldSpec, bases));
-	Py_DECREF(bases);
-}
-
-JPPyObject PyJPField_alloc(JPField *field)
-{
-	JP_TRACE_IN_C("PyJPField::alloc");
-	JPContext *context = field->getContext();
-	jvalue v;
-	v.l = field->getJavaObject();
-	JPPyObject self = PyJPValue_create((PyTypeObject*) PyJPField_Type, field->getContext(),
-			JPValue(context->_java_lang_reflect_Field, v));
-	((PyJPField*) self.get())->m_Field = field;
-	return self;
-	JP_TRACE_OUT;
-}
-
 PyObject *PyJPField_name(PyJPField *self, PyObject *arg)
 {
-	JP_TRACE_IN_C("PyJPField::getName", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPField::getName", self);
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
-	JP_TRACE_IN_C("PyJPField_get", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPField_get", self);
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Field->isStatic())
@@ -95,16 +78,16 @@ PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 			JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
 
 		return self->m_Field->getField(jval->getValue().l).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
-	JP_TRACE_IN_C("PyJPField_set", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPField_set", self);
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		ASSERT_JVM_RUNNING(context);
 		if (self->m_Field->isFinal())
@@ -121,9 +104,9 @@ int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 			JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
 		self->m_Field->setField(jval->getValue().l, pyvalue);
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg)
@@ -147,3 +130,8 @@ PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg)
 	}
 	PY_STANDARD_CATCH(NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif
+

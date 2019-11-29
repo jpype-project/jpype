@@ -20,28 +20,60 @@
 #define ASSERT_JVM_RUNNING(context) ((JPContext*)context)->assertJVMRunning(JP_STACKINFO())
 #define PY_STANDARD_CATCH(...) catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
 
+
 /** This is the module specifically for the cpython modules to include.
  */
 #include <Python.h>
 #include <jpype.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/**
+ * Search for a method in the tree.
+ *
+ * The regular method in Python always de-references the descriptor before
+ * we can examine it.  We need to lookup it out without de-referencing it.
+ * This will only searches the type dictionaries.
+ *
+ * @param type
+ * @param attr_name
+ * @return
+ */
 PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name);
 
-// Forward declare the types
-extern PyObject* PyJPArray_Type;
-extern PyObject* PyJPContext_Type;
-extern PyObject *PyJPClass_Type;
-extern PyObject *PyJPClassHints_Type;
-extern PyObject *PyJPClassMeta_Type;
-extern PyObject *PyJPField_Type;
-extern PyObject *PyJPMethod_Type;
-extern PyObject *PyJPMonitor_Type;
-extern PyObject *PyJPProxy_Type;
-extern PyObject *PyJPValueBase_Type;
-extern PyObject *PyJPValue_Type;
-extern PyObject *PyJPValueLong_Type;
-extern PyObject *PyJPValueFloat_Type;
-extern PyObject *PyJPValueExc_Type;
+/** Structure to hold all types associated with the module.
+ *
+ * Rather than holding a bunch of global variables, the preferred method
+ * is hold everything in the state.  This will allow sub-interpreters to have
+ * their own state if needed.  To access these type variables use the
+ * PyJPModuleState macros.  We have not do extensive testing on sub-interpreters
+ * and it is likely something is still wrong with our implementation.
+ */
+typedef struct
+{
+	PyObject* PyJPArray_Type;
+	PyObject* PyJPContext_Type;
+	PyObject *PyJPClass_Type;
+	PyObject *PyJPClassHints_Type;
+	PyObject *PyJPClassMeta_Type;
+	PyObject *PyJPField_Type;
+	PyObject *PyJPMethod_Type;
+	PyObject *PyJPProxy_Type;
+	PyObject *PyJPValueBase_Type;
+	PyObject *PyJPValue_Type;
+	PyObject *PyJPValueLong_Type;
+	PyObject *PyJPValueFloat_Type;
+	PyObject *PyJPValueExc_Type;
+} PyJPModuleState;
+
+extern PyModuleDef PyJPModuleDef;
+
+#define PyJPModule_global PyState_FindModule(&PyJPModuleDef)
+#define PyJPModuleState(o) ((PyJPModuleState *)PyModule_GetState(o))
+#define PyJPModuleState_global ((PyJPModuleState *)PyModule_GetState(PyJPModule_global))
 
 struct PyJPContext
 {
@@ -114,6 +146,21 @@ struct PyJPProxy
 	PyJPContext *m_Context;
 } ;
 
+
+
+PyJPValue* PyJPValue_asValue(PyObject *self);
+PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwargs);
+
+extern const char *__javavalue__;
+extern const char *__javaproxy__;
+extern const char *__javaclass__;
+
+#ifdef __cplusplus
+}
+#endif
+
+// C++ methods
+
 inline JPContext* PyJPValue_getContext(PyJPValue* value)
 {
 	JPContext *context = value->m_Context->m_Context;
@@ -126,37 +173,13 @@ inline JPContext* PyJPValue_getContext(PyJPValue* value)
 }
 #define PyJPValue_GET_CONTEXT(X) PyJPValue_getContext((PyJPValue*)X)
 
-namespace PyJPModule
-{
-	extern PyObject *module;
-	/** Set a JPype Resource.
-	 *
-	 * JPype needs to know about a number of python objects to function
-	 * properly. These resources are set in the initialization methods
-	 * as those resources are created in python.
-	 */
-	PyObject* setResource(PyObject *obj, PyObject *args);
-	extern PyInterpreterState *s_Interpreter;
-}
-
-bool PyJPContext_check(PyObject *o);
-
 JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value);
 JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 JPPyObject PyJPClass_create(PyTypeObject *type, JPContext *context, JPClass *cls);
-PyJPValue* PyJPValue_asValue(PyObject *self);
-
-void PyJPMethod_initType(PyObject *module);
-void PyJPProxy_initType(PyObject *module);
-void PyJPContext_initType(PyObject *module);
-void PyJPClassHints_initType(PyObject *module);
-void PyJPValue_initType(PyObject* module);
-void PyJPArray_initType(PyObject *module);
-void PyJPClass_initType(PyObject *module);
-void PyJPMonitor_initType(PyObject *module);
-void PyJPField_initType(PyObject *module);
-
-JPPyObject PyJPField_alloc(JPField *field);
+JPPyObject PyJPField_create(JPField *field);
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
+JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
+JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
 
 #endif /* PYJP_H */

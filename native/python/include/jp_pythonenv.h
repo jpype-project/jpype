@@ -10,7 +10,6 @@ struct PyJPMethod;
  */
 namespace JPPythonEnv
 {
-	void init();
 
 	/** Convert a JPClass to the corresponding Python wrapper class.
 	 *
@@ -48,12 +47,6 @@ namespace JPPythonEnv
 	JPProxy* getJavaProxy(PyObject* obj);
 
 	JPPyObject getJavaProxyCallable(PyObject* obj, const string& name);
-
-	/** Register a python resource with jpype.
-	 *
-	 * @throws if python resource name is not known.
-	 */
-	void setResource(const string& name, PyObject* resource);
 
 	/** Convert exceptions generated in C++ to Python.
 	 *

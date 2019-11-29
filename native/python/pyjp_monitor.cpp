@@ -16,7 +16,11 @@
  *****************************************************************************/
 #include <pyjp.h>
 
-PyObject *PyJPMonitor_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int PyJPMonitor_init(PyJPMonitor *self, PyObject *args);
 void PyJPMonitor_dealloc(PyJPMonitor *o);
 PyObject* PyJPMonitor_str(PyJPMonitor *o);
@@ -41,7 +45,7 @@ static PyType_Slot monitorSlots[] = {
 	{0}
 };
 
-static PyType_Spec monitorSpec = {
+PyType_Spec PyJPMonitorSpec = {
 	"_jpype.PyJPMonitor",
 	sizeof (PyJPMonitor),
 	0,
@@ -49,19 +53,11 @@ static PyType_Spec monitorSpec = {
 	monitorSlots
 };
 
-// Static methods
-
-void PyJPMonitor_initType(PyObject *module)
-{
-	PyModule_AddObject(module, "PyJPMonitor",
-			PyJPMonitor_Type = PyType_FromSpec(&monitorSpec));
-}
-
 int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
-	JP_TRACE_IN_C("PyJPMonitor::__init__");
 	try
 	{
+		JP_TRACE_IN_C("PyJPMonitor::__init__");
 		self->m_Monitor = NULL;
 
 		PyObject *obj;
@@ -103,54 +99,50 @@ int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		self->m_Context = (PyJPContext*) (context->getHost());
 		Py_INCREF(self->m_Context);
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 void PyJPMonitor_dealloc(PyJPMonitor *self)
 {
-	JP_TRACE_IN_C("PyJPMonitor::__dealloc__");
 	try
 	{
+		JP_TRACE_IN_C("PyJPMonitor_dealloc");
 		delete self->m_Monitor;
 		PyObject_GC_UnTrack(self);
 		PyJPMonitor_clear(self);
 		Py_TYPE(self)->tp_free(self);
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH();
-	JP_TRACE_OUT_C;
 }
 
 int PyJPMonitor_traverse(PyJPMonitor *self, visitproc visit, void *arg)
 {
-	JP_TRACE_IN_C("PyJPMonitor::traverse");
 	Py_VISIT(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 int PyJPMonitor_clear(PyJPMonitor *self)
 {
-	JP_TRACE_IN_C("PyJPMonitor::clear");
 	Py_CLEAR(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
-	JP_TRACE_IN_C("PyJPMonitor::__str__");
 	try
 	{
+		JP_TRACE_IN_C("PyJPMonitor_str");
 		JPContext *context = self->m_Context->m_Context;
 		ASSERT_JVM_RUNNING(context);
 		stringstream ss;
 		ss << "<java monitor>";
 		return JPPyString::fromStringUTF8(ss.str()).keep();
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
@@ -176,3 +168,7 @@ PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 	}
 	PY_STANDARD_CATCH(NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif

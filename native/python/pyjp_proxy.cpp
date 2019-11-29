@@ -17,7 +17,11 @@
 #include <pyjp.h>
 #include <structmember.h>
 
-PyObject *PyJPProxy_Type = NULL;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs);
 void PyJPProxy_dealloc(PyJPProxy *self);
@@ -41,7 +45,7 @@ static PyType_Slot proxySlots[] = {
 	{0}
 };
 
-static PyType_Spec proxySpec = {
+PyType_Spec PyJPProxySpec = {
 	"_jpype.PyJPProxy",
 	sizeof (PyObject),
 	0,
@@ -49,29 +53,26 @@ static PyType_Spec proxySpec = {
 	proxySlots
 };
 
-
-void PyJPProxy_initType(PyObject *module)
-{
-	PyModule_AddObject(module, "PyJPProxy",
-			PyJPProxy_Type = PyType_FromSpec(&proxySpec));
-}
-
 PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN("PyJPProxy_new");
-	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
-	self->m_Proxy = NULL;
-	self->m_Target = NULL;
-	self->m_Context = NULL;
-	return (PyObject*) self;
-	JP_TRACE_OUT;
+	try
+	{
+		JP_TRACE_IN_C("PyJPProxy_new");
+		PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
+		self->m_Proxy = NULL;
+		self->m_Target = NULL;
+		self->m_Context = NULL;
+		return (PyObject*) self;
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH(NULL);
 }
 
 int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
-	JP_TRACE_IN_C("PyJPProxy_init", self);
 	try
 	{
+		JP_TRACE_IN_C("PyJPProxy_init", self);
 		// Parse arguments
 		PyObject *target;
 		PyObject *pyintf;
@@ -124,39 +125,39 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 		JP_TRACE("Proxy", self);
 		JP_TRACE("Target", target);
 		return 0;
+		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(-1);
-	JP_TRACE_OUT_C;
 }
 
 void PyJPProxy_dealloc(PyJPProxy *self)
 {
-	JP_TRACE_IN_C("PyJPProxy::dealloc", self);
-	delete self->m_Proxy;
+	try
+	{
+		JP_TRACE_IN_C("PyJPProxy_dealloc", self);
+		delete self->m_Proxy;
 
-	PyObject_GC_UnTrack(self);
-	PyJPProxy_clear(self);
-	// Free self
-	Py_TYPE(self)->tp_free(self);
-	JP_TRACE_OUT_C;
+		PyObject_GC_UnTrack(self);
+		PyJPProxy_clear(self);
+		// Free self
+		Py_TYPE(self)->tp_free(self);
+		JP_TRACE_OUT_C;
+	}
+	PY_STANDARD_CATCH();
 }
 
 int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
-	JP_TRACE_IN_C("PyJPProxy::traverse", self);
 	Py_VISIT(self->m_Target);
 	Py_VISIT(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 int PyJPProxy_clear(PyJPProxy *self)
 {
-	JP_TRACE_IN_C("PyJPProxy::clear", self);
 	Py_CLEAR(self->m_Target);
 	Py_CLEAR(self->m_Context);
 	return 0;
-	JP_TRACE_OUT_C;
 }
 
 PyObject *PyJPProxy_str(PyJPProxy *self)
@@ -172,3 +173,7 @@ PyObject *PyJPProxy_str(PyJPProxy *self)
 	}
 	PY_STANDARD_CATCH(NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif
