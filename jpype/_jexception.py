@@ -26,7 +26,8 @@ else:
     _unicode = unicode
 
 
-class _JException(Exception, _jobject.JObject):
+@_jcustomizer.JImplementationFor("java.lang.Throwable", base=True)
+class JException(Exception):
     """ Base class for all ``java.lang.Throwable`` objects.
 
     When called as an object ``JException`` will produce a new exception class.  
@@ -81,8 +82,6 @@ class _JException(Exception, _jobject.JObject):
     @property
     def args(self):
         return self._jargs()
-#    args = property(lambda self: self._jargs(), None)
-#    """ Test doc string on property"""
 
     def _jargs(self):
         cause = self.getCause()
@@ -93,7 +92,7 @@ class _JException(Exception, _jobject.JObject):
 
 #JException = _jobject.defineJObjectFactory("JException", None,
 #                                           _JException, bases=(Exception, _jobject.JObject))
-_jcustomizer.registerClassBase('java.lang.Throwable', JException)
+#_jcustomizer.registerClassBase('java.lang.Throwable', JException)
 
 
 def _JExceptionClassFactory(jvm, tp):

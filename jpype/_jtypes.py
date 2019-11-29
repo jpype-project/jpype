@@ -42,13 +42,12 @@ class _JPrimitiveClass(_jclass.JClass):
      - __javavalue__ - the instance of the java value.
 
     """
-    def __new__(cls, jvm, name, basetype):
+    def __new__(cls, jvm, name, code, basetype):
         members = {
             "__init__": _JPrimitive.init,
             "__setattr__": object.__setattr__,
-           # "__javaclass__": None,
             "__jvm__": jvm,
-           # "_java_boxed_class": None,
+            "__jcode__": code,
         }
         return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, _JPrimitive), members)
 
@@ -58,50 +57,48 @@ class _JPrimitiveClass(_jclass.JClass):
 
     def _load(self, boxed):
         jvm = self.__jvm__
-        print("load", self.__name__)
         jvm._primitive_types[self.__name__] = _jpype.PyJPClass(jvm, self.__name__)
-        jvm._boxed_types[self.__name__] =  boxed
 
 
-class _JPrimitive(object):
-    def __setattr__(self, attr, value):
-        raise AttributeError("%s does not have field %s" %
-                             (self.__name__, attr))
-
-    def init(self, v):
-        if v is not None:
-            jc = self.__jvm__._primitive_types[self.__class__.__name__]
-            self._pyv = v
-            self.__javavalue__ = _jpype.PyJPValue(jc, v)
-        else:
-            self.__javavalue__ = None
-
-    def byteValue(self):
-        if self._pyv < -128 or self._pyv > 127:
-            raise OverFlowError("Cannot convert to byte value")
-        return int(self._pyv)
-
-    def shortValue(self):
-        if self._pyv < -32768 or self._pyv > 32767:
-            raise OverFlowError("Cannot convert to short value")
-        return int(self._pyv)
-
-    def intValue(self):
-        if self._pyv < -2147483648 or self._pyv > 2147483647:
-            raise OverFlowError("Cannot convert to int value")
-        return int(self._pyv)
-
-    def longValue(self):
-        if self._pyv < -9223372036854775808 or self._pyv > 9223372036854775807:
-            raise OverFlowError("Cannot convert to long value")
-        return _long(self._pyv)
-
-    def floatValue(self):
-        if self._pyv < -_maxFloat or self._pyv > _maxFloat:
-            raise OverFlowError("Cannot convert to long value")
-        return float(self._pyv)
-
-    def doubleValue(self):
-        if self._pyv < -_maxDouble or self._pyv > _maxDouble:
-            raise OverFlowError("Cannot convert to double value")
-        return float(self._pyv)
+#class _JPrimitive(object):
+#    def init(self, v):
+#        if v is not None:
+#            jc = self.__jvm__._primitive_types[self.__class__.__name__]
+#            self._pyv = v
+#            self.__javavalue__ = _jpype.PyJPValue(jc, v)
+#        else:
+#            self.__javavalue__ = None
+#
+#    def __setattr__(self, attr, value):
+#        raise AttributeError("%s does not have field %s" %
+#                             (self.__name__, attr))
+#
+#    def byteValue(self):
+#        if self._pyv < -128 or self._pyv > 127:
+#            raise OverFlowError("Cannot convert to byte value")
+#        return int(self._pyv)
+#
+#    def shortValue(self):
+#        if self._pyv < -32768 or self._pyv > 32767:
+#            raise OverFlowError("Cannot convert to short value")
+#        return int(self._pyv)
+#
+#    def intValue(self):
+#        if self._pyv < -2147483648 or self._pyv > 2147483647:
+#            raise OverFlowError("Cannot convert to int value")
+#        return int(self._pyv)
+#
+#    def longValue(self):
+#        if self._pyv < -9223372036854775808 or self._pyv > 9223372036854775807:
+#            raise OverFlowError("Cannot convert to long value")
+#        return int(self._pyv)
+#
+#    def floatValue(self):
+#        if self._pyv < -_maxFloat or self._pyv > _maxFloat:
+#            raise OverFlowError("Cannot convert to long value")
+#        return float(self._pyv)
+#
+#    def doubleValue(self):
+#        if self._pyv < -_maxDouble or self._pyv > _maxDouble:
+#            raise OverFlowError("Cannot convert to double value")
+#        return float(self._pyv)

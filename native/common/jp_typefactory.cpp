@@ -173,6 +173,9 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			if (className == "java.lang.String")
 				return (jlong) (context->_java_lang_String
 					= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			if (className == "java.lang.Throwable")
+				return (jlong) (context->_java_lang_Throwable
+					= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
 			// Register the box types
 			if (className == "java.lang.Void")

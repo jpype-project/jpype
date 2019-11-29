@@ -43,12 +43,8 @@ __all__ = [
     'JBoolean', 'JByte', 'JChar', 'JShort',
     'JInt', 'JLong', 'JFloat', 'JDouble']
 
-if _sys.version_info > (3,):
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
+if _sys.version_info < (3,):
+    raise ImportException("Python 2 is not supported")
 
 
 # Activate jedi tab completion
@@ -105,7 +101,7 @@ def _hasClassPath(args):
 def _handleClassPath(clsList):
     out = []
     for s in clsList:
-        if not isinstance(s, (str, _jtypes._unicode)):
+        if not isinstance(s, str):
             raise TypeError("Classpath elements must be strings")
         if s.endswith('*'):
             import glob
@@ -182,6 +178,16 @@ def getDefaultJVMPath():
 def get_default_jvm_path(*args, **kwargs):
     return getDefaultJVMPath(*args, **kwargs)
 
+# Primitive types are their own special classes as they do not tie to the JVM
+JBoolean = _jtypes._JPrimitiveClass("boolean", 'Z', int)
+JByte = _jtypes._JPrimitiveClass("byte", 'B', int)
+JChar = _jtypes._JPrimitiveClass("char", 'C', int)
+JShort = _jtypes._JPrimitiveClass("short", 'S', int)
+JInt = _jtypes._JPrimitiveClass("int", 'I', int)
+JLong = _jtypes._JPrimitiveClass("long", 'J', _long)
+JFloat = _jtypes._JPrimitiveClass("float", 'F', float)
+JDouble = _jtypes._JPrimitiveClass("double", 'D', float)
+
 
 class JContext(_jpype.PyJPContext):
 
@@ -197,24 +203,80 @@ class JContext(_jpype.PyJPContext):
             "JException", (_jexception.JException,), {'__jvm__': self})
 
         # Basic types
-        self.JBoolean = _jtypes._JPrimitiveClass(self, "boolean", int)
-        self.JByte = _jtypes._JPrimitiveClass(self, "byte", int)
-        self.JChar = _jtypes._JPrimitiveClass(self, "char", int)
-        self.JShort = _jtypes._JPrimitiveClass(self, "short", int)
-        self.JInt = _jtypes._JPrimitiveClass(self, "int", int)
-        self.JLong = _jtypes._JPrimitiveClass(self, "long", _long)
-        self.JFloat = _jtypes._JPrimitiveClass(self, "float", float)
-        self.JDouble = _jtypes._JPrimitiveClass(self, "double", float)
+        self.JBoolean = JBoolean
+        self.JByte = JByte
+        self.JChar = JChar
+        self.JShort = JShort
+        self.JInt = JInt
+        self.JLong = JLong
+        self.JFloat = JFloat
+        self.JDouble = JDouble
 
         # Forward declarations
         self._type_classes = {}
         self._object_classes = {}
         self._primitive_types = {}
-        self._boxed_types = {}
 
         self._java_lang_Object = None
         self._java_lang_Class = None
         _jpype.PyJPContext.__init__(self)
+
+    def _initialize(self):
+        """ Completes the initialization process
+        
+        This method instatiates all of the required classes for operation.
+        """
+        self._java_lang_Object = self.JClass("java.lang.Object")
+        self._java_lang_Class = self.JClass("java.lang.Class")
+        self._java_lang_String = self.JClass("java.lang.String")
+
+#        self._java_lang_ClassLoader = self.JClass("java.lang.ClassLoader")
+#        self._java_ClassLoader = self.JClass(
+#            'java.lang.ClassLoader').getSystemClassLoader()
+#        if not self._java_ClassLoader:
+#            raise RuntimeError("Unable to load Java SystemClassLoader")
+
+        self._java_lang_RuntimeException = self.JClass(
+            "java.lang.RuntimeException")
+
+        # Preload needed classes
+        self._java_lang_Boolean = self.JClass("java.lang.Boolean")
+        self._java_lang_Byte = self.JClass("java.lang.Byte")
+        self._java_lang_Character = self.JClass("java.lang.Character")
+        self._java_lang_Short = self.JClass("java.lang.Short")
+        self._java_lang_Integer = self.JClass("java.lang.Integer")
+        self._java_lang_Long = self.JClass("java.lang.Long")
+        self._java_lang_Float = self.JClass("java.lang.Float")
+        self._java_lang_Double = self.JClass("java.lang.Double")
+
+        # Table for automatic conversion to objects "JObject(value, type)"
+        self._object_classes[bool] = self._java_lang_Boolean
+        self._object_classes[int] = self._java_lang_Long
+        self._object_classes[float] = self._java_lang_Double
+        self._object_classes[str] = self._java_lang_String
+        self._object_classes[type] = self._java_lang_Class
+        self._object_classes[_jpype.PyJPClass] = self._java_lang_Class
+        self._object_classes[object] = self._java_lang_Object
+        self._object_classes[self.JBoolean] = self._java_lang_Boolean
+        self._object_classes[self.JByte] = self._java_lang_Byte
+        self._object_classes[self.JChar] = self._java_lang_Character
+        self._object_classes[self.JShort] = jself._ava_lang_Short
+        self._object_classes[self.JInteger] = self._java_lang_Integer
+        self._object_classes[self.JLong] = self._java_lang_Long
+        self._object_classes[self.JFloat] = self._java_lang_Float
+        self._object_classes[self.JDouble] = self._java_lang_Double
+        self._object_classes[type(None)] = self._java_lang_Object
+
+        # Set up table of automatic conversions of Python primitives
+        # this table supports "JArray(type)"
+        self._type_classes[bool] = JBoolean
+        self._type_classes[int] = JLong
+        self._type_classes[float] = JDouble
+        self._type_classes[str] = self._java_lang_String
+        self._type_classes[type] = self._java_lang_Class
+        self._type_classes[object] = self._java_lang_Object
+        self._type_classes[self.JString] = self._java_lang_String
+        self._type_classes[self.JObject] = self._java_lang_Object
 
     def startJVM(self, *args, **kwargs):
         """
@@ -294,7 +356,7 @@ class JContext(_jpype.PyJPContext):
 
         # Handle strings and list of strings.
         if classpath:
-            if isinstance(classpath, (str, _jtypes._unicode)):
+            if isinstance(classpath, str):
                 args.append('-Djava.class.path=%s' %
                             _handleClassPath([classpath]))
             elif hasattr(classpath, '__iter__'):
@@ -327,55 +389,6 @@ please file a ticket with the developer.
         self._initialize()
         return self
 
-    def _initialize(self):
-        self._java_lang_Object = self.JClass("java.lang.Object")
-        self._java_lang_Class = self.JClass("java.lang.Class")
-        self._java_lang_String = self.JClass("java.lang.String")
-
-        self._java_ClassLoader = self.JClass(
-            'java.lang.ClassLoader').getSystemClassLoader()
-        if not self._java_ClassLoader:
-            raise RuntimeError("Unable to load Java SystemClassLoader")
-
-        self._java_lang_RuntimeException = self.JClass(
-            "java.lang.RuntimeException")
-
-        # Preload needed classes
-        java_lang_Boolean = self.JClass("java.lang.Boolean")
-        java_lang_Long = self.JClass("java.lang.Long")
-        java_lang_Double = self.JClass("java.lang.Double")
-
-        # Table for automatic conversion to objects
-        self._object_classes[bool] = java_lang_Boolean
-        self._object_classes[int] = java_lang_Long
-        self._object_classes[_long] = java_lang_Long
-        self._object_classes[float] = java_lang_Double
-        self._object_classes[str] = self._java_lang_String
-        self._object_classes[_unicode] = self._java_lang_String
-        self._object_classes[type] = self._java_lang_Class
-        self._object_classes[_jpype.PyJPClass] = self._java_lang_Class
-        self._object_classes[object] = self._java_lang_Object
-
-        # Place the jvalue types for primitives
-        self.JBoolean._load(self.JClass("java.lang.Boolean"))
-        self.JByte._load(self.JClass("java.lang.Byte"))
-        self.JChar._load(self.JClass("java.lang.Character"))
-        self.JShort._load(self.JClass("java.lang.Short"))
-        self.JInt._load(self.JClass("java.lang.Integer"))
-        self.JLong._load(self.JClass("java.lang.Long"))
-        self.JFloat._load(self.JClass("java.lang.Float"))
-        self.JDouble._load(self.JClass("java.lang.Double"))
-
-        # Set up table of automatic conversions to primitives
-        self._type_classes[bool] = JBoolean
-        self._type_classes[int] = JLong
-        self._type_classes[_long] = JLong
-        self._type_classes[float] = JDouble
-        self._type_classes[str] = self._java_lang_String
-        self._type_classes[_unicode] = self._java_lang_String
-        self._type_classes[type] = self._java_lang_Class
-        self._type_classes[object] = self._java_lang_Object
-
     def getJVMVersion(self):
         """ Get the JVM version if the JVM is started.
 
@@ -399,13 +412,14 @@ please file a ticket with the developer.
         return tuple([int(i) for i in version.split('.')])
 
 
+# Connect the default JVM to the types.
 _jpype._jvm = JContext()
 _jobject.JObject.__jvm__ = _jpype._jvm
 _jarray.JArray.__jvm__ = _jpype._jvm
 _jclass.JClass.__jvm__ = _jpype._jvm
 _jexception.JException.__jvm__ = _jpype._jvm
 
-# Export symbols
+# Export symbols from the default JVM 
 startJVM = _jpype._jvm.startJVM
 shutdownJVM = _jpype._jvm.shutdown
 isJVMStarted = _jpype._jvm.isStarted
@@ -414,12 +428,3 @@ attachThreadToJVM = _jpype._jvm.attachThread
 detachThreadFromJVM = _jpype._jvm.detachThread
 isThreadAttachedToJVM = _jpype._jvm.isThreadAttached
 
-# Expose the basic types
-JBoolean = _jpype._jvm.JBoolean
-JByte = _jpype._jvm.JByte
-JChar = _jpype._jvm.JChar
-JShort = _jpype._jvm.JShort
-JInt = _jpype._jvm.JInt
-JLong = _jpype._jvm.JLong
-JFloat = _jpype._jvm.JFloat
-JDouble = _jpype._jvm.JDouble

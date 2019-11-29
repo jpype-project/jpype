@@ -95,6 +95,7 @@ public class TypeManager
     createClass(JPypeProxy.class, true);
     createClass(Method.class, true);
     createClass(Field.class, true);
+    createClass(Throwable.class, true);
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.

@@ -19,13 +19,6 @@ from . import _jcustomizer
 
 __all__ = ['JClass', 'JInterface', 'JOverride']
 
-if _sys.version > '3':
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
-
 _JObject = None
 
 # FIXME reconnect customizers
@@ -56,7 +49,7 @@ def JOverride(*args, **kwargs):
     return modifier
 
 
-class JClass(type):
+class JClass(_jpype.PyJPClassMeta):
     """Meta class for all java class instances.
 
     JClass when called as an object will contruct a new java Class wrapper.
@@ -82,48 +75,18 @@ class JClass(type):
     """
     __jvm__ = None
 
-    @property
-    def class_(self):
-        return self.__jvm__.JObject(self.__javaclass__)
-
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, loader=None, initialize=True):
         if len(args) == 1:
-            return _JClassNew(cls.__jvm__, args[0], **kwargs)
+            jc = args[0]
+            if loader and isinstance(jc, str):
+                jc = cls.__jvm__._java_lang_Class.forName(arg, initialize, loader)
+            elif isinstance(jc, str):
+                jc = _jpype.PyJPClass(jvm, arg)
+            if javaClass is None:
+                raise jvm._java_lang_RuntimeException(
+                    "Java class '%s' not found" % name)
+            return cls.__jvm__._getClass(jc)
         return super(JClass, cls).__new__(cls, *args, **kwargs)
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            return
-        super(JClass, self.__class__).__init__(self, *args)
-
-    def __getattribute__(self, name):
-        if name.startswith('_'):
-            if name == "__doc__":
-                return _jclassDoc(self)
-            return type.__getattribute__(self, name)
-        attr = type.__getattribute__(self, name)
-        if isinstance(attr, _jpype.PyJPMethod):
-            return attr
-        if isinstance(attr, property):
-            raise AttributeError("Field is not static")
-        return attr
-
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return type.__setattr__(self, name, value)
-
-        if not hasattr(self, name):
-            raise AttributeError("Static field '%s' not found on Java '%s' class" %
-                                 (name, self.__name__))
-
-        try:
-            attr = typeLookup(self, name)
-            if hasattr(attr, '__set__'):
-                return attr.__set__(self, value)
-        except AttributeError:
-            pass
-        raise AttributeError("Static field '%s' is not settable on Java '%s' class" %
-                             (name, self.__name__))
 
     def mro(cls):
         # Bases is ordered by (user, extend, interfaces)
@@ -162,30 +125,10 @@ class JClass(type):
     def __repr__(self):
         return "<java class '%s'>" % (self.__name__)
 
+    @property
+    def class_(self):
+        return self.__jvm__.JObject(self.__javaclass__)
 
-def _JClassNew(jvm, arg, loader=None, initialize=True):
-    if loader and isinstance(arg, str):
-        arg = jvm._java_lang_Class.forName(arg, initialize, loader)
-
-    if isinstance(arg, _jpype.PyJPClass):
-        javaClass = arg
-    elif jvm._java_lang_Class and isinstance(arg, jvm._java_lang_Class):
-        javaClass = arg.__javavalue__
-    else:
-        javaClass = _jpype.PyJPClass(jvm, arg)
-
-    if javaClass is None:
-        raise jvm._java_lang_RuntimeException(
-            "Java class '%s' not found" % name)
-
-    # Lookup the class name
-    name = javaClass.getCanonicalName()
-
-    # See if we have an existing class in the cache
-    _JCLASSES = javaClass.__jvm__._classes
-    if name in _JCLASSES:
-        return _JCLASSES[name]
-    return _JClassFactory(name, javaClass)
 
 class _JInterfaceMeta(type):
     def __instancecheck__(self, cls):
@@ -193,16 +136,15 @@ class _JInterfaceMeta(type):
             return false
         if not hasattr(cls, '__javaclass__'):
             return false
-        return cls.__javaclass__.isInterface()
+        return cls.__javaclass__._isInterface()
+
 
 class JInterface(metaclass=_JInterfaceMeta):
     """Virtual Base class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any java class that is
     a pure interface without implementation. It is not possible to create
-    a instance of a java interface. The ``mro`` is hacked such that
-    ``JInterface`` does not appear in the tree of objects implement an
-    interface.
+    a instance of a Java interface. 
 
     Example:
 
@@ -217,28 +159,24 @@ class JInterface(metaclass=_JInterfaceMeta):
     pass
 
 
-def _JClassFactory(name, jc):
+def _JClassFactory(jc):
+    """ This hook creates Python class wrappers for each Java class.
+
+    The wrapper is a Python class containing:
+      - private member ``__javaclass__`` pointing to a java.lang.Class
+        instance.
+      - private member ``__jvm__`` pointing to the Java context
+      - member and static methods
+      - member and static fields
+      - Python wrappers for inner classes
+      - anything added by the customizer
+    """
     from . import _jarray
 
     # Set up bases
+    name = jc.__name__
     jvm = jc.__jvm__
-    bases = []
-    bjc = jc.getSuperClass()
-    if name == 'java.lang.Object':
-        bases.append(jvm.JObject)
-    elif jc.isArray():
-        bases.append(_jarray.JArray)
-
-    if jc.isPrimitive():
-        bases.append(object)
-    elif bjc is not None:
-        bases.append(jvm.JClass(bjc))
-    #elif bjc is None:
-    #    bases.append(JInterface)
-
-    itf = jc.getInterfaces()
-    for ic in itf:
-        bases.append(jvm.JClass(ic))
+    bases = list(jv._bases)
 
     # Set up members
     members = {
@@ -246,11 +184,9 @@ def _JClassFactory(name, jc):
         "__name__": name,
         "__jvm__": jvm,
     }
-    fields = jc.getClassFields()
-    for i in fields:
-        fname = pysafe(i.getName())
-        members[fname] = i
-    for jm in jc.getClassMethods():
+    for i in jc._fields:
+        members[pysafe(i.__name__] = i
+    for jm in jc._methods:
         members[pysafe(jm.__name__)] = jm
 
     # Apply customizers
@@ -272,103 +208,6 @@ def _JClassFactory(name, jc):
             type.__setattr__(res, str(cls.getSimpleName()), cls2)
 
     return res
-
-# **********************************************************
-
-
-def _toJavaClass(jvm, tp):
-    """(internal) Converts a class type in python into a internal java class.
-
-    Used mainly to support JArray.
-
-    The type argument will operate on:
-     - (str) lookup by class name or fail if not found.
-     - (JClass) just returns the java type.
-     - (type) uses a lookup table to find the class.
-    """
-    # if it a string
-    if isinstance(tp, (str, _unicode)):
-        return jvm.JClass(tp).__javaclass__
-
-    if isinstance(tp, _jpype.PyJPClass):
-        return tp
-
-    if not isinstance(tp, type):
-        raise TypeError(
-            "Argument must be a class, java class, or string representing a java class")
-
-    if tp is _JObject:
-        return jvm._java_lang_Object.__javaclass__
-
-    # See if it a class type
-    try:
-        return tp.__javaclass__
-    except AttributeError:
-        pass
-
-    try:
-        return jvm._type_classes[tp].__javaclass__
-    except KeyError:
-        pass
-
-    raise TypeError("Unable to find class for '%s'" % tp.__name__)
-
-
-def _getDefaultJavaObject(jvm, obj):
-    try:
-        return jvm._object_classes[type(obj)]
-    except KeyError:
-        pass
-
-    try:
-        return obj._java_boxed_class
-    except AttributeError:
-        pass
-
-    if isinstance(obj, _jpype.PyJPClass):
-        return jvm._java_lang_Class
-
-    # We need to check this first as values have both
-    # __javavalue__ and __javaclass__
-    if hasattr(obj, '__javavalue__'):
-        return JClass(obj.__javaclass__)
-
-    if hasattr(obj, '__javaclass__'):
-        return jvm._java_lang_Class
-
-    if obj == None:
-        return jvm._java_lang_Object
-
-    raise TypeError(
-        "Unable to determine the default type of `{0}`".format(obj.__class__))
-
-
-def typeLookup(tp, name):
-    """Fetch a descriptor from the inheritance tree.
-
-    This uses a cache to avoid additional cost when accessing items deep in
-    the tree multiple times.
-    """
-    # TODO this cache may have interactions with retroactive
-    # customizers. We should likely clear the cache if
-    # the class is customized.
-    try:
-        cache = tp.__dict__['_cache']
-    except:
-        cache = {}
-        type.__setattr__(tp, '_cache', cache)
-    if name in cache:
-        return cache[name]
-
-    # Drill down the tree searching all parents for a field
-    for cls in tp.__mro__:
-        if name in cls.__dict__:
-            obj = cls.__dict__[name]
-            cache[name] = obj
-            return obj
-
-    cache[name] = None
-    return None
 
 
 def _jclassDoc(cls):
@@ -451,107 +290,5 @@ def _jclassDoc(cls):
     return "\n".join(out)
 
 
-def _jmethodDoc(method, cls, overloads):
-    """Generator for PyJPMethod.__doc__ property
-
-    Parameters:
-      method (PyJPMethod): method to generate doc string for.
-      cls (java.lang.Class): Class holding this method dispatch.
-      overloads (java.lang.reflect.Method[]): tuple holding all the methods
-        that are served by this method dispatch.
-
-    Returns:
-      The doc string for the method dispatch.
-    """
-    from textwrap import TextWrapper
-    out = []
-    out.append("Java method dispatch '%s' for '%s'" %
-               (method.__name__, cls.getName()))
-    out.append("")
-    exceptions = []
-    returns = []
-    methods = []
-    classmethods = []
-    for ov in overloads:
-        modifiers = ov.getModifiers()
-        exceptions.extend(ov.getExceptionTypes())
-        returnName = ov.getReturnType().getCanonicalName()
-        params = ", ".join([str(i.getCanonicalName())
-                            for i in ov.getParameterTypes()])
-        if returnName != "void":
-            returns.append(returnName)
-        if modifiers & 8:
-            classmethods.append("    * %s %s(%s)" %
-                                (returnName, ov.getName(), params))
-        else:
-            methods.append("    * %s %s(%s)" %
-                           (returnName, ov.getName(), params))
-    if classmethods:
-        out.append("  Static Methods:")
-        out.extend(classmethods)
-        out.append("")
-
-    if methods:
-        out.append("  Virtual Methods:")
-        out.extend(methods)
-        out.append("")
-
-    if exceptions:
-        out.append("  Raises:")
-        for exc in set(exceptions):
-            out.append("    %s: from java" % exc.getCanonicalName())
-        out.append("")
-
-    if returns:
-        out.append("  Returns:")
-        words = ", ".join([str(i) for i in set(returns)])
-        wrapper = TextWrapper(initial_indent='    ',
-                              subsequent_indent='    ')
-        out.extend(wrapper.wrap(words))
-        out.append("")
-
-    return "\n".join(out)
-
-
-def _jmethodAnnotation(method, cls, overloads):
-    """Generator for ``PyJPMethod.__annotation__`` property
-
-    Parameters:
-      method (PyJPMethod): method to generate annotations for.
-      cls (java.lang.Class): Class holding this method dispatch.
-      overloads (java.lang.reflect.Method[]): tuple holding all the methods
-        that are served by this method dispatch.
-
-    Returns:
-      The dict to use for type annotations.
-    """
-    returns = []
-
-    # Special handling if we have 1 overload
-    if len(overloads) == 1:
-        ov = overloads[0]
-        out = {}
-        for i, p in enumerate(ov.getParameterTypes()):
-            out['arg%d' % i] = JClass(p)
-        out['return'] = JClass(ov.getReturnType())
-        return out
-
-    # Otherwise, we only get the return
-    for ov in overloads:
-        returns.append(ov.getReturnType())
-    returns = set(returns)
-    if len(returns) == 1:
-        return {"return": JClass([i for i in returns][0])}
-    return {}
-
-
-def _jmethodCode(method):
-    def call(*args):
-        return method.__call__(*args)
-    return call
-
-
-_jpype.setResource('GetClassMethod', _JClassNew)
-_jpype.setResource('GetMethodDoc', _jmethodDoc)
-_jpype.setResource('GetMethodAnnotations', _jmethodAnnotation)
-_jpype.setResource('GetMethodCode', _jmethodCode)
+_jpype._JClassFactory = _JClassFactory
+_jpype._jclassDoc = _jclassDoc

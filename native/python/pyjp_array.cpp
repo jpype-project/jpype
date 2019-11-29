@@ -30,24 +30,21 @@ void PyJPArray_dealloc(PyJPArray *self);
 PyObject *PyJPArray_repr(PyJPArray *self);
 PyObject *PyJPArray_getArrayLength(PyJPArray *self, PyObject *arg);
 PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg);
-PyObject *PyJPArray_getArraySlice(PyJPArray *self, PyObject *arg);
-PyObject *PyJPArray_setArraySlice(PyJPArray *self, PyObject *arg);
-PyObject *PyJPArray_setArrayItem(PyJPArray *self, PyObject *arg);
+int PyJPArray_setArrayItem(PyJPArray *self, PyObject *item, PyObject* value);
 
 static PyMethodDef arrayMethods[] = {
-	{"__len__", (PyCFunction) (&PyJPArray_getArrayLength), METH_NOARGS, ""},
-	{"_getArrayItem", (PyCFunction) (&PyJPArray_getArrayItem), METH_VARARGS, ""},
-	{"_setArrayItem", (PyCFunction) (&PyJPArray_setArrayItem), METH_VARARGS, ""},
-	{"_getArraySlice", (PyCFunction) (&PyJPArray_getArraySlice), METH_VARARGS, ""},
-	{"_setArraySlice", (PyCFunction) (&PyJPArray_setArraySlice), METH_VARARGS, ""},
+	{"__getitem__", (PyCFunction) (&PyJPArray_getArrayItem), METH_O | METH_COEXIST, ""},
 	{NULL},
 };
 
 static PyType_Slot arraySlots[] = {
-	{ Py_tp_new,     PyJPArray_new},
-	{ Py_tp_dealloc, (destructor) PyJPArray_dealloc},
-	{ Py_tp_repr,    (reprfunc) PyJPArray_repr},
-	{ Py_tp_methods, &arrayMethods},
+	{ Py_tp_new,      PyJPArray_new},
+	{ Py_tp_dealloc,  (destructor) PyJPArray_dealloc},
+	{ Py_tp_repr,     (reprfunc) PyJPArray_repr},
+	{ Py_tp_methods,  &arrayMethods},
+	{ Py_sq_item,     &PyJPArray_getArrayItem},
+	{ Py_sq_ass_item, &PyJPArray_setArrayItem},
+	{ Py_sq_length,   &PyJPArray_getArrayLength},
 	{0}
 };
 
@@ -129,103 +126,82 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 {
 	try
 	{
-		JP_TRACE_IN_C("PyJPArray::getArrayItem");
+		JP_TRACE_IN_C("PyJPArray_getArrayItem");
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		JPJavaFrame frame(context);
-		int ndx;
-		PyArg_ParseTuple(arg, "i", &ndx);
-		JP_PY_CHECK();
-		return self->m_Array->getItem(ndx).keep();
+		if (PyIndex_Check(arg))
+		{
+			Py_ssize_t i = PyNumber_AsSsize_t(arg, PyExc_IndexError);
+			if (i == -1 && PyErr_Occurred())
+				return NULL;
+			if (i < 0)
+				i += self->m_Array->getLength();
+			return self->m_Array->getItem((jsize) i).keep();
+		}
+
+		if (PySlice_Check(arg))
+		{
+			Py_ssize_t start, stop, step, slicelength;
+			if (PySlice_Unpack(arg, &start, &stop, &step) < 0)
+				return NULL;
+
+			if (step != 1)
+				JP_RAISE_VALUE_ERROR("Slicing step not implemented");
+
+			slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
+					&start, &stop, step);
+
+			if (slicelength <= 0)
+				return PyList_New(0);
+			return self->m_Array->getRange((jsize) start, (jsize) stop).keep();
+		}
+		JP_RAISE_TYPE_ERROR("array indices must be indexes or slices");
 		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPArray_getArraySlice(PyJPArray *self, PyObject *arg)
+int PyJPArray_setArrayItem(PyJPArray *self, PyObject *item, PyObject* value)
 {
 	try
 	{
-		JP_TRACE_IN_C("PyJPArray::getArraySlice");
-		int lo = -1;
-		int hi = -1;
+		JP_TRACE_IN_C("PyJPArray_setArrayItem");
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		JPJavaFrame frame(context);
 
-		PyArg_ParseTuple(arg, "ii", &lo, &hi);
-		JP_PY_CHECK();
+		if (PyIndex_Check(item))
+		{
+			Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
+			if (i == -1 && PyErr_Occurred())
+				return -1;
+			if (i < 0)
+				i += self->m_Array->getLength();
+			self->m_Array->setItem((jsize) i, value);
+			return 0;
+		}
 
-		JPArray *a = (JPArray*) self->m_Array;
-		int length = a->getLength();
+		if (PySlice_Check(item))
+		{
+			Py_ssize_t start, stop, step, slicelength;
 
-		// stolen from jcc, to get nice slice support
-		if (lo < 0) lo = length + lo;
-		if (lo < 0) lo = 0;
-		else if (lo > length) lo = length;
-		if (hi < 0) hi = length + hi;
-		if (hi < 0) hi = 0;
-		else if (hi > length) hi = length;
-		if (lo > hi) lo = hi;
+			if (PySlice_Unpack(item, &start, &stop, &step) < 0)
+				return -1;
 
-		return a->getRange(lo, hi).keep();
+			if (step != 1)
+				JP_RAISE_VALUE_ERROR("Slicing step not implemented");
+
+			slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
+					&start, &stop, step);
+
+			if (slicelength <= 0)
+				return 0;
+
+			self->m_Array->setRange((jsize) start, (jsize) stop, value);
+			return 0;
+		}
 		JP_TRACE_OUT_C;
 	}
-	PY_STANDARD_CATCH(NULL);
-}
-
-PyObject *PyJPArray_setArraySlice(PyJPArray *self, PyObject *arg)
-{
-	try
-	{
-		JP_TRACE_IN_C("PyJPArray::setArraySlice");
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		JPJavaFrame frame(context);
-
-		// Parse arguments
-		PyObject *sequence;
-		int lo = -1;
-		int hi = -1;
-		PyArg_ParseTuple(arg, "iiO", &lo, &hi, &sequence);
-		JP_PY_CHECK();
-
-		JPArray *a = (JPArray*) self->m_Array;
-
-		int length = a->getLength();
-		if (length == 0)
-			Py_RETURN_NONE;
-
-		if (lo < 0) lo = length + lo;
-		if (lo < 0) lo = 0;
-		else if (lo > length) lo = length;
-		if (hi < 0) hi = length + hi;
-		if (hi < 0) hi = 0;
-		else if (hi > length) hi = length;
-		if (lo > hi) lo = hi;
-
-		a->setRange(lo, hi, sequence);
-		Py_RETURN_NONE;
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
-}
-
-PyObject *PyJPArray_setArrayItem(PyJPArray *self, PyObject *arg)
-{
-	try
-	{
-		JP_TRACE_IN_C("PyJPArray::setArrayItem");
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		JPJavaFrame frame(context);
-
-		int ndx;
-		PyObject *value;
-		PyArg_ParseTuple(arg, "iO", &ndx, &value);
-		JP_PY_CHECK();
-
-		self->m_Array->setItem(ndx, value);
-		Py_RETURN_NONE;
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
+	PY_STANDARD_CATCH(-1);
 }
 
 #ifdef __cplusplus

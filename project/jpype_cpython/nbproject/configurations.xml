@@ -99,11 +99,9 @@
       <logicalFolder name="python" displayName="python" projectFiles="true">
         <itemPath>../../native/python/jp_pythonenv.cpp</itemPath>
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
-        <itemPath>../../native/python/jpype_memory_view.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
-        <itemPath>../../native/common/pyjp_classmeta.cpp</itemPath>
         <itemPath>../../native/python/pyjp_context.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
@@ -479,11 +477,6 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="../../native/common/pyjp_classmeta.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="../../native/python/include/jp_pythonenv.h"
             ex="false"
             tool="3"
@@ -507,11 +500,6 @@
             flavor2="0">
       </item>
       <item path="../../native/python/jp_pythontypes.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/jpype_memory_view.cpp"
             ex="false"
             tool="1"
             flavor2="0">

@@ -226,6 +226,7 @@ public:
 	JPClass* _java_lang_Class;
 	JPClass* _java_lang_reflect_Field;
 	JPClass* _java_lang_reflect_Method;
+	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
 
 	JPClassRef _java_lang_RuntimeException;

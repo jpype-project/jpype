@@ -398,7 +398,6 @@ PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwar
 
 		// Store caches
 		javaClass ->setHost(out);
-		PyDict_SetItemString(self->m_Classes, javaClass->getCanonicalName().c_str(), out);
 		JP_TRACE_OUT_C;
 	}
 	PY_STANDARD_CATCH(NULL);
@@ -435,7 +434,6 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 	// Call the factory in Python
 	JPPyObject out = JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
 	javaClass ->setHost(out.get());
-	PyDict_SetItemString(context->m_Classes, javaClass->getCanonicalName().c_str(), out.get());
 	return out;
 	JP_TRACE_OUT_C;
 }

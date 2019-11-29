@@ -52,7 +52,7 @@ _JARRAY_TYPENAME_MAP = {
 }
 
 
-class JArray(_jpype.PyJPArray, _jobject.JObject):
+class JArray(_jpype.PyJPArray):
     """ Create a java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.
@@ -159,42 +159,8 @@ class JArray(_jpype.PyJPArray, _jobject.JObject):
         """
         return self.__len__()
 
-    def __len__(self):
-        return self.__javaarray__.getArrayLength()
-
     def __iter__(self):
         return _JavaArrayIter(self)
-
-    def __getitem__(self, ndx):
-        if isinstance(ndx, slice):
-            start, stop, step = ndx.indices(len(self))
-            if step != 1:
-                raise NotImplementedError("Slicing with step unimplemented")
-            return self.__getslice__(start, stop)
-        return self._getArrayItem(ndx)
-
-    def __setitem__(self, ndx, val):
-        if isinstance(ndx, slice):
-            start, stop, step = ndx.indices(len(self))
-            if step != 1:
-                # Iterate in python if we need to step
-                indices = irange(start, stop, step)
-                for index, value in zip(indices, val):
-                    self[index] = value
-            else:
-                self.__setslice__(start, stop, val)
-            return
-        self._setArrayItem(ndx, val)
-
-    def __getslice__(self, i, j):
-        if j == _sys.maxsize:
-            j = self.__len__()
-        return self._getArraySlice(i, j)
-
-    def __setslice__(self, i, j, v):
-        if j == _sys.maxsize:
-            j = self.__len__()
-        self._setArraySlice(i, j, v)
 
     def __eq__(self, other):
         if isinstance(other, _jpype.PyJPValue):
@@ -230,6 +196,39 @@ class JArray(_jpype.PyJPArray, _jobject.JObject):
             A shallow copy of the array.
         """
         return self.__jvm__.JClass("java.util.Arrays").copyOf(self, len(self))
+
+
+def _toJavaClass(jvm, tp):
+    """(internal) Converts a class type in python into a internal java class.
+
+    Used mainly to support JArray.
+
+    The type argument will operate on:
+     - (str) lookup by class name or fail if not found.
+     - (JClass) just returns the java type.
+     - (type) uses a lookup table to find the class.
+    """
+    # if it a string than we lookup the class by name.
+    if isinstance(tp, str)):
+        return _jpype.PyJPClass(jvm, tp)
+
+    # if is a java.lang.Class instance, then no coversion required
+    if isinstance(tp, _jpype.PyJPClass):
+        return tp
+
+    # Okay then it must be a type
+    try:
+        return jvm._type_classes[tp].__javaclass__
+    except KeyError:
+        pass
+
+    # See if it a class type
+    try:
+        return tp.__javaclass__
+    except AttributeError:
+        pass
+
+    raise TypeError("Unable to find class for '%s'" % tp.__name__)
 
 
 def _JArrayNewClass(jvm, cls, ndims=1):
@@ -288,9 +287,6 @@ class _JCharArray(object):
     def __str__(self):
         return str(_jstring.JString(self))
 
-    def __unicode__(self):
-        return unicode(_jstring.JString(self))
-
     def __eq__(self, other):
         if isinstance(other, _jpype.PyJPValue):
             return self.equals(other)
@@ -300,3 +296,7 @@ class _JCharArray(object):
             return self.equals(self.__class__(other))
         except TypeError:
             return False
+
+
+_jpype._JArrayBase = JArray
+

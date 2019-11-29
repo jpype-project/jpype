@@ -26,19 +26,24 @@ extern "C"
 
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs);
-PyObject *PyJPClass_getCanonicalName(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_getSuperClass(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_getInterfaces(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_getClassFields(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_getClassMethods(PyJPClass *self, PyObject *arg);
+
+PyObject *PyJPClass_getBases(PyJPClass *self, void *closure);
+PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure);
+PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure);
+PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure);
+
 PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_newInstance(PyJPClass *self, PyObject *pyargs);
+
+// Query
 PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg);
 PyObject *PyJPClass_isInterface(PyJPClass *self, PyObject *arg);
 PyObject *PyJPClass_isThrowable(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isPrimitive(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isArray(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isAbstract(PyJPClass *self, PyObject *args);
+
+// Debugging
 PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_dumpCtor(PyJPClass *self, PyObject *args);
@@ -49,13 +54,7 @@ const char *classDoc =
 		"__javaclass__ in any wrapper Python classes or instances.";
 
 static PyMethodDef classMethods[] = {
-	{"_getCanonicalName", (PyCFunction) (&PyJPClass_getCanonicalName), METH_NOARGS, ""},
-	{"_getSuperClass", (PyCFunction) (&PyJPClass_getSuperClass), METH_NOARGS, ""},
-	{"_getClassFields", (PyCFunction) (&PyJPClass_getClassFields), METH_NOARGS, ""},
-	{"_getClassMethods", (PyCFunction) (&PyJPClass_getClassMethods), METH_NOARGS, ""},
 	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_VARARGS, ""},
-	{"_getSuperclass", (PyCFunction) (&PyJPClass_getSuperClass), METH_NOARGS, ""},
-	{"_getInterfaces", (PyCFunction) (&PyJPClass_getInterfaces), METH_NOARGS, ""},
 	{"_isInterface", (PyCFunction) (&PyJPClass_isInterface), METH_NOARGS, ""},
 	{"_isPrimitive", (PyCFunction) (&PyJPClass_isPrimitive), METH_NOARGS, ""},
 	{"_isThrowable", (PyCFunction) (&PyJPClass_isThrowable), METH_NOARGS, ""},
@@ -68,11 +67,20 @@ static PyMethodDef classMethods[] = {
 	{NULL},
 };
 
+static PyGetSetDef classGetSets[] = {
+	{"__name__", (getter) (&PyJPClass_getCanonicalName), NULL, ""},
+	{"_fields", (getter) (&PyJPClass_getClassFields), NULL, ""},
+	{"_methods", (getter) (&PyJPClass_getClassMethods), NULL, ""},
+	{"_bases", (getter) (&PyJPClass_getBases), NULL, ""},
+	{0}
+};
+
 static PyType_Slot classSlots[] = {
 	{ Py_tp_new,     PyJPClass_new},
 	{ Py_tp_init,    (initproc) PyJPClass_init},
 	{ Py_tp_methods, classMethods},
 	{ Py_tp_doc,     (void*) classDoc},
+	{ Py_tp_getset,  &classGetSets},
 	{0}
 };
 
@@ -149,7 +157,7 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	PY_STANDARD_CATCH(-1);
 }
 
-PyObject *PyJPClass_getCanonicalName(PyJPClass *self, PyObject *arg)
+PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 {
 	try
 	{
@@ -164,41 +172,70 @@ PyObject *PyJPClass_getCanonicalName(PyJPClass *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPClass_getSuperClass(PyJPClass *self, PyObject *arg)
+PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 {
 	try
 	{
-		JP_TRACE_IN_C("PyJPClass_getSuperClass", self);
 		PyJPModuleState *state = PyJPModuleState_global;
+		JP_TRACE_IN_C("PyJPClass_getInfo", self);
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		JPJavaFrame frame(context);
-		JPClass *base = self->m_Class->getSuperClass();
-		if (base == NULL)
+
+		// Decide the base for this object
+		JPPyObject baseType;
+		JPClass *super = self->m_Class->getSuperClass();
+		if (self->m_Class == context->_java_lang_Object)
 		{
-			Py_RETURN_NONE;
+			baseType = JPPyObject(JPPyRef::_use, state->PyJPValue_Type);
+		}
+		if (self->m_Class == context->_java_lang_Class)
+		{
+			baseType = JPPyObject(JPPyRef::_use, state->PyJPClass_Type);
+		} else if (self->m_Class == context->_java_lang_Throwable)
+		{
+			baseType = JPPyObject(JPPyRef::_use, state->PyJPValueExc_Type);
+		} else if (dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class)
+		{
+			baseType = JPPyObject(JPPyRef::_claim,
+					PyObject_GetAttrString(PyJPModule_global, "_JArrayBase"));
+		} else if (self->m_Class->isPrimitive())
+		{
+			JP_RAISE_TYPE_ERROR("primitives are not objects");
+		} else if (self->m_Class == context->_java_lang_Boolean ||
+				self->m_Class == context->_java_lang_Byte ||
+				self->m_Class == context->_java_lang_Short ||
+				self->m_Class == context->_java_lang_Integer ||
+				self->m_Class == context->_java_lang_Long)
+		{
+			super = NULL;
+			baseType = state->PyJPValueLong_Type;
+		} else if (self->m_Class == context->_java_lang_Float ||
+				self->m_Class == context->_java_lang_Double)
+		{
+			super = NULL;
+			baseType = JPPyObject(JPPyRef::_use, state->PyJPValueFloat_Type);
+		} else if (self->m_Class->isInterface())
+		{
+			baseType = JPPyObject(JPPyRef::_use, state->PyJPValueBase_Type);
 		}
 
-		return PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, context, base).keep();
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
-}
-
-PyObject *PyJPClass_getInterfaces(PyJPClass *self, PyObject *arg)
-{
-	try
-	{
-		JP_TRACE_IN_C("PyJPClass_getInterfaces", self);
-		PyJPModuleState *state = PyJPModuleState_global;
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		JPJavaFrame frame(context);
 		const JPClassList& baseItf = self->m_Class->getInterfaces();
+		int count = baseItf.size() + baseType.isNull() ? 1 : 0 + super != NULL;
 
 		// Pack into a tuple
-		JPPyTuple result(JPPyTuple::newTuple(baseItf.size()));
+		JPPyTuple result(JPPyTuple::newTuple(count));
+		unsigned int i = 0;
 		for (unsigned int i = 0; i < baseItf.size(); i++)
 		{
 			result.setItem(i, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, context, baseItf[i]).get());
+		}
+		if (super != NULL)
+		{
+			result.setItem(i++, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, context, super).get());
+		}
+		if (baseType != NULL)
+		{
+			result.setItem(i++, baseType.keep());
 		}
 		return result.keep();
 		JP_TRACE_OUT_C;
@@ -206,7 +243,7 @@ PyObject *PyJPClass_getInterfaces(PyJPClass *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPClass_getClassFields(PyJPClass *self, PyObject *arg)
+PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 {
 	try
 	{
@@ -227,7 +264,7 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, PyObject *arg)
 	PY_STANDARD_CATCH(NULL);
 }
 
-PyObject *PyJPClass_getClassMethods(PyJPClass *self, PyObject *arg)
+PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 {
 	try
 	{
@@ -235,15 +272,33 @@ PyObject *PyJPClass_getClassMethods(PyJPClass *self, PyObject *arg)
 		JPContext *context = PyJPValue_GET_CONTEXT(self);
 		JPJavaFrame frame(context);
 
+		// Boxed and Throwable are special cases that require the object
+		// methods copied in as well as their own.
 		const JPMethodDispatchList& m_Methods = self->m_Class->getMethods();
+		size_t count = m_Methods.size();
+		if (self->m_Class == context->_java_lang_Throwable ||
+				dynamic_cast<JPBoxedType*> (self->m_Class) != 0)
+		{
+			count += context->_java_lang_Object->getMethods().size();
+		}
+
+		// Add the methods of the class
 		int i = 0;
-		JPPyTuple result(JPPyTuple::newTuple(m_Methods.size()));
+		JPPyTuple result(JPPyTuple::newTuple(count));
 		for (JPMethodDispatchList::const_iterator cur = m_Methods.begin(); cur != m_Methods.end(); cur++)
 		{
-			JP_TRACE("method ", *cur);
 			result.setItem(i++, PyJPMethod_create(*cur, NULL).get());
 		}
 
+		// Add the object methods if not inherited
+		if (count != m_Methods.size())
+		{
+			const JPMethodDispatchList& m_ObjectMethods = context->_java_lang_Object->getMethods();
+			for (JPMethodDispatchList::const_iterator cur = m_ObjectMethods.begin(); cur != m_ObjectMethods.end(); cur++)
+			{
+				result.setItem(i++, PyJPMethod_create(*cur, NULL).get());
+			}
+		}
 		return result.keep();
 		JP_TRACE_OUT_C;
 	}

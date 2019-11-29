@@ -116,35 +116,55 @@ _jclass._JObject = JObject
 _jcustomizer._JObject = JObject
 
 
+def _getDefaultAJavaObject(jvm, tp):
+    """ Determine the type of the object based the type of a value.
+        
+        Python primitives - lookup the type in the table
+        Java primitive - lookup boxed type in the table
+        Java objects - just use their type directly
+
+
+    """
+    # handle Python types and Java primitives
+    try:
+        return jvm._object_classes[tp]
+    except KeyError:
+        pass
+
+    if issubclass(obj, _jpype.PyJPClass):
+        return jvm._java_lang_Class
+  
+    # JObject(JClass("str"))
+    if issubclass(obj, _jpype.PyJPClassMeta):
+        return jvm._java_lang_Class
+
+    if issubclass(obj, _jpype.PyJPValueBase):
+        return obj.__javaclass__
+
+    raise TypeError(
+        "Unable to determine the default type of `{0}`".format(obj.__class__))
+
+
 def _JObjectFactory(jvm, v=None, tp=None):
     """ Creates a Java object.
 
     If not specified type is determined based on the object.
     If type type is specified then then it tried to box it.
     """
-    cls = None
-
-    if isinstance(v, type):
-        if hasattr(v, '__javaclass__'):
-            cls = _jclass.JClass("java.lang.Class").__javaclass__
-        else:
-            raise TypeError("%s is not a java class." % v)
-
-    # Automatically look up the type if not specified,
     if tp is None:
-        return _jclass._getDefaultJavaObject(jvm, v)
+        # Automatically determine based on the value
+        tp = _getDefaultAJavaObject(jvm, type(v))
 
-    # If it is a string look up the class name,
-    elif isinstance(tp, (str, _unicode)):
-        return jvm.JClass(tp)
+    # Java primitive conversion to boxed type
+    if isinstance(tp, _jpype._JPrimitive):
+        return _getDefaultAJavaObject(type(tp))(v)
 
-    # Check if we are to box it,
-    elif isinstance(tp, type):
-        if hasattr(tp, '_java_boxed_class'):
-            # FIXME we need to lookup the name in the jvm table.  
-            return tp._java_boxed_class
-        elif hasattr(tp, '__javaclass__'):
-            return _jclass.JClass(tp.__javaclass__)
+    # Given a Already an object
+    if isinstance(tp, _jpype.PyJPClassMeta):
+        return tp.__javaclass__._cast(v)
+
+    # Given a Java class
+        return tp._cast(v)
 
     raise TypeError("Invalid type conversion to %s requested." % tp)
 

@@ -15,6 +15,7 @@
 import _jpype
 import sys as _sys
 
+# These all need to move to typehints
 _JP_BASES = {}
 _JP_IMPLEMENTATIONS = {}
 
@@ -26,7 +27,6 @@ else:
 __all__ = ['JImplementationFor']
 
 # Forward declarations
-_JObject = None
 _JCLASSES = {} # FIXME move to typehints
 
 
@@ -36,8 +36,8 @@ def registerClassBase(name, cls):
     Use @JImplementationFor(cls, base=True) to access this.
 
     """
-    if not issubclass(cls,  _JObject):
-        raise TypeError("Classbases must derive from JObject")
+#    if not issubclass(cls,  _JObject):
+#        raise TypeError("Classbases must derive from JObject")
 
     if name in _JP_BASES:
         _JP_BASES[name].append(cls)
