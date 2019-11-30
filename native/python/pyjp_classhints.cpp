@@ -31,12 +31,12 @@ static PyMethodDef classMethods[] = {
 };
 
 static PyType_Slot hintsSlots[] = {
-	{ Py_tp_new ,    PyJPClassHints_new},
-	{ Py_tp_init,    (initproc) PyJPClassHints_init},
-	{ Py_tp_dealloc, (destructor) PyJPClassHints_dealloc},
-	{ Py_tp_str,     (reprfunc) PyJPClassHints_str},
-	{ Py_tp_doc,     "Java Class Hints"},
-	{ Py_tp_methods, classMethods},
+	{ Py_tp_new ,    (void*) PyJPClassHints_new},
+	{ Py_tp_init,    (void*) PyJPClassHints_init},
+	{ Py_tp_dealloc, (void*) PyJPClassHints_dealloc},
+	{ Py_tp_str,     (void*) PyJPClassHints_str},
+	{ Py_tp_doc,     (void*) "Java Class Hints"},
+	{ Py_tp_methods, (void*) classMethods},
 	{0}
 };
 
@@ -50,59 +50,41 @@ PyType_Spec PyJPClassHintsSpec = {
 
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	try
-	{
-		JP_TRACE_IN_C("PyJPProxy_new");
-		PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
-		self->m_Hints = NULL;
-		return (PyObject*) self;
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
+	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
+	self->m_Hints = NULL;
+	return (PyObject*) self;
 }
 
 int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 {
-	try
-	{
-		JP_TRACE_IN_C("PyJPClassHints_init", self);
-		// Parse arguments
-		PyObject *target;
-		PyObject *pyintf;
-		if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
-		{
-			return -1;
-		}
+	JP_PY_TRY("PyJPClassHints_init", self);
+	// Parse arguments
+	PyObject *target;
+	PyObject *pyintf;
+	if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
+		return -1;
 
-		return 0;
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(-1);
+	return 0;
+	JP_PY_CATCH(-1);
 }
 
 void PyJPClassHints_dealloc(PyJPClassHints *self)
 {
-	try
-	{
-		JP_TRACE_IN_C("PyJPClassHints_dealloc", self);
-		delete self->m_Hints;
+	JP_PY_TRY("PyJPClassHints_dealloc", self)
+			delete self->m_Hints;
 
-		// Free self
-		Py_TYPE(self)->tp_free(self);
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH();
+	// Free self
+	Py_TYPE(self)->tp_free(self);
+	JP_PY_CATCH();
 }
 
 PyObject *PyJPClassHints_str(PyJPClassHints *self)
 {
-	try
-	{
-		stringstream sout;
-		sout << "<java class hints>";
-		return JPPyString::fromStringUTF8(sout.str()).keep();
-	}
-	PY_STANDARD_CATCH(NULL);
+	JP_PY_TRY("PyJPClassHints_str", self)
+	stringstream sout;
+	sout << "<java class hints>";
+	return JPPyString::fromStringUTF8(sout.str()).keep();
+	JP_PY_CATCH(NULL);
 }
 
 #ifdef __cplusplus

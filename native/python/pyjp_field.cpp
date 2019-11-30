@@ -35,9 +35,9 @@ static PyGetSetDef fieldGetSets[] = {
 };
 
 static PyType_Slot fieldSlots[] = {
-	{ Py_tp_descr_get, (descrgetfunc) PyJPField_get},
-	{ Py_tp_descr_set, (descrsetfunc) PyJPField_set},
-	{ Py_tp_getset,    &fieldGetSets},
+	{ Py_tp_descr_get, (void*) PyJPField_get},
+	{ Py_tp_descr_set, (void*) PyJPField_set},
+	{ Py_tp_getset,    (void*) &fieldGetSets},
 	{0}
 };
 
@@ -45,93 +45,76 @@ PyType_Spec PyJPFieldSpec = {
 	"_jpype.PyJPField",
 	sizeof (PyJPField),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_BASETYPE,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, //| Py_TPFLAGS_HAVE_GC,
 	fieldSlots
 };
 
 PyObject *PyJPField_name(PyJPField *self, PyObject *arg)
 {
-	try
-	{
-		JP_TRACE_IN_C("PyJPField::getName", self);
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		ASSERT_JVM_RUNNING(context);
-		return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
+	JP_PY_TRY("PyJPField_name", self)
+	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	ASSERT_JVM_RUNNING(context);
+	return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
+	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
-	try
-	{
-		JP_TRACE_IN_C("PyJPField_get", self);
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		ASSERT_JVM_RUNNING(context);
-		if (self->m_Field->isStatic())
-			return self->m_Field->getStaticField().keep();
-		if (obj == NULL)
-			JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
-		JPValue *jval = JPPythonEnv::getJavaValue(obj);
-		if (jval == NULL)
-			JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
+	JP_PY_TRY("PyJPField_get", self)
+	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	ASSERT_JVM_RUNNING(context);
+	if (self->m_Field->isStatic())
+		return self->m_Field->getStaticField().keep();
+	if (obj == NULL)
+		JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
+	JPValue *jval = JPPythonEnv::getJavaValue(obj);
+	if (jval == NULL)
+		JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
 
-		return self->m_Field->getField(jval->getValue().l).keep();
-		JP_TRACE_OUT_C;
-	}
-	PY_STANDARD_CATCH(NULL);
+	return self->m_Field->getField(jval->getValue().l).keep();
+	JP_PY_CATCH(NULL);
 }
 
 int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
-	try
+	JP_PY_TRY("PyJPField_set", self)
+	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	ASSERT_JVM_RUNNING(context);
+	if (self->m_Field->isFinal())
+		JP_RAISE_ATTRIBUTE_ERROR("Field is final");
+	if (self->m_Field->isStatic())
 	{
-		JP_TRACE_IN_C("PyJPField_set", self);
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		ASSERT_JVM_RUNNING(context);
-		if (self->m_Field->isFinal())
-			JP_RAISE_ATTRIBUTE_ERROR("Field is final");
-		if (self->m_Field->isStatic())
-		{
-			self->m_Field->setStaticField(pyvalue);
-			return 0;
-		}
-		if (obj == Py_None)
-			JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
-		JPValue *jval = JPPythonEnv::getJavaValue(obj);
-		if (jval == NULL)
-			JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
-		self->m_Field->setField(jval->getValue().l, pyvalue);
+		self->m_Field->setStaticField(pyvalue);
 		return 0;
-		JP_TRACE_OUT_C;
 	}
-	PY_STANDARD_CATCH(-1);
+	if (obj == Py_None)
+		JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
+	JPValue *jval = JPPythonEnv::getJavaValue(obj);
+	if (jval == NULL)
+		JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
+	self->m_Field->setField(jval->getValue().l, pyvalue);
+	return 0;
+	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg)
 {
-	try
-	{
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		ASSERT_JVM_RUNNING(context);
-		return PyBool_FromLong(self->m_Field->isStatic());
-	}
-	PY_STANDARD_CATCH(NULL);
+	JP_PY_TRY("PyJPField_isStatic", self)
+	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	ASSERT_JVM_RUNNING(context);
+	return PyBool_FromLong(self->m_Field->isStatic());
+	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg)
 {
-	try
-	{
-		JPContext *context = PyJPValue_GET_CONTEXT(self);
-		ASSERT_JVM_RUNNING(context);
-		return PyBool_FromLong(self->m_Field->isFinal());
-	}
-	PY_STANDARD_CATCH(NULL);
+	JP_PY_TRY("PyJPField_isFinal", self)
+	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	ASSERT_JVM_RUNNING(context);
+	return PyBool_FromLong(self->m_Field->isFinal());
+	JP_PY_CATCH(NULL);
 }
 
 #ifdef __cplusplus
 }
 #endif
-

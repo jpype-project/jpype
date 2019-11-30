@@ -32,13 +32,8 @@
 #define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
-#define JP_TRACE_IN_C(...)  try {
-#define JP_TRACE_OUT_C } \
-  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
-#define JP_TRACE_IN(...) \
-  try {
-#define JP_TRACE_OUT } \
-  catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN(...) try {
+#define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
 #define JP_TRACE_LOCKS(...)
 #define JP_TRACE_PY(m, obj)

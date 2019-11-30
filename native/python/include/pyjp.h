@@ -16,15 +16,22 @@
 
 #ifndef PYJP_H
 #define PYJP_H
-
-#define ASSERT_JVM_RUNNING(context) ((JPContext*)context)->assertJVMRunning(JP_STACKINFO())
-#define PY_STANDARD_CATCH(...) catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
-
-
-/** This is the module specifically for the cpython modules to include.
- */
 #include <Python.h>
 #include <jpype.h>
+
+#ifdef JP_TRACING_ENABLE
+#define JP_PY_TRY(...) \
+  JPypeTracer _trace(__VA_ARGS__); \
+  try {
+#define JP_PY_CATCH \
+  } \
+  catch(...) { \
+  _trace.gotError(JP_STACKINFO()); \
+  throw;JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
+#else
+#define JP_PY_TRY(...)  try {
+#define JP_PY_CATCH(...)  } catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -163,11 +170,11 @@ extern const char *__javaclass__;
 
 inline JPContext* PyJPValue_getContext(PyJPValue* value)
 {
-	JPContext *context = value->m_Context->m_Context;
+	JPContext *context = NULL;
+	if (value->m_Context != NULL)
+		context = value->m_Context->m_Context;
 	if (context == NULL)
-	{
-		JP_RAISE_RUNTIME_ERROR("Context is null");
-	}
+		return NULL;
 	ASSERT_JVM_RUNNING(context);
 	return context;
 }

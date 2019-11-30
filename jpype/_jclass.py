@@ -86,7 +86,7 @@ class JClass(_jpype.PyJPClassMeta):
                 raise jvm._java_lang_RuntimeException(
                     "Java class '%s' not found" % name)
             return cls.__jvm__._getClass(jc)
-        return super(JClass, cls).__new__(cls, *args, **kwargs)
+        return super(JClass, cls).__new__(cls, *args)
 
     def mro(cls):
         # Bases is ordered by (user, extend, interfaces)
@@ -185,7 +185,7 @@ def _JClassFactory(jc):
         "__jvm__": jvm,
     }
     for i in jc._fields:
-        members[pysafe(i.__name__] = i
+        members[pysafe(i.__name__)] = i
     for jm in jc._methods:
         members[pysafe(jm.__name__)] = jm
 

@@ -93,7 +93,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 	// other bug that once fixed will correct this problem.
 	JPThreadLock guard;
 	{
-		JP_TRACE_IN_C("JPype_InvocationHandler_hostInvoke");
+		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 		try
 		{
 			if (hostObj == 0)
@@ -172,7 +172,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 						"unknown error occurred");
 		}
 		return NULL;
-		JP_TRACE_OUT_C;
+		JP_TRACE_OUT;
 	}
 }
 

@@ -17,6 +17,7 @@
 #include <jpype.h>
 #include <jp_primitive_common.h>
 
+// These are global as they are not connected to a JVM.
 JPVoidType *_void = new JPVoidType();
 JPByteType *_byte = new JPByteType();
 JPBooleanType *_boolean = new JPBooleanType();
@@ -56,33 +57,40 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 	return;
 }
 
+#ifdef JP_TRACING_ENABLE
+#define JP_JAVA_TRY(...) \
+  JPypeTracer _trace(__VA_ARGS__); \
+  try {
+#define JP_JAVA_CATCH \
+  } \
+  catch(...) { \
+  _trace.gotError(JP_STACKINFO()); \
+  JPTypeFactory_rethrow(frame); } return __VA_ARGS__
+#else
+#define JP_JAVA_TRY(...)  try {
+#define JP_JAVA_CATCH(...)  } catch(...) { JPTypeFactory_rethrow(frame); } return __VA_ARGS__
+#endif
+
 JNIEXPORT void JNICALL JPTypeFactory_destroy(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlongArray resources,
 		jint sz)
 {
-	JP_TRACE_IN_C("JPTypeFactory_destroy");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
+	JP_JAVA_TRY("JPTypeFactory_destroy");
+	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
+			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+	jlong* values = accessor.get();
+	for (int i = 0; i < sz; ++i)
 	{
-		JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
-				&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
-		jlong* values = accessor.get();
-		for (int i = 0; i < sz; ++i)
-		{
-			// Do not delete the shared primitive types.
-			if (dynamic_cast<JPPrimitiveType*> ((JPResource*) values[i]) != 0)
-				continue;
-			delete (JPResource*) values[i];
-		}
-		return;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
+		// Do not delete the shared primitive types.
+		if (dynamic_cast<JPPrimitiveType*> ((JPResource*) values[i]) != 0)
+			continue;
+		delete (JPResource*) values[i];
 	}
 	return;
-	JP_TRACE_OUT_C;
+	JP_JAVA_CATCH();
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
@@ -92,24 +100,17 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		jlongArray overloadPtrs,
 		jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_defineMethodDispatch");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		JPClass* cls = (JPClass*) clsPtr;
-		JPMethodList overloadList;
-		convert(frame, overloadPtrs, overloadList);
-		string cname = context->toStringUTF8(name);
-		JP_TRACE(cname);
-		JPMethodDispatch* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
-		return (jlong) dispatch;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_TRY("JPTypeFactory_defineMethodDispatch");
+	JPClass* cls = (JPClass*) clsPtr;
+	JPMethodList overloadList;
+	convert(frame, overloadPtrs, overloadList);
+	string cname = context->toStringUTF8(name);
+	JP_TRACE(cname);
+	JPMethodDispatch* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
+	return (jlong) dispatch;
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
@@ -120,25 +121,18 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 		jlong componentClass,
 		jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_defineArrayClass");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		string cname = context->toStringUTF8(name);
-		JP_TRACE(cname);
-		JPArrayClass* result = new JPArrayClass(context, cls,
-				cname,
-				(JPClass*) superClass,
-				(JPClass*) componentClass,
-				modifiers);
-		return (jlong) result;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_TRY("JPTypeFactory_defineArrayClass");
+	string cname = context->toStringUTF8(name);
+	JP_TRACE(cname);
+	JPArrayClass* result = new JPArrayClass(context, cls,
+			cname,
+			(JPClass*) superClass,
+			(JPClass*) componentClass,
+			modifiers);
+	return (jlong) result;
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
@@ -149,109 +143,101 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		jlongArray interfacePtrs,
 		jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_defineObjectClass");
 	JPContext* context = (JPContext*) contextPtr;
-	JP_TRACE("got context", context);
 	JPJavaFrame frame(context, env);
-	try
+	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
+	string className = context->toStringUTF8(name);
+	JP_TRACE(className);
+	JPClassList interfaces;
+	if (interfacePtrs != NULL)
+		convert(frame, interfacePtrs, interfaces);
+	JPClass* result = NULL;
+	if (JPModifier::isSpecial(modifiers))
 	{
-		string className = context->toStringUTF8(name);
-		JP_TRACE(className);
-		JPClassList interfaces;
-		if (interfacePtrs != NULL)
-			convert(frame, interfacePtrs, interfaces);
-		JPClass* result = NULL;
-		if (JPModifier::isSpecial(modifiers))
+		// Certain classes require special implementations
+		if (className == "java.lang.Object")
+			return (jlong) (context->_java_lang_Object
+				= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+		if (className == "java.lang.Class")
+			return (jlong) (context->_java_lang_Class
+				= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+		if (className == "java.lang.String")
+			return (jlong) (context->_java_lang_String
+				= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+		if (className == "java.lang.Throwable")
+			return (jlong) (context->_java_lang_Throwable
+				= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+
+		// Register the box types
+		if (className == "java.lang.Void")
+			return (jlong) (context->_java_lang_Void
+				= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _void));
+		if (className == "java.lang.Boolean")
 		{
-			// Certain classes require special implementations
-			if (className == "java.lang.Object")
-				return (jlong) (context->_java_lang_Object
-					= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-			if (className == "java.lang.Class")
-				return (jlong) (context->_java_lang_Class
-					= new JPClassType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-			if (className == "java.lang.String")
-				return (jlong) (context->_java_lang_String
-					= new JPStringType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-			if (className == "java.lang.Throwable")
-				return (jlong) (context->_java_lang_Throwable
-					= new JPObjectType(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			context->m_BooleanValueID = frame.GetMethodID(cls, "booleanValue", "()Z");
+			return (jlong) (context->_java_lang_Boolean
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _boolean));
+		}
+		if (className == "java.lang.Byte")
+		{
+			context->m_ByteValueID = frame.GetMethodID(cls, "byteValue", "()B");
+			return (jlong) (context->_java_lang_Byte
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _byte));
+		}
+		if (className == "java.lang.Character")
+		{
+			context->m_CharValueID = frame.GetMethodID(cls, "charValue", "()C");
+			return (jlong) (context->_java_lang_Char
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _char));
+		}
+		if (className == "java.lang.Short")
+		{
+			context->m_ShortValueID = frame.GetMethodID(cls, "shortValue", "()S");
+			return (jlong) (context->_java_lang_Short
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _short));
+		}
+		if (className == "java.lang.Integer")
+		{
+			context->m_IntValueID = frame.GetMethodID(cls, "intValue", "()I");
+			return (jlong) (context->_java_lang_Integer
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _int));
+		}
+		if (className == "java.lang.Long")
+		{
+			context->m_LongValueID = frame.GetMethodID(cls, "longValue", "()J");
+			return (jlong) (context->_java_lang_Long
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _long));
+		}
+		if (className == "java.lang.Float")
+		{
+			context->m_FloatValueID = frame.GetMethodID(cls, "floatValue", "()F");
+			return (jlong) (context->_java_lang_Float
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _float));
+		}
+		if (className == "java.lang.Double")
+		{
+			context->m_DoubleValueID = frame.GetMethodID(cls, "doubleValue", "()D");
+			return (jlong) (context->_java_lang_Double
+					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _double));
+		}
+		if (className == "org.jpype.proxy.JPypeProxy")
+			return (jlong)
+			new JPProxyType(context, cls, className, (JPClass*) superClass, interfaces, modifiers);
 
-			// Register the box types
-			if (className == "java.lang.Void")
-				return (jlong) (context->_java_lang_Void
-					= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _void));
-			if (className == "java.lang.Boolean")
-			{
-				context->m_BooleanValueID = frame.GetMethodID(cls, "booleanValue", "()Z");
-				return (jlong) (context->_java_lang_Boolean
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _boolean));
-			}
-			if (className == "java.lang.Byte")
-			{
-				context->m_ByteValueID = frame.GetMethodID(cls, "byteValue", "()B");
-				return (jlong) (context->_java_lang_Byte
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _byte));
-			}
-			if (className == "java.lang.Character")
-			{
-				context->m_CharValueID = frame.GetMethodID(cls, "charValue", "()C");
-				return (jlong) (context->_java_lang_Char
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _char));
-			}
-			if (className == "java.lang.Short")
-			{
-				context->m_ShortValueID = frame.GetMethodID(cls, "shortValue", "()S");
-				return (jlong) (context->_java_lang_Short
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _short));
-			}
-			if (className == "java.lang.Integer")
-			{
-				context->m_IntValueID = frame.GetMethodID(cls, "intValue", "()I");
-				return (jlong) (context->_java_lang_Integer
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _int));
-			}
-			if (className == "java.lang.Long")
-			{
-				context->m_LongValueID = frame.GetMethodID(cls, "longValue", "()J");
-				return (jlong) (context->_java_lang_Long
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _long));
-			}
-			if (className == "java.lang.Float")
-			{
-				context->m_FloatValueID = frame.GetMethodID(cls, "floatValue", "()F");
-				return (jlong) (context->_java_lang_Float
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _float));
-			}
-			if (className == "java.lang.Double")
-			{
-				context->m_DoubleValueID = frame.GetMethodID(cls, "doubleValue", "()D");
-				return (jlong) (context->_java_lang_Double
-						= new JPBoxedType(context, cls, className, (JPClass*) superClass, interfaces, modifiers, _double));
-			}
-			if (className == "org.jpype.proxy.JPypeProxy")
-				return (jlong)
-				new JPProxyType(context, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		// Register reflection types for later use
+		if (className == "java.lang.reflect.Method")
+			return (jlong) (context->_java_lang_reflect_Method = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
+		if (className == "java.lang.reflect.Field")
+			return (jlong) (context->_java_lang_reflect_Field = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
-			// Register reflection types for later use
-			if (className == "java.lang.reflect.Method")
-				return (jlong) (context->_java_lang_reflect_Method = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-			if (className == "java.lang.reflect.Field")
-				return (jlong) (context->_java_lang_reflect_Field = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers));
-
-			stringstream ss;
-			ss << "Special class not defined for " << className;
-			JP_RAISE_RUNTIME_ERROR(ss.str());
-		} else
-			// Otherwise create a normal class
-			result = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers);
-		return (jlong) result;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+		stringstream ss;
+		ss << "Special class not defined for " << className;
+		JP_RAISE_RUNTIME_ERROR(ss.str());
+	} else
+		// Otherwise create a normal class
+		result = new JPClass(context, cls, className, (JPClass*) superClass, interfaces, modifiers);
+	return (jlong) result;
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
@@ -261,38 +247,31 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 		jlong boxedPtr,
 		jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_definePrimitive");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		string cname = context->toStringUTF8(name);
-		JP_TRACE(cname);
-		if (cname == "void")
-			return (jlong) (context->_void = _void);
-		if (cname == "byte")
-			return (jlong) (context->_byte = _byte);
-		if (cname == "boolean")
-			return (jlong) (context->_boolean = _boolean);
-		if (cname == "char")
-			return (jlong) (context->_char = _char);
-		if (cname == "short")
-			return (jlong) (context->_short = _short);
-		if (cname == "int")
-			return (jlong) (context->_int = _int);
-		if (cname == "long")
-			return (jlong) (context->_long = _long);
-		if (cname == "float")
-			return (jlong) (context->_float = _float);
-		if (cname == "double")
-			return (jlong) (context->_double = _double);
-		return 0;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
+	JP_JAVA_TRY("JPTypeFactory_definePrimitive");
+	string cname = context->toStringUTF8(name);
+	JP_TRACE(cname);
+	if (cname == "void")
+		return (jlong) (context->_void = _void);
+	if (cname == "byte")
+		return (jlong) (context->_byte = _byte);
+	if (cname == "boolean")
+		return (jlong) (context->_boolean = _boolean);
+	if (cname == "char")
+		return (jlong) (context->_char = _char);
+	if (cname == "short")
+		return (jlong) (context->_short = _short);
+	if (cname == "int")
+		return (jlong) (context->_int = _int);
+	if (cname == "long")
+		return (jlong) (context->_long = _long);
+	if (cname == "float")
+		return (jlong) (context->_float = _float);
+	if (cname == "double")
+		return (jlong) (context->_double = _double);
 	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
@@ -302,28 +281,21 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 		jlongArray methodPtrs,
 		jlongArray fieldPtrs)
 {
-	JP_TRACE_IN_C("JPTypeFactory_assignMembers");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		JPClass* cls = (JPClass*) clsPtr;
-		JPMethodDispatchList methodList;
-		convert(frame, methodPtrs, methodList);
+	JP_JAVA_TRY("JPTypeFactory_assignMembers");
+	JPClass* cls = (JPClass*) clsPtr;
+	JPMethodDispatchList methodList;
+	convert(frame, methodPtrs, methodList);
 
-		JPFieldList fieldList;
-		convert(frame, fieldPtrs, fieldList);
-		cls->assignMembers(
-				(JPMethodDispatch*) ctorMethod,
-				methodList,
-				fieldList);
-		return;
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
+	JPFieldList fieldList;
+	convert(frame, fieldPtrs, fieldList);
+	cls->assignMembers(
+			(JPMethodDispatch*) ctorMethod,
+			methodList,
+			fieldList);
 	return;
-	JP_TRACE_OUT_C;
+	JP_JAVA_CATCH();
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
@@ -334,27 +306,20 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 		jlong fieldType,
 		jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_defineField");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		string cname = context->toStringUTF8(name);
-		JP_TRACE("class", cls);
-		JP_TRACE(cname);
-		jfieldID fid = frame.FromReflectedField(field);
-		return (jlong) (new JPField(
-				(JPClass*) cls,
-				cname,
-				field, fid,
-				(JPClass*) fieldType,
-				modifiers));
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_TRY("JPTypeFactory_defineField");
+	string cname = context->toStringUTF8(name);
+	JP_TRACE("class", cls);
+	JP_TRACE(cname);
+	jfieldID fid = frame.FromReflectedField(field);
+	return (jlong) (new JPField(
+			(JPClass*) cls,
+			cname,
+			field, fid,
+			(JPClass*) fieldType,
+			modifiers));
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
@@ -363,28 +328,21 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 		jobject method,
 		jlongArray overloadList, jint modifiers)
 {
-	JP_TRACE_IN_C("JPTypeFactory_defineMethod");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		jmethodID mid = frame.FromReflectedMethod(method);
-		JPMethodList cover;
-		convert(frame, overloadList, cover);
-		string cname = context->toStringUTF8(name);
-		JP_TRACE(cname);
-		return (jlong) (new JPMethod(
-				(JPClass*) cls,
-				cname,
-				method, mid,
-				cover,
-				modifiers));
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_TRY("JPTypeFactory_defineMethod");
+	jmethodID mid = frame.FromReflectedMethod(method);
+	JPMethodList cover;
+	convert(frame, overloadList, cover);
+	string cname = context->toStringUTF8(name);
+	JP_TRACE(cname);
+	return (jlong) (new JPMethod(
+			(JPClass*) cls,
+			cname,
+			method, mid,
+			cover,
+			modifiers));
+	JP_JAVA_CATCH(0);
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
@@ -394,21 +352,14 @@ JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
 		jlongArray argumentTypes
 		)
 {
-	JP_TRACE_IN_C("JPTypeFactory_populateMethod");
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
-	try
-	{
-		JPClassList cargs;
-		convert(frame, argumentTypes, cargs);
-		JPMethod *methodPtr = (JPMethod*) method;
-		methodPtr->setParameters((JPClass*) returnType, cargs);
-	} catch (...)
-	{
-		JPTypeFactory_rethrow(frame);
-	}
-	return 0;
-	JP_TRACE_OUT_C;
+	JP_JAVA_TRY("JPTypeFactory_populateMethod");
+	JPClassList cargs;
+	convert(frame, argumentTypes, cargs);
+	JPMethod *methodPtr = (JPMethod*) method;
+	methodPtr->setParameters((JPClass*) returnType, cargs);
+	JP_JAVA_CATCH(0);
 }
 
 JPTypeFactory::~JPTypeFactory()

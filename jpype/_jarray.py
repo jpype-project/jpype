@@ -209,7 +209,7 @@ def _toJavaClass(jvm, tp):
      - (type) uses a lookup table to find the class.
     """
     # if it a string than we lookup the class by name.
-    if isinstance(tp, str)):
+    if isinstance(tp, str):
         return _jpype.PyJPClass(jvm, tp)
 
     # if is a java.lang.Class instance, then no coversion required

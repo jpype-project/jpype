@@ -52,7 +52,7 @@ string JPMethod::toString() const
 
 JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
-	JP_TRACE_IN_C("JPMethod::matchVars");
+	JP_TRACE_IN("JPMethod::matchVars");
 	JPArrayClass *arraytype = (JPArrayClass*) vartype;
 	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
@@ -73,7 +73,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	}
 
 	return lastMatch;
-	JP_TRACE_OUT_C;
+	JP_TRACE_OUT;
 }
 
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance,

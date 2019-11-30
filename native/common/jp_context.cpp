@@ -99,17 +99,16 @@ bool JPContext::isRunning()
 	}
 	return true;
 }
-
 /**
 	throw a JPypeException if the JVM is not started
  */
-void JPContext::assertJVMRunning(const JPStackInfo& info)
+void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
-	if (m_JavaVM == NULL || !m_IsInitialized)
-	{
-		printf("THROW\n");
+	if (context == NULL)
+		throw JPypeException(JPError::_runtime_error, "Java Context is null", info);
+
+	if (!context->isRunning())
 		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
-	}
 }
 
 void JPContext::loadEntryPoints(const string& path)

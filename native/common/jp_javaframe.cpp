@@ -22,51 +22,51 @@
 namespace
 {
 
-	/*****************************************************************************/
-	// Helper classes
+/*****************************************************************************/
+// Helper classes
 
-	/** Call a java jni function with error checking.
-	 *
-	 * This version should be used when the java call is a fixed length of time
-	 * to complete.
-	 */
-	class JPCall
+/** Call a java jni function with error checking.
+ *
+ * This version should be used when the java call is a fixed length of time
+ * to complete.
+ */
+class JPCall
+{
+	JNIEnv* _env;
+	JPContext* _context;
+	const char* _msg;
+public:
+
+	JPCall(const JPJavaFrame& frame, const char* msg)
 	{
-		JNIEnv* _env;
-		JPContext* _context;
-		const char* _msg;
-	public:
+		_env = frame.getEnv();
+		_context = frame.getContext();
+		_msg = msg;
+	}
 
-		JPCall(const JPJavaFrame& frame, const char* msg)
+	void check()
+	{
+		if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
-			_env = frame.getEnv();
-			_context = frame.getContext();
-			_msg = msg;
+			jthrowable th = _env->functions->ExceptionOccurred(_env);
+			_env->functions->ExceptionClear(_env);
+			_env = 0;
+			throw JPypeException(_context, th, _msg, JP_STACKINFO());
 		}
+	}
 
-		void check()
+	~JPCall() NO_EXCEPT_FALSE
+	{
+		// This is a throw in destructor which is only allowed on an exception safe code pattern
+		if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
-			if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
-			{
-				jthrowable th = _env->functions->ExceptionOccurred(_env);
-				_env->functions->ExceptionClear(_env);
-				_env = 0;
-				throw JPypeException(_context, th, _msg, JP_STACKINFO());
-			}
+			jthrowable th = _env->functions->ExceptionOccurred(_env);
+			_env->functions->ExceptionClear(_env);
+			_env = 0;
+			throw JPypeException(_context, th, _msg, JP_STACKINFO());
 		}
-
-		~JPCall() NO_EXCEPT_FALSE
-		{
-			// This is a throw in destructor which is only allowed on an exception safe code pattern
-			if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
-			{
-				jthrowable th = _env->functions->ExceptionOccurred(_env);
-				_env->functions->ExceptionClear(_env);
-				_env = 0;
-				throw JPypeException(_context, th, _msg, JP_STACKINFO());
-			}
-		}
-	};
+	}
+} ;
 
 } // default namespace
 
@@ -85,6 +85,7 @@ JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
 JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 : m_Context(context), popped(false)
 {
+	ASSERT_JVM_RUNNING(context);
 	JavaVM* javaVM = context->getJavaVM();
 
 	jint res;

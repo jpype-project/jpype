@@ -94,6 +94,8 @@ typedef JPRef<jthrowable> JPThrowableRef;
 
 class JPStackInfo;
 
+void assertJVMRunning(JPContext* context, const JPStackInfo& info);
+
 /**
  * A Context encapsulates the Java virtual machine, the Java classes required
  * to function, and the JPype services created for that machine.
@@ -130,7 +132,6 @@ public:
 
 	// JVM control functions
 	bool isRunning();
-	void assertJVMRunning(const JPStackInfo& info);
 	void startJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
 	void shutdownJVM();
 	void attachCurrentThread();

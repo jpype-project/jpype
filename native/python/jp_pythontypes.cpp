@@ -208,29 +208,17 @@ JPPyObject JPPyBool::fromLong(jlong value)
 
 JPPyObject JPPyInt::fromInt(jint l)
 {
-#if PY_MAJOR_VERSION >= 3
 	return JPPyObject(JPPyRef::_call, PyLong_FromLong(l));
-#else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong(l));
-#endif
 }
 
 JPPyObject JPPyInt::fromLong(jlong l)
 {
-#if PY_MAJOR_VERSION >= 3
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
-#else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int) l));
-#endif
 }
 
 bool JPPyInt::check(PyObject *obj)
 {
-#if PY_MAJOR_VERSION >= 3 || LONG_MAX > 2147483647
 	return false;
-#else
-	return PyInt_Check(obj);
-#endif
 }
 
 jint JPPyInt::asInt(PyObject *obj)
@@ -250,25 +238,13 @@ JPPyObject JPPyLong::fromLong(jlong l)
 
 bool JPPyLong::check(PyObject *obj)
 {
-#if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj);
-#else
-	return PyInt_Check(obj)
-			|| PyLong_Check(obj);
-#endif
 }
 
 bool JPPyLong::checkConvertable(PyObject *obj)
 {
-#if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj)
 			|| PyObject_HasAttrString(obj, "__int__");
-#else
-	return PyInt_Check(obj)
-			|| PyLong_Check(obj)
-			|| PyObject_HasAttrString(obj, "__int__")
-			|| PyObject_HasAttrString(obj, "__long__");
-#endif
 }
 
 bool JPPyLong::checkIndexable(PyObject *obj)
@@ -324,16 +300,6 @@ jdouble JPPyFloat::asDouble(PyObject *obj)
  * String
  ***************************************************************************/
 
-/*
-// This is needed for unicode to jchar[] in array conversions
-void JPPyString::getRawUnicodeString(jchar** outBuffer, jlong& outSize)
-{
-  // FIXME jni uses a different encoding than is standard, thus we may need conversion here.
-  outSize = length();
- *outBuffer = (jchar*)PyUnicode_AsUnicode(pyobj);
-}
- */
-
 JPPyObject JPPyString::fromCharUTF16(jchar c)
 {
 #if PY_MAJOR_VERSION < 3 || defined(PYPY_VERSION)
@@ -357,22 +323,15 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 
 bool JPPyString::checkCharUTF16(PyObject *pyobj)
 {
-	JP_TRACE_IN_C("JPPyString::checkCharUTF16");
+	JP_TRACE_IN("JPPyString::checkCharUTF16");
 	if (JPPyLong::checkIndexable(pyobj))
 		return true;
-#if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj) && PyUnicode_GET_SIZE(pyobj) == 1)
-		return true;
-	if (PyString_Check(pyobj) && PyString_Size(pyobj) == 1)
-		return true;
-#else
 	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj) == 1)
 		return true;
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
-#endif
 	return false;
-	JP_TRACE_OUT_C;
+	JP_TRACE_OUT;
 }
 
 jchar JPPyString::asCharUTF16(PyObject *pyobj)
@@ -387,29 +346,7 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 		return (jchar) val;
 	}
 
-#if PY_MAJOR_VERSION < 3
-	if (PyString_Check(pyobj))
-	{
-		Py_ssize_t sz = PyString_Size(pyobj);
-		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
-
-		jchar c = PyString_AsString(pyobj)[0];
-		if (PyErr_Occurred())
-			JP_RAISE_PYTHON("Error in byte conversion");
-		return c;
-	}
-
-	if (PyUnicode_Check(pyobj))
-	{
-		if (PyUnicode_GET_SIZE(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
-
-		wchar_t buffer;
-		PyUnicode_AsWideChar((PyUnicodeObject*) pyobj, &buffer, 1);
-		return buffer;
-	}
-#elif defined(PYPY_VERSION)
+#if defined(PYPY_VERSION)
 	if (PyBytes_Check(pyobj))
 	{
 		int sz = PyBytes_Size(pyobj);
@@ -470,11 +407,7 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
  */
 bool JPPyString::check(PyObject *obj)
 {
-#if PY_MAJOR_VERSION < 3
-	return PyUnicode_Check(obj) || PyString_Check(obj);
-#else
 	return PyUnicode_Check(obj) || PyBytes_Check(obj);
-#endif
 }
 
 /** Create a new string from utf8 encoded string.
@@ -482,50 +415,18 @@ bool JPPyString::check(PyObject *obj)
  */
 JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 {
-	JP_TRACE_IN_C("JPPyString::fromStringUTF8");
+	JP_TRACE_IN("JPPyString::fromStringUTF8");
 	size_t len = str.size();
-
-#if PY_MAJOR_VERSION < 3
-	// Python 2 is unicode only on request
-	if (unicode)
-	{
-		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(str.c_str(), len));
-	} else
-	{
-		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(str.c_str(), len));
-	}
-#else
-	// Python 3 is always unicode
 	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
-#endif
-	JP_TRACE_OUT_C;
+	JP_TRACE_OUT;
 }
 
 string JPPyString::asStringUTF8(PyObject *pyobj)
 {
-	JP_TRACE_IN_C("JPPyUnicode::asStringUTF8");
+	JP_PY_TRY("JPPyUnicode::asStringUTF8");
 	ASSERT_NOT_NULL(pyobj);
 
-#if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj))
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
-		PyBytes_AsStringAndSize(val.get(), &buffer, &size); // internal reference
-		JP_PY_CHECK();
-		if (buffer != NULL)
-			return string(buffer, size);
-		else
-			return string();
-	} else
-	{
-		char *buffer = PyString_AsString(pyobj); // internal reference
-		JP_PY_CHECK();
-		return string(buffer);
-	}
-#else
 	if (PyUnicode_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
@@ -545,10 +446,9 @@ string JPPyString::asStringUTF8(PyObject *pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
-#endif
 	JP_RAISE_RUNTIME_ERROR("Failed to convert to string.");
 	return string();
-	JP_TRACE_OUT_C;
+	JP_TRACE_OUT;
 }
 
 bool JPPyMemoryView::check(PyObject *obj)
@@ -558,11 +458,11 @@ bool JPPyMemoryView::check(PyObject *obj)
 
 void JPPyMemoryView::getByteBufferSize(PyObject *obj, char** outBuffer, long& outSize)
 {
-	JP_TRACE_IN_C("JPPyMemoryView::getByteBufferPtr");
+	JP_TRACE_IN("JPPyMemoryView::getByteBufferPtr");
 	Py_buffer *py_buf = PyMemoryView_GET_BUFFER(obj); // macro, does no checks
 	*outBuffer = (char*) py_buf->buf;
 	outSize = (long) py_buf->len;
-	JP_TRACE_OUT_C;
+	JP_TRACE_OUT;
 }
 
 
@@ -793,4 +693,3 @@ JPPyCallRelease::~JPPyCallRelease()
 	PyEval_RestoreThread(save);
 	JP_TRACE_LOCKS("GIL RELEASE DONE", this);
 }
-

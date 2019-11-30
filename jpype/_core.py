@@ -184,7 +184,7 @@ JByte = _jtypes._JPrimitiveClass("byte", 'B', int)
 JChar = _jtypes._JPrimitiveClass("char", 'C', int)
 JShort = _jtypes._JPrimitiveClass("short", 'S', int)
 JInt = _jtypes._JPrimitiveClass("int", 'I', int)
-JLong = _jtypes._JPrimitiveClass("long", 'J', _long)
+JLong = _jtypes._JPrimitiveClass("long", 'J', int)
 JFloat = _jtypes._JPrimitiveClass("float", 'F', float)
 JDouble = _jtypes._JPrimitiveClass("double", 'D', float)
 

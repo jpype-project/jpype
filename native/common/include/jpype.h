@@ -157,6 +157,7 @@ public:
 #define JP_RAISE_INDEX_ERROR(msg)    { throw JPypeException(JPError::_index_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_ATTRIBUTE_ERROR(msg) { throw JPypeException(JPError::_attribute_error, msg, JP_STACKINFO()); }
 #define JP_RAISE_METHOD_NOT_FOUND(msg) { throw JPypeException(JPError::_method_not_found, msg, JP_STACKINFO()); }
+#define ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
 
 // Base utility headers
 #include "jp_javaframe.h"
@@ -205,5 +206,15 @@ public:
 #include "jp_classloader.h"
 #include "jp_proxy.h"
 #include "jp_monitor.h"
+
+extern JPVoidType *_void;
+extern JPByteType *_byte;
+extern JPBooleanType *_boolean;
+extern JPCharType *_char;
+extern JPShortType *_short;
+extern JPIntType *_int;
+extern JPLongType *_long;
+extern JPFloatType *_float;
+extern JPDoubleType *_double;
 
 #endif // _JPYPE_H_
