@@ -217,20 +217,20 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 	}
 
 	const JPClassList& baseItf = self->m_Class->getInterfaces();
-	int count = baseItf.size() + baseType.isNull() ? 1 : 0 + super != NULL;
+	int count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != NULL ? 1 : 0);
 
 	// Pack into a tuple
 	JPPyTuple result(JPPyTuple::newTuple(count));
 	unsigned int i = 0;
-	for (unsigned int i = 0; i < baseItf.size(); i++)
+	for (; i < baseItf.size(); i++)
 	{
-		result.setItem(i, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, context, baseItf[i]).get());
+		result.setItem(i, JPPythonEnv::newJavaClass(baseItf[i]).keep());
 	}
 	if (super != NULL)
 	{
-		result.setItem(i++, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, context, super).get());
+		result.setItem(i++, JPPythonEnv::newJavaClass(super).keep());
 	}
-	if (baseType.isNull())
+	if (!baseType.isNull())
 	{
 		result.setItem(i++, baseType.keep());
 	}

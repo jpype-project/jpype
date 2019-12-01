@@ -141,21 +141,21 @@ PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 int PyJPContext_init(PyJPContext *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPContext_init", self)
-		return 0;
+	return 0;
 	JP_PY_CATCH(-1);
 }
 
 void PyJPContext_dealloc(PyJPContext *self)
 {
 	JP_PY_TRY("PyJPContext_dealloc", self)
-		if (self->m_Context->isRunning())
-			self->m_Context->shutdownJVM();
-		delete self->m_Context;
-		self->m_Context = NULL;
-		PyObject_GC_UnTrack(self);
-		PyJPContext_clear(self);
-		// Free self
-		Py_TYPE(self)->tp_free(self);
+	if (self->m_Context->isRunning())
+		self->m_Context->shutdownJVM();
+	delete self->m_Context;
+	self->m_Context = NULL;
+	PyObject_GC_UnTrack(self);
+	PyJPContext_clear(self);
+	// Free self
+	Py_TYPE(self)->tp_free(self);
 	JP_PY_CATCH();
 }
 
@@ -175,9 +175,9 @@ PyObject *PyJPContext_str(PyJPContext *self)
 {
 	JP_PY_TRY("PyJPContext_str", self)
 	JPContext *context = self->m_Context;
-		stringstream sout;
-		sout << "<java context " << context << ">";
-		return JPPyString::fromStringUTF8(sout.str()).keep();
+	stringstream sout;
+	sout << "<java context " << context << ">";
+	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -336,7 +336,8 @@ PyObject *PyJPContext_convertToDirectByteBuffer(PyJPContext *self, PyObject *arg
 PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPContext_getClass", self)
-	PyJPModuleState *state = PyJPModuleState_global;
+	PyObject *module = PyJPModule_global;
+	PyJPModuleState *state = PyJPModuleState(module);
 
 	PyJPClass *cls = NULL;
 	if (!PyArg_ParseTuple(args, "O!", state->PyJPClass_Type, &cls))
@@ -351,15 +352,19 @@ PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwar
 	}
 
 	// Get the type factory
-	PyObject* factory = PyDict_GetItemString(Py_TYPE(self)->tp_dict, "_JClassFactory");
-	if (factory == NULL)
+	JPPyObject factory(JPPyRef::_accept,
+			PyObject_GetAttrString(module, "_JClassFactory"));
+
+	//	PyObject* factory = PyDict_GetItemString(Py_TYPE(self)->tp_dict, "_JClassFactory");
+	if (factory.isNull())
 		JP_RAISE_RUNTIME_ERROR("Factory not set");
 
 	// Call the factory
-	PyObject* out = PyObject_Call(factory, args, kwargs);
+	JPPyObject out = factory.call(args, kwargs);
 
 	// Store caches
-	javaClass ->setHost(out);
+	javaClass ->setHost(out.get());
+	return out.keep();
 	JP_PY_CATCH(NULL);
 }
 
