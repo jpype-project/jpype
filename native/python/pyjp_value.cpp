@@ -193,8 +193,8 @@ static struct PyMethodDef baseMethods[] = {
 	{0}
 };
 
-static struct PyMethodDef baseGetSet[] = {
-	{"__jvm__", (PyCFunction) PyJPValue_getJVM, NULL, ""},
+static struct PyGetSetDef baseGetSet[] = {
+	{"__jvm__", (getter) PyJPValue_getJVM, NULL, "the Java context for this object"},
 	{0}
 };
 
@@ -316,12 +316,13 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 
 	if (dynamic_cast<JPArrayClass*> (cls) != NULL)
 	{
+		JPJavaFrame frame(cls->getContext());
 		int sz;
 		if (!PyArg_ParseTuple(pyargs, "i", &sz))
 		{
 			return -1;
 		}
-		self->m_Value = ((JPArrayClass*) cls)->newInstance(sz);
+		self->m_Value = ((JPArrayClass*) cls)->newInstance(frame, sz);
 		return 0;
 	}
 
@@ -530,7 +531,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		jstring str = (jstring) self->m_Value.getValue().l;
 		if (str == NULL)
 			JP_RAISE_VALUE_ERROR("null string");
-		string cstring = context->toStringUTF8(str);
+		string cstring = frame.toStringUTF8(str);
 		PyDict_SetItemString(dict.get(), "str", out = JPPyString::fromStringUTF8(cstring).keep());
 		Py_INCREF(out);
 		return out;
@@ -542,7 +543,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		JP_RAISE_VALUE_ERROR("toString called with null class");
 
 	// In general toString is not immutable, so we won't cache it.
-	return JPPyString::fromStringUTF8(context->toString(self->m_Value.getValue().l)).keep();
+	return JPPyString::fromStringUTF8(frame.toString(self->m_Value.getValue().l)).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -569,7 +570,7 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 	else
 	{
 		jobject jo = self->m_Value.getJavaObject();
-		sout << "  value = " << jo << " " << context->toString(jo);
+		sout << "  value = " << jo << " " << frame.toString(jo);
 	}
 
 	sout << ">";

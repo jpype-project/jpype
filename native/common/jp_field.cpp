@@ -16,13 +16,14 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPField::JPField(JPClass* cls,
-		 const string& name,
-		 jobject field,
-		 jfieldID fid,
-		 JPClass* fieldType,
-		 jint modifiers)
-: m_Field(cls->getContext(), field)
+JPField::JPField(JPJavaFrame& frame,
+		JPClass* cls,
+		const string& name,
+		jobject field,
+		jfieldID fid,
+		JPClass* fieldType,
+		jint modifiers)
+: m_Field(frame, field)
 {
 	this->m_Class = cls;
 	this->m_Name = name;
@@ -37,7 +38,8 @@ JPField::~JPField()
 
 string JPField::toString()
 {
-	return getContext()->toString(m_Field.get());
+	JPJavaFrame frame(m_Class->getContext());
+	return frame.toString(m_Field.get());
 }
 
 JPPyObject JPField::getStaticField()

@@ -33,14 +33,13 @@ JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
 	JP_TRACE_OUT;
 }
 
-JPReferenceQueue::JPReferenceQueue(JPContext* context)
+JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPReferenceQueue::init");
-	m_Context = context;
-	JPJavaFrame frame(context, 32);
+	m_Context = frame.getContext();
 
 	// build the ReferenceQueue class ...
-	jclass cls = context->getClassLoader()->findClass("org.jpype.ref.JPypeReferenceQueue");
+	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.ref.JPypeReferenceQueue");
 
 	//Required due to bug in jvm
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522

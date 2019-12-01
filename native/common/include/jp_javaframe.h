@@ -75,6 +75,8 @@ public:
 	 */
 	JPJavaFrame(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
 
+	JPJavaFrame(const JPJavaFrame& frame);
+
 	/** Exit the local scope and clean up all java
 	 * objects.
 	 *
@@ -130,6 +132,20 @@ public:
 	{
 		return m_Context;
 	}
+
+	string toString(jobject o);
+	string toStringUTF8(jstring str);
+
+	/**
+	 * Convert a UTF8 encoded string into Java.
+	 *
+	 * This returns a local reference.
+	 * @param str
+	 * @return
+	 */
+	jstring fromStringUTF8(const string& str);
+	jobject callMethod(jobject method, jobject obj, jobject args);
+
 
 private:
 

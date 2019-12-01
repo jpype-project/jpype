@@ -22,7 +22,7 @@ class JPReferenceQueue
 {
 	friend class JPContext;
 public:
-	JPReferenceQueue(JPContext* context);
+	explicit JPReferenceQueue(JPJavaFrame& frame);
 	~JPReferenceQueue();
 	//	void startJPypeReferenceQueue(bool useJavaThread);
 	//	void shutdown();

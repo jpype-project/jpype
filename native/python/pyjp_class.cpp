@@ -303,6 +303,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 	JPContext *context = PyJPValue_GET_CONTEXT(self);
 	if (context == NULL)
 		Py_RETURN_NONE;
+	JPJavaFrame frame(context);
 
 	PyObject *value;
 	if (!PyArg_ParseTuple(args, "O", &value))
@@ -318,7 +319,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 	// If it is already a Java object, then let Java decide
 	// if the cast is possible
 	JPValue *jval = JPPythonEnv::getJavaValue(value);
-	if (jval != NULL && type->isInstance(*jval))
+	if (jval != NULL && type->isInstance(frame, *jval))
 	{
 		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, jval->getValue()))
 				.keep();
@@ -359,7 +360,7 @@ PyObject *PyJPClass_newInstance(PyJPClass *self, PyObject *pyargs)
 			return NULL;
 		}
 		JPArrayClass *cls = (JPArrayClass*) (self->m_Class);
-		JPValue value = cls->newInstance(sz);
+		JPValue value = cls->newInstance(frame, sz);
 		return JPPythonEnv::newJavaObject(value).keep();
 	}
 
@@ -396,14 +397,14 @@ PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg)
 	JPClass *cls = JPPythonEnv::getJavaClass(other);
 	if (cls != NULL)
 	{
-		return PyBool_FromLong(self->m_Class->isAssignableFrom(cls));
+		return PyBool_FromLong(self->m_Class->isAssignableFrom(frame, cls));
 	}
 
 	if (JPPyString::check(other))
 	{
 		JPClass *otherClass = context->getTypeManager()
 				->findClassByName(JPPyString::asStringUTF8(other));
-		return PyBool_FromLong(self->m_Class->isAssignableFrom(otherClass));
+		return PyBool_FromLong(self->m_Class->isAssignableFrom(frame, otherClass));
 	}
 
 	PyErr_SetString(PyExc_TypeError, "isAssignableFrom requires java class or string argument.");

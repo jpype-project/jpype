@@ -48,10 +48,11 @@ public:
 	{
 		if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
+			JPJavaFrame frame(_context, _env);
 			jthrowable th = _env->functions->ExceptionOccurred(_env);
 			_env->functions->ExceptionClear(_env);
 			_env = 0;
-			throw JPypeException(_context, th, _msg, JP_STACKINFO());
+			throw JPypeException(frame, th, _msg, JP_STACKINFO());
 		}
 	}
 
@@ -60,10 +61,11 @@ public:
 		// This is a throw in destructor which is only allowed on an exception safe code pattern
 		if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
+			JPJavaFrame frame(_context, _env);
 			jthrowable th = _env->functions->ExceptionOccurred(_env);
 			_env->functions->ExceptionClear(_env);
 			_env = 0;
-			throw JPypeException(_context, th, _msg, JP_STACKINFO());
+			throw JPypeException(frame, th, _msg, JP_STACKINFO());
 		}
 	}
 } ;
@@ -86,27 +88,17 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 : m_Context(context), popped(false)
 {
 	ASSERT_JVM_RUNNING(context);
-	JavaVM* javaVM = context->getJavaVM();
-
-	jint res;
-	if (javaVM == NULL)
-	{
-		JP_RAISE_RUNTIME_ERROR("JVM is null");
-	}
-
-	// Get the environment
-	res = javaVM->functions->GetEnv(javaVM, (void**) &m_Env, USE_JNI_VERSION);
-
-	// If we don't have an environment then we are in a thread, so we must attach
-	if (res == JNI_EDETACHED)
-	{
-		res = javaVM->functions->AttachCurrentThread(javaVM, (void**) &m_Env, NULL);
-		if (res != JNI_OK)
-			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
-	}
+	m_Env = context->getEnv();
 
 	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, i);
+}
+
+JPJavaFrame::JPJavaFrame(const JPJavaFrame& frame)
+: m_Context(frame.m_Context), m_Env(frame.m_Env), popped(false)
+{
+	// Create a memory management frame to live in
+	m_Env->functions->PushLocalFrame(m_Env, LOCAL_FRAME_DEFAULT);
 }
 
 jobject JPJavaFrame::keep(jobject obj)
@@ -1033,4 +1025,60 @@ jint JPJavaFrame::RegisterNatives(jclass a0, const JNINativeMethod* a1, jint a2)
 {
 	JPCall call(*this, "RegisterNatives");
 	return m_Env->functions->RegisterNatives(m_Env, a0, a1, a2);
+}
+
+class JPStringAccessor
+{
+	JPJavaFrame& frame_;
+	jboolean isCopy;
+
+public:
+	const char* cstr;
+	int length;
+	jstring jstr_;
+
+	JPStringAccessor(JPJavaFrame& frame, jstring jstr)
+	: frame_(frame), jstr_(jstr)
+	{
+		cstr = frame_.GetStringUTFChars(jstr, &isCopy);
+		length = frame_.GetStringUTFLength(jstr);
+	}
+
+	~JPStringAccessor()
+	{
+		frame_.ReleaseStringUTFChars(jstr_, cstr);
+	}
+} ;
+
+string JPJavaFrame::toString(jobject o)
+{
+	jstring str = (jstring) CallObjectMethodA(o, m_Context->m_Object_ToStringID, 0);
+	return toStringUTF8(str);
+}
+
+string JPJavaFrame::toStringUTF8(jstring str)
+{
+	JPStringAccessor contents(*this, str);
+	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+}
+
+jstring JPJavaFrame::fromStringUTF8(const string& str)
+{
+	JPJavaFrame frame(*this);
+	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
+	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
+}
+
+jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
+{
+	JP_TRACE_IN("JPJavaFrame::callMethod");
+	if (m_Context->m_CallMethodID == 0)
+		return NULL;
+	JPJavaFrame frame(*this);
+	jvalue v[3];
+	v[0].l = method;
+	v[1].l = obj;
+	v[2].l = args;
+	return frame.keep(frame.CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_CallMethodID, v));
+	JP_TRACE_OUT;
 }

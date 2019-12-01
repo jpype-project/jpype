@@ -16,14 +16,12 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPTypeManager::JPTypeManager(JPContext* context)
+JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 {
-	m_Context = context;
-	// Everything that requires specialization must be created here.
-	JPJavaFrame frame(context);
 	JP_TRACE_IN("JPTypeManager::init");
+	m_Context = frame.getContext();
 
-	jclass cls = context->getClassLoader()->findClass("org.jpype.manager.TypeManager");
+	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
@@ -52,7 +50,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JP_TRACE_IN("JPTypeManager::findClassByName");
 	JPJavaFrame frame(m_Context);
 	jvalue val;
-	val.l = (jobject) m_Context->fromStringUTF8(name);
+	val.l = (jobject) frame.fromStringUTF8(name);
 	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
 	if (out == NULL)
 	{

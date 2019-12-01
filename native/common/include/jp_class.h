@@ -22,8 +22,9 @@
 class JPClass : public JPResource
 {
 public:
-
-	JPClass(JPContext* context,
+	// Special entry point for JVM independent entities
+	JPClass(const string& name, jint modifiers);
+	JPClass(JPJavaFrame& context,
 		jclass clss,
 		const string& name,
 		JPClass* super,
@@ -164,7 +165,7 @@ public:
 	 * FIXME this may be able to be replaced with isSubTypeOf.
 	 * They are doing the same thing.
 	 */
-	virtual bool isAssignableFrom(JPClass* o);
+	virtual bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
 
 	// Object properties
 
@@ -183,13 +184,14 @@ public:
 	virtual string describe();
 
 	// Check if a value is an instance of this class
-	bool isInstance(JPValue& val);
+	bool isInstance(JPJavaFrame& frame, JPValue& val);
 
 	JPContext* getContext() const
 	{
 		if (m_Context == 0)
 			JP_RAISE_RUNTIME_ERROR("Null context");
-		return m_Context;
+		return
+		m_Context;
 	}
 
 protected:

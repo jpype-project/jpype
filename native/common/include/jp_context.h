@@ -52,34 +52,19 @@ public:
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
 
-	JPRef(const JPRef& other)
+	JPRef(JPJavaFrame& frame, jref obj)
 	{
-		m_Context = other.m_Context;
-		JPJavaFrame frame(m_Context);
-		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
+
+		m_Context = frame.getContext();
+		m_Ref = 0;
+		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
+
+	JPRef(const JPRef& other);
 
 	~JPRef();
 
-	JPRef& operator=(const JPRef& other)
-	{
-		if (other.m_Ref == m_Ref)
-			return *this;
-		if (m_Context != 0 && m_Ref != 0)
-		{
-			JPJavaFrame frame(m_Context);
-			if (m_Ref != 0)
-				frame.DeleteGlobalRef((jobject) m_Ref);
-		}
-		m_Context = other.m_Context;
-		m_Ref = other.m_Ref;
-		if (m_Context != 0 && m_Ref != 0)
-		{
-			JPJavaFrame frame(m_Context);
-			m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
-		}
-		return *this;
-	}
+	JPRef& operator=(const JPRef& other);
 
 	jref get() const
 	{
@@ -100,9 +85,13 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info);
  * A Context encapsulates the Java virtual machine, the Java classes required
  * to function, and the JPype services created for that machine.
  *
- * Environments and Contexts are different concepts. A separate Java environment
- * exists for each thread for each machine. The Java context is shared with
- * all objects that share the same virtual machine.
+ * Frames, Environments and Contexts are different concepts.
+ *  - Java context is shared with all objects that exist in a virtual machine.
+ *  - Java environment exists for each thread for each machine.
+ *  - Java frames exist in the stack holding the local variables that
+ *    method.
+ * Frames and Environments should never be held longer than the duration of
+ * a method.
  *
  * The members in the Context are broken into
  * - JVM control functions
@@ -138,6 +127,8 @@ public:
 	void attachCurrentThreadAsDaemon();
 	bool isThreadAttached();
 	void detachCurrentThread();
+
+	JNIEnv* getEnv();
 
 	JavaVM* getJavaVM()
 	{
@@ -188,20 +179,6 @@ public:
 		return m_ConvertStrings;
 	}
 
-	// Java functions
-	string toString(jobject o);
-	string toStringUTF8(jstring str);
-	jobject callMethod(jobject method, jobject obj, jobject args);
-
-	/**
-	 * Convert a UTF8 encoded string into Java.
-	 *
-	 * This returns a local reference.
-	 * @param str
-	 * @return
-	 */
-	jstring fromStringUTF8(const string& str);
-
 	// Java type resources
 	JPVoidType* _void;
 	JPBooleanType* _boolean;
@@ -242,8 +219,6 @@ public:
 	jmethodID m_FloatValueID;
 	jmethodID m_DoubleValueID;
 
-
-
 	void setHost(PyObject* host)
 	{
 		m_Host = host;
@@ -259,11 +234,11 @@ private:
 	void loadEntryPoints(const string& path);
 	void createJVM(void* arg);	// JVM
 
-
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
 private:
+	friend class JPJavaFrame;
 	JPContext(const JPContext& orig);
 
 	JavaVM *m_JavaVM;
@@ -290,12 +265,49 @@ private:
 } ;
 
 template<class jref>
+JPRef<jref>::JPRef(const JPRef& other)
+{
+	m_Context = other.m_Context;
+	if (m_Context != NULL)
+	{
+		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
+	} else
+	{
+		printf("NULL context in JPRef()");
+	}
+}
+
+template<class jref>
 JPRef<jref>::~JPRef()
 {
 	if (m_Ref != 0 && m_Context != 0)
 	{
 		m_Context->ReleaseGlobalRef((jobject) m_Ref);
 	}
+}
+
+template<class jref>
+JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
+{
+	if (other.m_Ref == m_Ref)
+		return *this;
+	// m_Context may or may not be set up here, so we need to use a
+	// different frame for unreferencing and referencing
+	if (m_Context != 0 && m_Ref != 0)
+	{
+		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		if (m_Ref != 0)
+			frame.DeleteGlobalRef((jobject) m_Ref);
+	}
+	m_Context = other.m_Context;
+	m_Ref = other.m_Ref;
+	if (m_Context != 0 && m_Ref != 0)
+	{
+		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
+	}
+	return *this;
 }
 
 #endif /* JP_CONTEXT_H */

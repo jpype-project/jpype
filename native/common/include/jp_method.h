@@ -24,7 +24,8 @@ class JPMethod : public JPResource
 	friend class JPMethodDispatch;
 public:
 	JPMethod();
-	JPMethod(JPClass* claz,
+	JPMethod(JPJavaFrame& frame,
+			JPClass* claz,
 		const string& name,
 		jobject mth,
 		jmethodID mid,

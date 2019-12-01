@@ -17,11 +17,11 @@
 #include <Python.h>
 #include <jpype.h>
 
-JPypeException::JPypeException(JPContext* context, jthrowable th, const char* msn, const JPStackInfo& stackInfo)
-: m_Throwable(context, th)
+JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const char* msn, const JPStackInfo& stackInfo)
+: m_Throwable(frame, th)
 {
 	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
-	m_Context = context;
+	m_Context = frame.getContext();
 	m_Type = JPError::_java_error;
 	m_Message = msn;
 	from(stackInfo);
@@ -140,8 +140,8 @@ string JPypeException::getJavaMessage()
 	{
 		if (m_Context == NULL)
 			return "Unable to access Java exception, context is null";
-		JPJavaFrame frame(m_Context);
-		return m_Context->toString((jobject) frame.ExceptionOccurred());
+		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		return frame.toString((jobject) frame.ExceptionOccurred());
 	} catch (...)
 	{
 		return "unknown error";
@@ -191,12 +191,12 @@ void JPypeException::convertJavaToPython()
 	}
 
 	// Okay we can get to a frame to talk to the object
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame(m_Context, m_Context->getEnv());
 	jthrowable th = m_Throwable.get();
 	JP_TRACE("Check typemanager");
 	if (!m_Context->isRunning())
 	{
-		PyErr_SetString(PyExc_RuntimeError, m_Context->toString((jobject) th).c_str());
+		PyErr_SetString(PyExc_RuntimeError, frame.toString((jobject) th).c_str());
 		return;
 	}
 
@@ -207,7 +207,7 @@ void JPypeException::convertJavaToPython()
 	if (cls == NULL)
 	{
 		// Nope, no class found
-		PyErr_SetString(PyExc_RuntimeError, m_Context->toString(th).c_str());
+		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
 		return;
 	}
 
@@ -217,7 +217,7 @@ void JPypeException::convertJavaToPython()
 	if (pycls.isNull())
 	{
 		// Nope, we can't make a Python object out of it.
-		PyErr_SetString(PyExc_RuntimeError, m_Context->toString(th).c_str());
+		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
 		return;
 	}
 
@@ -250,7 +250,7 @@ void JPypeException::convertPythonToJava(JPContext* context)
 			{
 				//th = (jthrowable) frame.NewLocalRef(javaExc->getJavaObject());
 				th = (jthrowable) javaExc->getJavaObject();
-				JP_TRACE("Throwing Java", context->toString(th));
+				JP_TRACE("Throwing Java", frame.toString(th));
 				frame.Throw(th);
 				return;
 			}
@@ -399,7 +399,7 @@ void JPypeException::toJava(JPContext *context)
 	try
 	{
 		string mesg = getMessage();
-		JPJavaFrame frame(context);
+		JPJavaFrame frame(context, context->getEnv());
 		switch (m_Type)
 		{
 			case JPError::_python_error:

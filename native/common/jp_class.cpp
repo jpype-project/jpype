@@ -16,15 +16,26 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPClass::JPClass(JPContext* context,
+JPClass::JPClass(
+		const string& name,
+		jint modifiers)
+{
+	m_Context = NULL;
+	m_CanonicalName = name;
+	m_SuperClass = NULL;
+	m_Interfaces = JPClassList();
+	m_Modifiers = modifiers;
+}
+
+JPClass::JPClass(JPJavaFrame& frame,
 		jclass clss,
 		const string& name,
 		JPClass* super,
 		const JPClassList& interfaces,
 		jint modifiers)
-: m_Class(context, clss)
+: m_Class(frame, clss)
 {
-	m_Context = context;
+	m_Context = frame.getContext();
 	m_CanonicalName = name;
 	m_SuperClass = super;
 	m_Interfaces = interfaces;
@@ -63,7 +74,8 @@ string JPClass::toString() const
 {
 	if (m_Context == 0)
 		return m_CanonicalName;
-	return m_Context->toString(m_Class.get());
+	JPJavaFrame frame(m_Context);
+	return frame.toString(m_Class.get());
 }
 
 //</editor-fold>
@@ -75,7 +87,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 	jobject r = frame.GetStaticObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
-		type = m_Context->getTypeManager()->findClassForObject(r);
+		type = frame.getContext()->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
 	return type->convertToPythonObject(frame, v);
@@ -88,7 +100,7 @@ JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	jobject r = frame.GetObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
-		type = m_Context->getTypeManager()->findClassForObject(r);
+		type = frame.getContext()->getTypeManager()->findClassForObject(r);
 	jvalue v;
 	v.l = r;
 	return type->convertToPythonObject(frame, v);
@@ -106,7 +118,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 
 	JPClass *type = this;
 	if (v.l != NULL)
-		type = m_Context->getTypeManager()->findClassForObject(v.l);
+		type = frame.getContext()->getTypeManager()->findClassForObject(v.l);
 
 	return type->convertToPythonObject(frame, v);
 
@@ -130,7 +142,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	// Get the return type
 	JPClass *type = this;
 	if (v.l != NULL)
-		type = m_Context->getTypeManager()->findClassForObject(v.l);
+		type = frame.getContext()->getTypeManager()->findClassForObject(v.l);
 
 	return type->convertToPythonObject(frame, v);
 
@@ -176,7 +188,7 @@ JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsi
 		JPClass *type = this;
 		v.l = frame.GetObjectArrayElement(array, i + start);
 		if (v.l != NULL)
-			type = m_Context->getTypeManager()->findClassForObject(v.l);
+			type = frame.getContext()->getTypeManager()->findClassForObject(v.l);
 		res.setItem(i, type->convertToPythonObject(frame, v).get());
 	}
 
@@ -238,7 +250,7 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	jvalue v;
 	v.l = obj;
 	if (obj != NULL)
-		retType = m_Context->getTypeManager()->findClassForObject(v.l);
+		retType = frame.getContext()->getTypeManager()->findClassForObject(v.l);
 	return retType->convertToPythonObject(frame, v);
 	JP_TRACE_OUT;
 }
@@ -277,7 +289,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
 		return JPPyObject::getNone();
 	}
 
-	JPClass *cls = m_Context->getTypeManager()->findClassForObject(obj.l);
+	JPClass *cls = frame.getContext()->getTypeManager()->findClassForObject(obj.l);
 	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
 	JP_TRACE_OUT;
 }
@@ -311,9 +323,8 @@ JPMatch::Type JPClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyO
 //</editor-fold>
 //<editor-fold desc="hierarchy" defaultstate="collapsed">
 
-bool JPClass::isAssignableFrom(JPClass* o)
+bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
 {
-	JPJavaFrame frame(m_Context);
 	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
 }
 
@@ -322,7 +333,7 @@ bool JPClass::isAssignableFrom(JPClass* o)
 
 string JPClass::describe()
 {
-	JPJavaFrame frame(m_Context);
+	//	JPJavaFrame frame(m_Context);
 	stringstream out;
 	out << "public ";
 	if (isAbstract())
@@ -394,13 +405,11 @@ string JPClass::describe()
 	return out.str();
 }
 
-bool JPClass::isInstance(JPValue& val)
+bool JPClass::isInstance(JPJavaFrame& frame, JPValue& val)
 {
 	JPClass* cls = val.getClass();
 	if (cls->isPrimitive())
 		return false;
-
-	JPJavaFrame frame(m_Context);
 	return frame.IsInstanceOf(val.getValue().l, m_Class.get());
 }
 

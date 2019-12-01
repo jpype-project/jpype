@@ -30,7 +30,7 @@
 class JPBoxedType : public JPClass
 {
 public:
-	JPBoxedType(JPContext* context,
+	JPBoxedType(JPJavaFrame& frame,
 			jclass clss,
 			const string& name,
 			JPClass* super,

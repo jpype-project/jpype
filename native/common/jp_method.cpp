@@ -17,13 +17,14 @@
 #include <jpype.h>
 #include <jp_method.h>
 
-JPMethod::JPMethod(JPClass* claz,
+JPMethod::JPMethod(JPJavaFrame& frame,
+		JPClass* claz,
 		const string& name,
 		jobject mth,
 		jmethodID mid,
 		JPMethodList& moreSpecific,
 		jint modifiers)
-: m_Method(claz->getContext(), mth)
+: m_Method(frame, mth)
 {
 	this->m_Class = claz;
 	this->m_Name = name;
@@ -189,7 +190,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
 		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
-		v[tlen - 1 - match.skip] = type->convertToJavaVector(arg, tlen - 1, (jsize) arg.size());
+		v[tlen - 1 - match.skip] = type->convertToJavaVector(frame, arg, tlen - 1, (jsize) arg.size());
 	}
 
 	JP_TRACE("Pack fixed total=", len - match.offset);
@@ -253,7 +254,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 		}
 
 		// Call the method
-		jobject o = context->callMethod(m_Method.get(), self, ja);
+		jobject o = frame.callMethod(m_Method.get(), self, ja);
 
 		// Deal with the return
 		if (retType->isPrimitive())

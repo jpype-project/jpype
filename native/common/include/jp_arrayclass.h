@@ -23,7 +23,7 @@
 class JPArrayClass : public JPClass
 {
 public:
-	JPArrayClass(JPContext* context,
+	JPArrayClass(JPJavaFrame& frame,
 			jclass cls,
 			const string& name,
 			JPClass* superClass,
@@ -34,7 +34,7 @@ public:
 	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj);
 
-	JPValue newInstance(int length);
+	JPValue newInstance(JPJavaFrame& frame, int length);
 
 	/**
 	 * Create a new java array containing a set of items take from
@@ -47,7 +47,7 @@ public:
 	 * @param end is the end of the range exclusive.
 	 * @return a jvalue containing a java vector.
 	 */
-	jvalue convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end);
+	jvalue convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& refs, jsize start, jsize end);
 
 	virtual JPClass* getComponentType()
 	{

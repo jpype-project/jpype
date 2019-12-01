@@ -17,13 +17,13 @@
 #include <jpype.h>
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 
-JPObjectType::JPObjectType(JPContext* context,
+JPObjectType::JPObjectType(JPJavaFrame& frame,
 		jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers)
-: JPClass(context, clss, name, super, interfaces, modifiers)
+: JPClass(frame, clss, name, super, interfaces, modifiers)
 {
 }
 

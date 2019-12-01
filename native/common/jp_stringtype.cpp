@@ -16,15 +16,14 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringType::JPStringType(JPContext* context,
+JPStringType::JPStringType(JPJavaFrame& frame,
 			   jclass clss,
 			   const string& name,
 			   JPClass* super,
 			   JPClassList& interfaces,
 			   jint modifiers)
-: JPClass(context, clss, name, super, interfaces, modifiers)
+: JPClass(frame, clss, name, super, interfaces, modifiers)
 {
-	JPJavaFrame frame(context);
 	m_String_ToCharArrayID = frame.GetMethodID(clss, "toCharArray", "()[C");
 }
 
@@ -40,16 +39,17 @@ jobject JPStringType::stringToCharArray(JPJavaFrame& frame, jstring str)
 JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	JP_TRACE_IN("JPStringType::asHostObject");
+	JPContext *context = frame.getContext();
 
 	if (val.l == NULL)
 	{
 		return JPPyObject::getNone();
 	}
 
-	if (m_Context->getConvertStrings())
+	if (context->getConvertStrings())
 	{
 		bool unicode = false;
-		string str = m_Context->toStringUTF8((jstring) (val.l));
+		string str = frame.toStringUTF8((jstring) (val.l));
 #if PY_MAJOR_VERSION < 3
 		for (size_t i = 0; i < str.size(); ++i)
 		{
@@ -86,13 +86,14 @@ JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 JPValue JPStringType::newInstance(JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPStringClass::newInstance");
+	JPJavaFrame frame(m_Context);
 	if (args.size() == 1 && JPPyString::check(args[0]))
 	{
 		// JNI has a short cut for constructing java.lang.String
 		JP_TRACE("Direct");
 		string str = JPPyString::asStringUTF8(args[0]);
 		jvalue res;
-		res.l = m_Context->fromStringUTF8(str);
+		res.l = frame.fromStringUTF8(str);
 		return JPValue(this, res);
 	}
 	return JPClass::newInstance(args);

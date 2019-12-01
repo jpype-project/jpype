@@ -130,7 +130,7 @@ typedef list<JPStackInfo> JPStackTrace;
 class JPypeException
 {
 public:
-	JPypeException(JPContext* context, jthrowable, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(JPJavaFrame &frame, jthrowable, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(JPError::Type errorType, int err, const string& msn, const JPStackInfo& stackInfo);

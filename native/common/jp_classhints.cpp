@@ -310,7 +310,7 @@ public:
 	{
 		jvalue res;
 		string str = JPPyString::asStringUTF8(pyobj);
-		res.l = frame.getContext()->fromStringUTF8(str);
+		res.l = frame.fromStringUTF8(str);
 		return res;
 	}
 } _stringConversion;

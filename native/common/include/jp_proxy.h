@@ -23,7 +23,7 @@ class JPProxyFactory
 {
 	friend class JPProxy;
 public:
-	JPProxyFactory(JPContext* context);
+	explicit JPProxyFactory(JPJavaFrame& frame);
 	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
 
 private:
@@ -65,7 +65,7 @@ private:
 class JPProxyType : public JPClass
 {
 public:
-	JPProxyType(JPContext* context,
+	JPProxyType(JPJavaFrame& frame,
 			jclass clss,
 			const string& name,
 			JPClass* super,

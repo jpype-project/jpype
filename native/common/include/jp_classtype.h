@@ -28,7 +28,7 @@
 class JPClassType : public JPClass
 {
 public:
-	JPClassType(JPContext* context,
+	JPClassType(JPJavaFrame& frame,
 		jclass clss,
 		const string& name,
 		JPClass* super,

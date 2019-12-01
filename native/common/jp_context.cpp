@@ -34,11 +34,11 @@ JPResource::~JPResource()
 namespace
 {
 
-	JPPlatformAdapter* GetAdapter()
-	{
-		static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
-		return adapter;
-	}
+JPPlatformAdapter* GetAdapter()
+{
+	static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
+	return adapter;
+}
 }
 
 
@@ -99,6 +99,7 @@ bool JPContext::isRunning()
 	}
 	return true;
 }
+
 /**
 	throw a JPypeException if the JVM is not started
  */
@@ -108,19 +109,23 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 		throw JPypeException(JPError::_runtime_error, "Java Context is null", info);
 
 	if (!context->isRunning())
+	{
+		int *i = 0;
+		*i = 0;
 		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
+	}
 }
 
 void JPContext::loadEntryPoints(const string& path)
 {
 	// Load symbols from the shared library
 	GetAdapter()->loadLibrary((char*) path.c_str());
-	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *))GetAdapter()->getSymbol("JNI_CreateJavaVM");
+	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )GetAdapter()->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
-			 bool ignoreUnrecognized, bool convertStrings)
+		bool ignoreUnrecognized, bool convertStrings)
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
@@ -158,57 +163,61 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// Connect our resources to the JVM
 	{
-		JPJavaFrame frame(this);
+		// This is the only frame that we can use until the system
+		// is initialized.  Any other frame creation will result in an error.
+		JPJavaFrame frame(this, env);
 
 		// After the JVM is created but before the context is started, we need
-		// lo set up all the services that the context will need.
+		// to set up all the services that the context will need.
 		JP_TRACE("Initialize");
 
 		// We need these first because if anything goes south this is the first
 		// thing that will get hit.
 		jclass object = frame.FindClass("java/lang/Object");
 		m_Object_ToStringID = frame.GetMethodID(object, "toString", "()Ljava/lang/String;");
-		_java_lang_NoSuchMethodError = JPClassRef(this, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
-		_java_lang_RuntimeException = JPClassRef(this, (jclass) frame.FindClass("java/lang/RuntimeException"));
+		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
+		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
 		// Bootloader needs to go first so we can load classes
-		m_ClassLoader = new JPClassLoader(this);
+		m_ClassLoader = new JPClassLoader(frame);
 
 		JP_TRACE("Install native");
 		// Start the rest of the services
-		m_TypeFactory = new JPTypeFactory(this);
-		m_TypeManager = new JPTypeManager(this);
-		m_ReferenceQueue = new JPReferenceQueue(this);
-		m_ProxyFactory = new JPProxyFactory(this);
+		m_TypeFactory = new JPTypeFactory(frame);
+		m_TypeManager = new JPTypeManager(frame);
+		m_ReferenceQueue = new JPReferenceQueue(frame);
+		m_ProxyFactory = new JPProxyFactory(frame);
 
-		// Launch the Java context
+		// Prepare to launch
 		JP_TRACE("Start Context");
-		jclass cls = m_ClassLoader->findClass("org.jpype.JPypeContext");
+		jclass cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
-								"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
+				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
 		m_ShutdownMethodID = frame.GetMethodID(cls, "shutdown", "()V");
-	    m_CallMethodID = frame.GetMethodID(cls, "callMethod",
-			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
+		m_CallMethodID = frame.GetMethodID(cls, "callMethod",
+				"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
 
+		// Launch
 		jvalue val[2];
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();
-		m_JavaContext = JPObjectRef(this, frame.CallStaticObjectMethodA(cls, startMethod, val));
+		m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(cls, startMethod, val));
 
 		// Post launch
 		JP_TRACE("Connect resources");
 		// Hook up the type manager
 		jmethodID getTypeManager = frame.GetMethodID(cls, "getTypeManager",
-							"()Lorg/jpype/manager/TypeManager;");
-		m_TypeManager->m_JavaTypeManager = JPObjectRef(this,
-							frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
+				"()Lorg/jpype/manager/TypeManager;");
+		m_TypeManager->m_JavaTypeManager = JPObjectRef(frame,
+				frame.CallObjectMethodA(m_JavaContext.get(), getTypeManager, 0));
 
 		// Hook up the reference queue
 		jmethodID getReferenceQueue = frame.GetMethodID(cls, "getReferenceQueue",
-								"()Lorg/jpype/ref/JPypeReferenceQueue;");
-		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(this,
-								frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
+				"()Lorg/jpype/ref/JPypeReferenceQueue;");
+		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(frame,
+				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
 
+		// Everything is started.
 	}
 	m_IsInitialized = true;
 	JP_TRACE_OUT;
@@ -304,63 +313,23 @@ void JPContext::detachCurrentThread()
 	m_JavaVM->functions->DetachCurrentThread(m_JavaVM);
 }
 
-// Java functions
-
-class JPStringAccessor
+JNIEnv* JPContext::getEnv()
 {
-	JPJavaFrame& frame_;
-	jboolean isCopy;
-
-public:
-	const char* cstr;
-	int length;
-	jstring jstr_;
-
-	JPStringAccessor(JPJavaFrame& frame, jstring jstr)
-	: frame_(frame), jstr_(jstr)
+	JNIEnv* env = NULL;
+	if (m_JavaVM == NULL)
 	{
-		cstr = frame_.GetStringUTFChars(jstr, &isCopy);
-		length = frame_.GetStringUTFLength(jstr);
+		JP_RAISE_RUNTIME_ERROR("JVM is null");
 	}
 
-	~JPStringAccessor()
+	// Get the environment
+	jint res = m_JavaVM->functions->GetEnv(m_JavaVM, (void**) &env, USE_JNI_VERSION);
+
+	// If we don't have an environment then we are in a thread, so we must attach
+	if (res == JNI_EDETACHED)
 	{
-		frame_.ReleaseStringUTFChars(jstr_, cstr);
+		res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, NULL);
+		if (res != JNI_OK)
+			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
 	}
-};
-
-string JPContext::toString(jobject o)
-{
-	JPJavaFrame frame(this);
-	jstring str = (jstring) frame.CallObjectMethodA(o, m_Object_ToStringID, 0);
-	JPStringAccessor contents(frame, str);
-	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-}
-
-string JPContext::toStringUTF8(jstring str)
-{
-	JPJavaFrame frame(this);
-	JPStringAccessor contents(frame, str);
-	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-}
-
-jstring JPContext::fromStringUTF8(const string& str)
-{
-	JPJavaFrame frame(this);
-	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
-	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
-}
-
-jobject JPContext::callMethod(jobject method, jobject obj, jobject args)
-{
-	JP_TRACE_IN("JPContext::callMethod");
-	if (m_CallMethodID == 0)
-		return NULL;
-	JPJavaFrame frame(this);
-	jvalue v[3];
-	v[0].l = method;
-	v[1].l = obj;
-	v[2].l = args;
-	return frame.keep(frame.CallObjectMethodA(m_JavaContext.get(), m_CallMethodID, v));
-	JP_TRACE_OUT;
+	return env;
 }

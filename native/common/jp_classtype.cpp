@@ -19,13 +19,13 @@
 
 // Class<java.lang.Class> has special rules
 
-JPClassType::JPClassType(JPContext* context,
+JPClassType::JPClassType(JPJavaFrame& frame,
 			 jclass clss,
 			 const string& name,
 			 JPClass* super,
 			 JPClassList& interfaces,
 			 jint modifiers)
-: JPClass(context, clss, name, super, interfaces, modifiers)
+: JPClass(frame, clss, name, super, interfaces, modifiers)
 {
 }
 

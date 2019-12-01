@@ -23,7 +23,7 @@
 class JPTypeFactory
 {
 public:
-	JPTypeFactory(JPContext* content);
+	explicit JPTypeFactory(JPJavaFrame& frame);
 	~JPTypeFactory();
 } ;
 
@@ -35,7 +35,7 @@ public:
 	/**
 	 * Initialize the type manager caches
 	 */
-	JPTypeManager(JPContext* content);
+	explicit JPTypeManager(JPJavaFrame& frame);
 	~JPTypeManager();
 
 	/**

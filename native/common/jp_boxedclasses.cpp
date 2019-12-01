@@ -17,13 +17,13 @@
 #include <jpype.h>
 #include <jp_boxedclasses.h>
 
-JPBoxedType::JPBoxedType(JPContext* context, jclass clss,
+JPBoxedType::JPBoxedType(JPJavaFrame& frame, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
 		jint modifiers,
 		JPPrimitiveType* primitiveType)
-: JPClass(context, clss, name, super, interfaces, modifiers),
+: JPClass(frame, clss, name, super, interfaces, modifiers),
 m_PrimitiveType(primitiveType)
 {
 }

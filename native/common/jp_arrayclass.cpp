@@ -19,13 +19,13 @@
 
 #include "jp_context.h"
 
-JPArrayClass::JPArrayClass(JPContext* context,
+JPArrayClass::JPArrayClass(JPJavaFrame& frame,
 		jclass cls,
 		const string& name,
 		JPClass* superClass,
 		JPClass* componentType,
 		jint modifiers)
-: JPClass(context, cls, name, superClass, JPClassList(), modifiers)
+: JPClass(frame, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;
 }
@@ -48,7 +48,7 @@ public:
 		string str = JPPyString::asStringUTF8(pyobj);
 
 		// Convert to new java string
-		jstring jstr = context->fromStringUTF8(str);
+		jstring jstr = frame.fromStringUTF8(str);
 
 		// call toCharArray()
 		res.l = context->_java_lang_String->stringToCharArray(frame, jstr);
@@ -109,6 +109,7 @@ public:
 JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
+	JPContext* context = frame.getContext();
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 	{
 		JP_TRACE("Null", match.type);
@@ -120,30 +121,20 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 		return match.type;
 	}
 
-	if (JPPyString::check(pyobj) && m_ComponentType == m_Context->_char)
+	if (JPPyString::check(pyobj) && m_ComponentType == context->_char)
 	{
 		JP_TRACE("String");
 		match.conversion = &charArrayConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-#if PY_MAJOR_VERSION >= 3
 	// Bytes are byte[]
-	if (PyBytes_Check(pyobj) && m_ComponentType == m_Context->_byte)
+	if (PyBytes_Check(pyobj) && m_ComponentType == context->_byte)
 	{
 		JP_TRACE("Byte");
 		match.conversion = &byteArrayConversion;
 		return match.type = JPMatch::_implicit;
 	}
-#else
-	// Bytes are byte[]
-	if (PyString_Check(pyobj) && m_ComponentType == m_Context->_byte)
-	{
-		JP_TRACE("Byte");
-		match.conversion = &byteArrayConversion;
-		return match.type = JPMatch::_implicit;
-	}
-#endif
 
 	if (JPPyObject::isSequenceOfItems(pyobj))
 	{
@@ -176,9 +167,8 @@ JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 	JP_TRACE_OUT;
 }
 
-jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end)
+jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& refs, jsize start, jsize end)
 {
-	JPJavaFrame frame(m_Context);
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
 	JP_TRACE("component type", m_ComponentType->getCanonicalName());
 	jsize length = (jsize) (end - start);
@@ -194,9 +184,8 @@ jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, js
 	JP_TRACE_OUT;
 }
 
-JPValue JPArrayClass::newInstance(int length)
+JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
 {
-	JPJavaFrame frame(m_Context);
 	jvalue v;
 	v.l = m_ComponentType->newArrayInstance(frame, length);
 	return JPValue(this, v);

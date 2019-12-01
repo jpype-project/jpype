@@ -17,7 +17,7 @@
 #include <jpype.h>
 
 JPPrimitiveType::JPPrimitiveType(const string& name)
-: JPClass(0, 0, name, NULL, JPClassList(), 0x411)
+: JPClass(name, 0x411)
 {
 }
 

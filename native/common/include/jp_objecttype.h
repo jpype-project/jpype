@@ -29,7 +29,7 @@
 class JPObjectType : public JPClass
 {
 public:
-	JPObjectType(JPContext* context, jclass clss,
+	JPObjectType(JPJavaFrame& frame, jclass clss,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
