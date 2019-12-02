@@ -22,16 +22,16 @@ class JPStringType : public JPClass
 public:
 
 	JPStringType(JPJavaFrame& frame,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 	virtual ~JPStringType();
 
 public:
 	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
-	JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
+	JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPValue newInstance(JPPyObjectVector& args) override;
 
 	// Use by arrays

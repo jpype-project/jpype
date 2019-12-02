@@ -17,11 +17,11 @@
 #include <jpype.h>
 
 JPStringType::JPStringType(JPJavaFrame& frame,
-			   jclass clss,
-			   const string& name,
-			   JPClass* super,
-			   JPClassList& interfaces,
-			   jint modifiers)
+		jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
 : JPClass(frame, clss, name, super, interfaces, modifiers)
 {
 	m_String_ToCharArrayID = frame.GetMethodID(clss, "toCharArray", "()[C");
@@ -67,7 +67,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)

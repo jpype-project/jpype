@@ -93,8 +93,8 @@ public:
  */
 template <typename jarraytype, typename jelementtype, typename setFnc>
 inline bool setRangeViaBuffer(JPJavaFrame& frame,
-			      jarray array, int start, uint length,
-			      PyObject* sequence, int npy_type, setFnc setter)
+		jarray array, int start, uint length,
+		PyObject* sequence, int npy_type, setFnc setter)
 {
 #ifdef HAVE_NUMPY
 	JPPyObject ref;
@@ -159,10 +159,10 @@ bool setRangeViaBuffer(JPJavaFrame& frame, jarray, int, uint, PyObject*, int, c)
  */
 template<typename jtype, typename py_wrapper_func>
 inline JPPyObject getSlice(JPJavaFrame& frame, jarray array, int lo, int hi, int npy_type,
-			   py_wrapper_func convert)
+		py_wrapper_func convert)
 {
 	JPPrimitiveArrayAccessor<jarray, void*> accessor(frame, array,
-							&JPJavaFrame::GetPrimitiveArrayCritical, &JPJavaFrame::ReleasePrimitiveArrayCritical);
+			&JPJavaFrame::GetPrimitiveArrayCritical, &JPJavaFrame::ReleasePrimitiveArrayCritical);
 
 	uint len = hi - lo;
 #ifdef HAVE_NUMPY

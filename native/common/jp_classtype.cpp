@@ -20,11 +20,11 @@
 // Class<java.lang.Class> has special rules
 
 JPClassType::JPClassType(JPJavaFrame& frame,
-			 jclass clss,
-			 const string& name,
-			 JPClass* super,
-			 JPClassList& interfaces,
-			 jint modifiers)
+		jclass clss,
+		const string& name,
+		JPClass* super,
+		JPClassList& interfaces,
+		jint modifiers)
 : JPClass(frame, clss, name, super, interfaces, modifiers)
 {
 }
@@ -33,7 +33,7 @@ JPClassType::~JPClassType()
 {
 }
 
-JPMatch::Type JPClassType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPClassType::getJavaConversion(JPJavaFrame *frame, JPMatch& match, PyObject* pyobj)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)

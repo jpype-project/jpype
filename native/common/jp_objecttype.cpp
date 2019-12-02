@@ -31,7 +31,7 @@ JPObjectType::~JPObjectType()
 {
 }
 
-JPMatch::Type JPObjectType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPObjectType::getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj)
 {
 	// Implicit rules for java.lang.Object
 	JP_TRACE_IN("JPObjectType::canConvertToJava");

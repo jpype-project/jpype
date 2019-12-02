@@ -153,11 +153,13 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 {
 	JP_TRACE_IN("JPClass::setStaticValue");
 	JPMatch match;
-	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 	{
-		JP_RAISE_TYPE_ERROR("Unable to convert");
+		stringstream err;
+		err << "unable to convert to " << getCanonicalName();
+		JP_RAISE_TYPE_ERROR(err.str().c_str());
 	}
-	jobject val = match.conversion->convert(frame, this, obj).l;
+	jobject val = match.conversion->convert(&frame, this, obj).l;
 	frame.SetStaticObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -166,11 +168,13 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 {
 	JP_TRACE_IN("JPClass::setInstanceValue");
 	JPMatch match;
-	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 	{
-		JP_RAISE_TYPE_ERROR("Unable to convert");
+		stringstream err;
+		err << "unable to convert to " << getCanonicalName();
+		JP_RAISE_TYPE_ERROR(err.str().c_str());
 	}
-	jobject val = match.conversion->convert(frame, this, obj).l;
+	jobject val = match.conversion->convert(&frame, this, obj).l;
 	frame.SetObjectField(c, fid, val);
 	JP_TRACE_OUT;
 }
@@ -209,7 +213,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		if (getJavaConversion(frame, match, v) < JPMatch::_implicit)
+		if (getJavaConversion(&frame, match, v) < JPMatch::_implicit)
 		{
 			JP_RAISE_TYPE_ERROR("Unable to convert");
 		}
@@ -219,8 +223,8 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	for (int i = 0; i < length; i++)
 	{
 		PyObject* v = seq[i].get();
-		getJavaConversion(frame, match, v);
-		frame.SetObjectArrayElement(array, i + start, match.conversion->convert(frame, this, v).l);
+		getJavaConversion(&frame, match, v);
+		frame.SetObjectArrayElement(array, i + start, match.conversion->convert(&frame, this, v).l);
 	}
 	JP_TRACE_OUT;
 }
@@ -229,13 +233,13 @@ void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* va
 {
 	JP_TRACE_IN("JPClass::setArrayItem");
 	JPMatch match;
-	getJavaConversion(frame, match, val);
+	getJavaConversion(&frame, match, val);
 	JP_TRACE("Type", getCanonicalName());
 	if ( match.type < JPMatch::_implicit)
 	{
 		JP_RAISE_TYPE_ERROR("Unable to convert");
 	}
-	jvalue v = match.conversion->convert(frame, this, val);
+	jvalue v = match.conversion->convert(&frame, this, val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);
 	JP_TRACE_OUT;
 }
@@ -294,7 +298,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	JP_TRACE("Python", JPPyObject::getTypeName(pyobj));
@@ -330,80 +334,6 @@ bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
 
 //</editor-fold>
 //<editor-fold desc="utility">
-
-string JPClass::describe()
-{
-	//	JPJavaFrame frame(m_Context);
-	stringstream out;
-	out << "public ";
-	if (isAbstract())
-	{
-		out << "abstract ";
-	}
-	if (isFinal())
-	{
-		out << "final ";
-	}
-
-	out << "class " << getCanonicalName();
-	JPClass* super = getSuperClass();
-	if (super != NULL)
-	{
-		out << " extends " << super->getCanonicalName();
-	}
-
-	const JPClassList& interfaces = this->getInterfaces();
-	if (interfaces.size() > 0)
-	{
-		out << " implements";
-		bool first = true;
-		for (JPClassList::const_iterator itf = interfaces.begin(); itf != interfaces.end(); itf++)
-		{
-			if (!first)
-			{
-				out << ",";
-			} else
-			{
-				first = false;
-			}
-			JPClass* pc = *itf;
-			out << " " << pc->getCanonicalName();
-		}
-	}
-	out << endl << "{" << endl;
-
-	// Fields
-	out << "  // Accessible Instance Fields" << endl;
-	for (JPFieldList::const_iterator curInstField = m_Fields.begin();
-			curInstField != m_Fields.end();
-			curInstField++)
-	{
-		JPField* f = *curInstField;
-		out << "  " << f->getName() << endl;
-	}
-	out << endl;
-
-	// Constructors
-	out << "  // Accessible Constructors" << endl;
-	{
-		JPMethodDispatch* f = m_Constructors;
-		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-				iter != f->getMethodOverloads().end(); ++iter)
-			out << "  " << (*iter)->toString() << endl;
-	}
-
-	out << "  // Accessible Methods" << endl;
-	for (JPMethodDispatchList::iterator curMethod = m_Methods.begin(); curMethod != m_Methods.end(); curMethod++)
-	{
-		JPMethodDispatch* f = *curMethod;
-		for (JPMethodList::const_iterator iter = f->getMethodOverloads().begin();
-				iter != f->getMethodOverloads().end(); ++iter)
-			out << "  " << (*iter)->toString() << endl;
-	}
-	out << "}";
-
-	return out.str();
-}
 
 bool JPClass::isInstance(JPJavaFrame& frame, JPValue& val)
 {

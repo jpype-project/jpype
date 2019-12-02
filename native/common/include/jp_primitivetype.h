@@ -28,13 +28,13 @@ public:
 
 	virtual JPBoxedType* getBoxedClass(JPContext *context) const = 0;
 
-	virtual char getTypeCode()=0;
-	virtual jlong getAsLong(jvalue v)=0;
-	virtual jdouble getAsDouble(jvalue v)=0;
+	virtual char getTypeCode() = 0;
+	virtual jlong getAsLong(jvalue v) = 0;
+	virtual jdouble getAsDouble(jvalue v) = 0;
 
 	virtual bool isAssignableFrom(JPClass* o);
 
-	virtual string describe();
+	virtual JPValue newInstance(JPPyObjectVector& args);
 
 protected:
 	JPBoxedType* m_BoxedClass;

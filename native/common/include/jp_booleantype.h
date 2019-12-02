@@ -19,7 +19,6 @@
 
 #include "jp_context.h"
 
-
 class JPBooleanType : public JPPrimitiveType
 {
 public:
@@ -45,7 +44,7 @@ public:
 		return context->_java_lang_Boolean;
 	}
 
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 

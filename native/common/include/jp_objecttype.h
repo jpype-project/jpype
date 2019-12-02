@@ -30,14 +30,14 @@ class JPObjectType : public JPClass
 {
 public:
 	JPObjectType(JPJavaFrame& frame, jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 
 	virtual~ JPObjectType();
 
-	JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
+	JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj) override;
 } ;
 
 #endif // _JPOBJECTTYPE_H_

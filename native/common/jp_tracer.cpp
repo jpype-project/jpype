@@ -23,18 +23,18 @@
 namespace std
 {
 
-	class mutex
-	{
-	} ;
+class mutex
+{
+} ;
 
-	template <class T> class lock_guard
-	{
-	public:
+template <class T> class lock_guard
+{
+public:
 
-		lock_guard(const T& mutex_type)
-		{
-		}
-	} ;
+	lock_guard(const T& mutex_type)
+	{
+	}
+} ;
 }
 
 #else
@@ -91,8 +91,7 @@ void JPypeTracer::traceOut(const char* msg, bool error)
 	if (error)
 	{
 		JPYPE_TRACING_OUTPUT << "</B> <!-- !!!!!!!! EXCEPTION !!!!!! " << msg << " -->" << endl;
-	}
-	else
+	} else
 	{
 		JPYPE_TRACING_OUTPUT << "</B> <!-- " << msg << " -->" << endl;
 	}

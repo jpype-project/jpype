@@ -44,7 +44,7 @@ class JPConversionAsDouble : public JPConversion
 	typedef JPDoubleType base_t;
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
 		base_t::field(res) = (base_t::type_t) JPPyFloat::asDouble(pyobj);
@@ -57,7 +57,7 @@ class JPConversionAsDoubleLong : public JPConversion
 	typedef JPDoubleType base_t;
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
 		base_t::field(res) = (base_t::type_t) JPPyLong::asLong(pyobj);
@@ -70,11 +70,11 @@ class JPConversionDoubleWidenInt : public JPConversion
 	typedef JPDoubleType base_t;
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		jvalue ret;
-		ret.d = (jdouble) ((JPPrimitiveType*)value->getClass())->getAsLong(value->getValue());
+		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
 		return ret;
 	}
 } doubleIntWidenConversion;
@@ -84,19 +84,22 @@ class JPConversionDoubleWidenFloat : public JPConversion
 	typedef JPDoubleType base_t;
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		jvalue ret;
-		ret.d = (jdouble) ((JPPrimitiveType*)value->getClass())->getAsDouble(value->getValue());
+		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
 		return ret;
 	}
 } doubleFloatWidenConversion;
 
-JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
 
@@ -111,7 +114,7 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (cls == context->_java_lang_Double)
+		if (context != NULL && cls == context->_java_lang_Double)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -210,18 +213,18 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetDoubleField(c, fid, val);
 }
 
@@ -268,9 +271,9 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-	if (getJavaConversion(frame, match, obj) < JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 

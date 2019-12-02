@@ -18,7 +18,7 @@
 #include <jpype.h>
 
 JNIEXPORT void JNICALL JPype_ReferenceQueue_removeHostReference(
-								JNIEnv *env, jclass clazz, jlong context, jlong hostObj)
+		JNIEnv *env, jclass clazz, jlong context, jlong hostObj)
 {
 	JP_TRACE_IN("JPype_ReferenceQueue_removeHostReference");
 	JPJavaFrame frame((JPContext*) context, env);

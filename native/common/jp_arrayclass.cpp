@@ -38,9 +38,9 @@ class JPConversionCharArray : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JPContext *context = frame.getContext();
+		JPContext *context = frame->getContext();
 		JP_TRACE("char[]");
 		jvalue res;
 
@@ -48,10 +48,10 @@ public:
 		string str = JPPyString::asStringUTF8(pyobj);
 
 		// Convert to new java string
-		jstring jstr = frame.fromStringUTF8(str);
+		jstring jstr = frame->fromStringUTF8(str);
 
 		// call toCharArray()
-		res.l = context->_java_lang_String->stringToCharArray(frame, jstr);
+		res.l = context->_java_lang_String->stringToCharArray(*frame, jstr);
 		return res;
 	}
 } charArrayConversion;
@@ -60,24 +60,18 @@ class JPConversionByteArray : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame2, JPClass *cls, PyObject *pyobj) override
 	{
+		JPJavaFrame frame(*frame2);
 		jvalue res;
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
 
-#if PY_MAJOR_VERSION >= 3
 		if (PyBytes_Check(pyobj))
 		{
 			PyBytes_AsStringAndSize(pyobj, &buffer, &size); // internal reference
 		}
-#else
-		if (PyString_Check(pyobj))
-		{
-			PyString_AsStringAndSize(pyobj, &buffer, &size); // internal reference
-		}
-#endif
-		jbyteArray byteArray = frame.NewByteArray((jsize)size);
+		jbyteArray byteArray = frame.NewByteArray((jsize) size);
 		frame.SetByteArrayRegion(byteArray, 0, (jsize) size, (jbyte*) buffer);
 		res.l = frame.keep(byteArray);
 		return res;
@@ -88,10 +82,11 @@ class JPConversionSequence : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame2, JPClass *cls, PyObject *pyobj) override
 	{
+		JPJavaFrame frame(*frame2);
 		jvalue res;
-		JPArrayClass *acls = (JPArrayClass *)cls;
+		JPArrayClass *acls = (JPArrayClass *) cls;
 		JP_TRACE("sequence");
 		JPPySequence seq(JPPyRef::_use, pyobj);
 		jsize length = (jsize) seq.size();
@@ -106,10 +101,13 @@ public:
 	}
 } sequenceConversion;
 
-JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	JPContext* context = frame.getContext();
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
 	{
 		JP_TRACE("Null", match.type);
@@ -129,7 +127,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame& frame, JPMatch& match
 	}
 
 	// Bytes are byte[]
-	if (PyBytes_Check(pyobj) && m_ComponentType == context->_byte)
+	if (context != NULL && PyBytes_Check(pyobj) && m_ComponentType == context->_byte)
 	{
 		JP_TRACE("Byte");
 		match.conversion = &byteArrayConversion;

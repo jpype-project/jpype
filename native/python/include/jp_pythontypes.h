@@ -47,51 +47,51 @@ typedef _object PyObject;
 namespace JPPyRef
 {
 
-	enum Type
-	{
-		/**
-		 * This policy is used if we need to hold a reference to an existing
-		 * object for some duration.  The object may be null.
-		 *
-		 * Increment reference count if not null, and decrement when done.
-		 */
-		_use = 0,
+enum Type
+{
+	/**
+	 * This policy is used if we need to hold a reference to an existing
+	 * object for some duration.  The object may be null.
+	 *
+	 * Increment reference count if not null, and decrement when done.
+	 */
+	_use = 0,
 
-		/**
-		 * This policy is used when we are given a borrowed reference and we
-		 * need to check for errors.
-		 *
-		 * Check for errors, increment reference count, and decrement when done.
-		 * Will throw an exception an error occurs.
-		 */
-		_borrowed = 1,
+	/**
+	 * This policy is used when we are given a borrowed reference and we
+	 * need to check for errors.
+	 *
+	 * Check for errors, increment reference count, and decrement when done.
+	 * Will throw an exception an error occurs.
+	 */
+	_borrowed = 1,
 
-		/**
-		 * This policy is used when we are given a new reference that we must
-		 * destroy.  This will steal a reference.
-		 *
-		 * claim reference, and decremented when done. Clears errors if NULL.
-		 */
-		_accept = 2,
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * claim reference, and decremented when done. Clears errors if NULL.
+	 */
+	_accept = 2,
 
-		/**
-		 * This policy is used when we are given a new reference that we must
-		 * destroy.  This will steal a reference.
-		 *
-		 * Assert not null, claim reference, and decremented when done.
-		 * Will throw an exception in the object is null.
-		 */
-		_claim = 6,
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * Assert not null, claim reference, and decremented when done.
+	 * Will throw an exception in the object is null.
+	 */
+	_claim = 6,
 
-		/**
-		 * This policy is used when we are capturing an object returned from a python
-		 * call that we are responsible for.  This will steal a reference.
-		 *
-		 * Check for errors, assert not null, then claim.
-		 * Will throw an exception an error occurs.
-		 */
-		_call = 7
-	} ;
+	/**
+	 * This policy is used when we are capturing an object returned from a python
+	 * call that we are responsible for.  This will steal a reference.
+	 *
+	 * Check for errors, assert not null, then claim.
+	 * Will throw an exception an error occurs.
+	 */
+	_call = 7
+} ;
 }
 
 /** Reference to a Python object.
@@ -232,8 +232,8 @@ public:
 /** Wrapper for a Python Bool object. */
 namespace JPPyBool
 {
-	bool check(PyObject* obj);
-	JPPyObject fromLong(jlong value);
+bool check(PyObject* obj);
+JPPyObject fromLong(jlong value);
 }
 
 /** Wrapper for a Python Int object.
@@ -244,41 +244,41 @@ namespace JPPyBool
  */
 namespace JPPyInt
 {
-	bool check(PyObject* obj);
-	jint asInt(PyObject* obj);
+bool check(PyObject* obj);
+jint asInt(PyObject* obj);
 
-	JPPyObject fromInt(jint l);
-	JPPyObject fromLong(jlong l);
+JPPyObject fromInt(jint l);
+JPPyObject fromLong(jlong l);
 }
 
 /** Wrapper for a Python long object.
  */
 namespace JPPyLong
 {
-	bool check(PyObject* obj);
-	bool checkConvertable(PyObject* obj);
+bool check(PyObject* obj);
+bool checkConvertable(PyObject* obj);
 
-	/** Check if this is really an integer type or just can be converted to.
-	 *
-	 * PEP-357 says __index__ is defined if we can use it as an array slice.
-	 * Only integer types can do that.
-	 */
-	bool checkIndexable(PyObject* obj);
-	jlong asLong(PyObject* obj);
-	JPPyObject fromLong(jlong l);
+/** Check if this is really an integer type or just can be converted to.
+ *
+ * PEP-357 says __index__ is defined if we can use it as an array slice.
+ * Only integer types can do that.
+ */
+bool checkIndexable(PyObject* obj);
+jlong asLong(PyObject* obj);
+JPPyObject fromLong(jlong l);
 }
 
 /** Wrapper for a Python float object. */
 namespace JPPyFloat
 {
-	bool check(PyObject* obj);
-	bool checkConvertable(PyObject* obj);
-	jdouble asDouble(PyObject* obj);
-	jfloat asFloat(PyObject* obj);
+bool check(PyObject* obj);
+bool checkConvertable(PyObject* obj);
+jdouble asDouble(PyObject* obj);
+jfloat asFloat(PyObject* obj);
 
-	// The scope of the created object is that of the JPPyFloat
-	JPPyObject fromDouble(jdouble l);
-	JPPyObject fromFloat(jfloat l);
+// The scope of the created object is that of the JPPyFloat
+JPPyObject fromDouble(jdouble l);
+JPPyObject fromFloat(jfloat l);
 }
 
 /****************************************************************************
@@ -331,8 +331,8 @@ public:
 
 namespace JPPyMemoryView
 {
-	bool check(PyObject* obj);
-	void getByteBufferSize(PyObject* pyobj, char **outBuffer, long& outSize);
+bool check(PyObject* obj);
+void getByteBufferSize(PyObject* pyobj, char **outBuffer, long& outSize);
 }
 
 /****************************************************************************
@@ -531,15 +531,15 @@ public:
  */
 namespace JPPyErr
 {
-	void clear();
-	/** Check if there is a pending Python exception.
-	 *
-	 * @return true if pending, false otherwise.
-	 */
-	bool occurred();
+void clear();
+/** Check if there is a pending Python exception.
+ *
+ * @return true if pending, false otherwise.
+ */
+bool occurred();
 
-	bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
-	void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
+bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
+void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 }
 
 /** Memory management for handling a python exception currently in progress. */

@@ -26,17 +26,17 @@ public:
 	JPMethod();
 	JPMethod(JPJavaFrame& frame,
 			JPClass* claz,
-		const string& name,
-		jobject mth,
-		jmethodID mid,
-		JPMethodList& moreSpecific,
-		jint modifiers);
+			const string& name,
+			jobject mth,
+			jmethodID mid,
+			JPMethodList& moreSpecific,
+			jint modifiers);
 
 	virtual ~JPMethod();
 
 	void setParameters(
-		JPClass *returnType,
-		JPClassList parameterTypes);
+			JPClass *returnType,
+			JPClassList parameterTypes);
 
 	/** Check to see if this overload matches the argument list.
 	 *

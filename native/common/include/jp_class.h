@@ -25,11 +25,11 @@ public:
 	// Special entry point for JVM independent entities
 	JPClass(const string& name, jint modifiers);
 	JPClass(JPJavaFrame& context,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		const JPClassList& interfaces,
-		jint modifiers);
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			const JPClassList& interfaces,
+			jint modifiers);
 	virtual ~JPClass();
 
 	void setHost(PyObject* host)
@@ -112,7 +112,7 @@ public:
 	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj);
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj);
 
 	/** Create a new Python object to wrap a Java value.
 	 *
@@ -180,8 +180,6 @@ public:
 	{
 		return m_Interfaces;
 	}
-
-	virtual string describe();
 
 	// Check if a value is an instance of this class
 	bool isInstance(JPJavaFrame& frame, JPValue& val);

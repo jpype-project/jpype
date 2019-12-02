@@ -56,20 +56,20 @@
 namespace JPError
 {
 
-	enum Type
-	{
-		_java_error = 0,
-		_python_error = 1,
-		_runtime_error = 2,
-		_type_error = 3,
-		_value_error = 4,
-		_overflow_error = 5,
-		_index_error = 6,
-		_attribute_error = 7,
-		_os_error_unix = 8,
-		_os_error_windows = 9,
-		_method_not_found = 10,
-	} ;
+enum Type
+{
+	_java_error = 0,
+	_python_error = 1,
+	_runtime_error = 2,
+	_type_error = 3,
+	_value_error = 4,
+	_overflow_error = 5,
+	_index_error = 6,
+	_attribute_error = 7,
+	_os_error_unix = 8,
+	_os_error_windows = 9,
+	_method_not_found = 10,
+} ;
 }
 
 // Create a stackinfo for a particular location in the code that can then

@@ -8,20 +8,20 @@ extern "C"
 {
 #endif
 
-	/*
-	 * Memoryview is introduced to 2.x series only in 2.7, so for supporting 2.6,
-	 * we need to have a minimal implementation here.
-	 */
+/*
+ * Memoryview is introduced to 2.x series only in 2.7, so for supporting 2.6,
+ * we need to have a minimal implementation here.
+ */
 
-	typedef struct
-	{
-		PyObject_HEAD
-		PyObject *base;
-		Py_buffer view;
-	} PyMemorySimpleViewObject;
+typedef struct
+{
+	PyObject_HEAD
+	PyObject *base;
+	Py_buffer view;
+} PyMemorySimpleViewObject;
 
 
-	extern PyTypeObject PyMemorySimpleView_Type;
+extern PyTypeObject PyMemorySimpleView_Type;
 
 #define PyMemorySimpleView_CheckExact(op) (((PyObject*)(op))->ob_type == &PyMemorySimpleView_Type)
 
@@ -31,10 +31,10 @@ extern "C"
 #define PyMemoryView_GET_BUFFER PyMemorySimpleView_GET_BUFFER
 #define PyMemoryView_Check PyMemorySimpleView_CheckExact
 
-	// Not supported
+// Not supported
 #define PyMemoryView_GetContiguous(X,Y,Z) NULL
 
-	void jpype_memoryview_init(PyObject* module /*PyObject **typeobject*/);
+void jpype_memoryview_init(PyObject* module /*PyObject **typeobject*/);
 
 #ifdef __cplusplus
 }

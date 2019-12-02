@@ -43,12 +43,12 @@ public:
 		return context->_java_lang_Double;
 	}
 
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val) override;
 	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
-	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
-	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
+	virtual JPPyObject  invokeStatic(JPJavaFrame &frame, jclass, jmethodID, jvalue*) override;
+	virtual JPPyObject  invoke(JPJavaFrame &frame, jobject, jclass, jmethodID, jvalue*) override;
 
 	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid) override;
 	virtual void        setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* val) override;

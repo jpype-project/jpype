@@ -329,7 +329,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 	{
 		JPJavaFrame frame(context);
 		JPMatch match;
-		type->getJavaConversion(frame, match, value);
+		type->getJavaConversion(&frame, match, value);
 		if (match.type == JPMatch::_none)
 		{
 			stringstream ss;
@@ -338,7 +338,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 			return 0;
 		}
 
-		jvalue v = match.conversion->convert(frame, type, value);
+		jvalue v = match.conversion->convert(&frame, type, value);
 		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, v)).keep();
 	}
 	JP_PY_CATCH(NULL);
@@ -460,7 +460,7 @@ PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args)
 
 	// Test the conversion
 	JPMatch match;
-	cls->getJavaConversion(frame, match, other);
+	cls->getJavaConversion(&frame, match, other);
 
 	// Report to user
 	if (match.type == JPMatch::_none)
@@ -497,7 +497,7 @@ PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 
 	// Test the conversion
 	JPMatch match;
-	cls->getJavaConversion(frame, match, other);
+	cls->getJavaConversion(&frame, match, other);
 
 	// If there is no conversion report a failure
 	if (match.type == JPMatch::_none)
@@ -507,7 +507,7 @@ PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 	}
 
 	// Otherwise give back a PyJPValue
-	jvalue v = match.conversion->convert(frame, cls, other);
+	jvalue v = match.conversion->convert(&frame, cls, other);
 	return PyJPValue_create((PyTypeObject*) state->PyJPValue_Type, context, JPValue(cls, v)).keep();
 	JP_PY_CATCH(NULL);
 }

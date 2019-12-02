@@ -32,11 +32,11 @@ public:
 	 */
 	JPField(JPJavaFrame& frame,
 			JPClass *cls,
-		const string& name,
-		jobject field,
-		jfieldID fid,
-		JPClass *fieldType,
-		jint modifiers);
+			const string& name,
+			jobject field,
+			jfieldID fid,
+			JPClass *fieldType,
+			jint modifiers);
 
 	/**
 	 * destructor
@@ -74,6 +74,11 @@ public:
 	bool isStatic() const
 	{
 		return JPModifier::isStatic(m_Modifiers);
+	}
+
+	JPClass* getClass() const
+	{
+		return m_Class;
 	}
 
 private:

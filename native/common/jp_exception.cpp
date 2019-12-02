@@ -90,7 +90,7 @@ string JPypeException::getMessage()
 		stringstream str;
 		str << m_Message << endl;
 		for (JPStackTrace::iterator iter = this->m_Trace.begin();
-			iter != m_Trace.end(); ++iter)
+				iter != m_Trace.end(); ++iter)
 		{
 			str << "\tat " << iter->getFunction() << "(" << iter->getFile() << ":" << iter->getLine() << ")" << endl;
 		}
@@ -321,7 +321,7 @@ void JPypeException::toPython()
 				std::stringstream ss;
 				ss << "JVM DLL not found: " << mesg;
 				PyObject* val = Py_BuildValue("(iz)", m_Error,
-							ss.str().c_str());
+						ss.str().c_str());
 				if (val != NULL)
 				{
 					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
@@ -340,7 +340,7 @@ void JPypeException::toPython()
 				std::stringstream ss;
 				ss << "JVM DLL not found: " << mesg;
 				PyObject* val = Py_BuildValue("(izzi)", 2,
-							ss.str().c_str(), NULL, m_Error);
+						ss.str().c_str(), NULL, m_Error);
 				if (val != NULL)
 				{
 					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);

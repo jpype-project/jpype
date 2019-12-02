@@ -32,7 +32,7 @@ JPBoxedType::~JPBoxedType()
 {
 }
 
-JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPBoxedType::getJavaConversion");
 	JPClass::getJavaConversion(frame, match, pyobj);

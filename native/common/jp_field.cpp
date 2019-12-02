@@ -54,22 +54,12 @@ void JPField::setStaticField(PyObject *pyobj)
 {
 	JP_TRACE_IN("JPField::setStaticAttribute");
 	JPJavaFrame frame(m_Class->getContext());
-
 	if (isFinal())
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
 		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
 	}
-
-	JPMatch match;
-	if (m_Type->getJavaConversion(frame, match, pyobj) <= JPMatch::_explicit)
-	{
-		stringstream err;
-		err << "unable to convert to " << m_Type->getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str().c_str());
-	}
-
 	m_Type->setStaticField(frame, m_Class->getJavaClass(), m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
@@ -93,14 +83,6 @@ void JPField::setField(jobject inst, PyObject *pyobj)
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
 		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
-	}
-
-	JPMatch match;
-	if (m_Type->getJavaConversion(frame, match, pyobj) <= JPMatch::_explicit)
-	{
-		stringstream err;
-		err << "unable to convert to " << m_Type->getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str());
 	}
 
 	m_Type->setField(frame, inst, m_FieldID, pyobj);

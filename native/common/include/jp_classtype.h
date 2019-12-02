@@ -29,16 +29,16 @@ class JPClassType : public JPClass
 {
 public:
 	JPClassType(JPJavaFrame& frame,
-		jclass clss,
-		const string& name,
-		JPClass* super,
-		JPClassList& interfaces,
-		jint modifiers);
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 
 	virtual~ JPClassType();
 
 public: // JPClass implementation
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
 } ;
 
 #endif // _JPCLASSTYPE_H_

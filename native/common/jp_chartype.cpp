@@ -44,7 +44,7 @@ class JPConversionAsChar : public JPConversion
 	typedef JPIntType base_t;
 public:
 
-	virtual jvalue convert(JPJavaFrame& frame, JPClass* cls, PyObject* pyobj) override
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
 		res.c = JPPyString::asCharUTF16(pyobj);
@@ -52,14 +52,17 @@ public:
 	}
 } asCharConversion;
 
-JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JPContext *context = frame.getContext();
 	JP_TRACE_IN("JPCharType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -69,7 +72,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame& frame, JPMatch& match, 
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == context->_java_lang_Char)
+		if (context != NULL && value->getClass() == context->_java_lang_Char)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
@@ -134,18 +137,18 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticCharField(c, fid, val);
 }
 
 void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharField(c, fid, val);
 }
 
@@ -154,7 +157,7 @@ JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, 
 	JP_TRACE_IN("JPCharType::getArrayRange");
 	// FIXME this section is not exception safe.
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
 	// FIXME this is an error, the encoding used by JAVA does not match standard UTF16.
@@ -172,11 +175,11 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize 
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
 	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_SHORT,
-		&JPJavaFrame::SetCharArrayRegion))
+			&JPJavaFrame::SetCharArrayRegion))
 		return;
 
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-							&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
@@ -206,8 +209,8 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match;
-    if (getJavaConversion(frame, match, obj)<JPMatch::_implicit)
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
-	type_t val = field(match.conversion->convert(frame, this, obj));
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }

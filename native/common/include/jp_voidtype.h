@@ -29,7 +29,7 @@ public:
 		return context->_java_lang_Void;
 	}
 
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame& frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
 	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;

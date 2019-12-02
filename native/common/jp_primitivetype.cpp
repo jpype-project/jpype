@@ -35,7 +35,20 @@ bool JPPrimitiveType::isAssignableFrom(JPClass* o)
 	return this == o;
 }
 
-string JPPrimitiveType::describe()
+JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
 {
-	return "primitive " + this->m_CanonicalName;
+	if (args.size() != 1)
+		JP_RAISE_TYPE_ERROR("primitives take 1 positional argument");
+
+	// Test the conversion
+	JPMatch match;
+	getJavaConversion(NULL, match, args[0]);
+
+	// If there is no conversion report a failure
+	if (match.type == JPMatch::_none)
+		JP_RAISE_TYPE_ERROR("Unable to create an instance.");
+
+	// Otherwise give back a PyJPValue
+	jvalue v = match.conversion->convert(NULL, this, args[0]);
+	return JPValue(this, v);
 }

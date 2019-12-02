@@ -18,9 +18,9 @@
 #include <algorithm>
 
 JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
-				   const string& name,
-				   JPMethodList& overloads,
-				   jint modifiers)
+		const string& name,
+		JPMethodList& overloads,
+		jint modifiers)
 : m_Name(name)
 {
 	m_Class = clazz;
@@ -85,8 +85,7 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 					bestMatch = match;
 					continue;
 				}
-			}
-			else
+			} else
 			{
 				// if best matches instance and current does not, no ambiguity
 				if (callInstance == !bestMatch.overload->isStatic())
@@ -144,8 +143,8 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 		}
 		ss << ")" << ", options are:" << std::endl;
 		for (JPMethodList::iterator it = m_Overloads.begin();
-			it != m_Overloads.end();
-			++it)
+				it != m_Overloads.end();
+				++it)
 		{
 			JPMethod* current = *it;
 			ss << "\t" << current->toString();
@@ -198,7 +197,7 @@ string JPMethodDispatch::dump()
 		JPMethod *u = *cur;
 		res << u->toString() << std::endl;
 		for (JPMethodList::iterator iter = u->m_MoreSpecificOverloads.begin();
-			iter != u->m_MoreSpecificOverloads.end(); ++iter)
+				iter != u->m_MoreSpecificOverloads.end(); ++iter)
 		{
 			res << "   " << (*iter)->toString() << std::endl;
 		}

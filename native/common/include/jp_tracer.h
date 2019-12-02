@@ -60,8 +60,7 @@ public:
 		try
 		{
 			throw;
-		}
-		catch (JPypeException& ex)
+		}		catch (JPypeException& ex)
 		{
 			ex.from(info);
 			throw;
@@ -82,55 +81,55 @@ private:
 namespace JPTracer
 {
 
-	template <class T>
-	inline void trace(const T& msg)
-	{
-		stringstream str;
-		str << msg;
-		JPypeTracer::trace1(str.str().c_str());
-	}
+template <class T>
+inline void trace(const T& msg)
+{
+	stringstream str;
+	str << msg;
+	JPypeTracer::trace1(str.str().c_str());
+}
 
-	inline void trace(const char *msg)
-	{
-		JPypeTracer::trace1(msg);
-	}
+inline void trace(const char *msg)
+{
+	JPypeTracer::trace1(msg);
+}
 
-	template <class T1, class T2>
-	inline void trace(const T1& msg1, const T2 & msg2)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2;
-		JPypeTracer::trace1(str.str().c_str());
-	}
+template <class T1, class T2>
+inline void trace(const T1& msg1, const T2 & msg2)
+{
+	stringstream str;
+	str << msg1 << " " << msg2;
+	JPypeTracer::trace1(str.str().c_str());
+}
 
-	inline void trace(const char *msg1, const char *msg2)
-	{
-		JPypeTracer::trace2(msg1, msg2);
-	}
+inline void trace(const char *msg1, const char *msg2)
+{
+	JPypeTracer::trace2(msg1, msg2);
+}
 
-	template <class T1, class T2, class T3>
-	inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3;
-		JPypeTracer::trace1(str.str().c_str());
-	}
+template <class T1, class T2, class T3>
+inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
+{
+	stringstream str;
+	str << msg1 << " " << msg2 << " " << msg3;
+	JPypeTracer::trace1(str.str().c_str());
+}
 
-	template <class T1, class T2, class T3, class T4>
-	inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg4)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
-		JPypeTracer::trace1(str.str().c_str());
-	}
+template <class T1, class T2, class T3, class T4>
+inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg4)
+{
+	stringstream str;
+	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
+	JPypeTracer::trace1(str.str().c_str());
+}
 
-	template <class T1, class T2, class T3, class T4, class T5>
-	inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5 & msg5)
-	{
-		stringstream str;
-		str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
-		JPypeTracer::trace1(str.str().c_str());
-	}
+template <class T1, class T2, class T3, class T4, class T5>
+inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5 & msg5)
+{
+	stringstream str;
+	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
+	JPypeTracer::trace1(str.str().c_str());
+}
 }
 
 #endif // _JP_TRACER_H__

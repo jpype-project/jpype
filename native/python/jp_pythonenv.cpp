@@ -152,6 +152,9 @@ JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, c
 {
 	JP_TRACE_IN("PyJPValue_createInstance");
 
+	if (value.getClass() == NULL && value.getValue().l != NULL)
+		JP_RAISE_RUNTIME_ERROR("Value inconsistency");
+
 	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
 	JP_PY_CHECK();
 
@@ -258,7 +261,11 @@ JPPyObject PyJPField_create(JPField *field)
 	JPContext *context = field->getContext();
 	jvalue v;
 	v.l = field->getJavaObject();
-	JPPyObject self = PyJPValue_create((PyTypeObject*) state->PyJPField_Type, field->getContext(),
+	if (state->PyJPField_Type == NULL)
+		JP_RAISE_RUNTIME_ERROR("PyJPField type is not defined.");
+	if (context->_java_lang_reflect_Field == NULL)
+		JP_RAISE_RUNTIME_ERROR("java.lang.reflect.Field not loaded.");
+	JPPyObject self = PyJPValue_createInstance((PyTypeObject*) state->PyJPField_Type, field->getContext(),
 			JPValue(context->_java_lang_reflect_Field, v));
 	((PyJPField*) self.get())->m_Field = field;
 	return self;

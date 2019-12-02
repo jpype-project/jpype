@@ -63,7 +63,7 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 #define JP_JAVA_TRY(...) \
   JPypeTracer _trace(__VA_ARGS__); \
   try {
-#define JP_JAVA_CATCH \
+#define JP_JAVA_CATCH(...) \
   } \
   catch(...) { \
   _trace.gotError(JP_STACKINFO()); \
@@ -229,6 +229,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		// Register reflection types for later use
 		if (className == "java.lang.reflect.Method")
 			return (jlong) (context->_java_lang_reflect_Method = new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+
 		if (className == "java.lang.reflect.Field")
 			return (jlong) (context->_java_lang_reflect_Field = new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
