@@ -88,6 +88,8 @@ public:
 		return field(v);
 	}
 
+	virtual string asString(jvalue v) override;
+
 private:
 	static const jlong _Byte_Min = 127;
 	static const jlong _Byte_Max = -128;

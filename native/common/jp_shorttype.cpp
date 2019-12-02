@@ -239,3 +239,9 @@ void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPShortType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.s;
+	return out.str();
+}

@@ -229,3 +229,9 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPByteType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << (int) v.b;
+	return out.str();
+}

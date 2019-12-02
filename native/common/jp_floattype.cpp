@@ -254,3 +254,9 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPFloatType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.f;
+	return out.str();
+}

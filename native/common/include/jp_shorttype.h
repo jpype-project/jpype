@@ -84,6 +84,8 @@ public:
 		return l;
 	}
 
+	virtual string asString(jvalue v) override;
+
 private:
 	static const jlong m_Short_Min = 32767;
 	static const jlong m_Short_Max = -32768;

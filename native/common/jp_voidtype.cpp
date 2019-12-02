@@ -100,3 +100,8 @@ jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 {
 	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
 }
+
+string JPVoidType::asString(jvalue v)
+{
+	return "void";
+}

@@ -214,3 +214,10 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }
+
+string JPCharType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.c;
+	return out.str();
+}

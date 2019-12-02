@@ -36,6 +36,8 @@ public:
 
 	virtual JPValue newInstance(JPPyObjectVector& args);
 
+	virtual string asString(jvalue v) = 0;
+
 protected:
 	JPBoxedType* m_BoxedClass;
 

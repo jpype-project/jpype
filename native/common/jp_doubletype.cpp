@@ -277,3 +277,9 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPDoubleType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.d;
+	return out.str();
+}

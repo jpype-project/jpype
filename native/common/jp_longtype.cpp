@@ -244,3 +244,9 @@ void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPLongType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.j;
+	return out.str();
+}

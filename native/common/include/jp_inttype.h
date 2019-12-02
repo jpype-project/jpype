@@ -85,6 +85,8 @@ public:
 		return l;
 	}
 
+	virtual string asString(jvalue v) override;
+
 } ;
 
 #endif // _JP_INT_TYPE_H_

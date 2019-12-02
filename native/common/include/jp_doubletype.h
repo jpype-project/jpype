@@ -76,6 +76,8 @@ public:
 		return (jdouble) field(v);
 	}
 
+	virtual string asString(jvalue v) override;
+
 } ;
 
 #endif // _JP_DOUBLE_TYPE_H_

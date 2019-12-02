@@ -61,6 +61,8 @@ public:
 		return 0;
 	}
 
+	virtual string asString(jvalue v) override;
+
 } ;
 
 #endif // _JP_VOID_TYPE_H_

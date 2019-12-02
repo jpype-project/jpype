@@ -218,3 +218,7 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPBooleanType::asString(jvalue v)
+{
+	return v.z ? "true" : "false";
+}

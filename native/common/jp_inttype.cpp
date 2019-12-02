@@ -246,3 +246,9 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }
 
+string JPIntType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.i;
+	return out.str();
+}

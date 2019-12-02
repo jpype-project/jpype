@@ -228,6 +228,7 @@ static PyMemberDef valueMembers[] = {
 
 static PyType_Slot valueSlots[] = {
 	{ Py_tp_new,      (void*) PyJPValue_new},
+	{ Py_tp_init,      (void*) PyJPValue_init},
 	{ Py_tp_dealloc,  (void*) PyJPValue_dealloc},
 	{ Py_tp_traverse, (void*) PyJPValue_traverse},
 	{ Py_tp_clear,    (void*) PyJPValue_clear},
@@ -261,6 +262,7 @@ PyType_Spec PyJPValueExceptionSpec = {
 
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
+	JP_PY_TRY("PyJPValueBase_new")
 	PyJPModuleState *state = PyJPModuleState_global;
 	PyObject *inner = PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, args, kwargs);
 	if (inner == NULL)
@@ -268,15 +270,18 @@ PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 	PyObject *self = type->tp_alloc(type, 0);
 	PyObject_SetAttrString(self, __javavalue__, inner);
 	return (PyObject*) self;
+	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
+	JP_PY_TRY("PyJPValue_new")
 	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
 	jvalue v;
 	self->m_Value = JPValue(NULL, v);
 	self->m_Context = NULL;
 	return (PyObject*) self;
+	JP_PY_CATCH(NULL);
 }
 
 int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
@@ -508,12 +513,22 @@ PyObject *PyJPValue_str(PyObject *pyself)
 	if (self == NULL)
 		JP_RAISE_TYPE_ERROR("Must be Java value");
 
-	if (self->m_Context == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null context");
+	JPClass *cls = self->m_Value.getClass();
+	if (cls == NULL)
+		JP_RAISE_VALUE_ERROR("toString called with null class");
 
+	// Special handling for primitives.
+	if (self->m_Context == NULL)
+	{
+		if (cls->isPrimitive())
+		{
+			JPPrimitiveType *pc = (JPPrimitiveType*) cls;
+			return JPPyString::fromStringUTF8(pc->asString(self->m_Value.getValue())).keep();
+		}
+		JP_RAISE_RUNTIME_ERROR("Null context");
+	}
 	JPContext *context = self->m_Context->m_Context;
 	ASSERT_JVM_RUNNING(context);
-	JPClass *cls = self->m_Value.getClass();
 	JPJavaFrame frame(context);
 	if (cls == context->_java_lang_String && Py_TYPE(self)->tp_dictoffset != 0)
 	{
@@ -537,10 +552,6 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		return out;
 	}
 
-	if (cls->isPrimitive())
-		JP_RAISE_VALUE_ERROR("toString requires a java object");
-	if (cls == NULL)
-		JP_RAISE_VALUE_ERROR("toString called with null class");
 
 	// In general toString is not immutable, so we won't cache it.
 	return JPPyString::fromStringUTF8(frame.toString(self->m_Value.getValue().l)).keep();

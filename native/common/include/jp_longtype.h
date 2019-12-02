@@ -75,6 +75,8 @@ public:
 		return (jdouble) field(v);
 	}
 
+	virtual string asString(jvalue v) override;
+
 } ;
 
 #endif // _JP_LONG_TYPE_H_

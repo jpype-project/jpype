@@ -77,6 +77,8 @@ public:
 		return field(v);
 	}
 
+	virtual string asString(jvalue v) override;
+
 } ;
 
 #endif // _JP_BOOLEAN_TYPE_H_
