@@ -34,7 +34,7 @@ public:
 	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj);
 
-	JPValue newInstance(JPJavaFrame& frame, int length);
+	JPValue newInstance(JPPyObjectVector& args);
 
 	/**
 	 * Create a new java array containing a set of items take from

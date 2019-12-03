@@ -200,6 +200,7 @@ static struct PyGetSetDef baseGetSet[] = {
 
 static PyType_Slot baseSlots[] = {
 	{Py_tp_new,      (void*) PyJPValueBase_new},
+	{Py_tp_init,     (void*) PyJPValue_init},
 	{Py_tp_setattro, (void*) PyJPValue_setattro},
 	{Py_tp_str,      (void*) PyJPValue_str},
 	{Py_tp_repr,     (void*) PyJPValue_repr},
@@ -228,7 +229,7 @@ static PyMemberDef valueMembers[] = {
 
 static PyType_Slot valueSlots[] = {
 	{ Py_tp_new,      (void*) PyJPValue_new},
-	{ Py_tp_init,      (void*) PyJPValue_init},
+	{ Py_tp_init,     (void*) PyJPValue_init},
 	{ Py_tp_dealloc,  (void*) PyJPValue_dealloc},
 	{ Py_tp_traverse, (void*) PyJPValue_traverse},
 	{ Py_tp_clear,    (void*) PyJPValue_clear},
@@ -309,27 +310,17 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 		return 0;
 
 	// Get the Java class from the type.
-	PyObject *obj = PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__");
+	JPPyObject obj = JPPyObject(JPPyRef::_claim,
+			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
 	JP_PY_CHECK();
-	if (!PyObject_IsInstance(obj, (PyObject*) state->PyJPClass_Type))
-	{
-		Py_DECREF(obj);
+	if (!PyObject_IsInstance(obj.get(), (PyObject*) state->PyJPClass_Type))
 		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
-	}
-	JPClass *cls = ((PyJPClass*) obj)->m_Class;
-	Py_DECREF(obj);
 
-	if (dynamic_cast<JPArrayClass*> (cls) != NULL)
-	{
-		JPJavaFrame frame(cls->getContext());
-		int sz;
-		if (!PyArg_ParseTuple(pyargs, "i", &sz))
-		{
-			return -1;
-		}
-		self->m_Value = ((JPArrayClass*) cls)->newInstance(frame, sz);
-		return 0;
-	}
+	// We must verify the context before we can access the class
+	// as the class may already be dead.
+	PyJPValue_GET_CONTEXT(obj.get());
+	JPClass *cls = ((PyJPClass*) obj.get())->m_Class;
+	PyJPContext *context = ((PyJPClass*) obj.get())->m_Value.m_Context;
 
 	JPPyObjectVector args(pyargs);
 	// DEBUG
@@ -337,7 +328,21 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 	{
 		ASSERT_NOT_NULL(args[i]);
 	}
-	self->m_Value =  cls->newInstance(args);
+
+	// Create an instance (this may fail)
+	JPValue value = cls->newInstance(args);
+
+	// If we succeed then we can hook up the context
+	self->m_Context = context;
+	if (context != NULL)
+	{
+		// Reference the object
+		JP_TRACE("Reference object", cls->getCanonicalName());
+		Py_INCREF(context);
+		JPJavaFrame frame(context->m_Context);
+		value.getValue().l = frame.NewGlobalRef(value.getValue().l);
+	}
+	self->m_Value = value;
 	return 0;
 	JP_PY_CATCH(-1);
 }

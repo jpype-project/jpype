@@ -34,7 +34,6 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure);
 PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure);
 
 PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_newInstance(PyJPClass *self, PyObject *pyargs);
 
 // Query
 PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg);
@@ -130,7 +129,7 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	JPJavaFrame frame(context);
 
 	JPClass *cls;
-	JPValue *jpvalue = JPPythonEnv::getJavaValue(arg0);
+	//JPValue *jpvalue = JPPythonEnv::getJavaValue(arg0);
 	if (JPPyString::check(arg0))
 	{
 		string cname = JPPyString::asStringUTF8(arg0);
@@ -341,39 +340,6 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 		jvalue v = match.conversion->convert(&frame, type, value);
 		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, v)).keep();
 	}
-	JP_PY_CATCH(NULL);
-}
-
-PyObject *PyJPClass_newInstance(PyJPClass *self, PyObject *pyargs)
-{
-	JP_PY_TRY("PyJPClass_newInstance", self)
-	JPContext *context = PyJPValue_GET_CONTEXT(self);
-	if (context == NULL)
-		Py_RETURN_NONE;
-	JPJavaFrame frame(context);
-
-	if (dynamic_cast<JPArrayClass*> (self->m_Class) != NULL)
-	{
-		int sz;
-		if (!PyArg_ParseTuple(pyargs, "i", &sz))
-		{
-			return NULL;
-		}
-		JPArrayClass *cls = (JPArrayClass*) (self->m_Class);
-		JPValue value = cls->newInstance(frame, sz);
-		return JPPythonEnv::newJavaObject(value).keep();
-	}
-
-	JPPyObjectVector args(pyargs); // DEBUG
-	for (size_t i = 0; i < args.size(); ++i)
-	{
-		ASSERT_NOT_NULL(args[i]);
-	}
-	JPClass *cls = (JPClass*) (self->m_Class);
-	JPValue value = cls->newInstance(args);
-	return JPPythonEnv::newJavaObject(value).keep();
-
-	PyErr_SetString(PyExc_TypeError, "Unable to create an instance.");
 	JP_PY_CATCH(NULL);
 }
 

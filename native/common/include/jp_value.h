@@ -43,6 +43,11 @@ public:
 		return m_Class;
 	}
 
+	jvalue& getValue()
+	{
+		return m_Value;
+	}
+
 	const jvalue& getValue() const
 	{
 		return m_Value;

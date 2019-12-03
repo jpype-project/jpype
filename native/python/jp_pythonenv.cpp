@@ -171,6 +171,7 @@ JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, c
 	{
 		// New value instance
 		self->m_Value = value;
+		self->m_Context = NULL;
 	}
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;

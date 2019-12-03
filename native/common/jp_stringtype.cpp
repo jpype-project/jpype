@@ -85,7 +85,7 @@ JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame* frame, JPMatch& match
 
 JPValue JPStringType::newInstance(JPPyObjectVector& args)
 {
-	JP_TRACE_IN("JPStringClass::newInstance");
+	JP_TRACE_IN("JPStringType::newInstance");
 	JPJavaFrame frame(m_Context);
 	if (args.size() == 1 && JPPyString::check(args[0]))
 	{

@@ -188,6 +188,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	JP_PY_CATCH(NULL);
 }
 
+#if 0
 static int PyJPModule_clear(PyObject *m)
 {
 	JP_PY_TRY("PyJPModule_clear")
@@ -204,11 +205,12 @@ static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg)
 	return 0;
 	JP_PY_CATCH(-1);
 }
+#endif
 
 static PyObject *PyJPModule_test(PyObject *m, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPModule_test")
-	printf("Global %x\n", PyJPModule_global);
+	printf("Global %p\n", PyJPModule_global);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }

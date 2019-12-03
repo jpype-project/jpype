@@ -286,7 +286,7 @@ int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *context)
 	self->m_Doc = obj;
 	Py_XINCREF(self->m_Doc);
 	return 0;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
