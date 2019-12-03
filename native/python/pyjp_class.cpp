@@ -170,7 +170,7 @@ PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 
 PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 {
-	JP_PY_TRY("PyJPClass_getInfo", self)
+	JP_PY_TRY("PyJPClass_getBases", self)
 	JPContext *context = PyJPValue_GET_CONTEXT(self);
 	if (context == NULL)
 		Py_RETURN_NONE;
@@ -223,15 +223,15 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 	unsigned int i = 0;
 	for (; i < baseItf.size(); i++)
 	{
-		result.setItem(i, JPPythonEnv::newJavaClass(baseItf[i]).keep());
+		result.setItem(i, JPPythonEnv::newJavaClass(baseItf[i]).get());
 	}
 	if (super != NULL)
 	{
-		result.setItem(i++, JPPythonEnv::newJavaClass(super).keep());
+		result.setItem(i++, JPPythonEnv::newJavaClass(super).get());
 	}
 	if (!baseType.isNull())
 	{
-		result.setItem(i++, baseType.keep());
+		result.setItem(i++, baseType.get());
 	}
 	return result.keep();
 	JP_PY_CATCH(NULL);

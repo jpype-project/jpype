@@ -398,7 +398,7 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 
 	// Call the factory in Python
 	JPPyObject out = JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
-	javaClass ->setHost(out.get());
+	javaClass->setHost(out.get());
 	return out;
 	JP_TRACE_OUT;
 }

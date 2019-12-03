@@ -25,6 +25,7 @@ extern "C"
 
 PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int       PyJPClassMeta_init(PyObject *self, PyObject *pyargs, PyObject *kwargs);
+void      PyJPClassMeta_dealloc(PyObject *self);
 PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name);
 int       PyJPClassMeta_setattro(PyObject *obj, PyObject *name, PyObject *value);
 PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs);
@@ -39,6 +40,7 @@ static struct PyMethodDef metaMethods[] = {
 static PyType_Slot metaSlots[] = {
 	{Py_tp_new,      (void*) &PyJPClassMeta_new},
 	{Py_tp_init,     (void*) &PyJPClassMeta_init},
+	{Py_tp_dealloc,  (void*) &PyJPClassMeta_dealloc},
 	{Py_tp_getattro, (void*) &PyJPClassMeta_getattro},
 	{Py_tp_setattro, (void*) &PyJPClassMeta_setattro},
 	{Py_tp_methods,  (void*) &metaMethods},
@@ -55,6 +57,7 @@ PyType_Spec PyJPClassMetaSpec = {
 
 PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
+	JP_PY_TRY("PyJPClassMeta_new");
 	// Call the Factory
 	if (PyTuple_Size(args) == 1)
 	{
@@ -65,19 +68,30 @@ PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 		return PyObject_Call(factory, args, kwargs);
 	}
 	return PyType_Type.tp_new(type, args, kwargs);
+	JP_PY_CATCH(NULL);
 }
 
 int PyJPClassMeta_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
+	JP_PY_TRY("PyJPClassMeta_init", self);
 	if (PyTuple_Size(args) == 1)
 	{
 		return 0;
 	}
 	return PyType_Type.tp_init(self, args, kwargs);
+	JP_PY_CATCH(-1);
+}
+
+void PyJPClassMeta_dealloc(PyObject *self)
+{
+	JP_PY_TRY("PyJPClassMeta_dealloc");
+	Py_TYPE(self)->tp_free(self);
+	JP_PY_CATCH();
 }
 
 PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 {
+	JP_PY_TRY("PyJPClassMeta_getattro")
 	PyJPModuleState *state = PyJPModuleState_global;
 	return PyType_Type.tp_getattro(obj, name);
 	if (!PyUnicode_Check(name))
@@ -109,10 +123,12 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 	PyErr_Format(PyExc_AttributeError, "Field '%s' is static", name_str);
 	Py_DECREF(attr);
 	return NULL;
+	JP_PY_CATCH(NULL);
 }
 
 int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 {
+	JP_PY_TRY("PyJPClassMeta_setattro");
 	if (!PyUnicode_Check(attr_name))
 	{
 		PyErr_Format(PyExc_TypeError,
@@ -149,6 +165,7 @@ int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 			"Static field '%s' is not settable on Java '%s' object",
 			name_str, Py_TYPE(o)->tp_name);
 	return -1;
+	JP_PY_CATCH(-1);
 }
 
 PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -379,6 +396,7 @@ void PyJPValue_dealloc(PyJPValue *self)
 int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg)
 {
 	JP_PY_TRY("PyJPValue_traverse", self)
+	JP_TRACE("RefCount", self->ob_base.ob_refcnt);
 	Py_VISIT(self->m_Context);
 	return 0;
 	JP_PY_CATCH(-1);
@@ -386,7 +404,7 @@ int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg)
 
 int PyJPValue_clear(PyJPValue *self)
 {
-	JP_PY_TRY("PyJPValue_clear", self)
+	JP_PY_TRY("PyJPValue_clear", self);
 	Py_CLEAR(self->m_Context);
 	return 0;
 	JP_PY_CATCH(-1);
@@ -474,7 +492,7 @@ PyJPValue* PyJPValue_asValue(PyObject *self)
 int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 {
 
-	JP_PY_TRY("PyJPValue_toString", self)
+	JP_PY_TRY("PyJPValue_toString", self);
 	if (!PyUnicode_Check(attr_name))
 	{
 		PyErr_Format(PyExc_TypeError,
