@@ -30,6 +30,7 @@ extern "C"
 
 static int PyJPModule_clear(PyObject *m);
 static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg);
+static void PyJPModule_free( void *arg);
 static PyObject *PyJPModule_test(PyObject *m, PyObject *args, PyObject *kwargs);
 
 static PyMethodDef moduleMethods[] = {
@@ -45,9 +46,9 @@ PyModuleDef PyJPModuleDef = {
 	sizeof (PyJPModuleState),
 	moduleMethods,
 	NULL,
-	//	(traverseproc) NULL,
-	//	(inquiry) NULL,
-	//	(freefunc) NULL
+	(traverseproc) PyJPModule_clear,
+	(inquiry) PyJPModule_traverse,
+	(freefunc) PyJPModule_free
 };
 
 extern PyType_Spec PyJPArraySpec;
@@ -141,6 +142,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	state->PyJPContext_Type = PyType_FromSpec(&PyJPContextSpec);
 	PyModule_AddObject(module, "PyJPContext", state->PyJPContext_Type);
 	JP_PY_CHECK();
+	PyModule_AddObject(module, "_contexts", PyList_New(0));
 
 	state->PyJPClassHints_Type = PyType_FromSpec(&PyJPClassHintsSpec);
 	PyModule_AddObject(module, "PyJPClassHints", state->PyJPClassHints_Type);
@@ -188,24 +190,28 @@ PyMODINIT_FUNC PyInit__jpype()
 	JP_PY_CATCH(NULL);
 }
 
-#if 0
 static int PyJPModule_clear(PyObject *m)
 {
-	JP_PY_TRY("PyJPModule_clear")
-			//	PyJPModuleState *state = PyJPModuleState(m);
-			// We should be dereferencing all of the types, but currently we are
-			// depending on the module dictionary to hold reference.
+	JP_PY_TRY("PyJPModule_clear");
+	//	PyJPModuleState *state = PyJPModuleState(m);
+	// We should be dereferencing all of the types, but currently we are
+	// depending on the module dictionary to hold reference.
 	return 0;
 	JP_PY_CATCH(-1);
 }
 
 static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg)
 {
-	JP_PY_TRY("PyJPModule_traverse")
+	JP_PY_TRY("PyJPModule_traverse");
 	return 0;
 	JP_PY_CATCH(-1);
 }
-#endif
+
+static void PyJPModule_free( void *arg)
+{
+	JP_PY_TRY("PyJPModule_free");
+	JP_PY_CATCH();
+}
 
 static PyObject *PyJPModule_test(PyObject *m, PyObject *args, PyObject *kwargs)
 {

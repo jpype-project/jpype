@@ -17,7 +17,6 @@
 #include <stddef.h>
 #include <pyjp.h>
 #include <structmember.h>
-
 #include "jp_context.h"
 
 #ifdef __cplusplus
@@ -107,8 +106,8 @@ static PyType_Slot contextSlots[] = {
 	{ Py_tp_new,        (void*) PyJPContext_new},
 	{ Py_tp_init,       (void*) PyJPContext_init},
 	{ Py_tp_dealloc,    (void*) PyJPContext_dealloc},
-	//	{ Py_tp_traverse,   (void*) PyJPContext_traverse},
-	//	{ Py_tp_clear,      (void*) PyJPContext_clear},
+	{ Py_tp_traverse,   (void*) PyJPContext_traverse},
+	{ Py_tp_clear,      (void*) PyJPContext_clear},
 	{ Py_tp_str,        (void*) PyJPContext_str},
 	{ Py_tp_getattro,   (void*) PyObject_GenericGetAttr},
 	{ Py_tp_setattro,   (void*) PyObject_GenericSetAttr},
@@ -122,7 +121,7 @@ PyType_Spec PyJPContextSpec = {
 	"_jpype.PyJPContext",
 	sizeof (PyJPContext),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // | Py_TPFLAGS_HAVE_GC
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	contextSlots
 };
 
@@ -135,6 +134,17 @@ PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	self->m_Classes = PyDict_New();
 	self->m_Context = new JPContext();
 	self->m_Context->setHost((PyObject*) self);
+
+	// Add the context to the module
+	PyObject* module = PyJPModule_global;
+	if (module != NULL)
+	{
+		PyObject* list = PyObject_GetAttrString(module, "_contexts");
+		PyList_Append(list, (PyObject*) self);
+		Py_INCREF(self);
+		Py_DECREF(list);
+	}
+
 	return (PyObject*) self;
 }
 
@@ -161,14 +171,18 @@ void PyJPContext_dealloc(PyJPContext *self)
 
 int PyJPContext_traverse(PyJPContext *self, visitproc visit, void *arg)
 {
+	JP_PY_TRY("PyJPContext_traverse", self)
 	Py_VISIT(self->m_Classes);
 	return 0;
+	JP_PY_CATCH(-1);
 }
 
 int PyJPContext_clear(PyJPContext *self)
 {
+	JP_PY_TRY("PyJPContext_clear", self)
 	Py_CLEAR(self->m_Classes);
 	return 0;
+	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPContext_str(PyJPContext *self)

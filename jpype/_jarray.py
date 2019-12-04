@@ -119,34 +119,6 @@ class JArray(_jpype.PyJPArray):
             return _JArrayNewClass(cls.__jvm__, *args, **kwargs)
         return super(JArray, cls).__new__(cls, *args, **kwargs)
 
-#    def __init__(self, *args, **kwargs):
-#        if hasattr(self, '__javavalue__'):
-#            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-#            return
-#
-#        if len(args) != 1:
-#            raise TypeError(
-#                "Array classes only take 2 parameters, {0} given"
-#                .format(len(args) + 1))
-#
-#        if isinstance(args[0], _jpype.PyJPValue):
-#            self.__javavalue__ = args[0]
-#            self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-#            return
-#
-#        values = None
-#        if _isIterable(args[0]):
-#            sz = len(args[0])
-#            values = args[0]
-#        else:
-#            sz = args[0]
-#
-#        self.__javavalue__ = self.__class__.__javaclass__.newInstance(sz)
-#        self.__javaarray__ = _jpype.PyJPArray(self.__javavalue__)
-#
-#        if values is not None:
-#            self.__javaarray__.setArraySlice(0, sz, values)
-
     def __str__(self):
         return str(tuple(self))
 

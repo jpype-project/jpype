@@ -88,6 +88,7 @@ struct PyJPContext
 	PyObject *m_Dict;
 	PyObject *m_Classes;
 } ;
+PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 
 struct PyJPClassHints
 {
