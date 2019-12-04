@@ -165,13 +165,10 @@ JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, c
 		jvalue v;
 		v.l = frame.NewGlobalRef(value.getValue().l);
 		self->m_Value = JPValue(value.getClass(), v);
-		self->m_Context = (PyJPContext*) (context->getHost());
-		Py_INCREF(self->m_Context);
 	} else
 	{
 		// New value instance
 		self->m_Value = value;
-		self->m_Context = NULL;
 	}
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;
@@ -290,8 +287,6 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 	self->m_Doc = NULL;
 	self->m_Annotations = NULL;
 	self->m_CodeRep = NULL;
-	self->m_Context = (PyJPContext*) (m->getContext()->getHost());
-	Py_INCREF(self->m_Context);
 	JP_TRACE("self", self);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
 	JP_TRACE_OUT;

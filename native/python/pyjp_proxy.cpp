@@ -29,19 +29,13 @@ int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg);
 int PyJPProxy_clear(PyJPProxy *self);
 PyObject *PyJPProxy_str(PyJPProxy *self);
 
-static PyMemberDef proxyMembers[] = {
-	{"__jvm__", T_OBJECT, offsetof(PyJPProxy, m_Context), READONLY},
-	{0}
-};
-
 static PyType_Slot proxySlots[] = {
 	{ Py_tp_new,      (void*) PyJPProxy_new},
 	{ Py_tp_init,     (void*) PyJPProxy_init},
 	{ Py_tp_dealloc,  (void*) PyJPProxy_dealloc},
 	{ Py_tp_str,      (void*) PyJPProxy_str},
-	//	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
-	//	{ Py_tp_clear,    (void*) PyJPProxy_clear},
-	{ Py_tp_members,  (void*) proxyMembers},
+	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
+	{ Py_tp_clear,    (void*) PyJPProxy_clear},
 	{0}
 };
 
@@ -49,7 +43,7 @@ PyType_Spec PyJPProxySpec = {
 	"_jpype.PyJPProxy",
 	sizeof (PyObject),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, // | Py_TPFLAGS_HAVE_GC,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	proxySlots
 };
 
@@ -59,7 +53,6 @@ PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
-	self->m_Context = NULL;
 	return (PyObject*) self;
 	JP_PY_CATCH(NULL);
 }
@@ -113,9 +106,6 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	Py_INCREF(target);
 	self->m_Target = target;
 	self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
-	self->m_Context = (PyJPContext*) (context->getHost());
-	Py_INCREF(self->m_Context);
-
 	JP_TRACE("Proxy", self);
 	JP_TRACE("Target", target);
 	return 0;
@@ -124,8 +114,8 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 
 void PyJPProxy_dealloc(PyJPProxy *self)
 {
-	JP_PY_TRY("PyJPProxy_dealloc", self)
-			delete self->m_Proxy;
+	JP_PY_TRY("PyJPProxy_dealloc", self);
+	delete self->m_Proxy;
 
 	PyObject_GC_UnTrack(self);
 	PyJPProxy_clear(self);
@@ -137,22 +127,19 @@ void PyJPProxy_dealloc(PyJPProxy *self)
 int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Target);
-	Py_VISIT(self->m_Context);
 	return 0;
 }
 
 int PyJPProxy_clear(PyJPProxy *self)
 {
 	Py_CLEAR(self->m_Target);
-	Py_CLEAR(self->m_Context);
 	return 0;
 }
 
 PyObject *PyJPProxy_str(PyJPProxy *self)
 {
-	JP_PY_TRY("PyJPProxy_str", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPProxy_str", self);
+	JPContext* context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	stringstream sout;
 	sout << "<java proxy>";

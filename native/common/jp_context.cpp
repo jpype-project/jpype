@@ -47,15 +47,15 @@ JPPlatformAdapter* GetAdapter()
 JPContext::JPContext()
 {
 	m_JavaVM = 0;
-	_void = 0;
-	_boolean = 0;
-	_byte = 0;
-	_char = 0;
-	_short = 0;
-	_int = 0;
-	_long = 0;
-	_float = 0;
-	_double = 0;
+	_void = new JPVoidType();
+	_byte = new JPByteType();
+	_boolean = new JPBooleanType();
+	_char = new JPCharType();
+	_short = new JPShortType();
+	_int = new JPIntType();
+	_long = new JPLongType();
+	_float = new JPFloatType();
+	_double = new JPDoubleType();
 
 	_java_lang_Void = 0;
 	_java_lang_Boolean = 0;
@@ -84,7 +84,6 @@ JPContext::JPContext()
 	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
-	m_Host = 0;
 }
 
 JPContext::~JPContext()

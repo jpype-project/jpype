@@ -23,6 +23,7 @@ protected:
 	JPPrimitiveType(const string& name);
 	virtual ~JPPrimitiveType();
 
+
 public:
 	virtual bool isPrimitive() const override;
 
@@ -38,8 +39,11 @@ public:
 
 	virtual string asString(jvalue v) = 0;
 
-protected:
-	JPBoxedType* m_BoxedClass;
+	void setClass(JPContext* context, jclass o)
+	{
+		m_Context = context;
+		m_Class = JPClassRef(context, o);
+	}
 
 } ;
 

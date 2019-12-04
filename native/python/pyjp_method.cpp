@@ -95,7 +95,6 @@ PyObject *PyJPMethod_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);
 	self->m_Method = NULL;
 	self->m_Instance = NULL;
-	self->m_Context = NULL;
 	self->m_Doc = NULL;
 	self->m_Annotations = NULL;
 	self->m_CodeRep = NULL;
@@ -114,7 +113,6 @@ void PyJPMethod_dealloc(PyJPMethod *self)
 int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Instance);
-	Py_VISIT(self->m_Context);
 	Py_VISIT(self->m_Doc);
 	Py_VISIT(self->m_Annotations);
 	Py_VISIT(self->m_CodeRep);
@@ -124,7 +122,6 @@ int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 int PyJPMethod_clear(PyJPMethod *self)
 {
 	Py_CLEAR(self->m_Instance);
-	Py_CLEAR(self->m_Context);
 	Py_CLEAR(self->m_Doc);
 	Py_CLEAR(self->m_Annotations);
 	Py_CLEAR(self->m_CodeRep);
@@ -133,9 +130,8 @@ int PyJPMethod_clear(PyJPMethod *self)
 
 PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 {
-	JP_PY_TRY("PyJPMethod_get", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPMethod_get", self);
+	JPContext *context = PyJPModule_getContext();
 	if (obj == NULL)
 	{
 		Py_INCREF((PyObject*) self);
@@ -148,9 +144,8 @@ PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 
 PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPMethod_call", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPMethod_call", self);
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JP_TRACE(self->m_Method->getName());
 	if (self->m_Instance == NULL)
@@ -167,9 +162,8 @@ PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 
 PyObject *PyJPMethod_str(PyJPMethod *self)
 {
-	JP_PY_TRY("PyJPMethod_str", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPMethod_str", self);
+	PyJPModule_getContext();
 	stringstream sout;
 	sout << self->m_Method->getClass()->getCanonicalName() << "." << self->m_Method->getName();
 	return JPPyString::fromStringUTF8(sout.str()).keep();
@@ -178,9 +172,8 @@ PyObject *PyJPMethod_str(PyJPMethod *self)
 
 PyObject *PyJPMethod_repr(PyJPMethod *self)
 {
-	JP_PY_TRY("PyJPMethod_repr", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPMethod_repr", self);
+	PyJPModule_getContext();
 	stringstream ss;
 	if (self->m_Instance == NULL)
 		ss << "<java method `";
@@ -195,8 +188,7 @@ PyObject *PyJPMethod_repr(PyJPMethod *self)
 PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *context)
 {
 	JP_TRACE_IN("PyJPMethod_getSelf", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	PyJPModule_getContext();
 	if (self->m_Instance == NULL)
 		Py_RETURN_NONE;
 	Py_INCREF(self->m_Instance);
@@ -212,8 +204,7 @@ PyObject *PyJPMethod_getNone(PyJPMethod *self, void *context)
 PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
 {
 	JP_PY_TRY("PyJPMethod_getName", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	PyJPModule_getContext();
 	return JPPyString::fromStringUTF8(self->m_Method->getName(), false).keep();
 	JP_PY_CATCH(NULL);
 }
@@ -221,8 +212,7 @@ PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
 PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
 {
 	JP_PY_TRY("PyJPMethod_getQualName", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	PyJPModule_getContext();
 	stringstream str;
 	str << self->m_Method->getClass()->getCanonicalName() << '.'
 			<< self->m_Method->getName();
@@ -233,8 +223,7 @@ PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
 PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 {
 	JP_PY_TRY("PyJPMethod_getDoc", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JPContext *context = PyJPModule_getContext();
 	if (self->m_Doc)
 	{
 		Py_INCREF(self->m_Doc);
@@ -292,8 +281,7 @@ int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *context)
 PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 {
 	JP_PY_TRY("PyJPMethod_getAnnotations", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JPContext *context = PyJPModule_getContext();
 	if (self->m_Annotations)
 	{
 		Py_INCREF(self->m_Annotations);
@@ -349,8 +337,7 @@ int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject *obj, void *context)
 PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *context, const char *attr)
 {
 	JP_PY_TRY("PyJPMethod_getCodeAttr", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JPContext *context = PyJPModule_getContext();
 	if (self->m_CodeRep == NULL)
 	{
 		JPPyObject getCode(JPPyRef::_claim,
@@ -386,8 +373,8 @@ PyObject *PyJPMethod_getGlobals(PyJPMethod *self, void *context)
 
 PyObject *PyJPMethod_isBeanAccessor(PyJPMethod *self, PyObject *arg)
 {
-	JP_PY_TRY("PyJPMethod_isBeanAccessor", self)
-	JPContext *context = self->m_Context->m_Context;
+	JP_PY_TRY("PyJPMethod_isBeanAccessor", self);
+	JPContext *context = PyJPModule_getContext();
 	ASSERT_JVM_RUNNING(context);
 	return PyBool_FromLong(self->m_Method->isBeanAccessor());
 	JP_PY_CATCH(NULL);
@@ -395,8 +382,8 @@ PyObject *PyJPMethod_isBeanAccessor(PyJPMethod *self, PyObject *arg)
 
 PyObject *PyJPMethod_isBeanMutator(PyJPMethod *self, PyObject *arg)
 {
-	JP_PY_TRY("PyJPMethod_isBeanMutator", self)
-	JPContext *context = self->m_Context->m_Context;
+	JP_PY_TRY("PyJPMethod_isBeanMutator", self);
+	JPContext *context = PyJPModule_getContext();
 	ASSERT_JVM_RUNNING(context);
 	return PyBool_FromLong(self->m_Method->isBeanMutator());
 	JP_PY_CATCH(NULL);
@@ -404,9 +391,8 @@ PyObject *PyJPMethod_isBeanMutator(PyJPMethod *self, PyObject *arg)
 
 PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPMethod_matchReport", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JP_PY_TRY("PyJPMethod_matchReport", self);
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPPyObjectVector vargs(args);
 	string report = self->m_Method->matchReport(vargs);
@@ -417,8 +403,7 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 PyObject *PyJPMethod_dump(PyJPMethod *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMethod_dump", self)
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	string report = self->m_Method->dump();
 	return JPPyString::fromStringUTF8(report).keep();

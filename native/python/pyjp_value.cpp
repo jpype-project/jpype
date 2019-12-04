@@ -194,24 +194,16 @@ PyObject *PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs);
 void PyJPValue_dealloc(PyJPValue *self);
-int PyJPValue_clear(PyJPValue *self);
-int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg);
 int PyJPValue_setattro(PyObject *o, PyObject *attr_name, PyObject *v);
 PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs);
 PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs);
 PyObject *PyJPValue_str(PyObject *self);
 PyObject *PyJPValue_repr(PyObject *self);
-PyObject *PyJPValue_getJVM(PyObject *pyself, void *closure);
 
 //============================================================
 
 static struct PyMethodDef baseMethods[] = {
 	{"_isinstance", (PyCFunction) & PyJPValueBase_check, METH_VARARGS | METH_CLASS, ""},
-	{0}
-};
-
-static struct PyGetSetDef baseGetSet[] = {
-	{"__jvm__", (getter) PyJPValue_getJVM, NULL, "the Java context for this object"},
 	{0}
 };
 
@@ -222,7 +214,6 @@ static PyType_Slot baseSlots[] = {
 	{Py_tp_str,      (void*) PyJPValue_str},
 	{Py_tp_repr,     (void*) PyJPValue_repr},
 	{Py_tp_methods,  (void*) &baseMethods},
-	{Py_tp_getset,   (void*) &baseGetSet},
 	{0}
 };
 
@@ -239,19 +230,11 @@ static struct PyMethodDef valueMethods[] = {
 	{0}
 };
 
-static PyMemberDef valueMembers[] = {
-	{"__jvm__", T_OBJECT, offsetof(PyJPValue, m_Context), READONLY},
-	{0}
-};
-
 static PyType_Slot valueSlots[] = {
 	{ Py_tp_new,      (void*) PyJPValue_new},
 	{ Py_tp_init,     (void*) PyJPValue_init},
 	{ Py_tp_dealloc,  (void*) PyJPValue_dealloc},
-	{ Py_tp_traverse, (void*) PyJPValue_traverse},
-	{ Py_tp_clear,    (void*) PyJPValue_clear},
 	{ Py_tp_methods,  (void*) &valueMethods},
-	{ Py_tp_members,  (void*) &valueMembers},
 	{0}
 };
 
@@ -259,7 +242,7 @@ PyType_Spec PyJPValueSpec = {
 	"_jpype.PyJPValue",
 	sizeof (PyJPValue),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC ,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	valueSlots
 };
 
@@ -274,9 +257,6 @@ PyType_Spec PyJPValueExceptionSpec = {
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	valueExcSlots
 };
-
-
-//============================================================
 
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -297,7 +277,6 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
 	jvalue v;
 	self->m_Value = JPValue(NULL, v);
-	self->m_Context = NULL;
 	return (PyObject*) self;
 	JP_PY_CATCH(NULL);
 }
@@ -321,6 +300,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValue_init", self)
 	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext* context = PyJPModule_getContext();
 
 	// Check if we are already initialized.
 	if (self->m_Value.getClass() != 0)
@@ -335,9 +315,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 
 	// We must verify the context before we can access the class
 	// as the class may already be dead.
-	PyJPValue_GET_CONTEXT(obj.get());
 	JPClass *cls = ((PyJPClass*) obj.get())->m_Class;
-	PyJPContext *context = ((PyJPClass*) obj.get())->m_Value.m_Context;
 
 	JPPyObjectVector args(pyargs);
 	// DEBUG
@@ -350,13 +328,11 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 	JPValue value = cls->newInstance(args);
 
 	// If we succeed then we can hook up the context
-	self->m_Context = context;
 	if (context != NULL)
 	{
 		// Reference the object
 		JP_TRACE("Reference object", cls->getCanonicalName());
-		Py_INCREF(context);
-		JPJavaFrame frame(context->m_Context);
+		JPJavaFrame frame(context);
 		value.getValue().l = frame.NewGlobalRef(value.getValue().l);
 	}
 	self->m_Value = value;
@@ -371,48 +347,24 @@ void PyJPValue_dealloc(PyJPValue *self)
 	// fails in __init__, thus lots of inits
 	JPValue& value = self->m_Value;
 	JPClass *cls = value.getClass();
-	if (self->m_Context != NULL && cls != NULL)
+
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext* context = state->m_Context;
+	if (context->isRunning() && cls != NULL && !cls->isPrimitive())
 	{
-		JPContext *context = self->m_Context->m_Context;
-		if (context->isRunning() && !cls->isPrimitive())
-		{
-			// If the JVM has shutdown then we don't need to free the resource
-			// FIXME there is a problem with initializing the system twice.
-			// Once we shut down the cls type goes away so this will fail.  If
-			// we then reinitialize we will access this bad resource.  Not sure
-			// of an easy solution.
-			JP_TRACE("Dereference object", cls->getCanonicalName());
-			context->ReleaseGlobalRef(value.getValue().l);
-		}
+		// If the JVM has shutdown then we don't need to free the resource
+		// FIXME there is a problem with initializing the system twice.
+		// Once we shut down the cls type goes away so this will fail.  If
+		// we then reinitialize we will access this bad resource.  Not sure
+		// of an easy solution.
+		JP_TRACE("Dereference object", cls->getCanonicalName());
+		context->ReleaseGlobalRef(value.getValue().l);
 	}
 
 	PyTypeObject *type = Py_TYPE(self);
-	PyObject_GC_UnTrack(self);
-	PyJPValue_clear(self);
 	type->tp_free((PyObject*) self);
 	JP_PY_CATCH();
 }
-
-int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg)
-{
-	JP_PY_TRY("PyJPValue_traverse", self)
-	JP_TRACE("RefCount", self->ob_base.ob_refcnt);
-	Py_VISIT(self->m_Context);
-	return 0;
-	JP_PY_CATCH(-1);
-}
-
-int PyJPValue_clear(PyJPValue *self)
-{
-	JP_PY_TRY("PyJPValue_clear", self);
-	Py_CLEAR(self->m_Context);
-	return 0;
-	JP_PY_CATCH(-1);
-}
-
-//============================================================
-
-// Test code
 
 PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -432,8 +384,6 @@ PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(NULL);
 }
-
-// Test code
 
 PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
@@ -536,12 +486,13 @@ PyObject *PyJPValue_str(PyObject *pyself)
 	if (self == NULL)
 		JP_RAISE_TYPE_ERROR("Must be Java value");
 
+	JPContext* context = PyJPModule_getContext();
 	JPClass *cls = self->m_Value.getClass();
 	if (cls == NULL)
 		JP_RAISE_VALUE_ERROR("toString called with null class");
 
 	// Special handling for primitives.
-	if (self->m_Context == NULL)
+	if (context == NULL)
 	{
 		if (cls->isPrimitive())
 		{
@@ -550,8 +501,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		}
 		JP_RAISE_RUNTIME_ERROR("Null context");
 	}
-	JPContext *context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+
 	JPJavaFrame frame(context);
 	if (cls == context->_java_lang_String && Py_TYPE(self)->tp_dictoffset != 0)
 	{
@@ -589,11 +539,7 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 	if (self == NULL)
 		JP_RAISE_TYPE_ERROR("Must be Java value");
 
-	if (self->m_Context == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null context");
-
-	JPContext * context = self->m_Context->m_Context;
-	ASSERT_JVM_RUNNING(context);
+	JPContext* context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	stringstream sout;
 	sout << "<java value " << self->m_Value.getClass()->toString();
@@ -609,18 +555,6 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 
 	sout << ">";
 	return JPPyString::fromStringUTF8(sout.str()).keep();
-	JP_PY_CATCH(NULL);
-}
-
-PyObject *PyJPValue_getJVM(PyObject *pyself, void *closure)
-{
-	JP_PY_TRY("PyJPValue_getJVM", pyself)
-	// Make this work for both PyJPValueBase and PyJPValue
-	PyJPValue *self = PyJPValue_asValue(pyself);
-	if (self->m_Context == NULL)
-		Py_RETURN_NONE;
-	Py_INCREF(self->m_Context);
-	return (PyObject *) (self->m_Context);
 	JP_PY_CATCH(NULL);
 }
 

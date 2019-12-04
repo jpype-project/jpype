@@ -90,7 +90,7 @@ void PyJPArray_dealloc(PyJPArray *self)
 PyObject *PyJPArray_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_repr");
-	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	stringstream sout;
 
@@ -102,16 +102,16 @@ PyObject *PyJPArray_repr(PyJPArray *self)
 
 PyObject *PyJPArray_getArrayLength(PyJPArray *self, PyObject *arg)
 {
-	JP_PY_TRY("PyJPArray_len")
-	PyJPValue_GET_CONTEXT(self);
+	JP_PY_TRY("PyJPArray_len");
+	JPContext *context = PyJPModule_getContext();
 	return PyInt_FromLong(self->m_Array->getLength());
 	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 {
-	JP_PY_TRY("PyJPArray_getArrayItem")
-	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	JP_PY_TRY("PyJPArray_getArrayItem");
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (PyIndex_Check(arg))
 	{
@@ -145,8 +145,8 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 
 int PyJPArray_setArrayItem(PyJPArray *self, PyObject *item, PyObject* value)
 {
-	JP_PY_TRY("PyJPArray_setArrayItem")
-	JPContext *context = PyJPValue_GET_CONTEXT(self);
+	JP_PY_TRY("PyJPArray_setArrayItem");
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
 	if (PyIndex_Check(item))

@@ -64,9 +64,8 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JPPyTuple args(JPPyTuple::newTuple(2));
-		args.setItem(0, (PyObject*) frame->getContext()->getHost());
-		args.setItem(1, (PyObject*) pyobj);
+		JPPyTuple args(JPPyTuple::newTuple(1));
+		args.setItem(0, (PyObject*) pyobj);
 		JPPyObject ret = method_.call(args.get(), NULL);
 		JPValue *value = JPPythonEnv::getJavaValue(ret.get());
 		if (value == NULL)

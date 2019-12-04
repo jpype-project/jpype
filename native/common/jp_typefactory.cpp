@@ -17,17 +17,6 @@
 #include <jpype.h>
 #include <jp_primitive_common.h>
 
-// These are global as they are not connected to a JVM.
-JPVoidType *_void = new JPVoidType();
-JPByteType *_byte = new JPByteType();
-JPBooleanType *_boolean = new JPBooleanType();
-JPCharType *_char = new JPCharType();
-JPShortType *_short = new JPShortType();
-JPIntType *_int = new JPIntType();
-JPLongType *_long = new JPLongType();
-JPFloatType *_float = new JPFloatType();
-JPDoubleType *_double = new JPDoubleType();
-
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
 	printf("JPTypeFactory rethrow\n");
@@ -256,23 +245,50 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
 	if (cname == "void")
-		return (jlong) (context->_void = _void);
+	{
+		context->_void->setClass(context, cls);
+		return (jlong) (context->_void);
+	}
 	if (cname == "byte")
-		return (jlong) (context->_byte = _byte);
+	{
+		context->_byte->setClass(context, cls);
+		return (jlong) (context->_byte);
+	}
 	if (cname == "boolean")
-		return (jlong) (context->_boolean = _boolean);
+	{
+		context->_boolean->setClass(context, cls);
+		return (jlong) (context->_boolean);
+	}
 	if (cname == "char")
-		return (jlong) (context->_char = _char);
+	{
+		context->_char->setClass(context, cls);
+		return (jlong) (context->_char);
+	}
 	if (cname == "short")
-		return (jlong) (context->_short = _short);
+	{
+		context->_short->setClass(context, cls);
+		return (jlong) (context->_short);
+	}
 	if (cname == "int")
-		return (jlong) (context->_int = _int);
+	{
+		context->_int->setClass(context, cls);
+		return (jlong) (context->_int);
+	}
 	if (cname == "long")
-		return (jlong) (context->_long = _long);
+	{
+		context->_long->setClass(context, cls);
+		return (jlong) (context->_long);
+	}
 	if (cname == "float")
-		return (jlong) (context->_float = _float);
+	{
+		context->_float->setClass(context, cls);
+		return (jlong) (context->_float);
+	}
 	if (cname == "double")
-		return (jlong) (context->_double = _double);
+	{
+		context->_double->setClass(context, cls);
+		return (jlong) (context->_double);
+	}
 	return 0;
 	JP_JAVA_CATCH(0);
 }

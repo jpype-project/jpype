@@ -219,16 +219,6 @@ public:
 	jmethodID m_FloatValueID;
 	jmethodID m_DoubleValueID;
 
-	void setHost(PyObject* host)
-	{
-		m_Host = host;
-	}
-
-	PyObject* getHost()
-	{
-		return m_Host;
-	}
-
 private:
 
 	void loadEntryPoints(const string& path);
@@ -260,7 +250,6 @@ private:
 
 	bool m_IsShutdown;
 	bool m_IsInitialized;
-	PyObject *m_Host;
 	bool m_ConvertStrings;
 } ;
 

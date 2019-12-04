@@ -60,6 +60,7 @@ PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name);
  */
 typedef struct
 {
+	JPContext* m_Context;
 	PyObject* PyJPArray_Type;
 	PyObject* PyJPContext_Type;
 	PyObject *PyJPClass_Type;
@@ -76,19 +77,9 @@ typedef struct
 } PyJPModuleState;
 
 extern PyModuleDef PyJPModuleDef;
+extern PyJPModuleState *PyJPModuleState_global;
 
 #define PyJPModule_global PyState_FindModule(&PyJPModuleDef)
-#define PyJPModuleState(o) ((PyJPModuleState *)PyModule_GetState(o))
-#define PyJPModuleState_global ((PyJPModuleState *)PyModule_GetState(PyJPModule_global))
-
-struct PyJPContext
-{
-	PyObject_HEAD
-	JPContext *m_Context;
-	PyObject *m_Dict;
-	PyObject *m_Classes;
-} ;
-PyObject *PyJPContext_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 
 struct PyJPClassHints
 {
@@ -100,7 +91,6 @@ struct PyJPValue
 {
 	PyObject_HEAD
 	JPValue m_Value;
-	PyJPContext *m_Context;
 } ;
 
 /** This is a wrapper for accessing the array method.  It is structured to
@@ -122,7 +112,6 @@ struct PyJPClass
 struct PyJPMethod
 {
 	PyFunctionObject func;
-	PyJPContext *m_Context;
 	JPMethodDispatch* m_Method;
 	PyObject* m_Instance;
 	PyObject* m_Doc;
@@ -142,7 +131,6 @@ struct PyJPMonitor
 {
 	PyObject_HEAD
 	JPMonitor *m_Monitor;
-	PyJPContext *m_Context;
 } ;
 
 struct PyJPProxy
@@ -150,13 +138,12 @@ struct PyJPProxy
 	PyObject_HEAD
 	JPProxy *m_Proxy;
 	PyObject *m_Target;
-	PyJPContext *m_Context;
 } ;
 
 
 
 PyJPValue* PyJPValue_asValue(PyObject *self);
-PyObject *PyJPContext_getClass(PyJPContext *self, PyObject *args, PyObject *kwargs);
+PyObject *PyJPModule_getClass(PyObject *module, PyObject *args, PyObject *kwargs);
 
 extern const char *__javavalue__;
 extern const char *__javaproxy__;
@@ -168,17 +155,13 @@ extern const char *__javaclass__;
 
 // C++ methods
 
-inline JPContext* PyJPValue_getContext(PyJPValue* value)
+inline JPContext* PyJPModule_getContext()
 {
-	JPContext *context = NULL;
-	if (value->m_Context != NULL)
-		context = value->m_Context->m_Context;
-	if (context == NULL)
-		return NULL;
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext* context = state->m_Context;
 	ASSERT_JVM_RUNNING(context);
 	return context;
 }
-#define PyJPValue_GET_CONTEXT(X) PyJPValue_getContext((PyJPValue*)X)
 
 JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value);
 JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value);
