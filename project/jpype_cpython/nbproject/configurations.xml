@@ -102,7 +102,6 @@
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
-        <itemPath>../../native/python/pyjp_context.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
         <itemPath>../../native/python/pyjp_module.cpp</itemPath>
@@ -509,11 +508,6 @@
       <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../../native/python/pyjp_classhints.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/pyjp_context.cpp"
             ex="false"
             tool="1"
             flavor2="0">

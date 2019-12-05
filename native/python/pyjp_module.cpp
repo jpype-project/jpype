@@ -117,7 +117,6 @@ extern PyType_Spec PyJPMonitorSpec;
 extern PyType_Spec PyJPClassMetaSpec;
 extern PyType_Spec PyJPValueBaseSpec;
 extern PyType_Spec PyJPValueSpec;
-extern PyType_Spec PyJPContextSpec;
 extern PyType_Spec PyJPClassHintsSpec;
 extern PyType_Spec PyJPValueExceptionSpec;
 
@@ -200,11 +199,6 @@ PyMODINIT_FUNC PyInit__jpype()
 	state->PyJPValueFloat_Type = PyObject_Call((PyObject*) & PyType_Type, floatArgs.get(), NULL);
 	PyModule_AddObject(module, "PyJPValueFloat", state->PyJPValueFloat_Type);
 	JP_PY_CHECK();
-
-	state->PyJPContext_Type = PyType_FromSpec(&PyJPContextSpec);
-	PyModule_AddObject(module, "PyJPContext", state->PyJPContext_Type);
-	JP_PY_CHECK();
-	PyModule_AddObject(module, "_contexts", PyList_New(0));
 
 	state->PyJPClassHints_Type = PyType_FromSpec(&PyJPClassHintsSpec);
 	PyModule_AddObject(module, "PyJPClassHints", state->PyJPClassHints_Type);
@@ -352,7 +346,7 @@ PyObject *PyJPModule_isStarted(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_attachThread(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPContext_attachThread", self);
+	JP_PY_TRY("PyJPModule_attachThread", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext *context = state->m_Context;
 	ASSERT_JVM_RUNNING(context);
@@ -361,9 +355,9 @@ PyObject *PyJPModule_attachThread(PyObject *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPContext_attachThreadAsDaemon(PyObject *self, PyObject *args)
+PyObject *PyJPModule_attachThreadAsDaemon(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPContext_attachThreadAsDaemon", self)
+	JP_PY_TRY("PyJPModule_attachThreadAsDaemon", self)
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext *context = state->m_Context;
 	ASSERT_JVM_RUNNING(context);
@@ -372,7 +366,7 @@ PyObject *PyJPContext_attachThreadAsDaemon(PyObject *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPContext_detachThread(PyObject *self, PyObject *args)
+PyObject *PyJPModule_detachThread(PyObject *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_detachThread", self)
 	PyJPModuleState *state = PyJPModuleState_global;
@@ -382,7 +376,7 @@ PyObject *PyJPContext_detachThread(PyObject *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPContext_isThreadAttached(PyObject *self, PyObject *args)
+PyObject *PyJPModule_isThreadAttached(PyObject *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_isThreadAttached", self)
 	PyJPModuleState *state = PyJPModuleState_global;
@@ -392,7 +386,7 @@ PyObject *PyJPContext_isThreadAttached(PyObject *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPContext_convertToDirectByteBuffer(PyObject *self, PyObject *args)
+PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer", self)
 	PyJPModuleState *state = PyJPModuleState_global;

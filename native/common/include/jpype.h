@@ -207,14 +207,4 @@ public:
 #include "jp_proxy.h"
 #include "jp_monitor.h"
 
-extern JPVoidType *_void;
-extern JPByteType *_byte;
-extern JPBooleanType *_boolean;
-extern JPCharType *_char;
-extern JPShortType *_short;
-extern JPIntType *_int;
-extern JPLongType *_long;
-extern JPFloatType *_float;
-extern JPDoubleType *_double;
-
 #endif // _JPYPE_H_

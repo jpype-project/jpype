@@ -36,13 +36,9 @@ static PyGetSetDef fieldGetSets[] = {
 };
 
 void PyJPValue_dealloc(PyJPValue *self);
-int PyJPValue_clear(PyJPValue *self);
-int PyJPValue_traverse(PyJPValue *self, visitproc visit, void *arg);
 
 static PyType_Slot fieldSlots[] = {
 	{ Py_tp_dealloc,   (void*) PyJPValue_dealloc},
-	{ Py_tp_traverse,  (void*) PyJPValue_traverse},
-	{ Py_tp_clear,     (void*) PyJPValue_clear},
 	{ Py_tp_descr_get, (void*) PyJPField_get},
 	{ Py_tp_descr_set, (void*) PyJPField_set},
 	{ Py_tp_repr,      (void*) &PyJPField_repr},
@@ -54,7 +50,7 @@ PyType_Spec PyJPFieldSpec = {
 	"_jpype.PyJPField",
 	sizeof (PyJPField),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	fieldSlots
 };
 
