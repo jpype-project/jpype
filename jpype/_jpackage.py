@@ -64,10 +64,9 @@ class JPackage(object):
 
     """
 
-    def __init__(self, name, strict=False, pattern=None, jvm=_jpype._jvm):
+    def __init__(self, name, strict=False, pattern=None):
         self.__name = name
         self.__pattern = pattern
-        self.__jvm = jvm
         if strict:
             self.__pattern = re.compile('[_a-z][_a-z0-9]')
 
@@ -84,7 +83,7 @@ class JPackage(object):
 
         # perhaps it is a class?
         subname = "{0}.{1}".format(self.__name, n)
-        if not self.__jvm.isStarted():
+        if not _jpype.isStarted():
             if n.startswith('_'):
                 raise ex1
             import warnings

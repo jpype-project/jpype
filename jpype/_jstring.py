@@ -32,9 +32,10 @@ class JString(object):
     using ``isinstance(obj, JString)``.
 
     """
-    __jvm__ = None
     def __new__(cls, *args, **kwargs):
-        return cls.__jvm__._java_lang_String.__new__(cls, *args)
+        return _jpype._java_lang_String.__new__(cls, *args)
+
+_jpype.JString = JString
 
 @_jcustomizer.JImplementationFor("java.lang.String")
 class _JString(object):

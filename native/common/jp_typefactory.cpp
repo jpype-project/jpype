@@ -246,47 +246,47 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 	JP_TRACE(cname);
 	if (cname == "void")
 	{
-		context->_void->setClass(context, cls);
+		context->_void->setClass(frame, cls);
 		return (jlong) (context->_void);
 	}
 	if (cname == "byte")
 	{
-		context->_byte->setClass(context, cls);
+		context->_byte->setClass(frame, cls);
 		return (jlong) (context->_byte);
 	}
 	if (cname == "boolean")
 	{
-		context->_boolean->setClass(context, cls);
+		context->_boolean->setClass(frame, cls);
 		return (jlong) (context->_boolean);
 	}
 	if (cname == "char")
 	{
-		context->_char->setClass(context, cls);
+		context->_char->setClass(frame, cls);
 		return (jlong) (context->_char);
 	}
 	if (cname == "short")
 	{
-		context->_short->setClass(context, cls);
+		context->_short->setClass(frame, cls);
 		return (jlong) (context->_short);
 	}
 	if (cname == "int")
 	{
-		context->_int->setClass(context, cls);
+		context->_int->setClass(frame, cls);
 		return (jlong) (context->_int);
 	}
 	if (cname == "long")
 	{
-		context->_long->setClass(context, cls);
+		context->_long->setClass(frame, cls);
 		return (jlong) (context->_long);
 	}
 	if (cname == "float")
 	{
-		context->_float->setClass(context, cls);
+		context->_float->setClass(frame, cls);
 		return (jlong) (context->_float);
 	}
 	if (cname == "double")
 	{
-		context->_double->setClass(context, cls);
+		context->_double->setClass(frame, cls);
 		return (jlong) (context->_double);
 	}
 	return 0;

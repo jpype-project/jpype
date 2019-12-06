@@ -54,7 +54,7 @@ class _JPrimitiveClass(_jclass.JClass):
 class _JPrimitive(object):
     def init(self, v):
         if v is not None:
-            jc = self.__jvm__._primitive_types[self.__class__.__name__]
+            jc = _jpype._primitive_types[self.__class__.__name__]
             self._pyv = v
             self.__javavalue__ = _jpype.PyJPValue(jc, v)
         else:

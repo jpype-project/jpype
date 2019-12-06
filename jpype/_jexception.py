@@ -42,16 +42,14 @@ class JException(Exception):
     ``java.lang.Throwable``.
 
     """
-    __jvm__ = None
-
     def __new__(cls, *args, **kwargs):
-        if cls == JException or cls == cls.__jvm__.JException: 
+        if cls == JException:
             import warnings
             if not hasattr(JException, '_warned'):
                 warnings.warn("Using JException to construct an exception type is deprecated.",
                               category=DeprecationWarning, stacklevel=2)
                 JException._warned = True
-            return _JExceptionClassFactory(cls.__jvm__, *args, **kwargs)
+            return _JExceptionClassFactory(*args, **kwargs)
         return super(JException, cls).__new__(cls)
 
     def __str__(self):
@@ -90,15 +88,14 @@ class JException(Exception):
         return (str(self.getMessage()), cause,)
 
 
-#JException = _jobject.defineJObjectFactory("JException", None,
-#                                           _JException, bases=(Exception, _jobject.JObject))
+_jpype.JException = JException
 #_jcustomizer.registerClassBase('java.lang.Throwable', JException)
 
 
-def _JExceptionClassFactory(jvm, tp):
+def _JExceptionClassFactory(tp):
     if isinstance(tp, (str, _unicode)):
-        return jvm.JClass(tp)
+        return _jpype.JClass(tp)
     if isinstance(tp, _jclass.JClass):
-        return jvm.JClass(tp.__javaclass__)
+        return _jpype.JClass(tp.__javaclass__)
     raise TypeError(
         "JException requires a string or java throwable type, got %s." % tp)

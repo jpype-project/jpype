@@ -131,7 +131,7 @@ int PyJPMethod_clear(PyJPMethod *self)
 PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPMethod_get", self);
-	JPContext *context = PyJPModule_getContext();
+	PyJPModule_getContext();
 	if (obj == NULL)
 	{
 		Py_INCREF((PyObject*) self);
@@ -337,7 +337,7 @@ int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject *obj, void *context)
 PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *context, const char *attr)
 {
 	JP_PY_TRY("PyJPMethod_getCodeAttr", self)
-	JPContext *context = PyJPModule_getContext();
+	PyJPModule_getContext();
 	if (self->m_CodeRep == NULL)
 	{
 		JPPyObject getCode(JPPyRef::_claim,

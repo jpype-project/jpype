@@ -73,19 +73,17 @@ class JClass(_jpype.PyJPClassMeta):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
-    __jvm__ = None
-
     def __new__(cls, *args, loader=None, initialize=True):
         if len(args) == 1:
             jc = args[0]
             if loader and isinstance(jc, str):
-                jc = cls.__jvm__._java_lang_Class.forName(arg, initialize, loader)
+                jc = _jpype._java_lang_Class.forName(arg, initialize, loader)
             elif isinstance(jc, str):
-                jc = _jpype.PyJPClass(jvm, arg)
+                jc = _jpype.PyJPClass(arg)
             if javaClass is None:
-                raise jvm._java_lang_RuntimeException(
+                raise _jpype._java_lang_RuntimeException(
                     "Java class '%s' not found" % name)
-            return cls.__jvm__._getClass(jc)
+            return _jpype._getClass(jc)
         return super(JClass, cls).__new__(cls, *args)
 
     def mro(cls):
@@ -127,7 +125,7 @@ class JClass(_jpype.PyJPClassMeta):
 
     @property
     def class_(self):
-        return self.__jvm__.JObject(self.__javaclass__)
+        return _jpype.JObject(self.__javaclass__)
 
 
 class _JInterfaceMeta(type):
@@ -165,7 +163,6 @@ def _JClassFactory(jc):
     The wrapper is a Python class containing:
       - private member ``__javaclass__`` pointing to a java.lang.Class
         instance.
-      - private member ``__jvm__`` pointing to the Java context
       - member and static methods
       - member and static fields
       - Python wrappers for inner classes
@@ -175,14 +172,12 @@ def _JClassFactory(jc):
 
     # Set up bases
     name = jc.__name__
-    jvm = jc.__jvm__
     bases = list(jv._bases)
 
     # Set up members
     members = {
         "__javaclass__": jc,
         "__name__": name,
-        "__jvm__": jvm,
     }
     for i in jc._fields:
         members[pysafe(i.__name__)] = i
@@ -191,8 +186,7 @@ def _JClassFactory(jc):
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = jvm.JClass(name, tuple(bases), members)
-    jvm._classes[name] = res
+    res = _jpype.JClass(name, tuple(bases), members)
 
     # Post customizers
     _jcustomizer._applyInitializer(res)
@@ -200,11 +194,11 @@ def _JClassFactory(jc):
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
-    if jvm._java_lang_Class:
+    if _jpype._java_lang_Class:
         for cls in res.class_.getDeclaredClasses():
             if cls.getModifiers() & 1 == 0:
                 continue
-            cls2 = jvm.JClass(cls)
+            cls2 = _jpype.JClass(cls)
             type.__setattr__(res, str(cls.getSimpleName()), cls2)
 
     return res

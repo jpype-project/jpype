@@ -112,11 +112,9 @@ class JArray(_jpype.PyJPArray):
 
 
     """
-    __jvm__ = None
-
     def __new__(cls, *args, **kwargs):
-        if cls == cls.__jvm__.JArray:
-            return _JArrayNewClass(cls.__jvm__, *args, **kwargs)
+        if cls == JArray:
+            return _JArrayNewClass(*args, **kwargs)
         return super(JArray, cls).__new__(cls, *args, **kwargs)
 
     def __str__(self):
@@ -167,10 +165,12 @@ class JArray(_jpype.PyJPArray):
         Returns:
             A shallow copy of the array.
         """
-        return self.__jvm__.JClass("java.util.Arrays").copyOf(self, len(self))
+        return _jpype.JClass("java.util.Arrays").copyOf(self, len(self))
+
+_jpype.JArray = JArray
 
 
-def _toJavaClass(jvm, tp):
+def _toJavaClass(tp):
     """(internal) Converts a class type in python into a internal java class.
 
     Used mainly to support JArray.
@@ -182,7 +182,7 @@ def _toJavaClass(jvm, tp):
     """
     # if it a string than we lookup the class by name.
     if isinstance(tp, str):
-        return _jpype.PyJPClass(jvm, tp)
+        return _jpype.PyJPClass(tp)
 
     # if is a java.lang.Class instance, then no coversion required
     if isinstance(tp, _jpype.PyJPClass):
@@ -190,7 +190,7 @@ def _toJavaClass(jvm, tp):
 
     # Okay then it must be a type
     try:
-        return jvm._type_classes[tp].__javaclass__
+        return _jpype._type_classes[tp].__javaclass__
     except KeyError:
         pass
 
@@ -203,19 +203,19 @@ def _toJavaClass(jvm, tp):
     raise TypeError("Unable to find class for '%s'" % tp.__name__)
 
 
-def _JArrayNewClass(jvm, cls, ndims=1):
+def _JArrayNewClass(cls, ndims=1):
     """ Convert a array class description into a JArray class."""
-    jc = _jclass._toJavaClass(jvm, cls)
+    jc = _jclass._toJavaClass(cls)
 
     if jc.isPrimitive():
         # primitives need special handling
         typename = ('['*ndims)+_JARRAY_TYPENAME_MAP[jc.getCanonicalName()]
     elif jc.isArray():
-        typename = ('['*ndims)+str(jvm.JObject(jc).getName())
+        typename = ('['*ndims)+str(_jpype.JObject(jc).getName())
     else:
-        typename = ('['*ndims)+'L'+str(jvm.JObject(jc).getName())+';'
+        typename = ('['*ndims)+'L'+str(_jpype.JObject(jc).getName())+';'
 
-    return jvm.JClass(typename)
+    return _jclass.JClass(typename)
 
 
 # FIXME JavaArrayClass likely should be exposed for isinstance, issubtype

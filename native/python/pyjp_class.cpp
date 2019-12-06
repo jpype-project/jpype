@@ -117,9 +117,8 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 		return 0;
 
 	PyObject *arg0;
-	PyObject *jvm = 0;
 
-	if (!PyArg_ParseTuple(args, "O!O", state->PyJPContext_Type, &jvm, &arg0))
+	if (!PyArg_ParseTuple(args, "O", &arg0))
 	{
 		return -1;
 	}

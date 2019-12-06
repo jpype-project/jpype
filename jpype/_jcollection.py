@@ -117,7 +117,7 @@ class _JList(object):
         if isinstance(ndx, slice):
             self[ndx.start:ndx.stop].clear()
         elif hasattr(ndx, '__index__'):
-            return self.remove(self.__jvm__.JInt(ndx))
+            return self.remove(_types.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
 

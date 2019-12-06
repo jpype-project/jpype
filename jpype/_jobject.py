@@ -69,10 +69,9 @@ class JObject(_jpype.PyJPValue):
          the requested type is not a Java class or primitive.
 
     """
-    __jvm__ = None
     def __new__(cls, *args, **kwargs):
          # Called from super
-        if cls != cls.__jvm__.JObject:
+        if cls != JObject:
             # Control will pass to __init__
             return super(JObject, cls).__new__(cls)
 
@@ -81,7 +80,7 @@ class JObject(_jpype.PyJPValue):
             args = [None]
 
         # Called to create or cast.
-        cls = _JObjectFactory(cls.__jvm__, *args, **kwargs)
+        cls = _JObjectFactory(*args, **kwargs)
         return cls.__javaclass__._cast(*args)
 
     def __setattr__(self, name, value):
@@ -112,11 +111,10 @@ class JObject(_jpype.PyJPValue):
 
 
 # Post load dependencies
-_jclass._JObject = JObject
-_jcustomizer._JObject = JObject
+_jpype.JObject = JObject
 
 
-def _getDefaultAJavaObject(jvm, tp):
+def _getDefaultAJavaObject(tp):
     """ Determine the type of the object based the type of a value.
         
         Python primitives - lookup the type in the table
@@ -127,16 +125,16 @@ def _getDefaultAJavaObject(jvm, tp):
     """
     # handle Python types and Java primitives
     try:
-        return jvm._object_classes[tp]
+        return _jpype._object_classes[tp]
     except KeyError:
         pass
 
     if issubclass(obj, _jpype.PyJPClass):
-        return jvm._java_lang_Class
+        return _jpype._java_lang_Class
   
     # JObject(JClass("str"))
     if issubclass(obj, _jpype.PyJPClassMeta):
-        return jvm._java_lang_Class
+        return _jpype._java_lang_Class
 
     if issubclass(obj, _jpype.PyJPValueBase):
         return obj.__javaclass__
@@ -145,7 +143,7 @@ def _getDefaultAJavaObject(jvm, tp):
         "Unable to determine the default type of `{0}`".format(obj.__class__))
 
 
-def _JObjectFactory(jvm, v=None, tp=None):
+def _JObjectFactory(v=None, tp=None):
     """ Creates a Java object.
 
     If not specified type is determined based on the object.
@@ -153,7 +151,7 @@ def _JObjectFactory(jvm, v=None, tp=None):
     """
     if tp is None:
         # Automatically determine based on the value
-        tp = _getDefaultAJavaObject(jvm, type(v))
+        tp = _getDefaultAJavaObject(type(v))
 
     # Java primitive conversion to boxed type
     if isinstance(tp, _jpype._JPrimitive):

@@ -62,7 +62,6 @@ typedef struct
 {
 	JPContext* m_Context;
 	PyObject* PyJPArray_Type;
-	PyObject* PyJPContext_Type;
 	PyObject *PyJPClass_Type;
 	PyObject *PyJPClassHints_Type;
 	PyObject *PyJPClassMeta_Type;
@@ -143,7 +142,7 @@ struct PyJPProxy
 
 
 PyJPValue* PyJPValue_asValue(PyObject *self);
-PyObject *PyJPModule_getClass(PyObject *module, PyObject *args, PyObject *kwargs);
+PyObject *PyJPModule_getClass(PyObject *module, PyObject *args);
 
 extern const char *__javavalue__;
 extern const char *__javaproxy__;

@@ -39,10 +39,10 @@ public:
 
 	virtual string asString(jvalue v) = 0;
 
-	void setClass(JPContext* context, jclass o)
+	void setClass(JPJavaFrame& frame, jclass o)
 	{
-		m_Context = context;
-		m_Class = JPClassRef(context, o);
+		m_Context = frame.getContext();
+		m_Class = JPClassRef(frame, o);
 	}
 
 } ;

@@ -428,7 +428,7 @@ PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 
 // Call from Python
 
-PyObject *PyJPModule_getClass(PyObject *self, PyObject *args, PyObject *kwargs)
+PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_getClass", self)
 	PyJPModuleState *state = PyJPModuleState_global;
@@ -453,8 +453,9 @@ PyObject *PyJPModule_getClass(PyObject *self, PyObject *args, PyObject *kwargs)
 	if (factory.isNull())
 		JP_RAISE_RUNTIME_ERROR("Factory not set");
 
+	printf("Factory %p %s\n", factory.get(), factory.get()->ob_type->tp_name);
 	// Call the factory
-	JPPyObject out = factory.call(args, kwargs);
+	JPPyObject out = factory.call(args, NULL);
 
 	// Store caches
 	javaClass ->setHost(out.get());
