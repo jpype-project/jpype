@@ -39,9 +39,7 @@ __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
-    'JVMNotFoundException', 'JVMNotSupportedException',
-    'JBoolean', 'JByte', 'JChar', 'JShort',
-    'JInt', 'JLong', 'JFloat', 'JDouble']
+    'JVMNotFoundException', 'JVMNotSupportedException',]
 
 if _sys.version_info < (3,):
     raise ImportException("Python 2 is not supported")
@@ -177,16 +175,6 @@ def getDefaultJVMPath():
 @deprecated("getDefaultJVMPath")
 def get_default_jvm_path(*args, **kwargs):
     return getDefaultJVMPath(*args, **kwargs)
-
-# Primitive types are their own special classes as they do not tie to the JVM
-JBoolean = _jtypes._JPrimitiveClass("boolean", 'Z', int)
-JByte = _jtypes._JPrimitiveClass("byte", 'B', int)
-JChar = _jtypes._JPrimitiveClass("char", 'C', int)
-JShort = _jtypes._JPrimitiveClass("short", 'S', int)
-JInt = _jtypes._JPrimitiveClass("int", 'I', int)
-JLong = _jtypes._JPrimitiveClass("long", 'J', int)
-JFloat = _jtypes._JPrimitiveClass("float", 'F', float)
-JDouble = _jtypes._JPrimitiveClass("double", 'D', float)
 
 # Create factories for these items
 JString = _jstring.JString

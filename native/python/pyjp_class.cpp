@@ -111,8 +111,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init", self)
-	PyJPModuleState *state = PyJPModuleState_global;
-	// Check if we are already initialized.
+			// Check if we are already initialized.
 	if ((PyJPValue*) self->m_Class != 0)
 		return 0;
 

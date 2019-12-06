@@ -32,7 +32,7 @@ Example:
 
 """
 # import package to get minimum types needed to use module.
-from ._core import *
+from ._jtypes import *
 from ._jclass import *
 from ._jobject import *
 from ._jarray import *

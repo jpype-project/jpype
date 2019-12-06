@@ -21,7 +21,7 @@ from . import _jclass
 from . import _jobject
 from . import _jcustomizer
 
-
+__all__ = ['JBoolean', 'JByte', 'JChar', 'JShort', 'JInt', 'JLong', 'JFloat', 'JDouble' ]
 
 # FIXME python2 and python3 get different conversions on int and long.  Likely we should
 # unify to got the the same types regardless of version.
@@ -44,14 +44,14 @@ class _JPrimitiveClass(_jclass.JClass):
     """
     def __new__(cls, name, code, basetype):
         members = {
-            "__init__": _JPrimitive.init,
+            "__init__": JPrimitive.init,
             "__setattr__": object.__setattr__,
             "__jcode__": code,
         }
-        return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, _JPrimitive), members)
+        return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, JPrimitive), members)
 
 
-class _JPrimitive(object):
+class JPrimitive(object):
     def init(self, v):
         if v is not None:
             jc = _jpype._primitive_types[self.__class__.__name__]
@@ -93,3 +93,17 @@ class _JPrimitive(object):
         if self._pyv < -_maxDouble or self._pyv > _maxDouble:
             raise OverFlowError("Cannot convert to double value")
         return float(self._pyv)
+
+_jpype.JPrimitive = JPrimitive
+
+# Primitive types are their own special classes as they do not tie to the JVM
+JBoolean = _JPrimitiveClass("boolean", 'Z', int)
+JByte = _JPrimitiveClass("byte", 'B', int)
+JChar = _JPrimitiveClass("char", 'C', int)
+JShort = _JPrimitiveClass("short", 'S', int)
+JInt = _JPrimitiveClass("int", 'I', int)
+JLong = _JPrimitiveClass("long", 'J', int)
+JFloat = _JPrimitiveClass("float", 'F', float)
+JDouble = _JPrimitiveClass("double", 'D', float)
+
+

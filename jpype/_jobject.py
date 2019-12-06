@@ -129,18 +129,18 @@ def _getDefaultAJavaObject(tp):
     except KeyError:
         pass
 
-    if issubclass(obj, _jpype.PyJPClass):
+    if issubclass(tp, _jpype.PyJPClass):
         return _jpype._java_lang_Class
   
     # JObject(JClass("str"))
-    if issubclass(obj, _jpype.PyJPClassMeta):
+    if issubclass(tp, _jpype.PyJPClassMeta):
         return _jpype._java_lang_Class
 
-    if issubclass(obj, _jpype.PyJPValueBase):
+    if issubclass(tp, _jpype.PyJPValueBase):
         return obj.__javaclass__
 
     raise TypeError(
-        "Unable to determine the default type of `{0}`".format(obj.__class__))
+        "Unable to determine the default type of `{0}`".format(tp.__class__))
 
 
 def _JObjectFactory(v=None, tp=None):
@@ -154,7 +154,7 @@ def _JObjectFactory(v=None, tp=None):
         tp = _getDefaultAJavaObject(type(v))
 
     # Java primitive conversion to boxed type
-    if isinstance(tp, _jpype._JPrimitive):
+    if isinstance(tp, _jpype.JPrimitive):
         return _getDefaultAJavaObject(type(tp))(v)
 
     # Given a Already an object

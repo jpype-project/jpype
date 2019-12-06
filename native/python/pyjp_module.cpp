@@ -267,7 +267,7 @@ static void PyJPModule_free( void *arg)
 {
 	JP_PY_TRY("PyJPModule_free");
 	PyJPModuleState *state = PyJPModuleState_global;
-	if (state->m_Context->isRunning()) : q
+	if (state->m_Context->isRunning())
 
 		state->m_Context->shutdownJVM();
 
