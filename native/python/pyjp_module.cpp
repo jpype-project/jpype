@@ -266,6 +266,11 @@ static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg)
 static void PyJPModule_free( void *arg)
 {
 	JP_PY_TRY("PyJPModule_free");
+	PyJPModuleState *state = PyJPModuleState_global;
+	if (state->m_Context->isRunning()) : q
+
+		state->m_Context->shutdownJVM();
+
 	JP_PY_CATCH();
 }
 
@@ -453,7 +458,6 @@ PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 	if (factory.isNull())
 		JP_RAISE_RUNTIME_ERROR("Factory not set");
 
-	printf("Factory %p %s\n", factory.get(), factory.get()->ob_type->tp_name);
 	// Call the factory
 	JPPyObject out = factory.call(args, NULL);
 

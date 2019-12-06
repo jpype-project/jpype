@@ -79,8 +79,8 @@ class JClass(_jpype.PyJPClassMeta):
             if loader and isinstance(jc, str):
                 jc = _jpype._java_lang_Class.forName(arg, initialize, loader)
             elif isinstance(jc, str):
-                jc = _jpype.PyJPClass(arg)
-            if javaClass is None:
+                jc = _jpype.PyJPClass(*args)
+            if jc is None:
                 raise _jpype._java_lang_RuntimeException(
                     "Java class '%s' not found" % name)
             return _jpype._getClass(jc)
@@ -172,17 +172,17 @@ def _JClassFactory(jc):
 
     # Set up bases
     name = jc.__name__
-    bases = list(jv._bases)
+    bases = list(jc._bases)
 
     # Set up members
     members = {
         "__javaclass__": jc,
         "__name__": name,
     }
-    for i in jc._fields:
-        members[pysafe(i.__name__)] = i
-    for jm in jc._methods:
-        members[pysafe(jm.__name__)] = jm
+    for field in jc._fields:
+        members[pysafe(field.__name__)] = field
+    for method in jc._methods:
+        members[pysafe(method.__name__)] = method
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
@@ -283,6 +283,6 @@ def _jclassDoc(cls):
 
     return "\n".join(out)
 
-
+_jpype.JClass = JClass
 _jpype._JClassFactory = _JClassFactory
 _jpype._jclassDoc = _jclassDoc

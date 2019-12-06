@@ -310,23 +310,23 @@ please file a ticket with the developer.
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
-    _jpype._startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
+    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
 
-    _jpype._java_lang_Object = JClass("java.lang.Object")
-    _jpype._java_lang_Class = JClass("java.lang.Class")
-    _jpype._java_lang_String = JClass("java.lang.String")
+    _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
+    _jpype._java_lang_Class = _jpype.JClass("java.lang.Class")
+    _jpype._java_lang_String = _jpype.JClass("java.lang.String")
 
-    _jpype._java_lang_RuntimeException = JClass("java.lang.RuntimeException")
+    _jpype._java_lang_RuntimeException = _jpype.JClass("java.lang.RuntimeException")
 
     # Preload needed classes
-    _jpype._java_lang_Boolean = JClass("java.lang.Boolean")
-    _jpype._java_lang_Byte = JClass("java.lang.Byte")
-    _jpype._java_lang_Character = JClass("java.lang.Character")
-    _jpype._java_lang_Short = JClass("java.lang.Short")
-    _jpype._java_lang_Integer = JClass("java.lang.Integer")
-    _jpype._java_lang_Long = JClass("java.lang.Long")
-    _jpype._java_lang_Float = JClass("java.lang.Float")
-    _jpype._java_lang_Double = JClass("java.lang.Double")
+    _jpype._java_lang_Boolean = _jpype.JClass("java.lang.Boolean")
+    _jpype._java_lang_Byte = _jpype.JClass("java.lang.Byte")
+    _jpype._java_lang_Character = _jpype.JClass("java.lang.Character")
+    _jpype._java_lang_Short = _jpype.JClass("java.lang.Short")
+    _jpype._java_lang_Integer = _jpype.JClass("java.lang.Integer")
+    _jpype._java_lang_Long = _jpype.JClass("java.lang.Long")
+    _jpype._java_lang_Float = _jpype.JClass("java.lang.Float")
+    _jpype._java_lang_Double = _jpype.JClass("java.lang.Double")
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes[bool] = _jpype._java_lang_Boolean
@@ -382,7 +382,6 @@ def getJVMVersion():
 
 shutdownJVM = _jpype.shutdown
 isJVMStarted = _jpype.isStarted
-getJVMVersion = _jpype.getJVMVersion
 attachThreadToJVM = _jpype.attachThread
 detachThreadFromJVM = _jpype.detachThread
 isThreadAttachedToJVM = _jpype.isThreadAttached

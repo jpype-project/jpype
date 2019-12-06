@@ -103,7 +103,7 @@ PyObject *PyJPArray_repr(PyJPArray *self)
 PyObject *PyJPArray_getArrayLength(PyJPArray *self, PyObject *arg)
 {
 	JP_PY_TRY("PyJPArray_len");
-	JPContext *context = PyJPModule_getContext();
+	PyJPModule_getContext();
 	return PyInt_FromLong(self->m_Array->getLength());
 	JP_PY_CATCH(NULL);
 }
