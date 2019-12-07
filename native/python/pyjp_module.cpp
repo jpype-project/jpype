@@ -252,6 +252,10 @@ static int PyJPModule_clear(PyObject *m)
 	//	PyJPModuleState *state = PyJPModuleState(m);
 	// We should be dereferencing all of the types, but currently we are
 	// depending on the module dictionary to hold reference.
+	PyJPModuleState *state = PyJPModuleState_global;
+	if (state != NULL && state->m_Context != NULL && state->m_Context->isRunning())
+
+		state->m_Context->shutdownJVM();
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -266,10 +270,6 @@ static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg)
 static void PyJPModule_free( void *arg)
 {
 	JP_PY_TRY("PyJPModule_free");
-	PyJPModuleState *state = PyJPModuleState_global;
-	if (state->m_Context->isRunning())
-
-		state->m_Context->shutdownJVM();
 
 	JP_PY_CATCH();
 }

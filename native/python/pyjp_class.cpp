@@ -78,7 +78,6 @@ static PyGetSetDef classGetSets[] = {
 static PyType_Slot classSlots[] = {
 	{ Py_tp_new,     (void*) PyJPClass_new},
 	{ Py_tp_init,    (void*) PyJPClass_init},
-	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_methods, (void*) classMethods},
 	{ Py_tp_doc,     (void*) classDoc},
 	{ Py_tp_getset,  (void*) &classGetSets},
@@ -143,14 +142,6 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	self->m_Class = cls;
 	return 0;
 	JP_PY_CATCH(-1);
-}
-
-void PyJPClass_dealloc(PyObject *self)
-{
-	JP_PY_TRY("PyJPClass_dealloc", self)
-	PyTypeObject *type = Py_TYPE(self);
-	type->tp_base->tp_dealloc(self);
-	JP_PY_CATCH();
 }
 
 PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
