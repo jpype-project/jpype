@@ -205,6 +205,7 @@ PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
 {
 	JP_PY_TRY("PyJPMethod_getName", self)
 	PyJPModule_getContext();
+	JP_TRACE(self->m_Method->getName());
 	return JPPyString::fromStringUTF8(self->m_Method->getName(), false).keep();
 	JP_PY_CATCH(NULL);
 }

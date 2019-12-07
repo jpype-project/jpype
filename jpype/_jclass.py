@@ -172,7 +172,14 @@ def _JClassFactory(jc):
 
     # Set up bases
     name = jc.__name__
-    bases = list(jc._bases)
+    print("JCLASS FACTORY ",name)
+    try:
+        bases = list(jc._bases)
+    except Exception as ex:
+        bases = list(object)
+        print("FAILURE in bases for", name)
+        print(ex)
+        _sys.stdout.flush()
 
     # Set up members
     members = {
@@ -186,20 +193,30 @@ def _JClassFactory(jc):
 
     # Apply customizers
     _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = _jpype.JClass(name, tuple(bases), members)
+    try:
+        res = _jpype.JClass(name, tuple(bases), members)
+    except Exception as ex:
+        print("FAILURE in wrapper for", name)
+        print(ex)
+        print(bases)
+        _sys.stdout.flush()
+
+
+    # We need to register wrapper before any further actions
+    jc._setHost(res)
 
     # Post customizers
-    _jcustomizer._applyInitializer(res)
+    #_jcustomizer._applyInitializer(res)
 
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
-    if _jpype._java_lang_Class:
-        for cls in res.class_.getDeclaredClasses():
-            if cls.getModifiers() & 1 == 0:
-                continue
-            cls2 = _jpype.JClass(cls)
-            type.__setattr__(res, str(cls.getSimpleName()), cls2)
+    #if _jpype._java_lang_Class:
+    #    for cls in res.class_.getDeclaredClasses():
+    #        if cls.getModifiers() & 1 == 0:
+    #            continue
+    #        cls2 = _jpype.JClass(cls)
+    #        type.__setattr__(res, str(cls.getSimpleName()), cls2)
 
     return res
 

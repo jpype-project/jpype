@@ -42,11 +42,12 @@ PyObject *PyJPClass_isThrowable(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isPrimitive(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isArray(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_isAbstract(PyJPClass *self, PyObject *args);
+PyObject *PyJPClass_dumpCtor(PyJPClass *self);
 
 // Debugging
 PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_dumpCtor(PyJPClass *self, PyObject *args);
+PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper);
 
 const char *classDoc =
 		"Internal representation of a Java Class.  This class can represent\n"
@@ -63,7 +64,8 @@ static PyMethodDef classMethods[] = {
 	{"_isAssignableFrom", (PyCFunction) (&PyJPClass_isAssignableFrom), METH_VARARGS, ""},
 	{"_canConvertToJava", (PyCFunction) (&PyJPClass_canConvertToJava), METH_VARARGS, ""},
 	{"_convertToJava", (PyCFunction) (&PyJPClass_convertToJava), METH_VARARGS, ""},
-	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_VARARGS, ""},
+	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_NOARGS, ""},
+	{"_setHost", (PyCFunction) (&PyJPClass_setHost), METH_O, ""},
 	{NULL},
 };
 
@@ -78,6 +80,7 @@ static PyGetSetDef classGetSets[] = {
 static PyType_Slot classSlots[] = {
 	{ Py_tp_new,     (void*) PyJPClass_new},
 	{ Py_tp_init,    (void*) PyJPClass_init},
+	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_methods, (void*) classMethods},
 	{ Py_tp_doc,     (void*) classDoc},
 	{ Py_tp_getset,  (void*) &classGetSets},
@@ -103,14 +106,10 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(NULL);
 }
 
-// FIXME, not clear which should win.  The JVM specified or the Class JVM
-// thus let's make it an error for now.
-// (jvm, str)
-
 int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPClass_init", self)
-			// Check if we are already initialized.
+	JP_PY_TRY("PyJPClass_init", self);
+	// Check if we are already initialized.
 	if ((PyJPValue*) self->m_Class != 0)
 		return 0;
 
@@ -144,11 +143,20 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(-1);
 }
 
+void PyJPClass_dealloc(PyObject *self)
+{
+	JP_PY_TRY("PyJPClass_dealloc", self);
+	PyJPModuleState *state = PyJPModuleState_global;
+	((PyTypeObject*) state->PyJPValue_Type)->tp_dealloc(self);
+	JP_PY_CATCH();
+}
+
 PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 {
 	JP_PY_TRY("PyJPClass_getCanonicalName", self)
 	PyJPModule_getContext();
 	string name = self->m_Class->getCanonicalName();
+	JP_TRACE(name);
 	PyObject *res = JPPyString::fromStringUTF8(name).keep();
 	return res;
 	JP_PY_CATCH(NULL);
@@ -173,6 +181,7 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 		baseType = JPPyObject(JPPyRef::_use, state->PyJPClass_Type);
 	} else if (self->m_Class == context->_java_lang_Throwable)
 	{
+		super = NULL;
 		baseType = JPPyObject(JPPyRef::_use, state->PyJPValueExc_Type);
 	} else if (dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class)
 	{
@@ -449,13 +458,22 @@ PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPClass_dumpCtor(PyJPClass *self, PyObject *args)
+PyObject *PyJPClass_dumpCtor(PyJPClass *self)
 {
-	JP_PY_TRY("PyJPClass_dumpCtor", self)
+	JP_PY_TRY("PyJPClass_dumpCtor", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	string report = self->m_Class->getCtor()->dump();
 	return JPPyString::fromStringUTF8(report).keep();
+	JP_PY_CATCH(NULL);
+}
+
+PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper)
+{
+	JP_PY_TRY("PyJPClass_setHost", self);
+	JPContext *context = PyJPModule_getContext();
+	self->m_Class->setHost(wrapper);
+	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
 

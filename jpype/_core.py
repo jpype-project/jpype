@@ -301,6 +301,8 @@ please file a ticket with the developer.
     _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
 
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
+    _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")
+    _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Exception")
     _jpype._java_lang_Class = _jpype.JClass("java.lang.Class")
     _jpype._java_lang_String = _jpype.JClass("java.lang.String")
 
@@ -324,21 +326,21 @@ please file a ticket with the developer.
     _jpype._object_classes[type] = _jpype._java_lang_Class
     _jpype._object_classes[_jpype.PyJPClass] = _jpype._java_lang_Class
     _jpype._object_classes[object] = _jpype._java_lang_Object
-    _jpype._object_classes[JBoolean] = _jpype._java_lang_Boolean
-    _jpype._object_classes[JByte] = _jpype._java_lang_Byte
-    _jpype._object_classes[JChar] = _jpype._java_lang_Character
-    _jpype._object_classes[JShort] = _jpype._ava_lang_Short
-    _jpype._object_classes[JInteger] = _jpype._java_lang_Integer
-    _jpype._object_classes[JLong] = _jpype._java_lang_Long
-    _jpype._object_classes[JFloat] = _jpype._java_lang_Float
-    _jpype._object_classes[JDouble] = _jpype._java_lang_Double
+    _jpype._object_classes[_jtypes.JBoolean] = _jpype._java_lang_Boolean
+    _jpype._object_classes[_jtypes.JByte] = _jpype._java_lang_Byte
+    _jpype._object_classes[_jtypes.JChar] = _jpype._java_lang_Character
+    _jpype._object_classes[_jtypes.JShort] = _jpype._java_lang_Short
+    _jpype._object_classes[_jtypes.JInt] = _jpype._java_lang_Integer
+    _jpype._object_classes[_jtypes.JLong] = _jpype._java_lang_Long
+    _jpype._object_classes[_jtypes.JFloat] = _jpype._java_lang_Float
+    _jpype._object_classes[_jtypes.JDouble] = _jpype._java_lang_Double
     _jpype._object_classes[type(None)] = _jpype._java_lang_Object
 
     # Set up table of automatic conversions of Python primitives
     # this table supports "JArray(type)"
-    _jpype._type_classes[bool] = JBoolean
-    _jpype._type_classes[int] = JLong
-    _jpype._type_classes[float] = JDouble
+    _jpype._type_classes[bool] = _jtypes.JBoolean
+    _jpype._type_classes[int] = _jtypes.JLong
+    _jpype._type_classes[float] = _jtypes.JDouble
     _jpype._type_classes[str] = _jpype._java_lang_String
     _jpype._type_classes[type] = _jpype._java_lang_Class
     _jpype._type_classes[object] = _jpype._java_lang_Object

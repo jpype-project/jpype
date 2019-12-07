@@ -254,7 +254,6 @@ static int PyJPModule_clear(PyObject *m)
 	// depending on the module dictionary to hold reference.
 	PyJPModuleState *state = PyJPModuleState_global;
 	if (state != NULL && state->m_Context != NULL && state->m_Context->isRunning())
-
 		state->m_Context->shutdownJVM();
 	return 0;
 	JP_PY_CATCH(-1);
@@ -276,7 +275,7 @@ static void PyJPModule_free( void *arg)
 
 PyObject *PyJPModule_startup(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPContext_startup", self);
+	JP_PY_TRY("PyJPModule_startup", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	if (state->m_Context->isRunning())
 	{
@@ -333,7 +332,7 @@ PyObject *PyJPModule_startup(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_shutdown(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPContext_shutdown", self);
+	JP_PY_TRY("PyJPModule_shutdown", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	// Stop the JVM
 	state->m_Context->shutdownJVM();
@@ -494,8 +493,6 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 			context, javaClass).get());
 
 	// Call the factory in Python
-	JPPyObject out = JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
-	javaClass->setHost(out.get());
-	return out;
+	return JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
 	JP_TRACE_OUT;
 }
