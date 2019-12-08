@@ -93,7 +93,6 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 {
 	JP_PY_TRY("PyJPClassMeta_getattro")
 	PyJPModuleState *state = PyJPModuleState_global;
-	return PyType_Type.tp_getattro(obj, name);
 	if (!PyUnicode_Check(name))
 	{
 		PyErr_Format(PyExc_TypeError,
@@ -103,25 +102,25 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 	}
 
 	// Private members are accessed directly
-	PyObject *attr = Py_TYPE(obj)->tp_getattro(obj, name);
-	if (attr == NULL)
+	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
+	if (pyattr == NULL)
 		return NULL;
+	JPPyObject attr(JPPyRef::_accept, pyattr);
 
 	// Private members go regardless
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
-		return attr;
+		return attr.keep();
 
 	// Methods
-	if (Py_TYPE(attr) == (PyTypeObject*) state->PyJPMethod_Type)
-		return attr;
+	if (Py_TYPE(attr.get()) == (PyTypeObject*) state->PyJPMethod_Type)
+		return attr.keep();
 
 	// Don't allow properties to be rewritten
-	if (!PyObject_IsInstance(attr, (PyObject*) & PyProperty_Type))
-		return attr;
+	if (!PyObject_IsInstance(attr.get(), (PyObject*) & PyProperty_Type))
+		return attr.keep();
 
 	const char *name_str = PyUnicode_AsUTF8(name);
 	PyErr_Format(PyExc_AttributeError, "Field '%s' is static", name_str);
-	Py_DECREF(attr);
 	return NULL;
 	JP_PY_CATCH(NULL);
 }
@@ -139,7 +138,7 @@ int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
-		return Py_TYPE(o)->tp_setattro(o, attr_name, v);
+		return PyType_Type.tp_setattro(o, attr_name, v);
 
 	PyObject *f = PyType_Lookup((PyTypeObject*) o, attr_name);
 	if (f == NULL)
@@ -441,8 +440,7 @@ PyJPValue* PyJPValue_asValue(PyObject *self)
 
 int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 {
-
-	JP_PY_TRY("PyJPValue_toString", self);
+	JP_PY_TRY("PyJPValue_setattro", self);
 	if (!PyUnicode_Check(attr_name))
 	{
 		PyErr_Format(PyExc_TypeError,
