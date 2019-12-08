@@ -27,7 +27,7 @@ else:
 
 
 @_jcustomizer.JImplementationFor("java.lang.Throwable", base=True)
-class JException(Exception):
+class JException(_jpype.PyJPException):
     """ Base class for all ``java.lang.Throwable`` objects.
 
     When called as an object ``JException`` will produce a new exception class.  
@@ -50,7 +50,7 @@ class JException(Exception):
                               category=DeprecationWarning, stacklevel=2)
                 JException._warned = True
             return _JExceptionClassFactory(*args, **kwargs)
-        return super(JException, cls).__new__(cls)
+        return _jpype.PyJPException.__new__(cls)
 
     def __str__(self):
         return str(self.toString())

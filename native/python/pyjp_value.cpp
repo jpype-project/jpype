@@ -30,31 +30,6 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name);
 int       PyJPClassMeta_setattro(PyObject *obj, PyObject *name, PyObject *value);
 PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs);
 
-static struct PyMethodDef metaMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPClassMeta_check, METH_VARARGS | METH_CLASS, ""},
-	//	{"__instancecheck__", XXXX, METH_VARARGS, ""},
-	//	{"__subclasscheck__", XXXX, METH_VARARGS, ""},
-	{0}
-};
-
-static PyType_Slot metaSlots[] = {
-	{Py_tp_new,      (void*) &PyJPClassMeta_new},
-	{Py_tp_init,     (void*) &PyJPClassMeta_init},
-	{Py_tp_dealloc,  (void*) &PyJPClassMeta_dealloc},
-	{Py_tp_getattro, (void*) &PyJPClassMeta_getattro},
-	{Py_tp_setattro, (void*) &PyJPClassMeta_setattro},
-	{Py_tp_methods,  (void*) &metaMethods},
-	{0}
-};
-
-PyType_Spec PyJPClassMetaSpec = {
-	"_jpype.PyJPClassMeta",
-	0,
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	metaSlots
-};
-
 PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClassMeta_new");
@@ -100,6 +75,8 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 				Py_TYPE(name)->tp_name);
 		return NULL;
 	}
+	Py_ssize_t sz;
+	JP_TRACE(PyUnicode_AsUTF8AndSize(name, &sz));
 
 	// Private members are accessed directly
 	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
@@ -187,76 +164,36 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	return PyBool_FromLong(ret);
 }
 
-const char* JAVA_VALUE = "__javavalue__";
+static struct PyMethodDef metaMethods[] = {
+	{"_isinstance", (PyCFunction) & PyJPClassMeta_check, METH_VARARGS | METH_CLASS, ""},
+	//	{"__instancecheck__", XXXX, METH_VARARGS, ""},
+	//	{"__subclasscheck__", XXXX, METH_VARARGS, ""},
+	{0}
+};
 
-PyObject *PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs);
-void PyJPValue_dealloc(PyJPValue *self);
-int PyJPValue_setattro(PyObject *o, PyObject *attr_name, PyObject *v);
-PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs);
-PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs);
-PyObject *PyJPValue_str(PyObject *self);
-PyObject *PyJPValue_repr(PyObject *self);
+static PyType_Slot metaSlots[] = {
+	{Py_tp_new,      (void*) &PyJPClassMeta_new},
+	{Py_tp_init,     (void*) &PyJPClassMeta_init},
+	{Py_tp_dealloc,  (void*) &PyJPClassMeta_dealloc},
+	{Py_tp_getattro, (void*) &PyJPClassMeta_getattro},
+	{Py_tp_setattro, (void*) &PyJPClassMeta_setattro},
+	{Py_tp_methods,  (void*) &metaMethods},
+	{0}
+};
+
+PyType_Spec PyJPClassMetaSpec = {
+	"_jpype.PyJPClassMeta",
+	0,
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	metaSlots
+};
 
 //============================================================
 
-static struct PyMethodDef baseMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPValueBase_check, METH_VARARGS | METH_CLASS, ""},
-	{0}
-};
+const char* JAVA_VALUE = "__javavalue__";
 
-static PyType_Slot baseSlots[] = {
-	{Py_tp_new,      (void*) PyJPValueBase_new},
-	{Py_tp_init,     (void*) PyJPValue_init},
-	{Py_tp_setattro, (void*) PyJPValue_setattro},
-	{Py_tp_str,      (void*) PyJPValue_str},
-	{Py_tp_repr,     (void*) PyJPValue_repr},
-	{Py_tp_methods,  (void*) &baseMethods},
-	{0}
-};
-
-PyType_Spec PyJPValueBaseSpec = {
-	"_jpype.PyJPValueBase",
-	sizeof (PyObject),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	baseSlots
-};
-
-static struct PyMethodDef valueMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPValue_check, METH_VARARGS | METH_CLASS, ""},
-	{0}
-};
-
-static PyType_Slot valueSlots[] = {
-	{ Py_tp_new,      (void*) PyJPValue_new},
-	{ Py_tp_init,     (void*) PyJPValue_init},
-	{ Py_tp_dealloc,  (void*) PyJPValue_dealloc},
-	{ Py_tp_methods,  (void*) &valueMethods},
-	{0}
-};
-
-PyType_Spec PyJPValueSpec = {
-	"_jpype.PyJPValue",
-	sizeof (PyJPValue),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueSlots
-};
-
-static PyType_Slot valueExcSlots[] = {
-	{0}
-};
-
-PyType_Spec PyJPValueExceptionSpec = {
-	"_jpype.PyJPValueException",
-	sizeof (PyObject),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueExcSlots
-};
-
+PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_new")
@@ -270,52 +207,9 @@ PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+int PyJPValue_construct(PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValue_new")
-	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
-	jvalue v;
-	self->m_Value = JPValue(NULL, v);
-	return (PyObject*) self;
-	JP_PY_CATCH(NULL);
-}
-
-int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
-{
-	JP_PY_TRY("PyJPValue_init", self)
-	PyJPModuleState *state = PyJPModuleState_global;
-	// Check if we are already initialized.
-	if (PyObject_HasAttrString(self, __javavalue__))
-		return 0;
-	JPPyObject value(JPPyRef::_call,
-			PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, pyargs, kwargs));
-	if (PyJPValue_init((PyJPValue*) value.get(), pyargs, kwargs) == -1)
-		return -1;
-	return PyObject_SetAttrString(self, __javavalue__, value.get());
-	JP_PY_CATCH(-1);
-}
-
-int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
-{
-	JP_PY_TRY("PyJPValue_init", self)
-	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext* context = PyJPModule_getContext();
-
-	// Check if we are already initialized.
-	if (self->m_Value.getClass() != 0)
-		return 0;
-
-	// Get the Java class from the type.
-	JPPyObject obj = JPPyObject(JPPyRef::_claim,
-			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
-	JP_PY_CHECK();
-	if (!PyObject_IsInstance(obj.get(), (PyObject*) state->PyJPClass_Type))
-		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
-
-	// We must verify the context before we can access the class
-	// as the class may already be dead.
-	JPClass *cls = ((PyJPClass*) obj.get())->m_Class;
-
 	JPPyObjectVector args(pyargs);
 	// DEBUG
 	for (size_t i = 0; i < args.size(); ++i)
@@ -336,6 +230,59 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 	}
 	self->m_Value = value;
 	return 0;
+}
+
+int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPValueBase_init", self);
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPPyObject value = JPPyObject(JPPyRef::_call,
+			PyObject_GetAttrString(self, __javavalue__));
+
+	// Access the context first so we ensure JVM is running
+	PyJPModule_getContext();
+
+	// Get the Java class from the type.
+	JPPyObject type = JPPyObject(JPPyRef::_call,
+			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
+	if (!PyObject_IsInstance(type.get(), (PyObject*) state->PyJPClass_Type))
+		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
+
+	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
+	return PyJPValue_construct((PyJPValue*) value.get(), cls, pyargs, kwargs);
+	JP_PY_CATCH(-1);
+}
+
+PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPValue_new")
+	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
+	jvalue v;
+	self->m_Value = JPValue(NULL, v);
+	return (PyObject*) self;
+	JP_PY_CATCH(NULL);
+}
+
+int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPValue_init", self)
+	PyJPModuleState *state = PyJPModuleState_global;
+
+	// Access the context first so we ensure JVM is running
+	PyJPModule_getContext();
+
+	// Check if we are already initialized.
+	if (self->m_Value.getClass() != 0)
+		return 0;
+
+	// Get the Java class from the type.
+	JPPyObject type = JPPyObject(JPPyRef::_call,
+			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
+	if (!PyObject_IsInstance(type.get(), (PyObject*) state->PyJPClass_Type))
+		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
+
+	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
+	return PyJPValue_construct(self, cls, pyargs, kwargs);
 	JP_PY_CATCH(-1);
 }
 
@@ -558,6 +505,117 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(NULL);
 }
+
+
+static struct PyMethodDef baseMethods[] = {
+	{"_isinstance", (PyCFunction) & PyJPValueBase_check, METH_VARARGS | METH_CLASS, ""},
+	{0}
+};
+
+static PyType_Slot baseSlots[] = {
+	{Py_tp_new,      (void*) PyJPValueBase_new},
+	{Py_tp_init,     (void*) PyJPValue_init},
+	{Py_tp_setattro, (void*) PyJPValue_setattro},
+	{Py_tp_str,      (void*) PyJPValue_str},
+	{Py_tp_repr,     (void*) PyJPValue_repr},
+	{Py_tp_methods,  (void*) &baseMethods},
+	{0}
+};
+
+PyType_Spec PyJPValueBaseSpec = {
+	"_jpype.PyJPValueBase",
+	sizeof (PyObject),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	baseSlots
+};
+
+static struct PyMethodDef valueMethods[] = {
+	{"_isinstance", (PyCFunction) & PyJPValue_check, METH_VARARGS | METH_CLASS, ""},
+	{0}
+};
+
+static PyType_Slot valueSlots[] = {
+	{ Py_tp_new,      (void*) PyJPValue_new},
+	{ Py_tp_init,     (void*) PyJPValue_init},
+	{ Py_tp_dealloc,  (void*) PyJPValue_dealloc},
+	{ Py_tp_methods,  (void*) &valueMethods},
+	{0}
+};
+
+PyType_Spec PyJPValueSpec = {
+	"_jpype.PyJPValue",
+	sizeof (PyJPValue),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	valueSlots
+};
+
+//=========================================================================
+
+PyObject* PyJPException_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPException_new");
+	// Attempt to create inner object first
+	PyJPModuleState *state = PyJPModuleState_global;
+	PyObject *inner = PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, args, kwargs);
+	if (inner == NULL)
+		return NULL;
+
+	// If successful initialize Exception
+	PyObject *self = ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args, kwargs);
+	PyObject_SetAttrString(self, __javavalue__, inner);
+	return (PyObject*) self;
+	JP_PY_CATCH(NULL);
+}
+
+int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
+{
+	// This method is here to ensure that we hit the right area of the mro
+	JP_PY_TRY("PyJPException_init", self);
+	if (PyJPValueBase_init(self, pyargs, kwargs) == -1)
+		return -1;
+	return ((PyTypeObject*) PyExc_BaseException)->tp_init(self, pyargs, kwargs);
+	JP_PY_CATCH(-1);
+}
+
+void PyJPException_dealloc(PyObject *self)
+{
+	JP_PY_TRY("PyJPException_dealloc", self);
+	((PyTypeObject*) PyExc_BaseException)->tp_dealloc(self);
+	JP_PY_CATCH();
+}
+
+int PyJPException_traverse(PyObject *self, visitproc visit, void *arg)
+{
+	JP_PY_TRY("PyJPException_traverse", self);
+	return ((PyTypeObject*) PyExc_BaseException)->tp_traverse(self, visit, arg);
+	JP_PY_CATCH(-1);
+}
+
+int PyJPException_clear(PyObject *self)
+{
+	JP_PY_TRY("PyJPException_clear", self);
+	return ((PyTypeObject*) PyExc_BaseException)->tp_clear(self);
+	JP_PY_CATCH(-1);
+}
+
+static PyType_Slot valueExcSlots[] = {
+	{ Py_tp_new,      (void*) PyJPException_new},
+	{ Py_tp_init,     (void*) PyJPException_init},
+	{ Py_tp_dealloc,  (void*) PyJPException_dealloc},
+	{ Py_tp_traverse, (void*) PyJPException_traverse},
+	{ Py_tp_clear,    (void*) PyJPException_clear},
+	{0}
+};
+
+PyType_Spec PyJPExceptionSpec = {
+	"_jpype.PyJPException",
+	0, // sizeof (PyBaseExceptionObject),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	valueExcSlots
+};
 
 #ifdef __cplusplus
 }

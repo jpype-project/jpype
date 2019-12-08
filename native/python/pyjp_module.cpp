@@ -118,7 +118,7 @@ extern PyType_Spec PyJPClassMetaSpec;
 extern PyType_Spec PyJPValueBaseSpec;
 extern PyType_Spec PyJPValueSpec;
 extern PyType_Spec PyJPClassHintsSpec;
-extern PyType_Spec PyJPValueExceptionSpec;
+extern PyType_Spec PyJPExceptionSpec;
 
 PyJPModuleState *PyJPModuleState_global = NULL;
 
@@ -166,8 +166,9 @@ PyMODINIT_FUNC PyInit__jpype()
 			state->PyJPValue_Type = PyType_FromSpecWithBases(&PyJPValueSpec, valueBase.get()));
 	JP_PY_CHECK();
 
-	PyModule_AddObject(module, "PyJPValueException",
-			state->PyJPValueExc_Type = PyType_FromSpecWithBases(&PyJPValueExceptionSpec, valueBase.get()));
+	valueBase = JPPyObject(JPPyRef::_claim, PyTuple_Pack(2, PyExc_Exception, state->PyJPValueBase_Type ));
+	PyModule_AddObject(module, "PyJPException",
+			state->PyJPValueExc_Type = PyType_FromSpecWithBases(&PyJPExceptionSpec, valueBase.get()));
 	JP_PY_CHECK();
 
 	valueBase = JPPyObject(JPPyRef::_claim, PyTuple_Pack(1, state->PyJPValue_Type));
@@ -194,7 +195,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	JPPyObject floatArgs = JPPyObject(JPPyRef::_claim, Py_BuildValue("sNN",
 			"_jpype.PyJPValueFloat",
-			PyTuple_Pack(2, &PyLong_Type, state->PyJPValueBase_Type),
+			PyTuple_Pack(2, &PyFloat_Type, state->PyJPValueBase_Type),
 			PyDict_New()));
 	state->PyJPValueFloat_Type = PyObject_Call((PyObject*) & PyType_Type, floatArgs.get(), NULL);
 	PyModule_AddObject(module, "PyJPValueFloat", state->PyJPValueFloat_Type);
