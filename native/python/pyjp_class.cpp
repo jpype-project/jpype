@@ -48,6 +48,7 @@ PyObject *PyJPClass_dumpCtor(PyJPClass *self);
 PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args);
 PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper);
+PyObject *PyJPClass_newArrayType(PyJPClass *self, PyObject* dims);
 
 const char *classDoc =
 		"Internal representation of a Java Class.  This class can represent\n"
@@ -66,6 +67,7 @@ static PyMethodDef classMethods[] = {
 	{"_convertToJava", (PyCFunction) (&PyJPClass_convertToJava), METH_VARARGS, ""},
 	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_NOARGS, ""},
 	{"_setHost", (PyCFunction) (&PyJPClass_setHost), METH_O, ""},
+	{"_newArrayType", (PyCFunction) (&PyJPClass_newArrayType), METH_O, ""},
 	{NULL},
 };
 
@@ -471,9 +473,31 @@ PyObject *PyJPClass_dumpCtor(PyJPClass *self)
 PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper)
 {
 	JP_PY_TRY("PyJPClass_setHost", self);
-	JPContext *context = PyJPModule_getContext();
+	PyJPModule_getContext();
 	self->m_Class->setHost(wrapper);
 	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
+PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
+{
+	JP_PY_TRY("PyJPClass_getArrayType", self);
+	JPContext* context = PyJPModule_getContext();
+	stringstream ss;
+	if (!PyIndex_Check(dims))
+		JP_RAISE_TYPE_ERROR("dims must be an integer");
+	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
+	if (d > 255)
+		JP_RAISE_VALUE_ERROR("dims too large");
+
+	for (int i = 0; i < d; ++i)
+		ss << "[";
+	if (self->m_Class->isPrimitive())
+		ss << ((JPPrimitiveType*) self->m_Class)->getTypeCode();
+	else
+		ss << self->m_Class->getName() << ";";
+	JPClass* cls = context->getTypeManager()->findClassByName(ss.str());
+	return JPPythonEnv::newJavaClass(cls).keep();
 	JP_PY_CATCH(NULL);
 }
 

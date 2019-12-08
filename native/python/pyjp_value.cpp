@@ -539,7 +539,10 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 	if (self == NULL)
 		JP_RAISE_TYPE_ERROR("Must be Java value");
 
-	JPContext* context = PyJPModule_getContext();
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext* context = state->m_Context;
+	if (!context->isRunning())
+		return JPPyString::fromStringUTF8("<java value>").keep();
 	JPJavaFrame frame(context);
 	stringstream sout;
 	sout << "<java value " << self->m_Value.getClass()->toString();

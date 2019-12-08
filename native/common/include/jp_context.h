@@ -229,6 +229,7 @@ private:
 
 private:
 	friend class JPJavaFrame;
+	friend class JPClass;
 	JPContext(const JPContext& orig);
 
 	JavaVM *m_JavaVM;
@@ -247,6 +248,7 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_ShutdownMethodID;
 	jmethodID m_CallMethodID;
+	jmethodID m_Class_GetNameID;
 
 	bool m_IsShutdown;
 	bool m_IsInitialized;

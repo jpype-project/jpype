@@ -78,6 +78,15 @@ string JPClass::toString() const
 	return frame.toString(m_Class.get());
 }
 
+string JPClass::getName() const
+{
+	if (m_Context == 0)
+		return m_CanonicalName;
+	JPJavaFrame frame(m_Context);
+	return frame.toString(frame.CallObjectMethodA(
+			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
+}
+
 //</editor-fold>
 //<editor-fold desc="as return type" defaultstate="collapsed">
 

@@ -109,8 +109,6 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 	if (!context->isRunning())
 	{
-		int *i = 0;
-		*i = 0;
 		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
 	}
 }
@@ -176,6 +174,9 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Object_ToStringID = frame.GetMethodID(object, "toString", "()Ljava/lang/String;");
 		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
 		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
+
+		jclass clsType = frame.FindClass("java/lang/Class");
+		m_Class_GetNameID = frame.GetMethodID(clsType, "getName", "()Ljava/lang/String;");
 
 		// Bootloader needs to go first so we can load classes
 		m_ClassLoader = new JPClassLoader(frame);

@@ -31,24 +31,25 @@ _maxFloat = 3.4028234663852886E38
 _maxDouble = 1.7976931348623157E308
 
 
-class _JPrimitiveClass(_jclass.JClass):
-    """ A wrapper specifying a specific java type.
-
-    These objects have three fields:
-
-     - __javaclass__ - the class for this object when matching arguments.
-     - _java_boxed_class - the class to convert to when converting to an 
-        object.
-     - __javavalue__ - the instance of the java value.
-
-    """
-    def __new__(cls, name, code, basetype):
-        members = {
-            "__init__": JPrimitive.init,
-            "__setattr__": object.__setattr__,
-            "__jcode__": code,
-        }
-        return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, JPrimitive), members)
+#class _JPrimitiveClass(_jclass.JClass):
+#    """ A wrapper specifying a specific java type.
+#
+#    These objects have three fields:
+#
+#     - __javaclass__ - the class for this object when matching arguments.
+#     - _java_boxed_class - the class to convert to when converting to an 
+#        object.
+#     - __javavalue__ - the instance of the java value.
+#
+#    """
+#    def __new__(cls, name, code, basetype, jc):
+def _JPrimitiveClass(name, basetype, jc):
+    members = {
+        "__init__": JPrimitive.init,
+        "__setattr__": object.__setattr__,
+        '__javaclass__': jc,
+    }
+    return _jclass.JClass(name, (basetype, JPrimitive), members)
 
 
 class JPrimitive(object):
@@ -97,13 +98,14 @@ class JPrimitive(object):
 _jpype.JPrimitive = JPrimitive
 
 # Primitive types are their own special classes as they do not tie to the JVM
-JBoolean = _JPrimitiveClass("boolean", 'Z', int)
-JByte = _JPrimitiveClass("byte", 'B', int)
-JChar = _JPrimitiveClass("char", 'C', int)
-JShort = _JPrimitiveClass("short", 'S', int)
-JInt = _JPrimitiveClass("int", 'I', int)
-JLong = _JPrimitiveClass("long", 'J', int)
-JFloat = _JPrimitiveClass("float", 'F', float)
-JDouble = _JPrimitiveClass("double", 'D', float)
+print(dir(_jpype))
+JBoolean = _JPrimitiveClass("boolean", int, _jpype._jboolean)
+JByte = _JPrimitiveClass("byte",  int, _jpype._jbyte)
+JChar = _JPrimitiveClass("char",  int, _jpype._jchar)
+JShort = _JPrimitiveClass("short", int, _jpype._jshort)
+JInt = _JPrimitiveClass("int",  int, _jpype._jint)
+JLong = _JPrimitiveClass("long",  int, _jpype._jlong)
+JFloat = _JPrimitiveClass("float",  float, _jpype._jfloat)
+JDouble = _JPrimitiveClass("double",  float, _jpype._jdouble)
 
 
