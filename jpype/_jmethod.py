@@ -14,6 +14,8 @@
 # *****************************************************************************
 import _jpype
 __all__ = []
+import _jpype
+from . import _jclass
 
 def _jmethodGetDoc(method, cls, overloads):
     """Generator for PyJPMethod.__doc__ property
@@ -96,16 +98,17 @@ def _jmethodGetAnnotation(method, cls, overloads):
         ov = overloads[0]
         out = {}
         for i, p in enumerate(ov.getParameterTypes()):
-            out['arg%d' % i] = JClass(p)
-        out['return'] = JClass(ov.getReturnType())
+            out['arg%d' % i] = _jclass.JClass(p)
+        out['return'] = _jclass.JClass(ov.getReturnType())
         return out
 
     # Otherwise, we only get the return
     for ov in overloads:
         returns.append(ov.getReturnType())
+
     returns = set(returns)
     if len(returns) == 1:
-        return {"return": JClass([i for i in returns][0])}
+        return {"return": _jclass.JClass([i for i in returns][0])}
     return {}
 
 

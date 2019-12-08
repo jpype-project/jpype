@@ -18,6 +18,7 @@
 import sys as _sys
 import inspect
 import _jpype
+from . import _jcustomizer
 
 __all__ = ['JObject']
 
@@ -89,6 +90,8 @@ class JObject(_jpype.PyJPValue):
 #        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
 #                             (name, self.__name__))
 
+@_jcustomizer.JImplementationFor('java.lang.Object')
+class _JObjectMethods(object):
     def __hash__(self):
         return self.hashCode()
 

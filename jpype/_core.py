@@ -33,6 +33,7 @@ from . import _jexception
 from . import _jcollection
 from . import _jcomparable
 from . import _jio
+from . import _jmethod
 from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
 
 __all__ = [

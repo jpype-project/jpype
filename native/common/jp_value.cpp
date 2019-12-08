@@ -18,6 +18,8 @@
 
 jobject JPValue::getJavaObject() const
 {
+	if (m_Class == NULL)
+		JP_RAISE_RUNTIME_ERROR("Null class");
 	if (!m_Class->isPrimitive())
 		return m_Value.l;
 

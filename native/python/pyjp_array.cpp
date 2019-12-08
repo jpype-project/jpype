@@ -87,7 +87,8 @@ int PyJPArray_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	// First call the base type that will construct the object
-	((PyTypeObject*) state->PyJPValue_Type)->tp_init(self, pyargs, kwargs);
+	if (((PyTypeObject*) state->PyJPValue_Type)->tp_init(self, pyargs, kwargs) == -1)
+		return -1;
 
 	// Next hook up the value to the array wrapper
 	JPValue& value = ((PyJPValue*) self)->m_Value;
