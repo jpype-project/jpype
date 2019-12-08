@@ -19,13 +19,11 @@
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
-	printf("JPTypeFactory rethrow\n");
 	try
 	{
 		throw;
 	} catch (JPypeException& ex)
 	{
-		printf("%s\n", ex.getMessage().c_str());
 		ex.toJava(frame.getContext());
 	} catch (...)
 	{

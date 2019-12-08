@@ -72,7 +72,7 @@ static PyMethodDef classMethods[] = {
 };
 
 static PyGetSetDef classGetSets[] = {
-	{"__name__", (getter) (&PyJPClass_getCanonicalName), NULL, ""},
+	{"__javaname__", (getter) (&PyJPClass_getCanonicalName), NULL, ""},
 	{"_fields", (getter) (&PyJPClass_getClassFields), NULL, ""},
 	{"_methods", (getter) (&PyJPClass_getClassMethods), NULL, ""},
 	{"_bases", (getter) (&PyJPClass_getBases), NULL, ""},

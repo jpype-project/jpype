@@ -17,20 +17,9 @@
 
 import sys as _sys
 import inspect
-
 import _jpype
-from . import _jclass
-from . import _jcustomizer
 
 __all__ = ['JObject']
-
-if _sys.version > '3':
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
-
 
 class JObject(_jpype.PyJPValue):
     """ Base class for all object instances.
@@ -83,22 +72,22 @@ class JObject(_jpype.PyJPValue):
         cls = _JObjectFactory(*args, **kwargs)
         return cls.__javaclass__._cast(*args)
 
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return object.__setattr__(self, name, value)
-
-        if not hasattr(self, name):
-            raise AttributeError("Field '%s' not found on Java '%s' object" %
-                                 (name, self.__name__))
-
-        try:
-            attr = _jclass.typeLookup(type(self), name)
-            if hasattr(attr, '__set__'):
-                return attr.__set__(self, value)
-        except AttributeError:
-            pass
-        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
-                             (name, self.__name__))
+#    def __setattr__(self, name, value):
+#        if name.startswith('_'):
+#            return object.__setattr__(self, name, value)
+#
+#        if not hasattr(self, name):
+#            raise AttributeError("Field '%s' not found on Java '%s' object" %
+#                                 (name, self.__name__))
+#
+#        try:
+#            attr = _jclass.typeLookup(type(self), name)
+#            if hasattr(attr, '__set__'):
+#                return attr.__set__(self, value)
+#        except AttributeError:
+#            pass
+#        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
+#                             (name, self.__name__))
 
     def __hash__(self):
         return self.hashCode()
@@ -114,13 +103,12 @@ class JObject(_jpype.PyJPValue):
 _jpype.JObject = JObject
 
 
-def _getDefaultAJavaObject(tp):
+def _getDefaultJavaObject(tp):
     """ Determine the type of the object based the type of a value.
         
         Python primitives - lookup the type in the table
         Java primitive - lookup boxed type in the table
         Java objects - just use their type directly
-
 
     """
     # handle Python types and Java primitives
@@ -151,11 +139,11 @@ def _JObjectFactory(v=None, tp=None):
     """
     if tp is None:
         # Automatically determine based on the value
-        tp = _getDefaultAJavaObject(type(v))
+        tp = _getDefaultJavaObject(type(v))
 
     # Java primitive conversion to boxed type
     if isinstance(tp, _jpype.JPrimitive):
-        return _getDefaultAJavaObject(type(tp))(v)
+        return _getDefaultJavaObject(type(tp))(v)
 
     # Given a Already an object
     if isinstance(tp, _jpype.PyJPClassMeta):

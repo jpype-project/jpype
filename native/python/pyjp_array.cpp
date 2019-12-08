@@ -29,7 +29,7 @@ PyObject *PyJPArray_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 int PyJPArray_init(PyObject *self, PyObject *pyargs, PyObject *kwargs);
 void PyJPArray_dealloc(PyJPArray *self);
 PyObject *PyJPArray_repr(PyJPArray *self);
-PyObject *PyJPArray_getArrayLength(PyJPArray *self, PyObject *arg);
+Py_ssize_t PyJPArray_len(PyJPArray *self);
 PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg);
 int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t index, PyObject* value);
 int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value);
@@ -48,7 +48,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_sq_item,     (void*) &PyJPArray_getArrayItem},
 	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
-	{ Py_sq_length,   (void*) &PyJPArray_getArrayLength},
+	{ Py_sq_length,   (void*) &PyJPArray_len},
 	{0}
 };
 
@@ -121,14 +121,14 @@ PyObject *PyJPArray_repr(PyJPArray *self)
 	JP_PY_CATCH(0);
 }
 
-PyObject *PyJPArray_getArrayLength(PyJPArray *self, PyObject *arg)
+Py_ssize_t PyJPArray_len(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_len");
 	PyJPModule_getContext();
 	if (self->m_Array == NULL)
 		JP_RAISE_RUNTIME_ERROR("Null array");
-	return PyInt_FromLong(self->m_Array->getLength());
-	JP_PY_CATCH(NULL);
+	return self->m_Array->getLength();
+	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
