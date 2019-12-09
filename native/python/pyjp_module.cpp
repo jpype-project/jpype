@@ -222,23 +222,23 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyModule_AddObject(module, "PyJPProxy", state->PyJPProxy_Type);
 	JP_PY_CHECK();
 
+	PyTypeObject* type = (PyTypeObject*) state->PyJPClass_Type;
 	PyModule_AddObject(module, "_jboolean",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_boolean).keep());
+			PyJPClass_create(type, NULL, context->_boolean).keep());
 	PyModule_AddObject(module, "_jchar",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_char).keep());
+			PyJPClass_create(type, NULL, context->_char).keep());
 	PyModule_AddObject(module, "_jbyte",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_byte).keep());
+			PyJPClass_create(type, NULL, context->_byte).keep());
 	PyModule_AddObject(module, "_jshort",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_short).keep());
+			PyJPClass_create(type, NULL, context->_short).keep());
 	PyModule_AddObject(module, "_jint",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_int).keep());
+			PyJPClass_create(type, NULL, context->_int).keep());
 	PyModule_AddObject(module, "_jlong",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_long).keep());
+			PyJPClass_create(type, NULL, context->_long).keep());
 	PyModule_AddObject(module, "_jfloat",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_float).keep());
+			PyJPClass_create(type, NULL, context->_float).keep());
 	PyModule_AddObject(module, "_jdouble",
-			PyJPClass_create((PyTypeObject*) state->PyJPClass_Type, NULL, context->_double).keep());
-
+			PyJPClass_create(type, NULL, context->_double).keep());
 
 	PyState_AddModule(module, &PyJPModuleDef);
 	JP_PY_CHECK();

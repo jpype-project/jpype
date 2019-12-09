@@ -194,16 +194,11 @@ PyType_Spec PyJPClassMetaSpec = {
 const char* JAVA_VALUE = "__javavalue__";
 
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_new")
-	PyJPModuleState *state = PyJPModuleState_global;
-	PyObject *inner = PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, args, kwargs);
-	if (inner == NULL)
-		return NULL;
-	PyObject *self = type->tp_alloc(type, 0);
-	PyObject_SetAttrString(self, __javavalue__, inner);
-	return (PyObject*) self;
+	return type->tp_alloc(type, 0);
 	JP_PY_CATCH(NULL);
 }
 
@@ -211,17 +206,12 @@ int PyJPValue_construct(PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObjec
 {
 	JPContext* context = PyJPModule_getContext();
 	JPPyObjectVector args(pyargs);
-	// DEBUG
-	for (size_t i = 0; i < args.size(); ++i)
-	{
-		ASSERT_NOT_NULL(args[i]);
-	}
 
 	// Create an instance (this may fail)
 	JPValue value = cls->newInstance(args);
 
 	// If we succeed then we can hook up the context
-	if (context != NULL)
+	if (context != NULL && !cls->isPrimitive())
 	{
 		// Reference the object
 		JP_TRACE("Reference object", cls->getCanonicalName());
@@ -235,9 +225,12 @@ int PyJPValue_construct(PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObjec
 int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_init", self);
+	// Attempt to create inner object first
 	PyJPModuleState *state = PyJPModuleState_global;
-	JPPyObject value = JPPyObject(JPPyRef::_call,
-			PyObject_GetAttrString(self, __javavalue__));
+	PyObject *inner = PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, pyargs, kwargs);
+	if (inner == NULL)
+		return -1;
+	PyObject_SetAttrString(self, __javavalue__, inner);
 
 	// Access the context first so we ensure JVM is running
 	PyJPModule_getContext();
@@ -249,7 +242,8 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
-	return PyJPValue_construct((PyJPValue*) value.get(), cls, pyargs, kwargs);
+	JP_TRACE("type", cls->getCanonicalName());
+	return PyJPValue_construct((PyJPValue*) inner, cls, pyargs, kwargs);
 	JP_PY_CATCH(-1);
 }
 
@@ -434,17 +428,13 @@ PyObject *PyJPValue_str(PyObject *pyself)
 	JPContext* context = PyJPModule_getContext();
 	JPClass *cls = self->m_Value.getClass();
 	if (cls == NULL)
-		JP_RAISE_VALUE_ERROR("toString called with null class");
+		return JPPyString::fromStringUTF8("null").keep();
 
 	// Special handling for primitives.
-	if (context == NULL)
+	if (cls->isPrimitive())
 	{
-		if (cls->isPrimitive())
-		{
-			JPPrimitiveType *pc = (JPPrimitiveType*) cls;
-			return JPPyString::fromStringUTF8(pc->asString(self->m_Value.getValue())).keep();
-		}
-		JP_RAISE_RUNTIME_ERROR("Null context");
+		return JPPyString::fromStringUTF8(
+				((JPPrimitiveType*) cls)->asString(self->m_Value.getValue())).keep();
 	}
 
 	JPJavaFrame frame(context);
@@ -469,7 +459,6 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		Py_INCREF(out);
 		return out;
 	}
-
 
 	// In general toString is not immutable, so we won't cache it.
 	return JPPyString::fromStringUTF8(frame.toString(self->m_Value.getValue().l)).keep();
@@ -514,7 +503,7 @@ static struct PyMethodDef baseMethods[] = {
 
 static PyType_Slot baseSlots[] = {
 	{Py_tp_new,      (void*) PyJPValueBase_new},
-	{Py_tp_init,     (void*) PyJPValue_init},
+	{Py_tp_init,     (void*) PyJPValueBase_init},
 	{Py_tp_setattro, (void*) PyJPValue_setattro},
 	{Py_tp_str,      (void*) PyJPValue_str},
 	{Py_tp_repr,     (void*) PyJPValue_repr},
@@ -556,16 +545,7 @@ PyType_Spec PyJPValueSpec = {
 PyObject* PyJPException_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPException_new");
-	// Attempt to create inner object first
-	PyJPModuleState *state = PyJPModuleState_global;
-	PyObject *inner = PyJPValue_new((PyTypeObject*) state->PyJPValue_Type, args, kwargs);
-	if (inner == NULL)
-		return NULL;
-
-	// If successful initialize Exception
-	PyObject *self = ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args, kwargs);
-	PyObject_SetAttrString(self, __javavalue__, inner);
-	return (PyObject*) self;
+	return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args, kwargs);
 	JP_PY_CATCH(NULL);
 }
 

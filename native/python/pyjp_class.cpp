@@ -24,78 +24,10 @@ extern "C"
 {
 #endif
 
-PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs);
-void PyJPClass_dealloc(PyObject *self);
-
-PyObject *PyJPClass_getBases(PyJPClass *self, void *closure);
-PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure);
-PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure);
-PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure);
-
-PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args);
-
-// Query
-PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_isInterface(PyJPClass *self, PyObject *arg);
-PyObject *PyJPClass_isThrowable(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_isPrimitive(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_isArray(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_isAbstract(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_dumpCtor(PyJPClass *self);
-
-// Debugging
-PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args);
-PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper);
-PyObject *PyJPClass_newArrayType(PyJPClass *self, PyObject* dims);
-
 const char *classDoc =
 		"Internal representation of a Java Class.  This class can represent\n"
 		"either an object, an array, or a primitive.  This type is stored as\n"
 		"__javaclass__ in any wrapper Python classes or instances.";
-
-static PyMethodDef classMethods[] = {
-	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_VARARGS, ""},
-	{"_isInterface", (PyCFunction) (&PyJPClass_isInterface), METH_NOARGS, ""},
-	{"_isPrimitive", (PyCFunction) (&PyJPClass_isPrimitive), METH_NOARGS, ""},
-	{"_isThrowable", (PyCFunction) (&PyJPClass_isThrowable), METH_NOARGS, ""},
-	{"_isArray", (PyCFunction) (&PyJPClass_isArray), METH_NOARGS, ""},
-	{"_isAbstract", (PyCFunction) (&PyJPClass_isAbstract), METH_NOARGS, ""},
-	{"_isAssignableFrom", (PyCFunction) (&PyJPClass_isAssignableFrom), METH_VARARGS, ""},
-	{"_canConvertToJava", (PyCFunction) (&PyJPClass_canConvertToJava), METH_VARARGS, ""},
-	{"_convertToJava", (PyCFunction) (&PyJPClass_convertToJava), METH_VARARGS, ""},
-	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_NOARGS, ""},
-	{"_setHost", (PyCFunction) (&PyJPClass_setHost), METH_O, ""},
-	{"_newArrayType", (PyCFunction) (&PyJPClass_newArrayType), METH_O, ""},
-	{NULL},
-};
-
-static PyGetSetDef classGetSets[] = {
-	{"__javaname__", (getter) (&PyJPClass_getCanonicalName), NULL, ""},
-	{"_fields", (getter) (&PyJPClass_getClassFields), NULL, ""},
-	{"_methods", (getter) (&PyJPClass_getClassMethods), NULL, ""},
-	{"_bases", (getter) (&PyJPClass_getBases), NULL, ""},
-	{0}
-};
-
-static PyType_Slot classSlots[] = {
-	{ Py_tp_new,     (void*) PyJPClass_new},
-	{ Py_tp_init,    (void*) PyJPClass_init},
-	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
-	{ Py_tp_methods, (void*) classMethods},
-	{ Py_tp_doc,     (void*) classDoc},
-	{ Py_tp_getset,  (void*) &classGetSets},
-	{0}
-};
-
-PyType_Spec PyJPClassSpec = {
-	"_jpype.PyJPClass",
-	sizeof (PyJPClass),
-	0,
-	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE, //| Py_TPFLAGS_HAVE_GC
-	classSlots
-};
 
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -126,7 +58,6 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	JPJavaFrame frame(context);
 
 	JPClass *cls;
-	//JPValue *jpvalue = JPPythonEnv::getJavaValue(arg0);
 	if (JPPyString::check(arg0))
 	{
 		string cname = JPPyString::asStringUTF8(arg0);
@@ -151,6 +82,15 @@ void PyJPClass_dealloc(PyObject *self)
 	PyJPModuleState *state = PyJPModuleState_global;
 	((PyTypeObject*) state->PyJPValue_Type)->tp_dealloc(self);
 	JP_PY_CATCH();
+}
+
+PyObject *PyJPClass_str(PyJPClass *pyself)
+{
+	JP_PY_TRY("PyJPClass_toString", pyself)
+	JPJavaFrame frame(PyJPModule_getContext());
+	return JPPyString::fromStringUTF8(
+			frame.toString((jobject) pyself->m_Class->getJavaClass())).keep();
+	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
@@ -500,6 +440,49 @@ PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 	return JPPythonEnv::newJavaClass(cls).keep();
 	JP_PY_CATCH(NULL);
 }
+
+static PyMethodDef classMethods[] = {
+	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_VARARGS, ""},
+	{"_isInterface", (PyCFunction) (&PyJPClass_isInterface), METH_NOARGS, ""},
+	{"_isPrimitive", (PyCFunction) (&PyJPClass_isPrimitive), METH_NOARGS, ""},
+	{"_isThrowable", (PyCFunction) (&PyJPClass_isThrowable), METH_NOARGS, ""},
+	{"_isArray", (PyCFunction) (&PyJPClass_isArray), METH_NOARGS, ""},
+	{"_isAbstract", (PyCFunction) (&PyJPClass_isAbstract), METH_NOARGS, ""},
+	{"_isAssignableFrom", (PyCFunction) (&PyJPClass_isAssignableFrom), METH_VARARGS, ""},
+	{"_canConvertToJava", (PyCFunction) (&PyJPClass_canConvertToJava), METH_VARARGS, ""},
+	{"_convertToJava", (PyCFunction) (&PyJPClass_convertToJava), METH_VARARGS, ""},
+	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_NOARGS, ""},
+	{"_setHost", (PyCFunction) (&PyJPClass_setHost), METH_O, ""},
+	{"_newArrayType", (PyCFunction) (&PyJPClass_newArrayType), METH_O, ""},
+	{NULL},
+};
+
+static PyGetSetDef classGetSets[] = {
+	{"__javaname__", (getter) (&PyJPClass_getCanonicalName), NULL, ""},
+	{"_fields",      (getter) (&PyJPClass_getClassFields), NULL, ""},
+	{"_methods",     (getter) (&PyJPClass_getClassMethods), NULL, ""},
+	{"_bases",       (getter) (&PyJPClass_getBases), NULL, ""},
+	{0}
+};
+
+static PyType_Slot classSlots[] = {
+	{ Py_tp_new,     (void*) PyJPClass_new},
+	{ Py_tp_init,    (void*) PyJPClass_init},
+	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
+	{ Py_tp_str,     (void*) PyJPClass_str},
+	{ Py_tp_methods, (void*) classMethods},
+	{ Py_tp_doc,     (void*) classDoc},
+	{ Py_tp_getset,  (void*) &classGetSets},
+	{0}
+};
+
+PyType_Spec PyJPClassSpec = {
+	"_jpype.PyJPClass",
+	sizeof (PyJPClass),
+	0,
+	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE,
+	classSlots
+};
 
 #ifdef __cplusplus
 }

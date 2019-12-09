@@ -30,82 +30,68 @@ __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort', 'JInt', 'JLong', 'JFloat', 'J
 _maxFloat = 3.4028234663852886E38
 _maxDouble = 1.7976931348623157E308
 
-
-#class _JPrimitiveClass(_jclass.JClass):
-#    """ A wrapper specifying a specific java type.
-#
-#    These objects have three fields:
-#
-#     - __javaclass__ - the class for this object when matching arguments.
-#     - _java_boxed_class - the class to convert to when converting to an 
-#        object.
-#     - __javavalue__ - the instance of the java value.
-#
-#    """
-#    def __new__(cls, name, code, basetype, jc):
-def _JPrimitiveClass(name, basetype, jc):
-    members = {
-        "__init__": JPrimitive.init,
-        "__setattr__": object.__setattr__,
-        '__javaclass__': jc,
-    }
-    return _jclass.JClass(name, (basetype, JPrimitive), members)
-
-
-class JPrimitive(object):
-    def init(self, v):
-        if v is not None:
-            jc = _jpype._primitive_types[self.__class__.__name__]
-            self._pyv = v
-            self.__javavalue__ = _jpype.PyJPValue(jc, v)
-        else:
-            self.__javavalue__ = None
-
-    def __setattr__(self, attr, value):
-        raise AttributeError("%s does not have field %s" %
-                             (self.__name__, attr))
+class JPrimitive(_jpype.PyJPValueBase):
 
     def byteValue(self):
-        if self._pyv < -128 or self._pyv > 127:
+        value = int(self)
+        if value < -128 or value > 127:
             raise OverFlowError("Cannot convert to byte value")
-        return int(self._pyv)
+        return value
 
     def shortValue(self):
-        if self._pyv < -32768 or self._pyv > 32767:
+        value = int(self)
+        if value < -32768 or value > 32767:
             raise OverFlowError("Cannot convert to short value")
-        return int(self._pyv)
+        return value
 
     def intValue(self):
+        value = int(self)
         if self._pyv < -2147483648 or self._pyv > 2147483647:
             raise OverFlowError("Cannot convert to int value")
-        return int(self._pyv)
+        return value
 
     def longValue(self):
-        if self._pyv < -9223372036854775808 or self._pyv > 9223372036854775807:
+        value = int(self)
+        if value < -9223372036854775808 or value > 9223372036854775807:
             raise OverFlowError("Cannot convert to long value")
-        return int(self._pyv)
+        return value
 
     def floatValue(self):
-        if self._pyv < -_maxFloat or self._pyv > _maxFloat:
-            raise OverFlowError("Cannot convert to long value")
-        return float(self._pyv)
+        value = float(self)
+        if value < -_maxFloat or value > _maxFloat:
+            raise OverFlowError("Cannot convert to float value")
+        return value
 
     def doubleValue(self):
-        if self._pyv < -_maxDouble or self._pyv > _maxDouble:
-            raise OverFlowError("Cannot convert to double value")
-        return float(self._pyv)
+        return float(value)
+
+class _JPrimitiveChar(JPrimitive):
+    def __new__(self, v):
+        if isinstance(v,str) and len(v)==1:
+            return _jpype.PyJPValueLong.__new__(self, ord(v))
+        if isinstance(v,int):
+            return _jpype.PyJPValueLong.__new__(self, v)
+        raise ValueError("Bad char for conversion")
+
+    def __str__(self):
+        return chr(int(self))
+
+def _JPrimitiveClass(name, basetype, jc):
+    members = {
+        '__javaclass__': jc,
+    }
+    return _jclass.JClass(name, basetype, members)
 
 _jpype.JPrimitive = JPrimitive
 
 # Primitive types are their own special classes as they do not tie to the JVM
-print(dir(_jpype))
-JBoolean = _JPrimitiveClass("boolean", int, _jpype._jboolean)
-JByte = _JPrimitiveClass("byte",  int, _jpype._jbyte)
-JChar = _JPrimitiveClass("char",  int, _jpype._jchar)
-JShort = _JPrimitiveClass("short", int, _jpype._jshort)
-JInt = _JPrimitiveClass("int",  int, _jpype._jint)
-JLong = _JPrimitiveClass("long",  int, _jpype._jlong)
-JFloat = _JPrimitiveClass("float",  float, _jpype._jfloat)
-JDouble = _JPrimitiveClass("double",  float, _jpype._jdouble)
+JBoolean = _JPrimitiveClass("boolean", (JPrimitive, _jpype.PyJPValueLong), _jpype._jboolean)
+JByte = _JPrimitiveClass("byte",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jbyte)
+JChar = _JPrimitiveClass("char",  (_JPrimitiveChar, _jpype.PyJPValueLong), _jpype._jchar)
+JShort = _JPrimitiveClass("short", (JPrimitive, _jpype.PyJPValueLong), _jpype._jshort)
+JInt = _JPrimitiveClass("int",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jint)
+JLong = _JPrimitiveClass("long",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jlong)
+JFloat = _JPrimitiveClass("float",  (JPrimitive, _jpype.PyJPValueFloat), _jpype._jfloat)
+JDouble = _JPrimitiveClass("double", (JPrimitive,  _jpype.PyJPValueFloat), _jpype._jdouble)
 
 
