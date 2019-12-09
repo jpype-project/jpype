@@ -160,7 +160,7 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 
 JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
-	JP_TRACE_IN("JPArrayClass::convertToPythonObject")
+	JP_TRACE_IN("JPArrayClass::convertToPythonObject");
 	return JPPythonEnv::newJavaObject(JPValue(this, val));
 	JP_TRACE_OUT;
 }

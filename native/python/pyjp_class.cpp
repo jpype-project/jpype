@@ -31,7 +31,7 @@ const char *classDoc =
 
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPClass_new", type)
+	JP_PY_TRY("PyJPClass_new", type);
 	PyJPModuleState *state = PyJPModuleState_global;
 	PyTypeObject *base = (PyTypeObject *) state->PyJPValue_Type;
 	PyObject *self = base->tp_new(type, args, kwargs);
@@ -86,7 +86,7 @@ void PyJPClass_dealloc(PyObject *self)
 
 PyObject *PyJPClass_str(PyJPClass *pyself)
 {
-	JP_PY_TRY("PyJPClass_toString", pyself)
+	JP_PY_TRY("PyJPClass_toString", pyself);
 	JPJavaFrame frame(PyJPModule_getContext());
 	return JPPyString::fromStringUTF8(
 			frame.toString((jobject) pyself->m_Class->getJavaClass())).keep();
@@ -95,7 +95,7 @@ PyObject *PyJPClass_str(PyJPClass *pyself)
 
 PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 {
-	JP_PY_TRY("PyJPClass_getCanonicalName", self)
+	JP_PY_TRY("PyJPClass_getCanonicalName", self);
 	PyJPModule_getContext();
 	string name = self->m_Class->getCanonicalName();
 	JP_TRACE(name);
@@ -106,7 +106,7 @@ PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 
 PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 {
-	JP_PY_TRY("PyJPClass_getBases", self)
+	JP_PY_TRY("PyJPClass_getBases", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -174,7 +174,7 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 
 PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 {
-	JP_PY_TRY("PyJPClass_getClassFields", self)
+	JP_PY_TRY("PyJPClass_getClassFields", self);
 	// Special case for primitives
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
@@ -192,7 +192,7 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 
 PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 {
-	JP_PY_TRY("PyJPClass_getClassMethods", self)
+	JP_PY_TRY("PyJPClass_getClassMethods", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -229,7 +229,7 @@ PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 
 PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPClass_cast", self)
+	JP_PY_TRY("PyJPClass_cast", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -274,7 +274,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 
 PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg)
 {
-	JP_PY_TRY("PyJPClass_isAssignableFrom", self)
+	JP_PY_TRY("PyJPClass_isAssignableFrom", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -371,7 +371,7 @@ PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args)
 
 PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPClass_convertToJava", self)
+	JP_PY_TRY("PyJPClass_convertToJava", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);

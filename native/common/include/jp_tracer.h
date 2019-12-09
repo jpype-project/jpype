@@ -24,7 +24,7 @@
   catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
 #define JP_TRACE_IN(...) \
   JPypeTracer _trace(__VA_ARGS__); \
-  try {
+  try { do {} while (0)
 #define JP_TRACE_OUT \
   } \
   catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
@@ -32,7 +32,7 @@
 #define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
-#define JP_TRACE_IN(...) try {
+#define JP_TRACE_IN(...) try { do {} while (0)
 #define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
 #define JP_TRACE_LOCKS(...)

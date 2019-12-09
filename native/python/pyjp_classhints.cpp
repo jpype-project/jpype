@@ -70,7 +70,7 @@ int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 
 void PyJPClassHints_dealloc(PyJPClassHints *self)
 {
-	JP_PY_TRY("PyJPClassHints_dealloc", self)
+	JP_PY_TRY("PyJPClassHints_dealloc", self);
 			delete self->m_Hints;
 
 	// Free self
@@ -80,7 +80,7 @@ void PyJPClassHints_dealloc(PyJPClassHints *self)
 
 PyObject *PyJPClassHints_str(PyJPClassHints *self)
 {
-	JP_PY_TRY("PyJPClassHints_str", self)
+	JP_PY_TRY("PyJPClassHints_str", self);
 	stringstream sout;
 	sout << "<java class hints>";
 	return JPPyString::fromStringUTF8(sout.str()).keep();

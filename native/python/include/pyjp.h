@@ -22,14 +22,16 @@
 #ifdef JP_TRACING_ENABLE
 #define JP_PY_TRY(...) \
   JPypeTracer _trace(__VA_ARGS__); \
-  try {
+  try { do {} while(0)
 #define JP_PY_CATCH(...) \
   } catch(...) { \
   JPPythonEnv::rethrow(JP_STACKINFO()); } \
   return __VA_ARGS__
 #else
-#define JP_PY_TRY(...)  try {
-#define JP_PY_CATCH(...)  } catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); } return __VA_ARGS__
+#define JP_PY_TRY(...)  try { do {} while(0)
+#define JP_PY_CATCH(...)  } catch(...) \
+  { JPPythonEnv::rethrow(JP_STACKINFO()); } \
+  return __VA_ARGS__
 #endif
 
 #ifdef __cplusplus

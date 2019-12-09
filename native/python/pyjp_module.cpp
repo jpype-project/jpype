@@ -124,7 +124,7 @@ PyJPModuleState *PyJPModuleState_global = NULL;
 
 PyMODINIT_FUNC PyInit__jpype()
 {
-	JP_PY_TRY("PyInit__jpype")
+	JP_PY_TRY("PyInit__jpype");
 	PyObject *module;
 	module = PyState_FindModule(&PyJPModuleDef);
 	if (module != NULL)
@@ -362,7 +362,7 @@ PyObject *PyJPModule_attachThread(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_attachThreadAsDaemon(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_attachThreadAsDaemon", self)
+	JP_PY_TRY("PyJPModule_attachThreadAsDaemon", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext *context = state->m_Context;
 	ASSERT_JVM_RUNNING(context);
@@ -373,7 +373,7 @@ PyObject *PyJPModule_attachThreadAsDaemon(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_detachThread(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_detachThread", self)
+	JP_PY_TRY("PyJPModule_detachThread", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	if (state->m_Context->isRunning())
 		state->m_Context->detachCurrentThread();
@@ -383,7 +383,7 @@ PyObject *PyJPModule_detachThread(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_isThreadAttached(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_isThreadAttached", self)
+	JP_PY_TRY("PyJPModule_isThreadAttached", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	if (!state->m_Context->isRunning())
 		return PyBool_FromLong(0);
@@ -393,7 +393,7 @@ PyObject *PyJPModule_isThreadAttached(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer", self)
+	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext *context = state->m_Context;
 	ASSERT_JVM_RUNNING(context);
@@ -435,7 +435,7 @@ PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 
 PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_getClass", self)
+	JP_PY_TRY("PyJPModule_getClass", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	PyJPClass *cls = NULL;
@@ -473,7 +473,7 @@ PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 
 JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 {
-	JP_TRACE_IN("JPPythonEnv::newJavaClass")
+	JP_TRACE_IN("JPPythonEnv::newJavaClass");
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	ASSERT_NOT_NULL(javaClass);

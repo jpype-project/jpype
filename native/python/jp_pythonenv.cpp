@@ -125,6 +125,7 @@ PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name)
  */
 JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value)
 {
+	JP_TRACE_IN("PyJPValue_createInstance");
 	PyJPModuleState *state = PyJPModuleState_global;
 	// dispatch by type so we will create the right wrapper type
 	JPPyObject out;
@@ -132,7 +133,7 @@ JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValu
 
 	if (type == (PyTypeObject *) state->PyJPValue_Type)
 		out = PyJPValue_createInstance(type, context, value);
-	else if (cls->isThrowable())
+	else if (cls->isThrowable() || cls->isInterface())
 		out = PyJPValue_createBase(type, context, value);
 	else if (cls == context->_java_lang_Class)
 	{
@@ -146,6 +147,7 @@ JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValu
 		out = PyJPValue_createInstance(type, context, value);
 
 	return out;
+	JP_TRACE_OUT;
 }
 
 JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
@@ -272,7 +274,7 @@ JPPyObject PyJPField_create(JPField *field)
 
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 {
-	JP_TRACE_IN("PyJPMethod_create");
+	JP_TRACE_IN("PyJPMethod_create", instance);
 	PyJPModuleState *state = PyJPModuleState_global;
 	PyTypeObject *type = (PyTypeObject*) state->PyJPMethod_Type;
 	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);

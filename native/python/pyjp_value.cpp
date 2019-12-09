@@ -66,7 +66,7 @@ void PyJPClassMeta_dealloc(PyObject *self)
 
 PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 {
-	JP_PY_TRY("PyJPClassMeta_getattro")
+	JP_PY_TRY("PyJPClassMeta_getattro");
 	PyJPModuleState *state = PyJPModuleState_global;
 	if (!PyUnicode_Check(name))
 	{
@@ -197,7 +197,7 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValueBase_new")
+	JP_PY_TRY("PyJPValueBase_new");
 	return type->tp_alloc(type, 0);
 	JP_PY_CATCH(NULL);
 }
@@ -249,7 +249,7 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValue_new")
+	JP_PY_TRY("PyJPValue_new");
 	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
 	jvalue v;
 	self->m_Value = JPValue(NULL, v);
@@ -259,7 +259,7 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValue_init", self)
+	JP_PY_TRY("PyJPValue_init", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	// Access the context first so we ensure JVM is running
@@ -282,7 +282,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 
 void PyJPValue_dealloc(PyJPValue *self)
 {
-	JP_PY_TRY("PyJPValue_dealloc", self)
+	JP_PY_TRY("PyJPValue_dealloc", self);
 	// We have to handle partially constructed objects that result from
 	// fails in __init__, thus lots of inits
 	JPValue& value = self->m_Value;
@@ -308,7 +308,7 @@ void PyJPValue_dealloc(PyJPValue *self)
 
 PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValueBase_check", self)
+	JP_PY_TRY("PyJPValueBase_check", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	int ret = 0;
 
@@ -327,7 +327,7 @@ PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 
 PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPValue_check", self)
+	JP_PY_TRY("PyJPValue_check", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	int ret = 0;
 
@@ -419,7 +419,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 
 PyObject *PyJPValue_str(PyObject *pyself)
 {
-	JP_PY_TRY("PyJPValue_toString", pyself)
+	JP_PY_TRY("PyJPValue_toString", pyself);
 	// Make this work for both PyJPValueBase and PyJPValue
 	PyJPValue* self = PyJPValue_asValue(pyself);
 	if (self == NULL)
@@ -467,7 +467,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 
 PyObject *PyJPValue_repr(PyObject *pyself)
 {
-	JP_PY_TRY("PyJPValue_repr", pyself)
+	JP_PY_TRY("PyJPValue_repr", pyself);
 	// Make this work for both PyJPValueBase and PyJPValue
 	PyJPValue *self = PyJPValue_asValue(pyself);
 	if (self == NULL)

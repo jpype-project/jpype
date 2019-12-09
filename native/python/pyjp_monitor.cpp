@@ -51,7 +51,7 @@ PyType_Spec PyJPMonitorSpec = {
 
 int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPMonitor_init")
+	JP_PY_TRY("PyJPMonitor_init");
 	self->m_Monitor = NULL;
 
 	PyObject *obj;
@@ -111,7 +111,7 @@ PyObject *PyJPMonitor_str(PyJPMonitor *self)
 
 PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPMonitor_enter", self)
+	JP_PY_TRY("PyJPMonitor_enter", self);
 	PyJPModule_getContext();
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
@@ -120,7 +120,7 @@ PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 
 PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
-	JP_PY_TRY("PyJPMonitor_exit", self)
+	JP_PY_TRY("PyJPMonitor_exit", self);
 	PyJPModule_getContext();
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;

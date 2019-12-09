@@ -49,7 +49,7 @@ PyType_Spec PyJPProxySpec = {
 
 PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPProxy_new")
+	JP_PY_TRY("PyJPProxy_new");
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	self->m_Proxy = NULL;
 	self->m_Target = NULL;
@@ -59,7 +59,7 @@ PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPProxy_init", self)
+	JP_PY_TRY("PyJPProxy_init", self);
 	// Parse arguments
 	PyObject *target;
 	PyObject *pyintf;
