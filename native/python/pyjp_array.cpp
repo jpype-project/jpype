@@ -25,41 +25,6 @@ extern "C"
 {
 #endif
 
-PyObject *PyJPArray_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-int PyJPArray_init(PyObject *self, PyObject *pyargs, PyObject *kwargs);
-void PyJPArray_dealloc(PyJPArray *self);
-PyObject *PyJPArray_repr(PyJPArray *self);
-Py_ssize_t PyJPArray_len(PyJPArray *self);
-PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg);
-int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t index, PyObject* value);
-int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value);
-
-static PyMethodDef arrayMethods[] = {
-	{"__getitem__", (PyCFunction) (&PyJPArray_getArrayItem), METH_O | METH_COEXIST, ""},
-	{NULL},
-};
-
-static PyType_Slot arraySlots[] = {
-	{ Py_tp_new,      (void*) PyJPArray_new},
-	{ Py_tp_init,     (void*) PyJPArray_init},
-	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
-	{ Py_tp_repr,     (void*) PyJPArray_repr},
-	{ Py_tp_methods,  (void*) &arrayMethods},
-	{ Py_sq_item,     (void*) &PyJPArray_getArrayItem},
-	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
-	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
-	{ Py_sq_length,   (void*) &PyJPArray_len},
-	{0}
-};
-
-PyType_Spec PyJPArraySpec = {
-	"_jpype.PyJPArray",
-	sizeof (PyJPArray),
-	0,
-	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE, //| Py_TPFLAGS_HAVE_GC,
-	arraySlots
-};
-
 /**
  * Create a new object.
  *
@@ -221,6 +186,32 @@ int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value)
 	}
 	JP_PY_CATCH(-1);
 }
+
+static PyMethodDef arrayMethods[] = {
+	{"__getitem__", (PyCFunction) (&PyJPArray_getArrayItem), METH_O | METH_COEXIST, ""},
+	{NULL},
+};
+
+static PyType_Slot arraySlots[] = {
+	{ Py_tp_new,      (void*) PyJPArray_new},
+	{ Py_tp_init,     (void*) PyJPArray_init},
+	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
+	{ Py_tp_repr,     (void*) PyJPArray_repr},
+	{ Py_tp_methods,  (void*) &arrayMethods},
+	{ Py_sq_item,     (void*) &PyJPArray_getArrayItem},
+	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
+	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
+	{ Py_sq_length,   (void*) &PyJPArray_len},
+	{0}
+};
+
+PyType_Spec PyJPArraySpec = {
+	"_jpype.PyJPArray",
+	sizeof (PyJPArray),
+	0,
+	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE, //| Py_TPFLAGS_HAVE_GC,
+	arraySlots
+};
 
 #ifdef __cplusplus
 }

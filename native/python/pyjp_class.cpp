@@ -434,8 +434,10 @@ PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 		ss << "[";
 	if (self->m_Class->isPrimitive())
 		ss << ((JPPrimitiveType*) self->m_Class)->getTypeCode();
+	else if (dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class)
+		ss << self->m_Class->getName();
 	else
-		ss << self->m_Class->getName() << ";";
+		ss << "L" << self->m_Class->getName() << ";";
 	JPClass* cls = context->getTypeManager()->findClassByName(ss.str());
 	return JPPythonEnv::newJavaClass(cls).keep();
 	JP_PY_CATCH(NULL);

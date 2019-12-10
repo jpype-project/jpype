@@ -21,39 +21,6 @@ extern "C"
 {
 #endif
 
-PyObject *PyJPField_name(PyJPField *self, PyObject *arg);
-PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type);
-int       PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue);
-PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg);
-PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg);
-PyObject *PyJPField_repr(PyJPField *self);
-
-static PyGetSetDef fieldGetSets[] = {
-	{"__name__", (getter) (&PyJPField_name), NULL, ""},
-	{"_final", (getter) (&PyJPField_isFinal), NULL, ""},
-	{"_static", (getter) (&PyJPField_isStatic), NULL, ""},
-	{0}
-};
-
-void PyJPValue_dealloc(PyJPValue *self);
-
-static PyType_Slot fieldSlots[] = {
-	{ Py_tp_dealloc,   (void*) PyJPValue_dealloc},
-	{ Py_tp_descr_get, (void*) PyJPField_get},
-	{ Py_tp_descr_set, (void*) PyJPField_set},
-	{ Py_tp_repr,      (void*) &PyJPField_repr},
-	{ Py_tp_getset,    (void*) &fieldGetSets},
-	{0}
-};
-
-PyType_Spec PyJPFieldSpec = {
-	"_jpype.PyJPField",
-	sizeof (PyJPField),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	fieldSlots
-};
-
 PyObject *PyJPField_name(PyJPField *self, PyObject *arg)
 {
 	JP_PY_TRY("PyJPField_name", self);
@@ -126,6 +93,32 @@ PyObject *PyJPField_repr(PyJPField *self)
 	return JPPyString::fromStringUTF8(ss.str()).keep();
 	JP_PY_CATCH(NULL);
 }
+
+static PyGetSetDef fieldGetSets[] = {
+	{"__name__", (getter) (&PyJPField_name), NULL, ""},
+	{"_final", (getter) (&PyJPField_isFinal), NULL, ""},
+	{"_static", (getter) (&PyJPField_isStatic), NULL, ""},
+	{0}
+};
+
+void PyJPValue_dealloc(PyJPValue *self);
+
+static PyType_Slot fieldSlots[] = {
+	{ Py_tp_dealloc,   (void*) PyJPValue_dealloc},
+	{ Py_tp_descr_get, (void*) PyJPField_get},
+	{ Py_tp_descr_set, (void*) PyJPField_set},
+	{ Py_tp_repr,      (void*) &PyJPField_repr},
+	{ Py_tp_getset,    (void*) &fieldGetSets},
+	{0}
+};
+
+PyType_Spec PyJPFieldSpec = {
+	"_jpype.PyJPField",
+	sizeof (PyJPField),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	fieldSlots
+};
 
 #ifdef __cplusplus
 }

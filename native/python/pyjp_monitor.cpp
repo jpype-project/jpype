@@ -21,34 +21,6 @@ extern "C"
 {
 #endif
 
-int PyJPMonitor_init(PyJPMonitor *self, PyObject *args);
-void PyJPMonitor_dealloc(PyJPMonitor *o);
-PyObject* PyJPMonitor_str(PyJPMonitor *o);
-PyObject* PyJPMonitor_enter(PyJPMonitor *self, PyObject *args);
-PyObject* PyJPMonitor_exit(PyJPMonitor *self, PyObject *args);
-
-static PyMethodDef monitorMethods[] = {
-	{"__enter__", (PyCFunction) (&PyJPMonitor_enter), METH_NOARGS, ""},
-	{"__exit__", (PyCFunction) (&PyJPMonitor_exit), METH_VARARGS, ""},
-	{NULL},
-};
-
-static PyType_Slot monitorSlots[] = {
-	{ Py_tp_init,     (void*) PyJPMonitor_init},
-	{ Py_tp_dealloc,  (void*) PyJPMonitor_dealloc},
-	{ Py_tp_str,      (void*) PyJPMonitor_str},
-	{ Py_tp_methods,  (void*) &monitorMethods},
-	{0}
-};
-
-PyType_Spec PyJPMonitorSpec = {
-	"_jpype.PyJPMonitor",
-	sizeof (PyJPMonitor),
-	0,
-	Py_TPFLAGS_DEFAULT,
-	monitorSlots
-};
-
 int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_init");
@@ -126,6 +98,28 @@ PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
+
+static PyMethodDef monitorMethods[] = {
+	{"__enter__", (PyCFunction) (&PyJPMonitor_enter), METH_NOARGS, ""},
+	{"__exit__", (PyCFunction) (&PyJPMonitor_exit), METH_VARARGS, ""},
+	{NULL},
+};
+
+static PyType_Slot monitorSlots[] = {
+	{ Py_tp_init,     (void*) PyJPMonitor_init},
+	{ Py_tp_dealloc,  (void*) PyJPMonitor_dealloc},
+	{ Py_tp_str,      (void*) PyJPMonitor_str},
+	{ Py_tp_methods,  (void*) &monitorMethods},
+	{0}
+};
+
+PyType_Spec PyJPMonitorSpec = {
+	"_jpype.PyJPMonitor",
+	sizeof (PyJPMonitor),
+	0,
+	Py_TPFLAGS_DEFAULT,
+	monitorSlots
+};
 
 #ifdef __cplusplus
 }

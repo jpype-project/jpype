@@ -22,31 +22,6 @@ extern "C"
 {
 #endif
 
-PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs);
-void PyJPProxy_dealloc(PyJPProxy *self);
-int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg);
-int PyJPProxy_clear(PyJPProxy *self);
-PyObject *PyJPProxy_str(PyJPProxy *self);
-
-static PyType_Slot proxySlots[] = {
-	{ Py_tp_new,      (void*) PyJPProxy_new},
-	{ Py_tp_init,     (void*) PyJPProxy_init},
-	{ Py_tp_dealloc,  (void*) PyJPProxy_dealloc},
-	{ Py_tp_str,      (void*) PyJPProxy_str},
-	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
-	{ Py_tp_clear,    (void*) PyJPProxy_clear},
-	{0}
-};
-
-PyType_Spec PyJPProxySpec = {
-	"_jpype.PyJPProxy",
-	sizeof (PyObject),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
-	proxySlots
-};
-
 PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_new");
@@ -146,6 +121,24 @@ PyObject *PyJPProxy_str(PyJPProxy *self)
 	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(NULL);
 }
+
+static PyType_Slot proxySlots[] = {
+	{ Py_tp_new,      (void*) PyJPProxy_new},
+	{ Py_tp_init,     (void*) PyJPProxy_init},
+	{ Py_tp_dealloc,  (void*) PyJPProxy_dealloc},
+	{ Py_tp_str,      (void*) PyJPProxy_str},
+	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
+	{ Py_tp_clear,    (void*) PyJPProxy_clear},
+	{0}
+};
+
+PyType_Spec PyJPProxySpec = {
+	"_jpype.PyJPProxy",
+	sizeof (PyObject),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	proxySlots
+};
 
 #ifdef __cplusplus
 }
