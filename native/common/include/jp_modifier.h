@@ -24,6 +24,7 @@ extern "C"
 
 namespace JPModifier
 {
+
 /* https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.1-200-E.1
  * https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.5-200-A.1
  * https://docs.oracle.com/javase/specs/jvms/se11/html/jvms-4.html#jvms-4.6-200-A.1

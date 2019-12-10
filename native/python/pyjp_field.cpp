@@ -60,7 +60,11 @@ int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 		JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
 	JPValue *jval = JPPythonEnv::getJavaValue(obj);
 	if (jval == NULL)
-		JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
+	{
+		stringstream ss;
+		ss << "Field requires instance value, not " << Py_TYPE(obj)->tp_name;
+		JP_RAISE_ATTRIBUTE_ERROR(ss.str().c_str());
+	}
 	self->m_Field->setField(jval->getValue().l, pyvalue);
 	return 0;
 	JP_PY_CATCH(-1);
@@ -94,6 +98,12 @@ PyObject *PyJPField_repr(PyJPField *self)
 	JP_PY_CATCH(NULL);
 }
 
+// These are hard to get to as any attempt to access them
+// through getattr will dereference them due to getset.
+// Thus these methods are only accessable directly during
+// class initialization.
+//
+// After then use  obj.__class__.__dict__['fieldname']._final
 static PyGetSetDef fieldGetSets[] = {
 	{"__name__", (getter) (&PyJPField_name), NULL, ""},
 	{"_final", (getter) (&PyJPField_isFinal), NULL, ""},

@@ -25,6 +25,7 @@ extern "C"
 const char* JAVA_VALUE = "__javavalue__";
 
 PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
+
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_new");
@@ -223,21 +224,16 @@ int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
 		return PyObject_GenericSetAttr(self, attr_name, value);
-	PyObject *f = PyType_Lookup(Py_TYPE(self), attr_name);
-	if (f == NULL)
+	JPPyObject f = JPPyObject(JPPyRef::_accept, PyType_Lookup(Py_TYPE(self), attr_name));
+	if (f.isNull())
 	{
 		const char *name_str = PyUnicode_AsUTF8(attr_name);
 		PyErr_Format(PyExc_AttributeError, "Field '%s' is not found", name_str);
 		return -1;
 	}
-	descrsetfunc desc = Py_TYPE(f)->tp_descr_set;
+	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
 	if (desc != NULL)
-	{
-		int res = desc(f, attr_name, value);
-		Py_DECREF(f);
-		return res;
-	}
-	Py_DECREF(f);
+		return desc(f.get(), self, value);
 
 	// Not a descriptor
 	const char *name_str = PyUnicode_AsUTF8(attr_name);

@@ -33,6 +33,7 @@ PyObject *PyJPMethod_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 }
 
 int PyJPMethod_clear(PyJPMethod *self);
+
 void PyJPMethod_dealloc(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_dealloc", self);

@@ -71,7 +71,7 @@ int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 void PyJPClassHints_dealloc(PyJPClassHints *self)
 {
 	JP_PY_TRY("PyJPClassHints_dealloc", self);
-			delete self->m_Hints;
+	delete self->m_Hints;
 
 	// Free self
 	Py_TYPE(self)->tp_free(self);

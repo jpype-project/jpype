@@ -94,7 +94,7 @@ PyObject *PyJPClassMeta_getattro(PyObject *obj, PyObject *name)
 	JP_PY_CATCH(NULL);
 }
 
-int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
+int PyJPClassMeta_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 {
 	JP_PY_TRY("PyJPClassMeta_setattro");
 	if (!PyUnicode_Check(attr_name))
@@ -107,31 +107,25 @@ int PyJPClassMeta_setattro(PyObject *o, PyObject *attr_name, PyObject *v)
 
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
-		return PyType_Type.tp_setattro(o, attr_name, v);
+		return PyType_Type.tp_setattro(self, attr_name, v);
 
-	PyObject *f = PyType_Lookup((PyTypeObject*) o, attr_name);
-	if (f == NULL)
+	JPPyObject f = JPPyObject(JPPyRef::_accept, PyType_Lookup((PyTypeObject*) self, attr_name));
+	if (f.isNull())
 	{
 		const char *name_str = PyUnicode_AsUTF8(attr_name);
 		PyErr_Format(PyExc_AttributeError, "Field '%s' is not found", name_str);
 		return -1;
 	}
 
-	int res;
-	descrsetfunc desc = Py_TYPE(f)->tp_descr_set;
+	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
 	if (desc != NULL)
-	{
-		res = desc(f, attr_name, v);
-		Py_DECREF(f);
-		return res;
-	}
-	Py_DECREF(f);
+		return desc(f.get(), self, v);
 
 	// Not a descriptor
 	const char *name_str = PyUnicode_AsUTF8(attr_name);
 	PyErr_Format(PyExc_AttributeError,
 			"Static field '%s' is not settable on Java '%s' object",
-			name_str, Py_TYPE(o)->tp_name);
+			name_str, Py_TYPE(self)->tp_name);
 	return -1;
 	JP_PY_CATCH(-1);
 }
