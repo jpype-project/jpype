@@ -83,6 +83,9 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 	{
 		JP_TRACE("Check value");
 		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;

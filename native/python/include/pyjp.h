@@ -94,6 +94,8 @@ struct PyJPValue
 	JPValue m_Value;
 } ;
 
+int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs);
+
 /** This is a wrapper for accessing the array method.  It is structured to
  * be like a bound method.  It should not be the primary handle to the object.
  * That will be a PyJPValue.

@@ -102,6 +102,8 @@
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
+        <itemPath>../../native/common/pyjp_classmeta.cpp</itemPath>
+        <itemPath>../../native/common/pyjp_exception.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
         <itemPath>../../native/python/pyjp_module.cpp</itemPath>
@@ -472,6 +474,16 @@
       <item path="../../native/common/jp_value.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../../native/common/jp_voidtype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/pyjp_classmeta.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/pyjp_exception.cpp"
             ex="false"
             tool="1"
             flavor2="0">

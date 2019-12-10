@@ -33,8 +33,7 @@ class JString(object):
 
     """
     def __new__(cls, *args, **kwargs):
-        cls = _jpype._java_lang_String
-        return cls.__new__(cls, *args)
+        return _jpype._java_lang_String(*args)
 
 _jpype.JString = JString
 

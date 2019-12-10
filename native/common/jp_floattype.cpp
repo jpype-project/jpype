@@ -93,6 +93,9 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;

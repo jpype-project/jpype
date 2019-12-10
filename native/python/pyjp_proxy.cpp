@@ -87,6 +87,7 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(-1);
 }
 
+int PyJPProxy_clear(PyJPProxy *self);
 void PyJPProxy_dealloc(PyJPProxy *self)
 {
 	JP_PY_TRY("PyJPProxy_dealloc", self);

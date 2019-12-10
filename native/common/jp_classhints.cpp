@@ -214,6 +214,8 @@ public:
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		JPClass *oc = value->getClass();
+		if (oc == NULL)
+			return match.type = JPMatch::_none;
 		if (oc == cls)
 		{
 			// hey, this is me! :)
@@ -252,7 +254,7 @@ public:
 	{
 		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
-		if (value == NULL || frame == NULL)
+		if (value == NULL || frame == NULL || value->getClass() == NULL)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;

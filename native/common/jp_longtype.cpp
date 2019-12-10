@@ -81,6 +81,9 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	{
 		JP_TRACE("Java value");
 		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
 		if (cls == this)
 		{
 			JP_TRACE("Exact");

@@ -69,14 +69,18 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JPClass* cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
+		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (context != NULL && value->getClass() == context->_java_lang_Boolean)
+		if (context != NULL && cls == context->_java_lang_Boolean)
 		{
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
