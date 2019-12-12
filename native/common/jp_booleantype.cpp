@@ -53,15 +53,20 @@ public:
 
 JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
+	JP_TRACE_IN("JPBooleanType::getJavaConversion", this);
 	JPContext *context = NULL;
 	if (frame != NULL)
 		context = frame->getContext();
 
 	if (JPPyObject::isNone(pyobj))
+	{
+		JP_TRACE("none");
 		return match.type = JPMatch::_none;
+	}
 
 	if (JPPyBool::check(pyobj))
 	{
+		JP_TRACE("python exact match");
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_exact;
 	}
@@ -75,6 +80,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 
 		if (cls == this)
 		{
+			JP_TRACE("exact match");
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
@@ -82,6 +88,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (context != NULL && cls == context->_java_lang_Boolean)
 		{
+			JP_TRACE("Boolean match");
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
 		}
@@ -98,18 +105,22 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 
 	if (JPPyLong::check(pyobj))
 	{
+		JP_TRACE("long match");
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
 	if (JPPyLong::checkConvertable(pyobj))
 	{
+		JP_TRACE("long convertable match");
 		match.conversion = &asBooleanConversion;
 		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 		return match.type;
 	}
 
+	JP_TRACE("no match");
 	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

@@ -46,6 +46,8 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
+
 	virtual char getTypeCode() override
 	{
 		return 'V';

@@ -152,73 +152,87 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 				= new JPClassType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 		if (className == "java.lang.String")
 			return (jlong) (context->_java_lang_String
-				= new JPStringType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPStringType(frame, cls, className,
+				(JPClass*) superClass, interfaces, modifiers));
 		if (className == "java.lang.Throwable")
 			return (jlong) (context->_java_lang_Throwable
-				= new JPObjectType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+				= new JPObjectType(frame, cls, className,
+				(JPClass*) superClass, interfaces, modifiers));
 
 		// Register the box types
 		if (className == "java.lang.Void")
 			return (jlong) (context->_java_lang_Void
-				= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_void));
+				= new JPBoxedType(frame, cls, className,
+				(JPClass*) superClass, interfaces, modifiers, context->_void));
 		if (className == "java.lang.Boolean")
 		{
 			context->m_BooleanValueID = frame.GetMethodID(cls, "booleanValue", "()Z");
 			return (jlong) (context->_java_lang_Boolean
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_boolean));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_boolean));
 		}
 		if (className == "java.lang.Byte")
 		{
 			context->m_ByteValueID = frame.GetMethodID(cls, "byteValue", "()B");
 			return (jlong) (context->_java_lang_Byte
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_byte));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_byte));
 		}
 		if (className == "java.lang.Character")
 		{
 			context->m_CharValueID = frame.GetMethodID(cls, "charValue", "()C");
 			return (jlong) (context->_java_lang_Char
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_char));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_char));
 		}
 		if (className == "java.lang.Short")
 		{
 			context->m_ShortValueID = frame.GetMethodID(cls, "shortValue", "()S");
 			return (jlong) (context->_java_lang_Short
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_short));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_short));
 		}
 		if (className == "java.lang.Integer")
 		{
 			context->m_IntValueID = frame.GetMethodID(cls, "intValue", "()I");
 			return (jlong) (context->_java_lang_Integer
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_int));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_int));
 		}
 		if (className == "java.lang.Long")
 		{
 			context->m_LongValueID = frame.GetMethodID(cls, "longValue", "()J");
 			return (jlong) (context->_java_lang_Long
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_long));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_long));
 		}
 		if (className == "java.lang.Float")
 		{
 			context->m_FloatValueID = frame.GetMethodID(cls, "floatValue", "()F");
 			return (jlong) (context->_java_lang_Float
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_float));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_float));
 		}
 		if (className == "java.lang.Double")
 		{
 			context->m_DoubleValueID = frame.GetMethodID(cls, "doubleValue", "()D");
 			return (jlong) (context->_java_lang_Double
-					= new JPBoxedType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers, context->_double));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_double));
 		}
 		if (className == "org.jpype.proxy.JPypeProxy")
 			return (jlong)
-			new JPProxyType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+			new JPProxyType(frame, cls, className,
+				(JPClass*) superClass, interfaces, modifiers);
 
 		// Register reflection types for later use
 		if (className == "java.lang.reflect.Method")
-			return (jlong) (context->_java_lang_reflect_Method = new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			return (jlong) (context->_java_lang_reflect_Method
+				= new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
 		if (className == "java.lang.reflect.Field")
-			return (jlong) (context->_java_lang_reflect_Field = new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			return (jlong) (context->_java_lang_reflect_Field
+				= new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
 		stringstream ss;
 		ss << "Special class not defined for " << className;

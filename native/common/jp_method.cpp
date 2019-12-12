@@ -245,8 +245,8 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 				JPMatch conv;
 				JPBoxedType *boxed = type->getBoxedClass(context);
 				boxed->getJavaConversion(&frame, conv, arg[i + match.skip]);
-				frame.SetObjectArrayElement(ja, i,
-						conv.conversion->convert(&frame, boxed, arg[i + match.skip]).l);
+				jvalue v = conv.conversion->convert(&frame, boxed, arg[i + match.skip]);
+				frame.SetObjectArrayElement(ja, i, v.l);
 			} else
 			{
 				frame.SetObjectArrayElement(ja, i, v[i].l);
@@ -255,6 +255,8 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 
 		// Call the method
 		jobject o = frame.callMethod(m_Method.get(), self, ja);
+
+		JP_TRACE("ReturnType", retType->getCanonicalName());
 
 		// Deal with the return
 		if (retType->isPrimitive())

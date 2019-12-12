@@ -273,9 +273,11 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 JPValue JPClass::getValueFromObject(const JPValue& obj)
 {
+	JP_TRACE_IN("JPClass::getValueFromObject");
 	jvalue res;
 	res.l = obj.getJavaObject();
 	return JPValue(this, res);
+	JP_TRACE_OUT;
 }
 
 JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)

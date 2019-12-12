@@ -323,11 +323,13 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
+		JP_TRACE_IN("JPConversionBox::convert");
 		jvalue res;
 		JPPyObjectVector args(pyobj, NULL);
 		JPValue pobj = cls->newInstance(args);
 		res.l = pobj.getJavaObject();
 		return res;
+		JP_TRACE_OUT;
 	}
 } _boxConversion;
 
