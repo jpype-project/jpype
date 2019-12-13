@@ -443,6 +443,17 @@ PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 	JP_PY_CATCH(NULL);
 }
 
+bool PyJPClass_Check(PyObject* obj)
+{
+	PyTypeObject* type = Py_TYPE(obj);
+	// PyJPClass -> PyJPValue -> PyJPValueBase -> object
+	PyObject *mro = type->tp_mro;
+	Py_ssize_t n = PyTuple_Size(mro);
+	if (n < 4)
+		return false;
+	return PyTuple_GetItem(mro, n - 4) == PyJPModuleState_global->PyJPClass_Type;
+}
+
 static PyMethodDef classMethods[] = {
 	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_VARARGS, ""},
 	{"_isInterface", (PyCFunction) (&PyJPClass_isInterface), METH_NOARGS, ""},

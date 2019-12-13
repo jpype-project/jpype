@@ -163,9 +163,6 @@ public:
 
 	/**
 	 * Expose IsAssignableFrom to python.
-	 *
-	 * FIXME this may be able to be replaced with isSubTypeOf.
-	 * They are doing the same thing.
 	 */
 	virtual bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
 

@@ -150,10 +150,62 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	return PyBool_FromLong(ret);
 }
 
+PyObject* PyJPClassMeta_subclasscheck(PyTypeObject *type, PyTypeObject *test)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	if ((PyObject*) test == state->PyJPValueBase_Type
+			|| (PyObject*) test == state->PyJPValue_Type)
+		Py_RETURN_FALSE;
+
+	// Only types that inherit form JPClassMeta are considered
+	PyObject* mro = Py_TYPE(type)->tp_mro;
+	Py_ssize_t n = PyTuple_Size(mro);
+	if (n < 3 || PyTuple_GetItem(mro, n - 3)
+			!= state->PyJPClassMeta_Type)
+		Py_RETURN_FALSE;
+
+	// Check for class inheritance first
+	JPClass *testClass = JPPythonEnv::getJavaClass((PyObject*) test);
+	JPClass *typeClass = JPPythonEnv::getJavaClass((PyObject*) type);
+	if (testClass == NULL)
+		Py_RETURN_FALSE;
+	JPContext* context = testClass->getContext();
+	if (testClass == typeClass)
+		Py_RETURN_TRUE;
+	if (typeClass != NULL)
+	{
+		JPJavaFrame frame(context);
+		if (typeClass->isPrimitive())
+			Py_RETURN_FALSE;
+		bool b = testClass->isAssignableFrom(frame, typeClass);
+		return PyBool_FromLong(b);
+	}
+
+	// Otherwise check for special cases
+	if (type->tp_name[0] != 'J')
+		Py_RETURN_FALSE;
+
+	JPPyObject module(JPPyRef::_use, PyJPModule_global);
+	if ((PyObject*) type == module.getAttrString("JInterface").get())
+		return PyBool_FromLong(testClass->isInterface());
+	if ((PyObject*) type == module.getAttrString("JObject").get())
+		return PyBool_FromLong(!testClass->isPrimitive());
+	if ((PyObject*) type == module.getAttrString("JArray").get())
+		return PyBool_FromLong(dynamic_cast<JPArrayClass*> (testClass) == testClass);
+	if ((PyObject*) type == module.getAttrString("JException").get())
+		return PyBool_FromLong(testClass->isThrowable());
+	Py_RETURN_FALSE;
+}
+
+PyObject* PyJPClassMeta_instancecheck(PyTypeObject *self, PyObject *args)
+{
+	return PyJPClassMeta_subclasscheck(self, Py_TYPE(args));
+}
+
 static struct PyMethodDef metaMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPClassMeta_check, METH_VARARGS | METH_CLASS, ""},
-	//	{"__instancecheck__", XXXX, METH_VARARGS, ""},
-	//	{"__subclasscheck__", XXXX, METH_VARARGS, ""},
+	{"_check", (PyCFunction) & PyJPClassMeta_check, METH_VARARGS | METH_CLASS, ""},
+	{"__instancecheck__", (PyCFunction) & PyJPClassMeta_instancecheck, METH_O, ""},
+	{"__subclasscheck__", (PyCFunction) & PyJPClassMeta_subclasscheck, METH_O, ""},
 	{0}
 };
 

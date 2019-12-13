@@ -128,16 +128,7 @@ class JClass(_jpype.PyJPClassMeta):
         return _jpype.JObject(self.__javaclass__)
 
 
-class _JInterfaceMeta(type):
-    def __instancecheck__(self, cls):
-        if not isinstance(cls, JClass):
-            return false
-        if not hasattr(cls, '__javaclass__'):
-            return false
-        return cls.__javaclass__._isInterface()
-
-
-class JInterface(metaclass=_JInterfaceMeta):
+class JInterface(metaclass=_jpype.PyJPClassMeta):
     """Virtual Base class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any java class that is
@@ -150,7 +141,6 @@ class JInterface(metaclass=_JInterfaceMeta):
 
        if issubclass(java.util.function.Function, jpype.JInterface):
           print("is interface")
-
 
         Use ``isinstance(obj, jpype.JavaInterface)`` to test for a interface.
     """
@@ -286,6 +276,8 @@ def _jclassDoc(cls):
 
     return "\n".join(out)
 
+# Install hooks
 _jpype.JClass = JClass
+_jpype.JInterface = JInterface
 _jpype._JClassFactory = _JClassFactory
 _jpype._jclassDoc = _jclassDoc

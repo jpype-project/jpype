@@ -112,6 +112,8 @@ struct PyJPClass
 	JPClass *m_Class;
 } ;
 
+bool PyJPClass_Check(PyObject* obj);
+
 struct PyJPMethod
 {
 	PyFunctionObject func;

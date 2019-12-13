@@ -27,7 +27,7 @@ else:
 
 
 @_jcustomizer.JImplementationFor("java.lang.Throwable", base=True)
-class JException(_jpype.PyJPException):
+class JException(_jpype.PyJPException, metaclass=_jpype.PyJPClassMeta):
     """ Base class for all ``java.lang.Throwable`` objects.
 
     When called as an object ``JException`` will produce a new exception class.  

@@ -36,7 +36,7 @@ JPClass *JPPythonEnv::getJavaClass(PyObject *obj)
 {
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPPyObject vobj(JPPyRef::_use, obj);
-	if (PyObject_IsInstance(obj, (PyObject*) state->PyJPClass_Type))
+	if (PyJPClass_Check(obj))
 		return ((PyJPClass*) obj)->m_Class;
 	if (!JPPyObject::hasAttrString(obj, __javaclass__))
 		return NULL;

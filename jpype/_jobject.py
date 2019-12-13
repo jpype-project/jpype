@@ -22,7 +22,7 @@ from . import _jcustomizer
 
 __all__ = ['JObject']
 
-class JObject(_jpype.PyJPValue):
+class JObject(_jpype.PyJPValue, metaclass=_jpype.PyJPClassMeta):
     """ Base class for all object instances.
 
     It can be used to test if an object is a java object instance with
@@ -73,22 +73,6 @@ class JObject(_jpype.PyJPValue):
         cls = _JObjectFactory(*args, **kwargs)
         return cls.__javaclass__._cast(*args)
 
-#    def __setattr__(self, name, value):
-#        if name.startswith('_'):
-#            return object.__setattr__(self, name, value)
-#
-#        if not hasattr(self, name):
-#            raise AttributeError("Field '%s' not found on Java '%s' object" %
-#                                 (name, self.__name__))
-#
-#        try:
-#            attr = _jclass.typeLookup(type(self), name)
-#            if hasattr(attr, '__set__'):
-#                return attr.__set__(self, value)
-#        except AttributeError:
-#            pass
-#        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
-#                             (name, self.__name__))
 
 @_jcustomizer.JImplementationFor('java.lang.Object')
 class _JObjectMethods(object):
@@ -100,10 +84,6 @@ class _JObjectMethods(object):
 
     def __ne__(self, other):
         return not self.equals(other)
-
-
-# Post load dependencies
-_jpype.JObject = JObject
 
 
 def _getDefaultJavaObject(tp):
@@ -157,4 +137,7 @@ def _JObjectFactory(v=None, tp=None):
 
     raise TypeError("Invalid type conversion to %s requested." % tp)
 
+
+# Post load dependencies
+_jpype.JObject = JObject
 

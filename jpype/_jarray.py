@@ -52,7 +52,7 @@ _JARRAY_TYPENAME_MAP = {
 }
 
 
-class JArray(_jpype.PyJPArray):
+class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
     """ Create a java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.

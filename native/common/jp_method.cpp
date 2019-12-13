@@ -231,6 +231,8 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 			JP_TRACE("Call instance");
 			len--;
 			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
+			if (selfObj == NULL)
+				JP_RAISE_RUNTIME_ERROR("Null object");
 			self = selfObj->getJavaObject();
 		}
 

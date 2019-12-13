@@ -121,6 +121,7 @@ extern PyType_Spec PyJPClassHintsSpec;
 extern PyType_Spec PyJPExceptionSpec;
 
 PyJPModuleState *PyJPModuleState_global = NULL;
+#define PyJPModule_global PyState_FindModule(&PyJPModuleDef)
 
 PyMODINIT_FUNC PyInit__jpype()
 {

@@ -69,7 +69,7 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 	// Get the Java class from the type.
 	JPPyObject type = JPPyObject(JPPyRef::_call,
 			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
-	if (!PyObject_IsInstance(type.get(), (PyObject*) state->PyJPClass_Type))
+	if (!PyJPClass_Check(type.get()))
 		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
@@ -103,7 +103,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 	// Get the Java class from the type.
 	JPPyObject type = JPPyObject(JPPyRef::_call,
 			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
-	if (!PyObject_IsInstance(type.get(), (PyObject*) state->PyJPClass_Type))
+	if (!PyJPClass_Check(type.get()))
 		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
@@ -323,7 +323,7 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 
 
 static struct PyMethodDef baseMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPValueBase_check, METH_VARARGS | METH_CLASS, ""},
+	{"_check", (PyCFunction) & PyJPValueBase_check, METH_VARARGS | METH_CLASS, ""},
 	{0}
 };
 
@@ -346,7 +346,7 @@ PyType_Spec PyJPValueBaseSpec = {
 };
 
 static struct PyMethodDef valueMethods[] = {
-	{"_isinstance", (PyCFunction) & PyJPValue_check, METH_VARARGS | METH_CLASS, ""},
+	{"_check", (PyCFunction) & PyJPValue_check, METH_VARARGS | METH_CLASS, ""},
 	{0}
 };
 
