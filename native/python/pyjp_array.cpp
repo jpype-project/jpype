@@ -216,3 +216,13 @@ PyType_Spec PyJPArraySpec = {
 #ifdef __cplusplus
 }
 #endif
+
+JPPyObject PyJPArray_create(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	JP_TRACE_IN("PyJPArray_alloc");
+	JPPyObject self = PyJPValue_createInstance(wrapper, context, value);
+	((PyJPArray*) self.get())->m_Array
+			= new JPArray(value.getClass(), (jarray) value.getValue().l);
+	return self;
+	JP_TRACE_OUT;
+}

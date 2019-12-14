@@ -63,6 +63,8 @@ PyObject* PyType_Lookup(PyTypeObject *type, PyObject *attr_name);
 typedef struct
 {
 	JPContext* m_Context;
+
+	// Python module classes
 	PyObject* PyJPArray_Type;
 	PyObject *PyJPClass_Type;
 	PyObject *PyJPClassHints_Type;
@@ -75,6 +77,15 @@ typedef struct
 	PyObject *PyJPValueLong_Type;
 	PyObject *PyJPValueFloat_Type;
 	PyObject *PyJPValueExc_Type;
+	PyInterpreterState *m_Interp;
+
+	// Hooks from Python
+	PyObject *JInterface;
+	PyObject *JObject;
+	PyObject *JArray;
+	PyObject *JException;
+	PyObject *JClassFactory;
+
 } PyJPModuleState;
 
 extern PyModuleDef PyJPModuleDef;

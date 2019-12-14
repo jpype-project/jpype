@@ -29,10 +29,7 @@ PyObject *PyJPClassMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs
 	if (PyTuple_Size(args) == 1)
 	{
 		// We have to handle string, PyJPValue instances and point to a class
-		PyObject *factory = PyObject_GetAttrString(PyJPModule_global, "ClassFactory");
-		if (factory == NULL)
-			return NULL;
-		return PyObject_Call(factory, args, kwargs);
+		return PyObject_Call(PyJPModuleState_global->JClassFactory, args, kwargs);
 	}
 	return PyType_Type.tp_new(type, args, kwargs);
 	JP_PY_CATCH(NULL);
@@ -42,8 +39,19 @@ int PyJPClassMeta_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClassMeta_init", self);
 	if (PyTuple_Size(args) == 1)
-	{
 		return 0;
+
+	// Set the host object
+	PyObject *name = NULL;
+	PyObject *bases = NULL;
+	PyObject *members = NULL;
+	if (!PyArg_ParseTuple(args, "OOO", &name, &bases, &members))
+		return -1;
+	PyObject* jc = PyDict_GetItemString(members, __javaclass__);
+	if (jc != NULL)
+	{
+		JPClass* cls = JPPythonEnv::getJavaClass(jc);
+		cls->setHost(self);
 	}
 	return PyType_Type.tp_init(self, args, kwargs);
 	JP_PY_CATCH(-1);
@@ -132,6 +140,7 @@ int PyJPClassMeta_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 
 PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
+	JP_PY_TRY("PyJPClassMeta_check", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	int ret = 0;
@@ -148,10 +157,12 @@ PyObject* PyJPClassMeta_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	return PyBool_FromLong(ret);
+	JP_PY_CATCH(NULL);
 }
 
 PyObject* PyJPClassMeta_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 {
+	JP_PY_TRY("PyJPClassMeta_subclasscheck");
 	PyJPModuleState *state = PyJPModuleState_global;
 	if ((PyObject*) test == state->PyJPValueBase_Type
 			|| (PyObject*) test == state->PyJPValue_Type)
@@ -185,16 +196,16 @@ PyObject* PyJPClassMeta_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if (type->tp_name[0] != 'J')
 		Py_RETURN_FALSE;
 
-	JPPyObject module(JPPyRef::_use, PyJPModule_global);
-	if ((PyObject*) type == module.getAttrString("JInterface").get())
+	if ((PyObject*) type == state->JInterface)
 		return PyBool_FromLong(testClass->isInterface());
-	if ((PyObject*) type == module.getAttrString("JObject").get())
+	if ((PyObject*) type == state->JObject)
 		return PyBool_FromLong(!testClass->isPrimitive());
-	if ((PyObject*) type == module.getAttrString("JArray").get())
+	if ((PyObject*) type == state->JArray)
 		return PyBool_FromLong(dynamic_cast<JPArrayClass*> (testClass) == testClass);
-	if ((PyObject*) type == module.getAttrString("JException").get())
+	if ((PyObject*) type == state->JException)
 		return PyBool_FromLong(testClass->isThrowable());
 	Py_RETURN_FALSE;
+	JP_PY_CATCH(NULL);
 }
 
 PyObject* PyJPClassMeta_instancecheck(PyTypeObject *self, PyObject *args)

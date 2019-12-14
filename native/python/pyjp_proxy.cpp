@@ -81,8 +81,9 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	Py_INCREF(target);
 	self->m_Target = target;
 	self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
-	JP_TRACE("Proxy", self);
-	JP_TRACE("Target", target);
+	JP_TRACE("Py Proxy", self);
+	JP_TRACE("Java Target", self->m_Proxy);
+	JP_TRACE("Target", self->m_Target);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -92,6 +93,8 @@ int PyJPProxy_clear(PyJPProxy *self);
 void PyJPProxy_dealloc(PyJPProxy *self)
 {
 	JP_PY_TRY("PyJPProxy_dealloc", self);
+	JP_TRACE("Java Target", self->m_Proxy);
+	JP_TRACE("Target", self->m_Target);
 	delete self->m_Proxy;
 
 	PyObject_GC_UnTrack(self);
@@ -103,14 +106,18 @@ void PyJPProxy_dealloc(PyJPProxy *self)
 
 int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
+	JP_PY_TRY("PyJPProxy_traverse", self);
 	Py_VISIT(self->m_Target);
 	return 0;
+	JP_PY_CATCH(-1);
 }
 
 int PyJPProxy_clear(PyJPProxy *self)
 {
+	JP_PY_TRY("PyJPProxy_clear", self);
 	Py_CLEAR(self->m_Target);
 	return 0;
+	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPProxy_str(PyJPProxy *self)

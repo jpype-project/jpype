@@ -94,6 +94,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 	JPThreadLock guard;
 	{
 		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
+		JP_TRACE("context", context);
+		JP_TRACE("hostObj", (void*) hostObj);
 		try
 		{
 			if (hostObj == 0)
@@ -107,6 +109,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			JP_TRACE("Get callable for", cname);
 
 			// Get the callable object
+			// FAILS HERE
 			JPPyObject callable(JPPythonEnv::getJavaProxyCallable((PyObject*) hostObj, cname));
 			PyErr_Clear();
 
@@ -129,7 +132,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			JP_TRACE("Call Python");
 			JPPyObject returnValue(callable.call(pyargs.get(), NULL));
 
-			JP_TRACE("Handle return", returnValue.getTypeName());
+			JP_TRACE("Handle return", Py_TYPE(returnValue.get())->tp_name);
 			if (returnClass == context->_void)
 			{
 				JP_TRACE("Void return");

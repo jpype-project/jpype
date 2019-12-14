@@ -335,7 +335,7 @@ class _JImportLoader:
     """ (internal) Loader hook for importlib. """
 
     def create_module(self, spec):
-        if not _jpype._jvm.isStarted():
+        if not _jpype.isStarted():
             raise ImportError("Attempt to create java modules without jvm")
 
         # Handle creating the java name based on the path

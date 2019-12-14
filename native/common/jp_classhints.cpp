@@ -95,7 +95,8 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *obj) override
 	{
 		JP_TRACE_IN("JPAttributeConversion::matches");
-		if (JPPyObject::hasAttrString(obj, attribute_.c_str()))
+		JPPyObject attr(JPPyRef::_accept, PyObject_GetAttrString(obj, attribute_.c_str()));
+		if (!attr.isNull())
 		{
 			match.conversion = this;
 			return match.type = JPMatch::_implicit;

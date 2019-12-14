@@ -178,9 +178,6 @@ def _JClassFactory(jc):
     _jcustomizer._applyCustomizers(name, jc, bases, members)
     res = _jpype.JClass(name, tuple(bases), members)
 
-    # We need to register wrapper before any further actions
-    jc._setHost(res)
-
     # Post customizers
     _jcustomizer._applyInitializer(res)
 
@@ -279,5 +276,5 @@ def _jclassDoc(cls):
 # Install hooks
 _jpype.JClass = JClass
 _jpype.JInterface = JInterface
-_jpype._JClassFactory = _JClassFactory
+_jpype.JClassFactory = _JClassFactory
 _jpype._jclassDoc = _jclassDoc

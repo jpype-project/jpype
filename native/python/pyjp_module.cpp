@@ -91,7 +91,7 @@ static PyMethodDef moduleMethods[] = {
 
 	// ByteBuffer
 	{"_convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_VARARGS, ""},
-	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_VARARGS, ""},
+	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
 	{NULL}
 };
 
@@ -126,8 +126,7 @@ PyJPModuleState *PyJPModuleState_global = NULL;
 PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
-	PyObject *module;
-	module = PyState_FindModule(&PyJPModuleDef);
+	PyObject *module = PyState_FindModule(&PyJPModuleDef);
 	if (module != NULL)
 	{
 		Py_INCREF(module);
@@ -150,6 +149,8 @@ PyMODINIT_FUNC PyInit__jpype()
 	// Initialize each of the python extension types
 	PyJPModuleState *state = ((PyJPModuleState *) PyModule_GetState(module));
 	PyJPModuleState_global = state;
+	PyThreadState *mainThreadState = PyThreadState_Get();
+	state->m_Interp = mainThreadState->interp;
 
 	state->m_Context = new JPContext();
 	JPContext* context = state->m_Context;
@@ -224,22 +225,29 @@ PyMODINIT_FUNC PyInit__jpype()
 	JP_PY_CHECK();
 
 	PyTypeObject* type = (PyTypeObject*) state->PyJPClass_Type;
-	PyModule_AddObject(module, "_jboolean",
-			PyJPClass_create(type, NULL, context->_boolean).keep());
-	PyModule_AddObject(module, "_jchar",
-			PyJPClass_create(type, NULL, context->_char).keep());
-	PyModule_AddObject(module, "_jbyte",
-			PyJPClass_create(type, NULL, context->_byte).keep());
-	PyModule_AddObject(module, "_jshort",
-			PyJPClass_create(type, NULL, context->_short).keep());
-	PyModule_AddObject(module, "_jint",
-			PyJPClass_create(type, NULL, context->_int).keep());
-	PyModule_AddObject(module, "_jlong",
-			PyJPClass_create(type, NULL, context->_long).keep());
-	PyModule_AddObject(module, "_jfloat",
-			PyJPClass_create(type, NULL, context->_float).keep());
-	PyModule_AddObject(module, "_jdouble",
-			PyJPClass_create(type, NULL, context->_double).keep());
+	PyModule_AddObject(module, "_jboolean", PyJPClass_create(type, NULL, context->_boolean).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jchar", PyJPClass_create(type, NULL, context->_char).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jbyte", PyJPClass_create(type, NULL, context->_byte).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jshort", PyJPClass_create(type, NULL, context->_short).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jint",	PyJPClass_create(type, NULL, context->_int).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jlong", PyJPClass_create(type, NULL, context->_long).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jfloat", PyJPClass_create(type, NULL, context->_float).keep());
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_jdouble", PyJPClass_create(type, NULL, context->_double).keep());
+	JP_PY_CHECK();
+
+	// Initialize the other resource references
+	state->JArray = NULL;
+	state->JObject = NULL;
+	state->JInterface = NULL;
+	state->JException = NULL;
+	state->JClassFactory = NULL;
 
 	PyState_AddModule(module, &PyJPModuleDef);
 	JP_PY_CHECK();
@@ -271,7 +279,6 @@ static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg)
 static void PyJPModule_free( void *arg)
 {
 	JP_PY_TRY("PyJPModule_free");
-
 	JP_PY_CATCH();
 }
 
@@ -326,6 +333,24 @@ PyObject *PyJPModule_startup(PyObject *self, PyObject *args)
 			JP_RAISE_RUNTIME_ERROR("VM Arguments must be strings");
 		}
 	}
+
+	// Before we continue we are going to cache all of the required resources
+	PyObject *module = PyJPModule_global;
+	state->JInterface = PyObject_GetAttrString(module, "JInterface");
+	if (state->JInterface == NULL)
+		return NULL;
+	state->JObject = PyObject_GetAttrString(module, "JObject");
+	if (state->JObject == NULL)
+		return NULL;
+	state->JArray = PyObject_GetAttrString(module, "JArray");
+	if (state->JArray == NULL)
+		return NULL;
+	state->JException = PyObject_GetAttrString(module, "JException");
+	if (state->JException == NULL)
+		return NULL;
+	state->JClassFactory = PyObject_GetAttrString(module, "JClassFactory");
+	if (state->JClassFactory == NULL)
+		return NULL;
 
 	state->m_Context->startJVM(cVmPath, args, ignoreUnrecognized, convertStrings);
 	Py_RETURN_NONE;
@@ -434,16 +459,26 @@ PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 
 // Call from Python
 
-PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
+/**
+ * Get the Python class wrapper for a Java class.
+ *
+ * This is the main entry point used by JClass.__new__.  Its tasks are
+ *  - Check the cache to see if there is already a wrapper class
+ *  - Delegate to JClassFactory to create a new wrapper
+ *
+ * @param module is the module (not used)
+ * @param args is PyJPClass instance.
+ * @return the class wrapper or NULL on Python exception.
+ */
+PyObject *PyJPModule_getClass(PyObject *module, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_getClass", self);
+	JP_PY_TRY("PyJPModule_getClass", module);
 	PyJPModuleState *state = PyJPModuleState_global;
 
-	PyJPClass *cls = NULL;
-	if (!PyArg_ParseTuple(args, "O!", state->PyJPClass_Type, &cls))
-		return NULL;
+	if (!PyJPClass_Check(args))
+		JP_RAISE_TYPE_ERROR("Must be a Java class");
 
-	JPClass *javaClass = cls->m_Class;
+	JPClass *javaClass = ((PyJPClass*) args)->m_Class;
 	if (javaClass->getHost() != NULL)
 	{
 		PyObject* out = javaClass->getHost();
@@ -451,16 +486,9 @@ PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 		return out;
 	}
 
-	// Get the type factory
-	JPPyObject factory(JPPyRef::_accept,
-			PyObject_GetAttrString(PyJPModule_global, "_JClassFactory"));
-
-	//	PyObject* factory = PyDict_GetItemString(Py_TYPE(self)->tp_dict, "_JClassFactory");
-	if (factory.isNull())
-		JP_RAISE_RUNTIME_ERROR("Factory not set");
-
 	// Call the factory
-	JPPyObject out = factory.call(args, NULL);
+	JPPyObject out(JPPyRef::_claim,
+			PyObject_Call(PyJPModuleState_global->JClassFactory, args, NULL));
 
 	// Store caches
 	javaClass ->setHost(out.get());
@@ -471,30 +499,3 @@ PyObject *PyJPModule_getClass(PyObject *self, PyObject *args)
 #ifdef __cplusplus
 }
 #endif
-
-JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
-{
-	JP_TRACE_IN("JPPythonEnv::newJavaClass");
-	PyJPModuleState *state = PyJPModuleState_global;
-
-	ASSERT_NOT_NULL(javaClass);
-
-	// Check the cache
-	if (javaClass->getHost() != NULL)
-		return JPPyObject(JPPyRef::_use, javaClass->getHost());
-
-	JPContext *context = javaClass->getContext();
-
-	// Get the type factory
-	JPPyObject factory(JPPyRef::_claim,
-			PyObject_GetAttrString(PyJPModule_global, "_JClassFactory"));
-
-	// Pack the args
-	JPPyTuple args(JPPyTuple::newTuple(1));
-	args.setItem(0, PyJPClass_create((PyTypeObject*) state->PyJPClass_Type,
-			context, javaClass).get());
-
-	// Call the factory in Python
-	return JPPyObject(JPPyRef::_call, PyObject_Call(factory.get(), args.get(), NULL));
-	JP_TRACE_OUT;
-}

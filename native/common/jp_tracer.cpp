@@ -115,6 +115,11 @@ void JPypeTracer::trace1(const char* msg)
 
 	if (jpype_tracer_last != NULL)
 		name = jpype_tracer_last->m_Name;
+	else
+	{
+		int *i = 0;
+		*i = 0;
+	}
 
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{

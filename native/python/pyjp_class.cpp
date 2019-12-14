@@ -76,6 +76,8 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(-1);
 }
 
+// FIXME remove this when finished.  It should be unnecessary
+
 void PyJPClass_dealloc(PyObject *self)
 {
 	JP_PY_TRY("PyJPClass_dealloc", self);
@@ -84,6 +86,9 @@ void PyJPClass_dealloc(PyObject *self)
 	JP_PY_CATCH();
 }
 
+/**
+ * This is a special case as we can access the string from JPClass.
+ */
 PyObject *PyJPClass_str(PyJPClass *pyself)
 {
 	JP_PY_TRY("PyJPClass_toString", pyself);
@@ -104,6 +109,17 @@ PyObject *PyJPClass_getCanonicalName(PyJPClass *self, void *closure)
 	JP_PY_CATCH(NULL);
 }
 
+/**
+ * Get the bases during Python wrapper class creation.
+ *
+ * This does the work of selecting which class methods are required for a
+ * given base type.  Some classes like boxed and exceptions cannot inherit
+ * directly from Java objects due to base class conflicts.
+ *
+ * @param self
+ * @param closure
+ * @return
+ */
 PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 {
 	JP_PY_TRY("PyJPClass_getBases", self);
@@ -127,8 +143,7 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 		baseType = JPPyObject(JPPyRef::_use, state->PyJPValueExc_Type);
 	} else if (dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class)
 	{
-		baseType = JPPyObject(JPPyRef::_claim,
-				PyObject_GetAttrString(PyJPModule_global, "_JArrayBase"));
+		baseType = JPPyObject(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule_global, "_JArrayBase"));
 	} else if (self->m_Class->isPrimitive())
 	{
 		JP_RAISE_TYPE_ERROR("primitives are not objects");
@@ -172,10 +187,18 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 	JP_PY_CATCH(NULL);
 }
 
+/**
+ * Get the class fields.
+ *
+ * Used only by JClassFactory.
+ *
+ * @param self
+ * @param closure
+ * @return
+ */
 PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 {
 	JP_PY_TRY("PyJPClass_getClassFields", self);
-	// Special case for primitives
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -190,6 +213,16 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 	JP_PY_CATCH(NULL);
 }
 
+/**
+ * Get class methods.
+ *
+ * Used only by JClassFactory.  This does the special magic to
+ * include the Object methods for boxed and exception types.
+ *
+ * @param self
+ * @param closure
+ * @return
+ */
 PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 {
 	JP_PY_TRY("PyJPClass_getClassMethods", self);
@@ -227,28 +260,31 @@ PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
+/**
+ * Create a instance with a different JClass than specified by the object.
+ *
+ * This is used to force a type into the method resolution.  Called by
+ * JObject.
+ *
+ * @param self
+ * @param args
+ * @return
+ */
+PyObject *PyJPClass_cast(PyJPClass *self, PyObject *value)
 {
 	JP_PY_TRY("PyJPClass_cast", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
-
-	PyObject *value;
-	if (!PyArg_ParseTuple(args, "O", &value))
-	{
-		return 0;
-	}
-
 	JPClass *type = self->m_Class;
 	ASSERT_NOT_NULL(value);
 	ASSERT_NOT_NULL(type);
-	JPPyObject wrapper = JPPythonEnv::newJavaClass(type);
 
 	// If it is already a Java object, then let Java decide
 	// if the cast is possible
 	JPValue *jval = JPPythonEnv::getJavaValue(value);
 	if (jval != NULL && type->isInstance(frame, *jval))
 	{
+		JPPyObject wrapper(JPPyRef::_claim, PyJPModule_getClass(NULL, (PyObject*) self));
 		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, jval->getValue()))
 				.keep();
 	}
@@ -266,73 +302,11 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *args)
 			return 0;
 		}
 
+		JPPyObject wrapper(JPPyRef::_claim, PyJPModule_getClass(NULL, (PyObject*) self));
 		jvalue v = match.conversion->convert(&frame, type, value);
 		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, v)).keep();
 	}
 	JP_PY_CATCH(NULL);
-}
-
-PyObject *PyJPClass_isAssignableFrom(PyJPClass *self, PyObject *arg)
-{
-	JP_PY_TRY("PyJPClass_isAssignableFrom", self);
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-
-	// We have to lookup the name by string here because the
-	// class wrapper may not exist.  This is used by the
-	// customizers.
-	PyObject *other;
-	if (!PyArg_ParseTuple(arg, "O", &other))
-	{
-		return NULL;
-	}
-
-	JPClass *cls = JPPythonEnv::getJavaClass(other);
-	if (cls != NULL)
-	{
-		return PyBool_FromLong(self->m_Class->isAssignableFrom(frame, cls));
-	}
-
-	if (JPPyString::check(other))
-	{
-		JPClass *otherClass = context->getTypeManager()
-				->findClassByName(JPPyString::asStringUTF8(other));
-		return PyBool_FromLong(self->m_Class->isAssignableFrom(frame, otherClass));
-	}
-
-	PyErr_SetString(PyExc_TypeError, "isAssignableFrom requires java class or string argument.");
-	return NULL;
-	JP_PY_CATCH(NULL);
-}
-
-PyObject *PyJPClass_isInterface(PyJPClass *self, PyObject *arg)
-{
-	PyJPModule_getContext();
-	return PyBool_FromLong(self->m_Class->isInterface());
-}
-
-PyObject *PyJPClass_isThrowable(PyJPClass *self, PyObject *args)
-{
-	PyJPModule_getContext();
-	return PyBool_FromLong(self->m_Class->isThrowable());
-}
-
-PyObject *PyJPClass_isPrimitive(PyJPClass *self, PyObject *args)
-{
-	PyJPModule_getContext();
-	return PyBool_FromLong((self->m_Class)->isPrimitive());
-}
-
-PyObject *PyJPClass_isArray(PyJPClass *self, PyObject *args)
-{
-	PyJPModule_getContext();
-	return PyBool_FromLong(dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class);
-}
-
-PyObject *PyJPClass_isAbstract(PyJPClass *self, PyObject *args)
-{
-	PyJPModule_getContext();
-	return PyBool_FromLong(self->m_Class->isAbstract());
 }
 
 PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *args)
@@ -410,15 +384,6 @@ PyObject *PyJPClass_dumpCtor(PyJPClass *self)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPClass_setHost(PyJPClass *self, PyObject* wrapper)
-{
-	JP_PY_TRY("PyJPClass_setHost", self);
-	PyJPModule_getContext();
-	self->m_Class->setHost(wrapper);
-	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
-}
-
 PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 {
 	JP_PY_TRY("PyJPClass_getArrayType", self);
@@ -439,7 +404,9 @@ PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 	else
 		ss << "L" << self->m_Class->getName() << ";";
 	JPClass* cls = context->getTypeManager()->findClassByName(ss.str());
-	return JPPythonEnv::newJavaClass(cls).keep();
+	JPPyObject pycls(PyJPClass_create(
+			(PyTypeObject*) PyJPModuleState_global->PyJPClass_Type, context, cls));
+	return PyJPModule_getClass(NULL, pycls.get());
 	JP_PY_CATCH(NULL);
 }
 
@@ -455,17 +422,10 @@ bool PyJPClass_Check(PyObject* obj)
 }
 
 static PyMethodDef classMethods[] = {
-	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_VARARGS, ""},
-	{"_isInterface", (PyCFunction) (&PyJPClass_isInterface), METH_NOARGS, ""},
-	{"_isPrimitive", (PyCFunction) (&PyJPClass_isPrimitive), METH_NOARGS, ""},
-	{"_isThrowable", (PyCFunction) (&PyJPClass_isThrowable), METH_NOARGS, ""},
-	{"_isArray", (PyCFunction) (&PyJPClass_isArray), METH_NOARGS, ""},
-	{"_isAbstract", (PyCFunction) (&PyJPClass_isAbstract), METH_NOARGS, ""},
-	{"_isAssignableFrom", (PyCFunction) (&PyJPClass_isAssignableFrom), METH_VARARGS, ""},
+	{"_cast", (PyCFunction) (&PyJPClass_cast), METH_O, ""},
 	{"_canConvertToJava", (PyCFunction) (&PyJPClass_canConvertToJava), METH_VARARGS, ""},
 	{"_convertToJava", (PyCFunction) (&PyJPClass_convertToJava), METH_VARARGS, ""},
 	{"_dumpCtor", (PyCFunction) (&PyJPClass_dumpCtor), METH_NOARGS, ""},
-	{"_setHost", (PyCFunction) (&PyJPClass_setHost), METH_O, ""},
 	{"_newArrayType", (PyCFunction) (&PyJPClass_newArrayType), METH_O, ""},
 	{NULL},
 };
@@ -500,3 +460,34 @@ PyType_Spec PyJPClassSpec = {
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * Internal method for wrapping a returned Java class instance.
+ *
+ * @param wrapper
+ * @param context
+ * @param cls
+ * @return
+ */
+JPPyObject PyJPClass_create(PyTypeObject *wrapper, JPContext *context, JPClass *cls)
+{
+	JP_TRACE_IN("PyJPClass_create");
+	// Special case for primitives
+	if (context == NULL)
+	{
+		jvalue v;
+		v.l = 0;
+		JPPyObject self = PyJPValue_createInstance(wrapper, context, JPValue(NULL, v));
+		((PyJPClass*) self.get())->m_Class = cls;
+		return self;
+	}
+
+	JPJavaFrame frame(context);
+	jvalue value;
+	value.l = (jobject) cls->getJavaClass();
+	JPPyObject self = PyJPValue_createInstance(wrapper, context,
+			JPValue(context->_java_lang_Class, value));
+	((PyJPClass*) self.get())->m_Class = cls;
+	return self;
+	JP_TRACE_OUT;
+}

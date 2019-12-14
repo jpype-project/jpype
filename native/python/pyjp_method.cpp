@@ -172,8 +172,7 @@ PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 	}
 
 	// Get the resource
-	JPPyObject getMethodDoc(JPPyRef::_claim,
-			PyObject_GetAttrString(PyJPModule_global, "_jmethodGetDoc"));
+	JPPyObject getMethodDoc(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule_global, "_jmethodGetDoc"));
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -230,8 +229,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 	}
 
 	// Get the resource
-	JPPyObject getAnnotations(JPPyRef::_claim,
-			PyObject_GetAttrString(PyJPModule_global, "_jmethodGetAnnotations"));
+	JPPyObject getAnnotations(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule_global, "_jmethodGetAnnotations"));
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -281,8 +279,7 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *context, const char *at
 	PyJPModule_getContext();
 	if (self->m_CodeRep == NULL)
 	{
-		JPPyObject getCode(JPPyRef::_claim,
-				PyObject_GetAttrString(PyJPModule_global, "_jmethodGetCode"));
+		JPPyObject getCode(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule_global, "_jmethodGetCode"));
 
 		// Pack the arguments
 		JP_TRACE("Pack arguments");
@@ -397,3 +394,25 @@ PyType_Spec PyJPMethodSpec = {
 #ifdef __cplusplus
 }
 #endif
+
+JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
+{
+	JP_TRACE_IN("PyJPMethod_create", instance);
+	PyJPModuleState *state = PyJPModuleState_global;
+	PyTypeObject *type = (PyTypeObject*) state->PyJPMethod_Type;
+	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);
+	JP_PY_CHECK();
+	self->m_Method = m;
+	self->m_Instance = instance;
+	if (instance != NULL)
+	{
+		JP_TRACE_PY("method alloc (inc)", instance);
+		Py_INCREF(instance);
+	}
+	self->m_Doc = NULL;
+	self->m_Annotations = NULL;
+	self->m_CodeRep = NULL;
+	JP_TRACE("self", self);
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	JP_TRACE_OUT;
+}

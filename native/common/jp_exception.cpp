@@ -112,7 +112,7 @@ string JPypeException::getPythonMessage()
 		JPPyErrFrame eframe;
 		if (!eframe.good)
 			return "no error reported";
-		JPPyString className(eframe.exceptionClass.getAttrString("__name__"));
+		JPPyString className(JPPyRef::_claim, PyObject_GetAttrString(eframe.exceptionClass.get(), "__name__"));
 		stringstream ss;
 		ss << JPPyString::asStringUTF8(className.get());
 
@@ -214,12 +214,6 @@ void JPypeException::convertJavaToPython()
 	// Start converting object by converting class
 	JP_TRACE("Create Java exception class");
 	JPPyObject pycls = JPPythonEnv::newJavaClass(cls);
-	if (pycls.isNull())
-	{
-		// Nope, we can't make a Python object out of it.
-		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
-		return;
-	}
 
 	// Okay, now we just need to make the PyJPValue
 	JP_TRACE("Create Java exception object");

@@ -133,3 +133,21 @@ PyType_Spec PyJPFieldSpec = {
 #ifdef __cplusplus
 }
 #endif
+
+JPPyObject PyJPField_create(JPField *field)
+{
+	JP_TRACE_IN("PyJPField_create");
+	PyJPModuleState *state = PyJPModuleState_global;
+	JPContext *context = field->getContext();
+	jvalue v;
+	v.l = field->getJavaObject();
+	if (state->PyJPField_Type == NULL)
+		JP_RAISE_RUNTIME_ERROR("PyJPField type is not defined.");
+	if (context->_java_lang_reflect_Field == NULL)
+		JP_RAISE_RUNTIME_ERROR("java.lang.reflect.Field not loaded.");
+	JPPyObject self = PyJPValue_createInstance((PyTypeObject*) state->PyJPField_Type, field->getContext(),
+			JPValue(context->_java_lang_reflect_Field, v));
+	((PyJPField*) self.get())->m_Field = field;
+	return self;
+	JP_TRACE_OUT;
+}

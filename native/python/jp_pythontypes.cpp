@@ -128,33 +128,6 @@ string JPPyObject::str()
 	return JPPyString::asStringUTF8(s.get());
 }
 
-bool JPPyObject::hasAttrString(PyObject *pyobj, const char *k)
-{
-	return PyObject_HasAttrString(pyobj, (char*) k) != 0;
-}
-
-JPPyObject JPPyObject::getAttrString(const char *k)
-{
-	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
-}
-
-int JPPyObject::setAttrString(const char* k, PyObject* value)
-{
-	if (PyObject_SetAttrString(pyobj, k, value) == -1)
-		JP_PY_CHECK();
-	return 0;
-}
-
-JPPyObject JPPyObject::getAttrString(PyObject *pyobj, const char *k)
-{
-	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
-}
-
-const char *JPPyObject::getTypeName()
-{
-	return Py_TYPE(pyobj)->tp_name;
-}
-
 const char *JPPyObject::getTypeName(PyObject *obj)
 {
 	if (obj == NULL)
@@ -173,12 +146,6 @@ bool JPPyObject::isInstance(PyObject *pyobj, PyObject *type)
 {
 	int res = PyObject_IsInstance(pyobj, type);
 	JP_PY_CHECK();
-	return res != 0;
-}
-
-bool JPPyObject::isSubclass(PyObject *pycls, PyObject *type)
-{
-	int res = PyObject_IsSubclass(pycls, type);
 	return res != 0;
 }
 
@@ -663,8 +630,7 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 
 JPPyCallAcquire::JPPyCallAcquire()
 {
-	PyThreadState *mainThreadState = PyThreadState_Get();
-	state1 = PyThreadState_New(mainThreadState->interp);
+	state1 = PyThreadState_New(PyJPModuleState_global->m_Interp);
 	PyEval_AcquireThread((PyThreadState*) state1);
 	JP_TRACE_LOCKS("GIL ACQUIRE", this);
 }

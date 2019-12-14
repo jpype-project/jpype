@@ -39,19 +39,19 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         self.cls = jpype.JClass("boolean")
 
     def testBooleanConvertTrue(self):
-        self.assertEqual(self.cls.__javaclass__.canConvertToJava(True), "exact")
+        self.assertEqual(self.cls.__javaclass__._canConvertToJava(True), "exact")
 
     def testBooleanConvertFalse(self):
-        self.assertEqual(self.cls.__javaclass__.canConvertToJava(False), "exact")
+        self.assertEqual(self.cls.__javaclass__._canConvertToJava(False), "exact")
 
     def testBooleanConvertInt(self):
-        self.assertEqual(self.cls.__javaclass__.canConvertToJava(1), "implicit")
+        self.assertEqual(self.cls.__javaclass__._canConvertToJava(1), "implicit")
 
     def testBooleanConvertFloat(self):
-        self.assertEqual(self.cls.__javaclass__.canConvertToJava(1.0), "explicit")
+        self.assertEqual(self.cls.__javaclass__._canConvertToJava(1.0), "explicit")
 
     def testBooleanConvertString(self):
-        self.assertEqual(self.cls.__javaclass__.canConvertToJava("false"), "none")
+        self.assertEqual(self.cls.__javaclass__._canConvertToJava("false"), "none")
 
     def testBooleanFromInt(self):
         self.assertEqual(self.Test.callBoolean(int(123)), True)

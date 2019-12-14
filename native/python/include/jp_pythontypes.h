@@ -150,12 +150,6 @@ public:
 	 */
 	string str();
 
-	static bool hasAttrString(PyObject*, const char* k);
-	JPPyObject getAttrString(const char* k);
-	static JPPyObject getAttrString(PyObject*, const char* k);
-	int setAttrString(const char* k, PyObject* value);
-
-	const char* getTypeName();
 	static const char* getTypeName(PyObject* obj);
 
 	/** Execute a call on an object.
@@ -198,14 +192,6 @@ public:
 	 * @param is a python class or a tuple of types.
 	 */
 	static bool isInstance(PyObject* pyobj, PyObject* type);
-
-	/** Returns true if pycls is equal to or derived from type.
-	 *
-	 * @param is a python class.
-	 * @param is a python class or a tuple of types.
-	 */
-	static bool isSubclass(PyObject* pycls, PyObject* type);
-
 	static bool isSequenceOfItems(PyObject* obj);
 
 	/** Get a reference to Python None.

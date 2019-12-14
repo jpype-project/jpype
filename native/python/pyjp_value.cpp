@@ -137,6 +137,13 @@ void PyJPValue_dealloc(PyJPValue *self)
 	JP_PY_CATCH();
 }
 
+/**
+ * Check if it is a PyJPValueBase instance.
+ *
+ * @param self is the PyJPValueBase class.
+ * @param other is the Python object to check.
+ * @return true value if it derives from PyJPValueBase.
+ */
 PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_check", self);
@@ -156,16 +163,18 @@ PyObject* PyJPValueBase_check(PyObject *self, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
+/**
+ * Check if it is a PyJPValue instance.
+ *
+ * @param self is the PyJPValue class.
+ * @param other is the Python object to check.
+ * @return true value if it derives from PyJPValue.
+ */
+PyObject* PyJPValue_check(PyObject *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPValue_check", self);
 	PyJPModuleState *state = PyJPModuleState_global;
 	int ret = 0;
-
-	PyObject *other;
-	if (!PyArg_ParseTuple(args, "O", &other))
-		return NULL;
-
 	PyObject *mro = Py_TYPE(other)->tp_mro;
 	Py_ssize_t n = PyTuple_Size(mro);
 	if (n >= 3)
@@ -185,10 +194,9 @@ PyObject* PyJPValue_check(PyObject *self, PyObject *args, PyObject *kwargs)
  * Fetches a PyJPObject from a Python object.
  *
  * Uses the MRO order to check types.
- * Returns a borrowed reference.
  *
- * @param self
- * @return
+ * @param self is a Python object.
+ * @return a borrowed reference to PyJPValue or NULL if not a PyJPValue type.
  */
 PyJPValue* PyJPValue_asValue(PyObject *self)
 {
@@ -198,8 +206,11 @@ PyJPValue* PyJPValue_asValue(PyObject *self)
 		return NULL;
 	Py_ssize_t n = PyTuple_Size(mro);
 
+	// Check for a Java value
 	if (n >= 3 && PyTuple_GetItem(mro, n - 3) == state->PyJPValue_Type)
 		return (PyJPValue*) self;
+
+	// Check for a pointer to a Java value
 	if (n >= 2 && PyTuple_GetItem(mro, n - 2) == state->PyJPValueBase_Type)
 	{
 		PyObject* dict = PyObject_GenericGetDict(self, NULL);
@@ -210,6 +221,18 @@ PyJPValue* PyJPValue_asValue(PyObject *self)
 	return NULL;
 }
 
+/**
+ * Set an attribute on a Java value.
+ *
+ * This enforced the closed nature of Java objects.  We cannot set any
+ * attribute that is not defined as a field with the exception of private
+ * Python fields.
+ *
+ * @param self is the Java value.
+ * @param attr_name is the attribute name.
+ * @param value
+ * @return 0 on success, -1 otherwise.
+ */
 int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 {
 	JP_PY_TRY("PyJPValue_setattro", self);
@@ -243,6 +266,16 @@ int PyJPValue_setattro(PyObject *self, PyObject *attr_name, PyObject *value)
 	JP_PY_CATCH(-1);
 }
 
+/**
+ * Convert a Java value to Python string.
+ *
+ * This uses a cache for java.lang.String as they are immutable.
+ * All others call to Java.  This is overridden by PyJPClass as it requires
+ * a special location to deal with primitives.
+ *
+ * @param pyself is either an instance of PyJPValue or PyJPValueBase.
+ * @return a new Python string or NULL on an error.
+ */
 PyObject *PyJPValue_str(PyObject *pyself)
 {
 	JP_PY_TRY("PyJPValue_toString", pyself);
@@ -291,6 +324,12 @@ PyObject *PyJPValue_str(PyObject *pyself)
 	JP_PY_CATCH(NULL);
 }
 
+/**
+ * Get a representation of a Java value.
+ *
+ * @param pyself is either an instance of PyJPValue or PyJPValueBase.
+ * @return a new Python string or NULL on an error.
+ */
 PyObject *PyJPValue_repr(PyObject *pyself)
 {
 	JP_PY_TRY("PyJPValue_repr", pyself);
@@ -346,7 +385,7 @@ PyType_Spec PyJPValueBaseSpec = {
 };
 
 static struct PyMethodDef valueMethods[] = {
-	{"_check", (PyCFunction) & PyJPValue_check, METH_VARARGS | METH_CLASS, ""},
+	{"_check", (PyCFunction) & PyJPValue_check, METH_O | METH_CLASS, ""},
 	{0}
 };
 
@@ -369,3 +408,115 @@ PyType_Spec PyJPValueSpec = {
 #ifdef __cplusplus
 }
 #endif
+
+/**
+ * Create a JPValue wrapper with the appropriate type.
+ *
+ * This method dodges the __new__ method, but does involve
+ * __init__.  It is called when returning a Java object back to
+ * Python.
+ *
+ * @param type is the type of the resulting wrapper.
+ * @param context is the java virtual machine.
+ * @param value is the java value to wrap.
+ * @return
+ */
+JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value)
+{
+	JP_TRACE_IN("PyJPValue_createInstance");
+	PyJPModuleState *state = PyJPModuleState_global;
+	// dispatch by type so we will create the right wrapper type
+	JPPyObject out;
+	JPClass* cls = value.getClass();
+
+	if (type == (PyTypeObject *) state->PyJPValue_Type)
+		out = PyJPValue_createInstance(type, context, value);
+	else if (cls->isThrowable() || cls->isInterface())
+		out = PyJPValue_createBase(type, context, value);
+	else if (cls == context->_java_lang_Class)
+	{
+		JPClass *cls2 = context->getTypeManager()->findClass((jclass) value.getValue().l);
+		out = PyJPClass_create(type, context, cls2);
+	} else if (dynamic_cast<JPBoxedType*> (cls) != 0)
+		out = PyJPValue_createBoxed(type, context, value);
+	else if (dynamic_cast<JPArrayClass*> (cls) != 0)
+		out = PyJPArray_create(type, context, value);
+	else
+		out = PyJPValue_createInstance(type, context, value);
+
+	return out;
+	JP_TRACE_OUT;
+}
+
+JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	JP_TRACE_IN("PyJPValue_createInstance");
+
+	if (value.getClass() == NULL && value.getValue().l != NULL)
+		JP_RAISE_RUNTIME_ERROR("Value inconsistency");
+
+	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
+	JP_PY_CHECK();
+
+	// If it is not a primitive, we need to reference it
+	if (context != NULL && !value.getClass()->isPrimitive())
+	{
+		JPJavaFrame frame(context);
+		jvalue v;
+		v.l = frame.NewGlobalRef(value.getValue().l);
+		self->m_Value = JPValue(value.getClass(), v);
+	} else
+	{
+		// New value instance
+		self->m_Value = value;
+	}
+	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	JP_TRACE_OUT;
+}
+
+JPPyObject PyJPValue_createBase(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	JP_TRACE_IN("PyJPValue_createbase");
+	JPPyObject self(JPPyRef::_claim, ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0));
+	PyObject_SetAttrString(self.get(), __javavalue__,
+			PyJPValue_createInstance((PyTypeObject*) state->PyJPValue_Type, context, value).get());
+	return self;
+	JP_TRACE_OUT;
+}
+
+JPPyObject PyJPValue_createBoxed(PyTypeObject *wrapper, JPContext *context, const JPValue& value)
+{
+	PyJPModuleState *state = PyJPModuleState_global;
+	// Find the primitive type
+	JPPrimitiveType *primitive = ((JPBoxedType*) value.getClass())->getPrimitive();
+
+	// Convert object to primitive type
+	JPValue jcontents = primitive->getValueFromObject(value);
+	JPPyObject pycontents;
+
+	// Convert to python based on the type
+	if (primitive == context->_boolean)
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().z));
+	else if (primitive == context->_byte)
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().b));
+	else if (primitive == context->_short)
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().s));
+	else if (primitive == context->_int)
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong(jcontents.getValue().i));
+	else if (primitive == context->_long)
+		pycontents = JPPyObject(JPPyRef::_claim, PyLong_FromLong((long) jcontents.getValue().j));
+	else if (primitive == context->_float)
+		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().f));
+	else if (primitive == context->_double)
+		pycontents = JPPyObject(JPPyRef::_claim, PyFloat_FromDouble(jcontents.getValue().d));
+	else if (primitive == context->_char)
+		return PyJPValue_createInstance(wrapper, context, value);
+
+	JPPyTuple tuple = JPPyTuple::newTuple(1);
+	tuple.setItem(0, pycontents.get());
+	JPPyObject self(JPPyRef::_call, PyObject_Call((PyObject*) wrapper, tuple.get(), NULL));
+	PyObject_SetAttrString(self.get(), __javavalue__,
+			PyJPValue_createInstance((PyTypeObject*) state->PyJPValue_Type, context, value).get());
+	return self;
+}
