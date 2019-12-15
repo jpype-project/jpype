@@ -236,7 +236,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 
 		stringstream ss;
 		ss << "Special class not defined for " << className;
-		JP_RAISE_RUNTIME_ERROR(ss.str());
+		JP_RAISE(PyExc_RuntimeError, ss.str());
 	} else
 		// Otherwise create a normal class
 		result = new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);

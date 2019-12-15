@@ -36,10 +36,10 @@ PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 	if (self->m_Field->isStatic())
 		return self->m_Field->getStaticField().keep();
 	if (obj == NULL)
-		JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
+		JP_RAISE(PyExc_AttributeError, "Field is not static");
 	JPValue *jval = JPPythonEnv::getJavaValue(obj);
 	if (jval == NULL)
-		JP_RAISE_ATTRIBUTE_ERROR("Field requires instance value");
+		JP_RAISE(PyExc_AttributeError, "Field requires instance value");
 
 	return self->m_Field->getField(jval->getValue().l).keep();
 	JP_PY_CATCH(NULL);
@@ -50,20 +50,20 @@ int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JP_PY_TRY("PyJPField_set", self);
 	PyJPModule_getContext();
 	if (self->m_Field->isFinal())
-		JP_RAISE_ATTRIBUTE_ERROR("Field is final");
+		JP_RAISE(PyExc_AttributeError, "Field is final");
 	if (self->m_Field->isStatic())
 	{
 		self->m_Field->setStaticField(pyvalue);
 		return 0;
 	}
 	if (obj == Py_None)
-		JP_RAISE_ATTRIBUTE_ERROR("Field is not static");
+		JP_RAISE(PyExc_AttributeError, "Field is not static");
 	JPValue *jval = JPPythonEnv::getJavaValue(obj);
 	if (jval == NULL)
 	{
 		stringstream ss;
 		ss << "Field requires instance value, not " << Py_TYPE(obj)->tp_name;
-		JP_RAISE_ATTRIBUTE_ERROR(ss.str().c_str());
+		JP_RAISE(PyExc_AttributeError, ss.str().c_str());
 	}
 	self->m_Field->setField(jval->getValue().l, pyvalue);
 	return 0;
@@ -142,9 +142,9 @@ JPPyObject PyJPField_create(JPField *field)
 	jvalue v;
 	v.l = field->getJavaObject();
 	if (state->PyJPField_Type == NULL)
-		JP_RAISE_RUNTIME_ERROR("PyJPField type is not defined.");
+		JP_RAISE(PyExc_RuntimeError, "PyJPField type is not defined.");
 	if (context->_java_lang_reflect_Field == NULL)
-		JP_RAISE_RUNTIME_ERROR("java.lang.reflect.Field not loaded.");
+		JP_RAISE(PyExc_RuntimeError, "java.lang.reflect.Field not loaded.");
 	JPPyObject self = PyJPValue_createInstance((PyTypeObject*) state->PyJPField_Type, field->getContext(),
 			JPValue(context->_java_lang_reflect_Field, v));
 	((PyJPField*) self.get())->m_Field = field;

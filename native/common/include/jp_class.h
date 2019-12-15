@@ -49,7 +49,7 @@ public:
 	{
 		jclass cls = m_Class.get();
 		if (cls == 0)
-			JP_RAISE_RUNTIME_ERROR("Class is null");
+			JP_RAISE(PyExc_RuntimeError, "Class is null");
 		return cls;
 	}
 
@@ -186,7 +186,7 @@ public:
 	JPContext* getContext() const
 	{
 		if (m_Context == 0)
-			JP_RAISE_RUNTIME_ERROR("Null context");
+			JP_RAISE(PyExc_RuntimeError, "Null context");
 		return
 		m_Context;
 	}

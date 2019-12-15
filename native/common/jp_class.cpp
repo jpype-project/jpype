@@ -166,7 +166,7 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 	{
 		stringstream err;
 		err << "unable to convert to " << getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str().c_str());
 	}
 	jobject val = match.conversion->convert(&frame, this, obj).l;
 	frame.SetStaticObjectField(c, fid, val);
@@ -181,7 +181,7 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 	{
 		stringstream err;
 		err << "unable to convert to " << getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str().c_str());
 	}
 	jobject val = match.conversion->convert(&frame, this, obj).l;
 	frame.SetObjectField(c, fid, val);
@@ -224,7 +224,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 		PyObject* v = seq[i].get();
 		if (getJavaConversion(&frame, match, v) < JPMatch::_implicit)
 		{
-			JP_RAISE_TYPE_ERROR("Unable to convert");
+			JP_RAISE(PyExc_TypeError, "Unable to convert");
 		}
 	}
 
@@ -246,7 +246,7 @@ void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* va
 	JP_TRACE("Type", getCanonicalName());
 	if ( match.type < JPMatch::_implicit)
 	{
-		JP_RAISE_TYPE_ERROR("Unable to convert");
+		JP_RAISE(PyExc_TypeError, "Unable to convert");
 	}
 	jvalue v = match.conversion->convert(&frame, this, val);
 	frame.SetObjectArrayElement((jobjectArray) a, ndx, v.l);

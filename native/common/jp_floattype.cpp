@@ -194,7 +194,7 @@ void JPFloatType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyO
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java float");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticFloatField(c, fid, val);
 }
@@ -203,7 +203,7 @@ void JPFloatType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java float");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetFloatField(c, fid, val);
 }
@@ -252,7 +252,7 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java float");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }

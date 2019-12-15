@@ -55,21 +55,12 @@
  */
 namespace JPError
 {
-
-enum Type
-{
-	_java_error = 0,
-	_python_error = 1,
-	_runtime_error = 2,
-	_type_error = 3,
-	_value_error = 4,
-	_overflow_error = 5,
-	_index_error = 6,
-	_attribute_error = 7,
-	_os_error_unix = 8,
-	_os_error_windows = 9,
-	_method_not_found = 10,
-} ;
+extern int _java_error;
+extern int _python_error;
+extern int _python_exc;
+extern int _os_error_unix;
+extern int _os_error_windows;
+extern int _method_not_found;
 }
 
 // Create a stackinfo for a particular location in the code that can then
@@ -79,12 +70,13 @@ enum Type
 
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
-#define JP_PY_CHECK()               { if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__); }
+#define JP_PY_CHECK() \
+{ if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__);  }
 
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if (X==NULL) JP_RAISE_RUNTIME_ERROR( "Null Pointer Exception"); }
+#define ASSERT_NOT_NULL(X) {if (X==NULL) {int*qq=0; *qq=0; JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }
@@ -120,6 +112,11 @@ public:
 } ;
 typedef list<JPStackInfo> JPStackTrace;
 
+typedef union
+{
+	int  i;
+	void*  l;
+} JPErrorUnion;
 /**
  * Exception issued by JPype to indicate an internal problem.
  *
@@ -131,9 +128,9 @@ class JPypeException
 {
 public:
 	JPypeException(JPJavaFrame &frame, jthrowable, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, int err, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, void* error, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
 
 	~JPypeException();
@@ -161,11 +158,11 @@ public:
 
 private:
 	JPContext* m_Context;
-	JPError::Type m_Type;
+	int m_Type;
+	JPErrorUnion m_Error;
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
-	int m_Error;
 } ;
 
 /**

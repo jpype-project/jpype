@@ -82,7 +82,7 @@ PyObject *JPPyObject::keep()
 {
 	if (pyobj == NULL)
 	{
-		JP_RAISE_RUNTIME_ERROR("Attempt to keep null reference");
+		JP_RAISE(PyExc_RuntimeError, "Attempt to keep null reference");
 	}
 	JP_TRACE_PY("pyref keep ", pyobj);
 	PyObject *out = pyobj;
@@ -308,7 +308,7 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 		jlong val = JPPyLong::asLong(pyobj);
 		if (val < 0 || val > 65535)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Unable to convert int into char range");
+			JP_RAISE(PyExc_OverflowError, "Unable to convert int into char range");
 		}
 		return (jchar) val;
 	}
@@ -318,7 +318,7 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 	{
 		int sz = PyBytes_Size(pyobj);
 		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
@@ -328,13 +328,13 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 	if (PyUnicode_Check(pyobj))
 	{
 		if (PyUnicode_GET_LENGTH(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
 		Py_UCS4 value = PyUnicode_READ_CHAR(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE_VALUE_ERROR("Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
 		}
 		return value;
 	}
@@ -343,7 +343,7 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 	{
 		Py_ssize_t sz = PyBytes_Size(pyobj);
 		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
@@ -353,18 +353,18 @@ jchar JPPyString::asCharUTF16(PyObject *pyobj)
 	if (PyUnicode_Check(pyobj))
 	{
 		if (PyUnicode_GET_LENGTH(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
 		Py_UCS4 value = PyUnicode_ReadChar(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE_VALUE_ERROR("Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
 		}
 		return value;
 	}
 #endif
-	JP_RAISE_RUNTIME_ERROR("error converting string to char");
+	JP_RAISE(PyExc_RuntimeError, "error converting string to char");
 	return 0;
 }
 
@@ -413,7 +413,7 @@ string JPPyString::asStringUTF8(PyObject *pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
-	JP_RAISE_RUNTIME_ERROR("Failed to convert to string.");
+	JP_RAISE(PyExc_RuntimeError, "Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
 }
@@ -536,7 +536,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject *sequence)
 : seq(JPPyRef::_use, sequence)
 {
 	if (!JPPySequence::check(sequence))
-		JP_RAISE_TYPE_ERROR("must be sequence");
+		JP_RAISE(PyExc_TypeError, "must be sequence");
 	size_t n = seq.size();
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
@@ -628,6 +628,7 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keep(), exceptionValue.keep(), exceptionTrace.keep());
 }
 
+/*
 JPPyCallAcquire::JPPyCallAcquire()
 {
 	state1 = PyThreadState_New(PyJPModuleState_global->m_Interp);
@@ -642,6 +643,20 @@ JPPyCallAcquire::~JPPyCallAcquire()
 	PyEval_ReleaseThread((PyThreadState*) state1);
 	PyThreadState_Delete((PyThreadState*) state1);
 }
+ */
+
+JPPyCallAcquire::JPPyCallAcquire()
+{
+	state1 = (int) PyGILState_Ensure();
+	JP_TRACE_LOCKS("GIL ACQUIRE", this);
+}
+
+JPPyCallAcquire::~JPPyCallAcquire()
+{
+	JP_TRACE_LOCKS("GIL ACQUIRE DONE", this);
+	PyGILState_Release((PyGILState_STATE) state1);
+}
+
 
 // This is used when leaving python from to perform some
 

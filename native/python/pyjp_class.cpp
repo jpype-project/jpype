@@ -146,7 +146,7 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 		baseType = JPPyObject(JPPyRef::_claim, PyObject_GetAttrString(PyJPModule_global, "_JArrayBase"));
 	} else if (self->m_Class->isPrimitive())
 	{
-		JP_RAISE_TYPE_ERROR("primitives are not objects");
+		JP_RAISE(PyExc_TypeError, "primitives are not objects");
 	} else if (self->m_Class == context->_java_lang_Boolean ||
 			self->m_Class == context->_java_lang_Byte ||
 			self->m_Class == context->_java_lang_Short ||
@@ -390,10 +390,10 @@ PyObject *PyJPClass_newArrayType(PyJPClass* self, PyObject* dims)
 	JPContext* context = PyJPModule_getContext();
 	stringstream ss;
 	if (!PyIndex_Check(dims))
-		JP_RAISE_TYPE_ERROR("dims must be an integer");
+		JP_RAISE(PyExc_TypeError, "dims must be an integer");
 	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
 	if (d > 255)
-		JP_RAISE_VALUE_ERROR("dims too large");
+		JP_RAISE(PyExc_ValueError, "dims too large");
 
 	for (int i = 0; i < d; ++i)
 		ss << "[";

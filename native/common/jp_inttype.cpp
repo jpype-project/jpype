@@ -186,7 +186,7 @@ void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObj
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticIntField(c, fid, val);
 }
@@ -195,7 +195,7 @@ void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* 
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetIntField(c, fid, val);
 }
@@ -244,7 +244,7 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java int");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }

@@ -79,7 +79,7 @@ public:
 	{
 		if (l < -32768 || l > 32767)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java short");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java short");
 		}
 		return l;
 	}

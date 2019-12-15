@@ -65,7 +65,7 @@ JPProxy *JPPythonEnv::getJavaProxy(PyObject *obj)
 	if (Py_TYPE(obj) == (PyTypeObject*) state->PyJPProxy_Type)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	JPPyObject self(JPPyRef::_accept, PyObject_GetAttrString(obj, __javaproxy__));
-	if (Py_TYPE(self.get()) == (PyTypeObject*) state->PyJPProxy_Type)
+	if (!self.isNull() && Py_TYPE(self.get()) == (PyTypeObject*) state->PyJPProxy_Type)
 		return (((PyJPProxy*) self.get())->m_Proxy);
 	return NULL;
 }

@@ -511,7 +511,7 @@ public:
 /** Front end for all Python exception handling.
  *
  * To issue an error from within the C++ layer use the appropriate
- * JP_RAISE_* macro.  If within the Python extension module use
+ * JP_RAISE macro.  If within the Python extension module use
  * the Python interface.
  *
  */
@@ -560,7 +560,7 @@ public:
 	/* Release the lock. */
 	~JPPyCallAcquire();
 private:
-	void* state1;
+	int state1;
 } ;
 
 /** Used when leaving python to an external potentially

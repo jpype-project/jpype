@@ -105,11 +105,11 @@ bool JPContext::isRunning()
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
 	if (context == NULL)
-		throw JPypeException(JPError::_runtime_error, "Java Context is null", info);
+		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Context is null", info);
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
+		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Virtual Machine is not running", info);
 	}
 }
 
@@ -155,7 +155,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	if (m_JavaVM == NULL)
 	{
 		JP_TRACE("Unable to start");
-		JP_RAISE_RUNTIME_ERROR("Unable to start JVM");
+		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
 	// Connect our resources to the JVM
@@ -229,7 +229,7 @@ void JPContext::shutdownJVM()
 
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
-		JP_RAISE_RUNTIME_ERROR("Attempt to shutdown without a live JVM");
+		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
 	{
 		JPJavaFrame frame(this);
@@ -291,7 +291,7 @@ void JPContext::attachCurrentThread()
 	JNIEnv* env;
 	jint res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, NULL);
 	if (res != JNI_OK)
-		JP_RAISE_RUNTIME_ERROR("Unable to attach to thread");
+		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread");
 }
 
 void JPContext::attachCurrentThreadAsDaemon()
@@ -299,7 +299,7 @@ void JPContext::attachCurrentThreadAsDaemon()
 	JNIEnv* env;
 	jint res = m_JavaVM->functions->AttachCurrentThreadAsDaemon(m_JavaVM, (void**) &env, NULL);
 	if (res != JNI_OK)
-		JP_RAISE_RUNTIME_ERROR("Unable to attach to thread as daemon");
+		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread as daemon");
 }
 
 bool JPContext::isThreadAttached()
@@ -318,7 +318,7 @@ JNIEnv* JPContext::getEnv()
 	JNIEnv* env = NULL;
 	if (m_JavaVM == NULL)
 	{
-		JP_RAISE_RUNTIME_ERROR("JVM is null");
+		JP_RAISE(PyExc_RuntimeError, "JVM is null");
 	}
 
 	// Get the environment
@@ -329,7 +329,7 @@ JNIEnv* JPContext::getEnv()
 	{
 		res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, NULL);
 		if (res != JNI_OK)
-			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
+			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 	}
 	return env;
 }

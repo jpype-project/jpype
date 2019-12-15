@@ -217,7 +217,7 @@ void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, Py
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticDoubleField(c, fid, val);
 }
@@ -226,7 +226,7 @@ void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObjec
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetDoubleField(c, fid, val);
 }
@@ -275,7 +275,7 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java double");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }

@@ -69,7 +69,7 @@ public:
 		JPPyObject ret = method_.call(args.get(), NULL);
 		JPValue *value = JPPythonEnv::getJavaValue(ret.get());
 		if (value == NULL)
-			JP_RAISE_TYPE_ERROR("Bad type conversion");
+			JP_RAISE(PyExc_TypeError, "Bad type conversion");
 		return value->getValue();
 	}
 private:
@@ -199,7 +199,7 @@ public:
 			res.l = frame->NewLocalRef(cls2->getJavaClass());
 			return res;
 		}
-		JP_RAISE_TYPE_ERROR("Python object is not a Java class");
+		JP_RAISE(PyExc_TypeError, "Python object is not a Java class");
 	}
 } _classConversion;
 
@@ -243,7 +243,7 @@ public:
 			res.l = frame->NewLocalRef(value->getValue().l);
 			return res;
 		}
-		JP_RAISE_TYPE_ERROR("Python object is not a Java value");
+		JP_RAISE(PyExc_TypeError, "Python object is not a Java value");
 	}
 } _objectConversion;
 
@@ -268,7 +268,7 @@ public:
 		jvalue res;
 		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		if (value == NULL)
-			JP_RAISE_TYPE_ERROR("Python object is not a Java value");
+			JP_RAISE(PyExc_TypeError, "Python object is not a Java value");
 		if (!value->getClass()->isPrimitive())
 		{
 			res.l = frame->NewLocalRef(value->getJavaObject());

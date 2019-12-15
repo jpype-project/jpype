@@ -28,18 +28,6 @@ extern "C"
 {
 #endif
 
-static int PyJPModule_clear(PyObject *m);
-static int PyJPModule_traverse(PyObject *m, visitproc visit, void *arg);
-static void PyJPModule_free( void *arg);
-PyObject *PyJPModule_startup(PyObject *self, PyObject *args);
-PyObject *PyJPModule_shutdown(PyObject *self, PyObject *args);
-PyObject *PyJPModule_isStarted(PyObject *self, PyObject *args);
-PyObject *PyJPModule_attachThread(PyObject *self, PyObject *args);
-PyObject *PyJPModule_attachThreadAsDaemon(PyObject *self, PyObject *args);
-PyObject *PyJPModule_detachThread(PyObject *self, PyObject *args);
-PyObject *PyJPModule_isThreadAttached(PyObject *self, PyObject *args);
-PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args);
-
 const char *check_doc =
 		"Checks if a thread is attached to the JVM.\n"
 		"\n"
@@ -77,36 +65,6 @@ const char *detach_doc =
 		"to prevent resource leaks. The thread can be reattached, so there\n"
 		"is no harm in detaching early or more than once. This method cannot fail\n"
 		"and there is no harm in calling it when the JVM is not running.\n";
-
-static PyMethodDef moduleMethods[] = {
-	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
-	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, shutdown_doc},
-
-	// Threading
-	{"isThreadAttached", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, check_doc},
-	{"attachThread", (PyCFunction) (&PyJPModule_attachThread), METH_NOARGS, attach_doc},
-	{"detachThread", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, detach_doc},
-	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
-
-	// ByteBuffer
-	{"_convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_VARARGS, ""},
-	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
-	{NULL}
-};
-
-extern PyModuleDef PyJPModuleDef;
-PyModuleDef PyJPModuleDef = {
-	PyModuleDef_HEAD_INIT,
-	"_jpype",
-	"jpype module",
-	sizeof (PyJPModuleState),
-	moduleMethods,
-	NULL,
-	(traverseproc) PyJPModule_clear,
-	(inquiry) PyJPModule_traverse,
-	(freefunc) PyJPModule_free
-};
 
 extern PyType_Spec PyJPArraySpec;
 extern PyType_Spec PyJPClassSpec;
@@ -150,7 +108,6 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPModuleState *state = ((PyJPModuleState *) PyModule_GetState(module));
 	PyJPModuleState_global = state;
 	PyThreadState *mainThreadState = PyThreadState_Get();
-	state->m_Interp = mainThreadState->interp;
 
 	state->m_Context = new JPContext();
 	JPContext* context = state->m_Context;
@@ -309,7 +266,7 @@ PyObject *PyJPModule_startup(PyObject *self, PyObject *args)
 
 	if (!(JPPyString::check(vmPath)))
 	{
-		JP_RAISE_RUNTIME_ERROR("Java JVM path must be a string");
+		JP_RAISE(PyExc_RuntimeError, "Java JVM path must be a string");
 	}
 
 	string cVmPath = JPPyString::asStringUTF8(vmPath);
@@ -330,7 +287,7 @@ PyObject *PyJPModule_startup(PyObject *self, PyObject *args)
 			args.push_back(v);
 		} else
 		{
-			JP_RAISE_RUNTIME_ERROR("VM Arguments must be strings");
+			JP_RAISE(PyExc_RuntimeError, "VM Arguments must be strings");
 		}
 	}
 
@@ -453,7 +410,7 @@ PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 		return res;
 	}
 
-	JP_RAISE_RUNTIME_ERROR("Do not know how to convert to direct byte buffer, only memory view supported");
+	JP_RAISE(PyExc_RuntimeError, "Do not know how to convert to direct byte buffer, only memory view supported");
 	JP_PY_CATCH(NULL);
 }
 
@@ -476,7 +433,7 @@ PyObject *PyJPModule_getClass(PyObject *module, PyObject *args)
 	PyJPModuleState *state = PyJPModuleState_global;
 
 	if (!PyJPClass_Check(args))
-		JP_RAISE_TYPE_ERROR("Must be a Java class");
+		JP_RAISE(PyExc_TypeError, "Must be a Java class");
 
 	JPClass *javaClass = ((PyJPClass*) args)->m_Class;
 	if (javaClass->getHost() != NULL)
@@ -487,14 +444,51 @@ PyObject *PyJPModule_getClass(PyObject *module, PyObject *args)
 	}
 
 	// Call the factory
-	JPPyObject out(JPPyRef::_claim,
-			PyObject_Call(PyJPModuleState_global->JClassFactory, args, NULL));
+	JP_TRACE("Factory", PyJPModuleState_global->JClassFactory);
+	JPPyTuple tuple = JPPyTuple::newTuple(1);
+	tuple.setItem(0, args);
+	JPPyObject out(JPPyRef::_call,
+			PyObject_Call(PyJPModuleState_global->JClassFactory, tuple.get(), NULL));
+	if (out.isNull())
+		return NULL;
+
+	JP_TRACE("Wrapper", out.get());
 
 	// Store caches
 	javaClass ->setHost(out.get());
 	return out.keep();
 	JP_PY_CATCH(NULL);
 }
+
+static PyMethodDef moduleMethods[] = {
+	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
+	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
+	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, shutdown_doc},
+
+	// Threading
+	{"isThreadAttached", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, check_doc},
+	{"attachThread", (PyCFunction) (&PyJPModule_attachThread), METH_NOARGS, attach_doc},
+	{"detachThread", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, detach_doc},
+	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
+
+	// ByteBuffer
+	{"_convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_VARARGS, ""},
+	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
+	{NULL}
+};
+
+extern PyModuleDef PyJPModuleDef;
+PyModuleDef PyJPModuleDef = {
+	PyModuleDef_HEAD_INIT,
+	"_jpype",
+	"jpype module",
+	sizeof (PyJPModuleState),
+	moduleMethods,
+	NULL,
+	(traverseproc) PyJPModule_clear,
+	(inquiry) PyJPModule_traverse,
+	(freefunc) PyJPModule_free
+};
 
 #ifdef __cplusplus
 }

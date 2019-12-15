@@ -144,7 +144,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			if (returnValue.isNull())
 			{
 				JP_TRACE("Null return");
-				JP_RAISE_TYPE_ERROR("Return value is None when it cannot be");
+				JP_RAISE(PyExc_TypeError, "Return value is None when it cannot be");
 			}
 
 			// We must box here.
@@ -158,7 +158,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			if (returnClass->getJavaConversion(&frame, returnMatch, returnValue.get()) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");
-				JP_RAISE_TYPE_ERROR("Return value is not compatible with required type.");
+				JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
 			}
 
 			JP_TRACE("Convert return to", returnClass->getCanonicalName());

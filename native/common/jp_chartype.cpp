@@ -142,7 +142,7 @@ void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticCharField(c, fid, val);
 }
@@ -151,7 +151,7 @@ void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharField(c, fid, val);
 }
@@ -214,7 +214,7 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java char");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }

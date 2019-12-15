@@ -38,7 +38,7 @@ jobject JPByteType::convertToDirectBuffer(JPJavaFrame& frame, PyObject* src)
 		return frame.keep(frame.NewDirectByteBuffer(rawData, size));
 	}
 
-	JP_RAISE_TYPE_ERROR("Unable to convert to Direct Buffer");
+	JP_RAISE(PyExc_TypeError, "Unable to convert to Direct Buffer");
 	JP_TRACE_OUT;
 }
 
@@ -166,7 +166,7 @@ void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticByteField(c, fid, val);
 }
@@ -175,7 +175,7 @@ void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetByteField(c, fid, val);
 }
@@ -228,7 +228,7 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java byte");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }

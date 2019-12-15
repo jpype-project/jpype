@@ -68,7 +68,7 @@ public:
 	{
 		if (l < -128 || l > 127)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java byte");
 		}
 		return l;
 	}

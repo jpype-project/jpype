@@ -200,7 +200,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 		JPConversion *conversion = match.argument[i].conversion;
 		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName(), conversion);
 		if (conversion == NULL)
-			JP_RAISE_RUNTIME_ERROR("Conversion is null");
+			JP_RAISE(PyExc_RuntimeError, "Conversion is null");
 		v[i - match.skip] = conversion->convert(&frame, type, arg[i]);
 	}
 	JP_TRACE_OUT;
@@ -232,7 +232,7 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 			len--;
 			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
 			if (selfObj == NULL)
-				JP_RAISE_RUNTIME_ERROR("Null object");
+				JP_RAISE(PyExc_RuntimeError, "Null object");
 			self = selfObj->getJavaObject();
 		}
 

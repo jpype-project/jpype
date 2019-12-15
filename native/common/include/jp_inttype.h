@@ -80,7 +80,7 @@ public:
 	{
 		if (l < -2147483648ll || l > 2147483647ll)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java int");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java int");
 		}
 		return l;
 	}

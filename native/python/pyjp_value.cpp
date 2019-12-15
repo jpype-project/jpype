@@ -70,7 +70,7 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 	JPPyObject type = JPPyObject(JPPyRef::_call,
 			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
 	if (!PyJPClass_Check(type.get()))
-		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
+		JP_RAISE(PyExc_TypeError, "__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
 	JP_TRACE("type", cls->getCanonicalName());
@@ -104,7 +104,7 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 	JPPyObject type = JPPyObject(JPPyRef::_call,
 			PyObject_GetAttrString((PyObject*) Py_TYPE(self), "__javaclass__"));
 	if (!PyJPClass_Check(type.get()))
-		JP_RAISE_TYPE_ERROR("__javaclass__ type is incorrect");
+		JP_RAISE(PyExc_TypeError, "__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
 	return PyJPValue_construct(self, cls, pyargs, kwargs);
@@ -282,7 +282,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 	// Make this work for both PyJPValueBase and PyJPValue
 	PyJPValue* self = PyJPValue_asValue(pyself);
 	if (self == NULL)
-		JP_RAISE_TYPE_ERROR("Must be Java value");
+		JP_RAISE(PyExc_TypeError, "Must be Java value");
 
 	JPContext* context = PyJPModule_getContext();
 	JPClass *cls = self->m_Value.getClass();
@@ -312,7 +312,7 @@ PyObject *PyJPValue_str(PyObject *pyself)
 		// Convert it
 		jstring str = (jstring) self->m_Value.getValue().l;
 		if (str == NULL)
-			JP_RAISE_VALUE_ERROR("null string");
+			JP_RAISE(PyExc_ValueError, "null string");
 		string cstring = frame.toStringUTF8(str);
 		PyDict_SetItemString(dict.get(), "str", out = JPPyString::fromStringUTF8(cstring).keep());
 		Py_INCREF(out);
@@ -336,7 +336,7 @@ PyObject *PyJPValue_repr(PyObject *pyself)
 	// Make this work for both PyJPValueBase and PyJPValue
 	PyJPValue *self = PyJPValue_asValue(pyself);
 	if (self == NULL)
-		JP_RAISE_TYPE_ERROR("Must be Java value");
+		JP_RAISE(PyExc_TypeError, "Must be Java value");
 
 	PyJPModuleState *state = PyJPModuleState_global;
 	JPContext* context = state->m_Context;
@@ -453,7 +453,7 @@ JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, c
 	JP_TRACE_IN("PyJPValue_createInstance");
 
 	if (value.getClass() == NULL && value.getValue().l != NULL)
-		JP_RAISE_RUNTIME_ERROR("Value inconsistency");
+		JP_RAISE(PyExc_RuntimeError, "Value inconsistency");
 
 	PyJPValue *self = (PyJPValue*) ((PyTypeObject*) wrapper)->tp_alloc(wrapper, 0);
 	JP_PY_CHECK();

@@ -38,7 +38,7 @@ bool JPPrimitiveType::isAssignableFrom(JPClass* o)
 JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
 {
 	if (args.size() != 1)
-		JP_RAISE_TYPE_ERROR("primitives take 1 positional argument");
+		JP_RAISE(PyExc_TypeError, "primitives take 1 positional argument");
 
 	// Test the conversion
 	JPMatch match;
@@ -46,7 +46,7 @@ JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
 
 	// If there is no conversion report a failure
 	if (match.type == JPMatch::_none)
-		JP_RAISE_TYPE_ERROR("Unable to create an instance.");
+		JP_RAISE(PyExc_TypeError, "Unable to create an instance.");
 
 	// Otherwise give back a PyJPValue
 	jvalue v = match.conversion->convert(NULL, this, args[0]);

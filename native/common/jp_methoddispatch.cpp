@@ -122,7 +122,7 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 		{
 			ss << "\t" << (*it)->toString() << std::endl;
 		}
-		JP_RAISE_TYPE_ERROR(ss.str());
+		JP_RAISE(PyExc_TypeError, ss.str());
 		JP_TRACE(ss.str());
 	}
 
@@ -150,7 +150,7 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 			ss << "\t" << current->toString();
 			ss << std::endl;
 		}
-		JP_RAISE_TYPE_ERROR(ss.str());
+		JP_RAISE(PyExc_TypeError, ss.str());
 	}
 
 	JP_TRACE("Best match", bestMatch.overload->toString());

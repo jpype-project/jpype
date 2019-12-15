@@ -187,7 +187,7 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 	JP_TRACE_IN("JPArrayClass::newInstance", this);
 	JPJavaFrame frame(getContext());
 	if (args.size() != 1)
-		JP_RAISE_TYPE_ERROR("Arrays require one argument");
+		JP_RAISE(PyExc_TypeError, "Arrays require one argument");
 
 	if (PySequence_Check(args[0]) == 1)
 	{
@@ -205,12 +205,12 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 		JP_TRACE("Index");
 		Py_ssize_t sz = PyNumber_AsSsize_t(args[0], NULL);
 		if (sz < 0 )
-			JP_RAISE_VALUE_ERROR("Invalid size");
+			JP_RAISE(PyExc_ValueError, "Invalid size");
 		jvalue v;
 		v.l = m_ComponentType->newArrayInstance(frame, (int) sz);
 		return JPValue(this, v);
 	}
 
-	JP_RAISE_TYPE_ERROR("Arrays require int or sequence parameters");
+	JP_RAISE(PyExc_TypeError, "Arrays require int or sequence parameters");
 	JP_TRACE_OUT;
 }

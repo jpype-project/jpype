@@ -75,7 +75,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 
 	// Make sure it is an iterable before we start
 	if (!JPPySequence::check(val))
-		JP_RAISE_TYPE_ERROR("can only assign a sequence");
+		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
 
 	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
@@ -90,7 +90,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
-		JP_RAISE_VALUE_ERROR(out.str());
+		JP_RAISE(PyExc_ValueError, out.str());
 	}
 
 	JP_TRACE("Call component set range");
@@ -107,7 +107,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 		// Python returns IndexError
 		stringstream ss;
 		ss << "java array assignment index out of range for size " << m_Length;
-		JP_RAISE_INDEX_ERROR(ss.str());
+		JP_RAISE(PyExc_IndexError, ss.str());
 	}
 
 	compType->setArrayItem(frame, m_Object.get(), ndx, val);
@@ -123,7 +123,7 @@ JPPyObject JPArray::getItem(jsize ndx)
 		// Python behavior is IndexError
 		stringstream ss;
 		ss << "index " << ndx << "is out of bounds for java array with size 0";
-		JP_RAISE_INDEX_ERROR(ss.str());
+		JP_RAISE(PyExc_IndexError, ss.str());
 	}
 
 	return compType->getArrayItem(frame, m_Object.get(), ndx);

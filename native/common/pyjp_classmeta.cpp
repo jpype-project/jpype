@@ -175,6 +175,9 @@ PyObject* PyJPClassMeta_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 			!= state->PyJPClassMeta_Type)
 		Py_RETURN_FALSE;
 
+	JP_TRACE("TypeClass", type->tp_name);
+	JP_TRACE("TestClass", test->tp_name);
+
 	// Check for class inheritance first
 	JPClass *testClass = JPPythonEnv::getJavaClass((PyObject*) test);
 	JPClass *typeClass = JPPythonEnv::getJavaClass((PyObject*) type);

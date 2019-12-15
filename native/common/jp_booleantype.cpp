@@ -169,7 +169,7 @@ void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, P
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticBooleanField(c, fid, val);
 }
@@ -178,7 +178,7 @@ void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObje
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetBooleanField(c, fid, val);
 }
@@ -228,7 +228,7 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 {
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
-		JP_RAISE_TYPE_ERROR("Unable to convert to Java boolean");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);
 }

@@ -62,7 +62,7 @@ public:
 		{
 			std::stringstream msg;
 			msg << "Unable to load symbol [" << name << "], error = " << dlerror();
-			JP_RAISE_RUNTIME_ERROR( msg.str().c_str());
+			JP_RAISE(PyExc_RuntimeError,  msg.str().c_str());
 		}
 		return res;
 	}

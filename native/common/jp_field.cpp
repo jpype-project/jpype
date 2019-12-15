@@ -58,7 +58,7 @@ void JPField::setStaticField(PyObject *pyobj)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
 	m_Type->setStaticField(frame, m_Class->getJavaClass(), m_FieldID, pyobj);
 	JP_TRACE_OUT;
@@ -82,7 +82,7 @@ void JPField::setField(jobject inst, PyObject *pyobj)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
 
 	m_Type->setField(frame, inst, m_FieldID, pyobj);

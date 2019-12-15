@@ -32,6 +32,14 @@ PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(NULL);
 }
 
+/**
+ * Initialize a PyJPProxy.
+ *
+ * @param self is the proxy instance.
+ * @param args is a tuple holding the target and a list of interfaces.
+ * @param kwargs is not used.
+ * @return a new proxy instance.
+ */
 int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_init", self);
@@ -39,51 +47,33 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	PyObject *target;
 	PyObject *pyintf;
 	if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
-	{
 		return -1;
-	}
+
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	// Pack interfaces
 	if (!JPPySequence::check(pyintf))
-	{
-		PyErr_SetString(PyExc_TypeError, "third argument must be a list of interface");
-		return -1;
-	}
+		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
 
 	JPClassList interfaces;
 	JPPySequence intf(JPPyRef::_use, pyintf);
 	jlong len = intf.size();
 	if (len < 1)
-	{
-		PyErr_SetString(PyExc_TypeError, "at least one interface is required");
-		return -1;
-	}
+		JP_RAISE(PyExc_TypeError, "at least one interface is required");
 
 	for (jlong i = 0; i < len; i++)
 	{
 		JPClass *cls = JPPythonEnv::getJavaClass(intf[i].get());
 		if (cls == NULL)
-		{
-			PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
-			return -1;
-		}
+			JP_RAISE(PyExc_TypeError, "interfaces must be object class instances");
 		interfaces.push_back(cls);
 	}
-
-	JPContext *context = interfaces[0]->getContext();
-	ASSERT_JVM_RUNNING(context);
-
-	// FIXME if we have multiple context someone has to check that all the interfaces
-	// belong to the same context.
-
-	JPJavaFrame frame(context);
 
 	Py_INCREF(target);
 	self->m_Target = target;
 	self->m_Proxy = context->getProxyFactory()->newProxy(target, interfaces);
 	JP_TRACE("Py Proxy", self);
-	JP_TRACE("Java Target", self->m_Proxy);
-	JP_TRACE("Target", self->m_Target);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -93,14 +83,13 @@ int PyJPProxy_clear(PyJPProxy *self);
 void PyJPProxy_dealloc(PyJPProxy *self)
 {
 	JP_PY_TRY("PyJPProxy_dealloc", self);
-	JP_TRACE("Java Target", self->m_Proxy);
-	JP_TRACE("Target", self->m_Target);
 	delete self->m_Proxy;
 
+	PyTypeObject *type = Py_TYPE(self);
 	PyObject_GC_UnTrack(self);
 	PyJPProxy_clear(self);
 	// Free self
-	Py_TYPE(self)->tp_free(self);
+	type->tp_free(self);
 	JP_PY_CATCH();
 }
 
@@ -143,7 +132,7 @@ static PyType_Slot proxySlots[] = {
 
 PyType_Spec PyJPProxySpec = {
 	"_jpype.PyJPProxy",
-	sizeof (PyObject),
+	sizeof (PyJPProxy),
 	0,
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	proxySlots

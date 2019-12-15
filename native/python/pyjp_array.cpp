@@ -78,7 +78,7 @@ PyObject *PyJPArray_repr(PyJPArray *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null array");
+		JP_RAISE(PyExc_RuntimeError, "Null array");
 	stringstream sout;
 
 	// FIXME way too hard to get this type name.
@@ -92,7 +92,7 @@ Py_ssize_t PyJPArray_len(PyJPArray *self)
 	JP_PY_TRY("PyJPArray_len");
 	PyJPModule_getContext();
 	if (self->m_Array == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null array");
+		JP_RAISE(PyExc_RuntimeError, "Null array");
 	return self->m_Array->getLength();
 	JP_PY_CATCH(-1);
 }
@@ -103,7 +103,7 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null array");
+		JP_RAISE(PyExc_RuntimeError, "Null array");
 	if (PyIndex_Check(arg))
 	{
 		Py_ssize_t i = PyNumber_AsSsize_t(arg, PyExc_IndexError);
@@ -121,7 +121,7 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 			return NULL;
 
 		if (step != 1)
-			JP_RAISE_VALUE_ERROR("Slicing step not implemented");
+			JP_RAISE(PyExc_ValueError, "Slicing step not implemented");
 
 		slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
 				&start, &stop, step);
@@ -130,7 +130,7 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 			return PyList_New(0);
 		return self->m_Array->getRange((jsize) start, (jsize) stop).keep();
 	}
-	JP_RAISE_TYPE_ERROR("array indices must be indexes or slices");
+	JP_RAISE(PyExc_TypeError, "array indices must be indexes or slices");
 	JP_PY_CATCH(NULL);
 }
 
@@ -140,7 +140,7 @@ int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject* value)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (item >= self->m_Array->getLength())
-		JP_RAISE_INDEX_ERROR("Index out of range");
+		JP_RAISE(PyExc_IndexError, "Index out of range");
 	self->m_Array->setItem((jsize) item, value);
 	return 0;
 	JP_PY_CATCH(-1);
@@ -152,7 +152,7 @@ int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if ( value == NULL)
-		JP_RAISE_VALUE_ERROR("item deletion not supported");
+		JP_RAISE(PyExc_ValueError, "item deletion not supported");
 
 	if (PyIndex_Check(item))
 	{
@@ -173,7 +173,7 @@ int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value)
 			return -1;
 
 		if (step != 1)
-			JP_RAISE_VALUE_ERROR("Slicing step not implemented");
+			JP_RAISE(PyExc_ValueError, "Slicing step not implemented");
 
 		slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
 				&start, &stop, step);

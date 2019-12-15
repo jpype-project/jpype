@@ -32,7 +32,7 @@ int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 
 	PyJPValue *value = PyJPValue_asValue(obj);
 	if (value == NULL)
-		JP_RAISE_TYPE_ERROR("Must be a Java Object");
+		JP_RAISE(PyExc_TypeError, "Must be a Java Object");
 
 	JPValue& v1 = value->m_Value;
 	JPContext *context = PyJPModule_getContext();

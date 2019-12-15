@@ -65,7 +65,7 @@ public:
 	{
 		if (l < -3.40282346638528860e+38 || l > 3.40282346638528860e+38)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
 		}
 		return l;
 	}

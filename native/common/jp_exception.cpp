@@ -23,32 +23,35 @@ JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const char* ms
 	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
 	m_Context = frame.getContext();
 	m_Type = JPError::_java_error;
+	m_Error.l = NULL;
 	m_Message = msn;
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const char* msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(int type, void* error, const char* msn, const JPStackInfo& stackInfo)
 {
-	JP_TRACE("EXCEPTION THROWN:", errType, msn);
-	m_Type = errType;
+	JP_TRACE("EXCEPTION THROWN:", error, msn);
+	m_Type = type;
+	m_Error.l = error;
 	m_Message = msn;
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const string& msn, const JPStackInfo& stackInfo)
-{
-	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = errType;
-	m_Message = msn;
-	from(stackInfo);
-}
-
-JPypeException::JPypeException(JPError::Type errType, int err, const string& msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(int type, void* errType, const string& msn, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = errType;
+	m_Type = type;
+	m_Error.l = errType;
 	m_Message = msn;
-	m_Error = err;
+	from(stackInfo);
+}
+
+JPypeException::JPypeException(int type,  const string& msn, int errType, const JPStackInfo& stackInfo)
+{
+	JP_TRACE("EXCEPTION THROWN", errType, msn);
+	m_Type = type;
+	m_Error.i = errType;
+	m_Message = msn;
 	from(stackInfo);
 }
 
@@ -56,6 +59,7 @@ JPypeException::JPypeException(const JPypeException& ex)
 : m_Context(ex.m_Context), m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
 	m_Type = ex.m_Type;
+	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
 }
 
@@ -166,10 +170,6 @@ jthrowable JPypeException::getJavaException()
 		{
 			eframe.good = false;
 			JPValue* javaExc = JPPythonEnv::getJavaValue(eframe.exceptionClass.get());
-			//                        JPValue* javaExc = JPPythonEnv::getJavaValue(
-			//		  	    JPPythonEnv::getJavaException(
-			//                             eframe.exceptionClass.get(),
-			//                            eframe.exceptionValue.get()).get());
 			if (javaExc != NULL)
 				return (jthrowable) javaExc->getJavaObject();
 		}
@@ -237,9 +237,6 @@ void JPypeException::convertPythonToJava(JPContext* context)
 		{
 			eframe.good = false;
 			JPValue* javaExc = JPPythonEnv::getJavaValue(eframe.exceptionValue.get());
-			//	    JPPythonEnv::getJavaException(
-			//              eframe.exceptionClass.get(),
-			//             eframe.exceptionValue.get()).get());
 			if (javaExc != NULL)
 			{
 				//th = (jthrowable) frame.NewLocalRef(javaExc->getJavaObject());
@@ -259,6 +256,13 @@ void JPypeException::convertPythonToJava(JPContext* context)
 	JP_TRACE_OUT;
 }
 
+int JPError::_java_error = 1;
+int JPError::_python_error = 2;
+int JPError::_python_exc = 3;
+int JPError::_os_error_unix = 10;
+int JPError::_os_error_windows = 11;
+int JPError::_method_not_found = 20;
+
 void JPypeException::toPython()
 {
 	string mesg;
@@ -266,99 +270,81 @@ void JPypeException::toPython()
 	try
 	{
 		mesg = getMessage();
-		JP_TRACE(m_Type);
+		JP_TRACE(m_Error.l);
 		JP_TRACE(mesg.c_str());
-		switch (m_Type)
+		if (m_Type == JPError::_java_error)
 		{
-			case JPError::_java_error:
-				JP_TRACE("Java exception");
-				JPypeException::convertJavaToPython();
-				return;
-
-			case JPError::_python_error:
-				JP_TRACE("Python exception");
-				// Error is already in the stack
-				return;
-
-			case JPError::_runtime_error:
-				JP_TRACE("Runtime error");
-				PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-				return;
-
-			case JPError::_type_error:
-				JP_TRACE("Type error");
-				PyErr_SetString(PyExc_TypeError, mesg.c_str());
-				return;
-
-			case JPError::_value_error:
-				JP_TRACE("Value error");
-				PyErr_SetString(PyExc_ValueError, mesg.c_str());
-				return;
-
-			case JPError::_overflow_error:
-				JP_TRACE("Overflow error");
-				PyErr_SetString(PyExc_OverflowError, mesg.c_str());
-				return;
-
-			case JPError::_index_error:
-				JP_TRACE("Index error");
-				PyErr_SetString(PyExc_IndexError, mesg.c_str());
-				return;
-
-			case JPError::_attribute_error:
-				JP_TRACE("Attribute error");
-				PyErr_SetString(PyExc_AttributeError, mesg.c_str());
-				return;
-
-			case JPError::_os_error_unix:
-			{
-				std::stringstream ss;
-				ss << "JVM DLL not found: " << mesg;
-				PyObject* val = Py_BuildValue("(iz)", m_Error,
-						ss.str().c_str());
-				if (val != NULL)
-				{
-					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
-					Py_DECREF(val);
-					if (exc != NULL)
-					{
-						PyErr_SetObject(PyExc_OSError, exc);
-						Py_DECREF(exc);
-					}
-				}
-				return;
-			}
-
-			case JPError::_os_error_windows:
-			{
-				std::stringstream ss;
-				ss << "JVM DLL not found: " << mesg;
-				PyObject* val = Py_BuildValue("(izzi)", 2,
-						ss.str().c_str(), NULL, m_Error);
-				if (val != NULL)
-				{
-					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
-					Py_DECREF(val);
-					if (exc != NULL)
-					{
-						PyErr_SetObject(PyExc_OSError, exc);
-						Py_DECREF(exc);
-					}
-				}
-				return;
-			}
-
-			default:
-				JP_TRACE("Unknown Error");
-				PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-				return;
+			JP_TRACE("Java exception");
+			JPypeException::convertJavaToPython();
+			return;
 		}
+
+		if (m_Type == JPError::_python_error)
+		{
+			JP_TRACE("Python exception");
+			return;
+		}
+
+		if (m_Type == JPError::_method_not_found)
+		{
+			JP_TRACE("Runtime error");
+			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+		}
+
+		if (m_Type == JPError::_os_error_unix)
+		{
+			std::stringstream ss;
+			ss << "JVM DLL not found: " << mesg;
+			PyObject* val = Py_BuildValue("(iz)", m_Error.i,
+					ss.str().c_str());
+			if (val != NULL)
+			{
+				PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+				Py_DECREF(val);
+				if (exc != NULL)
+				{
+					PyErr_SetObject(PyExc_OSError, exc);
+					Py_DECREF(exc);
+				}
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_os_error_windows)
+		{
+			std::stringstream ss;
+			ss << "JVM DLL not found: " << mesg;
+			PyObject* val = Py_BuildValue("(izzi)", 2,
+					ss.str().c_str(), NULL, m_Error.i);
+			if (val != NULL)
+			{
+				PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+				Py_DECREF(val);
+				if (exc != NULL)
+				{
+					PyErr_SetObject(PyExc_OSError, exc);
+					Py_DECREF(exc);
+				}
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_python_exc)
+		{
+			// All others are Python errors
+			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
+			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
+			return;
+		}
+		JP_TRACE("Unknown error");
+		PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+		return;
 	} catch (JPypeException& ex)
 	{
 		// Print our parting words
 		JPTracer::trace("Fatal error in exception handling");
 		JPTracer::trace("Handling:", mesg);
-		JPTracer::trace("Type:", m_Type);
+		JPTracer::trace("Type:", m_Error.l);
 		if (ex.m_Type == JPError::_python_error)
 			JPTracer::trace("Inner Python:", ex.getPythonMessage());
 		else if (ex.m_Type == JPError::_java_error)
@@ -394,35 +380,35 @@ void JPypeException::toJava(JPContext *context)
 	{
 		string mesg = getMessage();
 		JPJavaFrame frame(context, context->getEnv());
-		switch (m_Type)
+		if (m_Type == JPError::_python_error)
 		{
-			case JPError::_python_error:
-				//Python errors need to be converted
-				JP_TRACE("Python exception");
-				convertPythonToJava(context);
-				return;
-
-			case JPError::_java_error:
-				// Java errors are already registered
-				JP_TRACE("Java exception");
-				//JP_TRACE(context->toString((jobject) frame.ExceptionOccurred()));
-				if (m_Throwable.get() != 0)
-				{
-					JP_TRACE("Java rethrow");
-					frame.Throw(m_Throwable.get());
-					return;
-				}
-			case JPError::_method_not_found:
-				frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), mesg.c_str());
-
-			default:
-				// All others are issued as RuntimeExceptions
-				JP_TRACE("JPype Error");
-				break;
+			JP_TRACE("Python exception");
+			convertPythonToJava(context);
+			return;
 		}
 
+		if (m_Type == JPError::_java_error)
+		{
+			JP_TRACE("Java exception");
+			//JP_TRACE(context->toString((jobject) frame.ExceptionOccurred()));
+			if (m_Throwable.get() != 0)
+			{
+				JP_TRACE("Java rethrow");
+				frame.Throw(m_Throwable.get());
+				return;
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_method_not_found)
+		{
+			frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), mesg.c_str());
+			return;
+		}
+		// All others are issued as RuntimeExceptions
 		JP_TRACE("String exception");
 		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
+		return;
 	} catch (JPypeException ex)
 	{
 		// Print our parting words.

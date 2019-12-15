@@ -77,7 +77,6 @@ typedef struct
 	PyObject *PyJPValueLong_Type;
 	PyObject *PyJPValueFloat_Type;
 	PyObject *PyJPValueExc_Type;
-	PyInterpreterState *m_Interp;
 
 	// Hooks from Python
 	PyObject *JInterface;
