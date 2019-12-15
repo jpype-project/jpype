@@ -230,9 +230,6 @@ JPPyObject fromLong(jlong value);
  */
 namespace JPPyInt
 {
-bool check(PyObject* obj);
-jint asInt(PyObject* obj);
-
 JPPyObject fromInt(jint l);
 JPPyObject fromLong(jlong l);
 }
@@ -346,8 +343,6 @@ public:
 	 */
 	static JPPyTuple newTuple(jlong sz);
 
-	static bool check(PyObject* obj);
-
 	/** Set an item in the tuple.
 	 *
 	 * This does not steal a reference to the object.
@@ -363,38 +358,6 @@ public:
 
 	/** Get the size of the tuple.
 	 */
-	jlong size();
-
-} ;
-
-/** Wrapper for a Python list object. */
-class JPPyList : public JPPyObject
-{
-public:
-
-	JPPyList(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
-	{
-	}
-
-	JPPyList(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
-
-	static JPPyList newList(jlong sz);
-	static bool check(PyObject* obj);
-
-	/** Set an item in the list.
-	 *
-	 * This does not steal a reference to the object.
-	 */
-	void setItem(jlong ndx, PyObject* val);
-
-	/** Fetch an item from a tuple.
-	 *
-	 * Scope remains with the JPTuple, so no smart reference is required.
-	 * @throws if the index is out of the range of the tuple.
-	 */
-	PyObject* getItem(jlong ndx);
 	jlong size();
 
 } ;
@@ -416,8 +379,6 @@ public:
 	{
 	}
 
-	// Note this use to work the same for list, sequence and tuple, but that breaks pypy
-	bool check();
 	static bool check(PyObject* obj);
 
 	JPPyObject getItem(jlong ndx);
@@ -475,35 +436,6 @@ private:
 	vector<JPPyObject> contents;
 } ;
 
-/** Wrapper for a Python dict.
- *
- * Currently this is not used in this project.  It is being retained
- * so that we can support kwargs at some point in the future.
- */
-class JPPyDict : public JPPyObject
-{
-public:
-
-	JPPyDict(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
-
-	// Create a new Dict
-	static JPPyDict newDict();
-
-	static bool check(PyObject* obj);
-
-	bool contains(PyObject* k);
-
-	JPPyObject getKeys();
-	JPPyObject copy(PyObject* obj);
-
-	// item remains with the scope of JPPyDict
-	PyObject* getItem(PyObject* k);
-	void setItemString(PyObject* o, const char* n);
-} ;
-
-
 /****************************************************************************
  * Error handling
  ***************************************************************************/
@@ -517,7 +449,6 @@ public:
  */
 namespace JPPyErr
 {
-void clear();
 /** Check if there is a pending Python exception.
  *
  * @return true if pending, false otherwise.

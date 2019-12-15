@@ -76,7 +76,7 @@ extern int _method_not_found;
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if (X==NULL) {int*qq=0; *qq=0; JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
+#define ASSERT_NOT_NULL(X) {if (X==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }

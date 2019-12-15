@@ -71,7 +71,7 @@ class JObject(_jpype.PyJPValue, metaclass=_jpype.PyJPClassMeta):
 
         # Called to create or cast.
         cls = _JObjectFactory(*args, **kwargs)
-        return cls.__javaclass__._cast(*args)
+        return cls.__javaclass__._cast(args[0])
 
 
 @_jcustomizer.JImplementationFor('java.lang.Object')

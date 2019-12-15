@@ -107,7 +107,6 @@ PyMODINIT_FUNC PyInit__jpype()
 	// Initialize each of the python extension types
 	PyJPModuleState *state = ((PyJPModuleState *) PyModule_GetState(module));
 	PyJPModuleState_global = state;
-	PyThreadState *mainThreadState = PyThreadState_Get();
 
 	state->m_Context = new JPContext();
 	JPContext* context = state->m_Context;

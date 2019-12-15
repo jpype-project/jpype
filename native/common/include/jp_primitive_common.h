@@ -176,7 +176,7 @@ inline JPPyObject getSlice(JPJavaFrame& frame, jarray array, int lo, int hi, int
 	}
 	return JPPyObject(JPPyRef::_claim, res);
 #else
-	JPPyList res(JPPyList::newList(len));
+	JPPyObject res(JPPyRef::_call, PyList_New((Py_ssize_t) sz));
 	if (len > 0)
 	{
 		jtype* val = (jtype*) accessor.get();

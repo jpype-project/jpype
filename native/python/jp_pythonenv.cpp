@@ -30,7 +30,10 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass *javaClass)
 	JPContext *context = javaClass->getContext();
 	JPPyObject pycls(PyJPClass_create(
 			(PyTypeObject*) PyJPModuleState_global->PyJPClass_Type, context, javaClass));
-	return JPPyObject(JPPyRef::_claim, PyJPModule_getClass(NULL, pycls.get()));
+	PyObject *out = PyJPModule_getClass(NULL, pycls.get());
+	if (out == NULL)
+		JP_RAISE_PYTHON("Failed");
+	return JPPyObject(JPPyRef::_claim, out);
 	JP_TRACE_OUT;
 }
 

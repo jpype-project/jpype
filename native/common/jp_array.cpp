@@ -62,7 +62,7 @@ JPPyObject JPArray::getRange(jsize start, jsize stop)
 	if (m_Object.get() == NULL || start >= stop)
 	{
 		// Python behavior would be to return an empty list
-		return JPPyList::newList(0);
+		return JPPyObject(JPPyRef::_call, PyList_New((Py_ssize_t) 0));
 	}
 
 	return compType->getArrayRange(frame, m_Object.get(), start, stop - start);
@@ -74,7 +74,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 	JP_TRACE_IN("JPArray::setRange");
 
 	// Make sure it is an iterable before we start
-	if (!JPPySequence::check(val))
+	if (!PySequence_Check(val))
 		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
 
 	JPJavaFrame frame(m_Class->getContext());

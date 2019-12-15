@@ -47,24 +47,20 @@ void PyJPMethod_dealloc(PyJPMethod *self)
 
 int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 {
-	JP_PY_TRY("PyJPMethod_traverse", self);
 	Py_VISIT(self->m_Instance);
 	Py_VISIT(self->m_Doc);
 	Py_VISIT(self->m_Annotations);
 	Py_VISIT(self->m_CodeRep);
 	return 0;
-	JP_PY_CATCH(-1);
 }
 
 int PyJPMethod_clear(PyJPMethod *self)
 {
-	JP_PY_TRY("PyJPMethod_clear", self);
 	Py_CLEAR(self->m_Instance);
 	Py_CLEAR(self->m_Doc);
 	Py_CLEAR(self->m_Annotations);
 	Py_CLEAR(self->m_CodeRep);
 	return 0;
-	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)

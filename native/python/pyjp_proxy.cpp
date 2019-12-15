@@ -53,7 +53,7 @@ int PyJPProxy_init(PyJPProxy *self, PyObject *args, PyObject *kwargs)
 	JPJavaFrame frame(context);
 
 	// Pack interfaces
-	if (!JPPySequence::check(pyintf))
+	if (!PySequence_Check(pyintf))
 		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
 
 	JPClassList interfaces;

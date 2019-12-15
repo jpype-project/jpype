@@ -122,6 +122,11 @@ class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
             return jc._newArrayType(dims)
         return super(JArray, cls).__new__(cls, *args, **kwargs)
 
+    def __jclass_init__(cls):
+        type.__setattr__(cls, "__str__", JArray.__str__)
+        type.__setattr__(cls, "__eq__", JArray.__eq__)
+        type.__setattr__(cls, "__ne__", JArray.__ne__)
+
     def __str__(self):
         return str(tuple(self))
 
@@ -140,18 +145,10 @@ class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
     def __eq__(self, other):
         if isinstance(other, _jpype.PyJPValue):
             return self.equals(other)
-        try:
-            return self.equals(self.__class__(other))
-        except TypeError:
-            return False
+        return False
 
     def __ne__(self, other):
-        if isinstance(other, _jpype.PyJPValue):
-            return not self.equals(other)
-        try:
-            return self.equals(self.__class__(other))
-        except TypeError:
-            return True
+        return not self.__eq__(other)
 
     def clone(self):
         """ Clone the Java array.

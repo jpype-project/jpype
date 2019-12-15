@@ -119,7 +119,7 @@ bool JPPyObject::isNone(PyObject *pyobj)
 
 bool JPPyObject::isSequenceOfItems(PyObject *obj)
 {
-	return JPPySequence::check(obj) && !JPPyString::check(obj);
+	return PySequence_Check(obj) && !JPPyString::check(obj);
 }
 
 string JPPyObject::str()
@@ -181,18 +181,6 @@ JPPyObject JPPyInt::fromInt(jint l)
 JPPyObject JPPyInt::fromLong(jlong l)
 {
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
-}
-
-bool JPPyInt::check(PyObject *obj)
-{
-	return false;
-}
-
-jint JPPyInt::asInt(PyObject *obj)
-{
-	jint res = PyInt_AsLong(obj);
-	JP_PY_CHECK();
-	return res;
 }
 
 //=====================================================================
@@ -445,11 +433,6 @@ JPPyTuple JPPyTuple::newTuple(jlong sz)
 	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
 }
 
-bool JPPyTuple::check(PyObject *obj)
-{
-	return (PyTuple_Check(obj)) ? true : false;
-}
-
 void JPPyTuple::setItem(jlong ndx, PyObject *val)
 {
 	ASSERT_NOT_NULL(val);
@@ -473,46 +456,6 @@ jlong JPPyTuple::size()
 }
 
 //=====================================================================
-// JPPyList
-
-JPPyList JPPyList::newList(jlong sz)
-{
-	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t) sz));
-}
-
-bool JPPyList::check(PyObject *obj)
-{
-	return (PyList_Check(obj)) ? true : false;
-}
-
-void JPPyList::setItem(jlong ndx, PyObject *val)
-{
-	ASSERT_NOT_NULL(val);
-	PySequence_SetItem(pyobj, (Py_ssize_t) ndx, val); // Does not steal
-	JP_PY_CHECK();
-}
-
-PyObject *JPPyList::getItem(jlong ndx)
-{
-	PyObject *res = PyList_GetItem(pyobj, (Py_ssize_t) ndx);
-	JP_PY_CHECK();
-	return res;
-}
-
-//=====================================================================
-// JPPySequence
-
-bool JPPySequence::check()
-{
-	if (pyobj == NULL)
-		return false;
-	return (PySequence_Check(pyobj)) ? true : false;
-}
-
-bool JPPySequence::check(PyObject *obj)
-{
-	return (PySequence_Check(obj)) ? true : false;
-}
 
 jlong JPPySequence::size()
 {
@@ -523,7 +466,8 @@ jlong JPPySequence::size()
 
 JPPyObject JPPySequence::getItem(jlong ndx)
 {
-	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, ndx)); // new reference
+	// new reference
+	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, ndx));
 }
 
 JPPyObjectVector::JPPyObjectVector(int i)
@@ -535,7 +479,7 @@ JPPyObjectVector::JPPyObjectVector(int i)
 JPPyObjectVector::JPPyObjectVector(PyObject *sequence)
 : seq(JPPyRef::_use, sequence)
 {
-	if (!JPPySequence::check(sequence))
+	if (!PySequence_Check(sequence))
 		JP_RAISE(PyExc_TypeError, "must be sequence");
 	size_t n = seq.size();
 	contents.resize(n);
@@ -561,50 +505,6 @@ JPPyObjectVector::JPPyObjectVector(PyObject *inst, PyObject *sequence)
 //=====================================================================
 // JPPyDict
 
-bool JPPyDict::contains(PyObject *k)
-{
-	int res = PyMapping_HasKey(pyobj, k);
-	JP_PY_CHECK();
-	return res != 0;
-}
-
-PyObject *JPPyDict::getItem(PyObject *k)
-{
-	PyObject *res = PyDict_GetItem(pyobj, k);
-	JP_PY_CHECK();
-	return res;
-}
-
-bool JPPyDict::check(PyObject *obj)
-{
-	return PyDict_Check(obj);
-}
-
-JPPyObject JPPyDict::getKeys()
-{
-	return JPPyObject(JPPyRef::_call, PyDict_Keys(pyobj));
-}
-
-JPPyObject JPPyDict::copy(PyObject *m)
-{
-	return JPPyObject(JPPyRef::_call, PyDict_Copy(m));
-}
-
-JPPyDict JPPyDict::newDict()
-{
-	return JPPyObject(JPPyRef::_call, PyDict_New());
-}
-
-void JPPyDict::setItemString(PyObject *o, const char *n)
-{
-	PyDict_SetItemString(pyobj, n, o);
-	JP_PY_CHECK();
-}
-
-void JPPyErr::clear()
-{
-	PyErr_Clear();
-}
 
 bool JPPyErr::occurred()
 {
