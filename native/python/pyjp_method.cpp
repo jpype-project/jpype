@@ -183,18 +183,15 @@ PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
 	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
-		jvalue v;
-		v.l = (*iter)->getJava();
-		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(methodClass, v)));
+		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(methodClass, (*iter)->getJava())));
 		ov.setItem(i++, obj.get());
 	}
 
 	// Pack the arguments
 
 	JP_TRACE("Pack arguments");
-	jvalue v;
-	v.l = (jobject) self->m_Method->getClass()->getJavaClass();
-	JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(context->_java_lang_Class, v)));
+	JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(context->_java_lang_Class,
+			(jobject) self->m_Method->getClass()->getJavaClass())));
 
 	JPPyTuple args(JPPyTuple::newTuple(3));
 	args.setItem(0, (PyObject*) self);
@@ -240,18 +237,15 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
 	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
-		jvalue v;
-		v.l = (*iter)->getJava();
-		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(methodClass, v)));
+		JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(methodClass, (*iter)->getJava())));
 		ov.setItem(i++, obj.get());
 	}
 
 	// Pack the arguments
 
 	JP_TRACE("Pack arguments");
-	jvalue v;
-	v.l = (jobject) self->m_Method->getClass()->getJavaClass();
-	JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(context->_java_lang_Class, v)));
+	JPPyObject obj(JPPythonEnv::newJavaObject(JPValue(context->_java_lang_Class,
+			(jobject) self->m_Method->getClass()->getJavaClass())));
 
 	JPPyTuple args(JPPyTuple::newTuple(3));
 	args.setItem(0, (PyObject*) self);

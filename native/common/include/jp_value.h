@@ -18,6 +18,7 @@
 #define _JPVALUE_H_
 
 #include "jp_class.h"
+#include "jp_javaframe.h"
 
 /** Lightweight representative of a jvalue with its corresponding class.
  * This should not have any memory management.  The user of the class
@@ -27,9 +28,21 @@ class JPValue
 {
 public:
 
+	JPValue()
+	: m_Class(NULL)
+	{
+		m_Value.l = 0;
+	}
+
 	JPValue(JPClass* clazz, const jvalue& value)
 	: m_Class(clazz), m_Value(value)
 	{
+	}
+
+	JPValue(JPClass* clazz, jobject value)
+	: m_Class(clazz)
+	{
+		m_Value.l = value;
 	}
 
 	~JPValue()
@@ -64,6 +77,19 @@ public:
 	{
 		return m_Value;
 	}
+
+	JPValue& keep(JPJavaFrame& frame)
+	{
+		m_Value.l = frame.keep(m_Value.l);
+		return *this;
+	}
+
+	JPValue& global(JPJavaFrame& frame)
+	{
+		m_Value.l = frame.NewGlobalRef(m_Value.l);
+		return *this;
+	}
+
 
 private:
 	JPClass* m_Class;

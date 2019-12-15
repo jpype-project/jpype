@@ -193,11 +193,10 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 	{
 		JP_TRACE("Sequence");
 		Py_ssize_t sz = PySequence_Size(args[0]);
-		jvalue v;
-		v.l = m_ComponentType->newArrayInstance(frame, (jsize) sz);
-		JPArray array(this, (jarray) v.l);
+		jobject inst = m_ComponentType->newArrayInstance(frame, (jsize) sz);
+		JPArray array(this, (jarray) inst);
 		array.setRange(0, (jsize) sz, args[0]);
-		return JPValue(this, v);
+		return JPValue(this, inst).keep(frame);
 	}
 
 	if (PyIndex_Check(args[0]))
@@ -206,9 +205,7 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 		Py_ssize_t sz = PyNumber_AsSsize_t(args[0], NULL);
 		if (sz < 0 )
 			JP_RAISE(PyExc_ValueError, "Invalid size");
-		jvalue v;
-		v.l = m_ComponentType->newArrayInstance(frame, (int) sz);
-		return JPValue(this, v);
+		return JPValue(this, m_ComponentType->newArrayInstance(frame, (int) sz)).keep(frame);
 	}
 
 	JP_RAISE(PyExc_TypeError, "Arrays require int or sequence parameters");

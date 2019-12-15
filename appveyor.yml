@@ -11,18 +11,6 @@ environment:
     CINST_OPTS:
 
   matrix:
-
-    ## This one is failing from gcc died with sig 11.
-    ## This error is apparently common when building python 2 modules with cygwin32.
-    ## The failure depends on the windows version and will cause a failure
-    ## on appveyor depending on which image is used.
-    ## We will disable it for now
-    #
-    # - PYTHON: "python2"
-    #  CYGWIN: "C:\\cygwin"
-    #  ARCH: x86
-    #  CYGSH: C:\Cygwin\bin\bash -c
-
     ## This one is failing due to a segfault when executing the first test in
     ## the test suite.  We have been unable to replicate it outside of appveyor
     ## We will disable it for now
@@ -33,27 +21,10 @@ environment:
     #      CYGSH: C:\Cygwin\bin\bash -c
     #      CINST_OPTS: --x86
 
-    ## Python 2 on this platform is failing in the multi-threaded test.
-    ## It is not clear if the issue is with the python build or incorrect
-    ## locking code in jpype.
-    ## We will disable it for now
-    #    - PYTHON: "python2"
-    #      CYGWIN: "C:\\cygwin64"
-    #      ARCH: x86_64
-    #      CYGSH: C:\Cygwin64\bin\bash -c
-
     - PYTHON: "python3.7"
       CYGWIN: "C:\\cygwin64"
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
-
-    - PYTHON: "C:\\Miniconda"
-      ARCH: x86
-      CONDA_PY: "2-latest"
-
-    - PYTHON: "C:\\Miniconda-x64"
-      ARCH: x86_64
-      CONDA_PY: "2-latest"
 
     - PYTHON: "C:\\Miniconda3"
       ARCH: x86

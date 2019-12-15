@@ -217,9 +217,7 @@ void JPypeException::convertJavaToPython()
 
 	// Okay, now we just need to make the PyJPValue
 	JP_TRACE("Create Java exception object");
-	jvalue v;
-	v.l = th;
-	JPPyObject pyvalue = JPPythonEnv::newJavaObject(JPValue(cls, v));
+	JPPyObject pyvalue = JPPythonEnv::newJavaObject(JPValue(cls, th));
 
 	// Transfer to python
 	PyErr_SetObject(pycls.get(), pyvalue.get());

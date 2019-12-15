@@ -68,9 +68,8 @@ int PyJPClass_init(PyJPClass *self, PyObject *args, PyObject *kwargs)
 		return (-1);
 	}
 
-	jvalue value;
-	value.l = frame.NewGlobalRef((jobject) cls->getJavaClass());
-	self->m_Value.m_Value = JPValue(context->_java_lang_Class, value);
+	self->m_Value.m_Value = JPValue(context->_java_lang_Class,
+			(jobject) cls->getJavaClass()).global(frame);
 	self->m_Class = cls;
 	return 0;
 	JP_PY_CATCH(-1);
@@ -285,13 +284,12 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *value)
 	if (jval != NULL && type->isInstance(frame, *jval))
 	{
 		JPPyObject wrapper(JPPyRef::_claim, PyJPModule_getClass(NULL, (PyObject*) self));
-		return PyJPValue_create((PyTypeObject*) wrapper.get(), context, JPValue(type, jval->getValue()))
-				.keep();
+		return PyJPValue_create((PyTypeObject*) wrapper.get(), context,
+				JPValue(type, jval->getValue())).keep();
 	}
 
 	// Otherwise, see if we can convert it
 	{
-		JPJavaFrame frame(context);
 		JPMatch match;
 		type->getJavaConversion(&frame, match, value);
 		if (match.type == JPMatch::_none)
@@ -475,18 +473,14 @@ JPPyObject PyJPClass_create(PyTypeObject *wrapper, JPContext *context, JPClass *
 	// Special case for primitives
 	if (context == NULL)
 	{
-		jvalue v;
-		v.l = 0;
-		JPPyObject self = PyJPValue_createInstance(wrapper, context, JPValue(NULL, v));
+		JPPyObject self = PyJPValue_createInstance(wrapper, context, JPValue());
 		((PyJPClass*) self.get())->m_Class = cls;
 		return self;
 	}
 
 	JPJavaFrame frame(context);
-	jvalue value;
-	value.l = (jobject) cls->getJavaClass();
 	JPPyObject self = PyJPValue_createInstance(wrapper, context,
-			JPValue(context->_java_lang_Class, value));
+			JPValue(context->_java_lang_Class, (jobject) cls->getJavaClass()));
 	((PyJPClass*) self.get())->m_Class = cls;
 	return self;
 	JP_TRACE_OUT;

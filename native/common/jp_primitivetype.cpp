@@ -49,6 +49,5 @@ JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
 		JP_RAISE(PyExc_TypeError, "Unable to create an instance.");
 
 	// Otherwise give back a PyJPValue
-	jvalue v = match.conversion->convert(NULL, this, args[0]);
-	return JPValue(this, v);
+	return JPValue(this, match.conversion->convert(NULL, this, args[0]));
 }

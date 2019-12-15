@@ -208,74 +208,19 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 
 JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
-	JPContext *context = m_Class->getContext();
 	JP_TRACE_IN("JPMethod::invoke");
+	// Check if it is caller sensitive
+	if (isCallerSensitive())
+		return invokeCallerSensitive(match, arg, instance);
+
+	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(context, (int) (8 + alen));
-
 	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
 	vector<jvalue> v(alen + 1);
 	packArgs(frame, match, v, arg);
-
-	// Check if it is caller sensitive
-	if (isCallerSensitive())
-	{
-		JP_TRACE("Caller sensitive method");
-		//public static Object callMethod(Method method, Object obj, Object[] args)
-		jobject self = NULL;
-		size_t len = alen;
-		if (!isStatic())
-		{
-			JP_TRACE("Call instance");
-			len--;
-			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
-			if (selfObj == NULL)
-				JP_RAISE(PyExc_RuntimeError, "Null object");
-			self = selfObj->getJavaObject();
-		}
-
-		// Convert arguments
-		jobjectArray ja = frame.NewObjectArray(len, context->_java_lang_Object->getJavaClass(), NULL);
-		for (jsize i = 0; i < (jsize) len; ++i)
-		{
-			JPClass *cls = m_ParameterTypes[i + match.skip - match.offset];
-			if (cls->isPrimitive())
-			{
-				JPPrimitiveType* type = (JPPrimitiveType*) cls;
-				JPMatch conv;
-				JPBoxedType *boxed = type->getBoxedClass(context);
-				boxed->getJavaConversion(&frame, conv, arg[i + match.skip]);
-				jvalue v = conv.conversion->convert(&frame, boxed, arg[i + match.skip]);
-				frame.SetObjectArrayElement(ja, i, v.l);
-			} else
-			{
-				frame.SetObjectArrayElement(ja, i, v[i].l);
-			}
-		}
-
-		// Call the method
-		jobject o = frame.callMethod(m_Method.get(), self, ja);
-
-		JP_TRACE("ReturnType", retType->getCanonicalName());
-
-		// Deal with the return
-		if (retType->isPrimitive())
-		{
-			JP_TRACE("Return primitive");
-			jvalue v;
-			v.l = o;
-			JPValue out = retType->getValueFromObject(JPValue(retType, v));
-			return retType->convertToPythonObject(frame, out.getValue());
-		} else
-		{
-			JP_TRACE("Return object");
-			jvalue v;
-			v.l = o;
-			return retType->convertToPythonObject(frame, v);
-		}
-	}
 
 	// Invoke the method (arg[0] = this)
 	if (JPModifier::isStatic(m_Modifiers))
@@ -311,21 +256,82 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 	JP_TRACE_OUT;
 }
 
+JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
+{
+	JP_TRACE_IN("JPMethod::invokeCallerSensitive");
+	JPContext *context = m_Class->getContext();
+	size_t alen = m_ParameterTypes.size();
+	JPJavaFrame frame(context, (int) (8 + alen));
+	JPClass* retType = m_ReturnType;
+
+	// Pack the arguments
+	vector<jvalue> v(alen + 1);
+	packArgs(frame, match, v, arg);
+
+	//Proxy the call to
+	//   public static Object callMethod(Method method, Object obj, Object[] args)
+	jobject self = NULL;
+	size_t len = alen;
+	if (!isStatic())
+	{
+		JP_TRACE("Call instance");
+		len--;
+		JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
+		if (selfObj == NULL)
+			JP_RAISE(PyExc_RuntimeError, "Null object");
+		self = selfObj->getJavaObject();
+	}
+
+	// Convert arguments
+	jobjectArray ja = frame.NewObjectArray(len, context->_java_lang_Object->getJavaClass(), NULL);
+	for (jsize i = 0; i < (jsize) len; ++i)
+	{
+		JPClass *cls = m_ParameterTypes[i + match.skip - match.offset];
+		if (cls->isPrimitive())
+		{
+			JPPrimitiveType* type = (JPPrimitiveType*) cls;
+			JPMatch conv;
+			JPBoxedType *boxed = type->getBoxedClass(context);
+			boxed->getJavaConversion(&frame, conv, arg[i + match.skip]);
+			jvalue v = conv.conversion->convert(&frame, boxed, arg[i + match.skip]);
+			frame.SetObjectArrayElement(ja, i, v.l);
+		} else
+		{
+			frame.SetObjectArrayElement(ja, i, v[i].l);
+		}
+	}
+
+	// Call the method
+	jobject o = frame.callMethod(m_Method.get(), self, ja);
+
+	JP_TRACE("ReturnType", retType->getCanonicalName());
+
+	// Deal with the return
+	if (retType->isPrimitive())
+	{
+		JP_TRACE("Return primitive");
+		JPBoxedType *boxed = ((JPPrimitiveType*) retType)->getBoxedClass(context);
+		JPValue out = retType->getValueFromObject(JPValue(boxed, o));
+		return retType->convertToPythonObject(frame, out.getValue());
+	} else
+	{
+		JP_TRACE("Return object");
+		jvalue v;
+		v.l = o;
+		return retType->convertToPythonObject(frame, v);
+	}
+	JP_TRACE_OUT;
+}
+
 JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::invokeConstructor");
 	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
-
 	vector<jvalue> v(alen + 1);
 	packArgs(frame, match, v, arg);
-
-	jvalue val;
-	{
-		JPPyCallRelease call;
-		val.l = frame.keep(frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
-	}
-	return JPValue(m_Class, val);
+	JPPyCallRelease call;
+	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0])).keep(frame);
 	JP_TRACE_OUT;
 }
 

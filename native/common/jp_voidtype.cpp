@@ -111,8 +111,6 @@ JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 	// This is needed if we call a caller sensitive method
 	// and we get a return which is expected to be a void object
 	JP_TRACE_IN("JPVoidType::getValueFromObject");
-	jvalue v;
-	v.l = 0;
-	return JPValue(this, v);
+	return JPValue(this, (jobject) 0);
 	JP_TRACE_OUT;
 }

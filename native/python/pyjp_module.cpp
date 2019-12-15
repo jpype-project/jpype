@@ -430,7 +430,7 @@ PyObject *PyJPModule_convertToDirectByteBuffer(PyObject *self, PyObject *args)
 PyObject *PyJPModule_getClass(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_getClass", module);
-	PyJPModuleState *state = PyJPModuleState_global;
+	//	PyJPModuleState *state = PyJPModuleState_global;
 
 	if (!PyJPClass_Check(args))
 		JP_RAISE(PyExc_TypeError, "Must be a Java class");

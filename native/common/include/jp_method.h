@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public:
 	 */
 	JPMatch::Type matches(JPJavaFrame &frame, JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
 	JPPyObject invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
+	JPPyObject invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPValue invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg);
 
 	bool isAbstract() const

@@ -62,9 +62,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	{
 		JPClass* type = (JPClass*) types[i];
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		jvalue v;
-		v.l = obj;
-		JPValue val = type->getValueFromObject(JPValue(type, v));
+		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
 	}
 	return pyargs;

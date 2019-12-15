@@ -82,8 +82,7 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValue_new");
 	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
-	jvalue v;
-	self->m_Value = JPValue(NULL, v);
+	self->m_Value = JPValue();
 	return (PyObject*) self;
 	JP_PY_CATCH(NULL);
 }
@@ -91,7 +90,7 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValue_init", self);
-	PyJPModuleState *state = PyJPModuleState_global;
+	//	PyJPModuleState *state = PyJPModuleState_global;
 
 	// Access the context first so we ensure JVM is running
 	PyJPModule_getContext();
@@ -462,9 +461,7 @@ JPPyObject PyJPValue_createInstance(PyTypeObject *wrapper, JPContext *context, c
 	if (context != NULL && !value.getClass()->isPrimitive())
 	{
 		JPJavaFrame frame(context);
-		jvalue v;
-		v.l = frame.NewGlobalRef(value.getValue().l);
-		self->m_Value = JPValue(value.getClass(), v);
+		self->m_Value = JPValue(value.getClass(), value.getValue().l).global(frame);
 	} else
 	{
 		// New value instance
