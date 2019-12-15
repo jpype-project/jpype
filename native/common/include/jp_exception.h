@@ -117,6 +117,7 @@ typedef union
 	int  i;
 	void*  l;
 } JPErrorUnion;
+
 /**
  * Exception issued by JPype to indicate an internal problem.
  *

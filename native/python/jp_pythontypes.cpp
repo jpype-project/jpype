@@ -505,7 +505,6 @@ JPPyObjectVector::JPPyObjectVector(PyObject *inst, PyObject *sequence)
 //=====================================================================
 // JPPyDict
 
-
 bool JPPyErr::occurred()
 {
 	return PyErr_Occurred() != 0;

@@ -51,6 +51,7 @@ public:
 JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
+	JP_TRACE_IN("JProxy getArgs");
 	JPJavaFrame frame(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
@@ -61,11 +62,13 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	for (jsize i = 0; i < argLen; i++)
 	{
 		JPClass* type = (JPClass*) types[i];
+		JP_TRACE("Convert", i, type->getCanonicalName());
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
 	}
 	return pyargs;
+	JP_TRACE_OUT;
 }
 
 JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
@@ -120,8 +123,8 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			// Find the return type
-			JP_TRACE("Get return type");
 			JPClass* returnClass = (JPClass*) returnTypePtr;
+			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");

@@ -25,6 +25,7 @@ __all__ = []
 
 # FIXME disabling these customizers for now.
 
+
 @_jcustomizer.JImplementationFor("java.lang.Boolean")
 class _JBoxedBoolean(object):
     # Boolean is special because in python True and False are singletons,
@@ -35,7 +36,7 @@ class _JBoxedBoolean(object):
     __gt__ = int.__gt__
     __le__ = int.__le__
     __ge__ = int.__ge__
- 
+
     def __str__(self):
         if int(self) == 0:
             return str(False)

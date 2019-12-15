@@ -35,7 +35,9 @@ class JString(object):
     def __new__(cls, *args, **kwargs):
         return _jpype._java_lang_String(*args)
 
+
 _jpype.JString = JString
+
 
 @_jcustomizer.JImplementationFor("java.lang.String")
 class _JString(object):
@@ -78,4 +80,3 @@ class _JString(object):
 
     def __repr__(self):
         return "'%s'" % self.__str__()
-

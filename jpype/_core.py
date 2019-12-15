@@ -40,7 +40,7 @@ __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
-    'JVMNotFoundException', 'JVMNotSupportedException',]
+    'JVMNotFoundException', 'JVMNotSupportedException', ]
 
 if _sys.version_info < (3,):
     raise ImportException("Python 2 is not supported")
@@ -177,6 +177,7 @@ def getDefaultJVMPath():
 def get_default_jvm_path(*args, **kwargs):
     return getDefaultJVMPath(*args, **kwargs)
 
+
 # Create factories for these items
 JString = _jstring.JString
 JArray = _jarray.JArray
@@ -191,6 +192,7 @@ _jpype._primitive_types = {}
 _jpype._java_lang_Object = None
 _jpype._java_lang_Class = None
 _jpype._started = False
+
 
 def startJVM(*args, **kwargs):
     """
@@ -307,7 +309,8 @@ please file a ticket with the developer.
     _jpype._java_lang_Class = _jpype.JClass("java.lang.Class")
     _jpype._java_lang_String = _jpype.JClass("java.lang.String")
 
-    _jpype._java_lang_RuntimeException = _jpype.JClass("java.lang.RuntimeException")
+    _jpype._java_lang_RuntimeException = _jpype.JClass(
+        "java.lang.RuntimeException")
 
     # Preload needed classes
     _jpype._java_lang_Boolean = _jpype.JClass("java.lang.Boolean")
@@ -348,6 +351,7 @@ please file a ticket with the developer.
     _jpype._type_classes[JString] = _jpype._java_lang_String
     _jpype._type_classes[JObject] = _jpype._java_lang_Object
 
+
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
 
@@ -376,4 +380,3 @@ isJVMStarted = _jpype.isStarted
 attachThreadToJVM = _jpype.attachThread
 detachThreadFromJVM = _jpype.detachThread
 isThreadAttachedToJVM = _jpype.isThreadAttached
-

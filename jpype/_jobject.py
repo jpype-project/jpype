@@ -22,6 +22,7 @@ from . import _jcustomizer
 
 __all__ = ['JObject']
 
+
 class JObject(_jpype.PyJPValue, metaclass=_jpype.PyJPClassMeta):
     """ Base class for all object instances.
 
@@ -88,7 +89,7 @@ class _JObjectMethods(object):
 
 def _getDefaultJavaObject(tp):
     """ Determine the type of the object based the type of a value.
-        
+
         Python primitives - lookup the type in the table
         Java primitive - lookup boxed type in the table
         Java objects - just use their type directly
@@ -102,7 +103,7 @@ def _getDefaultJavaObject(tp):
 
     if issubclass(tp, _jpype.PyJPClass):
         return _jpype._java_lang_Class
-  
+
     # JObject(JClass("str"))
     if issubclass(tp, _jpype.PyJPClassMeta):
         return _jpype._java_lang_Class
@@ -140,4 +141,3 @@ def _JObjectFactory(v=None, tp=None):
 
 # Post load dependencies
 _jpype.JObject = JObject
-

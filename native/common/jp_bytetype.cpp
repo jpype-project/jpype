@@ -52,7 +52,7 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallByteMethodA(obj.getJavaObject(), context->m_ByteValueID, 0);
+	field(v) = frame.CallByteMethodA(obj.getValue().l, context->m_ByteValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -63,7 +63,6 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject* pyobj) override
 	{
-
 		jvalue res;
 		base_t::field(res) = base_t::assertRange(JPPyLong::asLong(pyobj));
 		return res;
@@ -83,7 +82,7 @@ JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		JPClass* cls = value->getClass();
+		JPClass *cls = value->getClass();
 		if (cls == NULL)
 			return match.type = JPMatch::_none;
 

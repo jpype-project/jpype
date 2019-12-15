@@ -21,7 +21,8 @@ from . import _jclass
 from . import _jobject
 from . import _jcustomizer
 
-__all__ = ['JBoolean', 'JByte', 'JChar', 'JShort', 'JInt', 'JLong', 'JFloat', 'JDouble' ]
+__all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
+           'JInt', 'JLong', 'JFloat', 'JDouble']
 
 # FIXME python2 and python3 get different conversions on int and long.  Likely we should
 # unify to got the the same types regardless of version.
@@ -29,6 +30,7 @@ __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort', 'JInt', 'JLong', 'JFloat', 'J
 # Set up all the tables
 _maxFloat = 3.4028234663852886E38
 _maxDouble = 1.7976931348623157E308
+
 
 class JPrimitive(_jpype.PyJPValueBase):
 
@@ -65,16 +67,18 @@ class JPrimitive(_jpype.PyJPValueBase):
     def doubleValue(self):
         return float(value)
 
+
 class _JPrimitiveChar(JPrimitive):
     def __new__(self, v):
-        if isinstance(v,str) and len(v)==1:
+        if isinstance(v, str) and len(v) == 1:
             return _jpype.PyJPValueLong.__new__(self, ord(v))
-        if isinstance(v,int):
+        if isinstance(v, int):
             return _jpype.PyJPValueLong.__new__(self, v)
         raise ValueError("Bad char for conversion")
 
     def __str__(self):
         return chr(int(self))
+
 
 def _JPrimitiveClass(name, basetype, jc):
     members = {
@@ -82,16 +86,23 @@ def _JPrimitiveClass(name, basetype, jc):
     }
     return _jclass.JClass(name, basetype, members)
 
+
 _jpype.JPrimitive = JPrimitive
 
 # Primitive types are their own special classes as they do not tie to the JVM
-JBoolean = _JPrimitiveClass("boolean", (JPrimitive, _jpype.PyJPValueLong), _jpype._jboolean)
-JByte = _JPrimitiveClass("byte",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jbyte)
-JChar = _JPrimitiveClass("char",  (_JPrimitiveChar, _jpype.PyJPValueLong), _jpype._jchar)
-JShort = _JPrimitiveClass("short", (JPrimitive, _jpype.PyJPValueLong), _jpype._jshort)
-JInt = _JPrimitiveClass("int",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jint)
-JLong = _JPrimitiveClass("long",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jlong)
-JFloat = _JPrimitiveClass("float",  (JPrimitive, _jpype.PyJPValueFloat), _jpype._jfloat)
-JDouble = _JPrimitiveClass("double", (JPrimitive,  _jpype.PyJPValueFloat), _jpype._jdouble)
-
-
+JBoolean = _JPrimitiveClass(
+    "boolean", (JPrimitive, _jpype.PyJPValueLong), _jpype._jboolean)
+JByte = _JPrimitiveClass(
+    "byte",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jbyte)
+JChar = _JPrimitiveClass(
+    "char",  (_JPrimitiveChar, _jpype.PyJPValueLong), _jpype._jchar)
+JShort = _JPrimitiveClass(
+    "short", (JPrimitive, _jpype.PyJPValueLong), _jpype._jshort)
+JInt = _JPrimitiveClass(
+    "int",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jint)
+JLong = _JPrimitiveClass(
+    "long",  (JPrimitive, _jpype.PyJPValueLong), _jpype._jlong)
+JFloat = _JPrimitiveClass(
+    "float",  (JPrimitive, _jpype.PyJPValueFloat), _jpype._jfloat)
+JDouble = _JPrimitiveClass(
+    "double", (JPrimitive,  _jpype.PyJPValueFloat), _jpype._jdouble)

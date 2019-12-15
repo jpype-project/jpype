@@ -44,7 +44,6 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testMostSpecificInstanceMethod(self):
         test1 = self.__jp.Test1()
-        print(test1.testMostSpecific.dump())
         self.assertEqual('A', str(test1.testMostSpecific(self._a)))
         self.assertEqual('B', str(test1.testMostSpecific(self._b)))
         self.assertEqual('B', str(test1.testMostSpecific(self._c)))

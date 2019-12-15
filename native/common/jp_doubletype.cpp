@@ -35,7 +35,7 @@ JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallDoubleMethodA(obj.getJavaObject(), context->m_DoubleValueID, 0);
+	field(v) = frame.CallDoubleMethodA(obj.getValue().l, context->m_DoubleValueID, 0);
 	return JPValue(this, v);
 }
 

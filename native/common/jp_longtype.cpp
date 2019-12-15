@@ -35,7 +35,7 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallLongMethodA(obj.getJavaObject(), context->m_LongValueID, 0);
+	field(v) = frame.CallLongMethodA(obj.getValue().l, context->m_LongValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -79,14 +79,12 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		JP_TRACE("Java value");
 		JPClass *cls = value->getClass();
 		if (cls == NULL)
 			return match.type = JPMatch::_none;
 
 		if (cls == this)
 		{
-			JP_TRACE("Exact");
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
@@ -94,7 +92,6 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (context != NULL && cls == context->_java_lang_Long)
 		{
-			JP_TRACE("Boxed");
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
 		}

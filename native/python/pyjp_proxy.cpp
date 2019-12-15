@@ -95,18 +95,14 @@ void PyJPProxy_dealloc(PyJPProxy *self)
 
 int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
-	JP_PY_TRY("PyJPProxy_traverse", self);
 	Py_VISIT(self->m_Target);
 	return 0;
-	JP_PY_CATCH(-1);
 }
 
 int PyJPProxy_clear(PyJPProxy *self)
 {
-	JP_PY_TRY("PyJPProxy_clear", self);
 	Py_CLEAR(self->m_Target);
 	return 0;
-	JP_PY_CATCH(-1);
 }
 
 PyObject *PyJPProxy_str(PyJPProxy *self)

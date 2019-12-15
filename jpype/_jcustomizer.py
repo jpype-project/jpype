@@ -27,7 +27,7 @@ else:
 __all__ = ['JImplementationFor']
 
 # Forward declarations
-_JCLASSES = {} # FIXME move to typehints
+_JCLASSES = {}  # FIXME move to typehints
 
 
 def registerClassBase(name, cls):

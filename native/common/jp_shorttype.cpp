@@ -32,13 +32,11 @@ JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 
 JPValue JPShortType::getValueFromObject(const JPValue& obj)
 {
-	JP_TRACE_IN("JPShortType::getValueFromObject");
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallShortMethodA(obj.getJavaObject(), context->m_ShortValueID, 0);
+	field(v) = frame.CallShortMethodA(obj.getValue().l, context->m_ShortValueID, 0);
 	return JPValue(this, v);
-	JP_TRACE_OUT;
 }
 
 class JPConversionAsShort : public JPConversion
@@ -131,7 +129,7 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type;
 	}
 
-	return match.type =  JPMatch::_none;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 

@@ -273,6 +273,7 @@ def _jclassDoc(cls):
 
     return "\n".join(out)
 
+
 # Install hooks
 _jpype.JClass = JClass
 _jpype.JInterface = JInterface

@@ -115,8 +115,8 @@ class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
     def __new__(cls, *args, **kwargs):
         if cls == JArray:
             jc = _toJavaClass(args[0])
-            if len(args)<=2:
-                dims =1
+            if len(args) < 2:
+                dims = 1
             else:
                 dims = args[1]
             return jc._newArrayType(dims)
@@ -169,6 +169,7 @@ class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
         """
         return _jpype.JClass("java.util.Arrays").copyOf(self, len(self))
 
+
 _jpype.JArray = JArray
 
 
@@ -203,7 +204,6 @@ def _toJavaClass(tp):
         pass
 
     raise TypeError("Unable to find class for '%s'" % tp.__name__)
-
 
 
 # FIXME JavaArrayClass likely should be exposed for isinstance, issubtype
@@ -259,4 +259,3 @@ class _JCharArray(object):
 
 
 _jpype._JArrayBase = JArray
-

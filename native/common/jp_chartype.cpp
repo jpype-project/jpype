@@ -35,7 +35,7 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallCharMethodA(obj.getJavaObject(), context->m_CharValueID, 0);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->m_CharValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -65,7 +65,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		JPClass* cls = value->getClass();
+		JPClass *cls = value->getClass();
 		if (cls == NULL)
 			return match.type = JPMatch::_none;
 

@@ -17,6 +17,7 @@ __all__ = []
 import _jpype
 from . import _jclass
 
+
 def _jmethodGetDoc(method, cls, overloads):
     """Generator for PyJPMethod.__doc__ property
 
@@ -116,6 +117,7 @@ def _jmethodGetCode(method):
     def call(*args):
         return method.__call__(*args)
     return call
+
 
 _jpype._jmethodGetDoc = _jmethodGetDoc
 _jpype._jmethodGetAnnotations = _jmethodGetAnnotation

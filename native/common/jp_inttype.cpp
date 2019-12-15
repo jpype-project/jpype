@@ -35,7 +35,7 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallIntMethodA(obj.getJavaObject(), context->m_IntValueID, 0);
+	field(v) = frame.CallIntMethodA(obj.getValue().l, context->m_IntValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -46,11 +46,9 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JP_TRACE_IN("JPConversionAsInt::convert");
 		jvalue res;
 		base_t::field(res) = base_t::assertRange(JPPyLong::asLong(pyobj));
 		return res;
-		JP_TRACE_OUT;
 	}
 } asIntConversion;
 
@@ -61,7 +59,7 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+		JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 		jvalue ret;
 		ret.i = (jint) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
 		return ret;
@@ -78,10 +76,9 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		JP_TRACE("Check value");
 		JPClass *cls = value->getClass();
 		if (cls == NULL)
 			return match.type = JPMatch::_none;
@@ -122,20 +119,17 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 
 	if (JPPyLong::check(pyobj))
 	{
-		JP_TRACE("Python long");
 		match.conversion = &asIntConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
 	if (JPPyLong::checkConvertable(pyobj))
 	{
-		JP_TRACE("Python long convertible");
 		match.conversion = &asIntConversion;
 		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 		return match.type;
 	}
 
-	JP_TRACE("None");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

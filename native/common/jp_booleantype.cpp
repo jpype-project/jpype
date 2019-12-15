@@ -35,7 +35,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj.getJavaObject(), context->m_BooleanValueID, 0) ? true : false;
+	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->m_BooleanValueID, 0) ? true : false;
 	return JPValue(this, v);
 }
 
@@ -59,28 +59,23 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		context = frame->getContext();
 
 	if (JPPyObject::isNone(pyobj))
-	{
-		JP_TRACE("none");
 		return match.type = JPMatch::_none;
-	}
 
 	if (JPPyBool::check(pyobj))
 	{
-		JP_TRACE("python exact match");
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_exact;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
 	if (value != NULL)
 	{
-		JPClass* cls = value->getClass();
+		JPClass *cls = value->getClass();
 		if (cls == NULL)
 			return match.type = JPMatch::_none;
 
 		if (cls == this)
 		{
-			JP_TRACE("exact match");
 			match.conversion = javaValueConversion;
 			return match.type = JPMatch::_exact;
 		}
@@ -88,7 +83,6 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
 		if (context != NULL && cls == context->_java_lang_Boolean)
 		{
-			JP_TRACE("Boolean match");
 			match.conversion = unboxConversion;
 			return match.type = JPMatch::_implicit;
 		}
@@ -97,28 +91,19 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyBool::check(pyobj))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_exact;
-	}
-
 	if (JPPyLong::check(pyobj))
 	{
-		JP_TRACE("long match");
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
 	if (JPPyLong::checkConvertable(pyobj))
 	{
-		JP_TRACE("long convertable match");
 		match.conversion = &asBooleanConversion;
 		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
 		return match.type;
 	}
 
-	JP_TRACE("no match");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
