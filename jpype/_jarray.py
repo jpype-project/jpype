@@ -123,7 +123,7 @@ class JArray(_jpype.PyJPArray, metaclass=_jpype.PyJPClassMeta):
         return super(JArray, cls).__new__(cls, *args, **kwargs)
 
     def __jclass_init__(cls):
-        type.__setattr__(cls, "__str__", JArray.__str__)
+#        type.__setattr__(cls, "__str__", JArray.__str__)
         type.__setattr__(cls, "__eq__", JArray.__eq__)
         type.__setattr__(cls, "__ne__", JArray.__ne__)
 

@@ -109,7 +109,7 @@ def _getDefaultJavaObject(tp):
         return _jpype._java_lang_Class
 
     if issubclass(tp, _jpype.PyJPValueBase):
-        return obj.__javaclass__
+        return tp.__javaclass__
 
     raise TypeError(
         "Unable to determine the default type of `{0}`".format(tp.__class__))
@@ -124,6 +124,10 @@ def _JObjectFactory(v=None, tp=None):
     if tp is None:
         # Automatically determine based on the value
         tp = _getDefaultJavaObject(type(v))
+    elif isinstance(tp, str):
+        tp = _jpype.JClass(tp)
+    if tp in _jpype._object_classes:
+        tp = _jpype._object_classes[tp]
 
     # Java primitive conversion to boxed type
     if isinstance(tp, _jpype.JPrimitive):
@@ -134,7 +138,9 @@ def _JObjectFactory(v=None, tp=None):
         return tp.__javaclass__._cast(v)
 
     # Given a Java class
+    if isinstance(tp, _jpype.PyJPClass):
         return tp._cast(v)
+
 
     raise TypeError("Invalid type conversion to %s requested." % tp)
 

@@ -339,6 +339,7 @@ please file a ticket with the developer.
     _jpype._object_classes[_jtypes.JFloat] = _jpype._java_lang_Float
     _jpype._object_classes[_jtypes.JDouble] = _jpype._java_lang_Double
     _jpype._object_classes[type(None)] = _jpype._java_lang_Object
+    _jpype._object_classes[_jstring.JString] = _jpype._java_lang_String
 
     # Set up table of automatic conversions of Python primitives
     # this table supports "JArray(type)"

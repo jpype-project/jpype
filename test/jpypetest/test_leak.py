@@ -191,11 +191,11 @@ class LeakTestCase(unittest.TestCase):
     @unittest.skipUnless(hasRefCount(), "no refcount")
     def testRefCountCall(self):
         def f():
-            obj = jpype.JString("help me")
+            obj = jpype.java.lang.Integer(1)
             initialObj = sys.getrefcount(obj)
             initialValue = sys.getrefcount(obj.__javavalue__)
             for i in range(0, 100):
-                obj.charAt(0)
+                obj.MAX_VALUE
             self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
             self.assertTrue(sys.getrefcount(
                 obj.__javavalue__)-initialValue < 5)
@@ -203,7 +203,7 @@ class LeakTestCase(unittest.TestCase):
             initialObj = sys.getrefcount(obj)
             initialValue = sys.getrefcount(obj.__javavalue__)
             for i in range(0, 100):
-                obj.compareTo(obj)
+                obj.valueOf(i)
             self.assertTrue(sys.getrefcount(obj)-initialObj < 5)
             self.assertTrue(sys.getrefcount(
                 obj.__javavalue__)-initialValue < 5)
