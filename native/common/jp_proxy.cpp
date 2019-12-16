@@ -23,31 +23,6 @@
 
 PyThread_type_lock lock;
 
-class JPThreadLock
-{
-public:
-
-	JPThreadLock()
-	{
-		JP_TRACE_LOCKS("Thread attempt lock", this);
-		if (!PyThread_acquire_lock(lock, NOWAIT_LOCK))
-		{
-			JP_TRACE_LOCKS("Thread wait lock", this);
-			Py_BEGIN_ALLOW_THREADS
-			PyThread_acquire_lock(lock, WAIT_LOCK);
-			Py_END_ALLOW_THREADS
-		}
-		JP_TRACE_LOCKS("Thread locked", this);
-	}
-
-	~JPThreadLock()
-	{
-		JP_TRACE_LOCKS("Thread release", this);
-		PyThread_release_lock(lock);
-	}
-
-} ;
-
 JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
@@ -84,15 +59,6 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
-
-	// Python has a bug that is corrupting the stack if a
-	// second thread passes this point.  I don't particularly
-	// like this solution as it prevents a Proxy from calling
-	// code that itself issues a proxy.  But after 2 weeks of debugging,
-	// trying random formulations, stripping it down, trying again...
-	// well this is the only thing that works. Perhaps there is some
-	// other bug that once fixed will correct this problem.
-	JPThreadLock guard;
 	{
 		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 		JP_TRACE("context", context);
@@ -184,7 +150,6 @@ JPProxyFactory::JPProxyFactory(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPProxy::init");
 	m_Context = frame.getContext();
-	lock = PyThread_allocate_lock();
 
 	jclass proxyClass = m_Context->getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
 
