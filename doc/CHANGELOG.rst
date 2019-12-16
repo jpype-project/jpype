@@ -4,6 +4,8 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - Updated the keyword safe list for Python 3.
+
   - Automatic conversion of CharSequence from Python strings.
 
   - java.lang.AutoCloseable supports Python "with" statement.
