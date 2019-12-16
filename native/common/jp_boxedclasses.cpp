@@ -42,7 +42,7 @@ JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	{
 		JP_TRACE("Primitive", match.type);
 		match.conversion = boxConversion;
-		return match.type = JPMatch::_explicit;
+		return match.type = JPMatch::_implicit;
 	}
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;

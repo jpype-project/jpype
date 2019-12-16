@@ -127,6 +127,9 @@ class JClass(_jpype.PyJPClassMeta):
     def class_(self):
         return _jpype.JObject(self.__javaclass__)
 
+    @property
+    def __doc__(self):
+        return _jclassDoc(self)
 
 class JInterface(metaclass=_jpype.PyJPClassMeta):
     """Virtual Base class for all Java Interfaces.
