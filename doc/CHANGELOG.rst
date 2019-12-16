@@ -10,6 +10,15 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - java.lang.AutoCloseable supports Python "with" statement.
 
+  - Hash codes for boxed types work properly in Python 3 and can be
+    used as dictionary keys again (same as JPype 0.6).  Java arrays
+    have working hash codes, but as they are mutable should not 
+    be used as dictionary keys.  java.lang.Character, java.lang.Float,
+    and java.lang.Double all work as dictionary keys, but due to
+    differences in the hashing algorithm do not index to the same
+    location as Python native types and thus may cause issues
+    when used as dictionary keys. 
+
   - Updated getJVMVersion to work with JDK 9+.
 
   - Added support for pickling of Java objects using optional module
@@ -34,7 +43,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     Jedi version 0.14.1 is required for tab completion as earlier versions 
     did not support annotations on compiled classes.  Tab completion
     with older versions requires use of the IPython greedy method.
-
 
   - JProxy objects now are returned from Java as the Python objects 
     that originate from. Older style proxy classes return the 
