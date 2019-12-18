@@ -531,7 +531,6 @@ pointer ``JPPyObject`` with the policy that it was created with such as
   This policy both steals the reference and verifies there were no errors
   prior to continuing. Errors are promoted to exceptions when this reference
   is created.
-
 If we need to pass an object which is held in a smart pointer to Python
 which requires a reference, we call keep on the reference which transfers
 control to a ``PyObject*`` and prevents the pointer from removing the reference.
@@ -545,8 +544,8 @@ reference for its scope.
 On CPython extensions
 ~~~~~~~~~~~~~~~~~~~~~
 
-CPython is somewhat of a nightmare to program in. It is not that they did not
-try to document the API, but it is darn complex. The problems extend well
+CPython is challenging to program in.   
+It is not that it is undocumented, but it is darn complex. The problems extend well
 beyond the reference counting system that we have worked around.  In
 particular, the object model though well developed is very complex, often to
 get it to work you must follow letter for letter the example on the CPython
@@ -560,19 +559,6 @@ there example, but they are conditioned on these methods they are calling
 directly to be the right one for the job, but depends a lot on what the
 behavior of the object is supposed to be. Get it wrong and you get really nasty
 segfault.
-
-CPython itself may be partly responsible for some of these problems.  They
-generally seem to trust the user and thus don't verify if the call makes sense.
-It is true that it will cost a little speed to be aggressive about checking the
-type flags and the allocator match, but not checking when the error happens,
-means that it fails far from the original problem source. I would hope that we
-have moved beyond the philosophy that the user should just to whatever they
-want so it runs as fast as possible, but that never appears to be the case. Of
-course, I am just opining from the outside of the tent and I am sure the issues
-are much more complicated it appears superficially. Then again if I can manage
-to provide a safe workspace while juggling the issues of multiple virtual
-machines, I am free to have opinions on the value of trading performance and
-safety.
 
 In short when working on the extension code, make sure you do everything by the
 book, and check that book twice. Always go through the types virtual table and

@@ -26,7 +26,7 @@
 
 #include <stdarg.h>
 
-#ifdef _MSC_VER // broken m$ compiler does not have c99 std header
+#ifdef _MSC_VER
     #if _MSC_VER >= 1600
         #include <cstdint>
     #else
