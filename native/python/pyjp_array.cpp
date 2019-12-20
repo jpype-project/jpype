@@ -117,8 +117,9 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 	if (PySlice_Check(arg))
 	{
 		Py_ssize_t start, stop, step, slicelength;
+		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
 #if PY_VERSION_HEX<0x03060100
-		if (PySlice_GetIndicesEx(slice, length, &start, &stop, &step, &slicelength) < 0)
+		if (PySlice_GetIndicesEx(arg, length, &start, &stop, &step, &slicelength) < 0)
 			return -1;
 #else
 		if (PySlice_Unpack(arg, &start, &stop, &step) < 0)
@@ -127,8 +128,7 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 		if (step != 1)
 			JP_RAISE(PyExc_ValueError, "Slicing step not implemented");
 
-		slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
-				&start, &stop, step);
+		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 #endif
 		if (slicelength <= 0)
 			return PyList_New(0);
@@ -172,9 +172,10 @@ int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value)
 	if (PySlice_Check(item))
 	{
 		Py_ssize_t start, stop, step, slicelength;
+		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
 
 #if PY_VERSION_HEX<0x03060100
-		if (PySlice_GetIndicesEx(slice, length, &start, &stop, &step, &slicelength) < 0)
+		if (PySlice_GetIndicesEx(item, length, &start, &stop, &step, &slicelength) < 0)
 		    return -1;
 #else
 		if (PySlice_Unpack(item, &start, &stop, &step) < 0)
@@ -183,8 +184,7 @@ int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject* value)
 		if (step != 1)
 			JP_RAISE(PyExc_ValueError, "Slicing step not implemented");
 
-		slicelength = PySlice_AdjustIndices((Py_ssize_t) self->m_Array->getLength(),
-				&start, &stop, step);
+		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 #endif
 		if (slicelength <= 0)
 			return 0;

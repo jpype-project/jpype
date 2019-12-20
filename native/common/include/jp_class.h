@@ -44,6 +44,7 @@ public:
 
 
 public:
+	void ensureMembers(JPJavaFrame& frame);
 
 	jclass getJavaClass() const
 	{

@@ -46,6 +46,13 @@ JPClass::~JPClass()
 {
 }
 
+void JPClass::ensureMembers(JPJavaFrame& frame)
+{
+	JPContext* context = frame.getContext();
+	JPTypeManager* typeManager = context->getTypeManager();
+	typeManager->populateMembers(this);
+}
+
 void JPClass::assignMembers(JPMethodDispatch* ctor,
 		JPMethodDispatchList& methods,
 		JPFieldList& fields)

@@ -37,13 +37,11 @@ import org.jpype.proxy.JPypeProxy;
  */
 public class TypeManager
 {
-//  private static TypeManager INSTANCE = new TypeManager();
   public long context = 0;
   public boolean isStarted = false;
   public boolean isShutdown = false;
   public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
   public TypeFactory typeFactory = null;
-  public List<Action> deferred = new LinkedList<>();
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
   public Class<? extends Annotation> functionalAnnotation = null;
@@ -108,7 +106,6 @@ public class TypeManager
     createPrimitive("long", Long.TYPE, Long.class);
     createPrimitive("float", Float.TYPE, Float.class);
     createPrimitive("double", Double.TYPE, Double.class);
-    this.executeDeferred();
   }
 
   /**
@@ -149,10 +146,6 @@ public class TypeManager
       // Just a regular class
       out = getClass(cls).classPtr;
     }
-
-    // Before we can leave, we need to make sure all classes that were
-    // loaded in the process have methods.
-    executeDeferred();
 
     return out;
   }
@@ -229,7 +222,7 @@ public class TypeManager
     try
     {
       typeFactory.populateMethod(context, wrapper, returnType, paramPtrs);
-     } catch (Exception ex)
+    } catch (Exception ex)
     {
       ex.printStackTrace();
     }
@@ -308,17 +301,6 @@ public class TypeManager
     return createClass(cls, false);
   }
 
-  private void executeDeferred()
-  {
-    while (!this.deferred.isEmpty())
-    {
-      Action next = this.deferred.remove(0);
-
-      // This may trigger even more classes to get loaded
-      next.execute();
-    }
-  }
-
   /**
    * Allocate a new wrapper for a java class.
    * <p>
@@ -378,7 +360,6 @@ public class TypeManager
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
     this.classMap.put(cls, out);
 
-    this.deferred.add(new CreateMembers(out));
     return out;
   }
 
@@ -431,6 +412,23 @@ public class TypeManager
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
+  public synchronized void populateMembers(Class cls)
+  {
+    ClassDescriptor desc = this.classMap.get(cls);
+    if (desc == null)
+      throw new RuntimeException("Class not loaded");
+    if (desc.fields != null)
+      return;
+    try
+    {
+      createMembers(desc);
+    } catch (Exception ex)
+    {
+      ex.printStackTrace(System.out);
+      throw ex;
+    }
+  }
+
   private void createMembers(ClassDescriptor desc)
   {
     this.createFields(desc);
@@ -639,6 +637,7 @@ public class TypeManager
       Class<?> decl = method.getDeclaringClass();
       if (method.getDeclaringClass() != desc.cls)
       {
+        this.populateMembers(decl);
         ov.ptr = this.classMap.get(decl).getMethod(method);
         if (ov.ptr == 0)
         {
@@ -840,27 +839,6 @@ public class TypeManager
 
 //</editor-fold>
 //<editor-fold desc="inner" defaultstate="collapsed">
-  private interface Action
-  {
-    void execute();
-  }
-
-  private class CreateMembers implements Action
-  {
-    ClassDescriptor cd;
-
-    public CreateMembers(ClassDescriptor out)
-    {
-      this.cd = out;
-    }
-
-    @Override
-    public void execute()
-    {
-      createMembers(cd);
-    }
-  }
-
   private class Destroyer
   {
     final int BLOCK_SIZE = 1024;

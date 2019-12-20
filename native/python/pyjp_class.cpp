@@ -125,6 +125,8 @@ PyObject *PyJPClass_getBases(PyJPClass *self, void *closure)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
+	self->m_Class->ensureMembers(frame);
+
 	// Decide the base for this object
 	JPPyObject baseType;
 	PyJPModuleState *state = PyJPModuleState_global;
@@ -201,6 +203,8 @@ PyObject *PyJPClass_getClassFields(PyJPClass *self, void *closure)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
+	self->m_Class->ensureMembers(frame);
+
 	int i = 0;
 	const JPFieldList& instFields = self->m_Class->getFields();
 	JPPyTuple result(JPPyTuple::newTuple(instFields.size()));
@@ -227,6 +231,8 @@ PyObject *PyJPClass_getClassMethods(PyJPClass *self, void *closure)
 	JP_PY_TRY("PyJPClass_getClassMethods", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
+
+	self->m_Class->ensureMembers(frame);
 
 	// Boxed and Throwable are special cases that require the object
 	// methods copied in as well as their own.

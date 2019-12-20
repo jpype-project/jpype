@@ -47,6 +47,7 @@ public:
 	JPClass* findClassByName(const string& str);
 	JPClass* findClassForObject(jobject obj);
 	void populateMethod(void* method, jobject obj);
+	void populateMembers(JPClass* cls);
 
 private:
 	JPContext* m_Context;
@@ -55,6 +56,7 @@ private:
 	jmethodID m_FindClassByName;
 	jmethodID m_FindClassForObject;
 	jmethodID m_PopulateMethod;
+	jmethodID m_PopulateMembers;
 } ;
 
 #endif // _JPCLASS_H_
