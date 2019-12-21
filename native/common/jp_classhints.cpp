@@ -43,6 +43,8 @@ JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPJavaFrame *frame, JP
 			best = (*iter);
 	}
 	match.conversion = best;
+	if (best == NULL)
+		return match.type = JPMatch::_none;
 	return match.type = JPMatch::_explicit;
 }
 
@@ -65,8 +67,9 @@ public:
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		JP_TRACE_IN("JPPythonConversion::convert");
-		JPPyTuple args(JPPyTuple::newTuple(1));
-		args.setItem(0, (PyObject*) pyobj);
+		JPPyTuple args(JPPyTuple::newTuple(2));
+		args.setItem(0, (PyObject*) cls->getHost());
+		args.setItem(1, (PyObject*) pyobj);
 		JPPyObject ret = method_.call(args.get(), NULL);
 		JPValue *value = JPPythonEnv::getJavaValue(ret.get());
 		if (value != NULL)

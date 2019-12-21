@@ -24,13 +24,19 @@ class ClassHintsTestCase(common.JPypeTestCase):
         s = "2019-12-21T05:26:13.223189Z"
         self.assertTrue(str(Instant.parse(s)), s)
 
+    def testInstant(self):
+        import datetime
+        now = datetime.datetime.utcnow()
+        Instant = jpype.JClass("java.time.Instant")
+        self.assertIsInstance(jpype.JObject(now, Instant), Instant)
+
     def testConvertExact(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):
             cht.call("hello")
 
         @jpype.JConversion(self.Custom, exact=str)
-        def StrToCustom(args):
+        def StrToCustom(jcls, args):
             return self.MyCustom(args)
 
         cht.call("hello")
@@ -43,7 +49,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
             cht.call(MyImpl())
 
         @jpype.JConversion(self.Custom, attribute="blah")
-        def StrToCustom(args):
+        def StrToCustom(jcls, args):
             return self.MyCustom(args)
 
         cht.call(MyImpl())

@@ -298,7 +298,7 @@ PyObject *PyJPClass_cast(PyJPClass *self, PyObject *value)
 	{
 		JPMatch match;
 		type->getJavaConversion(&frame, match, value);
-		if (match.type == JPMatch::_none)
+		if (match.type == JPMatch::_none || match.conversion == NULL)
 		{
 			stringstream ss;
 			ss << "Unable to convert " << Py_TYPE(value)->tp_name << " to java type " << type->toString();

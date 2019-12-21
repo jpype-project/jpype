@@ -120,7 +120,7 @@ PyObject *PyJPArray_getArrayItem(PyJPArray *self, PyObject *arg)
 		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
 #if PY_VERSION_HEX<0x03060100
 		if (PySlice_GetIndicesEx(arg, length, &start, &stop, &step, &slicelength) < 0)
-			return -1;
+			return NULL;
 #else
 		if (PySlice_Unpack(arg, &start, &stop, &step) < 0)
 			return NULL;

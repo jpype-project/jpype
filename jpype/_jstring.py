@@ -83,6 +83,6 @@ class _JString(object):
 
 
 @_jcustomizer.JConversion("java.lang.CharSequence", exact=str)
-def _StrToCharSequence(args):
+def _StrToCharSequence(jcls, args):
     return JString(args)
 

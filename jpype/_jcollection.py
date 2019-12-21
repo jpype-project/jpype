@@ -225,3 +225,14 @@ class _JEnumeration(object):
         return self
 
     next = __next__
+
+# These methods need a home.
+import datetime
+@_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
+def InstantConversion(jcls, obj):
+    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
+    sec = int(utc)
+    nsec = int((utc-sec)*1e9)
+    return jcls.ofEpochSecond(sec, nsec)
+
+

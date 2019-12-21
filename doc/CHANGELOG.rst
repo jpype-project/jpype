@@ -4,30 +4,40 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **0.8.0**
+  - User defined conversions to Java types can be defined using
+    @JConversion decorator.  Conversions for strings to CharSequence,
+
+
+  - Customizers have been reworked into ClassHints structure.
+
+  - Significant speed improvements.  All wrapper types now inherit from
+    Python extension types rather than ordinary Python objects.  Python
+    code sections on critical paths for method resolution and returns
+    have been streamlined into C code.
 
   - Complete rewrite of core to deal with global variables and move core
-    logic to Java. Preliminary work on support of multiple JVMs.
+    logic to Java.
 
   - PyJPMethod now supports the FunctionType API.
 
   - Tab completion with Jedi is supported.  Jedi is the engine behind
     tab completion in many popular editors and shells such as IPython.
-    Jedi version 0.14.1 is required for tab completion as earlier versions 
+    Jedi version 0.14.1 is required for tab completion as earlier versions
     did not support annotations on compiled classes.  Tab completion
     with older versions requires use of the IPython greedy method.
 
   - Updated getJVMVersion to work with JDK 9+.
 
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
-  
+
   - Removed limitations having to do with CallerSensitive methods. Methods
-    affected are listed in :doc:`caller-sensitive`. Caller sensitive 
+    affected are listed in :doc:`caller-sensitive`. Caller sensitive
     methods now receive an internal JPype class as the desut
 
   - Fixed incorrect change with exceptions ``str()``
-  
-  - JProxy objects now are returned from Java as the Python objects 
-    that originate from. Older style proxy classes return the 
+
+  - JProxy objects now are returned from Java as the Python objects
+    that originate from. Older style proxy classes return the
     inst or dict. New style return the proxy class instance.
     Thus proxy classes can be stored on generic Java containers
     and retrieved as Python objects.
@@ -42,7 +52,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,
-    improved hardening, and member management.  Massive number of internal 
+    improved hardening, and member management.  Massive number of internal
     bugs were identified during the rewrite and corrected.
     See the :doc:`ChangeLog-0.7` for details of all changes.
 
@@ -62,7 +72,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
      - Java exceptions are now derived from Python exception. The old wrapper
        types have been removed. Catch the exception with the actual Java
        exception type rather than ``JException``.
-       
+
      - Undocumented exceptions issued from within JPype have been mapped to the
        corresponding Python exception types such as ``TypeError`` and
        ``ValueError`` appropriately.  Code catching exceptions from previous
@@ -76,7 +86,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - API rework:
 
      - JPype factory methods now act as base classes for dynamic
-       class trees. 
+       class trees.
      - Static fields and methods are now available in object
        instances.
      - Inner classes are now imported with the parent class.
@@ -115,7 +125,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
       conversion has been removed.
     - Artifical base classes ``JavaClass`` and ``JavaObject`` have been removed.
     - Undocumented old style customizers have been removed.
-    - Many internal jpype symbols have been removed from the namespace to 
+    - Many internal jpype symbols have been removed from the namespace to
       prevent leakage of symbols on imports.
 
   - promoted *`--install-option`* to a *`--global-option`* as it applies to the build as well

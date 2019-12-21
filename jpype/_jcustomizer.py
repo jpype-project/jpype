@@ -22,12 +22,13 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
 
     Whenever a method resolution is called the JPype internal rules
     are applied, but sometimes this is insufficient.  If only a
-    single method required modification then a customizer can
+    single method requires modification then a class customizer can
     be applied.  But if many interfaces require the same conversion
     than a user conversion may be an option.
 
-    To add a user conversion define a method which take the target
-    object as the argument and returns a Java object or Java proxy that
+    To add a user conversion define a method which take the requested
+    Java type as the first argument, the target object to be converted
+    as the second argument and returns a Java object or Java proxy that
     matches the required type.  If the type is not a Java type then
     a TypeError will be produce.  This method is only evaluated
     after the match has been determine prior to calling.
