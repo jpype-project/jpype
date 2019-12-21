@@ -73,6 +73,7 @@ public:
 		{
 			jvalue v = value->getValue();
 			JP_TRACE("Value", v.l);
+			v.l = frame->NewLocalRef(v.l);
 			return v;
 		}
 		JPProxy *proxy = JPPythonEnv::getJavaProxy(ret.get());
@@ -80,6 +81,7 @@ public:
 		{
 			jvalue v = proxy->getProxy();
 			JP_TRACE("Proxy", v.l);
+			v.l = frame->NewLocalRef(v.l);
 			return v;
 		}
 		JP_RAISE(PyExc_TypeError, "Bad type conversion");

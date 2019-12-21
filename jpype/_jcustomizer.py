@@ -17,7 +17,7 @@ import sys as _sys
 
 __all__ = ['JImplementationFor', 'JConversion']
 
-def JConversion(clsname, exact=None, instanceof=None, attribute=None):
+def JConversion(cls, exact=None, instanceof=None, attribute=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
@@ -41,7 +41,13 @@ def JConversion(clsname, exact=None, instanceof=None, attribute=None):
     is being matched, which can cause many methods to potentially
     become ambiguous.
 
+    Conversion are not inherited. If the same converter needs to
+    apply to multiple types, then multiple decorators can
+    be applied to the same method.
+
     Args:
+      cls(str, JClass): The class that will be produced by this
+        conversion.
       exact(type): this conversion applies only to objects that have
         a type exactly equal to the argument.
       instanceof(type): this conversion applies to any object that
@@ -50,7 +56,7 @@ def JConversion(clsname, exact=None, instanceof=None, attribute=None):
         passes hasattr(obj, arg)
     """
     def customizer(func):
-        hints = getClassHints(clsname)
+        hints = getClassHints(cls)
         if exact:
             hints.addTypeConversion(exact, func, True)
         if instanceof:

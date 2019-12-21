@@ -80,3 +80,9 @@ class _JString(object):
 
     def __repr__(self):
         return "'%s'" % self.__str__()
+
+
+@_jcustomizer.JConversion("java.lang.CharSequence", exact=str)
+def _StrToCharSequence(args):
+    return JString(args)
+
