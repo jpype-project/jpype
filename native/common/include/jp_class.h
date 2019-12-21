@@ -42,6 +42,15 @@ public:
 		return m_Host.get();
 	}
 
+	void setHints(PyObject* host)
+	{
+		m_Hints = JPPyObject(JPPyRef::_use, host);
+	}
+
+	PyObject* getHints()
+	{
+		return m_Hints.get();
+	}
 
 public:
 	void ensureMembers(JPJavaFrame& frame);
@@ -203,6 +212,7 @@ protected:
 	string               m_CanonicalName;
 	jint                 m_Modifiers;
 	JPPyObject           m_Host;
+	JPPyObject           m_Hints;
 } ;
 
 

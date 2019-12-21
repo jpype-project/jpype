@@ -21,49 +21,16 @@ extern "C"
 {
 #endif
 
-PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs);
-void PyJPClassHints_dealloc(PyJPClassHints *self);
-PyObject *PyJPClassHints_str(PyJPClassHints *self);
-
-static PyMethodDef classMethods[] = {
-	{NULL},
-};
-
-static PyType_Slot hintsSlots[] = {
-	{ Py_tp_new ,    (void*) PyJPClassHints_new},
-	{ Py_tp_init,    (void*) PyJPClassHints_init},
-	{ Py_tp_dealloc, (void*) PyJPClassHints_dealloc},
-	{ Py_tp_str,     (void*) PyJPClassHints_str},
-	{ Py_tp_doc,     (void*) "Java Class Hints"},
-	{ Py_tp_methods, (void*) classMethods},
-	{0}
-};
-
-PyType_Spec PyJPClassHintsSpec = {
-	"_jpype.PyJPClassHints",
-	sizeof (PyJPClassHints),
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	hintsSlots
-};
-
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
-	self->m_Hints = NULL;
+	self->m_Hints = new JPClassHints();
 	return (PyObject*) self;
 }
 
 int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClassHints_init", self);
-	// Parse arguments
-	PyObject *target;
-	PyObject *pyintf;
-	if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
-		return -1;
-
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -86,6 +53,29 @@ PyObject *PyJPClassHints_str(PyJPClassHints *self)
 	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(NULL);
 }
+
+
+static PyMethodDef classMethods[] = {
+	{NULL},
+};
+
+static PyType_Slot hintsSlots[] = {
+	{ Py_tp_new ,    (void*) PyJPClassHints_new},
+	{ Py_tp_init,    (void*) PyJPClassHints_init},
+	{ Py_tp_dealloc, (void*) PyJPClassHints_dealloc},
+	{ Py_tp_str,     (void*) PyJPClassHints_str},
+	{ Py_tp_doc,     (void*) "Java Class Hints"},
+	{ Py_tp_methods, (void*) classMethods},
+	{0}
+};
+
+PyType_Spec PyJPClassHintsSpec = {
+	"_jpype.PyJPClassHints",
+	sizeof (PyJPClassHints),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	hintsSlots
+};
 
 #ifdef __cplusplus
 }

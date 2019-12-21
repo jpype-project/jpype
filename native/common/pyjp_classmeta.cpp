@@ -52,6 +52,14 @@ int PyJPClassMeta_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	{
 		JPClass* cls = JPPythonEnv::getJavaClass(jc);
 		cls->setHost(self);
+		PyJPModuleState *state = PyJPModuleState_global;
+		PyObject* hints = PyDict_GetItemString(members, __javaclasshints__);
+		if (hints != NULL )
+		{
+			if (!PyObject_IsInstance(hints, state->PyJPClassHints_Type))
+				JP_RAISE(PyExc_TypeError, "hints must be hints type");
+			cls->setHints(hints);
+		}
 	}
 	return PyType_Type.tp_init(self, args, kwargs);
 	JP_PY_CATCH(-1);

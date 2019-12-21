@@ -141,7 +141,6 @@ def _JObjectFactory(v=None, tp=None):
     if isinstance(tp, _jpype.PyJPClass):
         return tp._cast(v)
 
-
     raise TypeError("Invalid type conversion to %s requested." % tp)
 
 

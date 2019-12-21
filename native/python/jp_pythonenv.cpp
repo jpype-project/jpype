@@ -4,6 +4,7 @@
 const char *__javavalue__ = "__javavalue__";
 const char *__javaproxy__ = "__javaproxy__";
 const char *__javaclass__ = "__javaclass__";
+const char *__javaclasshints__ = "__javaclasshints__";
 
 /** Construct a Python wrapper for a Java object. */
 JPPyObject JPPythonEnv::newJavaObject(const JPValue& value)

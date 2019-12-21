@@ -163,6 +163,7 @@ PyObject *PyJPModule_getClass(PyObject *module, PyObject *args);
 extern const char *__javavalue__;
 extern const char *__javaproxy__;
 extern const char *__javaclass__;
+extern const char *__javaclasshints__;
 
 #ifdef __cplusplus
 }

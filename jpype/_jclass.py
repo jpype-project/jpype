@@ -131,6 +131,7 @@ class JClass(_jpype.PyJPClassMeta):
     def __doc__(self):
         return _jclassDoc(self)
 
+
 class JInterface(metaclass=_jpype.PyJPClassMeta):
     """Virtual Base class for all Java Interfaces.
 
@@ -166,10 +167,12 @@ def _JClassFactory(jc):
     # Set up bases
     name = jc.__javaname__
     bases = list(jc._bases)
+    hints = _jcustomizer.getClassHints(name)
 
     # Set up members
     members = {
         "__javaclass__": jc,
+        "__javaclasshints__": hints,
         "__name__": name,
     }
     for field in jc._fields:
@@ -178,11 +181,11 @@ def _JClassFactory(jc):
         members[pysafe(method.__name__)] = method
 
     # Apply customizers
-    _jcustomizer._applyCustomizers(name, jc, bases, members)
+    hints.applyCustomizers(name, jc, bases, members)
     res = _jpype.JClass(name, tuple(bases), members)
 
     # Post customizers
-    _jcustomizer._applyInitializer(res)
+    hints.applyInitializer(res)
 
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined

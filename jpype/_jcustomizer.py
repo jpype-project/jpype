@@ -16,8 +16,6 @@ import _jpype
 import sys as _sys
 
 # These all need to move to typehints
-_JP_BASES = {}
-_JP_IMPLEMENTATIONS = {}
 
 if _sys.version_info > (3,):
     _unicode = str
@@ -27,43 +25,6 @@ else:
 __all__ = ['JImplementationFor']
 
 # Forward declarations
-_JCLASSES = {}  # FIXME move to typehints
-
-
-def registerClassBase(name, cls):
-    """ (internal) Add an implementation for a class
-
-    Use @JImplementationFor(cls, base=True) to access this.
-
-    """
-#    if not issubclass(cls,  _JObject):
-#        raise TypeError("Classbases must derive from JObject")
-
-    if name in _JP_BASES:
-        _JP_BASES[name].append(cls)
-    else:
-        _JP_BASES[name] = [cls]
-
-    # Changing the base class in python can break things,
-    # so we will tag this as an error for now.
-    if name in _JCLASSES:
-        raise RuntimeError(
-            "Base classes must be added before class is created")
-
-
-def registerClassImplementation(classname, proto):
-    """ (internal) Add an implementation for a class
-
-    Use @JImplementationFor(cls) to access this.
-    """
-    if classname in _JP_IMPLEMENTATIONS:
-        _JP_IMPLEMENTATIONS[classname].append(proto)
-    else:
-        _JP_IMPLEMENTATIONS[classname] = [proto]
-
-    # If we have already created a class, apply it retroactively.
-    if classname in _JCLASSES:
-        _applyCustomizerPost(_JCLASSES[classname], proto)
 
 
 def JImplementationFor(clsname, base=False):
@@ -98,10 +59,11 @@ def JImplementationFor(clsname, base=False):
         raise TypeError("SuperFor requires a java classname string")
 
     def customizer(cls):
+        hints = getClassHints(clsname)
         if base:
-            registerClassBase(clsname, cls)
+            hints.registerClassBase(clsname, cls)
         else:
-            registerClassImplementation(clsname, cls)
+            hints.registerClassImplementation(clsname, cls)
         return cls
     return customizer
 
@@ -180,17 +142,51 @@ def _applyCustomizerPost(cls, proto):
         _applyAll(cls, init)
 
 
-def _applyCustomizers(name, jc, bases, members):
-    """ (internal) Called by JClass and JArray to customize a newly created class."""
-    # Apply base classes
-    if name in _JP_BASES:
-        for b in _JP_BASES[name]:
+class JClassHints(_jpype.PyJPClassHints):
+    """ ClassHints holds class customizers and conversions.
+
+    These items can be defined before the JVM is created.
+    """
+
+    def __init__(self):
+        self.bases = []
+        self.implementations = []
+        self.instantiated = False
+
+    def registerClassBase(self, name, base):
+        """ (internal) Add an implementation for a class
+
+        Use @JImplementationFor(cls, base=True) to access this.
+
+        """
+        self.bases.append(base)
+
+        # Changing the base class in python can break things,
+        # so we will tag this as an error for now.
+        if self.instantiated:
+            raise RuntimeError(
+                "Base classes must be added before class is created")
+
+    def registerClassImplementation(self, classname, proto):
+        """ (internal) Add an implementation for a class
+
+        Use @JImplementationFor(cls) to access this.
+        """
+        self.implementations.append(proto)
+
+        # If we have already created a class, apply it retroactively.
+        if self.instantiated:
+            _applyCustomizerPost(_jpype.JClass(classname), proto)
+
+    def applyCustomizers(self, name, jc, bases, members):
+        """ (internal) Called by JClass and JArray to customize a newly created class."""
+        # Apply base classes
+        for b in self.bases:
             bases.insert(0, b)
 
-    # Apply implementations
-    if name in _JP_IMPLEMENTATIONS:
+        # Apply implementations
         sticky = []
-        for proto in _JP_IMPLEMENTATIONS[name]:
+        for proto in self.implementations:
             _applyCustomizerImpl(members, proto, sticky,
                                  lambda p, v: members.__setitem__(p, v))
 
@@ -199,15 +195,26 @@ def _applyCustomizers(name, jc, bases, members):
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 
+    def applyInitializer(self, cls):
+        """ (internal) Called after the class is created to apply any customizations
+        required by inherited parents. 
+        """
+        self.instantiated = True
+        if hasattr(cls, '__jclass_init__'):
+            init = []
+            for base in cls.__mro__:
+                if '__jclass_init__' in base.__dict__:
+                    init.insert(0, base.__dict__['__jclass_init__'])
+            for func in init:
+                func(cls)
 
-def _applyInitializer(cls):
-    """ (internal) Called after the class is created to apply any customizations
-    required by inherited parents. 
-    """
-    if hasattr(cls, '__jclass_init__'):
-        init = []
-        for base in cls.__mro__:
-            if '__jclass_init__' in base.__dict__:
-                init.insert(0, base.__dict__['__jclass_init__'])
-        for func in init:
-            func(cls)
+
+def getClassHints(name):
+    hints = _jpype._hints.get(name, None)
+    if not hints:
+        hints = JClassHints()
+        _jpype._hints[name] = hints
+    return hints
+
+
+_jpype._hints = {}
