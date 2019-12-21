@@ -1,3 +1,5 @@
+# Utility used to alter a Java jar file to date it in the future.
+# This was needed to intentionally trigger a version error.
 import jpype
 import jpype.imports
 jpype.startJVM()
