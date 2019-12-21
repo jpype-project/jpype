@@ -15,47 +15,81 @@
 import _jpype
 import sys as _sys
 
-# These all need to move to typehints
+__all__ = ['JImplementationFor', 'JConversion']
 
-if _sys.version_info > (3,):
-    _unicode = str
-else:
-    _unicode = unicode
+def JConversion(clsname, exact=None, instanceof=None, attribute=None):
+    """ Decorator to define a method as a converted a Java type.
 
-__all__ = ['JImplementationFor']
+    Whenever a method resolution is called the JPype internal rules
+    are applied, but sometimes this is insufficient.  If only a
+    single method required modification then a customizer can
+    be applied.  But if many interfaces require the same conversion
+    than a user conversion may be an option.
 
-# Forward declarations
+    To add a user conversion define a method which take the target
+    object as the argument and returns a Java object or Java proxy that
+    matches the required type.  If the type is not a Java type then
+    a TypeError will be produce.  This method is only evaluated
+    after the match has been determine prior to calling.
+
+    Care should be used when defining a user conversion. If example
+    if one has an interface that requires a specific class and you
+    want it to take a Python string, then a user conversion can
+    do that.  On the other hand if you define a generic converter
+    of any Python object to a Java string, then every interface
+    will attempt to call the conversion method whenever a Java string
+    is being matched, which can cause many methods to potentially
+    become ambiguous.
+
+    Args:
+      exact(type): this conversion applies only to objects that have
+        a type exactly equal to the argument.
+      instanceof(type): this conversion applies to any object that
+        pass isinstance(obj, arg)
+      attribute(str): this conversion applies to any object that has
+        passes hasattr(obj, arg)
+    """
+    def customizer(func):
+        hints = getClassHints(clsname)
+        if exact:
+            hints.addTypeConversion(exact, func, True)
+        if instanceof:
+            hints.addTypeConversion(instanceof, func, False)
+        if attribute:
+            hints.addAttributeConversion(attribute, func)
+        return func
+    return customizer
 
 
 def JImplementationFor(clsname, base=False):
     """ Decorator to define an implementation for a class.
 
     Applies to a class which will serve as a prototype as for the java class
-    wrapper.  If it is registered as a base class, then the class must 
-    derive from JObject.  Otherwise, the methods are copied from 
+    wrapper.  If it is registered as a base class, then the class must
+    derive from JObject.  Otherwise, the methods are copied from
     the prototype to java class wrapper.
 
-    The method ``__jclass_init__(cls)`` will be called with the constructed 
-    class as the argument.  This call be used to set methods for all classes 
-    that derive from the specified class.  Use ``type.__setattr__()`` to 
+    The method ``__jclass_init__(cls)`` will be called with the constructed
+    class as the argument.  This call be used to set methods for all classes
+    that derive from the specified class.  Use ``type.__setattr__()`` to
     alter the class methods.
 
-    Using the prototype class as a base class is used mainly to support 
+    Using the prototype class as a base class is used mainly to support
     classes which must be derived from a python type by design.  Use
     of a base class will produce a RuntimeError if the class has already
-    been created.  
+    been created.
 
-    For non-base class customizers, the customizer will be applied 
+    For non-base class customizers, the customizer will be applied
     retroactively if the class is already created.  Conflicts are
     resolved by the last customizer applied.
 
     Args:
       clsname (str): name of java class.
-      base (bool, optional): if True this will be a base class. 
+      base (bool, optional): if True this will be a base class.
         Default is False.
 
     """
-    if not isinstance(clsname, (str, _unicode)):
+    if not isinstance(clsname, str):
         raise TypeError("SuperFor requires a java classname string")
 
     def customizer(cls):
@@ -197,7 +231,7 @@ class JClassHints(_jpype.PyJPClassHints):
 
     def applyInitializer(self, cls):
         """ (internal) Called after the class is created to apply any customizations
-        required by inherited parents. 
+        required by inherited parents.
         """
         self.instantiated = True
         if hasattr(cls, '__jclass_init__'):
@@ -210,6 +244,8 @@ class JClassHints(_jpype.PyJPClassHints):
 
 
 def getClassHints(name):
+    if isinstance(name, _jpype.PyJPClassMeta):
+        name = name.__name__
     hints = _jpype._hints.get(name, None)
     if not hints:
         hints = JClassHints()

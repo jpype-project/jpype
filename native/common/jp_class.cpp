@@ -16,6 +16,8 @@
  *****************************************************************************/
 #include <jpype.h>
 
+#include "pyjp.h"
+
 JPClass::JPClass(
 		const string& name,
 		jint modifiers)
@@ -334,7 +336,16 @@ JPMatch::Type JPClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyO
 		return match.type;
 	}
 
-	// APPLY USER SUPPLIED CONVERSIONS
+	// Apply user supplied conversions
+	if (!m_Hints.isNull())
+	{
+		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
+		if (hints->getConversion(match, frame, this, pyobj) != JPMatch::_none)
+		{
+			JP_TRACE("Match custom conversion");
+			return match.type;
+		}
+	}
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;

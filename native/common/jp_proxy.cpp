@@ -206,7 +206,7 @@ JPProxy::~JPProxy()
 {
 }
 
-jobject JPProxy::getProxy()
+jvalue JPProxy::getProxy()
 {
 	JP_TRACE_IN("JPProxy::getProxy");
 	JPContext* context = getContext();
@@ -218,7 +218,9 @@ jobject JPProxy::getProxy()
 	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
 			m_Factory->m_NewInstanceID, 0);
 
-	return frame.keep(instance);
+	jvalue out;
+	out.l = frame.keep(instance);
+	return out;
 	JP_TRACE_OUT;
 }
 

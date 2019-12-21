@@ -46,7 +46,7 @@ public:
 		return m_InterfaceClasses;
 	}
 
-	jobject getProxy();
+	jvalue getProxy();
 
 	JPContext* getContext()
 	{

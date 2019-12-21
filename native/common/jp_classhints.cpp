@@ -30,20 +30,20 @@ JPClassHints::~JPClassHints()
 {
 }
 
-JPConversion* JPClassHints::getConversion(JPJavaFrame *frame, JPClass *cls, PyObject *obj)
+JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPJavaFrame *frame, JPClass *cls, PyObject *obj)
 {
 	JPConversion *best = NULL;
-	JPMatch match;
 	for (std::list<JPConversion*>::iterator iter = conversions.begin();
 			iter != conversions.end(); ++iter)
 	{
 		JPMatch::Type quality = (*iter)->matches(match, frame, cls, obj);
 		if (quality > JPMatch::_explicit)
-			return (*iter);
+			return match.type;
 		if (quality != JPMatch::_none)
 			best = (*iter);
 	}
-	return best;
+	match.conversion = best;
+	return match.type = JPMatch::_explicit;
 }
 
 /**
@@ -64,13 +64,26 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
+		JP_TRACE_IN("JPPythonConversion::convert");
 		JPPyTuple args(JPPyTuple::newTuple(1));
 		args.setItem(0, (PyObject*) pyobj);
 		JPPyObject ret = method_.call(args.get(), NULL);
 		JPValue *value = JPPythonEnv::getJavaValue(ret.get());
-		if (value == NULL)
-			JP_RAISE(PyExc_TypeError, "Bad type conversion");
-		return value->getValue();
+		if (value != NULL)
+		{
+			jvalue v = value->getValue();
+			JP_TRACE("Value", v.l);
+			return v;
+		}
+		JPProxy *proxy = JPPythonEnv::getJavaProxy(ret.get());
+		if (proxy != NULL)
+		{
+			jvalue v = proxy->getProxy();
+			JP_TRACE("Proxy", v.l);
+			return v;
+		}
+		JP_RAISE(PyExc_TypeError, "Bad type conversion");
+		JP_TRACE_OUT;
 	}
 private:
 
@@ -431,10 +444,7 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		jvalue res;
-		JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
-		res.l = proxy->getProxy();
-		return res;
+		return JPPythonEnv::getJavaProxy(pyobj)->getProxy();
 	}
 } _proxyConversion;
 

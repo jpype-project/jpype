@@ -90,9 +90,9 @@ public:
 	 * Searches the list for a conversion. The first conversion better than
 	 * explicit is returned immediately.
 	 *
-	 * @returns the best match or null.
+	 * @returns the quality of the match
 	 */
-	JPConversion* getConversion(JPJavaFrame *context, JPClass *cls, PyObject *obj);
+	JPMatch::Type getConversion(JPMatch& match, JPJavaFrame *context, JPClass *cls, PyObject *obj);
 
 	/**
 	 * Add a conversion based on a specified attribute.

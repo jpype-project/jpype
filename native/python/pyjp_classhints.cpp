@@ -54,8 +54,37 @@ PyObject *PyJPClassHints_str(PyJPClassHints *self)
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+{
+	JP_PY_TRY("PyJPClassHints_addAttributeConversion", self);
+	char* attribute;
+	Py_ssize_t len;
+	PyObject *method;
+	if (!PyArg_ParseTuple(args, "s#O", &attribute, &len, &method))
+		return NULL;
+
+	self->m_Hints->addAttributeConversion(string(attribute, len), method);
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
+PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+{
+	JP_PY_TRY("PyJPClassHints_addTypeConversion", self);
+	PyObject *type;
+	PyObject *method;
+	unsigned char exact;
+	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
+		return NULL;
+
+	self->m_Hints->addTypeConversion(type, method, exact);
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
 
 static PyMethodDef classMethods[] = {
+	{"addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
+	{"addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
 	{NULL},
 };
 
