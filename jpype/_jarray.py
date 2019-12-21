@@ -203,6 +203,9 @@ class _JArray(object):
         except TypeError:
             return True
 
+    def __hash__(self):
+        return self.hashCode()
+
     def clone(self):
         """ Clone the Java array.
 
@@ -221,6 +224,7 @@ class _JArray(object):
             A shallow copy of the array.
         """
         return _jclass.JClass("java.util.Arrays").copyOf(self, len(self))
+
 
 
 JArray = _jobject.defineJObjectFactory("JArray", None, _JArray)

@@ -60,6 +60,9 @@ class _JBoxedBoolean(int, _jobject.JObject):
             return str(False)
         return str(True)
 
+    def __hash__(self):
+        return int.__hash__(self)
+
 
 @_jcustomizer.JImplementationFor("java.lang.Byte", base=True)
 class _JBoxedByte(int, _jobject.JObject):
@@ -83,6 +86,9 @@ class _JBoxedByte(int, _jobject.JObject):
         __gt__ = int.__gt__
         __le__ = int.__le__
         __ge__ = int.__ge__
+
+    def __hash__(self):
+        return int.__hash__(self)
 
 
 @_jcustomizer.JImplementationFor("java.lang.Short", base=True)
@@ -108,6 +114,9 @@ class _JBoxedShort(int, _jobject.JObject):
         __le__ = int.__le__
         __ge__ = int.__ge__
 
+    def __hash__(self):
+        return int.__hash__(self)
+
 
 @_jcustomizer.JImplementationFor("java.lang.Integer", base=True)
 class _JBoxedInteger(int, _jobject.JObject):
@@ -131,6 +140,9 @@ class _JBoxedInteger(int, _jobject.JObject):
         __gt__ = int.__gt__
         __le__ = int.__le__
         __ge__ = int.__ge__
+
+    def __hash__(self):
+        return int.__hash__(self)
 
 
 @_jcustomizer.JImplementationFor("java.lang.Long", base=True)
@@ -156,6 +168,9 @@ class _JBoxedLong(_long, _jobject.JObject):
         __le__ = _long.__le__
         __ge__ = _long.__ge__
 
+    def __hash__(self):
+        return _long.__hash__(self)
+
 
 @_jcustomizer.JImplementationFor("java.lang.Float", base=True)
 class _JBoxedFloat(float, _jobject.JObject):
@@ -172,6 +187,9 @@ class _JBoxedFloat(float, _jobject.JObject):
     __eq__ = float.__eq__
     __ne__ = float.__ne__
 
+    def __hash__(self):
+        return float.__hash__(self)
+
 
 @_jcustomizer.JImplementationFor("java.lang.Double", base=True)
 class _JBoxedDouble(float, _jobject.JObject):
@@ -187,3 +205,7 @@ class _JBoxedDouble(float, _jobject.JObject):
         raise ValueError("Invalid arguments %s" % args[0])
     __eq__ = float.__eq__
     __ne__ = float.__ne__
+
+    def __hash__(self):
+        return float.__hash__(self)
+
