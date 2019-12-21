@@ -30,6 +30,16 @@ class ClassHintsTestCase(common.JPypeTestCase):
         Instant = jpype.JClass("java.time.Instant")
         self.assertIsInstance(jpype.JObject(now, Instant), Instant)
 
+    def testPath(self):
+        import pathlib
+        JPath = jpype.JClass("java.nio.file.Path")
+        self.assertIsInstance(jpype.JObject(pathlib.Path(__file__).absolute(), JPath), JPath)
+
+    def testFile(self):
+        import pathlib
+        JFile = jpype.JClass("java.io.File")
+        self.assertIsInstance(jpype.JObject(pathlib.Path(__file__).absolute(), JFile), JFile)
+
     def testConvertExact(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):

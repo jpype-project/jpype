@@ -17,6 +17,7 @@
 from . import _jclass
 from . import _jcustomizer
 from . import _jtypes
+import _jpype
 
 try:
     from collections.abc import Sequence
@@ -234,5 +235,14 @@ def InstantConversion(jcls, obj):
     sec = int(utc)
     nsec = int((utc-sec)*1e9)
     return jcls.ofEpochSecond(sec, nsec)
+
+@_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
+def PathConvert(jcls, obj):
+    Paths = _jpype.JClass("java.nio.file.Paths")
+    return Paths.get(obj.__fspath__())
+
+@_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
+def PathConvert(jcls, obj):
+    return jcls(obj.__fspath__())
 
 
