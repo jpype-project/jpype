@@ -55,7 +55,7 @@ class JPypeTestCase(unittest.TestCase):
                 warnings.warn("using deprecated convertStrings")
             if self._jacoco:
                 import warnings
-                args.append("-javaagent:jacocoagent.jar=destfile=jacoco.exec,includes=org.jpype.*")
+                args.append("-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
 
             classpath_arg %= jpype.getClassPath()

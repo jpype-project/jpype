@@ -38,9 +38,10 @@ pip-delete-this-directory.txt
 htmlcov/
 .tox/
 .coverage
+jacoco.exec
 .cache
 nosetests.xml
-coverage.xml
+coverage*.xml
 # Translations
 *.mo
 *.pot
@@ -60,6 +61,7 @@ target/
 /project/jpype_cpython/Makefile
 /project/jpype_cpython/nbproject/Package-Release.bash
 /project/jpype_python/nbproject/private/
+/project/coverage/*.jar
 *.swp
 *.stackdump
 tmp
