@@ -85,8 +85,10 @@ matrix:
         - $PIP install -e .
         - $PIP install gcovr pytest-cov
       script:
+        # add --jacoco for java coverage
         - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar"
         - gcovr -r . --xml -o coverage.xml -d
+        #- java -jar jacococli.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml
         - bash <(curl -s https://codecov.io/bash) 
     
     # TODO: remove in 0.8

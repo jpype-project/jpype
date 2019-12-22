@@ -1,4 +1,5 @@
 import pytest
+import jpype
 
 def pytest_addoption(parser):
     parser.addoption('--jar', action="store", default=None, help="Use a jar rather than the thunks")
@@ -10,4 +11,14 @@ def common_opts(request):
     request.cls._jar = request.config.getoption("--jar")
     request.cls._convertStrings = request.config.getoption("--convertStrings")
     request.cls._jacoco = request.config.getoption("--jacoco")
+
+@pytest.fixture(scope="session", autouse=True)
+def coverage(request):
+    yield
+    if request.config.getoption("--jacoco") and jpype.isJVMStarted():
+        # Force dump of the jacoco agent
+        RT=jpype.JClass("org.jacoco.agent.rt.RT")
+        agent=RT.getAgent()
+        agent.dump(False)
+
 
