@@ -25,6 +25,7 @@ except ImportError:
     import unittest
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class PickleTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

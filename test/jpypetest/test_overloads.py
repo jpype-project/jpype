@@ -23,6 +23,7 @@ import common
 java = jpype.java
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class OverloadTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

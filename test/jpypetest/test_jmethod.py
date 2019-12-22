@@ -39,6 +39,7 @@ def copy_func(f):
     return g
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class JMethodTestCase(common.JPypeTestCase):
     """ Test for methods of JMethod (_jpype.PyJPMethod)
 

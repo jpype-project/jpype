@@ -30,6 +30,7 @@ except:
     pass
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class JediTestCase(common.JPypeTestCase):
     """Test tab completion on JPype objects
     """

@@ -18,6 +18,7 @@ import jpype
 import common
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class JClassTestCase(common.JPypeTestCase):
     """ Test for methods of JClass
 

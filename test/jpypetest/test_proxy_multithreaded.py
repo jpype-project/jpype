@@ -44,6 +44,7 @@ class ThreadCallbackImpl:
         self.values.append(val)
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class ProxyMultiThreadedTestCase(common.JPypeTestCase):
 
     def setUp(self):

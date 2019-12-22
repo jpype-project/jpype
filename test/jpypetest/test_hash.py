@@ -19,6 +19,7 @@ import common
 import sys
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class HashTestCase(common.JPypeTestCase):
 
     def setUp(self):

@@ -23,9 +23,8 @@ if sys.version > '3':
     long = int
     unicode = str
 
-# Test code
 
-
+@common.pytest.mark.usefixtures("common_opts")
 class BoxedTestCase(common.JPypeTestCase):
     __name__ = "BoxedTestCase"
 

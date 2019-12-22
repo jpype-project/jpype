@@ -51,8 +51,9 @@ matrix:
       python: 2.7
       dist: xenial
       language: python
-      env:
-        - JPYPE_STR_CONVERSION=False
+      script:
+        - $PYTHON -c "import jpype"
+        - $PYTHON -m pytest -v test/jpypetest --convertStrings
 
     - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
       python: 3.7
@@ -84,7 +85,7 @@ matrix:
         - $PIP install -e .
         - $PIP install gcovr pytest-cov
       script:
-        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml
+        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar"
         - gcovr -r . --xml -o coverage.xml -d
         - bash <(curl -s https://codecov.io/bash) 
     
@@ -96,7 +97,9 @@ matrix:
       env:
         - PYTHON=python3
         - PIP=pip3
-        - JPYPE_STR_CONVERSION=False
+      script:
+        - $PYTHON -c "import jpype"
+        - $PYTHON -m pytest -v test/jpypetest --convertStrings
 
     - name: "Python 2.7 on macOS"
       os: osx

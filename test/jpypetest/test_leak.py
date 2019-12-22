@@ -3,6 +3,7 @@ import jpype
 import gc
 import sys
 import os
+import common
 from os import path
 from subprocess import call
 
@@ -149,6 +150,7 @@ def subJVM(impl, methodName):
     return True
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class LeakTestCase(unittest.TestCase):
 
     def runTest(self):

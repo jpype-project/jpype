@@ -1,9 +1,8 @@
 import jpype
 import common
 
-# jpype.startJVM(jpype.getDefaultJVMPath())
 
-
+@common.pytest.mark.usefixtures("common_opts")
 class ClosedTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

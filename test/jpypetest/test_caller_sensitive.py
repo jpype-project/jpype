@@ -17,6 +17,7 @@
 import jpype
 import common
 
+@common.pytest.mark.usefixtures("common_opts")
 class JCallerSensitiveCase(common.JPypeTestCase):
     """ Test for caller sensitive methods.
 

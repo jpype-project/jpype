@@ -23,6 +23,7 @@ if sys.version > '3':
     unicode = str
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class ReflectCase(common.JPypeTestCase):
 
     def setUp(self):

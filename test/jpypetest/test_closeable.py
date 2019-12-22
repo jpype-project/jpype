@@ -23,6 +23,7 @@ def pythonNewerThan(major, minor):
     return sys.version_info[0] > major or (sys.version_info[0] == major and sys.version_info[1] > minor)
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class CloseableTestCase(common.JPypeTestCase):
 
     def setUp(self):

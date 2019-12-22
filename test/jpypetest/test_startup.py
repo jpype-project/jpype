@@ -40,6 +40,7 @@ def check_output(*popenargs, **kwargs):
         raise error
     return output
 
+@common.pytest.mark.usefixtures("common_opts")
 class StartJVMCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

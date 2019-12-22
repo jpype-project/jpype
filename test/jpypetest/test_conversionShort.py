@@ -32,6 +32,7 @@ def haveNumpy():
         return False
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class ConversionShortTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

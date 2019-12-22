@@ -22,6 +22,7 @@ import common
 #import sys
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class ObjectWrapperTestCase(common.JPypeTestCase):
     def testCallOverloads(self):
         # build the harness

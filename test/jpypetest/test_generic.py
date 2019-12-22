@@ -18,6 +18,7 @@ import jpype
 import common
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class GenericTestCase(common.JPypeTestCase):
     """ Test for JClass with generic types
     """

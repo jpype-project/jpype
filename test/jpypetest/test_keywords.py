@@ -18,6 +18,7 @@ import jpype
 import common
 import keyword
 
+@common.pytest.mark.usefixtures("common_opts")
 class KeywordsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

@@ -19,6 +19,7 @@ import sys
 import common
 
 
+@common.pytest.mark.usefixtures("common_opts")
 class MroTestCase(common.JPypeTestCase):
     def testMro(self):
         C = JPackage('jpype.mro').C

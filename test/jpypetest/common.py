@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 
+import pytest
 import jpype
 import logging
 import os
@@ -24,6 +25,7 @@ try:
     import unittest2 as unittest
 except ImportError:
     import unittest
+
 
 CLASSPATH = None
 
@@ -40,28 +42,30 @@ class JPypeTestCase(unittest.TestCase):
             logger = logging.getLogger(__name__)
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
+            args = ["-ea", "-Xmx256M", "-Xms16M" ]
+            # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
+            #"-Xcheck:jni",
+            if self._jar:
+                import warnings
+                jpype.addClassPath(self._jar)
+                warnings.warn("using jar instead of thunks")
+            if self._convertStrings:
+                import warnings
+                warnings.warn("using deprecated convertStrings")
+            if self._jacoco:
+                import warnings
+                args.append("-javaagent:jacocoagent.jar,includes=org.jpype.*")
+                warnings.warn("using JaCoCo")
+
             classpath_arg %= jpype.getClassPath()
-            JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
-            jpype.startJVM(jvm_path, "-ea",
-                           # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
-                           #"-Xcheck:jni",
-                           "-Xmx256M", "-Xms16M", classpath_arg, convertStrings=self.str_conversion)
+            #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
+            jpype.startJVM(jvm_path, *args, classpath_arg, convertStrings=self._convertStrings)
         self.jpype = jpype.JPackage('jpype')
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual
 
     def tearDown(self):
         pass
-
-class test_a(JPypeTestCase):
-    def test(self):
-        assert True
-
-
-class test_fuck(JPypeTestCase):
-
-    def test(self):
-        assert hasattr(self, 'str_conversion')
 
 
 if __name__ == '__main__':
