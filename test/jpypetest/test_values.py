@@ -26,7 +26,6 @@ if sys.version > '3':
 # Test code
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ValuesTestCase(common.JPypeTestCase):
     """ Test of type conversion for fields. """
     def setUp(self):

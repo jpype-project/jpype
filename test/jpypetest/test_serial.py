@@ -22,7 +22,6 @@ import traceback
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class SerializationTestCase(common.JPypeTestCase):
 
     def setUp(self):

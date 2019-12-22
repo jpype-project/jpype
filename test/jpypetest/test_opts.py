@@ -6,20 +6,19 @@ import common
 # Options are defined in the file conftest.py and
 # passed the a fixture function.  This fixture function
 # is then applied to each TestCase class.
+#
+class OptsTestCase(common.JPypeTestCase):
 
-#@common.pytest.mark.usefixtures("common_opts")
-#class OptsTestCase(common.JPypeTestCase):
-#
-#    def setUp(self):
-#        common.JPypeTestCase.setUp(self)
-#
-#    def testOpts(self):
-#        self.assertTrue(hasattr(self, "_jar"))
-#        self.assertTrue(hasattr(self, "_convertStrings"))
-#
-#    def testConvertStrings(self):
-#        self.assertTrue(self._convertStrings)
-#
-#    def testJar(self):
-#        self.assertEqual(self._jar, "foo")
-#
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def testOpts(self):
+        self.assertTrue(hasattr(self, "_jar"))
+        self.assertTrue(hasattr(self, "_convertStrings"))
+
+    def testConvertStrings(self):
+        self.assertTrue(self._convertStrings)
+
+    def testJar(self):
+        self.assertEqual(self._jar, "foo")
+

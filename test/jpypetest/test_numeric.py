@@ -19,7 +19,6 @@ import common
 import sys
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class NumericTestCase(common.JPypeTestCase):
     def testMathAbs(self):
         self.assertEqual(java.lang.Math.abs(-10), 10)

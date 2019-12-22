@@ -13,7 +13,6 @@ from jpype._darwin import *
 import sys
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class JVMFinderTest(unittest.TestCase):
     """
     test some methods to obtain a jvm.

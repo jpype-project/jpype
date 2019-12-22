@@ -36,7 +36,6 @@ def isJavaEnum(tp):
     return issubclass(tp, jpype.JClass('java.lang.Enum'))
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ImportsTestCase(common.JPypeTestCase):
     def setUp(self):
         #        logger = logging.getLogger(__name__)

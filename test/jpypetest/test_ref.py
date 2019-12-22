@@ -19,7 +19,6 @@ import jpype
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ReferenceQueueTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

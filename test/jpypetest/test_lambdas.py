@@ -21,7 +21,6 @@ import time
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class LambdasTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

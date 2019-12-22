@@ -2,7 +2,6 @@ import jpype
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class PropertiesTestCase(common.JPypeTestCase):
     #    __name__="PropertiesTestCase"
 

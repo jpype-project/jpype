@@ -18,7 +18,6 @@ import jpype
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class VirtualsTestCase(common.JPypeTestCase):
     """ Test that we get the right method regardless of how we call it.
 

@@ -69,7 +69,6 @@ else:
     def tounicode(x): return unicode(x, 'utf-8')
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class Utf8TestCase(common.JPypeTestCase):
 
     def setUp(self):

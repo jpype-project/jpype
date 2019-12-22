@@ -25,7 +25,6 @@ def proxy(s):
 
 # This is a test case to exercise all of the paths that pass through
 # the string conversion to make sure all are exercised.
-@common.pytest.mark.usefixtures("common_opts")
 class LegacyTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

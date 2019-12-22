@@ -27,7 +27,6 @@ def throwByJavaException():
     JPackage('jpype').exc.ExceptionTest.throwIOException()
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ExceptionTestCase(common.JPypeTestCase):
     def testExceptionThrown(self):
         try:

@@ -35,7 +35,6 @@ def compareList(l1, l2):
     return True
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class VarArgsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

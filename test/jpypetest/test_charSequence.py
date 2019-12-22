@@ -20,7 +20,6 @@ import logging
 import time
 import common
 
-@common.pytest.mark.usefixtures("common_opts")
 class ConversionCharSequenceTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)

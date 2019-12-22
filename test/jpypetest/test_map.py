@@ -17,7 +17,6 @@
 import jpype
 import common
 
-@common.pytest.mark.usefixtures("common_opts")
 class JMapTestCase(common.JPypeTestCase):
     """ Test for methods of java.lang.Map 
     """

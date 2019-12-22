@@ -53,7 +53,6 @@ class ThreadCallbackImpl:
         self.values.append(val)
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ProxyTestCase(common.JPypeTestCase):
 
     def setUp(self):

@@ -31,7 +31,6 @@ def haveNumpy():
     except ImportError:
         return False
 
-@common.pytest.mark.usefixtures("common_opts")
 class ArrayTestCase(common.JPypeTestCase):
 
     def setUp(self):

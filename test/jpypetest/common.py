@@ -33,6 +33,7 @@ def version(v):
     return tuple([int(i) for i in v.split('.')])
 
 
+@pytest.mark.usefixtures("common_opts")
 class JPypeTestCase(unittest.TestCase):
     def setUp(self):
         if not jpype.isJVMStarted():
@@ -58,8 +59,9 @@ class JPypeTestCase(unittest.TestCase):
                 warnings.warn("using JaCoCo")
 
             classpath_arg %= jpype.getClassPath()
+            args.append(classpath_arg)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
-            jpype.startJVM(jvm_path, *args, classpath_arg, convertStrings=self._convertStrings)
+            jpype.startJVM(jvm_path, *args, convertStrings=self._convertStrings)
         self.jpype = jpype.JPackage('jpype')
         if sys.version < '3':
             self.assertCountEqual = self.assertItemsEqual

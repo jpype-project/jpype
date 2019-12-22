@@ -2,7 +2,6 @@ import jpype
 import common
 
 
-@common.pytest.mark.usefixtures("common_opts")
 class ClosedTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
