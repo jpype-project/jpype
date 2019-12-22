@@ -85,6 +85,7 @@ matrix:
         - $PIP install -e .
         - $PIP install gcovr pytest-cov
         - mvn -f project/coverage package
+        - ant -f test/build.xml
       script:
         - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar" --jacoco
         - gcovr -r . --xml -o coverage.xml -d
