@@ -4,6 +4,7 @@ try:
 except ImportError:
     import unittest
 import mock
+import common
 
 from jpype._jvmfinder import *
 from jpype._linux import *

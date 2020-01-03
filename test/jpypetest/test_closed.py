@@ -1,8 +1,6 @@
 import jpype
 import common
 
-# jpype.startJVM(jpype.getDefaultJVMPath())
-
 
 class ClosedTestCase(common.JPypeTestCase):
     def setUp(self):

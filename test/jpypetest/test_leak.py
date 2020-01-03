@@ -3,6 +3,7 @@ import jpype
 import gc
 import sys
 import os
+import common
 from os import path
 from subprocess import call
 

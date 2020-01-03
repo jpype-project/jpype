@@ -18,6 +18,7 @@ import sys
 import jpype
 from jpype import JPackage, JArray, JByte, java, JClass
 import common
+import pytest
 
 if sys.version > '3':
     unicode = str
@@ -29,7 +30,6 @@ def haveNumpy():
         return True
     except ImportError:
         return False
-
 
 class ArrayTestCase(common.JPypeTestCase):
 

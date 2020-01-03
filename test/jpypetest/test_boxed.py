@@ -23,8 +23,6 @@ if sys.version > '3':
     long = int
     unicode = str
 
-# Test code
-
 
 class BoxedTestCase(common.JPypeTestCase):
     __name__ = "BoxedTestCase"

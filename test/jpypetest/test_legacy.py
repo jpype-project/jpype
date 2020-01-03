@@ -29,7 +29,7 @@ class LegacyTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         # TODO: remove in 0.8
-        if not self.str_conversion:
+        if not self._convertStrings:
             raise common.unittest.SkipTest
         self._test = jpype.JClass("jpype.str.Test")
         self._intf = jpype.JClass("jpype.str.StringFunction")
