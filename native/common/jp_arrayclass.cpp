@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h> // FIXME work on bytes, remove when complete
 #include <jpype.h>
@@ -58,7 +58,7 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit under java rules.
 	}
 
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 	// Bytes are byte[]
 	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
 	{
@@ -142,7 +142,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-#if PY_MAJOR_VERSION >= 3 
+#if PY_MAJOR_VERSION >= 3
 	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
 	{
 		Py_ssize_t size = 0;
@@ -211,6 +211,6 @@ JPValue JPArrayClass::newInstance(int length)
 {
 	JPJavaFrame frame;
 	jvalue v;
-	v.l = m_ComponentType->newArrayInstance(frame, length);
+	v.l = frame.keep(m_ComponentType->newArrayInstance(frame, length));
 	return JPValue(this, v);
 }

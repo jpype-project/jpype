@@ -77,7 +77,7 @@ JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
 	JP_TRACE_OUT;
 }
 
-// Specializations for each of the boxed types.  
+// Specializations for each of the boxed types.
 // This sets up the table of conversions that we allow
 
 //============================================================
@@ -85,7 +85,7 @@ JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
 jclass findClass(const string& str)
 {
 	JPJavaFrame frame;
-	return frame.FindClass(str);
+	return (jclass) frame.keep((jobject) frame.FindClass(str));
 }
 
 //============================================================
