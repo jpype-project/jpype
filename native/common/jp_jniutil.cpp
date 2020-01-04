@@ -712,7 +712,7 @@ jclass JPJni::getPrimitiveClass(jclass clz)
 {
 	JPJavaFrame frame;
 	jfieldID fid = frame.GetStaticFieldID(clz, "TYPE", "Ljava/lang/Class;");
-	jclass res = (jclass) frame.GetStaticObjectField(clz, fid);
+	jclass res = (jclass) frame.keep(frame.GetStaticObjectField(clz, fid));
 	return res;
 }
 

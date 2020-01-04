@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
- 
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -230,7 +230,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	JP_TRACE_IN("JPClass::setArrayRange");
 	jobjectArray array = (jobjectArray) a;
 
-	// Verify before we start the conversion, as we wont be able 
+	// Verify before we start the conversion, as we wont be able
 	// to abort once we start
 	JPPySequence seq(JPPyRef::_use, vals);
 	JP_TRACE("Verify argument types");
@@ -286,17 +286,17 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 
-	// FIXME returning None likely incorrect from java prospective.  
-	//  Java still knows the type of null objects thus 
-	//  converting to None would pose a problem as we lose type.  
-	//  We would need subclass None for this to make sense so we 
+	// FIXME returning None likely incorrect from java prospective.
+	//  Java still knows the type of null objects thus
+	//  converting to None would pose a problem as we lose type.
+	//  We would need subclass None for this to make sense so we
 	//  can carry both the type and the null, but Python considers
-	//  None a singleton so this is not an option. 
-	// 
+	//  None a singleton so this is not an option.
+	//
 	//  Of course if we don't mind that "Object is None" would
 	//  fail, but "Object == None" would be true, the we
 	//  could support null objects properly.  However, this would
-	//  need to work as "None == Object" which may be hard to 
+	//  need to work as "None == Object" which may be hard to
 	//  achieve.
 	//
 	// We will still need to have the concept of null objects
@@ -378,8 +378,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 	if (value != NULL)
 	{
 		JP_TRACE("Value");
-		res.l = frame.NewLocalRef(value->getJavaObject());
-		res.l = frame.keep(res.l);
+		res.l = frame.keep(frame.NewLocalRef(value->getJavaObject()));
 		return res;
 	}
 
