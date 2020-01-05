@@ -161,53 +161,53 @@ def _copyStaticMethods(out, cls):
 # %% Customizer
 _CUSTOMIZERS = []
 
-if _sys.version_info > (3,):
-    def registerImportCustomizer(customizer):
-        """ Import customizers can be used to import python packages
-        into java modules automatically.
+
+def registerImportCustomizer(customizer):
+    """ Import customizers can be used to import python packages
+    into java modules automatically.
+    """
+    _CUSTOMIZERS.append(customizer)
+
+# Support hook for placing other things into the java tree
+class JImportCustomizer(object):
+    """ Base class for Import customizer.
+
+    Import customizers should implement canCustomize and getSpec.
+
+    Example:
+
+    .. code-block:: python
+
+       # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
+       class SiteCustomizer(jpype.imports.JImportCustomizer):
+           def canCustomize(self, name):
+               if name.startswith('org.mysite') and name.endswith('.py'):
+                   return True
+               return False
+           def getSpec(self, name):
+               pname = name[:-3]
+               devel = os.environ.get('DEVEL')
+               path = os.path.join(devel, pname,'py','__init__.py')
+               return importlib.util.spec_from_file_location(name, path)
+   """
+
+    def canCustomize(self, name):
+        """ Determine if this path is to be treated differently
+
+        Return:
+            True if an alternative spec is required.
         """
-        _CUSTOMIZERS.append(customizer)
+        return False
 
-    # Support hook for placing other things into the java tree
-    class JImportCustomizer(object):
-        """ Base class for Import customizer.
+    def getSpec(self, name):
+        """ Get the module spec for this module.
+        """
+        raise NotImplementedError
 
-        Import customizers should implement canCustomize and getSpec.
 
-        Example:
 
-        .. code-block:: python
 
-           # Site packages for each java package are stored under $DEVEL/<java_pkg>/py
-           class SiteCustomizer(jpype.imports.JImportCustomizer):
-               def canCustomize(self, name):
-                   if name.startswith('org.mysite') and name.endswith('.py'):
-                       return True
-                   return False
-               def getSpec(self, name):
-                   pname = name[:-3]
-                   devel = os.environ.get('DEVEL')
-                   path = os.path.join(devel, pname,'py','__init__.py')
-                   return importlib.util.spec_from_file_location(name, path)
-       """
 
-        def canCustomize(self, name):
-            """ Determine if this path is to be treated differently 
-
-            Return:
-                True if an alternative spec is required.
-            """
-            return False
-
-        def getSpec(self, name):
-            """ Get the module spec for this module. 
-            """
-            raise NotImplementedError
-else:
-    def registerImportCustomizer(customizer):
-        raise NotImplementedError(
-            "Import customizers not implemented for Python 2.x")
-    JImportCustomizer = object
 
 
 # %% Import
@@ -384,8 +384,8 @@ def registerDomain(mod, alias=None):
 
     Args:
         mod(str): Is the Python module to bind to Java.
-        alias(str, optional): Is the name of the Java path if different 
-          than the Python name. 
+        alias(str, optional): Is the name of the Java path if different
+          than the Python name.
     """
     if not alias:
         alias = mod

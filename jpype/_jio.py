@@ -21,16 +21,16 @@ from . import _jexception
 # This contains a customizer for closeable so that we can use the python "with"
 # statement.
 
-if _sys.version_info > (3,):
-    pass
+
+
 
 
 @_jcustomizer.JImplementationFor("java.lang.AutoCloseable")
 class _JCloseable(object):
     """ Customizer for ``java.lang.AutoCloseable`` and ``java.io.Closeable``
 
-    This customizer adds support of the `with` operator to all Java 
-    classes that implement Java AutoCloseable interface. 
+    This customizer adds support of the `with` operator to all Java
+    classes that implement Java AutoCloseable interface.
 
     Example:
 

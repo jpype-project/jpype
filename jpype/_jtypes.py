@@ -24,15 +24,15 @@ from . import _jcustomizer
 __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
            'JInt', 'JLong', 'JFloat', 'JDouble']
 
-if _sys.version_info > (3,):
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
 
-# FIXME python2 and python3 get different conversions on int and long.  Likely we should
-# unify to got the the same types regardless of version.
+
+
+
+
+
+
+
+
 
 # Set up all the tables
 _maxFloat = 0
@@ -57,10 +57,10 @@ def _initialize():
     # Set up table of automatic conversions
     _JP_TYPE_CLASSES[bool] = JBoolean
     _JP_TYPE_CLASSES[int] = JLong
-    _JP_TYPE_CLASSES[_long] = JLong
+
     _JP_TYPE_CLASSES[float] = JDouble
     _JP_TYPE_CLASSES[str] = _jclass.JClass("java.lang.String")
-    _JP_TYPE_CLASSES[_unicode] = _jclass.JClass("java.lang.String")
+
     _JP_TYPE_CLASSES[type] = _jclass.JClass("java.lang.Class")
     _JP_TYPE_CLASSES[object] = _jclass.JClass("java.lang.Object")
 
@@ -79,7 +79,7 @@ class _JPrimitiveClass(_jclass.JClass):
     These objects have three fields:
 
      - __javaclass__ - the class for this object when matching arguments.
-     - _java_boxed_class - the class to convert to when converting to an 
+     - _java_boxed_class - the class to convert to when converting to an
         object.
      - __javavalue__ - the instance of the java value.
 
@@ -133,7 +133,7 @@ class _JPrimitive(object):
     def longValue(self):
         if self._pyv < -9223372036854775808 or self._pyv > 9223372036854775807:
             raise OverFlowError("Cannot convert to long value")
-        return _long(self._pyv)
+        return int(self._pyv)
 
     def floatValue(self):
         if self._pyv < -_maxFloat or self._pyv > _maxFloat:
@@ -151,6 +151,6 @@ JByte = _JPrimitiveClass("byte", int)
 JChar = _JPrimitiveClass("char", int)
 JShort = _JPrimitiveClass("short", int)
 JInt = _JPrimitiveClass("int", int)
-JLong = _JPrimitiveClass("long", _long)
+JLong = _JPrimitiveClass("long", int)
 JFloat = _JPrimitiveClass("float", float)
 JDouble = _JPrimitiveClass("double", float)

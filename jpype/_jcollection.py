@@ -38,7 +38,7 @@ def isPythonSequence(v):
 class _JIterable(object):
     """ Customizer for ``java.util.Iterable``
 
-    This customizer adds the Python iterator syntax to classes that 
+    This customizer adds the Python iterator syntax to classes that
     implement Java Iterable.
     """
 

@@ -24,9 +24,9 @@ import sys
 class JVMNotFoundException(ValueError):
     """ Exception raised when no JVM was found in the search path.
 
-    This exception is raised when the all of the places searched did not 
-    contain a JVM. The locations searched depend on the machine architecture. 
-    To avoid this exception specify the JAVA_HOME environment variable as a 
+    This exception is raised when the all of the places searched did not
+    contain a JVM. The locations searched depend on the machine architecture.
+    To avoid this exception specify the JAVA_HOME environment variable as a
     valid jre or jdk root directory.
     """
     pass

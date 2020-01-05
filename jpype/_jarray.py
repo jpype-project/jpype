@@ -27,9 +27,9 @@ from . import _jobject
 from . import _jstring
 from . import _jcustomizer
 
-if _sys.version > '3':
-    unicode = str
-    irange = range
+
+
+
 
 __all__ = ['JArray']
 
@@ -52,7 +52,7 @@ class _JArray(object):
     The resulting Java array class can be used to construct a new
     array with a given size or members.
 
-    JPype arrays support Python operators for iterating, length, equals, 
+    JPype arrays support Python operators for iterating, length, equals,
     not equals, subscripting, and limited slicing. They also support Java
     object methods, clone, and length property. Java arrays may not
     be resized, thus elements cannot be added nor deleted. Currently,
@@ -64,7 +64,7 @@ class _JArray(object):
           # Define a new array class for ``int[]``
           IntArrayCls = JArray(JInt)
 
-          # Create an array holding 10 elements 
+          # Create an array holding 10 elements
           #   equivalent to Java ``int[] x=new int[10]``
           x = IntArrayCls(10)
 
@@ -85,9 +85,9 @@ class _JArray(object):
                print("class is a java array type.")
 
     Args:
-      javaClass (str,type): Is the type of element to hold in 
+      javaClass (str,type): Is the type of element to hold in
         the array.
-      ndims (Optional,int): the number of dimensions of the array 
+      ndims (Optional,int): the number of dimensions of the array
         (default=1)
 
     Returns:
@@ -96,7 +96,7 @@ class _JArray(object):
     Raises:
       TypeError: if the component class is invalid or could not be found.
 
-    Note: 
+    Note:
       javaClass can be specified in three ways:
 
         - as a string with the name of a java class.
@@ -169,7 +169,7 @@ class _JArray(object):
             start, stop, step = ndx.indices(len(self))
             if step != 1:
                 # Iterate in python if we need to step
-                indices = irange(start, stop, step)
+                indices = range(start, stop, step)
                 for index, value in zip(indices, val):
                     self[index] = value
             else:
@@ -211,13 +211,13 @@ class _JArray(object):
 
         Create a "shallow" copy of a Java array. For a
         single dimensional array of primitives, the cloned array is
-        complete independent copy of the original. For objects or 
+        complete independent copy of the original. For objects or
         multidimensional arrays, the new array is a copy which points
         to the same members as the original.
 
         To obtain a deep copy of a Java array, use Java serialize and
-        deserialize operations to duplicate the entire array and 
-        contents. In order to deep copy, the objects must be 
+        deserialize operations to duplicate the entire array and
+        contents. In order to deep copy, the objects must be
         Serializable.
 
         Returns:
@@ -286,13 +286,13 @@ class _JCharArray(object):
     def __str__(self):
         return str(_jstring.JString(self))
 
-    def __unicode__(self):
-        return unicode(_jstring.JString(self))
+
+
 
     def __eq__(self, other):
         if hasattr(other, '__javavalue__'):
             return self.equals(other)
-        elif isinstance(other, (str, unicode)):
+        elif isinstance(other, str):
             return self[:] == other
         try:
             return self.equals(self.__class__(other))

@@ -55,7 +55,7 @@ def addClassPath(path1):
     glob pattern.
 
     Arguments:
-      path(str): 
+      path(str):
 
     """
     global _CLASSPATHS
@@ -72,7 +72,7 @@ def getClassPath(env=True):
     Includes user added paths and the environment CLASSPATH.
 
     Arguments:
-      env(Optional, bool): If true then environment is included. 
+      env(Optional, bool): If true then environment is included.
         (default True)
     """
     global _CLASSPATHS

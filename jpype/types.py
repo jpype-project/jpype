@@ -15,13 +15,13 @@
 #
 # *****************************************************************************
 
-""" 
+"""
 JPype Types Module
 ------------------
 
-Optional module containing only the Java types and factories used by 
-JPype.  Classes in this module include ``JArray``, ``JClass``, 
-``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
+Optional module containing only the Java types and factories used by
+JPype.  Classes in this module include ``JArray``, ``JClass``,
+``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``,
 ``JFloat``, ``JDouble``, ``JString``, ``JObject``, and ``JException``.
 
 Example:

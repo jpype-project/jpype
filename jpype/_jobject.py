@@ -25,12 +25,12 @@ from . import _jinit
 
 __all__ = ['JObject']
 
-if _sys.version > '3':
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
+
+
+
+
+
+
 
 
 def _initialize():
@@ -44,31 +44,31 @@ class JObject(object):
     It can be used to test if an object is a java object instance with
     ``isinstance(obj, JObject)``.
 
-    Calling ``JObject`` as a function can be used to covert or cast to 
-    specific Java type.  It will box primitive types and supports an 
+    Calling ``JObject`` as a function can be used to covert or cast to
+    specific Java type.  It will box primitive types and supports an
     option type to box to.
 
-    This wrapper functions four ways. 
+    This wrapper functions four ways.
 
-      - If the no type is given the object is automatically 
-        cast to type best matched given the value.  This can be used 
+      - If the no type is given the object is automatically
+        cast to type best matched given the value.  This can be used
         to create a boxed primitive.  ``JObject(JInt(i))``
 
       - If the type is a primitve, the object will be the boxed type of that
         primitive.  ``JObject(1, JInt)``
 
       - If the type is a Java class and the value is a Java object, the
-        object will be cast to the Java class and will be an exact match to 
-        the class for the purposes of matching arguments. If the object 
+        object will be cast to the Java class and will be an exact match to
+        the class for the purposes of matching arguments. If the object
         is not compatible, an exception will be raised.
 
       - If the value is a python wrapper for class it will create a class
-        instance.  This is aliased to be much more obvious as the ``class_`` 
+        instance.  This is aliased to be much more obvious as the ``class_``
         member of each Java class.
 
     Args:
        value: The value to be cast into an Java object.
-       type(Optional, type): The type to cast into.  
+       type(Optional, type): The type to cast into.
 
     Raises:
        TypeError: If the object cannot be cast to the specified type, or
@@ -116,8 +116,8 @@ class JObject(object):
     def __str__(self):
         return self.__javavalue__.toString()
 
-    def __unicode__(self):
-        return self.__javavalue__.toUnicode()
+
+
 
     def __hash__(self):
         return self.hashCode()
@@ -153,7 +153,7 @@ def _JObjectFactory(v=None, tp=None):
         return _jclass._getDefaultJavaObject(v)
 
     # If it is a string look up the class name,
-    elif isinstance(tp, (str, _unicode)):
+    elif isinstance(tp, str):
         return _jclass.JClass(tp)
 
     # Check if we are to box it,

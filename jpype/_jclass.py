@@ -19,12 +19,12 @@ from . import _jcustomizer
 
 __all__ = ['JClass', 'JInterface', 'JOverride']
 
-if _sys.version > '3':
-    _unicode = str
-    _long = int
-else:
-    _unicode = unicode
-    _long = long
+
+
+
+
+
+
 
 _JObject = None
 
@@ -64,10 +64,10 @@ def _initialize():
     global _JP_OBJECT_CLASSES
     _JP_OBJECT_CLASSES[bool] = java_lang_Boolean
     _JP_OBJECT_CLASSES[int] = java_lang_Long
-    _JP_OBJECT_CLASSES[_long] = java_lang_Long
+
     _JP_OBJECT_CLASSES[float] = java_lang_Double
     _JP_OBJECT_CLASSES[str] = java_lang_String
-    _JP_OBJECT_CLASSES[_unicode] = java_lang_String
+
     _JP_OBJECT_CLASSES[type] = _java_lang_Class
     _JP_OBJECT_CLASSES[_jpype.PyJPClass] = _java_lang_Class
     _JP_OBJECT_CLASSES[object] = _java_lang_Object
@@ -363,7 +363,7 @@ def _toJavaClass(tp):
      - (type) uses a lookup table to find the class.
     """
     # if it a string
-    if isinstance(tp, (str, _unicode)):
+    if isinstance(tp, str):
         return JClass(tp).__javaclass__
 
     if isinstance(tp, _jpype.PyJPClass):
