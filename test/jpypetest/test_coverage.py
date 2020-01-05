@@ -16,6 +16,8 @@ class CoverageCase(common.JPypeTestCase):
         self.assertEqual(f, "foo")
 
     def testCygwin(self):
+        if sys.platform == "cygwin":
+            raise common.unittest.SkipTest("not tested on cygwin")
         try:
             sys.platform = "cygwin"
             importlib.reload(jpype._classpath)
@@ -50,6 +52,8 @@ class CoverageCase(common.JPypeTestCase):
             importlib.reload(jpype._classpath)
 
     def testWin32(self):
+        if sys.platform == "win32":
+            raise common.unittest.SkipTest("not tested on win32")
         try:
             sys.platform = "win32"
             importlib.reload(jpype._classpath)
@@ -59,7 +63,7 @@ class CoverageCase(common.JPypeTestCase):
         finally:
             sys.platform = self.platform
             importlib.reload(jpype._classpath)
- 
+
     def testHandleClassPath(self):
         with self.assertRaises(TypeError):
             jpype._core._handleClassPath([1])
@@ -137,12 +141,70 @@ class CoverageCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             jpype.java.lang.Boolean(1,2)
 
+    def testJStringAppend(self):
+        js = jpype.JString("foo")
+        self.assertEqual(js+"bar", "foobar")
+        if not self._convertStrings:
+            self.assertIsInstance(js+"bar", jpype.java.lang.String)
+
+    def testJStringNE(self):
+        js = jpype.JString("foo")
+        self.assertFalse(js!="foo")
+        self.assertFalse(js!=jpype.JString("foo"))
+
+    # FIXME review this for slices and other cases, we may need
+    # to improve this one
+    def testJStringGetItem(self):
+        js = jpype.JString("fred")
+        self.assertEqual(js[1],"r")
+
+    def testJStringLen(self):
+        js = jpype.JString("fred")
+        self.assertEqual(len(js),4)
+
+    def testJStringLT(self):
+        js = jpype.JString("b")
+        self.assertTrue(js<'c')
+        self.assertFalse(js<'b')
+        self.assertFalse(js<'a')
+
+    def testJStringLE(self):
+        js = jpype.JString("b")
+        self.assertTrue(js<='c')
+        self.assertTrue(js<='b')
+        self.assertFalse(js<='a')
+
+    def testJStringGT(self):
+        js = jpype.JString("b")
+        self.assertFalse(js>'c')
+        self.assertFalse(js>'b')
+        self.assertTrue(js>'a')
+
+    def testJStringGE(self):
+        js = jpype.JString("b")
+        self.assertFalse(js>='c')
+        self.assertTrue(js>='b')
+        self.assertTrue(js>='a')
+
+    def testJStringContains(self):
+        js = jpype.JString("fred")
+        self.assertTrue("r" in js)
+        self.assertFalse("g" in js)
+
+    def testJStringRepr(self):
+        js = jpype.JString("fred")
+        self.assertTrue(repr(js), "fred")
+
+    # FIXME this one is broken
+#    def testJPrimitiveSetAttr(self):
+#        ji = jpype.JInt(1)
+#        with self.assertRaises(AttributeError):
+#            ji.qq = "wow"
+
+
     # FIXME this path seems like something outdated and is not working
 #    def testJBooleanFromBool(self):
-#        class A:
-#           def booleanValue(self):
-#                return True
-#        self.assertTrue(jpype.java.lang.Boolean(A())==True)
+#        self.assertTrue(jpype.java.lang.Boolean(jpype.JInt(40))==True)
 
 
 

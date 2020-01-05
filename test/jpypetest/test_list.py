@@ -89,7 +89,21 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("c")
         obj.add("d")
         self.assertEqual(tuple(i for i in obj[1:3]), ('b','c'))
- 
+
+    def testGetItemSlice(self):
+        obj = self.cls()
+        obj.add("a")
+        obj.add("b")
+        obj.add("c")
+        obj.add("d")
+        self.assertEqual(tuple(obj[::1]), ('a','b','c','d'))
+        self.assertEqual(tuple(obj[:-2]), ('a','b'))
+        self.assertEqual(tuple(obj[-2:]), ('c','d'))
+        with self.assertRaises(TypeError):
+            obj[::2]
+        with self.assertRaises(TypeError):
+            obj[::-1]
+  
     def testRemoveRange(self):
         obj = self.cls()
         obj.add("a")
@@ -141,6 +155,12 @@ class JListTestCase(common.JPypeTestCase):
         obj.addAll(["a","b","c","d","e"])
         obj.removeAll(["c","d"])
         self.assertEqual(tuple(i for i in obj), ('a', 'b', 'e'))
+
+    def testRetainAll(self):
+        obj = self.cls()
+        obj.addAll(["a","b","c","d","e"])
+        obj.retainAll(["c","d"])
+        self.assertEqual(tuple(i for i in obj), ('c', 'd'))
 
     def testInit(self):
         cls = jpype.JClass('java.util.ArrayList')

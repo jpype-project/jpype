@@ -97,10 +97,10 @@ class _JPrimitiveClass(_jclass.JClass):
         _jclass._JCLASSES[args[0]] = self
         super(_JPrimitive, self).__init__(self)
 
-    def _load(self, boxed):
-        type.__setattr__(self, '__javaclass__',
-                         _jpype.PyJPClass(self.__name__))
-        type.__setattr__(self, '_java_boxed_class', boxed)
+
+
+
+
 
 
 class _JPrimitive(object):
