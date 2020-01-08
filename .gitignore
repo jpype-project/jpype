@@ -67,3 +67,5 @@ target/
 tmp
 doc/html
 native/jars
+docker/*.tar.gz
+docker/wheelhouse

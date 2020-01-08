@@ -1,0 +1,3 @@
+Build the sdist using "python setup.py sdist"
+Copy the distribution from dist to docker
+Execute run.sh
