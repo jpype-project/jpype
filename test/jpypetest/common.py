@@ -53,16 +53,5 @@ class JPypeTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-class test_a(JPypeTestCase):
-    def test(self):
-        assert True
-
-
-class test_fuck(JPypeTestCase):
-
-    def test(self):
-        assert hasattr(self, 'str_conversion')
-
-
 if __name__ == '__main__':
     unittest.main()

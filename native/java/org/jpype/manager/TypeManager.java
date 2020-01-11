@@ -276,9 +276,8 @@ public class TypeManager
     }
     dest.flush();
 
-    // FIXME. If someone was to try the wild ass stunt of
-    // shutting down the JVM from within a python proxy method
-    // it would likely all go to hell. We would lose the class
+    // FIXME. If someone attempts to shutdown the JVM within a Python
+    // proxy, everything will crash here.  We would lose the class
     // that is calling things and the ability to throw exceptions.
     // Most likely this will go splat. We need to catch this
     // from within JPype and hard fault our way to safety.
