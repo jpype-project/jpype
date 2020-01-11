@@ -58,12 +58,13 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 {
 	JP_PY_TRY("PyJPClassHints_addAttributeConversion", self);
 	char* attribute;
-	Py_ssize_t len;
 	PyObject *method;
-	if (!PyArg_ParseTuple(args, "s#O", &attribute, &len, &method))
+	if (!PyArg_ParseTuple(args, "sO", &attribute, &method))
 		return NULL;
+	JP_TRACE(attribute);
+	JP_TRACE(Py_TYPE(method)->tp_name);
 
-	self->m_Hints->addAttributeConversion(string(attribute, len), method);
+	self->m_Hints->addAttributeConversion(string(attribute), method);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }

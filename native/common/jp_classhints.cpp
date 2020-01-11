@@ -130,8 +130,12 @@ private:
 
 void JPClassHints::addAttributeConversion(const string &attribute, PyObject *conversion)
 {
+	JP_TRACE_IN("JPClassHints::addAttributeConversion", this);
+	JP_TRACE(attribute);
 	conversions.push_back(new JPAttributeConversion(attribute, conversion));
+	JP_TRACE_OUT;
 }
+
 //</editor-fold>
 //<editor-fold desc="type conversion" defaultstate="collapsed">
 
@@ -168,7 +172,9 @@ private:
 
 void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exact)
 {
+	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
 	conversions.push_back(new JPTypeConversion(type, method, exact));
+	JP_TRACE_OUT;
 }
 //</editor-fold>
 
