@@ -67,8 +67,8 @@ public:
 		return JPModifier::isBeanAccessor(m_Modifiers);
 	}
 
-	JPPyObject invoke(JPPyObjectVector& vargs, bool instance);
-	JPValue invokeConstructor(JPPyObjectVector& vargs);
+	JPPyObject invoke(JPJavaFrame& frame, JPPyObjectVector& vargs, bool instance);
+	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 
 	string matchReport(JPPyObjectVector& sequence);
 	string dump();
@@ -84,7 +84,7 @@ private:
 	 * @param searchInstance is true if the first argument is to be skipped
 	 * when matching with a non-static.
 	 */
-	void findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance);
+	void findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance);
 	void dumpOverloads();
 
 	JPClass*      m_Class;

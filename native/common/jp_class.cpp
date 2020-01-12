@@ -66,10 +66,10 @@ void JPClass::assignMembers(JPMethodDispatch* ctor,
 
 //<editor-fold desc="new" defaultstate="collapsed">
 
-JPValue JPClass::newInstance(JPPyObjectVector& args)
+JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	ASSERT_NOT_NULL(m_Constructors);
-	return m_Constructors->invokeConstructor(args);
+	return m_Constructors->invokeConstructor(frame, args);
 }
 
 jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)

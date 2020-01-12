@@ -78,12 +78,6 @@ public:
 		return m_Value;
 	}
 
-	JPValue& keep(JPJavaFrame& frame)
-	{
-		m_Value.l = frame.keep(m_Value.l);
-		return *this;
-	}
-
 	JPValue& global(JPJavaFrame& frame)
 	{
 		m_Value.l = frame.NewGlobalRef(m_Value.l);

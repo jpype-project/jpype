@@ -29,17 +29,20 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 PyObject* PyJPValueBase_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValueBase_new");
-	return type->tp_alloc(type, 0);
+	PyObject* self = type->tp_alloc(type, 0);
+	JP_TRACE("got", self);
+	return self;
 	JP_PY_CATCH(NULL);
 }
 
-int PyJPValue_construct(PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObject *kwargs)
+int PyJPValue_construct(JPContext* context, PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObject *kwargs)
 {
-	JPContext* context = PyJPModule_getContext();
+	JP_PY_TRY("PyJPValueBase_construct");
 	JPPyObjectVector args(pyargs);
+	JPJavaFrame frame(context);
 
 	// Create an instance (this may fail)
-	JPValue value = cls->newInstance(args);
+	JPValue value = cls->newInstance(frame, args);
 
 	// If we succeed then we can hook up the context
 	if (context != NULL && !cls->isPrimitive())
@@ -50,7 +53,9 @@ int PyJPValue_construct(PyJPValue *self, JPClass* cls, PyObject *pyargs, PyObjec
 		value.getValue().l = frame.NewGlobalRef(value.getValue().l);
 	}
 	self->m_Value = value;
+	JP_TRACE("Value", self->m_Value.getValue().l);
 	return 0;
+	JP_PY_CATCH(-1);
 }
 
 int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
@@ -64,7 +69,7 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 	PyObject_SetAttrString(self, __javavalue__, inner);
 
 	// Access the context first so we ensure JVM is running
-	PyJPModule_getContext();
+	JPContext* context = PyJPModule_getContext();
 
 	// Get the Java class from the type.
 	JPPyObject type = JPPyObject(JPPyRef::_call,
@@ -73,8 +78,7 @@ int PyJPValueBase_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 		JP_RAISE(PyExc_TypeError, "__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
-	JP_TRACE("type", cls->getCanonicalName());
-	return PyJPValue_construct((PyJPValue*) inner, cls, pyargs, kwargs);
+	return PyJPValue_construct(context, (PyJPValue*) inner, cls, pyargs, kwargs);
 	JP_PY_CATCH(-1);
 }
 
@@ -83,6 +87,7 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	JP_PY_TRY("PyJPValue_new");
 	PyJPValue *self = (PyJPValue*) type->tp_alloc(type, 0);
 	self->m_Value = JPValue();
+	JP_TRACE("got", self);
 	return (PyObject*) self;
 	JP_PY_CATCH(NULL);
 }
@@ -90,10 +95,9 @@ PyObject *PyJPValue_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPValue_init", self);
-	//	PyJPModuleState *state = PyJPModuleState_global;
 
 	// Access the context first so we ensure JVM is running
-	PyJPModule_getContext();
+	JPContext* context = PyJPModule_getContext();
 
 	// Check if we are already initialized.
 	if (self->m_Value.getClass() != 0)
@@ -106,16 +110,25 @@ int PyJPValue_init(PyJPValue *self, PyObject *pyargs, PyObject *kwargs)
 		JP_RAISE(PyExc_TypeError, "__javaclass__ type is incorrect");
 
 	JPClass *cls = ((PyJPClass*) type.get())->m_Class;
-	return PyJPValue_construct(self, cls, pyargs, kwargs);
+	return PyJPValue_construct(context, self, cls, pyargs, kwargs);
 	JP_PY_CATCH(-1);
+}
+
+void PyJPValueBase_dealloc(PyJPValue *self)
+{
+	JP_PY_TRY("PyJPValueBase_dealloc", self);
+	PyTypeObject *type = Py_TYPE(self);
+	type->tp_free((PyObject*) self);
+	JP_PY_CATCH();
 }
 
 void PyJPValue_dealloc(PyJPValue *self)
 {
 	JP_PY_TRY("PyJPValue_dealloc", self);
 	// We have to handle partially constructed objects that result from
-	// fails in __init__, thus lots of inits
+	// fails in __init__, thus lots of checks
 	JPValue& value = self->m_Value;
+	JP_TRACE("Value", self->m_Value.getValue().l);
 	JPClass *cls = value.getClass();
 
 	PyJPModuleState *state = PyJPModuleState_global;
@@ -368,6 +381,7 @@ static struct PyMethodDef baseMethods[] = {
 static PyType_Slot baseSlots[] = {
 	{Py_tp_new,      (void*) PyJPValueBase_new},
 	{Py_tp_init,     (void*) PyJPValueBase_init},
+	{Py_tp_dealloc,  (void*) PyJPValueBase_dealloc},
 	{Py_tp_setattro, (void*) PyJPValue_setattro},
 	{Py_tp_str,      (void*) PyJPValue_str},
 	{Py_tp_repr,     (void*) PyJPValue_repr},
@@ -422,7 +436,7 @@ PyType_Spec PyJPValueSpec = {
  */
 JPPyObject PyJPValue_create(PyTypeObject *type, JPContext *context, const JPValue& value)
 {
-	JP_TRACE_IN("PyJPValue_createInstance");
+	JP_TRACE_IN("PyJPValue_create");
 	PyJPModuleState *state = PyJPModuleState_global;
 	// dispatch by type so we will create the right wrapper type
 	JPPyObject out;

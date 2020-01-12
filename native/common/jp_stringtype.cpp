@@ -83,17 +83,16 @@ JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame* frame, JPMatch& match
 	JP_TRACE_OUT;
 }
 
-JPValue JPStringType::newInstance(JPPyObjectVector& args)
+JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPStringType::newInstance");
 	if (args.size() == 1 && JPPyString::check(args[0]))
 	{
-		JPJavaFrame frame(m_Context);
 		// JNI has a short cut for constructing java.lang.String
 		JP_TRACE("Direct");
 		string str = JPPyString::asStringUTF8(args[0]);
-		return JPValue(this, frame.fromStringUTF8(str)).keep(frame);
+		return JPValue(this, frame.fromStringUTF8(str));
 	}
-	return JPClass::newInstance(args);
+	return JPClass::newInstance(frame, args);
 	JP_TRACE_OUT;
 }

@@ -351,7 +351,7 @@ public:
 		JP_TRACE_IN("JPConversionBox::convert");
 		jvalue res;
 		JPPyObjectVector args(pyobj, NULL);
-		JPValue pobj = cls->newInstance(args);
+		JPValue pobj = cls->newInstance(*frame, args);
 		res.l = pobj.getJavaObject();
 		return res;
 		JP_TRACE_OUT;

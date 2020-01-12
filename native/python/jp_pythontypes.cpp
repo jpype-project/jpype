@@ -379,11 +379,12 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 
 string JPPyString::asStringUTF8(PyObject *pyobj)
 {
-	JP_PY_TRY("JPPyUnicode::asStringUTF8");
+	JP_PY_TRY("JPPyString::asStringUTF8");
 	ASSERT_NOT_NULL(pyobj);
 
 	if (PyUnicode_Check(pyobj))
 	{
+		JP_TRACE("Unicode");
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
 		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
@@ -395,6 +396,7 @@ string JPPyString::asStringUTF8(PyObject *pyobj)
 			return string();
 	} else if (PyBytes_Check(pyobj))
 	{
+		JP_TRACE("Bytes");
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
 		PyBytes_AsStringAndSize(pyobj, &buffer, &size);

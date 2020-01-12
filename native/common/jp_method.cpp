@@ -206,7 +206,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
+JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
 	// Check if it is caller sensitive
@@ -215,7 +215,6 @@ JPPyObject JPMethod::invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool in
 
 	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(context, (int) (8 + alen));
 	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
@@ -323,15 +322,14 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethod::invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg)
+JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethod::invokeConstructor");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(m_Class->getContext(), 8 + alen);
 	vector<jvalue> v(alen + 1);
 	packArgs(frame, match, v, arg);
 	JPPyCallRelease call;
-	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0])).keep(frame);
+	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
 	JP_TRACE_OUT;
 }
 

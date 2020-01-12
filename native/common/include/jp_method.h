@@ -49,9 +49,9 @@ public:
 	 *
 	 */
 	JPMatch::Type matches(JPJavaFrame &frame, JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
-	JPPyObject invoke(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
+	JPPyObject invoke(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPPyObject invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
-	JPValue invokeConstructor(JPMethodMatch& match, JPPyObjectVector& arg);
+	JPValue invokeConstructor(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg);
 
 	bool isAbstract() const
 	{

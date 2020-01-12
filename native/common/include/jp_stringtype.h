@@ -32,7 +32,7 @@ public:
 public:
 	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 	JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj) override;
-	virtual JPValue newInstance(JPPyObjectVector& args) override;
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 
 	// Use by arrays
 	jobject stringToCharArray(JPJavaFrame& frame, jstring str);

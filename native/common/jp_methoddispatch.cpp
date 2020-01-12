@@ -42,10 +42,9 @@ string JPMethodDispatch::getClassName() const
 	return m_Class->getCanonicalName();
 }
 
-void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& arg, bool callInstance)
+void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg, bool callInstance)
 {
 	JP_TRACE_IN("JPMethodDispatch::findOverload");
-	JPJavaFrame frame(m_Class->getContext());
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
@@ -158,21 +157,21 @@ void JPMethodDispatch::findOverload(JPMethodMatch &bestMatch, JPPyObjectVector& 
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethodDispatch::invoke(JPPyObjectVector& args, bool instance)
+JPPyObject JPMethodDispatch::invoke(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
 	JPMethodMatch match(args.size());
-	findOverload(match, args, instance);
-	return match.overload->invoke(match, args, instance);
+	findOverload(frame, match, args, instance);
+	return match.overload->invoke(frame, match, args, instance);
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethodDispatch::invokeConstructor(JPPyObjectVector& args)
+JPValue JPMethodDispatch::invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPMethodDispatch::invokeConstructor");
 	JPMethodMatch match(args.size());
-	findOverload(match, args, false);
-	return match.overload->invokeConstructor(match, args);
+	findOverload(frame, match, args, false);
+	return match.overload->invokeConstructor(frame, match, args);
 	JP_TRACE_OUT;
 }
 

@@ -87,11 +87,11 @@ PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 	if (self->m_Instance == NULL)
 	{
 		JPPyObjectVector vargs(args);
-		return self->m_Method->invoke(vargs, false).keep();
+		return self->m_Method->invoke(frame, vargs, false).keep();
 	} else
 	{
 		JPPyObjectVector vargs(self->m_Instance, args);
-		return self->m_Method->invoke(vargs, true).keep();
+		return self->m_Method->invoke(frame, vargs, true).keep();
 	}
 	JP_PY_CATCH(NULL);
 }

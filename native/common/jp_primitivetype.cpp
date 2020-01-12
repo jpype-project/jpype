@@ -35,7 +35,7 @@ bool JPPrimitiveType::isAssignableFrom(JPClass* o)
 	return this == o;
 }
 
-JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
+JPValue JPPrimitiveType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	if (args.size() != 1)
 		JP_RAISE(PyExc_TypeError, "primitives take 1 positional argument");
@@ -49,5 +49,5 @@ JPValue JPPrimitiveType::newInstance(JPPyObjectVector& args)
 		JP_RAISE(PyExc_TypeError, "Unable to create an instance.");
 
 	// Otherwise give back a PyJPValue
-	return JPValue(this, match.conversion->convert(NULL, this, args[0]));
+	return JPValue(this, match.conversion->convert(&frame, this, args[0]));
 }

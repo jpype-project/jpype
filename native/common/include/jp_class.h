@@ -183,7 +183,7 @@ public:
 		return m_SuperClass;
 	}
 
-	virtual JPValue newInstance(JPPyObjectVector& args);
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
 
 	const JPClassList& getInterfaces()
 	{

@@ -35,7 +35,7 @@ public:
 
 	virtual bool isAssignableFrom(JPClass* o);
 
-	virtual JPValue newInstance(JPPyObjectVector& args);
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
 
 	virtual string asString(jvalue v) = 0;
 

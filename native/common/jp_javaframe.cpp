@@ -137,8 +137,11 @@ jobject JPJavaFrame::NewLocalRef(jobject a0)
 
 jobject JPJavaFrame::NewGlobalRef(jobject a0)
 {
+	JP_TRACE_IN("JPJavaFrame::NewGlobalRef", a0);
 	jobject res = m_Env->functions->NewGlobalRef(m_Env, a0);
+	JP_TRACE("got", res);
 	return res;
+	JP_TRACE_OUT;
 }
 
 /*****************************************************************************/
@@ -1064,9 +1067,8 @@ string JPJavaFrame::toStringUTF8(jstring str)
 
 jstring JPJavaFrame::fromStringUTF8(const string& str)
 {
-	JPJavaFrame frame(*this);
 	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
-	return (jstring) frame.keep(frame.NewStringUTF(mstr.c_str()));
+	return (jstring) NewStringUTF(mstr.c_str());
 }
 
 jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)

@@ -182,10 +182,9 @@ jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& r
 	JP_TRACE_OUT;
 }
 
-JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
+JPValue JPArrayClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPArrayClass::newInstance", this);
-	JPJavaFrame frame(getContext());
 	if (args.size() != 1)
 		JP_RAISE(PyExc_TypeError, "Arrays require one argument");
 
@@ -196,7 +195,7 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 		jobject inst = m_ComponentType->newArrayInstance(frame, (jsize) sz);
 		JPArray array(this, (jarray) inst);
 		array.setRange(0, (jsize) sz, args[0]);
-		return JPValue(this, inst).keep(frame);
+		return JPValue(this, inst);
 	}
 
 	if (PyIndex_Check(args[0]))
@@ -205,7 +204,7 @@ JPValue JPArrayClass::newInstance(JPPyObjectVector& args)
 		Py_ssize_t sz = PyNumber_AsSsize_t(args[0], NULL);
 		if (sz < 0 )
 			JP_RAISE(PyExc_ValueError, "Invalid size");
-		return JPValue(this, m_ComponentType->newArrayInstance(frame, (int) sz)).keep(frame);
+		return JPValue(this, m_ComponentType->newArrayInstance(frame, (int) sz));
 	}
 
 	JP_RAISE(PyExc_TypeError, "Arrays require int or sequence parameters");

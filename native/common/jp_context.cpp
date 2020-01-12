@@ -270,6 +270,7 @@ void JPContext::createJVM(void* arg)
 
 void JPContext::ReleaseGlobalRef(jobject obj)
 {
+	JP_TRACE_IN("JPContext::ReleaseGlobalRef", obj);
 	// Check if the JVM is already shutdown
 	if (m_JavaVM == NULL)
 		return;
@@ -281,6 +282,7 @@ void JPContext::ReleaseGlobalRef(jobject obj)
 	jint res = m_JavaVM->functions->GetEnv(m_JavaVM, (void**) &env, USE_JNI_VERSION);
 	if (res != JNI_EDETACHED)
 		env->functions->DeleteGlobalRef(env, obj);
+	JP_TRACE_OUT;
 }
 
 /*****************************************************************************/
