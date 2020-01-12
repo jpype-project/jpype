@@ -4,9 +4,10 @@ os:
 language: python
 
 python:
-  - '3.4'
   - '3.5'
   - '3.6'
+  - '3.7'
+  - '3.8'
   - 'nightly'
   - 'pypy'
   - 'pypy3'
@@ -33,8 +34,8 @@ matrix:
     - python: pypy3
 
   include:
-    - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
-      python: 3.7
+    - name: "Python 3.8 on Xenial Linux (w/o NUMPY)"
+      python: 3.8
       dist: xenial
       language: python
       env:
@@ -42,16 +43,16 @@ matrix:
         - PIP=pip3
         - NUMPY="--global-option=--disable-numpy"
 
-    - name: "Python 3.7 on Xenial Linux"
-      python: 3.7
+    - name: "Python 3.8 on Xenial Linux"
+      python: 3.8
       dist: xenial
       language: python
       env:
         - PYTHON=python3
         - PIP=pip3
 
-    - name: "Python 3.7 on Xenial Linux"
-      python: 3.7
+    - name: "Python 3.8 on Xenial Linux"
+      python: 3.8
       dist: xenial
       language: python
       env:
