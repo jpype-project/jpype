@@ -108,7 +108,7 @@ class LeakChecker():
 
 
 def stringFunc():
-    jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
+    jpype.java.lang.String('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
 
 def classFunc():
