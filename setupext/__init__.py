@@ -7,3 +7,4 @@ from . import build_thunk
 from . import test_java
 from . import sdist
 from . import pytester
+from . import wheel
