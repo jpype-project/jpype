@@ -23,9 +23,18 @@ try:
             print("Setting numpy requirement to %s"%version)
             _bdist_wheel.run(self)
 
-except ImportException:
+except ImportError:
     class WheelCommand(Command):
-        pass
+         # Brief (40-50 characters) description of the command
+        description = "Fake bdist_wheel command"
+        user_options = []
 
+        def initialize_options(self):
+            pass
 
+        def finalize_options(self):
+            pass
+
+        def run(self):
+            print("Wheel was not installed")
 
