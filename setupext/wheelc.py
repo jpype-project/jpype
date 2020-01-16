@@ -23,7 +23,8 @@ try:
             print("Setting numpy requirement to %s"%version)
             _bdist_wheel.run(self)
 
-except ImportError:
+except ImportError as ex:
+    raise ex
     class WheelCommand(Command):
          # Brief (40-50 characters) description of the command
         description = "Fake bdist_wheel command"
