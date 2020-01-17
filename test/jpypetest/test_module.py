@@ -15,7 +15,7 @@ if __name__!="subprocess":
 def subrun(function, *args):
     """ Utility function to launch a subprocess and get the result. """
     os.environ['PYTHONPATH'] = os.getcwd()
-    pickle.dump([*args], open("input.pic",'wb'))
+    pickle.dump(args, open("input.pic",'wb'))
     child = subprocess.Popen([sys.executable, "-"],stdin=subprocess.PIPE)
     prog= []
     prog.append('with open(r"%s","r") as fd:'%os.path.abspath(__file__))
