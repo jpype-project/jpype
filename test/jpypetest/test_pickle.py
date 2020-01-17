@@ -17,6 +17,8 @@
 import jpype
 from jpype import java
 from jpype.pickle import JPickler, JUnpickler
+import pickle
+import sys
 import common
 
 try:
@@ -24,27 +26,39 @@ try:
 except ImportError:
     import unittest
 
+def dump(fname):
+    with open(fname, "rb") as fd:
+        data = fd.read()
+    out = ["%02x"%i for i in data]
+    print("Pickle fail", " ".join(out), file=sys.stderr)
+
 
 class PickleTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
     def testString(self):
-        s = java.lang.String("test")
-        with open("test.pic","wb") as fd:
-            JPickler(fd).dump(s)
-        with open("test.pic","rb") as fd:
-            s2 = JUnpickler(fd).load()
+        try:
+            s = java.lang.String("test")
+            with open("test.pic","wb") as fd:
+                JPickler(fd).dump(s)
+            with open("test.pic","rb") as fd:
+                s2 = JUnpickler(fd).load()
+        except pickle.UnpicklingError:
+            dump("test.pic")
         self.assertEqual(s,s2)
 
     def testList(self):
         s = java.util.ArrayList()
         s.add("test")
         s.add("this")
-        with open("test.pic","wb") as fd:
-            JPickler(fd).dump(s)
-        with open("test.pic","rb") as fd:
-            s2 = JUnpickler(fd).load()
+        try:
+            with open("test.pic","wb") as fd:
+                JPickler(fd).dump(s)
+            with open("test.pic","rb") as fd:
+                s2 = JUnpickler(fd).load()
+        except pickle.UnpicklingError:
+            dump("test.pic")
         self.assertEqual(s2.get(0), "test")
         self.assertEqual(s2.get(1), "this")
 
@@ -52,10 +66,13 @@ class PickleTestCase(common.JPypeTestCase):
         d = {}
         d["array"] = java.util.ArrayList()
         d["string"] = java.lang.String("food")
-        with open("test.pic","wb") as fd:
-            JPickler(fd).dump(d)
-        with open("test.pic","rb") as fd:
-            d2 = JUnpickler(fd).load()
+        try:
+            with open("test.pic","wb") as fd:
+                JPickler(fd).dump(d)
+            with open("test.pic","rb") as fd:
+                d2 = JUnpickler(fd).load()
+        except pickle.UnpicklingError:
+            dump("test.pic")
         self.assertEqual(d2['string'], "food")
         self.assertIsInstance(d2['array'], java.util.ArrayList)
 
