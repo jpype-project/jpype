@@ -19,18 +19,20 @@ setup(
     maintainer_email='cooperate@originell.org',
     url='https://github.com/jpype-project/jpype',
     platforms=[
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Operating System :: Microsoft :: Windows :: Windows Vista',
-        'Operating System :: POSIX :: Linux',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
+        'Operating System :: Unix',
+        'Operating System :: MacOS',
     ],
     classifiers=[
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+    ],
+    topics=[
+        'Topic :: Software Development',
+        'Topic :: Scientific/Engineering',
     ],
     packages=[
         'jpype'],

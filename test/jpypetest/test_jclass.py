@@ -174,3 +174,4 @@ class JClassTestCase(common.JPypeTestCase):
         with self.assertRaises(jpype.JException):
             intr()
 
+

@@ -178,10 +178,7 @@ JPPyObject JPPythonEnv::getMethodDoc(PyJPMethod* javaMethod)
 {
 	JP_TRACE_IN("JPPythonEnv::getMethodDoc");
 	if (s_Resources->s_GetMethodDoc.isNull())
-	{
-		JP_TRACE("Resource not set.");
-		return JPPyObject();
-	}
+		JP_RAISE_RUNTIME_ERROR("GetMethodDoc resource not set.");
 
 	ASSERT_NOT_NULL(javaMethod);
 
@@ -221,10 +218,7 @@ JPPyObject JPPythonEnv::getMethodAnnotations(PyJPMethod* javaMethod)
 {
 	JP_TRACE_IN("JPPythonEnv::getMethodAnnotations");
 	if (s_Resources->s_GetMethodDoc.isNull())
-	{
-		JP_TRACE("Resource not set.");
-		return JPPyObject();
-	}
+		JP_RAISE_RUNTIME_ERROR("GetMethodAnnotations resource not set.");
 
 	ASSERT_NOT_NULL(javaMethod);
 
@@ -265,10 +259,7 @@ JPPyObject JPPythonEnv::getMethodCode(PyJPMethod* javaMethod)
 {
 	JP_TRACE_IN("JPPythonEnv::getMethodCode");
 	if (s_Resources->s_GetMethodCode.isNull())
-	{
-		JP_TRACE("Resource not set.");
-		return JPPyObject();
-	}
+		JP_RAISE_RUNTIME_ERROR("GetMethodCode resource not set.");
 
 	ASSERT_NOT_NULL(javaMethod);
 

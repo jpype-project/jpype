@@ -24,7 +24,6 @@ struct PyJPProxy
 
 	static PyTypeObject Type;
 	static void initType(PyObject* module);
-	static bool check(PyObject* o);
 
 	static PyObject*   __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);
 	static int __init__(PyJPProxy* self, PyObject* args, PyObject* kwargs);

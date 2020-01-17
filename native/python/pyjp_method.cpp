@@ -29,21 +29,12 @@ struct PyGetSetDef methodGetSet[] = {
 	{"__name__", (getter) (&PyJPMethod::getName), NULL, NULL, NULL},
 	{"__doc__", (getter) (&PyJPMethod::getDoc), (setter) (&PyJPMethod::setDoc), NULL, NULL},
 	{"__annotations__", (getter) (&PyJPMethod::getAnnotations), (setter) (&PyJPMethod::setAnnotations), NULL, NULL},
-#if PY_MAJOR_VERSION >= 3
 	{"__closure__", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
 	{"__code__", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
 	{"__defaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
 	{"__kwdefaults__", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
 	{"__globals__", (getter) (&PyJPMethod::getGlobals), NULL, NULL, NULL},
 	{"__qualname__", (getter) (&PyJPMethod::getQualName), NULL, NULL, NULL},
-#else
-	{"func_closure", (getter) (&PyJPMethod::getClosure), NULL, NULL, NULL},
-	{"func_code", (getter) (&PyJPMethod::getCode), NULL, NULL, NULL},
-	{"func_defaults", (getter) (&PyJPMethod::getNone), NULL, NULL, NULL},
-	{"func_doc", (getter) (&PyJPMethod::getDoc), (setter) (&PyJPMethod::setDoc), NULL, NULL},
-	{"func_globals", (getter) (&PyJPMethod::getGlobals), NULL, NULL, NULL},
-	{"func_name", (getter) (&PyJPMethod::getName), NULL, NULL, NULL},
-#endif
 	{NULL},
 };
 

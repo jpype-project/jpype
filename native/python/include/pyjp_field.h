@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _PYFIELD_H_
 #define _PYFIELD_H_
@@ -31,8 +31,6 @@ struct PyJPField
 	static PyObject*  getName(PyJPField* self, PyObject* arg);
 	static PyObject*  __get__(PyJPField* self, PyObject* obj, PyObject* type);
 	static int        __set__(PyJPField* self, PyObject* obj, PyObject* val);
-	static PyObject*  isStatic(PyJPField* self, PyObject* arg);
-	static PyObject*  isFinal(PyJPField* self, PyObject* arg);
 
 	JPField* m_Field;
 } ;

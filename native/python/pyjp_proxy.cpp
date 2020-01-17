@@ -177,7 +177,3 @@ int PyJPProxy::clear(PyJPProxy *self)
 	JP_TRACE_OUT;
 }
 
-bool PyJPProxy::check(PyObject* o)
-{
-	return Py_TYPE(o) == &PyJPProxy::Type;
-}

@@ -3,6 +3,7 @@ import common
 import sys
 import os
 import importlib
+import _jpype
 
 # Tests just for coverage 
 # These will be moved to the corresponding test file as needed
@@ -194,6 +195,10 @@ class CoverageCase(common.JPypeTestCase):
     def testJStringRepr(self):
         js = jpype.JString("fred")
         self.assertTrue(repr(js), "fred")
+
+    def testSetResourceFail(self):
+        with self.assertRaises(RuntimeError):
+            _jpype.setResource("NotAResource", None)
 
     # FIXME this one is broken
 #    def testJPrimitiveSetAttr(self):
