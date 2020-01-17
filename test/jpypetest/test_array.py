@@ -389,3 +389,57 @@ class ArrayTestCase(common.JPypeTestCase):
         # Check for bug in 0.7.0
         array = jpype.JArray(jpype.JObject)([None,])
         self.assertEqual(array[:], (None,))
+
+    def testGetArraySlice(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        self.assertEqual(list(array[1:]),contents[1:])
+        self.assertEqual(list(array[:-1]),contents[:-1])
+        self.assertEqual(list(array[1:-1]),contents[1:-1])
+
+    def testSetArraySlice(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array[1:]=[5,6,7]
+        contents[1:]=[5,6,7]
+        self.assertEqual(list(array[:]),contents[:])
+        array[:-1]=[8,9,10]
+        contents[:-1]=[8,9,10]
+        self.assertEqual(list(array[:]),contents[:])
+
+    def testGetArraySliceStep(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(NotImplementedError):
+            array[::2]
+
+    def testSetArraySliceStep(self):
+        contents=[1,2,3,4,5,6]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array[::2]=[5,6,7]
+        contents[::2]=[5,6,7]
+        self.assertEqual(list(array[:]),contents[:])
+
+    def testEquals(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array2 = jpype.JArray(jpype.JInt)(contents)
+        self.assertEqual(array, array)
+        self.assertNotEqual(array, array2)
+
+    def testEqualsChar(self):
+        contents="abc"
+        array = jpype.JArray(jpype.JChar)(contents)
+        array2 = jpype.JArray(jpype.JChar)(contents)
+        self.assertEqual(array, array)
+        self.assertNotEqual(array, array2)
+        self.assertEqual(array, "abc")
+
+    def testIter(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        contents2 = [i for i in array]
+        self.assertEqual(contents, contents2)
+
+
+ 

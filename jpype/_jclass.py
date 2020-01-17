@@ -227,8 +227,8 @@ def _JClassNew(arg, loader=None, initialize=True):
     else:
         javaClass = _jpype.PyJPClass(arg)
 
-    if javaClass is None:
-        raise _java_lang_RuntimeException("Java class '%s' not found" % name)
+
+
 
     # Lookup the class name
     name = javaClass.getCanonicalName()

@@ -15,10 +15,10 @@
 #
 # *****************************************************************************
 import sys as _sys
-try:
-    from collections.abc import Sequence
-except ImportError:
-    from collections import Sequence
+
+from collections.abc import Sequence
+
+
 
 
 import _jpype
@@ -161,7 +161,7 @@ class _JArray(object):
             start, stop, step = ndx.indices(len(self))
             if step != 1:
                 raise NotImplementedError("Slicing with step unimplemented")
-            return self.__getslice__(start, stop)
+            return self.__javaarray__.getArraySlice(start, stop)
         return self.__javaarray__.getArrayItem(ndx)
 
     def __setitem__(self, ndx, val):
@@ -173,19 +173,19 @@ class _JArray(object):
                 for index, value in zip(indices, val):
                     self[index] = value
             else:
-                self.__setslice__(start, stop, val)
+                self.__javaarray__.setArraySlice(start, stop, val)
             return
         self.__javaarray__.setArrayItem(ndx, val)
 
-    def __getslice__(self, i, j):
-        if j == _sys.maxsize:
-            j = self.__javaarray__.getArrayLength()
-        return self.__javaarray__.getArraySlice(i, j)
+#    def __getslice__(self, i, j):
+#        if j == _sys.maxsize:
+#            j = self.__javaarray__.getArrayLength()
+#        return self.__javaarray__.getArraySlice(i, j)
 
-    def __setslice__(self, i, j, v):
-        if j == _sys.maxsize:
-            j = self.__javaarray__.getArrayLength()
-        self.__javaarray__.setArraySlice(i, j, v)
+#    def __setslice__(self, i, j, v):
+#        if j == _sys.maxsize:
+#            j = self.__javaarray__.getArrayLength()
+#        self.__javaarray__.setArraySlice(i, j, v)
 
     def __eq__(self, other):
         if hasattr(other, '__javavalue__'):

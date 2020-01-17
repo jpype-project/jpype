@@ -616,6 +616,9 @@ tied to the JVM that is started or attached. Thus operating more than one
 JVM does not appear to be possible under the current implementation.
 Difficulties that would need to be overcome to remove this limitation include:
 
+- All available JVM implementations support on one JVM instance per 
+  process. Thus a communication layer would have to proxy JNI
+  class from JPype to another process.
 - Which JVM would a static class method call. Thus the class types
   would need to be JVM specific (ie. ``JClass('org.MyObject', jvm=JVM1)``)
 - How would can a wrapper for two different JVM coexist in the
@@ -629,6 +632,17 @@ Difficulties that would need to be overcome to remove this limitation include:
 
 Thus it appears prohibitive to support multiple JVMs in the JPype
 class model.
+
+
+Errors reported by Python fault handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The JVM takes over the standard fault handlers resulting in unusual
+behavior if Python handlers are installed.  As part of normal operations
+the JVM will trigger a segmentation fault when starting and when 
+interrupting threads.  Pythons faulthandler can intercept these operations 
+thus reporting extraneous fault messages or preventing normal JVM 
+operations if Python handles it.  When operating with JPype, Python 
+faulthandler module should be disabled.
 
 
 Unloading the JVM
