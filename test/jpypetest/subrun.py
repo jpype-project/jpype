@@ -40,9 +40,10 @@ def _execute(inQueue, outQueue):
 
 class Client(object):
     def __init__(self):
-        self.inQueue = mp.Queue()
-        self.outQueue = mp.Queue()
-        self.process = mp.Process(target=_execute, args=[self.inQueue, self.outQueue])
+        ctx = mp.get_context("spawn")
+        self.inQueue = ctx.Queue()
+        self.outQueue = ctx.Queue()
+        self.process = ctx.Process(target=_execute, args=[self.inQueue, self.outQueue], daemon=True)
         self.process.start()
 
     def execute(self, function, *args, timeout=5):
