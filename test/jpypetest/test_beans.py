@@ -107,4 +107,6 @@ class BeansTest(unittest.TestCase):
     def setUp(self):
         self.path = jpype.getDefaultJVMPath()
     def testBeans(self):
+        if sys.platform == 'cygwin':
+            raise common.unittest.SkipTest("not tested on cygwin")
         self.assertTrue(subrun(runBeans))
