@@ -80,4 +80,8 @@ class ImportsTestCase(common.JPypeTestCase):
         from java.lang import Character
         self.assertTrue(isJavaEnum(Character.UnicodeScript))
 
+    def testImportFail(self):
+        with self.assertRaises(ImportError):
+            from java.lang import NotThere
+
 # FIXME add test for static member variable imports and other edge cases.

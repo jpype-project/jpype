@@ -54,18 +54,18 @@ Example:
 """
 
 import _jpype
-try:
-    from importlib.machinery import ModuleSpec as _ModuleSpec
-    from types import ModuleType as _ModuleType
-except Exception:
 
-    # For Python2 compatiblity
-    #  (Note: customizers are not supported)
-    class _ModuleSpec(object):
-        def __init__(self, name, loader):
-            self.name = name
-            self.loader = loader
-    _ModuleType = object
+from importlib.machinery import ModuleSpec as _ModuleSpec
+from types import ModuleType as _ModuleType
+
+
+
+
+
+
+
+
+
 
 import _jpype
 import sys as _sys
@@ -356,18 +356,18 @@ class _JImportLoader:
     def exec_module(self, fullname):
         pass
 
-    # For compatablity with Python 2.7
-    def find_module(self, name, path=None):
-        parts = name.split('.', 1)
-        if not parts[0] in _JDOMAINS:
-            return None
-        return self
 
-    # For compatablity with Python 2.7
-    def load_module(self, name):
-        module = self.create_module(_ModuleSpec(name, self))
-        _sys.modules[name] = module
-        return module
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Install hooks into python importlib

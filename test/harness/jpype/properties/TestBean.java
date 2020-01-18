@@ -2,77 +2,50 @@ package jpype.properties;
 
 public class TestBean {
 
-	private String getA;
+	public static String m1;
+	public String m2;
+	public String m3;
+	public String m4;
+	public String m5;
 
-	private String setA;
-
-	private String property1;
-
-	private String property2Invisible;
-
-	private String property3;
-
-	private String property4;
-
-	private String property5;
-
-	private String property6;
-
-	private String property7;
-
-	public String getProperty1() {
-		return "get" + property1;
+	public String getPropertyMember() {
+		return this.m2;
 	}
 
-	public String getProperty2() {
-		return "get" + property2Invisible;
+	public void setPropertyMember(String value) {
+		this.m2 = value;
 	}
 
-	public String getProperty3() {
-		return "get" + property3;
+	public static String getPropertyStatic() {
+		return m1;
 	}
 
-	public String abcProperty4() {
-		return "abc" + property4;
+	public static void setPropertyStatic(String value) {
+		m1 = value;
 	}
 
-	public String getProperty6() {
-		return "get" + property7;
+	public String getReadOnly() {
+		return this.m3;
 	}
 
-	public String property1() {
-		return "method";
+	public void setWriteOnly(String value) {
+		this.m4 = value;
 	}
 
-	protected String property2() {
-		return "method";
+	public void setWith(String value) {
+		this.m5 = value;
 	}
 
-	protected String property3() {
-		return "method";
+	public String getWith() {
+		return this.m5;
 	}
 
-	public String returnProperty5() {
-		return "return" + this.property5;
+	public void setFailure1(String value, int i) {
 	}
 
-	public void setProperty1(String property1) {
-		this.property1 = "set" + property1;
+	public String getFailure2(int i) {
+		return "fail";
 	}
 
-	public void setProperty2(String property2) {
-		this.property2Invisible = "set" + property2;
-	}
 
-	public void setProperty3(String property3) {
-		this.property3 = "set" + property3;
-	}
-
-	public void setProperty5(String property5) {
-		this.property5 = "set" + property5;
-	}
-	
-	public void setProperty6(String property6) {
-		this.property7 = "set" + property6;
-	}
 }

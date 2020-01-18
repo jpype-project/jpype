@@ -100,13 +100,13 @@ class JObject(object):
         if name.startswith('_'):
             return object.__setattr__(self, name, value)
 
-        if not hasattr(self, name):
+        attr = _jclass.typeLookup(type(self), name)
+        if attr == None:
             raise AttributeError("Field '%s' not found on Java '%s' object" %
-                                 (name, self.__name__))
-
+                                     (name, self.__name__))
         try:
-            attr = _jclass.typeLookup(type(self), name)
-            if hasattr(attr, '__set__'):
+            setter = getattr(attr, "__set__", None)
+            if setter!=None:
                 return attr.__set__(self, value)
         except AttributeError:
             pass

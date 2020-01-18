@@ -65,14 +65,14 @@ def _extract_accessor_pairs(members):
         if name == "getClass":
             continue
 
-        if name.startswith("get") and member.isBeanAccessor():
+        if member.isBeanAccessor():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
                 pair[0] = member
             except KeyError:
                 accessor_pairs[property_name] = [member, None]
-        elif name.startswith("set") and member.isBeanMutator():
+        elif member.isBeanMutator():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]

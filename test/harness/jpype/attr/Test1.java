@@ -40,7 +40,7 @@ public class Test1
 		return "aaa";
 	}
 	
-  public static String[] testStaticString(String s1, String s2)
+	public static String[] testStaticString(String s1, String s2)
 	{
 	    return new String[] { s1, s2};
 	}

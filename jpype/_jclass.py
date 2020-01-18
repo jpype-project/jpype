@@ -151,12 +151,12 @@ class JClass(type):
         if name.startswith('_'):
             return type.__setattr__(self, name, value)
 
-        if not hasattr(self, name):
+        attr = typeLookup(self, name)
+        if attr == None:
             raise AttributeError("Static field '%s' not found on Java '%s' class" %
                                  (name, self.__name__))
-
+        setter = getattr(attr, '__set__', None)
         try:
-            attr = typeLookup(self, name)
             if hasattr(attr, '__set__'):
                 return attr.__set__(self, value)
         except AttributeError:
