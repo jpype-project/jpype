@@ -27,8 +27,8 @@ def subrun(function, *args):
     prog.append('  ex=ex1')
     prog.append('pickle.dump([ret,ex], open("output.pic","wb"))')
     child.communicate(input=bytes("\n".join(prog), 'utf-8'))
-    [ret,ex]=pickle.load(open("output.pic","rb"))
     child.wait()
+    [ret,ex]=pickle.load(open("output.pic","rb"))
     os.remove("input.pic")
     os.remove("output.pic")
     if ex:
