@@ -16,6 +16,7 @@
 # *****************************************************************************
 
 from collections.abc import Sequence
+from collections.abc import Mapping
 
 
 
@@ -144,7 +145,7 @@ class _JList(object):
 
 
 def isPythonMapping(v):
-    if isinstance(v, collections.Mapping):
+    if isinstance(v, Mapping):
         if not hasattr(v.__class__, '__metaclass__') or \
            v.__class__.__metaclass__ is _jclass._JavaClass:
             return True
