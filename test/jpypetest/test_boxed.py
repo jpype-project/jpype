@@ -159,4 +159,11 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.Boxed.whichDouble(1.0), 1)
         self.assertEqual(self.Boxed.whichDouble(self.Double(1.0)), 2)
 
-
+    def testPrivitiveToBoxed(self):
+        jpype.java.lang.Boolean(jpype.JBoolean(0))
+        jpype.java.lang.Byte(jpype.JByte(0))
+        jpype.java.lang.Short(jpype.JShort(0))
+        jpype.java.lang.Integer(jpype.JInt(0))
+        jpype.java.lang.Long(jpype.JLong(0))
+        jpype.java.lang.Float(jpype.JFloat(0))
+        jpype.java.lang.Double(jpype.JDouble(0))

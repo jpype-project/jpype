@@ -59,10 +59,10 @@ import sys as _sys
 from . import _jclass
 from . import _jobject
 import pickle
-try:
-    from copyreg import dispatch_table
-except ImportError:
-    from copy_reg import dispatch_table
+
+from copyreg import dispatch_table
+
+
 
 # TODO: Support use of a custom classloader with the unpickler.
 # TODO: Use copyreg to pickle a JProxy
@@ -116,10 +116,10 @@ class _JDispatch(object):
         byte = self._encoder.pack(obj).__javaarray__.toBytes()
         return (self._builder, (byte, ))
 
-    # For Python2
-    def save(self, pickler, obj):
-        rv = self.reduce(obj)
-        pickler.save_reduce(obj=obj, *rv)
+
+
+
+
 
 
 class JPickler(pickle.Pickler):
