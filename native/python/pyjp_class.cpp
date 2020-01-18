@@ -25,13 +25,8 @@ static PyMethodDef classMethods[] = {
 	{"newInstance", (PyCFunction) (&PyJPClass::newInstance), METH_VARARGS, ""},
 	{"getSuperclass", (PyCFunction) (&PyJPClass::getSuperClass), METH_NOARGS, ""},
 	{"getInterfaces", (PyCFunction) (&PyJPClass::getInterfaces), METH_NOARGS, ""},
-	{"isInterface", (PyCFunction) (&PyJPClass::isInterface), METH_NOARGS, ""},
 	{"isPrimitive", (PyCFunction) (&PyJPClass::isPrimitive), METH_NOARGS, ""},
-	{"isThrowable", (PyCFunction) (&PyJPClass::isThrowable), METH_NOARGS, ""},
 	{"isArray", (PyCFunction) (&PyJPClass::isArray), METH_NOARGS, ""},
-	{"isAbstract", (PyCFunction) (&PyJPClass::isAbstract), METH_NOARGS, ""},
-	{"isAssignableFrom", (PyCFunction) (&PyJPClass::isAssignableFrom), METH_VARARGS, ""},
-	{"asJavaValue", (PyCFunction) (&PyJPClass::asJavaValue), METH_NOARGS, ""},
 	{"canConvertToJava", (PyCFunction) (&PyJPClass::canConvertToJava), METH_VARARGS, ""},
 	{"convertToJava", (PyCFunction) (&PyJPClass::convertToJava), METH_VARARGS, ""},
 
@@ -302,69 +297,6 @@ PyObject* PyJPClass::newInstance(PyJPClass* self, PyObject* pyargs)
 	JP_TRACE_OUT;
 }
 
-PyObject* PyJPClass::isAssignableFrom(PyJPClass* self, PyObject* arg)
-{
-	JP_TRACE_IN("PyJPClass::isSubclass");
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPClass::isSubClass");
-		JPJavaFrame frame;
-
-		// We have to lookup the name by string here because the
-		// class wrapper may not exist.  This is used by the
-		// customizers.
-		PyObject* other;
-		if (!PyArg_ParseTuple(arg, "O", &other))
-		{
-			return NULL;
-		}
-
-		JPClass* cls = JPPythonEnv::getJavaClass(other);
-		if (cls != NULL)
-		{
-			return PyBool_FromLong(self->m_Class->isAssignableFrom(cls));
-		}
-
-		if (JPPyString::check(other))
-		{
-			JPClass* otherClass = JPTypeManager::findClass(JPPyString::asStringUTF8(other));
-			return PyBool_FromLong(self->m_Class->isAssignableFrom(otherClass));
-		}
-
-		PyErr_SetString(PyExc_TypeError, "isAssignableFrom requires java class or string argument.");
-		return NULL;
-	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
-	JP_TRACE_OUT;
-}
-
-PyObject* PyJPClass::isInterface(PyJPClass* self, PyObject* arg)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPClass::isInterface");
-		JPJavaFrame frame;
-		return PyBool_FromLong(self->m_Class->isInterface());
-	}
-	PY_STANDARD_CATCH;
-
-	return NULL;
-}
-
-PyObject* PyJPClass::isThrowable(PyJPClass* self, PyObject* args)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPClass::isException");
-		JPJavaFrame frame;
-		return PyBool_FromLong(self->m_Class->isThrowable());
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
-}
-
 PyObject* PyJPClass::isPrimitive(PyJPClass* self, PyObject* args)
 {
 	try
@@ -384,32 +316,6 @@ PyObject* PyJPClass::isArray(PyJPClass* self, PyObject* args)
 		ASSERT_JVM_RUNNING("PyJPClass::isArray");
 		JPJavaFrame frame;
 		return PyBool_FromLong(dynamic_cast<JPArrayClass*> (self->m_Class) == self->m_Class);
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
-}
-
-PyObject* PyJPClass::isAbstract(PyJPClass* self, PyObject* args)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPClass::isAbstract");
-		JPJavaFrame frame;
-		return PyBool_FromLong(self->m_Class->isAbstract());
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
-}
-
-PyObject* PyJPClass::asJavaValue(PyJPClass* self, PyObject* args)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPClass::asJavaValue");
-		JPJavaFrame frame;
-		jvalue v;
-		v.l = self->m_Class->getJavaClass();
-		return PyJPValue::alloc(JPTypeManager::_java_lang_Class, v).keep();
 	}
 	PY_STANDARD_CATCH;
 	return NULL;
