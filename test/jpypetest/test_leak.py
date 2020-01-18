@@ -65,8 +65,8 @@ class LeakChecker():
 
         (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
         success = 0
-        for j in xrange(10):
-            for i in xrange(size):
+        for j in range(10):
+            for i in range(size):
                 func()
             (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
 
@@ -93,7 +93,7 @@ class LeakChecker():
                 return False
 
         print()
-        for i in xrange(len(grow0)):
+        for i in range(len(grow0)):
             print('  Pass%d: %f %f  - %d %d %d' %
                   (i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
         print()
@@ -123,7 +123,7 @@ def startup():
 def runLeakChecker(funcname, counts):
     startup()
     lc = LeakChecker()
-    func = globals(funcname)
+    func = globals()[funcname]
     return lc.memTest(func, 5000)
 
 def runLeakCtor(classname, counts):
@@ -132,7 +132,7 @@ def runLeakCtor(classname, counts):
     cls = jpype.JClass(classname)
     def func():
         cls("test")
-    return lc.memTest(fun, 5000)
+    return lc.memTest(func, 5000)
 
 def runInvoke(counts):
     startup()
@@ -140,7 +140,7 @@ def runInvoke(counts):
     jstr = jpype.JString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     def func():
         jstr.getBytes()
-    return lc.memTest(fun, 5000)
+    return lc.memTest(func, 5000)
 
 def runRefCount():
     startup()
