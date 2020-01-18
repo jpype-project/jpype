@@ -441,5 +441,29 @@ class ArrayTestCase(common.JPypeTestCase):
         contents2 = [i for i in array]
         self.assertEqual(contents, contents2)
 
+    def testGetOutOfBounds(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(IndexError):
+            array[5]
+        self.assertEqual(array[-1], contents[-1])
+        self.assertEqual(array[-4], contents[-4])
+        with self.assertRaises(IndexError):
+            array[-5]
 
+    def testSetOutOfBounds(self):
+        contents=[1,2,3,4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(IndexError):
+            array[5]=1
+        array[-1]=5
+        contents[-1]=5
+        array[-4]=6
+        contents[-4]=6
+        self.assertEqual(list(array[:]), contents)
+        with self.assertRaises(IndexError):
+            array[-5]=1
+
+
+ 
  

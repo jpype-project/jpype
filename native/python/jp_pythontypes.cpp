@@ -160,24 +160,6 @@ JPPyObject JPPyObject::call(PyObject* args, PyObject* kwargs)
 	return JPPyObject(JPPyRef::_call, PyObject_Call(pyobj, args, kwargs));
 }
 
-bool JPPyObject::isInstance(PyObject* pyobj, PyObject* type)
-{
-	int res = PyObject_IsInstance(pyobj, type);
-	JP_PY_CHECK();
-	return res != 0;
-}
-
-bool JPPyObject::isSubclass(PyObject* pycls, PyObject* type)
-{
-	int res = PyObject_IsSubclass(pycls, type);
-	return res != 0;
-}
-
-bool JPPyType::check(PyObject* obj)
-{
-	return PyType_Check(obj);
-}
-
 JPPyObject JPPyObject::getNone()
 {
 	return JPPyObject(JPPyRef::_use, Py_None);
@@ -199,36 +181,7 @@ JPPyObject JPPyBool::fromLong(jlong value)
 
 JPPyObject JPPyInt::fromInt(jint l)
 {
-#if PY_MAJOR_VERSION >= 3
 	return JPPyObject(JPPyRef::_call, PyLong_FromLong(l));
-#else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong(l));
-#endif
-}
-
-JPPyObject JPPyInt::fromLong(jlong l)
-{
-#if PY_MAJOR_VERSION >= 3
-	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
-#else
-	return JPPyObject(JPPyRef::_call, PyInt_FromLong((int) l));
-#endif
-}
-
-bool JPPyInt::check(PyObject* obj)
-{
-#if PY_MAJOR_VERSION >= 3 || LONG_MAX > 2147483647
-	return false;
-#else
-	return PyInt_Check(obj);
-#endif
-}
-
-jint JPPyInt::asInt(PyObject* obj)
-{
-	jint res = PyInt_AsLong(obj);
-	JP_PY_CHECK();
-	return res;
 }
 
 //=====================================================================
@@ -327,7 +280,7 @@ void JPPyString::getRawUnicodeString(jchar** outBuffer, jlong& outSize)
 
 JPPyObject JPPyString::fromCharUTF16(jchar c)
 {
-#if PY_MAJOR_VERSION < 3 || defined(PYPY_VERSION)
+#if defined(PYPY_VERSION)
 	wchar_t buf[1];
 	buf[0] = c;
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromWideChar(buf, 1));
@@ -351,17 +304,10 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 	JP_TRACE_IN("JPPyString::checkCharUTF16");
 	if (JPPyLong::checkIndexable(pyobj))
 		return true;
-#if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj) && PyUnicode_GET_SIZE(pyobj) == 1)
-		return true;
-	if (PyString_Check(pyobj) && PyString_Size(pyobj) == 1)
-		return true;
-#else
 	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj) == 1)
 		return true;
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
-#endif
 	return false;
 	JP_TRACE_OUT;
 }
@@ -378,29 +324,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		return (jchar) val;
 	}
 
-#if PY_MAJOR_VERSION < 3
-	if (PyString_Check(pyobj))
-	{
-		Py_ssize_t sz = PyString_Size(pyobj);
-		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
-
-		jchar c = PyString_AsString(pyobj)[0];
-		if (PyErr_Occurred())
-			JP_RAISE_PYTHON("Error in byte conversion");
-		return c;
-	}
-
-	if (PyUnicode_Check(pyobj))
-	{
-		if (PyUnicode_GET_SIZE(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
-
-		wchar_t buffer;
-		PyUnicode_AsWideChar((PyUnicodeObject*) pyobj, &buffer, 1);
-		return buffer;
-	}
-#elif defined(PYPY_VERSION)
+#if defined(PYPY_VERSION)
 	if (PyBytes_Check(pyobj))
 	{
 		int sz = PyBytes_Size(pyobj);
@@ -475,21 +399,9 @@ JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
 {
 	size_t len = str.size();
 
-#if PY_MAJOR_VERSION < 3
-	// Python 2 is unicode only on request
-	if (unicode)
-	{
-		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(str.c_str(), len));
-	}
-	else
-	{
-		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize(str.c_str(), len));
-	}
-#else
 	// Python 3 is always unicode
 	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
 	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
-#endif
 }
 
 string JPPyString::asStringUTF8(PyObject* pyobj)
@@ -497,26 +409,6 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	JP_TRACE_IN("JPPyUnicode::asStringUTF8");
 	ASSERT_NOT_NULL(pyobj);
 
-#if PY_MAJOR_VERSION < 3
-	if (PyUnicode_Check(pyobj))
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
-		PyBytes_AsStringAndSize(val.get(), &buffer, &size); // internal reference
-		JP_PY_CHECK();
-		if (buffer != NULL)
-			return string(buffer, size);
-		else
-			return string();
-	}
-	else
-	{
-		char *buffer = PyString_AsString(pyobj); // internal reference
-		JP_PY_CHECK();
-		return string(buffer);
-	}
-#else
 	if (PyUnicode_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
@@ -537,7 +429,6 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
-#endif
 	JP_RAISE_RUNTIME_ERROR("Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
@@ -680,55 +571,6 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 		contents[i + 1] = seq[i];
 	}
 	contents[0] = instance;
-}
-
-
-//=====================================================================
-// JPPyDict
-
-bool JPPyDict::contains(PyObject* k)
-{
-	int res = PyMapping_HasKey(pyobj, k);
-	JP_PY_CHECK();
-	return res != 0;
-}
-
-PyObject* JPPyDict::getItem(PyObject* k)
-{
-	PyObject* res = PyDict_GetItem(pyobj, k);
-	JP_PY_CHECK();
-	return res;
-}
-
-bool JPPyDict::check(PyObject* obj)
-{
-	return PyDict_Check(obj);
-}
-
-JPPyObject JPPyDict::getKeys()
-{
-	return JPPyObject(JPPyRef::_call, PyDict_Keys(pyobj));
-}
-
-JPPyObject JPPyDict::copy(PyObject* m)
-{
-	return JPPyObject(JPPyRef::_call, PyDict_Copy(m));
-}
-
-JPPyDict JPPyDict::newDict()
-{
-	return JPPyObject(JPPyRef::_call, PyDict_New());
-}
-
-void JPPyDict::setItemString(PyObject* o, const char* n)
-{
-	PyDict_SetItemString(pyobj, n, o);
-	JP_PY_CHECK();
-}
-
-void JPPyErr::clear()
-{
-	PyErr_Clear();
 }
 
 bool JPPyErr::occurred()
