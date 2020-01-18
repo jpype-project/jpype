@@ -9,10 +9,10 @@ from subrun import *
 ##############################################################################
 # Test methods
 
-def startup():
+def startup(path):
     import jpype
     import jpype.beans
-    jpype.startJVM(classpath=os.path.abspath("test/classes"), convertStrings=False)
+    jpype.startJVM(classpath=path, convertStrings=False)
 
 def runHasProperties():
     cls = jpype.JClass("jpype/properties/TestBean")
@@ -69,7 +69,7 @@ class BeansTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         BeansTest.client = subrun.Client()
-        BeansTest.client.execute(startup)
+        BeansTest.client.execute(startup, os.path.abspath("test/classes"))
 
     @classmethod
     def tearDownClass(cls):
