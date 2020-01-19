@@ -66,11 +66,13 @@ class StartJVMCase(common.JPypeTestCase):
             client.execute(runStartJVMTest, classpath=self.cp,
                            convertStrings=False)
 
+    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgList(self):
         with subrun.Client() as client:
             client.execute(runStartJVMTest, classpath=[
                            self.cp], convertStrings=False)
 
+    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgListEmpty(self):
         with subrun.Client() as client:
             client.execute(runStartJVMTest, classpath=[
