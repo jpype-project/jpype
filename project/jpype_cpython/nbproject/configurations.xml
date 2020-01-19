@@ -56,7 +56,6 @@
           <itemPath>../../native/python/include/pyjp_method.h</itemPath>
           <itemPath>../../native/python/include/pyjp_module.h</itemPath>
           <itemPath>../../native/python/include/pyjp_monitor.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_proxy.h</itemPath>
           <itemPath>../../native/python/include/pyjp_value.h</itemPath>
         </logicalFolder>
       </logicalFolder>
@@ -500,11 +499,6 @@
             flavor2="0">
       </item>
       <item path="../../native/python/include/pyjp_monitor.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_proxy.h"
             ex="false"
             tool="3"
             flavor2="0">

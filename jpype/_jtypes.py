@@ -115,35 +115,35 @@ class _JPrimitive(object):
         else:
             self.__javavalue__ = None
 
-    def byteValue(self):
-        if self._pyv < -128 or self._pyv > 127:
-            raise OverFlowError("Cannot convert to byte value")
-        return int(self._pyv)
 
-    def shortValue(self):
-        if self._pyv < -32768 or self._pyv > 32767:
-            raise OverFlowError("Cannot convert to short value")
-        return int(self._pyv)
 
-    def intValue(self):
-        if self._pyv < -2147483648 or self._pyv > 2147483647:
-            raise OverFlowError("Cannot convert to int value")
-        return int(self._pyv)
 
-    def longValue(self):
-        if self._pyv < -9223372036854775808 or self._pyv > 9223372036854775807:
-            raise OverFlowError("Cannot convert to long value")
-        return int(self._pyv)
 
-    def floatValue(self):
-        if self._pyv < -_maxFloat or self._pyv > _maxFloat:
-            raise OverFlowError("Cannot convert to long value")
-        return float(self._pyv)
 
-    def doubleValue(self):
-        if self._pyv < -_maxDouble or self._pyv > _maxDouble:
-            raise OverFlowError("Cannot convert to double value")
-        return float(self._pyv)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 JBoolean = _JPrimitiveClass("boolean", int)

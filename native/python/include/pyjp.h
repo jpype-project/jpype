@@ -16,11 +16,26 @@
 
 #ifndef PYJP_H
 #define PYJP_H
+#include <Python.h>
+#include <jpype.h>
+
+#ifdef JP_TRACING_ENABLE
+#define JP_PY_TRY(...) \
+  JPypeTracer _trace(__VA_ARGS__); \
+  try { do {} while(0)
+#define JP_PY_CATCH(...) \
+  } catch(...) { \
+  JPPythonEnv::rethrow(JP_STACKINFO()); } \
+  return __VA_ARGS__
+#else
+#define JP_PY_TRY(...)  try { do {} while(0)
+#define JP_PY_CATCH(...)  } catch(...) \
+  { JPPythonEnv::rethrow(JP_STACKINFO()); } \
+  return __VA_ARGS__
+#endif
 
 /** This is the module specifically for the cpython modules to include.
  */
-#include <Python.h>
-#include <jpype.h>
 #include <pyjp_module.h>
 #include <pyjp_array.h>
 #include <pyjp_class.h>
@@ -29,7 +44,26 @@
 #include <pyjp_module.h>
 #include <pyjp_monitor.h>
 #include <pyjp_value.h>
-#include <pyjp_proxy.h>
+
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+struct PyJPProxy
+{
+	PyObject_HEAD
+	JPProxy* m_Proxy;
+	PyObject* m_Target;
+	PyObject* m_Callable;
+} ;
+
+extern PyTypeObject* PyJPProxy_Type;
+
+#ifdef __cplusplus
+}
+#endif
 
 #define ASSERT_JVM_RUNNING(X) JPEnv::assertJVMRunning(X, JP_STACKINFO())
 #define PY_STANDARD_CATCH catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); }

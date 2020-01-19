@@ -38,9 +38,9 @@ class ModuleTestCase2(common.JPypeTestCase):
     def testProxyInitBad3(self):
         with self.assertRaises(TypeError):
             _jpype.PyJPProxy(None, None, tuple([None, None]))
-    def testProxyStr(self):
-        proxy = _jpype.PyJPProxy(None, None, tuple())
-        self.assertIsInstance(str(proxy), str)
+    def testProxyNoInterfaces(self):
+        with self.assertRaises(TypeError):
+            proxy = _jpype.PyJPProxy(None, None, tuple())
     def testValueInitBad(self):
         with self.assertRaises(TypeError):
             _jpype.PyJPValue("no")

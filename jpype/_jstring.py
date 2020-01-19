@@ -55,7 +55,12 @@ class _JString(object):
         return self.length()
 
     def __getitem__(self, i):
-        return self.charAt(i)
+        if i<0:
+            i+=len(self)
+        try:
+            return self.charAt(i)
+        except:
+            raise IndexError("Java string index out of range")
 
     def __lt__(self, other):
         return self.compareTo(other) < 0

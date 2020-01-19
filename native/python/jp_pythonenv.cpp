@@ -126,12 +126,12 @@ JPClass* JPPythonEnv::getJavaClass(PyObject* obj)
 
 JPProxy* JPPythonEnv::getJavaProxy(PyObject* obj)
 {
-	if (Py_TYPE(obj) == &PyJPProxy::Type)
+	if (Py_TYPE(obj) == PyJPProxy_Type)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	if (!JPPyObject::hasAttrString(obj, __javaproxy__))
 		return 0;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaproxy__));
-	if (Py_TYPE(self.get()) == &PyJPProxy::Type)
+	if (Py_TYPE(self.get()) == PyJPProxy_Type)
 	{
 		return (((PyJPProxy*) self.get())->m_Proxy);
 	}
