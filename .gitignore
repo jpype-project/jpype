@@ -69,3 +69,5 @@ doc/html
 native/jars
 docker/*.tar.gz
 docker/wheelhouse
+/.eggs
+/tmp*
