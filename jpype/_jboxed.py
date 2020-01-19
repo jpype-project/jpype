@@ -43,7 +43,7 @@ class _JBoxedBoolean(int, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return int.__new__(cls, cls.booleanValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = int.__eq__
     __ne__ = int.__ne__
 
@@ -75,7 +75,7 @@ class _JBoxedByte(int, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return int.__new__(cls, cls.byteValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = int.__eq__
     __ne__ = int.__ne__
 
@@ -102,7 +102,7 @@ class _JBoxedShort(int, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return int.__new__(cls, cls.shortValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = int.__eq__
     __ne__ = int.__ne__
 
@@ -129,7 +129,7 @@ class _JBoxedInteger(int, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return int.__new__(cls, cls.intValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = int.__eq__
     __ne__ = int.__ne__
 
@@ -156,7 +156,7 @@ class _JBoxedLong(int, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return int.__new__(cls, cls.longValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = int.__eq__
     __ne__ = int.__ne__
 
@@ -183,7 +183,7 @@ class _JBoxedFloat(float, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return float.__new__(cls, cls.floatValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = float.__eq__
     __ne__ = float.__ne__
 
@@ -202,7 +202,7 @@ class _JBoxedDouble(float, _jobject.JObject):
 
         if isinstance(args[0], _jpype.PyJPValue):
             return float.__new__(cls, cls.doubleValue(args[0]))
-        raise ValueError("Invalid arguments %s" % args[0])
+        raise TypeError("Invalid argument '%s'" % type(args[0]).__name__)
     __eq__ = float.__eq__
     __ne__ = float.__ne__
 

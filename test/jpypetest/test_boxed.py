@@ -167,3 +167,68 @@ class BoxedTestCase(common.JPypeTestCase):
         jpype.java.lang.Long(jpype.JLong(0))
         jpype.java.lang.Float(jpype.JFloat(0))
         jpype.java.lang.Double(jpype.JDouble(0))
+
+    def testBooleanBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Boolean(tuple())
+
+    def testByteBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Byte(tuple())
+
+    def testCharacterBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Character(tuple())
+
+    def testShortBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Short(tuple())
+
+    def testIntegerBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Integer(tuple())
+
+    def testLongBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Long(tuple())
+
+    def testFloatBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Float(tuple())
+
+    def testDoubleBad(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Double(tuple())
+
+    def testBooleanBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Boolean(tuple(), tuple())
+
+    def testByteBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Byte(tuple(), tuple())
+
+    def testCharacterBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Character(tuple(), tuple())
+
+    def testShortBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Short(tuple(), tuple())
+
+    def testIntegerBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Integer(tuple(), tuple())
+
+    def testLongBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Long(tuple(), tuple())
+
+    def testFloatBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Float(tuple(), tuple())
+
+    def testDoubleBad2(self):
+        with self.assertRaises(TypeError):
+            jpype.java.lang.Double(tuple(), tuple())
+

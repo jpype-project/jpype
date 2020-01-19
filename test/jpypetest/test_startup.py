@@ -69,6 +69,10 @@ class StartJVMCase(common.JPypeTestCase):
         with subrun.Client() as client, self.assertRaises(TypeError):
             client.execute(runStartJVMTest, '-Djava.class.path=%s'%self.cp, classpath=self.cp, convertStrings=False)
 
+    def testClasspathBadType(self):
+        with subrun.Client() as client, self.assertRaises(TypeError):
+            client.execute(runStartJVMTest, classpath=1, convertStrings=False)
+
     def testPathArg(self):
         with subrun.Client() as client:
             client.execute(runStartJVMTest, self.path, classpath=self.cp, convertStrings=False)
