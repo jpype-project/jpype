@@ -34,6 +34,8 @@ if _sys.platform == 'cygwin':
         return parts
 
     def _posix2win(directory):
+        if len(directory)>3 and directory[1:3]==":\\":
+            return directory
         root = _get_root()
         directory = _os.path.abspath(directory)
         paths = _splitpath(directory)

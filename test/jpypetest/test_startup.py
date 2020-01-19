@@ -2,6 +2,7 @@ import jpype
 import common
 import subrun
 import os
+import sys
 
 def runStartupTwice():
     jpype.startJVM(convertStrings=False)
@@ -18,7 +19,12 @@ def runStartJVM(*args, **kwargs):
 
 def runStartJVMTest(*args, **kwargs):
     jpype.startJVM(*args, **kwargs)
-    jclass = jpype.JClass('jpype.array.TestArray')
+    try:
+        jclass = jpype.JClass('jpype.array.TestArray')
+        return
+    except:
+        pass
+    raise RuntimeError("Test class not found")
 
 class StartJVMCase(common.JPypeTestCase):
     def setUp(self):
@@ -61,6 +67,7 @@ class StartJVMCase(common.JPypeTestCase):
         with subrun.Client() as client:
             client.execute(runStartJVMTest, classpath=[self.cp,''], convertStrings=False)
 
+    @common.unittest.skipIf(sys.platform=="cygwin", "Not supported on cygwin")
     def testClasspathArgDef(self):
         with subrun.Client() as client:
             client.execute(runStartJVMTest, '-Djava.class.path=%s'%self.cp, convertStrings=False)
