@@ -27,7 +27,7 @@ __all__ = ['JString']
 class _JString(object):
     """ Base class for ``java.lang.String`` objects
 
-    When called as a function, this class will produce a ``java.lang.String`` 
+    When called as a function, this class will produce a ``java.lang.String``
     object.  It can be used to test if an object is a Java string
     using ``isinstance(obj, JString)``.
 
@@ -55,7 +55,12 @@ class _JString(object):
         return self.length()
 
     def __getitem__(self, i):
-        return self.charAt(i)
+        if i<0:
+            i+=len(self)
+        try:
+            return self.charAt(i)
+        except:
+            raise IndexError("Java string index out of range")
 
     def __lt__(self, other):
         return self.compareTo(other) < 0

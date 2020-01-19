@@ -14,10 +14,7 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <Python.h>
-#include <jpype.h>
-
-#include "pyjp_proxy.h"
+#include <pyjp.h>
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()

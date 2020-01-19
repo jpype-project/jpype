@@ -20,6 +20,7 @@ import logging
 import time
 import common
 
+
 class ConversionCharSequenceTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -33,4 +34,3 @@ class ConversionCharSequenceTestCase(common.JPypeTestCase):
         self.assertEqual(str(then), now)
         then = Instant.parse(jpype.JObject(now, "java.lang.CharSequence"))
         self.assertEqual(str(then), now)
-

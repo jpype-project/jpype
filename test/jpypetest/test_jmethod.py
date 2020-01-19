@@ -23,6 +23,8 @@ import inspect
 
 # Code from stackoverflow
 # Reference http://stackoverflow.com/questions/13503079/how-to-create-a-copy-of-a-python-function
+
+
 def copy_func(f):
     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
     if sys.version_info[0] < 3:
@@ -34,7 +36,7 @@ def copy_func(f):
                                argdefs=f.__defaults__,
                                closure=f.__closure__)
         g.__kwdefaults__ = f.__kwdefaults__
-    
+
     g = functools.update_wrapper(g, f)
     return g
 
@@ -52,7 +54,7 @@ class JMethodTestCase(common.JPypeTestCase):
         be enough to "clone" the method.
 
     It should also be callable as a method, class method.
-    
+
     Further inspect should work
      * inspect.getdoc() should match __doc__
      * inspect.signature() should work
@@ -76,8 +78,10 @@ class JMethodTestCase(common.JPypeTestCase):
 
     @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodQualName(self):
-        self.assertEqual(self.cls.substring.__qualname__, "java.lang.String.substring")
-        self.assertEqual(self.obj.substring.__qualname__, "java.lang.String.substring")
+        self.assertEqual(self.cls.substring.__qualname__,
+                         "java.lang.String.substring")
+        self.assertEqual(self.obj.substring.__qualname__,
+                         "java.lang.String.substring")
 
     def testMethodDoc(self):
         self.assertIsInstance(self.cls.substring.__doc__, str)
@@ -91,14 +95,18 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertIsInstance(self.cls.substring.__annotations__, dict)
         self.assertIsNotNone(self.obj.substring.__annotations__, dict)
 
-        # This one will need to change in Python 3.8 
-        self.assertEqual(self.cls.substring.__annotations__["return"], self.cls)
+        # This one will need to change in Python 3.8
+        self.assertEqual(self.cls.substring.__annotations__[
+                         "return"], self.cls)
 
     @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodInspectSignature(self):
-        self.assertIsInstance(inspect.signature(self.cls.substring), inspect.Signature)
-        self.assertIsInstance(inspect.signature(self.obj.substring), inspect.Signature)
-        self.assertEqual(inspect.signature(self.obj.substring).return_annotation, self.cls)
+        self.assertIsInstance(inspect.signature(
+            self.cls.substring), inspect.Signature)
+        self.assertIsInstance(inspect.signature(
+            self.obj.substring), inspect.Signature)
+        self.assertEqual(inspect.signature(
+            self.obj.substring).return_annotation, self.cls)
 
     def testMethodInspectFunction(self):
         self.assertTrue(inspect.isfunction(self.cls.substring))

@@ -18,10 +18,10 @@ import sys as _sys
 _JP_BASES = {}
 _JP_IMPLEMENTATIONS = {}
 
-if _sys.version_info > (3,):
-    _unicode = str
-else:
-    _unicode = unicode
+
+
+
+
 
 __all__ = ['JImplementationFor']
 
@@ -70,31 +70,31 @@ def JImplementationFor(clsname, base=False):
     """ Decorator to define an implementation for a class.
 
     Applies to a class which will serve as a prototype as for the java class
-    wrapper.  If it is registered as a base class, then the class must 
-    derive from JObject.  Otherwise, the methods are copied from 
+    wrapper.  If it is registered as a base class, then the class must
+    derive from JObject.  Otherwise, the methods are copied from
     the prototype to java class wrapper.
 
-    The method ``__jclass_init__(cls)`` will be called with the constructed 
-    class as the argument.  This call be used to set methods for all classes 
-    that derive from the specified class.  Use ``type.__setattr__()`` to 
+    The method ``__jclass_init__(cls)`` will be called with the constructed
+    class as the argument.  This call be used to set methods for all classes
+    that derive from the specified class.  Use ``type.__setattr__()`` to
     alter the class methods.
 
-    Using the prototype class as a base class is used mainly to support 
+    Using the prototype class as a base class is used mainly to support
     classes which must be derived from a python type by design.  Use
     of a base class will produce a RuntimeError if the class has already
-    been created.  
+    been created.
 
-    For non-base class customizers, the customizer will be applied 
+    For non-base class customizers, the customizer will be applied
     retroactively if the class is already created.  Conflicts are
     resolved by the last customizer applied.
 
     Args:
       clsname (str): name of java class.
-      base (bool, optional): if True this will be a base class. 
+      base (bool, optional): if True this will be a base class.
         Default is False.
 
     """
-    if not isinstance(clsname, (str, _unicode)):
+    if not isinstance(clsname, str):
         raise TypeError("SuperFor requires a java classname string")
 
     def customizer(cls):
@@ -202,7 +202,7 @@ def _applyCustomizers(name, jc, bases, members):
 
 def _applyInitializer(cls):
     """ (internal) Called after the class is created to apply any customizations
-    required by inherited parents. 
+    required by inherited parents.
     """
     if hasattr(cls, '__jclass_init__'):
         init = []

@@ -59,10 +59,10 @@ import sys as _sys
 from . import _jclass
 from . import _jobject
 import pickle
-try:
-    from copyreg import dispatch_table
-except ImportError:
-    from copy_reg import dispatch_table
+
+from copyreg import dispatch_table
+
+
 
 # TODO: Support use of a custom classloader with the unpickler.
 # TODO: Use copyreg to pickle a JProxy
@@ -80,8 +80,8 @@ class JUnserializer(object):
 class _JDispatch(object):
     """Dispatch for Java classes and objects.
 
-    Python does not have a good way to register a reducer that applies to 
-    many classes, thus we will substitute the usual dictionary with a 
+    Python does not have a good way to register a reducer that applies to
+    many classes, thus we will substitute the usual dictionary with a
     class that can produce reducers as needed.
     """
 
@@ -92,12 +92,12 @@ class _JDispatch(object):
             cl.loadClass('org.jpype.pickle.Encoder'))()
         self._builder = JUnserializer()
         self._dispatch = dispatch
-        if _sys.version_info > (3,):
-            # Extension dispatch table holds reduce method
-            self._call = self.reduce
-        else:
-            # Internal dispatch table holds save method
-            self._call = self.save
+
+        # Extension dispatch table holds reduce method
+        self._call = self.reduce
+
+
+
 
     # Python2 and Python3 _Pickler use get()
     def get(self, cls):
@@ -116,10 +116,10 @@ class _JDispatch(object):
         byte = self._encoder.pack(obj).__javaarray__.toBytes()
         return (self._builder, (byte, ))
 
-    # For Python2
-    def save(self, pickler, obj):
-        rv = self.reduce(obj)
-        pickler.save_reduce(obj=obj, *rv)
+
+
+
+
 
 
 class JPickler(pickle.Pickler):
@@ -139,12 +139,12 @@ class JPickler(pickle.Pickler):
 
     def __init__(self, file, *args, **kwargs):
         pickle.Pickler.__init__(self, file, *args, **kwargs)
-        if _sys.version_info > (3,):
-            # In Python3 we need to hook into the dispatch table for extensions
-            self.dispatch_table = _JDispatch(dispatch_table)
-        else:
-            # In Python2 we must connect to the internal dispatch
-            self.dispatch = _JDispatch(self.dispatch)
+
+        # In Python3 we need to hook into the dispatch table for extensions
+        self.dispatch_table = _JDispatch(dispatch_table)
+
+
+
 
 
 class JUnpickler(pickle.Unpickler):
@@ -155,7 +155,7 @@ class JUnpickler(pickle.Unpickler):
         *args: any arguments support by the native unpickler.
 
     Raises:
-        java.lang.ClassNotFoundException: if a serialized class is not 
+        java.lang.ClassNotFoundException: if a serialized class is not
             found by the current classloader.
         java.io.InvalidClassException: if the serialVersionUID for the
             class does not match, usually as a result of a new jar
@@ -173,7 +173,7 @@ class JUnpickler(pickle.Unpickler):
         pickle.Unpickler.__init__(self, file, *args, **kwargs)
 
     def find_class(self, module, cls):
-        """Specialization for Java classes.  
+        """Specialization for Java classes.
 
         We just need to substitute the stub class for a real
         one which points to our decoder instance.

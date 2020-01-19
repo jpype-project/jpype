@@ -45,7 +45,7 @@ static PyMethodDef jpype_methods[] = {
 	// sentinel
 	{NULL}
 };
-#if PY_MAJOR_VERSION >= 3
+
 static struct PyModuleDef moduledef = {
 	PyModuleDef_HEAD_INIT,
 	"_jpype",
@@ -53,14 +53,10 @@ static struct PyModuleDef moduledef = {
 	-1,
 	jpype_methods,
 };
-#endif
 
-#if PY_MAJOR_VERSION >= 3
+extern void PyJPProxy_initType(PyObject* module);
+
 PyMODINIT_FUNC PyInit__jpype()
-#else
-
-PyMODINIT_FUNC init_jpype()
-#endif
 {
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
@@ -68,13 +64,9 @@ PyMODINIT_FUNC init_jpype()
 	PyEval_InitThreads();
 
 	// Initalize the module (depends on python version)
-#if PY_MAJOR_VERSION >= 3
 	PyObject* module = PyModule_Create(&moduledef);
-#else
-	PyObject* module = Py_InitModule("_jpype", jpype_methods);
-#endif
 	Py_INCREF(module);
-	PyModule_AddStringConstant(module, "__version__", "0.7.0");
+	PyModule_AddStringConstant(module, "__version__", "0.7.1");
 
 	// Initialize the Java static resources
 	JPEnv::init();
@@ -88,19 +80,13 @@ PyMODINIT_FUNC init_jpype()
 	PyJPField::initType(module);
 	PyJPMethod::initType(module);
 	PyJPMonitor::initType(module);
-	PyJPProxy::initType(module);
+	PyJPProxy_initType(module);
 	PyJPValue::initType(module);
-
-#if (PY_VERSION_HEX < 0x02070000)
-	jpype_memoryview_init(module);
-#endif
 
 #ifdef HAVE_NUMPY
 	import_array();
 #endif
-#if PY_MAJOR_VERSION >= 3
 	return module;
-#endif
 }
 
 PyObject* PyJPModule::startup(PyObject* obj, PyObject* args)
@@ -297,7 +283,7 @@ PyObject* PyJPModule::setResource(PyObject* self, PyObject* arg)
 		JPPythonEnv::setResource(tname, value);
 		Py_RETURN_NONE;
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 
 	return NULL;
 	JP_TRACE_OUT;
@@ -341,7 +327,7 @@ PyObject* PyJPModule::convertToDirectByteBuffer(PyObject* self, PyObject* args)
 
 		JP_RAISE_RUNTIME_ERROR("Do not know how to convert to direct byte buffer, only memory view supported");
 	}
-	PY_STANDARD_CATCH
+	PY_STANDARD_CATCH;
 	return NULL;
 	JP_TRACE_OUT;
 }

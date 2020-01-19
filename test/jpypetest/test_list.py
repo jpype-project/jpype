@@ -17,6 +17,7 @@
 import jpype
 import common
 
+
 class JListTestCase(common.JPypeTestCase):
     """ Test for methods of java.lang.Map 
 
@@ -55,7 +56,6 @@ class JListTestCase(common.JPypeTestCase):
             self.set(ndx, v)
             """
 
-
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.cls = jpype.JClass('java.util.ArrayList')
@@ -73,7 +73,7 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("a")
         obj.add("b")
         obj.add("c")
-        self.assertEqual(tuple(i for i in obj), ('a','b','c'))
+        self.assertEqual(tuple(i for i in obj), ('a', 'b', 'c'))
 
     def testGetItem(self):
         obj = self.cls()
@@ -88,8 +88,22 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("b")
         obj.add("c")
         obj.add("d")
-        self.assertEqual(tuple(i for i in obj[1:3]), ('b','c'))
- 
+        self.assertEqual(tuple(i for i in obj[1:3]), ('b', 'c'))
+
+    def testGetItemSlice(self):
+        obj = self.cls()
+        obj.add("a")
+        obj.add("b")
+        obj.add("c")
+        obj.add("d")
+        self.assertEqual(tuple(obj[::1]), ('a', 'b', 'c', 'd'))
+        self.assertEqual(tuple(obj[:-2]), ('a', 'b'))
+        self.assertEqual(tuple(obj[-2:]), ('c', 'd'))
+        with self.assertRaises(TypeError):
+            obj[::2]
+        with self.assertRaises(TypeError):
+            obj[::-1]
+
     def testRemoveRange(self):
         obj = self.cls()
         obj.add("a")
@@ -97,15 +111,15 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("c")
         obj.add("d")
         obj[1:3].clear()
-        self.assertEqual(tuple(i for i in obj), ('a','d'))
+        self.assertEqual(tuple(i for i in obj), ('a', 'd'))
 
     def testSetItem(self):
         obj = self.cls()
         obj.add("a")
         obj.add("b")
         obj.add("c")
-        obj[1]='changed'
-        self.assertEqual(tuple(i for i in obj), ('a','changed','c'))
+        obj[1] = 'changed'
+        self.assertEqual(tuple(i for i in obj), ('a', 'changed', 'c'))
 
     def testDelItem(self):
         obj = self.cls()
@@ -113,7 +127,7 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("b")
         obj.add("c")
         del obj[1]
-        self.assertEqual(tuple(i for i in obj), ('a','c'))
+        self.assertEqual(tuple(i for i in obj), ('a', 'c'))
         obj.add("a")
         obj.add("b")
         obj.add("c")
@@ -123,28 +137,32 @@ class JListTestCase(common.JPypeTestCase):
 
     def testAddAll(self):
         obj = self.cls()
-        obj.addAll(["a","b","c"])
+        obj.addAll(["a", "b", "c"])
         self.assertEqual(tuple(i for i in obj), ('a', 'b', 'c'))
-        obj.addAll(1,["a","b","c"])
+        obj.addAll(1, ["a", "b", "c"])
         self.assertEqual(tuple(i for i in obj), ('a', 'a', 'b', 'c', 'b', 'c'))
         with self.assertRaises(TypeError):
             obj.addAll()
         with self.assertRaises(TypeError):
-            obj.addAll(1,2,3)
+            obj.addAll(1, 2, 3)
         with self.assertRaises(TypeError):
-            obj.addAll(1,2)
+            obj.addAll(1, 2)
         with self.assertRaises(TypeError):
-            obj.addAll(1.0,['a'])
- 
+            obj.addAll(1.0, ['a'])
+
     def testRemoveAll(self):
         obj = self.cls()
-        obj.addAll(["a","b","c","d","e"])
-        obj.removeAll(["c","d"])
+        obj.addAll(["a", "b", "c", "d", "e"])
+        obj.removeAll(["c", "d"])
         self.assertEqual(tuple(i for i in obj), ('a', 'b', 'e'))
+
+    def testRetainAll(self):
+        obj = self.cls()
+        obj.addAll(["a", "b", "c", "d", "e"])
+        obj.retainAll(["c", "d"])
+        self.assertEqual(tuple(i for i in obj), ('c', 'd'))
 
     def testInit(self):
         cls = jpype.JClass('java.util.ArrayList')
-        obj = cls(self.Arrays.asList(['a','b','c']))
+        obj = cls(self.Arrays.asList(['a', 'b', 'c']))
         self.assertEqual(tuple(i for i in obj), ('a', 'b', 'c'))
-
-

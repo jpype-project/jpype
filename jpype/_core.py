@@ -106,13 +106,15 @@ def _hasClassPath(args):
 def _handleClassPath(clsList):
     out = []
     for s in clsList:
-        if not isinstance(s, (str, _jtypes._unicode)):
+        if not isinstance(s, str):
             raise TypeError("Classpath elements must be strings")
         if s.endswith('*'):
             import glob
             out.extend(glob.glob(s+'.jar'))
         else:
             out.append(s)
+    if _sys.platform == "cygwin":
+        out = [ _classpath._posix2win(i) for i in out]
     return _classpath._SEP.join(out)
 
 
@@ -143,10 +145,10 @@ def startJVM(*args, **kwargs):
         cast to Python strings. This option is to support legacy code
         for which conversion of Python strings was the default. This
         will globally change the behavior of all calls using
-        strings, and a value of True is NOT recommended for newly 
+        strings, and a value of True is NOT recommended for newly
         developed code.
 
-        The default value for this option during 0.7 series is 
+        The default value for this option during 0.7 series is
         True.  The option will be False starting in 0.8. A
         warning will be issued if this option is not specified
         during the transition period.
@@ -196,7 +198,7 @@ def startJVM(*args, **kwargs):
 
     # Handle strings and list of strings.
     if classpath:
-        if isinstance(classpath, (str, _jtypes._unicode)):
+        if isinstance(classpath, str):
             args.append('-Djava.class.path=%s' % _handleClassPath([classpath]))
         elif hasattr(classpath, '__iter__'):
             args.append('-Djava.class.path=%s' % _handleClassPath(classpath))
@@ -367,7 +369,7 @@ def getJVMVersion():
     runtime = _jclass.JClass('java.lang.Runtime')
     version = runtime.class_.getPackage().getImplementationVersion()
 
-    # Java 9+ has a version method 
+    # Java 9+ has a version method
     if not version:
         version = runtime.version()
     version = (re.match("([0-9.]+)", str(version)).group(1))

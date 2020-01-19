@@ -261,6 +261,8 @@ JPValue JPMethod::invokeConstructor(JPPyObjectVector& arg)
 
 bool JPMethod::isBeanMutator()
 {
+	if (m_Name.compare(0, 3, "set") != 0)
+		return false;
 	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		if ((*it)->isBeanMutator())
@@ -271,6 +273,8 @@ bool JPMethod::isBeanMutator()
 
 bool JPMethod::isBeanAccessor()
 {
+	if (this->m_Name.compare(0, 3, "get") != 0)
+		return false;
 	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		if ((*it)->isBeanAccessor())

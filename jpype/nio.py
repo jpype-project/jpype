@@ -20,10 +20,10 @@ import _jpype
 __all__ = ['convertToDirectBuffer']
 
 
-if _sys.version_info < (2, 7):
-    _mem_view = _jpype.memoryview  # own memoryview implementation
-else:
-    _mem_view = memoryview
+
+
+
+
 
 # FIXME this is not documented.
 # FIXME there are no tests of this method
@@ -32,7 +32,7 @@ else:
 def convertToDirectBuffer(obj):
     __doc__ = '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''
 
-    memoryview_of_obj = _mem_view(obj)
+    memoryview_of_obj = memoryview(obj)
 
     if memoryview_of_obj.readonly:
         raise ValueError(

@@ -26,7 +26,6 @@ struct PyJPValue
 
 	static PyTypeObject Type;
 	static void        initType(PyObject* module);
-	static bool        check(PyObject* o);
 
 	// Object A
 	static PyObject*   __new__(PyTypeObject* self, PyObject* args, PyObject* kwargs);

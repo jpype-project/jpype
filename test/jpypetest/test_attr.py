@@ -267,7 +267,8 @@ class AttributeTestCase(common.JPypeTestCase):
     def testPassedObjectGetsCleanedUp(self):
         import platform
         if platform.python_implementation() == 'PyPy':
-            raise common.unittest.SkipTest('PyPy memory model does not pass test')
+            raise common.unittest.SkipTest(
+                'PyPy memory model does not pass test')
 
         h = JClass('jpype.attr.Test1')()
         block_size = 1024 * 1024 * 10

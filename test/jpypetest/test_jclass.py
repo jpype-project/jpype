@@ -155,3 +155,21 @@ class JClassTestCase(common.JPypeTestCase):
         cls = jpype.JClass('jpype.types.MethodsTest')
         with self.assertRaises(AttributeError):
             cls.callProtectedObject(jpype.JObject())
+
+    def testJClassFail(self):
+        with self.assertRaises(jpype.JException):
+            cls = jpype.JClass("asdw.gqyr.jhnw")
+
+    def testGetClassFromClass(self):
+        cls = jpype.JClass('java.lang.Class')
+        self.assertIsInstance(cls.class_, cls)
+
+    def testGetClassFromInterface(self):
+        intr = jpype.JClass('java.io.Serializable')
+        cls = jpype.JClass('java.lang.Class')
+        self.assertIsInstance(intr.class_, cls)
+
+    def testInterfaceCtor(self):
+        intr = jpype.JClass('java.io.Serializable')
+        with self.assertRaises(jpype.JException):
+            intr()

@@ -31,6 +31,7 @@ def haveNumpy():
     except ImportError:
         return False
 
+
 class ArrayTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -158,7 +159,7 @@ class ArrayTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
         jarr[1:2] = [1]
         with self.assertRaises(ValueError):
-            jarr[1:2] = [1,2,3]
+            jarr[1:2] = [1, 2, 3]
 
     def testJArrayConversionInt(self):
         jarr = jpype.JArray(jpype.JInt)(self.VALUES)
@@ -378,7 +379,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertTrue(isinstance(jarray(10), jpype.JArray))
 
     def testArrayClone(self):
-        array = jpype.JArray(jpype.JInt, 2)([[1,2],[3,4]])
+        array = jpype.JArray(jpype.JInt, 2)([[1, 2], [3, 4]])
         carray = array.clone()
         # Verify the first dimension is cloned
         self.assertFalse(array.equals(carray))
@@ -387,5 +388,79 @@ class ArrayTestCase(common.JPypeTestCase):
 
     def testObjectNullArraySlice(self):
         # Check for bug in 0.7.0
-        array = jpype.JArray(jpype.JObject)([None,])
+        array = jpype.JArray(jpype.JObject)([None, ])
         self.assertEqual(array[:], (None,))
+
+    def testGetArraySlice(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        self.assertEqual(list(array[1:]), contents[1:])
+        self.assertEqual(list(array[:-1]), contents[:-1])
+        self.assertEqual(list(array[1:-1]), contents[1:-1])
+
+    def testSetArraySlice(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array[1:] = [5, 6, 7]
+        contents[1:] = [5, 6, 7]
+        self.assertEqual(list(array[:]), contents[:])
+        array[:-1] = [8, 9, 10]
+        contents[:-1] = [8, 9, 10]
+        self.assertEqual(list(array[:]), contents[:])
+
+    def testGetArraySliceStep(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(NotImplementedError):
+            array[::2]
+
+    def testSetArraySliceStep(self):
+        contents = [1, 2, 3, 4, 5, 6]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array[::2] = [5, 6, 7]
+        contents[::2] = [5, 6, 7]
+        self.assertEqual(list(array[:]), contents[:])
+
+    def testEquals(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        array2 = jpype.JArray(jpype.JInt)(contents)
+        self.assertEqual(array, array)
+        self.assertNotEqual(array, array2)
+
+    def testEqualsChar(self):
+        contents = "abc"
+        array = jpype.JArray(jpype.JChar)(contents)
+        array2 = jpype.JArray(jpype.JChar)(contents)
+        self.assertEqual(array, array)
+        self.assertNotEqual(array, array2)
+        self.assertEqual(array, "abc")
+
+    def testIter(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        contents2 = [i for i in array]
+        self.assertEqual(contents, contents2)
+
+    def testGetOutOfBounds(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(IndexError):
+            array[5]
+        self.assertEqual(array[-1], contents[-1])
+        self.assertEqual(array[-4], contents[-4])
+        with self.assertRaises(IndexError):
+            array[-5]
+
+    def testSetOutOfBounds(self):
+        contents = [1, 2, 3, 4]
+        array = jpype.JArray(jpype.JInt)(contents)
+        with self.assertRaises(IndexError):
+            array[5] = 1
+        array[-1] = 5
+        contents[-1] = 5
+        array[-4] = 6
+        contents[-4] = 6
+        self.assertEqual(list(array[:]), contents)
+        with self.assertRaises(IndexError):
+            array[-5] = 1

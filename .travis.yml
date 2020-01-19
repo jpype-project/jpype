@@ -4,8 +4,6 @@ os:
 language: python
 
 python:
-  - '2.7'
-  - '3.4'
   - '3.5'
   - '3.6'
   - 'nightly'
@@ -34,27 +32,6 @@ matrix:
     - python: pypy3
 
   include:
-    - name: "Python 2.7 on Xenial Linux (w/o NUMPY)"
-      python: 2.7
-      dist: xenial
-      language: python
-      env:
-        - NUMPY="--global-option=--disable-numpy"
-
-    - name: "Python 2.7 on Xenial Linux"
-      python: 2.7
-      dist: xenial
-      language: python
-
-    # TODO: remove in 0.8
-    - name: "Python 2.7 on Xenial Linux"
-      python: 2.7
-      dist: xenial
-      language: python
-      script:
-        - $PYTHON -c "import jpype"
-        - $PYTHON -m pytest -v test/jpypetest --convertStrings
-
     - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
       python: 3.7
       dist: xenial
@@ -103,18 +80,6 @@ matrix:
       script:
         - $PYTHON -c "import jpype"
         - $PYTHON -m pytest -v test/jpypetest --convertStrings
-
-    - name: "Python 2.7 on macOS"
-      os: osx
-      osx_image: xcode10.2
-      language: java
-      env:
-        - PYTHON=python
-        - INST=--user
-      addons:
-        homebrew:
-          packages:
-            - ant
 
     - name: "Python 3.7 on macOS"
       os: osx

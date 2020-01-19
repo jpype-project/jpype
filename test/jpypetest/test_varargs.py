@@ -111,5 +111,3 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(var.callString1("a"), 0)
         self.assertEqual(var.callString1("a", "b"), 1)
         self.assertEqual(var.callString1("a", "b", "c"), 2)
-
-

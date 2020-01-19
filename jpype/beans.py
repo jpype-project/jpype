@@ -14,7 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-""" 
+"""
 JPype Beans Module
 ------------------
 
@@ -22,9 +22,9 @@ This customizer finds all occurances of methods with get or set and converts
 them into Python properties. This behavior is sometimes useful in programming
 with JPype with interactive shells, but also leads to a lot of confusion.
 Is this class exposing a variable or is this a property added JPype.  It was
-the default behavior until 0.7. 
+the default behavior until 0.7.
 
-As an unnecessary behavior that violates both the Python principle 
+As an unnecessary behavior that violates both the Python principle
 *"There should be one-- and preferably only one --obvious way to do it."* and
 the C++ principle *"You only pay for what you use"*. Thus this misfeature
 was removed from the distribution as a default. However, given that it is
@@ -65,14 +65,14 @@ def _extract_accessor_pairs(members):
         if name == "getClass":
             continue
 
-        if name.startswith("get") and member.isBeanAccessor():
+        if member.isBeanAccessor():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
                 pair[0] = member
             except KeyError:
                 accessor_pairs[property_name] = [member, None]
-        elif name.startswith("set") and member.isBeanMutator():
+        elif member.isBeanMutator():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]

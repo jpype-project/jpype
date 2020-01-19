@@ -18,8 +18,6 @@
 
 static PyMethodDef fieldMethods[] = {
 	{"getName", (PyCFunction) (&PyJPField::getName), METH_NOARGS, ""},
-	{"isFinal", (PyCFunction) (&PyJPField::isFinal), METH_NOARGS, ""},
-	{"isStatic", (PyCFunction) (&PyJPField::isStatic), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -149,28 +147,4 @@ int PyJPField::__set__(PyJPField* self, PyObject* obj, PyObject* pyvalue)
 	PY_STANDARD_CATCH;
 	return -1;
 	JP_TRACE_OUT;
-}
-
-PyObject* PyJPField::isStatic(PyJPField* self, PyObject* arg)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPField::isStatic");
-		JPJavaFrame frame;
-		return PyBool_FromLong(self->m_Field->isStatic());
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
-}
-
-PyObject* PyJPField::isFinal(PyJPField* self, PyObject* arg)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPField::isFinal");
-		JPJavaFrame frame;
-		return PyBool_FromLong(self->m_Field->isFinal());
-	}
-	PY_STANDARD_CATCH;
-	return NULL;
 }

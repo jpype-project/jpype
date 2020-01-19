@@ -40,5 +40,3 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
         # Get the queue instance
         queue = JPypeReferenceQueue.getInstance()
         self.assertTrue(queue.isRunning())
-
-

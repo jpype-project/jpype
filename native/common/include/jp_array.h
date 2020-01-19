@@ -57,10 +57,6 @@ public:
 		return m_Object.get();
 	}
 
-public: // Wrapper
-	virtual JPClass* getType();
-	virtual jvalue  getValue();
-
 private:
 	JPArrayClass* m_Class;
 	JPArrayRef    m_Object;

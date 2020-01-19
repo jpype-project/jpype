@@ -14,10 +14,11 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-try:
-    from collections.abc import Sequence
-except ImportError:
-    from collections import Sequence
+
+from collections.abc import Sequence
+from collections.abc import Mapping
+
+
 
 from . import _jclass
 from . import _jcustomizer
@@ -38,7 +39,7 @@ def isPythonSequence(v):
 class _JIterable(object):
     """ Customizer for ``java.util.Iterable``
 
-    This customizer adds the Python iterator syntax to classes that 
+    This customizer adds the Python iterator syntax to classes that
     implement Java Iterable.
     """
 
@@ -78,6 +79,16 @@ class _JCollection(object):
             v = _jclass.JClass('java.util.Arrays').asList(v)
         return self._retainAll(v)
 
+def _sliceAdjust(slc, size):
+    start = slc.start
+    stop = slc.stop
+    if slc.step and (slc.step>1 or slc.step<0):
+        raise TypeError("Stride not supported")
+    if start==None: start = 0
+    if stop == None: stop = size
+    if start<0: start += size
+    if stop<0: stop += size
+    return slice(start, stop)
 
 @_jcustomizer.JImplementationFor('java.util.List')
 class _JList(object):
@@ -89,13 +100,8 @@ class _JList(object):
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
-            start = ndx.start
-            stop = ndx.stop
-            if start < 0:
-                start = self.size() + start
-            if stop < 0:
-                stop = self.size() + stop
-            return self.subList(start, stop)
+            ndx = _sliceAdjust(ndx, self.size())
+            return self.subList(ndx.start, ndx.stop)
         else:
             if ndx < 0:
                 ndx = self.size() + ndx
@@ -105,8 +111,9 @@ class _JList(object):
         if isinstance(ndx, slice):
             if isPythonSequence(v):
                 v = _jclass.JClass('java.util.Arrays').asList(v)
+            ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
-            self.addAll(start, v)
+            self.addAll(ndx.start, v)
         else:
             if ndx < 0:
                 ndx = self.size() + ndx
@@ -114,6 +121,7 @@ class _JList(object):
 
     def __delitem__(self, ndx):
         if isinstance(ndx, slice):
+            ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
         elif hasattr(ndx, '__index__'):
             return self.remove(_jtypes.JInt(ndx))
@@ -137,7 +145,7 @@ class _JList(object):
 
 
 def isPythonMapping(v):
-    if isinstance(v, collections.Mapping):
+    if isinstance(v, Mapping):
         if not hasattr(v.__class__, '__metaclass__') or \
            v.__class__.__metaclass__ is _jclass._JavaClass:
             return True

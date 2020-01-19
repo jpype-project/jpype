@@ -84,12 +84,12 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
         _checkJVMArch(jvm)
 
     def _get_winreg(self):
-        # Py2
-        try:
-            import _winreg as winreg
-            return winreg
-        except ImportError:
-            pass
+
+
+
+
+
+
 
         # in Py3, winreg has been moved
         try:

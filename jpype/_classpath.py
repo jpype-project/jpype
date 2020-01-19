@@ -34,6 +34,8 @@ if _sys.platform == 'cygwin':
         return parts
 
     def _posix2win(directory):
+        if len(directory)>3 and directory[1:3]==":\\":
+            return directory
         root = _get_root()
         directory = _os.path.abspath(directory)
         paths = _splitpath(directory)
@@ -55,7 +57,7 @@ def addClassPath(path1):
     glob pattern.
 
     Arguments:
-      path(str): 
+      path(str):
 
     """
     global _CLASSPATHS
@@ -72,7 +74,7 @@ def getClassPath(env=True):
     Includes user added paths and the environment CLASSPATH.
 
     Arguments:
-      env(Optional, bool): If true then environment is included. 
+      env(Optional, bool): If true then environment is included.
         (default True)
     """
     global _CLASSPATHS

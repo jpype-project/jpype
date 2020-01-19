@@ -80,11 +80,6 @@ void PyJPArray::initType(PyObject* module)
 	PyModule_AddObject(module, "PyJPArray", (PyObject*) & PyJPArray::Type);
 }
 
-bool PyJPArray::check(PyObject* o)
-{
-	return Py_TYPE(o) == &PyJPArray::Type;
-}
-
 JPPyObject PyJPArray::alloc(JPArray* obj)
 {
 	JPJavaFrame fame;

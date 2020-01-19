@@ -280,5 +280,3 @@ class VirtualsTestCase(common.JPypeTestCase):
         v1.get()
         self.vt.VoidSupplier.get(v1)
         self.vt.ClassVoidSupplier.get(v1)
-
-

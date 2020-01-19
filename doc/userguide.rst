@@ -616,6 +616,9 @@ tied to the JVM that is started or attached. Thus operating more than one
 JVM does not appear to be possible under the current implementation.
 Difficulties that would need to be overcome to remove this limitation include:
 
+- All available JVM implementations support on one JVM instance per
+  process. Thus a communication layer would have to proxy JNI
+  class from JPype to another process.
 - Which JVM would a static class method call. Thus the class types
   would need to be JVM specific (ie. ``JClass('org.MyObject', jvm=JVM1)``)
 - How would can a wrapper for two different JVM coexist in the
@@ -629,6 +632,51 @@ Difficulties that would need to be overcome to remove this limitation include:
 
 Thus it appears prohibitive to support multiple JVMs in the JPype
 class model.
+
+Working with Multiprocessing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Because only one JVM can be started per process, JPype cannot be used
+with processes created with fork.  Forks copy all memory including the
+JVM.  The copied JVM usually will not function properly thus
+JPype cannot support multiprocessing using fork.
+
+To use multiprocessing with JPype, processes must be created with
+"spawn".  As the multiprocessing context is usually selected at
+the start and the default for unix is fork, this requires the creating
+the appropraite spawn context.  To launch multiprocessing properly
+the following receipe can be used.
+
+.. code-block:: python
+
+   import multiprocessing as mp
+
+   ctx = mp.get_context("spawn")
+   process = ctx.Process(...)
+   queue = ctx.Queue()
+   ...
+
+Also when using multiprocessing, Java objects cannot be sent
+through the default Queue methods as it used pickle without
+any Java support.  This can be overcome by wrapping Queue to first
+encode to a byte stream using the JPickle package.  By wrapping
+a Queue with the Java pickler any serializable Java object can
+be transferred between processes.
+
+In addition, a standard Queue will not produce an error if is unable to
+pickle a Java object.  This can cause deadlocks when using
+multiprocessing IPC thus wrapping any Queue is required.
+
+
+Errors reported by Python fault handler
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The JVM takes over the standard fault handlers resulting in unusual
+behavior if Python handlers are installed.  As part of normal operations
+the JVM will trigger a segmentation fault when starting and when
+interrupting threads.  Pythons faulthandler can intercept these operations
+thus reporting extraneous fault messages or preventing normal JVM
+operations if Python handles it.  When operating with JPype, Python
+faulthandler module should be disabled.
 
 
 Unloading the JVM
@@ -648,9 +696,7 @@ advantage of it. As the time of writing, the latest stable Sun JVM was
 Unsupported Python versions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyPy 2.7 has issues with the Python meta class programming. PyPy 3 appears
-to work, but does not have very aggressive memory deallocation. Thus PyPy
-3 fails the leak test.
+CPython 2 support was removed starting in 2020.
 
 
 Unsupported Java virtual machines
@@ -662,8 +708,8 @@ Cygwin
 ~~~~~~
 
 Cygwin is currently usable in JPype, but has a number of issues for
-which there is no current solution. The python2 compilation on cygwin has
-bugs in a threading implementation that lead to crashes in the test bench.
+which there is no current solution.
+
 Cygwin does not appear to pass environment variables to the JVM properly
 resulting in unusual behavior with certain windows calls. The path
 separator for Cygwin does not match that of the Java dll, thus specification
@@ -672,7 +718,7 @@ of class paths must account for this. Subject to these issues JPype is usable.
 PyPy
 ~~~~
 
-The GC routine in PyPy does not play well with Java. It runs when it thinks
+The GC routine in PyPy 3 does not play well with Java. It runs when it thinks
 that Python is running out of resources. Thus a code that allocates a lot
 of Java memory and deletes the Python objects will still be holding the
 Java memory until Python is garbage collected. This means that out of
@@ -684,10 +730,10 @@ Advanced Topics
 Using JPype for debugging Java code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One common use of JPype is not to develop programs in Python, but rather to 
+One common use of JPype is not to develop programs in Python, but rather to
 function as a Read-Eval-Print Loop for Java. When operating Java though
 Python as a method of developing or debugging Java there are a few tricks
-that can be used to simplify the job, beyond being able to probe and plot the 
+that can be used to simplify the job, beyond being able to probe and plot the
 Java data structures interactively. These methods include:
 
 1) Attaching a debugger to the Java JVM being run under JPype.
@@ -702,18 +748,18 @@ Attaching a Debugger
 
 Interacting with Java through a shell is great, but sometimes it is necessary
 to drop down to a debugger. To make this happen we need to start the JVM
-with options to support remote debugging. 
+with options to support remote debugging.
 
 .. code-block:: python
 
-    jpype.startJVM("-Xint", "-Xdebug", "-Xnoagent", 
+    jpype.startJVM("-Xint", "-Xdebug", "-Xnoagent",
       "-Xrunjdwp:transport=dt_socket,server=y,address=12999,suspend=n")
 
 Then add a marker in your program when it is time to attach the debugger
 in the form of a pause statement.
 
 .. code-block:: python
-    
+
     input("pause to attach debugger")
     myobj.callProblematicMethod()
 
@@ -729,11 +775,11 @@ a breakpoint is hit.
 Attach data to an Exception
 :::::::::::::::::::::::::::
 
-Sometimes getting to the level of a debugger is challenging especially if the 
+Sometimes getting to the level of a debugger is challenging especially if the
 code is large and error occurs rarely. In this case it is often benefitial to
 simply attach data to an exception. To do this, we need to write a small
-utility class. Java exceptions are not strictly speaking expandable, but 
-they can be chained. Thus, it we create a dummy exception holding a 
+utility class. Java exceptions are not strictly speaking expandable, but
+they can be chained. Thus, it we create a dummy exception holding a
 ``java.util.Map`` and attach it to as the cause of the exception, it will be
 passed back down the call stack until it reaches Python. We can then use
 ``getCause()`` to retrieve the map containing the relevant data.
@@ -749,12 +795,12 @@ use this option, we simply make sure all of the classes in Java that we are
 using are Serializable, then add a condition that detects the faulty algorithm
 state. When the fault occurs, we create a ``java.util.HashMap`` and populate
 it with the values we wish to be able to examine from within Python. We then
-use Java serialization to write this state file to disk. We then execute the 
+use Java serialization to write this state file to disk. We then execute the
 program and collect the resulting state files.
 
 We can then return later with an interactive Python shell, and launch JPype
 with a classpath for the jars and possibly a connection to debugger.
-We load the state file into memory and we can then probe or execute the 
+We load the state file into memory and we can then probe or execute the
 methods that lead up to the fault.
 
 

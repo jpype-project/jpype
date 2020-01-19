@@ -3,25 +3,25 @@
 #include <vector>
 
 /**
- * This set of source are mostly sugar with some light weight 
+ * This set of source are mostly sugar with some light weight
  * reference management.  Each type holds a reference for the duration of its
  * scope.  If the PyObject must survive the reference container lifespan
  * then a keep must be called.  keep() should only appear when returning from
  * the python module.  Any earlier than the return provides an opportunity for
  * an exception to be throw which may leak.
- * 
+ *
  * For this module to function properly, each call needs to be check against the
  * python object model to verify.
  * 1) Does a call return an object as a new reference or a borrowed one.
  * 2) Does a call set an error that must be checked.
  * 3) Does the call steal a reference to an object passed into it.
- * 
+ *
  * Calls should always accept a raw PyObject* and return JPPyObject if
  * the return can be an new object or PyObject* if the return is a borrowed
  * reference.  Obviously holding a borrowed reference can create issues as
- * nothing prevents a borrowed object from falling out of the list and 
+ * nothing prevents a borrowed object from falling out of the list and
  * being deleted.
- * 
+ *
  */
 
 //  Note: Python uses a sized size type.  Thus we will map it to jlong.
@@ -38,10 +38,10 @@ typedef _object PyObject;
  * - It can return NULL indicating there is no object.
  * - It can give a borrowed object or NULL if it doesn't exist.
  * - Or we can just have an existing object we want to use.
- * 
+ *
  * With all these different methods, we need to have a policy that
- * state how we want this object reference to be treated.  Each 
- * policy will produce different actions on the creation of 
+ * state how we want this object reference to be treated.  Each
+ * policy will produce different actions on the creation of
  * a reference wrapper.
  */
 namespace JPPyRef
@@ -49,10 +49,10 @@ namespace JPPyRef
 
 	enum Type
 	{
-		/**  
-		 * This policy is used if we need to hold a reference to an existing 
+		/**
+		 * This policy is used if we need to hold a reference to an existing
 		 * object for some duration.  The object may be null.
-		 * 
+		 *
 		 * Increment reference count if not null, and decrement when done.
 		 */
 		_use =  0,
@@ -60,7 +60,7 @@ namespace JPPyRef
 		/**
 		 * This policy is used when we are given a borrowed reference and we
 		 * need to check for errors.
-		 * 
+		 *
 		 * Check for errors, increment reference count, and decrement when done.
 		 * Will throw an exception an error occurs.
 		 */
@@ -69,7 +69,7 @@ namespace JPPyRef
 		/**
 		 * This policy is used when we are given a new reference that we must
 		 * destroy.  This will steal a reference.
-		 * 
+		 *
 		 * Assert not null, claim reference, and decremented when done.
 		 * Will throw an exception in the object is null.
 		 */
@@ -78,7 +78,7 @@ namespace JPPyRef
 		/**
 		 * This policy is used when we are capturing an object returned from a python
 		 * call that we are responsible for.  This will steal a reference.
-		 * 
+		 *
 		 * Check for errors, assert not null, then claim.
 		 * Will throw an exception an error occurs.
 		 */
@@ -87,14 +87,14 @@ namespace JPPyRef
 }
 
 /** Reference to a Python object.
- * 
+ *
  * This creates a reference on creation and deletes it on destruction.
  *
  * Because there is a cost associated with creating wrappers, most
  * methods should be static if they don't actually require management.
  *
  * Methods will return either a bare PyObject* if they hold the
- * object like a container, or a wrapper which will control the lifespan 
+ * object like a container, or a wrapper which will control the lifespan
  * of the object.
  *
  */
@@ -107,7 +107,7 @@ public:
 	}
 
 	/** Create a new reference to a Python object.
-	 * 
+	 *
 	 * @param usage control how this object is to be handled, see JPPyRef.
 	 * @param obj is the python object.
 	 */
@@ -121,17 +121,17 @@ public:
 
 	/**
 	 * Keep an object by creating a reference.
-	 * 
-	 * This should only appear in the return statement in the cpython module.  
-	 * The reference must not be null.  Keep invalidates this handle from any 
+	 *
+	 * This should only appear in the return statement in the cpython module.
+	 * The reference must not be null.  Keep invalidates this handle from any
 	 * further use as you were supposed to have called return.
-	 * 
-	 * @return the pointer to the Python object. 
+	 *
+	 * @return the pointer to the Python object.
 	 */
 	PyObject* keep();
 
 	/** Access the object.  This should never appear in
-	 * a return statement.  
+	 * a return statement.
 	 */
 	PyObject* get()
 	{
@@ -150,14 +150,14 @@ public:
 	static const char* getTypeName(PyObject* obj);
 
 	/** Execute a call on an object.
-	 * 
+	 *
 	 * @param args must a tuple and must not be null.
 	 * @param kwargs must be a dict and can be null.
 	 */
 	JPPyObject call(PyObject* args, PyObject* kwargs);
 
 	/** Determine if this python reference is null.
-	 * 
+	 *
 	 * @returns true if null.
 	 */
 	bool isNull() const
@@ -165,9 +165,9 @@ public:
 		return pyobj == NULL;
 	}
 
-	/** Determine if this python reference refers to 
+	/** Determine if this python reference refers to
 	 * None.
-	 * 
+	 *
 	 * @returns true if reference to None, false otherwise.
 	 */
 	bool isNone()
@@ -175,27 +175,12 @@ public:
 		return isNone(pyobj);
 	}
 
-	/** Determine if this python reference refers to 
+	/** Determine if this python reference refers to
 	 * None.
-	 * 
+	 *
 	 * @returns true if reference to None, false otherwise.
 	 */
 	static bool isNone(PyObject* o);
-
-	/** Returns true if pyobj is an instance of type
-	 *  or a subclass thereof
-	 * 
-	 * @param is a python object.
-	 * @param is a python class or a tuple of types.
-	 */
-	static bool isInstance(PyObject* pyobj, PyObject* type);
-
-	/** Returns true if pycls is equal to or derived from type.
-	 * 
-	 * @param is a python class.
-	 * @param is a python class or a tuple of types.
-	 */
-	static bool isSubclass(PyObject* pycls, PyObject* type);
 
 	static bool isSequenceOfItems(PyObject* obj);
 
@@ -210,12 +195,6 @@ protected:
 	PyObject* pyobj;
 } ;
 
-class JPPyType : public JPPyObject
-{
-public:
-	static bool check(PyObject* obj);
-} ;
-
 /****************************************************************************
  * Number types
  ***************************************************************************/
@@ -227,31 +206,27 @@ namespace JPPyBool
 	JPPyObject fromLong(jlong value);
 }
 
-/** Wrapper for a Python Int object. 
- * 
- * Only Python 2 has int objects. For purposes of deciding 
- * the wrapper type long and int should be treated identically 
+/** Wrapper for a Python Int object.
+ *
+ * Only Python 2 has int objects. For purposes of deciding
+ * the wrapper type long and int should be treated identically
  * or we will have operational differences between Python 2 and 3.
  */
 namespace JPPyInt
 {
-	bool check(PyObject* obj);
-	jint asInt(PyObject* obj);
-
-	JPPyObject fromInt(jint l);
-	JPPyObject fromLong(jlong l);
+JPPyObject fromInt(jint l);
 }
 
-/** Wrapper for a Python long object. 
+/** Wrapper for a Python long object.
  */
 namespace JPPyLong
 {
 	bool check(PyObject* obj);
 	bool checkConvertable(PyObject* obj);
 
-	/** Check if this is really an integer type or just can be converted to.  
-	 * 
-	 * PEP-357 says __index__ is defined if we can use it as an array slice. 
+	/** Check if this is really an integer type or just can be converted to.
+	 *
+	 * PEP-357 says __index__ is defined if we can use it as an array slice.
 	 * Only integer types can do that.
 	 */
 	bool checkIndexable(PyObject* obj);
@@ -277,9 +252,9 @@ namespace JPPyFloat
  ***************************************************************************/
 
 /** Wrapper for the concept of a Python string.
- * 
- * For the purposes of this interface we will hide the differences 
- * between unicode and string. 
+ *
+ * For the purposes of this interface we will hide the differences
+ * between unicode and string.
  */
 class JPPyString : public JPPyObject
 {
@@ -294,7 +269,7 @@ public:
 	}
 
 	/** Check if the object is a bytes or unicode.
-	 * 
+	 *
 	 * @returns true if the object is bytes or unicode.
 	 */
 	static bool check(PyObject* obj);
@@ -302,7 +277,7 @@ public:
 	/** Create a new string from utf8 encoded string.
 	 * Note: java utf8 is not utf8.
 	 *
-	 * Python2 produced str unless unicode is set to 
+	 * Python2 produced str unless unicode is set to
 	 * true.  Python3 will always produce a unicode string.
 	 *
 	 * @param str is the string to convert
@@ -344,8 +319,8 @@ public:
 	}
 
 	/** Create a new tuple holding a fixed number of items.
-	 * 
-	 * Every item must be set before the tuple is used or we are heading 
+	 *
+	 * Every item must be set before the tuple is used or we are heading
 	 * for a segfault.  Tuples are not mutable so items can only be set
 	 * during creation.
 	 */
@@ -354,13 +329,13 @@ public:
 	static bool check(PyObject* obj);
 
 	/** Set an item in the tuple.
-	 * 
+	 *
 	 * This does not steal a reference to the object.
 	 */
 	void setItem(jlong ndx, PyObject* val);
 
 	/** Fetch an item from a tuple.
-	 * 
+	 *
 	 * Scope remains with the JPTuple, so no smart reference is required.
 	 * @throws if the index is out of the range of the tuple.
 	 */
@@ -389,13 +364,13 @@ public:
 	static bool check(PyObject* obj);
 
 	/** Set an item in the list.
-	 * 
+	 *
 	 * This does not steal a reference to the object.
 	 */
 	void setItem(jlong ndx, PyObject* val);
 
 	/** Fetch an item from a tuple.
-	 * 
+	 *
 	 * Scope remains with the JPTuple, so no smart reference is required.
 	 * @throws if the index is out of the range of the tuple.
 	 */
@@ -404,9 +379,9 @@ public:
 
 } ;
 
-/** Wrapper for a Python sequence. 
- * 
- * In most cases, we will not use this directly, but rather convert to 
+/** Wrapper for a Python sequence.
+ *
+ * In most cases, we will not use this directly, but rather convert to
  * a JPPyObjectVector for easy access.
  */
 class JPPySequence : public JPPyObject
@@ -437,7 +412,7 @@ public:
 
 /** For purposes of efficiency, we should only convert a sequence once per
  * method call.  This class is to support that operation.
- * 
+ *
  * THis object is read only.
  */
 class JPPyObjectVector
@@ -450,7 +425,7 @@ public:
 	 */
 	JPPyObjectVector(PyObject* sequence);
 
-	/** Use an existing sequence members as a vector plus the 
+	/** Use an existing sequence members as a vector plus the
 	 * object instance.
 	 */
 	JPPyObjectVector(PyObject* inst, PyObject* sequence);
@@ -493,19 +468,6 @@ public:
 	{
 	}
 
-	// Create a new Dict 
-	static JPPyDict newDict();
-
-	static bool check(PyObject* obj);
-
-	bool contains(PyObject* k);
-
-	JPPyObject getKeys();
-	JPPyObject copy(PyObject* obj);
-
-	// item remains with the scope of JPPyDict
-	PyObject* getItem(PyObject* k);
-	void setItemString( PyObject* o, const char* n);
 } ;
 
 
@@ -514,17 +476,16 @@ public:
  ***************************************************************************/
 
 /** Front end for all Python exception handling.
- * 
+ *
  * To issue an error from within the C++ layer use the appropriate
  * JP_RAISE_* macro.  If within the Python extension module use
  * the Python interface.
- * 
+ *
  */
 namespace JPPyErr
 {
-	void clear();
-	/** Check if there is a pending Python exception.
-	 * 
+/** Check if there is a pending Python exception.
+	 *
 	 * @return true if pending, false otherwise.
 	 */
 	bool occurred();
@@ -554,7 +515,7 @@ public:
 	}
 } ;
 
-/** Used to establish a python lock when called from a 
+/** Used to establish a python lock when called from a
  * thread external to python such a java.
  */
 class JPPyCallAcquire

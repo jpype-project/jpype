@@ -18,7 +18,6 @@
 
 static PyMethodDef classMethods[] = {
 	{"toString", (PyCFunction) (&PyJPValue::toString), METH_NOARGS, ""},
-	{"toUnicode", (PyCFunction) (&PyJPValue::toUnicode), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -74,11 +73,6 @@ void PyJPValue::initType(PyObject* module)
 	PyType_Ready(&PyJPValue::Type);
 	Py_INCREF(&PyJPValue::Type);
 	PyModule_AddObject(module, "PyJPValue", (PyObject*) (&PyJPValue::Type));
-}
-
-bool PyJPValue::check(PyObject* o)
-{
-	return Py_TYPE(o) == &PyJPValue::Type;
 }
 
 // These are from the internal methods when we alreayd have the jvalue
@@ -276,44 +270,3 @@ PyObject* PyJPValue::toString(PyJPValue* self)
 	return 0;
 	JP_TRACE_OUT;
 }
-
-/** This is the way to convert an object into a python string. */
-PyObject* PyJPValue::toUnicode(PyJPValue* self)
-{
-	JP_TRACE_IN("PyJPValue::toUnicode");
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPValue::toUnicode");
-		JPJavaFrame frame;
-		JPClass* cls = self->m_Value.getClass();
-		if (cls == JPTypeManager::_java_lang_String)
-		{
-			// Java strings are immutable so we will cache them.
-			ensureCache(self);
-			PyObject* out;
-			out = PyDict_GetItemString(self->m_Cache, "unicode"); // Borrowed reference
-			if (out == NULL)
-			{
-				jstring str = (jstring) self->m_Value.getValue().l;
-				if (str == NULL)
-					JP_RAISE_VALUE_ERROR("null string");
-				PyDict_SetItemString(self->m_Cache, "unicode", out = JPPyString::fromStringUTF8(JPJni::toStringUTF8(str), true).keep());
-			}
-			Py_INCREF(out);
-			return out;
-
-		}
-		if (cls->isPrimitive())
-			JP_RAISE_VALUE_ERROR("toUnicode requires a java object");
-		if (cls == NULL)
-			JP_RAISE_VALUE_ERROR("toUnicode called with null class");
-
-		// In general toString is not immutable, so we won't cache it.
-		return JPPyString::fromStringUTF8(JPJni::toString(self->m_Value.getValue().l), true).keep();
-	}
-	PY_STANDARD_CATCH;
-	return 0;
-	JP_TRACE_OUT;
-}
-
-

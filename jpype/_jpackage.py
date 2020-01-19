@@ -48,8 +48,8 @@ class JPackage(object):
     Args:
       path (str): Path into the Java class tree.
       strict (bool, optional): Requires Java paths to conform to the Java
-        package naming convention. If a path does not conform and a class 
-        with the required name is not found, the AttributeError is raise 
+        package naming convention. If a path does not conform and a class
+        with the required name is not found, the AttributeError is raise
         to indicate that the class was not found.
 
     Example:

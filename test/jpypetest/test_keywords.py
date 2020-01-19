@@ -18,6 +18,7 @@ import jpype
 import common
 import keyword
 
+
 class KeywordsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -25,4 +26,3 @@ class KeywordsTestCase(common.JPypeTestCase):
     def testKeywords(self):
         for kw in keyword.kwlist:
             self.assertTrue(jpype._pykeywords.pysafe(kw).endswith("_"))
-

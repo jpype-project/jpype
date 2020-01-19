@@ -12,12 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
 // Note: java represents arrays of zero length as null, thus we
-// need to be careful to handle these properly.  We need to 
+// need to be careful to handle these properly.  We need to
 // carry them around so that we can match types.
 
 JPArray::JPArray(JPClass* cls, jarray inst) : m_Object(inst)
@@ -85,7 +85,7 @@ void JPArray::setRange(jsize start, jsize stop, PyObject* val)
 	JP_TRACE("Verify lengths", len, plength);
 	if ((long) len != plength)
 	{
-		// Python would allow mismatching size by growing or shrinking 
+		// Python would allow mismatching size by growing or shrinking
 		// the length of the array.  But java arrays are immutable in length.
 		std::stringstream out;
 		out << "Slice assignment must be of equal lengths : " << len << " != " << plength;
@@ -101,12 +101,13 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 {
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();
-	if (ndx > m_Length)
+
+	if (ndx < 0)
+		ndx += m_Length;
+
+	if (ndx >= m_Length || ndx < 0)
 	{
-		// Python returns IndexError
-		stringstream ss;
-		ss << "java array assignment index out of range for size " << m_Length;
-		JP_RAISE_INDEX_ERROR(ss.str());
+		JP_RAISE_INDEX_ERROR("java array assignment out of bounds");
 	}
 
 	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
@@ -122,25 +123,13 @@ JPPyObject JPArray::getItem(jsize ndx)
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();
 
-	if (ndx > m_Length)
+	if (ndx < 0)
+		ndx += m_Length;
+
+	if (ndx >= m_Length || ndx < 0)
 	{
-		// Python behavior is IndexError
-		stringstream ss;
-		ss << "index " << ndx << "is out of bounds for java array with size 0";
-		JP_RAISE_INDEX_ERROR(ss.str());
+		JP_RAISE_INDEX_ERROR("array index out of bounds");
 	}
 
 	return compType->getArrayItem(frame, m_Object.get(), ndx);
-}
-
-JPClass* JPArray::getType()
-{
-	return m_Class;
-}
-
-jvalue JPArray::getValue()
-{
-	jvalue val;
-	val.l = m_Object.get();
-	return val;
 }

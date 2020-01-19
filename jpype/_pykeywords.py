@@ -18,10 +18,10 @@
 # This is a super set of the keywords in Python2 and Python3.
 # We use this so that jpype is a bit more version independent.
 _KEYWORDS = set((
-    'False', 'None', 'True', 'and', 'as', 'assert', 'async', 
-    'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 
-    'except', 'exec', 'finally', 'for', 'from', 'global', 'if', 'import', 
-    'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'print', 
+    'False', 'None', 'True', 'and', 'as', 'assert', 'async',
+    'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else',
+    'except', 'exec', 'finally', 'for', 'from', 'global', 'if', 'import',
+    'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'print',
     'raise', 'return', 'try', 'while', 'with', 'yield'
 ))
 
