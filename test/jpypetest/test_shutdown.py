@@ -7,6 +7,7 @@ jarray = None
 jcls = None
 jobj = None
 
+
 def startup():
     jpype.startJVM(convertStrings=False)
     global jstr, jarray, jcls, jobj
@@ -15,7 +16,7 @@ def startup():
     jstr = jpype.java.lang.String("good morning")
     jobj = jpype.java.lang.Object()
     jcls = jpype.JClass("java.lang.String")
-    jarray = jpype.JArray(jpype.JInt)([1,2,3,4])
+    jarray = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
 
     # Then blow everything up
     jpype.shutdownJVM()
@@ -26,36 +27,45 @@ def startup():
 def runArrayGet():
     jarray[0]
 
+
 def runArraySet():
-    jarray[0]=1
+    jarray[0] = 1
+
 
 def runArrayGetSlice():
     jarray[0:2]
 
+
 def runArraySetSlice():
-    jarray[0:2]=[1,2]
+    jarray[0:2] = [1, 2]
+
 
 def runArrayStr():
     str(jarray)
 
+
 def runClassCtor():
     obj = jcls()
+
 
 def runObjectStr():
     str(jobj)
 
+
 def runObjectInvoke():
     jobj.wait()
 
+
 def runStringStr():
     str(jstr)
+
 
 def runStringInvoke():
     jstr.substring(1)
 
 
 class ShutdownTest(unittest.TestCase):
- 
+
     def setup(self):
         self.client = ShutdownTest.client
 
@@ -107,5 +117,3 @@ class ShutdownTest(unittest.TestCase):
     def testStringStr(self):
         with self.assertRaises(RuntimeError):
             self.client.execute(runStringStr)
-
-

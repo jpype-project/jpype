@@ -28,6 +28,7 @@ if sys.version > '3':
 
 class ValuesTestCase(common.JPypeTestCase):
     """ Test of type conversion for fields. """
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.Fields = jpype.JClass('jpype.types.FieldsTest')()
@@ -133,17 +134,15 @@ class ValuesTestCase(common.JPypeTestCase):
 
     def testStringDictKey1(self):
         d = dict()
-        d['foo']='a'
-        self.assertEqual(d[jpype.JString('foo')],'a')
+        d['foo'] = 'a'
+        self.assertEqual(d[jpype.JString('foo')], 'a')
 
     def testStringDictKey2(self):
         d = dict()
-        d[jpype.JString('foo')]='a'
-        self.assertEqual(d['foo'],'a')
+        d[jpype.JString('foo')] = 'a'
+        self.assertEqual(d['foo'], 'a')
 
     def testStringDictKey3(self):
         d = dict()
-        d[jpype.JString('foo')]='a'
-        self.assertEqual(d[jpype.JString('foo')],'a')
-
-
+        d[jpype.JString('foo')] = 'a'
+        self.assertEqual(d[jpype.JString('foo')], 'a')

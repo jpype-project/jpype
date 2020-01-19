@@ -1,6 +1,7 @@
 import jpype
 import common
 
+
 class JStringTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -13,11 +14,11 @@ class JStringTestCase(common.JPypeTestCase):
     def testEq(self):
         a = jpype.JString("abc")
         b = jpype.JClass("java.lang.String")("abc")
-        self.assertEqual(a,b)
+        self.assertEqual(a, b)
 
     def testEqPy(self):
         a = jpype.JString("abc")
-        self.assertEqual(a,"abc")
+        self.assertEqual(a, "abc")
 
     def testNotEq(self):
         a = jpype.JString("abc")
@@ -48,37 +49,37 @@ class JStringTestCase(common.JPypeTestCase):
     def testLt(self):
         a = jpype.JString("abc")
         b = jpype.JString("def")
-        self.assertTrue(a<b)
-        self.assertFalse(b<a)
-        self.assertFalse(b<"def")
-        self.assertTrue(a<"def")
+        self.assertTrue(a < b)
+        self.assertFalse(b < a)
+        self.assertFalse(b < "def")
+        self.assertTrue(a < "def")
 
     def testLe(self):
         a = jpype.JString("abc")
         b = jpype.JString("def")
-        self.assertTrue(a<=a)
-        self.assertTrue(a<=b)
-        self.assertFalse(b<=a)
-        self.assertTrue(b<="def")
-        self.assertTrue(a<="def")
+        self.assertTrue(a <= a)
+        self.assertTrue(a <= b)
+        self.assertFalse(b <= a)
+        self.assertTrue(b <= "def")
+        self.assertTrue(a <= "def")
 
     def testGt(self):
         a = jpype.JString("abc")
         b = jpype.JString("def")
-        self.assertFalse(a<a)
-        self.assertTrue(a<b)
-        self.assertFalse(b<a)
-        self.assertFalse(b<"def")
-        self.assertTrue(a<"def")
+        self.assertFalse(a < a)
+        self.assertTrue(a < b)
+        self.assertFalse(b < a)
+        self.assertFalse(b < "def")
+        self.assertTrue(a < "def")
 
     def testGe(self):
         a = jpype.JString("abc")
         b = jpype.JString("def")
-        self.assertTrue(a>=a)
-        self.assertFalse(a>=b)
-        self.assertTrue(b>=a)
-        self.assertTrue(b>="def")
-        self.assertFalse(a>="def")
+        self.assertTrue(a >= a)
+        self.assertFalse(a >= b)
+        self.assertTrue(b >= a)
+        self.assertTrue(b >= "def")
+        self.assertFalse(a >= "def")
 
     def testContains(self):
         a = jpype.JString("abc")
@@ -91,5 +92,4 @@ class JStringTestCase(common.JPypeTestCase):
 
     def __repr__(self):
         a = jpype.JString("abc")
-        self.assertEqual(repr(a),"'abc'")
-
+        self.assertEqual(repr(a), "'abc'")

@@ -27,10 +27,11 @@ class HashTestCase(common.JPypeTestCase):
     def testHashString(self):
         self.assertIsNotNone(hash(jpype.java.lang.String("upside down")))
         self.assertIsNotNone(hash(jpype.JString("upside down")))
-        self.assertEqual(hash(jpype.JString("upside down")), hash("upside down"))
+        self.assertEqual(hash(jpype.JString("upside down")),
+                         hash("upside down"))
 
     def testHashArray(self):
-        self.assertIsNotNone(hash(jpype.JArray(jpype.JInt)([1,2,3])))
+        self.assertIsNotNone(hash(jpype.JArray(jpype.JInt)([1, 2, 3])))
 
     def testHashObject(self):
         self.assertIsNotNone(hash(jpype.java.lang.Object()))
@@ -65,4 +66,3 @@ class HashTestCase(common.JPypeTestCase):
 
     def testHashDouble(self):
         self.assertIsNotNone(hash(jpype.java.lang.Double(6.62607004e-34)))
-

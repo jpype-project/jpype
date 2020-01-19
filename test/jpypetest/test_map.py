@@ -17,6 +17,7 @@
 import jpype
 import common
 
+
 class JMapTestCase(common.JPypeTestCase):
     """ Test for methods of java.lang.Map 
     """
@@ -27,42 +28,41 @@ class JMapTestCase(common.JPypeTestCase):
     def testLen(self):
         cls = jpype.JClass('java.util.HashMap')
         obj = cls()
-        obj.put("a",1)
-        obj.put("b",2)
-        obj.put("c",3)
+        obj.put("a", 1)
+        obj.put("b", 2)
+        obj.put("c", 3)
         self.assertEqual(len(obj), 3)
 
     def testIter(self):
         cls = jpype.JClass('java.util.TreeMap')
         obj = cls()
-        obj.put("a",1)
-        obj.put("b",2)
-        obj.put("c",3)
-        self.assertEqual(tuple(i for i in obj), ('a','b','c'))
+        obj.put("a", 1)
+        obj.put("b", 2)
+        obj.put("c", 3)
+        self.assertEqual(tuple(i for i in obj), ('a', 'b', 'c'))
 
     def testGetItem(self):
         cls = jpype.JClass('java.util.HashMap')
         obj = cls()
-        obj.put("a",1)
-        obj.put("b",2)
-        obj.put("c",3)
+        obj.put("a", 1)
+        obj.put("b", 2)
+        obj.put("c", 3)
         self.assertEqual(obj['b'], 2)
 
     def testSetItem(self):
         cls = jpype.JClass('java.util.HashMap')
         obj = cls()
-        obj.put("a",1)
-        obj.put("b",2)
-        obj.put("c",3)
-        obj['b']=5
+        obj.put("a", 1)
+        obj.put("b", 2)
+        obj.put("c", 3)
+        obj['b'] = 5
         self.assertEqual(obj['b'], 5)
 
     def testSetItem(self):
         cls = jpype.JClass('java.util.TreeMap')
         obj = cls()
-        obj.put("a",1)
-        obj.put("b",2)
-        obj.put("c",3)
+        obj.put("a", 1)
+        obj.put("b", 2)
+        obj.put("c", 3)
         del obj['b']
-        self.assertEqual(tuple(i for i in obj), ('a','c'))
-
+        self.assertEqual(tuple(i for i in obj), ('a', 'c'))

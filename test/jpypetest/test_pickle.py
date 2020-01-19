@@ -21,15 +21,14 @@ import pickle
 import sys
 import common
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+
+import unittest
+
 
 def dump(fname):
     with open(fname, "rb") as fd:
         data = fd.read()
-    out = ["%02x"%i for i in data]
+    out = ["%02x" % i for i in data]
     print("Pickle fail", " ".join(out), file=sys.stderr)
 
 
@@ -40,22 +39,22 @@ class PickleTestCase(common.JPypeTestCase):
     def testString(self):
         try:
             s = java.lang.String("test")
-            with open("test.pic","wb") as fd:
+            with open("test.pic", "wb") as fd:
                 JPickler(fd).dump(s)
-            with open("test.pic","rb") as fd:
+            with open("test.pic", "rb") as fd:
                 s2 = JUnpickler(fd).load()
         except pickle.UnpicklingError:
             dump("test.pic")
-        self.assertEqual(s,s2)
+        self.assertEqual(s, s2)
 
     def testList(self):
         s = java.util.ArrayList()
         s.add("test")
         s.add("this")
         try:
-            with open("test.pic","wb") as fd:
+            with open("test.pic", "wb") as fd:
                 JPickler(fd).dump(s)
-            with open("test.pic","rb") as fd:
+            with open("test.pic", "rb") as fd:
                 s2 = JUnpickler(fd).load()
         except pickle.UnpicklingError:
             dump("test.pic")
@@ -67,9 +66,9 @@ class PickleTestCase(common.JPypeTestCase):
         d["array"] = java.util.ArrayList()
         d["string"] = java.lang.String("food")
         try:
-            with open("test.pic","wb") as fd:
+            with open("test.pic", "wb") as fd:
                 JPickler(fd).dump(d)
-            with open("test.pic","rb") as fd:
+            with open("test.pic", "rb") as fd:
                 d2 = JUnpickler(fd).load()
         except pickle.UnpicklingError:
             dump("test.pic")
@@ -79,7 +78,5 @@ class PickleTestCase(common.JPypeTestCase):
     def testFail(self):
         s = java.lang.Object()
         with self.assertRaises(java.io.NotSerializableException):
-            with open("test.pic","wb") as fd:
+            with open("test.pic", "wb") as fd:
                 JPickler(fd).dump(s)
-     
-

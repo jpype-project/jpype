@@ -25,15 +25,14 @@ class DocStringTestCase(common.JPypeTestCase):
 
     def testDocClass(self):
         cls = jpype.JClass('java.util.Iterator')
-        self.assertIsNotNone( cls.__doc__)
+        self.assertIsNotNone(cls.__doc__)
         cls = jpype.JClass('java.lang.String')
-        self.assertIsNotNone( cls.__doc__)
+        self.assertIsNotNone(cls.__doc__)
 
     def testDocMethod(self):
         cls = jpype.JClass('java.lang.String')
-        self.assertIsNotNone( cls.substring.__doc__)
+        self.assertIsNotNone(cls.substring.__doc__)
 
     def testDocEnumClass(self):
         cls = jpype.JClass('java.lang.Character.UnicodeScript')
-        self.assertIsNotNone( cls.__doc__)
-
+        self.assertIsNotNone(cls.__doc__)

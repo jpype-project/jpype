@@ -231,4 +231,3 @@ class BoxedTestCase(common.JPypeTestCase):
     def testDoubleBad2(self):
         with self.assertRaises(TypeError):
             jpype.java.lang.Double(tuple(), tuple())
-

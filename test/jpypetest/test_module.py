@@ -1,17 +1,20 @@
 # Tests for module functionality including failures that cannot
 # be triggered in normal operations
 import _jpype
-import unittest 
+import unittest
 import subrun
 
 ##############################################################################
 # Test methods
 
+
 def runStartup(path):
     _jpype.startup(path, tuple(), False, False)
 
+
 def runStartupBadArgs(path):
     _jpype.startup(path)
+
 
 def runNoMethodDoc(path):
     _jpype.startup(path, tuple(), False, False)
@@ -19,11 +22,13 @@ def runNoMethodDoc(path):
     methods = cls.getClassMethods()
     methods[0].__doc__  # RuntimeError
 
+
 def runNoMethodAnnotation(path):
     _jpype.startup(path, tuple(), False, False)
     cls = _jpype.PyJPClass("java.lang.String")
     methods = cls.getClassMethods()
     methods[0].__annotations__  # RuntimeError
+
 
 def runNoMethodCode(path):
     _jpype.startup(path, tuple(), False, False)
@@ -31,9 +36,11 @@ def runNoMethodCode(path):
     methods = cls.getClassMethods()
     methods[0].__code__  # RuntimeError
 
+
 def runValueEntry():
     # fails as no JVM is running yet
     _jpype.PyJPValue()
+
 
 def runShutdown():
     import jpype
@@ -80,4 +87,3 @@ class TestModule(unittest.TestCase):
     def testShutdown(self):
         with subrun.Client() as client:
             client.execute(runShutdown)
-

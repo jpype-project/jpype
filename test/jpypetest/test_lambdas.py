@@ -38,15 +38,14 @@ class LambdasTestCase(common.JPypeTestCase):
         self.assertEqual(self.lambdas.getLambda().apply(1.0), 2.0)
 
     def testLambdasStr(self):
-        func=self.lambdas.getFunction()
+        func = self.lambdas.getFunction()
         self.assertIsInstance(str(func), str)
 
     def testLambdasEquals(self):
-        func=self.lambdas.getFunction()
-        self.assertEqual(func,func)
+        func = self.lambdas.getFunction()
+        self.assertEqual(func, func)
 
     def testLambdasNoteEquals(self):
-        func=self.lambdas.getFunction()
-        func2=self.lambdas.getFunction()
-        self.assertNotEqual(func,func2)
-
+        func = self.lambdas.getFunction()
+        func2 = self.lambdas.getFunction()
+        self.assertNotEqual(func, func2)

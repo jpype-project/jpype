@@ -20,6 +20,7 @@ import logging
 import time
 import common
 
+
 def haveJImports():
     try:
         import jpype.imports

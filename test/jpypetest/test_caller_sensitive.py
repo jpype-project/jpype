@@ -17,6 +17,7 @@
 import jpype
 import common
 
+
 class JCallerSensitiveCase(common.JPypeTestCase):
     """ Test for caller sensitive methods.
 
@@ -38,7 +39,7 @@ class JCallerSensitiveCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        if not jpype.getJVMVersion()>(1,8,0):
+        if not jpype.getJVMVersion() > (1, 8, 0):
             raise common.unittest.SkipTest
 
         self.Class = jpype.JClass("jpype.method.Caller")
@@ -54,7 +55,8 @@ class JCallerSensitiveCase(common.JPypeTestCase):
         self.assertIsInstance(self.obj.callObjectMember(), self.Class)
 
     def testCallMemberFromClass(self):
-        self.assertIsInstance(self.Class.callObjectMember(self.obj), self.Class)
+        self.assertIsInstance(
+            self.Class.callObjectMember(self.obj), self.Class)
 
     def testCallVoidStatic(self):
         self.assertEqual(self.Class.callVoidStatic(), None)
@@ -90,19 +92,20 @@ class JCallerSensitiveCase(common.JPypeTestCase):
         self.assertEqual(self.Class.callArg1(self.obj, 125), 125)
 
     def testVarArgs(self):
-        self.assertEqual(tuple(self.obj.callVarArgs(1,2,3)), (2,3))
+        self.assertEqual(tuple(self.obj.callVarArgs(1, 2, 3)), (2, 3))
 
     def testVarArgsFromClass(self):
-        self.assertEqual(tuple(self.Class.callVarArgs(self.obj, 1,2,3)), (2,3))
+        self.assertEqual(
+            tuple(self.Class.callVarArgs(self.obj, 1, 2, 3)), (2, 3))
 
     def testDeclaredMethod(self):
-        self.assertIsInstance(jpype.java.lang.Object.class_.getDeclaredMethod('wait'), jpype.java.lang.reflect.Method)
+        self.assertIsInstance(jpype.java.lang.Object.class_.getDeclaredMethod(
+            'wait'), jpype.java.lang.reflect.Method)
 
     def testStackWalker1(self):
         with self.assertRaises(jpype.java.lang.IllegalCallerException):
             self.obj.callStackWalker1()
 
     def testStackWalker2(self):
-        self.assertEqual(self.obj.callStackWalker2(), jpype.JClass(jpype.java.lang.Class.forName("org.jpype.Utility")).class_)
-
-
+        self.assertEqual(self.obj.callStackWalker2(), jpype.JClass(
+            jpype.java.lang.Class.forName("org.jpype.Utility")).class_)

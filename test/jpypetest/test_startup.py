@@ -4,9 +4,11 @@ import subrun
 import os
 import sys
 
+
 def runStartupTwice():
     jpype.startJVM(convertStrings=False)
     jpype.startJVM(convertStrings=False)
+
 
 def runRestart():
     jpype.startJVM(convertStrings=False)
@@ -17,6 +19,7 @@ def runRestart():
 def runStartJVM(*args, **kwargs):
     jpype.startJVM(*args, **kwargs)
 
+
 def runStartJVMTest(*args, **kwargs):
     jpype.startJVM(*args, **kwargs)
     try:
@@ -26,12 +29,13 @@ def runStartJVMTest(*args, **kwargs):
         pass
     raise RuntimeError("Test class not found")
 
+
 class StartJVMCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.path = jpype.getDefaultJVMPath()
         root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-        cp = os.path.join(root, 'classes').replace('\\','/')
+        cp = os.path.join(root, 'classes').replace('\\', '/')
         assert os.path.exists(cp)
         self.cp = cp
 
@@ -49,32 +53,39 @@ class StartJVMCase(common.JPypeTestCase):
 
     def testInvalidArgsFalse(self):
         with subrun.Client() as client, self.assertRaises(RuntimeError):
-            client.execute(runStartJVM, "-for_sure_InVaLiD", ignoreUnrecognized=False, convertStrings=False)
+            client.execute(runStartJVM, "-for_sure_InVaLiD",
+                           ignoreUnrecognized=False, convertStrings=False)
 
     def testInvalidArgsTrue(self):
         with subrun.Client() as client:
-            client.execute(runStartJVM, "-for_sure_InVaLiD", ignoreUnrecognized=True, convertStrings=False)
+            client.execute(runStartJVM, "-for_sure_InVaLiD",
+                           ignoreUnrecognized=True, convertStrings=False)
 
     def testClasspathArgKeyword(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, classpath=self.cp, convertStrings=False)
+            client.execute(runStartJVMTest, classpath=self.cp,
+                           convertStrings=False)
 
     def testClasspathArgList(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, classpath=[self.cp], convertStrings=False)
+            client.execute(runStartJVMTest, classpath=[
+                           self.cp], convertStrings=False)
 
     def testClasspathArgListEmpty(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, classpath=[self.cp,''], convertStrings=False)
+            client.execute(runStartJVMTest, classpath=[
+                           self.cp, ''], convertStrings=False)
 
-    @common.unittest.skipIf(sys.platform=="cygwin", "Not supported on cygwin")
+    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgDef(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, '-Djava.class.path=%s'%self.cp, convertStrings=False)
+            client.execute(runStartJVMTest, '-Djava.class.path=%s' %
+                           self.cp, convertStrings=False)
 
     def testClasspathTwice(self):
         with subrun.Client() as client, self.assertRaises(TypeError):
-            client.execute(runStartJVMTest, '-Djava.class.path=%s'%self.cp, classpath=self.cp, convertStrings=False)
+            client.execute(runStartJVMTest, '-Djava.class.path=%s' %
+                           self.cp, classpath=self.cp, convertStrings=False)
 
     def testClasspathBadType(self):
         with subrun.Client() as client, self.assertRaises(TypeError):
@@ -82,11 +93,13 @@ class StartJVMCase(common.JPypeTestCase):
 
     def testPathArg(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, self.path, classpath=self.cp, convertStrings=False)
+            client.execute(runStartJVMTest, self.path,
+                           classpath=self.cp, convertStrings=False)
 
     def testPathKeyword(self):
         with subrun.Client() as client:
-            client.execute(runStartJVMTest, classpath=self.cp, jvmpath=self.path, convertStrings=False)
+            client.execute(runStartJVMTest, classpath=self.cp,
+                           jvmpath=self.path, convertStrings=False)
 
     def testPathTwice(self):
         with subrun.Client() as client, self.assertRaises(TypeError):
@@ -95,6 +108,3 @@ class StartJVMCase(common.JPypeTestCase):
     def testBadKeyword(self):
         with subrun.Client() as client, self.assertRaises(TypeError):
             client.execute(runStartJVM, invalid=True)
-
-
-

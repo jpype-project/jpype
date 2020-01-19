@@ -17,6 +17,7 @@
 import jpype
 import common
 
+
 def proxy(s):
     if not isinstance(s, str):
         raise TypeError("Fail")
@@ -55,21 +56,20 @@ class LegacyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s, str)
 
     def testArrayItem(self):
-        tc = ('apples','banana','cherries','dates','elderberry')
-        for i in range(0,5):
+        tc = ('apples', 'banana', 'cherries', 'dates', 'elderberry')
+        for i in range(0, 5):
             s = self._test.array[i]
             self.assertEqual(s, tc[i])
             self.assertIsInstance(s, str)
 
     def testArrayRange(self):
-        tc = ('apples','banana','cherries','dates','elderberry')
+        tc = ('apples', 'banana', 'cherries', 'dates', 'elderberry')
         slc = self._test.array[1:-1]
         self.assertEqual(slc, tc[1:-1])
         self.assertIsInstance(slc[1], str)
 
     def testProxy(self):
-        p = jpype.JProxy([self._intf],dict={'call':proxy})
+        p = jpype.JProxy([self._intf], dict={'call': proxy})
         r = self._test().callProxy(p, "roundtrip")
         self.assertEqual(r, "roundtrip")
         self.assertIsInstance(r, str)
-

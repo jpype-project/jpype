@@ -1,8 +1,7 @@
 # part of JPype1; author Martin K. Scherer; 2014
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+
+
+import unittest
 import mock
 import common
 

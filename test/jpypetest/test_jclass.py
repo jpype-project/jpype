@@ -173,5 +173,3 @@ class JClassTestCase(common.JPypeTestCase):
         intr = jpype.JClass('java.io.Serializable')
         with self.assertRaises(jpype.JException):
             intr()
-
-

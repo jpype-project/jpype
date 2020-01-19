@@ -101,11 +101,14 @@ class LeakChecker():
 
 # Helpers
 
+
 def stringFunc():
     jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
 
+
 def classFunc():
     cls = jpype.JClass('java.lang.String')
+
 
 def startup():
     root = path.dirname(path.abspath(path.dirname(__file__)))
@@ -117,8 +120,8 @@ def startup():
                    # "-Xcheck:jni",
                    "-Xmx256M", "-Xms16M", classpath_arg)
 
- 
-#Test functions
+
+# Test functions
 
 def runLeakChecker(funcname, counts):
     startup()
@@ -126,21 +129,26 @@ def runLeakChecker(funcname, counts):
     func = globals()[funcname]
     return lc.memTest(func, 5000)
 
+
 def runLeakCtor(classname, counts):
     startup()
     lc = LeakChecker()
     cls = jpype.JClass(classname)
+
     def func():
         cls("test")
     return lc.memTest(func, 5000)
+
 
 def runInvoke(counts):
     startup()
     lc = LeakChecker()
     jstr = jpype.JString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+
     def func():
         jstr.getBytes()
     return lc.memTest(func, 5000)
+
 
 def runRefCount():
     startup()
@@ -188,4 +196,3 @@ class LeakTestCase(unittest.TestCase):
     def testRefCount(self):
         with subrun.Client() as client:
             client.execute(runRefCount)
-

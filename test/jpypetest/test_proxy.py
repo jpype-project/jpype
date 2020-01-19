@@ -74,7 +74,7 @@ class ProxyTestCase(common.JPypeTestCase):
         proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
 
     def testProxyRoundTrip(self):
-        
+
         @JImplements(java.lang.Runnable)
         class MyRun(object):
             @JOverride
@@ -87,7 +87,7 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIs(al.get(0), runner)
 
     def testProxyLeak(self):
- 
+
         @JImplements(java.lang.Runnable)
         class MyRun(object):
             @JOverride
@@ -98,7 +98,7 @@ class ProxyTestCase(common.JPypeTestCase):
         runner = MyRun()
         al.add(runner)
         initial = sys.getrefcount(runner)
-        for i in range(0,10):
+        for i in range(0, 10):
             self.assertIs(al.get(0), runner)
         final = sys.getrefcount(runner)
         self.assertEqual(initial, final)
@@ -123,42 +123,46 @@ class ProxyTestCase(common.JPypeTestCase):
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
-              pass
+                pass
 
     def testProxyImplementsForm2(self):
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
-        @JImplements(itf1,itf2)
+        @JImplements(itf1, itf2)
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
-              pass
+                pass
+
             @JOverride
             def testMethod2(self):
-              pass
+                pass
+
             @JOverride
             def write(self):
-              pass
+                pass
 
     def testProxyImplementsForm3(self):
         @JImplements("jpype.proxy.TestInterface1")
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
-              pass
+                pass
 
     def testProxyImplementsForm4(self):
-        @JImplements("jpype.proxy.TestInterface1","jpype.proxy.TestInterface2")
+        @JImplements("jpype.proxy.TestInterface1", "jpype.proxy.TestInterface2")
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
-              pass
+                pass
+
             @JOverride
             def testMethod2(self):
-              pass
+                pass
+
             @JOverride
             def write(self):
-              pass
+                pass
 
     def testProxyImplementsFail1(self):
         with self.assertRaisesRegex(TypeError, "least one Java interface"):
@@ -167,7 +171,7 @@ class ProxyTestCase(common.JPypeTestCase):
             class MyImpl(object):
                 @JOverride
                 def testMethod1(self):
-                  pass
+                    pass
 
     def testProxyImplementsFail2(self):
         with self.assertRaisesRegex(TypeError, "is not a Java interface"):
@@ -176,7 +180,7 @@ class ProxyTestCase(common.JPypeTestCase):
             class MyImpl(object):
                 @JOverride
                 def testMethod1(self):
-                  pass
+                    pass
 
     def testProxyImplementsFail3(self):
         with self.assertRaisesRegex(NotImplementedError, "requires method"):
@@ -184,7 +188,7 @@ class ProxyTestCase(common.JPypeTestCase):
             @JImplements("jpype.proxy.TestInterface1")
             class MyImpl(object):
                 def testMethod1(self):
-                  pass
+                    pass
 
     def testProxyImplementsFail4(self):
         with self.assertRaisesRegex(TypeError, "is not a Java interface"):
@@ -192,7 +196,7 @@ class ProxyTestCase(common.JPypeTestCase):
             @JImplements("java.lang.StringBuilder")
             class MyImpl(object):
                 def testMethod1(self):
-                  pass
+                    pass
 
     def testProxyWithDict(self):
         d = {
