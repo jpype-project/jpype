@@ -19,3 +19,8 @@ class ByteBufferCase(common.JPypeTestCase):
         with self.assertRaises(jpype.JException):
             bb.put(5)
 
+    def testConvertToDirectBufferFail(self):
+        a=bytes([0,0,0,0])
+        with self.assertRaises(ValueError):
+            bb = jpype.nio.convertToDirectBuffer(a)
+

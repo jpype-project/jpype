@@ -27,11 +27,11 @@ def _execute(inQueue, outQueue):
             break
         ex = None
         ret = None
-        (func_name,func_file, args)=datum
+        (func_name,func_file, args, kwargs)=datum
         try:
             module = _import(func_file)
             func = getattr(module, func_name)
-            ret = func(*args)
+            ret = func(*args, **kwargs)
         except Exception as ex1:
             traceback.print_exc()
             ex = ex1
@@ -45,11 +45,12 @@ class Client(object):
         self.outQueue = ctx.Queue()
         self.process = ctx.Process(target=_execute, args=[self.inQueue, self.outQueue], daemon=True)
         self.process.start()
+        self.timeout = 5
 
-    def execute(self, function, *args, timeout=5):
-        self.inQueue.put([function.__name__, os.path.abspath(inspect.getfile(function)), args])
+    def execute(self, function, *args, **kwargs):
+        self.inQueue.put([function.__name__, os.path.abspath(inspect.getfile(function)), args, kwargs])
         try:
-            (ret, ex) = self.outQueue.get(True, timeout)
+            (ret, ex) = self.outQueue.get(True, self.timeout)
         except queue.Empty:
             raise AssertionError("function failed")
         if ex!=None:
