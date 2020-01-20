@@ -51,7 +51,6 @@
           <itemPath>../../native/python/include/jpype_memory_view.h</itemPath>
           <itemPath>../../native/python/include/pyjp.h</itemPath>
           <itemPath>../../native/python/include/pyjp_array.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_class.h</itemPath>
           <itemPath>../../native/python/include/pyjp_field.h</itemPath>
           <itemPath>../../native/python/include/pyjp_method.h</itemPath>
           <itemPath>../../native/python/include/pyjp_module.h</itemPath>
@@ -474,11 +473,6 @@
       <item path="../../native/python/include/pyjp.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="../../native/python/include/pyjp_array.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_class.h"
             ex="false"
             tool="3"
             flavor2="0">

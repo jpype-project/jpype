@@ -54,6 +54,7 @@ static struct PyModuleDef moduledef = {
 	jpype_methods,
 };
 
+extern void PyJPClass_initType(PyObject* module);
 extern void PyJPProxy_initType(PyObject* module);
 
 PyMODINIT_FUNC PyInit__jpype()
@@ -76,7 +77,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	// Initialize each of the python extension types
 	PyJPArray::initType(module);
-	PyJPClass::initType(module);
+	PyJPClass_initType(module);
 	PyJPField::initType(module);
 	PyJPMethod::initType(module);
 	PyJPMonitor::initType(module);

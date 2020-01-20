@@ -171,5 +171,5 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testInterfaceCtor(self):
         intr = jpype.JClass('java.io.Serializable')
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             intr()

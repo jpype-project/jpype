@@ -5,6 +5,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 
+  - JInterface is now a meta class.  Use isinstance(cls, JInterface)
+    to test for interfaces.
 
 - **0.7.1 - 12-16-2019**
 
