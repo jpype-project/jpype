@@ -449,6 +449,9 @@ entry("Size of an array",
       python("len(array)"))
 entry("Convert to python list", None,
       python("pylist = list(array)"))
+entry("Convert Java byte[] to bytes", None,
+      python("contents = bytes(array)"))
+
 
 entry("Iterate elements",
       """
