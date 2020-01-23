@@ -4,6 +4,7 @@ $env:Path += ";"+$env:PYTHON
 ant.exe -version
 python.exe --version
 python.exe -c "import struct; print(struct.calcsize('P') * 8)"
+python.exe -c "import numpy; print('numpy version: ', numpy.version.full_version)"
 
 # Install the build dependencies of the project. If some dependencies contain
 # compiled extensions and are not provided as pre-built wheel packages,

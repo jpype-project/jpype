@@ -12,6 +12,14 @@ environment:
 
   matrix:
 
+    - PYTHON: "C:\\Miniconda38-x64"
+      CONDA_PY: "3.8.1"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda38"
+      CONDA_PY: "3.8.1"
+      ARCH: x86
+
     - PYTHON: "python3.7"
       CYGWIN: "C:\\cygwin64"
       ARCH: x86_64
