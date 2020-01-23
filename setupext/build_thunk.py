@@ -33,7 +33,7 @@ def output(fout, l):
     print("    ", file=fout, end="")
     line = []
     buffer = array.array("B")
-    buffer.fromstring(l)
+    buffer.frombytes(l)
     for i in buffer:
         line.append("(jbyte)0x%02X" % i)
     print(",".join(line), file=fout, end="")
