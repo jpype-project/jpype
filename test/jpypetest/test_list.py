@@ -45,7 +45,7 @@ class JListTestCase(common.JPypeTestCase):
                 stop = self.size() + stop
             for i in range(start, stop):
                 self.remove(start)
-            if isinstance(v, collections.Sequence):
+            if isinstance(v, collections.abc.Sequence):
                 ndx = start
                 for i in v:
                     self.add(ndx, i)

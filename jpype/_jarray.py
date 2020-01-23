@@ -247,7 +247,7 @@ def _JArrayNewClass(cls, ndims=1):
 
 # FIXME JavaArrayClass likely should be exposed for isinstance, issubtype
 # FIXME are these not sequences?  They act like sequences but are they
-# connected to collections.Sequence
+# connected to collections.abc.Sequence
 # has: __len__, __iter__, __getitem__
 # missing: __contains__ (required for in)
 # Cannot be Mutable because java arrays are fixed in length
