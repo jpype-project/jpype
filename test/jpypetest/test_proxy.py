@@ -296,3 +296,19 @@ class ProxyTestCase(common.JPypeTestCase):
                 pass
         self.assertIsInstance(JObject(MyClass(), jrun), jrun)
         self.assertIsInstance(JObject(MyClass()), jobj)
+
+    def testProxyConvert(self):
+        # This was tests that arguments and "self" both
+        # convert to the same object
+        TestInterface5 = JClass("jpype.proxy.TestInterface5")
+        ProxyTriggers = JClass("jpype.proxy.ProxyTriggers")
+
+        @JImplements(TestInterface5)
+        class Bomb(object):
+            @JOverride
+            def equals(self, other):
+                return type(self)==type(other)
+
+        b = Bomb()
+        t = ProxyTriggers()
+        self.assertTrue(t.testEquals(b))

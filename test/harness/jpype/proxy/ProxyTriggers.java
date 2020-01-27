@@ -67,4 +67,9 @@ public class ProxyTriggers
     	byte[] vals = { 1, 2, 3, 4};
     	return itf.write(vals , 12, 13);
     }
+
+    public boolean testEquals(Object o)
+    {
+	    return o.equals(o);
+    }
 }
