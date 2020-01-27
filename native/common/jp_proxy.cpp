@@ -18,12 +18,12 @@
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()
-	jclass handlerClass;
-	jmethodID invocationHandlerConstructorID;
-	jfieldID hostObjectID;
+jclass handlerClass;
+jmethodID invocationHandlerConstructorID;
+jfieldID hostObjectID;
 
-	jclass proxyClass;
-	jmethodID getInvocationHandlerID;
+jclass proxyClass;
+jmethodID getInvocationHandlerID;
 }
 
 JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
@@ -60,7 +60,12 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		{
 			jclass c = (jclass) frame.GetObjectArrayElement(types, i);
 			JPClass* type = JPTypeManager::findClass(c);
-			JPValue val = type->getValueFromObject(frame.GetObjectArrayElement(args, i));
+			jobject arg = frame.GetObjectArrayElement(args, i);
+			JP_TRACE("Convert to (orig)", type->getCanonicalName());
+			if (!type->isPrimitive() && arg != NULL)
+				type = JPTypeManager::findClass(JPTypeManager::getClassFor(arg));
+			JP_TRACE("Convert to", type->getCanonicalName());
+			JPValue val = type->getValueFromObject(arg);
 			pyargs.setItem(i, type->convertToPythonObject(val).get());
 		}
 
@@ -130,6 +135,7 @@ void JPProxy::init()
 	invocationHandlerConstructorID = frame.GetMethodID(handler, "<init>", "()V");
 
 	frame.RegisterNatives(handlerClass, method, 1);
+	JPTypeManager::registerClass(new JPProxyType());
 
 	JP_TRACE_OUT;
 }
@@ -161,8 +167,6 @@ jobject JPProxy::getProxy()
 
 	jobject m_Handler = frame.NewObject(handlerClass, invocationHandlerConstructorID);
 	frame.SetLongField(m_Handler, hostObjectID, (jlong) m_Instance);
-	JPTypeManager::registerClass(new JPProxyType());
-
 
 	jvalue v[3];
 	v[0].l = cl;
