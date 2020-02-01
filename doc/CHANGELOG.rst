@@ -8,6 +8,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - JInterface is now a meta class.  Use isinstance(cls, JInterface)
     to test for interfaces.
 
+  - Fixed memory leak in Proxy invocation
+
+  - Fixed bug with Proxy not converting when passed as an argument to Python functions
+    during execution of proxies
+
+
 - **0.7.1 - 12-16-2019**
 
   - Updated the keyword safe list for Python 3.

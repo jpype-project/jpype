@@ -7,7 +7,6 @@ python:
   - '3.5'
   - '3.6'
   - 'nightly'
-  - 'pypy'
   - 'pypy3'
 
 env:
@@ -16,7 +15,7 @@ env:
     - PIP=pip
     - INST=""
     # Moved numpy testing to Xenial
-    #   Testing with and without numpy on more than 2.7/3.7 for each arch
+    #   Testing with and without numpy on more than 3.7 for each arch
     #   is likely a waste.  The paths to a CPython module do not really
     #   change, but byte order and major version may make a difference.
 
@@ -28,7 +27,6 @@ addons:
 matrix:
   allow_failures:
     - python: nightly
-    - python: pypy
     - python: pypy3
 
   include:
