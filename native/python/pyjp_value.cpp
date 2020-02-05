@@ -124,7 +124,7 @@ int PyJPValue::__init__(PyJPValue* self, PyObject* args, PyObject* kwargs)
 		PyObject* claz;
 		PyObject* value;
 
-		if (!PyArg_ParseTuple(args, "O!O", &PyJPClass::Type, &claz, &value))
+		if (!PyArg_ParseTuple(args, "O!O", PyJPClass_Type, &claz, &value))
 		{
 			return -1;
 		}

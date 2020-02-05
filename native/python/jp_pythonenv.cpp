@@ -82,7 +82,7 @@ JPPyObject JPPythonEnv::newJavaClass(JPClass* javaClass)
 
 	JP_TRACE(javaClass->toString());
 	JPPyTuple args(JPPyTuple::newTuple(1));
-	args.setItem(0, PyJPClass::alloc(javaClass).get());
+	args.setItem(0, PyJPClass_alloc(javaClass).get());
 
 	// calls jpype._jclass._getClassFor(_jpype.PyJPClass)
 	if (s_Resources->s_GetClassMethod.isNull())
@@ -112,12 +112,12 @@ JPValue* JPPythonEnv::getJavaValue(PyObject* obj)
 JPClass* JPPythonEnv::getJavaClass(PyObject* obj)
 {
 	JPPyObject vobj(JPPyRef::_use, obj);
-	if (Py_TYPE(obj) == &PyJPClass::Type)
+	if (Py_TYPE(obj) == PyJPClass_Type)
 		return ((PyJPClass*) obj)->m_Class;
 	if (!JPPyObject::hasAttrString(obj, __javaclass__))
 		return NULL;
 	JPPyObject self(JPPyObject::getAttrString(obj, __javaclass__));
-	if (Py_TYPE(self.get()) == &PyJPClass::Type)
+	if (Py_TYPE(self.get()) == PyJPClass_Type)
 	{
 		return ((PyJPClass*) self.get())->m_Class;
 	}

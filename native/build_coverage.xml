@@ -1,0 +1,45 @@
+<project default="all" name="JPype - Native">
+
+	<!-- JAVA_VERSION must match the oldest supported Java version -->
+	<property name="JAVA_VERSION" value="8" />
+
+	<!-- src can't be "java" as it breaks nose tests -->
+	<property name="src" location="java"/>
+	<property name="build" location="build"/>
+
+	<target name="test" depends="compile">
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${build}/classes"/>
+		<mkdir dir="${build}/lib"/>
+		<javac destdir="${build}/classes"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			excludes="**/JPypeClassLoader.java"
+			debug="true"
+			debuglevel="source,lines,vars"
+			>
+			<src path="${src}"/>
+		</javac>
+		<javac destdir="${build}/lib"
+			source="${JAVA_VERSION}"
+			target="${JAVA_VERSION}"
+			includes="**/JPypeClassLoader.java"
+			>
+			<src path="${src}"/>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<jar destfile="native/org.jpype.jar"
+			basedir="${build}/classes" />
+	</target>
+
+	<target name="all" depends="jar" />
+
+	<target name="clean">
+		<delete dir="${build}"/>
+	</target>
+
+</project>

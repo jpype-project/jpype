@@ -196,10 +196,6 @@ class JClass(type):
             # Include the remaining that we still need to consider
             parents.extend([b for b in prev if not b in parents])
 
-        # JavaObjects are not interfaces, so we need to remove the JavaInterface inheritance
-        if _JObject in out and JInterface in out:
-            out.remove(JInterface)
-
         return out
 
     def __repr__(self):
@@ -250,51 +246,35 @@ def _JClassNew(arg, loader=None, initialize=True):
     return cls
 
 
-class JInterface(object):
-    """Base class for all Java Interfaces.
+class JInterfaceMeta(type):
+    def __instancecheck__(self, obj):
+        if not hasattr(obj, '__javaclass__'):
+            return False
+        return obj.__javaclass__.isInterface()
 
-    ``JInterface`` is serves as the base class for any java class that is
+    def __subclasscheck__(self, obj):
+        # This is included for compatiblity with JPype 0.7.x
+        if not hasattr(obj, '__javaclass__'):
+            return False
+        return obj.__javaclass__.isInterface()
+
+class JInterface(metaclass=JInterfaceMeta):
+    """A meta class for all Java Interfaces.
+
+    ``JInterface`` is serves as the base class for any Java class that is
     a pure interface without implementation. It is not possible to create
-    a instance of a java interface. The ``mro`` is hacked such that
-    ``JInterface`` does not appear in the tree of objects implement an
-    interface.
+    a instance of a Java interface.
 
     Example:
 
     .. code-block:: python
 
-       if issubclass(java.util.function.Function, jpype.JInterface):
+       if isinstance(java.util.function.Function, jpype.JInterface):
           print("is interface")
 
 
-        Use ``isinstance(obj, jpype.JavaInterface)`` to test for a interface.
     """
-    @property
-    def class_(self):
-        return _JObject(self.__javaclass__)
-
-    def __new__(cls, *args, **kwargs):
-        return super(JInterface, cls).__new__(cls)
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            object.__setattr__(self, '__javavalue__', args[0])
-        elif not hasattr(self, '__javavalue__'):
-            raise JClass("java.lang.InstantiationException")(
-                "`%s` is an interface." % str(self.class_.getName()))
-        super(JInterface, self).__init__()
-
-    def __str__(self):
-        return self.toString()
-
-    def __hash__(self):
-        return self.hashCode()
-
-    def __eq__(self):
-        return self.equals(o)
-
-    def __ne__(self):
-        return not self.equals(o)
+    pass
 
 
 def _JClassFactory(name, jc):
@@ -312,7 +292,7 @@ def _JClassFactory(name, jc):
     elif bjc is not None:
         bases.append(JClass(bjc))
     elif bjc is None:
-        bases.append(JInterface)
+        bases.append(_JObject)
     itf = jc.getInterfaces()
     for ic in itf:
         bases.append(JClass(ic))

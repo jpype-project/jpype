@@ -38,7 +38,6 @@
  */
 #include <pyjp_module.h>
 #include <pyjp_array.h>
-#include <pyjp_class.h>
 #include <pyjp_field.h>
 #include <pyjp_method.h>
 #include <pyjp_module.h>
@@ -51,6 +50,12 @@ extern "C"
 {
 #endif
 
+struct PyJPClass
+{
+	PyObject_HEAD
+	JPClass* m_Class;
+} ;
+
 struct PyJPProxy
 {
 	PyObject_HEAD
@@ -60,6 +65,8 @@ struct PyJPProxy
 } ;
 
 extern PyTypeObject* PyJPProxy_Type;
+extern PyTypeObject* PyJPClass_Type;
+
 
 #ifdef __cplusplus
 }
@@ -67,5 +74,7 @@ extern PyTypeObject* PyJPProxy_Type;
 
 #define ASSERT_JVM_RUNNING(X) JPEnv::assertJVMRunning(X, JP_STACKINFO())
 #define PY_STANDARD_CATCH catch(...) { JPPythonEnv::rethrow(JP_STACKINFO()); }
+
+JPPyObject PyJPClass_alloc(JPClass* cls);
 
 #endif /* PYJP_H */
