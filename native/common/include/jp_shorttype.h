@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_SHORT_TYPE_H_
 #define _JP_SHORT_TYPE_H_
@@ -53,22 +53,30 @@ public:
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
 	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length) override;
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*) override;
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
+			jsize start, jsize length, jsize step,
+			PyObject *sequence) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
 
-	template <class T> T assertRange(const T& l)
+	virtual char getTypeCode() override
 	{
-		if (l < JPJni::s_Short_Min || l > JPJni::s_Short_Max)
+		return 'S';
+	}
+
+	template <class T> static T assertRange(const T& l)
+	{
+		if (l < -32768 || l > 32767)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java short");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java short");
 		}
 		return l;
 	}
 
+	virtual void getView(JPArrayView& view) override;
+	virtual void releaseView(JPArrayView& view, bool complete) override;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

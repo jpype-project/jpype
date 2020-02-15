@@ -72,7 +72,6 @@ class JVMFinderTest(unittest.TestCase):
         self.assertEqual(
             p, os.path.join('/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/amd64/server', 'libjvm.so'))
 
-    @unittest.skipIf(sys.version_info[:2] == (2, 6), "skip on py26")
     @mock.patch('platform.mac_ver')
     def test_javahome_binary_py27(self, mock_mac_ver):
         # this version has java_home binary
@@ -88,32 +87,6 @@ class JVMFinderTest(unittest.TestCase):
             p = finder._javahome_binary()
 
             self.assertEqual(p, expected.strip())
-
-        # this version has no java_home binary
-        mock_mac_ver.return_value = ('10.5', '', '')
-        p = finder._javahome_binary()
-
-        self.assertEqual(p, None)
-
-    @unittest.skipUnless(sys.version_info[:2] == (2, 6), "only py26")
-    @mock.patch('platform.mac_ver')
-    def test_javahome_binary_py26(self, mock_mac_ver):
-        # this version has java_home binary
-        mock_mac_ver.return_value = ('10.6.8', '', '')
-        expected = '/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\n'
-
-        finder = DarwinJVMFinder()
-
-        # fake check_output
-        with mock.patch('subprocess.Popen') as mock_popen:
-            class proc:
-                def communicate(self):
-                    return (expected, )
-            mock_popen.return_value = proc()
-
-            p = finder._javahome_binary()
-
-            self.assertEqual(p.strip(), expected.strip())
 
         # this version has no java_home binary
         mock_mac_ver.return_value = ('10.5', '', '')

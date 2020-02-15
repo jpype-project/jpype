@@ -14,7 +14,6 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <Python.h> // FIXME work on bytes, remove when complete
 #include <jpype.h>
 
 JPArrayClass::JPArrayClass(jclass c) : JPClass(c)
@@ -36,7 +35,7 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 		return JPMatch::_implicit;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -102,8 +101,8 @@ JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
 
 JPPyObject JPArrayClass::convertToPythonObject(jvalue val)
 {
-	JP_TRACE_IN("JPArrayClass::convertToPythonObject")
-	return JPPythonEnv::newJavaObject(JPValue(this, val));
+	JP_TRACE_IN("JPArrayClass::convertToPythonObject");
+	return PyJPValue_create(JPValue(this, val));
 	JP_TRACE_OUT;
 }
 
@@ -119,9 +118,19 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
+		// Check if it is a slice, because slices must be cloned
+		if (PyObject_IsInstance(obj, (PyObject*) PyJPArray_Type))
+		{
+			PyJPArray* array = (PyJPArray*) obj;
+			if (array->m_Array->isSlice())
+			{
+				res.l = frame.keep(array->m_Array->clone(frame, obj));
+				return res;
+			}
+		}
 		return *value;
 	}
 
@@ -142,7 +151,6 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-#if PY_MAJOR_VERSION >= 3
 	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
 	{
 		Py_ssize_t size = 0;
@@ -153,18 +161,6 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 		res.l = frame.keep(byteArray);
 		return res;
 	}
-#else
-	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		PyString_AsStringAndSize(obj, &buffer, &size); // internal reference
-		jbyteArray byteArray = frame.NewByteArray(size);
-		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
-		res.l = frame.keep(byteArray);
-		return res;
-	}
-#endif
 
 	if (JPPyObject::isSequenceOfItems(obj))
 	{
@@ -185,7 +181,7 @@ jvalue JPArrayClass::convertToJava(PyObject* obj)
 	stringstream ss;
 	ss << "Cannot convert value of type " << JPPyObject::getTypeName(obj)
 			<< " to Java array type " << this->m_CanonicalName;
-	JP_RAISE_TYPE_ERROR(ss.str());
+	JP_RAISE(PyExc_TypeError, ss.str());
 	return res;
 	JP_TRACE_OUT;
 }
@@ -207,10 +203,38 @@ jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, js
 	JP_TRACE_OUT;
 }
 
-JPValue JPArrayClass::newInstance(int length)
+JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
 {
-	JPJavaFrame frame;
 	jvalue v;
 	v.l = frame.keep(m_ComponentType->newArrayInstance(frame, length));
 	return JPValue(this, v);
+}
+
+JPValue JPArrayClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	JP_TRACE_IN("JPArrayClass::newInstance");
+	if (args.size() != 1)
+		JP_RAISE(PyExc_TypeError, "Arrays require one argument");
+
+	if (PySequence_Check(args[0]) == 1)
+	{
+		JP_TRACE("Sequence");
+		Py_ssize_t sz = PySequence_Size(args[0]);
+		jobject inst = m_ComponentType->newArrayInstance(frame, (jsize) sz);
+		JPArray array(JPValue(this,  inst));
+		array.setRange(0, (jsize) sz, 1, args[0]);
+		return JPValue(this, inst);
+	}
+
+	if (PyIndex_Check(args[0]))
+	{
+		JP_TRACE("Index");
+		Py_ssize_t sz = PyNumber_AsSsize_t(args[0], NULL);
+		if (sz < 0 )
+			JP_RAISE(PyExc_ValueError, "Invalid size");
+		return JPValue(this, m_ComponentType->newArrayInstance(frame, (int) sz));
+	}
+
+	JP_RAISE(PyExc_TypeError, "Arrays require int or sequence parameters");
+	JP_TRACE_OUT;
 }

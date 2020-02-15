@@ -145,8 +145,7 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 			JP_TRACE("Argument length mismatch", len, tlen);
 			return match; // JPMatch::_none
 		}
-	}
-	else
+	} else
 	{
 		JP_TRACE("Match vargs");
 		JPClass* type = m_ArgumentsTypeCache[tlen - 1];
@@ -169,14 +168,12 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 				lastMatch = matchVars(arg, last, type);
 				match.isVarIndirect = true;
 				JP_TRACE("Match vargs indirect", lastMatch);
-			}
-			else
+			} else
 			{
 				match.isVarDirect = true;
 				JP_TRACE("Match vargs direct", lastMatch);
 			}
-		}
-		else if (len > tlen)
+		} else if (len > tlen)
 		{
 			// Must match the array type
 			len = tlen - 1;
@@ -184,7 +181,6 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 			match.isVarIndirect = true;
 			JP_TRACE("Match vargs indirect", lastMatch);
 		}
-
 		else if (len < tlen)
 		{
 			match.isVarIndirect = true;
@@ -201,7 +197,8 @@ JPMatch JPMethodOverload::matches(bool callInstance, JPPyObjectVector& arg)
 	for (size_t i = 0; i < len; i++)
 	{
 		JPClass* type = m_ArgumentsTypeCache[i];
-		JPMatch::Type ematch = type->canConvertToJava(arg[i + match.offset]);
+		PyObject *obj = arg[i + match.offset];
+		JPMatch::Type ematch = type->canConvertToJava(obj);
 		JP_TRACE("compare", ematch, type->toString(), JPPyObject::getTypeName(arg[i + match.offset]));
 		if (ematch < JPMatch::_implicit)
 		{
@@ -246,12 +243,11 @@ void JPMethodOverload::packArgs(JPMatch& match, vector<jvalue>& v, JPPyObjectVec
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool instance)
+JPPyObject JPMethodOverload::invoke(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethodOverload::invoke");
 	ensureTypeCache();
 	size_t alen = m_Arguments.size();
-	JPJavaFrame frame(8 + alen);
 	JPClass* retType = m_ReturnTypeCache;
 
 	// Pack the arguments
@@ -269,7 +265,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 		{
 			JP_TRACE("Call instance");
 			len--;
-			JPValue *selfObj = JPPythonEnv::getJavaValue(arg[0]);
+			JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
 			self = selfObj->getJavaObject();
 		}
 
@@ -297,8 +293,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 			JP_TRACE("Return primitive");
 			JPValue out = retType->getValueFromObject(o);
 			return retType->convertToPythonObject(out.getValue());
-		}
-		else
+		} else
 		{
 			JP_TRACE("Return object");
 			jvalue v;
@@ -314,7 +309,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
 	} else
 	{
-		JPValue* selfObj = JPPythonEnv::getJavaValue(arg[0]);
+		JPValue* selfObj = PyJPValue_getJavaSlot(arg[0]);
 		jobject c;
 		if (selfObj == NULL)
 		{
@@ -322,8 +317,7 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 			// class object.  We already know it is safe to convert.
 			jvalue  v = this->m_Class->convertToJava(arg[0]);
 			c = v.l;
-		}
-		else
+		} else
 		{
 			c = selfObj->getJavaObject();
 		}
@@ -335,12 +329,11 @@ JPPyObject JPMethodOverload::invoke(JPMatch& match, JPPyObjectVector& arg, bool 
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethodOverload::invokeConstructor(JPMatch& match, JPPyObjectVector& arg)
+JPValue JPMethodOverload::invokeConstructor(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg)
 {
 	JP_TRACE_IN("JPMethodOverload::invokeConstructor");
 	ensureTypeCache();
 	size_t alen = m_Arguments.size();
-	JPJavaFrame frame(8 + alen);
 
 	vector<jvalue> v(alen + 1);
 	packArgs(match, v, arg);
@@ -348,7 +341,7 @@ JPValue JPMethodOverload::invokeConstructor(JPMatch& match, JPPyObjectVector& ar
 	jvalue val;
 	{
 		JPPyCallRelease call;
-		val.l = frame.keep(frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
+		val.l = frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]);
 	}
 	return JPValue(m_Class, val);
 

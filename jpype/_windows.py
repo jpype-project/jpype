@@ -85,12 +85,6 @@ class WindowsJVMFinder(_jvmfinder.JVMFinder):
 
     def _get_winreg(self):
 
-
-
-
-
-
-
         # in Py3, winreg has been moved
         try:
             import winreg

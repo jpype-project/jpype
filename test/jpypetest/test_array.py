@@ -120,7 +120,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testJArrayConversionChar(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getCharArray()
-        self.assertEqual(v[:], 'avcd')
+        self.assertEqual(str(v[:]), 'avcd')
         # FIXME: this returns unicode on windows
         self.assertEqual(str(v[:]), 'avcd')
         self.assertEqual(unicode(v[:]), u'avcd')
@@ -389,7 +389,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testObjectNullArraySlice(self):
         # Check for bug in 0.7.0
         array = jpype.JArray(jpype.JObject)([None, ])
-        self.assertEqual(array[:], (None,))
+        self.assertEqual(tuple(array[:]), (None,))
 
     def testGetArraySlice(self):
         contents = [1, 2, 3, 4]
@@ -409,11 +409,30 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[:]), contents[:])
 
     def testGetArraySliceStep(self):
-        contents = [1, 2, 3, 4]
+        contents = [1, 2, 3, 4, 5, 6]
         array = jpype.JArray(jpype.JInt)(contents)
-        with self.assertRaises(NotImplementedError):
-            array[::2]
+        self.assertEqual(list(array[::2]), contents[::2])
+        self.assertEqual(list(array[::3]), contents[::3])
+        self.assertEqual(list(array[::4]), contents[::4])
+        self.assertEqual(list(array[::5]), contents[::5])
+        self.assertEqual(list(array[::6]), contents[::6])
+        self.assertEqual(list(array[::7]), contents[::7])
+        self.assertEqual(list(array[::8]), contents[::8])
+        self.assertEqual(list(array[1::3]), contents[1::3])
+        self.assertEqual(list(array[1:-2:3]), contents[1:-2:3])
 
+    def testGetArraySliceStepNeg(self):
+        contents = [1, 2, 3, 4, 5, 6]
+        array = jpype.JArray(jpype.JInt)(contents)
+        self.assertEqual(list(array[::-1]), contents[::-1])
+        self.assertEqual(list(array[::-2]), contents[::-2])
+        self.assertEqual(list(array[::-3]), contents[::-3])
+        self.assertEqual(list(array[::-4]), contents[::-4])
+        self.assertEqual(list(array[::-5]), contents[::-5])
+        self.assertEqual(list(array[::-6]), contents[::-6])
+        self.assertEqual(list(array[2::-3]), contents[2::-3])
+        self.assertEqual(list(array[-2::-3]), contents[-2::-3])
+ 
     def testSetArraySliceStep(self):
         contents = [1, 2, 3, 4, 5, 6]
         array = jpype.JArray(jpype.JInt)(contents)
@@ -464,3 +483,14 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[:]), contents)
         with self.assertRaises(IndexError):
             array[-5] = 1
+
+    def testSliceCast(self):        
+        JA = jpype.JArray(jpype.JInt)
+        ja = JA([1,2,3,4,5,6,7,8])
+        ja2 = ja[::2]
+        jo = jpype.JObject(ja2, object)
+        ja3 = jpype.JObject(jo, JA)
+        self.assertEqual(type(jo), jpype.JClass("java.lang.Object"))
+        self.assertEqual(type(ja2), JA)
+        self.assertEqual(type(ja3), JA)
+        self.assertEqual(list(ja2), list(ja3))

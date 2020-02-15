@@ -14,157 +14,121 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <pyjp.h>
+#include <jpype.h>
 
-static PyMethodDef methods[] = {
-	{"__enter__", (PyCFunction) (&PyJPMonitor::__enter__), METH_NOARGS, ""},
-	{"__exit__", (PyCFunction) (&PyJPMonitor::__exit__), METH_VARARGS, ""},
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+struct PyJPMonitor
+{
+	PyObject_HEAD
+	JPMonitor *m_Monitor;
+} ;
+
+static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
+{
+	JP_PY_TRY("PyJPMonitor_init");
+	self->m_Monitor = NULL;
+	ASSERT_JVM_RUNNING();
+	JPJavaFrame frame;
+
+	PyObject* value;
+
+	if (!PyArg_ParseTuple(args, "O", &value))
+	{
+		return -1;
+	}
+
+	JPValue *v1 = PyJPValue_getJavaSlot(value);
+	if (v1 == NULL)
+		JP_RAISE(PyExc_TypeError, "Java object is required.");
+
+	// FIXME should these be runtime or type error.
+	// it is legitimately the wrong "type" of object.
+	if (v1->getClass() == JPTypeManager::_java_lang_String)
+		JP_RAISE(PyExc_TypeError, "Java strings cannot be used to synchronize.");
+
+	if ((v1->getClass())->isPrimitive())
+		JP_RAISE(PyExc_TypeError, "Java primitives cannot be used to synchronize.");
+
+	if (v1->getValue().l == NULL)
+		JP_RAISE(PyExc_TypeError, "Java null cannot be used to synchronize.");
+
+	self->m_Monitor = new JPMonitor(v1->getValue().l);
+	return 0;
+	JP_PY_CATCH(-1);
+}
+
+static void PyJPMonitor_dealloc(PyJPMonitor *self)
+{
+	JP_PY_TRY("PyJPMonitor_dealloc");
+	delete self->m_Monitor;
+	Py_TYPE(self)->tp_free(self);
+	JP_PY_CATCH();
+}
+
+static PyObject *PyJPMonitor_str(PyJPMonitor *self)
+{
+	JP_PY_TRY("PyJPMonitor_str");
+	ASSERT_JVM_RUNNING();
+	stringstream ss;
+	ss << "<java monitor>";
+	return JPPyString::fromStringUTF8(ss.str()).keep();
+	JP_PY_CATCH(NULL);
+}
+
+static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
+{
+	JP_PY_TRY("PyJPMonitor_enter");
+	ASSERT_JVM_RUNNING();
+	self->m_Monitor->enter();
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
+static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
+{
+	JP_PY_TRY("PyJPMonitor_exit");
+	ASSERT_JVM_RUNNING();
+	self->m_Monitor->exit();
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
+static PyMethodDef monitorMethods[] = {
+	{"__enter__", (PyCFunction) (&PyJPMonitor_enter), METH_NOARGS, ""},
+	{"__exit__", (PyCFunction) (&PyJPMonitor_exit), METH_VARARGS, ""},
 	{NULL},
 };
 
-PyTypeObject PyJPMonitor::Type = {
-	PyVarObject_HEAD_INIT(&PyType_Type, 0)
-	/* tp_name           */ "_jpype.PyJPMonitor",
-	/* tp_basicsize      */ sizeof (PyJPMonitor),
-	/* tp_itemsize       */ 0,
-	/* tp_dealloc        */ (destructor) PyJPMonitor::__dealloc__,
-	/* tp_print          */ 0,
-	/* tp_getattr        */ 0,
-	/* tp_setattr        */ 0,
-	/* tp_compare        */ 0,
-	/* tp_repr           */ 0,
-	/* tp_as_number      */ 0,
-	/* tp_as_sequence    */ 0,
-	/* tp_as_mapping     */ 0,
-	/* tp_hash           */ 0,
-	/* tp_call           */ 0,
-	/* tp_str            */ (reprfunc) PyJPMonitor::__str__,
-	/* tp_getattro       */ 0,
-	/* tp_setattro       */ 0,
-	/* tp_as_buffer      */ 0,
-	/* tp_flags          */ Py_TPFLAGS_DEFAULT,
-	/* tp_doc            */ "Java Monitor",
-	/* tp_traverse       */ 0,
-	/* tp_clear          */ 0,
-	/* tp_richcompare    */ 0,
-	/* tp_weaklistoffset */ 0,
-	/* tp_iter           */ 0,
-	/* tp_iternext       */ 0,
-	/* tp_methods        */ methods,
-	/* tp_members        */ 0,
-	/* tp_getset         */ 0,
-	/* tp_base           */ 0,
-	/* tp_dict           */ 0,
-	/* tp_descr_get      */ 0,
-	/* tp_descr_set      */ 0,
-	/* tp_dictoffset     */ 0,
-	/* tp_init           */ (initproc) PyJPMonitor::__init__,
-	/* tp_alloc          */ 0,
-	/* tp_new            */ PyType_GenericNew
+static PyType_Slot monitorSlots[] = {
+	{ Py_tp_init,     (void*) PyJPMonitor_init},
+	{ Py_tp_dealloc,  (void*) PyJPMonitor_dealloc},
+	{ Py_tp_str,      (void*) PyJPMonitor_str},
+	{ Py_tp_methods,  (void*) &monitorMethods},
+	{0}
 };
 
-// Static methods
+PyType_Spec PyJPMonitorSpec = {
+	"_jpype._JMonitor",
+	sizeof (PyJPMonitor),
+	0,
+	Py_TPFLAGS_DEFAULT,
+	monitorSlots
+};
 
-void PyJPMonitor::initType(PyObject* module)
-{
-	PyType_Ready(&PyJPMonitor::Type);
-	Py_INCREF(&PyJPMonitor::Type);
-	PyModule_AddObject(module, "PyJPMonitor", (PyObject*) (&PyJPMonitor::Type));
+PyTypeObject* PyJPMonitor_Type = NULL;
+
+#ifdef __cplusplus
 }
+#endif
 
-int PyJPMonitor::__init__(PyJPMonitor* self, PyObject* args)
+void PyJPMonitor_initType(PyObject* module)
 {
-	JP_TRACE_IN("PyJPMonitor::__init__");
-	try
-	{
-		self->m_Monitor = NULL;
-		ASSERT_JVM_RUNNING("PyJPMonitor::__init__");
-		JPJavaFrame frame;
-
-		PyObject* value;
-
-		if (!PyArg_ParseTuple(args, "O!", &PyJPValue::Type, &value))
-		{
-			return -1;
-		}
-
-		JPValue& v1 = ((PyJPValue*) value)->m_Value;
-
-		// FIXME should these be runtime or type error.
-		// it is legitimately the wrong "type" of object.
-		if (v1.getClass() == JPTypeManager::_java_lang_String)
-		{
-			PyErr_SetString(PyExc_TypeError, "Strings cannot be used to synchronize.");
-			return -1;
-		}
-
-		if ((v1.getClass())->isPrimitive())
-		{
-			PyErr_SetString(PyExc_TypeError, "Primitives cannot be used to synchronize.");
-			return -1;
-		}
-
-		if (v1.getValue().l == NULL)
-		{
-			PyErr_SetString(PyExc_TypeError, "Null cannot be used to synchronize.");
-			return -1;
-		}
-
-		self->m_Monitor = new JPMonitor(v1.getValue().l);
-		return 0;
-	}
-	PY_STANDARD_CATCH;
-	return -1;
-	JP_TRACE_OUT;
+	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
+	JP_PY_CHECK();
 }
-
-void PyJPMonitor::__dealloc__(PyJPMonitor* self)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__dealloc__");
-		JPJavaFrame frame;
-		delete self->m_Monitor;
-		Py_TYPE(self)->tp_free(self);
-	}
-	PY_STANDARD_CATCH
-}
-
-PyObject* PyJPMonitor::__str__(PyJPMonitor* self)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__str__");
-		stringstream ss;
-		ss << "<java monitor>";
-		return JPPyString::fromStringUTF8(ss.str()).keep();
-	}
-	PY_STANDARD_CATCH
-	return NULL;
-}
-
-PyObject* PyJPMonitor::__enter__(PyJPMonitor* self, PyObject* args)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__enter__");
-		self->m_Monitor->enter();
-		Py_RETURN_NONE;
-	}
-	PY_STANDARD_CATCH
-	return NULL;
-}
-
-PyObject* PyJPMonitor::__exit__(PyJPMonitor* self, PyObject* args)
-{
-	try
-	{
-		ASSERT_JVM_RUNNING("PyJPMonitor::__exit__");
-		self->m_Monitor->exit();
-		Py_RETURN_NONE;
-	}
-	PY_STANDARD_CATCH
-	return NULL;
-}
-
-

@@ -61,10 +61,11 @@ class ExceptionTestCase(common.JPypeTestCase):
 
         self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
 
-    def testExceptionPYEXCName(self):
-        e = self.jpype.exc.ChildTestException()
-        name = "jpype.exc.ChildTestException"
-        self.assertEqual(name, e.__name__)
+#    This test is problematic as __name__ is a class property not an object property
+#    def testExceptionPYEXCName(self):
+#        e = self.jpype.exc.ChildTestException()
+#        name = "jpype.exc.ChildTestException"
+#        self.assertEqual(name, e.__name__)
 
     def testExceptionInstanceof(self):
         e = self.jpype.exc.ChildTestException()

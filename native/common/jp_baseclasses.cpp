@@ -18,7 +18,7 @@
 
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 
-JPObjectBaseClass::JPObjectBaseClass() : JPClass(JPJni::s_ObjectClass)
+JPObjectBaseClass::JPObjectBaseClass(jclass cls) : JPClass(cls)
 {
 }
 
@@ -36,7 +36,7 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	}
 
 	// arrays are objects
-	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -54,7 +54,7 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	}
 
 	// Class are objects too
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
+	JPClass* cls = PyJPClass_getJPClass(pyobj);
 	if (cls != NULL)
 	{
 		JP_TRACE("implicit array class");
@@ -74,7 +74,7 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 		return JPMatch::_implicit;
 	}
 
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
+	JPProxy* proxy = PyJPProxy_getJPProxy(pyobj);
 	if (proxy != NULL)
 	{
 		JP_TRACE("implicit python proxy");
@@ -85,7 +85,7 @@ JPMatch::Type JPObjectBaseClass::canConvertToJava(PyObject* pyobj)
 	JP_TRACE_OUT;
 }
 
-// java.lang.Object can be converted to from all object classes, 
+// java.lang.Object can be converted to from all object classes,
 // all primitive types (via boxing), strings, arrays, and python bridge classes
 
 jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
@@ -101,16 +101,26 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	JPValue *value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
+		// Check if it is a slice, because slices must be cloned
+		if (PyObject_IsInstance(pyobj, (PyObject*) PyJPArray_Type))
+		{
+			PyJPArray* array = (PyJPArray*) pyobj;
+			if (array->m_Array->isSlice())
+			{
+				res.l = frame.keep(array->m_Array->clone(frame, pyobj));
+				return res;
+			}
+		}
+
 		if (!(value->getClass())->isPrimitive())
 		{
 			res.l = frame.NewLocalRef(value->getJavaObject());
 			res.l = frame.keep(res.l);
 			return res;
-		}
-		else
+		} else
 		{
 			// Okay we need to box it.
 			JPPrimitiveType* type = (JPPrimitiveType*) (value->getClass());
@@ -127,14 +137,14 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	if (JPPyBool::check(pyobj))
+	if (PyBool_Check(pyobj))
 	{
 		res = JPTypeManager::_boolean->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
 		return res;
 	}
 
-	if (JPPyFloat::check(pyobj))
+	if (PyFloat_Check(pyobj))
 	{
 		res = JPTypeManager::_double->getBoxedClass()->convertToJava(pyobj);
 		res.l = frame.keep(res.l);
@@ -164,7 +174,7 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
+	JPClass* cls = PyJPClass_getJPClass(pyobj);
 	if (cls != NULL)
 	{
 		res.l = frame.NewLocalRef(cls->getJavaClass());
@@ -172,21 +182,21 @@ jvalue JPObjectBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(pyobj);
+	JPProxy* proxy = PyJPProxy_getJPProxy(pyobj);
 	if (proxy != NULL)
 	{
 		res.l = frame.keep(proxy->getProxy());
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Unable to convert to object");
+	JP_RAISE(PyExc_TypeError, "Unable to convert to object");
 	return res;
 	JP_TRACE_OUT;
 }
 
 //=======================================================
 
-JPClassBaseClass::JPClassBaseClass() : JPClass(JPJni::s_ClassClass)
+JPClassBaseClass::JPClassBaseClass(jclass cls) : JPClass(cls)
 {
 }
 
@@ -200,7 +210,7 @@ JPMatch::Type JPClassBaseClass::canConvertToJava(PyObject* pyobj)
 	if (JPPyObject::isNone(pyobj))
 		return JPMatch::_implicit;
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue* value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -208,7 +218,7 @@ JPMatch::Type JPClassBaseClass::canConvertToJava(PyObject* pyobj)
 		return JPMatch::_none;
 	}
 
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
+	JPClass* cls = PyJPClass_getJPClass(pyobj);
 	if (cls != NULL)
 		return JPMatch::_exact;
 
@@ -232,7 +242,7 @@ jvalue JPClassBaseClass::convertToJava(PyObject* pyobj)
 		return res;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(pyobj);
+	JPValue* value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -241,17 +251,17 @@ jvalue JPClassBaseClass::convertToJava(PyObject* pyobj)
 			res.l = frame.keep(res.l);
 			return res;
 		}
-		JP_RAISE_TYPE_ERROR("Unable to convert to java class");
+		JP_RAISE(PyExc_TypeError, "Unable to convert to java class");
 	}
 
-	JPClass* cls = JPPythonEnv::getJavaClass(pyobj);
+	JPClass* cls = PyJPClass_getJPClass(pyobj);
 	if (cls != NULL)
 	{
 		res.l = frame.NewLocalRef(cls->getJavaClass());
 		res.l = frame.keep(res.l);
 		return res;
 	}
-	JP_RAISE_TYPE_ERROR("Unable to convert to java class");
+	JP_RAISE(PyExc_TypeError, "Unable to convert to java class");
 	return res;
 	JP_TRACE_OUT;
 }

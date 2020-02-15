@@ -10,58 +10,58 @@ class ModuleTestCase2(common.JPypeTestCase):
     def testMonitorOnNull(self):
         value = jpype.JObject(None)
         with self.assertRaises(TypeError):
-            _jpype.PyJPMonitor(value.__javavalue__)
+            _jpype._JMonitor(value)
 
     def testMonitorOnString(self):
         value = jpype.JString("foo")
         with self.assertRaises(TypeError):
-            _jpype.PyJPMonitor(value.__javavalue__)
+            _jpype._JMonitor(value)
 
     def testMonitorOnPrim(self):
         value = jpype.JInt(1)
         with self.assertRaises(TypeError):
-            _jpype.PyJPMonitor(value.__javavalue__)
+            _jpype._JMonitor(value)
 
     def testMonitorInitBad(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPMonitor()
+            _jpype._JMonitor()
 
     def testMonitorInitBad2(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPMonitor(None)
+            _jpype._JMonitor(None)
 
     def testMonitorStr(self):
         obj = jpype.java.lang.Object()
-        monitor = _jpype.PyJPMonitor(obj.__javavalue__)
+        monitor = _jpype._JMonitor(obj)
         self.assertIsInstance(str(monitor), str)
 
     def testProxyInitBad(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPProxy(None)
+            _jpype._JProxy(None)
 
     def testProxyInitBad2(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPProxy(None, None, None)
+            _jpype._JProxy(None, None, None)
 
     def testProxyInitBad3(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPProxy(None, None, tuple([None, None]))
+            _jpype._JProxy(None, None, tuple([None, None]))
 
     def testProxyNoInterfaces(self):
         with self.assertRaises(TypeError):
-            proxy = _jpype.PyJPProxy(None, None, tuple())
+            proxy = _jpype._JProxy(None, None, tuple())
 
     def testValueInitBad(self):
         with self.assertRaises(TypeError):
-            _jpype.PyJPValue("no")
+            _jpype._JValue("no")
 
-    def testValueInitBad2(self):
-        with self.assertRaises(TypeError):
-            _jpype.PyJPValue("no", "no")
+#    def testValueInitBad2(self):
+#        with self.assertRaises(TypeError):
+#            _jpype._JValue("no", "no")
 
     def testValueStr(self):
         obj = jpype.JClass("java.lang.Object")()
-        self.assertIsInstance(str(obj.__javavalue__), str)
+        self.assertIsInstance(str(obj), str)
 
     def testModuleDump(self):
         _jpype.dumpJVMStats()

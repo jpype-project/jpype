@@ -1,6 +1,6 @@
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
- 
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -14,7 +14,7 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include <jpype.h>
 
 JPFloatType::JPFloatType() : JPPrimitiveType(JPTypeManager::_java_lang_Float)
 {
@@ -50,7 +50,7 @@ JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -67,7 +67,7 @@ JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	if (JPPyFloat::check(obj))
+	if (PyFloat_Check(obj))
 	{
 		// This next line is a puzzle.  It seems like it should be JPMatch::_exact.
 		return JPMatch::_implicit;
@@ -86,7 +86,7 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 {
 	JP_TRACE_IN("JPFloatType::convertToJava");
 	jvalue res;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -99,25 +99,22 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 			return getValueFromObject(value->getJavaObject());
 		}
 
-		JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
-	}
-	else if (JPPyFloat::checkConvertable(obj))
+		JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
+	} else if (JPPyFloat::checkConvertable(obj))
 	{
 		double l = JPPyFloat::asDouble(obj);
 		// FIXME the check for s_minFloat seems wrong.
 		// Java would trim to 0 rather than giving an error.
 		if (l >= 0 && l > JPJni::s_Float_Max)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
-		}
-		else if (l < 0 && l < -JPJni::s_Float_Max)
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
+		} else if (l < 0 && l < -JPJni::s_Float_Max)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java float");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
 		}
 		res.f = (jfloat) l;
 		return res;
-	}
-		// We should never reach here as an int because we should
+	}// We should never reach here as an int because we should
 		// have hit the float conversion.  But we are leaving it for the odd
 		// duck with __int__ but no __float__
 	else if (JPPyLong::checkConvertable(obj))
@@ -126,7 +123,7 @@ jvalue JPFloatType::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java float");
+	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java float");
 	return res;
 	JP_TRACE_OUT;
 }
@@ -185,31 +182,59 @@ void JPFloatType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject
 	frame.SetFloatField(c, fid, val);
 }
 
-JPPyObject JPFloatType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
-{
-	return getSlice<jfloat>(frame, a, lo, lo + hi, NPY_FLOAT32, PyFloat_FromDouble);
-}
-
-void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
 	JP_TRACE_IN("JPFloatType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT32,
-			&JPJavaFrame::SetFloatArrayRegion))
-		return;
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetFloatArrayElements, &JPJavaFrame::ReleaseFloatArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	// First check if assigning sequence supports buffer API
+	if (PyObject_CheckBuffer(sequence))
 	{
-		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
+		JPPyBuffer buffer(sequence, PyBUF_FULL_RO);
+		if (buffer.valid())
+		{
+			Py_buffer& view = buffer.getView();
+			if (view.ndim != 1)
+				JP_RAISE(PyExc_TypeError, "buffer dims incorrect");
+			Py_ssize_t vshape = view.shape[0];
+			Py_ssize_t vstep = view.strides[0];
+			if (vshape != length)
+				JP_RAISE(PyExc_ValueError, "mismatched size");
+
+			char* memory = (char*) view.buf;
+			if (view.suboffsets && view.suboffsets[0] >= 0)
+				memory = *((char**) memory) + view.suboffsets[0];
+			jsize index = start;
+			jconverter conv = getConverter(view.format, view.itemsize, "f");
+			for (Py_ssize_t i = 0; i < length; ++i, index += step)
+			{
+				jvalue r = conv(memory);
+				val[index] = r.f;
+				memory += vstep;
+			}
+			accessor.commit();
+			return;
+		} else
+		{
+			PyErr_Clear();
+		}
+	}
+
+	// Use sequence API
+	JPPySequence seq(JPPyRef::_use, sequence);
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+	{
+		double v =  PyFloat_AsDouble(seq[i].get());
 		if (v == -1. && JPPyErr::occurred())
 		{
 			JP_RAISE_PYTHON("JPFloatType::setArrayRange");
 		}
-		val[start + i] = v;
+		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -232,3 +257,21 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetFloatArrayRegion(array, ndx, 1, &val);
 }
 
+void JPFloatType::getView(JPArrayView& view)
+{
+	JPJavaFrame frame;
+	view.memory = (void*) frame.GetFloatArrayElements(
+			(jfloatArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "f";
+	view.buffer.itemsize = sizeof (jfloat);
+}
+
+void JPFloatType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseFloatArrayElements((jfloatArray) view.array->getJava(),
+				(jfloat*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	}
+}

@@ -17,28 +17,13 @@
 
 import sys as _sys
 import inspect
-
 import _jpype
-from . import _jclass
 from . import _jcustomizer
-from . import _jinit
 
 __all__ = ['JObject']
 
 
-
-
-
-
-
-
-
-def _initialize():
-    type.__setattr__(JObject, '__javaclass__',
-                     _jpype.PyJPClass('java.lang.Object'))
-
-
-class JObject(object):
+class JObject(_jpype._JObject):
     """ Base class for all object instances.
 
     It can be used to test if an object is a java object instance with
@@ -76,62 +61,50 @@ class JObject(object):
 
     """
     def __new__(cls, *args, **kwargs):
-        if cls != JObject:
-            return super(JObject, cls).__new__(cls)
         # Create a null pointer object
         if len(args) == 0:
             args = [None]
-        cls = _JObjectFactory(*args, **kwargs)
-        self = cls.__new__(cls, args[0])
-        self.__javavalue__ = _jpype.PyJPValue(cls.__javaclass__, args[0])
-        return self
-
-    def __init__(self, *args):
-        if hasattr(self, '__javavalue__'):
-            pass
-        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            object.__setattr__(self, '__javavalue__', args[0])
-        elif not hasattr(self, '__javavalue__'):
-            jv = self.__class__.__javaclass__.newInstance(*args)
-            object.__setattr__(self, '__javavalue__', jv)
-        super(JObject, self).__init__()
-
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return object.__setattr__(self, name, value)
-
-        attr = _jclass.typeLookup(type(self), name)
-        if attr == None:
-            raise AttributeError("Field '%s' not found on Java '%s' object" %
-                                     (name, self.__name__))
-        try:
-            setter = getattr(attr, "__set__", None)
-            if setter!=None:
-                return attr.__set__(self, value)
-        except AttributeError:
-            pass
-        raise AttributeError("Field '%s' is not settable on Java '%s' object" %
-                             (name, self.__name__))
-
-    def __str__(self):
-        return self.__javavalue__.toString()
+        return _JObjectFactory(*args, **kwargs)
 
 
-
-
+class _JObjectProto(object):
     def __hash__(self):
         return self.hashCode()
 
     def __eq__(self, other):
-        return self.equals(other)
+        try:
+            return self.equals(other)
+        except TypeError:
+            return False
 
-    def __ne__(self, other):
-        return not self.equals(other)
 
+def _getDefaultJavaObject(obj):
+    """ Determine the type of the object based the type of a value.
 
-# Post load dependencies
-_jclass._JObject = JObject
-_jcustomizer._JObject = JObject
+        Python primitives - lookup the type in the table
+        Java primitive - lookup boxed type in the table
+        Java objects - just use their type directly
+
+    """
+    tp = type(obj)
+    # handle Python types and Java primitives
+    try:
+        return _jpype._object_classes[tp]
+    except KeyError:
+        pass
+
+    # handle Class wrappers
+    if isinstance(tp, _jpype._JClass):
+        return tp
+
+    # handle JProxy instances
+    try:
+        return obj.__javaclass__
+    except AttributeError:
+        pass
+
+    raise TypeError(
+        "Unable to determine the default type of `{0}`".format(tp.__name__))
 
 
 def _JObjectFactory(v=None, tp=None):
@@ -140,66 +113,21 @@ def _JObjectFactory(v=None, tp=None):
     If not specified type is determined based on the object.
     If type type is specified then then it tried to box it.
     """
-    cls = None
-
-    if isinstance(v, type):
-        if hasattr(v, '__javaclass__'):
-            cls = _jclass.JClass("java.lang.Class").__javaclass__
-        else:
-            raise TypeError("%s is not a java class." % v)
-
-    # Automatically look up the type if not specified,
     if tp is None:
-        return _jclass._getDefaultJavaObject(v)
-
-    # If it is a string look up the class name,
+        # Automatically determine based on the value
+        tp = _getDefaultJavaObject(v)
     elif isinstance(tp, str):
-        return _jclass.JClass(tp)
+        tp = _jpype.JClass(tp)
+    if tp in _jpype._object_classes:
+        tp = _jpype._object_classes[tp]
 
-    # Check if we are to box it,
-    elif isinstance(tp, type):
-        if hasattr(tp, '_java_boxed_class'):
-            return tp._java_boxed_class
-        elif hasattr(tp, '__javaclass__'):
-            return _jclass.JClass(tp.__javaclass__)
+    # Given a Java class
+    if isinstance(tp, _jpype._JClass):
+        return tp._cast(v)
 
     raise TypeError("Invalid type conversion to %s requested." % tp)
 
 
-def defineJObjectFactory(name, jclass, proto, bases=(JObject,), members=None):
-    """ Create a factory type such as JObject or JArray.
-
-    Args:
-        name (str): Name of the class to produce
-        jclass (str): Name of the java class this should shadow.
-        proto (type): Is a type from which the class methods will be based.
-        bases (tuple): Bases for this meta class factory.
-        members (dict): Any additional members for this class.
-
-    """
-    # Copy the members from the prototype
-    if members == None:
-        members = {}
-    for p, v in proto.__dict__.items():
-        if isinstance(v, (str, property)):
-            members[p] = v
-        elif callable(v):
-            members[p] = v
-        elif p == "__new__":
-            members[p] = v
-
-    res = None
-
-    if jclass != None:
-        members['__javaclass__'] = None
-
-    # Create a new class
-    res = _jclass.JClass(name, bases, members)
-
-    if jclass != None:
-        # Register this class to be initialized when jvm starts
-        def jinit():
-            type.__setattr__(res, '__javaclass__', _jpype.PyJPClass(jclass))
-        _jinit.registerJVMInitializer(jinit)
-
-    return res
+# Hook up module resources
+_jpype.JObject = JObject
+_jcustomizer._applyCustomizerPost(_jpype._JObject, _JObjectProto)

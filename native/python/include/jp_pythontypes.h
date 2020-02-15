@@ -1,5 +1,6 @@
 #ifndef JP_PYTHONTYPES_H_
 #define JP_PYTHONTYPES_H_
+#include <Python.h>
 #include <vector>
 
 /**
@@ -47,43 +48,51 @@ typedef _object PyObject;
 namespace JPPyRef
 {
 
-	enum Type
-	{
-		/**
-		 * This policy is used if we need to hold a reference to an existing
-		 * object for some duration.  The object may be null.
-		 *
-		 * Increment reference count if not null, and decrement when done.
-		 */
-		_use =  0,
+enum Type
+{
+	/**
+	 * This policy is used if we need to hold a reference to an existing
+	 * object for some duration.  The object may be null.
+	 *
+	 * Increment reference count if not null, and decrement when done.
+	 */
+	_use = 0,
 
-		/**
-		 * This policy is used when we are given a borrowed reference and we
-		 * need to check for errors.
-		 *
-		 * Check for errors, increment reference count, and decrement when done.
-		 * Will throw an exception an error occurs.
-		 */
-		_borrowed = 1,
+	/**
+	 * This policy is used when we are given a borrowed reference and we
+	 * need to check for errors.
+	 *
+	 * Check for errors, increment reference count, and decrement when done.
+	 * Will throw an exception an error occurs.
+	 */
+	_borrowed = 1,
 
-		/**
-		 * This policy is used when we are given a new reference that we must
-		 * destroy.  This will steal a reference.
-		 *
-		 * Assert not null, claim reference, and decremented when done.
-		 * Will throw an exception in the object is null.
-		 */
-		_claim = 2,
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * claim reference, and decremented when done. Clears errors if NULL.
+	 */
+	_accept = 2,
 
-		/**
-		 * This policy is used when we are capturing an object returned from a python
-		 * call that we are responsible for.  This will steal a reference.
-		 *
-		 * Check for errors, assert not null, then claim.
-		 * Will throw an exception an error occurs.
-		 */
-		_call = 3
-	} ;
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * Assert not null, claim reference, and decremented when done.
+	 * Will throw an exception in the object is null.
+	 */
+	_claim = 6,
+
+	/**
+	 * This policy is used when we are capturing an object returned from a python
+	 * call that we are responsible for.  This will steal a reference.
+	 *
+	 * Check for errors, assert not null, then claim.
+	 * Will throw an exception an error occurs.
+	 */
+	_call = 7
+} ;
 }
 
 /** Reference to a Python object.
@@ -138,23 +147,11 @@ public:
 		return pyobj;
 	}
 
-	/** Return string value as UTF8.
-	 */
-	string str();
-
 	static bool hasAttrString(PyObject*, const char* k);
 	JPPyObject getAttrString(const char* k);
 	static JPPyObject getAttrString(PyObject*, const char* k);
 
-	const char* getTypeName();
 	static const char* getTypeName(PyObject* obj);
-
-	/** Execute a call on an object.
-	 *
-	 * @param args must a tuple and must not be null.
-	 * @param kwargs must be a dict and can be null.
-	 */
-	JPPyObject call(PyObject* args, PyObject* kwargs);
 
 	/** Determine if this python reference is null.
 	 *
@@ -188,10 +185,10 @@ public:
 	 */
 	static JPPyObject getNone();
 
-protected:
 	void incref();
 	void decref();
 
+protected:
 	PyObject* pyobj;
 } ;
 
@@ -199,52 +196,33 @@ protected:
  * Number types
  ***************************************************************************/
 
-/** Wrapper for a Python Bool object. */
-namespace JPPyBool
-{
-	bool check(PyObject* obj);
-	JPPyObject fromLong(jlong value);
-}
-
-/** Wrapper for a Python Int object.
- *
- * Only Python 2 has int objects. For purposes of deciding
- * the wrapper type long and int should be treated identically
- * or we will have operational differences between Python 2 and 3.
- */
-namespace JPPyInt
-{
-JPPyObject fromInt(jint l);
-}
-
 /** Wrapper for a Python long object.
  */
 namespace JPPyLong
 {
-	bool check(PyObject* obj);
-	bool checkConvertable(PyObject* obj);
+bool check(PyObject* obj);
+bool checkConvertable(PyObject* obj);
 
-	/** Check if this is really an integer type or just can be converted to.
-	 *
-	 * PEP-357 says __index__ is defined if we can use it as an array slice.
-	 * Only integer types can do that.
-	 */
-	bool checkIndexable(PyObject* obj);
-	jlong asLong(PyObject* obj);
-	JPPyObject fromLong(jlong l);
+/** Check if this is really an integer type or just can be converted to.
+ *
+ * PEP-357 says __index__ is defined if we can use it as an array slice.
+ * Only integer types can do that.
+ */
+bool checkIndexable(PyObject* obj);
+jlong asLong(PyObject* obj);
+JPPyObject fromLong(jlong l);
 }
 
 /** Wrapper for a Python float object. */
 namespace JPPyFloat
 {
-	bool check(PyObject* obj);
-	bool checkConvertable(PyObject* obj);
-	jdouble asDouble(PyObject* obj);
-	jfloat asFloat(PyObject* obj);
+bool checkConvertable(PyObject* obj);
+jdouble asDouble(PyObject* obj);
+jfloat asFloat(PyObject* obj);
 
-	// The scope of the created object is that of the JPPyFloat
-	JPPyObject fromDouble(jdouble l);
-	JPPyObject fromFloat(jfloat l);
+// The scope of the created object is that of the JPPyFloat
+JPPyObject fromDouble(jdouble l);
+JPPyObject fromFloat(jfloat l);
 }
 
 /****************************************************************************
@@ -281,9 +259,8 @@ public:
 	 * true.  Python3 will always produce a unicode string.
 	 *
 	 * @param str is the string to convert
-	 * @param unicode is true if unicode is allowed.
 	 */
-	static JPPyObject fromStringUTF8(const string& str, bool unicode = false);
+	static JPPyObject fromStringUTF8(const string& str);
 
 	/** Get a UTF-8 encoded string from Python
 	 */
@@ -294,12 +271,6 @@ public:
 	static jchar asCharUTF16(PyObject* obj);
 
 } ;
-
-namespace JPPyMemoryView
-{
-	bool check(PyObject* obj);
-	void getByteBufferSize(PyObject* pyobj, char **outBuffer, long& outSize);
-}
 
 /****************************************************************************
  * Container types
@@ -347,38 +318,6 @@ public:
 
 } ;
 
-/** Wrapper for a Python list object. */
-class JPPyList : public JPPyObject
-{
-public:
-
-	JPPyList(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
-	{
-	}
-
-	JPPyList(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
-
-	static JPPyList newList(jlong sz);
-	static bool check(PyObject* obj);
-
-	/** Set an item in the list.
-	 *
-	 * This does not steal a reference to the object.
-	 */
-	void setItem(jlong ndx, PyObject* val);
-
-	/** Fetch an item from a tuple.
-	 *
-	 * Scope remains with the JPTuple, so no smart reference is required.
-	 * @throws if the index is out of the range of the tuple.
-	 */
-	PyObject* getItem(jlong ndx);
-	jlong size();
-
-} ;
-
 /** Wrapper for a Python sequence.
  *
  * In most cases, we will not use this directly, but rather convert to
@@ -395,10 +334,6 @@ public:
 	JPPySequence(const JPPyObject &self) : JPPyObject(self)
 	{
 	}
-
-	// Note this use to work the same for list, sequence and tuple, but that breaks pypy
-	bool check();
-	static bool check(PyObject* obj);
 
 	JPPyObject getItem(jlong ndx);
 
@@ -485,13 +420,13 @@ public:
 namespace JPPyErr
 {
 /** Check if there is a pending Python exception.
-	 *
-	 * @return true if pending, false otherwise.
-	 */
-	bool occurred();
+ *
+ * @return true if pending, false otherwise.
+ */
+bool occurred();
 
-	bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
-	void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
+bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
+void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 }
 
 /** Memory management for handling a python exception currently in progress. */
@@ -544,5 +479,35 @@ private:
 	void* state2;
 } ;
 
+class JPPyBuffer
+{
+public:
+	/**
+	 * Attempt to create a buffer view.
+	 *
+	 * If this fails then valid will return false and
+	 * PyExc_BufferError will be set.  Clear the exception if
+	 * the alternative methods are used.
+	 *
+	 * @param obj
+	 * @param flags
+	 */
+	JPPyBuffer(PyObject* obj, int flags);
+	~JPPyBuffer();
+
+	Py_buffer& getView()
+	{
+		return m_View;
+	}
+
+	bool valid()
+	{
+		return m_Valid;
+	}
+
+private:
+	Py_buffer m_View;
+	bool m_Valid;
+} ;
 
 #endif

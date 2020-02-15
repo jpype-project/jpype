@@ -22,65 +22,67 @@
  */
 namespace JPTypeManager
 {
-	extern JPVoidType* _void;
-	extern JPBooleanType* _boolean;
-	extern JPByteType* _byte;
-	extern JPCharType* _char;
-	extern JPShortType* _short;
-	extern JPIntType* _int;
-	extern JPLongType* _long;
-	extern JPFloatType* _float;
-	extern JPDoubleType* _double;
-	extern JPClass* _java_lang_Object;
-	extern JPClass* _java_lang_Class;
-	extern JPStringClass* _java_lang_String;
+extern JPVoidType* _void;
+extern JPBooleanType* _boolean;
+extern JPByteType* _byte;
+extern JPCharType* _char;
+extern JPShortType* _short;
+extern JPIntType* _int;
+extern JPLongType* _long;
+extern JPFloatType* _float;
+extern JPDoubleType* _double;
+extern JPClass* _java_lang_Object;
+extern JPClass* _java_lang_Class;
+extern JPStringClass* _java_lang_String;
 
-	extern JPBoxedClass* _java_lang_Void;
-	extern JPBoxedClass* _java_lang_Boolean;
-	extern JPBoxedClass* _java_lang_Byte;
-	extern JPBoxedClass* _java_lang_Char;
-	extern JPBoxedClass* _java_lang_Short;
-	extern JPBoxedClass* _java_lang_Integer;
-	extern JPBoxedClass* _java_lang_Long;
-	extern JPBoxedClass* _java_lang_Float;
-	extern JPBoxedClass* _java_lang_Double;
+extern JPBoxedClass* _java_lang_Void;
+extern JPBoxedClass* _java_lang_Boolean;
+extern JPBoxedClass* _java_lang_Byte;
+extern JPBoxedClass* _java_lang_Character;
+extern JPBoxedClass* _java_lang_Short;
+extern JPBoxedClass* _java_lang_Integer;
+extern JPBoxedClass* _java_lang_Long;
+extern JPBoxedClass* _java_lang_Float;
+extern JPBoxedClass* _java_lang_Double;
+extern JPClass* _java_lang_Number;
+extern JPClass* _java_lang_Throwable;
 
-	/**
-	 * Initialize the type manager caches
-	 */
-	void init();
+/**
+ * Initialize the type manager caches
+ */
+void init();
 
-	/**
-	 * delete allocated typenames, should only be called at program termination
-	 */
-	void shutdown();
+/**
+ * delete allocated typenames, should only be called at program termination
+ */
+void shutdown();
 
-	/**
-	 * Find a class using a native name.
-	 *
-	 * The pointer returned is NOT owned by the caller
-	 */
-	JPClass* findClass(const string& str);
-	JPClass* findClass(jclass cls);
-	JPClass* findClassForObject(jobject obj);
+/**
+ * Find a class using a native name.
+ *
+ * The pointer returned is NOT owned by the caller
+ */
+JPClass* findClass(const string& str);
+JPClass* findClass(jclass cls);
+JPClass* findClassForObject(jobject obj);
 
-	void flushCache();
+void flushCache();
 
-	int getLoadedClasses();
+int getLoadedClasses();
 
-	/**
-	 * Special class registry for primary types.
-	 *
-	 * @param classWrapper
-	 * @return
-	 */
-	JPClass* registerClass(JPClass* classWrapper);
+/**
+ * Special class registry for primary types.
+ *
+ * @param classWrapper
+ * @return
+ */
+JPClass* registerClass(JPClass* classWrapper);
 
-	jclass getClassFor(jobject obj);
-        
-        // Support for caller sensitive methods
-	bool isCallerSensitive(jobject obj);
-	jobject callMethod(jobject method, jobject obj, jobject args);
+jclass getClassFor(jobject obj);
+
+// Support for caller sensitive methods
+bool isCallerSensitive(jobject obj);
+jobject callMethod(jobject method, jobject obj, jobject args);
 
 } // namespace
 

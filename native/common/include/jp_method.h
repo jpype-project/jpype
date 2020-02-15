@@ -50,8 +50,8 @@ public:
 	bool isBeanMutator();
 	bool isBeanAccessor();
 
-	JPPyObject invoke(JPPyObjectVector& vargs, bool instance);
-	JPValue invokeConstructor(JPPyObjectVector& vargs);
+	JPPyObject invoke(JPJavaFrame& frame, JPPyObjectVector& vargs, bool instance);
+	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 
 	string matchReport(JPPyObjectVector& sequence);
 	string dump();

@@ -45,14 +45,14 @@ jvalue JPBoxedClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL && value->getClass() == this)
 	{
 		res.l = value->getJavaObject();
 		return res;
 	}
 
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
+	JPProxy* proxy = PyJPProxy_getJPProxy(obj);
 	if (proxy != NULL)
 	{
 		res.l = frame.keep(proxy->getProxy());
@@ -61,7 +61,7 @@ jvalue JPBoxedClass::convertToJava(PyObject* obj)
 
 	// Call a constructor using the object
 	JPPyObjectVector args(obj, NULL);
-	JPValue pobj = newInstance(args);
+	JPValue pobj = newInstance(frame, args);
 	res.l = frame.keep(pobj.getJavaObject());
 	return res;
 	JP_TRACE_OUT;
@@ -82,16 +82,11 @@ JPMatch::Type JPBoxedClass::canConvertToJava(PyObject* pyobj)
 
 //============================================================
 
-jclass findClass(const string& str)
-{
-	JPJavaFrame frame;
-	return (jclass) frame.keep((jobject) frame.FindClass(str));
-}
+using namespace JPJni;
 
 //============================================================
 
-JPBoxedVoidClass::JPBoxedVoidClass()
-: JPBoxedClass(findClass("java/lang/Void"))
+JPBoxedVoidClass::JPBoxedVoidClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -101,8 +96,7 @@ JPBoxedVoidClass::~JPBoxedVoidClass()
 
 //============================================================
 
-JPBoxedBooleanClass::JPBoxedBooleanClass()
-: JPBoxedClass(findClass("java/lang/Boolean"))
+JPBoxedBooleanClass::JPBoxedBooleanClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -112,8 +106,7 @@ JPBoxedBooleanClass::~JPBoxedBooleanClass()
 
 //============================================================
 
-JPBoxedByteClass::JPBoxedByteClass()
-: JPBoxedClass(findClass("java/lang/Byte"))
+JPBoxedByteClass::JPBoxedByteClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -124,8 +117,7 @@ JPBoxedByteClass::~JPBoxedByteClass()
 
 //============================================================
 
-JPBoxedCharacterClass::JPBoxedCharacterClass()
-: JPBoxedClass(findClass("java/lang/Character"))
+JPBoxedCharacterClass::JPBoxedCharacterClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -136,8 +128,7 @@ JPBoxedCharacterClass::~JPBoxedCharacterClass()
 
 //============================================================
 
-JPBoxedShortClass::JPBoxedShortClass()
-: JPBoxedClass(findClass("java/lang/Short"))
+JPBoxedShortClass::JPBoxedShortClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -147,8 +138,7 @@ JPBoxedShortClass::~JPBoxedShortClass()
 
 //============================================================
 
-JPBoxedIntegerClass::JPBoxedIntegerClass()
-: JPBoxedClass(findClass("java/lang/Integer"))
+JPBoxedIntegerClass::JPBoxedIntegerClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -158,8 +148,7 @@ JPBoxedIntegerClass::~JPBoxedIntegerClass()
 
 //============================================================
 
-JPBoxedLongClass::JPBoxedLongClass()
-: JPBoxedClass(findClass("java/lang/Long"))
+JPBoxedLongClass::JPBoxedLongClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -169,8 +158,7 @@ JPBoxedLongClass::~JPBoxedLongClass()
 
 //============================================================
 
-JPBoxedFloatClass::JPBoxedFloatClass()
-: JPBoxedClass(findClass("java/lang/Float"))
+JPBoxedFloatClass::JPBoxedFloatClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 
@@ -180,8 +168,7 @@ JPBoxedFloatClass::~JPBoxedFloatClass()
 
 //============================================================
 
-JPBoxedDoubleClass::JPBoxedDoubleClass()
-: JPBoxedClass(findClass("java/lang/Double"))
+JPBoxedDoubleClass::JPBoxedDoubleClass(jclass cls) : JPBoxedClass(cls)
 {
 }
 

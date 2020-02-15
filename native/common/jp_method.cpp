@@ -38,10 +38,9 @@ const string& JPMethod::getName() const
 
 void JPMethod::addOverload(JPClass* claz, jobject mth)
 {
-	//	printf("JPMethodOverload %s\n", JPJni::toStringC(mth));
 	JPMethodOverload* over = new JPMethodOverload(claz, mth);
 
-	// The same overload can be repeated each time it is overriden.
+	// The same overload can be repeated each time it is overridden.
 	bool found = false;
 	for (OverloadList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
@@ -65,16 +64,6 @@ void JPMethod::addOverload(JPClass* claz, jobject mth)
 	{
 		m_hasStatic = true;
 	}
-
-	//	if (over->isBeanAccessor())
-	//	{
-	//		m_BeanAccessor = true;
-	//	}
-	//
-	//	if (over->isBeanAccessor())
-	//	{
-	//		m_BeanMutator = true;
-	//	}
 
 	// We can't check the order of specificity here because we do not want to
 	// load the argument types here.  Thus we need to wait for the first
@@ -132,8 +121,7 @@ void JPMethod::ensureOverloadCache()
 			// We can put it at the front of the ordered list
 			front->m_Ordered = true;
 			m_Overloads.push_front(front);
-		}
-		else
+		} else
 		{
 			// Otherwsie, we will defer it
 			unsorted.push_back(front);
@@ -211,7 +199,7 @@ JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
 		{
 			ss << "\t" << (*it)->toString() << std::endl;
 		}
-		JP_RAISE_TYPE_ERROR(ss.str());
+		JP_RAISE(PyExc_TypeError, ss.str());
 		JP_TRACE(ss.str());
 	}
 
@@ -239,24 +227,24 @@ JPMatch JPMethod::findOverload(JPPyObjectVector& arg, bool callInstance)
 			ss << "\t" << current->toString();
 			ss << std::endl;
 		}
-		JP_RAISE_TYPE_ERROR(ss.str());
+		JP_RAISE(PyExc_TypeError, ss.str());
 	}
 	return bestMatch;
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethod::invoke(JPPyObjectVector& args, bool instance)
+JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
 	JPMatch match = findOverload(args, instance);
-	return match.overload->invoke(match, args, instance);
+	return match.overload->invoke(frame, match, args, instance);
 	JP_TRACE_OUT;
 }
 
-JPValue JPMethod::invokeConstructor(JPPyObjectVector& arg)
+JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& arg)
 {
 	JPMatch currentMatch = findOverload(arg, false);
-	return currentMatch.overload->invokeConstructor(currentMatch, arg);
+	return currentMatch.overload->invokeConstructor(frame, currentMatch, arg);
 }
 
 bool JPMethod::isBeanMutator()

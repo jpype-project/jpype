@@ -19,7 +19,6 @@ from collections.abc import Sequence
 from collections.abc import Mapping
 
 
-
 from . import _jclass
 from . import _jcustomizer
 from . import _jtypes
@@ -79,16 +78,22 @@ class _JCollection(object):
             v = _jclass.JClass('java.util.Arrays').asList(v)
         return self._retainAll(v)
 
+
 def _sliceAdjust(slc, size):
     start = slc.start
     stop = slc.stop
-    if slc.step and (slc.step>1 or slc.step<0):
+    if slc.step and (slc.step > 1 or slc.step < 0):
         raise TypeError("Stride not supported")
-    if start==None: start = 0
-    if stop == None: stop = size
-    if start<0: start += size
-    if stop<0: stop += size
+    if start == None:
+        start = 0
+    if stop == None:
+        stop = size
+    if start < 0:
+        start += size
+    if stop < 0:
+        stop += size
     return slice(start, stop)
+
 
 @_jcustomizer.JImplementationFor('java.util.List')
 class _JList(object):

@@ -70,14 +70,14 @@ void JPField::setStaticField(PyObject* val)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
 
 	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_TypeCache->getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str().c_str());
 	}
 
 	jclass claz = m_Class->getJavaClass();
@@ -105,14 +105,14 @@ void JPField::setField(jobject inst, PyObject* val)
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
-		JP_RAISE_ATTRIBUTE_ERROR(err.str().c_str());
+		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
 
 	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << m_TypeCache->getCanonicalName();
-		JP_RAISE_TYPE_ERROR(err.str());
+		JP_RAISE(PyExc_TypeError, err.str());
 	}
 
 	m_TypeCache->setField(frame, inst, m_FieldID, val);

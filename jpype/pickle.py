@@ -63,7 +63,6 @@ import pickle
 from copyreg import dispatch_table
 
 
-
 # TODO: Support use of a custom classloader with the unpickler.
 # TODO: Use copyreg to pickle a JProxy
 
@@ -96,10 +95,8 @@ class _JDispatch(object):
         # Extension dispatch table holds reduce method
         self._call = self.reduce
 
-
-
-
     # Python2 and Python3 _Pickler use get()
+
     def get(self, cls):
         if not issubclass(cls, (_jclass.JClass, _jobject.JObject)):
             return self._dispatch.get(cls)
@@ -113,13 +110,8 @@ class _JDispatch(object):
 
     # For Python3
     def reduce(self, obj):
-        byte = self._encoder.pack(obj).__javaarray__.toBytes()
+        byte = bytes(self._encoder.pack(obj))
         return (self._builder, (byte, ))
-
-
-
-
-
 
 
 class JPickler(pickle.Pickler):
@@ -142,9 +134,6 @@ class JPickler(pickle.Pickler):
 
         # In Python3 we need to hook into the dispatch table for extensions
         self.dispatch_table = _JDispatch(dispatch_table)
-
-
-
 
 
 class JUnpickler(pickle.Unpickler):

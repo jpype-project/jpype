@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_EXCEPTION_H_
 #define _JP_EXCEPTION_H_
@@ -27,8 +27,8 @@
  * We must throw the correct exception so that it can properly be handled
  * when returning back to the native code.
  *
- * If we are returning to python, and it is a 
- * - _python_error, then we assume that a python exception has already been 
+ * If we are returning to python, and it is a
+ * - _python_error, then we assume that a python exception has already been
  *   placed in the python virtual machine.
  * - _java_error, then we will covert it to a python object with the correct
  *   object type.
@@ -55,48 +55,28 @@
  */
 namespace JPError
 {
-
-	enum Type
-	{
-		_java_error = 0,
-		_python_error = 1,
-		_runtime_error = 2,
-		_type_error = 3,
-		_value_error = 4,
-		_overflow_error = 5,
-		_index_error = 6,
-		_attribute_error = 7,
-		_os_error_unix = 8,
-		_os_error_windows = 9
-	} ;
+extern int _java_error;
+extern int _python_error;
+extern int _python_exc;
+extern int _os_error_unix;
+extern int _os_error_windows;
+extern int _method_not_found;
 }
 
-// Create a stackinfo for a particular location in the code that can then 
+// Create a stackinfo for a particular location in the code that can then
 // be passed to the handler routine for auditing.
 #define JP_STACKINFO() JPStackInfo(__FUNCTION_NAME__, __FILE__, __LINE__)
 
-// Macros for raising an exception with jpype
-//   These must be macros so that we can update the pattern and
-//   maintain the appropraite auditing information.  C++ does not
-//   have a lot for facitilies to make this easy.
-#define JP_RAISE_PYTHON(msg)         { throw JPypeException(JPError::_python_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_RUNTIME_ERROR(msg)  { throw JPypeException(JPError::_runtime_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_UNIX(err, msg)  { throw JPypeException(JPError::_os_error_unix, err, msg, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_WINDOWS(err, msg)  { throw JPypeException(JPError::_os_error_windows, err, msg, JP_STACKINFO()); }
-#define JP_RAISE_TYPE_ERROR(msg)     { throw JPypeException(JPError::_type_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_VALUE_ERROR(msg)    { throw JPypeException(JPError::_value_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_OVERFLOW_ERROR(msg) { throw JPypeException(JPError::_overflow_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_INDEX_ERROR(msg)    { throw JPypeException(JPError::_index_error, msg, JP_STACKINFO()); }
-#define JP_RAISE_ATTRIBUTE_ERROR(msg) { throw JPypeException(JPError::_attribute_error, msg, JP_STACKINFO()); }
 
-// Macro to all after excuting a Python command that can result in
+// Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
-#define JP_PY_CHECK()               { if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__); }
+#define JP_PY_CHECK() \
+{ if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__);  }
 
 // Macro to use when hardening code
-//   Most of these will be removed after core is debugged, but 
+//   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if (X==NULL) JP_RAISE_RUNTIME_ERROR( "Null Pointer Exception"); }
+#define ASSERT_NOT_NULL(X) {if (X==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }
@@ -132,20 +112,26 @@ public:
 } ;
 typedef list<JPStackInfo> JPStackTrace;
 
+typedef union
+{
+	int  i;
+	void*  l;
+} JPErrorUnion;
+
 /**
  * Exception issued by JPype to indicate an internal problem.
- * 
+ *
  * This is primarily focused on transferring exception handling
  * to Python as the majority of errors are reported there.
- * 
+ *
  */
 class JPypeException
 {
 public:
 	JPypeException(jthrowable, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, const string& msn, const JPStackInfo& stackInfo);
-	JPypeException(JPError::Type errorType, int err, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, void* error, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
+	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
 
 	~JPypeException();
@@ -159,10 +145,10 @@ public:
 	void convertJavaToPython();
 	void convertPythonToJava();
 
-	/** Transfer handling of this exception to python. 
-	 * 
+	/** Transfer handling of this exception to python.
+	 *
 	 * This should appear in the catch block whenever we return to python.
-	 * 
+	 *
 	 */
 	void toPython();
 
@@ -171,17 +157,22 @@ public:
 
 	jthrowable getJavaException();
 
+	int getExceptionType()
+	{
+		return m_Type;
+	}
+
 private:
-	JPError::Type m_Type;
+	int m_Type;
+	JPErrorUnion m_Error;
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
-	int m_Error;
 } ;
 
 /**
  * Exception issued with there was a Java exception issued after a java call.
- * 
+ *
  * This will just be held until it is converted to python or passed
  * back to java.
  */

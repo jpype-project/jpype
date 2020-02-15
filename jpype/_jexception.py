@@ -21,12 +21,8 @@ from . import _jobject
 __all__ = ['JException']
 
 
-
-
-
-
-
-class _JException(object):
+@_jcustomizer.JImplementationFor("java.lang.Throwable", base=True)
+class JException(_jpype._JException):
     """ Base class for all ``java.lang.Throwable`` objects.
 
     When called as an object ``JException`` will produce a new exception class.
@@ -49,17 +45,9 @@ class _JException(object):
                               category=DeprecationWarning, stacklevel=2)
                 JException._warned = True
             return _JExceptionClassFactory(*args, **kwargs)
-        return super(JException, cls).__new__(cls)
-
-    def __init__(self, *args, **kwargs):
-        if hasattr(self, '__javavalue__'):
-            pass
-        elif len(args) == 1 and isinstance(args[0], _jpype.PyJPValue):
-            self.__javavalue__ = args[0]
-        else:
-            self.__javavalue__ = self.__class__.__javaclass__.newInstance(
-                *args)
-        super(Exception, self.__class__).__init__(self)
+        self = _jpype._JException.__new__(cls, *args)
+        _jpype._JException.__init__(self, *args)
+        return self
 
     def __str__(self):
         return str(self.toString())
@@ -99,15 +87,14 @@ class _JException(object):
         return (str(self.getMessage()), cause,)
 
 
-JException = _jobject.defineJObjectFactory("JException", "java.lang.Throwable",
-                                           _JException, bases=(Exception, _jobject.JObject))
-_jcustomizer.registerClassBase('java.lang.Throwable', JException)
-
-
 def _JExceptionClassFactory(tp):
     if isinstance(tp, str):
         return _jclass.JClass(tp)
     if isinstance(tp, _jclass.JClass):
-        return _jclass.JClass(tp.__javaclass__)
+        return tp
     raise TypeError(
         "JException requires a string or java throwable type, got %s." % tp)
+
+
+# Hook up module resources
+_jpype.JException = JException

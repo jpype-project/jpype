@@ -9,11 +9,13 @@ import java.lang.ref.ReferenceQueue;
 class JPypeReference extends PhantomReference
 {
   long mHostReference;
+  long mCleanup;
 
-  public JPypeReference(ReferenceQueue arg1, Object javaObject, long hostObject)
+  public JPypeReference(ReferenceQueue arg1, Object javaObject, long host, long cleanup)
   {
     super(javaObject, arg1);
-    mHostReference = hostObject;
+    mHostReference = host;
+    mCleanup = cleanup;
   }
 
   @Override

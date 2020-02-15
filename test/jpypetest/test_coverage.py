@@ -97,7 +97,7 @@ class CoverageCase(common.JPypeTestCase):
             jpype.JArray(jpype.JInt, 1)(1, 2, 3)
 
     def testJArrayStr(self):
-        self.assertEqual(str(jpype.JArray(jpype.JInt)([1, 2])), str((1, 2)))
+        self.assertEqual(str(jpype.JArray(jpype.JInt)([1, 2])), str([1, 2]))
 
     def testJArrayLength(self):
         ja = jpype.JArray(jpype.JInt)([1, 2])
@@ -203,9 +203,9 @@ class CoverageCase(common.JPypeTestCase):
         js = jpype.JString("fred")
         self.assertTrue(repr(js), "fred")
 
-    def testSetResourceFail(self):
-        with self.assertRaises(RuntimeError):
-            _jpype.setResource("NotAResource", None)
+#    def testSetResourceFail(self):
+#        with self.assertRaises(RuntimeError):
+#            _jpype.setResource("NotAResource", None)
 
     # FIXME this one is broken
 #    def testJPrimitiveSetAttr(self):

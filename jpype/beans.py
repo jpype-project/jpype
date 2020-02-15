@@ -60,7 +60,7 @@ def _extract_accessor_pairs(members):
     accessor_pairs = {}
 
     for name, member in members.items():
-        if not isinstance(member, _jpype.PyJPMethod) or len(name) <= 3:
+        if not isinstance(member, _jpype._JMethod) or len(name) <= 3:
             continue
         if name == "getClass":
             continue

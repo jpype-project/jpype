@@ -20,59 +20,6 @@ from . import _jcustomizer
 __all__ = ['JClass', 'JInterface', 'JOverride']
 
 
-
-
-
-
-
-
-_JObject = None
-
-_java_lang_RuntimeException = None
-_java_ClassLoader = None
-_java_lang_Class = None
-_java_lang_Object = None
-
-_JCLASSES = {}
-_JP_TYPE_CLASSES = {}
-_JP_OBJECT_CLASSES = {}
-
-_jcustomizer._JCLASSES = _JCLASSES
-
-
-def _initialize():
-    global _java_ClassLoader
-
-    # Due to bootstrapping, Object and Class must be defined first.
-    global _java_lang_Object, _java_lang_Class
-    _java_lang_Object = JClass("java.lang.Object")
-    _java_lang_Class = JClass("java.lang.Class")
-
-    _java_ClassLoader = JClass('java.lang.ClassLoader').getSystemClassLoader()
-    if not _java_ClassLoader:
-        raise RuntimeError("Unable to load Java SystemClassLoader")
-
-    global _java_lang_RuntimeException
-    _java_lang_RuntimeException = JClass("java.lang.RuntimeException")
-
-    # Preload needed classes
-    java_lang_Boolean = JClass("java.lang.Boolean")
-    java_lang_Long = JClass("java.lang.Long")
-    java_lang_Double = JClass("java.lang.Double")
-    java_lang_String = JClass("java.lang.String")
-
-    global _JP_OBJECT_CLASSES
-    _JP_OBJECT_CLASSES[bool] = java_lang_Boolean
-    _JP_OBJECT_CLASSES[int] = java_lang_Long
-
-    _JP_OBJECT_CLASSES[float] = java_lang_Double
-    _JP_OBJECT_CLASSES[str] = java_lang_String
-
-    _JP_OBJECT_CLASSES[type] = _java_lang_Class
-    _JP_OBJECT_CLASSES[_jpype.PyJPClass] = _java_lang_Class
-    _JP_OBJECT_CLASSES[object] = _java_lang_Object
-
-
 def JOverride(*args, **kwargs):
     """Annotation to denote a method as overriding a Java method.
 
@@ -97,7 +44,12 @@ def JOverride(*args, **kwargs):
     return modifier
 
 
-class JClass(type):
+class JClassMeta(type):
+    def __instancecheck__(self, other):
+        return type(other) == _jpype._JClass
+
+
+class JClass(_jpype._JClass, metaclass=JClassMeta):
     """Meta class for all java class instances.
 
     JClass when called as an object will contruct a new java Class wrapper.
@@ -121,144 +73,38 @@ class JClass(type):
     Raises:
       TypeError: if the component class is invalid or could not be found.
     """
-    @property
-    def class_(self):
-        return _JObject(self.__javaclass__)
+    def __new__(cls, jc, loader=None, initialize=True):
+        if loader and isinstance(jc, str):
+            jc = _jpype._java_lang_Class.forName(jc, initialize, loader)
 
-    def __new__(cls, *args, **kwargs):
-        if len(args) == 1:
-            return _JClassNew(args[0], **kwargs)
-        return super(JClass, cls).__new__(cls, *args, **kwargs)
-
-    def __init__(self, *args, **kwargs):
-        if len(args) == 1:
-            return
-        super(JClass, self.__class__).__init__(self, *args)
-
-    def __getattribute__(self, name):
-        if name.startswith('_'):
-            if name == "__doc__":
-                return _jclassDoc(self)
-            return type.__getattribute__(self, name)
-        attr = type.__getattribute__(self, name)
-        if isinstance(attr, _jpype.PyJPMethod):
-            return attr
-        if isinstance(attr, property):
-            raise AttributeError("Field is not static")
-        return attr
-
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return type.__setattr__(self, name, value)
-
-        attr = typeLookup(self, name)
-        if attr == None:
-            raise AttributeError("Static field '%s' not found on Java '%s' class" %
-                                 (name, self.__name__))
-        setter = getattr(attr, '__set__', None)
-        try:
-            if hasattr(attr, '__set__'):
-                return attr.__set__(self, value)
-        except AttributeError:
-            pass
-        raise AttributeError("Static field '%s' is not settable on Java '%s' class" %
-                             (name, self.__name__))
-
-    def mro(cls):
-        # Bases is ordered by (user, extend, interfaces)
-        # Thus we maintain order of parents whereever possible
-        # Breadth first inclusion of the parents
-        parents = list(cls.__bases__)
-        out = [cls]
-
-        # Until we run out of parents
-        while parents:
-
-            # Test if the first is a leaf of the tree
-            front = parents.pop(0)
-            for p in parents:
-                if issubclass(p, front):
-                    parents.append(front)
-                    front = None
-                    break
-
-            if not front:
-                # It is not a leaf, we select another candidate
-                continue
-
-            # It is a leaf, so add it to the parents
-            out.append(front)
-
-            # Place the immediate parents of newest in the head of the list
-            prev = parents
-            parents = list(front.__bases__)
-
-            # Include the remaining that we still need to consider
-            parents.extend([b for b in prev if not b in parents])
-
-        return out
-
-    def __repr__(self):
-        return "<java class '%s'>"%(self.__name__)
-
-
-def _JClassNew(arg, loader=None, initialize=True):
-    params = None
-    if isinstance(arg, str):
-        if arg.endswith(">"):
-            i = arg.find("<")
-            params = arg[i+1:-1]
-            arg = arg[:i]
-            if params:
+        # Handle generics
+        if isinstance(jc, str) and jc.endswith(">"):
+            i = jc.find("<")
+            params = jc[i+1:-1]
+            ret = _jpype._getClass(jc[:i])
+            acceptParams = len(ret.class_.getTypeParameters())
+            if acceptParams == 0:
+                raise TypeError(
+                    "Java class '%s' does not take parameters" % (ret.__name__))
+            if len(params) > 0:
                 params = params.split(',')
-            else:
-                params = []
-            # FIXME we can check the geneic parameters better.
+            if len(params) > 0 and len(params) != len(ret.class_.getTypeParameters()):
+                print(params, len(params))
+                raise TypeError(
+                    "Java generic class '%s' length mismatch" % (ret.__name__))
+            return ret
 
-    if loader and isinstance(arg, str):
-        arg = _java_lang_Class.forName(arg, initialize, loader)
-
-    if isinstance(arg, _jpype.PyJPClass):
-        javaClass = arg
-    else:
-        javaClass = _jpype.PyJPClass(arg)
+        # Pass to class factory to create the type
+        return _jpype._getClass(jc)
 
 
+class _JClassProto(object):
+    @property
+    def __doc__(self):
+        return _jclassDoc(self)
 
 
-    # Lookup the class name
-    name = javaClass.getCanonicalName()
-
-    # See if we have an existing class in the cache
-    if name in _JCLASSES:
-        cls = _JCLASSES[name]
-    else:
-        cls = _JClassFactory(name, javaClass)
-
-    if params is not None:
-        acceptParams = len(cls.class_.getTypeParameters())
-        if acceptParams == 0:
-            raise TypeError(
-                "Java class '%s' does not take parameters" % (cls.__name__))
-        if len(params) > 0 and len(params) != len(cls.class_.getTypeParameters()):
-            raise TypeError(
-                "Java generic class '%s' length mismatch" % (cls.__name__))
-    return cls
-
-
-class JInterfaceMeta(type):
-    def __instancecheck__(self, obj):
-        if not hasattr(obj, '__javaclass__'):
-            return False
-        return obj.__javaclass__.isInterface()
-
-    def __subclasscheck__(self, obj):
-        # This is included for compatiblity with JPype 0.7.x
-        if not hasattr(obj, '__javaclass__'):
-            return False
-        return obj.__javaclass__.isInterface()
-
-class JInterface(metaclass=JInterfaceMeta):
+class JInterface(_jpype._JObject):
     """A meta class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any Java class that is
@@ -272,160 +118,38 @@ class JInterface(metaclass=JInterfaceMeta):
        if isinstance(java.util.function.Function, jpype.JInterface):
           print("is interface")
 
-
     """
     pass
 
 
-def _JClassFactory(name, jc):
-    from . import _jarray
-
-    # Set up bases
-    bases = []
-    bjc = jc.getSuperClass()
-    if name == 'java.lang.Object':
-        bases.append(_JObject)
-    elif jc.isArray():
-        bases.append(_jarray.JArray)
-    elif jc.isPrimitive():
-        bases.append(object)
-    elif bjc is not None:
-        bases.append(JClass(bjc))
-    elif bjc is None:
-        bases.append(_JObject)
-    itf = jc.getInterfaces()
-    for ic in itf:
-        bases.append(JClass(ic))
-
-    # Set up members
-    members = {
-        "__javaclass__": jc,
-        "__name__": name,
-    }
-    fields = jc.getClassFields()
-    for i in fields:
-        fname = pysafe(i.getName())
-        members[fname] = i
-    for jm in jc.getClassMethods():
-        members[pysafe(jm.__name__)] = jm
+def _JClassPre(name, bases, members):
+    # Correct keyword conflicts with Python
+    m = list(members.items())
+    for k, v in m:
+        k2 = pysafe(k)
+        if k2 != k:
+            del members[k]
+            members[k2] = v
 
     # Apply customizers
-    _jcustomizer._applyCustomizers(name, jc, bases, members)
-    res = JClass(name, tuple(bases), members)
-    _JCLASSES[name] = res
+    _jcustomizer._applyCustomizers(name, bases, members)
+    return (name, tuple(bases), members)
 
+
+def _JClassPost(res, *args):
     # Post customizers
     _jcustomizer._applyInitializer(res)
 
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
-    if _java_lang_Class:
-        for cls in res.class_.getDeclaredClasses():
+    if _jpype._java_lang_Class:
+        jcls = res.class_
+        for cls in jcls.getDeclaredClasses():
             if cls.getModifiers() & 1 == 0:
                 continue
-            cls2 = JClass(cls)
-            type.__setattr__(res, str(cls.getSimpleName()), cls2)
-
-    return res
-
-# **********************************************************
-
-
-def _toJavaClass(tp):
-    """(internal) Converts a class type in python into a internal java class.
-
-    Used mainly to support JArray.
-
-    The type argument will operate on:
-     - (str) lookup by class name or fail if not found.
-     - (JClass) just returns the java type.
-     - (type) uses a lookup table to find the class.
-    """
-    # if it a string
-    if isinstance(tp, str):
-        return JClass(tp).__javaclass__
-
-    if isinstance(tp, _jpype.PyJPClass):
-        return tp
-
-    if not isinstance(tp, type):
-        raise TypeError(
-            "Argument must be a class, java class, or string representing a java class")
-
-    # See if it a class type
-    try:
-        return tp.__javaclass__
-    except AttributeError:
-        pass
-
-    try:
-        return _JP_TYPE_CLASSES[tp].__javaclass__
-    except KeyError:
-        pass
-
-    raise TypeError("Unable to find class for '%s'" % tp.__name__)
-
-
-def _getDefaultJavaObject(obj):
-    global _JP_OBJECT_CLASSES
-    try:
-        return _JP_OBJECT_CLASSES[type(obj)]
-    except KeyError:
-        pass
-
-    try:
-        return obj._java_boxed_class
-    except AttributeError:
-        pass
-
-    if isinstance(obj, _jpype.PyJPClass):
-        return _java_lang_Class
-
-    # We need to check this first as values have both
-    # __javavalue__ and __javaclass__
-    if hasattr(obj, '__javavalue__'):
-        return JClass(obj.__javaclass__)
-
-    if hasattr(obj, '__javaclass__'):
-        return _java_lang_Class
-
-    if hasattr(obj, '__javaproxy__'):
-        return _java_lang_Object
-
-    if obj == None:
-        return _java_lang_Object
-
-    raise TypeError(
-        "Unable to determine the default type of `{0}`".format(obj.__class__))
-
-
-def typeLookup(tp, name):
-    """Fetch a descriptor from the inheritance tree.
-
-    This uses a cache to avoid additional cost when accessing items deep in
-    the tree multiple times.
-    """
-    # TODO this cache may have interactions with retroactive
-    # customizers. We should likely clear the cache if
-    # the class is customized.
-    try:
-        cache = tp.__dict__['_cache']
-    except:
-        cache = {}
-        type.__setattr__(tp, '_cache', cache)
-    if name in cache:
-        return cache[name]
-
-    # Drill down the tree searching all parents for a field
-    for cls in tp.__mro__:
-        if name in cls.__dict__:
-            obj = cls.__dict__[name]
-            cache[name] = obj
-            return obj
-
-    cache[name] = None
-    return None
+            wrapper = _jpype.JClass(cls)
+            type.__setattr__(res, str(cls.getSimpleName()), wrapper)
 
 
 def _jclassDoc(cls):
@@ -508,105 +232,10 @@ def _jclassDoc(cls):
     return "\n".join(out)
 
 
-def _jmethodDoc(method, cls, overloads):
-    """Generator for PyJPMethod.__doc__ property
-
-    Parameters:
-      method (PyJPMethod): method to generate doc string for.
-      cls (java.lang.Class): Class holding this method dispatch.
-      overloads (java.lang.reflect.Method[]): tuple holding all the methods
-        that are served by this method dispatch.
-
-    Returns:
-      The doc string for the method dispatch.
-    """
-    from textwrap import TextWrapper
-    out = []
-    out.append("Java method dispatch '%s' for '%s'" %
-               (method.__name__, cls.getName()))
-    out.append("")
-    exceptions = []
-    returns = []
-    methods = []
-    classmethods = []
-    for ov in overloads:
-        modifiers = ov.getModifiers()
-        exceptions.extend(ov.getExceptionTypes())
-        returnName = ov.getReturnType().getCanonicalName()
-        params = ", ".join([str(i.getCanonicalName())
-                            for i in ov.getParameterTypes()])
-        if returnName != "void":
-            returns.append(returnName)
-        if modifiers & 8:
-            classmethods.append("    * %s %s(%s)" %
-                                (returnName, ov.getName(), params))
-        else:
-            methods.append("    * %s %s(%s)" %
-                           (returnName, ov.getName(), params))
-    if classmethods:
-        out.append("  Static Methods:")
-        out.extend(classmethods)
-        out.append("")
-
-    if methods:
-        out.append("  Virtual Methods:")
-        out.extend(methods)
-        out.append("")
-
-    if exceptions:
-        out.append("  Raises:")
-        for exc in set(exceptions):
-            out.append("    %s: from java" % exc.getCanonicalName())
-        out.append("")
-
-    if returns:
-        out.append("  Returns:")
-        words = ", ".join([str(i) for i in set(returns)])
-        wrapper = TextWrapper(initial_indent='    ',
-                              subsequent_indent='    ')
-        out.extend(wrapper.wrap(words))
-        out.append("")
-
-    return "\n".join(out)
-
-
-def _jmethodAnnotation(method, cls, overloads):
-    """Generator for ``PyJPMethod.__annotation__`` property
-
-    Parameters:
-      method (PyJPMethod): method to generate annotations for.
-      cls (java.lang.Class): Class holding this method dispatch.
-      overloads (java.lang.reflect.Method[]): tuple holding all the methods
-        that are served by this method dispatch.
-
-    Returns:
-      The dict to use for type annotations.
-    """
-    returns = []
-
-    # Special handling if we have 1 overload
-    if len(overloads)==1:
-        ov = overloads[0]
-        out = {}
-        for i,p in enumerate(ov.getParameterTypes()):
-            out['arg%d'%i] = JClass(p)
-        out['return'] = JClass(ov.getReturnType())
-        return out
-
-    # Otherwise, we only get the return
-    for ov in overloads:
-        returns.append(ov.getReturnType())
-    returns = set(returns)
-    if len(returns) == 1:
-        return {"return": JClass([i for i in returns][0])}
-    return {}
-
-def _jmethodCode(method):
-    def call(*args):
-       return method.__call__(*args)
-    return call
-
-_jpype.setResource('GetClassMethod', _JClassNew)
-_jpype.setResource('GetMethodDoc', _jmethodDoc)
-_jpype.setResource('GetMethodAnnotations', _jmethodAnnotation)
-_jpype.setResource('GetMethodCode', _jmethodCode)
+# Install module hooks
+_jpype.JClass = JClass
+_jpype.JInterface = JInterface
+_jpype._jclassDoc = _jclassDoc
+_jpype._JClassPre = _JClassPre
+_jpype._JClassPost = _JClassPost
+_jcustomizer._applyCustomizerPost(_jpype._JClass, _JClassProto)

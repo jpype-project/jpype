@@ -31,6 +31,8 @@ public:
 		return m_BoxedClass;
 	}
 
+	virtual char getTypeCode() = 0;
+
 	void setBoxedClass(JPBoxedClass* boxedClass);
 
 protected:

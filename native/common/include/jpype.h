@@ -12,24 +12,20 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPYPE_H_
-#define _JPYPE_H_ 
+#define _JPYPE_H_
 
-// Define this to generate the trace calls
-
-// Define this to make the trace calls do their output. 
-//    use "setup.py --enable-tracing build" to enable 
-//#define JP_TRACING_ENABLE
+#ifdef __GNUC__
+// Python requires char* but C++ string constants are const char*
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+#endif
 
 #ifdef WIN32
-#define JPYPE_WIN32
 
 #ifndef __GNUC__ // Then this must mean a variant of GCC on win32 ...
-#define JPYPE_WIN32_VCPP
 #pragma warning (disable:4786)
-#else
 #endif
 
 #if defined(__CYGWIN__)
@@ -40,26 +36,12 @@
 #define JNICALL
 #endif
 
-#else
-#define JPYPE_LINUX
 #endif
 
 #include <jni.h>
 
-#if PY_MAJOR_VERSION >= 3
-// Python 3
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_AsLong PyLong_AsLong
-#define PyInt_AS_LONG PyLong_AS_LONG
-#define PyInt_Check PyLong_Check
-#define PyInt_FromSsize_t PyLong_FromSsize_t
-#else
-#undef PyUnicode_FromFormat
-#define PyUnicode_FromFormat PyString_FromFormat
-#endif
-
 // Define this and use to allow destructors to throw in C++11 or later
-#if defined(_MSC_VER)  
+#if defined(_MSC_VER)
 
 // Visual Studio C++ does not seem have changed __cplusplus since 1997
 #if (_MSVC_LAND >= 201402)
@@ -71,7 +53,7 @@
 #else
 
 // For all the compilers than understand standards
-#if (__cplusplus >= 201103L) 
+#if (__cplusplus >= 201103L)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
 #define NO_EXCEPT_FALSE throw(JPypeException)
@@ -101,11 +83,16 @@ using std::list;
 /** Definition of commonly used template types */
 typedef vector<string> StringVector;
 
+typedef jvalue (*jconverter)(char*) ;
+
+extern jconverter getConverter(const char* from, int itemsize, const char* to);
+
 class JPClass;
-class JPArrayClass;
 class JPValue;
 class JPProxy;
 class JPArray;
+class JPArrayClass;
+class JPArrayView;
 class JPBoxedClass;
 class JPVoidType;
 class JPBooleanType;
@@ -120,11 +107,22 @@ class JPStringClass;
 class JPMethod;
 class JPField;
 
+#include <pyjp.h>
+
+// Macros for raising an exception with jpype
+//   These must be macros so that we can update the pattern and
+//   maintain the appropriate auditing information.  C++ does not
+//   have a lot for facilities to make this easy.
+#define JP_RAISE_PYTHON(msg)                { throw JPypeException(JPError::_python_error, NULL, msg, JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPypeException(JPError::_os_error_unix,  msg, err, JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPypeException(JPError::_os_error_windows,  msg, err, JP_STACKINFO()); }
+#define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, NULL, msg, JP_STACKINFO()); }
+#define JP_RAISE(type, msg)                 { throw JPypeException(JPError::_python_exc, type, msg, JP_STACKINFO()); }
+
 // Base utility headers
 #include "jp_javaframe.h"
 #include "jp_exception.h"
 #include "jp_pythontypes.h"
-#include "jp_pythonenv.h"
 #include "jp_tracer.h"
 #include "jp_typename.h"
 #include "jp_env.h"
@@ -165,5 +163,43 @@ class JPField;
 #include "jp_classloader.h"
 #include "jp_proxy.h"
 #include "jp_monitor.h"
+
+template <typename array_t, typename ptr_t>
+class JPPrimitiveArrayAccessor
+{
+	typedef void (JPJavaFrame::*releaseFnc)(array_t, ptr_t, jint);
+	typedef ptr_t (JPJavaFrame::*accessFnc)(array_t, jboolean*);
+
+	JPJavaFrame& _frame;
+	array_t _array;
+	ptr_t _elem;
+	releaseFnc _release;
+	jboolean _iscopy;
+	jint _commit;
+
+public:
+
+	JPPrimitiveArrayAccessor(JPJavaFrame& frame, jarray array, accessFnc access, releaseFnc release)
+	: _frame(frame), _array((array_t) array), _release(release)
+	{
+		_commit = JNI_ABORT;
+		_elem = ((&_frame)->*access)(_array, &_iscopy);
+	}
+
+	~JPPrimitiveArrayAccessor()
+	{
+		((&_frame)->*_release)(_array, _elem, _commit);
+	}
+
+	ptr_t get()
+	{
+		return _elem;
+	}
+
+	void commit()
+	{
+		_commit = 0;
+	}
+} ;
 
 #endif // _JPYPE_H_

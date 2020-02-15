@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPFIELD_H_
 #define _JPFIELD_H_
@@ -49,6 +49,11 @@ public:
 	bool isFinal() const
 	{
 		return m_IsFinal;
+	}
+
+	JPClass *getClass()
+	{
+		return m_Class;
 	}
 
 private:

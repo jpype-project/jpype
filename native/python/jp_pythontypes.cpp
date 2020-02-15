@@ -1,10 +1,25 @@
-#include <Python.h>
 #include <jpype.h>
-#include <jpype_memory_view.h>
 
 /****************************************************************************
  * Base object
  ***************************************************************************/
+
+static void assertValid(PyObject *obj)
+{
+	if (obj->ob_refcnt >= 1)
+		return;
+
+	// At this point our car has traveled beyond the end of the
+	// cliff and it will hit the ground some twenty
+	// python calls later with a nearly untracable fault, thus
+	// rather than waiting for the inevitable, we chose to take
+	// a noble death here.
+	JP_TRACE_PY("pyref FAULT", obj);
+	JPTracer::trace("Python referencing fault");
+	int *i = 0;
+	*i = 0;
+}
+
 JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
 : pyobj(NULL)
 {
@@ -14,12 +29,17 @@ JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
 
 	if ((usage & 2) == 2)
 	{
+		if ((usage & 4) == 4)
+		{
+			ASSERT_NOT_NULL(obj);
+			assertValid(obj);
+		} else if (obj == NULL)
+			PyErr_Clear();
+
 		// Claim it by stealing a references
-		ASSERT_NOT_NULL(obj);
 		pyobj = obj;
 		JP_TRACE_PY("pyref new(claim)", pyobj);
-	}
-	else
+	} else
 	{
 		pyobj = obj;
 		if (pyobj == NULL)
@@ -28,8 +48,9 @@ JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
 			return;
 		}
 
-		JP_TRACE_PY("pyref new(inc)", pyobj);
+		assertValid(obj);
 		incref();
+		JP_TRACE_PY("pyref new(inc)", pyobj);
 	}
 }
 
@@ -38,8 +59,8 @@ JPPyObject::JPPyObject(const JPPyObject &self)
 {
 	if (pyobj != NULL)
 	{
-		JP_TRACE_PY("pyref copy ctor(inc)", pyobj);
 		incref();
+		JP_TRACE_PY("pyref copy ctor(inc)", pyobj);
 	}
 }
 
@@ -49,8 +70,7 @@ JPPyObject::~JPPyObject()
 	{
 		JP_TRACE_PY("pyref dtor(dec)", pyobj);
 		decref();
-	}
-	else
+	} else
 	{
 		JP_TRACE_PY("pyref dtor(null)", pyobj);
 	}
@@ -68,8 +88,8 @@ JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 	pyobj = self.pyobj;
 	if (pyobj != NULL)
 	{
-		JP_TRACE_PY("pyref op=(inc)", pyobj);
 		incref();
+		JP_TRACE_PY("pyref op=(inc)", pyobj);
 	}
 	return *this;
 }
@@ -78,7 +98,7 @@ PyObject* JPPyObject::keep()
 {
 	if (pyobj == NULL)
 	{
-		JP_RAISE_RUNTIME_ERROR("Attempt to keep null reference");
+		JP_RAISE(PyExc_RuntimeError, "Attempt to keep null reference");
 	}
 	JP_TRACE_PY("pyref keep ", pyobj);
 	PyObject *out = pyobj;
@@ -88,22 +108,13 @@ PyObject* JPPyObject::keep()
 
 void JPPyObject::incref()
 {
+	assertValid(pyobj);
 	Py_INCREF(pyobj);
 }
 
 void JPPyObject::decref()
 {
-	if (pyobj->ob_refcnt <= 0)
-	{
-		// At this point our car has traveled beyond the end of the
-		// cliff and it will hit the ground some twenty
-		// python calls later with a nearly untracable fault, thus
-		// rather than waiting for the inevitable, we chose to take
-		// a noble death here.
-		JPypeTracer::trace("Python referencing fault");
-		int *i = 0;
-		*i = 0;
-	}
+	assertValid(pyobj);
 	Py_DECREF(pyobj);
 	pyobj = 0;
 }
@@ -115,13 +126,7 @@ bool JPPyObject::isNone(PyObject* pyobj)
 
 bool JPPyObject::isSequenceOfItems(PyObject* obj)
 {
-	return JPPySequence::check(obj) && !JPPyString::check(obj);
-}
-
-string JPPyObject::str()
-{
-	JPPyObject s(JPPyRef::_call, PyObject_Str(pyobj));
-	return JPPyString::asStringUTF8(s.get());
+	return PySequence_Check(obj) && !JPPyString::check(obj);
 }
 
 bool JPPyObject::hasAttrString(PyObject* pyobj, const char* k)
@@ -141,23 +146,11 @@ JPPyObject JPPyObject::getAttrString(PyObject* pyobj, const char* k)
 	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
 }
 
-const char* JPPyObject::getTypeName()
-{
-	return Py_TYPE(pyobj)->tp_name;
-}
-
 const char* JPPyObject::getTypeName(PyObject* obj)
 {
 	if (obj == NULL)
 		return "null";
 	return Py_TYPE(obj)->tp_name;
-}
-
-JPPyObject JPPyObject::call(PyObject* args, PyObject* kwargs)
-{
-	ASSERT_NOT_NULL(pyobj);
-	ASSERT_NOT_NULL(args);
-	return JPPyObject(JPPyRef::_call, PyObject_Call(pyobj, args, kwargs));
 }
 
 JPPyObject JPPyObject::getNone()
@@ -168,24 +161,6 @@ JPPyObject JPPyObject::getNone()
 /****************************************************************************
  * Number types
  ***************************************************************************/
-
-bool JPPyBool::check(PyObject* obj)
-{
-	return PyBool_Check(obj);
-}
-
-JPPyObject JPPyBool::fromLong(jlong value)
-{
-	return JPPyObject(JPPyRef::_claim, PyBool_FromLong(value ? 1 : 0));
-}
-
-JPPyObject JPPyInt::fromInt(jint l)
-{
-	return JPPyObject(JPPyRef::_call, PyLong_FromLong(l));
-}
-
-//=====================================================================
-// JPLong
 
 JPPyObject JPPyLong::fromLong(jlong l)
 {
@@ -204,32 +179,18 @@ bool JPPyLong::check(PyObject* obj)
 
 bool JPPyLong::checkConvertable(PyObject* obj)
 {
-#if PY_MAJOR_VERSION >= 3
 	return PyLong_Check(obj)
 			|| PyObject_HasAttrString(obj, "__int__");
-#else
-	return PyInt_Check(obj)
-			|| PyLong_Check(obj)
-			|| PyObject_HasAttrString(obj, "__int__")
-			|| PyObject_HasAttrString(obj, "__long__");
-#endif
 }
 
 bool JPPyLong::checkIndexable(PyObject* obj)
 {
-	return PyObject_HasAttrString(obj, "__index__")!=0;
+	return PyObject_HasAttrString(obj, "__index__") != 0;
 }
 
 jlong JPPyLong::asLong(PyObject* obj)
 {
-	jlong res;
-#if PY_MAJOR_VERSION >= 3
-	res = PyLong_AsLongLong(obj);
-#elif LONG_MAX > 2147483647
-	res = PyInt_Check(obj) ? PyInt_AsLong(obj) : PyLong_AsLongLong(obj);
-#else
-	res = PyLong_AsLongLong(obj);
-#endif
+	jlong res = PyLong_AsLongLong(obj);
 	JP_PY_CHECK();
 	return res;
 }
@@ -245,11 +206,6 @@ JPPyObject JPPyFloat::fromFloat(jfloat l)
 JPPyObject JPPyFloat::fromDouble(jdouble l)
 {
 	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(l));
-}
-
-bool JPPyFloat::check(PyObject* obj)
-{
-	return PyFloat_Check(obj);
 }
 
 bool JPPyFloat::checkConvertable(PyObject* obj)
@@ -268,16 +224,6 @@ jdouble JPPyFloat::asDouble(PyObject* obj)
  * String
  ***************************************************************************/
 
-/*
-// This is needed for unicode to jchar[] in array conversions
-void JPPyString::getRawUnicodeString(jchar** outBuffer, jlong& outSize)
-{
-  // FIXME jni uses a different encoding than is standard, thus we may need conversion here.
-  outSize = length();
- *outBuffer = (jchar*)PyUnicode_AsUnicode(pyobj);
-}
- */
-
 JPPyObject JPPyString::fromCharUTF16(jchar c)
 {
 #if defined(PYPY_VERSION)
@@ -287,7 +233,7 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #else
 	if (c < 128)
 	{
-		char c1 = (char)c;
+		char c1 = (char) c;
 		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(&c1, 1));
 	}
 	JPPyObject buf(JPPyRef::_call, PyUnicode_New(1, 65535));
@@ -319,7 +265,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		jlong val = JPPyLong::asLong(pyobj);
 		if (val < 0 || val > 65535)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Unable to convert int into char range");
+			JP_RAISE(PyExc_OverflowError, "Unable to convert int into char range");
 		}
 		return (jchar) val;
 	}
@@ -329,7 +275,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	{
 		int sz = PyBytes_Size(pyobj);
 		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
@@ -339,13 +285,13 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	if (PyUnicode_Check(pyobj))
 	{
 		if (PyUnicode_GET_LENGTH(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
 		Py_UCS4 value = PyUnicode_READ_CHAR(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE_VALUE_ERROR("Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
 		}
 		return value;
 	}
@@ -354,7 +300,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	{
 		Py_ssize_t sz = PyBytes_Size(pyobj);
 		if (sz != 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
@@ -364,18 +310,18 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	if (PyUnicode_Check(pyobj))
 	{
 		if (PyUnicode_GET_LENGTH(pyobj) > 1)
-			JP_RAISE_VALUE_ERROR("Char must be length 1");
+			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
 		Py_UCS4 value = PyUnicode_ReadChar(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE_VALUE_ERROR("Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
 		}
 		return value;
 	}
 #endif
-	JP_RAISE_RUNTIME_ERROR("error converting string to char");
+	JP_RAISE(PyExc_RuntimeError, "error converting string to char");
 	return 0;
 }
 
@@ -385,17 +331,13 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
  */
 bool JPPyString::check(PyObject* obj)
 {
-#if PY_MAJOR_VERSION < 3
-	return PyUnicode_Check(obj) || PyString_Check(obj);
-#else
 	return PyUnicode_Check(obj) || PyBytes_Check(obj);
-#endif
 }
 
 /** Create a new string from utf8 encoded string.
  * Note: java utf8 is not utf8.
  */
-JPPyObject JPPyString::fromStringUTF8(const string& str, bool unicode)
+JPPyObject JPPyString::fromStringUTF8(const string& str)
 {
 	size_t len = str.size();
 
@@ -420,8 +362,7 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 			return string(buffer, size);
 		else
 			return string();
-	}
-	else if (PyBytes_Check(pyobj))
+	} else if (PyBytes_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
@@ -429,32 +370,14 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
-	JP_RAISE_RUNTIME_ERROR("Failed to convert to string.");
+	JP_RAISE(PyExc_RuntimeError, "Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
 }
 
-bool JPPyMemoryView::check(PyObject* obj)
-{
-	return PyMemoryView_Check(obj); // macro, cannot fail
-}
-
-void JPPyMemoryView::getByteBufferSize(PyObject* obj, char** outBuffer, long& outSize)
-{
-	JP_TRACE_IN("JPPyMemoryView::getByteBufferPtr");
-	Py_buffer* py_buf = PyMemoryView_GET_BUFFER(obj); // macro, does no checks
-	*outBuffer = (char*) py_buf->buf;
-	outSize = (long) py_buf->len;
-	JP_TRACE_OUT;
-}
-
-
 /****************************************************************************
  * Container types
  ***************************************************************************/
-
-//=====================================================================
-// JPPyTuple
 
 JPPyTuple JPPyTuple::newTuple(jlong sz)
 {
@@ -488,48 +411,6 @@ jlong JPPyTuple::size()
 	return res;
 }
 
-//=====================================================================
-// JPPyList
-
-JPPyList JPPyList::newList(jlong sz)
-{
-	return JPPyList(JPPyRef::_call, PyList_New((Py_ssize_t) sz));
-}
-
-bool JPPyList::check(PyObject* obj)
-{
-	return (PyList_Check(obj)) ? true : false;
-}
-
-void JPPyList::setItem(jlong ndx, PyObject* val)
-{
-	ASSERT_NOT_NULL(val);
-	PySequence_SetItem(pyobj, (Py_ssize_t) ndx, val); // Does not steal
-	JP_PY_CHECK();
-}
-
-PyObject* JPPyList::getItem(jlong ndx)
-{
-	PyObject* res = PyList_GetItem(pyobj, (Py_ssize_t) ndx);
-	JP_PY_CHECK();
-	return res;
-}
-
-//=====================================================================
-// JPPySequence
-
-bool JPPySequence::check()
-{
-	if (pyobj == NULL)
-		return false;
-	return (PySequence_Check(pyobj)) ? true : false;
-}
-
-bool JPPySequence::check(PyObject* obj)
-{
-	return (PySequence_Check(obj)) ? true : false;
-}
-
 jlong JPPySequence::size()
 {
 	if (pyobj == NULL)
@@ -551,8 +432,8 @@ JPPyObjectVector::JPPyObjectVector(int i)
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 : seq(JPPyRef::_use, sequence)
 {
-	if (!JPPySequence::check(sequence))
-		JP_RAISE_TYPE_ERROR("must be sequence");
+	if (!PySequence_Check(sequence))
+		JP_RAISE(PyExc_TypeError, "must be sequence");
 	size_t n = seq.size();
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
@@ -624,3 +505,14 @@ JPPyCallRelease::~JPPyCallRelease()
 	PyEval_RestoreThread(save);
 }
 
+JPPyBuffer::JPPyBuffer(PyObject* obj, int flags)
+{
+	int ret = PyObject_GetBuffer(obj, &m_View, flags);
+	m_Valid = (ret != -1);
+}
+
+JPPyBuffer::~JPPyBuffer()
+{
+	if (m_Valid)
+		PyBuffer_Release(&m_View);
+}

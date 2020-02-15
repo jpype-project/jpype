@@ -37,7 +37,7 @@ public:
 	JPMethodOverload* overload;
 	char offset;
 	char skip;
-	
+
 	JPMatch()
 	{
 		type = JPMatch::_none;
@@ -65,8 +65,8 @@ public:
 	 *
 	 */
 	JPMatch matches(bool isInstance, JPPyObjectVector& args) ;
-	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
-	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
+	JPPyObject invoke(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg, bool instance);
+	JPValue  invokeConstructor(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg);
 
 	jobject getJava() const
 	{

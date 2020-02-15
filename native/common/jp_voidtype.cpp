@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <jpype.h>
 
@@ -31,12 +31,12 @@ bool JPVoidType::isSubTypeOf(JPClass* other) const
 
 JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a static field.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a static field.");
 }
 
 JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a field.");
 }
 
 JPPyObject JPVoidType::convertToPythonObject(jvalue val)
@@ -81,35 +81,32 @@ JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPVoidType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject*)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a static field.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a static field.");
 }
 
 void JPVoidType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of a field.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a field.");
 }
 
-JPPyObject JPVoidType::getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length)
+void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
-}
-
-void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*)
-{
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
 
 JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, jsize)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
 
 void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
 
 jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 {
-	JP_RAISE_RUNTIME_ERROR("void cannot be the type of an array.");
+	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }

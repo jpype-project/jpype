@@ -12,25 +12,51 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
 
+#if defined(_MSC_VER) && _MSC_VER<1700
+
+// Welcome to the year 2008!
+namespace std
+{
+
+class mutex
+{
+} ;
+
+template <class T> class lock_guard
+{
+public:
+
+	lock_guard(const T& mutex_type)
+	{
+	}
+} ;
+}
+
+#else
+#include <mutex>
+#endif
+
 static int jpype_traceLevel = 0;
 static JPypeTracer* jpype_tracer_last = NULL;
+
+std::mutex trace_lock;
 
 #define JPYPE_TRACING_OUTPUT cerr
 
 //This code is not thread safe, thus tracing a multithreaded code is likely
 // to result in crashes.
 
-JPypeTracer::JPypeTracer(const char* name) : m_Name(name)
+JPypeTracer::JPypeTracer(const char* name, void* reference) : m_Name(name)
 {
-	traceIn(name);
 	m_Error = false;
 	m_Last = jpype_tracer_last;
 	jpype_tracer_last = this;
+	traceIn(name, reference);
 }
 
 JPypeTracer::~JPypeTracer()
@@ -39,19 +65,24 @@ JPypeTracer::~JPypeTracer()
 	jpype_tracer_last = m_Last;
 }
 
-void JPypeTracer::traceIn(const char* msg)
+void JPypeTracer::traceIn(const char* msg, void* ref)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
 		JPYPE_TRACING_OUTPUT << "  ";
 	}
-	JPYPE_TRACING_OUTPUT << "<B msg=\"" << msg << "\" >" << endl;
+	JPYPE_TRACING_OUTPUT << "<B msg=\"" << msg << "\"";
+	if (ref != NULL)
+		JPYPE_TRACING_OUTPUT << " id=\"" << ref << "\"";
+	JPYPE_TRACING_OUTPUT << " >" << endl;
 	JPYPE_TRACING_OUTPUT.flush();
 	jpype_traceLevel++;
 }
 
 void JPypeTracer::traceOut(const char* msg, bool error)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	jpype_traceLevel--;
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
@@ -60,33 +91,36 @@ void JPypeTracer::traceOut(const char* msg, bool error)
 	if (error)
 	{
 		JPYPE_TRACING_OUTPUT << "</B> <!-- !!!!!!!! EXCEPTION !!!!!! " << msg << " -->" << endl;
-	}
-	else
+	} else
 	{
 		JPYPE_TRACING_OUTPUT << "</B> <!-- " << msg << " -->" << endl;
 	}
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
+#define JP_ENABLE_TRACE_PY
 void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 {
 #ifdef JP_ENABLE_TRACE_PY
-	stringstream ss;
-	ss << msg << " " << (void*) ref;
 	if (ref != NULL)
-	{
-		ss << " " << ref->ob_refcnt << " " << ref->ob_type->tp_name;
-	}
-	trace1(ss.str());
+		JPTracer::trace(msg, (void*) ref, ref->ob_refcnt, Py_TYPE(ref)->tp_name);
+	else
+		JPTracer::trace(msg, (void*) ref);
 #endif
 }
 
-void JPypeTracer::trace1(const string& msg)
+void JPypeTracer::trace1(const char* msg)
 {
+	std::lock_guard<std::mutex> guard(trace_lock);
 	string name = "unknown";
 
 	if (jpype_tracer_last != NULL)
 		name = jpype_tracer_last->m_Name;
+	else
+	{
+		int *i = 0;
+		*i = 0;
+	}
 
 	for (int i = 0; i < jpype_traceLevel; i++)
 	{
@@ -96,3 +130,18 @@ void JPypeTracer::trace1(const string& msg)
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
+void JPypeTracer::trace2(const char* msg1, const char* msg2)
+{
+	std::lock_guard<std::mutex> guard(trace_lock);
+	string name = "unknown";
+
+	if (jpype_tracer_last != NULL)
+		name = jpype_tracer_last->m_Name;
+
+	for (int i = 0; i < jpype_traceLevel; i++)
+	{
+		JPYPE_TRACING_OUTPUT << "  ";
+	}
+	JPYPE_TRACING_OUTPUT << "<M>" << name << " : " << msg1 << " " << msg2 << "</M>" << endl;
+	JPYPE_TRACING_OUTPUT.flush();
+}

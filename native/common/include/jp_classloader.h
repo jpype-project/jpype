@@ -21,16 +21,16 @@
 
 namespace JPClassLoader
 {
-	/** Initialize the class loader.
-	 */
-	void init();
+/** Initialize the class loader.
+ */
+void init();
 
-	/** Load a class by name from the jpype.jar.
-	 *
-	 * @returns the class loaded
-	 * @throws RuntimeException if the class is not found.
-	 */
-	jclass findClass(string name);
+/** Load a class by name from the jpype.jar.
+ *
+ * @returns the class loaded
+ * @throws RuntimeException if the class is not found.
+ */
+jclass findClass(string name);
 
 } ;
 

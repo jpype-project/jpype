@@ -24,7 +24,7 @@ from . import _jcustomizer
 __all__ = ['JString']
 
 
-class _JString(object):
+class JString(_jpype._JObject):
     """ Base class for ``java.lang.String`` objects
 
     When called as a function, this class will produce a ``java.lang.String``
@@ -33,11 +33,14 @@ class _JString(object):
 
     """
     def __new__(cls, *args, **kwargs):
-        if cls == JString:
-            cls = _jclass.JClass(JString.__javaclass__)
-            return cls.__new__(cls, *args)
-        return super(JString, cls).__new__(cls, *args, **kwargs)
+        if cls != JString:
+            raise TypeError("JString factory cannot be used as base class")
+        cls = _jclass.JClass("java.lang.String")
+        return cls(*args)
 
+
+@_jcustomizer.JImplementationFor("java.lang.String")
+class _JStringProto(object):
     def __add__(self, other):
         return self.concat(other)
 
@@ -55,12 +58,13 @@ class _JString(object):
         return self.length()
 
     def __getitem__(self, i):
-        if i<0:
-            i+=len(self)
-        try:
-            return self.charAt(i)
-        except:
-            raise IndexError("Java string index out of range")
+        if i < 0:
+            i += len(self)
+            if i < 0:
+                raise IndexError("Array index is negative")
+        if i >= len(self):
+            raise IndexError("Array index exceeds length")
+        return self.charAt(i)
 
     def __lt__(self, other):
         return self.compareTo(other) < 0
@@ -81,9 +85,7 @@ class _JString(object):
         return self.__str__().__hash__()
 
     def __repr__(self):
-        return "'%s'"%self.__str__()
+        return "'%s'" % self.__str__()
 
 
-JString = _jobject.defineJObjectFactory(
-    "JString", "java.lang.String", _JString)
-_jcustomizer.registerClassBase('java.lang.String', JString)
+_jpype.JString = JString

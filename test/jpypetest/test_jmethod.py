@@ -42,7 +42,7 @@ def copy_func(f):
 
 
 class JMethodTestCase(common.JPypeTestCase):
-    """ Test for methods of JMethod (_jpype.PyJPMethod)
+    """ Test for methods of JMethod (_jpype._JMethod)
 
     This should test how well the object matchs a Python3 function.  
      * __self__: should appear on a bound, None otherwise.

@@ -16,8 +16,8 @@
  *****************************************************************************/
 #include <jpype.h>
 
-JPStringClass::JPStringClass(jclass cls) : JPClass(cls) 
-					   // JPJni::s_StringClass)
+JPStringClass::JPStringClass(jclass cls) : JPClass(cls)
+// JPJni::s_StringClass)
 {
 }
 
@@ -36,22 +36,11 @@ JPPyObject JPStringClass::convertToPythonObject(jvalue val)
 
 	if (JPEnv::getConvertStrings())
 	{
-		bool unicode = false;
 		string str = JPJni::toStringUTF8((jstring) (val.l));
-#if PY_MAJOR_VERSION < 3
-		for (size_t i = 0; i < str.size(); ++i)
-		{
-			if (str[i]&0x80)
-			{
-				unicode = true;
-				break;
-			}
-		}
-#endif
-		return JPPyString::fromStringUTF8(str, unicode);
+		return JPPyString::fromStringUTF8(str);
 	}
 
-	return JPPythonEnv::newJavaObject(JPValue(this, val));
+	return PyJPValue_create(JPValue(this, val));
 	JP_TRACE_OUT;
 }
 
@@ -66,7 +55,7 @@ JPMatch::Type JPStringClass::canConvertToJava(PyObject* obj)
 		return JPMatch::_implicit;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -103,7 +92,7 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 	}
 
 	// java.lang.string is already a global object
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this || frame.IsAssignableFrom(value->getJavaClass(), m_Class.get()))
@@ -112,7 +101,7 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 			res.l = frame.keep(res.l);
 			return res;
 		}
-		JP_RAISE_TYPE_ERROR("Attempt to convert a non string java object");
+		JP_RAISE(PyExc_TypeError, "Attempt to convert a non string java object");
 	}
 
 	// Otherwise convert the string
@@ -123,12 +112,12 @@ jvalue JPStringClass::convertToJava(PyObject* obj)
 		res.l = frame.keep(jstr);
 		return res;
 	}
-	JP_RAISE_TYPE_ERROR("Unable to convert to java string");
+	JP_RAISE(PyExc_TypeError, "Unable to convert to java string");
 	return res;
 	JP_TRACE_OUT;
 }
 
-JPValue JPStringClass::newInstance(JPPyObjectVector& args)
+JPValue JPStringClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPStringClass::newInstance");
 	if (args.size() == 1 && JPPyString::check(args[0]))
@@ -140,6 +129,6 @@ JPValue JPStringClass::newInstance(JPPyObjectVector& args)
 		res.l = JPJni::fromStringUTF8(str);
 		return JPValue(this, res);
 	}
-	return JPClass::newInstance(args);
+	return JPClass::newInstance(frame, args);
 	JP_TRACE_OUT;
 }

@@ -12,11 +12,12 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
+class JPArrayView;
 class JPClass
 {
 public:
@@ -34,7 +35,7 @@ public:
 	{
 		return m_Class.get();
 	}
-        
+
 	string toString() const;
 	string getCanonicalName() const;
 	bool isAbstract();
@@ -45,11 +46,21 @@ public:
 	const MethodList& getMethods();
 	const FieldList&  getFields();
 
+	PyObject* getHost()
+	{
+		return m_Host.get();
+	}
+
+	void setHost(PyObject* obj)
+	{
+		m_Host = JPPyObject(JPPyRef::_use, obj);
+	}
+
 	/**
-	 * Determine if a Python object will convert to this java type. 
-	 * 
+	 * Determine if a Python object will convert to this java type.
+	 *
 	 * This is used to determine which overload is the best match.
-	 * 
+	 *
 	 * @param obj is the Python object.
 	 * @return the quality of the match
 	 */
@@ -57,47 +68,47 @@ public:
 
 	/**
 	 * Execute a conversion from Python to java.
-	 * 
+	 *
 	 * This should only be called if canConvertToJava returned
 	 * a valid conversion.
-	 * 
+	 *
 	 * @param obj is the Python object.
 	 * @return a jvalue holding the converted python object.
 	 */
 	virtual jvalue convertToJava(PyObject* obj);
 
-	/** Create a new Python object to wrap a Java value. 
-	 * 
+	/** Create a new Python object to wrap a Java value.
+	 *
 	 * @return a new Python object.
 	 */
 	virtual JPPyObject convertToPythonObject(jvalue val);
 
 	/**
 	 * Get the Java value representing as an object.
-	 * 
+	 *
 	 * This will unbox if the type is a primitive.
-	 *  
+	 *
 	 * @return a java value with class.
 	 */
 	virtual JPValue getValueFromObject(jobject obj);
 
-	/** 
-	 * Call a static method that returns this type of object. 
+	/**
+	 * Call a static method that returns this type of object.
 	 */
 	virtual JPPyObject invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*);
 
-	/** 
-	 * Call a method that returns this type of object. 
+	/**
+	 * Call a method that returns this type of object.
 	 */
 	virtual JPPyObject invoke(JPJavaFrame& frame, jobject, jclass clazz, jmethodID, jvalue*);
 
 	/**
 	 * Get a static field that returns this type.
-	 * 
+	 *
 	 * @param frame is the frame to hold the local reference.
 	 * @param cls is the class holding the static field.
 	 * @param fid is the field id.
-	 * @return 
+	 * @return
 	 */
 	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid);
 	virtual void        setStaticField(JPJavaFrame& frame, jclass cls, jfieldID fid, PyObject* val);
@@ -106,21 +117,21 @@ public:
 	virtual void        setField(JPJavaFrame& frame, jobject obj, jfieldID fid, PyObject* val);
 
 	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size);
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length);
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length, PyObject* vals);
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
+			jsize start, jsize length, jsize step, PyObject* vals);
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
 	/** Determine if this class is a super or implements another class.
-	 * 
-	 * This is used specifically in the method overload to determine 
+	 *
+	 * This is used specifically in the method overload to determine
 	 * if a method will cover another.  For objects this is the same as
 	 * IsAssignableFrom.  For primitive type, then this will be true
 	 * if this primitive can be converted to other without a cast.
-	 * 
+	 *
 	 * In the sense of
 	 *  http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
-	 * 
+	 *
 	 * @param other is the class to to assign to.
 	 * @return true if this class is the same, a super class, or implements
 	 * the other class.
@@ -128,24 +139,28 @@ public:
 	virtual bool isSubTypeOf(JPClass* other) const;
 
 	/**
-	 * Expose IsAssignableFrom to python. 
-	 * 
+	 * Expose IsAssignableFrom to python.
+	 *
 	 * FIXME this may be able to be replaced with isSubTypeOf.
-	 * They are doing the same thing. 
+	 * They are doing the same thing.
 	 */
-	bool isAssignableFrom(JPClass* o);
+	bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
 
 	// Object properties
 	JPClass* getSuperClass();
-	virtual JPValue newInstance(JPPyObjectVector& args);
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
 	const ClassList& getInterfaces();
 
 	string describe();
 
 	// Check if a value is an instance of this class
 	bool isInstance(JPValue& val);
-	
+
 	virtual void postLoad();
+
+	virtual void getView(JPArrayView& view);
+	virtual void releaseView(JPArrayView& view, bool complete);
+
 private:
 	void loadFields();
 	void loadMethods();
@@ -164,7 +179,7 @@ protected:
 	bool         m_IsThrowable;
 	bool         m_IsAbstract;
 	bool         m_IsFinal;
-
+	JPPyObject   m_Host;
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

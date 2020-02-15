@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 import queue
+import unittest
 
 _modules = {}
 
@@ -44,6 +45,9 @@ def _execute(inQueue, outQueue):
 
 class Client(object):
     def __init__(self):
+        self.start()
+
+    def start(self):
         ctx = mp.get_context("spawn")
         self.inQueue = ctx.Queue()
         self.outQueue = ctx.Queue()
@@ -63,6 +67,10 @@ class Client(object):
             raise ex
         return ret
 
+    def restart(self):
+        self.stop()
+        self.start()
+
     def stop(self):
         self.inQueue.put(None)
         self.process.join()
@@ -75,60 +83,76 @@ class Client(object):
         return False
 
 
-class assertRaises(object):
-    def __init__(self, exc):
-        self.exc = exc
+def TestCase(cls=None, **kwargs):
+    """ Decorator that makes tests run in a subprocess """
+    if cls:
+        return _prepare(cls)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        if issubclass(type, self.exc):
-            return True
-        frame = sys._getframe(1)
-        lines = inspect.getsourcelines(frame)
-        info = inspect.getframeinfo(frame)
-        msg = []
-        msg.append("Assert raises '%s' got '%s' at %s, line %d, in %s" % (
-            self.exc.__name__, type.__name__, info.filename, info.lineno, info.function))
-        msg.append(lines[0][frame.f_lineno-lines[1]-1])
-        raise AssertionError("\n".join(msg))
+    def modify(cls):
+        return _prepare(cls, **kwargs)
+    return modify
 
 
-def assertTrue(logic, *args):
-    if bool(logic) is True:
-        return
-    frame = sys._getframe(1)
-    lines = inspect.getsourcelines(frame)
-    info = inspect.getframeinfo(frame)
-    msg = []
-    msg.append("Assert True failed at %s, line %d, in %s" %
-               (info.filename, info.lineno, info.function))
-    msg.append(lines[0][frame.f_lineno-lines[1]])
-    raise AssertionError("\n".join(msg))
+def _hook(filename, clsname, funcname, *args):
+    module = _import(filename)
+    cls = getattr(module, clsname)
+    inst = '_instance_%s' % cls.__name__
+    if not inst in module.__dict__:
+        setattr(module, inst, cls())
+    inst = getattr(module, inst)
+    getattr(inst, funcname)(*args)
 
 
-def assertFalse(logic, *args):
-    if bool(logic) is False:
-        return
-    frame = sys._getframe(1)
-    lines = inspect.getsourcelines(frame)
-    info = inspect.getframeinfo(frame)
-    msg = []
-    msg.append("Assert False failed at %s, line %d, in %s" %
-               (info.filename, info.lineno, info.function))
-    msg.append(lines[0][frame.f_lineno-lines[1]])
-    raise AssertionError("\n".join(msg))
+def _prepare(orig, individual=False):
+    clsname = orig.__name__
+    filename = os.path.abspath(inspect.getfile(orig))
 
+    class ProxyClass(orig):
+        @classmethod
+        def tearDownClass(cls):
+            ProxyClass._client.execute(
+                _hook, filename, clsname, '_tearDownClass')
+            ProxyClass._client.stop()
 
-def assertEqual(value1, value2, *args):
-    if value1 == value2:
-        return
-    frame = sys._getframe(1)
-    lines = inspect.getsourcelines(frame)
-    info = inspect.getframeinfo(frame)
-    msg = []
-    msg.append("Assertion '%s'=='%s' failed at %s, line %d, in %s" %
-               (value1, value2, info.filename, info.lineno, info.function))
-    msg.append(lines[0][frame.f_lineno-lines[1]])
-    raise AssertionError("\n".join(msg))
+        @classmethod
+        def setUpClass(cls):
+            ProxyClass._client = Client()
+            ProxyClass._client.execute(_hook, filename, clsname, '_setUpClass')
+
+        def setUp(self):
+            if individual:
+                ProxyClass._client.restart()
+            ProxyClass._client.execute(_hook, filename, clsname, '_setUp')
+            if hasattr(self, "setUpLocals"):
+                ProxyClass._client.execute(
+                    _hook, filename, clsname, '_set', self.setUpLocals())
+
+        def _set(self, dic):
+            for k, v in dic.items():
+                setattr(self, k, v)
+
+        def tearDown(self):
+            ProxyClass._client.execute(_hook, filename, clsname, '_tearDown')
+
+    class ProxyMethod(object):
+        def __init__(self, name):
+            self.name = name
+            self.__name__= name
+            self.__qualname__ = "%s.%s"%(clsname, name)
+
+        def __call__(self):
+            ProxyClass._client.execute(_hook, filename, clsname, self.name)
+
+    for k, v in orig.__dict__.items():
+        if k.startswith("test"):
+            test = ProxyMethod("_"+k)
+            test.__name__ = k
+            type.__setattr__(ProxyClass, k, test)
+            type.__setattr__(ProxyClass, "_"+k, v)
+
+    type.__setattr__(ProxyClass, "_setUp", orig.setUp)
+    type.__setattr__(ProxyClass, "_setUpClass", orig.setUpClass)
+    type.__setattr__(ProxyClass, "_tearDown", orig.tearDown)
+    type.__setattr__(ProxyClass, "_tearDownClass", orig.tearDownClass)
+
+    return ProxyClass

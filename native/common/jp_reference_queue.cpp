@@ -16,31 +16,26 @@
  *****************************************************************************/
 #include <Python.h>
 #include <jpype.h>
-#include <jp_thunk.h>
 
 namespace
 { // impl detail
-	jmethodID s_ReferenceQueueRegisterMethod;
-	jmethodID s_ReferenceQueueStartMethod;
-	jmethodID s_ReferenceQueueStopMethod;
-
-	jobject s_ReferenceQueue;
+jmethodID s_ReferenceQueueRegisterMethod;
+jmethodID s_ReferenceQueueStartMethod;
+jmethodID s_ReferenceQueueStopMethod;
+jobject s_ReferenceQueue;
 }
 
 JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
-		JNIEnv *env, jclass clazz, jlong hostObj)
+		JNIEnv *env, jclass clazz, jlong host, jlong cleanup)
 {
 	JPJavaFrame frame;
 	JP_TRACE_IN("Java_jpype_ref_JPypeReferenceQueue_removeHostReference");
-
 	JPPyCallAcquire callback;
-	if (hostObj > 0)
+	if (cleanup != 0)
 	{
-		PyObject* hostObjRef = (PyObject*) hostObj;
-		Py_DECREF(hostObjRef);
+		JCleanupHook func = (JCleanupHook) cleanup;
+		(*func)((void*) host);
 	}
-
-	//return NULL;
 	JP_TRACE_OUT;
 }
 
@@ -56,11 +51,11 @@ void JPReferenceQueue::init()
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
 	jmethodID ctor = frame.GetMethodID(cls, "<init>", "()V");
 	if (ctor == NULL)
-		JP_RAISE_RUNTIME_ERROR("JPypeReferenceQueue ctor not found");
+		JP_RAISE(PyExc_RuntimeError, "JPypeReferenceQueue ctor not found");
 
 	JNINativeMethod method2[1];
 	method2[0].name = (char*) "removeHostReference";
-	method2[0].signature = (char*) "(J)V";
+	method2[0].signature = (char*) "(JJ)V";
 	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
 
 	frame.RegisterNatives(cls, method2, 1);
@@ -69,17 +64,14 @@ void JPReferenceQueue::init()
 	s_ReferenceQueue = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
 
 	// Get all required methods
-	s_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;J)V");
+	s_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
 	s_ReferenceQueueStartMethod = frame.GetMethodID(cls, "start", "()V");
 	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
 
 	JP_TRACE_OUT;
 }
 
-
-// FIXME move the loader for the custom class from jp_proxy.cpp
-
-void JPReferenceQueue::startJPypeReferenceQueue(bool useJavaThread)
+void JPReferenceQueue::startJPypeReferenceQueue()
 {
 	JP_TRACE_IN("JPReferenceQueue::startJPypeReferenceQueue");
 	JPJavaFrame frame;
@@ -95,30 +87,35 @@ void JPReferenceQueue::shutdown()
 	JP_TRACE_OUT;
 }
 
+extern "C"
+{
+
+static void releasePython(void* host)
+{
+	Py_XDECREF((PyObject*) host);
+}
+
+}
+
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
+{
+	// MATCH TO DECREF IN unreferencePython
+	Py_INCREF(hostRef);
+	registerRef(obj, hostRef, &releasePython);
+}
+
+void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 {
 	JP_TRACE_IN("JPReferenceQueue::registerRef");
 	JPJavaFrame frame;
 
 	// create the ref ...
-	jvalue args[2];
+	jvalue args[3];
 	args[0].l = obj;
-	args[1].j = (jlong) hostRef;
-
-	// MATCH TO DECREF IN Java_jpype_ref_JPypeReferenceQueue_removeHostReference
-	Py_INCREF(hostRef);
+	args[1].j = (jlong) host;
+	args[2].j = (jlong) func;
 
 	JP_TRACE("Register reference");
 	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);
-	JP_TRACE_OUT;
-}
-
-void JPReferenceQueue::registerRef(PyObject* ref, PyObject* targetRef)
-{
-	JP_TRACE_IN("JPReferenceQueue::registerRef");
-	JPJavaFrame frame;
-	JPValue* objRef = JPPythonEnv::getJavaValue(ref);
-	jobject srcObject = objRef->getJavaObject();
-	registerRef(srcObject, targetRef);
 	JP_TRACE_OUT;
 }

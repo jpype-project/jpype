@@ -1,6 +1,6 @@
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
-  
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -12,9 +12,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  
+
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include <jpype.h>
 
 JPBooleanType::JPBooleanType() : JPPrimitiveType(JPTypeManager::_java_lang_Boolean)
 {
@@ -31,7 +31,7 @@ bool JPBooleanType::isSubTypeOf(JPClass* other) const
 
 JPPyObject JPBooleanType::convertToPythonObject(jvalue val)
 {
-	return JPPyBool::fromLong(val.z);
+	return JPPyObject(JPPyRef::_claim, PyBool_FromLong(val.z ? 1 : 0));
 }
 
 JPValue JPBooleanType::getValueFromObject(jobject obj)
@@ -50,12 +50,12 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 	}
 
 	// Exact Python match
-	if (JPPyBool::check(obj))
+	if (PyBool_Check(obj))
 	{
 		return JPMatch::_exact;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		// Wrapper
@@ -71,7 +71,7 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	if (JPPyBool::check(obj))
+	if (PyBool_Check(obj))
 	{
 		return JPMatch::_exact;
 	}
@@ -83,7 +83,7 @@ JPMatch::Type JPBooleanType::canConvertToJava(PyObject* obj)
 		// If it implements logical operations it is an integer type
 		if (JPPyLong::checkIndexable(obj))
 			return JPMatch::_implicit;
-			// Otherwise it may be a float or list.  
+			// Otherwise it may be a float or list.
 		else
 			return JPMatch::_explicit;
 	}
@@ -96,7 +96,7 @@ jvalue JPBooleanType::convertToJava(PyObject* obj)
 	JP_TRACE_IN("JPBooleanType::convertToJava");
 	jvalue res;
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -104,11 +104,10 @@ jvalue JPBooleanType::convertToJava(PyObject* obj)
 		if (value->getClass() == m_BoxedClass)
 		{
 			if (value->getJavaObject() == NULL)
-				JP_RAISE_RUNTIME_ERROR("Null pointer in implicit conversion from boxed.");
+				JP_RAISE(PyExc_RuntimeError, "Null pointer in implicit conversion from boxed.");
 			return getValueFromObject(value->getJavaObject());
 		}
-	}
-	else if (JPPyLong::checkConvertable(obj))
+	} else if (JPPyLong::checkConvertable(obj))
 	{
 		res.z = (jboolean) JPPyLong::asLong(obj) != 0;
 	}
@@ -170,32 +169,58 @@ void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObje
 	frame.SetBooleanField(c, fid, val);
 }
 
-JPPyObject JPBooleanType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
-{
-	return getSlice<type_t>(frame, a, start, start + length, NPY_BOOL, PyBool_FromLong);
-}
+#define HAVE_PTR(suboffsets, dim) (suboffsets && suboffsets[dim] >= 0)
+#define ADJUST_PTR(ptr, suboffsets, dim) \
+    (HAVE_PTR(suboffsets, dim) ? *((char**)ptr) + suboffsets[dim] : ptr)
 
-void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
 	JP_TRACE_IN("JPBooleanType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_BOOL,
-			&JPJavaFrame::SetBooleanArrayRegion))
-		return;
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetBooleanArrayElements, &JPJavaFrame::ReleaseBooleanArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	// First check if assigning sequence supports buffer API
+	if (PyObject_CheckBuffer(sequence))
 	{
-		// FIXME this is suspect as we are supposed to be boolean, not integers
-		long v = PyInt_AsLong(seq[i].get());
-		if (v == -1 && JPPyErr::occurred())
+		JPPyBuffer buffer(sequence, PyBUF_FULL_RO);
+		if (buffer.valid())
 		{
-			JP_RAISE_PYTHON("JPBooleanType::setArrayRange");
+			Py_buffer& view = buffer.getView();
+			if (view.ndim != 1)
+				JP_RAISE(PyExc_TypeError, "buffer dims incorrect");
+			Py_ssize_t vshape = view.shape[0];
+			Py_ssize_t vstep = view.strides[0];
+			if (vshape != length)
+				JP_RAISE(PyExc_ValueError, "mismatched size");
+
+			char* memory = (char*) view.buf;
+			if (view.suboffsets && view.suboffsets[0] >= 0)
+				memory = *((char**) memory) + view.suboffsets[0];
+			jsize index = start;
+			jconverter conv = getConverter(view.format, view.itemsize, "z");
+			for (Py_ssize_t i = 0; i < length; ++i, index += step)
+			{
+				jvalue r = conv(memory);
+				val[index] = r.z;
+				memory += vstep;
+			}
+			accessor.commit();
+			return;
+		} else
+		{
+			PyErr_Clear();
 		}
-		val[start + i] = (type_t) v;
+	}
+
+	// Use sequence API
+	JPPySequence seq(JPPyRef::_use, sequence);
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+	{
+		val[index] = PyObject_IsTrue(seq[i].get());
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -218,3 +243,21 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 	frame.SetBooleanArrayRegion(array, ndx, 1, &val);
 }
 
+void JPBooleanType::getView(JPArrayView& view)
+{
+	JPJavaFrame frame;
+	view.memory = (void*) frame.GetBooleanArrayElements(
+			(jbooleanArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "?";
+	view.buffer.itemsize = sizeof (jboolean);
+}
+
+void JPBooleanType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseBooleanArrayElements((jbooleanArray) view.array->getJava(),
+				(jboolean*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	} 
+}

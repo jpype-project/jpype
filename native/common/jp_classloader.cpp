@@ -20,8 +20,8 @@
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()
-	jobject classLoader;
-	jmethodID findClassID;
+jobject classLoader;
+jmethodID findClassID;
 }
 
 void JPClassLoader::init()
@@ -40,7 +40,7 @@ void JPClassLoader::init()
 	// Set up class loader
 	jmethodID ctorID = frame.GetMethodID(cls, "<init>", "(Ljava/lang/ClassLoader;)V");
 	if (ctorID == NULL)
-		JP_RAISE_RUNTIME_ERROR("JPypeClassLoader ctor not found");
+		JP_RAISE(PyExc_RuntimeError, "JPypeClassLoader ctor not found");
 	//v.l = cl;
 
 	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/classloader/JPypeClassLoader;");
