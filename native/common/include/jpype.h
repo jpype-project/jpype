@@ -83,8 +83,29 @@ using std::list;
 /** Definition of commonly used template types */
 typedef vector<string> StringVector;
 
+/**
+ * Converter are used for bulk byte transfers from Python to Java.
+ */
 typedef jvalue (*jconverter)(void*) ;
 
+/**
+ * Create a converter for a bulk byte transfer.
+ *
+ * Bulk transfers do not check for range and may be lossy.  These are only
+ * triggered when a transfer either using memoryview or a slice operator
+ * assignment from a buffer object (such as numpy.array).  Converters are
+ * created once at the start of the transfer and used to convert each
+ * byte by casting the memory and then assigning to the jvalue union with
+ * the requested type.
+ *
+ * Byte order transfers are not supported by the Python buffer API and thus
+ * have not been implemented.
+ *
+ * @param from is a Python struct designation
+ * @param itemsize is the size of the Python item
+ * @param to is the desired Java primitive type
+ * @return a converter function to convert each member.
+ */
 extern jconverter getConverter(const char* from, int itemsize, const char* to);
 
 class JPClass;
@@ -94,16 +115,6 @@ class JPArray;
 class JPArrayClass;
 class JPArrayView;
 class JPBoxedClass;
-class JPVoidType;
-class JPBooleanType;
-class JPByteType;
-class JPCharType;
-class JPShortType;
-class JPIntType;
-class JPLongType;
-class JPFloatType;
-class JPDoubleType;
-class JPStringClass;
 class JPMethod;
 class JPField;
 
@@ -127,79 +138,18 @@ class JPField;
 #include "jp_typename.h"
 #include "jp_env.h"
 #include "jp_jniutil.h"
-#include "jp_typemanager.h"
-#include "jp_encoding.h"
+#include "jp_match.h"
 
 // Other header files
-#include "jp_methodoverload.h"
 #include "jp_value.h"
 #include "jp_class.h"
-
-// Primitives classes
 #include "jp_primitivetype.h"
-#include "jp_voidtype.h"
-#include "jp_booleantype.h"
-#include "jp_bytetype.h"
-#include "jp_chartype.h"
-#include "jp_shorttype.h"
-#include "jp_inttype.h"
-#include "jp_longtype.h"
-#include "jp_floattype.h"
-#include "jp_doubletype.h"
+#include "jp_typemanager.h"
 
 // Accessors
-#include "jp_field.h"
-#include "jp_method.h"
 #include "jp_array.h"
 
-// Object classes
-#include "jp_arrayclass.h"
-#include "jp_stringclass.h"
-#include "jp_baseclasses.h"
-#include "jp_boxedclasses.h"
-
 // Services
-#include "jp_reference_queue.h"
-#include "jp_classloader.h"
 #include "jp_proxy.h"
-#include "jp_monitor.h"
-
-template <typename array_t, typename ptr_t>
-class JPPrimitiveArrayAccessor
-{
-	typedef void (JPJavaFrame::*releaseFnc)(array_t, ptr_t, jint);
-	typedef ptr_t (JPJavaFrame::*accessFnc)(array_t, jboolean*);
-
-	JPJavaFrame& _frame;
-	array_t _array;
-	ptr_t _elem;
-	releaseFnc _release;
-	jboolean _iscopy;
-	jint _commit;
-
-public:
-
-	JPPrimitiveArrayAccessor(JPJavaFrame& frame, jarray array, accessFnc access, releaseFnc release)
-	: _frame(frame), _array((array_t) array), _release(release)
-	{
-		_commit = JNI_ABORT;
-		_elem = ((&_frame)->*access)(_array, &_iscopy);
-	}
-
-	~JPPrimitiveArrayAccessor()
-	{
-		((&_frame)->*_release)(_array, _elem, _commit);
-	}
-
-	ptr_t get()
-	{
-		return _elem;
-	}
-
-	void commit()
-	{
-		_commit = 0;
-	}
-} ;
 
 #endif // _JPYPE_H_

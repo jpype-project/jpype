@@ -14,7 +14,7 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
 
 JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo& stackInfo)
 : m_Throwable(th)

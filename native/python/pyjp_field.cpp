@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_field.h"
 
 #ifdef __cplusplus
 extern "C"

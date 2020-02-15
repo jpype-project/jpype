@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_voidtype.h"
 
 JPVoidType::JPVoidType() : JPPrimitiveType(JPTypeManager::_java_lang_Void)
 {

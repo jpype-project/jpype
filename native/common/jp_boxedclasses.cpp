@@ -14,8 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
-#include <jp_boxedclasses.h>
+#include "jpype.h"
+#include "jp_boxedclasses.h"
 
 JPBoxedClass::JPBoxedClass(jclass c) : JPClass(c)
 {

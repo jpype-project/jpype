@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_arrayclass.h"
 
 // Note: java represents arrays of zero length as null, thus we
 // need to be careful to handle these properly.  We need to

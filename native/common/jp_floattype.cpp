@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_floattype.h"
 
 JPFloatType::JPFloatType() : JPPrimitiveType(JPTypeManager::_java_lang_Float)
 {

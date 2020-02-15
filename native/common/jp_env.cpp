@@ -15,7 +15,10 @@
 
  *****************************************************************************/
 #include <Python.h>
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_classloader.h"
+#include "jp_reference_queue.h"
+
 
 //AT's on porting:
 //  1) the original definition of global static object leads to crashing

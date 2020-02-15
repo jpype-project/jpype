@@ -14,8 +14,11 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
-#include <pyjp.h>
+#include "jpype.h"
+#include "pyjp.h"
+#include "jp_arrayclass.h"
+#include "jp_reference_queue.h"
+
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPClass_initType(PyObject* module);

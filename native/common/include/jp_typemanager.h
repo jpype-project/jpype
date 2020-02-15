@@ -22,18 +22,18 @@
  */
 namespace JPTypeManager
 {
-extern JPVoidType* _void;
-extern JPBooleanType* _boolean;
-extern JPByteType* _byte;
-extern JPCharType* _char;
-extern JPShortType* _short;
-extern JPIntType* _int;
-extern JPLongType* _long;
-extern JPFloatType* _float;
-extern JPDoubleType* _double;
+extern JPPrimitiveType* _void;
+extern JPPrimitiveType* _boolean;
+extern JPPrimitiveType* _byte;
+extern JPPrimitiveType* _char;
+extern JPPrimitiveType* _short;
+extern JPPrimitiveType* _int;
+extern JPPrimitiveType* _long;
+extern JPPrimitiveType* _float;
+extern JPPrimitiveType* _double;
 extern JPClass* _java_lang_Object;
 extern JPClass* _java_lang_Class;
-extern JPStringClass* _java_lang_String;
+extern JPClass* _java_lang_String;
 
 extern JPBoxedClass* _java_lang_Void;
 extern JPBoxedClass* _java_lang_Boolean;

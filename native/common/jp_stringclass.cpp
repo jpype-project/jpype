@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_stringclass.h"
 
 JPStringClass::JPStringClass(jclass cls) : JPClass(cls)
 // JPJni::s_StringClass)

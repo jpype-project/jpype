@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <jpype.h>
-#include <pyjp.h>
+#include "jpype.h"
+#include "pyjp.h"
 #include <structmember.h>
 
 #ifdef __cplusplus

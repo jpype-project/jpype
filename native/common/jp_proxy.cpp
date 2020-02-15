@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_classloader.h"
+#include "jp_reference_queue.h"
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()

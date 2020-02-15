@@ -14,7 +14,10 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_field.h"
+#include "jp_method.h"
+#include "jp_methodoverload.h"
 
 JPClass::JPClass(jclass clss) : m_Class(clss)
 {

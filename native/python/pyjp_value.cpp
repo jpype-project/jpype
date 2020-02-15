@@ -14,8 +14,11 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
-#include <pyjp.h>
+#include "jpype.h"
+#include "pyjp.h"
+#include "jp_arrayclass.h"
+#include "jp_boxedclasses.h"
+#include "jp_stringclass.h"
 
 #ifdef __cplusplus
 extern "C"

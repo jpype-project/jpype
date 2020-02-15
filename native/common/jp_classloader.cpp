@@ -15,8 +15,9 @@
 
  *****************************************************************************/
 #include <Python.h>
-#include <jpype.h>
-#include <jp_thunk.h>
+#include "jpype.h"
+#include "jp_thunk.h"
+#include "jp_classloader.h"
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()

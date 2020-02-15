@@ -20,16 +20,17 @@
           <itemPath>../../native/common/include/jp_exception.h</itemPath>
           <itemPath>../../native/common/include/jp_field.h</itemPath>
           <itemPath>../../native/common/include/jp_floattype.h</itemPath>
-          <itemPath>../../native/common/include/jp_hostenv.h</itemPath>
           <itemPath>../../native/common/include/jp_inttype.h</itemPath>
           <itemPath>../../native/common/include/jp_javaframe.h</itemPath>
           <itemPath>../../native/common/include/jp_jniutil.h</itemPath>
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
+          <itemPath>../../native/common/include/jp_match.h</itemPath>
           <itemPath>../../native/common/include/jp_method.h</itemPath>
           <itemPath>../../native/common/include/jp_methodoverload.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
+          <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
           <itemPath>../../native/common/include/jp_primitivetype.h</itemPath>
           <itemPath>../../native/common/include/jp_proxy.h</itemPath>
           <itemPath>../../native/common/include/jp_reference_queue.h</itemPath>
@@ -221,11 +222,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_hostenv.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_inttype.h"
             ex="false"
             tool="3"
@@ -242,6 +238,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_longtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_match.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -267,6 +268,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_platform_win32.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_primitive_accessor.h"
             ex="false"
             tool="3"
             flavor2="0">

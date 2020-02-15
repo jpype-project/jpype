@@ -1,4 +1,4 @@
-#include <jpype.h>
+#include "jpype.h"
 
 namespace
 {

@@ -92,7 +92,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     def testDoubleOpen(self):
         data = [1, 2, 3, 4, 5]
-        ja=JArray(JInt)(data)
+        ja = JArray(JInt)(data)
         m1 = memoryview(ja)
         m2 = memoryview(ja)
         del m1
@@ -120,10 +120,10 @@ class ConversionBuffer(common.JPypeTestCase):
 
     def testMemoryViewWrite(self):
         data = [1, 2, 3, 4, 5]
-        ja=JArray(JInt)(data)
-        b = memoryview(ja) # Create a view
-        b[0] = 123 # Alter the memory using the view
-        del b # Commit to Java
+        ja = JArray(JInt)(data)
+        b = memoryview(ja)  # Create a view
+        b[0] = 123  # Alter the memory using the view
+        del b  # Commit to Java
         self.assertEqual(ja[0], 123)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
@@ -143,31 +143,41 @@ class ConversionBuffer(common.JPypeTestCase):
         self.assertTrue(bytes(ja[::-2]) ==
                         bytes(np.array(data[::-2], dtype=np.int32)))
 
-
     def executeConvert(self, jtype, dtype):
         n = 100
         na = np.random.randint(0, 1, size=n).astype(np.bool)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(-2**7, 2**7-1, size=n).astype(np.int8)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(0, 2**8-1, size=n).astype(np.uint8)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(-2**15, 2**15-1, size=n).astype(np.int16)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(0, 2**16-1, size=n).astype(np.uint16)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(-2**31, 2**31 - 1, size=n).astype(np.int32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
-        na = np.random.randint(0, 2**32 - 1, size=n).astype(np.int32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**7, 2**7-1, size=n, dtype=np.int8)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**8-1, size=n, dtype=np.uint8)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**15, 2**15-1, size=n, dtype=np.int16)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**16-1, size=n, dtype=np.uint16)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**31, 2**31 - 1, size=n, dtype=np.int32)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**32 - 1, size=n, dtype=np.uint32)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
         na = np.random.randint(-2**63, 2**63 - 1, size=n, dtype=np.int64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
         na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
         na = np.random.random(n).astype(np.float32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
         na = np.random.random(n).astype(np.float64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
+                               == np.array(na, dtype=dtype)))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBoolConvert(self):
@@ -196,4 +206,3 @@ class ConversionBuffer(common.JPypeTestCase):
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleConvert(self):
         self.executeConvert(JArray(JDouble), np.float64)
-

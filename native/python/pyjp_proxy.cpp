@@ -14,8 +14,11 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include <Python.h>
 #include <structmember.h>
+#include "jpype.h"
+#include "jp_proxy.h"
+
 
 #ifdef __cplusplus
 extern "C"

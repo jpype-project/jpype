@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_arrayclass.h"
 
 JPArrayClass::JPArrayClass(jclass c) : JPClass(c)
 {

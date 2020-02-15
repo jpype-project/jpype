@@ -12,9 +12,10 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_field.h"
 
 JPField::JPField(JPClass* clazz, jobject fld) : m_Field(fld)
 {

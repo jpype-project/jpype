@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_arrayclass.h"
+#include "jp_methodoverload.h"
 
 JPMethodOverload::JPMethodOverload(JPClass* claz, jobject mth) : m_Method(mth)
 {

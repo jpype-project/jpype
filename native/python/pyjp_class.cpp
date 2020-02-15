@@ -14,11 +14,17 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
-#include <pyjp.h>
 #include <algorithm>
+#include <Python.h>
 #include <frameobject.h>
 #include <structmember.h>
+#include "jpype.h"
+#include "pyjp.h"
+#include "jp_arrayclass.h"
+#include "jp_boxedclasses.h"
+#include "jp_field.h"
+#include "jp_method.h"
+
 
 struct PyJPClass
 {

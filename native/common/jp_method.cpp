@@ -14,8 +14,11 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
 #include <algorithm>
+#include "jpype.h"
+#include "jp_method.h"
+#include "jp_methodoverload.h"
+
 
 JPMethod::JPMethod(JPClass* clazz, const string& name, bool isConstructor) : m_Name(name)
 {

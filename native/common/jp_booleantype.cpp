@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_booleantype.h"
 
 JPBooleanType::JPBooleanType() : JPPrimitiveType(JPTypeManager::_java_lang_Boolean)
 {
@@ -259,5 +261,5 @@ void JPBooleanType::releaseView(JPArrayView& view, bool complete)
 	{
 		frame.ReleaseBooleanArrayElements((jbooleanArray) view.array->getJava(),
 				(jboolean*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	} 
+	}
 }

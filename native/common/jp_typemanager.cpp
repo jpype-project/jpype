@@ -16,6 +16,20 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "jp_typemanager.h"
+#include "jp_arrayclass.h"
+#include "jp_baseclasses.h"
+#include "jp_boxedclasses.h"
+#include "jp_stringclass.h"
+#include "jp_classloader.h"
+#include "jp_voidtype.h"
+#include "jp_booleantype.h"
+#include "jp_bytetype.h"
+#include "jp_chartype.h"
+#include "jp_shorttype.h"
+#include "jp_inttype.h"
+#include "jp_longtype.h"
+#include "jp_floattype.h"
+#include "jp_doubletype.h"
 
 namespace
 {
@@ -34,19 +48,19 @@ jmethodID isCallerSensitiveID;
 
 namespace JPTypeManager
 {
-JPVoidType* _void;
-JPBooleanType* _boolean;
-JPByteType* _byte;
-JPCharType* _char;
-JPShortType* _short;
-JPIntType* _int;
-JPLongType* _long;
-JPFloatType* _float;
-JPDoubleType* _double;
+JPPrimitiveType* _void;
+JPPrimitiveType* _boolean;
+JPPrimitiveType* _byte;
+JPPrimitiveType* _char;
+JPPrimitiveType* _short;
+JPPrimitiveType* _int;
+JPPrimitiveType* _long;
+JPPrimitiveType* _float;
+JPPrimitiveType* _double;
 JPClass* _java_lang_Object;
 JPClass* _java_lang_Class;
-JPStringClass* _java_lang_String;
-JPStringClass* _java_lang_CharSequence;
+JPClass* _java_lang_String;
+JPClass* _java_lang_CharSequence;
 
 JPBoxedClass* _java_lang_Void;
 JPBoxedClass* _java_lang_Boolean;

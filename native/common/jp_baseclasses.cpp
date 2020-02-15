@@ -14,7 +14,18 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_baseclasses.h"
+#include "jp_stringclass.h"
+#include "jp_primitivetype.h"
+#include "jp_booleantype.h"
+#include "jp_bytetype.h"
+#include "jp_chartype.h"
+#include "jp_shorttype.h"
+#include "jp_inttype.h"
+#include "jp_longtype.h"
+#include "jp_floattype.h"
+#include "jp_doubletype.h"
 
 // Class<java.lang.Object> and Class<java.lang.Class> have special rules
 

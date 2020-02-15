@@ -14,7 +14,7 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_encoding.h>
+#include "jp_encoding.h"
 
 // FIXME These encoders handle all of the codes expected to be passed between
 // Java and Python assuming they both generate complient codings.  However,
