@@ -134,3 +134,14 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertEqual(a(self.obj, 1), "oo")
         a = copy_func(self.obj.substring)
         self.assertEqual(a(1), "oo")
+
+    def testMethodDump(self):
+        # This is replaced by doc, should be removed
+        self.assertIsInstance(jpype.JString("foo").substring.dump(), str)
+
+    def testMethodDump(self):
+        # This is replaced by doc, should be removed (or do something useful)
+        self.assertIsInstance(jpype.JString("foo").substring.matchReport(), str)
+
+    def testMethodHelp(self):
+        help(jpype.JString("a").substring)

@@ -241,6 +241,41 @@ class CoverageCase(common.JPypeTestCase):
             class Sally(object):
                 pass
 
+    def testModuleHasClass(self):
+        self.assertTrue(_jpype._hasClass("java.lang.Object"))
 
+    def testModuleExamine(self):
+        # this is an internal testing routine for Java slots
+        _jpype.examine(jpype.JString)
+        _jpype.examine(jpype.JString("foo"))
+
+    def testJClassBadClass(self):
+        with self.assertRaises(Exception):
+            jpype.JClass("not.a.class")
+
+    def testJClassBadType(self):
+        with self.assertRaises(TypeError):
+            jpype.JClass({})
+
+    def testJClassFromClass(self):
+        self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName("java.lang.StringBuilder")),jpype.JClass)
+
+    def testJArrayDimTooBig(self):
+        with self.assertRaises(ValueError):
+            jpype.JArray(jpype.JInt,10000)
+
+    def testJArrayDimWrong(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt,1.5)
+
+    def testJArrayArgs(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt,1,'f')
+
+    def testJArrayTypeBad(self):
+        class John(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JArray(John)
 
 

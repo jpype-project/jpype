@@ -144,75 +144,56 @@ class ConversionBuffer(common.JPypeTestCase):
                         bytes(np.array(data[::-2], dtype=np.int32)))
 
 
-    def executeConvert(self, ja, na):
-        # Force every conversion to be executed
-        self.assertTrue(np.all(np.array(ja, dtype=np.bool) == np.array(na, dtype=np.bool)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.uint8) == np.array(na, dtype=np.uint8)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.int8) == np.array(na, dtype=np.int8)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.uint16) == np.array(na, dtype=np.uint16)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.int16) == np.array(na, dtype=np.int16)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.uint32) == np.array(na, dtype=np.uint32)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.int32) == np.array(na, dtype=np.int32)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.uint64) == np.array(na, dtype=np.uint64)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.int64) == np.array(na, dtype=np.int64)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.float32) == np.array(na, dtype=np.float32)))
-        self.assertTrue(np.all(np.array(ja, dtype=np.float64) == np.array(na, dtype=np.float64)))
+    def executeConvert(self, jtype, dtype):
+        n = 100
+        na = np.random.randint(0, 1, size=n).astype(np.bool)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**7, 2**7-1, size=n).astype(np.int8)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**8-1, size=n).astype(np.uint8)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**15, 2**15-1, size=n).astype(np.int16)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**16-1, size=n).astype(np.uint16)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**31, 2**31 - 1, size=n).astype(np.int32)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**32 - 1, size=n).astype(np.int32)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(-2**63, 2**63 - 1, size=n, dtype=np.int64)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.random(n).astype(np.float32)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
+        na = np.random.random(n).astype(np.float64)
+        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype) == np.array(na, dtype=dtype)))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBoolConvert(self):
-        n = 100
-        na = np.random.randint(0, 1, size=n).astype(np.bool)
-        ja = JArray(JBoolean)(na)
-        self.executeConvert(ja, na)
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testCharConvert(self):
-        # This is not technically correct as Char is not a number type, but we are
-        # testing buffer transfer here
-        n = 100
-        na = np.random.randint(0, 65535, size=n).astype(np.uint16)
-        ja = JArray(JChar)(na)
-        self.executeConvert(ja, na)
+        self.executeConvert(JArray(JBoolean), np.bool)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteConvert(self):
-        n = 100
-        na = np.random.randint(-128, 127, size=n).astype(np.byte)
-        ja = JArray(JByte)(na)
-        self.executeConvert(ja, na)
+        self.executeConvert(JArray(JByte), np.int8)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortConvert(self):
-        n = 100
-        na = np.random.randint(-32768, 32767, size=n).astype(np.int16)
-        ja = JArray(JShort)(na)
-        self.executeConvert(ja, na)
+        self.executeConvert(JArray(JShort), np.int16)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntConvert(self):
-        n = 100
-        na = np.random.randint(-2**31, 2**31 - 1, size=n).astype(np.int32)
-        ja = JArray(JInt)(na)
-        self.executeConvert(ja, na)
+        self.executeConvert(JArray(JInt), np.int32)
+
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testLongConvert(self):
+        self.executeConvert(JArray(JLong), np.int64)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatConvert(self):
-        n = 100
-        na = np.random.randint(-2**63, 2**63 - 1, size=n, dtype=np.int64)
-        ja = JArray(JLong)(na)
-        self.executeConvert(ja, na)
+        self.executeConvert(JArray(JFloat), np.float32)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testFloatConvert(self):
-        n = 100
-        na = np.random.random(n).astype(np.float32)
-        ja = JArray(JFloat)(na)
-        self.executeConvert(ja, na)
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testFloatConvert(self):
-        n = 100
-        na = np.random.random(n).astype(np.float64)
-        ja = JArray(JDouble)(na)
-        self.executeConvert(ja, na)
+    def testDoubleConvert(self):
+        self.executeConvert(JArray(JDouble), np.float64)
 

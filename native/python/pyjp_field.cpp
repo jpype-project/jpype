@@ -33,15 +33,6 @@ static void PyJPField_dealloc(PyJPField *self)
 	Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject *PyJPField_name(PyJPField *self, PyObject *arg)
-{
-	JP_PY_TRY("PyJPField_name");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
-	return JPPyString::fromStringUTF8(self->m_Field->getName()).keep();
-	JP_PY_CATCH(NULL);
-}
-
 static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPField_get");
@@ -85,22 +76,6 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JP_PY_CATCH(-1);
 }
 
-static PyObject *PyJPField_isStatic(PyJPField *self, PyObject *arg)
-{
-	JP_PY_TRY("PyJPField_isStatic");
-	ASSERT_JVM_RUNNING();
-	return PyBool_FromLong(self->m_Field->isStatic());
-	JP_PY_CATCH(NULL);
-}
-
-static PyObject *PyJPField_isFinal(PyJPField *self, PyObject *arg)
-{
-	JP_PY_TRY("PyJPField_isFinal");
-	ASSERT_JVM_RUNNING();
-	return PyBool_FromLong(self->m_Field->isFinal());
-	JP_PY_CATCH(NULL);
-}
-
 static PyObject *PyJPField_repr(PyJPField *self)
 {
 	JP_PY_TRY("PyJPField_repr");
@@ -113,16 +88,7 @@ static PyObject *PyJPField_repr(PyJPField *self)
 	JP_PY_CATCH(NULL);
 }
 
-// These are hard to get to as any attempt to access them
-// through getattr will dereference them due to getset.
-// Thus these methods are only accessible directly during
-// class initialization.
-//
-// After then use  obj.__class__.__dict__['fieldname']._final
 static PyGetSetDef fieldGetSets[] = {
-	{"__name__", (getter) (&PyJPField_name), NULL, ""},
-	{"_final", (getter) (&PyJPField_isFinal), NULL, ""},
-	{"_static", (getter) (&PyJPField_isStatic), NULL, ""},
 	{0}
 };
 

@@ -46,7 +46,9 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPArray_init");
 	ASSERT_JVM_RUNNING();
+	JP_TRACE("before");
 	JPJavaFrame frame;
+	JP_TRACE("after");
 
 	// Cases here.
 	//  -  We got here with a JPValue
@@ -66,6 +68,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JPValue *value = PyJPValue_getJavaSlot(v);
 	if (value != NULL)
 	{
+		JPJavaFrame frame;
 		JPArrayClass* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
 		if (arrayClass2 == NULL)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
@@ -78,6 +81,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	if (PySequence_Check(v))
 	{
+		JPJavaFrame frame;
 		jlong length =  PySequence_Size(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
@@ -261,6 +265,7 @@ void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 {
 	JP_PY_TRY("PyJPArray_releaseBuffer");
 	ASSERT_JVM_RUNNING();
+	JPJavaFrame frame;
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;
 	delete self->m_View;
@@ -272,6 +277,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArray_getBuffer");
 	ASSERT_JVM_RUNNING();
+	JPJavaFrame frame;
 	try
 	{
 		if (self->m_View == NULL)
@@ -343,8 +349,6 @@ static PyType_Slot arraySlots[] = {
 	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
 	{ Py_sq_item,     (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
-	//	{ Py_tp_getattro, (void*) &PyJPObject_getattro},
-	//	{ Py_tp_setattro, (void*) &PyJPObject_setattro},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 	{0}
 };

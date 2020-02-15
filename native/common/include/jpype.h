@@ -83,7 +83,7 @@ using std::list;
 /** Definition of commonly used template types */
 typedef vector<string> StringVector;
 
-typedef jvalue (*jconverter)(char*) ;
+typedef jvalue (*jconverter)(void*) ;
 
 extern jconverter getConverter(const char* from, int itemsize, const char* to);
 

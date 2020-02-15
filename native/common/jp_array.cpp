@@ -140,6 +140,7 @@ jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 
 JPArrayView::JPArrayView(JPArray* array)
 {
+	JPJavaFrame frame;
 	this->array = array;
 	refcount = 0;
 	buffer.obj = NULL;
@@ -163,6 +164,7 @@ void JPArrayView::reference()
 bool JPArrayView::unreference()
 {
 	refcount--;
+	JP_TRACE("REF COUNT", refcount);
 	array->getClass()->getComponentType()->releaseView(*this, refcount == 0);
 	return refcount == 0;
 }
