@@ -494,3 +494,18 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(type(ja2), JA)
         self.assertEqual(type(ja3), JA)
         self.assertEqual(list(ja2), list(ja3))
+
+    def testReverse(self):
+        n = [1,2,3,4,5,6,7,8]
+        JA = jpype.JArray(jpype.JInt)
+        ja = JA(n)
+        a = [ i for i in reversed(ja)]
+        n = [ i for i in reversed(n)]
+        self.assertEqual(a, n)
+
+    def testJArrayBadType(self):
+        class Bob(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JArray(Bob)
+

@@ -216,3 +216,31 @@ class CoverageCase(common.JPypeTestCase):
     # FIXME this path seems like something outdated and is not working
 #    def testJBooleanFromBool(self):
 #        self.assertTrue(jpype.java.lang.Boolean(jpype.JInt(40))==True)
+
+    def testJArrayFail(self):
+        class JArray2(jpype.JArray):
+            pass
+        with self.assertRaises(TypeError):
+            JArray2(jpype.JInt)
+
+    def testJStringFail(self):
+        class JString2(jpype.JString):
+            pass
+        with self.assertRaises(TypeError):
+            JString2("foo")
+
+    def testCustomizerLate(self):
+        with self.assertRaises(TypeError):
+            @jpype.JImplementationFor("java.lang.Object", base=True)
+            class Sally(object):
+                pass
+
+    def testCustomizerBadType(self):
+        with self.assertRaises(TypeError):
+            @jpype.JImplementationFor({})
+            class Sally(object):
+                pass
+
+
+
+

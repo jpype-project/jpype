@@ -177,7 +177,7 @@ class JProxy(_jpype._JProxy):
 
         # Verify that one of the options has been selected
         if dict is not None and inst is not None:
-            raise RuntimeError("Specify only one of dict and inst")
+            raise TypeError("Specify only one of dict and inst")
 
         if dict is not None:
             inst = _JFromDict(dict)

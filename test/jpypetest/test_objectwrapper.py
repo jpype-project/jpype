@@ -100,6 +100,18 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         self.assertEqual(type(JObject(1, JShort)),
                          jpype.JClass("java.lang.Short"))
 
+    def testJObjectBadType(self):
+        class Fred(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JObject(1, Fred)
+
+    def testJObjectUnknownObject(self):
+        class Fred(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JObject(Fred())
+
 
 #     def testMakeSureWeCanLoadAllClasses(self):
 #         def get_system_jars():

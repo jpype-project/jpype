@@ -312,3 +312,7 @@ class ProxyTestCase(common.JPypeTestCase):
         b = Bomb()
         t = ProxyTriggers()
         self.assertTrue(t.testEquals(b))
+
+    def testProxyFail(self):
+        with self.assertRaises(TypeError):
+            JProxy(inst=object(), dict={}, intf="java.io.Serializable")

@@ -27,9 +27,6 @@ def registerClassBase(name, cls):
     Use @JImplementationFor(cls, base=True) to access this.
 
     """
-    if not issubclass(cls, _jpype._JObject):
-        raise TypeError("Classbases must derive from JObject")
-
     if name in _JP_BASES:
         _JP_BASES[name].append(cls)
     else:
@@ -38,7 +35,7 @@ def registerClassBase(name, cls):
     # Changing the base class in python can break things,
     # so we will tag this as an error for now.
     if _jpype._hasClass(name):
-        raise RuntimeError(
+        raise TypeError(
             "Base classes must be added before class is created")
 
 
@@ -86,7 +83,7 @@ def JImplementationFor(clsname, base=False):
 
     """
     if not isinstance(clsname, str):
-        raise TypeError("SuperFor requires a java classname string")
+        raise TypeError("ImplementationFor requires a java classname string")
 
     def customizer(cls):
         if base:
