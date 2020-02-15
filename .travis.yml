@@ -47,7 +47,7 @@ matrix:
         - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
         - $PYTHON setup.py install
         - $PIP install -e .
-        - $PIP install gcovr pytest-cov
+        - $PIP install gcovr pytest-cov jedi
         - mvn -f project/coverage package
         - ant -f test/build.xml
       script:

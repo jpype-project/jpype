@@ -27,12 +27,9 @@ jmethodID s_Object_EqualsID;
 jmethodID s_Class_GetNameID;
 jmethodID s_Class_GetComponentTypeID;
 jmethodID s_Class_GetDeclaredFieldsID;
-jmethodID s_Class_GetDeclaredMethodsID;
 jmethodID s_Class_GetInterfacesID;
-jmethodID s_Class_GetFieldsID;
 jmethodID s_Class_GetMethodsID;
 jmethodID s_Class_GetDeclaredConstructorsID;
-jmethodID s_Class_GetConstructorsID;
 jmethodID s_Class_IsArrayID;
 jmethodID s_Class_IsInterfaceID;
 jmethodID s_Class_GetModifiersID;
@@ -106,11 +103,8 @@ void JPJni::init()
 
 	s_Class_GetComponentTypeID = frame.GetMethodID(s_ClassClass, "getComponentType", "()Ljava/lang/Class;");
 	s_Class_GetDeclaredFieldsID = frame.GetMethodID(s_ClassClass, "getDeclaredFields", "()[Ljava/lang/reflect/Field;");
-	s_Class_GetDeclaredMethodsID = frame.GetMethodID(s_ClassClass, "getDeclaredMethods", "()[Ljava/lang/reflect/Method;");
 	s_Class_GetMethodsID = frame.GetMethodID(s_ClassClass, "getMethods", "()[Ljava/lang/reflect/Method;");
-	s_Class_GetFieldsID = frame.GetMethodID(s_ClassClass, "getFields", "()[Ljava/lang/reflect/Field;");
 	s_Class_GetDeclaredConstructorsID = frame.GetMethodID(s_ClassClass, "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;");
-	s_Class_GetConstructorsID = frame.GetMethodID(s_ClassClass, "getConstructors", "()[Ljava/lang/reflect/Constructor;");
 	s_Class_IsArrayID = frame.GetMethodID(s_ClassClass, "isArray", "()Z");
 	s_Class_IsInterfaceID = frame.GetMethodID(s_ClassClass, "isInterface", "()Z");
 	s_Class_GetModifiersID = frame.GetMethodID(s_ClassClass, "getModifiers", "()I");
@@ -199,18 +193,6 @@ jobject JPJni::stringToCharArray(jstring str)
 	jobject res = frame.CallObjectMethod(str, s_String_ToCharArrayID);
 	return frame.keep(res);
 }
-
-//JPTypeName JPJni::getTypeNameForObject(jobject o)
-//{
-//	if (o == NULL)
-//	{
-//		return JPTypeName::fromSimpleName("java.lang.Object");
-//	}
-//
-//	JPJavaFrame frame;
-//	jclass c = getClass(o);
-//	return getTypeNameForClass(c);
-//}
 
 jclass JPJni::getClass(jobject o)
 {
@@ -301,130 +283,24 @@ bool JPJni::isFieldPublic(jobject field)
 	return (res ? true : false);
 }
 
-//JPTypeName JPJni::getTypeNameForClass(jclass clazz)
-//{
-//	string simpleName = convertToSimpleName(clazz);
-//	return JPTypeName::fromSimpleName(simpleName.c_str());
-//}
-
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jclass> JPJni::getInterfaces(JPJavaFrame& frame, jclass clazz)
+jobjectArray JPJni::getInterfaces(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray interfaces = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetInterfacesID);
-
-	int len = frame.GetArrayLength(interfaces);
-	vector<jclass> res;
-	for (int i = 0; i < len; i++)
-	{
-		jclass c = (jclass) frame.GetObjectArrayElement(interfaces, i);
-		res.push_back(c);
-	}
-
-	return res;
+	return (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetInterfacesID);
 }
 
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getDeclaredFields(JPJavaFrame& frame, jclass clazz)
+jobjectArray JPJni::getDeclaredFields(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray fields = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredFieldsID);
-
-	int len = frame.GetArrayLength(fields);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(fields, i);
-		res.push_back(c);
-	}
-
-	return res;
+	return (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredFieldsID);
 }
 
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getFields(JPJavaFrame& frame, jclass clazz)
+jobjectArray JPJni::getDeclaredConstructors(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray fields = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetFieldsID);
-
-	int len = frame.GetArrayLength(fields);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(fields, i);
-		res.push_back(c);
-	}
-
-	return res;
+	return (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredConstructorsID);
 }
 
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getDeclaredMethods(JPJavaFrame& frame, jclass clazz)
+jobjectArray JPJni::getMethods(JPJavaFrame& frame, jclass clazz)
 {
-	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredMethodsID);
-
-	int len = frame.GetArrayLength(methods);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(methods, i);
-		res.push_back(c);
-	}
-
-	return res;
-}
-
-
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getDeclaredConstructors(JPJavaFrame& frame, jclass clazz)
-{
-	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetDeclaredConstructorsID);
-
-	int len = frame.GetArrayLength(methods);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(methods, i);
-		res.push_back(c);
-	}
-
-	return res;
-}
-
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getConstructors(JPJavaFrame& frame, jclass clazz)
-{
-	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetConstructorsID);
-
-	int len = frame.GetArrayLength(methods);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(methods, i);
-		res.push_back(c);
-	}
-
-	return res;
-}
-
-// Returns multiple local references,  must have a suitable local frame
-
-vector<jobject> JPJni::getMethods(JPJavaFrame& frame, jclass clazz)
-{
-	jobjectArray methods = (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetMethodsID);
-
-	int len = frame.GetArrayLength(methods);
-	vector<jobject> res;
-	for (int i = 0; i < len; i++)
-	{
-		jobject c = frame.GetObjectArrayElement(methods, i);
-		res.push_back(c);
-	}
-
-	return res;
+	return (jobjectArray) frame.CallObjectMethod(clazz, s_Class_GetMethodsID);
 }
 
 // Returns local reference

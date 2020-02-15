@@ -67,38 +67,22 @@ bool            isFinal(jclass cls);
 /**
  * java.lang.Class.getInterfaces()
  */
-vector<jclass>  getInterfaces(JPJavaFrame& frame, jclass cls);
+jobjectArray  getInterfaces(JPJavaFrame& frame, jclass cls);
 
 /**
  * java.lang.Class.getDeclaredFields()
  */
-vector<jobject> getDeclaredFields(JPJavaFrame& frame, jclass cls);
-
-
-/**
- * java.lang.Class.getConstructors()
- */
-vector<jobject> getConstructors(JPJavaFrame& frame, jclass cls);
-
-/**
- * java.lang.Class.getFields()
- */
-vector<jobject> getFields(JPJavaFrame& frame, jclass cls);
+jobjectArray getDeclaredFields(JPJavaFrame& frame, jclass cls);
 
 /**
  * java.lang.Class.getDeclaredMethods()
  */
-vector<jobject> getDeclaredMethods(JPJavaFrame& frame, jclass cls);
+jobjectArray getMethods(JPJavaFrame& frame, jclass cls);
 
 /**
  * java.lang.Class.getDeclaredMethods()
  */
-vector<jobject> getMethods(JPJavaFrame& frame, jclass cls);
-
-/**
- * java.lang.Class.getDeclaredMethods()
- */
-vector<jobject> getDeclaredConstructors(JPJavaFrame& frame, jclass cls);
+jobjectArray getDeclaredConstructors(JPJavaFrame& frame, jclass cls);
 
 /**
  * java.lang.Class.getModifiers()

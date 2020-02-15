@@ -441,12 +441,14 @@ const JPClass::ClassList& JPClass::getInterfaces()
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadInterfaces");
 	// Super interfaces
-	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class.get());
-
-	for (vector<jclass>::iterator it = intf.begin(); it != intf.end(); it++)
+	jobjectArray intf = JPJni::getInterfaces(frame, m_Class.get());
+	int len = frame.GetArrayLength(intf);
+	for (int i = 0; i < len; i++)
 	{
-		JPClass* interface = JPTypeManager::findClass(*it);
+		jclass c = (jclass) frame.GetObjectArrayElement(intf, i);
+		JPClass* interface = JPTypeManager::findClass(c);
 		m_SuperInterfaces.push_back(interface);
+		frame.DeleteLocalRef(c);
 	}
 	return m_SuperInterfaces;
 	JP_TRACE_OUT;
@@ -467,33 +469,37 @@ void JPClass::postLoad()
 
 void JPClass::loadFields()
 {
-	JPJavaFrame frame(512);
+	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadFields");
 	// fields
-	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class.get());
+	jobjectArray fields = JPJni::getDeclaredFields(frame, m_Class.get());
 
-	for (vector<jobject>::iterator it = fields.begin(); it != fields.end(); it++)
+	int len = frame.GetArrayLength(fields);
+	for (int i = 0; i < len; i++)
 	{
-		// Skip private fields
-		if (!JPJni::isFieldPublic(*it))
+		jobject c = frame.GetObjectArrayElement(fields, i);
+		if (!JPJni::isFieldPublic(c))
 			continue;
-		m_Fields.push_back(new JPField(this, *it));
+		m_Fields.push_back(new JPField(this, c));
+		frame.DeleteLocalRef(c);
 	}
 	JP_TRACE_OUT;
 }
 
 void JPClass::loadMethods()
 {
-	JPJavaFrame frame(512);
+	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadMethods");
 
 	// methods
 	MethodMap methodMap;
-	vector<jobject> methods = JPJni::getMethods(frame, m_Class.get());
+	jobjectArray methods = JPJni::getMethods(frame, m_Class.get());
 
-	for (vector<jobject>::iterator iter1 = methods.begin(); iter1 != methods.end(); iter1++)
+	int len = frame.GetArrayLength(methods);
+	for (int i = 0; i < len; i++)
 	{
-		const string& name = JPJni::getMemberName(*iter1);
+		jobject c = frame.GetObjectArrayElement(methods, i);
+		const string& name = JPJni::getMemberName(c);
 		JPMethod* method = NULL;
 		MethodMap::iterator iter2 = methodMap.find(name);
 		if (iter2 == methodMap.end())
@@ -504,7 +510,8 @@ void JPClass::loadMethods()
 		{
 			method = iter2->second;
 		}
-		method->addOverload(this, *iter1);
+		method->addOverload(this, c);
+		frame.DeleteLocalRef(c);
 	}
 
 	int i = 0;
@@ -527,15 +534,16 @@ void JPClass::loadConstructors()
 		return;
 	}
 
-
-	vector<jobject> methods = JPJni::getDeclaredConstructors(frame, m_Class.get());
-
-	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
+	jobjectArray methods = JPJni::getDeclaredConstructors(frame, m_Class.get());
+	int len = frame.GetArrayLength(methods);
+	for (int i = 0; i < len; i++)
 	{
-		if (JPJni::isMemberPublic(*it))
+		jobject c = frame.GetObjectArrayElement(methods, i);
+		if (JPJni::isMemberPublic(c))
 		{
-			m_Constructors->addOverload(this, *it);
+			m_Constructors->addOverload(this, c);
 		}
+		frame.DeleteLocalRef(c);
 	}
 	JP_TRACE_OUT;
 }
