@@ -329,12 +329,9 @@ With this limitiation in mind, this appears to be the best implementation
 
 We could in principle add the slot to the "front" of the Python object but that
 could cause additional issues as we would require also require overriding the
-deallocation slot to disappear our memory from the free.  This is dangerous
-because any module that mistakenly called the Python generic object base free
-rather than the slot free would cause Python to crash.  Of course that should
-already be a problem for the module with the bug, but as it would be a correct
-assumption in 99% of the cases it may not be exposed.  Thus in our opinion
-adding to the tail is safer than adding to the head.
+deallocation slot to disappear our memory from the free.  The Python GC module
+has already reserved the memory in the front of the object so the back is 
+the next best option.
 
 
 Speed patch implications
