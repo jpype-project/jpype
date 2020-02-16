@@ -18,13 +18,6 @@ import sys
 import jpype
 import common
 
-# Python2/3 support
-if sys.version > '3':
-    long = int
-    unicode = str
-
-# Test code
-
 
 def compareList(l1, l2):
     if len(l1) != len(l2):

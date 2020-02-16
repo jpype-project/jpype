@@ -18,13 +18,6 @@ import sys
 import jpype
 import common
 
-# Python2/3 support
-if sys.version > '3':
-    long = int
-    unicode = str
-
-# Test code
-
 
 class ValuesTestCase(common.JPypeTestCase):
     """ Test of type conversion for fields. """

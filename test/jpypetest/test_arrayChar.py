@@ -22,7 +22,6 @@ class ArrayCharTestCase(common.JPypeTestCase):
         t = JClass("jpype.array.TestArray")()
         v = t.getCharArray()
         self.assertEqual(str(v), 'avcd')
-        self.assertEqual(unicode(v), u'avcd')
 
     def testJArrayConversionChar(self):
         t = JClass("jpype.array.TestArray")()

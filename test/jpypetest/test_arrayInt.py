@@ -21,30 +21,30 @@ class ArrayIntTestCase(common.JPypeTestCase):
         self.VALUES = [random.randint(-2**31, 2**31-1) for i in range(10)]
 
     def assertElementsEqual(self, a, b):
-        self.assertCountEqual(a, b)
+        self.assertEqual(len(a), len(b))
         for i in range(len(a)):
                 self.assertEqual(a[i], b[i])
 
     def testJIntArrayConversionFail(self):
-        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        jarr = JArray(JInt)(self.VALUES)
         with self.assertRaises(TypeError):
             jarr[1] = 'a'
 
     def testJIntArraySliceLength(self):
-        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        jarr = JArray(JInt)(self.VALUES)
         jarr[1:2] = [1]
         with self.assertRaises(ValueError):
             jarr[1:2] = [1, 2, 3]
 
     def testJIntArrayConversionInt(self):
-        jarr = jpype.JArray(jpype.JInt)(self.VALUES)
+        jarr = JArray(JInt)(self.VALUES)
         result = jarr[0: len(jarr)]
         self.assertElementsEqual(self.VALUES, result)
         result = jarr[2:10]
         self.assertElementsEqual(self.VALUES[2:10], result)
 
     def testJIntArrayConversionError(self):
-        jarr = jpype.JArray(jpype.JInt, 1)(10)
+        jarr = JArray(JInt, 1)(10)
         with self.assertRaises(TypeError):
             jarr[1:2] = [dict()]
         # -1 is returned by python, if conversion fails also, ensure this works
@@ -55,7 +55,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
         import numpy as np
         n = 100
         a = np.random.randint(-2**31, 2**31 - 1, size=n, dtype=np.int32)
-        jarr = jpype.JArray(jpype.JInt)(n)
+        jarr = JArray(JInt)(n)
         jarr[:] = a
         self.assertElementsEqual(a, jarr)
 
@@ -64,11 +64,11 @@ class ArrayIntTestCase(common.JPypeTestCase):
         import numpy as np
         n = 100
         a = np.random.random(n).astype(np.int)
-        jarr = jpype.JArray(jpype.JInt)(a)
+        jarr = JArray(JInt)(a)
         self.assertElementsEqual(a, jarr)
 
     def testJIntArrayClone(self):
-        array = jpype.JArray(jpype.JInt, 2)([[1, 2], [3, 4]])
+        array = JArray(JInt, 2)([[1, 2], [3, 4]])
         carray = array.clone()
         # Verify the first dimension is cloned
         self.assertFalse(array.equals(carray))
@@ -77,14 +77,14 @@ class ArrayIntTestCase(common.JPypeTestCase):
 
     def testJIntArrayGetSlice(self):
         contents = self.VALUES
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         self.assertEqual(list(array[1:]), contents[1:])
         self.assertEqual(list(array[:-1]), contents[:-1])
         self.assertEqual(list(array[1:-1]), contents[1:-1])
 
     def testJIntArraySetSlice(self):
         contents = [1,2,3,4]
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         array[1:] = [5, 6, 7]
         contents[1:] = [5, 6, 7]
         self.assertEqual(list(array[:]), contents[:])
@@ -94,7 +94,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
 
     def testJIntArrayGetSliceStep(self):
         contents = self.VALUES
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         self.assertEqual(list(array[::2]), contents[::2])
         self.assertEqual(list(array[::3]), contents[::3])
         self.assertEqual(list(array[::4]), contents[::4])
@@ -107,7 +107,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
 
     def testJIntArraySliceStepNeg(self):
         contents = self.VALUES
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         self.assertEqual(list(array[::-1]), contents[::-1])
         self.assertEqual(list(array[::-2]), contents[::-2])
         self.assertEqual(list(array[::-3]), contents[::-3])
@@ -119,27 +119,27 @@ class ArrayIntTestCase(common.JPypeTestCase):
  
     def testJIntArraySetArraySliceStep(self):
         contents = [1,2,3,4,5,6]
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         array[::2] = [5, 6, 7]
         contents[::2] = [5, 6, 7]
         self.assertEqual(list(array[:]), contents[:])
 
     def testJIntArrayEquals(self):
         contents = self.VALUES
-        array = jpype.JArray(jpype.JInt)(contents)
-        array2 = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
+        array2 = JArray(JInt)(contents)
         self.assertEqual(array, array)
         self.assertNotEqual(array, array2)
 
     def testJIntArrayIter(self):
         contents = self.VALUES
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         contents2 = [i for i in array]
         self.assertEqual(contents, contents2)
 
     def testJIntArrayGetOutOfBounds(self):
         contents = [1, 2, 3, 4]
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         with self.assertRaises(IndexError):
             array[5]
         self.assertEqual(array[-1], contents[-1])
@@ -149,7 +149,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
 
     def testJIntArraySetOutOfBounds(self):
         contents = [1, 2, 3, 4]
-        array = jpype.JArray(jpype.JInt)(contents)
+        array = JArray(JInt)(contents)
         with self.assertRaises(IndexError):
             array[5] = 1
         array[-1] = 5
@@ -161,7 +161,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
             array[-5] = 1
 
     def testJIntArraySliceCast(self):        
-        JA = jpype.JArray(jpype.JInt)
+        JA = JArray(JInt)
         ja = JA(self.VALUES)
         ja2 = ja[::2]
         jo = jpype.JObject(ja2, object)
@@ -173,7 +173,7 @@ class ArrayIntTestCase(common.JPypeTestCase):
 
     def testJIntArrayReverse(self):
         n = self.VALUES
-        JA = jpype.JArray(jpype.JInt)
+        JA = JArray(JInt)
         ja = JA(n)
         a = [ i for i in reversed(ja)]
         n = [ i for i in reversed(n)]
