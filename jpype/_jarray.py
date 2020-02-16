@@ -169,19 +169,11 @@ def _toJavaClass(tp):
     raise TypeError("Unable to find class for '%s'" % tp.__name__)
 
 
-# FIXME JavaArrayClass likely should be exposed for isinstance, issubtype
 # FIXME are these not sequences?  They act like sequences but are they
 # connected to collections.abc.Sequence
 # has: __len__, __iter__, __getitem__
 # missing: __contains__ (required for in)
 # Cannot be Mutable because java arrays are fixed in length
-
-def _isIterable(obj):
-    if isinstance(obj, Sequence):
-        return True
-    if hasattr(obj, '__len__') and hasattr(obj, '__iter__'):
-        return True
-    return False
 
 
 class _JavaArrayIter(object):

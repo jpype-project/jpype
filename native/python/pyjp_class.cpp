@@ -138,29 +138,38 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_tp_setattro:
 				type->tp_setattro = (setattrofunc) slot->pfunc;
 				break;
-			case  Py_tp_dealloc:
+			case Py_tp_dealloc:
 				type->tp_dealloc = (destructor) slot->pfunc;
 				break;
-			case  Py_tp_str:
+			case Py_tp_str:
 				type->tp_str = (reprfunc) slot->pfunc;
 				break;
-			case  Py_tp_repr:
+			case Py_tp_repr:
 				type->tp_repr = (reprfunc) slot->pfunc;
 				break;
-			case  Py_tp_methods:
+			case Py_tp_methods:
 				type->tp_methods = (PyMethodDef*) slot->pfunc;
 				break;
 			case  Py_sq_ass_item:
 				heap->as_sequence.sq_ass_item = (ssizeobjargproc) slot->pfunc;
 				break;
-			case  Py_sq_item:
+			case Py_sq_item:
 				heap->as_sequence.sq_item = (ssizeargfunc) slot->pfunc;
 				break;
-			case  Py_sq_length:
+			case Py_sq_length:
 				heap->as_sequence.sq_length = (lenfunc) slot->pfunc;
 				break;
-			case  Py_mp_ass_subscript:
+			case Py_mp_ass_subscript:
 				heap->as_mapping.mp_ass_subscript = (objobjargproc) slot->pfunc;
+				break;
+			case Py_tp_hash:
+				type->tp_hash = (hashfunc) slot->pfunc;
+				break;
+			case Py_nb_int:
+				heap->as_number.nb_int = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_float:
+				heap->as_number.nb_float = (unaryfunc) slot->pfunc;
 				break;
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
@@ -497,7 +506,12 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	// Cast on java object
 	//	if (!type->isSubTypeOf(val->getClass()))
 	jobject obj = val->getJavaObject();
+	if (obj == NULL)
+		return PyJPValue_create(JPValue(type, 0)).keep();
 	JPClass *otherClass = JPTypeManager::findClassForObject(obj);
+	if (otherClass == NULL)
+		return PyJPValue_create(JPValue(type, val->getJavaObject())).keep();
+
 	if (!otherClass->isSubTypeOf(type))
 	{
 		PyErr_Format(PyExc_TypeError,

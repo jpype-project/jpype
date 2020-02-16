@@ -38,6 +38,3 @@ class _JComparable(object):
 
     def __le__(self, o):
         return self.compareTo(o) <= 0
-
-    def __hash__(self):
-        return self.hashCode()

@@ -68,9 +68,6 @@ class JObject(_jpype._JObject):
 
 
 class _JObjectProto(object):
-    def __hash__(self):
-        return self.hashCode()
-
     def __eq__(self, other):
         try:
             return self.equals(other)

@@ -231,3 +231,25 @@ class BoxedTestCase(common.JPypeTestCase):
     def testDoubleBad2(self):
         with self.assertRaises(TypeError):
             jpype.java.lang.Double(tuple(), tuple())
+
+    def testBooleanNull(self):
+        null = jpype.JObject(None, jpype.java.lang.Boolean)
+        with self.assertRaises(jpype.JException):
+            int(null)
+        with self.assertRaises(jpype.JException):
+            float(null)
+
+    def testIntNull(self):
+        null = jpype.JObject(None, jpype.java.lang.Integer)
+        with self.assertRaises(jpype.JException):
+            int(null)
+        with self.assertRaises(jpype.JException):
+            float(null)
+
+    def testDoubleNull(self):
+        null = jpype.JObject(None, jpype.java.lang.Double)
+        with self.assertRaises(jpype.JException):
+            int(null)
+        with self.assertRaises(jpype.JException):
+            float(null)
+

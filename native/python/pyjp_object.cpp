@@ -42,12 +42,27 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_PY_CATCH(NULL);
 }
 
+static Py_hash_t PyJPObject_hash(PyObject *obj)
+{
+	JP_PY_TRY("PyJPObject_hash");
+	ASSERT_JVM_RUNNING();
+	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
+	if (javaSlot == NULL || javaSlot->getClass() == NULL)
+		return Py_TYPE(Py_None)->tp_hash(Py_None);
+	jobject o = javaSlot->getJavaObject();
+	if (o == NULL)
+		return Py_TYPE(Py_None)->tp_hash(Py_None);
+	return JPJni::hashCode(o);
+	JP_PY_CATCH(0);
+}
+
 static PyType_Slot objectSlots[] = {
 	{Py_tp_new,      (void*) &PyJPObject_new},
 	{Py_tp_free,     (void*) &PyJPValue_free},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_str,      (void*) &PyJPValue_str},
+	{Py_tp_hash,     (void*) &PyJPObject_hash},
 	{0}
 };
 
