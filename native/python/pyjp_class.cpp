@@ -25,7 +25,6 @@
 #include "jp_field.h"
 #include "jp_method.h"
 
-
 struct PyJPClass
 {
 	PyHeapTypeObject ht_type;
@@ -342,6 +341,9 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 {
 	JP_PY_TRY("PyJPClass_subclasscheck");
+	if (test == type)
+		Py_RETURN_TRUE;
+
 	if (!JPEnv::isInitialized())
 	{
 		if ((PyObject*) type == _JObject)
@@ -421,9 +423,23 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JP_PY_CATCH(-1);
 }
 
-PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *args)
+PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 {
-	return PyJPClass_subclasscheck(self, Py_TYPE(args));
+	// JInterface is a meta
+	if ((PyObject*) self == _JInterface)
+	{
+		ASSERT_JVM_RUNNING();
+		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
+		return PyBool_FromLong(testClass != NULL && testClass->isInterface());
+	}
+	if ((PyObject*) self == _JException)
+	{
+		ASSERT_JVM_RUNNING();
+		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
+		if (testClass)
+			return PyBool_FromLong(testClass->isThrowable());
+	}
+	return PyJPClass_subclasscheck(self, Py_TYPE(test));
 }
 
 // Added for auditing

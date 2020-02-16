@@ -228,7 +228,7 @@ please file a ticket with the developer.
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
     _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")
-    _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Exception")
+    _jpype._java_lang_Exception = _jpype.JClass("java.lang.Exception")
     _jpype._java_lang_Class = _jpype.JClass("java.lang.Class")
     _jpype._java_lang_String = _jpype.JClass("java.lang.String")
 
