@@ -160,11 +160,11 @@ void PyJPNumber_initType(PyObject* module)
 	PyModule_AddObject(module, "_JNumberFloat", (PyObject*) PyJPNumberFloat_Type);
 	JP_PY_CHECK();
 
-	bases = PyTuple_Pack(2, &PyFloat_Type, PyJPObject_Type);
-	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases);
+	bases = PyTuple_Pack(1, &PyLong_Type, PyJPObject_Type);
+	PyJPNumberChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberCharSpec, bases);
 	Py_DECREF(bases);
 	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JNumberChar", (PyObject*) PyJPNumberFloat_Type);
+	PyModule_AddObject(module, "_JNumberChar", (PyObject*) PyJPNumberChar_Type);
 	JP_PY_CHECK();
 }
 
