@@ -310,47 +310,6 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	JP_PY_CATCH(-1);
 }
 
-// This works for Primitives and Boxed types that derive from
-// Python long or float,  char required special handling.
-
-PyObject *PyJPChar_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
-{
-	JP_PY_TRY("PyJPValueChar_new", type);
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
-	PyObject *self;
-	if (PyTuple_Size(args) == 1 && JPPyString::checkCharUTF16(PyTuple_GetItem(args, 0)))
-	{
-		jchar i = JPPyString::asCharUTF16(PyTuple_GetItem(args, 0));
-		PyObject *args2 = PyTuple_Pack(1, PyLong_FromLong(i));
-		self = PyLong_Type.tp_new(type, args2, kwargs);
-		Py_DECREF(args2);
-	} else
-	{
-		self = PyLong_Type.tp_new(type, args, kwargs);
-	}
-	if (!self)
-		JP_RAISE_PYTHON("type new failed");
-	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Class type incorrect");
-	jvalue val = cls->convertToJava(self);
-	PyJPValue_assignJavaSlot(self, JPValue(cls, val));
-	JP_TRACE("new", self);
-	return self;
-	JP_PY_CATCH(NULL);
-}
-
-PyObject* PyJPValueChar_str(PyObject* self)
-{
-	JP_PY_TRY("PyJPValueChar_str", self);
-	JPValue *value = PyJPValue_getJavaSlot(self);
-	if (value == NULL)
-		JP_RAISE(PyExc_RuntimeError, "Java slot missing");
-	return JPPyString::fromCharUTF16(value->getValue().c).keep();
-	JP_PY_CATCH(NULL);
-}
-
 static PyType_Slot valueSlots[] = {
 	{ Py_tp_init,     (void*) PyJPValue_init},
 	{ Py_tp_free,     (void*) PyJPValue_free},
@@ -368,51 +327,6 @@ static PyType_Spec valueSpec = {
 	valueSlots
 };
 
-static PyType_Slot valueLongSlots[] = {
-	{ Py_tp_new,  (void*) PyJPNumber_new},
-	{0}
-};
-
-PyTypeObject *PyJPValueLong_Type = NULL;
-static PyType_Spec valueLongSpec = {
-	"_jpype._JValueLong",
-	0,
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueLongSlots
-};
-
-
-static PyType_Slot valueFloatSlots[] = {
-	{ Py_tp_new,   (void*) PyJPNumber_new},
-	{0}
-};
-
-PyTypeObject *PyJPValueFloat_Type = NULL;
-static PyType_Spec valueFloatSpec = {
-	"_jpype._JValueFloat",
-	0,
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueFloatSlots
-};
-
-
-static PyType_Slot valueCharSlots[] = {
-	{ Py_tp_new,  (void*) PyJPChar_new},
-	{ Py_tp_str,  (void*) PyJPValueChar_str},
-	{0}
-};
-
-PyTypeObject *PyJPValueChar_Type = NULL;
-static PyType_Spec valueCharSpec = {
-	"_jpype._JValueChar",
-	0,
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueCharSlots
-};
-
 #ifdef __cplusplus
 }
 #endif
@@ -424,55 +338,6 @@ void PyJPValue_initType(PyObject* module)
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JValue", (PyObject*) PyJPValue_Type);
 	JP_PY_CHECK();
-
-	bases = PyTuple_Pack(1, &PyLong_Type);
-	PyJPValueLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&valueLongSpec, bases);
-	Py_DECREF(bases);
-	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JValueLong", (PyObject*) PyJPValueLong_Type);
-	JP_PY_CHECK();
-
-	bases = PyTuple_Pack(1, &PyFloat_Type);
-	PyJPValueFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&valueFloatSpec, bases);
-	Py_DECREF(bases);
-	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JValueFloat", (PyObject*) PyJPValueFloat_Type);
-	JP_PY_CHECK();
-
-	bases = PyTuple_Pack(1, &PyLong_Type);
-	PyJPValueChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&valueCharSpec, bases);
-	Py_DECREF(bases);
-	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JValueChar", (PyObject*) PyJPValueChar_Type);
-	JP_PY_CHECK();
-
-}
-
-static JPPyObject PyJPNumber_create(JPPyObject& wrapper, const JPValue& value)
-{
-	// Bools are not numbers in Java
-	if (value.getClass() == JPTypeManager::_java_lang_Boolean)
-	{
-		jlong l = JPJni::booleanValue(value.getJavaObject());
-		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
-		return JPPyObject(JPPyRef::_call,
-				PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
-	}
-	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
-	{
-		jlong l = JPJni::longValue(value.getJavaObject());
-		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
-		return JPPyObject(JPPyRef::_call,
-				PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
-	}
-	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyFloat_Type))
-	{
-		jdouble l = JPJni::doubleValue(value.getJavaObject());
-		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));
-		return JPPyObject(JPPyRef::_call,
-				PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
-	}
-	JP_RAISE(PyExc_TypeError, "unable to convert");
 }
 
 // These are from the internal methods when we already have the jvalue

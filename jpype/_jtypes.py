@@ -22,33 +22,33 @@ __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
            'JInt', 'JLong', 'JFloat', 'JDouble']
 
 
-class JBoolean(_jpype._JValueLong):
+class JBoolean(_jpype._JNumberLong):
     pass
 
 
-class JByte(_jpype._JValueLong):
+class JByte(_jpype._JNumberLong):
     pass
 
 
-class JChar(_jpype._JValueChar):
+class JChar(_jpype._JNumberChar):
     pass
 
 
-class JInt(_jpype._JValueLong):
+class JInt(_jpype._JNumberLong):
     pass
 
 
-class JShort(_jpype._JValueLong):
+class JShort(_jpype._JNumberLong):
     pass
 
 
-class JLong(_jpype._JValueLong):
+class JLong(_jpype._JNumberLong):
     pass
 
 
-class JFloat(_jpype._JValueFloat):
+class JFloat(_jpype._JNumberFloat):
     pass
 
 
-class JDouble(_jpype._JValueFloat):
+class JDouble(_jpype._JNumberFloat):
     pass

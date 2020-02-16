@@ -115,8 +115,6 @@ PyObject  *PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases);
 PyObject  *PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems );
 void       PyJPValue_free(void* obj);
 void       PyJPValue_finalize(void* obj);
-PyObject  *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
-PyObject  *PyJPChar_new(PyTypeObject *type, PyObject *args, PyObject *kwargs);
 
 // Generic methods that operate on any object with a Java slot
 PyObject  *PyJPValue_str(PyObject* self);
@@ -140,6 +138,7 @@ JPPyObject PyJPArray_create(PyTypeObject* wrapper, JPValue& value);
 JPPyObject PyJPClass_create(JPClass* cls);
 JPPyObject PyJPField_create(JPField* m);
 JPPyObject PyJPMethod_create(JPMethod *m, PyObject *instance);
+JPPyObject PyJPNumber_create(JPPyObject& wrapper, const JPValue& value);
 JPPyObject PyJPValue_create(const JPValue& value);
 
 JPClass*   PyJPClass_getJPClass(PyObject* obj);
