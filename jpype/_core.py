@@ -26,7 +26,6 @@ from . import _classpath
 # Customizers are applied in the order that they are defined currently.
 #from . import _properties
 from . import _jarray
-from . import _jboxed
 from . import _jexception
 from . import _jcollection
 from . import _jcomparable

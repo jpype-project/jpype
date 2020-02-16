@@ -171,6 +171,9 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_nb_float:
 				heap->as_number.nb_float = (unaryfunc) slot->pfunc;
 				break;
+			case Py_tp_richcompare:
+				type->tp_richcompare = (richcmpfunc) slot->pfunc;
+				break;
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
 				JP_RAISE_PYTHON("fail");
@@ -656,7 +659,10 @@ static JPPyObject PyJPClass_getBases(JPClass* cls)
 	JPClass *super = cls->getSuperClass();
 	if (dynamic_cast<JPBoxedClass*> (cls) == cls)
 	{
-		if (cls == JPTypeManager::_java_lang_Character)
+		if (cls == JPTypeManager::_java_lang_Boolean)
+		{
+			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberBool_Type);
+		} else if (cls == JPTypeManager::_java_lang_Character)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberChar_Type);
 		} else if (cls == JPTypeManager::_java_lang_Boolean

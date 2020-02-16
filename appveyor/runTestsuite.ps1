@@ -1,5 +1,5 @@
 cd $env:APPVEYOR_BUILD_FOLDER
-python.exe -m pytest -v --junitxml=junit.xml test/jpypetest
+python.exe -m pytest -v --junitxml=junit.xml test/jpypetest --checkjni
 $success = $?
 Write-Host "result code of pytest:" $success
 

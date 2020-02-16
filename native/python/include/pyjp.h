@@ -95,6 +95,7 @@ extern PyTypeObject *PyJPException_Type;
 extern PyTypeObject *PyJPNumberLong_Type;
 extern PyTypeObject *PyJPNumberFloat_Type;
 extern PyTypeObject *PyJPNumberChar_Type;
+extern PyTypeObject *PyJPNumberBool_Type;
 
 // JPype resources
 extern PyObject *_JArray;

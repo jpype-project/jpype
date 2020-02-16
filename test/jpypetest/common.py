@@ -46,7 +46,9 @@ class JPypeTestCase(unittest.TestCase):
             logger = logging.getLogger(__name__)
             logger.info("Running testsuite using JVM %s" % jvm_path)
             classpath_arg = "-Djava.class.path=%s"
-            args = ["-ea", "-Xmx256M", "-Xms16M", "-Xcheck:jni"]
+            args = ["-ea", "-Xmx256M", "-Xms16M"]
+            if self._checkjni:
+                args.append("-Xcheck:jni")
             # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
             # "-Xcheck:jni",
             if self._jar:
