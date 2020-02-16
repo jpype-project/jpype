@@ -15,13 +15,11 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import sys
 import logging
 import time
 import common
-
-if sys.version > '3':
-    long = int
 
 
 def haveNumpy():
@@ -36,7 +34,7 @@ class ConversionFloatTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0+1.0/65536
-        self.Test = jpype.JClass("jpype.types.MethodsTest")()
+        self.Test = JClass("jpype.types.MethodsTest")()
 
     def testFloatFromInt(self):
         self.assertEqual(self.Test.callFloat(int(123)), 123)
@@ -96,3 +94,7 @@ class ConversionFloatTestCase(common.JPypeTestCase):
             self.Test.callFloat(float(1e40))
         with self.assertRaises(OverflowError):
             self.Test.callFloat(float(-1e40))
+
+    def testFloatFromNone(self):
+        with self.assertRaises(TypeError):
+            self.Test.callFloat(None)

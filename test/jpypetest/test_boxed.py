@@ -331,6 +331,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -344,6 +345,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -357,6 +359,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -370,6 +373,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -383,6 +387,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -396,6 +401,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -410,6 +416,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -424,6 +431,7 @@ class BoxedTestCase(common.JPypeTestCase):
             float(n)
         self.assertEqual(str(n), str(None))
         self.assertEqual(repr(n), str(None))
+        self.assertEqual(hash(n), hash(None))
         u = passThrough(n)
         self.assertEqual(u, None)
 
@@ -434,7 +442,3 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertIsInstance(java.lang.Long(1), java.lang.Number)
         self.assertIsInstance(java.lang.Float(1), java.lang.Number)
         self.assertIsInstance(java.lang.Double(1), java.lang.Number)
-
-
-
-# FIXME Null boxed types print as value 0 not null

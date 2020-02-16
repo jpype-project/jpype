@@ -259,6 +259,9 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 		self->m_Array->setRange((jsize) start, (jsize) slicelength, (jsize) step,  value);
 		return 0;
 	}
+	PyErr_Format(PyExc_TypeError,
+			"Java array indices must be integers or slices, not '%s'",
+			Py_TYPE(item)->tp_name);
 	JP_PY_CATCH(-1);
 }
 

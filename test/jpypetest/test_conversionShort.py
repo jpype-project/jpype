@@ -15,13 +15,11 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import sys
 import logging
 import time
 import common
-
-if sys.version > '3':
-    long = int
 
 
 def haveNumpy():
@@ -35,7 +33,7 @@ def haveNumpy():
 class ConversionShortTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = jpype.JClass("jpype.types.MethodsTest")()
+        self.Test = JClass("jpype.types.MethodsTest")()
 
     def testShortFromInt(self):
         self.assertEqual(self.Test.callShort(int(123)), 123)
@@ -93,6 +91,10 @@ class ConversionShortTestCase(common.JPypeTestCase):
 
     def testShortRange(self):
         with self.assertRaises(OverflowError):
-            self.Test.callShort(long(1e10))
+            self.Test.callShort(int(1e10))
         with self.assertRaises(OverflowError):
-            self.Test.callShort(long(-1e10))
+            self.Test.callShort(int(-1e10))
+
+    def testShortFromNone(self):
+        with self.assertRaises(TypeError):
+            self.Test.callShort(None)

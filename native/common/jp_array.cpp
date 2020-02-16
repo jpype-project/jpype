@@ -74,7 +74,11 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 	// Make sure it is an iterable before we start
 	if (!PySequence_Check(val))
-		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
+	{
+		PyErr_Format(PyExc_TypeError,
+				"Java array assignments must be sequences, not '%s'", Py_TYPE(val)->tp_name);
+		JP_RAISE_PYTHON("fail");
+	}
 
 	JPJavaFrame frame;
 	JPClass* compType = m_Class->getComponentType();
@@ -109,7 +113,12 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 		JP_RAISE(PyExc_IndexError, "java array assignment out of bounds");
 
 	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
-		JP_RAISE(PyExc_TypeError, "Unable to convert.");
+	{
+		PyErr_Format(PyExc_TypeError, "Unable to convert '%s' int Java '%s'",
+				Py_TYPE(val)->tp_name,
+				this->getClass()->getComponentType()->getCanonicalName().c_str());
+		JP_RAISE_PYTHON("fail");
+	}
 
 	compType->setArrayItem(frame, m_Object.get(), m_Start + ndx*m_Step, val);
 }
