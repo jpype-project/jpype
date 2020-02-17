@@ -242,8 +242,8 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 	JP_TRACE("Verify argument types");
 	for (int i = 0; i < length; i++)
 	{
-		PyObject* v = seq[i].get();
-		if (this->canConvertToJava(v) <= JPMatch::_explicit)
+		JPPyObject v = seq[i];
+		if (this->canConvertToJava(v.get()) <= JPMatch::_explicit)
 		{
 			JP_RAISE(PyExc_TypeError, "Unable to convert.");
 		}
