@@ -130,7 +130,8 @@ ssize_t JPVoidType::getItemSize()
 	return 0;
 }
 
-void JPVoidType::copyElements(JPJavaFrame &frame, jarray a, int start, int len, void* memory, int offset)
+void JPVoidType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
 }
 
