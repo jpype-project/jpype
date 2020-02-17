@@ -292,11 +292,12 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		*view = self->m_View->buffer;
 
 		// We are always contiguous so no need to check that here.
-		if ((flags & PyBUF_WRITEABLE) != PyBUF_WRITEABLE)
+		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 		{
-			self->m_View->buffer.readonly = 0;
-			view->readonly = 0;
+			PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
+			return -1;
 		}
+		view->readonly = 1;
 
 		// If strides are not requested and this is a slice then fail
 		if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES)

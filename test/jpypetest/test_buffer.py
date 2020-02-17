@@ -122,9 +122,8 @@ class ConversionBuffer(common.JPypeTestCase):
         data = [1, 2, 3, 4, 5]
         ja = JArray(JInt)(data)
         b = memoryview(ja)  # Create a view
-        b[0] = 123  # Alter the memory using the view
-        del b  # Commit to Java
-        self.assertEqual(ja[0], 123)
+        with self.assertRaises(TypeError):
+            b[0] = 123  # Alter the memory using the view
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSlice(self):
