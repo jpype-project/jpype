@@ -117,7 +117,7 @@ string JPypeException::getPythonMessage()
 		JPPyErrFrame eframe;
 		if (!eframe.good)
 			return "no error reported";
-		JPPyString className(eframe.exceptionClass.getAttrString("__name__"));
+		JPPyObject className(JPPyRef::_call, PyObject_GetAttrString(eframe.exceptionClass.get(), "__name__"));
 		stringstream ss;
 		ss << JPPyString::asStringUTF8(className.get());
 

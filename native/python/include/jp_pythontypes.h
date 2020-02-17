@@ -147,9 +147,7 @@ public:
 		return pyobj;
 	}
 
-	static bool hasAttrString(PyObject*, const char* k);
 	JPPyObject getAttrString(const char* k);
-	static JPPyObject getAttrString(PyObject*, const char* k);
 
 	static const char* getTypeName(PyObject* obj);
 
@@ -238,13 +236,6 @@ class JPPyString : public JPPyObject
 {
 public:
 
-	JPPyString(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
-	{
-	}
-
-	JPPyString(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
 
 	/** Check if the object is a bytes or unicode.
 	 *

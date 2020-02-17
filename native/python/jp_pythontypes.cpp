@@ -129,23 +129,6 @@ bool JPPyObject::isSequenceOfItems(PyObject* obj)
 	return PySequence_Check(obj) && !JPPyString::check(obj);
 }
 
-bool JPPyObject::hasAttrString(PyObject* pyobj, const char* k)
-{
-	int res = PyObject_HasAttrString(pyobj, (char*) k);
-	JP_PY_CHECK();
-	return res != 0;
-}
-
-JPPyObject JPPyObject::getAttrString(const char* k)
-{
-	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
-}
-
-JPPyObject JPPyObject::getAttrString(PyObject* pyobj, const char* k)
-{
-	return JPPyObject(JPPyRef::_call, PyObject_GetAttrString(pyobj, (char*) k)); // new reference
-}
-
 const char* JPPyObject::getTypeName(PyObject* obj)
 {
 	if (obj == NULL)

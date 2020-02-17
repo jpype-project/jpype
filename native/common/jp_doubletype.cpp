@@ -108,7 +108,7 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 	{
 		field(res) = (type_t) JPPyLong::asLong(obj);
 		return res;
-	} else if (JPPyObject::hasAttrString(obj, "__float__"))
+	} else if (PyObject_HasAttrString(obj, "__float__"))
 	{
 		field(res) = (type_t) JPPyFloat::asDouble(obj);
 		return res;
