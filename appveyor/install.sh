@@ -34,6 +34,7 @@ $PYTHON get-pip.py
 $PYTHON -m pip install setuptools
 $PYTHON -m pip install mock
 $PYTHON -m pip install jedi
+$PYTHON -m pip install numpy
 git clone --depth=1 https://github.com/pypa/setuptools.git
 cd setuptools
 $PYTHON ./bootstrap.py

@@ -11,6 +11,7 @@ python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 # target Python version and architecture
 pip.exe install zipp==1.1.0
 pip.exe install setuptools -r test-requirements.txt
+pip.exe install numpy
 #pip.exe install pytest==5.2.0
 #pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
