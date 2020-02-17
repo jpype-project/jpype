@@ -1,74 +1,110 @@
+import subrun
+import os
+import unittest
 import jpype
-import common
 
+@subrun.TestCase
+class PropertiesTestCase(unittest.TestCase):
 
-class PropertiesTestCase(common.JPypeTestCase):
-    #    __name__="PropertiesTestCase"
+    @classmethod
+    def setUpClass(cls):
+        import jpype.beans
+        jpype.startJVM(classpath=os.path.abspath("test/classes"), convertStrings=False)
 
     def setUp(self):
-        super(PropertiesTestCase, self).setUp()
         self._bean = jpype.JClass('jpype.properties.TestBean')()
 
-    @common.unittest.skip("properties disabled")
     def testPropertyPublicMethodOverlap(self):
         self._bean.setProperty1("val")
         self.assertEqual("getsetval", self._bean.getProperty1())
 
-    @common.unittest.skip("properties disabled")
     def testPublicMethodPropertyOverlap(self):
         self.assertEqual("method", self._bean.property1())
 
-    @common.unittest.skip("properties disabled")
     def testPropertyProtectedMethodOverlapInvisibleAttribute(self):
         self._bean.property2 = "val"
         self.assertEqual("getsetval", self._bean.property2)
 
-    @common.unittest.skip("properties disabled")
     def testProtectedMethodPropertyOverlapInvisibleAttribute(self):
         self.assertFalse(hasattr(self._bean.property2, '__call__'))
 
-    @common.unittest.skip("properties disabled")
     def testPropertyProtectedMethodOverlapAttribute(self):
         self._bean.property3 = "val"
         self.assertEqual("getsetval", self._bean.property3)
 
-    @common.unittest.skip("properties disabled")
     def testProtectedMethodPropertyOverlapAttribute(self):
         self.assertFalse(hasattr(self._bean.property3, '__call__'))
 
-    @common.unittest.skip("properties disabled")
     def testPropertyProtectedMethodOverlapAttributeSet(self):
         self._bean.setProperty3("val")
         self.assertEqual("getsetval", self._bean.property3)
 
-    @common.unittest.skip("properties disabled")
     def testPropertyProtectedMethodOverlapAttributeGet(self):
         self._bean.property3 = "val"
         self.assertEqual("getsetval", self._bean.getProperty3())
 
-    @common.unittest.skip("properties disabled")
     def testPrivateAttributeNoThreeCharacterMethodMatchCollision(self):
         self._bean.property4 = "val"
         self.assertEqual("abcval", self._bean.abcProperty4())
 
-    @common.unittest.skip("properties disabled")
     def testPropertyOnlySetter(self):
         self._bean.property5 = "val"
         self.assertEqual("returnsetval", self._bean.returnProperty5())
 
-    @common.unittest.skip("properties disabled")
     def testPropertyOnlySetterSet(self):
         self._bean.setProperty5("val")
-        self.assertEqual("setval", self._bean.property5)
+        with self.assertRaises(AttributeError):
+            self.assertEqual("setval", self._bean.property5)
 
-    @common.unittest.skip("properties disabled")
     def testPropertyDifferentAttribute(self):
         self._bean.property6 = "val"
         self.assertEqual("getsetval", self._bean.property6)
         self.assertEqual("setval", self._bean.property7)
 
-    @common.unittest.skip("properties disabled")
     def testProertyDifferentAttributeSet(self):
         self._bean.setProperty6("val")
         self.assertEqual("getsetval", self._bean.property6)
         self.assertEqual("setval", self._bean.property7)
+
+    def testHasProperties(self):
+        cls = jpype.JClass("jpype/properties/TestBean")
+        obj = cls()
+        self.assertTrue(isinstance(cls.__dict__['propertyMember'], property))
+        self.assertTrue(isinstance(cls.__dict__['readOnly'], property))
+        self.assertTrue(isinstance(cls.__dict__['writeOnly'], property))
+        self.assertTrue(isinstance(cls.__dict__['with_'], property))
+
+    def testPropertyMember(self):
+        obj = jpype.JClass("jpype/properties/TestBean")()
+        obj.propertyMember = "q"
+        self.assertEqual(obj.propertyMember, "q")
+
+    def testPropertyKeyword(self):
+        obj = jpype.JClass("jpype/properties/TestBean")()
+        obj.with_ = "a"
+        self.assertEqual(obj.with_, "a")
+        self.assertEqual(obj.m5, "a")
+
+    def testPropertyReadOnly(self):
+        # Test readonly
+        obj = jpype.JClass("jpype/properties/TestBean")()
+        obj.m3 = "b"
+        self.assertEqual(obj.readOnly, "b")
+        with self.assertRaises(AttributeError):
+            obj.readOnly = "c"
+
+    def testPropertyWriteOnly(self):
+        # Test writeonly
+        obj = jpype.JClass("jpype/properties/TestBean")()
+        obj.writeOnly = "c"
+        self.assertEqual(obj.m4, "c")
+        with self.assertRaises(AttributeError):
+            x = obj.writeOnly
+
+    def testNoProperties(self):
+        cls = jpype.JClass("jpype/properties/TestBean")
+        with self.assertRaises(KeyError):
+            cls.__dict__['failure1']
+        with self.assertRaises(KeyError):
+            cls.__dict__['failure2']
+

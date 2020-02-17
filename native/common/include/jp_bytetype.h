@@ -53,27 +53,28 @@ public:
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
 	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length) override;
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*) override;
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length, jsize step, PyObject*) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	JPPyObject toBytes(JPJavaFrame& frame, jarray);
-
-	// Only Byte supports direct buffer convertion
-	virtual jobject   convertToDirectBuffer(PyObject* src);
+	virtual char getTypeCode() override
+	{
+		return 'B';
+	}
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
 
 	template <class T> T assertRange(const T& l)
 	{
-		if (l < JPJni::s_Byte_Min || l > JPJni::s_Byte_Max)
+		if (l < -128 || l > 127)
 		{
-			JP_RAISE_OVERFLOW_ERROR("Cannot convert value to Java byte");
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java byte");
 		}
 		return l;
 	}
+
+	virtual void getView(JPArrayView& view) override;
+	virtual void releaseView(JPArrayView& view, bool complete) override;
 } ;
 
 #endif // _JPBYTE_TYPE_H_
-

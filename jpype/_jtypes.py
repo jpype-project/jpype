@@ -17,140 +17,38 @@
 import sys as _sys
 
 import _jpype
-from . import _jclass
-from . import _jobject
-from . import _jcustomizer
 
 __all__ = ['JBoolean', 'JByte', 'JChar', 'JShort',
            'JInt', 'JLong', 'JFloat', 'JDouble']
 
 
+class JBoolean(_jpype._JBoolean):
+    pass
 
 
+class JByte(_jpype._JNumberLong):
+    pass
 
 
+class JChar(_jpype._JChar):
+    pass
 
 
+class JInt(_jpype._JNumberLong):
+    pass
 
 
+class JShort(_jpype._JNumberLong):
+    pass
 
-# Set up all the tables
-_maxFloat = 0
-_maxDouble = 0
 
+class JLong(_jpype._JNumberLong):
+    pass
 
-def _initialize():
-    _JP_TYPE_CLASSES = _jclass._JP_TYPE_CLASSES
-    _JCLASSES = _jclass._JCLASSES
-    global _maxFloat, _maxDouble
 
-    # Place the jvalue types for primitives
-    _JPrimitiveLoad(JBoolean, _jclass.JClass("java.lang.Boolean"))
-    _JPrimitiveLoad(JByte, _jclass.JClass("java.lang.Byte"))
-    _JPrimitiveLoad(JChar, _jclass.JClass("java.lang.Character"))
-    _JPrimitiveLoad(JShort, _jclass.JClass("java.lang.Short"))
-    _JPrimitiveLoad(JInt, _jclass.JClass("java.lang.Integer"))
-    _JPrimitiveLoad(JLong, _jclass.JClass("java.lang.Long"))
-    _JPrimitiveLoad(JFloat, _jclass.JClass("java.lang.Float"))
-    _JPrimitiveLoad(JDouble, _jclass.JClass("java.lang.Double"))
+class JFloat(_jpype._JNumberFloat):
+    pass
 
-    # Set up table of automatic conversions
-    _JP_TYPE_CLASSES[bool] = JBoolean
-    _JP_TYPE_CLASSES[int] = JLong
 
-    _JP_TYPE_CLASSES[float] = JDouble
-    _JP_TYPE_CLASSES[str] = _jclass.JClass("java.lang.String")
-
-    _JP_TYPE_CLASSES[type] = _jclass.JClass("java.lang.Class")
-    _JP_TYPE_CLASSES[object] = _jclass.JClass("java.lang.Object")
-
-    _maxFloat = _jclass.JClass("java.lang.Float").MAX_VALUE
-    _maxDouble = _jclass.JClass("java.lang.Double").MAX_VALUE
-
-
-def _JPrimitiveLoad(cls, boxedType):
-    type.__setattr__(cls, '__javaclass__', _jpype.PyJPClass(cls.__name__))
-    type.__setattr__(cls, '_java_boxed_class', boxedType)
-
-
-class _JPrimitiveClass(_jclass.JClass):
-    """ A wrapper specifying a specific java type.
-
-    These objects have three fields:
-
-     - __javaclass__ - the class for this object when matching arguments.
-     - _java_boxed_class - the class to convert to when converting to an
-        object.
-     - __javavalue__ - the instance of the java value.
-
-    """
-    def __new__(cls, name, basetype):
-        members = {
-            "__init__": _JPrimitive.init,
-            "__setattr__": object.__setattr__,
-            "__javaclass__": None,
-            "_java_boxed_class": None,
-        }
-        return super(_JPrimitiveClass, cls).__new__(cls, name, (basetype, _JPrimitive), members)
-
-    def __init__(self, *args):
-        _jclass._JCLASSES[args[0]] = self
-        super(_JPrimitive, self).__init__(self)
-
-
-
-
-
-
-
-class _JPrimitive(object):
-    def __setattr__(self, attr, value):
-        raise AttributeError("%s does not have field %s" %
-                             (self.__name__, attr))
-
-    def init(self, v):
-        if v is not None:
-            self._pyv = v
-            self.__javavalue__ = _jpype.PyJPValue(self.__javaclass__, v)
-        else:
-            self.__javavalue__ = None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-JBoolean = _JPrimitiveClass("boolean", int)
-JByte = _JPrimitiveClass("byte", int)
-JChar = _JPrimitiveClass("char", int)
-JShort = _JPrimitiveClass("short", int)
-JInt = _JPrimitiveClass("int", int)
-JLong = _JPrimitiveClass("long", int)
-JFloat = _JPrimitiveClass("float", float)
-JDouble = _JPrimitiveClass("double", float)
+class JDouble(_jpype._JNumberFloat):
+    pass

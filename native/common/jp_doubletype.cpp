@@ -1,6 +1,6 @@
 /*****************************************************************************
    Copyright 2004-2008 Steve Ménard
-  
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
@@ -12,9 +12,11 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-  
+
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_doubletype.h"
 
 JPDoubleType::JPDoubleType() : JPPrimitiveType(JPTypeManager::_java_lang_Double)
 {
@@ -49,7 +51,7 @@ JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -66,7 +68,7 @@ JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	if (JPPyFloat::check(obj))
+	if (PyFloat_Check(obj))
 	{
 		return JPMatch::_exact;
 	}
@@ -86,7 +88,7 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 	JP_TRACE_IN("JPDoubleType::convertToJava");
 	jvalue res;
 	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -97,25 +99,22 @@ jvalue JPDoubleType::convertToJava(PyObject* obj)
 		{
 			return getValueFromObject(value->getJavaObject());
 		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
-	}
-	else if (JPPyFloat::check(obj))
+		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java double");
+	} else if (PyFloat_Check(obj))
 	{
 		field(res) = (type_t) JPPyFloat::asDouble(obj);
 		return res;
-	}
-	else if (JPPyLong::check(obj))
+	} else if (JPPyLong::check(obj))
 	{
 		field(res) = (type_t) JPPyLong::asLong(obj);
 		return res;
-	}
-	else if (JPPyObject::hasAttrString(obj, "__float__"))
+	} else if (PyObject_HasAttrString(obj, "__float__"))
 	{
 		field(res) = (type_t) JPPyFloat::asDouble(obj);
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java double");
+	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java double");
 	return res;
 	JP_TRACE_OUT;
 }
@@ -174,31 +173,59 @@ void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObjec
 	frame.SetDoubleField(c, fid, val);
 }
 
-JPPyObject JPDoubleType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
-{
-	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_FLOAT64, PyFloat_FromDouble);
-}
-
-void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_FLOAT64,
-			&JPJavaFrame::SetDoubleArrayRegion))
-		return;
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
 
 	type_t* val = accessor.get();
+	// First check if assigning sequence supports buffer API
+	if (PyObject_CheckBuffer(sequence))
+	{
+		JPPyBuffer buffer(sequence, PyBUF_FULL_RO);
+		if (buffer.valid())
+		{
+			Py_buffer& view = buffer.getView();
+			if (view.ndim != 1)
+				JP_RAISE(PyExc_TypeError, "buffer dims incorrect");
+			Py_ssize_t vshape = view.shape[0];
+			Py_ssize_t vstep = view.strides[0];
+			if (vshape != length)
+				JP_RAISE(PyExc_ValueError, "mismatched size");
+
+			char* memory = (char*) view.buf;
+			if (view.suboffsets && view.suboffsets[0] >= 0)
+				memory = *((char**) memory) + view.suboffsets[0];
+			jsize index = start;
+			jconverter conv = getConverter(view.format, view.itemsize, "d");
+			for (Py_ssize_t i = 0; i < length; ++i, index += step)
+			{
+				jvalue r = conv(memory);
+				val[index] = r.d;
+				memory += vstep;
+			}
+			accessor.commit();
+			return;
+		} else
+		{
+			PyErr_Clear();
+		}
+	}
+
+	// Use sequence API
 	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
 		if (v == -1. && JPPyErr::occurred())
 		{
 			JP_RAISE_PYTHON("JPDoubleType::setArrayRange");
 		}
-		val[start + i] = v;
+		val[index] = v;
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -221,3 +248,21 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 	frame.SetDoubleArrayRegion(array, ndx, 1, &val);
 }
 
+void JPDoubleType::getView(JPArrayView& view)
+{
+	JPJavaFrame frame;
+	view.memory = (void*) frame.GetDoubleArrayElements(
+			(jdoubleArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "d";
+	view.buffer.itemsize = sizeof (jdouble);
+}
+
+void JPDoubleType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseDoubleArrayElements((jdoubleArray) view.array->getJava(),
+				(jdouble*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	}
+}

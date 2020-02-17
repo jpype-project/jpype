@@ -19,9 +19,6 @@ import jpype
 from jpype import JPackage, JArray, JByte, java
 import common
 
-if sys.version > '3':
-    unicode = str
-
 
 class ReflectCase(common.JPypeTestCase):
 

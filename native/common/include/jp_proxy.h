@@ -43,6 +43,7 @@ private:
 } ;
 
 // Special wrapper for round trip returns
+
 class JPProxyType : public JPClass
 {
 public:

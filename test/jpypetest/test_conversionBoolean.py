@@ -15,13 +15,11 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import sys
 import logging
 import time
 import common
-
-if sys.version > '3':
-    long = int
 
 
 def haveNumpy():
@@ -91,3 +89,7 @@ class ConversionBooleanTestCase(common.JPypeTestCase):
         import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float64(2))
+
+    def testBooleanFromNone(self):
+        with self.assertRaises(TypeError):
+            self.Test.callBoolean(None)

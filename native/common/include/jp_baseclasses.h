@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPBASECLASS_H_
 #define _JPBASECLASS_H_
@@ -29,7 +29,7 @@
 class JPObjectBaseClass : public JPClass
 {
 public:
-	JPObjectBaseClass();
+	JPObjectBaseClass(jclass cls);
 	virtual~ JPObjectBaseClass();
 
 public: // JPClass implementation
@@ -48,7 +48,7 @@ public: // JPClass implementation
 class JPClassBaseClass : public JPClass
 {
 public:
-	JPClassBaseClass();
+	JPClassBaseClass(jclass cls);
 	virtual~ JPClassBaseClass();
 
 public: // JPClass implementation

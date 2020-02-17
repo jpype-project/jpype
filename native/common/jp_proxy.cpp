@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <pyjp.h>
+#include "jpype.h"
+#include "jp_classloader.h"
+#include "jp_reference_queue.h"
 
 namespace
 { // impl detail, gets initialized by JPProxy::init()
@@ -43,7 +45,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 		string cname = JPJni::toStringUTF8(name);
 
 		// Get the callable object
-		JPPyObject callable(JPPythonEnv::getJavaProxyCallable((PyObject*) hostObj, cname));
+		JPPyObject callable(PyJPProxy_getCallable((PyObject*) hostObj, cname));
 
 		// If method can't be called, throw an exception
 		if (callable.isNull() || callable.isNone())
@@ -69,7 +71,7 @@ JNIEXPORT jobject JNICALL Java_jpype_JPypeInvocationHandler_hostInvoke(
 			pyargs.setItem(i, type->convertToPythonObject(val).get());
 		}
 
-		JPPyObject returnValue(callable.call(pyargs.get(), NULL));
+		JPPyObject returnValue(JPPyRef::_call, PyObject_Call(callable.get(), pyargs.get(), NULL));
 		JPClass* returnClass = JPTypeManager::findClass(returnType);
 
 		if (returnValue.isNull() || returnValue.isNone())
@@ -191,6 +193,9 @@ JPPyObject JPProxyType::convertToPythonObject(jvalue val)
 	JPJavaFrame frame;
 	jobject ih = frame.CallStaticObjectMethodA(proxyClass, getInvocationHandlerID, &val);
 	PyJPProxy* proxy = (PyJPProxy*) frame.GetLongField(ih, hostObjectID);
-	return JPPyObject(JPPyRef::_use, proxy->m_Target);
+	PyObject* obj = proxy->m_Target;
+	if (obj == Py_None)
+		obj = (PyObject*) proxy;
+	return JPPyObject(JPPyRef::_use, obj);
 }
 

@@ -25,13 +25,34 @@ struct _object;
 typedef _object PyObject;
 #endif
 
+class JPArray;
+
+class JPArrayView
+{
+public:
+	JPArrayView(JPArray* array);
+	void reference();
+	bool unreference();
+
+public:
+	JPArray *array;
+	void *memory;
+	Py_buffer buffer;
+	int refcount;
+	Py_ssize_t shape[1];
+	Py_ssize_t strides[1];
+	jboolean isCopy;
+} ;
+
 /**
  * Class to wrap Java Class and provide low-level behavior
  */
 class JPArray
 {
+	friend class JPArrayView;
 public:
-	JPArray(JPClass* cls, jarray inst);
+	JPArray(const JPValue& array);
+	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
 
 public:
@@ -42,10 +63,15 @@ public:
 	}
 
 	jsize     getLength();
-	JPPyObject getRange(jsize start, jsize stop);
-	void       setRange(jsize start, jsize stop, PyObject* val);
+	void       setRange(jsize start, jsize length, jsize step, PyObject* val);
 	JPPyObject getItem(jsize ndx);
 	void       setItem(jsize ndx, PyObject*);
+	jarray     clone(JPJavaFrame& frame, PyObject* obj);
+
+	bool       isSlice() const
+	{
+		return m_Slice;
+	}
 
 	jarray     getJava()
 	{
@@ -60,7 +86,10 @@ public:
 private:
 	JPArrayClass* m_Class;
 	JPArrayRef    m_Object;
-	jsize        m_Length;
+	jsize         m_Start;
+	jsize         m_Step;
+	jsize         m_Length;
+	bool          m_Slice;
 } ;
 
 

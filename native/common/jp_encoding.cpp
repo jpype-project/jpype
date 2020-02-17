@@ -14,7 +14,7 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_encoding.h>
+#include "jp_encoding.h"
 
 // FIXME These encoders handle all of the codes expected to be passed between
 // Java and Python assuming they both generate complient codings.  However,
@@ -55,7 +55,7 @@ struct membuf : std::streambuf
 	{
 		this->setg(begin, begin, end);
 	}
-};
+} ;
 
 // Convert a string from one encoding to another.
 // Currently we use this to transcribe from utf-8 to java-utf-8 and back.
@@ -143,21 +143,18 @@ void JPEncodingUTF8::encode(std::ostream& out, unsigned int c) const
 	{
 		// encode 1
 		out.put(char(c & 0xff));
-	}
-	else if (c < 0x800)
+	} else if (c < 0x800)
 	{
 		// encode 2
 		out.put(char(0xc0 + ((c >> 6)&0x1f)));
 		out.put(char(0x80 + ((c >> 0)&0x3f)));
-	}
-	else if (c < 0x10000) // Note 0xd800-0xdfff are not valid codes
+	} else if (c < 0x10000) // Note 0xd800-0xdfff are not valid codes
 	{
 		// encode 3
 		out.put(char(0xe0 + ((c >> 12)&0x0f)));
 		out.put(char(0x80 + ((c >> 6)&0x3f)));
 		out.put(char(0x80 + ((c >> 0)&0x3f)));
-	}
-	else if (c < 0x110000)
+	} else if (c < 0x110000)
 	{
 		// encode 4
 		out.put(char(0xf0 + ((c >> 18)&0x07)));
@@ -304,26 +301,22 @@ void JPEncodingJavaUTF8::encode(std::ostream& out, unsigned int c) const
 		// encode 0 as 2
 		out.put(char(0xc0));
 		out.put(char(0x80));
-	}
-	else if (c < 0x80)
+	} else if (c < 0x80)
 	{
 		// encode 1
 		out.put(char(c & 0xff));
-	}
-	else if (c < 0x800)
+	} else if (c < 0x800)
 	{
 		// encode 2
 		out.put(char(0xc0 + ((c >> 6)&0x1f)));
 		out.put(char(0x80 + ((c >> 0)&0x3f)));
-	}
-	else if (c < 0xd800 || (c >= 0xe000 && c < 0x10000))
+	} else if (c < 0xd800 || (c >= 0xe000 && c < 0x10000))
 	{
 		// encode 3
 		out.put(char(0xe0 + char((c >> 12)&0x0f)));
 		out.put(char(0x80 + char((c >> 6)&0x3f)));
 		out.put(char(0x80 + char((c >> 0)&0x3f)));
-	}
-	else if (c < 0x110000)
+	} else if (c < 0x110000)
 	{
 		c = c - 0x10000;
 
@@ -387,8 +380,7 @@ unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 		// Plain old code if between 0x0000-0xD7FF, 0xE000-0xFFFF
 		if ((out & 0xf800) != 0xd800)
 			return out;
-	}
-	else
+	} else
 	{
 		return -1;
 	}

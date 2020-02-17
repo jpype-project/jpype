@@ -14,42 +14,45 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <Python.h>
-#include <jpype.h>
+#include "jpype.h"
 
-#include "pyjp_value.h"
-
-JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo& stackInfo) : m_Throwable(th)
+JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo& stackInfo)
+: m_Throwable(th)
 {
 	JPJavaFrame frame;
 	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
 	m_Type = JPError::_java_error;
+	m_Error.l = NULL;
 	m_Message = msn;
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const char* msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(int type, void* error, const char* msn, const JPStackInfo& stackInfo)
 {
-	JP_TRACE("EXCEPTION THROWN:", errType, msn);
-	m_Type = errType;
+	JP_TRACE("EXCEPTION THROWN:", error, msn);
+	m_Type = type;
+	m_Error.l = error;
+	if (msn == NULL)
+		msn = "None";
 	m_Message = msn;
 	from(stackInfo);
 }
 
-JPypeException::JPypeException(JPError::Type errType, const string& msn, const JPStackInfo& stackInfo)
-{
-	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = errType;
-	m_Message = msn;
-	from(stackInfo);
-}
-
-JPypeException::JPypeException(JPError::Type errType, int err, const string& msn, const JPStackInfo& stackInfo)
+JPypeException::JPypeException(int type, void* errType, const string& msn, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = errType;
+	m_Type = type;
+	m_Error.l = errType;
 	m_Message = msn;
-	m_Error = err;
+	from(stackInfo);
+}
+
+JPypeException::JPypeException(int type,  const string& msn, int errType, const JPStackInfo& stackInfo)
+{
+	JP_TRACE("EXCEPTION THROWN", errType, msn);
+	m_Type = type;
+	m_Error.i = errType;
+	m_Message = msn;
 	from(stackInfo);
 }
 
@@ -57,6 +60,7 @@ JPypeException::JPypeException(const JPypeException& ex)
 : m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
 	m_Type = ex.m_Type;
+	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
 }
 
@@ -113,18 +117,27 @@ string JPypeException::getPythonMessage()
 		JPPyErrFrame eframe;
 		if (!eframe.good)
 			return "no error reported";
-		JPPyString className(eframe.exceptionClass.getAttrString("__name__"));
+		JPPyObject className(JPPyRef::_call, PyObject_GetAttrString(eframe.exceptionClass.get(), "__name__"));
 		stringstream ss;
 		ss << JPPyString::asStringUTF8(className.get());
 
 		// Exception value
 		if (!eframe.exceptionValue.isNull())
 		{
-			// Convert the exception value to string
-			string pyStrValue = eframe.exceptionValue.str();
-			if (!pyStrValue.empty())
+			// Special handling here so that we don't fail on exceptions.
+			string pyStrValue;
+			PyObject *sval = PyObject_Str(eframe.exceptionValue.get());
+			if (sval != NULL)
 			{
-				ss << ": " << pyStrValue;
+				try
+				{
+					pyStrValue = JPPyString::asStringUTF8(sval);
+					ss << ": " << pyStrValue;
+
+				} catch (...)
+				{
+				}
+				Py_DECREF(sval);
 			}
 		}
 
@@ -149,7 +162,7 @@ string JPypeException::getJavaMessage()
 
 bool isJavaThrowable(PyObject* exceptionClass)
 {
-	JPClass* cls = JPPythonEnv::getJavaClass(exceptionClass);
+	JPClass* cls = PyJPClass_getJPClass(exceptionClass);
 	if (cls == NULL)
 		return false;
 	return cls->isThrowable();
@@ -164,11 +177,7 @@ jthrowable JPypeException::getJavaException()
 		if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
 		{
 			eframe.good = false;
-			JPValue* javaExc = JPPythonEnv::getJavaValue(eframe.exceptionClass.get());
-			//                        JPValue* javaExc = JPPythonEnv::getJavaValue(
-			//		  	    JPPythonEnv::getJavaException(
-			//                             eframe.exceptionClass.get(),
-			//                            eframe.exceptionValue.get()).get());
+			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionClass.get());
 			if (javaExc != NULL)
 				return (jthrowable) javaExc->getJavaObject();
 		}
@@ -181,11 +190,15 @@ jthrowable JPypeException::getJavaException()
 
 void JPypeException::convertJavaToPython()
 {
+	// Welcome to paranoia land, where they really are out to get you!
 	JP_TRACE_IN("JPypeException::convertJavaToPython");
+
+	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame;
 	jthrowable th = m_Throwable.get();
 
 	// Convert to Python object
+	JP_TRACE("Convert to python");
 	JPClass* cls = JPTypeManager::findClassForObject((jobject) th);
 	if (cls == NULL)
 	{
@@ -193,21 +206,20 @@ void JPypeException::convertJavaToPython()
 		return;
 	}
 
-	// Start converting object by converting class
-	JPPyObject pycls = JPPythonEnv::newJavaClass(cls);
-	if (pycls.isNull())
+	// Create the exception object (this may fail)
+	jvalue v;
+	v.l = th;
+	JPPyObject pyvalue = PyJPValue_create(JPValue(cls, v));
+	if (pyvalue.isNull())
 	{
 		PyErr_SetString(PyExc_RuntimeError, JPJni::toString(th).c_str());
 		return;
 	}
-
-	// Okay now we just need to make the PyJPValue
-	jvalue v;
-	v.l = th;
-	JPPyObject pyvalue = JPPythonEnv::newJavaObject(JPValue(cls, v));
+	PyObject *type = (PyObject*) Py_TYPE(pyvalue.get());
+	Py_INCREF(type);
 
 	// Transfer to python
-	PyErr_SetObject(pycls.get(), pyvalue.get());
+	PyErr_SetObject(type, pyvalue.get());
 	JP_TRACE_OUT;
 }
 
@@ -221,10 +233,7 @@ void JPypeException::convertPythonToJava()
 		if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
 		{
 			eframe.good = false;
-			JPValue* javaExc = JPPythonEnv::getJavaValue(eframe.exceptionValue.get());
-			//	    JPPythonEnv::getJavaException(
-			//              eframe.exceptionClass.get(),
-			//             eframe.exceptionValue.get()).get());
+			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
 			if (javaExc != NULL)
 			{
 				//th = (jthrowable) frame.NewLocalRef(javaExc->getJavaObject());
@@ -244,6 +253,13 @@ void JPypeException::convertPythonToJava()
 	JP_TRACE_OUT;
 }
 
+int JPError::_java_error = 1;
+int JPError::_python_error = 2;
+int JPError::_python_exc = 3;
+int JPError::_os_error_unix = 10;
+int JPError::_os_error_windows = 11;
+int JPError::_method_not_found = 20;
+
 void JPypeException::toPython()
 {
 	string mesg;
@@ -251,100 +267,91 @@ void JPypeException::toPython()
 	try
 	{
 		mesg = getMessage();
-		switch (m_Type)
+		JP_TRACE(m_Error.l);
+		JP_TRACE(mesg.c_str());
+		if (m_Type == JPError::_java_error)
 		{
-			case JPError::_java_error:
-				JP_TRACE("Java exception");
-				JPypeException::convertJavaToPython();
-				return;
-
-			case JPError::_python_error:
-				JP_TRACE("Python exception");
-				// Error is already in the stack
-				return;
-
-			case JPError::_runtime_error:
-				JP_TRACE("Runtime error");
-				PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-				return;
-
-			case JPError::_type_error:
-				JP_TRACE("Type error");
-				PyErr_SetString(PyExc_TypeError, mesg.c_str());
-				return;
-
-			case JPError::_value_error:
-				JP_TRACE("Value error");
-				PyErr_SetString(PyExc_ValueError, mesg.c_str());
-				return;
-
-			case JPError::_overflow_error:
-				JP_TRACE("Overflow error");
-				PyErr_SetString(PyExc_OverflowError, mesg.c_str());
-				return;
-
-			case JPError::_index_error:
-				JP_TRACE("Index error");
-				PyErr_SetString(PyExc_IndexError, mesg.c_str());
-				return;
-
-			case JPError::_attribute_error:
-				JP_TRACE("Attribute error");
-				PyErr_SetString(PyExc_AttributeError, mesg.c_str());
-				return;
-
-			case JPError::_os_error_unix:
-			{
-				PyObject* val = Py_BuildValue("(iz)", m_Error, (string("JVM DLL not found: ") + mesg).c_str());
-				if (val != NULL)
-				{
-					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
-					Py_DECREF(val);
-					if (exc != NULL)
-					{
-						PyErr_SetObject(PyExc_OSError, exc);
-						Py_DECREF(exc);
-					}
-				}
-				return;
-			}
-
-			case JPError::_os_error_windows:
-			{
-				PyObject* val = Py_BuildValue("(izzi)", 2, (string("JVM DLL not found: ") + mesg).c_str(), NULL, m_Error);
-				if (val != NULL)
-				{
-					PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
-					Py_DECREF(val);
-					if (exc != NULL)
-					{
-						PyErr_SetObject(PyExc_OSError, exc);
-						Py_DECREF(exc);
-					}
-				}
-				return;
-			}
-
-			default:
-				JP_TRACE("Unknown Error");
-				PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-				return;
+			JP_TRACE("Java exception");
+			JPypeException::convertJavaToPython();
+			return;
 		}
+
+		if (m_Type == JPError::_python_error)
+		{
+			JP_TRACE("Python exception");
+			// Error is already in the stack
+			return;
+		}
+
+		if (m_Type == JPError::_method_not_found)
+		{
+			JP_TRACE("Runtime error");
+			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+		}
+
+		if (m_Type == JPError::_os_error_unix)
+		{
+			std::stringstream ss;
+			ss << "JVM DLL not found: " << mesg;
+			PyObject* val = Py_BuildValue("(iz)", m_Error.i,
+					ss.str().c_str());
+			if (val != NULL)
+			{
+				PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+				Py_DECREF(val);
+				if (exc != NULL)
+				{
+					PyErr_SetObject(PyExc_OSError, exc);
+					Py_DECREF(exc);
+				}
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_os_error_windows)
+		{
+			std::stringstream ss;
+			ss << "JVM DLL not found: " << mesg;
+			PyObject* val = Py_BuildValue("(izzi)", 2,
+					ss.str().c_str(), NULL, m_Error.i);
+			if (val != NULL)
+			{
+				PyObject* exc = PyObject_Call(PyExc_OSError, val, NULL);
+				Py_DECREF(val);
+				if (exc != NULL)
+				{
+					PyErr_SetObject(PyExc_OSError, exc);
+					Py_DECREF(exc);
+				}
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_python_exc)
+		{
+			// All others are Python errors
+			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
+			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
+			return;
+		}
+		JP_TRACE("Unknown error");
+		PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+		return;
 	} catch (JPypeException& ex)
 	{
 		// Print our parting words
-		JPypeTracer::trace("Fatal error in exception handling");
-		JPypeTracer::trace("Handling:", mesg);
-		JPypeTracer::trace("Type:", m_Type);
+		JPTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Handling:", mesg);
+		JPTracer::trace("Type:", m_Error.l);
 		if (ex.m_Type == JPError::_python_error)
-			JPypeTracer::trace("Inner Python:", ex.getPythonMessage());
+			JPTracer::trace("Inner Python:", ex.getPythonMessage());
 		else if (ex.m_Type == JPError::_java_error)
-			JPypeTracer::trace("Inner Java:", ex.getJavaMessage());
+			JPTracer::trace("Inner Java:", ex.getJavaMessage());
 		else
-			JPypeTracer::trace("Inner:", ex.getMessage());
+			JPTracer::trace("Inner:", ex.getMessage());
 
 		JPStackInfo info = ex.m_Trace.front();
-		JPypeTracer::trace(info.getFile(), info.getFunction(), info.getLine());
+		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
 		// Heghlu'meH QaQ jajvam!
 		PyErr_SetString(PyExc_RuntimeError, "Fatal error occurred");
@@ -355,7 +362,7 @@ void JPypeException::toPython()
 	} catch (...)
 	{
 		// urp?!
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 
 		// You shall not pass!
 		int *i = 0;
@@ -372,38 +379,41 @@ void JPypeException::toJava()
 		string mesg = getMessage();
 		JP_TRACE(mesg);
 		JPJavaFrame frame;
-		switch (m_Type)
+		if (m_Type == JPError::_python_error)
 		{
-			case JPError::_python_error:
-				//Python errors need to be converted
-				JP_TRACE("Python exception");
-				convertPythonToJava();
-				return;
-
-			case JPError::_java_error:
-				// Java errors are already registered
-				JP_TRACE("Java exception");
-				JP_TRACE(JPJni::toString((jobject) frame.ExceptionOccurred()));
-				if (m_Throwable.get() != 0)
-				{
-					frame.Throw(m_Throwable.get());
-					return;
-				}
-
-			default:
-				// All others are issued as RuntimeExceptions
-				JP_TRACE("JPype Error");
-				break;
+			JP_TRACE("Python exception");
+			convertPythonToJava();
+			return;
 		}
 
+		if (m_Type == JPError::_java_error)
+		{
+			JP_TRACE("Java exception");
+			//JP_TRACE(context->toString((jobject) frame.ExceptionOccurred()));
+			if (m_Throwable.get() != 0)
+			{
+				JP_TRACE("Java rethrow");
+				frame.Throw(m_Throwable.get());
+				return;
+			}
+			return;
+		}
+
+		if (m_Type == JPError::_method_not_found)
+		{
+			frame.ThrowNew(JPJni::s_NoSuchMethodErrorClass, mesg.c_str());
+			return;
+		}
+		// All others are issued as RuntimeExceptions
 		JP_TRACE("String exception");
 		frame.ThrowNew(JPJni::s_RuntimeExceptionClass, mesg.c_str());
+		return;
 	} catch (JPypeException ex)
 	{
 		// Print our parting words.
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 		JPStackInfo info = ex.m_Trace.front();
-		JPypeTracer::trace(info.getFile(), info.getFunction(), info.getLine());
+		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
 		// Take one for the team.
 		int *i = 0;
@@ -411,7 +421,7 @@ void JPypeException::toJava()
 	} catch (...)
 	{
 		// urp?!
-		JPypeTracer::trace("Fatal error in exception handling");
+		JPTracer::trace("Fatal error in exception handling");
 
 		// It is pointless, I can't go on.
 		int *i = 0;

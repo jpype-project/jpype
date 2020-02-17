@@ -6,6 +6,8 @@ language: python
 python:
   - '3.5'
   - '3.6'
+  - '3.7'
+  - '3.8'
   - 'nightly'
   - 'pypy3'
 
@@ -14,10 +16,6 @@ env:
     - PYTHON=python
     - PIP=pip
     - INST=""
-    # Moved numpy testing to Xenial
-    #   Testing with and without numpy on more than 3.7 for each arch
-    #   is likely a waste.  The paths to a CPython module do not really
-    #   change, but byte order and major version may make a difference.
 
 addons:
   apt:
@@ -30,15 +28,6 @@ matrix:
     - python: pypy3
 
   include:
-    - name: "Python 3.7 on Xenial Linux (w/o NUMPY)"
-      python: 3.7
-      dist: xenial
-      language: python
-      env:
-        - PYTHON=python3
-        - PIP=pip3
-        - NUMPY="--global-option=--disable-numpy"
-
     - name: "Python 3.7 on Xenial Linux"
       python: 3.7
       dist: xenial
@@ -58,30 +47,18 @@ matrix:
         - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
         - $PYTHON setup.py install
         - $PIP install -e .
-        - $PIP install gcovr pytest-cov
+        - $PIP install gcovr pytest-cov jedi
         - mvn -f project/coverage package
         - ant -f test/build.xml
       script:
-        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar" --jacoco
+        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar" --jacoco --checkjni
         - gcovr -r . --xml -o coverage.xml -d
         - java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml
         - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     
-    # TODO: remove in 0.8
-    - name: "Python 3.7 on Xenial Linux"
-      python: 3.7
-      dist: xenial
-      language: python
-      env:
-        - PYTHON=python3
-        - PIP=pip3
-      script:
-        - $PYTHON -c "import jpype"
-        - $PYTHON -m pytest -v test/jpypetest --convertStrings
-
-    - name: "Python 3.7 on macOS"
+    - name: "Python on macOS xcode 10.3"
       os: osx
-      osx_image: xcode10.2
+      osx_image: xcode10.3
       language: java
       env:
         - PYTHON=python3
@@ -92,6 +69,20 @@ matrix:
           packages:
             - ant
 
+    - name: "Python on macOS xcode 11.3"
+      os: osx
+      osx_image: xcode11.3
+      language: java
+      env:
+        - PYTHON=python3
+        - INST=--user
+        - PIP=pip3
+      addons:
+        homebrew:
+          packages:
+            - ant
+
+
 install:
   - echo $PYTHON $INST
   - $PYTHON setup.py sdist
@@ -101,5 +92,5 @@ install:
 
 script:
   - $PYTHON -c "import jpype"
-  - $PYTHON -m pytest -v test/jpypetest
+  - $PYTHON -m pytest -v test/jpypetest --checkjni
 

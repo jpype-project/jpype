@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_inttype.h"
 
 JPIntType::JPIntType() : JPPrimitiveType(JPTypeManager::_java_lang_Integer)
 {
@@ -34,7 +36,7 @@ bool JPIntType::isSubTypeOf(JPClass* other) const
 
 JPPyObject JPIntType::convertToPythonObject(jvalue val)
 {
-	return JPPyInt::fromInt(field(val));
+	return JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
 }
 
 JPValue JPIntType::getValueFromObject(jobject obj)
@@ -52,7 +54,7 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -66,7 +68,7 @@ JPMatch::Type JPIntType::canConvertToJava(PyObject* obj)
 			return JPMatch::_implicit;
 		}
 
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8) 
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return JPMatch::_none;
 	}
 
@@ -92,7 +94,7 @@ jvalue JPIntType::convertToJava(PyObject* obj)
 	JP_TRACE_IN("JPIntType::convertToJava");
 	jvalue res;
 	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -103,15 +105,14 @@ jvalue JPIntType::convertToJava(PyObject* obj)
 		{
 			return getValueFromObject(value->getJavaObject());
 		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java int");
-	}
-	else if (JPPyLong::checkConvertable(obj))
+		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java int");
+	} else if (JPPyLong::checkConvertable(obj))
 	{
 		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java int");
+	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java int");
 	return res; // never reached
 	JP_TRACE_OUT;
 }
@@ -170,31 +171,59 @@ void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* 
 	frame.SetIntField(c, fid, val);
 }
 
-JPPyObject JPIntType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
-{
-	return getSlice<type_t>(frame, a, lo, lo + hi, NPY_INT, PyInt_FromLong);
-}
-
-void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
 	JP_TRACE_IN("JPIntType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_INT,
-			&JPJavaFrame::SetIntArrayRegion))
-		return;
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	// First check if assigning sequence supports buffer API
+	if (PyObject_CheckBuffer(sequence))
 	{
-		type_t v = (type_t) PyInt_AsLong(seq[i].get());
+		JPPyBuffer buffer(sequence, PyBUF_FULL_RO);
+		if (buffer.valid())
+		{
+			Py_buffer& view = buffer.getView();
+			if (view.ndim != 1)
+				JP_RAISE(PyExc_TypeError, "buffer dims incorrect");
+			Py_ssize_t vshape = view.shape[0];
+			Py_ssize_t vstep = view.strides[0];
+			if (vshape != length)
+				JP_RAISE(PyExc_ValueError, "mismatched size");
+
+			char* memory = (char*) view.buf;
+			if (view.suboffsets && view.suboffsets[0] >= 0)
+				memory = *((char**) memory) + view.suboffsets[0];
+			jsize index = start;
+			jconverter conv = getConverter(view.format, view.itemsize, "i");
+			for (Py_ssize_t i = 0; i < length; ++i, index += step)
+			{
+				jvalue r = conv(memory);
+				val[index] = r.i;
+				memory += vstep;
+			}
+			accessor.commit();
+			return;
+		} else
+		{
+			PyErr_Clear();
+		}
+	}
+
+	// Use sequence API
+	JPPySequence seq(JPPyRef::_use, sequence);
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+	{
+		jlong v = PyLong_AsLongLong(seq[i].get());
 		if (v == -1 && JPPyErr::occurred())
 		{
 			JP_RAISE_PYTHON("JPIntType::setArrayRange");
 		}
-		val[start + i] = v;
+		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -217,3 +246,29 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 	frame.SetIntArrayRegion(array, ndx, 1, &val);
 }
 
+void JPIntType::getView(JPArrayView& view)
+{
+	JPJavaFrame frame;
+	view.isCopy = false;
+	view.memory = (void*) frame.GetIntArrayElements(
+			(jintArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "i";
+	view.buffer.itemsize = sizeof (jint);
+}
+
+void JPIntType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
+				(jint*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	}
+	// This should commit the memory, but we JNI_COMMIT is not being respected
+	// on JDK 12.  Not sure why, but will disable for now
+	//	else if (view.isCopy)
+	//	{
+	//		frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
+	//				(jint*) view.memory, JNI_COMMIT);
+	//	}
+}

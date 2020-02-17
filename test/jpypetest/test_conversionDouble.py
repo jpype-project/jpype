@@ -15,13 +15,11 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import sys
 import logging
 import time
 import common
-
-if sys.version > '3':
-    long = int
 
 
 def haveNumpy():
@@ -98,3 +96,7 @@ class ConversionDoubleTestCase(common.JPypeTestCase):
     def testDoubleNaN(self):
         import math
         self.assertTrue(math.isnan(self.Test.callDouble(float("nan"))))
+
+    def testDoubleFromNone(self):
+        with self.assertRaises(TypeError):
+            self.Test.callDouble(None)

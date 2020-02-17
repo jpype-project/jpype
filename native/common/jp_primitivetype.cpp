@@ -14,7 +14,8 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_boxedclasses.h"
 
 JPPrimitiveType::JPPrimitiveType(JPBoxedClass* cls)
 : JPClass(JPJni::getPrimitiveClass(cls->getJavaClass())), m_BoxedClass(cls)

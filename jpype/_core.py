@@ -15,11 +15,10 @@
 #
 # *****************************************************************************
 import sys as _sys
-
 import _jpype
-
 from . import _jclass
 from . import _jobject
+from . import _jstring
 from . import _jtypes
 from . import _classpath
 
@@ -27,11 +26,11 @@ from . import _classpath
 # Customizers are applied in the order that they are defined currently.
 #from . import _properties
 from . import _jarray
-from . import _jboxed
 from . import _jexception
 from . import _jcollection
 from . import _jcomparable
 from . import _jio
+from . import _jmethod
 from . import _jinit
 from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
 
@@ -42,12 +41,15 @@ __all__ = [
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
+if _sys.version_info < (3,):
+    raise ImportException("Python 2 is not supported")
+
 
 # Activate jedi tab completion
 try:
     import jedi as _jedi
     _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += \
-       ( _jpype.PyJPMethod, _jpype.PyJPField)
+        (_jpype._JMethod, _jpype._JField)
 except:
     pass
 
@@ -86,13 +88,6 @@ def deprecated(*args):
         return func2
 
 
-def _initialize():
-    _jclass._initialize()
-    _jobject._initialize()
-    _jtypes._initialize()
-    _jinit.runJVMInitializers()
-
-
 def isJVMStarted():
     return _jpype.isStarted()
 
@@ -102,6 +97,7 @@ def _hasClassPath(args):
         if i.startswith('-Djava.class.path'):
             return True
     return False
+
 
 def _handleClassPath(clsList):
     out = []
@@ -114,11 +110,12 @@ def _handleClassPath(clsList):
         else:
             out.append(s)
     if _sys.platform == "cygwin":
-        out = [ _classpath._posix2win(i) for i in out]
+        out = [_classpath._posix2win(i) for i in out]
     return _classpath._SEP.join(out)
 
 
 _JVM_started = False
+
 
 def startJVM(*args, **kwargs):
     """
@@ -221,13 +218,76 @@ please file a ticket with the developer.
 
     convertStrings = kwargs.pop('convertStrings', True)
 
-
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
     _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
-    _initialize()
+
+    _jpype._java_lang_Class = None
+    _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
+    _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")
+    _jpype._java_lang_Exception = _jpype.JClass("java.lang.Exception")
+    _jpype._java_lang_Class = _jpype.JClass("java.lang.Class")
+    _jpype._java_lang_String = _jpype.JClass("java.lang.String")
+
+    _jpype._java_lang_RuntimeException = _jpype.JClass(
+        "java.lang.RuntimeException")
+
+    # Preload needed classes
+    _jpype._java_lang_Boolean = _jpype.JClass("java.lang.Boolean")
+    _jpype._java_lang_Byte = _jpype.JClass("java.lang.Byte")
+    _jpype._java_lang_Character = _jpype.JClass("java.lang.Character")
+    _jpype._java_lang_Short = _jpype.JClass("java.lang.Short")
+    _jpype._java_lang_Integer = _jpype.JClass("java.lang.Integer")
+    _jpype._java_lang_Long = _jpype.JClass("java.lang.Long")
+    _jpype._java_lang_Float = _jpype.JClass("java.lang.Float")
+    _jpype._java_lang_Double = _jpype.JClass("java.lang.Double")
+
+    # Table for automatic conversion to objects "JObject(value, type)"
+    _jpype._object_classes = {}
+    _jpype._object_classes[bool] = _jpype._java_lang_Boolean
+    _jpype._object_classes[int] = _jpype._java_lang_Long
+    _jpype._object_classes[float] = _jpype._java_lang_Double
+    _jpype._object_classes[str] = _jpype._java_lang_String
+    _jpype._object_classes[type] = _jpype._java_lang_Class
+    _jpype._object_classes[_jpype._JClass] = _jpype._java_lang_Class
+    _jpype._object_classes[object] = _jpype._java_lang_Object
+    _jpype._object_classes[_jtypes.JBoolean] = _jpype._java_lang_Boolean
+    _jpype._object_classes[_jtypes.JByte] = _jpype._java_lang_Byte
+    _jpype._object_classes[_jtypes.JChar] = _jpype._java_lang_Character
+    _jpype._object_classes[_jtypes.JShort] = _jpype._java_lang_Short
+    _jpype._object_classes[_jtypes.JInt] = _jpype._java_lang_Integer
+    _jpype._object_classes[_jtypes.JLong] = _jpype._java_lang_Long
+    _jpype._object_classes[_jtypes.JFloat] = _jpype._java_lang_Float
+    _jpype._object_classes[_jtypes.JDouble] = _jpype._java_lang_Double
+    _jpype._object_classes[type(None)] = _jpype._java_lang_Object
+    _jpype._object_classes[_jstring.JString] = _jpype._java_lang_String
+
+    # Set up table of automatic conversions of Python primitives
+    # this table supports "JArray(type)"
+    _jpype._type_classes = {}
+    _jpype._type_classes[bool] = _jtypes.JBoolean
+    _jpype._type_classes[int] = _jtypes.JLong
+    _jpype._type_classes[float] = _jtypes.JDouble
+    _jpype._type_classes[str] = _jpype._java_lang_String
+    _jpype._type_classes[type] = _jpype._java_lang_Class
+    _jpype._type_classes[object] = _jpype._java_lang_Object
+    _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
+    _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
+    _jinit.runJVMInitializers()
+
+    # Bind types
+    _jpype.JString.class_ = _jpype._java_lang_String
+    _jpype.JObject.class_ = _jpype._java_lang_Object
+    _jtypes.JBoolean.class_ = _jpype._java_lang_Boolean.TYPE
+    _jtypes.JByte.class_ = _jpype._java_lang_Byte.TYPE
+    _jtypes.JChar.class_ = _jpype._java_lang_Character.TYPE
+    _jtypes.JShort.class_ = _jpype._java_lang_Short.TYPE
+    _jtypes.JInt.class_ = _jpype._java_lang_Integer.TYPE
+    _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
+    _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
+    _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
 
 
 def attachToJVM(jvm):
@@ -308,7 +368,7 @@ def synchronized(obj):
 
     """
     try:
-        return _jpype.PyJPMonitor(obj.__javavalue__)
+        return _jpype._JMonitor(obj)
     except AttributeError as ex:
         pass
     raise TypeError("synchronized only applies to java objects")
@@ -374,4 +434,3 @@ def getJVMVersion():
         version = runtime.version()
     version = (re.match("([0-9.]+)", str(version)).group(1))
     return tuple([int(i) for i in version.split('.')])
-

@@ -45,4 +45,14 @@ public class TestArray
     	String s = "avcd";
     	return s.getBytes();
     }
+
+    public Object testObject(Object obj)
+    {
+	    return obj;
+    }
+
+    public Object testInt(int[] obj)
+    {
+	    return obj;
+    }
 }

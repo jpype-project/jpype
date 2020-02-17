@@ -97,7 +97,7 @@ class CoverageCase(common.JPypeTestCase):
             jpype.JArray(jpype.JInt, 1)(1, 2, 3)
 
     def testJArrayStr(self):
-        self.assertEqual(str(jpype.JArray(jpype.JInt)([1, 2])), str((1, 2)))
+        self.assertEqual(str(jpype.JArray(jpype.JInt)([1, 2])), str([1, 2]))
 
     def testJArrayLength(self):
         ja = jpype.JArray(jpype.JInt)([1, 2])
@@ -203,9 +203,9 @@ class CoverageCase(common.JPypeTestCase):
         js = jpype.JString("fred")
         self.assertTrue(repr(js), "fred")
 
-    def testSetResourceFail(self):
-        with self.assertRaises(RuntimeError):
-            _jpype.setResource("NotAResource", None)
+#    def testSetResourceFail(self):
+#        with self.assertRaises(RuntimeError):
+#            _jpype.setResource("NotAResource", None)
 
     # FIXME this one is broken
 #    def testJPrimitiveSetAttr(self):
@@ -216,3 +216,66 @@ class CoverageCase(common.JPypeTestCase):
     # FIXME this path seems like something outdated and is not working
 #    def testJBooleanFromBool(self):
 #        self.assertTrue(jpype.java.lang.Boolean(jpype.JInt(40))==True)
+
+    def testJArrayFail(self):
+        class JArray2(jpype.JArray):
+            pass
+        with self.assertRaises(TypeError):
+            JArray2(jpype.JInt)
+
+    def testJStringFail(self):
+        class JString2(jpype.JString):
+            pass
+        with self.assertRaises(TypeError):
+            JString2("foo")
+
+    def testCustomizerLate(self):
+        with self.assertRaises(TypeError):
+            @jpype.JImplementationFor("java.lang.Object", base=True)
+            class Sally(object):
+                pass
+
+    def testCustomizerBadType(self):
+        with self.assertRaises(TypeError):
+            @jpype.JImplementationFor({})
+            class Sally(object):
+                pass
+
+    def testModuleHasClass(self):
+        self.assertTrue(_jpype._hasClass("java.lang.Object"))
+
+    def testModuleExamine(self):
+        # this is an internal testing routine for Java slots
+        _jpype.examine(jpype.JString)
+        _jpype.examine(jpype.JString("foo"))
+
+    def testJClassBadClass(self):
+        with self.assertRaises(Exception):
+            jpype.JClass("not.a.class")
+
+    def testJClassBadType(self):
+        with self.assertRaises(TypeError):
+            jpype.JClass({})
+
+    def testJClassFromClass(self):
+        self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName("java.lang.StringBuilder")),jpype.JClass)
+
+    def testJArrayDimTooBig(self):
+        with self.assertRaises(ValueError):
+            jpype.JArray(jpype.JInt,10000)
+
+    def testJArrayDimWrong(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt,1.5)
+
+    def testJArrayArgs(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt,1,'f')
+
+    def testJArrayTypeBad(self):
+        class John(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JArray(John)
+
+

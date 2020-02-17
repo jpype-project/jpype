@@ -12,10 +12,13 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #include <Python.h>
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_classloader.h"
+#include "jp_reference_queue.h"
+
 
 //AT's on porting:
 //  1) the original definition of global static object leads to crashing
@@ -25,16 +28,16 @@
 //Therefore, they must be guarded with a mutex.
 namespace
 { // impl details
-	JavaVM* s_JavaVM = NULL;
-	bool s_ConvertStrings = false;
+JavaVM* s_JavaVM = NULL;
+bool s_ConvertStrings = false;
 
-	jint(JNICALL *CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
-	jint(JNICALL *GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
+jint(JNICALL *CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
+jint(JNICALL *GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize* nVms);
 
 }
 
 /*****************************************************************************/
-// Platform handles the differences in dealing with shared libraries 
+// Platform handles the differences in dealing with shared libraries
 // on windows and unix variants.
 
 #ifdef WIN32
@@ -42,7 +45,7 @@ namespace
 #define  PLATFORM_ADAPTER Win32PlatformAdapter
 #else
 #include "jp_platform_linux.h"
-#define  PLATFORM_ADAPTER LinuxPlatformAdapter  
+#define  PLATFORM_ADAPTER LinuxPlatformAdapter
 #endif
 
 
@@ -51,58 +54,58 @@ namespace
 namespace
 {
 
-	JPPlatformAdapter* GetAdapter()
+JPPlatformAdapter* GetAdapter()
+{
+	static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
+	return adapter;
+}
+
+
+/*****************************************************************************/
+// Helper classes
+
+/** Call a java jni function with error checking.
+ *
+ * This version should be used when the java call is a fixed length of time
+ * to complete.
+ */
+class JPCall
+{
+	JNIEnv* _env;
+	const char* _msg;
+public:
+
+	JPCall(const JPJavaFrame& frame, const char* msg)
 	{
-		static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
-		return adapter;
+		_env = frame.getEnv();
+		_msg = msg;
 	}
 
-
-	/*****************************************************************************/
-	// Helper classes
-
-	/** Call a java jni function with error checking.
-	 *
-	 * This version should be used when the java call is a fixed length of time
-	 * to complete.
-	 */
-	class JPCall
+	void check()
 	{
-		JNIEnv* _env;
-		const char* _msg;
-	public:
-
-		JPCall(const JPJavaFrame& frame, const char* msg)
+		if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
-			_env = frame.getEnv();
-			_msg = msg;
+			jthrowable th = _env->functions->ExceptionOccurred(_env);
+			_env->functions->ExceptionClear(_env);
+			_env = 0;
+			throw JPypeException(th, _msg, JP_STACKINFO());
 		}
+	}
 
-		void check()
+	~JPCall() NO_EXCEPT_FALSE
+	{
+		// This is a throw in destructor which is only allowed on an exception safe code pattern
+		if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
-			if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
-			{
-				jthrowable th = _env->functions->ExceptionOccurred(_env);
-				_env->functions->ExceptionClear(_env);
-				_env = 0;
-				throw JPypeException(th, _msg, JP_STACKINFO());
-			}
+			jthrowable th = _env->functions->ExceptionOccurred(_env);
+			_env->functions->ExceptionClear(_env);
+			_env = 0;
+			throw JPypeException(th, _msg, JP_STACKINFO());
 		}
+	}
+} ;
 
-		~JPCall() NO_EXCEPT_FALSE
-		{
-			// This is a throw in destructor which is only allowed on an exception safe code pattern
-			if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
-			{
-				jthrowable th = _env->functions->ExceptionOccurred(_env);
-				_env->functions->ExceptionClear(_env);
-				_env = 0;
-				throw JPypeException(th, _msg, JP_STACKINFO());
-			}
-		}
-	};
-
-} // default namespace 
+} // default namespace
 
 /*****************************************************************************/
 
@@ -117,31 +120,26 @@ bool JPEnv::isInitialized()
 /**
 	throw a JPypeException if the JVM is not started
  */
-void JPEnv::assertJVMRunning(const char* function, const JPStackInfo& info)
+void JPEnv::assertJVMRunning(const JPStackInfo& info)
 {
-	// FIXME fit function names into raise
-	if (!JPEnv::isInitialized())
+	if (s_JavaVM == NULL)
 	{
-		throw JPypeException(JPError::_runtime_error, "Java Virtual Machine is not running", info);
+		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Virtual Machine is not running", info);
 	}
-}
-
-void JPEnv::init()
-{
 }
 
 void loadEntryPoints(const string& path)
 {
-	// Load symbols from the shared library	
+	// Load symbols from the shared library
 	GetAdapter()->loadLibrary((char*) path.c_str());
-	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *))GetAdapter()->getSymbol("JNI_CreateJavaVM");
+	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )GetAdapter()->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
 void JPEnv::loadJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings)
 {
 	JP_TRACE_IN("JPEnv::loadJVM");
-        s_ConvertStrings = convertStrings;
+	s_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
 	loadEntryPoints(vmPath);
@@ -166,29 +164,44 @@ void JPEnv::loadJVM(const string& vmPath, const StringVector& args, bool ignoreU
 	if (s_JavaVM == NULL)
 	{
 		JP_TRACE("Unable to start");
-		JP_RAISE_RUNTIME_ERROR("Unable to start JVM");
+		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
 	JP_TRACE("Initialize");
-	JPJni::init();
-	JPClassLoader::init();
-	JPTypeManager::init();
-	JPReferenceQueue::init();
-	JPProxy::init();
-	JPReferenceQueue::startJPypeReferenceQueue(true);
+	try
+	{
+		JPJni::init();
+		JPClassLoader::init();
+		JPTypeManager::init();
+		JPReferenceQueue::init();
+		JPProxy::init();
+		JPReferenceQueue::startJPypeReferenceQueue();
+	}	catch (JPypeException& ex)
+	{
+		// Special case, if we get a Java exception here we can't convert
+		// it to a wrapper type as wrapper types do no exist yet.
+		if (ex.getExceptionType() == JPError::_java_error)
+		{
+			jthrowable th = ex.getJavaException();
+			if (!th)
+				JP_RAISE(PyExc_RuntimeError, ex.getMessage());
+			PyErr_SetString(PyExc_RuntimeError, JPJni::toString(ex.getJavaException()).c_str());
+		}
+		JP_RAISE_PYTHON("Exception in init");
+	}
 	JP_TRACE_OUT;
 }
 
 bool JPEnv::getConvertStrings()
 {
-  return s_ConvertStrings;
+	return s_ConvertStrings;
 }
 
 void JPEnv::shutdown()
 {
 	JP_TRACE_IN("JPEnv::shutdown");
 	if (s_JavaVM == NULL)
-		JP_RAISE_RUNTIME_ERROR("Attempt to shutdown without a live JVM");
+		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
 	// Reference queue has to be be shutdown first as we need to close resources
 	JPReferenceQueue::shutdown();
@@ -198,7 +211,7 @@ void JPEnv::shutdown()
 
 	// Wait for all non-demon threads to terminate
 	// DestroyJVM is rather misnamed.  It is simply a wait call
-	// FIXME our reference queue thunk does not appear to have properly set 
+	// FIXME our reference queue thunk does not appear to have properly set
 	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
 	//	s_JavaVM->functions->DestroyJavaVM(s_JavaVM);
@@ -230,7 +243,7 @@ void JPEnv::attachJVM(const string& vmPath)
 
 	if (s_JavaVM == NULL)
 	{
-		JP_RAISE_RUNTIME_ERROR("Unable to attach to JVM");
+		JP_RAISE(PyExc_RuntimeError, "Unable to attach to JVM");
 	}
 
 	JPJni::init();
@@ -248,13 +261,13 @@ void JPEnv::GetCreatedJavaVM()
 	TRACE_IN("JPEnv::GetCreatedJavaVM");
 
 	jsize numVms;
-	
+
 	jint ret = GetCreatedJVMs_Method(&s_JavaVM, 1, &numVms);
 	if (ret < 0)
 	{
 		return NULL;
 	}
-	
+
 	TRACE_OUT;
 	 */
 }
@@ -267,7 +280,7 @@ void JPEnv::attachCurrentThread()
 	JNIEnv* env;
 	jint res = s_JavaVM->functions->AttachCurrentThread(s_JavaVM, (void**) &env, NULL);
 	if (res != JNI_OK)
-		JP_RAISE_RUNTIME_ERROR("Unable to attach to thread");
+		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread");
 }
 
 void JPEnv::attachCurrentThreadAsDaemon()
@@ -275,7 +288,7 @@ void JPEnv::attachCurrentThreadAsDaemon()
 	JNIEnv* env;
 	jint res = s_JavaVM->functions->AttachCurrentThreadAsDaemon(s_JavaVM, (void**) &env, NULL);
 	if (res != JNI_OK)
-		JP_RAISE_RUNTIME_ERROR("Unable to attach to thread as daemon");
+		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread as daemon");
 }
 
 bool JPEnv::isThreadAttached()
@@ -297,7 +310,7 @@ void JPEnv::detachCurrentThread()
 JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int i)
 : env(p_env), attached(false), popped(false)
 {
-	// Create a memory managment frame to live in	
+	// Create a memory management frame to live in
 	env->functions->PushLocalFrame(env, i);
 }
 
@@ -310,10 +323,10 @@ JPJavaFrame::JPJavaFrame(int i)
 		int *i = 0;
 		*i = 0;
 
-		JP_RAISE_RUNTIME_ERROR("JVM is null");
+		JP_RAISE(PyExc_RuntimeError, "JVM is null");
 	}
 
-	// Get the enviroment 
+	// Get the enviroment
 	res = s_JavaVM->functions->GetEnv(s_JavaVM, (void**) &env, USE_JNI_VERSION);
 
 	// If we don't have an enviroment then we are in a thread, so we must attach
@@ -321,14 +334,14 @@ JPJavaFrame::JPJavaFrame(int i)
 	{
 		res = s_JavaVM->functions->AttachCurrentThread(s_JavaVM, (void**) &env, NULL);
 		if (res != JNI_OK)
-			JP_RAISE_RUNTIME_ERROR("Unable to attach to local thread");
+			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 
 		attached = true;
 	}
 
 	popped = false;
 
-	// Create a memory managment frame to live in	
+	// Create a memory managment frame to live in
 	env->functions->PushLocalFrame(env, i);
 }
 

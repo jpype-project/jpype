@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef JP_STRINGCLASS_H
 #define JP_STRINGCLASS_H
@@ -28,7 +28,7 @@ public:
 	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
 	virtual jvalue      convertToJava(PyObject* obj) override;
 	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue newInstance(JPPyObjectVector& args) override;
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 } ;
 
 #endif /* JP_STRINGTYPE_H */

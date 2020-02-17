@@ -23,9 +23,6 @@ __all__ = ["JProxy", "JImplements"]
 import _jpype
 from . import _jclass
 
-if sys.version > '3':
-    unicode = str
-
 # FIXME the java.lang.method we are overriding should be passes to the lookup function
 # so we can properly handle name mangling on the override.
 
@@ -55,29 +52,16 @@ def _createJProxy(cls, *intf, **kwargs):
                 raise NotImplementedError("Interface '%s' requires method '%s' to be implemented." % (
                     interface.class_.getName(), method.getName()))
 
-    # Define a lookup interface
-    def lookup(self, name):
-        # Get the override from the override dictionary
-        over = overrides[name]
+    members = {}
 
-        # We need convert the method to a bound method using descriptor interface
-        return over[0].__get__(self)
-
-    # Construct a new init method
-    init = cls.__dict__.get('__init__', None)
-    if init:
-        def init2(self, *args, **kwargs):
-            init(self, *args, **kwargs)
-            self.__javaproxy__ = _jpype.PyJPProxy(self, lookup, actualIntf)
-    else:
-        def init2(self, *args, **kwargs):
-            self.__javaproxy__ = _jpype.PyJPProxy(self, lookup, actualIntf)
-
-    # Replace the init with the proxy init
-    type.__setattr__(cls, '__init__', init2)
+    def new(tp, *args, **kwargs):
+        self = _jpype._JProxy.__new__(tp, None, actualIntf)
+        cls.__init__(self, *args, **kwargs)
+        return self
+    members['__new__'] = new
 
     # Return the augmented class
-    return cls
+    return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
 
 
 def JImplements(*args, **kwargs):
@@ -122,7 +106,7 @@ def _convertInterfaces(intf):
     # Flatten the list
     intflist = []
     for item in intf:
-        if isinstance(item, (str, unicode)) or not hasattr(item, '__iter__'):
+        if isinstance(item, str) or not hasattr(item, '__iter__'):
             intflist.append(item)
         else:
             intflist.extend(item)
@@ -130,7 +114,7 @@ def _convertInterfaces(intf):
     # Look up the classes if given as a string
     actualIntf = set()
     for item in intflist:
-        if isinstance(item, (str, unicode)):
+        if isinstance(item, str):
             actualIntf.add(_jclass.JClass(item))
         else:
             actualIntf.add(item)
@@ -142,15 +126,28 @@ def _convertInterfaces(intf):
     for cls in actualIntf:
         # If it isn't a JClass, then it cannot be a Java interface
         if not isinstance(cls, _jclass.JClass):
-            raise TypeError("'%s' is not a Java interface"%type(cls).__name__)
+            raise TypeError("'%s' is not a Java interface" %
+                            type(cls).__name__)
         # Java concrete and abstract classes cannot be proxied
         if not issubclass(cls, _jclass.JInterface):
-            raise TypeError("'%s' is not a Java interface"%cls.__name__)
+            raise TypeError("'%s' is not a Java interface" % cls.__name__)
 
     return tuple(actualIntf)
 
 
-class JProxy(object):
+class _JFromDict(object):
+    def __init__(self, dict):
+        self.dict = dict
+
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, 'dict')[name]
+        except KeyError:
+            pass
+        raise AttributeError("attribute not found")
+
+
+class JProxy(_jpype._JProxy):
     """ Define a proxy for a Java interface.
 
     This is an older style JPype proxy interface that uses either a
@@ -174,28 +171,20 @@ class JProxy(object):
         inst (object, optional): specifies an object with methods
             whose names matches the java interfaces methods.
     """
-
-    def __init__(self, intf, dict=None, inst=None):
+    def __new__(cls, intf, dict=None, inst=None):
         # Convert the interfaces
         actualIntf = _convertInterfaces([intf])
 
         # Verify that one of the options has been selected
         if dict is not None and inst is not None:
-            raise RuntimeError("Specify only one of dict and inst")
+            raise TypeError("Specify only one of dict and inst")
 
         if dict is not None:
-            # Define the lookup function based for a dict
-            def lookup(d, name):
-                return d[name]
-            # create a proxy
-            self.__javaproxy__ = _jpype.PyJPProxy(dict, lookup, actualIntf)
+            inst = _JFromDict(dict)
+            return _jpype._JProxy(_JFromDict(dict), actualIntf)
             return
 
         if inst is not None:
-            # Define the lookup function based for a object instance
-            def lookup(d, name):
-                return getattr(d, name)
-            # create a proxy
-            self.__javaproxy__ = _jpype.PyJPProxy(inst, lookup, actualIntf)
-            return
+            return _jpype._JProxy.__new__(cls, inst, actualIntf)
+
         raise TypeError("a dict or inst must be specified")

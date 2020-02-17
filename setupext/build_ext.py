@@ -15,11 +15,8 @@ class BuildExtCommand(build_ext):
     """
     Override some behavior in extension building:
 
-    1. Numpy:
-        If not opted out, try to use NumPy and define macro 'HAVE_NUMPY', so arrays
-        returned from Java can be wrapped efficiently in a ndarray.
-    2. handle compiler flags for different compilers via a dictionary.
-    3. try to disable warning -Wstrict-prototypes is valid for C/ObjC but not for C++
+    1. handle compiler flags for different compilers via a dictionary.
+    2. try to disable warning -Wstrict-prototypes is valid for C/ObjC but not for C++
     """
 
     # extra compile args
@@ -76,22 +73,8 @@ class BuildExtCommand(build_ext):
         self.run_command("build_thunk")
 
         jpypeLib = self.extensions[0]
-        disable_numpy = self.distribution.disable_numpy
         tracing = self.distribution.enable_tracing
         self._set_cflags()
-        # handle numpy
-        if not disable_numpy:
-            try:
-                import numpy
-                jpypeLib.include_dirs.append(numpy.get_include())
-                jpypeLib.define_macros.append(('HAVE_NUMPY', 1))
-                warnings.warn("Turned ON Numpy support for fast Java array access",
-                              FeatureNotice)
-            except ImportError:
-                pass
-        else:
-            warnings.warn("Turned OFF Numpy support for fast Java array access",
-                          FeatureNotice)
         if tracing:
             jpypeLib.define_macros.append(('JP_TRACING_ENABLE', 1))
 

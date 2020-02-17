@@ -20,17 +20,17 @@
           <itemPath>../../native/common/include/jp_exception.h</itemPath>
           <itemPath>../../native/common/include/jp_field.h</itemPath>
           <itemPath>../../native/common/include/jp_floattype.h</itemPath>
-          <itemPath>../../native/common/include/jp_hostenv.h</itemPath>
           <itemPath>../../native/common/include/jp_inttype.h</itemPath>
           <itemPath>../../native/common/include/jp_javaframe.h</itemPath>
           <itemPath>../../native/common/include/jp_jniutil.h</itemPath>
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
+          <itemPath>../../native/common/include/jp_match.h</itemPath>
           <itemPath>../../native/common/include/jp_method.h</itemPath>
           <itemPath>../../native/common/include/jp_methodoverload.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
-          <itemPath>../../native/common/include/jp_primitive_common.h</itemPath>
+          <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
           <itemPath>../../native/common/include/jp_primitivetype.h</itemPath>
           <itemPath>../../native/common/include/jp_proxy.h</itemPath>
           <itemPath>../../native/common/include/jp_reference_queue.h</itemPath>
@@ -46,16 +46,8 @@
       </logicalFolder>
       <logicalFolder name="f1" displayName="Python" projectFiles="true">
         <logicalFolder name="include" displayName="include" projectFiles="true">
-          <itemPath>../../native/python/include/jp_pythonenv.h</itemPath>
           <itemPath>../../native/python/include/jp_pythontypes.h</itemPath>
-          <itemPath>../../native/python/include/jpype_memory_view.h</itemPath>
           <itemPath>../../native/python/include/pyjp.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_array.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_field.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_method.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_module.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_monitor.h</itemPath>
-          <itemPath>../../native/python/include/pyjp_value.h</itemPath>
         </logicalFolder>
       </logicalFolder>
     </logicalFolder>
@@ -76,6 +68,7 @@
         <itemPath>../../native/common/jp_chartype.cpp</itemPath>
         <itemPath>../../native/common/jp_class.cpp</itemPath>
         <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_convert.cpp</itemPath>
         <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
         <itemPath>../../native/common/jp_encoding.cpp</itemPath>
         <itemPath>../../native/common/jp_env.cpp</itemPath>
@@ -99,15 +92,15 @@
         <itemPath>../../native/common/jp_voidtype.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="python" displayName="python" projectFiles="true">
-        <itemPath>../../native/python/jp_pythonenv.cpp</itemPath>
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
-        <itemPath>../../native/python/jpype_memory_view.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
         <itemPath>../../native/python/pyjp_method.cpp</itemPath>
         <itemPath>../../native/python/pyjp_module.cpp</itemPath>
         <itemPath>../../native/python/pyjp_monitor.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_number.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_object.cpp</itemPath>
         <itemPath>../../native/python/pyjp_proxy.cpp</itemPath>
         <itemPath>../../native/python/pyjp_value.cpp</itemPath>
       </logicalFolder>
@@ -121,11 +114,12 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>../../doc/ChangeLog-0.7.md</itemPath>
-      <itemPath>Makefile</itemPath>
+      <itemPath>Makefile.linux</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
+    <Elem>../../native/common</Elem>
+    <Elem>../../native/python</Elem>
     <Elem>../../native/common</Elem>
     <Elem>../../native/python</Elem>
   </sourceRootList>
@@ -228,11 +222,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_hostenv.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_inttype.h"
             ex="false"
             tool="3"
@@ -249,6 +238,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_longtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_match.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -278,7 +272,7 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_primitive_common.h"
+      <item path="../../native/common/include/jp_primitive_accessor.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -377,6 +371,8 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="../../native/common/jp_convert.cpp" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="../../native/common/jp_doubletype.cpp"
             ex="false"
             tool="1"
@@ -455,64 +451,14 @@
             tool="1"
             flavor2="0">
       </item>
-      <item path="../../native/python/include/jp_pythonenv.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/python/include/jp_pythontypes.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/jpype_memory_view.h"
             ex="false"
             tool="3"
             flavor2="0">
       </item>
       <item path="../../native/python/include/pyjp.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="../../native/python/include/pyjp_array.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_field.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_method.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_module.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_monitor.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/include/pyjp_value.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/jp_pythonenv.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
       <item path="../../native/python/jp_pythontypes.cpp"
-            ex="false"
-            tool="1"
-            flavor2="0">
-      </item>
-      <item path="../../native/python/jpype_memory_view.cpp"
             ex="false"
             tool="1"
             flavor2="0">
@@ -534,6 +480,16 @@
             flavor2="0">
       </item>
       <item path="../../native/python/pyjp_monitor.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_number.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_object.cpp"
             ex="false"
             tool="1"
             flavor2="0">

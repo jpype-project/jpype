@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPENV_H_
 #define _JPENV_H_
@@ -35,35 +35,30 @@ public:
 
 namespace JPEnv
 {
-	/**
-	 * Initialize the JPype subs-system. Does NOT load the JVM
-	 */
-	void init();
+/**
+ * Load the JVM
+ * TODO : add the non-string parameters, for possible callbacks
+ */
+void loadJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
 
-	/**
-	 * Load the JVM
-	 * TODO : add the non-string parameters, for possible callbacks
-	 */
-	void loadJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
+void attachJVM(const string& vmPath);
 
-	void attachJVM(const string& vmPath);
+void detachCurrentThread();
+void attachCurrentThread();
+void attachCurrentThreadAsDaemon();
+bool isThreadAttached();
+void assertJVMRunning(const JPStackInfo& info);
+void shutdown();
 
-	void detachCurrentThread();
-	void attachCurrentThread();
-	void attachCurrentThreadAsDaemon();
-	bool isThreadAttached();
-	void assertJVMRunning(const char* function, const JPStackInfo& info);
-	void shutdown();
+/**
+ * Check if the JPype environment has been initialized
+ */
+bool isInitialized();
 
-	/**
-	 * Check if the JPype environment has been initialized
-	 */
-	bool isInitialized();
+void CreateJavaVM(void* arg);
+void GetCreatedJavaVM();
 
-	void CreateJavaVM(void* arg);
-	void GetCreatedJavaVM();
-
-        bool getConvertStrings();
+bool getConvertStrings();
 }
 
 #endif // _JPENV_H_

@@ -55,6 +55,5 @@ def JIterator(it):
 java = JPackage("java", strict=True)
 javax = JPackage("javax", strict=True)
 
-JMethod = _jpype.PyJPMethod
-JField = _jpype.PyJPField
-
+JMethod = _jpype._JMethod
+JField = _jpype._JField

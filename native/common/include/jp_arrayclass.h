@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JPARRAYCLASS_H_
 #define _JPARRAYCLASS_H_
@@ -31,14 +31,15 @@ public:
 	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
 	virtual jvalue convertToJava(PyObject* obj) override;
 
-	JPValue newInstance(int length);
+	JPValue newInstance(JPJavaFrame& frame, int length);
+	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 
 	/**
-	 * Create a new java array containing a set of items take from 
+	 * Create a new java array containing a set of items take from
 	 * a range.
-	 * 
+	 *
 	 * This is used to support variable arguments.
-	 *  
+	 *
 	 * @param refs contains a vector of python objects.
 	 * @param start is the start of the range inclusive.
 	 * @param end is the end of the range exclusive.

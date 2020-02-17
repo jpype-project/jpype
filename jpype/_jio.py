@@ -22,9 +22,6 @@ from . import _jexception
 # statement.
 
 
-
-
-
 @_jcustomizer.JImplementationFor("java.lang.AutoCloseable")
 class _JCloseable(object):
     """ Customizer for ``java.lang.AutoCloseable`` and ``java.io.Closeable``

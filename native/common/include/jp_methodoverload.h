@@ -19,36 +19,6 @@
 
 class JPMethodOverload;
 
-class JPMatch
-{
-public:
-
-	enum Type
-	{
-		_none = 0,
-		_explicit = 1,
-		_implicit = 2,
-		_exact = 3
-	} ;
-
-	Type type;
-	bool isVarDirect;
-	bool isVarIndirect;
-	JPMethodOverload* overload;
-	char offset;
-	char skip;
-	
-	JPMatch()
-	{
-		type = JPMatch::_none;
-		isVarDirect = false;
-		isVarIndirect = false;
-		overload = NULL;
-		offset = 0;
-		skip = 0;
-	}
-} ;
-
 class JPMethodOverload
 {
 	friend class JPMethod;
@@ -65,8 +35,8 @@ public:
 	 *
 	 */
 	JPMatch matches(bool isInstance, JPPyObjectVector& args) ;
-	JPPyObject invoke(JPMatch& match, JPPyObjectVector&  arg, bool instance);
-	JPValue  invokeConstructor(JPMatch& match, JPPyObjectVector& arg);
+	JPPyObject invoke(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg, bool instance);
+	JPValue  invokeConstructor(JPJavaFrame& frame, JPMatch& match, JPPyObjectVector& arg);
 
 	jobject getJava() const
 	{

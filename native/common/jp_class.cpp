@@ -14,7 +14,10 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
+#include "jp_field.h"
+#include "jp_method.h"
+#include "jp_methodoverload.h"
 
 JPClass::JPClass(jclass clss) : m_Class(clss)
 {
@@ -55,10 +58,10 @@ JPClass::~JPClass()
 
 //<editor-fold desc="new" defaultstate="collapsed">
 
-JPValue JPClass::newInstance(JPPyObjectVector& args)
+JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	ASSERT_NOT_NULL(m_Constructors);
-	return m_Constructors->invokeConstructor(args);
+	return m_Constructors->invokeConstructor(frame, args);
 }
 
 jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -151,7 +154,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 		v.l = frame.CallStaticObjectMethodA(claz, mth, val);
 	}
 
-	JPClass* type = this;
+	JPClass *type = this;
 	if (v.l != NULL)
 		type = JPTypeManager::findClassForObject(v.l);
 
@@ -175,7 +178,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	}
 
 	// Get the return type
-	JPClass* type = this;
+	JPClass *type = this;
 	if (v.l != NULL)
 		type = JPTypeManager::findClassForObject(v.l);
 
@@ -204,28 +207,31 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
-{
-	JP_TRACE_IN("JPClass::getArrayRange");
-	jobjectArray array = (jobjectArray) a;
+//JPPyObject JPClass::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, jsize step)
+//{
+//	JP_TRACE_IN("JPClass::getArrayRange");
+//	jobjectArray array = (jobjectArray) a;
+//
+//	JPPyTuple res(JPPyTuple::newTuple(length));
+//
+//	jvalue v;
+//	int index = start;
+//	for (int i = 0; i < length; i++, index += step)
+//	{
+//		v.l = frame.GetObjectArrayElement(array, index);
+//		JPClass* type = this;
+//		if (v.l != NULL)
+//			type = JPTypeManager::findClassForObject(v.l);
+//		res.setItem(i, type->convertToPythonObject(v).get());
+//	}
+//
+//	return res;
+//	JP_TRACE_OUT;
+//}
 
-	JPPyTuple res(JPPyTuple::newTuple(length));
-
-	jvalue v;
-	for (int i = 0; i < length; i++)
-	{
-		v.l = frame.GetObjectArrayElement(array, i + start);
-		JPClass* type = this;
-		if (v.l != NULL)
-			type = JPTypeManager::findClassForObject(v.l);
-		res.setItem(i, type->convertToPythonObject(v).get());
-	}
-
-	return res;
-	JP_TRACE_OUT;
-}
-
-void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* vals)
+void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* vals)
 {
 	JP_TRACE_IN("JPClass::setArrayRange");
 	jobjectArray array = (jobjectArray) a;
@@ -236,17 +242,18 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize len
 	JP_TRACE("Verify argument types");
 	for (int i = 0; i < length; i++)
 	{
-		PyObject* v = seq[i].get();
-		if (this->canConvertToJava(v) <= JPMatch::_explicit)
+		JPPyObject v = seq[i];
+		if (this->canConvertToJava(v.get()) <= JPMatch::_explicit)
 		{
-			JP_RAISE_TYPE_ERROR("Unable to convert.");
+			JP_RAISE(PyExc_TypeError, "Unable to convert.");
 		}
 	}
 
 	JP_TRACE("Copy");
-	for (int i = 0; i < length; i++)
+	int index = start;
+	for (int i = 0; i < length; i++, index += step)
 	{
-		frame.SetObjectArrayElement(array, i + start, convertToJava(seq[i].get()).l);
+		frame.SetObjectArrayElement(array, index, convertToJava(seq[i].get()).l);
 	}
 	JP_TRACE_OUT;
 }
@@ -307,7 +314,7 @@ JPPyObject JPClass::convertToPythonObject(jvalue obj)
 	}
 
 	JPClass* cls = JPTypeManager::findClassForObject(obj.l);
-	return JPPythonEnv::newJavaObject(JPValue(cls, obj));
+	return PyJPValue_create(JPValue(cls, obj));
 	JP_TRACE_OUT;
 }
 
@@ -315,13 +322,14 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 {
 	ASSERT_NOT_NULL(obj);
 	JPJavaFrame frame;
-	JP_TRACE_IN("JPClass::canConvertToJava");
+	JP_TRACE_IN("JPClass::canConvertToJava", this);
+	JP_TRACE("Type", this->getCanonicalName());
 	if (JPPyObject::isNone(obj))
 	{
 		return JPMatch::_implicit;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		JPClass* oc = value->getClass();
@@ -339,7 +347,7 @@ JPMatch::Type JPClass::canConvertToJava(PyObject* obj)
 		}
 	}
 
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
+	JPProxy* proxy = PyJPProxy_getJPProxy(obj);
 	if (proxy != NULL)
 	{
 		// Check if any of the interfaces matches ...
@@ -374,7 +382,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		JP_TRACE("Value");
@@ -382,7 +390,7 @@ jvalue JPClass::convertToJava(PyObject* obj)
 		return res;
 	}
 
-	JPProxy* proxy = JPPythonEnv::getJavaProxy(obj);
+	JPProxy* proxy = PyJPProxy_getJPProxy(obj);
 	if (proxy != NULL)
 	{
 		JP_TRACE("Proxy");
@@ -398,9 +406,8 @@ jvalue JPClass::convertToJava(PyObject* obj)
 //</editor-fold>
 //<editor-fold desc="hierarchy" defaultstate="collapsed">
 
-bool JPClass::isAssignableFrom(JPClass* o)
+bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
 {
-	JPJavaFrame frame;
 	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
 }
 
@@ -437,12 +444,14 @@ const JPClass::ClassList& JPClass::getInterfaces()
 	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadInterfaces");
 	// Super interfaces
-	vector<jclass> intf = JPJni::getInterfaces(frame, m_Class.get());
-
-	for (vector<jclass>::iterator it = intf.begin(); it != intf.end(); it++)
+	jobjectArray intf = JPJni::getInterfaces(frame, m_Class.get());
+	int len = frame.GetArrayLength(intf);
+	for (int i = 0; i < len; i++)
 	{
-		JPClass* interface = JPTypeManager::findClass(*it);
+		jclass c = (jclass) frame.GetObjectArrayElement(intf, i);
+		JPClass* interface = JPTypeManager::findClass(c);
 		m_SuperInterfaces.push_back(interface);
+		frame.DeleteLocalRef(c);
 	}
 	return m_SuperInterfaces;
 	JP_TRACE_OUT;
@@ -452,6 +461,8 @@ const JPClass::ClassList& JPClass::getInterfaces()
 
 void JPClass::postLoad()
 {
+	if (m_Constructors != NULL)
+		return;
 	JP_TRACE_IN("JPClass::postLoad");
 	loadFields();
 	loadMethods();
@@ -461,45 +472,49 @@ void JPClass::postLoad()
 
 void JPClass::loadFields()
 {
-	JPJavaFrame frame(32);
+	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadFields");
 	// fields
-	vector<jobject> fields = JPJni::getDeclaredFields(frame, m_Class.get());
+	jobjectArray fields = JPJni::getDeclaredFields(frame, m_Class.get());
 
-	for (vector<jobject>::iterator it = fields.begin(); it != fields.end(); it++)
+	int len = frame.GetArrayLength(fields);
+	for (int i = 0; i < len; i++)
 	{
-		// Skip private fields
-		if (!JPJni::isFieldPublic(*it))
+		jobject c = frame.GetObjectArrayElement(fields, i);
+		if (!JPJni::isFieldPublic(c))
 			continue;
-		m_Fields.push_back(new JPField(this, *it));
+		m_Fields.push_back(new JPField(this, c));
+		frame.DeleteLocalRef(c);
 	}
 	JP_TRACE_OUT;
 }
 
 void JPClass::loadMethods()
 {
-	JPJavaFrame frame(32);
+	JPJavaFrame frame;
 	JP_TRACE_IN("JPClass::loadMethods");
 
 	// methods
 	MethodMap methodMap;
-	vector<jobject> methods = JPJni::getMethods(frame, m_Class.get());
+	jobjectArray methods = JPJni::getMethods(frame, m_Class.get());
 
-	for (vector<jobject>::iterator iter1 = methods.begin(); iter1 != methods.end(); iter1++)
+	int len = frame.GetArrayLength(methods);
+	for (int i = 0; i < len; i++)
 	{
-		const string& name = JPJni::getMemberName(*iter1);
+		jobject c = frame.GetObjectArrayElement(methods, i);
+		const string& name = JPJni::getMemberName(c);
 		JPMethod* method = NULL;
 		MethodMap::iterator iter2 = methodMap.find(name);
 		if (iter2 == methodMap.end())
 		{
 			method = new JPMethod(this, name, false);
 			methodMap[name] = method;
-		}
-		else
+		} else
 		{
 			method = iter2->second;
 		}
-		method->addOverload(this, *iter1);
+		method->addOverload(this, c);
+		frame.DeleteLocalRef(c);
 	}
 
 	int i = 0;
@@ -522,15 +537,16 @@ void JPClass::loadConstructors()
 		return;
 	}
 
-
-	vector<jobject> methods = JPJni::getDeclaredConstructors(frame, m_Class.get());
-
-	for (vector<jobject>::iterator it = methods.begin(); it != methods.end(); it++)
+	jobjectArray methods = JPJni::getDeclaredConstructors(frame, m_Class.get());
+	int len = frame.GetArrayLength(methods);
+	for (int i = 0; i < len; i++)
 	{
-		if (JPJni::isMemberPublic(*it))
+		jobject c = frame.GetObjectArrayElement(methods, i);
+		if (JPJni::isMemberPublic(c))
 		{
-			m_Constructors->addOverload(this, *it);
+			m_Constructors->addOverload(this, c);
 		}
+		frame.DeleteLocalRef(c);
 	}
 	JP_TRACE_OUT;
 }
@@ -568,8 +584,7 @@ string JPClass::describe()
 			if (!first)
 			{
 				out << ",";
-			}
-			else
+			} else
 			{
 				first = false;
 			}
@@ -615,13 +630,21 @@ string JPClass::describe()
 bool JPClass::isInstance(JPValue& val)
 {
 	JPClass* cls = val.getClass();
-	if (cls->isPrimitive())
+	if (cls == NULL || cls->isPrimitive())
 		return false;
 
 	JPJavaFrame frame;
 	return frame.IsInstanceOf(val.getValue().l, m_Class.get()) != 0;
 }
 
+void JPClass::getView(JPArrayView& view)
+{
+	JP_RAISE(PyExc_BufferError, "Operation not support");
+}
 
+void JPClass::releaseView(JPArrayView& view, bool complete)
+{
+	JP_RAISE(PyExc_BufferError, "Operation not support");
+}
 
 //</editor-fold>

@@ -14,7 +14,9 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_bytetype.h"
 
 JPByteType::JPByteType() : JPPrimitiveType(JPTypeManager::_java_lang_Byte)
 {
@@ -34,27 +36,9 @@ bool JPByteType::isSubTypeOf(JPClass* other) const
 			|| other == JPTypeManager::_double;
 }
 
-jobject JPByteType::convertToDirectBuffer(PyObject* src)
-{
-	JPJavaFrame frame;
-	JP_TRACE_IN("JPByteType::convertToDirectBuffer");
-
-	if (JPPyMemoryView::check(src))
-	{
-		char* rawData;
-		long size;
-
-		JPPyMemoryView::getByteBufferSize(src, &rawData, size);
-		return frame.keep(frame.NewDirectByteBuffer(rawData, size));
-	}
-
-	JP_RAISE_TYPE_ERROR("Unable to convert to Direct Buffer");
-	JP_TRACE_OUT;
-}
-
 JPPyObject JPByteType::convertToPythonObject(jvalue val)
 {
-	return JPPyInt::fromInt(field(val));
+	return JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
 }
 
 JPValue JPByteType::getValueFromObject(jobject obj)
@@ -72,7 +56,7 @@ JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -112,7 +96,7 @@ jvalue JPByteType::convertToJava(PyObject* obj)
 	JP_TRACE_IN("JPByteType::convertToJava");
 	jvalue res;
 	field(res) = 0;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -123,15 +107,14 @@ jvalue JPByteType::convertToJava(PyObject* obj)
 		{
 			return getValueFromObject(value->getJavaObject());
 		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
-	}
-	else if (JPPyLong::checkConvertable(obj))
+		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java byte");
+	} else if (JPPyLong::checkConvertable(obj))
 	{
 		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java byte");
+	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java byte");
 	return res;
 	JP_TRACE_OUT;
 }
@@ -190,35 +173,58 @@ void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetByteField(c, fid, val);
 }
 
-JPPyObject JPByteType::getArrayRange(JPJavaFrame& frame, jarray a, jsize lo, jsize hi)
-{
-	return getSlice<jbyte>(frame, a, lo, lo + hi, NPY_BYTE, PyInt_FromLong);
-}
-
-void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step, PyObject* sequence)
 {
 	JP_TRACE_IN("JPByteType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_BYTE,
-			&JPJavaFrame::SetByteArrayRegion))
-		return;
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetByteArrayElements, &JPJavaFrame::ReleaseByteArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	// First check if assigning sequence supports buffer API
+	if (PyObject_CheckBuffer(sequence))
 	{
-#if (PY_VERSION_HEX >= 0x02070000)
-		type_t v = (type_t) PyInt_AsLong(seq[i].get());
+		JPPyBuffer buffer(sequence, PyBUF_FULL_RO);
+		if (buffer.valid())
+		{
+			Py_buffer& view = buffer.getView();
+			if (view.ndim != 1)
+				JP_RAISE(PyExc_TypeError, "buffer dims incorrect");
+			Py_ssize_t vshape = view.shape[0];
+			Py_ssize_t vstep = view.strides[0];
+			if (vshape != length)
+				JP_RAISE(PyExc_ValueError, "mismatched size");
+
+			char* memory = (char*) view.buf;
+			if (view.suboffsets && view.suboffsets[0] >= 0)
+				memory = *((char**) memory) + view.suboffsets[0];
+			jsize index = start;
+			jconverter conv = getConverter(view.format, view.itemsize, "b");
+			for (Py_ssize_t i = 0; i < length; ++i, index += step)
+			{
+				jvalue r = conv(memory);
+				val[index] = r.b;
+				memory += vstep;
+			}
+			accessor.commit();
+			return;
+		} else
+		{
+			PyErr_Clear();
+		}
+	}
+
+	// Use sequence API
+	JPPySequence seq(JPPyRef::_use, sequence);
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+	{
+		jlong v = PyLong_AsLongLong(seq[i].get());
 		if (v == -1 && JPPyErr::occurred())
 		{
 			JP_RAISE_PYTHON("JPByteType::setArrayRange");
 		}
-#else
-		type_t v = (type_t) PyInt_AS_LONG(seq[i].get());
-#endif
-		val[start + i] = v;
+		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -241,14 +247,21 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetByteArrayRegion(array, ndx, 1, &val);
 }
 
-JPPyObject JPByteType::toBytes(JPJavaFrame& frame, jarray array)
+void JPByteType::getView(JPArrayView& view)
 {
-	JPPrimitiveArrayAccessor<jarray, void*> accessor(frame, array,
-		&JPJavaFrame::GetPrimitiveArrayCritical, &JPJavaFrame::ReleasePrimitiveArrayCritical);
-	jsize len = frame.GetArrayLength(array);
-#if PY_MAJOR_VERSION < 3
-		return JPPyObject(JPPyRef::_call, PyString_FromStringAndSize((char*)accessor.get(), len));
-#else
-	return JPPyObject(JPPyRef::_call, PyBytes_FromStringAndSize((char*)accessor.get(), len));
-#endif
+	JPJavaFrame frame;
+	view.memory = (void*) frame.GetByteArrayElements(
+			(jbyteArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "b";
+	view.buffer.itemsize = sizeof (jbyte);
+}
+
+void JPByteType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseByteArrayElements((jbyteArray) view.array->getJava(),
+				(jbyte*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	}
 }

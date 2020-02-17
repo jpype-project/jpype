@@ -99,100 +99,49 @@ class LeakChecker():
         print()
         return True
 
-# Helpers
-
-
-def stringFunc():
-    jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
-
-
-def classFunc():
-    cls = jpype.JClass('java.lang.String')
-
-
-def startup():
-    root = path.dirname(path.abspath(path.dirname(__file__)))
-    jpype.addClassPath(path.join(root, 'classes'))
-    jvm_path = jpype.getDefaultJVMPath()
-    classpath_arg = "-Djava.class.path=%s"
-    classpath_arg %= jpype.getClassPath()
-    jpype.startJVM(jvm_path, "-ea",
-                   # "-Xcheck:jni",
-                   "-Xmx256M", "-Xms16M", classpath_arg)
-
-
-# Test functions
-
-def runLeakChecker(funcname, counts):
-    startup()
+def runLeakChecker(func, counts):
     lc = LeakChecker()
-    func = globals()[funcname]
     return lc.memTest(func, 5000)
 
 
-def runLeakCtor(classname, counts):
-    startup()
-    lc = LeakChecker()
-    cls = jpype.JClass(classname)
-
-    def func():
-        cls("test")
-    return lc.memTest(func, 5000)
-
-
-def runInvoke(counts):
-    startup()
-    lc = LeakChecker()
-    jstr = jpype.JString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-
-    def func():
-        jstr.getBytes()
-    return lc.memTest(func, 5000)
-
-
-def runRefCount():
-    startup()
-    obj = jpype.JString("help me")
-    initialObj = sys.getrefcount(obj)
-    initialValue = sys.getrefcount(obj.__javavalue__)
-    for i in range(0, 100):
-        obj.charAt(0)
-    subrun.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-    subrun.assertTrue(sys.getrefcount(
-        obj.__javavalue__)-initialValue < 5)
-
-    initialObj = sys.getrefcount(obj)
-    initialValue = sys.getrefcount(obj.__javavalue__)
-    for i in range(0, 100):
-        obj.compareTo(obj)
-    subrun.assertTrue(sys.getrefcount(obj)-initialObj < 5)
-    subrun.assertTrue(sys.getrefcount(
-        obj.__javavalue__)-initialValue < 5)
-
-
+@subrun.TestCase(individual=True)
 class LeakTestCase(unittest.TestCase):
+
+    def setUp(self):
+        root = path.dirname(path.abspath(path.dirname(__file__)))
+        jpype.addClassPath(path.join(root, 'classes'))
+        jvm_path = jpype.getDefaultJVMPath()
+        classpath_arg = "-Djava.class.path=%s"
+        classpath_arg %= jpype.getClassPath()
+        jpype.startJVM(jvm_path, "-ea",
+                       # "-Xcheck:jni",
+                       "-Xmx256M", "-Xms16M", classpath_arg)
+
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
-        with subrun.Client() as client:
-            client.execute(runLeakChecker, "stringFunc", 5000)
+        def stringFunc():
+            jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
+        runLeakChecker( stringFunc, 5000)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
-        with subrun.Client() as client:
-            client.execute(runLeakChecker, "classFunc", 5000)
+        def classFunc():
+            cls = jpype.JClass('java.lang.String')
+        runLeakChecker( classFunc, 5000)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
-        with subrun.Client() as client:
-            client.execute(runLeakCtor, "java.lang.String", 5000)
+        cls = jpype.JClass("java.lang.String")
+        def func():
+            cls("test")
+        runLeakChecker(func, 5000)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
-        with subrun.Client() as client:
-            client.execute(runInvoke, 5000)
+        jstr = jpype.JString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 
-    @unittest.skipUnless(hasRefCount(), "no refcount")
-    def testRefCount(self):
-        with subrun.Client() as client:
-            client.execute(runRefCount)
+        def func():
+            jstr.getBytes()
+        runLeakChecker(func, 5000)
+

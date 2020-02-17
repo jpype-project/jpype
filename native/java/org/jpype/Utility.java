@@ -140,6 +140,6 @@ public class Utility
       return cls.getInterfaces()[0];
     }
     return cls;
-	}
+  }
 
 }

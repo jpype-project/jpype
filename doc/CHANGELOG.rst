@@ -4,15 +4,48 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - Speed for call return path has been improved by a factor of 3.
+
+  - All exposed internals have been replaced with CPython implementations
+    thus symbols `__javaclass__`, `__javavalue__`, and `__javaproxy__`
+    have been removed.  A dedicated Java slot has been added to all CPython
+    types derived from `_jpype` class types.  All private tables have been
+    moved to CPython.  Java types must derive from the metaclass `JClass`
+    which enforces type slots.  Mixins of Python base classes is not
+    permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays 
+    derive directly from internal CPython implementations.
+
+  - Internal improvements to tracing and exception handling.
+
+  - Memory leak in convertToDirectBuffer has been corrected.
+
+  = Arrays slices are now a view which support writeback to the original
+    like numpy array.  Array slices are no longer covariant returns of 
+    list or numpy.array depending on the build procedure.
+
+  - Array slices support steps for both set and get.
+
+  - Arrays now implement `__reversed__`
+
+  - Incorrect mapping of floats between 0 and 1 to False in setting
+    Java boolean array members is corrected.
+
+  - Java arrays now properly assert range checks when setting elements
+    from sequences.
+
+  - Java arrays support memoryview API and no longer required numpy
+    to transfer buffer contents.
+
+  - Numpy is no longer an optional extra.  Memory transfer to numpy
+    is available without compiling for numpy support.
 
   - JInterface is now a meta class.  Use isinstance(cls, JInterface)
     to test for interfaces.
 
   - Fixed memory leak in Proxy invocation
 
-  - Fixed bug with Proxy not converting when passed as an argument to Python functions
-    during execution of proxies
-
+  - Fixed bug with Proxy not converting when passed as an argument to 
+    Python functions during execution of proxies
 
 - **0.7.1 - 12-16-2019**
 
@@ -43,7 +76,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   
   - Removed limitations having to do with CallerSensitive methods. Methods
     affected are listed in :doc:`caller-sensitive`. Caller sensitive 
-    methods now receive an internal JPype class as the desut
+    methods now receive an internal JPype class as the caller
 
   - Fixed segfault when converting null elements while accessing a slice
     from a Java object array.

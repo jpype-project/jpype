@@ -18,18 +18,18 @@
 #define JP_REFERENCE_QUEUE_H__
 #include <jpype.h>
 
-//extern jbyte JPypeReferenceQueue[];
-//jsize getJPypeReferenceQueueLength();
+extern "C"
+{
+typedef void (*JCleanupHook)(void*) ;
+}
 
 namespace JPReferenceQueue
 {
-
-	void init();
-	void startJPypeReferenceQueue(bool useJavaThread);
-	void shutdown();
-	void registerRef( jobject obj, PyObject*  targetRef);
-	void registerRef(PyObject* ref, PyObject* targetRef);
-
+void init();
+void startJPypeReferenceQueue();
+void shutdown();
+void registerRef( jobject obj, PyObject*  targetRef);
+void registerRef(jobject obj, void* host, JCleanupHook func);
 } // end of namespace JPReferenceQueue
 
 #endif

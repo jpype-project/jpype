@@ -17,6 +17,7 @@ import java.util.Set;
  */
 public class JPypeReferenceQueue extends ReferenceQueue
 {
+
   static private JPypeReferenceQueue mInstance;
   private Set mHostReferences = new HashSet();
   private boolean mStopped = false;
@@ -41,17 +42,11 @@ public class JPypeReferenceQueue extends ReferenceQueue
   }
 
   /**
-   * (internal) Binds the lifetime of a Python object to a Java object.
-   * <p>
-   * JPype adds an extra reference to a PyObject* and then calls this method to
-   * hold that reference until the Java object is garbage collected.
-   *
-   * @param javaObject
-   * @param pythonObject
+   * (internal) Binds the lifetime of C memory to a Java object.
    */
-  public void registerRef(Object javaObject, long pythonObject)
+  public void registerRef(Object javaObject, long host, long cleanup)
   {
-    JPypeReference ref = new JPypeReference(this, javaObject, pythonObject);
+    JPypeReference ref = new JPypeReference(this, javaObject, host, cleanup);
     mHostReferences.add(ref);
   }
 
@@ -117,17 +112,19 @@ public class JPypeReferenceQueue extends ReferenceQueue
 
 //<editor-fold desc="internal" defaultstate="collapsed">
   /**
-   * Native hook to delete a python resource.
+   * Native hook to delete a native resource.
    *
-   * @param hostRef is the address of the python object (cast to PyObject*).
+   * @param host is the address of memory in C.
+   * @param cleanup is the address the function to cleanup the memory.
    */
-  private static native void removeHostReference(long hostRef);
+  private static native void removeHostReference(long host, long cleanup);
 
   /**
    * Thread to monitor the queue and delete resources.
    */
   private class Worker implements Runnable
   {
+
     @Override
     public void run()
     {
@@ -145,8 +142,10 @@ public class JPypeReferenceQueue extends ReferenceQueue
               mHostReferences.remove(ref);
             }
             long hostRef = ref.mHostReference;
-            ref.mHostReference = -1;
-            removeHostReference(hostRef);
+            long cleanup = ref.mCleanup;
+            ref.mHostReference = 0;
+            ref.mCleanup = 0;
+            removeHostReference(hostRef, cleanup);
           }
         } catch (InterruptedException ex)
         {

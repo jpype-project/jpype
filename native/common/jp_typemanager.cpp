@@ -14,53 +14,65 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
-#include <jp_typemanager.h>
+#include "jpype.h"
+#include "jp_typemanager.h"
+#include "jp_arrayclass.h"
+#include "jp_baseclasses.h"
+#include "jp_boxedclasses.h"
+#include "jp_stringclass.h"
+#include "jp_classloader.h"
+#include "jp_voidtype.h"
+#include "jp_booleantype.h"
+#include "jp_bytetype.h"
+#include "jp_chartype.h"
+#include "jp_shorttype.h"
+#include "jp_inttype.h"
+#include "jp_longtype.h"
+#include "jp_floattype.h"
+#include "jp_doubletype.h"
 
 namespace
 {
-	//AT's on porting:
-	// 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
-	//
-	//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-	typedef map<string, JPClass* > JavaClassMap;
+//AT's on porting:
+// 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
+//
+//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
+typedef map<string, JPClass* > JavaClassMap;
 
-	JavaClassMap javaClassMap;
-	jclass utility;
-	jmethodID getClassForID;
-	jmethodID callMethodID;
-	jmethodID isCallerSensitiveID;
-
-	//	TypeMap typeMap;
-	//	JavaClassMap javaClassMap;
-	//	JavaArrayClassMap javaArrayClassMap;
+JavaClassMap javaClassMap;
+jclass utility;
+jmethodID getClassForID;
+jmethodID callMethodID;
+jmethodID isCallerSensitiveID;
 }
 
 namespace JPTypeManager
 {
-	JPVoidType* _void;
-	JPBooleanType* _boolean;
-	JPByteType* _byte;
-	JPCharType* _char;
-	JPShortType* _short;
-	JPIntType* _int;
-	JPLongType* _long;
-	JPFloatType* _float;
-	JPDoubleType* _double;
-	JPClass* _java_lang_Object;
-	JPClass* _java_lang_Class;
-	JPStringClass* _java_lang_String;
-	JPStringClass* _java_lang_CharSequence;
+JPPrimitiveType* _void;
+JPPrimitiveType* _boolean;
+JPPrimitiveType* _byte;
+JPPrimitiveType* _char;
+JPPrimitiveType* _short;
+JPPrimitiveType* _int;
+JPPrimitiveType* _long;
+JPPrimitiveType* _float;
+JPPrimitiveType* _double;
+JPClass* _java_lang_Object;
+JPClass* _java_lang_Class;
+JPClass* _java_lang_String;
+JPClass* _java_lang_CharSequence;
 
-	JPBoxedClass* _java_lang_Void;
-	JPBoxedClass* _java_lang_Boolean;
-	JPBoxedClass* _java_lang_Byte;
-	JPBoxedClass* _java_lang_Char;
-	JPBoxedClass* _java_lang_Short;
-	JPBoxedClass* _java_lang_Integer;
-	JPBoxedClass* _java_lang_Long;
-	JPBoxedClass* _java_lang_Float;
-	JPBoxedClass* _java_lang_Double;
+JPBoxedClass* _java_lang_Void;
+JPBoxedClass* _java_lang_Boolean;
+JPBoxedClass* _java_lang_Byte;
+JPBoxedClass* _java_lang_Character;
+JPBoxedClass* _java_lang_Short;
+JPBoxedClass* _java_lang_Integer;
+JPBoxedClass* _java_lang_Long;
+JPBoxedClass* _java_lang_Float;
+JPBoxedClass* _java_lang_Double;
+JPClass* _java_lang_Number;
+JPClass* _java_lang_Throwable;
 }
 
 JPClass* JPTypeManager::registerClass(JPClass* classWrapper)
@@ -69,7 +81,6 @@ JPClass* JPTypeManager::registerClass(JPClass* classWrapper)
 	const string& simple = classWrapper->getCanonicalName();
 	javaClassMap[simple] = classWrapper;
 	JP_TRACE(simple, classWrapper);
-	classWrapper->postLoad();
 	return classWrapper;
 	JP_TRACE_OUT;
 }
@@ -80,7 +91,6 @@ JPClass* registerArrayClass(string name, jclass jc)
 	JPClass* cls = new JPArrayClass(jc);
 	JP_TRACE(name, cls);
 	javaClassMap[name] = cls;
-	cls->postLoad();
 	return cls;
 	JP_TRACE_OUT;
 }
@@ -149,20 +159,39 @@ void JPTypeManager::init()
 	getClassForID = frame.GetStaticMethodID(utility, "getClassFor",
 			"(Ljava/lang/Object;)Ljava/lang/Class;");
 
-	registerClass(_java_lang_Object = new JPObjectBaseClass());
-	registerClass(_java_lang_Class = new JPClassBaseClass());
-	registerClass(_java_lang_String = new JPStringClass(JPJni::s_StringClass));
-	registerClass(_java_lang_CharSequence = new JPStringClass(JPJni::s_CharSequenceClass));
+	jclass cls;
+	cls = (jclass) frame.FindClass("java/lang/Object");
+	registerClass(_java_lang_Object = new JPObjectBaseClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Class");
+	registerClass(_java_lang_Class = new JPClassBaseClass(cls));
 
-	registerClass(_java_lang_Void = new JPBoxedVoidClass());
-	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass());
-	registerClass(_java_lang_Byte = new JPBoxedByteClass());
-	registerClass(_java_lang_Char = new JPBoxedCharacterClass());
-	registerClass(_java_lang_Short = new JPBoxedShortClass());
-	registerClass(_java_lang_Integer = new JPBoxedIntegerClass());
-	registerClass(_java_lang_Long = new JPBoxedLongClass());
-	registerClass(_java_lang_Float = new JPBoxedFloatClass());
-	registerClass(_java_lang_Double = new JPBoxedDoubleClass());
+	cls = (jclass) frame.FindClass("java/lang/String");
+	registerClass(_java_lang_String = new JPStringClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/CharSequence");
+	registerClass(_java_lang_CharSequence = new JPStringClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Number");
+	registerClass(_java_lang_Number = new JPClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Throwable");
+	registerClass(_java_lang_Throwable = new JPClass(cls));
+
+	cls = (jclass) frame.FindClass("java/lang/Void");
+	registerClass(_java_lang_Void = new JPBoxedVoidClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Boolean");
+	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Byte");
+	registerClass(_java_lang_Byte = new JPBoxedByteClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Character");
+	registerClass(_java_lang_Character = new JPBoxedCharacterClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Short");
+	registerClass(_java_lang_Short = new JPBoxedShortClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Integer");
+	registerClass(_java_lang_Integer = new JPBoxedIntegerClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Long");
+	registerClass(_java_lang_Long = new JPBoxedLongClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Float");
+	registerClass(_java_lang_Float = new JPBoxedFloatClass(cls));
+	cls = (jclass) frame.FindClass("java/lang/Double");
+	registerClass(_java_lang_Double = new JPBoxedDoubleClass(cls));
 
 	registerClass(_void = new JPVoidType());
 	registerClass(_boolean = new JPBooleanType());

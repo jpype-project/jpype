@@ -21,9 +21,6 @@ import sys as _sys
 @_jcustomizer.JImplementationFor('java.lang.Comparable')
 class _JComparable(object):
 
-
-
-
     def __eq__(self, o):
         return self.compareTo(o) == 0
 
@@ -41,6 +38,3 @@ class _JComparable(object):
 
     def __le__(self, o):
         return self.compareTo(o) <= 0
-
-    def __hash__(self):
-        return self.hashCode()

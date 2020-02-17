@@ -12,9 +12,9 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
-#include <jpype.h>
+#include "jpype.h"
 
 jobject JPValue::getJavaObject() const
 {
@@ -24,13 +24,13 @@ jobject JPValue::getJavaObject() const
 	// This method is only used internally, thus it requires a logical code
 	// error to trigger. We will use type error in case there is some
 	// way a user can trigger it.
-	JP_RAISE_TYPE_ERROR("access Java primitive value as Java object");
+	JP_RAISE(PyExc_TypeError, "access Java primitive value as Java object");
 }
 
 jclass JPValue::getJavaClass() const
 {
 	if (m_Class == NULL)
-		JP_RAISE_RUNTIME_ERROR("Null class");
+		JP_RAISE(PyExc_RuntimeError, "Null class");
 	return m_Class->getJavaClass();
 }
 

@@ -1,0 +1,68 @@
+PYVER = 3.8
+LIB =_jpype.cpython-38-x86_64-linux-gnu.so
+CC = x86_64-linux-gnu-gcc 
+ARCH = linux-x86_64-$(PYVER)
+#TRACE = -DJP_TRACING_ENABLE=1
+CFLAGS = -pthread -DNDEBUG -fwrapv -O0 -Wall -fstack-protector-strong -Wformat -Werror=format-security \
+	 -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC \
+	 -g3 -std=c++11 -ggdb $(TRACE)
+
+INCLUDES = -Inative/common/include -Inative/python/include -Ibuild/src -Inative/jni_include \
+	-I/usr/include/python$(PYVER) 
+#-I/mnt/c/cygwin64/home/nelson85/env/python-3.6-ubuntu/include/python3.6m
+
+BUILD = build/temp.$(ARCH)
+LINKFLAGS = -pthread -shared -Wl,-O1 -Wl,-Bsymbolic-functions -Wl,-Bsymbolic-functions -Wl,-z,relro \
+	    -Wl,-Bsymbolic-functions -Wl,-z,relro -g -fstack-protector-strong -Wformat \
+	    -Werror=format-security -Wdate-time -D_FORTIFY_SOURCE=2 
+
+SRCS = build/src/jp_thunk.cpp native/common/jp_array.cpp native/common/jp_arrayclass.cpp \
+       native/common/jp_baseclasses.cpp native/common/jp_booleantype.cpp native/common/jp_boxedclasses.cpp \
+       native/common/jp_bytetype.cpp native/common/jp_chartype.cpp native/common/jp_class.cpp \
+       native/common/jp_classloader.cpp native/common/jp_convert.cpp native/common/jp_doubletype.cpp \
+       native/common/jp_encoding.cpp native/common/jp_env.cpp native/common/jp_exception.cpp \
+       native/common/jp_field.cpp native/common/jp_floattype.cpp native/common/jp_inttype.cpp \
+       native/common/jp_jniutil.cpp native/common/jp_longtype.cpp native/common/jp_method.cpp \
+       native/common/jp_methodoverload.cpp native/common/jp_monitor.cpp native/common/jp_primitivetype.cpp \
+       native/common/jp_proxy.cpp native/common/jp_reference_queue.cpp native/common/jp_shorttype.cpp \
+       native/common/jp_stringclass.cpp native/common/jp_tracer.cpp native/common/jp_typemanager.cpp \
+       native/common/jp_value.cpp native/common/jp_voidtype.cpp native/python/jp_pythontypes.cpp \
+       native/python/pyjp_array.cpp native/python/pyjp_class.cpp \
+       native/python/pyjp_field.cpp native/python/pyjp_method.cpp native/python/pyjp_module.cpp \
+       native/python/pyjp_monitor.cpp native/python/pyjp_object.cpp native/python/pyjp_proxy.cpp \
+       native/python/pyjp_value.cpp \
+       native/python/pyjp_number.cpp
+
+all: $(LIB)
+
+DEPDIR = build/deps
+$(DEPDIR): ; @mkdir -p $@
+
+DEPFILES := $(SRCS:%.cpp=$(DEPDIR)/%.d)
+
+deps: $(DEPFILES)
+
+%/:
+	echo $@
+
+$(DEPDIR)/%.d: %.cpp 
+	mkdir -p $(dir $@)
+	$(CC) $(INCLUDES) -MT $(patsubst $(DEPDIR)%,'$$(BUILD)%',$(patsubst %.d,%.o,$@)) -MM $< -o $@
+
+
+OBJS = $(addprefix $(BUILD)/, $(SRCS:.cpp=.o))
+
+
+$(BUILD)/%.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+
+build/lib.$(ARCH)/$(LIB): $(OBJS)
+	x86_64-linux-gnu-g++ $(LINKFLAGS) $(OBJS) -ldl -o $@
+
+$(LIB): build/lib.$(ARCH)/$(LIB)
+	cp $^ $@
+
+-include $(DEPFILES)
+

@@ -15,13 +15,11 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import sys
 import logging
 import time
 import common
-
-if sys.version > '3':
-    long = int
 
 
 def haveNumpy():
@@ -93,6 +91,10 @@ class ConversionByteTestCase(common.JPypeTestCase):
 
     def testByteRange(self):
         with self.assertRaises(OverflowError):
-            self.Test.callByte(long(1e10))
+            self.Test.callByte(int(1e10))
         with self.assertRaises(OverflowError):
-            self.Test.callByte(long(-1e10))
+            self.Test.callByte(int(-1e10))
+
+    def testByteFromNone(self):
+        with self.assertRaises(TypeError):
+            self.Test.callByte(None)

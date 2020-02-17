@@ -61,13 +61,6 @@ import sys
 from jpype import JPackage
 import common
 
-if sys.version_info[0] >= 3:
-    unicode = str
-
-    def tounicode(x): return x
-else:
-    def tounicode(x): return unicode(x, 'utf-8')
-
 
 class Utf8TestCase(common.JPypeTestCase):
 
@@ -82,19 +75,19 @@ class Utf8TestCase(common.JPypeTestCase):
         #            java class Utf8Test
         self.TDICT = []
         self.TDICT.append(['english',
-                           tounicode("I can eat glass and it doesn't hurt me.")])
+                           ("I can eat glass and it doesn't hurt me.")])
         self.TDICT.append(['french',
-                           tounicode("Je peux manger du verre, ça ne me fait pas mal.")])
+                           ("Je peux manger du verre, ça ne me fait pas mal.")])
         self.TDICT.append(['rune',
-                           tounicode("ᛖᚴ ᚷᛖᛏ ᛖᛏᛁ ᚧ ᚷᛚᛖᚱ ᛘᚾ ᚦᛖᛋᛋ ᚨᚧ ᚡᛖ ᚱᚧᚨ ᛋᚨᚱ")])
+                           ("ᛖᚴ ᚷᛖᛏ ᛖᛏᛁ ᚧ ᚷᛚᛖᚱ ᛘᚾ ᚦᛖᛋᛋ ᚨᚧ ᚡᛖ ᚱᚧᚨ ᛋᚨᚱ")])
         self.TDICT.append(['cn_simp',
-                           tounicode("人人生而自由,在尊严和权利上一律平等。他们赋有理性和良心,并应以兄弟关系的精神互相对待。")])
+                           ("人人生而自由,在尊严和权利上一律平等。他们赋有理性和良心,并应以兄弟关系的精神互相对待。")])
         self.TDICT.append(['cn_trad',
-                           tounicode("人人生而自由﹐在尊嚴和權利上一律平等。他們賦有理性和良心﹐並應以兄弟關係的精神互相對待。")])
+                           ("人人生而自由﹐在尊嚴和權利上一律平等。他們賦有理性和良心﹐並應以兄弟關係的精神互相對待。")])
         self.TDICT.append(['arab',
-                           tounicode("أنا قادر على أكل الزجاج و هذا لا يؤلمني.")])
+                           ("أنا قادر على أكل الزجاج و هذا لا يؤلمني.")])
         self.TDICT.append(['emoji',
-                           tounicode("😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0")])
+                           ("😁😂😃😄😅😆😠😡😢😣😤😥😨😩😪🚉🚌🚏🚑🚒🚓🚕🚗🚙🚚🚢🚤🚥🚧🚨🚻🚼🚽🚾🛀🆕🆖🆗🆘🆙🆚🈁🈂🈚🈯🈹🈺🉐🉑8⃣9⃣7⃣6⃣1⃣0")])
 
     def test_get_ascii(self):
         """
@@ -135,10 +128,10 @@ class Utf8TestCase(common.JPypeTestCase):
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(String(val.encode('utf-8'), 'UTF8'))
             try:
-                rval = unicode(utf8_test.get()).encode(
+                rval = str(utf8_test.get()).encode(
                     'utf-16').decode('utf-16')
             except UnicodeEncodeError as uue:
-                rval = unicode(utf8_test.get()).encode(
+                rval = str(utf8_test.get()).encode(
                     'utf-16', errors='surrogatepass').decode('utf-16')
                 lbl += (' ' + str(uue))
             self.assertEqual(
@@ -151,7 +144,7 @@ class Utf8TestCase(common.JPypeTestCase):
         String = JPackage('java').lang.String
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(String(val.encode('utf-8'), 'UTF8'))
-            self.assertEqual(val, unicode(utf8_test.get()),
+            self.assertEqual(val, str(utf8_test.get()),
                              "Utf8Test.java binary upload for: " + lbl)
 
     def test_string_upload(self):
@@ -174,10 +167,10 @@ class Utf8TestCase(common.JPypeTestCase):
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(val)
             try:
-                rval = unicode(utf8_test.get()).encode(
+                rval = str(utf8_test.get()).encode(
                     'utf-16').decode('utf-16')
             except UnicodeEncodeError as uue:
-                rval = unicode(utf8_test.get()).encode(
+                rval = str(utf8_test.get()).encode(
                     'utf-16', errors='surrogatepass').decode('utf-16')
                 lbl += (' ' + str(uue))
             self.assertEqual(
@@ -189,7 +182,6 @@ class Utf8TestCase(common.JPypeTestCase):
         """
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(val)
-          #  res = utf8_test.get().__unicode__()
-            res = unicode(utf8_test.get())
+            res = str(utf8_test.get())
             self.assertEqual(
                 val, res, "Utf8Test.java string upload for: " + lbl)

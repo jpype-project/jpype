@@ -2,7 +2,7 @@ export PATH="/bin:/usr/bin:$PATH"
 cd $APPVEYOR_BUILD_FOLDER
 
 echo "==== Run test.jpypetest"
-$PYTHON -m pytest -v --junitxml=junit.xml test/jpypetest
+$PYTHON -m pytest -v --junitxml=junit.xml test/jpypetest --checkjni
 
 status=$?
 echo "result code of pytest:" $status 

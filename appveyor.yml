@@ -11,11 +11,27 @@ environment:
     CINST_OPTS:
 
   matrix:
+    - PYTHON: "C:\\Miniconda35-x64"
+      CONDA_PY: "3.5.2"
+      ARCH: x86_64
+
+    - PYTHON: "C:\\Miniconda35"
+      CONDA_PY: "3.5.2"
+      ARCH: x86
 
     - PYTHON: "python3.7"
       CYGWIN: "C:\\cygwin64"
       ARCH: x86_64
       CYGSH: C:\Cygwin64\bin\bash -c
+
+      # Currently getting 2.7 when 3.8 is requested 
+      #    - PYTHON: "C:\\Miniconda38-x64"
+      #      CONDA_PY: "3.8"
+      #      ARCH: x86_64
+
+      #    - PYTHON: "C:\\Miniconda38"
+      #      CONDA_PY: "3.8"
+      #      ARCH: x86
 
     - PYTHON: "C:\\Miniconda3"
       ARCH: x86
@@ -24,14 +40,6 @@ environment:
     - PYTHON: "C:\\Miniconda3-x64"
       CONDA_PY: "3-latest"
       ARCH: x86_64
-
-    - PYTHON: "C:\\Miniconda35-x64"
-      CONDA_PY: "3.5.2"
-      ARCH: x86_64
-
-    - PYTHON: "C:\\Miniconda35"
-      CONDA_PY: "3.5.2"
-      ARCH: x86
 
     - PYTHON: "C:\\Miniconda36-x64"
       CONDA_PY: "3.6.5"
@@ -48,6 +56,7 @@ environment:
     - PYTHON: "C:\\Miniconda37"
       CONDA_PY: "3.7"
       ARCH: x86
+
 
 install:
   # Force java to be installed where JAVA_HOME points

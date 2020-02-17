@@ -43,63 +43,63 @@ protected:
 class JPBoxedVoidClass : public JPBoxedClass
 {
 public:
-	JPBoxedVoidClass();
+	JPBoxedVoidClass(jclass cls);
 	virtual~ JPBoxedVoidClass();
 } ;
 
 class JPBoxedBooleanClass : public JPBoxedClass
 {
 public:
-	JPBoxedBooleanClass();
+	JPBoxedBooleanClass(jclass cls);
 	virtual~ JPBoxedBooleanClass();
 } ;
 
 class JPBoxedByteClass : public JPBoxedClass
 {
 public:
-	JPBoxedByteClass();
+	JPBoxedByteClass(jclass cls);
 	virtual~ JPBoxedByteClass();
 } ;
 
 class JPBoxedCharacterClass : public JPBoxedClass
 {
 public:
-	JPBoxedCharacterClass();
+	JPBoxedCharacterClass(jclass cls);
 	virtual~ JPBoxedCharacterClass();
 } ;
 
 class JPBoxedShortClass : public JPBoxedClass
 {
 public:
-	JPBoxedShortClass();
+	JPBoxedShortClass(jclass cls);
 	virtual~ JPBoxedShortClass();
 } ;
 
 class JPBoxedIntegerClass : public JPBoxedClass
 {
 public:
-	JPBoxedIntegerClass();
+	JPBoxedIntegerClass(jclass cls);
 	virtual~ JPBoxedIntegerClass();
 } ;
 
 class JPBoxedLongClass : public JPBoxedClass
 {
 public:
-	JPBoxedLongClass();
+	JPBoxedLongClass(jclass cls);
 	virtual~ JPBoxedLongClass();
 } ;
 
 class JPBoxedFloatClass : public JPBoxedClass
 {
 public:
-	JPBoxedFloatClass();
+	JPBoxedFloatClass(jclass cls);
 	virtual~ JPBoxedFloatClass();
 } ;
 
 class JPBoxedDoubleClass : public JPBoxedClass
 {
 public:
-	JPBoxedDoubleClass();
+	JPBoxedDoubleClass(jclass cls);
 	virtual~ JPBoxedDoubleClass();
 } ;
 

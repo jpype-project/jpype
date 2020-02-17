@@ -66,3 +66,9 @@ class HashTestCase(common.JPypeTestCase):
 
     def testHashDouble(self):
         self.assertIsNotNone(hash(jpype.java.lang.Double(6.62607004e-34)))
+
+    def testHashNone(self):
+        self.assertEqual(hash(None), hash(jpype.JObject(None)))
+        q = jpype.JObject(None, jpype.java.lang.Double)
+        self.assertEqual(hash(None), hash(jpype.JObject(None)))
+

@@ -14,9 +14,11 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jp_primitive_common.h>
+#include "jpype.h"
+#include "jp_primitive_accessor.h"
+#include "jp_chartype.h"
 
-JPCharType::JPCharType() : JPPrimitiveType(JPTypeManager::_java_lang_Char)
+JPCharType::JPCharType() : JPPrimitiveType(JPTypeManager::_java_lang_Character)
 {
 }
 
@@ -27,11 +29,6 @@ JPCharType::~JPCharType()
 bool JPCharType::isSubTypeOf(JPClass* other) const
 {
 	return other == JPTypeManager::_char;
-	// FIXME this wss wrong.  Java char is not an integer type.
-	//			|| other == JPTypeManager::_int
-	//			|| other == JPTypeManager::_long
-	//			|| other == JPTypeManager::_float
-	//			|| other == JPTypeManager::_double;
 }
 
 JPPyObject JPCharType::convertToPythonObject(jvalue val)
@@ -54,7 +51,7 @@ JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
 		return JPMatch::_none;
 	}
 
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		if (value->getClass() == this)
@@ -84,7 +81,7 @@ jvalue JPCharType::convertToJava(PyObject* obj)
 	JP_TRACE_IN("JPCharType::convertToJava");
 	JP_TRACE(JPPyObject::getTypeName(obj));
 	jvalue res;
-	JPValue* value = JPPythonEnv::getJavaValue(obj);
+	JPValue* value = PyJPValue_getJavaSlot(obj);
 	if (value != NULL)
 	{
 		JP_TRACE("Java Value");
@@ -96,15 +93,14 @@ jvalue JPCharType::convertToJava(PyObject* obj)
 		{
 			return getValueFromObject(value->getJavaObject());
 		}
-		JP_RAISE_TYPE_ERROR("Cannot convert value to Java char");
-	}
-	else if (JPPyString::checkCharUTF16(obj))
+		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java char");
+	} else if (JPPyString::checkCharUTF16(obj))
 	{
 		res.c = JPPyString::asCharUTF16(obj);
 		return res;
 	}
 
-	JP_RAISE_TYPE_ERROR("Cannot convert value to Java char");
+	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java char");
 	return res;
 	JP_TRACE_OUT;
 }
@@ -163,45 +159,47 @@ void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetCharField(c, fid, val);
 }
 
-JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length)
-{
-	JP_TRACE_IN("JPCharType::getArrayRange");
-	// FIXME this section is not exception safe.
-	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+//JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a,
+//		jsize start, jsize length, jsize step)
+//{
+//	JP_TRACE_IN("JPCharType::getArrayRange");
+//	// FIXME this section is not exception safe.
+//	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
+//			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
+//
+//	type_t* val = accessor.get();
+//	// FIXME this is an error, the encoding used by JAVA does not match standard UTF16.
+//	// We need to handle this by each code point.
+//	JPPyObject res(JPPyRef::_call, PyUnicode_FromUnicode(NULL, length));
+//	Py_UNICODE *pchars = PyUnicode_AS_UNICODE(res.get());
+//
+//	for (Py_ssize_t i = start; i < length; i++)
+//		pchars[i] = (Py_UNICODE) val[i];
+//	return res;
+//	JP_TRACE_OUT;
+//}
 
-	type_t* val = accessor.get();
-	// FIXME this is an error, the encoding used by JAVA does not match standard UTF16.
-	// We need to handle this by each code point.
-	JPPyObject res(JPPyRef::_call, PyUnicode_FromUnicode(NULL, length));
-	Py_UNICODE *pchars = PyUnicode_AS_UNICODE(res.get());
-
-	for (Py_ssize_t i = start; i < length; i++)
-		pchars[i] = (Py_UNICODE) val[i];
-	return res;
-	JP_TRACE_OUT;
-}
-
-void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a, jsize start, jsize length, PyObject* sequence)
+void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
-	if (setRangeViaBuffer<array_t, type_t>(frame, a, start, length, sequence, NPY_SHORT,
-			&JPJavaFrame::SetCharArrayRegion))
-		return;
 
+	// FIXME need different rules than integer/float types
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
 	JPPySequence seq(JPPyRef::_use, sequence);
-	for (Py_ssize_t i = 0; i < length; ++i)
+	jsize index = start;
+	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jchar v = JPPyString::asCharUTF16(seq[i].get());
 		if (JPPyErr::occurred())
 		{
 			JP_RAISE_PYTHON("JPCharType::setArrayRange");
 		}
-		val[start + i] = (type_t) v;
+		val[index] = (type_t) v;
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -222,4 +220,23 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	array_t array = (array_t) a;
 	type_t val = field(convertToJava(obj));
 	frame.SetCharArrayRegion(array, ndx, 1, &val);
+}
+
+void JPCharType::getView(JPArrayView& view)
+{
+	JPJavaFrame frame;
+	view.memory = (void*) frame.GetCharArrayElements(
+			(jcharArray) view.array->getJava(), &view.isCopy);
+	view.buffer.format = "H";
+	view.buffer.itemsize = sizeof (jchar);
+}
+
+void JPCharType::releaseView(JPArrayView& view, bool complete)
+{
+	JPJavaFrame frame;
+	if (complete)
+	{
+		frame.ReleaseCharArrayElements((jcharArray) view.array->getJava(),
+				(jchar*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	}
 }

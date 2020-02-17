@@ -12,7 +12,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-   
+
  *****************************************************************************/
 #ifndef _JP_VOID_TYPE_H_
 #define _JP_VOID_TYPE_H_
@@ -38,10 +38,16 @@ public:
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
 	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
-	virtual JPPyObject  getArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length) override;
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize, jsize, PyObject*) override;
+	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
+			jsize start, jsize length, jsize step,
+			PyObject *sequence) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
+
+	virtual char getTypeCode() override
+	{
+		return 'V';
+	}
 
 	virtual bool isSubTypeOf(JPClass* other) const override;
 } ;

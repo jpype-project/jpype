@@ -18,16 +18,7 @@ import sys as _sys
 _JP_BASES = {}
 _JP_IMPLEMENTATIONS = {}
 
-
-
-
-
-
 __all__ = ['JImplementationFor']
-
-# Forward declarations
-_JObject = None
-_JCLASSES = None
 
 
 def registerClassBase(name, cls):
@@ -36,9 +27,6 @@ def registerClassBase(name, cls):
     Use @JImplementationFor(cls, base=True) to access this.
 
     """
-    if not issubclass(cls,  _JObject):
-        raise TypeError("Classbases must derive from JObject")
-
     if name in _JP_BASES:
         _JP_BASES[name].append(cls)
     else:
@@ -46,8 +34,8 @@ def registerClassBase(name, cls):
 
     # Changing the base class in python can break things,
     # so we will tag this as an error for now.
-    if name in _JCLASSES:
-        raise RuntimeError(
+    if _jpype._hasClass(name):
+        raise TypeError(
             "Base classes must be added before class is created")
 
 
@@ -62,8 +50,8 @@ def registerClassImplementation(classname, proto):
         _JP_IMPLEMENTATIONS[classname] = [proto]
 
     # If we have already created a class, apply it retroactively.
-    if classname in _JCLASSES:
-        _applyCustomizerPost(_JCLASSES[classname], proto)
+    if _jpype._hasClass(classname):
+        _applyCustomizerPost(_jpype._getClass(classname), proto)
 
 
 def JImplementationFor(clsname, base=False):
@@ -95,7 +83,7 @@ def JImplementationFor(clsname, base=False):
 
     """
     if not isinstance(clsname, str):
-        raise TypeError("SuperFor requires a java classname string")
+        raise TypeError("ImplementationFor requires a java classname string")
 
     def customizer(cls):
         if base:
@@ -139,7 +127,7 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
                 rename = attr.get('rename', rename)
 
             # Apply rename
-            if p in members and isinstance(members[p], (_jpype.PyJPField, _jpype.PyJPMethod)):
+            if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
                 setter(rename, members[p])
 
             setter(p, v)
@@ -180,7 +168,7 @@ def _applyCustomizerPost(cls, proto):
         _applyAll(cls, init)
 
 
-def _applyCustomizers(name, jc, bases, members):
+def _applyCustomizers(name, bases, members):
     """ (internal) Called by JClass and JArray to customize a newly created class."""
     # Apply base classes
     if name in _JP_BASES:
@@ -198,6 +186,9 @@ def _applyCustomizers(name, jc, bases, members):
             def init(cls):
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
+
+
+_jpype._applyCustomizers = _applyCustomizers
 
 
 def _applyInitializer(cls):
