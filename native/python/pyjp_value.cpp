@@ -151,48 +151,6 @@ void PyJPValue_finalize(void* obj)
 	JP_PY_CATCH();
 }
 
-static int PyJPValue_init(PyObject* self, PyObject* args, PyObject* kwargs)
-{
-	JP_PY_TRY("PyJPValue_init", self);
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
-
-	PyObject* claz;
-	PyObject* pyvalue;
-
-	if (!PyArg_ParseTuple(args, "OO", &claz, &pyvalue))
-	{
-		return -1;
-	}
-
-	JPClass* type = PyJPClass_getJPClass(claz);
-	ASSERT_NOT_NULL(pyvalue);
-	ASSERT_NOT_NULL(type);
-
-	// If it is already a Java object, then let Java decide
-	// if the cast is possible
-	JPValue* value = PyJPValue_getJavaSlot(pyvalue);
-	if (value != NULL && type->isInstance(*value))
-	{
-		PyJPValue_assignJavaSlot(self, *value);
-		return 0;
-	}
-
-	// Otherwise, see if we can convert it
-	if (type->canConvertToJava(pyvalue) == JPMatch::_none)
-	{
-		stringstream ss;
-		ss << "Unable to convert " << Py_TYPE(pyvalue)->tp_name << " to java type " << type->toString();
-		PyErr_SetString(PyExc_TypeError, ss.str().c_str());
-		return -1;
-	}
-
-	jvalue v = type->convertToJava(pyvalue);
-	PyJPValue_assignJavaSlot(self, JPValue(type, v));
-	return 0;
-	JP_PY_CATCH(-1);
-}
-
 /** This is the way to convert an object into a python string. */
 PyObject* PyJPValue_str(PyObject* self)
 {
@@ -310,35 +268,9 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	JP_PY_CATCH(-1);
 }
 
-static PyType_Slot valueSlots[] = {
-	{ Py_tp_init,     (void*) PyJPValue_init},
-	{ Py_tp_free,     (void*) PyJPValue_free},
-	{ Py_tp_getattro, (void*) &PyJPValue_getattro},
-	{ Py_tp_setattro, (void*) &PyJPValue_setattro},
-	{0}
-};
-
-PyTypeObject *PyJPValue_Type = NULL;
-static PyType_Spec valueSpec = {
-	"_jpype._JValue",
-	0,
-	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
-	valueSlots
-};
-
 #ifdef __cplusplus
 }
 #endif
-
-void PyJPValue_initType(PyObject* module)
-{
-	PyObject *bases;
-	PyJPValue_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&valueSpec, NULL);
-	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JValue", (PyObject*) PyJPValue_Type);
-	JP_PY_CHECK();
-}
 
 // These are from the internal methods when we already have the jvalue
 

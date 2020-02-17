@@ -51,14 +51,6 @@ class ModuleTestCase2(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             proxy = _jpype._JProxy(None, None, tuple())
 
-    def testValueInitBad(self):
-        with self.assertRaises(TypeError):
-            _jpype._JValue("no")
-
-#    def testValueInitBad2(self):
-#        with self.assertRaises(TypeError):
-#            _jpype._JValue("no", "no")
-
     def testValueStr(self):
         obj = jpype.JClass("java.lang.Object")()
         self.assertIsInstance(str(obj), str)

@@ -27,7 +27,6 @@ extern void PyJPMethod_initType(PyObject* module);
 extern void PyJPMonitor_initType(PyObject* module);
 extern void PyJPProxy_initType(PyObject* module);
 extern void PyJPObject_initType(PyObject* module);
-extern void PyJPValue_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 
 // To ensure no leaks (requires C++ linkage)
@@ -480,21 +479,6 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
 	printf("======\n");
-	//	Py_ssize_t sz = _PyObject_VAR_SIZE(Py_TYPE(type), Py_SIZE(Py_TYPE(type)) + 1);
-	//	printf("  size: %d\n", sz);
-	//	char* t = (char*) type;
-	//	for (int i = 0; i < sz; ++i)
-	//	{
-	//		printf("%02x ", t[i]&0xff);
-	//		if (((i + 1)&0x1f) == 0)
-	//			printf("\n");
-	//		else if (((i + 1)&0xf) == 0)
-	//			printf(" -  ");
-	//		else if (((i + 1)&0x7) == 0)
-	//			printf("  ");
-	//	}
-	//
-	//	printf("======\n");
 	fflush(stdout);
 
 	return PyBool_FromLong(ret);
@@ -558,7 +542,6 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPNumber_initType(module);
 	PyJPMonitor_initType(module);
 	PyJPProxy_initType(module);
-	PyJPValue_initType(module);
 
 	return module;
 	JP_PY_CATCH(NULL);

@@ -61,11 +61,6 @@ class TestModule(unittest.TestCase):
             del _jpype.getMethodCode
             jpype.startJVM()
 
-    def testValueEntry(self):
-        with self.assertRaises(RuntimeError):
-            # fails as no JVM is running yet
-            _jpype._JValue()
-
     def testShutdown(self):
         import jpype
         jpype.startJVM(convertStrings=False)
