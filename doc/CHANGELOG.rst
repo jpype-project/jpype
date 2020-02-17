@@ -6,6 +6,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 - **Next version - unreleased**
   - Speed for call return path has been improved by a factor of 3.
 
+  - Multidimensional array buffer transfers increase speed transfers
+    to numpy substantially (orders of magnitude).  Multidimension primitive
+    transfers are read-only copies produced inside the JVM with C contiguous
+    layout.
+
   - All exposed internals have been replaced with CPython implementations
     thus symbols `__javaclass__`, `__javavalue__`, and `__javaproxy__`
     have been removed.  A dedicated Java slot has been added to all CPython
