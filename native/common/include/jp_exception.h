@@ -140,7 +140,6 @@ public:
 
 	string getMessage();
 	string getPythonMessage();
-	string getJavaMessage();
 
 	void convertJavaToPython();
 	void convertPythonToJava();

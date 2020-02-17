@@ -31,7 +31,7 @@ class JPArrayView
 {
 public:
 	JPArrayView(JPArray* array);
-	JPArrayView(JPArray* array, int d0, int d1);
+	JPArrayView(JPArray* array, jobject collection);
 	~JPArrayView();
 	void reference();
 	bool unreference();
@@ -41,8 +41,8 @@ public:
 	void *memory;
 	Py_buffer buffer;
 	int refcount;
-	Py_ssize_t shape[2];
-	Py_ssize_t strides[2];
+	Py_ssize_t shape[5];
+	Py_ssize_t strides[5];
 	jboolean isCopy;
 	jboolean owned;
 } ;
@@ -69,6 +69,16 @@ public:
 	void       setRange(jsize start, jsize length, jsize step, PyObject* val);
 	JPPyObject getItem(jsize ndx);
 	void       setItem(jsize ndx, PyObject*);
+
+	/**
+	 *  Create a shallow copy of an array.
+	 *
+	 * This is used to extract a slice before calling or casting operations.
+	 *
+	 * @param frame
+	 * @param obj
+	 * @return
+	 */
 	jarray     clone(JPJavaFrame& frame, PyObject* obj);
 
 	bool       isSlice() const

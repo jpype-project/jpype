@@ -273,9 +273,9 @@ ssize_t JPIntType::getItemSize()
 	return sizeof (jfloat);
 }
 
-void JPIntType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPIntType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jint* b = (jint*) ((char*) memory + offset);
-	frame.GetIntArrayRegion((jintArray) a, 0, len, b);
+	frame.GetIntArrayRegion((jintArray) a, start, len, b);
 }

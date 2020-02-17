@@ -285,10 +285,10 @@ ssize_t JPFloatType::getItemSize()
 	return sizeof (jfloat);
 }
 
-void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jfloat* b = (jfloat*) ((char*) memory + offset);
-	frame.GetFloatArrayRegion((jfloatArray) a, 0, len, b);
+	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 

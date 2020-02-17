@@ -274,10 +274,9 @@ ssize_t JPDoubleType::getItemSize()
 	return sizeof (jdouble);
 }
 
-void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jdouble* b = (jdouble*) ((char*) memory + offset);
-	frame.GetDoubleArrayRegion((jdoubleArray) a, 0, len, b);
+	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
 }
-

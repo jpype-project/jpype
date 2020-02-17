@@ -17,9 +17,13 @@
 package org.jpype;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.jpype.proxy.JPypeInvocationHandler;
 
 /**
@@ -140,6 +144,75 @@ public class Utility
       return cls.getInterfaces()[0];
     }
     return cls;
+  }
+
+  /**
+   * Helper function for collect rectangular,
+   */
+  private static boolean collect(List l, Object o, int q, int[] shape, int d)
+  {
+    if (Array.getLength(o) != shape[q])
+      return false;
+    if (q + 1 == d)
+    {
+      l.add(o);
+      return true;
+    }
+    for (int i = 0; i < shape[q]; ++i)
+    {
+      if (!collect(l, Array.get(o, i), q + 1, shape, d))
+        return false;
+    }
+    return true;
+  }
+
+  /**
+   * Collect up a rectangular primitive array for a Python memory view.
+   *
+   * If it is a rectangular primitive array then the result will be an object
+   * array containing. - the primitive type - an int array with the shape of the
+   * array - each of the primitive arrays that will need be visited in order.
+   *
+   * This is the safest way to provide a view as we are verifying and collected
+   * thus even if something mutates the shape of the array after we have
+   * visited, we have a locked copy.
+   *
+   * @param o is the object to be tested.
+   * @return null if the object is not a rectangular primitive array.
+   */
+  public static Object[] collectRectangular(Object o)
+  {
+    if (o == null || !o.getClass().isArray())
+      return null;
+    int[] shape = new int[5];
+    int d = 0;
+    ArrayList<Object> out = new ArrayList<>();
+    Object o1 = o;
+    Class c1 = o1.getClass();
+    for (int i = 0; i < 5; ++i)
+    {
+      shape[d++] = Array.getLength(o1);
+      o1 = Array.get(o1, 0);
+      if (o1 == null)
+        return null;
+      c1 = c1.getComponentType();
+      if (!c1.isArray())
+        break;
+    }
+    if (!c1.isPrimitive())
+      return null;
+    out.add(c1);
+    shape = Arrays.copyOfRange(shape, 0, d);
+    out.add(shape);
+    int total = 1;
+    for (int i = 0; i < d - 1; i++)
+      total *= shape[i];
+    out.ensureCapacity(total + 2);
+    if (d == 5)
+      return null;
+    if (!collect(out, o, 0, shape, d))
+      return null;
+    return out.toArray();
   }
 
 }

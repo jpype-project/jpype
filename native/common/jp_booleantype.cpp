@@ -271,9 +271,9 @@ ssize_t JPBooleanType::getItemSize()
 	return sizeof (jboolean);
 }
 
-void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jboolean* b = (jboolean*) ((char*) memory + offset);
-	frame.GetBooleanArrayRegion((jbooleanArray) a, 0, len, b);
+	frame.GetBooleanArrayRegion((jbooleanArray) a, start, len, b);
 }

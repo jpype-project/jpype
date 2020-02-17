@@ -23,7 +23,7 @@ JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo
 	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
 	m_Type = JPError::_java_error;
 	m_Error.l = NULL;
-	m_Message = msn;
+	m_Message = JPJni::toString(th);
 	from(stackInfo);
 }
 
@@ -142,18 +142,6 @@ string JPypeException::getPythonMessage()
 		}
 
 		return ss.str();
-	} catch (...)
-	{
-		return "unknown error";
-	}
-}
-
-string JPypeException::getJavaMessage()
-{
-	try
-	{
-		JPJavaFrame frame;
-		return JPJni::toString((jobject) frame.ExceptionOccurred());
 	} catch (...)
 	{
 		return "unknown error";
@@ -345,8 +333,6 @@ void JPypeException::toPython()
 		JPTracer::trace("Type:", m_Error.l);
 		if (ex.m_Type == JPError::_python_error)
 			JPTracer::trace("Inner Python:", ex.getPythonMessage());
-		else if (ex.m_Type == JPError::_java_error)
-			JPTracer::trace("Inner Java:", ex.getJavaMessage());
 		else
 			JPTracer::trace("Inner:", ex.getMessage());
 

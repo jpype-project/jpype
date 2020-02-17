@@ -283,50 +283,30 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	ASSERT_JVM_RUNNING();
 	JPJavaFrame frame;
 
-	//	printf("Request buffer %08x\n", flags);
-	//	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
-	//		printf("  writable\n");
-	//	if ((flags & PyBUF_FORMAT) == PyBUF_FORMAT)
-	//		printf("  format\n");
-	//	if ((flags & PyBUF_ND) == PyBUF_ND)
-	//		printf("  nd\n");
-	//	if ((flags & PyBUF_STRIDES) == PyBUF_STRIDES)
-	//		printf("  strides\n");
-	//	if ((flags & PyBUF_INDIRECT) == PyBUF_INDIRECT)
-	//		printf("  indirect\n");
-
 	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 	{
 		PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
 		return -1;
 	}
 
-	// First we need to see if we are primitive
-	int dims;
-	if (self->m_Array->checkIsPrimitive(dims) == -1)
+	//Check to see if we are a slice and clone it if necessary
+	jarray obj = self->m_Array->getJava();
+	if (self->m_Array->isSlice())
+		obj = self->m_Array->clone(frame, (PyObject*) self);
+
+	// Collect the members into a rectangular array if possible.
+	jobject result = JPTypeManager::collectRectangular(obj);
+	if (result == NULL)
 	{
-		PyErr_SetString(PyExc_BufferError, "Java array buffer is only supported on primitives");
-		return -1;
-	}
-	if (dims > 2)
-	{
-		PyErr_SetString(PyExc_BufferError, "Java array buffer only supports up to 2 dimensions");
+		PyErr_SetString(PyExc_BufferError, "Java array buffer is not rectangular primitives");
 		return -1;
 	}
 
-	int dimsize0;
-	int dimsize1;
-	if (self->m_Array->checkRectangular(dimsize0, dimsize1) == -1)
-	{
-		PyErr_SetString(PyExc_BufferError, "Java array is not rectangular");
-		return -1;
-	}
-
-	// So we are rectangular so try to create a view
+	// If it is rectangular so try to create a view
 	try
 	{
 		if (self->m_View == NULL)
-			self->m_View = new JPArrayView(self->m_Array, dimsize0, dimsize1);
+			self->m_View = new JPArrayView(self->m_Array, result);
 		self->m_View->reference();
 		*view = self->m_View->buffer;
 
@@ -346,8 +326,9 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	}	catch (JPypeException &ex)
+	} catch (JPypeException &ex)
 	{
+
 		PyJPArray_releaseBuffer(self, view);
 		throw ex;
 	}
@@ -399,8 +380,9 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	}	catch (JPypeException &ex)
+	} catch (JPypeException &ex)
 	{
+
 		PyJPArray_releaseBuffer(self, view);
 		throw ex;
 	}
@@ -474,6 +456,7 @@ static PyType_Spec arrayPrimSpec = {
 
 void PyJPArray_initType(PyObject * module)
 {
+
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());

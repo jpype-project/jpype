@@ -79,7 +79,9 @@ public:
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;
 	virtual ssize_t getItemSize() override;
-	virtual void copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset) override;
+	virtual void copyElements(JPJavaFrame &frame,
+			jarray a, jsize start, jsize len,
+			void* memory, int offset) override;
 } ;
 
 #endif // _JP_SHORT_TYPE_H_

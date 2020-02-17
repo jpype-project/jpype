@@ -39,7 +39,9 @@ public:
 	virtual void releaseView(JPArrayView& view) = 0;
 	virtual const char* getBufferFormat() = 0;
 	virtual ssize_t getItemSize() = 0;
-	virtual void copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset) = 0;
+	virtual void copyElements(JPJavaFrame &frame,
+			jarray a, jsize start, jsize len,
+			void* memory, int offset) = 0;
 
 protected:
 	JPClass* m_BoxedClass;

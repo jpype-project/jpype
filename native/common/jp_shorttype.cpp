@@ -274,10 +274,10 @@ ssize_t JPShortType::getItemSize()
 	return sizeof (jshort);
 }
 
-void JPShortType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPShortType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jshort* b = (jshort*) ((char*) memory + offset);
-	frame.GetShortArrayRegion((jshortArray) a, 0, len, b);
+	frame.GetShortArrayRegion((jshortArray) a, start, len, b);
 }
 

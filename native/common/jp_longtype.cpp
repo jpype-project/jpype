@@ -271,9 +271,9 @@ ssize_t JPLongType::getItemSize()
 	return sizeof (jlong);
 }
 
-void JPLongType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPLongType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jlong* b = (jlong*) ((char*) memory + offset);
-	frame.GetLongArrayRegion((jlongArray) a, 0, len, b);
+	frame.GetLongArrayRegion((jlongArray) a, start, len, b);
 }

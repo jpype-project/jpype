@@ -23,7 +23,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP(self):
-        data = [1, 0, 256, 0.5, 1e9]
+        data = [1, 0, 256, 1e9]
         ja = JArray(JBoolean)(data)
         na = np.array(data, dtype=np.bool)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)
@@ -31,7 +31,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testCharToNP(self):
-        data = [1, 0, 0.5, 5.5, 65535]
+        data = [1, 0, 65535]
         ja = JArray(JChar)(data)
         na = np.array(data, dtype=np.uint16)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)
@@ -39,7 +39,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteToNP(self):
-        data = [1, 0, -128, -1, 0.5, 127]
+        data = [1, 0, -128, -1, 127]
         ja = JArray(JByte)(data)
         na = np.array(data, dtype=np.byte)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)
@@ -47,7 +47,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortToNP(self):
-        data = [1, 0, 256, -1, 0.5, -32768, 32767]
+        data = [1, 0, 256, -1, -32768, 32767]
         ja = JArray(JShort)(data)
         na = np.array(data, dtype=np.int16)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)
@@ -55,7 +55,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP(self):
-        data = [1, 0, 256, -1, 0.5, 1e9]
+        data = [1, 0, 256, -1]
         ja = JArray(JInt)(data)
         na = np.array(data, dtype=np.int32)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)
@@ -63,7 +63,7 @@ class ConversionBuffer(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP(self):
-        data = [1, 0, 256, -1, 0.5, 1e9]
+        data = [1, 0, 256, -1]
         ja = JArray(JLong)(data)
         na = np.array(data, dtype=np.int64)
         self.assertTrue(np.all(np.array(ja, dtype=np.double)

@@ -248,9 +248,9 @@ ssize_t JPCharType::getItemSize()
 	return sizeof (jchar);
 }
 
-void JPCharType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jchar* b = (jchar*) ((char*) memory + offset);
-	frame.GetCharArrayRegion((jcharArray) a, 0, len, b);
+	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }

@@ -273,9 +273,9 @@ ssize_t JPByteType::getItemSize()
 	return sizeof (jbyte);
 }
 
-void JPByteType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+void JPByteType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
 {
-	int len = frame.GetArrayLength(a);
 	jbyte* b = (jbyte*) ((char*) memory + offset);
-	frame.GetByteArrayRegion((jbyteArray) a, 0, len, b);
+	frame.GetByteArrayRegion((jbyteArray) a, start, len, b);
 }
