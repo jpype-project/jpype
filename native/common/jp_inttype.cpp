@@ -256,19 +256,26 @@ void JPIntType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jint);
 }
 
-void JPIntType::releaseView(JPArrayView& view, bool complete)
+void JPIntType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
-				(jint*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
-	// This should commit the memory, but we JNI_COMMIT is not being respected
-	// on JDK 12.  Not sure why, but will disable for now
-	//	else if (view.isCopy)
-	//	{
-	//		frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
-	//				(jint*) view.memory, JNI_COMMIT);
-	//	}
+	frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
+			(jint*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+}
+
+const char* JPIntType::getBufferFormat()
+{
+	return "i";
+}
+
+ssize_t JPIntType::getItemSize()
+{
+	return sizeof (jfloat);
+}
+
+void JPIntType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+{
+	int len = frame.GetArrayLength(a);
+	jint* b = (jint*) ((char*) memory + offset);
+	frame.GetIntArrayRegion((jintArray) a, 0, len, b);
 }

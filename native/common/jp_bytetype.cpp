@@ -256,12 +256,26 @@ void JPByteType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jbyte);
 }
 
-void JPByteType::releaseView(JPArrayView& view, bool complete)
+void JPByteType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseByteArrayElements((jbyteArray) view.array->getJava(),
-				(jbyte*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseByteArrayElements((jbyteArray) view.array->getJava(),
+			(jbyte*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+}
+
+const char* JPByteType::getBufferFormat()
+{
+	return "b";
+}
+
+ssize_t JPByteType::getItemSize()
+{
+	return sizeof (jbyte);
+}
+
+void JPByteType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+{
+	int len = frame.GetArrayLength(a);
+	jbyte* b = (jbyte*) ((char*) memory + offset);
+	frame.GetByteArrayRegion((jbyteArray) a, 0, len, b);
 }

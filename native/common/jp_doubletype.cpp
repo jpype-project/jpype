@@ -257,12 +257,27 @@ void JPDoubleType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jdouble);
 }
 
-void JPDoubleType::releaseView(JPArrayView& view, bool complete)
+void JPDoubleType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseDoubleArrayElements((jdoubleArray) view.array->getJava(),
-				(jdouble*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseDoubleArrayElements((jdoubleArray) view.array->getJava(),
+			(jdouble*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
 }
+
+const char* JPDoubleType::getBufferFormat()
+{
+	return "d";
+}
+
+ssize_t JPDoubleType::getItemSize()
+{
+	return sizeof (jdouble);
+}
+
+void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+{
+	int len = frame.GetArrayLength(a);
+	jdouble* b = (jdouble*) ((char*) memory + offset);
+	frame.GetDoubleArrayRegion((jdoubleArray) a, 0, len, b);
+}
+

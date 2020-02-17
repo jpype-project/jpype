@@ -79,7 +79,10 @@ public:
 	}
 
 	virtual void getView(JPArrayView& view) override;
-	virtual void releaseView(JPArrayView& view, bool complete) override;
+	virtual void releaseView(JPArrayView& view) override;
+	virtual const char* getBufferFormat() override;
+	virtual ssize_t getItemSize() override;
+	virtual void copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset) override;
 } ;
 
 #endif // _JP_FLOAT_TYPE_H_

@@ -111,3 +111,26 @@ jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 {
 	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
+
+void JPVoidType::getView(JPArrayView& view)
+{
+}
+
+void JPVoidType::releaseView(JPArrayView& view)
+{
+}
+
+const char* JPVoidType::getBufferFormat()
+{
+	return NULL;
+}
+
+ssize_t JPVoidType::getItemSize()
+{
+	return 0;
+}
+
+void JPVoidType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+{
+}
+

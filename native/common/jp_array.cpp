@@ -139,6 +139,50 @@ JPPyObject JPArray::getItem(jsize ndx)
 	return compType->getArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
 }
 
+int JPArray::checkIsPrimitive(int &dims)
+{
+	dims = 0;
+	JPClass* cls = this->getClass();
+	while (dynamic_cast<JPArrayClass*> (cls) != 0)
+	{
+		dims++;
+		cls = ((JPArrayClass*) cls)->getComponentType();
+	}
+	if (!cls->isPrimitive())
+		return -1;
+	return 0;
+}
+
+int JPArray::checkRectangular(int &dimsize0, int &dimsize1)
+{
+	JPJavaFrame frame;
+	// Get the first dimension
+	dimsize0 = getLength();
+	if (dimsize0 == 0)
+		return -1;
+
+	// Get the second dimension
+	jobjectArray a = (jobjectArray) getJava();
+	jobject u = frame.GetObjectArrayElement(a, m_Start);
+	if (u == 0)
+		return -1;
+	dimsize1 = frame.GetArrayLength((jarray) u);
+	frame.DeleteLocalRef(u);
+
+	for (int i = 1; i < dimsize0; ++i)
+	{
+		int j = m_Start + i*m_Step;
+		jobject u2 = frame.GetObjectArrayElement(a, j);
+		if (u2 == 0)
+			return -1;
+		jint s = frame.GetArrayLength((jarray) u2);
+		if (s != dimsize1)
+			return -1;
+		frame.DeleteLocalRef(u2);
+	}
+	return 0;
+}
+
 jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 {
 	JPValue value = m_Class->newInstance(frame, m_Length);
@@ -156,7 +200,8 @@ JPArrayView::JPArrayView(JPArray* array)
 	buffer.obj = NULL;
 	buffer.ndim = 1;
 	buffer.suboffsets = NULL;
-	array->getClass()->getComponentType()->getView(*this);
+	JPPrimitiveType *type = (JPPrimitiveType*) array->getClass()->getComponentType();
+	type->getView(*this);
 	strides[0] = buffer.itemsize * array->m_Step;
 	shape[0] = array->m_Length;
 	buffer.buf = (char*) memory + buffer.itemsize * array->m_Start;
@@ -164,6 +209,50 @@ JPArrayView::JPArrayView(JPArray* array)
 	buffer.shape = shape;
 	buffer.strides = strides;
 	buffer.readonly = 1;
+	owned = false;
+}
+
+JPArrayView::JPArrayView(JPArray* array, int dimsize0, int dimsize1)
+{
+	JPJavaFrame frame;
+	this->array = array;
+	refcount = 0;
+	buffer.obj = NULL;
+	buffer.ndim = 2;
+	buffer.suboffsets = NULL;
+	JPArrayClass *cls = array->m_Class;
+	cls = (JPArrayClass*) cls->getComponentType();
+	JPPrimitiveType *cls2 = (JPPrimitiveType*) cls->getComponentType();
+	ssize_t itemsize = cls2->getItemSize();
+	memory = new char[dimsize0 * dimsize1 * itemsize];
+	int offset = 0;
+	jobjectArray a = (jobjectArray) array->getJava();
+	for (int i = 0; i < dimsize0; i++)
+	{
+		int j = array->m_Start + i * array->m_Step;
+		jarray a1 = (jarray) frame.GetObjectArrayElement(a, j);
+		cls2->copyElements(frame, a1, memory, offset);
+		offset += itemsize*dimsize1;
+		frame.DeleteLocalRef(a1);
+	}
+	buffer.itemsize = itemsize;
+	strides[0] = buffer.itemsize * dimsize1;
+	strides[1] = buffer.itemsize;
+	shape[0] = dimsize0;
+	shape[1] = dimsize1;
+	buffer.format = const_cast<char*> (cls2->getBufferFormat());
+	buffer.buf = (char*) memory + buffer.itemsize * array->m_Start;
+	buffer.len = dimsize0 * dimsize1 * buffer.itemsize;
+	buffer.shape = shape;
+	buffer.strides = strides;
+	buffer.readonly = 1;
+	owned = true;
+}
+
+JPArrayView::~JPArrayView()
+{
+	if (owned)
+		delete (char*) memory;
 }
 
 void JPArrayView::reference()
@@ -174,7 +263,8 @@ void JPArrayView::reference()
 bool JPArrayView::unreference()
 {
 	refcount--;
-	JP_TRACE("REF COUNT", refcount);
-	array->getClass()->getComponentType()->releaseView(*this, refcount == 0);
+	JPPrimitiveType *type = (JPPrimitiveType*) array->getClass()->getComponentType();
+	if (refcount == 0 && !owned)
+		type->releaseView(*this);
 	return refcount == 0;
 }

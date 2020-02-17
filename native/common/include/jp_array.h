@@ -31,6 +31,8 @@ class JPArrayView
 {
 public:
 	JPArrayView(JPArray* array);
+	JPArrayView(JPArray* array, int d0, int d1);
+	~JPArrayView();
 	void reference();
 	bool unreference();
 
@@ -39,9 +41,10 @@ public:
 	void *memory;
 	Py_buffer buffer;
 	int refcount;
-	Py_ssize_t shape[1];
-	Py_ssize_t strides[1];
+	Py_ssize_t shape[2];
+	Py_ssize_t strides[2];
 	jboolean isCopy;
+	jboolean owned;
 } ;
 
 /**
@@ -82,6 +85,9 @@ public:
 	{
 		return m_Object.get();
 	}
+
+	int checkIsPrimitive(int &dims);
+	int checkRectangular(int &dimsize0, int &dimsize1);
 
 private:
 	JPArrayClass* m_Class;

@@ -254,12 +254,26 @@ void JPLongType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jlong);
 }
 
-void JPLongType::releaseView(JPArrayView& view, bool complete)
+void JPLongType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseLongArrayElements((jlongArray) view.array->getJava(),
-				(jlong*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseLongArrayElements((jlongArray) view.array->getJava(),
+			(jlong*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+}
+
+const char* JPLongType::getBufferFormat()
+{
+	return "q";
+}
+
+ssize_t JPLongType::getItemSize()
+{
+	return sizeof (jlong);
+}
+
+void JPLongType::copyElements(JPJavaFrame &frame, jarray a, void* memory, int offset)
+{
+	int len = frame.GetArrayLength(a);
+	jlong* b = (jlong*) ((char*) memory + offset);
+	frame.GetLongArrayRegion((jlongArray) a, 0, len, b);
 }
