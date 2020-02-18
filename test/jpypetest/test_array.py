@@ -176,9 +176,9 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(list(a), ['a','x','y','z','e','f'])
 
     def testBytesConversion(self):
-        contents = [131, 254, 2, 0, 65]
+        contents = [11, -128, 127, 2, 0, 65]
         array = jpype.JArray(jpype.JByte)(contents)
         test = bytes(array)
         self.assertIsInstance(test, bytes)
-        self.assertEqual(test, bytes(contents))
+        self.assertEqual(test, bytes([i%256 for i in contents]))
 
