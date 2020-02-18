@@ -21,9 +21,9 @@ JPype Imports Module
 --------------------
 
 Once imported this module will place the standard TLDs into the python
-scope. These tlds are ``java``, ``com``, ``org``, and ``gov``.  Java
-symbols from these domains can be imported using the standard Python
-syntax.
+scope. These tlds are ``java``, ``com``, ``org``, ``gov``, ``mil``, 
+``net`` and ``edu``. Java symbols from these domains can be imported 
+using the standard Python syntax.
 
 Import customizers are supported in Python 3.6 or greater.
 
@@ -38,7 +38,7 @@ Forms supported:
 For further information please read the :doc:`imports` guide.
 
 Requires:
-    Python 2.7 or 3.6 or later
+    Python 3.6 or later
 
 Example:
 
@@ -382,6 +382,9 @@ registerDomain('com')
 registerDomain('gov')
 registerDomain('java')
 registerDomain('org')
+registerDomain('mil')
+registerDomain('edu')
+registerDomain('net')
 
 # %% Initialize
 
