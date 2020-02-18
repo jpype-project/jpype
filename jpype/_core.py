@@ -231,8 +231,7 @@ please file a ticket with the developer.
             match = re.search("([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1))-44
-                # FIXME this should have from ex but not accepted in Python 2
-                raise RuntimeError("%s is older than required Java version %d"%(jvmpath, version))
+                raise RuntimeError("%s is older than required Java version %d"%(jvmpath, version)) from ex
         raise
 
     _jpype._java_lang_Class = None
