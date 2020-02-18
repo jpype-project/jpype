@@ -170,6 +170,7 @@ void JPEnv::loadJVM(const string& vmPath, const StringVector& args, bool ignoreU
 	JP_TRACE("Initialize");
 	try
 	{
+		JPException_init();
 		JPJni::init();
 		JPClassLoader::init();
 		JPTypeManager::init();

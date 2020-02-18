@@ -239,7 +239,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 
 static PyObject* PyJPModule_attach(PyObject* module, PyObject* args)
 {
-	JP_TRACE_IN("PyJPModule_attach");
+	JP_PY_TRY("PyJPModule_attach");
 	if (JPEnv::isInitialized())
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
@@ -460,16 +460,16 @@ PyObject* examine(PyObject *module, PyObject *other)
 		printf("  Object:\n");
 		printf("    size: %lld\n", Py_SIZE(other));
 		printf("    dictoffset: %lld\n", ((long long) _PyObject_GetDictPtr(other)-(long long) other));
-		printf("    javaoffset: %d\n", PyJPValue_getJavaSlotOffset(other));
+		printf("    javaoffset: %ld\n", PyJPValue_getJavaSlotOffset(other));
 	}
 	printf("  Type: %p\n", type);
 	printf("    name: %s\n", type->tp_name);
 	printf("    typename: %s\n", Py_TYPE(type)->tp_name);
 	printf("    gc: %d\n", (type->tp_flags & Py_TPFLAGS_HAVE_GC) == Py_TPFLAGS_HAVE_GC);
-	printf("    basicsize: %lld\n", type->tp_basicsize);
-	printf("    itemsize: %lld\n", type->tp_itemsize);
-	printf("    dictoffset: %lld\n", type->tp_dictoffset);
-	printf("    weaklistoffset: %lld\n", type->tp_weaklistoffset);
+	printf("    basicsize: %ld\n", type->tp_basicsize);
+	printf("    itemsize: %ld\n", type->tp_itemsize);
+	printf("    dictoffset: %ld\n", type->tp_dictoffset);
+	printf("    weaklistoffset: %ld\n", type->tp_weaklistoffset);
 	printf("    hasJavaSlot: %d\n", PyJPValue_hasJavaSlot(type));
 	printf("    getattro: %p\n", type->tp_getattro);
 	printf("    setattro: %p\n", type->tp_setattro);
@@ -518,6 +518,8 @@ static struct PyModuleDef moduledef = {
 	moduleMethods,
 };
 
+PyObject *PyJPModule = NULL;
+
 PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
@@ -530,6 +532,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyObject* module = PyModule_Create(&moduledef);
 	// PyJPModule = module;
 	Py_INCREF(module);
+	PyJPModule = module;
 	PyModule_AddStringConstant(module, "__version__", "0.7.2");
 
 	// Initialize each of the python extension types

@@ -98,6 +98,7 @@ extern PyTypeObject *PyJPNumberChar_Type;
 extern PyTypeObject *PyJPNumberBool_Type;
 
 // JPype resources
+extern PyObject *PyJPModule;
 extern PyObject *_JArray;
 extern PyObject *_JObject;
 extern PyObject *_JInterface;

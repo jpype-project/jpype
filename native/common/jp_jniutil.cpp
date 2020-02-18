@@ -144,7 +144,6 @@ void JPJni::init()
 
 	s_ConstructorClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/reflect/Constructor"));
 	s_Constructor_GetParameterTypesID = frame.GetMethodID(s_ConstructorClass, "getParameterTypes", "()[Ljava/lang/Class;");
-
 	s_ThrowableClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Throwable"));
 	s_Throwable_GetMessageID = frame.GetMethodID(s_ThrowableClass, "getMessage", "()Ljava/lang/String;");
 	s_Throwable_PrintStackTraceID = frame.GetMethodID(s_ThrowableClass, "printStackTrace", "(Ljava/io/PrintWriter;)V");
@@ -205,6 +204,8 @@ jclass JPJni::getClass(jobject o)
 string JPJni::toString(jobject o)
 {
 	JPJavaFrame frame;
+	if (s_Object_ToStringID == NULL)
+		return "not initialized";
 	jstring jname = (jstring) frame.CallObjectMethod(o, s_Object_ToStringID);
 	return toStringUTF8(jname);
 }
@@ -425,29 +426,6 @@ bool JPJni::isConstructor(jobject obj)
 {
 	JPJavaFrame frame;
 	return frame.IsInstanceOf(obj, s_ConstructorClass) != 0;
-}
-
-string JPJni::getStackTrace(jthrowable th)
-{
-	JPJavaFrame frame;
-	jobject strWriter = frame.NewObject(s_StringWriterClass, s_StringWriterID);
-
-	jvalue v;
-	v.l = strWriter;
-	jobject printWriter = frame.NewObjectA(s_PrintWriterClass, s_PrintWriterID, &v);
-
-	v.l = printWriter;
-	frame.CallVoidMethodA(th, s_Throwable_PrintStackTraceID, &v);
-	frame.CallVoidMethod(printWriter, s_FlushID);
-	return toString(strWriter);
-}
-
-string JPJni::getMessage(jthrowable th)
-{
-	JPJavaFrame frame;
-	jstring jstr = (jstring) frame.CallObjectMethod(th, s_Throwable_GetMessageID);
-
-	return toStringUTF8(jstr);
 }
 
 bool JPJni::isThrowable(jclass c)

@@ -15,6 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include <frameobject.h>
+PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
+PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th);
 
 JPypeException::JPypeException(jthrowable th, const char* msn, const JPStackInfo& stackInfo)
 : m_Throwable(th)
@@ -94,12 +97,6 @@ string JPypeException::getMessage()
 	{
 		stringstream str;
 		str << m_Message << endl;
-		for (JPStackTrace::iterator iter = this->m_Trace.begin();
-				iter != m_Trace.end(); ++iter)
-		{
-			str << "\tat " << iter->getFunction() << "(" << iter->getFile() << ":" << iter->getLine() << ")" << endl;
-		}
-
 		JP_TRACE(str.str());
 		return str.str();
 	} catch (...)
@@ -218,7 +215,14 @@ void JPypeException::convertJavaToPython()
 	PyObject *type = (PyObject*) Py_TYPE(pyvalue.get());
 	Py_INCREF(type);
 
-	// Transfer to python
+	// Add cause to the exception
+	JPPyObject args(JPPyRef::_call, Py_BuildValue("(s)", "Java Exception"));
+	JPPyObject cause(JPPyRef::_call, PyObject_Call(PyExc_Exception, args.get(), NULL));
+	JPPyObject trace(JPPyRef::_call, PyTrace_FromJavaException(frame, th));
+	PyException_SetTraceback(cause.get(), trace.get());
+	PyException_SetCause(pyvalue.get(), cause.keep());
+
+	// Transfer to Python
 	PyErr_SetObject(type, pyvalue.get());
 	JP_TRACE_OUT;
 }
@@ -236,7 +240,6 @@ void JPypeException::convertPythonToJava()
 			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
 			if (javaExc != NULL)
 			{
-				//th = (jthrowable) frame.NewLocalRef(javaExc->getJavaObject());
 				th = (jthrowable) javaExc->getJavaObject();
 				JP_TRACE("Throwing Java", JPJni::toString(th));
 				frame.Throw(th);
@@ -428,4 +431,118 @@ void JPypeException::toJava()
 		*i = 0;
 	}
 	JP_TRACE_OUT;
+}
+
+PyTracebackObject *tb_create(
+		PyTracebackObject *last_traceback,
+		PyObject *dict,
+		const char* filename,
+		const char* funcname,
+		int linenum)
+{
+	// Create a code for this frame.
+	PyCodeObject *code = PyCode_NewEmpty(filename, funcname, linenum);
+	// Create a frame for the traceback.
+	PyFrameObject *frame = (PyFrameObject*) PyFrame_Type.tp_alloc(&PyFrame_Type, 0);
+	frame->f_back = NULL;
+	if (last_traceback != NULL)
+		frame->f_back = last_traceback->tb_frame;
+	frame->f_builtins = dict;
+	Py_INCREF(frame->f_builtins);
+	frame->f_code = (PyCodeObject*) code;
+	frame->f_executing = 0;
+	frame->f_gen = NULL;
+	frame->f_globals = dict;
+	Py_INCREF(frame->f_globals);
+	frame->f_iblock = 0;
+	frame->f_lasti = 0;
+	frame->f_lineno = 0;
+	frame->f_locals = NULL;
+	frame->f_localsplus[0] = 0;
+	frame->f_stacktop = NULL;
+	frame->f_trace = NULL;
+	frame->f_valuestack = 0;
+#if PY_VERSION_HEX>=0x03070000
+	frame->f_trace_lines = 0;
+	frame->f_trace_opcodes = 0;
+#endif
+
+	// Create a traceback
+	PyTracebackObject *traceback = (PyTracebackObject*)
+			PyTraceBack_Type.tp_alloc(&PyTraceBack_Type, 0);
+	traceback->tb_frame = frame;
+	traceback->tb_lasti = frame->f_lasti;
+	traceback->tb_lineno = linenum;
+	traceback->tb_next = last_traceback;
+	return traceback;
+}
+
+PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
+{
+	PyTracebackObject *last_traceback = NULL;
+	PyObject *dict = PyModule_GetDict(PyJPModule);
+	for (JPStackTrace::iterator iter = trace.begin(); iter != trace.end(); ++iter)
+	{
+		last_traceback = tb_create(last_traceback, dict,  iter->getFile(),
+				iter->getFunction(), iter->getLine());
+	}
+	if (last_traceback == NULL)
+		Py_RETURN_NONE;
+	return (PyObject*) last_traceback;
+}
+
+namespace
+{
+jmethodID s_Throwable_GetStackTraceID;
+jmethodID s_StackTraceElement_GetFileName;
+jmethodID s_StackTraceElement_GetMethodName;
+jmethodID s_StackTraceElement_GetLineNumber;
+jmethodID s_StackTraceElement_GetClassName;
+}
+
+void JPException_init()
+{
+	JP_TRACE_IN("JPException_init");
+	JPJavaFrame frame;
+	jclass s_ThrowableClass = (jclass) frame.FindClass("java/lang/Throwable");
+	s_Throwable_GetStackTraceID = frame.GetMethodID(s_ThrowableClass, "getStackTrace", "()[Ljava/lang/StackTraceElement;");
+
+	jclass s_StackTraceElementClass = (jclass) frame.FindClass("java/lang/StackTraceElement");
+	s_StackTraceElement_GetFileName = frame.GetMethodID(s_StackTraceElementClass, "getFileName", "()Ljava/lang/String;");
+	s_StackTraceElement_GetMethodName = frame.GetMethodID(s_StackTraceElementClass, "getMethodName", "()Ljava/lang/String;");
+	s_StackTraceElement_GetClassName = frame.GetMethodID(s_StackTraceElementClass, "getClassName", "()Ljava/lang/String;");
+	s_StackTraceElement_GetLineNumber = frame.GetMethodID(s_StackTraceElementClass, "getLineNumber", "()I");
+	JP_TRACE_OUT;
+}
+
+PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th)
+{
+	PyTracebackObject *last_traceback = NULL;
+	jarray obj = (jarray) frame.CallObjectMethod(th, s_Throwable_GetStackTraceID);
+	jsize sz = frame.GetArrayLength(obj);
+	PyObject *dict = PyModule_GetDict(PyJPModule);
+	for (jsize i = 0; i < sz; ++i)
+	{
+		jobject elem = frame.GetObjectArrayElement((jobjectArray) obj, i);
+		string filename, method;
+		jstring jfilename = (jstring) frame.CallObjectMethod(elem,
+				s_StackTraceElement_GetFileName);
+		jstring jmethodname = (jstring) frame.CallObjectMethod(elem,
+				s_StackTraceElement_GetMethodName);
+		jstring jclassname = (jstring) frame.CallObjectMethod(elem,
+				s_StackTraceElement_GetClassName);
+		if (jfilename != NULL)
+			filename = JPJni::toStringUTF8(jfilename);
+		else
+			filename = JPJni::toStringUTF8(jclassname) + ".java";
+		if (jmethodname != NULL)
+			method = JPJni::toStringUTF8(jclassname) + "." + JPJni::toStringUTF8(jmethodname);
+		jint lineNum = frame.CallIntMethod(elem, s_StackTraceElement_GetLineNumber);
+
+		last_traceback = tb_create(last_traceback, dict,  filename.c_str(),
+				method.c_str(), lineNum);
+	}
+	if (last_traceback == NULL)
+		Py_RETURN_NONE;
+	return (PyObject*) last_traceback;
 }

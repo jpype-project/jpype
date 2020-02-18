@@ -14,6 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import jpype
 from jpype import JException, java, JProxy, JPackage
 import traceback
 import common
@@ -81,3 +82,25 @@ class ExceptionTestCase(common.JPypeTestCase):
             self.fail()
         except JException(self.jpype.exc.ParentTestException) as ex:
             self.assertIsInstance(ex, self.jpype.exc.ChildTestException)
+
+
+    def testCause(self):
+        cls =jpype.JClass("jpype.exc.ExceptionTest")
+        try:
+            cls.throwChain()
+        except Exception as ex:
+            ex1= ex
+
+        self.assertEqual(str(ex1.__cause__),"Java Exception")
+        frame = ex1.__cause__.__traceback__
+        expected = [
+        'jpype.exc.ExceptionTest.throwChain',
+        'jpype.exc.ExceptionTest.method1',
+        'jpype.exc.ExceptionTest.method2',
+        ]
+        i=0
+        while (frame):
+           self.assertEqual(frame.tb_frame.f_code.co_name,expected[i])
+           frame = frame.tb_next
+           i+=1
+
