@@ -16,8 +16,9 @@ VER=0.7.1
 for PLAT in x86_64 i686
 do
 	DOCKER_IMAGE=quay.io/pypa/manylinux1_$PLAT
-	for PY in cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38
-	do
-		docker run --rm -e VER=$VER -e PY=$PY -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/build.sh
-	done
+	# Different versions need different NUMPY as NUMPY support for Python varies by version
+	docker run --rm -e VER=$VER -e PY=cp35-cp35m -e NUMPY=1.15.0  -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/build.sh
+	docker run --rm -e VER=$VER -e PY=cp36-cp36m -e NUMPY=1.15.0  -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/build.sh
+	docker run --rm -e VER=$VER -e PY=cp37-cp37m -e NUMPY=1.15.0  -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/build.sh
+	docker run --rm -e VER=$VER -e PY=cp38-cp38  -e NUMPY=1.18.0  -e PLAT=$PLAT -v `pwd`:/io $DOCKER_IMAGE /io/build.sh
 done
