@@ -222,7 +222,17 @@ please file a ticket with the developer.
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
                         % (','.join([str(i) for i in kwargs])))
 
-    _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
+    try:
+        _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
+    except RuntimeError as ex:
+        source = str(ex)
+        if "UnsupportedClassVersion" in source:
+            import re
+            match = re.search("([0-9]+)\.[0-9]+", source)
+            if match:
+                version = int(match.group(1))-44
+                raise RuntimeError("%s is older than required Java version %d"%(jvmpath, version)) from ex
+        raise
 
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
