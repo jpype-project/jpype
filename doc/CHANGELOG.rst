@@ -47,7 +47,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Fixed bug with Proxy not converting when passed as an argument to
     Python functions during execution of proxies
 
+  - Missing tlds "mil", "net", and "edu" added to default imports.
+
   - Enhanced error reporting for UnsupportedClassVersion during startup.
+
 
 - **0.7.1 - 12-16-2019**
 
