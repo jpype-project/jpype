@@ -257,12 +257,27 @@ void JPShortType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jshort);
 }
 
-void JPShortType::releaseView(JPArrayView& view, bool complete)
+void JPShortType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseShortArrayElements((jshortArray) view.array->getJava(),
-				(jshort*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseShortArrayElements((jshortArray) view.array->getJava(),
+			(jshort*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
 }
+
+const char* JPShortType::getBufferFormat()
+{
+	return "h";
+}
+
+ssize_t JPShortType::getItemSize()
+{
+	return sizeof (jshort);
+}
+
+void JPShortType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
+{
+	jshort* b = (jshort*) ((char*) memory + offset);
+	frame.GetShortArrayRegion((jshortArray) a, start, len, b);
+}
+

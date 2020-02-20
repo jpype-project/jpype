@@ -85,6 +85,8 @@ public:
 	{
 		if (_env && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
+			// We must clear the exception so that we can perform future
+			// JNI calls or they will all fail on the current exception.
 			jthrowable th = _env->functions->ExceptionOccurred(_env);
 			_env->functions->ExceptionClear(_env);
 			_env = 0;
@@ -97,6 +99,8 @@ public:
 		// This is a throw in destructor which is only allowed on an exception safe code pattern
 		if (_env != NULL && _env->functions->ExceptionCheck(_env) == JNI_TRUE)
 		{
+			// We must clear the exception so that we can perform future
+			// JNI calls or they will all fail on the current exception.
 			jthrowable th = _env->functions->ExceptionOccurred(_env);
 			_env->functions->ExceptionClear(_env);
 			_env = 0;

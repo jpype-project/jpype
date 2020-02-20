@@ -265,9 +265,9 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	JP_PY_CATCH(-1);
 }
 
-void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
+static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 {
-	JP_PY_TRY("PyJPArray_releaseBuffer");
+	JP_PY_TRY("PyJPArrayPrimitive_releaseBuffer");
 	ASSERT_JVM_RUNNING();
 	JPJavaFrame frame;
 	if (self->m_View == NULL || !self->m_View->unreference())
@@ -282,8 +282,72 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	JP_PY_TRY("PyJPArray_getBuffer");
 	ASSERT_JVM_RUNNING();
 	JPJavaFrame frame;
+
+	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
+	{
+		PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
+		return -1;
+	}
+
+	//Check to see if we are a slice and clone it if necessary
+	jarray obj = self->m_Array->getJava();
+	if (self->m_Array->isSlice())
+		obj = self->m_Array->clone(frame, (PyObject*) self);
+
+	// Collect the members into a rectangular array if possible.
+	jobject result = JPTypeManager::collectRectangular(obj);
+	if (result == NULL)
+	{
+		PyErr_SetString(PyExc_BufferError, "Java array buffer is not rectangular primitives");
+		return -1;
+	}
+
+	// If it is rectangular so try to create a view
 	try
 	{
+		if (self->m_View == NULL)
+			self->m_View = new JPArrayView(self->m_Array, result);
+		self->m_View->reference();
+		*view = self->m_View->buffer;
+
+		// If strides are not requested and this is a slice then fail
+		if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES)
+			view->strides = NULL;
+
+		// If shape is not requested
+		if ((flags & PyBUF_ND) != PyBUF_ND)
+			view->shape = NULL;
+
+		// If format is not requested
+		if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT)
+			view->format = NULL;
+
+		// Okay all successful so reference the parent object
+		view->obj = (PyObject*) self;
+		Py_INCREF(view->obj);
+		return 0;
+	} catch (JPypeException &ex)
+	{
+
+		PyJPArray_releaseBuffer(self, view);
+		throw ex;
+	}
+	JP_PY_CATCH(-1);
+}
+
+int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
+{
+	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
+	ASSERT_JVM_RUNNING();
+	JPJavaFrame frame;
+	try
+	{
+		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
+		{
+			PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
+			return -1;
+		}
+
 		if (self->m_View == NULL)
 		{
 			self->m_View = new JPArrayView(self->m_Array);
@@ -292,11 +356,6 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		*view = self->m_View->buffer;
 
 		// We are always contiguous so no need to check that here.
-		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
-		{
-			PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
-			return -1;
-		}
 		view->readonly = 1;
 
 		// If strides are not requested and this is a slice then fail
@@ -321,8 +380,9 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	}	catch (JPypeException &ex)
+	} catch (JPypeException &ex)
 	{
+
 		PyJPArray_releaseBuffer(self, view);
 		throw ex;
 	}
@@ -358,6 +418,11 @@ static PyType_Slot arraySlots[] = {
 	{0}
 };
 
+static PyBufferProcs arrayBuffer = {
+	(getbufferproc) & PyJPArray_getBuffer,
+	(releasebufferproc) & PyJPArray_releaseBuffer
+};
+
 PyTypeObject *PyJPArray_Type = NULL;
 static PyType_Spec arraySpec = {
 	"_jpype._JArray",
@@ -368,7 +433,7 @@ static PyType_Spec arraySpec = {
 };
 
 static PyBufferProcs arrayPrimBuffer = {
-	(getbufferproc) & PyJPArray_getBuffer,
+	(getbufferproc) & PyJPArrayPrimitive_getBuffer,
 	(releasebufferproc) & PyJPArray_releaseBuffer
 };
 
@@ -389,11 +454,13 @@ static PyType_Spec arrayPrimSpec = {
 }
 #endif
 
-void PyJPArray_initType(PyObject *module)
+void PyJPArray_initType(PyObject * module)
 {
+
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
+	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
@@ -409,7 +476,7 @@ void PyJPArray_initType(PyObject *module)
 	JP_PY_CHECK();
 }
 
-JPPyObject PyJPArray_create(PyTypeObject *type, JPValue &value)
+JPPyObject PyJPArray_create(PyTypeObject *type, JPValue & value)
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();

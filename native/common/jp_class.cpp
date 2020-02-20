@@ -637,14 +637,4 @@ bool JPClass::isInstance(JPValue& val)
 	return frame.IsInstanceOf(val.getValue().l, m_Class.get()) != 0;
 }
 
-void JPClass::getView(JPArrayView& view)
-{
-	JP_RAISE(PyExc_BufferError, "Operation not support");
-}
-
-void JPClass::releaseView(JPArrayView& view, bool complete)
-{
-	JP_RAISE(PyExc_BufferError, "Operation not support");
-}
-
 //</editor-fold>

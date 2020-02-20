@@ -268,12 +268,27 @@ void JPFloatType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jfloat);
 }
 
-void JPFloatType::releaseView(JPArrayView& view, bool complete)
+void JPFloatType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseFloatArrayElements((jfloatArray) view.array->getJava(),
-				(jfloat*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseFloatArrayElements((jfloatArray) view.array->getJava(),
+			(jfloat*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
 }
+
+const char* JPFloatType::getBufferFormat()
+{
+	return "f";
+}
+
+ssize_t JPFloatType::getItemSize()
+{
+	return sizeof (jfloat);
+}
+
+void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
+{
+	jfloat* b = (jfloat*) ((char*) memory + offset);
+	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
+}
+

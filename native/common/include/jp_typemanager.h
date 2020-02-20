@@ -65,6 +65,7 @@ void shutdown();
 JPClass* findClass(const string& str);
 JPClass* findClass(jclass cls);
 JPClass* findClassForObject(jobject obj);
+jobject collectRectangular(jarray obj);
 
 void flushCache();
 

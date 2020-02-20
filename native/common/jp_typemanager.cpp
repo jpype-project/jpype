@@ -44,6 +44,7 @@ jclass utility;
 jmethodID getClassForID;
 jmethodID callMethodID;
 jmethodID isCallerSensitiveID;
+jmethodID collectRectangularID;
 }
 
 namespace JPTypeManager
@@ -126,6 +127,16 @@ bool JPTypeManager::isCallerSensitive(jobject obj)
 	return frame.CallStaticBooleanMethodA(utility, isCallerSensitiveID, &v) != 0;
 }
 
+jobject JPTypeManager::collectRectangular(jarray obj)
+{
+	if (collectRectangularID == 0)
+		return 0;
+	JPJavaFrame frame;
+	jvalue v;
+	v.l = (jobject) obj;
+	return frame.keep(frame.CallStaticObjectMethodA(utility, collectRectangularID, &v));
+}
+
 jobject JPTypeManager::callMethod(jobject method, jobject obj, jobject args)
 {
 	JP_TRACE_IN("JPTypeManager::callMethod");
@@ -158,6 +169,9 @@ void JPTypeManager::init()
 
 	getClassForID = frame.GetStaticMethodID(utility, "getClassFor",
 			"(Ljava/lang/Object;)Ljava/lang/Class;");
+
+	collectRectangularID = frame.GetStaticMethodID(utility, "collectRectangular",
+			"(Ljava/lang/Object;)[Ljava/lang/Object;");
 
 	jclass cls;
 	cls = (jclass) frame.FindClass("java/lang/Object");

@@ -254,12 +254,26 @@ void JPBooleanType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jboolean);
 }
 
-void JPBooleanType::releaseView(JPArrayView& view, bool complete)
+void JPBooleanType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseBooleanArrayElements((jbooleanArray) view.array->getJava(),
-				(jboolean*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseBooleanArrayElements((jbooleanArray) view.array->getJava(),
+			(jboolean*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+}
+
+const char* JPBooleanType::getBufferFormat()
+{
+	return "?";
+}
+
+ssize_t JPBooleanType::getItemSize()
+{
+	return sizeof (jboolean);
+}
+
+void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
+{
+	jboolean* b = (jboolean*) ((char*) memory + offset);
+	frame.GetBooleanArrayRegion((jbooleanArray) a, start, len, b);
 }

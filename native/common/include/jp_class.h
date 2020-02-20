@@ -158,9 +158,6 @@ public:
 
 	virtual void postLoad();
 
-	virtual void getView(JPArrayView& view);
-	virtual void releaseView(JPArrayView& view, bool complete);
-
 private:
 	void loadFields();
 	void loadMethods();

@@ -231,12 +231,26 @@ void JPCharType::getView(JPArrayView& view)
 	view.buffer.itemsize = sizeof (jchar);
 }
 
-void JPCharType::releaseView(JPArrayView& view, bool complete)
+void JPCharType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame;
-	if (complete)
-	{
-		frame.ReleaseCharArrayElements((jcharArray) view.array->getJava(),
-				(jchar*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
-	}
+	frame.ReleaseCharArrayElements((jcharArray) view.array->getJava(),
+			(jchar*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+}
+
+const char* JPCharType::getBufferFormat()
+{
+	return "H";
+}
+
+ssize_t JPCharType::getItemSize()
+{
+	return sizeof (jchar);
+}
+
+void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		void* memory, int offset)
+{
+	jchar* b = (jchar*) ((char*) memory + offset);
+	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }
