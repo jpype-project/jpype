@@ -4,6 +4,10 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - C++ and Java exceptions hold the traceback as a Python exception
+    cause.  It is no longer necessary to call stacktrace() to retrieve
+    the traceback information.
+
   - Speed for call return path has been improved by a factor of 3.
 
   - Multidimensional array buffer transfers increase speed transfers

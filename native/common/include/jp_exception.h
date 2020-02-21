@@ -110,7 +110,7 @@ public:
 		return line_;
 	}
 } ;
-typedef list<JPStackInfo> JPStackTrace;
+typedef vector<JPStackInfo> JPStackTrace;
 
 typedef union
 {
@@ -199,5 +199,7 @@ public:
 	int line;
 	string message;
 } ;
+
+void JPException_init();
 
 #endif

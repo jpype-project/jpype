@@ -51,4 +51,19 @@ class ExceptionTest
   {
     throw new ChildTestException();
   }
+
+  public static void throwChain()
+  {
+	  method1();
+  }
+
+  static void method1()
+  {
+	  method2();
+  }
+
+  static void method2()
+  {
+	  throw new RuntimeException("Inner");
+  }
 }
