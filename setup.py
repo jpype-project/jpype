@@ -47,7 +47,6 @@ setup(
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
-        'bdist_wheel': setupext.wheelc.WheelCommand,
     },
     zip_safe=False,
     ext_modules=[jpypeLib],
