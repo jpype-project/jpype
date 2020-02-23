@@ -202,3 +202,7 @@ def _applyInitializer(cls):
                 init.insert(0, base.__dict__['__jclass_init__'])
         for func in init:
             func(cls)
+
+
+registerClassBase("java.lang.IndexOutOfBoundsException", IndexError)
+

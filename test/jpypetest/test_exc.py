@@ -83,7 +83,6 @@ class ExceptionTestCase(common.JPypeTestCase):
         except JException(self.jpype.exc.ParentTestException) as ex:
             self.assertIsInstance(ex, self.jpype.exc.ChildTestException)
 
-
     def testCause(self):
         cls =jpype.JClass("jpype.exc.ExceptionTest")
         try:
@@ -103,4 +102,8 @@ class ExceptionTestCase(common.JPypeTestCase):
            self.assertEqual(frame.tb_frame.f_code.co_name,expected[i])
            frame = frame.tb_next
            i+=1
+
+    def testIndexError(self):
+        with self.assertRaises(IndexError):
+            raise java.lang.IndexOutOfBoundsException("From Java")
 

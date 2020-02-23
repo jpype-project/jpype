@@ -1,4 +1,5 @@
 import jpype
+from jpype.types import *
 import common
 
 
@@ -68,3 +69,50 @@ class CollectionTestCase(common.JPypeTestCase):
         del jlist[0]
         self.assertEqual(len(jlist), 3)
         self.assertEqual(jlist[0], 2)
+
+    def testCollectionAddAll(self):
+        l = [1, 2, 3, 4]
+        l2 = ['a','b']
+        jlist = jpype.JClass("java.util.ArrayList")()
+        jlist.addAll(l)
+        jcollection = jpype.JObject(jlist, jpype.java.util.Collection)
+        jcollection.addAll(l2)
+        l.extend(l2)
+        self.assertEqual(l, list(jcollection))
+
+    def testListSetItemNeg(self):
+        l = [1, 2, 3, 4]
+        jlist = jpype.JClass("java.util.ArrayList")()
+        jlist.addAll([1, 2, 3, 4])
+        jlist[-1]=5
+        l[-1]=5
+        self.assertEqual(l, list(jlist))
+        jlist[-2]=6
+        l[-2]=6
+        self.assertEqual(l, list(jlist))
+        with self.assertRaises(IndexError):
+            jlist[-5]=6
+
+    def testMapKeyError(self):
+        hm = JClass('java.util.HashMap')()
+        with self.assertRaises(KeyError):
+            hm['foo']
+        hm['foo'] = None
+        self.assertEqual(hm['foo'], None)
+
+    def testHashMapEntryIter(self):
+        hm = JClass('java.util.HashMap')()
+        hm['alice'] = 'alice'
+        hm['betty'] = 'betty'
+        hm['catty'] = 'catty'
+        for p,v in hm.entrySet():
+            self.assertEqual(p, v)
+
+    def testTreeMapEntryIter(self):
+        hm = JClass('java.util.TreeMap')()
+        hm['alice'] = 'alice'
+        hm['betty'] = 'betty'
+        hm['catty'] = 'catty'
+        for p,v in hm.entrySet():
+            self.assertEqual(p, v)
+
