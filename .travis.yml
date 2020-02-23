@@ -81,6 +81,9 @@ matrix:
         homebrew:
           packages:
             - ant
+          # Remove the following after bug is resolved
+          # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/17
+          update: true
 
 
 install:
