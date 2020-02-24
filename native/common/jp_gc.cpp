@@ -3,94 +3,56 @@
 #include "jp_reference_queue.h"
 
 #ifndef WIN32
+#define USE_RESOURCE
 #include <sys/resource.h>
+#define DELTA_LIMIT 5*1024
+#define SOFT_LIMIT 60*1024
+#define HARD_LIMIT 200*1024
+#else
+#define USE_PROCESS_INFO
+#include <Windows.h>
+#include <psapi.h>
+#define DELTA_LIMIT 5*1024*1024
+#define SOFT_LIMIT 60*1024*1024
+#define HARD_LIMIT 200*1024*1024
 #endif
 
 namespace
 {
+bool running = false;
 bool in_python_gc = false;
+bool java_triggered = false;
 PyObject *python_gc = NULL;
 jclass _SystemClass = NULL;
 jmethodID _gcMethodID;
-//PyMemAllocatorEx raw_allocators;
+
+ssize_t last_python = 0;
+ssize_t last_java = 0;
+int skip_counter = 0;
+int skip_last = 0;
 }
 
 void triggerPythonGC();
 
 extern "C" void callbackJavaGCTriggered(void* n)
 {
-	printf("Sentinel trigger\n");
+	// Don't reinstall the sentinel if we are terminated
+	if (!running)
+		return;
 	// Install a new sentinel
 	JPJavaFrame frame;
 	jobject sentinel = frame.NewByteArray(0);
 	JPReferenceQueue::registerRef(sentinel, 0, callbackJavaGCTriggered);
+
+	// If we were triggered from Java call a Python cleanup
 	if (!in_python_gc)
 	{
-		printf("Force Python\n");
 		// trigger Python gc
 		in_python_gc = true;
+		java_triggered = true;
 		PyGC_Collect();
 	}
 }
-
-//extern "C" void* gc_malloc_raw(void *ctx, size_t sz)
-//{
-//	printf("Malloc %lu\n", sz);
-//	PyMemAllocatorEx *alloc = (PyMemAllocatorEx *) ctx;
-//	return raw_allocators.malloc(raw_allocators.ctx, sz);
-//}
-//
-//extern "C" void* gc_calloc_raw(void *ctx, size_t nelem, size_t elsize)
-//{
-//	printf("Calloc %lu\n", nelem * elsize);
-//	PyMemAllocatorEx *alloc = (PyMemAllocatorEx *) ctx;
-//	PyMemAllocatorEx *prior = (PyMemAllocatorEx *) alloc->ctx;
-//	return raw_allocators.calloc(raw_allocators.ctx, nelem, elsize);
-//}
-//
-//extern "C" void* gc_realloc_raw(void *ctx, void* ptr, size_t size)
-//{
-//	printf("Realloc %lu\n", size);
-//	PyMemAllocatorEx *alloc = (PyMemAllocatorEx *) ctx;
-//	PyMemAllocatorEx *prior = (PyMemAllocatorEx *) alloc->ctx;
-//	return raw_allocators.realloc(raw_allocators.ctx, ptr, size);
-//}
-//
-//extern "C" void gc_free_raw(void *ctx, void* ptr)
-//{
-//	printf("Free %p\n", ptr);
-//	PyMemAllocatorEx *alloc = (PyMemAllocatorEx *) ctx;
-//	PyMemAllocatorEx *prior = (PyMemAllocatorEx *) alloc->ctx;
-//	raw_allocators.free(raw_allocators.ctx, ptr);
-//}
-
-// Connection to numpy if using a weak import if possible
-//typedef void (*PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
-//		void *user_data);
-
-void **PyArray_API;
-typedef void (PyDataMem_EventHookFunc) (void *inp, void *outp, size_t size,
-		void *user_data);
-typedef PyDataMem_EventHookFunc * PyDataMem_SetEventHook \
-       (PyDataMem_EventHookFunc *, void *, void **);
-#define PyDataMem_SetEventHook \
-        (*(PyDataMem_EventHookFunc * (*)(PyDataMem_EventHookFunc *, void *, void **)) \
-         PyArray_API[291])
-
-//static void myevent_hook(void *inp, void *outp, size_t size,
-//		void *user_data)
-//{
-//	if (inp == NULL)
-//	{
-//		ssize_t* q = (ssize_t*) outp;
-//		printf("Hook no in %d %p %d\n", size, outp, q[-1]);
-//	}
-//	if (size == 0)
-//	{
-//		ssize_t* q = (ssize_t*) inp;
-//		printf("Hook no size %p %d\n", inp, q[-1]);
-//	}
-//}
 
 void JPGarbageCollection::init()
 {
@@ -115,51 +77,74 @@ void JPGarbageCollection::init()
 	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
 	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
 
+	running = true;
+}
 
-	//	PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
-	//	if (numpy != NULL)
-	//	{
-	//		PyObject *c_api = PyObject_GetAttrString(numpy, "_ARRAY_API");
-	//		PyArray_API = (void **) PyCapsule_GetPointer(c_api, NULL);
-	//		printf("array %p\n", PyArray_API[291]);
-	//		void *old_data;
-	//		PyDataMem_SetEventHook(myevent_hook, NULL, &old_data);
-	//	} else
-	//	{
-	//		PyErr_Clear();
-	//	}
-	// Connect into Python so we know when we need to trigger a Java collection
-	//	PyMemAllocatorEx alloc;
-	//	alloc.malloc = gc_malloc_raw;
-	//	alloc.calloc = gc_calloc_raw;
-	//	alloc.realloc = gc_realloc_raw;
-	//	alloc.free = gc_free_raw;
-	//
-	//	alloc.ctx = &raw_allocators;
-	//	PyMem_GetAllocator(PYMEM_DOMAIN_MEM, &raw_allocators);
-	//	PyMem_SetAllocator(PYMEM_DOMAIN_MEM, &alloc);
+void JPGarbageCollection::shutdown()
+{
+	running = false;
 }
 
 void JPGarbageCollection::onStart()
 {
-	if (in_python_gc)
+	if (!running)
 		return;
-	printf("Start Python\n");
-	JPJavaFrame frame;
 	in_python_gc = true;
-	//	printf("Force Java\n");
-	//	frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
 }
 
 void JPGarbageCollection::onEnd()
 {
-	printf("End Python\n");
+	if (!running)
+		return;
 	if (in_python_gc)
 	{
+		int run_gc = 0;
+
+		ssize_t prev = last_python;
+#ifdef USE_RESOURCE
 		rusage usage;
 		getrusage(RUSAGE_SELF, &usage);
-		printf("usage %ld\n", usage.ru_maxrss);
+		ssize_t current = usage.ru_maxrss;
+#endif
+
+#ifdef USE_PROCESS_INFO
+		PROCESS_MEMORY_COUNTERS pmc;
+		GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof (pmc));
+		SIZE_T current = pmc.WorkingSetSize;
+#endif
+
+		if (java_triggered)
+			last_java = current;
+		else
+			last_python = current;
+		if (current > SOFT_LIMIT && current > prev)
+			run_gc = 1;
+		if (last_python > last_java + DELTA_LIMIT)
+			run_gc = 2;
+		if (skip_counter > skip_last - 3)
+			run_gc = 3;
+		if (current > HARD_LIMIT && skip_counter > skip_last / 2)
+			run_gc = 4;
+		if (last_python > current)
+			last_python = current;
+
+		//		printf("consider gc %d (%d,%d) d=%d s=%d %d\n", run_gc,
+		//				last_python, last_java, current - prev, skip_last, skip_counter);
+
+		if (run_gc > 0)
+		{
+			// Don't reset the limit if it was count triggered
+			if (run_gc != 3 && skip_counter > 0)
+				skip_last = skip_counter + 5;
+			skip_counter = 0;
+			JPJavaFrame frame;
+			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
+		} else
+		{
+			skip_counter++;
+		}
 	}
 	// Remove our lock so that we can watch for triggers
 	in_python_gc = false;
+	java_triggered = false;
 }

@@ -31,7 +31,8 @@ SRCS = build/src/jp_thunk.cpp native/common/jp_array.cpp native/common/jp_arrayc
        native/python/pyjp_field.cpp native/python/pyjp_method.cpp native/python/pyjp_module.cpp \
        native/python/pyjp_monitor.cpp native/python/pyjp_object.cpp native/python/pyjp_proxy.cpp \
        native/python/pyjp_value.cpp \
-       native/python/pyjp_number.cpp
+       native/python/pyjp_number.cpp \
+       native/common/jp_gc.cpp
 
 all: $(LIB)
 

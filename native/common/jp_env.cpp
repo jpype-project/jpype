@@ -209,6 +209,8 @@ void JPEnv::shutdown()
 	if (s_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
+	JPGarbageCollection::shutdown();
+
 	// Reference queue has to be be shutdown first as we need to close resources
 	JPReferenceQueue::shutdown();
 

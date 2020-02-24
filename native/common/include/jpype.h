@@ -156,6 +156,8 @@ namespace JPGarbageCollection
 {
 void init();
 
+void shutdown();
+
 /**
  * Called when Python starts it Garbage collector
  */
