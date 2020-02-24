@@ -181,6 +181,7 @@ void JPEnv::loadJVM(const string& vmPath, const StringVector& args, bool ignoreU
 		JPReferenceQueue::init();
 		JPProxy::init();
 		JPReferenceQueue::startJPypeReferenceQueue();
+		JPGarbageCollection::init();
 	}	catch (JPypeException& ex)
 	{
 		// Special case, if we get a Java exception here we can't convert

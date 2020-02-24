@@ -19,6 +19,7 @@
 #include "jp_arrayclass.h"
 #include "jp_reference_queue.h"
 
+void PyJPModule_installGC(PyObject* module);
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPClass_initType(PyObject* module);
@@ -233,6 +234,10 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 
 	PyJPModule_loadResources(module);
 	JPEnv::loadJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
+
+	// install the gc hook
+	PyJPModule_installGC(module);
+
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -444,6 +449,21 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
+{
+	PyObject *a1 = PyTuple_GetItem(obj, 0);
+	if (!PyUnicode_Check(a1))
+		JP_RAISE(PyExc_TypeError, "Bad callback argument");
+	if (PyUnicode_ReadChar(a1, 2) == 'a')
+	{
+		JPGarbageCollection::onStart();
+	} else
+	{
+		JPGarbageCollection::onEnd();
+	}
+	Py_RETURN_NONE;
+}
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -495,6 +515,7 @@ static PyMethodDef moduleMethods[] = {
 	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
 	{"examine", (PyCFunction) (&examine), METH_O, ""},
 	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
+	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
 
 	// Threading
 	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},
@@ -568,4 +589,18 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 		return;
 	}
 	JP_TRACE_OUT;
+}
+
+void PyJPModule_installGC(PyObject* module)
+{
+	// Get the Python garbage collector
+	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+
+	// Find the callbacks
+	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(gc.get(), "callbacks"));
+
+	// Hook up our callback
+	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(module, "_collect"));
+	PyList_Append(callbacks.get(), collect.get());
+	JP_PY_CHECK();
 }

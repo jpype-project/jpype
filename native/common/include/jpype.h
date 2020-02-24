@@ -152,4 +152,20 @@ class JPField;
 // Services
 #include "jp_proxy.h"
 
+namespace JPGarbageCollection
+{
+void init();
+
+/**
+ * Called when Python starts it Garbage collector
+ */
+void onStart();
+
+/**
+ * Called when Python finishes it Garbage collector
+ */
+void onEnd();
+
+}
+
 #endif // _JPYPE_H_
