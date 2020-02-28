@@ -9,7 +9,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
 setup(
     name='JPype1',
-    version='0.7.1',
+    version='0.7.2',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
