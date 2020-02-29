@@ -148,12 +148,11 @@ class CollectionTestCase(common.JPypeTestCase):
             self.assertEqual(dc[p], v)
 
     def testMapABC(self):
-        from collections.abc import Mapping, Sized, Iterable, Container, Collection
+        from collections.abc import Mapping, Sized, Iterable, Container
         hm = JClass('java.util.HashMap')()
         self.assertIsInstance(hm, Sized)
         self.assertIsInstance(hm, Iterable)
         self.assertIsInstance(hm, Container)
-        self.assertIsInstance(hm, Collection)
         self.assertIsInstance(hm, Mapping)
 
 
