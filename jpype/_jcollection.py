@@ -58,7 +58,7 @@ class _JCollection(object):
         return self.size()
 
     def __delitem__(self, i):
-        return self.remove(i)
+        raise TypeError("'%s' does not support item deletion, use remove() method"%type(self).__name__)
 
     @JOverride(sticky=True)
     def addAll(self, v):
@@ -177,7 +177,11 @@ class _JMap(object):
         return self.remove(i)
 
     def __getitem__(self, ndx):
-        return self.get(ndx)
+        item = self.get(ndx)
+        if item == None:
+            if not self.containsKey(ndx):
+                raise KeyError('%s'%ndx)
+        return item
 
     def __setitem__(self, ndx, v):
         self.put(ndx, v)
@@ -191,6 +195,23 @@ class _JMap(object):
             # do the regular method ...
             self._putAll(v)
 
+
+@_jcustomizer.JImplementationFor('java.util.Set')
+class _JSet(object):
+    def __delitem__(self, i):
+        return self.remove(i)
+
+
+@_jcustomizer.JImplementationFor("java.util.Map.Entry")
+class _JMapEntry(object):
+    def __len__(self):
+        return 2
+    def __getitem__(self,x):
+        if x==0:
+            return self.getKey()
+        if x==1:
+            return self.getValue()
+        raise IndexError("Pairs are always length 2")
 
 @_jcustomizer.JImplementationFor('java.util.Iterator')
 class _JIterator(object):

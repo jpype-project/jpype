@@ -60,6 +60,21 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Enhanced error reporting for UnsupportedClassVersion during startup.
 
+  - Corrections for collection methods to improve complience with
+    Python containers.  
+    
+    - java.util.Map gives KeyError if the item is not found.  Values that
+      are ``null`` still return ``None`` as expected.  Use ``get()`` if 
+      empty keys are to be treated as ``None``.
+      
+    - java.util.Collection ``__delitem__`` was removed as it overloads
+      oddly between ``remove(Object)`` and ``remove(int)`` on Lists.
+      Use Java ``remove()`` method to access the original Java behavior,
+      but a cast is strongly recommended to to handle the overload.
+
+  - java.lang.IndexOutOfBoundsException can be caught with IndexError
+    for complience when accessing ``java.util.List`` elements.
+
 
 - **0.7.1 - 12-16-2019**
 
