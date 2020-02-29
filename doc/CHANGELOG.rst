@@ -4,6 +4,8 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+
+- **0.7.2 - 2-28-2019**
   - C++ and Java exceptions hold the traceback as a Python exception
     cause.  It is no longer necessary to call stacktrace() to retrieve
     the traceback information.
