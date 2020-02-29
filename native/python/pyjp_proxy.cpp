@@ -17,6 +17,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_proxy.h"
 
 
@@ -28,8 +29,8 @@ extern "C"
 static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_new");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -43,7 +44,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	if (!PySequence_Check(pyintf))
 		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
 
-	JPClass::ClassList interfaces;
+	JPClassList interfaces;
 	JPPySequence intf(JPPyRef::_use, pyintf);
 	jlong len = intf.size();
 	if (len < 1)
@@ -57,7 +58,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	self->m_Proxy = new JPProxy((PyObject*) self, interfaces);
+	self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
 	self->m_Target = target;
 	Py_INCREF(target);
 
@@ -91,8 +92,9 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
+	JPJavaFrame frame(self->m_Proxy->getContext());
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
-	return PyJPClass_create(cls).keep();
+	return PyJPClass_create(frame, cls).keep();
 }
 
 static PyObject *PyJPProxy_str(PyObject *self)
@@ -153,6 +155,9 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
 {
 	JP_TRACE_IN("JPythonEnv::getJavaProxyCallable");
+	if (Py_TYPE(obj) != PyJPProxy_Type
+			&& Py_TYPE(obj)->tp_base != PyJPProxy_Type)
+		JP_RAISE(PyExc_TypeError, "Incorrect type passed to proxy lookup");
 	PyJPProxy *proxy = (PyJPProxy*) obj;
 	if (proxy->m_Target != Py_None)
 		obj = proxy->m_Target;

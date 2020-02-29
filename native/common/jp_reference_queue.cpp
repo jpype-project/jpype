@@ -19,77 +19,6 @@
 #include "jp_classloader.h"
 #include "jp_reference_queue.h"
 
-
-namespace
-{ // impl detail
-jmethodID s_ReferenceQueueRegisterMethod;
-jmethodID s_ReferenceQueueStartMethod;
-jmethodID s_ReferenceQueueStopMethod;
-jobject s_ReferenceQueue;
-}
-
-JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
-		JNIEnv *env, jclass clazz, jlong host, jlong cleanup)
-{
-	JPJavaFrame frame;
-	JP_TRACE_IN("Java_jpype_ref_JPypeReferenceQueue_removeHostReference");
-	JPPyCallAcquire callback;
-	if (cleanup != 0)
-	{
-		JCleanupHook func = (JCleanupHook) cleanup;
-		(*func)((void*) host);
-	}
-	JP_TRACE_OUT;
-}
-
-void JPReferenceQueue::init()
-{
-	JPJavaFrame frame(32);
-	JP_TRACE_IN("JPReferenceQueue::init");
-
-	// build the ReferenceQueue class ...
-	jclass cls = JPClassLoader::findClass("org.jpype.ref.JPypeReferenceQueue");
-
-	//Required due to bug in jvm
-	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	jmethodID ctor = frame.GetMethodID(cls, "<init>", "()V");
-	if (ctor == NULL)
-		JP_RAISE(PyExc_RuntimeError, "JPypeReferenceQueue ctor not found");
-
-	JNINativeMethod method2[1];
-	method2[0].name = (char*) "removeHostReference";
-	method2[0].signature = (char*) "(JJ)V";
-	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
-
-	frame.RegisterNatives(cls, method2, 1);
-
-	jmethodID getInstanceID = frame.GetStaticMethodID(cls, "getInstance", "()Lorg/jpype/ref/JPypeReferenceQueue;");
-	s_ReferenceQueue = frame.NewGlobalRef(frame.CallStaticObjectMethod(cls, getInstanceID));
-
-	// Get all required methods
-	s_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
-	s_ReferenceQueueStartMethod = frame.GetMethodID(cls, "start", "()V");
-	s_ReferenceQueueStopMethod = frame.GetMethodID(cls, "stop", "()V");
-
-	JP_TRACE_OUT;
-}
-
-void JPReferenceQueue::startJPypeReferenceQueue()
-{
-	JP_TRACE_IN("JPReferenceQueue::startJPypeReferenceQueue");
-	JPJavaFrame frame;
-	frame.CallVoidMethod(s_ReferenceQueue, s_ReferenceQueueStartMethod);
-	JP_TRACE_OUT;
-}
-
-void JPReferenceQueue::shutdown()
-{
-	JP_TRACE_IN("JPReferenceQueue::shutdown");
-	JPJavaFrame frame;
-	frame.CallVoidMethod(s_ReferenceQueue, s_ReferenceQueueStopMethod);
-	JP_TRACE_OUT;
-}
-
 extern "C"
 {
 
@@ -99,6 +28,47 @@ static void releasePython(void* host)
 }
 
 }
+
+JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
+		JNIEnv *env, jclass clazz, jlong contextPtr, jlong host, jlong cleanup)
+{
+	JP_TRACE_IN("JPype_ReferenceQueue_removeHostReference");
+	JPContext *context = (JPContext*) contextPtr;
+	JPJavaFrame frame((JPContext*) context, env);
+	JPPyCallAcquire callback;
+	if (cleanup != 0)
+	{
+		JCleanupHook func = (JCleanupHook) cleanup;
+		(*func)((void*) host);
+	}
+	JP_TRACE_OUT;
+}
+
+JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
+{
+	JP_TRACE_IN("JPReferenceQueue::init");
+	m_Context = frame.getContext();
+
+	// build the ReferenceQueue class ...
+	jclass cls = m_Context->getClassLoader()
+			->findClass(frame, "org.jpype.ref.JPypeReferenceQueue");
+
+	//Required due to bug in jvm
+	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
+	frame.GetMethodID(cls, "<init>", "()V");
+
+	JNINativeMethod method2[1];
+	method2[0].name = (char*) "removeHostReference";
+	method2[0].signature = (char*) "(JJJ)V";
+	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
+	frame.RegisterNatives(cls, method2, 1);
+
+	// Get all required methods
+	m_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
+
+	JP_TRACE_OUT;
+}
+
 
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 {
@@ -110,7 +80,7 @@ void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 {
 	JP_TRACE_IN("JPReferenceQueue::registerRef");
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 
 	// create the ref ...
 	jvalue args[3];
@@ -119,6 +89,6 @@ void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 	args[2].j = (jlong) func;
 
 	JP_TRACE("Register reference");
-	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);
+	frame.CallVoidMethodA(m_ReferenceQueue.get(), m_ReferenceQueueRegisterMethod, args);
 	JP_TRACE_OUT;
 }

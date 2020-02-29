@@ -22,27 +22,30 @@ class JPByteType : public JPPrimitiveType
 public:
 
 	JPByteType();
-	virtual ~JPByteType();
+	virtual ~JPByteType() override;
 
 public:
 	typedef jbyte type_t;
 	typedef jbyteArray array_t;
 
-	inline jbyte& field(jvalue& v)
+	static inline jbyte& field(jvalue& v)
 	{
 		return v.b;
 	}
 
-	inline jbyte field(const jvalue& v) const
+	static inline const jbyte& field(const jvalue& v)
 	{
 		return v.b;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Byte;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -62,9 +65,7 @@ public:
 		return 'B';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
-
-	template <class T> T assertRange(const T& l)
+	template <class T> static T assertRange(const T& l)
 	{
 		if (l < -128 || l > 127)
 		{
@@ -73,6 +74,19 @@ public:
 		return l;
 	}
 
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual string asString(jvalue v) override;
+
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;
@@ -80,6 +94,9 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+private:
+	static const jlong _Byte_Min = 127;
+	static const jlong _Byte_Max = -128;
 } ;
 
 #endif // _JPBYTE_TYPE_H_

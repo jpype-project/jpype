@@ -23,13 +23,20 @@ extern "C"
 typedef void (*JCleanupHook)(void*) ;
 }
 
-namespace JPReferenceQueue
+class JPReferenceQueue
 {
-void init();
-void startJPypeReferenceQueue();
-void shutdown();
-void registerRef( jobject obj, PyObject*  targetRef);
-void registerRef(jobject obj, void* host, JCleanupHook func);
-} // end of namespace JPReferenceQueue
+	friend class JPContext;
+public:
+	explicit JPReferenceQueue(JPJavaFrame& frame);
+	~JPReferenceQueue();
+	void registerRef( jobject obj, PyObject*  targetRef);
+	void registerRef(jobject obj, void* host, JCleanupHook func);
+
+private:
+	JPContext* m_Context;
+	JPObjectRef m_ReferenceQueue;
+	jmethodID m_ReferenceQueueRegisterMethod;
+
+} ; // end of namespace JPReferenceQueue
 
 #endif

@@ -17,8 +17,10 @@
 #include "jpype.h"
 #include "jp_primitive_accessor.h"
 #include "jp_doubletype.h"
+#include "pyjp.h"
 
-JPDoubleType::JPDoubleType() : JPPrimitiveType(JPTypeManager::_java_lang_Double)
+JPDoubleType::JPDoubleType()
+: JPPrimitiveType("double")
 {
 }
 
@@ -26,96 +28,149 @@ JPDoubleType::~JPDoubleType()
 {
 }
 
-bool JPDoubleType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_double;
-}
-
-JPPyObject JPDoubleType::convertToPythonObject(jvalue val)
+JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyFloat::fromDouble(field(val));
 }
 
-JPValue JPDoubleType::getValueFromObject(jobject obj)
+JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 {
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = JPJni::doubleValue(obj);
+	field(v) = frame.CallDoubleMethodA(obj.getValue().l, context->m_DoubleValueID, 0);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPDoubleType::canConvertToJava(PyObject* obj)
+class JPConversionAsDouble : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPDoubleType base_t;
+public:
 
-	JPValue* value = PyJPValue_getJavaSlot(obj);
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) JPPyFloat::asDouble(pyobj);
+		return res;
+	}
+} asDoubleConversion;
+
+class JPConversionAsDoubleLong : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) JPPyLong::asLong(pyobj);
+		return res;
+	}
+} asDoubleLongConversion;
+
+class JPConversionDoubleWidenInt : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+} doubleIntWidenConversion;
+
+class JPConversionDoubleWidenFloat : public JPConversion
+{
+	typedef JPDoubleType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
+		return ret;
+	}
+} doubleFloatWidenConversion;
+
+JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
+	if (JPPyObject::isNone(pyobj))
+		return match.type = JPMatch::_none;
+
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
+		if (cls == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
-		if (value->getClass() == m_BoxedClass)
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (context != NULL && cls == context->_java_lang_Double)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
 
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
-	}
-
-	if (PyFloat_Check(obj))
-	{
-		return JPMatch::_exact;
-	}
-
-	// Java allows conversion to any type with a longer range even if lossy
-	// Does it quack?
-	if (JPPyFloat::checkConvertable(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	return JPMatch::_none;
-}
-
-jvalue JPDoubleType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPDoubleType::convertToJava");
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
+		// Consider widening
+		if (cls->isPrimitive())
 		{
-			return *value;
+			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			switch (prim->getTypeCode())
+			{
+				case 'B':
+				case 'S':
+				case 'C':
+				case 'I':
+				case 'J':
+					match.conversion = &doubleIntWidenConversion;
+					return match.type = JPMatch::_implicit;
+				case 'F':
+					match.conversion = &doubleFloatWidenConversion;
+					return match.type = JPMatch::_implicit;
+				default:
+					return match.type = JPMatch::_none;
+			}
 		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java double");
-	} else if (PyFloat_Check(obj))
-	{
-		field(res) = (type_t) JPPyFloat::asDouble(obj);
-		return res;
-	} else if (JPPyLong::check(obj))
-	{
-		field(res) = (type_t) JPPyLong::asLong(obj);
-		return res;
-	} else if (PyObject_HasAttrString(obj, "__float__"))
-	{
-		field(res) = (type_t) JPPyFloat::asDouble(obj);
-		return res;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return match.type = JPMatch::_none;
 	}
 
-	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java double");
-	return res;
+	if (PyFloat_Check(pyobj))
+	{
+		match.conversion = &asDoubleConversion;
+		return match.type = JPMatch::_exact;
+	}
+
+	if (JPPyFloat::checkConvertable(pyobj))
+	{
+		match.conversion = &asDoubleConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	if (JPPyLong::checkConvertable(pyobj))
+	{
+		match.conversion = &asDoubleLongConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -128,14 +183,14 @@ JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID f
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -145,7 +200,7 @@ JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -158,18 +213,24 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetDoubleField(c, fid, val);
 }
 
@@ -200,7 +261,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 			if (view.suboffsets && view.suboffsets[0] >= 0)
 				memory = *((char**) memory) + view.suboffsets[0];
 			jsize index = start;
-			jconverter conv = getConverter(view.format, view.itemsize, "d");
+			jconverter conv = getConverter(view.format, (int) view.itemsize, "d");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
 			{
 				jvalue r = conv(memory);
@@ -223,7 +284,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
 		if (v == -1. && JPPyErr::occurred())
 		{
-			JP_RAISE_PYTHON("JPDoubleType::setArrayRange");
+			JP_RAISE_PYTHON();
 		}
 		val[index] = v;
 	}
@@ -238,19 +299,28 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetDoubleArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
+	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+string JPDoubleType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.d;
+	return out.str();
 }
 
 void JPDoubleType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(view.getContext());
 	view.memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.array->getJava(), &view.isCopy);
 	view.buffer.format = "d";
@@ -259,7 +329,7 @@ void JPDoubleType::getView(JPArrayView& view)
 
 void JPDoubleType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(view.getContext());
 	frame.ReleaseDoubleArrayElements((jdoubleArray) view.array->getJava(),
 			(jdouble*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
 }

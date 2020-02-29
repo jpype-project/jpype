@@ -26,32 +26,53 @@ public:
 	/**
 	 * Create a new field based on class and java.lang.Field object
 	 */
-	JPField(JPClass* clazz, jobject fld);
+	JPField(JPJavaFrame& frame,
+			JPClass *cls,
+			const string& name,
+			jobject field,
+			jfieldID fid,
+			JPClass *fieldType,
+			jint modifiers);
 
 	/**
 	 * destructor
 	 */
 	virtual ~JPField();
 
-public:
-	bool isStatic() const;
+	jobject getJavaObject()
+	{
+		return this->m_Field.get();
+	}
 
-	string toString() const;
+	JPContext* getContext()
+	{
+		return m_Class->getContext();
+	}
 
-	const string& getName() const;
+	string toString();
+
+	const string& getName() const
+	{
+		return m_Name;
+	}
 
 	JPPyObject getStaticField();
-	void     setStaticField(PyObject* val);
+	void     setStaticField(PyObject *pyobj);
 
 	JPPyObject getField(jobject inst);
-	void     setField(jobject inst, PyObject* val);
+	void     setField(jobject inst, PyObject *pyobj);
 
 	bool isFinal() const
 	{
-		return m_IsFinal;
+		return JPModifier::isFinal(m_Modifiers);
 	}
 
-	JPClass *getClass()
+	bool isStatic() const
+	{
+		return JPModifier::isStatic(m_Modifiers);
+	}
+
+	JPClass *getClass() const
 	{
 		return m_Class;
 	}
@@ -60,18 +81,12 @@ private:
 	JPField(const JPField&);
 	JPField& operator=(const JPField&) ;
 
-	void ensureTypeCache();
-
-private:
 	string           m_Name;
 	JPClass*         m_Class;
-	bool             m_IsStatic;
-	bool             m_IsFinal;
 	JPObjectRef      m_Field;
 	jfieldID         m_FieldID;
-	JPClassRef       m_Type;
-	JPClass*         m_TypeCache;
+	JPClass*         m_Type;
+	jint             m_Modifiers;
 } ;
 
 #endif // _JPFIELD_H_
-

@@ -11,56 +11,56 @@ public:
 	static jvalue toZ(void* c)
 	{
 		jvalue v;
-		v.z = (*(T*) c) == 0 ? false : true;
+		v.z = (*(T*) c) != 0;
 		return v;
 	}
 
 	static jvalue toB(void* c)
 	{
 		jvalue v;
-		v.b = (*(T*) c);
+		v.b = (jbyte) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toC(void* c)
 	{
 		jvalue v;
-		v.c = (*(T*) c);
+		v.c = (jchar) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toS(void* c)
 	{
 		jvalue v;
-		v.s = (*(T*) c);
+		v.s = (jshort) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toI(void* c)
 	{
 		jvalue v;
-		v.i = (*(T*) c);
+		v.i = (jint) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toJ(void* c)
 	{
 		jvalue v;
-		v.j = (*(T*) c);
+		v.j = (jlong) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toF(void* c)
 	{
 		jvalue v;
-		v.f = (*(T*) c);
+		v.f = (jfloat) (*(T*) c);
 		return v;
 	}
 
 	static jvalue toD(void* c)
 	{
 		jvalue v;
-		v.d = (*(T*) c);
+		v.d = (jdouble) (*(T*) c);
 		return v;
 	}
 

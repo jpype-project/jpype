@@ -17,8 +17,10 @@
 #include "jpype.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
+#include "pyjp.h"
 
-JPCharType::JPCharType() : JPPrimitiveType(JPTypeManager::_java_lang_Character)
+JPCharType::JPCharType()
+: JPPrimitiveType("char")
 {
 }
 
@@ -26,82 +28,74 @@ JPCharType::~JPCharType()
 {
 }
 
-bool JPCharType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_char;
-}
-
-JPPyObject JPCharType::convertToPythonObject(jvalue val)
+JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyString::fromCharUTF16(val.c);
 }
 
-JPValue JPCharType::getValueFromObject(jobject obj)
+JPValue JPCharType::getValueFromObject(const JPValue& obj)
 {
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = JPJni::charValue(obj);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->m_CharValueID, 0);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPCharType::canConvertToJava(PyObject* obj)
+class JPConversionAsChar : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
+	typedef JPCharType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		return JPMatch::_none;
-	}
-
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-
-		if (value->getClass() == m_BoxedClass)
-		{
-			return JPMatch::_implicit;
-		}
-
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
-	}
-
-	if (JPPyString::checkCharUTF16(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	return JPMatch::_none;
-}
-
-jvalue JPCharType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPCharType::convertToJava");
-	JP_TRACE(JPPyObject::getTypeName(obj));
-	jvalue res;
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		JP_TRACE("Java Value");
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java char");
-	} else if (JPPyString::checkCharUTF16(obj))
-	{
-		res.c = JPPyString::asCharUTF16(obj);
+		jvalue res;
+		res.c = JPPyString::asCharUTF16(pyobj);
 		return res;
 	}
+} asCharConversion;
 
-	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java char");
-	return res;
+JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	JP_TRACE_IN("JPCharType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
+	if (JPPyObject::isNone(pyobj))
+		return match.type = JPMatch::_none;
+
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
+	if (value != NULL)
+	{
+		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
+		if (cls == this)
+		{
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
+		}
+
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (context != NULL && cls == context->_java_lang_Character)
+		{
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return match.type = JPMatch::_none;
+	}
+
+	if (JPPyString::checkCharUTF16(pyobj))
+	{
+		match.conversion = &asCharConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -114,14 +108,14 @@ JPPyObject JPCharType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticCharField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetCharField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -131,7 +125,7 @@ JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticCharMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -144,40 +138,27 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticCharField(c, fid, val);
 }
 
 void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharField(c, fid, val);
 }
 
-//JPPyObject JPCharType::getArrayRange(JPJavaFrame& frame, jarray a,
-//		jsize start, jsize length, jsize step)
-//{
-//	JP_TRACE_IN("JPCharType::getArrayRange");
-//	// FIXME this section is not exception safe.
-//	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
-//			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
-//
-//	type_t* val = accessor.get();
-//	// FIXME this is an error, the encoding used by JAVA does not match standard UTF16.
-//	// We need to handle this by each code point.
-//	JPPyObject res(JPPyRef::_call, PyUnicode_FromUnicode(NULL, length));
-//	Py_UNICODE *pchars = PyUnicode_AS_UNICODE(res.get());
-//
-//	for (Py_ssize_t i = start; i < length; i++)
-//		pchars[i] = (Py_UNICODE) val[i];
-//	return res;
-//	JP_TRACE_OUT;
-//}
 
 void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jsize start, jsize length, jsize step,
@@ -185,7 +166,6 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
 
-	// FIXME need different rules than integer/float types
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
@@ -197,7 +177,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jchar v = JPPyString::asCharUTF16(seq[i].get());
 		if (JPPyErr::occurred())
 		{
-			JP_RAISE_PYTHON("JPCharType::setArrayRange");
+			JP_RAISE_PYTHON();
 		}
 		val[index] = (type_t) v;
 	}
@@ -212,19 +192,28 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetCharArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetCharArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
+	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+string JPCharType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.c;
+	return out.str();
 }
 
 void JPCharType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(view.getContext());
 	view.memory = (void*) frame.GetCharArrayElements(
 			(jcharArray) view.array->getJava(), &view.isCopy);
 	view.buffer.format = "H";
@@ -233,7 +222,7 @@ void JPCharType::getView(JPArrayView& view)
 
 void JPCharType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(view.getContext());
 	frame.ReleaseCharArrayElements((jcharArray) view.array->getJava(),
 			(jchar*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
 }

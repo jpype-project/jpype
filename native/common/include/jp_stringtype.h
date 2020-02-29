@@ -17,17 +17,21 @@
 #ifndef JP_STRINGCLASS_H
 #define JP_STRINGCLASS_H
 
-class JPStringClass : public JPClass
+class JPStringType : public JPClass
 {
 public:
 
-	JPStringClass(jclass cls);
-	virtual ~JPStringClass();
+	JPStringType(JPJavaFrame& frame,
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
+	virtual ~JPStringType();
 
 public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj) override;
 	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 } ;
 

@@ -25,10 +25,10 @@ extern "C"
 static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPObject_init");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
-	JPJavaFrame frame;
+	JPJavaFrame frame(context);
 	JPPyObjectVector args(pyargs);
 
 	// Get the Java class from the type.
@@ -37,7 +37,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
 
 	// Create an instance (this may fail)
-	PyJPValue_assignJavaSlot(self, cls->newInstance(frame, args));
+	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
 	return self;
 	JP_PY_CATCH(NULL);
 }
@@ -45,14 +45,15 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 static Py_hash_t PyJPObject_hash(PyObject *obj)
 {
 	JP_PY_TRY("PyJPObject_hash");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
 	if (javaSlot == NULL || javaSlot->getClass() == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	jobject o = javaSlot->getJavaObject();
 	if (o == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	return JPJni::hashCode(o);
+	return frame.CallIntMethodA(o, context->m_Object_HashCodeID, 0);
 	JP_PY_CATCH(0);
 }
 

@@ -18,50 +18,48 @@ import java.util.Set;
 public class JPypeReferenceQueue extends ReferenceQueue
 {
 
-  static private JPypeReferenceQueue mInstance;
-  private Set mHostReferences = new HashSet();
-  private boolean mStopped = false;
-  private Thread mQueueThread;
-  private Object mQueueStopMutex = new Object();
+  public long context = 0;
+  private Set<JPypeReference> hostReferences = new HashSet();
+  private boolean isStopped = false;
+  private Thread queueThread;
+  private Object queueStopMutex = new Object();
 
-  private JPypeReferenceQueue()
+  public JPypeReferenceQueue()
+  {
+  }
+
+  public JPypeReferenceQueue(long context)
   {
     super();
+    this.context = context;
   }
 
   /**
-   * Get the reference queue.
+   * (internal) Binds the lifetime of a Python object to a Java object.
+   * <p>
+   * JPype adds an extra reference to a PyObject* and then calls this method to
+   * hold that reference until the Java object is garbage collected.
    *
-   * @return the singleton instance.
-   */
-  static public JPypeReferenceQueue getInstance()
-  {
-    if (mInstance == null)
-      mInstance = new JPypeReferenceQueue();
-    return mInstance;
-  }
-
-  /**
-   * (internal) Binds the lifetime of C memory to a Java object.
+   * @param javaObject is the object to bind the lifespan to.
+   * @param host is the pointer to the host object.
+   * @param cleanup is the pointer to the function to call to delete the
+   * resource.
    */
   public void registerRef(Object javaObject, long host, long cleanup)
   {
     JPypeReference ref = new JPypeReference(this, javaObject, host, cleanup);
-    mHostReferences.add(ref);
+    hostReferences.add(ref);
   }
 
   /**
    * Start the threading queue.
-   * <p>
-   * This method is long running. It will return only if the queue gets stopped.
-   * <p>
    */
   public void start()
   {
-    mStopped = false;
-    mQueueThread = new Thread(new Worker());
-    mQueueThread.setDaemon(true);
-    mQueueThread.start();
+    isStopped = false;
+    queueThread = new Thread(new Worker());
+    queueThread.setDaemon(true);
+    queueThread.start();
   }
 
   /**
@@ -73,15 +71,16 @@ public class JPypeReferenceQueue extends ReferenceQueue
   {
     try
     {
-      // wait for the thread to finish ...
-      synchronized (mQueueStopMutex)
+      synchronized (queueStopMutex)
       {
-        mStopped = true;
-        mQueueStopMutex.wait(5000);
+        synchronized (this)
+        {
+          isStopped = true;
+          queueThread.interrupt();
+        }
 
-        // FIXME what happens to any references that are outstanding after
-        // the queue is stopped.  They will never be cleared so that means
-        // they can never be collected.
+        // wait for the thread to finish ...
+        queueStopMutex.wait(10000);
       }
     } catch (InterruptedException ex)
     {
@@ -97,7 +96,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public boolean isRunning()
   {
-    return !mStopped;
+    return !isStopped;
   }
 
   /**
@@ -107,7 +106,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public int getQueueSize()
   {
-    return this.mHostReferences.size();
+    return this.hostReferences.size();
   }
 
 //<editor-fold desc="internal" defaultstate="collapsed">
@@ -117,7 +116,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
    * @param host is the address of memory in C.
    * @param cleanup is the address the function to cleanup the memory.
    */
-  private static native void removeHostReference(long host, long cleanup);
+  private static native void removeHostReference(long context, long host, long cleanup);
 
   /**
    * Thread to monitor the queue and delete resources.
@@ -128,7 +127,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
     @Override
     public void run()
     {
-      while (!mStopped)
+      while (!isStopped)
       {
         try
         {
@@ -137,25 +136,40 @@ public class JPypeReferenceQueue extends ReferenceQueue
           JPypeReference ref = (JPypeReference) remove(250);
           if (ref != null)
           {
-            synchronized (mHostReferences)
+            synchronized (hostReferences)
             {
-              mHostReferences.remove(ref);
+              hostReferences.remove(ref);
             }
-            long hostRef = ref.mHostReference;
-            long cleanup = ref.mCleanup;
-            ref.mHostReference = 0;
-            ref.mCleanup = 0;
-            removeHostReference(hostRef, cleanup);
+            long hostRef = ref.hostReference;
+            long cleanup = ref.cleanup;
+            ref.hostReference = 0;
+            ref.cleanup = 0;
+            removeHostReference(context, hostRef, cleanup);
           }
         } catch (InterruptedException ex)
         {
           // don't know why ... don't really care ...
         }
       }
-      mHostReferences = null;
-      synchronized (mQueueStopMutex)
+
+      synchronized (hostReferences)
       {
-        mQueueStopMutex.notifyAll();
+        // We have references into Python which will never be freed if we don't
+        // remove them now
+        for (JPypeReference ref : hostReferences)
+        {
+          long hostRef = ref.hostReference;
+          long cleanup = ref.cleanup;
+          ref.hostReference = 0;
+          ref.cleanup = 0;
+          removeHostReference(context, hostRef, cleanup);
+        }
+        hostReferences = null;
+      }
+
+      synchronized (queueStopMutex)
+      {
+        queueStopMutex.notifyAll();
       }
     }
   }

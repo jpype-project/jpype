@@ -14,24 +14,15 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-
 from collections.abc import Sequence
 from collections.abc import Mapping
 
-
+import _jpype
 from . import _jclass
 from . import _jcustomizer
 from . import _jtypes
 
 JOverride = _jclass.JOverride
-
-
-def isPythonSequence(v):
-    if isinstance(v, Sequence):
-        if not hasattr(v.__class__, '__metaclass__') \
-           or v.__class__.__metaclass__ is _jclass._JavaClass:
-            return True
-    return False
 
 
 @_jcustomizer.JImplementationFor("java.lang.Iterable")
@@ -59,24 +50,6 @@ class _JCollection(object):
 
     def __delitem__(self, i):
         raise TypeError("'%s' does not support item deletion, use remove() method"%type(self).__name__)
-
-    @JOverride(sticky=True)
-    def addAll(self, v):
-        if isPythonSequence(v):
-            v = _jclass.JClass('java.util.Arrays').asList(v)
-        return self._addAll(v)
-
-    @JOverride(sticky=True)
-    def removeAll(self, v):
-        if isPythonSequence(v):
-            v = _jclass.JClass('java.util.Arrays').asList(v)
-        return self._removeAll(v)
-
-    @JOverride(sticky=True)
-    def retainAll(self, v):
-        if isPythonSequence(v):
-            v = _jclass.JClass('java.util.Arrays').asList(v)
-        return self._retainAll(v)
 
 
 def _sliceAdjust(slc, size):
@@ -114,8 +87,6 @@ class _JList(object):
 
     def __setitem__(self, ndx, v):
         if isinstance(ndx, slice):
-            if isPythonSequence(v):
-                v = _jclass.JClass('java.util.Arrays').asList(v)
             ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
             self.addAll(ndx.start, v)
@@ -132,21 +103,6 @@ class _JList(object):
             return self.remove(_jtypes.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
-
-    @JOverride(sticky=True)
-    def addAll(self, *args):
-        if len(args) == 1:
-            v = args[0]
-            if isPythonSequence(v):
-                v = _jclass.JClass('java.util.Arrays').asList(v)
-            self._addAll(v)
-        elif len(args) == 2 and hasattr(args[0], '__index__'):
-            v = args[1]
-            if isPythonSequence(v):
-                v = _jclass.JClass('java.util.Arrays').asList(v)
-            self._addAll(args[0], v)
-        else:
-            raise TypeError("Incorrect arguments to addAll")
 
 
 def isPythonMapping(v):
@@ -220,10 +176,6 @@ class _JIterator(object):
     This customizer adds the Python iterator concept to classes
     that implement the Java Iterator interface.
     """
-#    def __jclass_init__(cls):
-    #        type.__setattr__(cls, '_next', cls.next)
-    #        type.__setattr__(cls, 'next', _JIterator.__next__)
-
     # Python 2 requires next to function as python next(), thus
     # we have a conflict in behavior. Java next is renamed.
     @JOverride(sticky=True, rename="_next")
@@ -258,3 +210,26 @@ class _JEnumeration(object):
         return self
 
     next = __next__
+
+# These methods need a home.
+import datetime
+@_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
+def _JInstantConversion(jcls, obj):
+    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
+    sec = int(utc)
+    nsec = int((utc-sec)*1e9)
+    return jcls.ofEpochSecond(sec, nsec)
+
+@_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
+def _JPathConvert(jcls, obj):
+    Paths = _jpype.JClass("java.nio.file.Paths")
+    return Paths.get(obj.__fspath__())
+
+@_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
+def _JFileConvert(jcls, obj):
+    return jcls(obj.__fspath__())
+
+@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
+def _JSequenceConvert(jcls, obj):
+    return _jclass.JClass('java.util.Arrays').asList(obj)
+

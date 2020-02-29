@@ -35,7 +35,7 @@ public:
 	~JPArrayView();
 	void reference();
 	bool unreference();
-
+	JPContext *getContext();
 public:
 	JPArray *array;
 	void *memory;
@@ -57,8 +57,6 @@ public:
 	JPArray(const JPValue& array);
 	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
-
-public:
 
 	JPArrayClass* getClass()
 	{
@@ -95,6 +93,9 @@ public:
 	{
 		return m_Object.get();
 	}
+
+	virtual JPClass* getType();
+	virtual jvalue  getValue();
 
 	int checkIsPrimitive(int &dims);
 	int checkRectangular(int &dimsize0, int &dimsize1);

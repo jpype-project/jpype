@@ -24,10 +24,13 @@ public:
 	JPVoidType();
 	virtual ~JPVoidType();
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Void;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -43,14 +46,24 @@ public:
 			PyObject *sequence) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual char getTypeCode() override
 	{
 		return 'V';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return 0;
+	}
 
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return 0;
+	}
+
+	virtual string asString(jvalue v) override;
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;

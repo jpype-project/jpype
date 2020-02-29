@@ -17,8 +17,9 @@
 #include "jpype.h"
 #include "jp_monitor.h"
 
-JPMonitor::JPMonitor(jobject value) : m_Value(value)
+JPMonitor::JPMonitor(JPContext* context, jobject value) : m_Value(context, value)
 {
+	m_Context = context;
 }
 
 JPMonitor::~JPMonitor()
@@ -30,13 +31,13 @@ void JPMonitor::enter()
 	// This can hold off for a while so we need to release resource
 	// so that we don't dead lock.
 	JPPyCallRelease call;
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	frame.MonitorEnter(m_Value.get());
 }
 
 void JPMonitor::exit()
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Context);
 	frame.MonitorExit(m_Value.get());
 }
 

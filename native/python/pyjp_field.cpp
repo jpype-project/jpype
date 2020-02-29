@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_field.h"
 
 #ifdef __cplusplus
@@ -37,8 +38,8 @@ static void PyJPField_dealloc(PyJPField *self)
 static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPField_get");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	if (self->m_Field->isStatic())
 		return self->m_Field->getStaticField().keep();
 	if (obj == NULL)
@@ -54,8 +55,8 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
 	JP_PY_TRY("PyJPField_set");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	if (self->m_Field->isFinal())
 		JP_RAISE(PyExc_AttributeError, "Field is final");
 	if (self->m_Field->isStatic())
@@ -80,7 +81,8 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 static PyObject *PyJPField_repr(PyJPField *self)
 {
 	JP_PY_TRY("PyJPField_repr");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	stringstream ss;
 	ss << "<java field `";
 	ss << self->m_Field->getName() << "' of '" <<

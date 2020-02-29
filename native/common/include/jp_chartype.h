@@ -38,11 +38,14 @@ public:
 		return v.c;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Character;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -62,7 +65,17 @@ public:
 		return 'C';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual string asString(jvalue v) override;
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
@@ -74,4 +87,3 @@ public:
 } ;
 
 #endif // _JP-CHAR_TYPE_H_
-

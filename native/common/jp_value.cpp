@@ -14,17 +14,19 @@
    limitations under the License.
 
  *****************************************************************************/
-#include "jpype.h"
+#include <jpype.h>
 
 jobject JPValue::getJavaObject() const
 {
+	if (m_Class == NULL)
+		JP_RAISE(PyExc_RuntimeError, "Null class");
 	if (!m_Class->isPrimitive())
 		return m_Value.l;
 
 	// This method is only used internally, thus it requires a logical code
 	// error to trigger. We will use type error in case there is some
 	// way a user can trigger it.
-	JP_RAISE(PyExc_TypeError, "access Java primitive value as Java object");
+	JP_RAISE(PyExc_TypeError, "cannot access Java primitive value as Java object");
 }
 
 jclass JPValue::getJavaClass() const
@@ -33,4 +35,3 @@ jclass JPValue::getJavaClass() const
 		JP_RAISE(PyExc_RuntimeError, "Null class");
 	return m_Class->getJavaClass();
 }
-

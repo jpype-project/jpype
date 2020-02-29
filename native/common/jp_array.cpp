@@ -22,11 +22,12 @@
 // need to be careful to handle these properly.  We need to
 // carry them around so that we can match types.
 
-JPArray::JPArray(const JPValue& val) : m_Object((jarray) val.getValue().l)
+JPArray::JPArray(const JPValue &value)
+: m_Object(value.getClass()->getContext(), (jarray) value.getValue().l)
 {
-	JPJavaFrame frame;
+	m_Class = (JPArrayClass*) value.getClass();
+	JPJavaFrame frame(m_Class->getContext());
 	JP_TRACE_IN("JPArray::JPArray");
-	m_Class = (JPArrayClass*) val.getClass();
 	ASSERT_NOT_NULL(m_Class);
 	JP_TRACE(m_Class->toString());
 
@@ -44,7 +45,7 @@ JPArray::JPArray(const JPValue& val) : m_Object((jarray) val.getValue().l)
 }
 
 JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
-: m_Object(instance->getJava())
+: m_Object(instance->m_Class->getContext(), (jarray) instance->getJava())
 {
 	JP_TRACE_IN("JPArray::JPArray");
 	m_Class = instance->m_Class;
@@ -75,16 +76,12 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 	// Make sure it is an iterable before we start
 	if (!PySequence_Check(val))
-	{
-		PyErr_Format(PyExc_TypeError,
-				"Java array assignments must be sequences, not '%s'", Py_TYPE(val)->tp_name);
-		JP_RAISE_PYTHON("fail");
-	}
+		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
 
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 	JPPySequence seq(JPPyRef::_use, val);
-	long plength = seq.size();
+	long plength = (long) seq.size();
 
 	JP_TRACE("Verify lengths", length, plength);
 	if ((long) length != plength)
@@ -104,7 +101,7 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 void JPArray::setItem(jsize ndx, PyObject* val)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -113,20 +110,12 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 	if (ndx >= m_Length || ndx < 0)
 		JP_RAISE(PyExc_IndexError, "java array assignment out of bounds");
 
-	if (compType->canConvertToJava(val) <= JPMatch::_explicit)
-	{
-		PyErr_Format(PyExc_TypeError, "Unable to convert '%s' int Java '%s'",
-				Py_TYPE(val)->tp_name,
-				this->getClass()->getComponentType()->getCanonicalName().c_str());
-		JP_RAISE_PYTHON("fail");
-	}
-
 	compType->setArrayItem(frame, m_Object.get(), m_Start + ndx*m_Step, val);
 }
 
 JPPyObject JPArray::getItem(jsize ndx)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -156,7 +145,7 @@ int JPArray::checkIsPrimitive(int &dims)
 
 int JPArray::checkRectangular(int &dimsize0, int &dimsize1)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(m_Class->getContext());
 	// Get the first dimension
 	dimsize0 = getLength();
 	if (dimsize0 == 0)
@@ -193,9 +182,21 @@ jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 	return out;
 }
 
+JPClass* JPArray::getType()
+{
+	return m_Class;
+}
+
+jvalue JPArray::getValue()
+{
+	jvalue val;
+	val.l = m_Object.get();
+	return val;
+}
+
 JPArrayView::JPArrayView(JPArray* array)
 {
-	JPJavaFrame frame;
+	JPJavaFrame frame(array->m_Class->getContext());
 	this->array = array;
 	refcount = 0;
 	buffer.obj = NULL;
@@ -217,17 +218,16 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 {
 	JP_TRACE_IN("JPArrayView::JPArrayView");
 	// All of the work has already been done by org.jpype.Utilities
-	JPJavaFrame frame;
+	JPJavaFrame frame(array->m_Class->getContext());
 	this->array = array;
 
-	//collection = frame.NewLocalRef(collection);
 	jint len = frame.GetArrayLength((jarray) collection);
 	jobject item0 = frame.GetObjectArrayElement((jobjectArray) collection, 0);
 	jobject item1 = frame.GetObjectArrayElement((jobjectArray) collection, 1);
 
 	// First element is the primitive type that we are packing the array from
 	JPPrimitiveType *componentType = (JPPrimitiveType*)
-			JPTypeManager::findClass((jclass) item0);
+			frame.findClass((jclass) item0);
 
 	// Second element is the shape of the array from which we compute the
 	// memory size, the shape, and strides
@@ -256,12 +256,12 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 
 	// All remaining elements are primitive arrays to be unpacked
 	int offset = 0;
-	int last = shape[dims - 1];
-	for (int i = 0; i < len - 2; i++)
+	Py_ssize_t last = shape[dims - 1];
+	for (Py_ssize_t i = 0; i < len - 2; i++)
 	{
-		jarray a1 = (jarray) frame.GetObjectArrayElement((jobjectArray) collection, i + 2);
-		componentType->copyElements(frame, a1, 0, last, memory, offset);
-		offset += itemsize * last;
+		jarray a1 = (jarray) frame.GetObjectArrayElement((jobjectArray) collection, (jsize) i + 2);
+		componentType->copyElements(frame, a1, 0, (jsize) last, memory, offset);
+		offset += (int) (itemsize * last);
 		frame.DeleteLocalRef(a1);
 	}
 
@@ -283,6 +283,11 @@ JPArrayView::~JPArrayView()
 {
 	if (owned)
 		delete (char*) memory;
+}
+
+JPContext *JPArrayView::getContext()
+{
+	return array->getClass()->getContext();
 }
 
 void JPArrayView::reference()
