@@ -120,9 +120,6 @@ class _JMap(object):
     This customizer adds the Python list and len operators to classes
     that implement the Java Map interface.
     """
-    #    def __jclass_init__(cls):
-    #        type.__setattr__(cls, 'putAll', _JMap.putAll)
-
     def __len__(self):
         return self.size()
 
@@ -142,14 +139,14 @@ class _JMap(object):
     def __setitem__(self, ndx, v):
         self.put(ndx, v)
 
-    @JOverride(sticky=True)
-    def putAll(self, v):
-        if isPythonMapping(v):
-            for i in v:
-                self.put(i, v[i])
-        else:
-            # do the regular method ...
-            self._putAll(v)
+    def items(self):
+        return self.entrySet()
+
+    def keys(self):
+        return list(self.keySet())
+
+    def __contains__(self, item):
+        return self.containsKey(item)
 
 
 @_jcustomizer.JImplementationFor('java.util.Set')
@@ -232,4 +229,13 @@ def _JFileConvert(jcls, obj):
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
+
+@_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
+def _JMapConvert(jcls, obj):
+    hm = _jclass.JClass('java.util.HashMap')()
+    for p,v in obj.items():
+        hm[p] = v
+    return hm
+
+
 

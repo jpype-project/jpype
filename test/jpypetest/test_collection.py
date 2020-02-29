@@ -116,3 +116,40 @@ class CollectionTestCase(common.JPypeTestCase):
         for p,v in hm.entrySet():
             self.assertEqual(p, v)
 
+    def testHashMapCtor(self):
+        HashMap = JClass('java.util.HashMap')
+        dc = dict()
+        dc['fred']=1
+        dc['george']=2
+        dc['paul']=3
+        hm = HashMap(dc)
+        for p,v in dc.items():
+            self.assertEqual(hm[p], v)
+
+    def testHashMapPutAll(self):
+        HashMap = JClass('java.util.HashMap')
+        hm = HashMap()
+        dc = dict()
+        dc['fred']=1
+        dc['george']=2
+        dc['paul']=3
+        hm.putAll(dc)
+        for p,v in dc.items():
+            self.assertEqual(hm[p], v)
+
+    def testHashMapConvert(self):
+        HashMap = JClass('java.util.HashMap')
+        hm = HashMap()
+        hm['fred']=1
+        hm['george']=2
+        hm['paul']=3
+        dc = dict(hm)
+        for p,v in hm.items():
+            self.assertEqual(dc[p], v)
+
+    def testMapIsMapping(self):
+        from collections.abc import Mapping
+        hm = JClass('java.util.HashMap')()
+        self.assertIsInstance(hm, Mapping)
+
+
