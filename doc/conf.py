@@ -80,7 +80,6 @@ class TypeMock(type):
         return type.__init__(self, *args)
 
     def __getattr__(self, key):
-        print("GET ",key,"from",self.__name__)
         kwargs = self._kwargs
         m = self._to(**kwargs)
         type.__setattr__(self, key, m)
