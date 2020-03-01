@@ -6,6 +6,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 - **Next version - unreleased**
 
 - **0.7.2 - 2-28-2019**
+
   - C++ and Java exceptions hold the traceback as a Python exception
     cause.  It is no longer necessary to call stacktrace() to retrieve
     the traceback information.
@@ -25,6 +26,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     which enforces type slots.  Mixins of Python base classes is not
     permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays 
     derive directly from internal CPython implementations.
+    See the :doc:`ChangeLog-0.7.2` for details of all changes.
 
   - Internal improvements to tracing and exception handling.
 
@@ -106,7 +108,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
   
   - Removed limitations having to do with CallerSensitive methods. Methods
-    affected are listed in :doc:`caller-sensitive`. Caller sensitive 
+    affected are listed in :doc:`caller_sensitive`. Caller sensitive 
     methods now receive an internal JPype class as the caller
 
   - Fixed segfault when converting null elements while accessing a slice
