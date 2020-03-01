@@ -108,7 +108,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
   
   - Removed limitations having to do with CallerSensitive methods. Methods
-    affected are listed in :doc:`caller-sensitive`. Caller sensitive 
+    affected are listed in :doc:`caller_sensitive`. Caller sensitive 
     methods now receive an internal JPype class as the caller
 
   - Fixed segfault when converting null elements while accessing a slice

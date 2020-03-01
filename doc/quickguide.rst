@@ -185,13 +185,13 @@ or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 | Get a static field        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     int var = MyClass.staticField;                      |     var = MyClass.staticField                           |
+|                           |     int vr = MyClass.staticField;                       |     var = MyClass.staticField                           |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Get a member field        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     int var = myObject.memberField;                     |     var = myObject.memberField                          |
+|                           |     int vr = myObject.memberField;                      |     var = myObject.memberField                          |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |

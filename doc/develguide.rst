@@ -316,7 +316,7 @@ the guardian to ensure the slot is attached, provide for the inheritance
 checks, and control access to static fields and methods.  The slot holds
 a java.lang.Class instance but it does not have any of the methods normally
 associate with a Java class instance exposed.  A java.lang.Class instance
-can be converted to a Jave class wrapper using ``JClass`.
+can be converted to a Jave class wrapper using ``JClass``.
 
 
 ``_JMethod`` class
