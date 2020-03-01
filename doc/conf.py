@@ -90,12 +90,12 @@ class _JClass(type):
 
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
-mockModule._JArray = TypeMock("_JArray")
-mockModule._JClass = _JClass
-mockModule._JField = TypeMock("_JField") 
-mockModule._JMethod = TypeMock("_JMethod")
-mockModule._JObject = TypeMock("_JObject")
-mockModule._hasClass = lambda x: False
+#mockModule._JArray = TypeMock("_JArray")
+#mockModule._JClass = _JClass
+#mockModule._JField = TypeMock("_JField") 
+#mockModule._JMethod = TypeMock("_JMethod")
+#mockModule._JObject = TypeMock("_JObject")
+#mockModule._hasClass = lambda x: False
 sys.modules['_jpype']=mockModule
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
