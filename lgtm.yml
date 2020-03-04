@@ -12,6 +12,10 @@ path_classifiers:
      - native
 
 extraction:
+   cpp:
+       index:
+           build_command: 
+             - python3 setup.py build
 
    java:
        index:
