@@ -8,10 +8,6 @@ path_classifiers:
    docs:
      - doc
 
-   library:
-     - jpype
-     - native
-
 extraction:
    cpp:
        index:
