@@ -2,6 +2,9 @@ package jpype.fields;
 
 public class Fields {
 
+	public final static int final_static_int = 1;
+	public final int final_member_int = 1;
+
 	public static boolean static_bool;
 	public static char    static_char;
 	public static byte    static_byte;

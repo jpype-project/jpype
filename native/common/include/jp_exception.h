@@ -70,8 +70,17 @@ extern int _method_not_found;
 
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
-#define JP_PY_CHECK() \
-{ if (JPPyErr::occurred()) JP_RAISE_PYTHON();  }
+#define JP_PY_CHECK() { if (JPPyErr::occurred()) JP_RAISE_PYTHON();  }
+
+// We need to hide sanity checks that only occur on fatal initialization
+// from the coverage tool
+#ifdef JP_INSTRUMENTATION
+#define JP_PY_CHECK_INIT() if (false)
+#else
+#define JP_PY_CHECK_INIT() { if (JPPyErr::occurred()) JP_RAISE_PYTHON();  }
+#endif
+
+
 
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but

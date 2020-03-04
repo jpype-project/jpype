@@ -69,9 +69,6 @@ JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -89,16 +86,16 @@ JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(pyobj))
+	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = &asByteConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyLong_Check(pyobj))
 	{
 		match.conversion = &asByteConversion;
-		return match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
+		return match.type = JPMatch::_explicit;
 	}
 
 	return match.type = JPMatch::_none;
@@ -212,10 +209,8 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jlong v = PyLong_AsLongLong(seq[i].get());
-		if (v == -1 && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON();
-		}
+		if (v == -1)
+			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
@@ -240,14 +235,6 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
-
-string JPByteType::asString(jvalue v)
-{
-	std::stringstream out;
-	out << (int) v.b;
-	return out.str();
-}
-
 
 void JPByteType::getView(JPArrayView& view)
 {

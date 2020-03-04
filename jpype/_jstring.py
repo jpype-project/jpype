@@ -14,11 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import sys as _sys
-
 import _jpype
-from . import _jclass
-from . import _jobject
 from . import _jcustomizer
 
 __all__ = ['JString']
@@ -35,7 +31,7 @@ class JString(_jpype._JObject):
     def __new__(cls, *args, **kwargs):
         if cls != JString:
             raise TypeError("JString factory cannot be used as base class")
-        cls = _jclass.JClass("java.lang.String")
+        cls = _jpype.JClass("java.lang.String")
         return cls(*args)
 
 

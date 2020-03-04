@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import common
 
 
@@ -173,3 +174,7 @@ class JClassTestCase(common.JPypeTestCase):
         intr = jpype.JClass('java.io.Serializable')
         with self.assertRaises(TypeError):
             intr()
+
+    def testJClassWithLoader(self):
+        cl = JClass('java.lang.Class').class_.getClassLoader()
+        self.assertIsInstance(JClass('java.lang.StringBuilder', loader=cl), JClass)

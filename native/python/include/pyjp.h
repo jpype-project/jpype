@@ -16,6 +16,7 @@
 #ifndef PYJP_H
 #define PYJP_H
 #include <Python.h>
+#include "jpype.h"
 #include "jp_pythontypes.h"
 
 class JPStackInfo;
@@ -28,10 +29,15 @@ class JPStackInfo;
   PyJPModule_rethrow(JP_STACKINFO()); } \
   return __VA_ARGS__
 #else
+#ifndef JP_INSTRUMENTATION
 #define JP_PY_TRY(...)  try { do {} while(0)
+#else
+#define JP_PY_TRY(...)  JP_TRACE_IN(__VA_ARGS__)
+#endif
 #define JP_PY_CATCH(...)  } catch(...) \
   { PyJPModule_rethrow(JP_STACKINFO()); } \
   return __VA_ARGS__
+#define JP_PY_CATCH_NONE(...)  } catch(...) {} return __VA_ARGS__
 #endif
 
 #ifdef __cplusplus
@@ -169,6 +175,9 @@ bool       PyJPValue_isSetJavaSlot(PyObject* self);
  */
 inline JPContext* PyJPModule_getContext()
 {
+#ifdef JP_INSTRUMENTATION
+	PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
+#endif
 	JPContext* context = JPContext_global;
 	_ASSERT_JVM_RUNNING(context);
 	return context;

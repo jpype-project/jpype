@@ -90,10 +90,8 @@ class ConversionFloatTestCase(common.JPypeTestCase):
             np.float64(self.value)), self.value)
 
     def testFloatRange(self):
-        with self.assertRaises(OverflowError):
-            self.Test.callFloat(float(1e40))
-        with self.assertRaises(OverflowError):
-            self.Test.callFloat(float(-1e40))
+        self.assertEquals( self.Test.callFloat(float(1e40)), float("inf"))
+        self.assertEquals( self.Test.callFloat(float(-1e40)), float("-inf"))
 
     def testFloatFromNone(self):
         with self.assertRaises(TypeError):

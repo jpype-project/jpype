@@ -104,7 +104,7 @@ string JPClass::getName() const
 
 JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
-	JP_TRACE_IN("JPClass::getStaticValue");
+	JP_TRACE_IN("JPClass::getStaticField");
 	jobject r = frame.GetStaticObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
@@ -117,7 +117,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 
 JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
-	JP_TRACE_IN("JPClass::getInstanceValue");
+	JP_TRACE_IN("JPClass::getField");
 	jobject r = frame.GetObjectField(c, fid);
 	JPClass* type = this;
 	if (r != NULL)
@@ -172,7 +172,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 
 void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JP_TRACE_IN("JPClass::setStaticValue");
+	JP_TRACE_IN("JPClass::setStaticField");
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 	{
@@ -187,7 +187,7 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 
 void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JP_TRACE_IN("JPClass::setInstanceValue");
+	JP_TRACE_IN("JPClass::setField");
 	JPMatch match;
 	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
 	{

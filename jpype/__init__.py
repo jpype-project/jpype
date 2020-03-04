@@ -21,15 +21,24 @@ from ._core import *
 from ._gui import *
 from ._classpath import *
 from ._jclass import *
+from ._jobject import *
+from . import _jarray
+from . import _jexception
 from .types import *
 from ._jcustomizer import *
 from . import reflect
 from . import nio
 from . import types
 from ._jcustomizer import *
+# Import all the class customizers
+# Customizers are applied in the order that they are defined currently.
+from . import _jmethod
+from . import _jcollection
+from . import _jcomparable
+from . import _jio
 
 
-__all__ = ['java', 'javax', 'JException', 'JOverride']
+__all__ = ['java', 'javax']
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)

@@ -90,6 +90,11 @@ class JStringTestCase(common.JPypeTestCase):
         a = jpype.JString("abc")
         self.assertEqual(hash(a), hash("abc"))
 
-    def __repr__(self):
+    def testRepr(self):
         a = jpype.JString("abc")
         self.assertEqual(repr(a), "'abc'")
+
+    def testConversion(self):
+        self.assertEqual(jpype.JString("AAAA"), "AAAA")
+        self.assertEqual(jpype.JString(bytes([65, 65, 65, 65])), "AAAA")
+

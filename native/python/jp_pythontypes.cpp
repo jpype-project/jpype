@@ -10,15 +10,20 @@ static void assertValid(PyObject *obj)
 	if (obj->ob_refcnt >= 1)
 		return;
 
+	// This condition can only be triggered by a fatal error in
+	// the reference management system which will result in some
+	// other fatal error later as we have incorrectly registered
+	// a deleted object with Python which most certainly will crash
+	// it at some point.
+#ifndef JP_INSTRUMENTATION
 	// At this point our car has traveled beyond the end of the
 	// cliff and it will hit the ground some twenty
 	// python calls later with a nearly untracable fault, thus
 	// rather than waiting for the inevitable, we chose to take
 	// a noble death here.
 	JP_TRACE_PY("pyref FAULT", obj);
-	JPTracer::trace("Python referencing fault");
-	int *i = 0;
-	*i = 0;
+	JP_RAISE(PyExc_SystemError, "Deleted reference");
+#endif
 }
 
 JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
@@ -97,10 +102,14 @@ JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 
 PyObject* JPPyObject::keep()
 {
+#ifndef JP_INSTRUMENTATION
+	// This can only happen if we have a fatal error in our reference
+	// management system.  It should never be triggered by the user.
 	if (pyobj == NULL)
 	{
-		JP_RAISE(PyExc_RuntimeError, "Attempt to keep null reference");
+		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference");
 	}
+#endif
 	JP_TRACE_PY("pyref keep ", pyobj);
 	PyObject *out = pyobj;
 	pyobj = NULL;
@@ -151,16 +160,6 @@ JPPyObject JPPyLong::fromLong(jlong l)
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 }
 
-bool JPPyLong::check(PyObject* obj)
-{
-#if PY_MAJOR_VERSION >= 3
-	return PyLong_Check(obj);
-#else
-	return PyInt_Check(obj)
-			|| PyLong_Check(obj);
-#endif
-}
-
 bool JPPyLong::checkConvertable(PyObject* obj)
 {
 	return PyLong_Check(obj)
@@ -190,11 +189,6 @@ JPPyObject JPPyFloat::fromFloat(jfloat l)
 JPPyObject JPPyFloat::fromDouble(jdouble l)
 {
 	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(l));
-}
-
-bool JPPyFloat::checkConvertable(PyObject* obj)
-{
-	return PyFloat_Check(obj) || PyObject_HasAttrString(obj, "__float__");
 }
 
 jdouble JPPyFloat::asDouble(PyObject* obj)
@@ -244,13 +238,11 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 
 jchar JPPyString::asCharUTF16(PyObject* pyobj)
 {
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyIndex_Check(pyobj))
 	{
-		jlong val = JPPyLong::asLong(pyobj);
+		jlong val = PyLong_AsLongLong(pyobj);
 		if (val < 0 || val > 65535)
-		{
 			JP_RAISE(PyExc_OverflowError, "Unable to convert int into char range");
-		}
 		return (jchar) val;
 	}
 
@@ -287,8 +279,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		jchar c = PyBytes_AsString(pyobj)[0];
-		if (PyErr_Occurred())
-			JP_RAISE_PYTHON();
+		JP_PY_CHECK();
 		return c;
 	}
 	if (PyUnicode_Check(pyobj))
@@ -305,8 +296,8 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		return value;
 	}
 #endif
-	JP_RAISE(PyExc_RuntimeError, "error converting string to char");
-	return 0;
+	PyErr_Format(PyExc_TypeError, "Unable to convert '%s'  to char", Py_TYPE(pyobj)->tp_name);
+	JP_RAISE_PYTHON();
 }
 
 /** Check if the object is a bytes or unicode.
@@ -368,31 +359,12 @@ JPPyTuple JPPyTuple::newTuple(jlong sz)
 	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
 }
 
-bool JPPyTuple::check(PyObject* obj)
-{
-	return (PyTuple_Check(obj)) ? true : false;
-}
-
 void JPPyTuple::setItem(jlong ndx, PyObject* val)
 {
 	ASSERT_NOT_NULL(val);
 	Py_INCREF(val);
 	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
 	JP_PY_CHECK();
-}
-
-PyObject* JPPyTuple::getItem(jlong ndx)
-{
-	PyObject* res = PyTuple_GetItem(pyobj, (Py_ssize_t) ndx);
-	JP_PY_CHECK();
-	return res;
-}
-
-jlong JPPyTuple::size()
-{
-	jlong res = PyTuple_Size(pyobj);
-	JP_PY_CHECK();
-	return res;
 }
 
 jlong JPPySequence::size()
@@ -407,17 +379,9 @@ JPPyObject JPPySequence::getItem(jlong ndx)
 	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, ndx)); // new reference
 }
 
-JPPyObjectVector::JPPyObjectVector(int i)
-: seq(JPPyRef::_use, NULL)
-{
-	contents.resize(i);
-}
-
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 : seq(JPPyRef::_use, sequence)
 {
-	if (!PySequence_Check(sequence))
-		JP_RAISE(PyExc_TypeError, "must be sequence");
 	size_t n = seq.size();
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)

@@ -103,6 +103,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		return 0;
 	}
 
+	JP_FAULT_RETURN("PyJPArray_init.null", 0);
 	JP_RAISE(PyExc_TypeError, "Invalid type");
 	JP_PY_CATCH(-1);
 }
@@ -121,7 +122,7 @@ static PyObject *PyJPArray_repr(PyJPArray *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_TypeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 	stringstream sout;
 
 	// FIXME way too hard to get this type name.
@@ -135,7 +136,7 @@ static Py_ssize_t PyJPArray_len(PyJPArray *self)
 	JP_PY_TRY("PyJPArray_len");
 	PyJPModule_getContext();
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_RuntimeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 	return self->m_Array->getLength();
 	JP_PY_CATCH(-1);
 }
@@ -151,7 +152,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_TypeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	if (PyIndex_Check(item))
 	{
@@ -202,23 +203,27 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	JP_PY_CATCH(NULL);
 }
 
-static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
-{
-	JP_PY_TRY("PyJPArray_assignItem");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-	self->m_Array->setItem((jsize) item, value);
-	return 0;
-	JP_PY_CATCH(-1);
-}
+//static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
+//{
+//	JP_PY_TRY("PyJPArray_assignItem");
+//	JPContext *context = PyJPModule_getContext();
+//	JPJavaFrame frame(context);
+//	self->m_Array->setItem((jsize) item, value);
+//	return 0;
+//	JP_PY_CATCH(-1);
+//}
 
 static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *value)
 {
-	JP_PY_TRY("PyJPArray_setArrayItem");
+	JP_PY_TRY("PyJPArray_assignSubscript");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
+	// Verified with numpy that item deletion on immutable should
+	// be ValueError
 	if ( value == NULL)
 		JP_RAISE(PyExc_ValueError, "item deletion not supported");
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	// Watch out for self assignment
 	if (PyObject_IsInstance(value, (PyObject*) PyJPArray_Type))
@@ -281,6 +286,8 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	JP_PY_TRY("PyJPArray_getBuffer");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 	{
@@ -339,6 +346,8 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 	try
 	{
 		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
@@ -410,7 +419,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
 	{ Py_tp_repr,     (void*) PyJPArray_repr},
 	{ Py_tp_methods,  (void*) &arrayMethods},
-	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
+	//	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
 	{ Py_sq_item,     (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
@@ -460,9 +469,9 @@ void PyJPArray_initType(PyObject * module)
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 
 	tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPArray_Type);

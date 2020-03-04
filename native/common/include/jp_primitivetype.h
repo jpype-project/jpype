@@ -36,8 +36,6 @@ public:
 
 	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
 
-	virtual string asString(jvalue v) = 0;
-
 	void setClass(JPJavaFrame& frame, jclass o)
 	{
 		m_Context = frame.getContext();

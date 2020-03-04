@@ -12,7 +12,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import sys as _sys
 import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer

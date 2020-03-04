@@ -14,25 +14,13 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import sys as _sys
+import sys
 import _jpype
-from . import _jclass
-from . import _jobject
-from . import _jstring
 from . import _jtypes
 from . import _classpath
-
-# Import all the class customizers
-# Customizers are applied in the order that they are defined currently.
-#from . import _properties
-from . import _jarray
-from . import _jexception
-from . import _jcollection
-from . import _jcomparable
-from . import _jio
-from . import _jmethod
 from . import _jinit
-from ._jvmfinder import JVMNotFoundException, JVMNotSupportedException
+
+from ._jvmfinder import *
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
@@ -41,8 +29,10 @@ __all__ = [
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
-if _sys.version_info < (3,):
-    raise ImportException("Python 2 is not supported")
+def versionTest():
+    if sys.version_info < (3,):
+        raise ImportError("Python 2 is not supported")
+versionTest()
 
 
 # Activate jedi tab completion
@@ -50,7 +40,7 @@ try:
     import jedi as _jedi
     _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += \
         (_jpype._JMethod, _jpype._JField)
-except:
+except Exception:
     pass
 
 
@@ -109,7 +99,7 @@ def _handleClassPath(clsList):
             out.extend(glob.glob(s+'.jar'))
         else:
             out.append(s)
-    if _sys.platform == "cygwin":
+    if sys.platform == "cygwin":
         out = [_classpath._posix2win(i) for i in out]
     return _classpath._SEP.join(out)
 
@@ -272,7 +262,7 @@ please file a ticket with the developer.
     _jpype._object_classes[_jtypes.JFloat] = _jpype._java_lang_Float
     _jpype._object_classes[_jtypes.JDouble] = _jpype._java_lang_Double
     _jpype._object_classes[type(None)] = _jpype._java_lang_Object
-    _jpype._object_classes[_jstring.JString] = _jpype._java_lang_String
+    _jpype._object_classes[_jpype.JString] = _jpype._java_lang_String
 
     # Set up table of automatic conversions of Python primitives
     # this table supports "JArray(type)"
@@ -384,38 +374,6 @@ def synchronized(obj):
     raise TypeError("synchronized only applies to java objects")
 
 
-def getDefaultJVMPath():
-    """
-    Retrieves the path to the default or first found JVM library
-
-    Returns:
-      The path to the JVM shared library file
-
-    Raises:
-      JVMNotFoundException: If there was no JVM found in the search path.
-      JVMNotSupportedException: If the JVM was found was not compatible with
-        Python due to cpu architecture.
-
-    """
-    if _sys.platform == "cygwin":
-        # Cygwin
-        from ._cygwin import WindowsJVMFinder
-        finder = WindowsJVMFinder()
-    elif _sys.platform == "win32":
-        # Windows
-        from ._windows import WindowsJVMFinder
-        finder = WindowsJVMFinder()
-    elif _sys.platform == "darwin":
-        # Mac OS X
-        from ._darwin import DarwinJVMFinder
-        finder = DarwinJVMFinder()
-    else:
-        # Use the Linux way for other systems
-        from ._linux import LinuxJVMFinder
-        finder = LinuxJVMFinder()
-
-    return finder.get_jvm_path()
-
 
 # Naming compatibility
 @deprecated("getDefaultJVMPath")
@@ -436,7 +394,7 @@ def getJVMVersion():
         return (0, 0, 0)
 
     import re
-    runtime = _jclass.JClass('java.lang.Runtime')
+    runtime = _jpype.JClass('java.lang.Runtime')
     version = runtime.class_.getPackage().getImplementationVersion()
 
     # Java 9+ has a version method

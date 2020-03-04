@@ -99,11 +99,6 @@ jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
 
-string JPVoidType::asString(jvalue v)
-{
-	return "void";
-}
-
 JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 {
 	// This is needed if we call a caller sensitive method

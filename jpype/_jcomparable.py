@@ -15,7 +15,6 @@
 #
 # *****************************************************************************
 from . import _jcustomizer
-import sys as _sys
 
 
 @_jcustomizer.JImplementationFor('java.lang.Comparable')

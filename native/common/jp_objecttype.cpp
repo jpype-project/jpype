@@ -60,13 +60,13 @@ JPMatch::Type JPObjectType::getJavaConversion(JPJavaFrame* frame, JPMatch& match
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::check(pyobj) || (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj)))
+	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = boxLongConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyFloat::checkConvertable(pyobj))
+	if (PyFloat_Check(pyobj))
 	{
 		match.conversion = boxDoubleConversion;
 		return match.type = JPMatch::_implicit;

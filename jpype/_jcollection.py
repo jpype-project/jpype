@@ -57,9 +57,9 @@ def _sliceAdjust(slc, size):
     stop = slc.stop
     if slc.step and (slc.step > 1 or slc.step < 0):
         raise TypeError("Stride not supported")
-    if start == None:
+    if start is None:
         start = 0
-    if stop == None:
+    if stop is None:
         stop = size
     if start < 0:
         start += size
@@ -134,7 +134,7 @@ class _JMap(object):
 
     def __getitem__(self, ndx):
         item = self.get(ndx)
-        if item == None:
+        if item is None:
             if not self.containsKey(ndx):
                 raise KeyError('%s'%ndx)
         return item

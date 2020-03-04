@@ -116,3 +116,38 @@ class CollectionTestCase(common.JPypeTestCase):
         for p,v in hm.entrySet():
             self.assertEqual(p, v)
 
+    def testSetDelItem(self):
+        hs = JClass('java.util.HashSet')()
+        hs.add('a')
+        hs.add('b')
+        hs.add('c')
+        self.assertTrue('a' in hs)
+        del hs['a']
+        self.assertFalse('a' in hs)
+
+    def testMapEntry(self):
+        hm = JClass('java.util.TreeMap')()
+        hm['alice'] = 'alice'
+        h = hm.entrySet()
+        self.assertEqual(len(h.iterator().next()), 2)
+
+    def testListIter(self):
+        ls = JClass('java.util.ArrayList')([0,1,2,3])
+        for i,j in enumerate(ls):
+            self.assertEqual(i,j)
+
+    def testEnumeration(self):
+        st = JClass('java.util.StringTokenizer')("this is a test");
+        out = []
+        for i in st:
+            out.append(str(i))
+        self.assertEqual(len(i), 4)
+        self.assertEqual(" ".join(out), "this is a test")
+
+    def testCollectionDelItem(self):
+        ja = JClass('java.util.ArrayList')(['1','2','3'])
+        jc = JObject(ja, 'java.util.Collection')
+        with self.assertRaisesRegex(TypeError, 'remove'):
+            del jc[1]
+
+

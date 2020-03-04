@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
-import warnings
 from setuptools.command.build_ext import build_ext
-from setuptools import Extension
 
 
 class FeatureNotice(Warning):
@@ -77,6 +73,9 @@ class BuildExtCommand(build_ext):
         self._set_cflags()
         if tracing:
             jpypeLib.define_macros.append(('JP_TRACING_ENABLE', 1))
+        coverage = self.distribution.enable_coverage
+        if coverage:
+            jpypeLib.define_macros.append(('JP_INSTRUMENTATION', 1))
 
         # has to be last call
         build_ext.build_extensions(self)

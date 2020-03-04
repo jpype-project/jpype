@@ -18,7 +18,13 @@
 import os
 import sys
 
-# ------------------------------------------------------------------------------
+__all__ = ['getDefaultJVMPath',
+           'JVMNotFoundException', 'JVMNotSupportedException']
+
+try:
+    import winreg
+except ImportError:
+    winreg = None
 
 
 class JVMNotFoundException(ValueError):
@@ -42,6 +48,30 @@ class JVMNotSupportedException(ValueError):
     JPype.
     """
     pass
+
+
+def getDefaultJVMPath():
+    """
+    Retrieves the path to the default or first found JVM library
+
+    Returns:
+      The path to the JVM shared library file
+
+    Raises:
+      JVMNotFoundException: If there was no JVM found in the search path.
+      JVMNotSupportedException: If the JVM was found was not compatible with
+        Python due to cpu architecture.
+
+    """
+    if sys.platform == "cygwin":
+        finder = CygwinJVMFinder()
+    elif sys.platform == "win32":
+        finder = WindowsJVMFinder()
+    elif sys.platform == "darwin":
+        finder = DarwinJVMFinder()
+    else:
+        finder = LinuxJVMFinder()
+    return finder.get_jvm_path()
 
 
 class JVMFinder(object):
@@ -74,7 +104,6 @@ class JVMFinder(object):
         Returns:
             The first found file path, or None
         """
-        found_jamvm = False
         non_supported_jvm = ('cacao', 'jamvm')
         found_non_supported_jvm = False
 
@@ -216,3 +245,211 @@ class JVMFinder(object):
             jvm = self.find_libjvm(home)
             if jvm is not None:
                 return jvm
+
+
+class LinuxJVMFinder(JVMFinder):
+    """
+    Linux JVM library finder class
+    """
+
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        JVMFinder.__init__(self)
+
+        # Java bin file
+        self._java = "/usr/bin/java"
+
+        # Library file name
+        self._libfile = "libjvm.so"
+
+        # Predefined locations
+        self._locations = ("/usr/lib/jvm", "/usr/java", "/opt/sun")
+
+        # Search methods
+        self._methods = (self._get_from_java_home,
+                         self._get_from_bin,
+                         self._get_from_known_locations)
+
+    def _get_from_bin(self):
+        """
+        Retrieves the Java library path according to the real installation of
+        the java executable
+
+        :return: The path to the JVM library, or None
+        """
+        # Find the real interpreter installation path
+        java_bin = os.path.realpath(self._java)
+        if os.path.exists(java_bin):
+            # Get to the home directory
+            java_home = os.path.abspath(os.path.join(os.path.dirname(java_bin),
+                                                     '..'))
+
+            # Look for the JVM library
+            return self.find_libjvm(java_home)
+
+
+class DarwinJVMFinder(LinuxJVMFinder):
+    """
+    Mac OS X JVM library finder class
+    """
+
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        LinuxJVMFinder.__init__(self)
+
+        # Library file name
+        self._libfile = "libjli.dylib"
+
+        self._methods = list(self._methods)
+        self._methods.append(self._javahome_binary)
+
+        # Predefined locations
+        self._locations = ('/Library/Java/JavaVirtualMachines',)
+
+    def _javahome_binary(self):
+        """
+        for osx > 10.5 we have the nice util /usr/libexec/java_home available. Invoke it and
+        return its output. It seems this tool has been removed in osx 10.9.
+        """
+        import platform
+        import subprocess
+        from distutils.version import StrictVersion
+
+        current = StrictVersion(platform.mac_ver()[0][:4])
+        if current >= StrictVersion('10.6') and current < StrictVersion('10.9'):
+            return subprocess.check_output(
+                    ['/usr/libexec/java_home']).strip()
+
+
+def _checkJVMArch(jvmPath, maxsize = sys.maxsize):
+    import struct
+    IMAGE_FILE_MACHINE_I386 = 332
+    IMAGE_FILE_MACHINE_IA64 = 512
+    IMAGE_FILE_MACHINE_AMD64 = 34404
+
+    is64 = maxsize > 2**32
+    with open(jvmPath, "rb") as f:
+        s = f.read(2)
+        if s != b"MZ":
+            raise JVMNotSupportedException("JVM not valid")
+        f.seek(60)
+        s = f.read(4)
+        header_offset = struct.unpack("<L", s)[0]
+        f.seek(header_offset+4)
+        s = f.read(2)
+        machine = struct.unpack("<H", s)[0]
+
+    if machine == IMAGE_FILE_MACHINE_I386:
+        if is64:
+            raise JVMNotSupportedException(
+                "JVM mismatch, python is 64 bit and JVM is 32 bit.")
+    elif machine == IMAGE_FILE_MACHINE_IA64 or machine == IMAGE_FILE_MACHINE_AMD64:
+        if not is64:
+            raise JVMNotSupportedException(
+                "JVM mismatch, python is 32 bit and JVM is 64 bit.")
+    else:
+        raise JVMNotSupportedException("Unable to determine JVM Type")
+
+
+reg_keys = [r"SOFTWARE\JavaSoft\Java Runtime Environment",
+            r"SOFTWARE\JavaSoft\JRE",
+            ]
+
+
+class WindowsJVMFinder(JVMFinder):
+    """
+    Windows JVM library finder class
+    """
+
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        JVMFinder.__init__(self)
+
+        # Library file name
+        self._libfile = "jvm.dll"
+
+        # Search methods
+        self._methods = (self._get_from_java_home, self._get_from_registry)
+
+    def check(self, jvm):
+        _checkJVMArch(jvm)
+
+    def _get_from_registry(self):
+        """
+        Retrieves the path to the default Java installation stored in the
+        Windows registry
+
+        :return: The path found in the registry, or None
+        """
+        # Winreg is an optional package in cygwin
+        if not winreg:
+            return None
+        for location in reg_keys:
+            try:
+                jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, location)
+                cv = winreg.QueryValueEx(jreKey, "CurrentVersion")
+                versionKey = winreg.OpenKey(jreKey, cv[0])
+                winreg.CloseKey(jreKey)
+
+                cv = winreg.QueryValueEx(versionKey, "RuntimeLib")
+                winreg.CloseKey(versionKey)
+
+                return cv[0]
+            except OSError:
+                pass
+        return None
+
+
+class CygwinJVMFinder(JVMFinder):
+    """
+    Cygwin JVM library finder class
+    """
+
+    def __init__(self):
+        """
+        Sets up members
+        """
+        # Call the parent constructor
+        JVMFinder.__init__(self)
+
+        # Library file name
+        self._libfile = "jvm.dll"
+
+        # Search methods
+        self._methods = (self._get_from_java_home, self._get_from_registry)
+
+    def check(self, jvm):
+        _checkJVMArch(jvm)
+
+    def _get_from_registry(self):
+        """
+        Retrieves the path to the default Java installation stored in the
+        Windows registry
+
+        :return: The path found in the registry, or None
+        """
+        for location in reg_keys:
+            location = location.replace('\\', '/')
+            jreKey = "/proc/registry/HKEY_LOCAL_MACHINE/{}".format(location)
+            try:
+                with open(jreKey + "/CurrentVersion") as f:
+                    cv = f.read().split('\x00')
+                versionKey = jreKey + "/" + cv[0]
+
+                with open(versionKey + "/RunTimeLib") as f:
+                    cv = f.read().split('\x00')
+
+                return cv[0]
+
+            except OSError:
+                pass
+        return None

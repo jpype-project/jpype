@@ -198,7 +198,6 @@ protected:
  */
 namespace JPPyLong
 {
-bool check(PyObject* obj);
 bool checkConvertable(PyObject* obj);
 
 /** Check if this is really an integer type or just can be converted to.
@@ -214,7 +213,6 @@ JPPyObject fromLong(jlong l);
 /** Wrapper for a Python float object. */
 namespace JPPyFloat
 {
-bool checkConvertable(PyObject* obj);
 jdouble asDouble(PyObject* obj);
 jfloat asFloat(PyObject* obj);
 
@@ -288,24 +286,11 @@ public:
 	 */
 	static JPPyTuple newTuple(jlong sz);
 
-	static bool check(PyObject* obj);
-
 	/** Set an item in the tuple.
 	 *
 	 * This does not steal a reference to the object.
 	 */
 	void setItem(jlong ndx, PyObject* val);
-
-	/** Fetch an item from a tuple.
-	 *
-	 * Scope remains with the JPTuple, so no smart reference is required.
-	 * @throws if the index is out of the range of the tuple.
-	 */
-	PyObject* getItem(jlong ndx);
-
-	/** Get the size of the tuple.
-	 */
-	jlong	size();
 
 } ;
 
@@ -344,8 +329,6 @@ public:
 class JPPyObjectVector
 {
 public:
-
-	JPPyObjectVector(int i);
 
 	/** Use an existing sequence members as a vector.
 	 */

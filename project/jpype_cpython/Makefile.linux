@@ -5,7 +5,7 @@ ARCH = linux-x86_64-$(PYVER)
 #TRACE = -DJP_TRACING_ENABLE=1
 CFLAGS = -pthread -DNDEBUG -fwrapv -O0 -Wall -fstack-protector-strong -Wformat -Werror=format-security \
 	 -Wdate-time -D_FORTIFY_SOURCE=2 -fPIC \
-	 -g3 -std=c++11 -ggdb $(TRACE)
+	 -g3 -std=c++11 -ggdb $(TRACE) -DJP_INSTRUMENTATION
 
 INCLUDES = -Inative/common/include -Inative/python/include -Ibuild/src -Inative/jni_include \
 	-I/usr/include/python$(PYVER) 

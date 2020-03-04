@@ -13,10 +13,7 @@
 #
 # *****************************************************************************
 import _jpype
-import sys as _sys
 from . import _jcustomizer
-from . import _jclass
-from . import _jobject
 
 __all__ = ['JException']
 
@@ -63,8 +60,8 @@ class JException(_jpype._JException):
         Returns:
           A string with the classic Java ``printStackTrace`` result.
         """
-        StringWriter = _jclass.JClass("java.io.StringWriter")
-        PrintWriter = _jclass.JClass("java.io.PrintWriter")
+        StringWriter = _jpype.JClass("java.io.StringWriter")
+        PrintWriter = _jpype.JClass("java.io.PrintWriter")
         sw = StringWriter()
         pw = PrintWriter(sw)
         self.printStackTrace(pw)
@@ -89,8 +86,8 @@ class JException(_jpype._JException):
 
 def _JExceptionClassFactory(tp):
     if isinstance(tp, str):
-        return _jclass.JClass(tp)
-    if isinstance(tp, _jclass.JClass):
+        return _jpype.JClass(tp)
+    if isinstance(tp, _jpype.JClass):
         return tp
     raise TypeError(
         "JException requires a string or java throwable type, got %s." % tp)

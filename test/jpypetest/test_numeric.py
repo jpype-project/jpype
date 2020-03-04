@@ -77,8 +77,7 @@ class NumericTestCase(common.JPypeTestCase):
         javawrapper = java.lang.Float
         jwrapper(float(2**127))
         javawrapper(float(2**127))
-        self.assertRaises(OverflowError, jwrapper, float(2**128))
-        # self.assertRaisesRegexp(RuntimeError, 'No matching overloads found', javawrapper, 5) # no conversion from int?
+        self.assertEqual(javawrapper(5), 5)
 
         # this difference might be undesirable,
         # a double bigger than maxfloat passed to java.lang.Float turns into infinity
@@ -86,3 +85,5 @@ class NumericTestCase(common.JPypeTestCase):
             float(2**128)).doubleValue())
         self.assertEqual(
             float('-inf'), javawrapper(float(-2**128)).doubleValue())
+        self.assertEqual( jwrapper(float(2**128)), float('inf'))
+        self.assertEqual( jwrapper(float(-2**128)), float('-inf'))

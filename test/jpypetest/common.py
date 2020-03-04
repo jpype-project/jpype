@@ -29,6 +29,13 @@ CLASSPATH = None
 def version(v):
     return tuple([int(i) for i in v.split('.')])
 
+def requireInstrumentation(func):
+    def f(self):
+        import _jpype
+        if not hasattr(_jpype, "fault"):
+            raise unittest.SkipTest
+        return func(self)
+    return f
 
 @pytest.mark.usefixtures("common_opts")
 class JPypeTestCase(unittest.TestCase):

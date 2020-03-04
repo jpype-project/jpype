@@ -14,9 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-
-import sys as _sys
-import inspect
 import _jpype
 from . import _jcustomizer
 
@@ -68,11 +65,19 @@ class JObject(_jpype._JObject):
 
 
 class _JObjectProto(object):
+    # Hash is covered by _jpype._JObject
     def __eq__(self, other):
         try:
             return self.equals(other)
         except TypeError:
             return False
+
+    def __ne__(self, other):
+        try:
+            return not self.equals(other)
+        except TypeError:
+            return True
+
 
 
 def _getDefaultJavaObject(obj):
