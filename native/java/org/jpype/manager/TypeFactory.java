@@ -133,8 +133,6 @@ public interface TypeFactory
    * @param name
    * @param method is the Java method that will be called, converts to a method
    * id.
-   * @param returnType
-   * @param argumentTypes
    * @param overloadList
    * @param modifiers
    * @return the pointer to the JPMethod.

@@ -334,8 +334,8 @@ public class TypeManager
    * <p>
    * Boxed types require special handlers, as does java.lang.String
    *
-   * @param code is >=0 for boxed types and -1 otherwise.
-   * @param cls
+   * @param cls is the Java class to wrap.
+   * @param special marks class as requiring a specialized C++ wrapper.
    * @return a C++ wrapper handle for a jp_classtype
    */
   private ClassDescriptor createClass(Class<?> cls, boolean special)
