@@ -1,0 +1,22 @@
+path_classifiers:
+   test:
+     - setup.py
+     - setupext
+     - test
+
+   docs:
+     - doc
+
+   library:
+     - jpype
+     - native
+
+extraction:
+
+   java:
+       index:
+           build_command: ant -f native/build.xml
+
+   python:
+       python_setup: 
+           version: "3"
