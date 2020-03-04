@@ -3,6 +3,7 @@ path_classifiers:
      - setup.py
      - setupext
      - test
+     - examples
 
    docs:
      - doc
