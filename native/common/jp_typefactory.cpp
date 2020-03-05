@@ -25,6 +25,18 @@
 #include "jp_methoddispatch.h"
 #include "jp_arrayclass.h"
 #include "jp_stringtype.h"
+#include "jp_typemanager.h"
+#include "jp_arrayclass.h"
+#include "jp_stringtype.h"
+#include "jp_voidtype.h"
+#include "jp_booleantype.h"
+#include "jp_bytetype.h"
+#include "jp_chartype.h"
+#include "jp_shorttype.h"
+#include "jp_inttype.h"
+#include "jp_longtype.h"
+#include "jp_floattype.h"
+#include "jp_doubletype.h"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
@@ -82,9 +94,6 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 	jlong* values = accessor.get();
 	for (int i = 0; i < sz; ++i)
 	{
-		// Do not delete the shared primitive types.
-		if (dynamic_cast<JPPrimitiveType*> ((JPResource*) values[i]) != 0)
-			continue;
 		delete (JPResource*) values[i];
 	}
 	return;
@@ -141,6 +150,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		jlongArray interfacePtrs,
 		jint modifiers)
 {
+	// All resources are created here are owned by Java and deleted by Java shutdown routine
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
@@ -173,11 +183,15 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 
 		// Register the box types
 		if (className == "java.lang.Void")
+		{
+			context->_void = new JPVoidType();
 			return (jlong) (context->_java_lang_Void
-				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_void));
+					= new JPBoxedType(frame, cls, className,
+					(JPClass*) superClass, interfaces, modifiers, context->_void));
+		}
 		if (className == "java.lang.Boolean")
 		{
+			context->_boolean = new JPBooleanType();
 			context->m_BooleanValueID = frame.GetMethodID(cls, "booleanValue", "()Z");
 			return (jlong) (context->_java_lang_Boolean
 					= new JPBoxedType(frame, cls, className,
@@ -185,6 +199,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Byte")
 		{
+			context->_byte = new JPByteType();
 			context->m_ByteValueID = frame.GetMethodID(cls, "byteValue", "()B");
 			return (jlong) (context->_java_lang_Byte
 					= new JPBoxedType(frame, cls, className,
@@ -192,6 +207,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Character")
 		{
+			context->_char = new JPCharType();
 			context->m_CharValueID = frame.GetMethodID(cls, "charValue", "()C");
 			return (jlong) (context->_java_lang_Character
 					= new JPBoxedType(frame, cls, className,
@@ -199,6 +215,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Short")
 		{
+			context->_short = new JPShortType();
 			context->m_ShortValueID = frame.GetMethodID(cls, "shortValue", "()S");
 			return (jlong) (context->_java_lang_Short
 					= new JPBoxedType(frame, cls, className,
@@ -206,6 +223,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Integer")
 		{
+			context->_int = new JPIntType();
 			context->m_IntValueID = frame.GetMethodID(cls, "intValue", "()I");
 			return (jlong) (context->_java_lang_Integer
 					= new JPBoxedType(frame, cls, className,
@@ -213,6 +231,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Long")
 		{
+			context->_long = new JPLongType();
+
 			context->m_LongValueID = frame.GetMethodID(cls, "longValue", "()J");
 			return (jlong) (context->_java_lang_Long
 					= new JPBoxedType(frame, cls, className,
@@ -220,6 +240,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Float")
 		{
+			context->_float = new JPFloatType();
 			context->m_FloatValueID = frame.GetMethodID(cls, "floatValue", "()F");
 			return (jlong) (context->_java_lang_Float
 					= new JPBoxedType(frame, cls, className,
@@ -227,6 +248,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		}
 		if (className == "java.lang.Double")
 		{
+			context->_double = new JPDoubleType();
 			context->m_DoubleValueID = frame.GetMethodID(cls, "doubleValue", "()D");
 			return (jlong) (context->_java_lang_Double
 					= new JPBoxedType(frame, cls, className,
@@ -263,6 +285,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 		jlong boxedPtr,
 		jint modifiers)
 {
+	// These resources are created by the boxed types 
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
 	JP_JAVA_TRY("JPTypeFactory_definePrimitive");

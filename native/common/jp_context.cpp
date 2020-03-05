@@ -63,15 +63,15 @@ JPPlatformAdapter* GetAdapter()
 JPContext::JPContext()
 {
 	m_JavaVM = 0;
-	_void = new JPVoidType();
-	_byte = new JPByteType();
-	_boolean = new JPBooleanType();
-	_char = new JPCharType();
-	_short = new JPShortType();
-	_int = new JPIntType();
-	_long = new JPLongType();
-	_float = new JPFloatType();
-	_double = new JPDoubleType();
+	_void = 0;
+	_byte = 0;
+	_boolean = 0;
+	_char = 0;
+	_short = 0;
+	_int = 0;
+	_long = 0;
+	_float = 0;
+	_double = 0;
 
 	_java_lang_Void = 0;
 	_java_lang_Boolean = 0;
@@ -105,6 +105,10 @@ JPContext::JPContext()
 
 JPContext::~JPContext()
 {
+	delete m_TypeFactory;
+	delete m_TypeManager;
+	delete m_ReferenceQueue;
+	delete m_ProxyFactory;
 }
 
 bool JPContext::isRunning()
@@ -275,7 +279,7 @@ void JPContext::shutdownJVM()
 
 	// Wait for all non-demon threads to terminate
 	// DestroyJVM is rather misnamed.  It is simply a wait call
-	// FIXME our reference queue thunk does not appear to have properly set
+	// Our reference queue thunk does not appear to have properly set
 	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
 	//	s_JavaVM->functions->DestroyJavaVM(s_JavaVM);
