@@ -154,6 +154,8 @@ public:
 	JPClass *findClassForObject(jobject obj);
 
 private:
+	// not implemented
+	JPJavaFrame& operator= (const JPJavaFrame& frame);
 
 	jint PushLocalFrame(jint);
 	jobject PopLocalFrame(jobject);

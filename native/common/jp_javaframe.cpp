@@ -61,7 +61,7 @@ public:
 			jthrowable th = _env->functions->ExceptionOccurred(_env);
 			_env->functions->ExceptionClear(_env);
 			_env = 0;
-			throw JPypeException(frame, th, JP_STACKINFO());
+			throw JPypeException(frame, th, JP_STACKINFO());  // lgtm [cpp/throw-in-destructor]
 		}
 	}
 } ;

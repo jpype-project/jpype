@@ -1,6 +1,5 @@
 import jpype
 import common
-import sys
 
 class MyImpl(object):
     def blah(self):

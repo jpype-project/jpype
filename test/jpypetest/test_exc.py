@@ -15,7 +15,7 @@
 #
 # *****************************************************************************
 import jpype
-from jpype import JException, java, JProxy, JPackage, JClass
+from jpype import JException, java, JProxy, JClass
 import traceback
 import common
 

@@ -123,14 +123,14 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             ja = JArray(JInt,2)(5)
             m = memoryview(ja)
-            del m
+            del m # lgtm [py/unnecessary-delete]
 
     def testJPArrayPrimitive_getBuffer(self):
         _jpype.fault("PyJPArrayPrimitive_getBuffer")
         def f():
             ja = JArray(JInt)(5)
             m = memoryview(ja)
-            del m
+            del m # lgtm [py/unnecessary-delete]
         with self.assertRaises(SystemError):
             f()
         with self.assertRaises(BufferError):
@@ -586,7 +586,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JProxy(None, [type])
         _jpype.fault("JPProxy::JPProxy")
         with self.assertRaises(SystemError):
-            jc =_jpype._JProxy(None, [JClass("java.io.Serializable")])
+            _jpype._JProxy(None, [JClass("java.io.Serializable")])
         _jpype._JProxy(None, [JClass("java.io.Serializable")])
 
 # FIXME this needs special treatment
@@ -602,8 +602,9 @@ class FaultTestCase(common.JPypeTestCase):
  
     def testJPProxy_dealloc(self):
         _jpype.fault("PyJPProxy_dealloc")
-        jc =_jpype._JProxy(None, [JClass("java.io.Serializable")])
-        del jc
+        def f():
+            _jpype._JProxy(None, [JClass("java.io.Serializable")])
+        f()  
 
     def testJPProxy_call(self):
         @JImplements("java.util.function.DoubleUnaryOperator")
@@ -615,7 +616,7 @@ class FaultTestCase(common.JPypeTestCase):
                 return d
         _jpype.fault("JPProxy::getProxy")
         with self.assertRaises(SystemError):
-            jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
+            JObject(f(), "java.util.function.DoubleUnaryOperator")
         jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
         # FIXME special case Java does not reflect the SystemError back to Python
         _jpype.fault("PyJPProxy_getCallable")
@@ -635,10 +636,10 @@ class FaultTestCase(common.JPypeTestCase):
             def accept(self, d):
                 return None
         jo = JObject(f(), "java.util.function.Consumer")
-        # FIXME segfault
+        # FIXME segfaults
         # jo.accept(None)
 
-    def testJPProxy_void(self):
+    def testJPProxy_box_return(self):
         q = None
         @JImplements("java.util.function.Supplier")
         class f(object):
@@ -646,7 +647,6 @@ class FaultTestCase(common.JPypeTestCase):
             def get(self):
                 return q
         jo = JObject(f(), "java.util.function.Supplier")
-        # FIXME segfault
         self.assertEqual(jo.get(), None)
         q=1.0
         self.assertIsInstance(jo.get(), java.lang.Double)
@@ -670,7 +670,7 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPValue_finalize(self):
         _jpype.fault("PyJPValue_finalize")
         a = JInt(1)
-        del a
+        del a # lgtm [py/unnecessary-delete] 
 
     def testJPValue_str(self):
         js = JString("f")
@@ -699,7 +699,7 @@ class FaultTestCase(common.JPypeTestCase):
             jo.substring = None
 
     def testJPBooleanType(self):
-        ja = JArray(JBoolean)(5)
+        ja = JArray(JBoolean)(5) # lgtm [py/similar-function]
         _jpype.fault("JPBooleanType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -712,7 +712,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_bool = object()
 
     def testJPCharType(self):
-        ja = JArray(JChar)(5)
+        ja = JArray(JChar)(5) # lgtm [py/similar-function]
         _jpype.fault("JPCharType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -725,7 +725,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_char = object()
 
     def testJPByteType(self):
-        ja = JArray(JByte)(5)
+        ja = JArray(JByte)(5) # lgtm [py/similar-function]
         _jpype.fault("JPByteType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -738,7 +738,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_byte = object()
 
     def testJPShortType(self):
-        ja = JArray(JShort)(5)
+        ja = JArray(JShort)(5) # lgtm [py/similar-function]
         _jpype.fault("JPShortType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -751,7 +751,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_short = object()
 
     def testJPIntType(self):
-        ja = JArray(JInt)(5)
+        ja = JArray(JInt)(5) # lgtm [py/similar-function]
         _jpype.fault("JPIntType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -764,7 +764,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_int = object()
 
     def testJPLongType(self):
-        ja = JArray(JLong)(5)
+        ja = JArray(JLong)(5) # lgtm [py/similar-function]
         _jpype.fault("JPLongType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -776,22 +776,8 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             jf().member_long = object()
 
-    def testJPDoubleType(self):
-        ja = JArray(JDouble)(5)
-        _jpype.fault("JPDoubleType::setArrayRange")
-        with self.assertRaises(SystemError):
-            ja[1:3] = [0,0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.fields.Fields")
-        with self.assertRaises(TypeError):
-            jf.static_double = object()
-        with self.assertRaises(TypeError):
-            jf().member_double = object()
-
-
     def testJPFloatType(self):
-        ja = JArray(JFloat)(5)
+        ja = JArray(JFloat)(5) # lgtm [py/similar-function]
         _jpype.fault("JPFloatType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -804,7 +790,7 @@ class FaultTestCase(common.JPypeTestCase):
             jf().member_float = object()
 
     def testJPDoubleType(self):
-        ja = JArray(JDouble)(5)
+        ja = JArray(JDouble)(5) # lgtm [py/similar-function]
         _jpype.fault("JPDoubleType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[1:3] = [0,0]
@@ -838,9 +824,11 @@ class FaultTestCase(common.JPypeTestCase):
         si = jf.__dict__['static_int']
         str(si)
         repr(si)
+        i =  None
         _jpype.fault("PyJPField_get")
         with self.assertRaises(SystemError):
             i = jfi.member_int
+        self.assertEqual(i, None)
         _jpype.fault("PyJPField_set")
         with self.assertRaises(SystemError):
             jfi.member_int = 2
@@ -866,9 +854,11 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPClass::setField")
         with self.assertRaises(SystemError):
             jfi.member_object = None
+        i = None
         _jpype.fault("JPClass::getStaticField")
         with self.assertRaises(SystemError):
             i = jf.static_object
         _jpype.fault("JPClass::getField")
         with self.assertRaises(SystemError):
             i = jfi.member_object
+        self.assertEqual(i, None)

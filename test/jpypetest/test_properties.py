@@ -1,5 +1,4 @@
 import subrun
-import os
 import unittest
 import jpype
 

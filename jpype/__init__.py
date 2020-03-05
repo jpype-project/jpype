@@ -22,20 +22,21 @@ from ._gui import *
 from ._classpath import *
 from ._jclass import *
 from ._jobject import *
-from . import _jarray
-from . import _jexception
+# There is a bug in lgtm with __init__ imports.  It will be fixed next month.
+from . import _jarray       # lgtm [py/import-own-module]
+from . import _jexception   # lgtm [py/import-own-module]
 from .types import *
 from ._jcustomizer import *
-from . import reflect
-from . import nio
-from . import types
+from . import reflect       # lgtm [py/import-own-module]
+from . import nio           # lgtm [py/import-own-module]
+from . import types         # lgtm [py/import-own-module]
 from ._jcustomizer import *
 # Import all the class customizers
 # Customizers are applied in the order that they are defined currently.
-from . import _jmethod
-from . import _jcollection
-from . import _jcomparable
-from . import _jio
+from . import _jmethod      # lgtm [py/import-own-module]
+from . import _jcollection  # lgtm [py/import-own-module]
+from . import _jcomparable  # lgtm [py/import-own-module]
+from . import _jio          # lgtm [py/import-own-module]
 
 
 __all__ = ['java', 'javax']

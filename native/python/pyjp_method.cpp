@@ -168,7 +168,7 @@ static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();

@@ -1,4 +1,3 @@
-import _jpype
 import jpype
 import common
 from jpype.types import *

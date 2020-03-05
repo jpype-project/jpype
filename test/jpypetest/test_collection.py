@@ -121,9 +121,9 @@ class CollectionTestCase(common.JPypeTestCase):
         hs.add('a')
         hs.add('b')
         hs.add('c')
-        self.assertTrue('a' in hs)
+        self.assertIn('a', hs)
         del hs['a']
-        self.assertFalse('a' in hs)
+        self.assertNotIn('a', hs)
 
     def testMapEntry(self):
         hm = JClass('java.util.TreeMap')()

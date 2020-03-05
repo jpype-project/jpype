@@ -16,7 +16,7 @@
 # *****************************************************************************
 import sys
 import _jpype
-from . import _jtypes
+from . import types as _jtypes
 from . import _classpath
 from . import _jinit
 
