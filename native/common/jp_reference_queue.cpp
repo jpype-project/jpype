@@ -69,6 +69,9 @@ JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 	JP_TRACE_OUT;
 }
 
+JPReferenceQueue::~JPReferenceQueue()
+{
+}
 
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 {
