@@ -275,7 +275,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 
-	// FIXME returning None likely incorrect from java prospective.
+	//  Returning None likely incorrect from java prospective.
 	//  Java still knows the type of null objects thus
 	//  converting to None would pose a problem as we lose type.
 	//  We would need subclass None for this to make sense so we

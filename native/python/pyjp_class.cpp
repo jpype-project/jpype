@@ -791,7 +791,6 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
 
-	// FIXME We need to apply the keyword correction here.
 	const JPFieldList& instFields = cls->getFields();
 	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
 	{

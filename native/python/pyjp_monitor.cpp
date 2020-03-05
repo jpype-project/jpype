@@ -48,8 +48,6 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	if (v1 == NULL)
 		JP_RAISE(PyExc_TypeError, "Java object is required.");
 
-	// FIXME should these be runtime or type error.
-	// it is legitimately the wrong "type" of object.
 	if (v1->getClass() == context->_java_lang_String)
 		JP_RAISE(PyExc_TypeError, "Java strings cannot be used to synchronize.");
 

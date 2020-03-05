@@ -289,7 +289,7 @@ JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 
 	if (cls->isPrimitive())
 	{
-		// FIXME we could actually get these to cast to the correct
+		// We could actually get these to cast to the correct
 		// primitive type which would preserve type conversions here.
 		return cls->convertToPythonObject(frame, value.getValue());
 	}

@@ -125,7 +125,6 @@ static PyObject *PyJPArray_repr(PyJPArray *self)
 		JP_RAISE(PyExc_ValueError, "Null array");
 	stringstream sout;
 
-	// FIXME way too hard to get this type name.
 	sout << "<java array " << self->m_Array->getClass()->toString() << ">";
 	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(0);
@@ -178,7 +177,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 #endif
 		if (slicelength <= 0)
 		{
-			// FIXME this should point to a null array so we don't hold worthless
+			// This should point to a null array so we don't hold worthless
 			// memory, but this is a low priority
 			start = stop = 0;
 			step = 1;

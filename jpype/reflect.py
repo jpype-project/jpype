@@ -16,9 +16,6 @@
 # *****************************************************************************
 from ._core import deprecated
 
-# FIXME this class is entirely replaced with calls to .class_ and should likely be deprecated.
-
-
 @deprecated("class_.getConstructors()")
 def getConstructors(clas):
     return clas.class_.getConstructors()[:]

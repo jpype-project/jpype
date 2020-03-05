@@ -282,7 +282,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 JPArrayView::~JPArrayView()
 {
 	if (m_Owned)
-		delete (char*) m_Memory;
+		delete [] (char*) m_Memory;
 }
 
 JPContext *JPArrayView::getContext()

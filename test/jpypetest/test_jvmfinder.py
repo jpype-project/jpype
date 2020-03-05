@@ -95,22 +95,22 @@ class JVMFinderTest(unittest.TestCase):
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.WindowsJVMFinder') as finder:
             mocksys.platform = 'win32'
             jpype._jvmfinder.getDefaultJVMPath()
-            self.assertTrue(finder().get_jvm_path in finder.mock_calls)
+            self.assertIn(finder().get_jvm_path, finder.mock_calls)
 
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.LinuxJVMFinder') as finder:
             mocksys.platform = 'linux'
             getDefaultJVMPath()
-            self.assertTrue(finder().get_jvm_path in finder.mock_calls)
+            self.assertIn(finder().get_jvm_path, finder.mock_calls)
 
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.DarwinJVMFinder') as finder:
             mocksys.platform = 'darwin'
             getDefaultJVMPath()
-            self.assertTrue(finder().get_jvm_path in finder.mock_calls)
+            self.assertIn(finder().get_jvm_path, finder.mock_calls)
 
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.CygwinJVMFinder') as finder:
             mocksys.platform = 'cygwin'
             getDefaultJVMPath()
-            self.assertTrue(finder().get_jvm_path in finder.mock_calls)
+            self.assertIn(finder().get_jvm_path, finder.mock_calls)
 
     def testLinuxGetFromBin(self):
         finder = jpype._jvmfinder.LinuxJVMFinder()

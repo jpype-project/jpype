@@ -16,7 +16,7 @@
  *****************************************************************************/
 #include "jp_encoding.h"
 
-// FIXME These encoders handle all of the codes expected to be passed between
+// These encoders handle all of the codes expected to be passed between
 // Java and Python assuming they both generate complient codings.  However,
 // this code does not handle miscodings very well.  The current behavior
 // is to simply terminate the string at the bad code without producing
@@ -97,7 +97,7 @@ std::string transcribe(const char* in, size_t len,
 		{
 			if (inStream.eof())
 				break;
-			// FIXME Truncate bad strings for now.
+			// Truncate bad strings for now.
 			return outStream.str();
 		}
 
