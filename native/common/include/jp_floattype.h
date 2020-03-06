@@ -17,9 +17,6 @@
 #ifndef _JP_FLOAT_TYPE_H_
 #define _JP_FLOAT_TYPE_H_
 
-#include "jp_jniutil.h"
-
-
 class JPFloatType : public JPPrimitiveType
 {
 public:
@@ -31,21 +28,24 @@ public:
 	typedef jfloat type_t;
 	typedef jfloatArray array_t;
 
-	inline jfloat& field(jvalue& v)
+	static inline jfloat& field(jvalue& v)
 	{
 		return v.f;
 	}
 
-	inline jfloat field(const jvalue& v) const
+	static inline const jfloat& field(const jvalue& v)
 	{
 		return v.f;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Float;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -62,21 +62,31 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
+	template <class T> static T assertRange(const T& l)
+	{
+		if (l < -3.40282346638528860e+38 || l > 3.40282346638528860e+38)
+		{
+			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
+		}
+		return l;
+	}
+
 	virtual char getTypeCode() override
 	{
 		return 'F';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
-
-	template <class T> T assertRange(const T& l)
+	virtual jlong getAsLong(jvalue v) override
 	{
-		if (l < -JPJni::s_Float_Max || l > JPJni::s_Float_Max)
-		{
-			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java byte");
-		}
-		return l;
+		return (jlong) field(v);
 	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return (jdouble) field(v);
+	}
+
+	virtual string asString(jvalue v) override;
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;

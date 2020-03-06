@@ -15,12 +15,10 @@
 
  *****************************************************************************/
 #include "jpype.h"
-#include "jp_boxedclasses.h"
 
-JPPrimitiveType::JPPrimitiveType(JPBoxedClass* cls)
-: JPClass(JPJni::getPrimitiveClass(cls->getJavaClass())), m_BoxedClass(cls)
+JPPrimitiveType::JPPrimitiveType(const string& name)
+: JPClass(name, 0x411)
 {
-	cls->setPrimitiveType(this);
 }
 
 JPPrimitiveType::~JPPrimitiveType()
@@ -30,4 +28,26 @@ JPPrimitiveType::~JPPrimitiveType()
 bool JPPrimitiveType::isPrimitive() const
 {
 	return true;
+}
+
+bool JPPrimitiveType::isAssignableFrom(JPClass* o)
+{
+	return this == o;
+}
+
+JPValue JPPrimitiveType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	if (args.size() != 1)
+		JP_RAISE(PyExc_TypeError, "primitives take 1 positional argument");
+
+	// Test the conversion
+	JPMatch match;
+	getJavaConversion(NULL, match, args[0]);
+
+	// If there is no conversion report a failure
+	if (match.type == JPMatch::_none)
+		JP_RAISE(PyExc_TypeError, "Unable to create an instance.");
+
+	// Otherwise give back a PyJPValue
+	return JPValue(this, match.conversion->convert(&frame, this, args[0]));
 }

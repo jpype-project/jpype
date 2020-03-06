@@ -15,7 +15,7 @@
 #
 # *****************************************************************************
 import jpype
-from jpype import JException, java, JProxy, JPackage
+from jpype import JException, java, JProxy, JPackage, JClass
 import traceback
 import common
 
@@ -25,13 +25,14 @@ def throwIOException():
 
 
 def throwByJavaException():
-    JPackage('jpype').exc.ExceptionTest.throwIOException()
+    JClass('jpype.exc.ExceptionTest').throwIOException()
 
 
 class ExceptionTestCase(common.JPypeTestCase):
     def testExceptionThrown(self):
+        ext = JClass('jpype.exc.ExceptionTest')
         try:
-            self.jpype.exc.ExceptionTest.throwRuntime()
+            ext.throwRuntime()
             self.fail()
         except JException as ex:
             self.assertIs(type(ex), java.lang.RuntimeException)
@@ -41,8 +42,9 @@ class ExceptionTestCase(common.JPypeTestCase):
                 'java.lang.RuntimeException: Foo'))
 
     def testExceptionByJavaClass(self):
+        ext = JClass('jpype.exc.ExceptionTest')
         try:
-            self.jpype.exc.ExceptionTest.throwRuntime()
+            ext.throwRuntime()
             self.fail()
         except JException(java.lang.RuntimeException) as ex:
             self.assertIs(type(ex), java.lang.RuntimeException)
@@ -52,15 +54,19 @@ class ExceptionTestCase(common.JPypeTestCase):
                 'java.lang.RuntimeException: Foo'))
 
     def testThrowException(self):
+        exthrow = JClass('jpype.exc.ExceptionThrower')
+        extest = JClass('jpype.exc.ExceptionTest')
         d = {"throwIOException": throwIOException, }
-        p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
-        self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
+        p = JProxy(exthrow, dict=d)
+        self.assertTrue(extest.delegateThrow(p))
 
     def testThrowException3(self):
+        exthrow = JClass('jpype.exc.ExceptionThrower')
+        extest = JClass('jpype.exc.ExceptionTest')
         d = {"throwIOException": throwByJavaException, }
-        p = JProxy(self.jpype.exc.ExceptionThrower, dict=d)
+        p = JProxy(exthrow, dict=d)
 
-        self.assertTrue(self.jpype.exc.ExceptionTest.delegateThrow(p))
+        self.assertTrue(extest.delegateThrow(p))
 
 #    This test is problematic as __name__ is a class property not an object property
 #    def testExceptionPYEXCName(self):

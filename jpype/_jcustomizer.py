@@ -15,43 +15,57 @@
 import _jpype
 import sys as _sys
 
-_JP_BASES = {}
-_JP_IMPLEMENTATIONS = {}
+__all__ = ['JImplementationFor', 'JConversion']
 
-__all__ = ['JImplementationFor']
+def JConversion(cls, exact=None, instanceof=None, attribute=None):
+    """ Decorator to define a method as a converted a Java type.
 
+    Whenever a method resolution is called the JPype internal rules
+    are applied, but sometimes this is insufficient.  If only a
+    single method requires modification then a class customizer can
+    be applied.  But if many interfaces require the same conversion
+    than a user conversion may be an option.
 
-def registerClassBase(name, cls):
-    """ (internal) Add an implementation for a class
+    To add a user conversion define a method which take the requested
+    Java type as the first argument, the target object to be converted
+    as the second argument and returns a Java object or Java proxy that
+    matches the required type.  If the type is not a Java type then
+    a TypeError will be produce.  This method is only evaluated
+    after the match has been determine prior to calling.
 
-    Use @JImplementationFor(cls, base=True) to access this.
+    Care should be used when defining a user conversion. If example
+    if one has an interface that requires a specific class and you
+    want it to take a Python string, then a user conversion can
+    do that.  On the other hand if you define a generic converter
+    of any Python object to a Java string, then every interface
+    will attempt to call the conversion method whenever a Java string
+    is being matched, which can cause many methods to potentially
+    become ambiguous.
 
+    Conversion are not inherited. If the same converter needs to
+    apply to multiple types, then multiple decorators can
+    be applied to the same method.
+
+    Args:
+      cls(str, JClass): The class that will be produced by this
+        conversion.
+      exact(type): this conversion applies only to objects that have
+        a type exactly equal to the argument.
+      instanceof(type): this conversion applies to any object that
+        pass isinstance(obj, arg)
+      attribute(str): this conversion applies to any object that has
+        passes hasattr(obj, arg)
     """
-    if name in _JP_BASES:
-        _JP_BASES[name].append(cls)
-    else:
-        _JP_BASES[name] = [cls]
-
-    # Changing the base class in python can break things,
-    # so we will tag this as an error for now.
-    if _jpype._hasClass(name):
-        raise TypeError(
-            "Base classes must be added before class is created")
-
-
-def registerClassImplementation(classname, proto):
-    """ (internal) Add an implementation for a class
-
-    Use @JImplementationFor(cls) to access this.
-    """
-    if classname in _JP_IMPLEMENTATIONS:
-        _JP_IMPLEMENTATIONS[classname].append(proto)
-    else:
-        _JP_IMPLEMENTATIONS[classname] = [proto]
-
-    # If we have already created a class, apply it retroactively.
-    if _jpype._hasClass(classname):
-        _applyCustomizerPost(_jpype._getClass(classname), proto)
+    def customizer(func):
+        hints = getClassHints(cls)
+        if exact:
+            hints.addTypeConversion(exact, func, True)
+        if instanceof:
+            hints.addTypeConversion(instanceof, func, False)
+        if attribute:
+            hints.addAttributeConversion(attribute, func)
+        return func
+    return customizer
 
 
 def JImplementationFor(clsname, base=False):
@@ -86,10 +100,11 @@ def JImplementationFor(clsname, base=False):
         raise TypeError("ImplementationFor requires a java classname string")
 
     def customizer(cls):
+        hints = getClassHints(clsname)
         if base:
-            registerClassBase(clsname, cls)
+            hints.registerClassBase(cls)
         else:
-            registerClassImplementation(clsname, cls)
+            hints.registerClassImplementation(clsname, cls)
         return cls
     return customizer
 
@@ -168,17 +183,51 @@ def _applyCustomizerPost(cls, proto):
         _applyAll(cls, init)
 
 
-def _applyCustomizers(name, bases, members):
-    """ (internal) Called by JClass and JArray to customize a newly created class."""
-    # Apply base classes
-    if name in _JP_BASES:
-        for b in _JP_BASES[name]:
+class JClassHints(_jpype._JClassHints):
+    """ ClassHints holds class customizers and conversions.
+
+    These items can be defined before the JVM is created.
+    """
+
+    def __init__(self):
+        self.bases = []
+        self.implementations = []
+        self.instantiated = False
+
+    def registerClassBase(self, base):
+        """ (internal) Add an implementation for a class
+
+        Use @JImplementationFor(cls, base=True) to access this.
+
+        """
+        self.bases.append(base)
+
+        # Changing the base class in python can break things,
+        # so we will tag this as an error for now.
+        if self.instantiated:
+            raise TypeError(
+                "Base classes must be added before class is created")
+
+    def registerClassImplementation(self, classname, proto):
+        """ (internal) Add an implementation for a class
+
+        Use @JImplementationFor(cls) to access this.
+        """
+        self.implementations.append(proto)
+
+        # If we have already created a class, apply it retroactively.
+        if self.instantiated:
+            _applyCustomizerPost(_jpype.JClass(classname), proto)
+
+    def applyCustomizers(self, name, bases, members):
+        """ (internal) Called by JClass and JArray to customize a newly created class."""
+        # Apply base classes
+        for b in self.bases:
             bases.insert(0, b)
 
-    # Apply implementations
-    if name in _JP_IMPLEMENTATIONS:
+        # Apply implementations
         sticky = []
-        for proto in _JP_IMPLEMENTATIONS[name]:
+        for proto in self.implementations:
             _applyCustomizerImpl(members, proto, sticky,
                                  lambda p, v: members.__setitem__(p, v))
 
@@ -187,22 +236,28 @@ def _applyCustomizers(name, bases, members):
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 
-
-_jpype._applyCustomizers = _applyCustomizers
-
-
-def _applyInitializer(cls):
-    """ (internal) Called after the class is created to apply any customizations
-    required by inherited parents.
-    """
-    if hasattr(cls, '__jclass_init__'):
-        init = []
-        for base in cls.__mro__:
-            if '__jclass_init__' in base.__dict__:
-                init.insert(0, base.__dict__['__jclass_init__'])
-        for func in init:
-            func(cls)
+    def applyInitializer(self, cls):
+        """ (internal) Called after the class is created to apply any customizations
+        required by inherited parents.
+        """
+        self.instantiated = True
+        if hasattr(cls, '__jclass_init__'):
+            init = []
+            for base in cls.__mro__:
+                if '__jclass_init__' in base.__dict__:
+                    init.insert(0, base.__dict__['__jclass_init__'])
+            for func in init:
+                func(cls)
 
 
-registerClassBase("java.lang.IndexOutOfBoundsException", IndexError)
+def getClassHints(name):
+    if isinstance(name, _jpype._JClass):
+        name = name.__name__
+    hints = _jpype._hints.get(name, None)
+    if not hints:
+        hints = JClassHints()
+        _jpype._hints[name] = hints
+    return hints
 
+_jpype._hints = {}
+getClassHints("java.lang.IndexOutOfBoundsException").registerClassBase(IndexError)

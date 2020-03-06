@@ -17,8 +17,10 @@
 #include "jpype.h"
 #include "jp_primitive_accessor.h"
 #include "jp_longtype.h"
+#include "pyjp.h"
 
-JPLongType::JPLongType() : JPPrimitiveType(JPTypeManager::_java_lang_Long)
+JPLongType::JPLongType()
+: JPPrimitiveType("long")
 {
 }
 
@@ -26,93 +28,113 @@ JPLongType::~JPLongType()
 {
 }
 
-bool JPLongType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
-}
-
-JPPyObject JPLongType::convertToPythonObject(jvalue val)
+JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyLong::fromLong(field(val));
 }
 
-JPValue JPLongType::getValueFromObject(jobject obj)
+JPValue JPLongType::getValueFromObject(const JPValue& obj)
 {
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = JPJni::longValue(obj);
+	field(v) = frame.CallLongMethodA(obj.getValue().l, context->m_LongValueID, 0);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPLongType::canConvertToJava(PyObject* obj)
+class JPConversionAsLong : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPLongType base_t;
+public:
 
-	JPValue* value = PyJPValue_getJavaSlot(obj);
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = JPPyLong::asLong(pyobj);
+		return res;
+	}
+} asLongConversion;
+
+class JPConversionLongWiden : public JPConversion
+{
+	typedef JPLongType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue* value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		ret.j = ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+} longWidenConversion;
+
+JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	JP_TRACE_IN("JPLongType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
+	if (JPPyObject::isNone(pyobj))
+		return match.type = JPMatch::_none;
+
+	JPValue* value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JPClass *cls = value->getClass();
+		if (cls == NULL)
+			return match.type = JPMatch::_none;
+
+		if (cls == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (context != NULL && cls == context->_java_lang_Long)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Consider widening
+		if (cls->isPrimitive())
+		{
+			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			switch (prim->getTypeCode())
+			{
+				case 'I':
+				case 'C':
+				case 'S':
+				case 'B':
+					match.conversion = &longWidenConversion;
+					return match.type = JPMatch::_implicit;
+				default:
+					return match.type = JPMatch::_none;
+			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(obj))
+	if (JPPyLong::check(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = &asLongConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(obj))
+	if (JPPyLong::checkConvertable(pyobj))
 	{
-		// If it has integer operations then we will call it an int
-		if (JPPyLong::checkIndexable(obj))
-			return JPMatch::_implicit;
-		else
-			return JPMatch::_explicit;
+		match.conversion = &asLongConversion;
+		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
+		return match.type;
 	}
 
-	return JPMatch::_none;
-}
-
-jvalue JPLongType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPLongType::convertToJava");
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java long");
-	} else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) JPPyLong::asLong(obj);
-		return res;
-	}
-
-	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java long");
-	return res; // never reached
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -125,14 +147,14 @@ JPPyObject JPLongType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticLongField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetLongField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -142,7 +164,7 @@ JPPyObject JPLongType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticLongMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -155,18 +177,24 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticLongField(c, fid, val);
 }
 
 void JPLongType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetLongField(c, fid, val);
 }
 
@@ -197,7 +225,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 			if (view.suboffsets && view.suboffsets[0] >= 0)
 				memory = *((char**) memory) + view.suboffsets[0];
 			jsize index = start;
-			jconverter conv = getConverter(view.format, view.itemsize, "j");
+			jconverter conv = getConverter(view.format, (int) view.itemsize, "j");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
 			{
 				jvalue r = conv(memory);
@@ -220,7 +248,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jlong v = PyLong_AsLongLong(seq[i].get());
 		if (v == -1 && JPPyErr::occurred())
 		{
-			JP_RAISE_PYTHON("JPLongType::setArrayRange");
+			JP_RAISE_PYTHON();
 		}
 		val[index] = (type_t) v;
 	}
@@ -235,30 +263,40 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetLongArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetLongArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
+	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);
 }
+
+string JPLongType::asString(jvalue v)
+{
+	std::stringstream out;
+	out << v.j;
+	return out.str();
+}
+
 
 void JPLongType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	view.memory = (void*) frame.GetLongArrayElements(
-			(jlongArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "q";
-	view.buffer.itemsize = sizeof (jlong);
+	JPJavaFrame frame(view.getContext());
+	view.m_Memory = (void*) frame.GetLongArrayElements(
+			(jlongArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "q";
+	view.m_Buffer.itemsize = sizeof (jlong);
 }
 
 void JPLongType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	frame.ReleaseLongArrayElements((jlongArray) view.array->getJava(),
-			(jlong*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	JPJavaFrame frame(view.getContext());
+	frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
+			(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPLongType::getBufferFormat()

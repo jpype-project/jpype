@@ -77,6 +77,12 @@ struct PyJPArray
 	JPArrayView *m_View;
 } ;
 
+struct PyJPClassHints
+{
+	PyObject_HEAD
+	JPClassHints *m_Hints;
+} ;
+
 struct PyJPProxy
 {
 	PyObject_HEAD
@@ -109,6 +115,8 @@ extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
 
+extern JPContext* JPContext_global;
+
 // Class wrapper functions
 int        PyJPClass_Check(PyObject* obj);
 PyObject  *PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases);
@@ -133,21 +141,37 @@ int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 }
 #endif
 
-#define ASSERT_JVM_RUNNING() JPEnv::assertJVMRunning(JP_STACKINFO())
-
 // C++ methods
-JPPyObject PyJPArray_create(PyTypeObject* wrapper, JPValue& value);
-JPPyObject PyJPClass_create(JPClass* cls);
+JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, JPValue& value);
+JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls);
+JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value);
+JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value);
 JPPyObject PyJPField_create(JPField* m);
-JPPyObject PyJPMethod_create(JPMethod *m, PyObject *instance);
-JPPyObject PyJPNumber_create(JPPyObject& wrapper, const JPValue& value);
-JPPyObject PyJPValue_create(const JPValue& value);
+JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
 JPClass*   PyJPClass_getJPClass(PyObject* obj);
 JPProxy*   PyJPProxy_getJPProxy(PyObject* obj);
 JPPyObject PyJPProxy_getCallable(PyObject* obj, const string& name);
 void       PyJPModule_rethrow(const JPStackInfo& info);
-void       PyJPValue_assignJavaSlot(PyObject* obj, const JPValue& value);
+void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
 bool       PyJPValue_isSetJavaSlot(PyObject* self);
+
+#define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
+/**
+ * Use this when getting the context where the context must be running.
+ *
+ * The context needs to be accessed before accessing and JPClass* or other
+ * internal structured.  Those resources are owned by the JVM and thus
+ * will be deleted when the JVM is shutdown.  This method will throw if the
+ * JVM is not running.
+ *
+ * If the context may or many not be running access JPContext_global directly.
+ */
+inline JPContext* PyJPModule_getContext()
+{
+	JPContext* context = JPContext_global;
+	_ASSERT_JVM_RUNNING(context);
+	return context;
+}
 
 #endif /* PYJP_H */

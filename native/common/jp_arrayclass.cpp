@@ -15,181 +15,68 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_arrayclass.h"
+#include "jp_context.h"
+#include "jp_stringtype.h"
 
-JPArrayClass::JPArrayClass(jclass c) : JPClass(c)
+JPArrayClass::JPArrayClass(JPJavaFrame& frame,
+		jclass cls,
+		const string& name,
+		JPClass* superClass,
+		JPClass* componentType,
+		jint modifiers)
+: JPClass(frame, cls, name, superClass, JPClassList(), modifiers)
 {
-	m_ComponentType = JPTypeManager::findClass(JPJni::getComponentType(c));
+	m_ComponentType = componentType;
 }
 
 JPArrayClass::~JPArrayClass()
 {
 }
 
-JPMatch::Type JPArrayClass::canConvertToJava(PyObject* obj)
+JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JP_TRACE_IN("JPArrayClass::canConvertToJava");
-	JPJavaFrame frame;
+	JP_TRACE_IN("JPArrayClass::getJavaConversion");
+	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none
+			|| objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none
+			|| charArrayConversion->matches(match, frame, this, pyobj) != JPMatch::_none
+			|| byteArrayConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+		return match.type;
 
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-
-		if (frame.IsAssignableFrom(value->getJavaClass(), m_Class.get()))
-		{
-			return JPMatch::_implicit;
-		}
-		return JPMatch::_none;
-	}
-
-	if (JPPyString::check(obj) && m_ComponentType == JPTypeManager::_char)
-	{
-		JP_TRACE("char[]");
-		// Strings are also char[]
-		return JPMatch::_implicit; // FIXME this should be JPMatch::_explicit under java rules.
-	}
-
-#if PY_MAJOR_VERSION >= 3
-	// Bytes are byte[]
-	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
-	{
-		return JPMatch::_implicit;
-	}
-#else
-	// Bytes are byte[]
-	if (PyString_Check(obj) && m_ComponentType == JPTypeManager::_byte)
-	{
-		return JPMatch::_implicit;
-	}
-#endif
-
-	//	if (JPPyString::checkBytes(o) && m_ComponentType == JPTypeManager::_byte)
-	//	{
-	//		TRACE1("char[]");
-	//		// Strings are also char[]
-	//		return JPMatch::_implicit;
-	//	}
-
-	JPPySequence seq(JPPyRef::_use, obj);
-	if (JPPyObject::isSequenceOfItems(obj))
+	if (JPPyObject::isSequenceOfItems(pyobj))
 	{
 		JP_TRACE("Sequence");
-		JPMatch::Type match = JPMatch::_implicit;
+		JPPySequence seq(JPPyRef::_use, pyobj);
 		jlong length = seq.size();
-		for (jlong i = 0; i < length && match > JPMatch::_none; i++)
+		match.type = JPMatch::_implicit;
+		JPMatch imatch;
+		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
-			JPMatch::Type newMatch = m_ComponentType->canConvertToJava(seq[i].get());
-			if (newMatch < match)
+			m_ComponentType->getJavaConversion(frame, imatch, seq[i].get());
+			if (imatch.type < match.type)
 			{
-				match = newMatch;
+				match.type = imatch.type;
 			}
 		}
-		return match;
+		match.conversion = sequenceConversion;
+		return match.type;
 	}
 
-	return JPMatch::_none;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPArrayClass::convertToPythonObject(jvalue val)
+JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	JP_TRACE_IN("JPArrayClass::convertToPythonObject");
-	return PyJPValue_create(JPValue(this, val));
+	return PyJPValue_create(frame, JPValue(this, val));
 	JP_TRACE_OUT;
 }
 
-jvalue JPArrayClass::convertToJava(PyObject* obj)
+jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& refs, jsize start, jsize end)
 {
-	JP_TRACE_IN("JPArrayClass::convertToJava");
-	JPJavaFrame frame;
-	jvalue res;
-	res.l = NULL;
-
-	if (JPPyObject::isNone(obj))
-	{
-		return res;
-	}
-
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		// Check if it is a slice, because slices must be cloned
-		if (PyObject_IsInstance(obj, (PyObject*) PyJPArray_Type))
-		{
-			PyJPArray* array = (PyJPArray*) obj;
-			if (array->m_Array->isSlice())
-			{
-				res.l = frame.keep(array->m_Array->clone(frame, obj));
-				return res;
-			}
-		}
-		return *value;
-	}
-
-	if (JPPyString::check(obj)
-			&& m_ComponentType == JPTypeManager::_char)
-	{
-		JP_TRACE("char[]");
-
-		// Convert to a string
-		string str = JPPyString::asStringUTF8(obj);
-
-		// Convert to new java string
-		jstring jstr = JPJni::fromStringUTF8(str);
-
-		// call toCharArray()
-		jobject charArray = JPJni::stringToCharArray(jstr);
-		res.l = frame.keep(charArray);
-		return res;
-	}
-
-	if (PyBytes_Check(obj) && m_ComponentType == JPTypeManager::_byte)
-	{
-		Py_ssize_t size = 0;
-		char *buffer = NULL;
-		PyBytes_AsStringAndSize(obj, &buffer, &size); // internal reference
-		jbyteArray byteArray = frame.NewByteArray(size);
-		frame.SetByteArrayRegion(byteArray, 0, size, (jbyte*) buffer);
-		res.l = frame.keep(byteArray);
-		return res;
-	}
-
-	if (JPPyObject::isSequenceOfItems(obj))
-	{
-		JP_TRACE("sequence");
-		JPPySequence seq(JPPyRef::_use, obj);
-		jsize length = (jsize) seq.size();
-
-		jarray array = m_ComponentType->newArrayInstance(frame, (jsize) length);
-
-		for (jsize i = 0; i < length; i++)
-		{
-			m_ComponentType->setArrayItem(frame, array, i, seq[i].get());
-		}
-		res.l = frame.keep(array);
-		return res;
-	}
-
-	stringstream ss;
-	ss << "Cannot convert value of type " << JPPyObject::getTypeName(obj)
-			<< " to Java array type " << this->m_CanonicalName;
-	JP_RAISE(PyExc_TypeError, ss.str());
-	return res;
-	JP_TRACE_OUT;
-}
-
-jvalue JPArrayClass::convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end)
-{
-	JPJavaFrame frame;
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
 	jsize length = (jsize) (end - start);
 
@@ -213,7 +100,7 @@ JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
 
 JPValue JPArrayClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
-	JP_TRACE_IN("JPArrayClass::newInstance");
+	JP_TRACE_IN("JPArrayClass::newInstance", this);
 	if (args.size() != 1)
 		JP_RAISE(PyExc_TypeError, "Arrays require one argument");
 

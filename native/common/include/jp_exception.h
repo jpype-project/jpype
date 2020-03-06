@@ -71,7 +71,7 @@ extern int _method_not_found;
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
 #define JP_PY_CHECK() \
-{ if (JPPyErr::occurred()) JP_RAISE_PYTHON(__FUNCTION_NAME__);  }
+{ if (JPPyErr::occurred()) JP_RAISE_PYTHON();  }
 
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
@@ -128,8 +128,8 @@ typedef union
 class JPypeException
 {
 public:
-	JPypeException(jthrowable, const char* msn, const JPStackInfo& stackInfo);
-	JPypeException(int type, void* error, const char* msn, const JPStackInfo& stackInfo);
+	JPypeException(JPJavaFrame &frame, jthrowable, const JPStackInfo& stackInfo);
+	JPypeException(int type, void* error, const JPStackInfo& stackInfo);
 	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
@@ -142,7 +142,7 @@ public:
 	string getPythonMessage();
 
 	void convertJavaToPython();
-	void convertPythonToJava();
+	void convertPythonToJava(JPContext* context);
 
 	/** Transfer handling of this exception to python.
 	 *
@@ -152,7 +152,7 @@ public:
 	void toPython();
 
 	/** Transfer handling of this exception to java. */
-	void toJava();
+	void toJava(JPContext* context);
 
 	jthrowable getJavaException();
 
@@ -162,6 +162,7 @@ public:
 	}
 
 private:
+	JPContext* m_Context;
 	int m_Type;
 	JPErrorUnion m_Error;
 	JPStackTrace m_Trace;
@@ -200,6 +201,6 @@ public:
 	string message;
 } ;
 
-void JPException_init();
+void JPException_init(JPJavaFrame &frame);
 
 #endif

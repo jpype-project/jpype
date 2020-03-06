@@ -108,23 +108,46 @@ typedef jvalue (*jconverter)(void*) ;
  */
 extern jconverter getConverter(const char* from, int itemsize, const char* to);
 
+// Types
 class JPClass;
 class JPValue;
 class JPProxy;
 class JPArray;
 class JPArrayClass;
 class JPArrayView;
-class JPBoxedClass;
+class JPBoxedType;
+class JPPrimitiveType;
+class JPStringType;
+
+// Members
 class JPMethod;
+class JPMethodDispatch;
 class JPField;
 
-#include <pyjp.h>
+// Services
+class JPTypeFactory;
+class JPTypeManager;
+class JPClassLoader;
+class JPReferenceQueue;
+class JPProxyFactory;
+class JPContext;
+
+typedef vector<JPClass*> JPClassList;
+typedef vector<JPField*> JPFieldList;
+typedef vector<JPMethodDispatch*> JPMethodDispatchList;
+typedef vector<JPMethod*> JPMethodList;
+
+class JPResource
+{
+public:
+	virtual ~JPResource() = 0;
+} ;
 
 // Macros for raising an exception with jpype
 //   These must be macros so that we can update the pattern and
 //   maintain the appropriate auditing information.  C++ does not
 //   have a lot for facilities to make this easy.
-#define JP_RAISE_PYTHON(msg)                { throw JPypeException(JPError::_python_error, NULL, msg, JP_STACKINFO()); }
+#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, NULL, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPypeException(JPError::_os_error_unix,  msg, err, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPypeException(JPError::_os_error_windows,  msg, err, JP_STACKINFO()); }
 #define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, NULL, msg, JP_STACKINFO()); }
@@ -132,17 +155,23 @@ class JPField;
 
 // Base utility headers
 #include "jp_javaframe.h"
+#include "jp_context.h"
 #include "jp_exception.h"
+#include "jp_env.h"
 #include "jp_pythontypes.h"
 #include "jp_tracer.h"
-#include "jp_typename.h"
-#include "jp_env.h"
-#include "jp_jniutil.h"
+#include "jp_typemanager.h"
+#include "jp_encoding.h"
+#include "jp_modifier.h"
 #include "jp_match.h"
 
 // Other header files
+#include "jp_classhints.h"
+#include "jp_method.h"
 #include "jp_value.h"
 #include "jp_class.h"
+
+// Primitives classes
 #include "jp_primitivetype.h"
 #include "jp_typemanager.h"
 

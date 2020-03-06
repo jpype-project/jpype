@@ -88,6 +88,16 @@ class TypeMock(type):
 class _JClass(type):
     pass
 
+class _JClassHints(object):
+    def __init__(self):
+        self.bases = []
+    def addClassBases(self, *args):
+        pass
+    def addTypeConversion(self, *args):
+        pass
+    def addAttributeConversion(self, *args):
+        pass
+
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
 mockModule._JArray = TypeMock("_JArray")
@@ -95,6 +105,7 @@ mockModule._JClass = _JClass
 mockModule._JField = TypeMock("_JField") 
 mockModule._JMethod = TypeMock("_JMethod")
 mockModule._JObject = TypeMock("_JObject")
+mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
 sys.modules['_jpype']=mockModule
 

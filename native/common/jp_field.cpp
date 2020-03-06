@@ -17,113 +17,75 @@
 #include "jpype.h"
 #include "jp_field.h"
 
-JPField::JPField(JPClass* clazz, jobject fld) : m_Field(fld)
+JPField::JPField(JPJavaFrame& frame,
+		JPClass* cls,
+		const string& name,
+		jobject field,
+		jfieldID fid,
+		JPClass* fieldType,
+		jint modifiers)
+: m_Field(frame, field)
 {
-	JPJavaFrame frame;
-	//	JP_TRACE_IN("JPField::JPField1");
-	m_Class = clazz;
-	m_Name = JPJni::getMemberName(fld);
-	m_IsStatic = JPJni::isMemberStatic(fld);
-	m_IsFinal = JPJni::isMemberFinal(fld);
-	m_FieldID = frame.FromReflectedField(fld);
-	m_Type = JPJni::getFieldType(m_Field.get());
-	m_TypeCache = NULL;
-
-	//	JP_TRACE_OUT
+	m_Class = cls;
+	m_Name = name;
+	m_FieldID = fid;
+	m_Type = fieldType;
+	m_Modifiers = modifiers;
 }
 
 JPField::~JPField()
 {
 }
 
-bool JPField::isStatic() const
+string JPField::toString()
 {
-	return m_IsStatic;
-}
-
-string JPField::toString() const
-{
-	return JPJni::toString(m_Field.get());
-}
-
-const string& JPField::getName() const
-{
-	return m_Name;
+	JPJavaFrame frame(m_Class->getContext());
+	return frame.toString(m_Field.get());
 }
 
 JPPyObject JPField::getStaticField()
 {
-	ensureTypeCache();
 	JP_TRACE_IN("JPField::getStaticAttribute");
-	JPJavaFrame frame;
-	jclass claz = m_Class->getJavaClass();
-	return m_TypeCache->getStaticField(frame, claz, m_FieldID);
+	JPJavaFrame frame(m_Class->getContext());
+	return m_Type->getStaticField(frame, m_Class->getJavaClass(), m_FieldID);
 	JP_TRACE_OUT;
 }
 
-void JPField::setStaticField(PyObject* val)
+void JPField::setStaticField(PyObject *pyobj)
 {
-	ensureTypeCache();
 	JP_TRACE_IN("JPField::setStaticAttribute");
-	JPJavaFrame frame;
-
-	if (m_IsFinal)
+	JPJavaFrame frame(m_Class->getContext());
+	if (isFinal())
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
 		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
-
-	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
-	{
-		stringstream err;
-		err << "unable to convert to " << m_TypeCache->getCanonicalName();
-		JP_RAISE(PyExc_TypeError, err.str().c_str());
-	}
-
-	jclass claz = m_Class->getJavaClass();
-	m_TypeCache->setStaticField(frame, claz, m_FieldID, val);
+	m_Type->setStaticField(frame, m_Class->getJavaClass(), m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
 
 JPPyObject JPField::getField(jobject inst)
 {
-	ensureTypeCache();
 	JP_TRACE_IN("JPField::getAttribute");
-	JPJavaFrame frame;
-	ASSERT_NOT_NULL(m_TypeCache);
-	JP_TRACE("field type", m_TypeCache->getCanonicalName());
-	return m_TypeCache->getField(frame, inst, m_FieldID);
+	JPJavaFrame frame(m_Class->getContext());
+	ASSERT_NOT_NULL(m_Type);
+	JP_TRACE("field type", m_Type->getCanonicalName());
+	return m_Type->getField(frame, inst, m_FieldID);
 	JP_TRACE_OUT;
 }
 
-void JPField::setField(jobject inst, PyObject* val)
+void JPField::setField(jobject inst, PyObject *pyobj)
 {
-	ensureTypeCache();
 	JP_TRACE_IN("JPField::setAttribute");
-	JPJavaFrame frame;
-	if (m_IsFinal)
+	JPJavaFrame frame(m_Class->getContext());
+	if (isFinal())
 	{
 		stringstream err;
 		err << "Field " << m_Name << " is read-only";
 		JP_RAISE(PyExc_AttributeError, err.str().c_str());
 	}
 
-	if (m_TypeCache->canConvertToJava(val) <= JPMatch::_explicit)
-	{
-		stringstream err;
-		err << "unable to convert to " << m_TypeCache->getCanonicalName();
-		JP_RAISE(PyExc_TypeError, err.str());
-	}
-
-	m_TypeCache->setField(frame, inst, m_FieldID, val);
+	m_Type->setField(frame, inst, m_FieldID, pyobj);
 	JP_TRACE_OUT;
-}
-
-void JPField::ensureTypeCache()
-{
-	if (m_TypeCache != NULL)
-		return;
-	m_TypeCache = JPTypeManager::findClass(m_Type.get());
-	ASSERT_NOT_NULL(m_TypeCache);
 }

@@ -157,7 +157,7 @@ class JClassTestCase(common.JPypeTestCase):
             cls.callProtectedObject(jpype.JObject())
 
     def testJClassFail(self):
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             cls = jpype.JClass("asdw.gqyr.jhnw")
 
     def testGetClassFromClass(self):

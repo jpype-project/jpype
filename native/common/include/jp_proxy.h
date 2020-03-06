@@ -17,42 +17,69 @@
 #ifndef _JPPROXY_H_
 #define _JPPROXY_H_
 
-#include "jp_class.h"
+class JPProxy;
+
+class JPProxyFactory
+{
+	friend class JPProxy;
+public:
+	explicit JPProxyFactory(JPJavaFrame& frame);
+	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
+
+private:
+	JPContext* m_Context;
+	JPClassRef m_ProxyClass;
+	jmethodID m_NewProxyID;
+	jmethodID m_NewInstanceID;
+} ;
 
 class JPProxy
 {
-public:
-	JPProxy(PyObject* inst, JPClass::ClassList& intf);
+	friend class JPProxyFactory;
+	JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf);
 
+public:
 	virtual ~JPProxy();
 
-	static void init();
-
-	const JPClass::ClassList& getInterfaces() const
+	const JPClassList& getInterfaces() const
 	{
 		return m_InterfaceClasses;
 	}
 
-	jobject getProxy();
+	jvalue getProxy();
+
+	JPContext* getContext()
+	{
+		return m_Factory->m_Context;
+	}
 
 private:
-	jobject	      m_Handler;
+	JPProxyFactory* m_Factory;
 	PyObject*     m_Instance; // This is a PyJPProxy
-	JPClass::ClassList m_InterfaceClasses;
-	JPObjectRef   m_Interfaces;
+	JPObjectRef   m_Proxy;
+	JPClassList   m_InterfaceClasses;
 } ;
 
-// Special wrapper for round trip returns
-
+/** Special wrapper for round trip returns
+ */
 class JPProxyType : public JPClass
 {
 public:
-	JPProxyType();
+	JPProxyType(JPJavaFrame& frame,
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			JPClassList& interfaces,
+			jint modifiers);
 	virtual~ JPProxyType();
 
 public: // JPClass implementation
-	virtual JPPyObject convertToPythonObject(jvalue val) override;
-} ;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
 
+private:
+	JPClassRef m_ProxyClass;
+	jmethodID  m_GetInvocationHandlerID;
+	jfieldID   m_InstanceID;
+} ;
 
 #endif // JPPROXY_H

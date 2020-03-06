@@ -1,4 +1,5 @@
 #include "jpype.h"
+#include "pyjp.h"
 
 /****************************************************************************
  * Base object
@@ -262,7 +263,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
-			JP_RAISE_PYTHON("Error in byte conversion");
+			JP_RAISE_PYTHON();
 		return c;
 	}
 	if (PyUnicode_Check(pyobj))
@@ -287,7 +288,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 
 		jchar c = PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
-			JP_RAISE_PYTHON("Error in byte conversion");
+			JP_RAISE_PYTHON();
 		return c;
 	}
 	if (PyUnicode_Check(pyobj))

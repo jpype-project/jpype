@@ -35,16 +35,16 @@ public:
 	~JPArrayView();
 	void reference();
 	bool unreference();
-
+	JPContext *getContext();
 public:
-	JPArray *array;
-	void *memory;
-	Py_buffer buffer;
-	int refcount;
-	Py_ssize_t shape[5];
-	Py_ssize_t strides[5];
-	jboolean isCopy;
-	jboolean owned;
+	JPArray *m_Array;
+	void *m_Memory;
+	Py_buffer m_Buffer;
+	int m_RefCount;
+	Py_ssize_t m_Shape[5];
+	Py_ssize_t m_Strides[5];
+	jboolean m_IsCopy;
+	jboolean m_Owned;
 } ;
 
 /**
@@ -57,8 +57,6 @@ public:
 	JPArray(const JPValue& array);
 	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
-
-public:
 
 	JPArrayClass* getClass()
 	{
@@ -95,6 +93,9 @@ public:
 	{
 		return m_Object.get();
 	}
+
+	virtual JPClass* getType();
+	virtual jvalue  getValue();
 
 	int checkIsPrimitive(int &dims);
 	int checkRectangular(int &dimsize0, int &dimsize1);

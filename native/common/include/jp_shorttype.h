@@ -24,25 +24,27 @@ public:
 	JPShortType();
 	virtual ~JPShortType();
 
-public:
 	typedef jshort type_t;
 	typedef jshortArray array_t;
 
-	inline jshort& field(jvalue& v)
+	static inline jshort& field(jvalue& v)
 	{
 		return v.s;
 	}
 
-	inline jshort field(const jvalue& v) const
+	static inline const jshort& field(const jvalue& v)
 	{
 		return v.s;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Short;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -59,11 +61,19 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
-
 	virtual char getTypeCode() override
 	{
 		return 'S';
+	}
+
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
 	}
 
 	template <class T> static T assertRange(const T& l)
@@ -75,6 +85,7 @@ public:
 		return l;
 	}
 
+	virtual string asString(jvalue v) override;
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;

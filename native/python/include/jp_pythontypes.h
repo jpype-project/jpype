@@ -361,7 +361,7 @@ public:
 		return contents.size();
 	}
 
-	PyObject* operator[](int i)
+	PyObject* operator[](ssize_t i)
 	{
 		return contents[i].get();
 	}

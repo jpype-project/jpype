@@ -132,20 +132,22 @@ def _JClassPre(name, bases, members):
             members[k2] = v
 
     # Apply customizers
-    _jcustomizer._applyCustomizers(name, bases, members)
+    hints = _jcustomizer.getClassHints(name)
+    hints.applyCustomizers(name, bases, members)
     return (name, tuple(bases), members)
 
 
 def _JClassPost(res, *args):
     # Post customizers
-    _jcustomizer._applyInitializer(res)
+    hints = _jcustomizer.getClassHints(res.__name__)
+    res._hints = hints
+    hints.applyInitializer(res)
 
     # Attach public inner classes we find
     #   Due to bootstrapping, we must wait until java.lang.Class is defined
     #   before we can access the class structures.
     if _jpype._java_lang_Class:
-        jcls = res.class_
-        for cls in jcls.getDeclaredClasses():
+        for cls in res.class_.getDeclaredClasses():
             if cls.getModifiers() & 1 == 0:
                 continue
             wrapper = _jpype.JClass(cls)

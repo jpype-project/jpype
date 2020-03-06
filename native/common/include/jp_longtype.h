@@ -24,25 +24,27 @@ public:
 	JPLongType();
 	virtual ~JPLongType();
 
-public:
 	typedef jlong type_t;
 	typedef jlongArray array_t;
 
-	inline jlong& field(jvalue& v)
+	static inline jlong& field(jvalue& v)
 	{
 		return v.j;
 	}
 
-	inline jlong field(const jvalue& v) const
+	static inline const jlong& field(const jvalue& v)
 	{
 		return v.j;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Long;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -64,7 +66,17 @@ public:
 		return 'J';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return (jlong) field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return (jdouble) field(v);
+	}
+
+	virtual string asString(jvalue v) override;
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
