@@ -3,8 +3,6 @@ import warnings
 import setupext
 import os
 import sys
-from setuptools import setup
-from setuptools import Extension
 
 # This handles all of the work to make our platform specific extension options.
 
@@ -34,7 +32,6 @@ if os.path.exists(java_home) and sys.platform != "cygwin":
             break
 
     if not found_jni:
-        import warnings
         warnings.warn('Falling back to provided JNI headers, since your provided'
                       ' JAVA_HOME "%s" does not provide jni.h' % java_home)
 
