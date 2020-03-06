@@ -87,7 +87,7 @@ public:
 
 JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+	JP_TRACE_IN("JPFloatType::getJavaConversion");
 	JPContext *context = NULL;
 	if (frame != NULL)
 		context = frame->getContext();

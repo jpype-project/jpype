@@ -57,7 +57,7 @@ public:
 
 JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+	JP_TRACE_IN("JPByteType::getJavaConversion");
 	JPContext *context = NULL;
 	if (frame != NULL)
 		context = frame->getContext();

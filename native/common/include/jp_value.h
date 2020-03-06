@@ -49,8 +49,6 @@ public:
 	{
 	}
 
-	jclass getJavaClass() const;
-
 	JPClass* getClass() const
 	{
 		return m_Class;

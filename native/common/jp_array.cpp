@@ -47,7 +47,7 @@ JPArray::JPArray(const JPValue &value)
 JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
 : m_Object(instance->m_Class->getContext(), (jarray) instance->getJava())
 {
-	JP_TRACE_IN("JPArray::JPArray");
+	JP_TRACE_IN("JPArray::JPArraySlice");
 	m_Class = instance->m_Class;
 	m_Step = step * instance->m_Step;
 	m_Start = instance->m_Start + instance->m_Step*start;
@@ -129,50 +129,6 @@ JPPyObject JPArray::getItem(jsize ndx)
 	return compType->getArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
 }
 
-int JPArray::checkIsPrimitive(int &dims)
-{
-	dims = 0;
-	JPClass* cls = getClass();
-	while (dynamic_cast<JPArrayClass*> (cls) != 0)
-	{
-		dims++;
-		cls = ((JPArrayClass*) cls)->getComponentType();
-	}
-	if (!cls->isPrimitive())
-		return -1;
-	return 0;
-}
-
-int JPArray::checkRectangular(int &dimsize0, int &dimsize1)
-{
-	JPJavaFrame frame(m_Class->getContext());
-	// Get the first dimension
-	dimsize0 = getLength();
-	if (dimsize0 == 0)
-		return -1;
-
-	// Get the second dimension
-	jobjectArray a = (jobjectArray) getJava();
-	jobject u = frame.GetObjectArrayElement(a, m_Start);
-	if (u == 0)
-		return -1;
-	dimsize1 = frame.GetArrayLength((jarray) u);
-	frame.DeleteLocalRef(u);
-
-	for (int i = 1; i < dimsize0; ++i)
-	{
-		int j = m_Start + i*m_Step;
-		jobject u2 = frame.GetObjectArrayElement(a, j);
-		if (u2 == 0)
-			return -1;
-		jint s = frame.GetArrayLength((jarray) u2);
-		if (s != dimsize1)
-			return -1;
-		frame.DeleteLocalRef(u2);
-	}
-	return 0;
-}
-
 jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 {
 	JPValue value = m_Class->newInstance(frame, m_Length);
@@ -180,18 +136,6 @@ jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 	jarray out = (jarray) value.getValue().l;
 	compType->setArrayRange(frame, out, 0, m_Length, 1, obj);
 	return out;
-}
-
-JPClass* JPArray::getType()
-{
-	return m_Class;
-}
-
-jvalue JPArray::getValue()
-{
-	jvalue val;
-	val.l = m_Object.get();
-	return val;
 }
 
 JPArrayView::JPArrayView(JPArray* array)

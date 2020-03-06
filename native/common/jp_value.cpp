@@ -28,10 +28,3 @@ jobject JPValue::getJavaObject() const
 	// way a user can trigger it.
 	JP_RAISE(PyExc_TypeError, "cannot access Java primitive value as Java object");
 }
-
-jclass JPValue::getJavaClass() const
-{
-	if (m_Class == NULL)
-		JP_RAISE(PyExc_RuntimeError, "Null class");
-	return m_Class->getJavaClass();
-}
