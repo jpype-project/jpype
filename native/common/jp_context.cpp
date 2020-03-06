@@ -60,6 +60,11 @@ JPPlatformAdapter* GetAdapter()
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
+void JPRef_failed()
+{
+	JP_RAISE(PyExc_SystemError, "NULL context in JPRef()");
+}
+
 JPContext::JPContext()
 {
 	m_JavaVM = 0;

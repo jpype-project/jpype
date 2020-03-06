@@ -26,11 +26,11 @@ JPField::JPField(JPJavaFrame& frame,
 		jint modifiers)
 : m_Field(frame, field)
 {
-	this->m_Class = cls;
-	this->m_Name = name;
-	this->m_FieldID = fid;
-	this->m_Type = fieldType;
-	this->m_Modifiers = modifiers;
+	m_Class = cls;
+	m_Name = name;
+	m_FieldID = fid;
+	m_Type = fieldType;
+	m_Modifiers = modifiers;
 }
 
 JPField::~JPField()

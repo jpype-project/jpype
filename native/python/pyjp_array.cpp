@@ -133,7 +133,7 @@ static PyObject *PyJPArray_repr(PyJPArray *self)
 static Py_ssize_t PyJPArray_len(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_len");
-	JPContext *context = PyJPModule_getContext();
+	PyJPModule_getContext();
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Null array");
 	return self->m_Array->getLength();
@@ -307,7 +307,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		if (self->m_View == NULL)
 			self->m_View = new JPArrayView(self->m_Array, result);
 		self->m_View->reference();
-		*view = self->m_View->buffer;
+		*view = self->m_View->m_Buffer;
 
 		// If strides are not requested and this is a slice then fail
 		if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES)
@@ -352,7 +352,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 			self->m_View = new JPArrayView(self->m_Array);
 		}
 		self->m_View->reference();
-		*view = self->m_View->buffer;
+		*view = self->m_View->m_Buffer;
 
 		// We are always contiguous so no need to check that here.
 		view->readonly = 1;

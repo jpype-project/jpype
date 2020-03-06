@@ -286,17 +286,17 @@ string JPLongType::asString(jvalue v)
 void JPLongType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetLongArrayElements(
-			(jlongArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "q";
-	view.buffer.itemsize = sizeof (jlong);
+	view.m_Memory = (void*) frame.GetLongArrayElements(
+			(jlongArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "q";
+	view.m_Buffer.itemsize = sizeof (jlong);
 }
 
 void JPLongType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseLongArrayElements((jlongArray) view.array->getJava(),
-			(jlong*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
+			(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPLongType::getBufferFormat()

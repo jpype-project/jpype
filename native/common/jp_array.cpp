@@ -132,7 +132,7 @@ JPPyObject JPArray::getItem(jsize ndx)
 int JPArray::checkIsPrimitive(int &dims)
 {
 	dims = 0;
-	JPClass* cls = this->getClass();
+	JPClass* cls = getClass();
 	while (dynamic_cast<JPArrayClass*> (cls) != 0)
 	{
 		dims++;
@@ -197,21 +197,21 @@ jvalue JPArray::getValue()
 JPArrayView::JPArrayView(JPArray* array)
 {
 	JPJavaFrame frame(array->m_Class->getContext());
-	this->array = array;
-	refcount = 0;
-	buffer.obj = NULL;
-	buffer.ndim = 1;
-	buffer.suboffsets = NULL;
+	m_Array = array;
+	m_RefCount = 0;
+	m_Buffer.obj = NULL;
+	m_Buffer.ndim = 1;
+	m_Buffer.suboffsets = NULL;
 	JPPrimitiveType *type = (JPPrimitiveType*) array->getClass()->getComponentType();
 	type->getView(*this);
-	strides[0] = buffer.itemsize * array->m_Step;
-	shape[0] = array->m_Length;
-	buffer.buf = (char*) memory + buffer.itemsize * array->m_Start;
-	buffer.len = array->m_Length * buffer.itemsize;
-	buffer.shape = shape;
-	buffer.strides = strides;
-	buffer.readonly = 1;
-	owned = false;
+	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
+	m_Shape[0] = array->m_Length;
+	m_Buffer.buf = (char*) m_Memory + m_Buffer.itemsize * array->m_Start;
+	m_Buffer.len = array->m_Length * m_Buffer.itemsize;
+	m_Buffer.shape = m_Shape;
+	m_Buffer.strides = m_Strides;
+	m_Buffer.readonly = 1;
+	m_Owned = false;
 }
 
 JPArrayView::JPArrayView(JPArray* array, jobject collection)
@@ -219,7 +219,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	JP_TRACE_IN("JPArrayView::JPArrayView");
 	// All of the work has already been done by org.jpype.Utilities
 	JPJavaFrame frame(array->m_Class->getContext());
-	this->array = array;
+	m_Array = array;
 
 	jint len = frame.GetArrayLength((jarray) collection);
 	jobject item0 = frame.GetObjectArrayElement((jobjectArray) collection, 0);
@@ -239,67 +239,67 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	ssize_t sz = itemsize;
 	for (int i = 0; i < dims; ++i)
 	{
-		shape[i] = shape2[i];
-		sz *= shape[i];
+		m_Shape[i] = shape2[i];
+		sz *= m_Shape[i];
 	}
 	Py_ssize_t stride = itemsize;
 	for (int i = 0; i < dims; ++i)
 	{
 		int n = dims - 1 - i;
-		strides[n] = stride;
-		stride *= shape[n];
+		m_Strides[n] = stride;
+		stride *= m_Shape[n];
 	}
 
-	refcount = 0;
-	memory = new char[sz];
-	owned = true;
+	m_RefCount = 0;
+	m_Memory = new char[sz];
+	m_Owned = true;
 
 	// All remaining elements are primitive arrays to be unpacked
 	int offset = 0;
-	Py_ssize_t last = shape[dims - 1];
+	Py_ssize_t last = m_Shape[dims - 1];
 	for (Py_ssize_t i = 0; i < len - 2; i++)
 	{
 		jarray a1 = (jarray) frame.GetObjectArrayElement((jobjectArray) collection, (jsize) i + 2);
-		componentType->copyElements(frame, a1, 0, (jsize) last, memory, offset);
+		componentType->copyElements(frame, a1, 0, (jsize) last, m_Memory, offset);
 		offset += (int) (itemsize * last);
 		frame.DeleteLocalRef(a1);
 	}
 
 	// Copy values into Python buffer for consumption
-	buffer.obj = NULL;
-	buffer.ndim = dims;
-	buffer.suboffsets = NULL;
-	buffer.itemsize = itemsize;
-	buffer.format = const_cast<char*> (componentType->getBufferFormat());
-	buffer.buf = (char*) memory + buffer.itemsize * array->m_Start;
-	buffer.len = sz;
-	buffer.shape = shape;
-	buffer.strides = strides;
-	buffer.readonly = 1;
+	m_Buffer.obj = NULL;
+	m_Buffer.ndim = dims;
+	m_Buffer.suboffsets = NULL;
+	m_Buffer.itemsize = itemsize;
+	m_Buffer.format = const_cast<char*> (componentType->getBufferFormat());
+	m_Buffer.buf = (char*) m_Memory + m_Buffer.itemsize * array->m_Start;
+	m_Buffer.len = sz;
+	m_Buffer.shape = m_Shape;
+	m_Buffer.strides = m_Strides;
+	m_Buffer.readonly = 1;
 	JP_TRACE_OUT;
 }
 
 JPArrayView::~JPArrayView()
 {
-	if (owned)
-		delete (char*) memory;
+	if (m_Owned)
+		delete (char*) m_Memory;
 }
 
 JPContext *JPArrayView::getContext()
 {
-	return array->getClass()->getContext();
+	return m_Array->getClass()->getContext();
 }
 
 void JPArrayView::reference()
 {
-	refcount++;
+	m_RefCount++;
 }
 
 bool JPArrayView::unreference()
 {
-	refcount--;
-	JPPrimitiveType *type = (JPPrimitiveType*) array->getClass()->getComponentType();
-	if (refcount == 0 && !owned)
+	m_RefCount--;
+	JPPrimitiveType *type = (JPPrimitiveType*) m_Array->getClass()->getComponentType();
+	if (m_RefCount == 0 && !m_Owned)
 		type->releaseView(*this);
-	return refcount == 0;
+	return m_RefCount == 0;
 }

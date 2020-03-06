@@ -17,8 +17,6 @@
 #include <Python.h>
 #include "jpype.h"
 
-#define USE_JNI_VERSION JNI_VERSION_1_4
-
 namespace
 {
 

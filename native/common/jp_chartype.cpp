@@ -214,17 +214,17 @@ string JPCharType::asString(jvalue v)
 void JPCharType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetCharArrayElements(
-			(jcharArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "H";
-	view.buffer.itemsize = sizeof (jchar);
+	view.m_Memory = (void*) frame.GetCharArrayElements(
+			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "H";
+	view.m_Buffer.itemsize = sizeof (jchar);
 }
 
 void JPCharType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseCharArrayElements((jcharArray) view.array->getJava(),
-			(jchar*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
+			(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPCharType::getBufferFormat()

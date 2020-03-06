@@ -285,18 +285,18 @@ string JPIntType::asString(jvalue v)
 void JPIntType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.isCopy = false;
-	view.memory = (void*) frame.GetIntArrayElements(
-			(jintArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "i";
-	view.buffer.itemsize = sizeof (jint);
+	view.m_IsCopy = false;
+	view.m_Memory = (void*) frame.GetIntArrayElements(
+			(jintArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "i";
+	view.m_Buffer.itemsize = sizeof (jint);
 }
 
 void JPIntType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseIntArrayElements((jintArray) view.array->getJava(),
-			(jint*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
+			(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPIntType::getBufferFormat()

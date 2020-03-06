@@ -38,10 +38,6 @@ JPArrayClass::~JPArrayClass()
 JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
-
 	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none
 			|| objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none
 			|| charArrayConversion->matches(match, frame, this, pyobj) != JPMatch::_none

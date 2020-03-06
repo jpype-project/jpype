@@ -284,17 +284,17 @@ string JPShortType::asString(jvalue v)
 void JPShortType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetShortArrayElements(
-			(jshortArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "h";
-	view.buffer.itemsize = sizeof (jshort);
+	view.m_Memory = (void*) frame.GetShortArrayElements(
+			(jshortArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "h";
+	view.m_Buffer.itemsize = sizeof (jshort);
 }
 
 void JPShortType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseShortArrayElements((jshortArray) view.array->getJava(),
-			(jshort*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
+			(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPShortType::getBufferFormat()

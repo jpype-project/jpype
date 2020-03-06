@@ -298,17 +298,17 @@ string JPFloatType::asString(jvalue v)
 void JPFloatType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetFloatArrayElements(
-			(jfloatArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "f";
-	view.buffer.itemsize = sizeof (jfloat);
+	view.m_Memory = (void*) frame.GetFloatArrayElements(
+			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "f";
+	view.m_Buffer.itemsize = sizeof (jfloat);
 }
 
 void JPFloatType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseFloatArrayElements((jfloatArray) view.array->getJava(),
-			(jfloat*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
+			(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPFloatType::getBufferFormat()

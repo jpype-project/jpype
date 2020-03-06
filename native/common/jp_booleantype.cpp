@@ -251,17 +251,17 @@ string JPBooleanType::asString(jvalue v)
 void JPBooleanType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetBooleanArrayElements(
-			(jbooleanArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "?";
-	view.buffer.itemsize = sizeof (jboolean);
+	view.m_Memory = (void*) frame.GetBooleanArrayElements(
+			(jbooleanArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "?";
+	view.m_Buffer.itemsize = sizeof (jboolean);
 }
 
 void JPBooleanType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseBooleanArrayElements((jbooleanArray) view.array->getJava(),
-			(jboolean*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
+			(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPBooleanType::getBufferFormat()

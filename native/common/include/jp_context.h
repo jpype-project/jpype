@@ -18,11 +18,6 @@
 #define JP_CONTEXT_H
 #include <jpype.h>
 
-#ifndef PyObject_HEAD
-struct _object;
-typedef _object PyObject;
-#endif
-
 /** JPClass is a bit heavy when we just need to hold a
  * class reference.  It causes issues during bootstrap. Thus we
  * need a lightweight reference to a jclass.
@@ -261,6 +256,8 @@ private:
 	bool m_ConvertStrings;
 } ;
 
+extern void JPRef_failed();
+
 template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {
@@ -271,7 +268,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
 	} else
 	{
-		JP_RAISE(PyExc_SystemError, "NULL context in JPRef()");
+		JPRef_failed();
 	}
 }
 

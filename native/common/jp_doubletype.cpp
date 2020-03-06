@@ -321,17 +321,17 @@ string JPDoubleType::asString(jvalue v)
 void JPDoubleType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetDoubleArrayElements(
-			(jdoubleArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "d";
-	view.buffer.itemsize = sizeof (jdouble);
+	view.m_Memory = (void*) frame.GetDoubleArrayElements(
+			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "d";
+	view.m_Buffer.itemsize = sizeof (jdouble);
 }
 
 void JPDoubleType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseDoubleArrayElements((jdoubleArray) view.array->getJava(),
-			(jdouble*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseDoubleArrayElements((jdoubleArray) view.m_Array->getJava(),
+			(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPDoubleType::getBufferFormat()

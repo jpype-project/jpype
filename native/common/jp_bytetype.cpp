@@ -252,17 +252,17 @@ string JPByteType::asString(jvalue v)
 void JPByteType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	view.memory = (void*) frame.GetByteArrayElements(
-			(jbyteArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "b";
-	view.buffer.itemsize = sizeof (jbyte);
+	view.m_Memory = (void*) frame.GetByteArrayElements(
+			(jbyteArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "b";
+	view.m_Buffer.itemsize = sizeof (jbyte);
 }
 
 void JPByteType::releaseView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
-	frame.ReleaseByteArrayElements((jbyteArray) view.array->getJava(),
-			(jbyte*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
+			(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 }
 
 const char* JPByteType::getBufferFormat()

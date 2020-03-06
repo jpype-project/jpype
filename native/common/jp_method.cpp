@@ -14,7 +14,6 @@
    limitations under the License.
 
  *****************************************************************************/
-#include <jpype.h>
 #include "jpype.h"
 #include "jp_arrayclass.h"
 #include "jp_boxedtype.h"
@@ -30,12 +29,12 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 		jint modifiers)
 : m_Method(frame, mth)
 {
-	this->m_Class = claz;
-	this->m_Name = name;
-	this->m_MethodID = mid;
-	this->m_MoreSpecificOverloads = moreSpecific;
-	this->m_Modifiers = modifiers;
-	this->m_ReturnType = (JPClass*) (-1);
+	m_Class = claz;
+	m_Name = name;
+	m_MethodID = mid;
+	m_MoreSpecificOverloads = moreSpecific;
+	m_Modifiers = modifiers;
+	m_ReturnType = (JPClass*) (-1);
 }
 
 JPMethod::~JPMethod()
@@ -46,8 +45,8 @@ void JPMethod::setParameters(
 		JPClass *returnType,
 		JPClassList parameterTypes)
 {
-	this->m_ReturnType = returnType;
-	this->m_ParameterTypes = parameterTypes;
+	m_ReturnType = returnType;
+	m_ParameterTypes = parameterTypes;
 }
 
 string JPMethod::toString() const
@@ -400,8 +399,8 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 
 void JPMethod::ensureTypeCache()
 {
-	if (this->m_ReturnType != (JPClass*) (-1))
+	if (m_ReturnType != (JPClass*) (-1))
 		return;
 
-	m_Class->getContext()->getTypeManager()->populateMethod(this, this->m_Method.get());
+	m_Class->getContext()->getTypeManager()->populateMethod(this, m_Method.get());
 }
