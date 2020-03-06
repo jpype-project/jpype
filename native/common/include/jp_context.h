@@ -271,7 +271,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
 	} else
 	{
-		printf("NULL context in JPRef()");
+		JP_RAISE(PyExc_SystemError, "NULL context in JPRef()");
 	}
 }
 
