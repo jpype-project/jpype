@@ -3,6 +3,7 @@ MANIFEST
 /test/classes/
 /test/jars/
 */build*/
+native/*.jar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
