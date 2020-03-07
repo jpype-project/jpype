@@ -538,6 +538,7 @@ or ``OSError``.
 Using ``jpype.JException`` with a class name as a string was supported in previous JPype
 versions but is currently deprecated.
 
+
 Customizers
 -----------
 
@@ -589,6 +590,58 @@ The customizer code will steal from the prototype class rather than acting as a
 base class, thus ensuring that the methods will appear on the most derived
 python class and are not hidden by the java implementations. The customizer will
 copy methods, callable objects, ``__new__``, class member strings, and properties.
+
+In addition, one can add a custom converter method which is called whenever a specified
+Python type is passed to a particular Java type.  To specify a conversion method
+add ``@JConversion`` to an ordinary Python function with the name of Java class
+to be converted to and one keyword of ``exact``, ``instanceof`` or ``attribute`` specified.
+The keyword control how strictly the conversion will be applied.  ``exact`` is 
+restricted to Python objects whose type exactly matched the specified type.
+``instanceof`` accepts anything that matches isinstance to the specified type.
+``attribute`` checks for a particular attribute being on supplied type and thus
+allows a duck typing conversion.
+
+User supplied conversions are tested after all internal conversions have been exhausted
+and are always consider to be an implicit conversion.
+
+.. code-block:: python
+        @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
+        def _JSequenceConvert(jcls, obj):
+            return _jclass.JClass('java.util.Arrays').asList(obj)
+
+
+
+Collections
+-----------
+
+JPype uses customizers to augment Java collection classes to operate like Python collections.
+Enhanced objects include ``java.util.List``, ``java.util.Set``, ``java.util.Map``, and 
+``java.util.Iterator``.  These classes generally comply with the Python API except in
+cases where there is a significant name conflict and thus no special treatment is required
+when handling these Java types.
+
+Java List classes such as ArrayList and LinkedList can be used in Python for loops and
+list comprehensions directly.  A Java list can be converted to a Python list or the 
+reverse by simply called the requested type as a copy constructor.
+
+.. code-block:: python
+     pylist = ['apple', 'orange', 'pears']
+
+     # Copy the Python list to Java.
+     jlist = JClass('java.util.ArrayList')(pylist)
+
+     # Copy the Java list back to Python.
+     pylist2 = list(jlist)
+
+ Note that the individual list elements are still Java objects when converted to Python
+ and thus a list comprehension would be required to force Python types if required.
+ Converting to Java will attempt to convert each argument individually to Java.  If there
+ is no conversion it will produce a ``TypeError``.  The conversion can be forced by
+ casting to the appropraite Java type with a list comprehension or by defining a 
+ new conversion customizer.
+
+ Similarly Java maps are interchangable with Python dict.  By applying these customizers
+ to the Java types, we avoid requiring special handing methods.
 
 
 Known limitations

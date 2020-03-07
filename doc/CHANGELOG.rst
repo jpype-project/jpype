@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - java.util.Map conforms to Python abc.Mapping API.
 
 - **0.7.2 - 2-28-2019**
 
