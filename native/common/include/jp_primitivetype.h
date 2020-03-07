@@ -32,8 +32,6 @@ public:
 	virtual jlong getAsLong(jvalue v) = 0;
 	virtual jdouble getAsDouble(jvalue v) = 0;
 
-	virtual bool isAssignableFrom(JPClass* o);
-
 	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
 
 	void setClass(JPJavaFrame& frame, jclass o)

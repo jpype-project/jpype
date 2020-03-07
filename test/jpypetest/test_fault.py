@@ -1471,6 +1471,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(5)
 
+# These are very hard to hit as they are all startup routines
 #        _jpype.fault("JPJavaFrame::GetMethodID")
 #        with self.assertRaisesRegex(SystemError, "fault"):
 #            raise SystemError("fault")
@@ -1486,3 +1487,17 @@ class FaultTestCase(common.JPypeTestCase):
 #        _jpype.fault("JPJavaFrame::RegisterNatives")
 #        with self.assertRaisesRegex(SystemError, "fault"):
 #            raise SystemError("fault")
+
+    def testJPClassTypeGetJavaConversion(self):
+        jc = JClass("java.lang.StringBuilder")
+        _jpype.fault("JPClass::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jc._canConvertToJava(object())
+        @jpype.JConversion("java.lang.StringBuilder", exact=object)
+        def f(self, obj):
+            raise SystemError("fail")
+        with self.assertRaisesRegex(SystemError, "fail"):
+            jc._convertToJava(object())
+
+
+    
