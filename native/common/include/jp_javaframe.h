@@ -176,20 +176,9 @@ public:
 	/** NewObjectA */
 	jobject NewObjectA(jclass a0, jmethodID a1, jvalue* a2);
 
-	/** NewObject */
-	jobject NewObject(jclass a0, jmethodID a1);
-
-	/** get/release primitive arrays critical (direct pointer access) */
-	void* GetPrimitiveArrayCritical(jarray array, jboolean *isCopy);
-	void ReleasePrimitiveArrayCritical(jarray array, void *carray, jint mode);
-
 	// Monitor
 	int MonitorEnter(jobject a0);
 	int MonitorExit(jobject a0);
-
-	// Class probe methods
-	jclass GetSuperclass(jclass a0);
-	jclass GetObjectClass(jobject a0);
 
 	jclass FindClass(const string& a0);
 	jclass DefineClass(const char* a0, jobject a1, const jbyte* a2, jsize a3);
@@ -203,7 +192,6 @@ public:
 
 	jfieldID FromReflectedField(jobject a0);
 	jfieldID GetFieldID(jclass a0, const char* a1, const char* a2);
-	jfieldID GetStaticFieldID(jclass a0, const char* a1, const char* a2);
 
 	jmethodID FromReflectedMethod(jobject a0);
 	jmethodID GetMethodID(jclass a0, const char* a1, const char* a2);
@@ -344,9 +332,6 @@ public:
 	 */
 	const char* GetStringUTFChars(jstring a0, jboolean* a1);
 	void ReleaseStringUTFChars(jstring a0, const char* a1);
-	const jchar* GetStringChars(jstring a0, jboolean* a1);
-	void ReleaseStringChars(jstring a0, const jchar* a1);
-	jsize GetStringLength(jstring a0);
 	jsize GetStringUTFLength(jstring a0);
 } ;
 

@@ -333,14 +333,3 @@ bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
 }
 
 //</editor-fold>
-//<editor-fold desc="utility">
-
-bool JPClass::isInstance(JPJavaFrame& frame, JPValue& val)
-{
-	JPClass* cls = val.getClass();
-	if (cls->isPrimitive())
-		return false;
-	return frame.IsInstanceOf(val.getValue().l, m_Class.get()) != 0;
-}
-
-//</editor-fold>

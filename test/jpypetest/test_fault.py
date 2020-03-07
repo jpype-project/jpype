@@ -863,6 +863,7 @@ class FaultTestCase(common.JPypeTestCase):
             i = jfi.member_object
         self.assertEqual(i, None)
 
+    @common.unittest.SkipTest
     def testJPTypeManagerFindClass(self):
         ja = JArray(JInt,2)([[1,1],[1,1]])
         _jpype.fault("JPTypeManager::findClass")
@@ -879,11 +880,11 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPTypeManagerPopulate(self):
         _jpype.fault("JPTypeManager::populateMembers")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JClass("java.lang.StringBuffer")
+            JClass("java.math.MathContext")
         _jpype.fault("JPTypeManager::populateMethod")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JClass("java.lang.StringBuffer")().reverse()
-        JClass("java.lang.StringBuffer")
+            JClass("java.math.MathContext")().getPrecision()
+        JClass("java.math.MathContext")
 
     def testJPArrayNew(self):
         ja = JArray(JInt)
@@ -986,3 +987,502 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Double._canConvertToJava(object())
 
+    def testJPJavaFrame(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::JPJavaFrame::NewObjectA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::JPJavaFrame::NewObject")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::NewDirectByteBuffer")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetPrimitiveArrayCritical")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleasePrimitiveArrayCritical")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameByteField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticByteField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_byte)
+        _jpype.fault("JPJavaFrame::GetByteField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_byte)
+        _jpype.fault("JPJavaFrame::SetStaticByteField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_byte = 1
+        _jpype.fault("JPJavaFrame::SetByteField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_byte = 0
+
+    def testJPJavaFrameByteMethods(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticByteMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticByte()
+        _jpype.fault("JPJavaFrame::CallByteMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberByte()
+        _jpype.fault("JPJavaFrame::CallNonvirtualByteMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberByte(obj)
+
+    def testJPJavaFrameShortField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticShortField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_short)
+        _jpype.fault("JPJavaFrame::GetShortField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_short)
+        _jpype.fault("JPJavaFrame::SetStaticShortField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_short = 1
+        _jpype.fault("JPJavaFrame::SetShortField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_short = 1
+
+    def testJPJavaFrameShortMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticShortMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticShort()
+        _jpype.fault("JPJavaFrame::CallShortMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberShort()
+        _jpype.fault("JPJavaFrame::CallNonvirtualShortMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberShort(obj)
+
+    def testJPJavaFrameIntField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticIntField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_int)
+        _jpype.fault("JPJavaFrame::GetIntField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_int)
+        _jpype.fault("JPJavaFrame::SetStaticIntField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_int = 1
+        _jpype.fault("JPJavaFrame::SetIntField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_int = 1
+
+    def testJPJavaFrameIntMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticIntMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticInt()
+        _jpype.fault("JPJavaFrame::CallIntMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberInt()
+        _jpype.fault("JPJavaFrame::CallNonvirtualIntMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberInt(obj)
+
+    def testJPJavaFrameLongField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticLongField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_long)
+        _jpype.fault("JPJavaFrame::GetLongField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_long)
+        _jpype.fault("JPJavaFrame::SetStaticLongField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_long = 1
+        _jpype.fault("JPJavaFrame::SetLongField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_long = 1
+
+    def testJPJavaFrameLongMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticLongMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticLong()
+        _jpype.fault("JPJavaFrame::CallLongMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberLong()
+        _jpype.fault("JPJavaFrame::CallNonvirtualLongMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberLong(obj)
+
+    def testJPJavaFrameFloatField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticFloatField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_float)
+        _jpype.fault("JPJavaFrame::GetFloatField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_float)
+        _jpype.fault("JPJavaFrame::SetStaticFloatField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_float = 1
+        _jpype.fault("JPJavaFrame::SetFloatField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_float = 1
+
+    def testJPJavaFrameFloatMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticFloatMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticFloat()
+        _jpype.fault("JPJavaFrame::CallFloatMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberFloat()
+        _jpype.fault("JPJavaFrame::CallNonvirtualFloatMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberFloat(obj)
+
+    def testJPJavaFrameDoubleField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticDoubleField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_double)
+        _jpype.fault("JPJavaFrame::GetDoubleField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_double)
+        _jpype.fault("JPJavaFrame::SetStaticDoubleField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_double = 1
+        _jpype.fault("JPJavaFrame::SetDoubleField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_double = 1
+
+    def testJPJavaFrameDoubleMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticDoubleMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticDouble()
+        _jpype.fault("JPJavaFrame::CallDoubleMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberDouble()
+        _jpype.fault("JPJavaFrame::CallNonvirtualDoubleMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberDouble(obj)
+
+    def testJPJavaFrameCharField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticCharField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_char)
+        _jpype.fault("JPJavaFrame::GetCharField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_char)
+        _jpype.fault("JPJavaFrame::SetStaticCharField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_char = 1
+        _jpype.fault("JPJavaFrame::SetCharField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_char = 1
+
+    def testJPJavaFrameCharMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticCharMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticChar()
+        _jpype.fault("JPJavaFrame::CallCharMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberChar()
+        _jpype.fault("JPJavaFrame::CallNonvirtualCharMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberChar(obj)
+
+    def testJPJavaFrameBooleanField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticBooleanField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_bool)
+        _jpype.fault("JPJavaFrame::GetBooleanField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_bool)
+        _jpype.fault("JPJavaFrame::SetStaticBooleanField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_bool = 1
+        _jpype.fault("JPJavaFrame::SetBooleanField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_bool = 1
+
+    def testJPJavaFrameBooleanMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticBooleanMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticBool()
+        _jpype.fault("JPJavaFrame::CallBooleanMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberBool()
+        _jpype.fault("JPJavaFrame::CallNonvirtualBooleanMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberBool(obj)
+
+    def testJPJavaFrameObjectField(self):
+        fields = JClass("jpype.fields.Fields")()
+        _jpype.fault("JPJavaFrame::GetStaticObjectField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.static_object)
+        _jpype.fault("JPJavaFrame::GetObjectField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(fields.member_object)
+        _jpype.fault("JPJavaFrame::SetStaticObjectField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.static_object = None
+        _jpype.fault("JPJavaFrame::SetObjectField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fields.member_object = None
+
+    def testJPJavaFrameObjectMethod(self):
+        cls = JClass("jpype.fields.Fields")
+        obj = cls()
+        _jpype.fault("JPJavaFrame::CallStaticObjectMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getStaticObject()
+        _jpype.fault("JPJavaFrame::CallObjectMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            obj.getMemberObject()
+        _jpype.fault("JPJavaFrame::CallNonvirtualObjectMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            cls.getMemberObject(obj)
+
+
+    def testJPJavaFrameByteArray(self):
+        _jpype.fault("JPJavaFrame::NewByteArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JByte)(1)
+        ja = JArray(JByte)(5)
+        _jpype.fault("JPJavaFrame::SetByteArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = 0
+        _jpype.fault("JPJavaFrame::GetByteArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+#        _jpype.fault("JPJavaFrame::GetByteArrayElements")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            memoryview(ja[0:3])
+#        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            memoryview(ja[0:3])
+
+    def testJPJavaFrameShortArray(self):
+        _jpype.fault("JPJavaFrame::NewShortArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JShort)(1)
+        _jpype.fault("JPJavaFrame::SetShortArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetShortArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetShortArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameIntArray(self):
+        _jpype.fault("JPJavaFrame::NewIntArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JInt)(1)
+        _jpype.fault("JPJavaFrame::SetIntArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetIntArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetIntArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameLongArray(self):
+        _jpype.fault("JPJavaFrame::NewLongArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JLong)(1)
+        _jpype.fault("JPJavaFrame::SetLongArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetLongArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetLongArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameFloatArray(self):
+        _jpype.fault("JPJavaFrame::NewFloatArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JFloat)(1)
+        _jpype.fault("JPJavaFrame::SetFloatArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetFloatArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetFloatArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameDoubleArray(self):
+        _jpype.fault("JPJavaFrame::NewDoubleArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JDouble)(1)
+        _jpype.fault("JPJavaFrame::SetDoubleArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetDoubleArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetDoubleArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameCharArray(self):
+        _jpype.fault("JPJavaFrame::NewCharArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JChar)(1)
+        _jpype.fault("JPJavaFrame::SetCharArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetCharArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetCharArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+    def testJPJavaFrameBooleanArray(self):
+        _jpype.fault("JPJavaFrame::NewBooleanArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JBoolean)(1)
+        _jpype.fault("JPJavaFrame::SetBooleanArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetBooleanArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::GetBooleanArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+
+    def testJPJavaFrameMonitor(self):
+        jo = JClass("java.lang.Object")()
+        _jpype.fault("JPJavaFrame::MonitorEnter")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            with syncronized(jo):
+                pass
+        _jpype.fault("JPJavaFrame::MonitorExit")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            with syncronized(jo):
+                pass
+
+
+    def testJPJavaFrameMonitor(self):
+        _jpype.fault("JPJavaFrame::FromReflectedMethod")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::FromReflectedField")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::FindClass")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+
+    def testJPJavaFrameObjectArray(self):
+        _jpype.fault("JPJavaFrame::NewObjectArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JObject)(1)
+        ja = JArray(JObject)(1)
+        _jpype.fault("JPJavaFrame::SetObjectArrayElement")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = None
+        _jpype.fault("JPJavaFrame::GetObjectArrayElement")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+
+    def testJPJavaFrameVoidMethod(self):
+        _jpype.fault("JPJavaFrame::CallStaticVoidMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::CallVoidMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+        _jpype.fault("JPJavaFrame::CallVoidMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            raise SystemError("fault")
+
+
+    def testJPJavaFrameAssignable(self):
+        _jpype.fault("JPJavaFrame::IsAssignableFrom")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            issubclass(JString, JObject)
+
+
+    def testJPJavaFrameString(self):
+        _jpype.fault("JPJavaFrame::NewString")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JString("aa")
+        _jpype.fault("JPJavaFrame::GetStringUTFChars")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            str(JString("a"))
+        # FIXME Segfaults
+#        _jpype.fault("JPJavaFrame::ReleaseStringUTFChars")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            str(JString("a"))
+        _jpype.fault("JPJavaFrame::GetStringUTFLength")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            str(JString("a"))
+
+
+    def testJPJavaFrameArrayLength(self):
+        _jpype.fault("JPJavaFrame::GetArrayLength")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JInt)(5)
+
+#        _jpype.fault("JPJavaFrame::GetMethodID")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            raise SystemError("fault")
+#        _jpype.fault("JPJavaFrame::GetStaticMethodID")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            raise SystemError("fault")
+#        _jpype.fault("JPJavaFrame::GetFieldID")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            raise SystemError("fault")
+#        _jpype.fault("JPJavaFrame::DefineClass")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            raise SystemError("fault")
+#        _jpype.fault("JPJavaFrame::RegisterNatives")
+#        with self.assertRaisesRegex(SystemError, "fault"):
+#            raise SystemError("fault")

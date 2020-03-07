@@ -190,9 +190,6 @@ public:
 		return m_Interfaces;
 	}
 
-	// Check if a value is an instance of this class
-	bool isInstance(JPJavaFrame& frame, JPValue& val);
-
 	JPContext* getContext() const
 	{
 		if (m_Context == 0)
