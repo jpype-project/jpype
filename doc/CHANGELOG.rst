@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
+  - java.util.Map conforms to Python abc.Mapping API.
 
   - float properly follows Java rules for conversion from double.
     floats outside of range map to inf and -inf.

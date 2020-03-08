@@ -149,3 +149,42 @@ class CollectionTestCase(common.JPypeTestCase):
         jc = JObject(ja, 'java.util.Collection')
         with self.assertRaisesRegex(TypeError, 'remove'):
             del jc[1]
+
+    def testHashMapCtor(self):
+        HashMap = JClass('java.util.HashMap')
+        dc = dict()
+        dc['fred'] = 1
+        dc['george'] = 2
+        dc['paul'] = 3
+        hm = HashMap(dc)
+        for p, v in dc.items():
+            self.assertEqual(hm[p], v)
+
+    def testHashMapPutAll(self):
+        HashMap = JClass('java.util.HashMap')
+        hm = HashMap()
+        dc = dict()
+        dc['fred'] = 1
+        dc['george'] = 2
+        dc['paul'] = 3
+        hm.putAll(dc)
+        for p, v in dc.items():
+            self.assertEqual(hm[p], v)
+
+    def testHashMapConvert(self):
+        HashMap = JClass('java.util.HashMap')
+        hm = HashMap()
+        hm['fred'] = 1
+        hm['george'] = 2
+        hm['paul'] = 3
+        dc = dict(hm)
+        for p, v in hm.items():
+            self.assertEqual(dc[p], v)
+
+    def testMapABC(self):
+        from collections.abc import Mapping, Sized, Iterable, Container
+        hm = JClass('java.util.HashMap')()
+        self.assertIsInstance(hm, Sized)
+        self.assertIsInstance(hm, Iterable)
+        self.assertIsInstance(hm, Container)
+        self.assertIsInstance(hm, Mapping)
