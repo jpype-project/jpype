@@ -4,6 +4,7 @@ import _jpype
 import unittest
 import subrun
 
+
 @subrun.TestCase(individual=True)
 class TestModule(unittest.TestCase):
 
@@ -65,5 +66,3 @@ class TestModule(unittest.TestCase):
         import jpype
         jpype.startJVM(convertStrings=False)
         jpype.shutdownJVM()
-
-

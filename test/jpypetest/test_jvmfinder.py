@@ -114,6 +114,7 @@ class JVMFinderTest(unittest.TestCase):
 
     def testLinuxGetFromBin(self):
         finder = jpype._jvmfinder.LinuxJVMFinder()
+
         def f(s):
             return s
         with mock.patch('os.path') as pathmock, \
@@ -124,7 +125,8 @@ class JVMFinderTest(unittest.TestCase):
             pathmock.dirname = os.path.dirname
             pathmock.join = os.path.join
             finder._get_from_bin()
-            self.assertEqual(pathmock.dirname.mock_calls[0].args, (finder._java,))
+            self.assertEqual(
+                pathmock.dirname.mock_calls[0].args, (finder._java,))
 
     @common.unittest.skip
     def testCheckArch(self):
@@ -133,21 +135,21 @@ class JVMFinderTest(unittest.TestCase):
                 self.assertRaises(JVMNotSupportedException):
             jpype._jvmfinder._checkJVMArch('path', 2**32)
 
-        data = struct.pack('<ccIH',b'M',b'Z',0, 332)
+        data = struct.pack('<ccIH', b'M', b'Z', 0, 332)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
             jpype._jvmfinder._checkJVMArch('path', 2**32)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
                 self.assertRaises(JVMNotSupportedException):
             jpype._jvmfinder._checkJVMArch('path', 2**64)
 
-        data = struct.pack('<ccIH',b'M',b'Z',0, 512)
+        data = struct.pack('<ccIH', b'M', b'Z', 0, 512)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
             jpype._jvmfinder._checkJVMArch('path', 2**64)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
                 self.assertRaises(JVMNotSupportedException):
             jpype._jvmfinder._checkJVMArch('path', 2**32)
 
-        data = struct.pack('<ccIH',b'M',b'Z',0, 34404)
+        data = struct.pack('<ccIH', b'M', b'Z', 0, 34404)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
             jpype._jvmfinder._checkJVMArch('path', 2**64)
         with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
@@ -157,7 +159,7 @@ class JVMFinderTest(unittest.TestCase):
     def testWindowsRegistry(self):
         finder = jpype._jvmfinder.WindowsJVMFinder()
         with mock.patch("jpype._jvmfinder.winreg") as winregmock:
-            winregmock.QueryValueEx.return_value = ('success','')
+            winregmock.QueryValueEx.return_value = ('success', '')
             self.assertEqual(finder._get_from_registry(), 'success')
             winregmock.OpenKey.side_effect = OSError()
             self.assertEqual(finder._get_from_registry(), None)

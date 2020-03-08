@@ -198,7 +198,6 @@ protected:
  */
 namespace JPPyLong
 {
-bool checkConvertable(PyObject* obj);
 
 /** Check if this is really an integer type or just can be converted to.
  *

@@ -71,4 +71,3 @@ class HashTestCase(common.JPypeTestCase):
         self.assertEqual(hash(None), hash(jpype.JObject(None)))
         q = jpype.JObject(None, jpype.java.lang.Double)
         self.assertEqual(hash(None), hash(jpype.JObject(None)))
-

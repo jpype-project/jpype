@@ -25,8 +25,10 @@ import unittest
 
 CLASSPATH = None
 
+
 def version(v):
     return tuple([int(i) for i in v.split('.')])
+
 
 def requireInstrumentation(func):
     def f(self):
@@ -35,6 +37,7 @@ def requireInstrumentation(func):
             raise unittest.SkipTest("instrumentation required")
         return func(self)
     return f
+
 
 def requireNumpy(func):
     def f(self):
@@ -61,6 +64,7 @@ class UseFunc(object):
     def __exit__(self, exception_type, exception_value, traceback):
         print("EXIT")
         setattr(self.obj, self.attr, self.orig)
+
 
 @pytest.mark.usefixtures("common_opts")
 class JPypeTestCase(unittest.TestCase):
@@ -111,16 +115,15 @@ class JPypeTestCase(unittest.TestCase):
     def assertElementsEqual(self, a, b):
         self.assertEqual(len(a), len(b))
         for i in range(len(a)):
-                self.assertEqual(a[i], b[i])
+            self.assertEqual(a[i], b[i])
 
     def assertElementsAlmostEqual(self, a, b):
         self.assertEqual(len(a), len(b))
         for i in range(len(a)):
-                self.assertAlmostEqual(a[i], b[i])
+            self.assertAlmostEqual(a[i], b[i])
 
     def useEqualityFunc(self, func):
         return UseFunc(self, func, 'assertEqual')
-
 
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ import jpype
 from jpype.types import *
 import common
 
+
 class JClassTestCase(common.JPypeTestCase):
     """ Test for methods of JObject
 

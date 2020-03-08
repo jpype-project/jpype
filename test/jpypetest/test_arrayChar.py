@@ -4,6 +4,7 @@ from jpype.types import *
 import common
 import pytest
 
+
 def haveNumpy():
     try:
         import numpy
@@ -16,7 +17,6 @@ class ArrayCharTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-
 
     def testCharArrayAsString(self):
         t = JClass("jpype.array.TestArray")()
@@ -35,4 +35,3 @@ class ArrayCharTestCase(common.JPypeTestCase):
         self.assertEqual(array, array)
         self.assertNotEqual(array, array2)
         self.assertEqual(array, "abc")
-

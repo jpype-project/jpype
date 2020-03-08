@@ -23,7 +23,7 @@ class ArrayLongTestCase(common.JPypeTestCase):
     def assertElementsEqual(self, a, b):
         self.assertEqual(len(a), len(b))
         for i in range(len(a)):
-                self.assertEqual(a[i], b[i])
+            self.assertEqual(a[i], b[i])
 
     def testJLongArrayConversionFail(self):
         jarr = JArray(JLong)(self.VALUES)
@@ -83,7 +83,7 @@ class ArrayLongTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[1:-1]), contents[1:-1])
 
     def testJLongArraySetSlice(self):
-        contents = [1,2,3,4]
+        contents = [1, 2, 3, 4]
         array = JArray(JLong)(contents)
         array[1:] = [5, 6, 7]
         contents[1:] = [5, 6, 7]
@@ -116,9 +116,9 @@ class ArrayLongTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[::-6]), contents[::-6])
         self.assertEqual(list(array[2::-3]), contents[2::-3])
         self.assertEqual(list(array[-2::-3]), contents[-2::-3])
- 
+
     def testJLongArraySetArraySliceStep(self):
-        contents = [1,2,3,4,5,6]
+        contents = [1, 2, 3, 4, 5, 6]
         array = JArray(JLong)(contents)
         array[::2] = [5, 6, 7]
         contents[::2] = [5, 6, 7]
@@ -160,7 +160,7 @@ class ArrayLongTestCase(common.JPypeTestCase):
         with self.assertRaises(IndexError):
             array[-5] = 1
 
-    def testJLongArraySliceCast(self):        
+    def testJLongArraySliceCast(self):
         JA = JArray(JLong)
         ja = JA(self.VALUES)
         ja2 = ja[::2]
@@ -175,8 +175,6 @@ class ArrayLongTestCase(common.JPypeTestCase):
         n = self.VALUES
         JA = JArray(JLong)
         ja = JA(n)
-        a = [ i for i in reversed(ja)]
-        n = [ i for i in reversed(n)]
+        a = [i for i in reversed(ja)]
+        n = [i for i in reversed(n)]
         self.assertEqual(a, n)
-
-

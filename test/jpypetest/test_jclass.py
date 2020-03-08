@@ -177,4 +177,5 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testJClassWithLoader(self):
         cl = JClass('java.lang.Class').class_.getClassLoader()
-        self.assertIsInstance(JClass('java.lang.StringBuilder', loader=cl), JClass)
+        self.assertIsInstance(
+            JClass('java.lang.StringBuilder', loader=cl), JClass)

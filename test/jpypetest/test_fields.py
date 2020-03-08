@@ -3,6 +3,7 @@ from jpype.types import *
 from jpype import JPackage, java
 import common
 
+
 class FieldsTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -204,7 +205,3 @@ class FieldsTestCase(common.JPypeTestCase):
         self.assertEqual(self.cls.static_object_field, "Charlie")
         self.assertEqual(self.obj.getStaticObject(), "Charlie")
         self.assertEqual(self.cls.getStaticObject(), "Charlie")
-
-
-
-

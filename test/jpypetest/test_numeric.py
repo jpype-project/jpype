@@ -85,5 +85,5 @@ class NumericTestCase(common.JPypeTestCase):
             float(2**128)).doubleValue())
         self.assertEqual(
             float('-inf'), javawrapper(float(-2**128)).doubleValue())
-        self.assertEqual( jwrapper(float(2**128)), float('inf'))
-        self.assertEqual( jwrapper(float(-2**128)), float('-inf'))
+        self.assertEqual(jwrapper(float(2**128)), float('inf'))
+        self.assertEqual(jwrapper(float(-2**128)), float('-inf'))

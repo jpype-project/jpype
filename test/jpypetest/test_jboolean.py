@@ -112,4 +112,3 @@ class JBooleanTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JBoolean)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
-

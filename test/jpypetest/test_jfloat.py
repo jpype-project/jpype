@@ -11,6 +11,7 @@ try:
 except ImportError:
     pass
 
+
 class JFloatTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -18,21 +19,21 @@ class JFloatTestCase(common.JPypeTestCase):
         self.cls = JClass("jpype.common.Fixture")
         self.fixture = self.cls()
 
-    def compareFloatEqual(self, x,y, msg=None):
+    def compareFloatEqual(self, x, y, msg=None):
         if x == y:
             return
-        if x<0:
+        if x < 0:
             x = -x
-        if y<0:
+        if y < 0:
             y = -y
         a = (x+y)/2
         b = (x-y)
-        if b<0:
+        if b < 0:
             b = -b
-        if b<a*1e-7:
+        if b < a*1e-7:
             return
         msg = self._formatMessage(msg, '%s == %s' % (safe_repr(first),
-             safe_repr(second)))
+                                                     safe_repr(second)))
         raise self.failureException(msg)
 
     @common.requireInstrumentation
@@ -108,39 +109,17 @@ class JFloatTestCase(common.JPypeTestCase):
             JFloat(1.0)
 
     @common.requireInstrumentation
-    def testSetArrayRangeFault(self):
-        ja = JArray(JFloat)(3)
-        _jpype.fault("JPFloatType::setArrayRange")
-        with self.assertRaises(SystemError):
-            ja[0:1] = [123]
-        ja[0:1] = [123]
-
-    @common.requireInstrumentation
-    def testJPFloatFault(self):
-        ja = JArray(JFloat)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPFloatType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_float_field = object()
-        with self.assertRaises(TypeError):
-            jf().float_field = object()
-
-    @common.requireInstrumentation
-    def testJFloatGetJavaConversion(self):
+    def testConversionFault(self):
         _jpype.fault("JPFloatType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JFloat._canConvertToJava(object())
 
     @common.requireInstrumentation
-    def testJPJavaFrameFloatArray(self):
+    def testArrayFault(self):
+        ja = JArray(JFloat)(5)
         _jpype.fault("JPJavaFrame::NewFloatArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JFloat)(1)
-        ja = JArray(JFloat)(5)
         _jpype.fault("JPJavaFrame::SetFloatArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = 0
@@ -152,15 +131,19 @@ class JFloatTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
         f()
+        _jpype.fault("JPFloatType::setArrayRange")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[1:3] = [0, 0]
 
     def testFromJIntWiden(self):
         self.assertEqual(JFloat(JByte(123)), 123)
@@ -186,7 +169,7 @@ class JFloatTestCase(common.JPypeTestCase):
 
     def testUnBox(self):
         pass
-        #with self.useEqualityFunc(self.foo):
+        # with self.useEqualityFunc(self.foo):
         #    self.assertEqual(JFloat(java.lang.Double(1.2345)), 1.2345)
 
     def testFromFloat(self):
@@ -206,6 +189,14 @@ class JFloatTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             JFloat(JString("A"))
         self.assertEqual(JFloat._canConvertToJava(object()), "none")
+        ja = JArray(JFloat)(5)
+        with self.assertRaises(TypeError):
+            ja[1] = object()
+        jf = JClass("jpype.common.Fixture")
+        with self.assertRaises(TypeError):
+            jf.static_float_field = object()
+        with self.assertRaises(TypeError):
+            jf().float_field = object()
 
     def testCallFloatFromNone(self):
         with self.assertRaises(TypeError):
@@ -270,8 +261,8 @@ class JFloatTestCase(common.JPypeTestCase):
 
     def testCheckJBoolean(self):
         # FIXME fails
-        #self.checkType(JBoolean(True))
-        #self.checkType(JBoolean(False))
+        # self.checkType(JBoolean(True))
+        # self.checkType(JBoolean(False))
         pass
 
     def testCheckJChar(self):
@@ -300,8 +291,8 @@ class JFloatTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyInt8(self):
-        self.checkType(np.random.randint(-127,128, dtype=np.int8))
-        self.checkType(np.random.randint(0,255, dtype=np.uint8))
+        self.checkType(np.random.randint(-127, 128, dtype=np.int8))
+        self.checkType(np.random.randint(0, 255, dtype=np.uint8))
         self.checkType(np.uint8(0))
         self.checkType(np.uint8(255))
         self.checkType(np.int8(-128))
@@ -309,8 +300,8 @@ class JFloatTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyInt16(self):
-        self.checkType(np.random.randint(-2**15,2**15-1, dtype=np.int16))
-        self.checkType(np.random.randint(0,2**16-1, dtype=np.uint16))
+        self.checkType(np.random.randint(-2**15, 2**15-1, dtype=np.int16))
+        self.checkType(np.random.randint(0, 2**16-1, dtype=np.uint16))
         self.checkType(np.uint16(0))
         self.checkType(np.uint16(2**16-1))
         self.checkType(np.int16(-2**15))
@@ -319,8 +310,8 @@ class JFloatTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testCheckNumpyInt32(self):
         with self.useEqualityFunc(self.compareFloatEqual):
-            self.checkType(np.random.randint(-2**31,2**31-1, dtype=np.int32))
-            self.checkType(np.random.randint(0,2**32-1, dtype=np.uint32))
+            self.checkType(np.random.randint(-2**31, 2**31-1, dtype=np.int32))
+            self.checkType(np.random.randint(0, 2**32-1, dtype=np.uint32))
             self.checkType(np.uint32(0))
             self.checkType(np.uint32(2**32-1))
             self.checkType(np.int32(-2**31))
@@ -329,12 +320,12 @@ class JFloatTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testCheckNumpyInt64(self):
         with self.useEqualityFunc(self.compareFloatEqual):
-            self.checkType(np.random.randint(-2**63,2**63-1, dtype=np.int64))
-            # FIXME OverflowError 
+            self.checkType(np.random.randint(-2**63, 2**63-1, dtype=np.int64))
+            # FIXME OverflowError
             #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
             self.checkType(np.uint64(0))
-            # FIXME OverflowError 
-            #self.checkType(np.uint64(2**64-1))
+            # FIXME OverflowError
+            # self.checkType(np.uint64(2**64-1))
             self.checkType(np.int64(-2**63))
             self.checkType(np.int64(2**63-1))
 
@@ -347,7 +338,7 @@ class JFloatTestCase(common.JPypeTestCase):
         with self.useEqualityFunc(self.compareFloatEqual):
             self.checkType(np.float64(np.random.rand()))
 
-    def testJArrayConversionDouble(self):
+    def testArrayConversionDouble(self):
         VALUES = [float(random.random()) for i in range(100)]
         jarr = JArray(JFloat)(VALUES)
         self.assertElementsAlmostEqual(VALUES, jarr)
@@ -367,31 +358,31 @@ class JFloatTestCase(common.JPypeTestCase):
         self.assertElementsAlmostEqual(expected, result)
 
     @common.requireNumpy
-    def testSetFromNPDoubleArray(self):
+    def testArraySetFromNPDouble(self):
         a = np.random.random(100).astype(np.float64)
         jarr = JArray(JFloat)(100)
         jarr[:] = a
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testInitFromNPDoubleArray(self):
+    def testArrayInitFromNPFloat(self):
         a = np.random.random(100).astype(np.float)
         jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testInitFromNPDoubleArrayFloat32(self):
+    def testArrayInitFromNPFloat32(self):
         a = np.random.random(100).astype(np.float32)
         jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testInitFromNPDoubleArrayFloat64(self):
+    def testArrayInitFromNPFloat64(self):
         a = np.random.random(100).astype(np.float64)
         jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
-    def testSetArrayRange(self):
+    def testArraySetRange(self):
         ja = JArray(JFloat)(3)
         ja[0:1] = [123]
         self.assertEqual(ja[0], 123)
@@ -401,4 +392,3 @@ class JFloatTestCase(common.JPypeTestCase):
         self.assertEqual(ja[0], 321)
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
-

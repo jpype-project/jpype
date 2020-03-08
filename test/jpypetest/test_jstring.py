@@ -97,4 +97,3 @@ class JStringTestCase(common.JPypeTestCase):
     def testConversion(self):
         self.assertEqual(jpype.JString("AAAA"), "AAAA")
         self.assertEqual(jpype.JString(bytes([65, 65, 65, 65])), "AAAA")
-

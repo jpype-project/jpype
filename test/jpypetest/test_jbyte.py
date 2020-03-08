@@ -5,10 +5,48 @@ import logging
 import time
 import common
 
+
 class JByteTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.fixture = jpype.JClass("jpype.common.Fixture")()
+
+    @common.requireInstrumentation
+    def testConversionFault(self):
+        _jpype.fault("JPByteType::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JByte._canConvertToJava(object())
+
+    @common.requireInstrumentation
+    def testArrayFaults(self):
+        ja = JArray(JByte)(5)
+        _jpype.fault("JPByteType::setArrayRange")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[1:3] = [0, 0]
+        _jpype.fault("JPJavaFrame::NewByteArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JByte)(1)
+        _jpype.fault("JPJavaFrame::SetByteArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = 0
+        _jpype.fault("JPJavaFrame::GetByteArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+        _jpype.fault("JPJavaFrame::GetByteArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            memoryview(ja[0:3])
+        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:3] = bytes([1, 2, 3])
+        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
+
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
     def testByteFromInt(self):
         self.assertEqual(self.fixture.callByte(int(123)), 123)
@@ -101,3 +139,12 @@ class JByteTestCase(common.JPypeTestCase):
         for i in range(len(expected)):
             self.assertEqual(expected[i], buf[i])
 
+    def testFromObject(self):
+        ja = JArray(JByte)(5)
+        with self.assertRaises(TypeError):
+            ja[1] = object()
+        jf = JClass("jpype.common.Fixture")
+        with self.assertRaises(TypeError):
+            jf.static_byte_field = object()
+        with self.assertRaises(TypeError):
+            jf().byte_field = object()

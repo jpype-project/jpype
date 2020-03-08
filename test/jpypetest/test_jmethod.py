@@ -145,7 +145,8 @@ class JMethodTestCase(common.JPypeTestCase):
 
     def testMethodDump(self):
         # This is replaced by doc, should be removed (or do something useful)
-        self.assertIsInstance(jpype.JString("foo").substring.matchReport(), str)
+        self.assertIsInstance(jpype.JString(
+            "foo").substring.matchReport(), str)
 
     def testMethodHelp(self):
         help(jpype.JString("a").substring)

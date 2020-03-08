@@ -307,7 +307,7 @@ class ProxyTestCase(common.JPypeTestCase):
         class Bomb(object):
             @JOverride
             def equals(self, other):
-                return type(self)==type(other)
+                return type(self) == type(other)
 
         b = Bomb()
         t = ProxyTriggers()

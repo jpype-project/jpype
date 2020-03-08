@@ -23,7 +23,7 @@ class ArrayShortTestCase(common.JPypeTestCase):
     def assertElementsEqual(self, a, b):
         self.assertEqual(len(a), len(b))
         for i in range(len(a)):
-                self.assertEqual(a[i], b[i])
+            self.assertEqual(a[i], b[i])
 
     def testJShortArrayConversionFail(self):
         jarr = JArray(JShort)(self.VALUES)
@@ -83,7 +83,7 @@ class ArrayShortTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[1:-1]), contents[1:-1])
 
     def testJShortArraySetSlice(self):
-        contents = [1,2,3,4]
+        contents = [1, 2, 3, 4]
         array = JArray(JShort)(contents)
         array[1:] = [5, 6, 7]
         contents[1:] = [5, 6, 7]
@@ -116,9 +116,9 @@ class ArrayShortTestCase(common.JPypeTestCase):
         self.assertEqual(list(array[::-6]), contents[::-6])
         self.assertEqual(list(array[2::-3]), contents[2::-3])
         self.assertEqual(list(array[-2::-3]), contents[-2::-3])
- 
+
     def testJShortArraySetArraySliceStep(self):
-        contents = [1,2,3,4,5,6]
+        contents = [1, 2, 3, 4, 5, 6]
         array = JArray(JShort)(contents)
         array[::2] = [5, 6, 7]
         contents[::2] = [5, 6, 7]
@@ -160,7 +160,7 @@ class ArrayShortTestCase(common.JPypeTestCase):
         with self.assertRaises(IndexError):
             array[-5] = 1
 
-    def testJShortArraySliceCast(self):        
+    def testJShortArraySliceCast(self):
         JA = JArray(JShort)
         ja = JA(self.VALUES)
         ja2 = ja[::2]
@@ -175,8 +175,6 @@ class ArrayShortTestCase(common.JPypeTestCase):
         n = self.VALUES
         JA = JArray(JShort)
         ja = JA(n)
-        a = [ i for i in reversed(ja)]
-        n = [ i for i in reversed(n)]
+        a = [i for i in reversed(ja)]
+        n = [i for i in reversed(n)]
         self.assertEqual(a, n)
-
-

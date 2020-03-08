@@ -95,18 +95,18 @@ class ConversionTestCase(common.JPypeTestCase):
     def testCharConversion(self):
         self.assertEqual(JChar._canConvertToJava("a"), "implicit")
         self.assertEqual(JChar._canConvertToJava(bytes([1])), "implicit")
-        self.assertEqual(JChar._canConvertToJava(bytes([1,1])), "none")
+        self.assertEqual(JChar._canConvertToJava(bytes([1, 1])), "none")
 
     def testCharOverflow(self):
         with self.assertRaises(OverflowError):
             JChar(1000000)
 
     def testCharBytes(self):
-        # setArrayRange directly calls Char conversion so it is a good way 
+        # setArrayRange directly calls Char conversion so it is a good way
         # to test without checking if conversion is possible first
         ja = JArray(JChar)(2)
         with self.assertRaises(ValueError):
-            ja[0:1] = [bytes([1,1,1])]
+            ja[0:1] = [bytes([1, 1, 1])]
         with self.assertRaises(OverflowError):
             ja[0:1] = [1000000]
         with self.assertRaises(ValueError):
@@ -114,6 +114,5 @@ class ConversionTestCase(common.JPypeTestCase):
         with self.assertRaises(ValueError):
             ja[0:1] = ["\U0001F600"]
         with self.assertRaises(TypeError):
-            ja[0:1] = [ object() ]
+            ja[0:1] = [object()]
         ja[0:1] = ["\u265E"]
-

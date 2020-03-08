@@ -2,6 +2,7 @@ import jpype
 import common
 from jpype.types import *
 
+
 class JCharTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -28,5 +29,3 @@ class JCharTestCase(common.JPypeTestCase):
             str(jc)
         _jpype.fault("PyJPModule_getContext")
         str(jc)
-
-

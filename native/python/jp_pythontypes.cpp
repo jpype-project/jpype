@@ -160,12 +160,6 @@ JPPyObject JPPyLong::fromLong(jlong l)
 	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
 }
 
-bool JPPyLong::checkConvertable(PyObject* obj)
-{
-	return PyLong_Check(obj)
-			|| PyObject_HasAttrString(obj, "__int__");
-}
-
 bool JPPyLong::checkIndexable(PyObject* obj)
 {
 	return PyObject_HasAttrString(obj, "__index__") != 0;

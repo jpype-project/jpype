@@ -635,19 +635,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             jf().char_field = object()
 
-    def testJPByteType(self):
-        ja = JArray(JByte)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPByteType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_byte_field = object()
-        with self.assertRaises(TypeError):
-            jf().byte_field = object()
-
     def testJPShortType(self):
         ja = JArray(JShort)(5)  # lgtm [py/similar-function]
         _jpype.fault("JPShortType::setArrayRange")
@@ -809,11 +796,6 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPCharType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JChar._canConvertToJava(object())
-
-    def testJByteGetJavaConversion(self):
-        _jpype.fault("JPByteType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JByte._canConvertToJava(object())
 
     def testJShortGetJavaConversion(self):
         _jpype.fault("JPShortType::getJavaConversion")
@@ -1125,32 +1107,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getObject(obj)
 
-    def testJPJavaFrameByteArray(self):
-        _jpype.fault("JPJavaFrame::NewByteArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JByte)(1)
-        ja = JArray(JByte)(5)
-        _jpype.fault("JPJavaFrame::SetByteArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetByteArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            print(ja[0])
-        _jpype.fault("JPJavaFrame::GetByteArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
-        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
-        def f():
-            # Special case no fault is allowed
-            memoryview(ja[0:3])
-        f()
-
     def testJPJavaFrameShortArray(self):
         _jpype.fault("JPJavaFrame::NewShortArray")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1167,11 +1123,12 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
@@ -1193,11 +1150,12 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
@@ -1219,17 +1177,16 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
         f()
-
-
 
     def testJPJavaFrameCharArray(self):
         _jpype.fault("JPJavaFrame::NewCharArray")
@@ -1247,11 +1204,12 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
@@ -1273,11 +1231,12 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1,2,3])
+            ja[0:3] = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])

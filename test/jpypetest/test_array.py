@@ -5,6 +5,7 @@ from jpype import JPackage, java
 import common
 import pytest
 
+
 def haveNumpy():
     try:
         import numpy
@@ -154,24 +155,24 @@ class ArrayTestCase(common.JPypeTestCase):
         a = JArray(JObject)(10)
         b = JArray(JObject)(10)
         with self.assertRaises(ValueError):
-            a[1:3]=b[1:4]
+            a[1:3] = b[1:4]
 
     def testJArrayIndexOutOfBounds(self):
         a = JArray(JObject)(10)
         with self.assertRaises(IndexError):
-            a[50]=1
+            a[50] = 1
         with self.assertRaises(IndexError):
-            a[-50]=1
+            a[-50] = 1
 
     def testJArrayBadItem(self):
         a = JArray(JObject)(10)
+
         class Larry(object):
-                pass
+            pass
         with self.assertRaises(TypeError):
-            a[1]=Larry()
+            a[1] = Larry()
 
     def testJArrayCopyRange(self):
-        a = JArray(JObject)(['a','b','c','d','e','f'])
-        a[1:4]=['x','y','z']
-        self.assertEqual(list(a), ['a','x','y','z','e','f'])
-
+        a = JArray(JObject)(['a', 'b', 'c', 'd', 'e', 'f'])
+        a[1:4] = ['x', 'y', 'z']
+        self.assertEqual(list(a), ['a', 'x', 'y', 'z', 'e', 'f'])
