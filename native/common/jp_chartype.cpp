@@ -237,3 +237,15 @@ void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize l
 	jchar* b = (jchar*) ((char*) memory + offset);
 	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }
+
+static void pack(jchar* d, jvalue v)
+{
+	*d = v.c;
+}
+
+PyObject *JPCharType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "c",
+			buffer, subs, base, dims);
+}

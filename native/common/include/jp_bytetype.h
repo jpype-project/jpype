@@ -92,6 +92,10 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+
+	virtual PyObject *newMultiArray(JPJavaFrame &frame,
+			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
+
 private:
 	static const jlong _Byte_Min = 127;
 	static const jlong _Byte_Max = -128;

@@ -332,3 +332,14 @@ void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize 
 	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 
+static void pack(jfloat* d, jvalue v)
+{
+	*d = v.f;
+}
+
+PyObject *JPFloatType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "f",
+			buffer, subs, base, dims);
+}

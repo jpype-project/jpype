@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -307,3 +307,14 @@ void JPShortType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize 
 	frame.GetShortArrayRegion((jshortArray) a, start, len, b);
 }
 
+static void pack(jshort* d, jvalue v)
+{
+	*d = v.s;
+}
+
+PyObject *JPShortType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "s",
+			buffer, subs, base, dims);
+}

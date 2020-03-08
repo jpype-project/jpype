@@ -64,5 +64,87 @@ public:
 
 } ;
 
-#endif /* JP_PRIMITIVE_ACCESSOR_H */
+template <class type_t> PyObject *convertMultiArray(
+		JPJavaFrame &frame,
+		JPPrimitiveType* cls,
+		void (*pack)(type_t*, jvalue),
+		const char* code,
+		JPPyBuffer &buffer,
+		int subs, int base, jobject dims)
+{
+	JPContext *context = frame.getContext();
+	Py_buffer& view = buffer.getView();
+	jconverter converter = getConverter(view.format, view.itemsize, code);
+	if (converter == NULL)
+	{
+		PyErr_Format(PyExc_TypeError, "No type converter found");
+		return NULL;
+	}
 
+	// Reserve space for array.
+	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayInstance(frame, subs);
+	std::vector<Py_ssize_t> indices(view.ndim);
+	int u = view.ndim - 1;
+	int k = 0;
+	jarray a0 = cls->newArrayInstance(frame, base);
+	frame.SetObjectArrayElement(contents, k++, a0);
+	jboolean isCopy;
+	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+	type_t *dest = (type_t*) mem;
+
+	int step;
+	if (view.strides == NULL)
+		step = view.itemsize;
+	else
+		step = view.strides[u];
+
+	// Align with the first element in the array
+	char *src = buffer.getBufferPtr(indices);
+
+	// Traverse the array
+	while (true)
+	{
+		if (indices[u] == view.shape[u])
+		{
+			int j;
+			for (j = 0; j < u; ++j)
+			{
+				indices[u - j - 1]++;
+				if (indices[u - j - 1] < view.shape[u - j - 1])
+					break;
+				indices[u - j - 1] = 0;
+			}
+			// Commit the current section
+			indices[u] = 0;
+			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, JNI_COMMIT);
+			frame.DeleteLocalRef(a0);
+
+			// If we hit the shape of the uppermost we are done
+			if (j == u)
+				break;
+
+			a0 = cls->newArrayInstance(frame, base);
+			frame.SetObjectArrayElement(contents, k++, a0);
+			mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+			dest = (type_t*) mem;
+			src = buffer.getBufferPtr(indices);
+		}
+		pack(dest, converter(src));
+		src += step;
+		dest++;
+		indices[u]++;
+	}
+
+	// Assemble it into a multidimensional array
+	jobject out = frame.assemble(dims, contents);
+
+	// Convert it to Python
+	JPClass *type = context->_java_lang_Object;
+	if (out != NULL)
+		type = frame.findClassForObject(out);
+	jvalue v;
+	v.l = out;
+	return type->convertToPythonObject(frame, v).keep();
+}
+
+#endif /* JP_PRIMITIVE_ACCESSOR_H */

@@ -138,6 +138,7 @@ public:
 
 	bool equals(jobject o1, jobject o2);
 	jobject collectRectangular(jarray obj);
+	jobject assemble(jobject dims, jobject parts);
 
 	/**
 	 * Convert a UTF8 encoded string into Java.

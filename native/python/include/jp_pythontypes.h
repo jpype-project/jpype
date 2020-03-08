@@ -468,6 +468,8 @@ public:
 	JPPyBuffer(PyObject* obj, int flags);
 	~JPPyBuffer();
 
+	char *getBufferPtr(std::vector<Py_ssize_t>& indices);
+
 	Py_buffer& getView()
 	{
 		return m_View;

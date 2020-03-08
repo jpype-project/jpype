@@ -233,6 +233,9 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Context_collectRectangularID = frame.GetMethodID(cls,
 				"collectRectangular",
 				"(Ljava/lang/Object;)[Ljava/lang/Object;");
+		m_Context_assembleID = frame.GetMethodID(cls,
+				"assemble",
+				"([ILjava/lang/Object;)Ljava/lang/Object;");
 
 		// Launch
 		jvalue val[2];

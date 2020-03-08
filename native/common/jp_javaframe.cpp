@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -1014,6 +1014,7 @@ bool JPJavaFrame::equals(jobject o1, jobject o2 )
 
 jobject JPJavaFrame::collectRectangular(jarray obj)
 {
+	JPCall call(*this, "collectRectangular");
 	if (m_Context->m_Context_collectRectangularID == 0)
 		return 0;
 	jvalue v;
@@ -1021,6 +1022,19 @@ jobject JPJavaFrame::collectRectangular(jarray obj)
 	return CallObjectMethodA(
 			m_Context->m_JavaContext.get(),
 			m_Context->m_Context_collectRectangularID, &v);
+}
+
+jobject JPJavaFrame::assemble(jobject dims, jobject parts)
+{
+	JPCall call(*this, "assemble");
+	if (m_Context->m_Context_collectRectangularID == 0)
+		return 0;
+	jvalue v[2];
+	v[0].l = (jobject) dims;
+	v[1].l = (jobject) parts;
+	return CallObjectMethodA(
+			m_Context->m_JavaContext.get(),
+			m_Context->m_Context_assembleID, v);
 }
 
 jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)

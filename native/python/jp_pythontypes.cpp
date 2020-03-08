@@ -458,3 +458,37 @@ JPPyBuffer::~JPPyBuffer()
 	if (m_Valid)
 		PyBuffer_Release(&m_View);
 }
+
+char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
+{
+	char *pointer = (char*) m_View.buf;
+	// No shape is just a 1D array
+	if (m_View.shape == NULL)
+	{
+		return pointer;
+	}
+
+	// No strides is C contiguous ND array
+	if (m_View.strides == NULL)
+	{
+		Py_ssize_t index = 0;
+		for (int i = 0; i < m_View.ndim; i++)
+		{
+			index = index * m_View.shape[i] + indices[i];
+		}
+		index *= m_View.itemsize;
+		return pointer + index;
+	}
+
+	// Otherwise we can be a full array
+	for (int i = 0; i < m_View.ndim; i++)
+	{
+		pointer += m_View.strides[i] * indices[i];
+		if (m_View.suboffsets != NULL && m_View.suboffsets[i] >= 0 )
+		{
+			pointer = *((char**) pointer) + m_View.suboffsets[i];
+		}
+	}
+	return pointer;
+}
+

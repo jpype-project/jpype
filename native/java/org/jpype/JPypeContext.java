@@ -61,6 +61,7 @@ import org.jpype.ref.JPypeReferenceQueue;
  */
 public class JPypeContext
 {
+
   private static JPypeContext instance = null;
   // This is the C++ portion of the context.
   private long context;
@@ -232,6 +233,42 @@ public class JPypeContext
     if (!collect(out, o, 0, shape, d))
       return null;
     return out.toArray();
+  }
+
+  private Object unpack(int size, Object parts)
+  {
+    Object e0 = Array.get(parts, 0);
+    Class c = e0.getClass();
+    int segments = Array.getLength(parts) / size;
+    Object a2 = Array.newInstance(c, size);
+    Object a1 = Array.newInstance(a2.getClass(), segments);
+    int k = 0;
+    for (int i = 0; i < segments; i++)
+    {
+      for (int j = 0; j < size; j++, k++)
+      {
+        Object o = Array.get(parts, k);
+        Array.set(a2, j, o);
+      }
+      Array.set(a1, i, a2);
+      if (i < segments - 1)
+        a2 = Array.newInstance(c, size);
+    }
+    return a1;
+  }
+
+  public Object assemble(int[] dims, Object parts)
+  {
+    int n = dims.length;
+    if (n == 1)
+      return Array.get(parts, 0);
+    if (n == 2)
+      return Array.get(unpack(dims[0], parts), 0);
+    for (int i = 0; i < n - 2; ++i)
+    {
+      parts = unpack(dims[n - i - 2], parts);
+    }
+    return parts;
   }
 
 }

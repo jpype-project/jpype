@@ -88,6 +88,10 @@ class JArray(_jpype._JObject):
         jc = _toJavaClass(tp)
         return _jpype._newArrayType(jc, dims)
 
+    @classmethod
+    def of(cls, array, dtype=None):
+        return _jpype.arrayFromBuffer(array, dtype)
+
 
 class _JArrayProto(object):
 

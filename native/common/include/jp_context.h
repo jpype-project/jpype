@@ -248,6 +248,7 @@ public:
 	jmethodID m_CallMethodID;
 	jmethodID m_Class_GetNameID;
 	jmethodID m_Context_collectRectangularID;
+	jmethodID m_Context_assembleID;
 	jmethodID m_String_ToCharArrayID;
 
 private:

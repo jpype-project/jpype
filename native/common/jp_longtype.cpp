@@ -308,3 +308,15 @@ void JPLongType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize l
 	jlong* b = (jlong*) ((char*) memory + offset);
 	frame.GetLongArrayRegion((jlongArray) a, start, len, b);
 }
+
+static void pack(jlong* d, jvalue v)
+{
+	*d = v.j;
+}
+
+PyObject *JPLongType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "j",
+			buffer, subs, base, dims);
+}

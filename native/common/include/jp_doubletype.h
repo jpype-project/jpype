@@ -83,6 +83,9 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+
+	virtual PyObject *newMultiArray(JPJavaFrame &frame,
+			JPPyBuffer& view, int subs, int base, jobject dims) override;
 } ;
 
 #endif // _JP_DOUBLE_TYPE_H_
