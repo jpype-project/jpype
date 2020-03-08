@@ -312,6 +312,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	{
 		if (self->m_View == NULL)
 			self->m_View = new JPArrayView(self->m_Array, result);
+		JP_PY_CHECK();
 		self->m_View->reference();
 		*view = self->m_View->m_Buffer;
 

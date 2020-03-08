@@ -11,16 +11,33 @@ try:
 except ImportError:
     pass
 
-class JDoubleTestCase(common.JPypeTestCase):
+class JFloatTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0+1.0/65536
         self.cls = JClass("jpype.common.Fixture")
         self.fixture = self.cls()
 
+    def compareFloatEqual(self, x,y, msg=None):
+        if x == y:
+            return
+        if x<0:
+            x = -x
+        if y<0:
+            y = -y
+        a = (x+y)/2
+        b = (x-y)
+        if b<0:
+            b = -b
+        if b<a*1e-7:
+            return
+        msg = self._formatMessage(msg, '%s == %s' % (safe_repr(first),
+             safe_repr(second)))
+        raise self.failureException(msg)
+
     @common.requireInstrumentation
     def testJPNumberFloat_int(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_int")
         with self.assertRaisesRegex(SystemError, "fault"):
             int(jd)
@@ -31,7 +48,7 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberFloat_float(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_float")
         with self.assertRaisesRegex(SystemError, "fault"):
             float(jd)
@@ -42,7 +59,7 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberFloat_str(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_str")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(jd)
@@ -53,7 +70,7 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberFloat_repr(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_repr")
         with self.assertRaisesRegex(SystemError, "fault"):
             repr(jd)
@@ -64,7 +81,7 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberFloat_compare(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_compare")
         with self.assertRaisesRegex(SystemError, "fault"):
             jd == 1
@@ -75,7 +92,7 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberFloat_hash(self):
-        jd = JDouble(1)
+        jd = JFloat(1)
         _jpype.fault("PyJPNumberFloat_hash")
         with self.assertRaises(SystemError):
             hash(jd)
@@ -86,87 +103,91 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPDoubleType::getJavaConversion")
+        _jpype.fault("JPFloatType::getJavaConversion")
         with self.assertRaises(SystemError):
-            JDouble(1.0)
+            JFloat(1.0)
 
     @common.requireInstrumentation
     def testSetArrayRangeFault(self):
-        ja = JArray(JDouble)(3)
-        _jpype.fault("JPDoubleType::setArrayRange")
+        ja = JArray(JFloat)(3)
+        _jpype.fault("JPFloatType::setArrayRange")
         with self.assertRaises(SystemError):
             ja[0:1] = [123]
         ja[0:1] = [123]
 
     def testFromJIntWiden(self):
-        self.assertEqual(JDouble(JByte(123)), 123)
-        self.assertEqual(JDouble(JShort(12345)), 12345)
-        self.assertEqual(JDouble(JInt(123456789)), 123456789)
-        self.assertEqual(JDouble(JLong(123456789)), 123456789)
+        self.assertEqual(JFloat(JByte(123)), 123)
+        self.assertEqual(JFloat(JShort(12345)), 12345)
+        self.assertEqual(JFloat(JInt(12345678)), 12345678)
+        self.assertEqual(JFloat(JLong(12345678)), 12345678)
 
     def testFromJFloatWiden(self):
-        self.assertEqual(JDouble(JFloat(12345678)), 12345678)
+        self.assertEqual(JFloat(JDouble(12345678)), 12345678)
 
     def testFromNone(self):
         with self.assertRaises(TypeError):
-            JDouble(None)
-        self.assertEqual(JDouble._canConvertToJava(None), "none")
+            JFloat(None)
+        self.assertEqual(JFloat._canConvertToJava(None), "none")
+
+    def testFromJFloat(self):
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.assertEqual(JFloat(JFloat(1.2345)), 1.2345)
 
     def testFromJDouble(self):
-        self.assertEqual(JDouble(JDouble(1.2345)), 1.2345)
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.assertEqual(JFloat(JDouble(1.2345)), 1.2345)
 
     def testUnBox(self):
-        self.assertEqual(JDouble(java.lang.Double(1.2345)), 1.2345)
+        pass
+        #with self.useEqualityFunc(self.foo):
+        #    self.assertEqual(JFloat(java.lang.Double(1.2345)), 1.2345)
 
     def testFromFloat(self):
-        self.assertEqual(JDouble(1.2345), 1.2345)
-        self.assertEqual(JDouble._canConvertToJava(1.2345), "exact")
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.assertEqual(JFloat(1.2345), 1.2345)
+        self.assertEqual(JFloat._canConvertToJava(1.2345), "implicit")
 
     def testFromLong(self):
-        self.assertEqual(JDouble(12345), 12345)
-        self.assertEqual(JDouble._canConvertToJava(12345), "implicit")
+        self.assertEqual(JFloat(12345), 12345)
+        self.assertEqual(JFloat._canConvertToJava(12345), "implicit")
 
     def testFromObject(self):
         with self.assertRaises(TypeError):
-            JDouble(object())
+            JFloat(object())
         with self.assertRaises(TypeError):
-            JDouble(JObject())
+            JFloat(JObject())
         with self.assertRaises(TypeError):
-            JDouble(JString("A"))
-        self.assertEqual(JDouble._canConvertToJava(object()), "none")
+            JFloat(JString("A"))
+        self.assertEqual(JFloat._canConvertToJava(object()), "none")
 
-    def testCallDoubleFromNone(self):
+    def testCallFloatFromNone(self):
         with self.assertRaises(TypeError):
-            self.fixture.callDouble(None)
+            self.fixture.callFloat(None)
         with self.assertRaises(TypeError):
-            self.fixture.static_double_field = None
+            self.fixture.static_float_field = None
         with self.assertRaises(TypeError):
-            self.fixture.double_field = None
+            self.fixture.float_field = None
 
-    def checkType(self, q, approx = False):
-        if approx:
-            assertion = self.assertAlmostEqual
-        else:
-            assertion = self.assertEqual
+    def checkType(self, q):
         #  Check field
-        self.fixture.double_field = q
-        assertion(self.fixture.double_field, q)
-        assertion(self.fixture.getDouble(), q)
+        self.fixture.float_field = q
+        self.assertEqual(self.fixture.float_field, q)
+        self.assertEqual(self.fixture.getFloat(), q)
         #  Check static field
-        self.cls.static_double_field = q
-        assertion(self.fixture.static_double_field, q)
-        assertion(self.fixture.getStaticDouble(), q)
-        assertion(self.cls.getStaticDouble(), q)
+        self.cls.static_float_field = q
+        self.assertEqual(self.fixture.static_float_field, q)
+        self.assertEqual(self.fixture.getStaticFloat(), q)
+        self.assertEqual(self.cls.getStaticFloat(), q)
         #  Check call
-        assertion(self.fixture.callDouble(q), q)
-        assertion(self.cls.callStaticDouble(q), q)
+        self.assertEqual(self.fixture.callFloat(q), q)
+        self.assertEqual(self.cls.callStaticFloat(q), q)
         #  Check throw
         with self.assertRaises(JException):
-            self.fixture.throwDouble()
+            self.fixture.throwFloat()
         with self.assertRaises(JException):
-            self.cls.throwStaticDouble()
+            self.cls.throwStaticFloat()
         with self.assertRaises(JException):
-            self.fixture.throwStaticDouble()
+            self.fixture.throwStaticFloat()
 
     def testCheckInt(self):
         self.checkType(1)
@@ -181,20 +202,20 @@ class JDoubleTestCase(common.JPypeTestCase):
     def testCheckNaN(self):
         import math
         nan = float("nan")
-        self.assertTrue(math.isnan(self.fixture.callDouble(nan)))
-        self.fixture.static_double_field = nan
-        self.assertTrue(math.isnan(self.fixture.static_double_field))
-        self.fixture.double_field = nan
-        self.assertTrue(math.isnan(self.fixture.double_field))
+        self.assertTrue(math.isnan(self.fixture.callFloat(nan)))
+        self.fixture.static_float_field = nan
+        self.assertTrue(math.isnan(self.fixture.static_float_field))
+        self.fixture.float_field = nan
+        self.assertTrue(math.isnan(self.fixture.float_field))
 
     def testCheckInf(self):
         import math
         inf = float("inf")
-        self.assertTrue(math.isinf(self.fixture.callDouble(inf)))
-        self.fixture.static_double_field = inf
-        self.assertTrue(math.isinf(self.fixture.static_double_field))
-        self.fixture.double_field = inf
-        self.assertTrue(math.isinf(self.fixture.double_field))
+        self.assertTrue(math.isinf(self.fixture.callFloat(inf)))
+        self.fixture.static_float_field = inf
+        self.assertTrue(math.isinf(self.fixture.static_float_field))
+        self.fixture.float_field = inf
+        self.assertTrue(math.isinf(self.fixture.float_field))
 
     def testCheckBool(self):
         self.checkType(True)
@@ -218,18 +239,17 @@ class JDoubleTestCase(common.JPypeTestCase):
         self.checkType(JShort(2**15-1))
 
     def testCheckJInt(self):
-        self.checkType(JInt(-2**31))
-        self.checkType(JInt(2**31-1))
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.checkType(JInt(-2**31+1))
+            self.checkType(JInt(2**31-1))
 
     def testCheckJLong(self):
-        self.checkType(JLong(-2**63), approx=True)
-        self.checkType(JLong(2**63-1), approx=True)
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.checkType(JLong(-2**63+1))
+            self.checkType(JLong(2**63-1))
 
     def testCheckJFloat(self):
         self.checkType(JFloat(1.515313))
-
-    def testCheckDouble(self):
-        self.checkType(JDouble(11.85193))
 
     @common.requireNumpy
     def testCheckNumpyInt8(self):
@@ -251,23 +271,25 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyInt32(self):
-        self.checkType(np.random.randint(-2**31,2**31-1, dtype=np.int32))
-        self.checkType(np.random.randint(0,2**32-1, dtype=np.uint32))
-        self.checkType(np.uint32(0))
-        self.checkType(np.uint32(2**32-1))
-        self.checkType(np.int32(-2**31))
-        self.checkType(np.int32(2**31-1))
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.checkType(np.random.randint(-2**31,2**31-1, dtype=np.int32))
+            self.checkType(np.random.randint(0,2**32-1, dtype=np.uint32))
+            self.checkType(np.uint32(0))
+            self.checkType(np.uint32(2**32-1))
+            self.checkType(np.int32(-2**31))
+            self.checkType(np.int32(2**31-1))
 
     @common.requireNumpy
     def testCheckNumpyInt64(self):
-        self.checkType(np.random.randint(-2**63,2**63-1, dtype=np.int64))
-        # FIXME OverflowError 
-        #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
-        self.checkType(np.uint64(0))
-        # FIXME OverflowError 
-        #self.checkType(np.uint64(2**64-1))
-        self.checkType(np.int64(-2**63))
-        self.checkType(np.int64(2**63-1))
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.checkType(np.random.randint(-2**63,2**63-1, dtype=np.int64))
+            # FIXME OverflowError 
+            #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
+            self.checkType(np.uint64(0))
+            # FIXME OverflowError 
+            #self.checkType(np.uint64(2**64-1))
+            self.checkType(np.int64(-2**63))
+            self.checkType(np.int64(2**63-1))
 
     @common.requireNumpy
     def testCheckNumpyFloat32(self):
@@ -275,11 +297,12 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyFloat64(self):
-        self.checkType(np.float64(np.random.rand()))
+        with self.useEqualityFunc(self.compareFloatEqual):
+            self.checkType(np.float64(np.random.rand()))
 
     def testJArrayConversionDouble(self):
-        VALUES = [float(random.random()) for i in range(10)]
-        jarr = JArray(JDouble)(VALUES)
+        VALUES = [float(random.random()) for i in range(100)]
+        jarr = JArray(JFloat)(VALUES)
         self.assertElementsAlmostEqual(VALUES, jarr)
         result = jarr[:]
         self.assertElementsAlmostEqual(VALUES, result)
@@ -294,35 +317,35 @@ class JDoubleTestCase(common.JPypeTestCase):
 
         result = jarr[3:-2]
         expected = VALUES[3:-2]
-        self.assertElementsEqual(expected, result)
+        self.assertElementsAlmostEqual(expected, result)
 
     @common.requireNumpy
     def testSetFromNPDoubleArray(self):
         a = np.random.random(100).astype(np.float64)
-        jarr = JArray(JDouble)(100)
+        jarr = JArray(JFloat)(100)
         jarr[:] = a
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
     def testInitFromNPDoubleArray(self):
         a = np.random.random(100).astype(np.float)
-        jarr = JArray(JDouble)(a)
+        jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
     def testInitFromNPDoubleArrayFloat32(self):
         a = np.random.random(100).astype(np.float32)
-        jarr = JArray(JDouble)(a)
+        jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
     def testInitFromNPDoubleArrayFloat64(self):
         a = np.random.random(100).astype(np.float64)
-        jarr = JArray(JDouble)(a)
+        jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
     def testSetArrayRange(self):
-        ja = JArray(JDouble)(3)
+        ja = JArray(JFloat)(3)
         ja[0:1] = [123]
         self.assertEqual(ja[0], 123)
         ja[0:1] = [-1]

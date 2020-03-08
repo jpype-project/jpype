@@ -72,7 +72,7 @@ class CollectionTestCase(common.JPypeTestCase):
 
     def testCollectionAddAll(self):
         l = [1, 2, 3, 4]
-        l2 = ['a','b']
+        l2 = ['a', 'b']
         jlist = jpype.JClass("java.util.ArrayList")()
         jlist.addAll(l)
         jcollection = jpype.JObject(jlist, jpype.java.util.Collection)
@@ -84,14 +84,14 @@ class CollectionTestCase(common.JPypeTestCase):
         l = [1, 2, 3, 4]
         jlist = jpype.JClass("java.util.ArrayList")()
         jlist.addAll([1, 2, 3, 4])
-        jlist[-1]=5
-        l[-1]=5
+        jlist[-1] = 5
+        l[-1] = 5
         self.assertEqual(l, list(jlist))
-        jlist[-2]=6
-        l[-2]=6
+        jlist[-2] = 6
+        l[-2] = 6
         self.assertEqual(l, list(jlist))
         with self.assertRaises(IndexError):
-            jlist[-5]=6
+            jlist[-5] = 6
 
     def testMapKeyError(self):
         hm = JClass('java.util.HashMap')()
@@ -105,7 +105,7 @@ class CollectionTestCase(common.JPypeTestCase):
         hm['alice'] = 'alice'
         hm['betty'] = 'betty'
         hm['catty'] = 'catty'
-        for p,v in hm.entrySet():
+        for p, v in hm.entrySet():
             self.assertEqual(p, v)
 
     def testTreeMapEntryIter(self):
@@ -113,7 +113,7 @@ class CollectionTestCase(common.JPypeTestCase):
         hm['alice'] = 'alice'
         hm['betty'] = 'betty'
         hm['catty'] = 'catty'
-        for p,v in hm.entrySet():
+        for p, v in hm.entrySet():
             self.assertEqual(p, v)
 
     def testSetDelItem(self):
@@ -132,12 +132,12 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertEqual(len(h.iterator().next()), 2)
 
     def testListIter(self):
-        ls = JClass('java.util.ArrayList')([0,1,2,3])
-        for i,j in enumerate(ls):
-            self.assertEqual(i,j)
+        ls = JClass('java.util.ArrayList')([0, 1, 2, 3])
+        for i, j in enumerate(ls):
+            self.assertEqual(i, j)
 
     def testEnumeration(self):
-        st = JClass('java.util.StringTokenizer')("this is a test");
+        st = JClass('java.util.StringTokenizer')("this is a test")
         out = []
         for i in st:
             out.append(str(i))
@@ -145,9 +145,7 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertEqual(" ".join(out), "this is a test")
 
     def testCollectionDelItem(self):
-        ja = JClass('java.util.ArrayList')(['1','2','3'])
+        ja = JClass('java.util.ArrayList')(['1', '2', '3'])
         jc = JObject(ja, 'java.util.Collection')
         with self.assertRaisesRegex(TypeError, 'remove'):
             del jc[1]
-
-

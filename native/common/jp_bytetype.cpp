@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -247,9 +247,16 @@ void JPByteType::getView(JPArrayView& view)
 
 void JPByteType::releaseView(JPArrayView& view)
 {
+	try
+	{
 	JPJavaFrame frame(view.getContext());
 	frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
-			(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPByteType::getBufferFormat()

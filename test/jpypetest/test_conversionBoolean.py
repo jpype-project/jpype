@@ -33,7 +33,7 @@ def haveNumpy():
 class ConversionBooleanTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = jpype.JClass("jpype.types.MethodsTest")()
+        self.Test = jpype.JClass("jpype.common.Fixture")()
 
     def testBooleanFromInt(self):
         self.assertEqual(self.Test.callBoolean(int(123)), True)

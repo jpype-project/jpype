@@ -175,16 +175,22 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 
 	// Second element is the shape of the array from which we compute the
 	// memory size, the shape, and strides
-	JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, (jintArray) item1,
-			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
-	jint* shape2 = accessor.get();
-	int dims = frame.GetArrayLength((jarray) item1);
-	ssize_t itemsize = componentType->getItemSize();
-	ssize_t sz = itemsize;
-	for (int i = 0; i < dims; ++i)
+	int dims;
+	ssize_t itemsize;
+	ssize_t sz;
 	{
-		m_Shape[i] = shape2[i];
-		sz *= m_Shape[i];
+		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, (jintArray) item1,
+				&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+		jint* shape2 = accessor.get();
+		dims = frame.GetArrayLength((jarray) item1);
+		itemsize = componentType->getItemSize();
+		sz = itemsize;
+		for (int i = 0; i < dims; ++i)
+		{
+			m_Shape[i] = shape2[i];
+			sz *= m_Shape[i];
+		}
+		accessor.abort();
 	}
 	Py_ssize_t stride = itemsize;
 	for (int i = 0; i < dims; ++i)
