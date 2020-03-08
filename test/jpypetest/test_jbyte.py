@@ -1,3 +1,4 @@
+import _jpype
 import jpype
 from jpype.types import *
 import sys

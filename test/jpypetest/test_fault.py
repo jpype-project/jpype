@@ -24,14 +24,14 @@ class FaultTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        if not hasattr(_jpype, "fault"):
-            raise common.unittest.SkipTest("no instrumentation")
 
+    @common.requireInstrumentation
     def testJPArray_new(self):
         _jpype.fault("PyJPArray_new")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(5)
 
+    @common.requireInstrumentation
     def testJPArray_init(self):
         _jpype.fault("PyJPArray_init")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -62,6 +62,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(5)
 
+    @common.requireInstrumentation
     def testJPArray_repr(self):
         ja = JArray(JInt)(5)
         _jpype.fault("PyJPArray_repr")
@@ -71,6 +72,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             repr(ja)
 
+    @common.requireInstrumentation
     def testJPArray_len(self):
         ja = JArray(JInt)(5)
         _jpype.fault("PyJPArray_len")
@@ -83,6 +85,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)
 
+    @common.requireInstrumentation
     def testJPArray_getArrayItem(self):
         ja = JArray(JInt)(5)
         _jpype.fault("PyJPArray_getArrayItem")
@@ -97,6 +100,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             ja[0]
 
+    @common.requireInstrumentation
     def testJPArray_assignSubscript(self):
         ja = JArray(JInt)(5)
         _jpype.fault("PyJPArray_assignSubscript")
@@ -122,6 +126,7 @@ class FaultTestCase(common.JPypeTestCase):
 #        with self.assertRaises(SystemError):
 #            f()
 
+    @common.requireInstrumentation
     def testJPArray_getBuffer(self):
         _jpype.fault("PyJPArray_getBuffer")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -129,6 +134,7 @@ class FaultTestCase(common.JPypeTestCase):
             m = memoryview(ja)
             del m  # lgtm [py/unnecessary-delete]
 
+    @common.requireInstrumentation
     def testJPArrayPrimitive_getBuffer(self):
         _jpype.fault("PyJPArrayPrimitive_getBuffer")
 
@@ -144,6 +150,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             f()
 
+    @common.requireInstrumentation
     def testJPArray_null(self):
         _jpype.fault("PyJPArray_init.null")
         null = JArray(JInt)(object())
@@ -164,6 +171,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             memoryview(null)
 
+    @common.requireInstrumentation
     def testJPClass_new(self):
         _jpype.fault("PyJPClass_new")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -173,6 +181,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             _jpype._JClass("foo", (_jpype._JObject,), {'__del__': None})
 
+    @common.requireInstrumentation
     def testJPClass_init(self):
         _jpype.fault("PyJPClass_init")
         with self.assertRaises(SystemError):
@@ -181,6 +190,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JClass("foo", (object,), {})
         _jpype._JClass("foo", (_jpype._JObject,), {})
 
+    @common.requireInstrumentation
     def testJPClass_getattro(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_getattro")
@@ -192,6 +202,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             js.substring
 
+    @common.requireInstrumentation
     def testJPClass_setattro(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_setattro")
@@ -205,6 +216,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             js.substring = 1
 
+    @common.requireInstrumentation
     def testJPClass_subclasscheck(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_subclasscheck")
@@ -214,6 +226,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             issubclass(js, JObject)
 
+    @common.requireInstrumentation
     def testJPClass_class(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_class")
@@ -225,6 +238,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             js.class_
 
+    @common.requireInstrumentation
     def testJPClass_setClass(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_setClass")
@@ -238,6 +252,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             js.class_ = None
 
+    @common.requireInstrumentation
     def testJPClass_hints(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_hints")
@@ -248,12 +263,14 @@ class FaultTestCase(common.JPypeTestCase):
             js._hints
         self.assertIsInstance(js._hints, _jpype._JClassHints)
 
+    @common.requireInstrumentation
     def testJPClass_setHints(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_setHints")
         with self.assertRaisesRegex(SystemError, "fault"):
             js._hints = None
 
+    @common.requireInstrumentation
     def testJPClass_cnaConvertToJava(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_canConvertToJava")
@@ -264,6 +281,7 @@ class FaultTestCase(common.JPypeTestCase):
             js._canConvertToJava("f")
         js._canConvertToJava("f")
 
+    @common.requireInstrumentation
     def testJPClass_cast(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_cast")
@@ -276,6 +294,7 @@ class FaultTestCase(common.JPypeTestCase):
             js._cast(JObject(None))
         js._cast(JObject(None))
 
+    @common.requireInstrumentation
     def testJPClass_convertToJava(self):
         js = JClass("java.lang.String")
         _jpype.fault("PyJPClass_convertToJava")
@@ -288,24 +307,28 @@ class FaultTestCase(common.JPypeTestCase):
             js._convertToJava("f")
         js._convertToJava("f")
 
+    @common.requireInstrumentation
     def testJPClassHints_new(self):
         _jpype.fault("PyJPClassHints_new")
         with self.assertRaisesRegex(SystemError, "fault"):
             _jpype._JClassHints()
         _jpype._JClassHints()
 
+    @common.requireInstrumentation
     def testJPClassHints_init(self):
         _jpype.fault("PyJPClassHints_init")
         with self.assertRaisesRegex(SystemError, "fault"):
             _jpype._JClassHints()
         _jpype._JClassHints()
 
+    @common.requireInstrumentation
     def testJPClassHints_str(self):
         _jpype.fault("PyJPClassHints_str")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(_jpype._JClassHints())
         str(_jpype._JClassHints())
 
+    @common.requireInstrumentation
     def testJPClassHints_addAttributeConversion(self):
         _jpype.fault("PyJPClassHints_addAttributeConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -319,6 +342,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JClassHints().addAttributeConversion("f", None)
         _jpype._JClassHints().addAttributeConversion("f", f)
 
+    @common.requireInstrumentation
     def testJPClassHints_addTypeConversion(self):
         _jpype.fault("PyJPClassHints_addTypeConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -364,6 +388,7 @@ class FaultTestCase(common.JPypeTestCase):
 # pyjp_module.cpp:	JP_PY_TRY("examine");
 # pyjp_module.cpp:	JP_PY_TRY("PyInit__jpype");
 
+    @common.requireInstrumentation
     def testJPMonitor_init(self):
         jo = JClass("java.lang.Object")()
         _jpype.fault("PyJPMonitor_init")
@@ -374,6 +399,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JMonitor(jo)
         _jpype._JMonitor(jo)
 
+    @common.requireInstrumentation
     def testJPMonitor_str(self):
         jo = JClass("java.lang.Object")()
         jm = _jpype._JMonitor(jo)
@@ -384,6 +410,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             str(jm)
 
+    @common.requireInstrumentation
     def testJPMonitor_enter(self):
         jo = JClass("java.lang.Object")()
         _jpype.fault("PyJPMonitor_enter")
@@ -395,6 +422,7 @@ class FaultTestCase(common.JPypeTestCase):
             with _jpype._JMonitor(jo):
                 pass
 
+    @common.requireInstrumentation
     def testJPMonitor_exit(self):
         jo = JClass("java.lang.Object")()
         _jpype.fault("PyJPMonitor_exit")
@@ -402,6 +430,7 @@ class FaultTestCase(common.JPypeTestCase):
             with _jpype._JMonitor(jo):
                 pass
 
+    @common.requireInstrumentation
     def testJPNumber_new(self):
         _jpype.fault("PyJPNumber_new")
 
@@ -416,6 +445,7 @@ class FaultTestCase(common.JPypeTestCase):
             JInt(1)
         JInt(1)
 
+    @common.requireInstrumentation
     def testJPNumberLong_int(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_int")
@@ -426,6 +456,7 @@ class FaultTestCase(common.JPypeTestCase):
             int(ji)
         int(ji)
 
+    @common.requireInstrumentation
     def testJPNumberLong_float(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_float")
@@ -436,6 +467,7 @@ class FaultTestCase(common.JPypeTestCase):
             float(ji)
         float(ji)
 
+    @common.requireInstrumentation
     def testJPNumberLong_str(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_str")
@@ -446,6 +478,7 @@ class FaultTestCase(common.JPypeTestCase):
             str(ji)
         str(ji)
 
+    @common.requireInstrumentation
     def testJPNumberLong_repr(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_repr")
@@ -456,6 +489,7 @@ class FaultTestCase(common.JPypeTestCase):
             repr(ji)
         repr(ji)
 
+    @common.requireInstrumentation
     def testJPNumberLong_compare(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_compare")
@@ -466,6 +500,7 @@ class FaultTestCase(common.JPypeTestCase):
             ji == 1
         ji == 1
 
+    @common.requireInstrumentation
     def testJPNumberLong_hash(self):
         ji = JInt(1)
         _jpype.fault("PyJPNumberLong_hash")
@@ -476,6 +511,7 @@ class FaultTestCase(common.JPypeTestCase):
             hash(ji)
         hash(ji)
 
+    @common.requireInstrumentation
     def testJPObject_new(self):
         _jpype.fault("PyJPObject_new")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -487,6 +523,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JObject()
         JString("a")
 
+    @common.requireInstrumentation
     def testJPObject_hash(self):
         jo = JClass("java.lang.Object")()
         _jpype.fault("PyJPObject_hash")
@@ -497,6 +534,7 @@ class FaultTestCase(common.JPypeTestCase):
             hash(jo)
         hash(jo)
 
+    @common.requireInstrumentation
     def testJPProxy_new(self):
         _jpype.fault("PyJPProxy_new")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -523,6 +561,7 @@ class FaultTestCase(common.JPypeTestCase):
 #        jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
 #        raise RuntimeError(jo.toString())
 
+    @common.requireInstrumentation
     def testJPProxy_dealloc(self):
         _jpype.fault("PyJPProxy_dealloc")
 
@@ -530,6 +569,7 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JProxy(None, [JClass("java.io.Serializable")])
         f()
 
+    @common.requireInstrumentation
     def testJPProxy_call(self):
         @JImplements("java.util.function.DoubleUnaryOperator")
         class f(object):
@@ -553,6 +593,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(jpype.JException):
             jo.applyAsDouble(2)
 
+    @common.requireInstrumentation
     def testJPProxy_void(self):
         @JImplements("java.util.function.Consumer")
         class f(object):
@@ -563,6 +604,7 @@ class FaultTestCase(common.JPypeTestCase):
         # FIXME segfaults
         # jo.accept(None)
 
+    @common.requireInstrumentation
     def testJPProxy_box_return(self):
         q = None
         @JImplements("java.util.function.Supplier")
@@ -582,6 +624,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(jpype.JException):
             jo.get()
 
+    @common.requireInstrumentation
     def testJPValue_alloc(self):
         _jpype.fault("PyJPValue_alloc")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -591,11 +634,13 @@ class FaultTestCase(common.JPypeTestCase):
             JInt(1)
         JInt(1)
 
+    @common.requireInstrumentation
     def testJPValue_finalize(self):
         _jpype.fault("PyJPValue_finalize")
         a = JInt(1)
         del a  # lgtm [py/unnecessary-delete]
 
+    @common.requireInstrumentation
     def testJPValue_str(self):
         js = JString("f")
         _jpype.fault("PyJPValue_str")
@@ -606,6 +651,7 @@ class FaultTestCase(common.JPypeTestCase):
             str(js)
         str(js)
 
+    @common.requireInstrumentation
     def testJPObject_getattro(self):
         jo = JString("f")
         _jpype.fault("PyJPObject_getattro")
@@ -616,64 +662,14 @@ class FaultTestCase(common.JPypeTestCase):
             jo.substring
         jo.substring
 
+    @common.requireInstrumentation
     def testJPObject_setattro(self):
         jo = JString("f")
         _jpype.fault("PyJPObject_setattro")
         with self.assertRaisesRegex(SystemError, "fault"):
             jo.substring = None
 
-    def testJPCharType(self):
-        ja = JArray(JChar)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPCharType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_char_field = object()
-        with self.assertRaises(TypeError):
-            jf().char_field = object()
-
-    def testJPShortType(self):
-        ja = JArray(JShort)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPShortType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_short_field = object()
-        with self.assertRaises(TypeError):
-            jf().short_field = object()
-
-    def testJPIntType(self):
-        ja = JArray(JInt)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPIntType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_int_field = object()
-        with self.assertRaises(TypeError):
-            jf().int_field = object()
-
-    def testJPLongType(self):
-        ja = JArray(JLong)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPLongType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_long_field = object()
-        with self.assertRaises(TypeError):
-            jf().long_field = object()
-
+    @common.requireInstrumentation
     def testJPField(self):
         jf = JClass("jpype.common.Fixture")
         jfi = jf()
@@ -708,6 +704,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             repr(si)
 
+    @common.requireInstrumentation
     def testConvertString(self):
         _jpype.fault("JPObjectType::canConvertToJava")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -716,6 +713,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JString._convertToJava("foo")
 
+    @common.requireInstrumentation
     def testJPObject(self):
         jf = JClass("jpype.common.Fixture")
         jfi = JClass("jpype.common.Fixture")()
@@ -735,6 +733,7 @@ class FaultTestCase(common.JPypeTestCase):
         self.assertEqual(i, None)
 
     @common.unittest.SkipTest
+    @common.requireInstrumentation
     def testJPTypeManagerFindClass(self):
         ja = JArray(JInt, 2)([[1, 1], [1, 1]])
         _jpype.fault("JPTypeManager::findClass")
@@ -748,6 +747,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             jo.substring(0, 1)
 
+    @common.requireInstrumentation
     def testJPTypeManagerPopulate(self):
         _jpype.fault("JPTypeManager::populateMembers")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -757,6 +757,7 @@ class FaultTestCase(common.JPypeTestCase):
             JClass("java.math.MathContext")().getPrecision()
         JClass("java.math.MathContext")
 
+    @common.requireInstrumentation
     def testJPArrayNew(self):
         ja = JArray(JInt)
         _jpype.fault("JPArray::JPArray")
@@ -767,24 +768,28 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             j[0:2:1]
 
+    @common.requireInstrumentation
     def testMethodPack(self):
         js = JString("a")
         _jpype.fault("JPMethod::packArgs")
         with self.assertRaisesRegex(SystemError, "fault"):
             js.substring(1)
 
+    @common.requireInstrumentation
     def testJArrayClassConvertToVector(self):
         Path = JClass("java.nio.file.Paths")
         _jpype.fault("JPArrayClass::convertToJavaVector")
         with self.assertRaisesRegex(SystemError, "fault"):
             Path.get("foo", "bar")
 
+    @common.requireInstrumentation
     def testJArrayGetJavaConversion(self):
         ja = JArray(JInt)
         _jpype.fault("JPArrayClass::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja._canConvertToJava(object())
 
+    @common.requireInstrumentation
     def testJArrayConvertToPythonObject(self):
         jl = JClass('java.util.ArrayList')()
         jl.add(JArray(JInt)(3))
@@ -792,26 +797,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             jl.get(0)
 
-    def testJCharGetJavaConversion(self):
-        _jpype.fault("JPCharType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JChar._canConvertToJava(object())
-
-    def testJShortGetJavaConversion(self):
-        _jpype.fault("JPShortType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JShort._canConvertToJava(object())
-
-    def testJIntGetJavaConversion(self):
-        _jpype.fault("JPIntType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JInt._canConvertToJava(object())
-
-    def testJLongGetJavaConversion(self):
-        _jpype.fault("JPLongType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JLong._canConvertToJava(object())
-
+    @common.requireInstrumentation
     def testJBoxedGetJavaConversion(self):
         _jpype.fault("JPBoxedType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -838,6 +824,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Double._canConvertToJava(object())
 
+    @common.requireInstrumentation
     def testJPJavaFrame(self):
         _jpype.fault("JPJavaFrame::JPJavaFrame::NewObjectA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -855,6 +842,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             raise SystemError("fault")
 
+    @common.requireInstrumentation
     def testJPJavaFrameByteField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticByteField")
@@ -870,6 +858,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.byte_field = 0
 
+    @common.requireInstrumentation
     def testJPJavaFrameByteMethods(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -883,6 +872,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getByte(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameShortField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticShortField")
@@ -898,6 +888,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.short_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameShortMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -911,6 +902,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getShort(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameIntField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticIntField")
@@ -926,6 +918,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.int_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameIntMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -939,6 +932,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getInt(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameLongField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticLongField")
@@ -954,6 +948,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.long_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameLongMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -967,6 +962,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getLong(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameFloatField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticFloatField")
@@ -982,6 +978,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.float_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameFloatMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -995,6 +992,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getFloat(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameDoubleField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticDoubleField")
@@ -1010,6 +1008,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.double_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameDoubleMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -1023,6 +1022,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getDouble(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameCharField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticCharField")
@@ -1038,6 +1038,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.char_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameCharMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -1051,6 +1052,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getChar(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameBooleanField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticBooleanField")
@@ -1066,6 +1068,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.bool_field = 1
 
+    @common.requireInstrumentation
     def testJPJavaFrameBooleanMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -1079,6 +1082,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getBool(obj)
 
+    @common.requireInstrumentation
     def testJPJavaFrameObjectField(self):
         fields = JClass("jpype.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticObjectField")
@@ -1094,6 +1098,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             fields.object_field = None
 
+    @common.requireInstrumentation
     def testJPJavaFrameObjectMethod(self):
         cls = JClass("jpype.common.Fixture")
         obj = cls()
@@ -1107,114 +1112,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             cls.getObject(obj)
 
-    def testJPJavaFrameShortArray(self):
-        _jpype.fault("JPJavaFrame::NewShortArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JShort)(1)
-        ja = JArray(JShort)(5)
-        _jpype.fault("JPJavaFrame::SetShortArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetShortArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            print(ja[0])
-        _jpype.fault("JPJavaFrame::GetShortArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
-
-        def f():
-            # Special case no fault is allowed
-            memoryview(ja[0:3])
-        f()
-
-    def testJPJavaFrameIntArray(self):
-        _jpype.fault("JPJavaFrame::NewIntArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JInt)(1)
-        ja = JArray(JInt)(5)
-        _jpype.fault("JPJavaFrame::SetIntArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetIntArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            print(ja[0])
-        _jpype.fault("JPJavaFrame::GetIntArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
-
-        def f():
-            # Special case no fault is allowed
-            memoryview(ja[0:3])
-        f()
-
-    def testJPJavaFrameLongArray(self):
-        _jpype.fault("JPJavaFrame::NewLongArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JLong)(1)
-        ja = JArray(JLong)(5)
-        _jpype.fault("JPJavaFrame::SetLongArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetLongArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            print(ja[0])
-        _jpype.fault("JPJavaFrame::GetLongArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
-
-        def f():
-            # Special case no fault is allowed
-            memoryview(ja[0:3])
-        f()
-
-    def testJPJavaFrameCharArray(self):
-        _jpype.fault("JPJavaFrame::NewCharArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JChar)(1)
-        ja = JArray(JChar)(5)
-        _jpype.fault("JPJavaFrame::SetCharArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetCharArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            print(ja[0])
-        _jpype.fault("JPJavaFrame::GetCharArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
-
-        def f():
-            # Special case no fault is allowed
-            memoryview(ja[0:3])
-        f()
-
+    @common.requireInstrumentation
     def testJPJavaFrameBooleanArray(self):
         _jpype.fault("JPJavaFrame::NewBooleanArray")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1242,6 +1140,7 @@ class FaultTestCase(common.JPypeTestCase):
             memoryview(ja[0:3])
         f()
 
+    @common.requireInstrumentation
     def testJPJavaFrameMonitor(self):
         jo = JClass("java.lang.Object")()
         _jpype.fault("JPJavaFrame::MonitorEnter")
@@ -1253,6 +1152,7 @@ class FaultTestCase(common.JPypeTestCase):
             with syncronized(jo):
                 pass
 
+    @common.requireInstrumentation
     def testJPJavaFrameMonitor(self):
         _jpype.fault("JPJavaFrame::FromReflectedMethod")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1264,6 +1164,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             raise SystemError("fault")
 
+    @common.requireInstrumentation
     def testJPJavaFrameObjectArray(self):
         _jpype.fault("JPJavaFrame::NewObjectArray")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1276,6 +1177,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
 
+    @common.requireInstrumentation
     def testJPJavaFrameVoidMethod(self):
         _jpype.fault("JPJavaFrame::CallStaticVoidMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1286,12 +1188,15 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::CallVoidMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
             raise SystemError("fault")
+        _jpype.fault("None")
 
+    @common.requireInstrumentation
     def testJPJavaFrameAssignable(self):
         _jpype.fault("JPJavaFrame::IsAssignableFrom")
         with self.assertRaisesRegex(SystemError, "fault"):
             issubclass(JString, JObject)
 
+    @common.requireInstrumentation
     def testJPJavaFrameString(self):
         _jpype.fault("JPJavaFrame::NewString")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1307,6 +1212,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             str(JString("a"))
 
+    @common.requireInstrumentation
     def testJPJavaFrameArrayLength(self):
         _jpype.fault("JPJavaFrame::GetArrayLength")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1329,6 +1235,7 @@ class FaultTestCase(common.JPypeTestCase):
 #        with self.assertRaisesRegex(SystemError, "fault"):
 #            raise SystemError("fault")
 
+    @common.requireInstrumentation
     def testJPClassTypeGetJavaConversion(self):
         jc = JClass("java.lang.StringBuilder")
         _jpype.fault("JPClass::getJavaConversion")

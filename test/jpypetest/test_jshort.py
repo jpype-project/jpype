@@ -11,10 +11,10 @@ try:
 except ImportError:
     pass
 
-VALUES = [random.randint(-2**31, 2**31-1) for i in range(10)]
+VALUES = [random.randint(-2**15, 2**15-1) for i in range(10)]
 
 
-class JIntTestCase(common.JPypeTestCase):
+class JShortTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.cls = JClass("jpype.common.Fixture")
@@ -22,7 +22,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_int(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_int")
         with self.assertRaisesRegex(SystemError, "fault"):
             int(jd)
@@ -33,7 +33,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_float(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_float")
         with self.assertRaisesRegex(SystemError, "fault"):
             float(jd)
@@ -44,7 +44,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_str(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_str")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(jd)
@@ -55,7 +55,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_repr(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_repr")
         with self.assertRaisesRegex(SystemError, "fault"):
             repr(jd)
@@ -66,7 +66,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_compare(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_compare")
         with self.assertRaisesRegex(SystemError, "fault"):
             jd == 1
@@ -77,7 +77,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPNumberLong_hash(self):
-        jd = JInt(1)
+        jd = JShort(1)
         _jpype.fault("PyJPNumberLong_hash")
         with self.assertRaises(SystemError):
             hash(jd)
@@ -88,130 +88,129 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPIntType::getJavaConversion")
+        _jpype.fault("JPShortType::getJavaConversion")
         with self.assertRaises(SystemError):
-            JInt(1.0)
+            JShort(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPIntType::getJavaConversion")
+        _jpype.fault("JPShortType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JInt._canConvertToJava(object())
+            JShort._canConvertToJava(object())
 
     @common.requireInstrumentation
     def testArrayFault(self):
-        ja = JArray(JInt)(5)
-        _jpype.fault("JPJavaFrame::NewIntArray")
+        ja = JArray(JShort)(5)
+        _jpype.fault("JPJavaFrame::NewShortArray")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JInt)(1)
-        _jpype.fault("JPJavaFrame::SetIntArrayRegion")
+            JArray(JShort)(1)
+        _jpype.fault("JPJavaFrame::SetShortArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = 0
-        _jpype.fault("JPJavaFrame::GetIntArrayRegion")
+        _jpype.fault("JPJavaFrame::GetShortArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
-        _jpype.fault("JPJavaFrame::GetIntArrayElements")
+        _jpype.fault("JPJavaFrame::GetShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
-        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
 
         def f():
             # Special case no fault is allowed
             memoryview(ja[0:3])
         f()
-        _jpype.fault("JPIntType::setArrayRange")
+        _jpype.fault("JPShortType::setArrayRange")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[1:3] = [0, 0]
 
-    def testFromJIntWiden(self):
-        self.assertEqual(JInt(JByte(123)), 123)
-        self.assertEqual(JInt(JShort(12345)), 12345)
-        self.assertEqual(JInt(JInt(12345678)), 12345678)
-        self.assertEqual(JInt(JLong(12345678)), 12345678)
-
-    def testFromJIntWiden(self):
-        self.assertEqual(JInt(JDouble(12345678)), 12345678)
+    def testFromJShortWiden(self):
+        self.assertEqual(JShort(JByte(123)), 123)
+        self.assertEqual(JShort(JShort(12345)), 12345)
+        with self.assertRaises(OverflowError):
+            JShort(JInt(12345678))
+        with self.assertRaises(OverflowError):
+            JShort(JLong(12345678))
 
     def testFromNone(self):
         with self.assertRaises(TypeError):
-            JInt(None)
-        self.assertEqual(JInt._canConvertToJava(None), "none")
+            JShort(None)
+        self.assertEqual(JShort._canConvertToJava(None), "none")
 
     def testUnBox(self):
-        self.assertEqual(JInt(java.lang.Double(1.2345)), 1)
+        self.assertEqual(JShort(java.lang.Double(1.2345)), 1)
 
     def testFromFloat(self):
-        self.assertEqual(JInt._canConvertToJava(1.2345), "none")
+        self.assertEqual(JShort._canConvertToJava(1.2345), "none")
 
     def testFromLong(self):
-        self.assertEqual(JInt(12345), 12345)
-        self.assertEqual(JInt._canConvertToJava(12345), "implicit")
+        self.assertEqual(JShort(12345), 12345)
+        self.assertEqual(JShort._canConvertToJava(12345), "implicit")
 
     def testFromObject(self):
         with self.assertRaises(TypeError):
-            JInt(object())
+            JShort(object())
         with self.assertRaises(TypeError):
-            JInt(JObject())
+            JShort(JObject())
         with self.assertRaises(TypeError):
-            JInt(JString("A"))
-        self.assertEqual(JInt._canConvertToJava(object()), "none")
-        ja = JArray(JInt)(5)
+            JShort(JString("A"))
+        self.assertEqual(JShort._canConvertToJava(object()), "none")
+        ja = JArray(JShort)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
         jf = JClass("jpype.common.Fixture")
         with self.assertRaises(TypeError):
-            jf.static_int_field = object()
+            jf.static_short_field = object()
         with self.assertRaises(TypeError):
-            jf().int_field = object()
+            jf().short_field = object()
 
     def testCallFloatFromNone(self):
         with self.assertRaises(TypeError):
-            self.fixture.callFloat(None)
+            self.fixture.callShort(None)
         with self.assertRaises(TypeError):
-            self.fixture.static_int_field = None
+            self.fixture.static_short_field = None
         with self.assertRaises(TypeError):
-            self.fixture.int_field = None
+            self.fixture.short_field = None
 
     def testThrow(self):
         #  Check throw
         with self.assertRaises(JException):
-            self.fixture.throwInt()
+            self.fixture.throwFloat()
         with self.assertRaises(JException):
-            self.cls.throwStaticInt()
+            self.cls.throwStaticFloat()
         with self.assertRaises(JException):
-            self.fixture.throwStaticInt()
+            self.fixture.throwStaticFloat()
 
     def checkType(self, q):
         #  Check field
-        self.fixture.int_field = q
-        self.assertEqual(self.fixture.int_field, q)
-        self.assertEqual(self.fixture.getInt(), q)
+        self.fixture.short_field = q
+        self.assertEqual(self.fixture.short_field, q)
+        self.assertEqual(self.fixture.getShort(), q)
         #  Check static field
-        self.cls.static_int_field = q
-        self.assertEqual(self.fixture.static_int_field, q)
-        self.assertEqual(self.fixture.getStaticInt(), q)
-        self.assertEqual(self.cls.getStaticInt(), q)
+        self.cls.static_short_field = q
+        self.assertEqual(self.fixture.static_short_field, q)
+        self.assertEqual(self.fixture.getStaticShort(), q)
+        self.assertEqual(self.cls.getStaticShort(), q)
         #  Check call
-        self.assertEqual(self.fixture.callInt(q), q)
-        self.assertEqual(self.cls.callStaticInt(q), q)
+        self.assertEqual(self.fixture.callShort(q), q)
+        self.assertEqual(self.cls.callStaticShort(q), q)
 
     def checkTypeFail(self, q, exc=TypeError):
         with self.assertRaises(exc):
-            self.fixture.int_field = q
+            self.fixture.short_field = q
         with self.assertRaises(exc):
-            self.fixture.callInt(q)
+            self.fixture.callShort(q)
         with self.assertRaises(exc):
-            self.fixture.callStaticInt(q)
+            self.fixture.callStaticShort(q)
 
     def testCastFloat(self):
-        self.fixture.int_field = JInt(6.0)
-        self.assertEqual(self.fixture.int_field, 6)
+        self.fixture.short_field = JShort(6.0)
+        self.assertEqual(self.fixture.short_field, 6)
 
     def testCheckInt(self):
         self.checkType(1)
@@ -220,10 +219,10 @@ class JIntTestCase(common.JPypeTestCase):
         self.checkTypeFail(2.0)
 
     def testCheckRange(self):
-        self.checkType(2**31-1)
-        self.checkType(-2**31)
-        self.checkTypeFail(2**31, exc=OverflowError)
-        self.checkTypeFail(-2**31-1, exc=OverflowError)
+        self.checkType(2**15-1)
+        self.checkType(-2**15)
+        self.checkTypeFail(2**15, exc=OverflowError)
+        self.checkTypeFail(-2**15-1, exc=OverflowError)
 
     def testCheckBool(self):
         self.checkType(True)
@@ -245,8 +244,8 @@ class JIntTestCase(common.JPypeTestCase):
         self.checkType(JShort(2**15-1))
 
     def testCheckJInt(self):
-        self.checkType(JInt(-2**31+1))
-        self.checkType(JInt(2**31-1))
+        self.checkTypeFail(JInt(-2**31+1))
+        self.checkTypeFail(JInt(2**31-1))
 
     def testCheckJLong(self):
         self.checkTypeFail(JLong(-2**63+1))
@@ -264,9 +263,8 @@ class JIntTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testCheckNumpyInt16(self):
         self.checkType(np.random.randint(-2**15, 2**15-1, dtype=np.int16))
-        self.checkType(np.random.randint(0, 2**16-1, dtype=np.uint16))
         self.checkType(np.uint16(0))
-        self.checkType(np.uint16(2**16-1))
+        self.checkTypeFail(np.uint16(2**16-1), exc=OverflowError)
         self.checkType(np.int16(-2**15))
         self.checkType(np.int16(2**15-1))
 
@@ -274,8 +272,8 @@ class JIntTestCase(common.JPypeTestCase):
     def testCheckNumpyInt32(self):
         self.checkType(np.uint32(0))
         self.checkTypeFail(np.uint32(2**32-1), exc=OverflowError)
-        self.checkType(np.int32(-2**31))
-        self.checkType(np.int32(2**31-1))
+        self.checkTypeFail(np.int32(-2**31), exc=OverflowError)
+        self.checkTypeFail(np.int32(2**31-1), exc=OverflowError)
 
     @common.requireNumpy
     def testCheckNumpyInt64(self):
@@ -284,8 +282,8 @@ class JIntTestCase(common.JPypeTestCase):
         #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
         # FIXME OverflowError
         # self.checkType(np.uint64(2**64-1))
-        self.checkTypeFail(np.int64(-2**63), OverflowError)
-        self.checkTypeFail(np.int64(2**63-1), OverflowError)
+        self.checkTypeFail(np.int64(-2**63), exc=OverflowError)
+        self.checkTypeFail(np.int64(2**63-1), exc=OverflowError)
 
     @common.requireNumpy
     def testCheckNumpyFloat32(self):
@@ -297,21 +295,21 @@ class JIntTestCase(common.JPypeTestCase):
 
     def checkArrayType(self, a, expected):
         # Check init
-        ja = JArray(JInt)(a)
+        ja = JArray(JShort)(a)
         self.assertElementsEqual(ja, expected)
-        ja = JArray(JInt)(len(a))
+        ja = JArray(JShort)(len(a))
         ja[:] = a
         self.assertElementsEqual(ja, expected)
         return ja
 
     def checkArrayTypeFail(self, a):
         # Check init
-        ja = JArray(JInt)(a)
-        ja = JArray(JInt)(len(a))
+        ja = JArray(JShort)(a)
+        ja = JArray(JShort)(len(a))
         ja[:] = a
 
     def testArrayConversion(self):
-        a = [random.randint(-2**31, 2**31) for i in range(100)]
+        a = [random.randint(-2**15, 2**15-1) for i in range(100)]
         jarr = self.checkArrayType(a, a)
         result = jarr[2:10]
         self.assertEqual(len(a[2:10]), len(result))
@@ -329,7 +327,7 @@ class JIntTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testArrayInitFromNPInt(self):
         a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int)
-        self.checkArrayType(a, a)
+        self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy
     def testArrayInitFromNPInt8(self):
@@ -344,25 +342,25 @@ class JIntTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testArrayInitFromNPInt32(self):
         a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int32)
-        self.checkArrayType(a, a)
+        self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy
     def testArrayInitFromNPInt64(self):
         a = np.random.randint(-2**63, 2**63 - 1, size=100, dtype=np.int64)
-        self.checkArrayType(a, a.astype(np.int32))
+        self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy
     def testArrayInitFromNPFloat32(self):
         a = np.random.random(100).astype(np.float32)
-        self.checkArrayType(a, a.astype(np.int32))
+        self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy
     def testArrayInitFromNPFloat64(self):
         a = np.random.random(100).astype(np.float64)
-        self.checkArrayType(a, a.astype(np.int32))
+        self.checkArrayType(a, a.astype(np.int16))
 
     def testArraySetRange(self):
-        ja = JArray(JInt)(3)
+        ja = JArray(JShort)(3)
         ja[0:1] = [123]
         self.assertEqual(ja[0], 123)
         ja[0:1] = [-1]
@@ -373,32 +371,32 @@ class JIntTestCase(common.JPypeTestCase):
             ja[0:1] = [object()]
 
     def testArrayConversionFail(self):
-        jarr = JArray(JInt)(VALUES)
+        jarr = JArray(JShort)(VALUES)
         with self.assertRaises(TypeError):
             jarr[1] = 'a'
 
     def testArraySliceLength(self):
-        jarr = JArray(JInt)(VALUES)
+        jarr = JArray(JShort)(VALUES)
         jarr[1:2] = [1]
         with self.assertRaises(ValueError):
             jarr[1:2] = [1, 2, 3]
 
     def testArrayConversionInt(self):
-        jarr = JArray(JInt)(VALUES)
+        jarr = JArray(JShort)(VALUES)
         result = jarr[0: len(jarr)]
         self.assertElementsEqual(VALUES, result)
         result = jarr[2:10]
         self.assertElementsEqual(VALUES[2:10], result)
 
     def testArrayConversionError(self):
-        jarr = JArray(JInt, 1)(10)
+        jarr = JArray(JShort, 1)(10)
         with self.assertRaises(TypeError):
             jarr[1:2] = [dict()]
         # -1 is returned by python, if conversion fails also, ensure this works
         jarr[1:2] = [-1]
 
     def testArrayClone(self):
-        array = JArray(JInt, 2)([[1, 2], [3, 4]])
+        array = JArray(JShort, 2)([[1, 2], [3, 4]])
         carray = array.clone()
         # Verify the first dimension is cloned
         self.assertFalse(array.equals(carray))
@@ -407,14 +405,14 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArrayGetSlice(self):
         contents = VALUES
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         self.assertEqual(list(array[1:]), contents[1:])
         self.assertEqual(list(array[:-1]), contents[:-1])
         self.assertEqual(list(array[1:-1]), contents[1:-1])
 
     def testArraySetSlice(self):
         contents = [1, 2, 3, 4]
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         array[1:] = [5, 6, 7]
         contents[1:] = [5, 6, 7]
         self.assertEqual(list(array[:]), contents[:])
@@ -424,7 +422,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArrayGetSliceStep(self):
         contents = VALUES
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         self.assertEqual(list(array[::2]), contents[::2])
         self.assertEqual(list(array[::3]), contents[::3])
         self.assertEqual(list(array[::4]), contents[::4])
@@ -437,7 +435,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArraySliceStepNeg(self):
         contents = VALUES
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         self.assertEqual(list(array[::-1]), contents[::-1])
         self.assertEqual(list(array[::-2]), contents[::-2])
         self.assertEqual(list(array[::-3]), contents[::-3])
@@ -449,27 +447,27 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArraySetArraySliceStep(self):
         contents = [1, 2, 3, 4, 5, 6]
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         array[::2] = [5, 6, 7]
         contents[::2] = [5, 6, 7]
         self.assertEqual(list(array[:]), contents[:])
 
     def testArrayEquals(self):
         contents = VALUES
-        array = JArray(JInt)(contents)
-        array2 = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
+        array2 = JArray(JShort)(contents)
         self.assertEqual(array, array)
         self.assertNotEqual(array, array2)
 
     def testArrayIter(self):
         contents = VALUES
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         contents2 = [i for i in array]
         self.assertEqual(contents, contents2)
 
     def testArrayGetOutOfBounds(self):
         contents = [1, 2, 3, 4]
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         with self.assertRaises(IndexError):
             array[5]
         self.assertEqual(array[-1], contents[-1])
@@ -479,7 +477,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArraySetOutOfBounds(self):
         contents = [1, 2, 3, 4]
-        array = JArray(JInt)(contents)
+        array = JArray(JShort)(contents)
         with self.assertRaises(IndexError):
             array[5] = 1
         array[-1] = 5
@@ -491,7 +489,7 @@ class JIntTestCase(common.JPypeTestCase):
             array[-5] = 1
 
     def testArraySliceCast(self):
-        JA = JArray(JInt)
+        JA = JArray(JShort)
         ja = JA(VALUES)
         ja2 = ja[::2]
         jo = jpype.JObject(ja2, object)
@@ -503,7 +501,7 @@ class JIntTestCase(common.JPypeTestCase):
 
     def testArrayReverse(self):
         n = list(VALUES)
-        ja = JArray(JInt)(n)
+        ja = JArray(JShort)(n)
         a = [i for i in reversed(ja)]
         n = [i for i in reversed(n)]
         self.assertEqual(a, n)

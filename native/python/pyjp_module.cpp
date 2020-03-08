@@ -490,12 +490,12 @@ PyObject* examine(PyObject *module, PyObject *other)
 uint32_t _PyModule_fault_code = -1;
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
-	if (PyTuple_Size(args) != 1)
+	if (args == Py_None)
 	{
-		_PyModule_fault_code = -1;
+		_PyModule_fault_code = 0;
 		Py_RETURN_NONE;
 	}
-	string code = JPPyString::asStringUTF8(PyTuple_GetItem(args, 0));
+	string code = JPPyString::asStringUTF8(args);
 	uint32_t u = 0;
 	for (size_t i = 0; i < code.size(); ++i)
 		u = u * 0x1a481023 + code[i];
@@ -525,7 +525,7 @@ static PyMethodDef moduleMethods[] = {
 
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
 #ifdef JP_INSTRUMENTATION
-	{"fault", (PyCFunction) (&PyJPModule_fault), METH_VARARGS, ""},
+	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
 #endif
 	// sentinel
 	{NULL}

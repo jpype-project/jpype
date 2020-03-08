@@ -35,7 +35,9 @@ def requireInstrumentation(func):
         import _jpype
         if not hasattr(_jpype, "fault"):
             raise unittest.SkipTest("instrumentation required")
-        return func(self)
+        rc = func(self)
+        _jpype.fault(None)
+        return rc
     return f
 
 
