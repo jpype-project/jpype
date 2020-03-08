@@ -98,6 +98,53 @@ class JDoubleTestCase(common.JPypeTestCase):
             ja[0:1] = [123]
         ja[0:1] = [123]
 
+    @common.requireInstrumentation
+    def testJPDoubleFaults(self):
+        ja = JArray(JDouble)(5)  # lgtm [py/similar-function]
+        _jpype.fault("JPDoubleType::setArrayRange")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[1:3] = [0, 0]
+        with self.assertRaises(TypeError):
+            ja[1] = object()
+        jf = JClass("jpype.common.Fixture")
+        with self.assertRaises(TypeError):
+            jf.static_double_field = object()
+        with self.assertRaises(TypeError):
+            jf().double_field = object()
+
+    @common.requireInstrumentation
+    def testJDoubleGetJavaConversion(self):
+        _jpype.fault("JPDoubleType::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JDouble._canConvertToJava(object())
+
+    @common.requireInstrumentation
+    def testJPJavaFrameDoubleArray(self):
+        _jpype.fault("JPJavaFrame::NewDoubleArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JDouble)(1)
+        ja = JArray(JDouble)(5)
+        _jpype.fault("JPJavaFrame::SetDoubleArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = 0
+        _jpype.fault("JPJavaFrame::GetDoubleArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+        _jpype.fault("JPJavaFrame::GetDoubleArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            memoryview(ja[0:3])
+        _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
+
     def testFromJIntWiden(self):
         self.assertEqual(JDouble(JByte(123)), 123)
         self.assertEqual(JDouble(JShort(12345)), 12345)

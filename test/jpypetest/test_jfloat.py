@@ -115,6 +115,53 @@ class JFloatTestCase(common.JPypeTestCase):
             ja[0:1] = [123]
         ja[0:1] = [123]
 
+    @common.requireInstrumentation
+    def testJPFloatFault(self):
+        ja = JArray(JFloat)(5)  # lgtm [py/similar-function]
+        _jpype.fault("JPFloatType::setArrayRange")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[1:3] = [0, 0]
+        with self.assertRaises(TypeError):
+            ja[1] = object()
+        jf = JClass("jpype.common.Fixture")
+        with self.assertRaises(TypeError):
+            jf.static_float_field = object()
+        with self.assertRaises(TypeError):
+            jf().float_field = object()
+
+    @common.requireInstrumentation
+    def testJFloatGetJavaConversion(self):
+        _jpype.fault("JPFloatType::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JFloat._canConvertToJava(object())
+
+    @common.requireInstrumentation
+    def testJPJavaFrameFloatArray(self):
+        _jpype.fault("JPJavaFrame::NewFloatArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JFloat)(1)
+        ja = JArray(JFloat)(5)
+        _jpype.fault("JPJavaFrame::SetFloatArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = 0
+        _jpype.fault("JPJavaFrame::GetFloatArrayRegion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+        _jpype.fault("JPJavaFrame::GetFloatArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            memoryview(ja[0:3])
+        _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
+
     def testFromJIntWiden(self):
         self.assertEqual(JFloat(JByte(123)), 123)
         self.assertEqual(JFloat(JShort(12345)), 12345)

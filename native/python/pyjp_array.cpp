@@ -390,9 +390,9 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		return 0;
 	} catch (JPypeException &ex)
 	{
-
 		PyJPArray_releaseBuffer(self, view);
-		throw ex;
+		ex.toPython();
+		return -1;
 	}
 	JP_PY_CATCH(-1);
 }

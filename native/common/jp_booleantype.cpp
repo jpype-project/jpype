@@ -250,9 +250,16 @@ void JPBooleanType::getView(JPArrayView& view)
 
 void JPBooleanType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
 			(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPBooleanType::getBufferFormat()

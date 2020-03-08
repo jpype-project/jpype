@@ -476,31 +476,6 @@ class FaultTestCase(common.JPypeTestCase):
             hash(ji)
         hash(ji)
 
-    def testJPChar_new(self):
-        _jpype.fault("PyJPChar_new")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JChar("a")
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JChar("a")
-        JChar("a")
-
-    def testJPChar_str(self):
-        jc = JChar("a")
-        _jpype.fault("PyJPChar_str")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            str(jc)
-        _jpype.fault("PyJPModule_getContext")
-        str(jc)
-
-    def testJPBoolean_str(self):
-        jb = JBoolean(True)
-        _jpype.fault("PyJPBoolean_str")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            str(jb)
-        _jpype.fault("PyJPModule_getContext")
-        str(jb)
-
     def testJPObject_new(self):
         _jpype.fault("PyJPObject_new")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -647,19 +622,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             jo.substring = None
 
-    def testJPBooleanType(self):
-        ja = JArray(JBoolean)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPBooleanType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_bool_field = object()
-        with self.assertRaises(TypeError):
-            jf().bool_field = object()
-
     def testJPCharType(self):
         ja = JArray(JChar)(5)  # lgtm [py/similar-function]
         _jpype.fault("JPCharType::setArrayRange")
@@ -724,32 +686,6 @@ class FaultTestCase(common.JPypeTestCase):
             jf.static_long_field = object()
         with self.assertRaises(TypeError):
             jf().long_field = object()
-
-    def testJPFloatType(self):
-        ja = JArray(JFloat)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPFloatType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_float_field = object()
-        with self.assertRaises(TypeError):
-            jf().float_field = object()
-
-    def testJPDoubleType(self):
-        ja = JArray(JDouble)(5)  # lgtm [py/similar-function]
-        _jpype.fault("JPDoubleType::setArrayRange")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja[1:3] = [0, 0]
-        with self.assertRaises(TypeError):
-            ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
-        with self.assertRaises(TypeError):
-            jf.static_double_field = object()
-        with self.assertRaises(TypeError):
-            jf().double_field = object()
 
     def testJPField(self):
         jf = JClass("jpype.common.Fixture")
@@ -869,11 +805,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             jl.get(0)
 
-    def testJBooleanGetJavaConversion(self):
-        _jpype.fault("JPBooleanType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JBoolean._canConvertToJava(object())
-
     def testJCharGetJavaConversion(self):
         _jpype.fault("JPCharType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -898,16 +829,6 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPLongType::getJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JLong._canConvertToJava(object())
-
-    def testJFloatGetJavaConversion(self):
-        _jpype.fault("JPFloatType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JFloat._canConvertToJava(object())
-
-    def testJDoubleGetJavaConversion(self):
-        _jpype.fault("JPDoubleType::getJavaConversion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JDouble._canConvertToJava(object())
 
     def testJBoxedGetJavaConversion(self):
         _jpype.fault("JPBoxedType::getJavaConversion")
@@ -1215,9 +1136,9 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::GetByteArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
-        # FIXME
-        #_jpype.fault("JPJavaFrame::GetByteArrayElements")
-        #memoryview(ja[0:3])
+        _jpype.fault("JPJavaFrame::GetByteArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0:3] = bytes([1,2,3])
@@ -1234,120 +1155,133 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::NewShortArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JShort)(1)
+        ja = JArray(JShort)(5)
         _jpype.fault("JPJavaFrame::SetShortArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0] = 0
         _jpype.fault("JPJavaFrame::GetShortArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            print(ja[0])
         _jpype.fault("JPJavaFrame::GetShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseShortArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
     def testJPJavaFrameIntArray(self):
         _jpype.fault("JPJavaFrame::NewIntArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(1)
+        ja = JArray(JInt)(5)
         _jpype.fault("JPJavaFrame::SetIntArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0] = 0
         _jpype.fault("JPJavaFrame::GetIntArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            print(ja[0])
         _jpype.fault("JPJavaFrame::GetIntArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
     def testJPJavaFrameLongArray(self):
         _jpype.fault("JPJavaFrame::NewLongArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JLong)(1)
+        ja = JArray(JLong)(5)
         _jpype.fault("JPJavaFrame::SetLongArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0] = 0
         _jpype.fault("JPJavaFrame::GetLongArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            print(ja[0])
         _jpype.fault("JPJavaFrame::GetLongArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseLongArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
-    def testJPJavaFrameFloatArray(self):
-        _jpype.fault("JPJavaFrame::NewFloatArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JFloat)(1)
-        _jpype.fault("JPJavaFrame::SetFloatArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::GetFloatArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::GetFloatArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::ReleaseFloatArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
 
-    def testJPJavaFrameDoubleArray(self):
-        _jpype.fault("JPJavaFrame::NewDoubleArray")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JDouble)(1)
-        _jpype.fault("JPJavaFrame::SetDoubleArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::GetDoubleArrayRegion")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::GetDoubleArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
-        _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
 
     def testJPJavaFrameCharArray(self):
         _jpype.fault("JPJavaFrame::NewCharArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JChar)(1)
+        ja = JArray(JChar)(5)
         _jpype.fault("JPJavaFrame::SetCharArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0] = 0
         _jpype.fault("JPJavaFrame::GetCharArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            print(ja[0])
         _jpype.fault("JPJavaFrame::GetCharArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
     def testJPJavaFrameBooleanArray(self):
         _jpype.fault("JPJavaFrame::NewBooleanArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JBoolean)(1)
+        ja = JArray(JBoolean)(5)
         _jpype.fault("JPJavaFrame::SetBooleanArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0] = 0
         _jpype.fault("JPJavaFrame::GetBooleanArrayRegion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            print(ja[0])
         _jpype.fault("JPJavaFrame::GetBooleanArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
-            raise SystemError("fault")
+            ja[0:3] = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        def f():
+            # Special case no fault is allowed
+            memoryview(ja[0:3])
+        f()
 
     def testJPJavaFrameMonitor(self):
         jo = JClass("java.lang.Object")()

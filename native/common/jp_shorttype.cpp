@@ -278,9 +278,16 @@ void JPShortType::getView(JPArrayView& view)
 
 void JPShortType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
 			(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPShortType::getBufferFormat()
