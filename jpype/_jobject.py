@@ -79,7 +79,6 @@ class _JObjectProto(object):
             return True
 
 
-
 def _getDefaultJavaObject(obj):
     """ Determine the type of the object based the type of a value.
 

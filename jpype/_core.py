@@ -29,9 +29,12 @@ __all__ = [
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
+
 def versionTest():
     if sys.version_info < (3,):
         raise ImportError("Python 2 is not supported")
+
+
 versionTest()
 
 
@@ -213,7 +216,8 @@ please file a ticket with the developer.
                         % (','.join([str(i) for i in kwargs])))
 
     try:
-        _jpype.startup(jvmpath, tuple(args), ignoreUnrecognized, convertStrings)
+        _jpype.startup(jvmpath, tuple(args),
+                       ignoreUnrecognized, convertStrings)
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
@@ -221,7 +225,8 @@ please file a ticket with the developer.
             match = re.search("([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1))-44
-                raise RuntimeError("%s is older than required Java version %d"%(jvmpath, version)) from ex
+                raise RuntimeError("%s is older than required Java version %d" % (
+                    jvmpath, version)) from ex
         raise
 
     _jpype._java_lang_Class = None
@@ -372,7 +377,6 @@ def synchronized(obj):
     except AttributeError as ex:
         pass
     raise TypeError("synchronized only applies to java objects")
-
 
 
 # Naming compatibility

@@ -16,6 +16,7 @@
 # *****************************************************************************
 from ._core import deprecated
 
+
 @deprecated("class_.getConstructors()")
 def getConstructors(clas):
     return clas.class_.getConstructors()[:]

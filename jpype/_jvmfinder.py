@@ -324,10 +324,10 @@ class DarwinJVMFinder(LinuxJVMFinder):
         current = StrictVersion(platform.mac_ver()[0][:4])
         if current >= StrictVersion('10.6') and current < StrictVersion('10.9'):
             return subprocess.check_output(
-                    ['/usr/libexec/java_home']).strip()
+                ['/usr/libexec/java_home']).strip()
 
 
-def _checkJVMArch(jvmPath, maxsize = sys.maxsize):
+def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
     import struct
     IMAGE_FILE_MACHINE_I386 = 332
     IMAGE_FILE_MACHINE_IA64 = 512

@@ -49,5 +49,5 @@ setup(
     zip_safe=False,
     ext_modules=[jpypeLib],
     distclass=setupext.dist.Distribution,
-    use_scm_version = True,
+    use_scm_version=True,
 )

@@ -166,4 +166,3 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertEqual(self.fixture.object_field, 2.6125)
         self.assertIsInstance(self.fixture.object_field,
                               JClass('java.lang.Double'))
-

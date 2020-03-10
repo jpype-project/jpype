@@ -138,6 +138,7 @@ class FaultTestCase(common.JPypeTestCase):
     @common.unittest.SkipTest
     def testJPArray_releaseBuffer(self):
         _jpype.fault("PyJPArray_releaseBuffer")
+
         def f():
             ja = JArray(JInt)(5)
             m = memoryview(ja)
