@@ -17,6 +17,22 @@ class FaultTestCase(common.JPypeTestCase):
     abnormal objects which can then be passed to trigger error handling
     behaviors for off normal conditions.
 
+    Most of the time the correct response to a fault is to pass it back
+    to the user.  But there are two exception to this rule.  Function
+    in which a Java resource is released using a Release* method must not
+    fault because these calls can occur during exception handling routines
+    and throwing may trigger an abort.  Second, Python calls to free,
+    finalize, and dealloc are not allowed to propagate exceptions as
+    this would potentially interrupt the GC or prevent a object from being
+    freed.  Exceptions during the destructor path should be eaten or
+    they may trigger randomly in places the user can't control (assigning
+    a variable, leaving a scope).
+
+    Many of these tests will be moved to other test units so that they
+    are located with rest of the tests for that unit.  Tests that
+    test for something other than SystemError should be separated from
+    the rest of the fault test.
+
     This may be one of the most tedious files every written by human hands.
     Coffee is advised.
 
@@ -117,14 +133,16 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             ja[0:2] = 1
 
-# FIXME investigate why the release is not happening
-#    def testJPArray_releaseBuffer(self):
-#        _jpype.fault("PyJPArray_releaseBuffer")
-#        def f():
-#            ja = JArray(JInt)(5)
-#            m = memoryview(ja)
-#        with self.assertRaises(SystemError):
-#            f()
+    # FIXME investigate why the release is not happening
+    # may indicate a leak. Disabling for now
+    @common.unittest.SkipTest
+    def testJPArray_releaseBuffer(self):
+        _jpype.fault("PyJPArray_releaseBuffer")
+        def f():
+            ja = JArray(JInt)(5)
+            m = memoryview(ja)
+        with self.assertRaises(SystemError):
+            f()
 
     @common.requireInstrumentation
     def testJPArray_getBuffer(self):
@@ -550,16 +568,18 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype._JProxy(None, [JClass("java.io.Serializable")])
         _jpype._JProxy(None, [JClass("java.io.Serializable")])
 
-# FIXME this needs special treatment
-#    def testJPProxy_str(self):
-#        # Java has a hidden requirement that toString be available
-#        @JImplements("java.util.function.DoubleUnaryOperator")
-#        class f(object):
-#            @JOverride
-#            def applyAsDouble(self, d):
-#                return d
-#        jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
-#        raise RuntimeError(jo.toString())
+    # FIXME this needs special treatment. It should call __str__()
+    # if toString is not defined.  Disable for now.
+    @common.unittest.SkipTest
+    def testJPProxy_str(self):
+        # Java has a hidden requirement that toString be available
+        @JImplements("java.util.function.DoubleUnaryOperator")
+        class f(object):
+            @JOverride
+            def applyAsDouble(self, d):
+                return d
+        jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
+        raise RuntimeError(jo.toString())
 
     @common.requireInstrumentation
     def testJPProxy_dealloc(self):
@@ -583,6 +603,8 @@ class FaultTestCase(common.JPypeTestCase):
             JObject(f(), "java.util.function.DoubleUnaryOperator")
         jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
         # FIXME special case Java does not reflect the SystemError back to Python
+        # Instead it gets changed to a RuntimeError.  We will correct this
+        # once we have pass through of Python exceptions.
         _jpype.fault("PyJPProxy_getCallable")
         with self.assertRaises(jpype.JException):
             jo.applyAsDouble(1)
@@ -601,7 +623,7 @@ class FaultTestCase(common.JPypeTestCase):
             def accept(self, d):
                 return None
         jo = JObject(f(), "java.util.function.Consumer")
-        # FIXME segfaults
+        # FIXME segfaults.  Please investigate!
         # jo.accept(None)
 
     @common.requireInstrumentation
@@ -732,6 +754,10 @@ class FaultTestCase(common.JPypeTestCase):
             i = jfi.object_field
         self.assertEqual(i, None)
 
+    # FIXME this test triggers the wrong fault which normally
+    # indicates a problem in the exception handling path.
+    # AssertionError: "fault" does not match "NULL context in JPRef()
+    # Disabling for now.
     @common.unittest.SkipTest
     @common.requireInstrumentation
     def testJPTypeManagerFindClass(self):
@@ -1204,7 +1230,7 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::GetStringUTFChars")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(JString("a"))
-        # FIXME Segfaults
+        # FIXME Segfaults.  Problem with release path.
 #        _jpype.fault("JPJavaFrame::ReleaseStringUTFChars")
 #        with self.assertRaisesRegex(SystemError, "fault"):
 #            str(JString("a"))

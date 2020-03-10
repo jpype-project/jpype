@@ -60,11 +60,9 @@ class UseFunc(object):
         self.orig = getattr(self.obj, self.attr)
 
     def __enter__(self):
-        print("ENTER")
         setattr(self.obj, self.attr, self.func)
 
     def __exit__(self, exception_type, exception_value, traceback):
-        print("EXIT")
         setattr(self.obj, self.attr, self.orig)
 
 

@@ -90,6 +90,10 @@ class JVMFinderTest(unittest.TestCase):
         p = finder._javahome_binary()
         self.assertEqual(p, None)
 
+    # FIXME this is testing the details of the implementation rather than the results.
+    # it is included only for coverage purposes.  Revise this to be a more meaningful test
+    # next time it breaks.
+    # FIXME this test does passes locally but not in the CI.  Disabling for now.
     @common.unittest.skip
     def testPlatform(self):
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.WindowsJVMFinder') as finder:
@@ -128,6 +132,9 @@ class JVMFinderTest(unittest.TestCase):
             self.assertEqual(
                 pathmock.dirname.mock_calls[0].args, (finder._java,))
 
+    # FIXME this test is faking files using the mock system.  Replace it with stub
+    # files so that we have a more accurate test rather than just testing the implementation.
+    # FIXME this fails in the CI but works locally.   Disabling this for now.
     @common.unittest.skip
     def testCheckArch(self):
         import struct
