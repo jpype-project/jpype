@@ -1,10 +1,11 @@
 import jpype
 import common
-import sys
+
 
 class MyImpl(object):
     def blah(self):
         pass
+
 
 class ClassHintsTestCase(common.JPypeTestCase):
 
@@ -35,14 +36,16 @@ class ClassHintsTestCase(common.JPypeTestCase):
         if not hasattr(pathlib.Path, '__fspath__'):
             raise common.unittest.SkipTest("not tested on cygwin")
         JPath = jpype.JClass("java.nio.file.Path")
-        self.assertIsInstance(jpype.JObject(pathlib.Path(__file__).absolute(), JPath), JPath)
+        self.assertIsInstance(jpype.JObject(
+            pathlib.Path(__file__).absolute(), JPath), JPath)
 
     def testFile(self):
         import pathlib
         if not hasattr(pathlib.Path, '__fspath__'):
             raise common.unittest.SkipTest("not tested on cygwin")
         JFile = jpype.JClass("java.io.File")
-        self.assertIsInstance(jpype.JObject(pathlib.Path(__file__).absolute(), JFile), JFile)
+        self.assertIsInstance(jpype.JObject(
+            pathlib.Path(__file__).absolute(), JFile), JFile)
 
     def testConvertExact(self):
         cht = self.ClassHintsTest
@@ -69,4 +72,3 @@ class ClassHintsTestCase(common.JPypeTestCase):
         cht.call(MyImpl())
         self.assertIsInstance(cht.input, self.MyCustom)
         self.assertIsInstance(cht.input.arg, MyImpl)
-

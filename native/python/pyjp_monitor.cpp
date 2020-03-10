@@ -48,8 +48,6 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	if (v1 == NULL)
 		JP_RAISE(PyExc_TypeError, "Java object is required.");
 
-	// FIXME should these be runtime or type error.
-	// it is legitimately the wrong "type" of object.
 	if (v1->getClass() == context->_java_lang_String)
 		JP_RAISE(PyExc_TypeError, "Java strings cannot be used to synchronize.");
 
@@ -134,7 +132,7 @@ PyTypeObject* PyJPMonitor_Type = NULL;
 void PyJPMonitor_initType(PyObject* module)
 {
 	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }

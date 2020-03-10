@@ -17,6 +17,7 @@ import sys as _sys
 
 __all__ = ['JImplementationFor', 'JConversion']
 
+
 def JConversion(cls, exact=None, instanceof=None, attribute=None):
     """ Decorator to define a method as a converted a Java type.
 
@@ -259,5 +260,7 @@ def getClassHints(name):
         _jpype._hints[name] = hints
     return hints
 
+
 _jpype._hints = {}
-getClassHints("java.lang.IndexOutOfBoundsException").registerClassBase(IndexError)
+getClassHints("java.lang.IndexOutOfBoundsException").registerClassBase(
+    IndexError)

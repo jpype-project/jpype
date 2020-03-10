@@ -20,5 +20,7 @@ class MyStr(str):
 
 while True:
     buf = java.lang.String('5' * 1024 * 1024 * 5)
+    del buf
     buf = nio.convertToDirectBuffer(MyStr('5' * 1024 * 1024))
+    del buf
 #       time.sleep(1)

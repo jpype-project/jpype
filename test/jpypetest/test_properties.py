@@ -1,7 +1,7 @@
 import subrun
-import os
 import unittest
 import jpype
+
 
 @subrun.TestCase
 class PropertiesTestCase(unittest.TestCase):
@@ -107,4 +107,3 @@ class PropertiesTestCase(unittest.TestCase):
             cls.__dict__['failure1']
         with self.assertRaises(KeyError):
             cls.__dict__['failure2']
-

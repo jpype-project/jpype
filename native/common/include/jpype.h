@@ -80,6 +80,29 @@ using std::endl;
 using std::vector;
 using std::list;
 
+#ifdef JP_INSTRUMENTATION
+
+template <size_t i>
+constexpr uint32_t _hash(const char *q, uint32_t v)
+{
+	return _hash < i - 1 > (q + 1, v * 0x1a481023 + q[0]);
+}
+
+template <>
+constexpr uint32_t _hash<0>(const char *q, uint32_t v)
+{
+	return v;
+}
+#define compile_hash(x) _hash<sizeof(x)-1>(x, 0)
+
+extern void PyJPModuleFault_throw(uint32_t code);
+extern int PyJPModuleFault_check(uint32_t code);
+#define JP_TRACE_IN(X, ...) try { PyJPModuleFault_throw(compile_hash(X));
+#define JP_FAULT_RETURN(X, Y)  if (PyJPModuleFault_check(compile_hash(X))) return Y
+#else
+#define JP_FAULT_RETURN(X, Y)  if (false)
+#endif
+
 /** Definition of commonly used template types */
 typedef vector<string> StringVector;
 

@@ -14,13 +14,14 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import datetime
 from collections.abc import Sequence
 from collections.abc import Mapping
 
 import _jpype
 from . import _jclass
 from . import _jcustomizer
-from . import _jtypes
+from . import types as _jtypes
 
 JOverride = _jclass.JOverride
 
@@ -49,7 +50,8 @@ class _JCollection(object):
         return self.size()
 
     def __delitem__(self, i):
-        raise TypeError("'%s' does not support item deletion, use remove() method"%type(self).__name__)
+        raise TypeError(
+            "'%s' does not support item deletion, use remove() method" % type(self).__name__)
 
 
 def _sliceAdjust(slc, size):
@@ -57,9 +59,9 @@ def _sliceAdjust(slc, size):
     stop = slc.stop
     if slc.step and (slc.step > 1 or slc.step < 0):
         raise TypeError("Stride not supported")
-    if start == None:
+    if start is None:
         start = 0
-    if stop == None:
+    if stop is None:
         stop = size
     if start < 0:
         start += size
@@ -134,9 +136,9 @@ class _JMap(object):
 
     def __getitem__(self, ndx):
         item = self.get(ndx)
-        if item == None:
+        if item is None:
             if not self.containsKey(ndx):
-                raise KeyError('%s'%ndx)
+                raise KeyError('%s' % ndx)
         return item
 
     def __setitem__(self, ndx, v):
@@ -162,12 +164,14 @@ class _JSet(object):
 class _JMapEntry(object):
     def __len__(self):
         return 2
-    def __getitem__(self,x):
-        if x==0:
+
+    def __getitem__(self, x):
+        if x == 0:
             return self.getKey()
-        if x==1:
+        if x == 1:
             return self.getValue()
         raise IndexError("Pairs are always length 2")
+
 
 @_jcustomizer.JImplementationFor('java.util.Iterator')
 class _JIterator(object):
@@ -211,8 +215,8 @@ class _JEnumeration(object):
 
     next = __next__
 
+
 # These methods need a home.
-import datetime
 @_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
 def _JInstantConversion(jcls, obj):
     utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
@@ -220,25 +224,26 @@ def _JInstantConversion(jcls, obj):
     nsec = int((utc-sec)*1e9)
     return jcls.ofEpochSecond(sec, nsec)
 
+
 @_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
 def _JPathConvert(jcls, obj):
     Paths = _jpype.JClass("java.nio.file.Paths")
     return Paths.get(obj.__fspath__())
 
+
 @_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
 def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
+
 
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
 
+
 @_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
 def _JMapConvert(jcls, obj):
     hm = _jclass.JClass('java.util.HashMap')()
-    for p,v in obj.items():
+    for p, v in obj.items():
         hm[p] = v
     return hm
-
-
-

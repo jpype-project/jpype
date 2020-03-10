@@ -37,12 +37,6 @@ JPField::~JPField()
 {
 }
 
-string JPField::toString()
-{
-	JPJavaFrame frame(m_Class->getContext());
-	return frame.toString(m_Field.get());
-}
-
 JPPyObject JPField::getStaticField()
 {
 	JP_TRACE_IN("JPField::getStaticAttribute");

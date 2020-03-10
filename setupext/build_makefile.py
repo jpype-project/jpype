@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 from setuptools.command.build_ext import build_ext
 
-# This setup target constructs a prototype Makefile suitable for compiling 
+# This setup target constructs a prototype Makefile suitable for compiling
 # the _jpype extension module.  It is intended to help with development
 # of the extension library on unix systems.
 #
@@ -12,8 +12,10 @@ from setuptools.command.build_ext import build_ext
 #
 # Then edit with the desired options
 
+
 class FeatureNotice(Warning):
     """ indicate notices about features """
+
 
 class Makefile(object):
     def __init__(self, actual):
@@ -27,13 +29,15 @@ class Makefile(object):
     def captureCompile(self, x):
         command = x[0]
         x = x[1:]
-        includes = [ i for i in x if i.startswith("-I")]
-        x = [ i for i in x if not i.startswith("-I")]
+        includes = [i for i in x if i.startswith("-I")]
+        x = [i for i in x if not i.startswith("-I")]
         i0 = None
         i1 = None
-        for i,v in enumerate(x):
-            if v == '-c': i1=i
-            elif v == '-o': i0=i
+        for i, v in enumerate(x):
+            if v == '-c':
+                i1 = i
+            elif v == '-o':
+                i0 = i
         pre = set(x[:i1])
         post = x[i0+2:]
 
@@ -49,8 +53,8 @@ class Makefile(object):
         self.library = x[-1]
         print(x[-3:])
         x = x[:-3]
-        self.objects = [ i for i in x if i.endswith(".o")]
-        self.link_options = [ i for i in x if not i.endswith(".o")]
+        self.objects = [i for i in x if i.endswith(".o")]
+        self.link_options = [i for i in x if not i.endswith(".o")]
         u = self.objects[0].split("/")
         self.build_dir = "/".join(u[:2])
 
@@ -76,14 +80,14 @@ class Makefile(object):
         includes = " ".join(self.includes)
         sources = " \\\n     ".join(self.sources)
         with open("Makefile", "w") as fd:
-            print("LIB = %s"%library, file=fd)
-            print("CC = %s"%compile_command, file=fd)
-            print("LINK = %s"%link_command, file=fd)
-            print("CFLAGS = %s %s"%(compile_pre,compile_post), file=fd)
-            print("INCLUDES = %s"%includes, file=fd)
-            print("BUILD = %s"%build, file=fd)
-            print("LINKFLAGS = %s"%link_flags, file=fd)
-            print("SRCS = %s"%sources, file=fd)
+            print("LIB = %s" % library, file=fd)
+            print("CC = %s" % compile_command, file=fd)
+            print("LINK = %s" % link_command, file=fd)
+            print("CFLAGS = %s %s" % (compile_pre, compile_post), file=fd)
+            print("INCLUDES = %s" % includes, file=fd)
+            print("BUILD = %s" % build, file=fd)
+            print("LINKFLAGS = %s" % link_flags, file=fd)
+            print("SRCS = %s" % sources, file=fd)
             print("""
 all: $(LIB)
 
@@ -128,7 +132,7 @@ class BuildMakefileCommand(build_ext):
 
     # extra compile args
     copt = {'msvc': [],
-            'unix': ['-ggdb',],
+            'unix': ['-ggdb', ],
             'mingw32': [],
             }
     # extra link args
@@ -151,7 +155,7 @@ class BuildMakefileCommand(build_ext):
         for k, v in cfg_vars.items():
             if not isinstance(v, str):
                 continue
-            if not k=="OPT" and not "FLAGS" in k:
+            if not k == "OPT" and not "FLAGS" in k:
                 continue
             for r, t in replacement.items():
                 if v.find(r) != -1:
@@ -163,15 +167,15 @@ class BuildMakefileCommand(build_ext):
         # set compiler flags
         c = self.compiler.compiler_type
         if c == 'unix' and self.distribution.enable_coverage:
-           self.extensions[0].extra_compile_args.extend(['-O0', '--coverage', '-ftest-coverage'])
-           self.extensions[0].extra_link_args.extend(['--coverage'])
+            self.extensions[0].extra_compile_args.extend(
+                ['-O0', '--coverage', '-ftest-coverage'])
+            self.extensions[0].extra_link_args.extend(['--coverage'])
         if c in self.copt:
             for e in self.extensions:
                 e.extra_compile_args.extend(self.copt[c])
         if c in self.lopt:
             for e in self.extensions:
                 e.extra_link_args.extend(self.lopt[c])
-
 
     def build_extensions(self):
         # We need to create the thunk code
@@ -196,4 +200,3 @@ class BuildMakefileCommand(build_ext):
 
     def __init__(self, *args):
         build_ext.__init__(self, *args)
-

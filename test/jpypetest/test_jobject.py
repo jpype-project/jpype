@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 import jpype
+from jpype.types import *
 import common
 
 
@@ -30,9 +31,10 @@ class JClassTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        self.fixture = JClass('jpype.common.Fixture')()
 
     def testSetAttrPythonField(self):
-        cls = jpype.JClass('java.lang.String')
+        cls = JClass('java.lang.String')
         obj = cls('foo')
         # Setting a private field on a Java class is allowed
         obj._allowed = 1
@@ -41,94 +43,126 @@ class JClassTestCase(common.JPypeTestCase):
             obj.forbidden = 1
 
     def testSetAttrFinal(self):
-        cls = jpype.JClass('java.lang.Long')
+        cls = JClass('java.lang.Long')
         obj = cls(1)
         with self.assertRaises(AttributeError):
             # Setting a final field is forbidden
             obj.SIZE = 1
 
     def testClass(self):
-        obj = jpype.JClass('java.lang.Long')
-        clsType = jpype.JClass('java.lang.Class')
+        obj = JClass('java.lang.Long')
+        clsType = JClass('java.lang.Class')
         # Get class must return a java.lang.Class instance belonging to the class
         self.assertIsInstance(obj.class_, clsType)
         self.assertEqual(obj.class_.getSimpleName(), "Long")
 
     def testGetAttrProperty(self):
-        obj = jpype.JClass('java.lang.RuntimeException')('oo')
+        obj = JClass('java.lang.RuntimeException')('oo')
         value = obj.args
         self.assertEqual(value, ('oo',))
 
     def testSetAttrProperty(self):
-        obj = jpype.JClass('java.lang.RuntimeException')('oo')
+        obj = JClass('java.lang.RuntimeException')('oo')
         with self.assertRaises(AttributeError):
             obj.args = 1
 
-    def testGetAttrStaticField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        obj.staticObjectField = "fred"
-        self.assertEqual(obj.staticObjectField, "fred")
-
-    def testSetAttrStaticField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        obj.staticObjectField = "fred"
+    def testAttrStaticField(self):
+        self.fixture.static_object_field = "fred"
+        self.assertEqual(self.fixture.static_object_field, "fred")
 
     def testGetAttrField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        v = obj.objectField
+        v = self.fixture.object_field
 
     def testSetAttrField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        obj.objectField = "fred"
+        self.fixture.object_field = "fred"
 
     def testGetAttrPrivateField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
         with self.assertRaises(AttributeError):
-            v = obj.privateObjectField
+            v = self.fixture.private_object_field
 
     def testSetAttrPrivateField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
         with self.assertRaises(AttributeError):
-            obj.privateObjectField = "fred"
+            self.fixture.private_object_field = "fred"
 
     def testGetAttrFinalField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        v = obj.finalObjectField
+        v = self.fixture.final_object_field
 
     def testSetAttrFinalField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
         with self.assertRaises(AttributeError):
-            obj.finalObjectField = "fred"
+            self.fixture.final_object_field = "fred"
 
     def testGetAttrStaticFinalField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
-        self.assertEqual(obj.finalStaticObjectField,
+        self.assertEqual(self.fixture.final_static_object_field,
                          "final static object field")
 
     def testSetAttrStaticFinalField(self):
-        obj = jpype.JClass('jpype.types.FieldsTest')()
         with self.assertRaises(AttributeError):
-            obj.finalStaticObjectField = "bar"
+            self.fixture.finalStaticObjectField = "bar"
 
     def testStaticMethod(self):
-        obj = jpype.JClass('jpype.types.MethodsTest')()
-        obj.callStaticObject(jpype.JObject())
+        self.fixture.callStaticObject(JObject())
 
     def testPrivateStaticMethod(self):
-        obj = jpype.JClass('jpype.types.MethodsTest')()
         with self.assertRaises(AttributeError):
-            obj.callPrivateStaticObject(jpype.JObject())
+            self.fixture.callPrivateStaticObject(JObject())
 
     def testMethod(self):
-        obj = jpype.JClass('jpype.types.MethodsTest')()
-        obj.callObject(jpype.JObject())
+        self.fixture.callObject(JObject())
 
     def testPrivateMethod(self):
-        obj = jpype.JClass('jpype.types.MethodsTest')()
         with self.assertRaises(AttributeError):
-            obj.callPrivateObject(jpype.JObject())
+            self.fixture.callPrivateObject(JObject())
 
     def testProtectedMethod(self):
-        obj = jpype.JClass('jpype.types.MethodsTest')()
         with self.assertRaises(AttributeError):
-            obj.callProtectedObject(jpype.JObject())
+            self.fixture.callProtectedObject(JObject())
+
+    def testObjectBoolTrue(self):
+        self.fixture.object_field = True
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Boolean'))
+        self.assertEqual(str(self.fixture.object_field), str(True))
+        self.assertEqual(self.fixture.object_field, True)
+
+    def testObjectBoolFalse(self):
+        self.fixture.object_field = False
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Boolean'))
+        self.assertEqual(str(self.fixture.object_field), str(False))
+        self.assertEqual(self.fixture.object_field, False)
+
+    def testObjectBoolJValue(self):
+        self.fixture.object_field = JBoolean(True)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Boolean'))
+        self.assertEqual(self.fixture.object_field, True)
+
+    def testObjectShort(self):
+        self.fixture.object_field = JShort(1)
+        self.assertEqual(self.fixture.object_field, 1)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Short'))
+
+    def testObjectInteger(self):
+        self.fixture.object_field = JInt(2)
+        self.assertEqual(self.fixture.object_field, 2)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Integer'))
+
+    def testObjectLong(self):
+        self.fixture.object_field = JLong(3)
+        self.assertEqual(self.fixture.object_field, 3)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Long'))
+
+    def testObjectFloat(self):
+        self.fixture.object_field = JFloat(1.125)
+        self.assertEqual(self.fixture.object_field, 1.125)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Float'))
+
+    def testObjectDouble(self):
+        self.fixture.object_field = JDouble(2.6125)
+        self.assertEqual(self.fixture.object_field, 2.6125)
+        self.assertIsInstance(self.fixture.object_field,
+                              JClass('java.lang.Double'))

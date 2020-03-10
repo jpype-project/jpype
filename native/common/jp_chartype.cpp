@@ -69,9 +69,6 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -175,10 +172,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jchar v = JPPyString::asCharUTF16(seq[i].get());
-		if (JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON();
-		}
+		JP_PY_CHECK();
 		val[index] = (type_t) v;
 	}
 	accessor.commit();
@@ -204,13 +198,6 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-string JPCharType::asString(jvalue v)
-{
-	std::stringstream out;
-	out << v.c;
-	return out.str();
-}
-
 void JPCharType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
@@ -222,9 +209,16 @@ void JPCharType::getView(JPArrayView& view)
 
 void JPCharType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 			(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPCharType::getBufferFormat()

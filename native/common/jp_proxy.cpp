@@ -113,12 +113,12 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 				return NULL;
 			}
 
-			// This should not be able to happen.  The call checks
-			// for an error and throws, thus this condition cannot be hit.
+			// This is a SystemError where the caller return null without
+			// setting a Python error.
 			if (returnValue.isNull())
 			{
 				JP_TRACE("Null return");
-				JP_RAISE(PyExc_TypeError, "Return value is None when it cannot be");
+				JP_RAISE(PyExc_TypeError, "Return value is null when it cannot be");
 			}
 
 			// We must box here.

@@ -474,7 +474,7 @@ public:
 		JP_TRACE_IN("JPConversionBoxLong::matches");
 		if (frame == NULL)
 			return match.type = JPMatch::_none;
-		if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
+		if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 		{
 			match.conversion = this;
 			return match.type = JPMatch::_implicit;
@@ -498,7 +498,7 @@ public:
 		JP_TRACE_IN("JPConversionBoxDouble::matches");
 		if (frame == NULL)
 			return match.type = JPMatch::_none;
-		if (JPPyLong::checkConvertable(pyobj) && JPPyLong::checkIndexable(pyobj))
+		if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 		{
 			match.conversion = this;
 			return match.type = JPMatch::_implicit;

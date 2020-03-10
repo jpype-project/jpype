@@ -50,7 +50,10 @@ public:
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
-		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyFloat::asDouble(pyobj));
+		double val = PyFloat_AsDouble(pyobj);
+		if (val == -1.0)
+			JP_PY_CHECK();
+		base_t::field(res) = (base_t::type_t) val;
 		return res;
 	}
 } asFloatConversion;
@@ -84,7 +87,7 @@ public:
 
 JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+	JP_TRACE_IN("JPFloatType::getJavaConversion");
 	JPContext *context = NULL;
 	if (frame != NULL)
 		context = frame->getContext();
@@ -96,9 +99,6 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -135,15 +135,21 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyFloat_Check(pyobj) || JPPyFloat::checkConvertable(pyobj))
+	if (PyFloat_Check(pyobj))
 	{
 		match.conversion = &asFloatConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = &asFloatLongConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	if (PyNumber_Check(pyobj))
+	{
+		match.conversion = &asFloatConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
@@ -259,10 +265,8 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		double v =  PyFloat_AsDouble(seq[i].get());
-		if (v == -1. && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON();
-		}
+		if (v == -1.)
+			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
@@ -288,13 +292,6 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-string JPFloatType::asString(jvalue v)
-{
-	std::stringstream out;
-	out << v.f;
-	return out.str();
-}
-
 void JPFloatType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
@@ -306,9 +303,16 @@ void JPFloatType::getView(JPArrayView& view)
 
 void JPFloatType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 			(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPFloatType::getBufferFormat()

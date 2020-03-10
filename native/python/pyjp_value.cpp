@@ -149,13 +149,13 @@ void PyJPValue_finalize(void* obj)
 		context->ReleaseGlobalRef(value->getValue().l);
 		*value = JPValue();
 	}
-	JP_PY_CATCH();
+	JP_PY_CATCH_NONE();
 }
 
 /** This is the way to convert an object into a python string. */
 PyObject* PyJPValue_str(PyObject* self)
 {
-	JP_PY_TRY("PyJPValue_toString", self);
+	JP_PY_TRY("PyJPValue_str", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
@@ -289,7 +289,7 @@ JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 
 	if (cls->isPrimitive())
 	{
-		// FIXME we could actually get these to cast to the correct
+		// We could actually get these to cast to the correct
 		// primitive type which would preserve type conversions here.
 		return cls->convertToPythonObject(frame, value.getValue());
 	}
@@ -329,7 +329,7 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	{
 		std::stringstream ss;
 		ss << "Missing Java slot on `" << Py_TYPE(self)->tp_name << "`";
-		JP_RAISE(PyExc_TypeError, ss.str().c_str());
+		JP_RAISE(PyExc_SystemError, ss.str().c_str());
 	}
 
 	JPValue* slot = (JPValue*) (((char*) self) + offset);

@@ -6,16 +6,17 @@ import common
 
 class InheritTestCase(common.JPypeTestCase):
     """ test for isinstance and issubclass """
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
     def assertIsSubclass(self, a, b):
-        if not issubclass(a,b):
-            raise AssertionError("'%s' is not a subclass of '%s'"%(a,b))
+        if not issubclass(a, b):
+            raise AssertionError("'%s' is not a subclass of '%s'" % (a, b))
 
     def assertNotIsSubclass(self, a, b):
-        if issubclass(a,b):
-            raise AssertionError("'%s' is a subclass of '%s'"%(a,b))
+        if issubclass(a, b):
+            raise AssertionError("'%s' is a subclass of '%s'" % (a, b))
 
     def testPrimitivesAsObjects(self):
         self.assertNotIsInstance(JBoolean(1), JObject)
@@ -92,7 +93,8 @@ class InheritTestCase(common.JPypeTestCase):
         self.assertIsSubclass(JException, Exception)
         self.assertIsSubclass(JException, JException)
         self.assertIsInstance(JException("java.lang.RuntimeException"), JClass)
-        self.assertIsInstance(JException("java.lang.RuntimeException"), JException)
+        self.assertIsInstance(JException(
+            "java.lang.RuntimeException"), JException)
         self.assertNotIsInstance(java.lang.Throwable("f"), JInterface)
         th = java.lang.Throwable("foo")
         self.assertIsInstance(th, JObject)

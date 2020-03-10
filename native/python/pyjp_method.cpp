@@ -168,7 +168,7 @@ static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
@@ -400,10 +400,10 @@ void PyJPMethod_initType(PyObject* module)
 	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
 	PyFunction_Type.tp_flags = flags;
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)

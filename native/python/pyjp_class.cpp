@@ -346,7 +346,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	const char *name_str = PyUnicode_AsUTF8(attr_name);
 	PyErr_Format(PyExc_AttributeError,
 			"Static field '%s' is not settable on Java '%s' object",
-			name_str, Py_TYPE(self)->tp_name);
+			name_str, ((PyTypeObject*) self)->tp_name);
 	return -1;
 	JP_PY_CATCH(-1);
 }
@@ -417,11 +417,11 @@ static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 
 static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 {
-	JP_PY_TRY("PyJPClass_class", self);
+	JP_PY_TRY("PyJPClass_setClass", self);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(type);
-	if (javaSlot->getClass() != context->_java_lang_Class)
+	if (javaSlot == NULL || javaSlot->getClass() != context->_java_lang_Class)
 		JP_RAISE(PyExc_TypeError, "Java class instance is required");
 	if (PyJPValue_isSetJavaSlot(self))
 		JP_RAISE(PyExc_AttributeError, "Java class can't be set");
@@ -663,9 +663,9 @@ void PyJPClass_initType(PyObject* module)
 	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
 	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JClass", (PyObject*) PyJPClass_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPClass* PyJPClass_getJPClass(PyObject* obj)
@@ -791,7 +791,6 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
 
-	// FIXME We need to apply the keyword correction here.
 	const JPFieldList& instFields = cls->getFields();
 	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
 	{

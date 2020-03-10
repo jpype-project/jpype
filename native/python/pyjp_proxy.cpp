@@ -87,7 +87,7 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 	PyObject_GC_UnTrack(self);
 	PyJPProxy_clear(self);
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH_NONE();
 }
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
@@ -96,16 +96,6 @@ static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 }
-
-static PyObject *PyJPProxy_str(PyObject *self)
-{
-	return PyObject_Str(self);
-}
-
-static PyMethodDef proxyMethods[] = {
-	{"toString", (PyCFunction) & PyJPProxy_str, METH_NOARGS, ""},
-	{NULL},
-};
 
 static PyGetSetDef proxyGetSets[] = {
 	{"__javaclass__", (getter) PyJPProxy_class, NULL, ""},
@@ -118,7 +108,6 @@ static PyType_Slot proxySlots[] = {
 	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
 	{ Py_tp_clear,    (void*) PyJPProxy_clear},
 	{ Py_tp_getset,   (void*) proxyGetSets},
-	{ Py_tp_methods,  (void*) proxyMethods},
 	{0}
 };
 
@@ -140,9 +129,9 @@ void PyJPProxy_initType(PyObject* module)
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) & PyBaseObject_Type);
 	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, tuple.get());
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
@@ -154,7 +143,7 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 
 JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
 {
-	JP_TRACE_IN("JPythonEnv::getJavaProxyCallable");
+	JP_TRACE_IN("PyJPProxy_getCallable");
 	if (Py_TYPE(obj) != PyJPProxy_Type
 			&& Py_TYPE(obj)->tp_base != PyJPProxy_Type)
 		JP_RAISE(PyExc_TypeError, "Incorrect type passed to proxy lookup");

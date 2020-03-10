@@ -4,6 +4,7 @@ import subrun
 import unittest
 import os
 
+
 def proxy(s):
     if not isinstance(s, str):
         raise TypeError("Fail")
@@ -16,7 +17,8 @@ class LegacyTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Run with automatic string conversion
-        jpype.startJVM(classpath=os.path.abspath("test/classes"), convertStrings=True)
+        jpype.startJVM(classpath=os.path.abspath(
+            "test/classes"), convertStrings=True)
 
     def setUp(self):
         self._test = jpype.JClass("jpype.str.Test")

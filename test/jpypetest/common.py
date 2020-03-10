@@ -30,6 +30,42 @@ def version(v):
     return tuple([int(i) for i in v.split('.')])
 
 
+def requireInstrumentation(func):
+    def f(self):
+        import _jpype
+        if not hasattr(_jpype, "fault"):
+            raise unittest.SkipTest("instrumentation required")
+        rc = func(self)
+        _jpype.fault(None)
+        return rc
+    return f
+
+
+def requireNumpy(func):
+    def f(self):
+        try:
+            import numpy
+            return func(self)
+        except ImportError:
+            pass
+        raise unittest.SkipTest("numpy required")
+    return f
+
+
+class UseFunc(object):
+    def __init__(self, obj, func, attr):
+        self.obj = obj
+        self.func = func
+        self.attr = attr
+        self.orig = getattr(self.obj, self.attr)
+
+    def __enter__(self):
+        setattr(self.obj, self.attr, self.func)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        setattr(self.obj, self.attr, self.orig)
+
+
 @pytest.mark.usefixtures("common_opts")
 class JPypeTestCase(unittest.TestCase):
     def setUp(self):
@@ -75,6 +111,19 @@ class JPypeTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def assertElementsEqual(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(len(a)):
+            self.assertEqual(a[i], b[i])
+
+    def assertElementsAlmostEqual(self, a, b):
+        self.assertEqual(len(a), len(b))
+        for i in range(len(a)):
+            self.assertAlmostEqual(a[i], b[i])
+
+    def useEqualityFunc(self, func):
+        return UseFunc(self, func, 'assertEqual')
 
 
 if __name__ == '__main__':

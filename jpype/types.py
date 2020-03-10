@@ -32,9 +32,8 @@ Example:
 
 """
 # import package to get minimum types needed to use module.
-
+import _jpype
 from ._jclass import *
-from ._jtypes import *
 from ._jobject import *
 from ._jarray import *
 from ._jexception import *
@@ -55,3 +54,35 @@ __all__ = [
     'JObject',
     'JException',
 ]
+
+
+class JBoolean(_jpype._JBoolean):
+    pass
+
+
+class JByte(_jpype._JNumberLong):
+    pass
+
+
+class JChar(_jpype._JChar):
+    pass
+
+
+class JInt(_jpype._JNumberLong):
+    pass
+
+
+class JShort(_jpype._JNumberLong):
+    pass
+
+
+class JLong(_jpype._JNumberLong):
+    pass
+
+
+class JFloat(_jpype._JNumberFloat):
+    pass
+
+
+class JDouble(_jpype._JNumberFloat):
+    pass

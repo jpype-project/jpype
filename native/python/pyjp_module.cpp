@@ -486,6 +486,24 @@ PyObject* examine(PyObject *module, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+#ifdef JP_INSTRUMENTATION
+uint32_t _PyModule_fault_code = -1;
+static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
+{
+	if (args == Py_None)
+	{
+		_PyModule_fault_code = 0;
+		Py_RETURN_NONE;
+	}
+	string code = JPPyString::asStringUTF8(args);
+	uint32_t u = 0;
+	for (size_t i = 0; i < code.size(); ++i)
+		u = u * 0x1a481023 + code[i];
+	_PyModule_fault_code = u;
+	return PyLong_FromLong(_PyModule_fault_code);
+}
+#endif
+
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
@@ -506,7 +524,9 @@ static PyMethodDef moduleMethods[] = {
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
-
+#ifdef JP_INSTRUMENTATION
+	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
+#endif
 	// sentinel
 	{NULL}
 };
@@ -573,3 +593,20 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	}
 	JP_TRACE_OUT;
 }
+
+#ifdef JP_INSTRUMENTATION
+
+int PyJPModuleFault_check(uint32_t code)
+{
+	return (code == _PyModule_fault_code);
+}
+
+void PyJPModuleFault_throw(uint32_t code)
+{
+	if (code == _PyModule_fault_code)
+	{
+		_PyModule_fault_code = -1;
+		JP_RAISE(PyExc_SystemError, "fault");
+	}
+}
+#endif

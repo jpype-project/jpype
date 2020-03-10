@@ -86,8 +86,6 @@ public:
 		return l;
 	}
 
-	virtual string asString(jvalue v) override;
-
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;

@@ -14,7 +14,6 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import sys as _sys
 import _jpype
 
 __all__ = ['convertToDirectBuffer']

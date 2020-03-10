@@ -94,12 +94,6 @@ public:
 		return m_Object.get();
 	}
 
-	virtual JPClass* getType();
-	virtual jvalue  getValue();
-
-	int checkIsPrimitive(int &dims);
-	int checkRectangular(int &dimsize0, int &dimsize1);
-
 private:
 	JPArrayClass* m_Class;
 	JPArrayRef    m_Object;

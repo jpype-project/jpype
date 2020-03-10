@@ -83,9 +83,6 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -121,17 +118,16 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(pyobj))
+	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = &asLongConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyLong_Check(pyobj))
 	{
 		match.conversion = &asLongConversion;
-		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
-		return match.type;
+		return match.type = JPMatch::_explicit;
 	}
 
 	return match.type = JPMatch::_none;
@@ -246,10 +242,8 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jlong v = PyLong_AsLongLong(seq[i].get());
-		if (v == -1 && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON();
-		}
+		if (v == -1)
+			JP_PY_CHECK()
 		val[index] = (type_t) v;
 	}
 	accessor.commit();
@@ -275,14 +269,6 @@ void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-string JPLongType::asString(jvalue v)
-{
-	std::stringstream out;
-	out << v.j;
-	return out.str();
-}
-
-
 void JPLongType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
@@ -294,9 +280,16 @@ void JPLongType::getView(JPArrayView& view)
 
 void JPLongType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
 			(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPLongType::getBufferFormat()

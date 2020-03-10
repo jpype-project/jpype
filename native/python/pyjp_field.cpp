@@ -120,9 +120,9 @@ PyType_Spec PyJPFieldSpec = {
 void PyJPField_initType(PyObject* module)
 {
 	PyJPField_Type = (PyTypeObject*) PyType_FromSpec(&PyJPFieldSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JField", (PyObject*) PyJPField_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPPyObject PyJPField_create(JPField* m)

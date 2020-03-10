@@ -99,6 +99,7 @@ class LeakChecker():
         print()
         return True
 
+
 def runLeakChecker(func, counts):
     lc = LeakChecker()
     return lc.memTest(func, 5000)
@@ -117,22 +118,22 @@ class LeakTestCase(unittest.TestCase):
                        # "-Xcheck:jni",
                        "-Xmx256M", "-Xms16M", classpath_arg)
 
-
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
         def stringFunc():
             jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
-        runLeakChecker( stringFunc, 5000)
+        runLeakChecker(stringFunc, 5000)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
         def classFunc():
             cls = jpype.JClass('java.lang.String')
-        runLeakChecker( classFunc, 5000)
+        runLeakChecker(classFunc, 5000)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
         cls = jpype.JClass("java.lang.String")
+
         def func():
             cls("test")
         runLeakChecker(func, 5000)
@@ -144,4 +145,3 @@ class LeakTestCase(unittest.TestCase):
         def func():
             jstr.getBytes()
         runLeakChecker(func, 5000)
-

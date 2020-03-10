@@ -24,19 +24,19 @@ extern "C"
 
 static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPObject_init");
-	JPContext *context = PyJPModule_getContext();
-	PyObject *self = type->tp_alloc(type, 0);
-	JP_PY_CHECK();
-	JPJavaFrame frame(context);
-	JPPyObjectVector args(pyargs);
-
+	JP_PY_TRY("PyJPObject_new");
 	// Get the Java class from the type.
-	JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
+	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
 
+	JPContext *context = PyJPModule_getContext();
+	PyObject *self = type->tp_alloc(type, 0);
+	JP_PY_CHECK();
+
 	// Create an instance (this may fail)
+	JPJavaFrame frame(context);
+	JPPyObjectVector args(pyargs);
 	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
 	return self;
 	JP_PY_CATCH(NULL);
@@ -101,14 +101,14 @@ void PyJPObject_initType(PyObject* module)
 {
 	PyObject *bases;
 	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 
 	bases = PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type);
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }

@@ -49,8 +49,6 @@ public:
 		return m_Class->getContext();
 	}
 
-	string toString();
-
 	const string& getName() const
 	{
 		return m_Name;

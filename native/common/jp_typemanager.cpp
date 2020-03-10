@@ -66,7 +66,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 
 JPClass* JPTypeManager::findClassForObject(jobject obj)
 {
-	JP_TRACE_IN("JPTypeManager::findClass");
+	JP_TRACE_IN("JPTypeManager::findClassForObject");
 	JPJavaFrame frame(m_Context);
 	jvalue val;
 	val.l = obj;
@@ -90,7 +90,7 @@ void JPTypeManager::populateMethod(void* method, jobject obj)
 
 void JPTypeManager::populateMembers(JPClass* cls)
 {
-	JP_TRACE_IN("JPTypeManager::populateMembers/");
+	JP_TRACE_IN("JPTypeManager::populateMembers");
 	JPJavaFrame frame(m_Context);
 	jvalue val[1];
 	val[0].l = (jobject) cls->getJavaClass();

@@ -83,9 +83,6 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -119,17 +116,16 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(pyobj))
+	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = &asShortConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyLong_Check(pyobj))
 	{
 		match.conversion = &asShortConversion;
-		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
-		return match.type;
+		return match.type = JPMatch::_explicit;
 	}
 
 	return match.type = JPMatch::_none;
@@ -244,10 +240,8 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jlong v = PyLong_AsLongLong(seq[i].get());
-		if (v == -1 && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON();
-		}
+		if (v == -1)
+			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
@@ -273,14 +267,6 @@ void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-string JPShortType::asString(jvalue v)
-{
-	std::stringstream out;
-	out << v.s;
-	return out.str();
-}
-
-
 void JPShortType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
@@ -292,9 +278,16 @@ void JPShortType::getView(JPArrayView& view)
 
 void JPShortType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
 			(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPShortType::getBufferFormat()

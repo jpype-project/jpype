@@ -411,7 +411,7 @@ void JPypeException::toJava(JPContext *context)
 		JP_TRACE("String exception");
 		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
 		return;
-	} catch (JPypeException ex)
+	} catch (JPypeException& ex)
 	{
 		// Print our parting words.
 		JPTracer::trace("Fatal error in exception handling");

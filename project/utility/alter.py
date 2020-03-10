@@ -6,7 +6,6 @@ jpype.startJVM()
 
 from java.util.jar import JarOutputStream
 from java.util.jar import JarInputStream
-from java.util.jar import JarFile
 from java.util.zip import CRC32
 from java.io import File
 from java.io import FileInputStream

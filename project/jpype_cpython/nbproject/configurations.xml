@@ -8,12 +8,15 @@
         <logicalFolder name="include" displayName="include" projectFiles="true">
           <itemPath>../../native/common/include/jp_array.h</itemPath>
           <itemPath>../../native/common/include/jp_arrayclass.h</itemPath>
-          <itemPath>../../native/common/include/jp_baseclasses.h</itemPath>
           <itemPath>../../native/common/include/jp_booleantype.h</itemPath>
           <itemPath>../../native/common/include/jp_boxedtype.h</itemPath>
           <itemPath>../../native/common/include/jp_bytetype.h</itemPath>
           <itemPath>../../native/common/include/jp_chartype.h</itemPath>
           <itemPath>../../native/common/include/jp_class.h</itemPath>
+          <itemPath>../../native/common/include/jp_classhints.h</itemPath>
+          <itemPath>../../native/common/include/jp_classloader.h</itemPath>
+          <itemPath>../../native/common/include/jp_classtype.h</itemPath>
+          <itemPath>../../native/common/include/jp_context.h</itemPath>
           <itemPath>../../native/common/include/jp_doubletype.h</itemPath>
           <itemPath>../../native/common/include/jp_encoding.h</itemPath>
           <itemPath>../../native/common/include/jp_env.h</itemPath>
@@ -25,7 +28,10 @@
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
           <itemPath>../../native/common/include/jp_match.h</itemPath>
           <itemPath>../../native/common/include/jp_method.h</itemPath>
+          <itemPath>../../native/common/include/jp_methoddispatch.h</itemPath>
+          <itemPath>../../native/common/include/jp_modifier.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
+          <itemPath>../../native/common/include/jp_objecttype.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
           <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
           <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
@@ -33,6 +39,7 @@
           <itemPath>../../native/common/include/jp_proxy.h</itemPath>
           <itemPath>../../native/common/include/jp_reference_queue.h</itemPath>
           <itemPath>../../native/common/include/jp_shorttype.h</itemPath>
+          <itemPath>../../native/common/include/jp_stringtype.h</itemPath>
           <itemPath>../../native/common/include/jp_tracer.h</itemPath>
           <itemPath>../../native/common/include/jp_typemanager.h</itemPath>
           <itemPath>../../native/common/include/jp_typename.h</itemPath>
@@ -162,11 +169,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_baseclasses.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_booleantype.h"
             ex="false"
             tool="3"
@@ -188,6 +190,26 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_class.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_classhints.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_classloader.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_classtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_context.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -247,7 +269,22 @@
             tool="3"
             flavor2="0">
       </item>
+      <item path="../../native/common/include/jp_methoddispatch.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_modifier.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../../native/common/include/jp_monitor.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_objecttype.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -283,6 +320,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_shorttype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_stringtype.h"
             ex="false"
             tool="3"
             flavor2="0">

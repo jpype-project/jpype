@@ -66,7 +66,8 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 		return NULL;
 	JP_TRACE(attribute);
 	JP_TRACE(Py_TYPE(method)->tp_name);
-
+	if (!PyCallable_Check(method))
+		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addAttributeConversion(string(attribute), method);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -80,7 +81,10 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	unsigned char exact;
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
 		return NULL;
-
+	if (!PyType_Check(type))
+		JP_RAISE(PyExc_TypeError, "type is required");
+	if (!PyCallable_Check(method))
+		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -118,7 +122,7 @@ PyType_Spec PyJPClassHintsSpec = {
 void PyJPClassHints_initType(PyObject* module)
 {
 	PyJPClassHints_Type = (PyTypeObject*) PyType_FromSpec(&PyJPClassHintsSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JClassHints", (PyObject*) PyJPClassHints_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }

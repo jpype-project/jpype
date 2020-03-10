@@ -64,19 +64,16 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 	if (JPPyObject::isNone(pyobj))
 		return match.type = JPMatch::_none;
 
-			if (PyBool_Check(pyobj))
+	if (PyBool_Check(pyobj))
 	{
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_exact;
-			}
+	}
 
 	JPValue *value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
-		if (cls == NULL)
-			return match.type = JPMatch::_none;
-
 		if (cls == this)
 		{
 			match.conversion = javaValueConversion;
@@ -94,17 +91,16 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(pyobj))
+	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
 	{
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(pyobj))
+	if (PyLong_Check(pyobj))
 	{
 		match.conversion = &asBooleanConversion;
-		match.type = JPPyLong::checkIndexable(pyobj) ? JPMatch::_implicit : JPMatch::_explicit;
-		return match.type;
+		return match.type = JPMatch::_explicit;
 	}
 
 	return match.type = JPMatch::_none;
@@ -204,7 +200,7 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
 				jvalue r = conv(memory);
 				val[index] = r.z;
 				memory += vstep;
-		}
+			}
 			accessor.commit();
 			return;
 		} else
@@ -243,11 +239,6 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-string JPBooleanType::asString(jvalue v)
-{
-	return v.z ? "true" : "false";
-}
-
 void JPBooleanType::getView(JPArrayView& view)
 {
 	JPJavaFrame frame(view.getContext());
@@ -259,9 +250,16 @@ void JPBooleanType::getView(JPArrayView& view)
 
 void JPBooleanType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
-	frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
 			(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPBooleanType::getBufferFormat()

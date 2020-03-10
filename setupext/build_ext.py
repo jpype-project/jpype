@@ -17,7 +17,7 @@ class BuildExtCommand(build_ext):
 
     # extra compile args
     copt = {'msvc': [],
-            'unix': ['-ggdb',],
+            'unix': ['-ggdb', ],
             'mingw32': [],
             }
     # extra link args
@@ -42,7 +42,7 @@ class BuildExtCommand(build_ext):
         for k, v in cfg_vars.items():
             if not isinstance(v, str):
                 continue
-            if not k=="OPT" and not "FLAGS" in k:
+            if not k == "OPT" and not "FLAGS" in k:
                 continue
             for r, t in replacement.items():
                 if v.find(r) != -1:
@@ -54,8 +54,9 @@ class BuildExtCommand(build_ext):
         # set compiler flags
         c = self.compiler.compiler_type
         if c == 'unix' and self.distribution.enable_coverage:
-           self.extensions[0].extra_compile_args.extend(['-O0', '--coverage', '-ftest-coverage'])
-           self.extensions[0].extra_link_args.extend(['--coverage'])
+            self.extensions[0].extra_compile_args.extend(
+                ['-O0', '--coverage', '-ftest-coverage'])
+            self.extensions[0].extra_link_args.extend(['--coverage'])
         if c in self.copt:
             for e in self.extensions:
                 e.extra_compile_args.extend(self.copt[c])
