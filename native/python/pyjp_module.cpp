@@ -639,24 +639,6 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	JP_TRACE_OUT;
 }
 
-<<<<<<< HEAD
-#ifdef JP_INSTRUMENTATION
-
-int PyJPModuleFault_check(uint32_t code)
-{
-	return (code == _PyModule_fault_code);
-}
-
-void PyJPModuleFault_throw(uint32_t code)
-{
-	if (code == _PyModule_fault_code)
-	{
-		_PyModule_fault_code = -1;
-		JP_RAISE(PyExc_SystemError, "fault");
-	}
-}
-#endif
-=======
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
@@ -763,5 +745,20 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
 }
 
+#ifdef JP_INSTRUMENTATION
 
->>>>>>> Support for multidimension primitive conversion
+int PyJPModuleFault_check(uint32_t code)
+{
+	return (code == _PyModule_fault_code);
+}
+
+void PyJPModuleFault_throw(uint32_t code)
+{
+	if (code == _PyModule_fault_code)
+	{
+		_PyModule_fault_code = -1;
+		JP_RAISE(PyExc_SystemError, "fault");
+	}
+}
+#endif
+

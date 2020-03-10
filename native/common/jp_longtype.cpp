@@ -244,7 +244,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jlong v = PyLong_AsLongLong(seq[i].get());
 		if (v == -1)
 			JP_PY_CHECK()
-		val[index] = (type_t) v;
+			val[index] = (type_t) v;
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
@@ -284,7 +284,7 @@ void JPLongType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
-			(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
@@ -316,7 +316,9 @@ static void pack(jlong* d, jvalue v)
 
 PyObject *JPLongType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPLongType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "j",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

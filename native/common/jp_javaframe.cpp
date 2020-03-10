@@ -1014,7 +1014,7 @@ bool JPJavaFrame::equals(jobject o1, jobject o2 )
 
 jobject JPJavaFrame::collectRectangular(jarray obj)
 {
-	JPCall call(*this, "collectRectangular");
+	JAVA_CALL("JPJavaFrame::collectRectangular");
 	if (m_Context->m_Context_collectRectangularID == 0)
 		return 0;
 	jvalue v;
@@ -1026,7 +1026,7 @@ jobject JPJavaFrame::collectRectangular(jarray obj)
 
 jobject JPJavaFrame::assemble(jobject dims, jobject parts)
 {
-	JPCall call(*this, "assemble");
+	JAVA_CALL("JPJavaFrame::assemble");
 	if (m_Context->m_Context_collectRectangularID == 0)
 		return 0;
 	jvalue v[2];

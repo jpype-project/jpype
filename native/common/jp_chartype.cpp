@@ -156,7 +156,6 @@ void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*
 	frame.SetCharField(c, fid, val);
 }
 
-
 void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jsize start, jsize length, jsize step,
 		PyObject* sequence)
@@ -213,7 +212,7 @@ void JPCharType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
-			(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
@@ -245,7 +244,9 @@ static void pack(jchar* d, jvalue v)
 
 PyObject *JPCharType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPCharType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "c",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

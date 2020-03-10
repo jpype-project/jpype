@@ -284,7 +284,7 @@ void JPIntType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
-			(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
@@ -316,7 +316,9 @@ static void pack(jint* d, jvalue v)
 
 PyObject *JPIntType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPIntType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "i",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

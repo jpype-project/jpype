@@ -282,7 +282,7 @@ void JPShortType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
-			(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
@@ -314,7 +314,9 @@ static void pack(jshort* d, jvalue v)
 
 PyObject *JPShortType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPShortType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "s",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

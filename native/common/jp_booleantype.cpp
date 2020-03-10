@@ -286,7 +286,9 @@ static void pack(jboolean* d, jvalue v)
 
 PyObject *JPBooleanType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPBooleanType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "z",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

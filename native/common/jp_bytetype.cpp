@@ -283,7 +283,9 @@ static void pack(jbyte* d, jvalue v)
 
 PyObject *JPByteType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
 {
+	JP_TRACE_IN("JPByteType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "b",
 			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }
