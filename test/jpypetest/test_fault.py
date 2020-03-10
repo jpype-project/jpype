@@ -132,6 +132,9 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_assignSubscript")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = 1
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:2] = 1
 
     def testJPArray_assignSubscriptExc(self):
         ja = JArray(JInt)(5)
@@ -139,9 +142,6 @@ class FaultTestCase(common.JPypeTestCase):
             del ja[0:2]
         with self.assertRaises(ValueError):
             ja[slice(0, 0, 0)] = 1
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaises(SystemError):
-            ja[0:2] = 1
 
     # FIXME investigate why the release is not happening
     # may indicate a leak. Disabling for now
