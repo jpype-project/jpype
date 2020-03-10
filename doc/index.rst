@@ -12,7 +12,7 @@ for engineering and code development.
 This is achieved not through re-implementing Python, as
 Jython/JPython has done, but rather through interfacing at the native
 level in both virtual machines. This shared memory based 
-approach achieves decent computing preformance, while providing the
+approach achieves decent computing performance, while providing the
 access to the entirety of CPython and Java libraries.
 
 Parts of the documentation
