@@ -33,7 +33,7 @@ static void releaseProxyPython(void* host)
 JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
-	JP_TRACE_IN("JProxy getArgs");
+	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
@@ -46,6 +46,8 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		JP_TRACE("Convert", i, type->getCanonicalName());
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = frame.findClassForObject(obj);
+		if (type == NULL)
+			type = reinterpret_cast<JPClass*> (accessor.get()[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
 	}
