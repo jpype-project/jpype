@@ -52,6 +52,12 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_init")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(5)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JInt)(5)
+
+    # FIXME move these tests to a different test unit
+    def testJPArray_initExc(self):
         with self.assertRaises(TypeError):
             _jpype._JArray("foo")
         with self.assertRaises(TypeError):
@@ -74,9 +80,6 @@ class FaultTestCase(common.JPypeTestCase):
                 return -1
         with self.assertRaises(ValueError):
             JArray(JInt)(badlist([1, 2, 3]))
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JInt)(5)
 
     @common.requireInstrumentation
     def testJPArray_repr(self):
@@ -106,15 +109,19 @@ class FaultTestCase(common.JPypeTestCase):
         ja = JArray(JInt)(5)
         _jpype.fault("PyJPArray_getArrayItem")
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[0]
+            print(ja[0])
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+
+    # FIXME move to another test unit
+    def testJPArray_getArrayItemExc(self):
+        ja = JArray(JInt)(5)
         with self.assertRaises(TypeError):
             ja[object()]
         with self.assertRaises(ValueError):
             ja[slice(0, 0, 0)]
         self.assertEqual(len(JArray(JInt)(5)[4:1]), 0)
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaises(SystemError):
-            ja[0]
 
     @common.requireInstrumentation
     def testJPArray_assignSubscript(self):
@@ -125,6 +132,9 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_assignSubscript")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = 1
+
+    def testJPArray_assignSubscriptExc(self):
+        ja = JArray(JInt)(5)
         with self.assertRaises(ValueError):
             del ja[0:2]
         with self.assertRaises(ValueError):
@@ -609,12 +619,17 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPProxy_getCallable")
         with self.assertRaises(jpype.JException):
             jo.applyAsDouble(1)
-        # FIXME segfault on this one, needs investigation
-#        _jpype.fault("JPype_InvocationHandler_hostInvoke")
-#        with self.assertRaises(jpype.JException):
-#            jo.applyAsDouble(1)
         with self.assertRaises(jpype.JException):
             jo.applyAsDouble(2)
+
+    def testJPProxy_void(self):
+        @JImplements("java.util.function.Consumer")
+        class f(object):
+            @JOverride
+            def accept(self, d):
+                return None
+        jo = JObject(f(), "java.util.function.Consumer")
+        jo.accept(None)
 
     @common.requireInstrumentation
     def testJPProxy_void(self):
@@ -624,8 +639,8 @@ class FaultTestCase(common.JPypeTestCase):
             def accept(self, d):
                 return None
         jo = JObject(f(), "java.util.function.Consumer")
-        # FIXME segfaults.  Please investigate!
-        # jo.accept(None)
+        _jpype.fault("JPProxy::getArgs")
+        jo.accept(None)
 
     @common.requireInstrumentation
     def testJPProxy_box_return(self):
@@ -1231,10 +1246,10 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::GetStringUTFChars")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(JString("a"))
-        # FIXME Segfaults.  Problem with release path.
-#        _jpype.fault("JPJavaFrame::ReleaseStringUTFChars")
-#        with self.assertRaisesRegex(SystemError, "fault"):
-#            str(JString("a"))
+        _jpype.fault("JPJavaFrame::ReleaseStringUTFChars")
+        # Releas must not pass the exception because it would
+        # cause an abort.
+        str(JString("a"))
         _jpype.fault("JPJavaFrame::GetStringUTFLength")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(JString("a"))
