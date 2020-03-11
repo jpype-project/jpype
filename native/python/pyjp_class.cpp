@@ -21,9 +21,10 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_arrayclass.h"
-#include "jp_boxedclasses.h"
+#include "jp_boxedtype.h"
 #include "jp_field.h"
 #include "jp_method.h"
+#include "jp_methoddispatch.h"
 
 struct PyJPClass
 {
@@ -176,7 +177,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				break;
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
-				JP_RAISE_PYTHON("fail");
+				JP_RAISE_PYTHON();
 		}
 	}
 	PyType_Ready(type);
@@ -316,7 +317,7 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 {
 	JP_PY_TRY("PyJPClass_setattro");
-	ASSERT_JVM_RUNNING();
+	PyJPModule_getContext();
 	if (!PyUnicode_Check(attr_name))
 	{
 		PyErr_Format(PyExc_TypeError,
@@ -345,7 +346,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	const char *name_str = PyUnicode_AsUTF8(attr_name);
 	PyErr_Format(PyExc_AttributeError,
 			"Static field '%s' is not settable on Java '%s' object",
-			name_str, Py_TYPE(self)->tp_name);
+			name_str, ((PyTypeObject*) self)->tp_name);
 	return -1;
 	JP_PY_CATCH(-1);
 }
@@ -356,15 +357,15 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if (test == type)
 		Py_RETURN_TRUE;
 
-	if (!JPEnv::isInitialized())
+	if (!JPContext_global->isRunning())
 	{
 		if ((PyObject*) type == _JObject)
 			return PyBool_FromLong(Py_IsSubClassSingle(PyJPObject_Type, test));
 		return PyBool_FromLong(Py_IsSubClassSingle(type, test));
 	}
 
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	// Check for class inheritance first
 	JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
@@ -377,7 +378,7 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	{
 		if (typeClass->isPrimitive())
 			Py_RETURN_FALSE;
-		bool b = frame.IsAssignableFrom(testClass->getJavaClass(), typeClass->getJavaClass());
+		bool b = frame.IsAssignableFrom(testClass->getJavaClass(), typeClass->getJavaClass()) != 0;
 		return PyBool_FromLong(b);
 	}
 
@@ -405,32 +406,58 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_class");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(self);
 	if (javaSlot == NULL)
 		JP_RAISE(PyExc_AttributeError, "Java slot is null");
-	return PyJPValue_create(*javaSlot).keep();
+	return PyJPValue_create(frame, *javaSlot).keep();
 	JP_PY_CATCH(NULL);
 }
 
 static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 {
-	JP_PY_TRY("PyJPClass_class", self);
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JP_PY_TRY("PyJPClass_setClass", self);
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(type);
-	if (javaSlot->getClass() != JPTypeManager::_java_lang_Class)
+	if (javaSlot == NULL || javaSlot->getClass() != context->_java_lang_Class)
 		JP_RAISE(PyExc_TypeError, "Java class instance is required");
 	if (PyJPValue_isSetJavaSlot(self))
-		JP_RAISE(PyExc_AttributeError, "Java class may not be reset");
-	PyJPValue_assignJavaSlot(self, *javaSlot);
+		JP_RAISE(PyExc_AttributeError, "Java class can't be set");
+	PyJPValue_assignJavaSlot(frame, self, *javaSlot);
 
-	JPClass* cls = JPTypeManager::findClass((jclass) javaSlot->getJavaObject());
+	JPClass* cls = frame.findClass((jclass) javaSlot->getJavaObject());
 	JP_TRACE("Set host", cls, javaSlot->getClass()->getCanonicalName().c_str());
 	if (cls->getHost() == NULL)
 		cls->setHost(self);
 	((PyJPClass*) self)->m_Class = cls;
+	return 0;
+	JP_PY_CATCH(-1);
+}
+
+static PyObject *PyJPClass_hints(PyObject *self, PyObject *closure)
+{
+	JP_PY_TRY("PyJPClass_hints");
+	PyJPModule_getContext();
+	PyJPClass *cls = (PyJPClass*) self;
+	PyObject *hints = cls->m_Class->getHints();
+	if (hints == NULL)
+		Py_RETURN_NONE;
+	Py_INCREF(hints);
+	return hints;
+	JP_PY_CATCH(NULL);
+}
+
+static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure)
+{
+	JP_PY_TRY("PyJPClass_setHints", self);
+	PyJPModule_getContext();
+	PyJPClass *cls = (PyJPClass*) self;
+	PyObject *hints = cls->m_Class->getHints();
+	if (hints != NULL)
+		JP_RAISE(PyExc_AttributeError, "_hints can't be set");
+	cls->m_Class->setHints(value);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -440,13 +467,15 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 	// JInterface is a meta
 	if ((PyObject*) self == _JInterface)
 	{
-		ASSERT_JVM_RUNNING();
+		JPContext *context = PyJPModule_getContext();
+		JPJavaFrame frame(context);
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		return PyBool_FromLong(testClass != NULL && testClass->isInterface());
 	}
 	if ((PyObject*) self == _JException)
 	{
-		ASSERT_JVM_RUNNING();
+		JPContext *context = PyJPModule_getContext();
+		JPJavaFrame frame(context);
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		if (testClass)
 			return PyBool_FromLong(testClass->isThrowable());
@@ -459,22 +488,23 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_canConvertToJava");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch::Type match = cls->canConvertToJava(other);
+	JPMatch match;
+	cls->getJavaConversion(&frame, match, other);
 
 	// Report to user
-	if (match == JPMatch::_none)
+	if (match.type == JPMatch::_none)
 		return JPPyString::fromStringUTF8("none").keep();
-	if (match == JPMatch::_explicit)
+	if (match.type == JPMatch::_explicit)
 		return JPPyString::fromStringUTF8("explicit").keep();
-	if (match == JPMatch::_implicit)
+	if (match.type == JPMatch::_implicit)
 		return JPPyString::fromStringUTF8("implicit").keep();
-	if (match == JPMatch::_exact)
+	if (match.type == JPMatch::_exact)
 		return JPPyString::fromStringUTF8("exact").keep();
 
 	// Not sure how this could happen
@@ -485,15 +515,18 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_cast");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPClass *type =  self->m_Class;
 	JPValue *val = PyJPValue_getJavaSlot(other);
 
 	// Cast on non-Java
 	if ( val == NULL || val->getClass()->isPrimitive())
 	{
+		JPMatch match;
+		type->getJavaConversion(&frame, match, other);
 		// Otherwise, see if we can convert it
-		if (type->canConvertToJava(other) == JPMatch::_none)
+		if (match.type == JPMatch::_none)
 		{
 			PyErr_Format(PyExc_TypeError,
 					"Unable to cast '%s' to java type '%s'",
@@ -502,20 +535,20 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 					);
 			return NULL;
 		}
-		jvalue v = type->convertToJava(other);
-		return PyJPValue_create(JPValue(type, v)).keep();
+		jvalue v = match.conversion->convert(&frame, type, other);
+		return PyJPValue_create(frame, JPValue(type, v)).keep();
 	}
 
 	// Cast on java object
 	//	if (!type->isSubTypeOf(val->getClass()))
 	jobject obj = val->getJavaObject();
 	if (obj == NULL)
-		return PyJPValue_create(JPValue(type, 0)).keep();
-	JPClass *otherClass = JPTypeManager::findClassForObject(obj);
+		return PyJPValue_create(frame, JPValue(type, 0)).keep();
+	JPClass *otherClass = frame.findClassForObject(obj);
 	if (otherClass == NULL)
-		return PyJPValue_create(JPValue(type, val->getJavaObject())).keep();
+		return PyJPValue_create(frame, JPValue(type, val->getJavaObject())).keep();
 
-	if (!otherClass->isSubTypeOf(type))
+	if (!otherClass->isAssignableFrom(frame, type))
 	{
 		PyErr_Format(PyExc_TypeError,
 				"Unable to cast '%s' to java type '%s'",
@@ -532,13 +565,13 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		PyJPArray *array = (PyJPArray*) other;
 		if (array->m_Array->isSlice())
 		{
-			JPJavaFrame frame;
+			JPJavaFrame frame(context);
 			jobject ja = frame.keep(array->m_Array->clone(frame, other));
-			return PyJPValue_create(JPValue(type, ja)).keep();
+			return PyJPValue_create(frame, JPValue(type, ja)).keep();
 		}
 	}
 
-	return PyJPValue_create(JPValue(type, val->getJavaObject())).keep();
+	return PyJPValue_create(frame, JPValue(type, val->getJavaObject())).keep();
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -549,24 +582,25 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_convertToJava");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch::Type match = cls->canConvertToJava(other);
+	JPMatch match;
+	cls->getJavaConversion(&frame, match, other);
 
 	// If there is no conversion report a failure
-	if (match == JPMatch::_none)
+	if (match.type == JPMatch::_none)
 	{
 		PyErr_SetString(PyExc_TypeError, "Unable to create an instance.");
 		return 0;
 	}
 
 	// Otherwise give back a PyJPValue
-	jvalue v = cls->convertToJava(other);
-	return PyJPValue_create(JPValue(cls, v)).keep();
+	jvalue v = match.conversion->convert(&frame, cls, other);
+	return PyJPValue_create(frame, JPValue(cls, v)).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -594,6 +628,7 @@ static PyMethodDef classMethods[] = {
 
 static PyGetSetDef classGetSets[] = {
 	{"class_", (getter) PyJPClass_class, (setter) PyJPClass_setClass, ""},
+	{"_hints", (getter) PyJPClass_hints, (setter) PyJPClass_setHints, ""},
 	{0}
 };
 
@@ -628,9 +663,9 @@ void PyJPClass_initType(PyObject* module)
 	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
 	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JClass", (PyObject*) PyJPClass_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPClass* PyJPClass_getJPClass(PyObject* obj)
@@ -642,45 +677,52 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 		if (PyJPClass_Check(obj))
 			return ((PyJPClass*) obj)->m_Class;
 		JPValue* javaSlot = PyJPValue_getJavaSlot(obj);
-		if (javaSlot == NULL || javaSlot->getClass() != JPTypeManager::_java_lang_Class)
+		if (javaSlot == NULL)
 			return NULL;
-		return JPTypeManager::findClass((jclass) javaSlot->getJavaObject());
+		JPClass *cls = javaSlot->getClass();
+		if (cls == NULL || cls != cls->getContext()->_java_lang_Class)
+			return NULL;
+		JPJavaFrame frame(cls->getContext());
+		return frame.findClass((jclass) javaSlot->getJavaObject());
 	}	catch (...)
 	{
 		return NULL;
 	}
 }
 
-static JPPyObject PyJPClass_getBases(JPClass* cls)
+static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_bases");
+
+	cls->ensureMembers(frame);
+
 	// Decide the base for this object
 	JPPyObject baseType;
+	JPContext *context = PyJPModule_getContext();
 	JPClass *super = cls->getSuperClass();
-	if (dynamic_cast<JPBoxedClass*> (cls) == cls)
+	if (dynamic_cast<JPBoxedType*> (cls) == cls)
 	{
-		if (cls == JPTypeManager::_java_lang_Boolean)
+		if (cls == context->_java_lang_Boolean)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberBool_Type);
-		} else if (cls == JPTypeManager::_java_lang_Character)
+		} else if (cls == context->_java_lang_Character)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberChar_Type);
-		} else if (cls == JPTypeManager::_java_lang_Boolean
-				|| cls == JPTypeManager::_java_lang_Byte
-				|| cls == JPTypeManager::_java_lang_Character
-				|| cls == JPTypeManager::_java_lang_Short
-				|| cls == JPTypeManager::_java_lang_Integer
-				|| cls == JPTypeManager::_java_lang_Long
+		} else if (cls == context->_java_lang_Boolean
+				|| cls == context->_java_lang_Byte
+				|| cls == context->_java_lang_Short
+				|| cls == context->_java_lang_Integer
+				|| cls == context->_java_lang_Long
 				)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberLong_Type);
-		} else if ( cls == JPTypeManager::_java_lang_Float
-				|| cls == JPTypeManager::_java_lang_Double
+		} else if ( cls == context->_java_lang_Float
+				|| cls == context->_java_lang_Double
 				)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberFloat_Type);
 		}
-	} else if (cls == JPTypeManager::_java_lang_Throwable)
+	} else if (cls == context->_java_lang_Throwable)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPException_Type);
 	} else if (dynamic_cast<JPArrayClass*> (cls) != 0)
@@ -697,19 +739,19 @@ static JPPyObject PyJPClass_getBases(JPClass* cls)
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPObject_Type);
 	}
 
-	const JPClass::ClassList& baseItf = cls->getInterfaces();
-	int count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != NULL ? 1 : 0);
+	const JPClassList& baseItf = cls->getInterfaces();
+	size_t count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != NULL ? 1 : 0);
 
 	// Pack into a tuple
 	JPPyObject result = JPPyObject(JPPyRef::_call, PyList_New(count));
 	unsigned int i = 0;
 	for (; i < baseItf.size(); i++)
 	{
-		PyList_SetItem(result.get(), i, PyJPClass_create(baseItf[i]).keep());
+		PyList_SetItem(result.get(), i, PyJPClass_create(frame, baseItf[i]).keep());
 	}
 	if (super != NULL)
 	{
-		PyList_SetItem(result.get(), i++, PyJPClass_create(super).keep());
+		PyList_SetItem(result.get(), i++, PyJPClass_create(frame, super).keep());
 	}
 	if (!baseType.isNull())
 	{
@@ -729,7 +771,7 @@ static JPPyObject PyJPClass_getBases(JPClass* cls)
  * @param cls
  * @return
  */
-JPPyObject PyJPClass_create(JPClass* cls)
+JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
 
@@ -739,27 +781,39 @@ JPPyObject PyJPClass_create(JPClass* cls)
 	{
 		return JPPyObject(JPPyRef::_use, host);
 	}
-	cls->postLoad();
+	JPContext *context = cls->getContext();
+	//	cls->postLoad();
 
 	JPPyTuple args = JPPyTuple::newTuple(3);
 	PyTuple_SetItem(args.get(), 0, JPPyString::fromStringUTF8(cls->getCanonicalName()).keep());
-	PyTuple_SetItem(args.get(), 1, PyJPClass_getBases(cls).keep());
+	PyTuple_SetItem(args.get(), 1, PyJPClass_getBases(frame, cls).keep());
 
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
 
-	// FIXME We need to apply the keyword correction here.
-	const JPClass::FieldList& instFields = cls->getFields();
-	for (JPClass::FieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
+	const JPFieldList& instFields = cls->getFields();
+	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
 	{
 		JPPyObject fieldName(JPPyString::fromStringUTF8((*iter)->getName()));
 		PyDict_SetItem(members, fieldName.keep(), PyJPField_create(*iter).keep());
 	}
-	const JPClass::MethodList& m_Methods = cls->getMethods();
-	for (JPClass::MethodList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+	const JPMethodDispatchList& m_Methods = cls->getMethods();
+	for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
 	{
 		JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
-		PyDict_SetItem(members, methodName.keep(), PyJPMethod_create(*iter, NULL).keep());
+		PyDict_SetItem(members, methodName.keep(),
+				PyJPMethod_create(*iter, NULL).keep());
+	}
+
+	if (cls->isInterface())
+	{
+		const JPMethodDispatchList& m_Methods = context->_java_lang_Object->getMethods();
+		for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+		{
+			JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
+			PyDict_SetItem(members, methodName.keep(),
+					PyJPMethod_create(*iter, NULL).keep());
+		}
 	}
 
 	// Call the customizer to make any required changes to the tables.
@@ -772,8 +826,8 @@ JPPyObject PyJPClass_create(JPClass* cls)
 
 	// Attach the javaSlot
 	self->m_Class = cls;
-	self->m_Class->postLoad();
-	PyJPValue_assignJavaSlot((PyObject*) self, JPValue(JPTypeManager::_java_lang_Class,
+	//	self->m_Class->postLoad();
+	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue(context->_java_lang_Class,
 			(jobject) self->m_Class->getJavaClass()));
 
 	// Attach the cache  (adds reference, thus wrapper lives to end of JVM)

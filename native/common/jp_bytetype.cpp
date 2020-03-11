@@ -17,8 +17,10 @@
 #include "jpype.h"
 #include "jp_primitive_accessor.h"
 #include "jp_bytetype.h"
+#include "pyjp.h"
 
-JPByteType::JPByteType() : JPPrimitiveType(JPTypeManager::_java_lang_Byte)
+JPByteType::JPByteType()
+: JPPrimitiveType("byte")
 {
 }
 
@@ -26,96 +28,77 @@ JPByteType::~JPByteType()
 {
 }
 
-bool JPByteType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_byte
-			|| other == JPTypeManager::_short
-			|| other == JPTypeManager::_int
-			|| other == JPTypeManager::_long
-			|| other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
-}
-
-JPPyObject JPByteType::convertToPythonObject(jvalue val)
+JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
 }
 
-JPValue JPByteType::getValueFromObject(jobject obj)
+JPValue JPByteType::getValueFromObject(const JPValue& obj)
 {
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = (type_t) JPJni::intValue(obj);
+	field(v) = frame.CallByteMethodA(obj.getValue().l, context->m_ByteValueID, 0);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPByteType::canConvertToJava(PyObject* obj)
+class JPConversionAsByte : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
-	{
-		return JPMatch::_none;
-	}
+	typedef JPByteType base_t;
+public:
 
-	JPValue* value = PyJPValue_getJavaSlot(obj);
+	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
+		return res;
+	}
+} asByteConversion;
+
+JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	JP_TRACE_IN("JPByteType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
+	if (JPPyObject::isNone(pyobj))
+		return match.type = JPMatch::_none;
+
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
 	if (value != NULL)
 	{
-		if (value->getClass() == this)
+		JPClass *cls = value->getClass();
+		if (cls == this)
 		{
-			return JPMatch::_exact;
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (value->getClass() == m_BoxedClass)
+		if (context != NULL && cls == context->_java_lang_Byte)
 		{
-			return JPMatch::_implicit;
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return JPMatch::_none;
+		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyLong::check(obj))
+	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
-		return JPMatch::_implicit;
+		match.conversion = &asByteConversion;
+		return match.type = JPMatch::_implicit;
 	}
 
-	if (JPPyLong::checkConvertable(obj))
+	if (PyLong_Check(pyobj))
 	{
-		// If it has integer operations then we will call it an int
-		if (JPPyLong::checkIndexable(obj))
-			return JPMatch::_implicit;
-		else
-			return JPMatch::_explicit;
+		match.conversion = &asByteConversion;
+		return match.type = JPMatch::_explicit;
 	}
 
-	return JPMatch::_none;
-}
-
-jvalue JPByteType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPByteType::convertToJava");
-	jvalue res;
-	field(res) = 0;
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return *value;
-		}
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-		JP_RAISE(PyExc_TypeError, "Cannot convert value to Java byte");
-	} else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) assertRange(JPPyLong::asLong(obj));
-		return res;
-	}
-
-	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java byte");
-	return res;
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -128,14 +111,14 @@ JPPyObject JPByteType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticByteField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetByteField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -145,7 +128,7 @@ JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticByteMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -158,18 +141,24 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticByteField(c, fid, val);
 }
 
 void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetByteField(c, fid, val);
 }
 
@@ -199,7 +188,7 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 			if (view.suboffsets && view.suboffsets[0] >= 0)
 				memory = *((char**) memory) + view.suboffsets[0];
 			jsize index = start;
-			jconverter conv = getConverter(view.format, view.itemsize, "b");
+			jconverter conv = getConverter(view.format, (int) view.itemsize, "b");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
 			{
 				jvalue r = conv(memory);
@@ -220,10 +209,8 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		jlong v = PyLong_AsLongLong(seq[i].get());
-		if (v == -1 && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON("JPByteType::setArrayRange");
-		}
+		if (v == -1)
+			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
@@ -237,30 +224,39 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetByteArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetByteArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
+	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 
 void JPByteType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	view.memory = (void*) frame.GetByteArrayElements(
-			(jbyteArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "b";
-	view.buffer.itemsize = sizeof (jbyte);
+	JPJavaFrame frame(view.getContext());
+	view.m_Memory = (void*) frame.GetByteArrayElements(
+			(jbyteArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "b";
+	view.m_Buffer.itemsize = sizeof (jbyte);
 }
 
 void JPByteType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	frame.ReleaseByteArrayElements((jbyteArray) view.array->getJava(),
-			(jbyte*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
+				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPByteType::getBufferFormat()

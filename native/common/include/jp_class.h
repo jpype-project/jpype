@@ -17,43 +17,103 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
-class JPArrayView;
-class JPClass
+#include "jp_modifier.h"
+
+class JPClass : public JPResource
 {
 public:
-	typedef map<string, JPMethod*> MethodMap;
-	typedef vector<JPMethod*> MethodList;
-	typedef vector<JPField*> FieldList;
-	typedef vector<JPClass*> ClassList;
-
-	JPClass(jclass clss);
+	// Special entry point for JVM independent entities
+	JPClass(const string& name, jint modifiers);
+	JPClass(JPJavaFrame& context,
+			jclass clss,
+			const string& name,
+			JPClass* super,
+			const JPClassList& interfaces,
+			jint modifiers);
 	virtual ~JPClass();
 
-public:
-
-	jclass getJavaClass() const
+	void setHost(PyObject* host)
 	{
-		return m_Class.get();
+		m_Host = JPPyObject(JPPyRef::_use, host);
 	}
-
-	string toString() const;
-	string getCanonicalName() const;
-	bool isAbstract();
-	bool isFinal();
-	bool isThrowable();
-	bool isInterface();
-	virtual bool isPrimitive() const;
-	const MethodList& getMethods();
-	const FieldList&  getFields();
 
 	PyObject* getHost()
 	{
 		return m_Host.get();
 	}
 
-	void setHost(PyObject* obj)
+	void setHints(PyObject* host)
 	{
-		m_Host = JPPyObject(JPPyRef::_use, obj);
+		m_Hints = JPPyObject(JPPyRef::_use, host);
+	}
+
+	PyObject* getHints()
+	{
+		return m_Hints.get();
+	}
+
+public:
+	void ensureMembers(JPJavaFrame& frame);
+
+	jclass getJavaClass() const
+	{
+		jclass cls = m_Class.get();
+		if (cls == 0)
+			JP_RAISE(PyExc_RuntimeError, "Class is null");
+		return cls;
+	}
+
+	void assignMembers(JPMethodDispatch* ctor,
+			JPMethodDispatchList& methods,
+			JPFieldList& fields);
+
+	string toString() const;
+
+	string getCanonicalName() const
+	{
+		return m_CanonicalName;
+	}
+
+	string getName() const;
+
+	bool isAbstract() const
+	{
+		return JPModifier::isAbstract(m_Modifiers);
+	}
+
+	bool isFinal() const
+	{
+		return JPModifier::isFinal(m_Modifiers);
+	}
+
+	bool isThrowable() const
+	{
+		return JPModifier::isThrowable(m_Modifiers);
+	}
+
+	bool isInterface() const
+	{
+		return JPModifier::isInterface(m_Modifiers);
+	}
+
+	virtual bool isPrimitive() const
+	{
+		return false;
+	}
+
+	JPMethodDispatch* getCtor()
+	{
+		return m_Constructors;
+	}
+
+	const JPMethodDispatchList& getMethods()
+	{
+		return m_Methods;
+	}
+
+	const JPFieldList&  getFields()
+	{
+		return m_Fields;
 	}
 
 	/**
@@ -61,27 +121,16 @@ public:
 	 *
 	 * This is used to determine which overload is the best match.
 	 *
-	 * @param obj is the Python object.
+	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type canConvertToJava(PyObject* obj);
-
-	/**
-	 * Execute a conversion from Python to java.
-	 *
-	 * This should only be called if canConvertToJava returned
-	 * a valid conversion.
-	 *
-	 * @param obj is the Python object.
-	 * @return a jvalue holding the converted python object.
-	 */
-	virtual jvalue convertToJava(PyObject* obj);
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj);
 
 	/** Create a new Python object to wrap a Java value.
 	 *
 	 * @return a new Python object.
 	 */
-	virtual JPPyObject convertToPythonObject(jvalue val);
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val);
 
 	/**
 	 * Get the Java value representing as an object.
@@ -90,7 +139,7 @@ public:
 	 *
 	 * @return a java value with class.
 	 */
-	virtual JPValue getValueFromObject(jobject obj);
+	virtual JPValue getValueFromObject(const JPValue& obj);
 
 	/**
 	 * Call a static method that returns this type of object.
@@ -122,61 +171,45 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
-	/** Determine if this class is a super or implements another class.
-	 *
-	 * This is used specifically in the method overload to determine
-	 * if a method will cover another.  For objects this is the same as
-	 * IsAssignableFrom.  For primitive type, then this will be true
-	 * if this primitive can be converted to other without a cast.
-	 *
-	 * In the sense of
-	 *  http://docs.oracle.com/javase/specs/jls/se7/html/jls-4.html#jls-4.10
-	 *
-	 * @param other is the class to to assign to.
-	 * @return true if this class is the same, a super class, or implements
-	 * the other class.
-	 */
-	virtual bool isSubTypeOf(JPClass* other) const;
-
 	/**
 	 * Expose IsAssignableFrom to python.
-	 *
-	 * FIXME this may be able to be replaced with isSubTypeOf.
-	 * They are doing the same thing.
 	 */
-	bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
+	virtual bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
 
 	// Object properties
-	JPClass* getSuperClass();
+
+	JPClass* getSuperClass()
+	{
+		return m_SuperClass;
+	}
+
 	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
-	const ClassList& getInterfaces();
 
-	string describe();
+	const JPClassList& getInterfaces()
+	{
+		return m_Interfaces;
+	}
 
-	// Check if a value is an instance of this class
-	bool isInstance(JPValue& val);
-
-	virtual void postLoad();
-
-private:
-	void loadFields();
-	void loadMethods();
-	void loadConstructors();
+	JPContext* getContext() const
+	{
+		if (m_Context == 0)
+			JP_RAISE(PyExc_RuntimeError, "Null context");
+		return
+		m_Context;
+	}
 
 protected:
-	JPClassRef   m_Class;
-	JPClass*     m_SuperClass;
-	ClassList    m_SuperInterfaces;
-	FieldList    m_Fields;
-	MethodList   m_Methods;
-	JPMethod*    m_Constructors;
-	string       m_CanonicalName;
-	bool         m_InterfacesLoaded;
-	bool         m_IsInterface;
-	bool         m_IsThrowable;
-	bool         m_IsAbstract;
-	bool         m_IsFinal;
-	JPPyObject   m_Host;
+	JPContext*           m_Context;
+	JPClassRef           m_Class;
+	JPClass*             m_SuperClass;
+	JPClassList          m_Interfaces;
+	JPMethodDispatch*    m_Constructors;
+	JPMethodDispatchList m_Methods;
+	JPFieldList          m_Fields;
+	string               m_CanonicalName;
+	jint                 m_Modifiers;
+	JPPyObject           m_Host;
+	JPPyObject           m_Hints;
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

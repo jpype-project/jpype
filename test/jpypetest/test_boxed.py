@@ -20,6 +20,7 @@ import common
 from jpype.types import *
 from jpype import java
 
+
 def passThrough(item):
     al = JClass("java.util.ArrayList")()
     al.add(item)
@@ -45,7 +46,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(c1, d1)
         self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
-        self.assertEqual(self.TestBoxed.callShort(c1), self.TestBoxed.callShort(d2))
+        self.assertEqual(self.TestBoxed.callShort(c1),
+                         self.TestBoxed.callShort(d2))
         # Verify ops
         self.assertEqual(d1+2, d1+2)
         self.assertEqual(d1*2, d1*2)
@@ -76,7 +78,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(c1, d1)
         self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
-        self.assertEqual(self.TestBoxed.callLong(c1), self.TestBoxed.callLong(d2))
+        self.assertEqual(self.TestBoxed.callLong(c1),
+                         self.TestBoxed.callLong(d2))
         # Verify ops
         self.assertEqual(d1+2, d1+2)
         self.assertEqual(d1*2, d1*2)
@@ -110,7 +113,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(c1, d1)
         self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
-        self.assertEqual(self.TestBoxed.callFloat(c1), self.TestBoxed.callFloat(d2))
+        self.assertEqual(self.TestBoxed.callFloat(c1),
+                         self.TestBoxed.callFloat(d2))
         # Verify ops
         self.assertEqual(d1+2, d1+2)
         self.assertEqual(d1*2, d1*2)
@@ -127,7 +131,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(c1, d1)
         self.assertEqual(c1, d2)
         self.assertEqual(d1, d2)
-        self.assertEqual(self.TestBoxed.callDouble(c1), self.TestBoxed.callDouble(d2))
+        self.assertEqual(self.TestBoxed.callDouble(c1),
+                         self.TestBoxed.callDouble(d2))
         # Verify ops
         self.assertEqual(d1+2, d1+2)
         self.assertEqual(d1*2, d1*2)
@@ -230,14 +235,14 @@ class BoxedTestCase(common.JPypeTestCase):
     def compareTest(self, u, v):
         self.assertEqual(u, v)
         self.assertNotEqual(u, v-1)
-        self.assertTrue(u>v-1)
-        self.assertFalse(u>v+1)
-        self.assertTrue(u>=v)
-        self.assertTrue(u<=v)
-        self.assertFalse(u<v)
-        self.assertFalse(u>v)
-        self.assertTrue(u<v+1)
-        self.assertTrue(u>v-1)
+        self.assertTrue(u > v-1)
+        self.assertFalse(u > v+1)
+        self.assertTrue(u >= v)
+        self.assertTrue(u <= v)
+        self.assertFalse(u < v)
+        self.assertFalse(u > v)
+        self.assertTrue(u < v+1)
+        self.assertTrue(u > v-1)
 
     def testByteBoxOps(self):
         u = JObject(81, JByte)
@@ -319,7 +324,7 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertIsInstance(u, java.lang.Double)
         self.assertEqual(u, java.lang.Double(5))
 
-    def testBooleanNull(self): 
+    def testBooleanNull(self):
         n = JObject(None, JBoolean)
         self.assertIsInstance(n, java.lang.Boolean)
         self.assertEqual(n, None)
@@ -335,7 +340,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testCharNull(self): 
+    def testCharNull(self):
         n = JObject(None, JChar)
         self.assertIsInstance(n, java.lang.Character)
         self.assertNotEqual(n, 0)
@@ -349,7 +354,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testByteNull(self): 
+    def testByteNull(self):
         n = JObject(None, JByte)
         self.assertIsInstance(n, java.lang.Byte)
         self.assertNotEqual(n, 0)
@@ -363,7 +368,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testShortNull(self): 
+    def testShortNull(self):
         n = JObject(None, JShort)
         self.assertIsInstance(n, java.lang.Short)
         self.assertNotEqual(n, 0)
@@ -377,7 +382,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testIntNull(self): 
+    def testIntNull(self):
         n = JObject(None, JInt)
         self.assertIsInstance(n, java.lang.Integer)
         self.assertNotEqual(n, 0)
@@ -391,7 +396,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testLongNull(self): 
+    def testLongNull(self):
         n = JObject(None, JLong)
         self.assertIsInstance(n, java.lang.Long)
         self.assertNotEqual(n, 0)
@@ -405,7 +410,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testFloatNull(self): 
+    def testFloatNull(self):
         n = JObject(None, JFloat)
         self.assertIsInstance(n, java.lang.Float)
         self.assertNotEqual(n, 0)
@@ -420,7 +425,7 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
-    def testDoubleNull(self): 
+    def testDoubleNull(self):
         n = JObject(None, JDouble)
         self.assertIsInstance(n, java.lang.Double)
         self.assertNotEqual(n, 0)

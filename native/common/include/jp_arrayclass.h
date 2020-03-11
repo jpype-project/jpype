@@ -23,13 +23,16 @@
 class JPArrayClass : public JPClass
 {
 public:
-	JPArrayClass(jclass c);
+	JPArrayClass(JPJavaFrame& frame,
+			jclass cls,
+			const string& name,
+			JPClass* superClass,
+			JPClass* componentType,
+			jint modifiers);
 	virtual~ JPArrayClass();
 
-public:
-	virtual JPPyObject convertToPythonObject(jvalue val) override;
-	virtual JPMatch::Type canConvertToJava(PyObject* obj) override;
-	virtual jvalue convertToJava(PyObject* obj) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj);
 
 	JPValue newInstance(JPJavaFrame& frame, int length);
 	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
@@ -45,15 +48,14 @@ public:
 	 * @param end is the end of the range exclusive.
 	 * @return a jvalue containing a java vector.
 	 */
-	jvalue convertToJavaVector(JPPyObjectVector& refs, jsize start, jsize end);
+	jvalue convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& refs, jsize start, jsize end);
 
 	virtual JPClass* getComponentType()
 	{
 		return m_ComponentType;
 	}
 
-
-public:
+private:
 	JPClass* m_ComponentType;
 } ;
 

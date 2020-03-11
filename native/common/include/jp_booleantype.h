@@ -24,25 +24,27 @@ public:
 	JPBooleanType();
 	virtual ~JPBooleanType();
 
-public:
 	typedef jboolean type_t;
 	typedef jbooleanArray array_t;
 
-	inline jboolean& field(jvalue& v)
+	static inline jboolean& field(jvalue& v)
 	{
 		return v.z;
 	}
 
-	inline jboolean field(const jvalue& v) const
+	static inline const jboolean& field(const jvalue& v)
 	{
 		return v.z;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Boolean;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -64,7 +66,15 @@ public:
 		return 'Z';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
@@ -73,7 +83,6 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
-
 } ;
 
 #endif // _JP_BOOLEAN_TYPE_H_

@@ -14,8 +14,8 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import _jpype
 from . import _jcustomizer
-import sys as _sys
 
 
 @_jcustomizer.JImplementationFor('java.lang.Comparable')
@@ -38,3 +38,6 @@ class _JComparable(object):
 
     def __le__(self, o):
         return self.compareTo(o) <= 0
+
+    __hash__ = _jpype._JObject.__hash__
+

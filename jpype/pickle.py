@@ -55,9 +55,7 @@ Requires:
 
 """
 from __future__ import absolute_import
-import sys as _sys
-from . import _jclass
-from . import _jobject
+import _jpype
 import pickle
 
 from copyreg import dispatch_table
@@ -85,9 +83,9 @@ class _JDispatch(object):
     """
 
     def __init__(self, dispatch):
-        cl = _jclass.JClass(
+        cl = _jpype.JClass(
             'org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._encoder = _jclass.JClass(
+        self._encoder = _jpype.JClass(
             cl.loadClass('org.jpype.pickle.Encoder'))()
         self._builder = JUnserializer()
         self._dispatch = dispatch
@@ -98,13 +96,13 @@ class _JDispatch(object):
     # Python2 and Python3 _Pickler use get()
 
     def get(self, cls):
-        if not issubclass(cls, (_jclass.JClass, _jobject.JObject)):
+        if not issubclass(cls, (_jpype.JClass, _jpype.JObject)):
             return self._dispatch.get(cls)
         return self._call
 
     # Python3 cPickler uses __getitem__()
     def __getitem__(self, cls):
-        if not issubclass(cls, (_jclass.JClass, _jobject.JObject)):
+        if not issubclass(cls, (_jpype.JClass, _jpype.JObject)):
             return self._dispatch[cls]
         return self._call
 
@@ -155,9 +153,9 @@ class JUnpickler(pickle.Unpickler):
     """
 
     def __init__(self, file, *args, **kwargs):
-        cl = _jclass.JClass(
+        cl = _jpype.JClass(
             'org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._decoder = _jclass.JClass(
+        self._decoder = _jpype.JClass(
             cl.loadClass('org.jpype.pickle.Decoder'))()
         pickle.Unpickler.__init__(self, file, *args, **kwargs)
 

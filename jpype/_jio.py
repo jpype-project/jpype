@@ -50,6 +50,5 @@ class _JCloseable(object):
             self.close()
         except _jexception.JException as jex:
             # Eat the second exception if we are already handling one.
-            if (info[0] == None):
+            if (info[0] is None):
                 raise jex
-            pass

@@ -15,13 +15,7 @@
 #
 # *****************************************************************************
 import sys as _sys
-
-from collections.abc import Sequence
-
 import _jpype
-from . import _jclass
-from . import _jobject
-from . import _jstring
 from . import _jcustomizer
 
 
@@ -200,7 +194,7 @@ class _JavaArrayIter(object):
 @_jcustomizer.JImplementationFor("char[]")
 class _JCharArray(object):
     def __str__(self):
-        return str(_jstring.JString(self))
+        return str(_jpype.JString(self))
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -209,6 +203,7 @@ class _JCharArray(object):
             return self.equals(self.__class__(other))
         except TypeError:
             return False
+    __hash__ = _jpype._JObject.__hash__
 
 
 # Install module hooks

@@ -20,20 +20,25 @@
 class JPPrimitiveType : public JPClass
 {
 protected:
-	JPPrimitiveType(JPBoxedClass* cls);
+	JPPrimitiveType(const string& name);
 	virtual ~JPPrimitiveType();
 
 public:
 	virtual bool isPrimitive() const override;
 
-	JPClass* getBoxedClass() const
-	{
-		return m_BoxedClass;
-	}
+	virtual JPClass* getBoxedClass(JPContext *context) const = 0;
 
 	virtual char getTypeCode() = 0;
+	virtual jlong getAsLong(jvalue v) = 0;
+	virtual jdouble getAsDouble(jvalue v) = 0;
 
-	void setBoxedClass(JPBoxedClass* boxedClass);
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
+
+	void setClass(JPJavaFrame& frame, jclass o)
+	{
+		m_Context = frame.getContext();
+		m_Class = JPClassRef(frame, o);
+	}
 
 	virtual void getView(JPArrayView& view) = 0;
 	virtual void releaseView(JPArrayView& view) = 0;
@@ -42,10 +47,6 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) = 0;
-
-protected:
-	JPClass* m_BoxedClass;
-
 } ;
 
 #endif

@@ -22,8 +22,8 @@ class TestJavaCommand(distutils.cmd.Command):
     def run(self):
         """Run command."""
         if os.path.exists(os.path.join("test", "classes")):
-           distutils.log.info("Skip building Java testbench")
-           return
+            distutils.log.info("Skip building Java testbench")
+            return
         distutils.log.info("Building Java testbench")
         buildXmlFile = os.path.join("test", "build.xml")
         command = [self.distribution.ant, '-f', buildXmlFile]

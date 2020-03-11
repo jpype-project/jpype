@@ -17,8 +17,10 @@
 #include "jpype.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
+#include "pyjp.h"
 
-JPFloatType::JPFloatType() : JPPrimitiveType(JPTypeManager::_java_lang_Float)
+JPFloatType::JPFloatType()
+: JPPrimitiveType("float")
 {
 }
 
@@ -26,107 +28,132 @@ JPFloatType::~JPFloatType()
 {
 }
 
-bool JPFloatType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_float
-			|| other == JPTypeManager::_double;
-}
-
-JPPyObject JPFloatType::convertToPythonObject(jvalue val)
+JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyFloat::fromFloat(field(val));
 }
 
-JPValue JPFloatType::getValueFromObject(jobject obj)
+JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 {
+	JPContext *context = obj.getClass()->getContext();
+	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = (type_t) JPJni::doubleValue(obj);
+	field(v) = (type_t) frame.CallFloatMethodA(obj.getValue().l, context->m_FloatValueID, 0);
 	return JPValue(this, v);
 }
 
-JPMatch::Type JPFloatType::canConvertToJava(PyObject* obj)
+class JPConversionAsFloat : public JPConversion
 {
-	ASSERT_NOT_NULL(obj);
-	if (JPPyObject::isNone(obj))
+	typedef JPFloatType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
-		return JPMatch::_none;
-	}
-
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return JPMatch::_exact;
-		}
-
-		if (value->getClass() == m_BoxedClass)
-		{
-			return JPMatch::_implicit;
-		}
-
-		// Java does not permit boxed to boxed conversions.
-		return JPMatch::_none;
-	}
-
-	if (PyFloat_Check(obj))
-	{
-		// This next line is a puzzle.  It seems like it should be JPMatch::_exact.
-		return JPMatch::_implicit;
-	}
-
-	// Java allows conversion to any type with a longer range even if lossy
-	if (JPPyFloat::checkConvertable(obj))
-	{
-		return JPMatch::_implicit;
-	}
-
-	return JPMatch::_none;
-}
-
-jvalue JPFloatType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPFloatType::convertToJava");
-	jvalue res;
-	JPValue* value = PyJPValue_getJavaSlot(obj);
-	if (value != NULL)
-	{
-		if (value->getClass() == this)
-		{
-			return value->getValue();
-		}
-
-		if (value->getClass() == m_BoxedClass)
-		{
-			return getValueFromObject(value->getJavaObject());
-		}
-
-		JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
-	} else if (JPPyFloat::checkConvertable(obj))
-	{
-		double l = JPPyFloat::asDouble(obj);
-		// FIXME the check for s_minFloat seems wrong.
-		// Java would trim to 0 rather than giving an error.
-		if (l >= 0 && l > JPJni::s_Float_Max)
-		{
-			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
-		} else if (l < 0 && l < -JPJni::s_Float_Max)
-		{
-			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
-		}
-		res.f = (jfloat) l;
-		return res;
-	}// We should never reach here as an int because we should
-		// have hit the float conversion.  But we are leaving it for the odd
-		// duck with __int__ but no __float__
-	else if (JPPyLong::checkConvertable(obj))
-	{
-		field(res) = (type_t) JPPyLong::asLong(obj);
+		jvalue res;
+		double val = PyFloat_AsDouble(pyobj);
+		if (val == -1.0)
+			JP_PY_CHECK();
+		base_t::field(res) = (base_t::type_t) val;
 		return res;
 	}
+} asFloatConversion;
 
-	JP_RAISE(PyExc_TypeError, "Cannot convert value to Java float");
-	return res;
+class JPConversionAsFloatLong : public JPConversion
+{
+	typedef JPFloatType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
+		return res;
+	}
+} asFloatLongConversion;
+
+class JPConversionFloatWidenInt : public JPConversion
+{
+	typedef JPFloatType base_t;
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		ret.f = (jfloat) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+} floatIntWidenConversion;
+
+JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	JP_TRACE_IN("JPFloatType::getJavaConversion");
+	JPContext *context = NULL;
+	if (frame != NULL)
+		context = frame->getContext();
+
+	if (JPPyObject::isNone(pyobj))
+		return match.type = JPMatch::_none;
+
+	JPValue *value = PyJPValue_getJavaSlot(pyobj);
+	if (value != NULL)
+	{
+		JPClass *cls = value->getClass();
+		if (cls == this)
+		{
+			match.conversion = javaValueConversion;
+			return match.type = JPMatch::_exact;
+		}
+
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (context != NULL && cls == context->_java_lang_Float)
+		{
+			match.conversion = unboxConversion;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Consider widening
+		if (cls->isPrimitive())
+		{
+			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			switch (prim->getTypeCode())
+			{
+				case 'B':
+				case 'S':
+				case 'C':
+				case 'I':
+				case 'J':
+					match.conversion = &floatIntWidenConversion;
+					return match.type = JPMatch::_implicit;
+				default:
+					return match.type = JPMatch::_none;
+			}
+		}
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return match.type = JPMatch::_none;
+	}
+
+	if (PyFloat_Check(pyobj))
+	{
+		match.conversion = &asFloatConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
+	{
+		match.conversion = &asFloatLongConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	if (PyNumber_Check(pyobj))
+	{
+		match.conversion = &asFloatConversion;
+		return match.type = JPMatch::_implicit;
+	}
+
+	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
@@ -139,27 +166,27 @@ JPPyObject JPFloatType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fi
 {
 	jvalue v;
 	field(v) = frame.GetStaticFloatField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 JPPyObject JPFloatType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetFloatField(c, fid);
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
-JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
+JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue *val)
 {
 	jvalue v;
 	{
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticFloatMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
-JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
+JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue *val)
 {
 	jvalue v;
 	{
@@ -169,18 +196,24 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 		else
 			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
-void JPFloatType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
+void JPFloatType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject *obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticFloatField(c, fid, val);
 }
 
-void JPFloatType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
+void JPFloatType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject *obj)
 {
-	type_t val = field(convertToJava(obj));
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetFloatField(c, fid, val);
 }
 
@@ -211,7 +244,7 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 			if (view.suboffsets && view.suboffsets[0] >= 0)
 				memory = *((char**) memory) + view.suboffsets[0];
 			jsize index = start;
-			jconverter conv = getConverter(view.format, view.itemsize, "f");
+			jconverter conv = getConverter(view.format, (int) view.itemsize, "f");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
 			{
 				jvalue r = conv(memory);
@@ -232,10 +265,8 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		double v =  PyFloat_AsDouble(seq[i].get());
-		if (v == -1. && JPPyErr::occurred())
-		{
-			JP_RAISE_PYTHON("JPFloatType::setArrayRange");
-		}
+		if (v == -1.)
+			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);
 	}
 	accessor.commit();
@@ -249,30 +280,39 @@ JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetFloatArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(v);
+	return convertToPythonObject(frame, v);
 }
 
 void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	array_t array = (array_t) a;
-	type_t val = field(convertToJava(obj));
-	frame.SetFloatArrayRegion(array, ndx, 1, &val);
+	JPMatch match;
+	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
+	type_t val = field(match.conversion->convert(&frame, this, obj));
+	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }
 
 void JPFloatType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	view.memory = (void*) frame.GetFloatArrayElements(
-			(jfloatArray) view.array->getJava(), &view.isCopy);
-	view.buffer.format = "f";
-	view.buffer.itemsize = sizeof (jfloat);
+	JPJavaFrame frame(view.getContext());
+	view.m_Memory = (void*) frame.GetFloatArrayElements(
+			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
+	view.m_Buffer.format = "f";
+	view.m_Buffer.itemsize = sizeof (jfloat);
 }
 
 void JPFloatType::releaseView(JPArrayView& view)
 {
-	JPJavaFrame frame;
-	frame.ReleaseFloatArrayElements((jfloatArray) view.array->getJava(),
-			(jfloat*) view.memory, view.buffer.readonly ? JNI_ABORT : 0);
+	try
+	{
+		JPJavaFrame frame(view.getContext());
+		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
+			(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException& ex)
+	{
+		// This is called as part of the cleanup routine and exceptions
+		// are not permitted
+	}
 }
 
 const char* JPFloatType::getBufferFormat()

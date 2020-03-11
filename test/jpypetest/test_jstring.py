@@ -1,4 +1,6 @@
+import _jpype
 import jpype
+from jpype.types import *
 import common
 
 
@@ -90,6 +92,25 @@ class JStringTestCase(common.JPypeTestCase):
         a = jpype.JString("abc")
         self.assertEqual(hash(a), hash("abc"))
 
-    def __repr__(self):
+    def testRepr(self):
         a = jpype.JString("abc")
         self.assertEqual(repr(a), "'abc'")
+
+    def testConversion(self):
+        self.assertEqual(jpype.JString("AAAA"), "AAAA")
+        self.assertEqual(jpype.JString(bytes([65, 65, 65, 65])), "AAAA")
+
+    def testStringDictKey1(self):
+        d = dict()
+        d['foo'] = 'a'
+        self.assertEqual(d[JString('foo')], 'a')
+
+    def testStringDictKey2(self):
+        d = dict()
+        d[JString('foo')] = 'a'
+        self.assertEqual(d['foo'], 'a')
+
+    def testStringDictKey3(self):
+        d = dict()
+        d[JString('foo')] = 'a'
+        self.assertEqual(d[JString('foo')], 'a')

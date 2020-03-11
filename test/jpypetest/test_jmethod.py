@@ -90,6 +90,7 @@ class JMethodTestCase(common.JPypeTestCase):
     def testMethodInspectDoc(self):
         self.assertIsInstance(inspect.getdoc(self.cls.substring), str)
         self.assertIsInstance(inspect.getdoc(self.obj.substring), str)
+        self.assertIsInstance(inspect.getdoc(self.obj.format), str)
 
     def testMethodAnnotations(self):
         self.assertIsInstance(self.cls.substring.__annotations__, dict)
@@ -98,6 +99,9 @@ class JMethodTestCase(common.JPypeTestCase):
         # This one will need to change in Python 3.8
         self.assertEqual(self.cls.substring.__annotations__[
                          "return"], self.cls)
+        self.assertEqual(self.cls.trim.__annotations__[
+                         "return"], self.cls)
+        self.assertEqual(self.cls.getBytes.__annotations__, {})
 
     @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodInspectSignature(self):
@@ -141,7 +145,8 @@ class JMethodTestCase(common.JPypeTestCase):
 
     def testMethodDump(self):
         # This is replaced by doc, should be removed (or do something useful)
-        self.assertIsInstance(jpype.JString("foo").substring.matchReport(), str)
+        self.assertIsInstance(jpype.JString(
+            "foo").substring.matchReport(), str)
 
     def testMethodHelp(self):
         help(jpype.JString("a").substring)

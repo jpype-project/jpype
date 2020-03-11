@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include <Python.h>
 #include "jpype.h"
+#include "jp_tracer.h"
 
 #if defined(_MSC_VER) && _MSC_VER<1700
 
@@ -98,7 +99,6 @@ void JPypeTracer::traceOut(const char* msg, bool error)
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
-#define JP_ENABLE_TRACE_PY
 void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 {
 #ifdef JP_ENABLE_TRACE_PY
@@ -140,3 +140,11 @@ void JPypeTracer::trace2(const char* msg1, const char* msg2)
 	JPYPE_TRACING_OUTPUT << "<M>" << name << " : " << msg1 << " " << msg2 << "</M>" << endl;
 	JPYPE_TRACING_OUTPUT.flush();
 }
+
+void JPypeTracer::traceLocks(const string& msg, void* ref)
+{
+	std::lock_guard<std::mutex> guard(trace_lock);
+	JPYPE_TRACING_OUTPUT << "<M>" << msg << ": " << ref << "</M>" << endl;
+	JPYPE_TRACING_OUTPUT.flush();
+}
+

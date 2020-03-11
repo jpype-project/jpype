@@ -15,8 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_monitor.h"
-#include "jp_stringclass.h"
+#include "jp_stringtype.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -33,8 +34,8 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_init");
 	self->m_Monitor = NULL;
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	PyObject* value;
 
@@ -47,9 +48,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	if (v1 == NULL)
 		JP_RAISE(PyExc_TypeError, "Java object is required.");
 
-	// FIXME should these be runtime or type error.
-	// it is legitimately the wrong "type" of object.
-	if (v1->getClass() == JPTypeManager::_java_lang_String)
+	if (v1->getClass() == context->_java_lang_String)
 		JP_RAISE(PyExc_TypeError, "Java strings cannot be used to synchronize.");
 
 	if ((v1->getClass())->isPrimitive())
@@ -58,7 +57,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	if (v1->getValue().l == NULL)
 		JP_RAISE(PyExc_TypeError, "Java null cannot be used to synchronize.");
 
-	self->m_Monitor = new JPMonitor(v1->getValue().l);
+	self->m_Monitor = new JPMonitor(context, v1->getValue().l);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -74,7 +73,8 @@ static void PyJPMonitor_dealloc(PyJPMonitor *self)
 static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
 	JP_PY_TRY("PyJPMonitor_str");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	stringstream ss;
 	ss << "<java monitor>";
 	return JPPyString::fromStringUTF8(ss.str()).keep();
@@ -84,7 +84,8 @@ static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_enter");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -93,7 +94,8 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_exit");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -130,7 +132,7 @@ PyTypeObject* PyJPMonitor_Type = NULL;
 void PyJPMonitor_initType(PyObject* module)
 {
 	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }

@@ -28,6 +28,7 @@ extern void PyJPMonitor_initType(PyObject* module);
 extern void PyJPProxy_initType(PyObject* module);
 extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
+extern void PyJPClassHints_initType(PyObject* module);
 
 // To ensure no leaks (requires C++ linkage)
 
@@ -106,7 +107,7 @@ static void PyJPModule_loadResources(PyObject* module)
 	}	catch (JPypeException&)
 	{
 		Py_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
-		JP_RAISE_PYTHON("resource failed");
+		JP_RAISE_PYTHON();
 	}
 }
 
@@ -191,7 +192,7 @@ int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 {
 	JP_PY_TRY("PyJPModule_startup");
-	if (JPEnv::isInitialized())
+	if (JPContext_global->isRunning())
 	{
 		PyErr_SetString(PyExc_OSError, "JVM is already started");
 		return NULL;
@@ -236,63 +237,62 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 	}
 
 	PyJPModule_loadResources(module);
-	JPEnv::loadJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
+	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject* PyJPModule_attach(PyObject* module, PyObject* args)
-{
-	JP_PY_TRY("PyJPModule_attach");
-	if (JPEnv::isInitialized())
-	{
-		PyErr_SetString(PyExc_OSError, "JVM is already started");
-		return NULL;
-	}
-	PyObject* vmPath;
+//static PyObject* PyJPModule_attach(PyObject* module, PyObject* args)
+//{
+//	JP_PY_TRY("PyJPModule_attach");
+//	if (JPContext_global->isRunning())
+//	{
+//		PyErr_SetString(PyExc_OSError, "JVM is already started");
+//		return NULL;
+//	}
+//	PyObject* vmPath;
+//
+//	if (!PyArg_ParseTuple(args, "O", &vmPath))
+//	{
+//		return NULL;
+//	}
+//
+//	if (!(JPPyString::check(vmPath)))
+//	{
+//		JP_RAISE(PyExc_RuntimeError, "First parameter must be a string or unicode");
+//	}
+//
+//	string cVmPath = JPPyString::asStringUTF8(vmPath);
+//	JPContext_global->attachJVM(cVmPath);
+//	PyJPModule_loadResources(module);
+//	Py_RETURN_NONE;
+//	JP_PY_CATCH(NULL);
+//}
 
-	if (!PyArg_ParseTuple(args, "O", &vmPath))
-	{
-		return NULL;
-	}
-
-	if (!(JPPyString::check(vmPath)))
-	{
-		JP_RAISE(PyExc_RuntimeError, "First parameter must be a string or unicode");
-	}
-
-	string cVmPath = JPPyString::asStringUTF8(vmPath);
-	JPEnv::attachJVM(cVmPath);
-	PyJPModule_loadResources(module);
-	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
-}
-
-static PyObject* PyJPModule_dumpJVMStats(PyObject* obj)
-{
-	cerr << "JVM activity report     :" << endl;
-	cerr << "\tclasses loaded       : " << JPTypeManager::getLoadedClasses() << endl;
-	Py_RETURN_NONE;
-}
+//static PyObject* PyJPModule_dumpJVMStats(PyObject* obj)
+//{
+//	cerr << "JVM activity report     :" << endl;
+//	cerr << "\tclasses loaded       : " << JPTypeManager::getLoadedClasses() << endl;
+//	Py_RETURN_NONE;
+//}
 
 static PyObject* PyJPModule_shutdown(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_shutdown");
-	JPEnv::shutdown();
+	JPContext_global->shutdownJVM();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
 
 static PyObject* PyJPModule_isStarted(PyObject* obj)
 {
-	return PyBool_FromLong(JPEnv::isInitialized());
+	return PyBool_FromLong(JPContext_global->isRunning());
 }
 
 static PyObject* PyJPModule_attachThread(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_attachThread");
-	ASSERT_JVM_RUNNING();
-	JPEnv::attachCurrentThread();
+	PyJPModule_getContext()->attachCurrentThread();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -300,8 +300,7 @@ static PyObject* PyJPModule_attachThread(PyObject* obj)
 static PyObject* PyJPModule_attachThreadAsDaemon(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_attachThreadAsDaemon");
-	ASSERT_JVM_RUNNING();
-	JPEnv::attachCurrentThreadAsDaemon();
+	PyJPModule_getContext()->attachCurrentThreadAsDaemon();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -309,8 +308,8 @@ static PyObject* PyJPModule_attachThreadAsDaemon(PyObject* obj)
 static PyObject* PyJPModule_detachThread(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_detachThread");
-	if (JPEnv::isInitialized())
-		JPEnv::detachCurrentThread();
+	if (JPContext_global->isRunning())
+		JPContext_global->detachCurrentThread();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -318,9 +317,9 @@ static PyObject* PyJPModule_detachThread(PyObject* obj)
 static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_isThreadAttached");
-	if (!JPEnv::isInitialized())
+	if (!JPContext_global->isRunning())
 		return PyBool_FromLong(0);
-	return PyBool_FromLong(JPEnv::isThreadAttached());
+	return PyBool_FromLong(JPContext_global->isThreadAttached());
 	JP_PY_CATCH(NULL);
 }
 
@@ -338,8 +337,8 @@ static void releaseView(void* view)
 static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	if (PyObject_CheckBuffer(src))
 	{
@@ -352,10 +351,10 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
 
 		// Bind lifespan of the view to the java object.
-		JPReferenceQueue::registerRef(v.l, vw.view, &releaseView);
+		context->getReferenceQueue()->registerRef(v.l, vw.view, &releaseView);
 		vw.view = 0;
-		JPClass* type = JPTypeManager::findClassForObject(v.l);
-		return type->convertToPythonObject(v).keep();
+		JPClass *type = frame.findClassForObject(v.l);
+		return type->convertToPythonObject(frame, v).keep();
 	}
 	JP_RAISE(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(NULL);
@@ -364,10 +363,12 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_getArrayType");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
-		JP_RAISE_PYTHON("bad args");
+		JP_RAISE_PYTHON();
 	if (!PyIndex_Check(dims))
 		JP_RAISE(PyExc_TypeError, "dims must be an integer");
 	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
@@ -383,59 +384,59 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 	if (cls->isPrimitive())
 		ss << ((JPPrimitiveType*) cls)->getTypeCode();
 	else if (dynamic_cast<JPArrayClass*> (cls) == cls)
-		ss << JPJni::getName(cls->getJavaClass());
+		ss << cls->getName();
 	else
-		ss << "L" << JPJni::getName(cls->getJavaClass()) << ";";
-	JPClass* arraycls = JPTypeManager::findClass(ss.str());
-	return PyJPClass_create(arraycls).keep();
+		ss << "L" << cls->getName() << ";";
+	JPClass* arraycls = frame.findClassByName(ss.str());
+	return PyJPClass_create(frame, arraycls).keep();
 	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
 	{
 		// String From Python
-		cls = JPTypeManager::findClass(JPPyString::asStringUTF8(obj));
+		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
 			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
 	} else
 	{
 		// From an existing java.lang.Class object
 		JPValue *value = PyJPValue_getJavaSlot(obj);
-		if (value == 0 || value->getClass() != JPTypeManager::_java_lang_Class)
+		if (value == 0 || value->getClass() != context->_java_lang_Class)
 		{
 			std::stringstream ss;
 			ss << "JClass requires str or java.lang.Class instance, not `" << Py_TYPE(obj)->tp_name << "`";
 			JP_RAISE(PyExc_TypeError, ss.str().c_str());
 		}
-		cls = JPTypeManager::findClass((jclass) value->getValue().l);
+		cls = frame.findClass((jclass) value->getValue().l);
 		if (cls == NULL)
 			JP_RAISE(PyExc_ValueError, "Unable to find class");
 	}
 
-	return PyJPClass_create(cls).keep();
+	return PyJPClass_create(frame, cls).keep();
 	JP_PY_CATCH(NULL);
 }
 
 PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
-	if (!JPEnv::isInitialized())
+	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE;
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
 	{
 		// String From Python
-		cls = JPTypeManager::findClass(JPPyString::asStringUTF8(obj));
+		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
 			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
 	} else
@@ -464,16 +465,16 @@ PyObject* examine(PyObject *module, PyObject *other)
 		printf("  Object:\n");
 		printf("    size: %lld\n", Py_SIZE(other));
 		printf("    dictoffset: %lld\n", ((long long) _PyObject_GetDictPtr(other)-(long long) other));
-		printf("    javaoffset: %ld\n", PyJPValue_getJavaSlotOffset(other));
+		printf("    javaoffset: %lld\n", PyJPValue_getJavaSlotOffset(other));
 	}
 	printf("  Type: %p\n", type);
 	printf("    name: %s\n", type->tp_name);
 	printf("    typename: %s\n", Py_TYPE(type)->tp_name);
 	printf("    gc: %d\n", (type->tp_flags & Py_TPFLAGS_HAVE_GC) == Py_TPFLAGS_HAVE_GC);
-	printf("    basicsize: %ld\n", type->tp_basicsize);
-	printf("    itemsize: %ld\n", type->tp_itemsize);
-	printf("    dictoffset: %ld\n", type->tp_dictoffset);
-	printf("    weaklistoffset: %ld\n", type->tp_weaklistoffset);
+	printf("    basicsize: %d\n", (int) type->tp_basicsize);
+	printf("    itemsize: %d\n", (int) type->tp_itemsize);
+	printf("    dictoffset: %d\n", (int) type->tp_dictoffset);
+	printf("    weaklistoffset: %d\n", (int) type->tp_weaklistoffset);
 	printf("    hasJavaSlot: %d\n", PyJPValue_hasJavaSlot(type));
 	printf("    getattro: %p\n", type->tp_getattro);
 	printf("    setattro: %p\n", type->tp_setattro);
@@ -489,11 +490,29 @@ PyObject* examine(PyObject *module, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+#ifdef JP_INSTRUMENTATION
+uint32_t _PyModule_fault_code = -1;
+static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
+{
+	if (args == Py_None)
+	{
+		_PyModule_fault_code = 0;
+		Py_RETURN_NONE;
+	}
+	string code = JPPyString::asStringUTF8(args);
+	uint32_t u = 0;
+	for (size_t i = 0; i < code.size(); ++i)
+		u = u * 0x1a481023 + code[i];
+	_PyModule_fault_code = u;
+	return PyLong_FromLong(_PyModule_fault_code);
+}
+#endif
+
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
 	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
-	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
+	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, ""},
 	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
 	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
@@ -506,10 +525,12 @@ static PyMethodDef moduleMethods[] = {
 	{"detachThreadFromJVM", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, ""},
 	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
 
-	{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
+	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
-
+#ifdef JP_INSTRUMENTATION
+	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
+#endif
 	// sentinel
 	{NULL}
 };
@@ -523,10 +544,12 @@ static struct PyModuleDef moduledef = {
 };
 
 PyObject *PyJPModule = NULL;
+JPContext* JPContext_global = NULL;
 
 PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
+	JPContext_global = new JPContext();
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
@@ -549,6 +572,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPNumber_initType(module);
 	PyJPMonitor_initType(module);
 	PyJPProxy_initType(module);
+	PyJPClassHints_initType(module);
 
 	return module;
 	JP_PY_CATCH(NULL);
@@ -573,3 +597,20 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	}
 	JP_TRACE_OUT;
 }
+
+#ifdef JP_INSTRUMENTATION
+
+int PyJPModuleFault_check(uint32_t code)
+{
+	return (code == _PyModule_fault_code);
+}
+
+void PyJPModuleFault_throw(uint32_t code)
+{
+	if (code == _PyModule_fault_code)
+	{
+		_PyModule_fault_code = -1;
+		JP_RAISE(PyExc_SystemError, "fault");
+	}
+}
+#endif

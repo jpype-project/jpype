@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_arrayclass.h"
 
 #ifdef __cplusplus
@@ -46,10 +47,8 @@ static PyObject *PyJPArray_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPArray_init");
-	ASSERT_JVM_RUNNING();
-	JP_TRACE("before");
-	JPJavaFrame frame;
-	JP_TRACE("after");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	// Cases here.
 	//  -  We got here with a JPValue
@@ -69,27 +68,27 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JPValue *value = PyJPValue_getJavaSlot(v);
 	if (value != NULL)
 	{
-		JPJavaFrame frame;
+		JPJavaFrame frame(context);
 		JPArrayClass* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
 		if (arrayClass2 == NULL)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
 		if (arrayClass2 != arrayClass)
 			JP_RAISE(PyExc_TypeError, "Array class mismatch");
 		((PyJPArray*) self)->m_Array = new JPArray(*value);
-		PyJPValue_assignJavaSlot(self, *value);
+		PyJPValue_assignJavaSlot(frame, self, *value);
 		return 0;
 	}
 
 	if (PySequence_Check(v))
 	{
-		JPJavaFrame frame;
+		JPJavaFrame frame(context);
 		jlong length =  PySequence_Size(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newInstance(frame, (int) length);
 		((PyJPArray*) self)->m_Array = new JPArray(newArray);
 		((PyJPArray*) self)->m_Array->setRange(0, (jsize) length, 1, v);
-		PyJPValue_assignJavaSlot(self, newArray);
+		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
 	}
 
@@ -100,10 +99,11 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newInstance(frame, (int) length);
 		((PyJPArray*) self)->m_Array = new JPArray(newArray);
-		PyJPValue_assignJavaSlot(self, newArray);
+		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
 	}
 
+	JP_FAULT_RETURN("PyJPArray_init.null", 0);
 	JP_RAISE(PyExc_TypeError, "Invalid type");
 	JP_PY_CATCH(-1);
 }
@@ -119,13 +119,12 @@ static void PyJPArray_dealloc(PyJPArray *self)
 static PyObject *PyJPArray_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_repr");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_TypeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 	stringstream sout;
 
-	// FIXME way too hard to get this type name.
 	sout << "<java array " << self->m_Array->getClass()->toString() << ">";
 	return JPPyString::fromStringUTF8(sout.str()).keep();
 	JP_PY_CATCH(0);
@@ -134,25 +133,25 @@ static PyObject *PyJPArray_repr(PyJPArray *self)
 static Py_ssize_t PyJPArray_len(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_len");
-	ASSERT_JVM_RUNNING();
+	PyJPModule_getContext();
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_RuntimeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 	return self->m_Array->getLength();
 	JP_PY_CATCH(-1);
 }
 
 static PyObject* PyJPArray_length(PyJPArray *self, PyObject *closure)
 {
-	return PyLong_FromLong(PyJPArray_len(self));
+	return PyLong_FromSsize_t(PyJPArray_len(self));
 }
 
 static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPArray_getArrayItem");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_TypeError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	if (PyIndex_Check(item))
 	{
@@ -178,7 +177,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 #endif
 		if (slicelength <= 0)
 		{
-			// FIXME this should point to a null array so we don't hold worthless
+			// This should point to a null array so we don't hold worthless
 			// memory, but this is a low priority
 			start = stop = 0;
 			step = 1;
@@ -189,7 +188,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 				Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
 
 		// Copy over the JPValue
-		PyJPValue_assignJavaSlot(newArray.get(),
+		PyJPValue_assignJavaSlot(frame, newArray.get(),
 				*PyJPValue_getJavaSlot((PyObject*) self));
 
 		// Set up JPArray as slice
@@ -203,30 +202,34 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	JP_PY_CATCH(NULL);
 }
 
-static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
-{
-	JP_PY_TRY("PyJPArray_assignItem");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
-	self->m_Array->setItem((jsize) item, value);
-	return 0;
-	JP_PY_CATCH(-1);
-}
+//static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
+//{
+//	JP_PY_TRY("PyJPArray_assignItem");
+//	JPContext *context = PyJPModule_getContext();
+//	JPJavaFrame frame(context);
+//	self->m_Array->setItem((jsize) item, value);
+//	return 0;
+//	JP_PY_CATCH(-1);
+//}
 
 static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *value)
 {
-	JP_PY_TRY("PyJPArray_setArrayItem");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JP_PY_TRY("PyJPArray_assignSubscript");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	// Verified with numpy that item deletion on immutable should
+	// be ValueError
 	if ( value == NULL)
 		JP_RAISE(PyExc_ValueError, "item deletion not supported");
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	// Watch out for self assignment
 	if (PyObject_IsInstance(value, (PyObject*) PyJPArray_Type))
 	{
 		JPValue *v1 = PyJPValue_getJavaSlot((PyObject*) self);
 		JPValue *v2 = PyJPValue_getJavaSlot((PyObject*) value);
-		if (JPJni::equalsObject(v1->getJavaObject(), v2->getJavaObject()))
+		if (frame.equals(v1->getJavaObject(), v2->getJavaObject()))
 			JP_RAISE(PyExc_ValueError, "self assignment not support currently");
 	}
 
@@ -268,8 +271,8 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_releaseBuffer");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;
 	delete self->m_View;
@@ -280,8 +283,10 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArray_getBuffer");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 
 	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 	{
@@ -295,7 +300,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		obj = self->m_Array->clone(frame, (PyObject*) self);
 
 	// Collect the members into a rectangular array if possible.
-	jobject result = JPTypeManager::collectRectangular(obj);
+	jobject result = frame.collectRectangular(obj);
 	if (result == NULL)
 	{
 		PyErr_SetString(PyExc_BufferError, "Java array buffer is not rectangular primitives");
@@ -307,8 +312,9 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	{
 		if (self->m_View == NULL)
 			self->m_View = new JPArrayView(self->m_Array, result);
+		JP_PY_CHECK();
 		self->m_View->reference();
-		*view = self->m_View->buffer;
+		*view = self->m_View->m_Buffer;
 
 		// If strides are not requested and this is a slice then fail
 		if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES)
@@ -338,8 +344,10 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	if (self->m_Array == NULL)
+		JP_RAISE(PyExc_ValueError, "Null array");
 	try
 	{
 		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
@@ -353,7 +361,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 			self->m_View = new JPArrayView(self->m_Array);
 		}
 		self->m_View->reference();
-		*view = self->m_View->buffer;
+		*view = self->m_View->m_Buffer;
 
 		// We are always contiguous so no need to check that here.
 		view->readonly = 1;
@@ -382,9 +390,9 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		return 0;
 	} catch (JPypeException &ex)
 	{
-
 		PyJPArray_releaseBuffer(self, view);
-		throw ex;
+		ex.toPython();
+		return -1;
 	}
 	JP_PY_CATCH(-1);
 }
@@ -411,7 +419,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
 	{ Py_tp_repr,     (void*) PyJPArray_repr},
 	{ Py_tp_methods,  (void*) &arrayMethods},
-	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
+	//	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
 	{ Py_sq_item,     (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
@@ -461,9 +469,9 @@ void PyJPArray_initType(PyObject * module)
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 
 	tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPArray_Type);
@@ -476,11 +484,11 @@ void PyJPArray_initType(PyObject * module)
 	JP_PY_CHECK();
 }
 
-JPPyObject PyJPArray_create(PyTypeObject *type, JPValue & value)
+JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, JPValue & value)
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 	((PyJPArray*) obj)->m_Array = new JPArray(value);
-	PyJPValue_assignJavaSlot(obj, value);
+	PyJPValue_assignJavaSlot(frame, obj, value);
 	return JPPyObject(JPPyRef::_claim, obj);
 }

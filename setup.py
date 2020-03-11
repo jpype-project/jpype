@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import warnings
 import setupext
 from setuptools import setup
 from setuptools import Extension
@@ -42,6 +41,7 @@ setup(
         'build_java': setupext.build_java.BuildJavaCommand,
         'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
+        'build_makefile': setupext.build_makefile.BuildMakefileCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
@@ -49,5 +49,5 @@ setup(
     zip_safe=False,
     ext_modules=[jpypeLib],
     distclass=setupext.dist.Distribution,
-    use_scm_version = True,
+    use_scm_version=True,
 )

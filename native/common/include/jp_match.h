@@ -1,7 +1,7 @@
 #ifndef JP_MATCH_H
 #define JP_MATCH_H
 
-class JPMethodOverload;
+class JPConversion;
 
 class JPMatch
 {
@@ -14,20 +14,37 @@ public:
 		_implicit = 2,
 		_exact = 3
 	} ;
+public:
+	JPMatch::Type type;
+	JPConversion* conversion;
+} ;
 
-	Type type;
-	bool isVarDirect;
+class JPMethodMatch
+{
+public:
+	JPMatch::Type type;
 	bool isVarIndirect;
-	JPMethodOverload* overload;
+	JPMethod* overload;
 	char offset;
 	char skip;
+	std::vector<JPMatch> argument;
 
-	JPMatch()
+	JPMatch& operator[](size_t i)
+	{
+		return argument[i];
+	}
+
+	const JPMatch& operator[](size_t i) const
+	{
+		return argument[i];
+	}
+
+	JPMethodMatch(size_t size)
+	: argument(size)
 	{
 		type = JPMatch::_none;
-		isVarDirect = false;
 		isVarIndirect = false;
-		overload = NULL;
+		overload = 0;
 		offset = 0;
 		skip = 0;
 	}

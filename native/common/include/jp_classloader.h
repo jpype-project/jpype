@@ -19,19 +19,39 @@
 
 #include "jp_class.h"
 
-namespace JPClassLoader
-{
-/** Initialize the class loader.
- */
-void init();
-
-/** Load a class by name from the jpype.jar.
+/**
+ * The class loader is reponsible for loading classes within JPype.
  *
- * @returns the class loaded
- * @throws RuntimeException if the class is not found.
+ * Depending on the settings it may either use an internal boot loader
+ * to get the jar from within the _jpype module, or it may use the
+ * system class loader.
  */
-jclass findClass(string name);
+class JPClassLoader
+{
+public:
+	/** Initialize the class loader.
+	 */
+	JPClassLoader(JPJavaFrame& frame);
 
+	/** Load a class by name from the jpype.jar.
+	 *
+	 * String is specified as a Java binary name.
+	 * https://docs.oracle.com/javase/7/docs/api/java/lang/ClassLoader.html#name
+	 *
+	 * @returns the class loaded
+	 * @throws RuntimeException if the class is not found.
+	 */
+	jclass findClass(JPJavaFrame& frame, string name);
+
+	// Classloader for Proxy
+	jobject getSystemClassLoader();
+	jobject getBootLoader();
+
+private:
+	JPContext* m_Context;
+	JPObjectRef m_SystemClassLoader;
+	JPObjectRef m_BootLoader;
+	jmethodID m_FindClass;
 } ;
 
 #endif // _JPCLASSLOADER_H_

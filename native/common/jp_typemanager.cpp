@@ -15,299 +15,85 @@
 
  *****************************************************************************/
 #include "jpype.h"
-#include "jp_typemanager.h"
-#include "jp_arrayclass.h"
-#include "jp_baseclasses.h"
-#include "jp_boxedclasses.h"
-#include "jp_stringclass.h"
 #include "jp_classloader.h"
-#include "jp_voidtype.h"
-#include "jp_booleantype.h"
-#include "jp_bytetype.h"
-#include "jp_chartype.h"
-#include "jp_shorttype.h"
-#include "jp_inttype.h"
-#include "jp_longtype.h"
-#include "jp_floattype.h"
-#include "jp_doubletype.h"
 
-namespace
+JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 {
-//AT's on porting:
-// 1) TODO: test on HP-UX platform. Cause: it is suspected to be an undefined order of initialization of static objects
-//
-//  2) TODO: in any case, use of static objects may impose problems in multi-threaded environment.
-typedef map<string, JPClass* > JavaClassMap;
-
-JavaClassMap javaClassMap;
-jclass utility;
-jmethodID getClassForID;
-jmethodID callMethodID;
-jmethodID isCallerSensitiveID;
-jmethodID collectRectangularID;
-}
-
-namespace JPTypeManager
-{
-JPPrimitiveType* _void;
-JPPrimitiveType* _boolean;
-JPPrimitiveType* _byte;
-JPPrimitiveType* _char;
-JPPrimitiveType* _short;
-JPPrimitiveType* _int;
-JPPrimitiveType* _long;
-JPPrimitiveType* _float;
-JPPrimitiveType* _double;
-JPClass* _java_lang_Object;
-JPClass* _java_lang_Class;
-JPClass* _java_lang_String;
-JPClass* _java_lang_CharSequence;
-
-JPBoxedClass* _java_lang_Void;
-JPBoxedClass* _java_lang_Boolean;
-JPBoxedClass* _java_lang_Byte;
-JPBoxedClass* _java_lang_Character;
-JPBoxedClass* _java_lang_Short;
-JPBoxedClass* _java_lang_Integer;
-JPBoxedClass* _java_lang_Long;
-JPBoxedClass* _java_lang_Float;
-JPBoxedClass* _java_lang_Double;
-JPClass* _java_lang_Number;
-JPClass* _java_lang_Throwable;
-}
-
-JPClass* JPTypeManager::registerClass(JPClass* classWrapper)
-{
-	JP_TRACE_IN("JPTypeManager::registerClass (specialized)");
-	const string& simple = classWrapper->getCanonicalName();
-	javaClassMap[simple] = classWrapper;
-	JP_TRACE(simple, classWrapper);
-	return classWrapper;
-	JP_TRACE_OUT;
-}
-
-JPClass* registerArrayClass(string name, jclass jc)
-{
-	JP_TRACE_IN("JPTypeManager::registerArrayClass");
-	JPClass* cls = new JPArrayClass(jc);
-	JP_TRACE(name, cls);
-	javaClassMap[name] = cls;
-	return cls;
-	JP_TRACE_OUT;
-}
-
-JPClass* registerObjectClass(string name, jclass jc)
-{
-	JP_TRACE_IN("JPTypeManager::registerObjectClass");
-	JPClass* cls = new JPClass(jc);
-	JP_TRACE(name, cls);
-	javaClassMap[name] = cls;
-	cls->postLoad();
-	return cls;
-	JP_TRACE_OUT;
-}
-
-jclass JPTypeManager::getClassFor(jobject obj)
-{
-	if (getClassForID == 0)
-		return NULL;
-	JPJavaFrame frame;
-	jvalue v;
-	v.l = obj;
-	return (jclass) frame.keep(frame.CallStaticObjectMethodA(utility, getClassForID, &v));
-}
-
-bool JPTypeManager::isCallerSensitive(jobject obj)
-{
-	if (isCallerSensitiveID == 0)
-		return false;
-	JPJavaFrame frame;
-	jvalue v;
-	v.l = obj;
-	return frame.CallStaticBooleanMethodA(utility, isCallerSensitiveID, &v) != 0;
-}
-
-jobject JPTypeManager::collectRectangular(jarray obj)
-{
-	if (collectRectangularID == 0)
-		return 0;
-	JPJavaFrame frame;
-	jvalue v;
-	v.l = (jobject) obj;
-	return frame.keep(frame.CallStaticObjectMethodA(utility, collectRectangularID, &v));
-}
-
-jobject JPTypeManager::callMethod(jobject method, jobject obj, jobject args)
-{
-	JP_TRACE_IN("JPTypeManager::callMethod");
-	if (callMethodID == 0)
-		return NULL;
-	JPJavaFrame frame;
-	jvalue v[3];
-	v[0].l = method;
-	v[1].l = obj;
-	v[2].l = args;
-	return frame.keep(frame.CallStaticObjectMethodA(utility, callMethodID, v));
-	JP_TRACE_OUT;
-}
-
-void JPTypeManager::init()
-{
-	// Everything that requires specialization must be created here.
-	JPJavaFrame frame;
 	JP_TRACE_IN("JPTypeManager::init");
+	m_Context = frame.getContext();
 
-	// Get utility class
-	utility = (jclass) frame.NewGlobalRef(JPClassLoader::findClass("org.jpype.Utility"));
+	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
+	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
+	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
+	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
+	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
+	m_PopulateMembers = frame.GetMethodID(cls, "populateMembers", "(Ljava/lang/Class;)V");
 
-	// Get support methods
-	callMethodID = frame.GetStaticMethodID(utility, "callMethod",
-			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
-
-	isCallerSensitiveID = frame.GetStaticMethodID(utility, "isCallerSensitive",
-			"(Ljava/lang/reflect/Method;)Z");
-
-	getClassForID = frame.GetStaticMethodID(utility, "getClassFor",
-			"(Ljava/lang/Object;)Ljava/lang/Class;");
-
-	collectRectangularID = frame.GetStaticMethodID(utility, "collectRectangular",
-			"(Ljava/lang/Object;)[Ljava/lang/Object;");
-
-	jclass cls;
-	cls = (jclass) frame.FindClass("java/lang/Object");
-	registerClass(_java_lang_Object = new JPObjectBaseClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Class");
-	registerClass(_java_lang_Class = new JPClassBaseClass(cls));
-
-	cls = (jclass) frame.FindClass("java/lang/String");
-	registerClass(_java_lang_String = new JPStringClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/CharSequence");
-	registerClass(_java_lang_CharSequence = new JPStringClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Number");
-	registerClass(_java_lang_Number = new JPClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Throwable");
-	registerClass(_java_lang_Throwable = new JPClass(cls));
-
-	cls = (jclass) frame.FindClass("java/lang/Void");
-	registerClass(_java_lang_Void = new JPBoxedVoidClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Boolean");
-	registerClass(_java_lang_Boolean = new JPBoxedBooleanClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Byte");
-	registerClass(_java_lang_Byte = new JPBoxedByteClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Character");
-	registerClass(_java_lang_Character = new JPBoxedCharacterClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Short");
-	registerClass(_java_lang_Short = new JPBoxedShortClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Integer");
-	registerClass(_java_lang_Integer = new JPBoxedIntegerClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Long");
-	registerClass(_java_lang_Long = new JPBoxedLongClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Float");
-	registerClass(_java_lang_Float = new JPBoxedFloatClass(cls));
-	cls = (jclass) frame.FindClass("java/lang/Double");
-	registerClass(_java_lang_Double = new JPBoxedDoubleClass(cls));
-
-	registerClass(_void = new JPVoidType());
-	registerClass(_boolean = new JPBooleanType());
-	registerClass(_byte = new JPByteType());
-	registerClass(_char = new JPCharType());
-	registerClass(_short = new JPShortType());
-	registerClass(_int = new JPIntType());
-	registerClass(_long = new JPLongType());
-	registerClass(_float = new JPFloatType());
-	registerClass(_double = new JPDoubleType());
-
+	// The object instance will be loaded later
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClass(const string& name)
+JPTypeManager::~JPTypeManager()
+{
+}
+
+JPClass* JPTypeManager::findClass(jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
-	try
+	JPJavaFrame frame(m_Context);
+	jvalue val;
+	val.l = obj;
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
+	JP_TRACE_OUT;
+}
+
+JPClass* JPTypeManager::findClassByName(const string& name)
+{
+	JP_TRACE_IN("JPTypeManager::findClassByName");
+	JPJavaFrame frame(m_Context);
+	jvalue val;
+	val.l = (jobject) frame.fromStringUTF8(name);
+	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	if (out == NULL)
 	{
-		JP_TRACE("Finding", name);
-		// First check in the map ...
-		JavaClassMap::iterator cur = javaClassMap.find(name);
-
-		if (cur != javaClassMap.end())
-		{
-			return cur->second;
-		}
-
-		// Convert to native name
-		string cname = name;
-		for (size_t i = 0; i < cname.size(); ++i)
-		{
-			if (cname[i] == '.')
-				cname[i] = '/';
-		}
-
-		// Okay so it isn't already loaded, we need to find the class then make a wrapper for it
-		JPJavaFrame frame;
-		jclass cls = (jclass) frame.FindClass(cname.c_str());
-		string aname = JPJni::getCanonicalName(cls);
-		JP_TRACE("FIXME ", cname, aname);
-		return findClass((jclass) frame.keep(cls));
+		stringstream err;
+		err << "Class " << name << " is not found";
+		JP_RAISE(PyExc_TypeError, err.str().c_str());
 	}
-	JP_CATCH;
+	return out;
 	JP_TRACE_OUT;
 }
 
 JPClass* JPTypeManager::findClassForObject(jobject obj)
 {
-	if (obj == NULL)
-		return NULL;
-	return findClass(getClassFor(obj));
-}
-
-JPClass* JPTypeManager::findClass(jclass cls)
-{
-	if (cls == NULL)
-		return NULL;
-
-	string name = JPJni::getCanonicalName(cls);
-
-	// Fist check in the map ...
-	JavaClassMap::iterator cur = javaClassMap.find(name);
-
-	if (cur != javaClassMap.end())
-	{
-		return cur->second;
-	}
-
-	JP_TRACE_IN("JPTypeManager::findClassLoad");
-	JP_TRACE(name);
-
-	// No we haven't got it .. lets load it!!!
-	JPJavaFrame frame;
-	if (JPJni::isArray(cls))
-	{
-		return registerArrayClass(name, cls);
-	} else
-	{
-		return registerObjectClass(name, cls);
-	}
+	JP_TRACE_IN("JPTypeManager::findClassForObject");
+	JPJavaFrame frame(m_Context);
+	jvalue val;
+	val.l = obj;
+	JPClass *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+	JP_TRACE("ClassName", cls == NULL ? "null" : cls->getCanonicalName());
+	return cls;
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::shutdown()
+void JPTypeManager::populateMethod(void* method, jobject obj)
 {
-	JP_TRACE_IN("JPTypeManager::shutdown");
-	flushCache();
+	JP_TRACE_IN("JPTypeManager::populateMethod");
+	JPJavaFrame frame(m_Context);
+	jvalue val[2];
+	val[0].j = (jlong) method;
+	val[1].l = obj;
+	JP_TRACE("Method", method);
+	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMethod, val);
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::flushCache()
+void JPTypeManager::populateMembers(JPClass* cls)
 {
-	for (JavaClassMap::iterator i = javaClassMap.begin(); i != javaClassMap.end(); ++i)
-	{
-		delete i->second;
-	}
-	javaClassMap.clear();
-}
-
-int JPTypeManager::getLoadedClasses()
-{
-	// diagnostic tools ... unlikely to load more classes than int can hold ...
-	return (int) javaClassMap.size();
+	JP_TRACE_IN("JPTypeManager::populateMembers");
+	JPJavaFrame frame(m_Context);
+	jvalue val[1];
+	val[0].l = (jobject) cls->getJavaClass();
+	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);
+	JP_TRACE_OUT;
 }

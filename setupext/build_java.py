@@ -4,7 +4,7 @@ import subprocess
 import distutils.cmd
 import distutils.log
 from distutils.errors import DistutilsPlatformError
-from distutils.dir_util import copy_tree, remove_tree
+from distutils.dir_util import copy_tree
 
 
 class BuildJavaCommand(distutils.cmd.Command):
@@ -27,14 +27,15 @@ class BuildJavaCommand(distutils.cmd.Command):
 
         # Try to use the cach if we are not requested build
         if not java:
-            src = os.path.join('native','jars')
-            dest = os.path.join('build','lib')
+            src = os.path.join('native', 'jars')
+            dest = os.path.join('build', 'lib')
             if os.path.exists(src):
                 distutils.log.info("Using Jar cache")
                 copy_tree(src, dest)
                 return
 
-        distutils.log.info("Jar cache is missing, using --enable-build-jar to recreate it.")
+        distutils.log.info(
+            "Jar cache is missing, using --enable-build-jar to recreate it.")
 
         # build the jar
         buildDir = os.path.join("..", "build")
@@ -52,6 +53,5 @@ class BuildJavaCommand(distutils.cmd.Command):
         # Coverage tool requires special placement of the source
         if self.distribution.enable_coverage:
             import shutil
-            shutil.copyfile(os.path.join("build","lib","org.jpype.jar"), os.path.join("native", "org.jpype.jar"))
-
-
+            shutil.copyfile(os.path.join("build", "lib", "org.jpype.jar"), os.path.join(
+                "native", "org.jpype.jar"))

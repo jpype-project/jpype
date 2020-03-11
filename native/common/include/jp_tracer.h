@@ -18,19 +18,31 @@
 #define _JP_TRACER_H__
 
 #ifdef JP_TRACING_ENABLE
-#define JP_TRACE_IN(...) JPypeTracer _trace(__VA_ARGS__); try {
-#define JP_TRACE_OUT } catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN_C(...) \
+  JPypeTracer _trace(__VA_ARGS__); try {
+#define JP_TRACE_OUT_C } \
+  catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
+#define JP_TRACE_IN(...) \
+  JPypeTracer _trace(__VA_ARGS__); \
+  try { do {} while (0)
+#define JP_TRACE_OUT \
+  } \
+  catch(...) { _trace.gotError(JP_STACKINFO()); throw; }
 #define JP_TRACE(...) JPTracer::trace(__VA_ARGS__)
+#define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
 #else
+#ifndef JP_INSTRUMENTATION
 #define JP_TRACE_IN(...) try { do {} while (0)
+#endif
 #define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
+#define JP_TRACE_LOCKS(...)
 #define JP_TRACE_PY(m, obj)
 #endif
 
 // Enable this option to get all the py referencing information
-//#define JP_ENABLE_TRACE_PY
+#define JP_ENABLE_TRACE_PY
 
 class JPypeTracer
 {
@@ -49,7 +61,7 @@ public:
 		m_Error = true;
 		try
 		{
-			throw;
+			throw; // lgtm [cpp/rethrow-no-exception]
 		} catch (JPypeException& ex)
 		{
 			ex.from(info);

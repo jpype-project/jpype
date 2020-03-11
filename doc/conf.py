@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autosectionlabel']
+extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc', 'sphinx.ext.autosectionlabel', 'readthedocs_ext.readthedocs', ]
 autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -73,6 +73,7 @@ class TypeMock(type):
         members['__getattr__'] =  TypeMock_getattr
         members['_kwargs'] = kwargs
         members['_to'] = to
+        members['__slots__'] = []
         return type.__new__(cls, name, bases, members)
 
     def __init__(self, *args, **kwargs):
@@ -84,10 +85,28 @@ class TypeMock(type):
         type.__setattr__(self, key, m)
         return m
 
+class _JClass(type):
+    pass
+
+class _JClassHints(object):
+    def __init__(self):
+        self.bases = []
+    def addClassBases(self, *args):
+        pass
+    def addTypeConversion(self, *args):
+        pass
+    def addAttributeConversion(self, *args):
+        pass
 
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
-mockModule.PyJPClass = TypeMock("PyJPClass")
+mockModule._JArray = TypeMock("_JArray")
+mockModule._JClass = _JClass
+mockModule._JField = TypeMock("_JField") 
+mockModule._JMethod = TypeMock("_JMethod")
+mockModule._JObject = TypeMock("_JObject")
+mockModule._JClassHints = _JClassHints
+mockModule._hasClass = lambda x: False
 sys.modules['_jpype']=mockModule
 
 # For some reason jpype.imports does not work if called in sphinx. Importing

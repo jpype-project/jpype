@@ -54,6 +54,3 @@ class ModuleTestCase2(common.JPypeTestCase):
     def testValueStr(self):
         obj = jpype.JClass("java.lang.Object")()
         self.assertIsInstance(str(obj), str)
-
-    def testModuleDump(self):
-        _jpype.dumpJVMStats()

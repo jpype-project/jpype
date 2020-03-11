@@ -16,7 +16,7 @@
  *****************************************************************************/
 #include "jp_encoding.h"
 
-// FIXME These encoders handle all of the codes expected to be passed between
+// These encoders handle all of the codes expected to be passed between
 // Java and Python assuming they both generate complient codings.  However,
 // this code does not handle miscodings very well.  The current behavior
 // is to simply terminate the string at the bad code without producing
@@ -53,7 +53,7 @@ struct membuf : std::streambuf
 
 	membuf(char* begin, char* end)
 	{
-		this->setg(begin, begin, end);
+		setg(begin, begin, end);
 	}
 } ;
 
@@ -97,7 +97,7 @@ std::string transcribe(const char* in, size_t len,
 		{
 			if (inStream.eof())
 				break;
-			// FIXME Truncate bad strings for now.
+			// Truncate bad strings for now.
 			return outStream.str();
 		}
 
@@ -216,37 +216,6 @@ unsigned int JPEncodingUTF8::fetch(std::istream& in) const
 	}
 	return -1;
 }
-
-//*****************************************************************
-// <rant>
-// To the Sun programmer who wrote GetStringUTFchars() that thought it was a
-// good idea to return UTF-16 embedded in UTF-8, you sir are an embarrassment.
-//
-// You had one job here, to take an internal representation in UTF16 and produce
-// a stream of chars that could be read by the outside world.  It had to be
-// translated as those encodings are incompatible and rather that writing
-// to a defined format, you simply lazily packed each UTF-16 into UTF-8 resulting
-// in surrogate codes in UTF-8.  It would have taken you all of 20 extra minutes
-// to do it right and you failed.
-//
-// Any time saving that you got by doing this in a lazy fashion was lost when
-// the second programmer besides yourself had to write a translation code.  And
-// all efficiency gains that you thought were made have been lost in the
-// memory management and retranslation that anyone would need to make use of your
-// U+1F4A9.  You are solely responsible for wasting thousands of hours of other
-// programmer's lives and promoting the heat death of the universe.
-//
-// And in case you feel that documentation makes it all okay, to top everything off
-// your documentation is incorrect.  You list encodings between U+0800 and U+FFFF
-// as being the 3 byte encoding, but the document fails to mention that U+D800 to U+DFFF
-// are not a valid encoding.  Thus leaving any coder to struggle to
-// figure out how there would not be a conflict between coding 3 and coding 4 without
-// consulting an additional source.
-//
-// You are an embarrassment to the craft.  Shame on you, shame on your family,
-// and shame on the goat that hauled your sorry butt into work each day.
-// </rant>
-//*****************************************************************
 
 
 // Encode a 21 code point into a Java UTF char stream.

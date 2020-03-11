@@ -17,6 +17,7 @@
 #include <Python.h>
 #include <structmember.h>
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_proxy.h"
 
 
@@ -28,8 +29,8 @@ extern "C"
 static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_new");
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -43,7 +44,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	if (!PySequence_Check(pyintf))
 		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
 
-	JPClass::ClassList interfaces;
+	JPClassList interfaces;
 	JPPySequence intf(JPPyRef::_use, pyintf);
 	jlong len = intf.size();
 	if (len < 1)
@@ -57,7 +58,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	self->m_Proxy = new JPProxy((PyObject*) self, interfaces);
+	self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
 	self->m_Target = target;
 	Py_INCREF(target);
 
@@ -86,24 +87,15 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 	PyObject_GC_UnTrack(self);
 	PyJPProxy_clear(self);
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH_NONE();
 }
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
+	JPJavaFrame frame(self->m_Proxy->getContext());
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
-	return PyJPClass_create(cls).keep();
+	return PyJPClass_create(frame, cls).keep();
 }
-
-static PyObject *PyJPProxy_str(PyObject *self)
-{
-	return PyObject_Str(self);
-}
-
-static PyMethodDef proxyMethods[] = {
-	{"toString", (PyCFunction) & PyJPProxy_str, METH_NOARGS, ""},
-	{NULL},
-};
 
 static PyGetSetDef proxyGetSets[] = {
 	{"__javaclass__", (getter) PyJPProxy_class, NULL, ""},
@@ -116,7 +108,6 @@ static PyType_Slot proxySlots[] = {
 	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
 	{ Py_tp_clear,    (void*) PyJPProxy_clear},
 	{ Py_tp_getset,   (void*) proxyGetSets},
-	{ Py_tp_methods,  (void*) proxyMethods},
 	{0}
 };
 
@@ -138,9 +129,9 @@ void PyJPProxy_initType(PyObject* module)
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) & PyBaseObject_Type);
 	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, tuple.get());
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
 
 JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
@@ -152,7 +143,10 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 
 JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
 {
-	JP_TRACE_IN("JPythonEnv::getJavaProxyCallable");
+	JP_TRACE_IN("PyJPProxy_getCallable");
+	if (Py_TYPE(obj) != PyJPProxy_Type
+			&& Py_TYPE(obj)->tp_base != PyJPProxy_Type)
+		JP_RAISE(PyExc_TypeError, "Incorrect type passed to proxy lookup");
 	PyJPProxy *proxy = (PyJPProxy*) obj;
 	if (proxy->m_Target != Py_None)
 		obj = proxy->m_Target;

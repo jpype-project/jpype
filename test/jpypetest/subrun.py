@@ -137,8 +137,8 @@ def _prepare(orig, individual=False):
     class ProxyMethod(object):
         def __init__(self, name):
             self.name = name
-            self.__name__= name
-            self.__qualname__ = "%s.%s"%(clsname, name)
+            self.__name__ = name
+            self.__qualname__ = "%s.%s" % (clsname, name)
 
         def __call__(self):
             ProxyClass._client.execute(_hook, filename, clsname, self.name)

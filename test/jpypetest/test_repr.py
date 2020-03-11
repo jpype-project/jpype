@@ -3,6 +3,7 @@ from jpype.types import *
 from jpype import JPackage, java
 import common
 
+
 class ReprTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -32,7 +33,7 @@ class ReprTestCase(common.JPypeTestCase):
             self.assertIsInstance(repr(monitor), str)
 
     def testArray(self):
-        array = JArray(JInt)([1,2,3])
+        array = JArray(JInt)([1, 2, 3])
         self.assertIsInstance(str(array), str)
         self.assertIsInstance(repr(array), str)
 
@@ -40,6 +41,3 @@ class ReprTestCase(common.JPypeTestCase):
         obj = JObject("abc", JObject)
         self.assertIsInstance(str(obj), str)
         self.assertIsInstance(repr(obj), str)
-
-
-

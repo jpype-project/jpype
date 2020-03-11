@@ -37,7 +37,7 @@ public:
 	/** Store a code point in an outgoing buffer. */
 	void encode(std::ostream& out, unsigned int codePoint) const override;
 
-	/** Retrieve a coding point from an incoming buffer. 
+	/** Retrieve a coding point from an incoming buffer.
 	 * returns the next coding point or -1 on invalid coding.
 	 */
 	unsigned int fetch(std::istream& is) const override;

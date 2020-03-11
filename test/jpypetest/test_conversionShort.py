@@ -33,7 +33,7 @@ def haveNumpy():
 class ConversionShortTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = JClass("jpype.types.MethodsTest")()
+        self.Test = jpype.JClass("jpype.common.Fixture")()
 
     def testShortFromInt(self):
         self.assertEqual(self.Test.callShort(int(123)), 123)

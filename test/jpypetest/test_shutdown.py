@@ -2,6 +2,7 @@ import unittest
 import jpype
 import subrun
 
+
 @subrun.TestCase
 class ShutdownTest(unittest.TestCase):
 

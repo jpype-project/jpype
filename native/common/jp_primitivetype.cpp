@@ -15,12 +15,10 @@
 
  *****************************************************************************/
 #include "jpype.h"
-#include "jp_boxedclasses.h"
 
-JPPrimitiveType::JPPrimitiveType(JPBoxedClass* cls)
-: JPClass(JPJni::getPrimitiveClass(cls->getJavaClass())), m_BoxedClass(cls)
+JPPrimitiveType::JPPrimitiveType(const string& name)
+: JPClass(name, 0x411)
 {
-	cls->setPrimitiveType(this);
 }
 
 JPPrimitiveType::~JPPrimitiveType()
@@ -30,4 +28,9 @@ JPPrimitiveType::~JPPrimitiveType()
 bool JPPrimitiveType::isPrimitive() const
 {
 	return true;
+}
+
+JPValue JPPrimitiveType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	JP_RAISE(PyExc_SystemError, "Not used");
 }

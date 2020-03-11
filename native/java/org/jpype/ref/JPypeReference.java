@@ -8,20 +8,20 @@ import java.lang.ref.ReferenceQueue;
  */
 class JPypeReference extends PhantomReference
 {
-  long mHostReference;
-  long mCleanup;
+  long hostReference;
+  long cleanup;
 
   public JPypeReference(ReferenceQueue arg1, Object javaObject, long host, long cleanup)
   {
     super(javaObject, arg1);
-    mHostReference = host;
-    mCleanup = cleanup;
+    this.hostReference = host;
+    this.cleanup = cleanup;
   }
 
   @Override
   public int hashCode()
   {
-    return (int) mHostReference;
+    return (int) hostReference;
   }
 
   @Override
@@ -32,6 +32,6 @@ class JPypeReference extends PhantomReference
       return false;
     }
 
-    return ((JPypeReference) arg0).mHostReference == mHostReference;
+    return ((JPypeReference) arg0).hostReference == hostReference;
   }
 }

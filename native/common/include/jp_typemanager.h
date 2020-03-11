@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
+   Copyright 2004 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,71 +20,43 @@
 /**
  * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.
  */
-namespace JPTypeManager
+class JPTypeFactory
 {
-extern JPPrimitiveType* _void;
-extern JPPrimitiveType* _boolean;
-extern JPPrimitiveType* _byte;
-extern JPPrimitiveType* _char;
-extern JPPrimitiveType* _short;
-extern JPPrimitiveType* _int;
-extern JPPrimitiveType* _long;
-extern JPPrimitiveType* _float;
-extern JPPrimitiveType* _double;
-extern JPClass* _java_lang_Object;
-extern JPClass* _java_lang_Class;
-extern JPClass* _java_lang_String;
+public:
+	explicit JPTypeFactory(JPJavaFrame& frame);
+	~JPTypeFactory();
+} ;
 
-extern JPBoxedClass* _java_lang_Void;
-extern JPBoxedClass* _java_lang_Boolean;
-extern JPBoxedClass* _java_lang_Byte;
-extern JPBoxedClass* _java_lang_Character;
-extern JPBoxedClass* _java_lang_Short;
-extern JPBoxedClass* _java_lang_Integer;
-extern JPBoxedClass* _java_lang_Long;
-extern JPBoxedClass* _java_lang_Float;
-extern JPBoxedClass* _java_lang_Double;
-extern JPClass* _java_lang_Number;
-extern JPClass* _java_lang_Throwable;
+class JPTypeManager
+{
+	friend class JPContext;
+public:
 
-/**
- * Initialize the type manager caches
- */
-void init();
+	/**
+	 * Initialize the type manager caches
+	 */
+	explicit JPTypeManager(JPJavaFrame& frame);
+	~JPTypeManager();
 
-/**
- * delete allocated typenames, should only be called at program termination
- */
-void shutdown();
+	/**
+	 * Find a class using a native name.
+	 *
+	 * The pointer returned is NOT owned by the caller
+	 */
+	JPClass* findClass(jclass cls);
+	JPClass* findClassByName(const string& str);
+	JPClass* findClassForObject(jobject obj);
+	void populateMethod(void* method, jobject obj);
+	void populateMembers(JPClass* cls);
 
-/**
- * Find a class using a native name.
- *
- * The pointer returned is NOT owned by the caller
- */
-JPClass* findClass(const string& str);
-JPClass* findClass(jclass cls);
-JPClass* findClassForObject(jobject obj);
-jobject collectRectangular(jarray obj);
-
-void flushCache();
-
-int getLoadedClasses();
-
-/**
- * Special class registry for primary types.
- *
- * @param classWrapper
- * @return
- */
-JPClass* registerClass(JPClass* classWrapper);
-
-jclass getClassFor(jobject obj);
-
-// Support for caller sensitive methods
-bool isCallerSensitive(jobject obj);
-jobject callMethod(jobject method, jobject obj, jobject args);
-
-} // namespace
+private:
+	JPContext* m_Context;
+	JPObjectRef m_JavaTypeManager;
+	jmethodID m_FindClass;
+	jmethodID m_FindClassByName;
+	jmethodID m_FindClassForObject;
+	jmethodID m_PopulateMethod;
+	jmethodID m_PopulateMembers;
+} ;
 
 #endif // _JPCLASS_H_

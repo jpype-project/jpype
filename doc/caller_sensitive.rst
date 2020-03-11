@@ -1,3 +1,8 @@
+:orphan:
+
+Caller Sensitive Methods
+========================
+
 The following methods use the caller sensitive (as of JDK 12):
 
   - ``java.io.ObjectStreamClass.forClass``

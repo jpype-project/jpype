@@ -4,12 +4,16 @@ import java.lang.reflect.*;
 
 public class JPypeInvocationHandler implements InvocationHandler
 {
+
   long hostObject;
 
   public Object invoke(Object proxy, Method method, Object[] args)
   {
-    return hostInvoke(method.getName(), hostObject, args, method.getParameterTypes(), method.getReturnType());
+    return hostInvoke(method.getName(), hostObject, args,
+            method.getParameterTypes(),
+            method.getReturnType());
   }
 
-  private static native Object hostInvoke(String name, long pyObject, Object[] args, Class[] argTypes, Class returnType);
+  private static native Object hostInvoke(String name,
+          long pyObject, Object[] args, Class[] argTypes, Class returnType);
 }

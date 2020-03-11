@@ -17,17 +17,13 @@
 #include "jpype.h"
 #include "jp_voidtype.h"
 
-JPVoidType::JPVoidType() : JPPrimitiveType(JPTypeManager::_java_lang_Void)
+JPVoidType::JPVoidType()
+: JPPrimitiveType("void")
 {
 }
 
 JPVoidType::~JPVoidType()
 {
-}
-
-bool JPVoidType::isSubTypeOf(JPClass* other) const
-{
-	return other == JPTypeManager::_void;
 }
 
 JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
@@ -40,23 +36,14 @@ JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a field.");
 }
 
-JPPyObject JPVoidType::convertToPythonObject(jvalue val)
+JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
 	return JPPyObject::getNone();
 }
 
-JPMatch::Type JPVoidType::canConvertToJava(PyObject* obj)
+JPMatch::Type JPVoidType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
-	return JPMatch::_none;
-}
-
-jvalue JPVoidType::convertToJava(PyObject* obj)
-{
-	JP_TRACE_IN("JPVoidType::convertToJava");
-	jvalue res;
-	res.l = NULL;
-	return res;
-	JP_TRACE_OUT;
+	return match.type = JPMatch::_none;
 }
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -112,6 +99,15 @@ jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
 	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
 }
 
+JPValue JPVoidType::getValueFromObject(const JPValue& obj)
+{
+	// This is needed if we call a caller sensitive method
+	// and we get a return which is expected to be a void object
+	JP_TRACE_IN("JPVoidType::getValueFromObject");
+	return JPValue(this, (jobject) 0);
+	JP_TRACE_OUT;
+}
+
 void JPVoidType::getView(JPArrayView& view)
 {
 }
@@ -130,8 +126,8 @@ ssize_t JPVoidType::getItemSize()
 	return 0;
 }
 
-void JPVoidType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+void JPVoidType::copyElements(JPJavaFrame &frame,
+		jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
 }
-

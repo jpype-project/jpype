@@ -20,7 +20,7 @@
 #include "jp_class.h"
 #include "jp_javaframe.h"
 
-/** Lightwieght representative of a jvalue with its corresponding class.
+/** Lightweight representative of a jvalue with its corresponding class.
  * This should not have any memory management.  The user of the class
  * must take a global reference if needed.
  */
@@ -49,8 +49,6 @@ public:
 	{
 	}
 
-	jclass getJavaClass() const;
-
 	JPClass* getClass() const
 	{
 		return m_Class;
@@ -66,7 +64,6 @@ public:
 		return m_Value;
 	}
 
-
 	jobject getJavaObject() const;
 
 	operator jvalue&()
@@ -79,14 +76,16 @@ public:
 		return m_Value;
 	}
 
-	void global(JPJavaFrame& frame)
+	JPValue& global(JPJavaFrame& frame)
 	{
 		m_Value.l = frame.NewGlobalRef(m_Value.l);
+		return *this;
 	}
 
 private:
 	JPClass* m_Class;
 	jvalue  m_Value;
+	jmethodID m_GetInvocationHandlerID;
 } ;
 
 #endif // _JPVALUE_H_

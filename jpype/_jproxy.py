@@ -14,14 +14,10 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-
-import collections
-import sys
+import _jpype
 
 __all__ = ["JProxy", "JImplements"]
 
-import _jpype
-from . import _jclass
 
 # FIXME the java.lang.method we are overriding should be passes to the lookup function
 # so we can properly handle name mangling on the override.
@@ -115,7 +111,7 @@ def _convertInterfaces(intf):
     actualIntf = set()
     for item in intflist:
         if isinstance(item, str):
-            actualIntf.add(_jclass.JClass(item))
+            actualIntf.add(_jpype.JClass(item))
         else:
             actualIntf.add(item)
 
@@ -125,11 +121,11 @@ def _convertInterfaces(intf):
 
     for cls in actualIntf:
         # If it isn't a JClass, then it cannot be a Java interface
-        if not isinstance(cls, _jclass.JClass):
+        if not isinstance(cls, _jpype.JClass):
             raise TypeError("'%s' is not a Java interface" %
                             type(cls).__name__)
         # Java concrete and abstract classes cannot be proxied
-        if not issubclass(cls, _jclass.JInterface):
+        if not issubclass(cls, _jpype.JInterface):
             raise TypeError("'%s' is not a Java interface" % cls.__name__)
 
     return tuple(actualIntf)
@@ -180,9 +176,7 @@ class JProxy(_jpype._JProxy):
             raise TypeError("Specify only one of dict and inst")
 
         if dict is not None:
-            inst = _JFromDict(dict)
             return _jpype._JProxy(_JFromDict(dict), actualIntf)
-            return
 
         if inst is not None:
             return _jpype._JProxy.__new__(cls, inst, actualIntf)

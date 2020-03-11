@@ -258,24 +258,23 @@ class CoverageCase(common.JPypeTestCase):
             jpype.JClass({})
 
     def testJClassFromClass(self):
-        self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName("java.lang.StringBuilder")),jpype.JClass)
+        self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName(
+            "java.lang.StringBuilder")), jpype.JClass)
 
     def testJArrayDimTooBig(self):
         with self.assertRaises(ValueError):
-            jpype.JArray(jpype.JInt,10000)
+            jpype.JArray(jpype.JInt, 10000)
 
     def testJArrayDimWrong(self):
         with self.assertRaises(TypeError):
-            jpype.JArray(jpype.JInt,1.5)
+            jpype.JArray(jpype.JInt, 1.5)
 
     def testJArrayArgs(self):
         with self.assertRaises(TypeError):
-            jpype.JArray(jpype.JInt,1,'f')
+            jpype.JArray(jpype.JInt, 1, 'f')
 
     def testJArrayTypeBad(self):
         class John(object):
             pass
         with self.assertRaises(TypeError):
             jpype.JArray(John)
-
-

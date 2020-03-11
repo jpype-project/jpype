@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+import fnmatch
 import os
-import subprocess
 import distutils.cmd
 import distutils.log
 import array
@@ -16,7 +16,6 @@ else:
     def translate(s, cfrom, cto):
         return s.translate(str.maketrans(cfrom, cto))
 
-import fnmatch
 
 # Python2/3 don't agree on how glob should work
 

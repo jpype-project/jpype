@@ -28,21 +28,24 @@ public:
 	typedef jint type_t;
 	typedef jintArray array_t;
 
-	inline jint& field(jvalue& v)
+	static inline jint& field(jvalue& v)
 	{
 		return v.i;
 	}
 
-	inline jint field(const jvalue& v) const
+	static inline const jint& field(const jvalue& v)
 	{
 		return v.i;
 	}
 
-public:
-	virtual JPMatch::Type  canConvertToJava(PyObject* obj) override;
-	virtual jvalue      convertToJava(PyObject* obj) override;
-	virtual JPPyObject  convertToPythonObject(jvalue val) override;
-	virtual JPValue     getValueFromObject(jobject obj) override;
+	virtual JPClass* getBoxedClass(JPContext *context) const
+	{
+		return context->_java_lang_Integer;
+	}
+
+	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch& match, PyObject* pyobj) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	virtual JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -64,7 +67,15 @@ public:
 		return 'I';
 	}
 
-	virtual bool isSubTypeOf(JPClass* other) const override;
+	virtual jlong getAsLong(jvalue v) override
+	{
+		return field(v);
+	}
+
+	virtual jdouble getAsDouble(jvalue v) override
+	{
+		return field(v);
+	}
 
 	static jlong assertRange(const jlong& l)
 	{

@@ -17,8 +17,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_arrayclass.h"
-#include "jp_boxedclasses.h"
-#include "jp_stringclass.h"
+#include "jp_boxedtype.h"
+#include "jp_stringtype.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -141,22 +141,23 @@ void PyJPValue_finalize(void* obj)
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
-	if (cls != NULL && JPEnv::isInitialized() && !cls->isPrimitive())
+	JPContext *context = PyJPModule_getContext();
+	if (cls != NULL && context->isRunning() && !cls->isPrimitive())
 	{
 		JP_TRACE("Value", cls->getCanonicalName(), &(value->getValue()));
 		JP_TRACE("Dereference object");
-		JPJavaFrame::ReleaseGlobalRef(value->getValue().l);
+		context->ReleaseGlobalRef(value->getValue().l);
 		*value = JPValue();
 	}
-	JP_PY_CATCH();
+	JP_PY_CATCH_NONE();
 }
 
 /** This is the way to convert an object into a python string. */
 PyObject* PyJPValue_str(PyObject* self)
 {
-	JP_PY_TRY("PyJPValue_toString", self);
-	ASSERT_JVM_RUNNING();
-	JPJavaFrame frame;
+	JP_PY_TRY("PyJPValue_str", self);
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == NULL)
 		JP_RAISE(PyExc_TypeError, "Not a Java value");
@@ -168,7 +169,7 @@ PyObject* PyJPValue_str(PyObject* self)
 	if (cls->isPrimitive())
 		JP_RAISE(PyExc_ValueError, "toString requires a java object");
 
-	if (cls == JPTypeManager::_java_lang_String)
+	if (cls == context->_java_lang_String)
 	{
 		PyObject *cache;
 		JPPyObject dict(JPPyRef::_accept, PyObject_GenericGetDict(self, NULL));
@@ -185,7 +186,7 @@ PyObject* PyJPValue_str(PyObject* self)
 			if (jstr == NULL)
 				str = "(null)";
 			else
-				str = JPJni::toStringUTF8(jstr);
+				str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
 			PyDict_SetItemString(dict.get(), "_jstr", cache);
 			Py_INCREF(cache);
@@ -196,7 +197,7 @@ PyObject* PyJPValue_str(PyObject* self)
 		JP_RAISE(PyExc_ValueError, "toString called with null class");
 
 	// In general toString is not immutable, so we won't cache it.
-	return JPPyString::fromStringUTF8(JPJni::toString(value->getValue().l)).keep();
+	return JPPyString::fromStringUTF8(frame.toString(value->getValue().l)).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -274,38 +275,39 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 
 // These are from the internal methods when we already have the jvalue
 
-JPPyObject PyJPValue_create(const JPValue& value2)
+JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 {
 	JP_TRACE_IN("PyJPValue_create");
 	JPValue value = value2;
 	JPClass* cls = value.getClass();
+	JPContext *context = frame.getContext();
 	if (cls == NULL)
 	{
-		cls = JPTypeManager::_java_lang_Object;
+		cls = context->_java_lang_Object;
 		value.getValue().l = NULL;
 	}
 
 	if (cls->isPrimitive())
 	{
-		// FIXME we could actually get these to cast to the correct
+		// We could actually get these to cast to the correct
 		// primitive type which would preserve type conversions here.
-		return cls->convertToPythonObject(value.getValue());
+		return cls->convertToPythonObject(frame, value.getValue());
 	}
 
 	JPPyObject obj;
-	JPPyObject wrapper = PyJPClass_create(cls);
+	JPPyObject wrapper = PyJPClass_create(frame, cls);
 	if (dynamic_cast<JPArrayClass*> (cls) == cls)
 	{
-		obj = PyJPArray_create((PyTypeObject*) wrapper.get(), value);
+		obj = PyJPArray_create(frame, (PyTypeObject*) wrapper.get(), value);
 	} else if (cls->isThrowable())
 	{
 		// Exceptions need new and init
 		JPPyTuple tuple = JPPyTuple::newTuple(1);
 		tuple.setItem(0, _JObjectKey);
 		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
-	} else if (dynamic_cast<JPBoxedClass*> (cls) != NULL)
+	} else if (dynamic_cast<JPBoxedType*> (cls) != NULL)
 	{
-		obj = PyJPNumber_create(wrapper, value);
+		obj = PyJPNumber_create(frame, wrapper, value);
 	} else
 	{
 		// Simple objects don't have a new or init function
@@ -316,20 +318,19 @@ JPPyObject PyJPValue_create(const JPValue& value2)
 	}
 
 	// Fill in the Java slot
-	PyJPValue_assignJavaSlot(obj.get(), value);
+	PyJPValue_assignJavaSlot(frame, obj.get(), value);
 	return obj;
 	JP_TRACE_OUT;
 }
 
-void PyJPValue_assignJavaSlot(PyObject* self, const JPValue& value)
+void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue& value)
 {
-	JPJavaFrame frame;
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
 	{
 		std::stringstream ss;
 		ss << "Missing Java slot on `" << Py_TYPE(self)->tp_name << "`";
-		JP_RAISE(PyExc_TypeError, ss.str().c_str());
+		JP_RAISE(PyExc_SystemError, ss.str().c_str());
 	}
 
 	JPValue* slot = (JPValue*) (((char*) self) + offset);

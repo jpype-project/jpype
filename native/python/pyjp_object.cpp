@@ -24,27 +24,28 @@ extern "C"
 
 static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPObject_init");
-	ASSERT_JVM_RUNNING();
+	JP_PY_TRY("PyJPObject_new");
+	// Get the Java class from the type.
+	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
+	if (cls == NULL)
+		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
+
+	JPContext *context = PyJPModule_getContext();
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
-	JPJavaFrame frame;
+  
+  // Create an instance (this may fail)
+	JPJavaFrame frame(context);
 	JPPyObjectVector args(pyargs);
-
-	// Java exceptions need to create an object to hit the
+  
+  // Java exceptions need to create an object to hit the
 	// Python constructor, but this object will not need to construct
 	// a Java object as the slot will be assigned later.   We will pass
 	// the constructor key to avoid assigning the slot here.
 	if (args.size() == 1 && args[0] == _JObjectKey)
 		return self;
-
-	// Get the Java class from the type.
-	JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
-	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
-
-	// Create an instance (this may fail)
-	PyJPValue_assignJavaSlot(self, cls->newInstance(frame, args));
+  
+	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
 	return self;
 	JP_PY_CATCH(NULL);
 }
@@ -52,14 +53,15 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 static Py_hash_t PyJPObject_hash(PyObject *obj)
 {
 	JP_PY_TRY("PyJPObject_hash");
-	ASSERT_JVM_RUNNING();
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
 	if (javaSlot == NULL || javaSlot->getClass() == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	jobject o = javaSlot->getJavaObject();
 	if (o == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	return JPJni::hashCode(o);
+	return frame.CallIntMethodA(o, context->m_Object_HashCodeID, 0);
 	JP_PY_CATCH(0);
 }
 
@@ -107,14 +109,14 @@ void PyJPObject_initType(PyObject* module)
 {
 	PyObject *bases;
 	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 
 	bases = PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type);
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK_INIT();
 }
