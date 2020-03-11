@@ -203,6 +203,7 @@ class _JCharArray(object):
             return self.equals(self.__class__(other))
         except TypeError:
             return False
+    __hash__ = _jpype._JObject.__hash__
 
 
 # Install module hooks

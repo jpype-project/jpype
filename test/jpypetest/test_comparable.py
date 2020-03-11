@@ -23,3 +23,7 @@ class ComparableTestCase(common.JPypeTestCase):
         self.assertTrue(a <= b)
         self.assertFalse(a == b)
         self.assertTrue(a != b)
+
+    def testComparableHash(self):
+        i = jpype.java.math.BigInteger("1000000000000")
+        self.assertIsInstance(hash(i), int)
