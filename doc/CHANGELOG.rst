@@ -9,6 +9,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - float properly follows Java rules for conversion from double.
     floats outside of range map to inf and -inf.
 
+  - Fix bug that was causing java.lang.Comparable, byte[], and char[] to be unhashable.
+
 - **0.7.2 - 2-28-2019**
 
   - C++ and Java exceptions hold the traceback as a Python exception

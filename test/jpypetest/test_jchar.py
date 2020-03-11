@@ -96,3 +96,8 @@ class JCharTestCase(common.JPypeTestCase):
         self.assertEqual(array, array)
         self.assertNotEqual(array, array2)
         self.assertEqual(array, "abc")
+
+    def testArrayHash(self):
+        ja = JArray(JByte)([1,2,3])
+        self.assertIsInstance(hash(ja), int)
+
