@@ -31,6 +31,13 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JPJavaFrame frame;
 	JPPyObjectVector args(pyargs);
 
+	// Java exceptions need to create an object to hit the
+	// Python constructor, but this object will not need to construct
+	// a Java object as the slot will be assigned later.   We will pass
+	// the constructor key to avoid assigning the slot here.
+	if (args.size() == 1 && args[0] == _JObjectKey)
+		return self;
+
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
 	if (cls == NULL)

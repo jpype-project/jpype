@@ -107,3 +107,10 @@ class ExceptionTestCase(common.JPypeTestCase):
         with self.assertRaises(IndexError):
             raise java.lang.IndexOutOfBoundsException("From Java")
 
+    def testExcCtor(self):
+        WE = jpype.JClass("jpype.exc.WierdException")
+        with self.assertRaises(WE):
+            WE.testThrow()
+
+
+

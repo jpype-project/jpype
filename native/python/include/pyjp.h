@@ -108,6 +108,7 @@ extern PyObject *_JClassPost;
 extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
+extern PyObject *_JObjectKey;
 
 // Class wrapper functions
 int        PyJPClass_Check(PyObject* obj);
