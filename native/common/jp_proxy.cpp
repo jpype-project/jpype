@@ -19,6 +19,7 @@
 #include "jp_classloader.h"
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
+#include "jp_boxedtype.h"
 
 extern "C"
 {
@@ -124,13 +125,19 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			// We must box here.
+			JPMatch returnMatch;
 			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");
-				returnClass = ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
+				if (returnClass->getJavaConversion(&frame, returnMatch, returnValue.get()) == JPMatch::_none)
+					JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
+				jvalue res = returnMatch.conversion->convert(&frame, returnClass, returnValue.get());
+				JPBoxedType *boxed =  (JPBoxedType *) ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
+				jvalue res2;
+				res2.l = boxed->box(frame, res);
+				return frame.keep(res2.l);
 			}
 
-			JPMatch returnMatch;
 			if (returnClass->getJavaConversion(&frame, returnMatch, returnValue.get()) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");

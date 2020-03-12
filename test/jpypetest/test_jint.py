@@ -147,7 +147,13 @@ class JIntTestCase(common.JPypeTestCase):
         self.assertEqual(JInt(java.lang.Double(1.2345)), 1)
 
     def testFromFloat(self):
-        self.assertEqual(JInt._canConvertToJava(1.2345), "none")
+        self.assertEqual(JInt._canConvertToJava(1.2345), "explicit")
+        @jpype.JImplements("java.util.function.IntSupplier")
+        class q(object):
+            @jpype.JOverride
+            def getAsInt(self):
+                return 4.5  # this will hit explicit conversion
+        self.assertEqual(JObject(q()).getAsInt(), 4)
 
     def testFromLong(self):
         self.assertEqual(JInt(12345), 12345)
@@ -507,3 +513,35 @@ class JIntTestCase(common.JPypeTestCase):
         a = [i for i in reversed(ja)]
         n = [i for i in reversed(n)]
         self.assertEqual(a, n)
+
+    def testArrayHash(self):
+        ja = JArray(JInt)([1,2,3])
+        self.assertIsInstance(hash(ja), int)
+
+    @common.requireNumpy
+    def testArrayBufferDims(self):
+        ja = JArray(JInt)(5)
+        a = np.zeros((5,2))
+        with self.assertRaisesRegex(TypeError, "incorrect"):
+            ja[:] = a
+
+    def testArrayBadItem(self):
+        class q(object):
+            def __index__(self):
+                raise SystemError("nope")
+        ja = JArray(JInt)(5)
+        a = [ 1, -1, q(), 3, 4]
+        with self.assertRaisesRegex(SystemError, "nope"):
+            ja[:] = a
+
+    def testArrayBadDims(self):
+        class q(bytes):
+            # Lie about our length
+            def __len__(self):
+                return 5
+        a = q([1,2,3])
+        ja = JArray(JInt)(5)
+        with self.assertRaisesRegex(ValueError, "Slice"):
+            ja[:] = [1, 2, 3]
+        with self.assertRaisesRegex(ValueError, "mismatch"):
+            ja[:] = a

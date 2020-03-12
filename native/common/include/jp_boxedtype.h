@@ -46,8 +46,11 @@ public:
 		return m_PrimitiveType;
 	}
 
+	jobject box(JPJavaFrame &frame, jvalue v);
+
 protected:
 	JPPrimitiveType* m_PrimitiveType;
+	jmethodID        m_CtorID;
 } ;
 
 #endif // _JPBOXEDCLASS_H_

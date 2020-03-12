@@ -76,6 +76,11 @@ public:
 		return (jdouble) field(v);
 	}
 
+	static jlong assertRange(const jlong& l)
+	{
+		return l;
+	}
+
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;

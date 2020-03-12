@@ -146,7 +146,7 @@ class JShortTestCase(common.JPypeTestCase):
         self.assertEqual(JShort(java.lang.Double(1.2345)), 1)
 
     def testFromFloat(self):
-        self.assertEqual(JShort._canConvertToJava(1.2345), "none")
+        self.assertEqual(JShort._canConvertToJava(1.2345), "explicit")
 
     def testFromLong(self):
         self.assertEqual(JShort(12345), 12345)
@@ -505,3 +505,35 @@ class JShortTestCase(common.JPypeTestCase):
         a = [i for i in reversed(ja)]
         n = [i for i in reversed(n)]
         self.assertEqual(a, n)
+
+    def testArrayHash(self):
+        ja = JArray(JShort)([1,2,3])
+        self.assertIsInstance(hash(ja), int)
+
+    @common.requireNumpy
+    def testArrayBufferDims(self):
+        ja = JArray(JShort)(5)
+        a = np.zeros((5,2))
+        with self.assertRaisesRegex(TypeError, "incorrect"):
+            ja[:] = a
+
+    def testArrayBadItem(self):
+        class q(object):
+            def __index__(self):
+                raise SystemError("nope")
+        ja = JArray(JShort)(5)
+        a = [ 1, 2, q(), 3, 4]
+        with self.assertRaisesRegex(SystemError, "nope"):
+            ja[:] = a
+
+    def testArrayBadDims(self):
+        class q(bytes):
+            # Lie about our length
+            def __len__(self):
+                return 5
+        a = q([1,2,3])
+        ja = JArray(JShort)(5)
+        with self.assertRaisesRegex(ValueError, "Slice"):
+            ja[:] = [1, 2, 3]
+        with self.assertRaisesRegex(ValueError, "mismatch"):
+            ja[:] = a
