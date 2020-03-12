@@ -120,6 +120,7 @@ extern PyObject *_JClassPost;
 extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
+extern PyObject *_JObjectKey;
 
 extern JPContext* JPContext_global;
 

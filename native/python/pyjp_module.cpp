@@ -58,6 +58,7 @@ PyObject* _JClassPost = NULL;
 PyObject* _JMethodDoc = NULL;
 PyObject* _JMethodAnnotations = NULL;
 PyObject* _JMethodCode = NULL;
+PyObject* _JObjectKey = NULL;
 
 static void PyJPModule_loadResources(PyObject* module)
 {
@@ -100,6 +101,9 @@ static void PyJPModule_loadResources(PyObject* module)
 		_JMethodCode = PyObject_GetAttrString(module, "getMethodCode");
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
+
+		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
+
 	}	catch (JPypeException&)
 	{
 		Py_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
