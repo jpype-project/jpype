@@ -167,6 +167,8 @@ class JByteTestCase(common.JPypeTestCase):
 
     def testArrayBadItem(self):
         class q(object):
+            def __int__(self):
+                raise SystemError("nope")
             def __index__(self):
                 raise SystemError("nope")
         ja = JArray(JByte)(5)
