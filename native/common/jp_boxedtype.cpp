@@ -26,6 +26,11 @@ JPBoxedType::JPBoxedType(JPJavaFrame& frame, jclass clss,
 : JPClass(frame, clss, name, super, interfaces, modifiers),
 m_PrimitiveType(primitiveType)
 {
+	if (name != "java.lang.Void")
+	{
+		string s = string("(") + primitiveType->getTypeCode() + ")V";
+		m_CtorID = frame.GetMethodID(clss, "<init>", s.c_str());
+	}
 }
 
 JPBoxedType::~JPBoxedType()
@@ -46,4 +51,9 @@ JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	}
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+jobject JPBoxedType::box(JPJavaFrame &frame, jvalue v)
+{
+	return frame.NewObjectA(m_Class.get(), m_CtorID, &v);
 }

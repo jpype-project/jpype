@@ -5,6 +5,10 @@ import sys
 import logging
 import time
 import common
+try:
+    import numpy as np
+except ImportError:
+    pass
 
 
 class JBooleanTestCase(common.JPypeTestCase):
@@ -113,3 +117,31 @@ class JBooleanTestCase(common.JPypeTestCase):
         jarr = jpype.JArray(jpype.JBoolean)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)
+
+    @common.requireNumpy
+    def testArrayBufferDims(self):
+        ja = JArray(JBoolean)(5)
+        a = np.zeros((5,2))
+        with self.assertRaisesRegex(TypeError, "incorrect"):
+            ja[:] = a
+
+    def testArrayBadItem(self):
+        class q(object):
+            def __bool__(self):
+                raise SystemError("nope")
+        ja = JArray(JBoolean)(5)
+        a = [ 1, 2, q(), 3, 4]
+        with self.assertRaisesRegex(SystemError, "nope"):
+            ja[:] = a
+
+    def testArrayBadDims(self):
+        class q(bytes):
+            # Lie about our length
+            def __len__(self):
+                return 5
+        a = q([1,2,3])
+        ja = JArray(JBoolean)(5)
+        with self.assertRaisesRegex(ValueError, "Slice"):
+            ja[:] = [1, 2, 3]
+        with self.assertRaisesRegex(ValueError, "mismatch"):
+            ja[:] = a

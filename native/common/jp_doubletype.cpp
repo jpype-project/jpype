@@ -158,18 +158,6 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 		return match.type = JPMatch::_exact;
 	}
 
-	if (PyFloat_Check(pyobj))
-	{
-		match.conversion = &asDoubleConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &asDoubleLongConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
 	if (PyNumber_Check(pyobj))
 	{
 		match.conversion = &asDoubleConversion;
@@ -330,7 +318,7 @@ void JPDoubleType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseDoubleArrayElements((jdoubleArray) view.m_Array->getJava(),
-			(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions

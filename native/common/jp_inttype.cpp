@@ -42,32 +42,9 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsInt : public JPConversion
-{
-	typedef JPIntType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
-		return res;
-	}
-} asIntConversion;
-
-class JPConversionIntWiden : public JPConversion
-{
-	typedef JPIntType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.i = (jint) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
-		return ret;
-	}
-} intWidenConversion;
+JPConversionLong<JPIntType> intConversion;
+JPConversionLongNumber<JPIntType> intNumberConversion;
+JPConversionLongWiden<JPIntType> intWidenConversion;
 
 JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -119,13 +96,13 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 
 	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
-		match.conversion = &asIntConversion;
+		match.conversion = &intConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (PyLong_Check(pyobj))
+	if (PyNumber_Check(pyobj))
 	{
-		match.conversion = &asIntConversion;
+		match.conversion = &intNumberConversion;
 		return match.type = JPMatch::_explicit;
 	}
 
@@ -284,7 +261,7 @@ void JPIntType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
-			(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
