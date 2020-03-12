@@ -983,7 +983,15 @@ public:
 
 	~JPStringAccessor()
 	{
-		frame_.ReleaseStringUTFChars(jstr_, cstr);
+		try
+		{
+			frame_.ReleaseStringUTFChars(jstr_, cstr);
+		}		catch (JPypeException &ex)
+		{
+			// Error during release must be eaten.
+			// If Java does not accept a release of the buffer it
+			// is Java's issue, not ours.
+		}
 	}
 } ;
 

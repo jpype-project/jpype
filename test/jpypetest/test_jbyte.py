@@ -149,3 +149,7 @@ class JByteTestCase(common.JPypeTestCase):
             jf.static_byte_field = object()
         with self.assertRaises(TypeError):
             jf().byte_field = object()
+
+    def testArrayHash(self):
+        ja = JArray(JByte)([1,2,3])
+        self.assertIsInstance(hash(ja), int)
