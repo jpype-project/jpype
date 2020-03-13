@@ -214,7 +214,10 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
-		val[index] = PyObject_IsTrue(seq[i].get());
+		int v = PyObject_IsTrue(seq[i].get());
+		if (v == -1)
+			JP_PY_CHECK();
+		val[index] = v;
 	}
 	accessor.commit();
 	JP_TRACE_OUT;

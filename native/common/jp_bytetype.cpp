@@ -42,18 +42,8 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsByte : public JPConversion
-{
-	typedef JPByteType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject* pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
-		return res;
-	}
-} asByteConversion;
+JPConversionLong<JPByteType> byteConversion;
+JPConversionLongNumber<JPByteType> byteNumberConversion;
 
 JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -88,13 +78,13 @@ JPMatch::Type JPByteType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 
 	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
-		match.conversion = &asByteConversion;
+		match.conversion = &byteConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (PyLong_Check(pyobj))
+	if (PyNumber_Check(pyobj))
 	{
-		match.conversion = &asByteConversion;
+		match.conversion = &byteNumberConversion;
 		return match.type = JPMatch::_explicit;
 	}
 

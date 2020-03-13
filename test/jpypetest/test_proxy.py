@@ -316,3 +316,66 @@ class ProxyTestCase(common.JPypeTestCase):
     def testProxyFail(self):
         with self.assertRaises(TypeError):
             JProxy(inst=object(), dict={}, intf="java.io.Serializable")
+
+    def testValid(self):
+        @JImplements("java.util.Comparator")
+        class ValidComparator(object):
+            @JOverride
+            def compare(self, _o1, _o2):
+                return 0
+
+            @JOverride
+            def equals(self, _obj):
+                return True
+        arr = JArray(JString)(["a","b"])
+        java.util.Arrays.sort(arr, ValidComparator())
+
+    def testRaisePython(self):
+        @JImplements("java.util.Comparator")
+        class RaiseException(object):
+            def __init__(self, exc):
+                self.exc = exc
+            @JOverride
+            def compare(self, _o1, _o2):
+                raise self.exc("nobody expects the Python exception!")
+
+            @JOverride
+            def equals(self, _obj):
+                return True
+        arr = JArray(JString)(["a","b"])
+        with self.assertRaises(TypeError):
+            java.util.Arrays.sort(arr, RaiseException(TypeError))
+        with self.assertRaises(ValueError):
+            java.util.Arrays.sort(arr, RaiseException(ValueError))
+        with self.assertRaises(SyntaxError):
+            java.util.Arrays.sort(arr, RaiseException(SyntaxError))
+        with self.assertRaises(java.lang.RuntimeException):
+            java.util.Arrays.sort(arr, RaiseException(java.lang.RuntimeException))
+
+    def testBad(self):
+        @JImplements("java.util.Comparator")
+        class TooManyParams(object):
+            @JOverride
+            def compare(self, _o1, _o2, _o3):
+                return 0
+
+            @JOverride
+            def equals(self, _obj):
+                return True
+
+        @JImplements("java.util.Comparator")
+        class TooFewParams(object):
+            @JOverride
+            def compare(self, _o1):
+                return 0
+
+            @JOverride
+            def equals(self, _obj):
+                return True
+
+        arr = JArray(JString)(["a","b"])
+        with self.assertRaises(TypeError):
+            java.util.Arrays.sort(arr, TooManyParams())
+        with self.assertRaises(TypeError):
+            java.util.Arrays.sort(arr, TooFewParams())
+

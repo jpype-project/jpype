@@ -42,32 +42,9 @@ JPValue JPShortType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsShort : public JPConversion
-{
-	typedef JPShortType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
-		return res;
-	}
-} asShortConversion;
-
-class JPConversionShortWiden : public JPConversion
-{
-	typedef JPShortType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject* pyobj) override
-	{
-		JPValue* value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.s = (jshort) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
-		return ret;
-	}
-} shortWidenConversion;
+JPConversionLong<JPShortType> shortConversion;
+JPConversionLongNumber<JPShortType> shortNumberConversion;
+JPConversionLongWiden<JPShortType> shortWidenConversion;
 
 JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -118,13 +95,13 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 
 	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
 	{
-		match.conversion = &asShortConversion;
+		match.conversion = &shortConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (PyLong_Check(pyobj))
+	if (PyNumber_Check(pyobj))
 	{
-		match.conversion = &asShortConversion;
+		match.conversion = &shortNumberConversion;
 		return match.type = JPMatch::_explicit;
 	}
 

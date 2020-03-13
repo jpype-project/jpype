@@ -407,9 +407,9 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 	PyErr_Fetch(&v1, &v2, &v3);
 	if (v1 == NULL && v2 == NULL && v3 == NULL)
 		return false;
-	exceptionClass = JPPyObject(JPPyRef::_claim, v1);
-	exceptionValue = JPPyObject(JPPyRef::_claim, v2);
-	exceptionTrace = JPPyObject(JPPyRef::_claim, v3);
+	exceptionClass = JPPyObject(JPPyRef::_accept, v1);
+	exceptionValue = JPPyObject(JPPyRef::_accept, v2);
+	exceptionTrace = JPPyObject(JPPyRef::_accept, v3);
 	return true;
 }
 

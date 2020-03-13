@@ -135,18 +135,6 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyFloat_Check(pyobj))
-	{
-		match.conversion = &asFloatConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &asFloatLongConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
 	if (PyNumber_Check(pyobj))
 	{
 		match.conversion = &asFloatConversion;

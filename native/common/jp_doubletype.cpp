@@ -158,18 +158,6 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 		return match.type = JPMatch::_exact;
 	}
 
-	if (PyFloat_Check(pyobj))
-	{
-		match.conversion = &asDoubleConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &asDoubleLongConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
 	if (PyNumber_Check(pyobj))
 	{
 		match.conversion = &asDoubleConversion;

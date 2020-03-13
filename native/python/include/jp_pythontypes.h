@@ -421,6 +421,11 @@ public:
 		if (good)
 			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
 	}
+
+	void clear()
+	{
+		good = false;
+	}
 } ;
 
 /** Used to establish a python lock when called from a

@@ -248,7 +248,6 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertIsInstance(ja, JArray(jtype))
         self.assertTrue(np.all(a.astype(dtype)==ja))
 
-
     @common.requireNumpy
     def testArrayOfBoolean(self):
         self.checkArrayOf(JBoolean, np.bool, 0, 1)
@@ -349,8 +348,21 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("JPDoubleType::newMultiArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JDouble)
- 
 
+    def testJArrayDimTooBig(self):
+        with self.assertRaises(ValueError):
+            jpype.JArray(jpype.JInt, 10000)
 
+    def testJArrayDimWrong(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt, 1.5)
 
+    def testJArrayArgs(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray(jpype.JInt, 1, 'f')
 
+    def testJArrayTypeBad(self):
+        class John(object):
+            pass
+        with self.assertRaises(TypeError):
+            jpype.JArray(John)

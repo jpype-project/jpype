@@ -62,7 +62,7 @@ public:
 		((&_frame)->*_release)(a, _elem, JNI_ABORT);
 	}
 
-} ;
+};
 
 template <class type_t> PyObject *convertMultiArray(
 		JPJavaFrame &frame,
@@ -146,5 +146,58 @@ template <class type_t> PyObject *convertMultiArray(
 	v.l = out;
 	return type->convertToPythonObject(frame, v).keep();
 }
+
+
+template <typename base_t>
+class JPConversionLong : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		jlong val = PyLong_AsLongLong(pyobj);
+		if (val == -1)
+			JP_PY_CHECK();
+		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
+		return res;
+	}
+} ;
+
+template <typename base_t>
+class JPConversionLongNumber : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		PyObject *obj = PyNumber_Long(pyobj);
+		JP_PY_CHECK();
+		jlong val = PyLong_AsLongLong(obj);
+		Py_DECREF(obj);
+		if (val == -1)
+			JP_PY_CHECK();
+		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
+		return res;
+	}
+};
+
+extern "C" JPValue* PyJPValue_getJavaSlot(PyObject* self);
+
+template <typename base_t>
+class JPConversionLongWiden : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
+		return ret;
+	}
+};
+
 
 #endif /* JP_PRIMITIVE_ACCESSOR_H */

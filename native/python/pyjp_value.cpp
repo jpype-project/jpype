@@ -302,7 +302,8 @@ JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 	} else if (cls->isThrowable())
 	{
 		// Exceptions need new and init
-		JPPyTuple tuple = JPPyTuple::newTuple(0);
+		JPPyTuple tuple = JPPyTuple::newTuple(1);
+		tuple.setItem(0, _JObjectKey);
 		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
 	} else if (dynamic_cast<JPBoxedType*> (cls) != NULL)
 	{

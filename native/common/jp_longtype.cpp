@@ -42,32 +42,9 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsLong : public JPConversion
-{
-	typedef JPLongType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = JPPyLong::asLong(pyobj);
-		return res;
-	}
-} asLongConversion;
-
-class JPConversionLongWiden : public JPConversion
-{
-	typedef JPLongType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		JPValue* value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.j = ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
-		return ret;
-	}
-} longWidenConversion;
+JPConversionLong<JPLongType> longConversion;
+JPConversionLongNumber<JPLongType> longNumberConversion;
+JPConversionLongWiden<JPLongType> longWidenConversion;
 
 JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -120,13 +97,13 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 
 	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
 	{
-		match.conversion = &asLongConversion;
+		match.conversion = &longNumberConversion;
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (PyLong_Check(pyobj))
+	if (PyNumber_Check(pyobj))
 	{
-		match.conversion = &asLongConversion;
+		match.conversion = &longNumberConversion;
 		return match.type = JPMatch::_explicit;
 	}
 

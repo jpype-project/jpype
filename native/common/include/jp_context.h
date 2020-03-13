@@ -250,6 +250,9 @@ public:
 	jmethodID m_Context_collectRectangularID;
 	jmethodID m_Context_assembleID;
 	jmethodID m_String_ToCharArrayID;
+	jmethodID m_Context_CreateExceptionID;
+	jmethodID m_Context_GetExcClassID;
+	jmethodID m_Context_GetExcValueID;
 
 private:
 	bool m_IsShutdown;

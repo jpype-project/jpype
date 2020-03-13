@@ -233,9 +233,17 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Context_collectRectangularID = frame.GetMethodID(cls,
 				"collectRectangular",
 				"(Ljava/lang/Object;)[Ljava/lang/Object;");
+
 		m_Context_assembleID = frame.GetMethodID(cls,
 				"assemble",
 				"([ILjava/lang/Object;)Ljava/lang/Object;");
+
+		m_Context_CreateExceptionID = frame.GetMethodID(cls, "createException",
+				"(JJ)Ljava/lang/Exception;");
+		m_Context_GetExcClassID = frame.GetMethodID(cls, "getExcClass",
+				"(Ljava/lang/Throwable;)J");
+		m_Context_GetExcValueID = frame.GetMethodID(cls, "getExcValue",
+				"(Ljava/lang/Throwable;)J");
 
 		// Launch
 		jvalue val[2];
