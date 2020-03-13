@@ -34,3 +34,10 @@ JPValue JPPrimitiveType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_RAISE(PyExc_SystemError, "Not used");
 }
+
+PyObject *JPPrimitiveType::newMultiArray(JPJavaFrame &frame,
+		JPPyBuffer& view, int subs, int base, jobject dims)
+{
+	PyErr_Format(PyExc_TypeError, "Not supported yet");
+	return NULL;
+}

@@ -1,17 +1,14 @@
 import sys
+import _jpype
 import jpype
 from jpype.types import *
 from jpype import JPackage, java
 import common
 import pytest
-
-
-def haveNumpy():
-    try:
-        import numpy
-        return True
-    except ImportError:
-        return False
+try:
+    import numpy as np
+except ImportError:
+    pass
 
 
 class ArrayTestCase(common.JPypeTestCase):
@@ -93,7 +90,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(l2, jarr[1])
         self.assertEqual(l3, jarr[2])
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testSetFromNPByteArray(self):
         import numpy as np
         n = 100
@@ -177,6 +174,181 @@ class ArrayTestCase(common.JPypeTestCase):
         a[1:4] = ['x', 'y', 'z']
         self.assertEqual(list(a), ['a', 'x', 'y', 'z', 'e', 'f'])
 
+    def checkArrayOf(self, jtype, dtype, mn=None, mx=None):
+        if mn and mx:
+            a = np.random.randint(mn, mx, size=100, dtype=dtype)
+        else:
+            a = np.random.random(100).astype(dtype)
+        ja = JArray.of(a)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertEqual(len(ja), 100)
+        self.assertTrue(np.all(a==ja))
+
+        a = np.reshape(a, (20,5))
+        ja = JArray.of(a)
+        self.assertIsInstance(ja, JArray(jtype,2))
+        self.assertEqual(len(ja), 20)
+        self.assertEqual(len(ja[0]), 5)
+        self.assertTrue(np.all(a==ja))
+
+        a = np.reshape(a, (5,2,10))
+        ja = JArray.of(a)
+        self.assertIsInstance(ja, JArray(jtype,3))
+        self.assertEqual(len(ja), 5)
+        self.assertEqual(len(ja[0]), 2)
+        self.assertEqual(len(ja[0][0]), 10)
+        self.assertTrue(np.all(a==ja))
+        self.assertTrue(np.all(a[1,:,:]==JArray.of(a[1,:,:])))
+        self.assertTrue(np.all(a[2::2,:,:]==JArray.of(a[2::2,:,:])))
+        self.assertTrue(np.all(a[:,:,4:-2]==JArray.of(a[:,:,4:-2])))
+
+    def checkArrayOfCast(self, jtype, dtype):
+        a = np.random.randint(0, 1, size=100, dtype=np.bool)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(0, 2*8-1, size=100, dtype=np.uint8)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(-2*7, 2*7-1, size=100, dtype=np.int8)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(0, 2*16-1, size=100, dtype=np.uint16)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(-2*15, 2*15-1, size=100, dtype=np.int16)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(0, 2*32-1, size=100, dtype=np.uint32)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(-2*31, 2*31-1, size=100, dtype=np.int32)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(0, 2*64-1, size=100, dtype=np.uint64)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+        a = np.random.randint(-2*63, 2*63-1, size=100, dtype=np.int64)
+        ja = JArray.of(a, dtype=jtype)
+        self.assertIsInstance(ja, JArray(jtype))
+        self.assertTrue(np.all(a.astype(dtype)==ja))
+
+    @common.requireNumpy
+    def testArrayOfBoolean(self):
+        self.checkArrayOf(JBoolean, np.bool, 0, 1)
+
+    @common.requireNumpy
+    def testArrayOfByte(self):
+        self.checkArrayOf(JByte, np.int8, -2**7, 2**7-1)
+
+    @common.requireNumpy
+    def testArrayOfShort(self):
+        self.checkArrayOf(JShort, np.int16, -2**15, 2**15-1)
+
+    @common.requireNumpy
+    def testArrayOfInt(self):
+        self.checkArrayOf(JInt, np.int32, -2**31, 2**31-1)
+
+    @common.requireNumpy
+    def testArrayOfLong(self):
+        self.checkArrayOf(JLong, np.int64, -2**63, 2**63-1)
+
+    @common.requireNumpy
+    def testArrayOfFloat(self):
+        self.checkArrayOf(JFloat, np.float32)
+
+    @common.requireNumpy
+    def testArrayOfDouble(self):
+        self.checkArrayOf(JDouble, np.float64)
+
+    @common.requireNumpy
+    def testArrayOfBooleanCast(self):
+        self.checkArrayOfCast(JBoolean, np.bool)
+
+    @common.requireNumpy
+    def testArrayOfByteCast(self):
+        self.checkArrayOfCast(JByte, np.int8)
+
+    @common.requireNumpy
+    def testArrayOfShortCast(self):
+        self.checkArrayOfCast(JShort, np.int16)
+
+    @common.requireNumpy
+    def testArrayOfIntCast(self):
+        self.checkArrayOfCast(JInt, np.int32)
+
+    @common.requireNumpy
+    def testArrayOfLongCast(self):
+        self.checkArrayOfCast(JLong, np.int64)
+
+    @common.requireNumpy
+    def testArrayOfFloatCast(self):
+        self.checkArrayOfCast(JFloat, np.float32)
+
+    @common.requireNumpy
+    def testArrayOfDoubleCast(self):
+        self.checkArrayOfCast(JDouble, np.float64)
+
+    def testArrayOfExc(self):
+        a = np.random.randint(0, 2*8-1, size=1, dtype=np.uint8)
+        with self.assertRaises(TypeError):
+            JArray.of(a)
+        a = np.random.randint(0, 2*16-1, size=1, dtype=np.uint16)
+        with self.assertRaises(TypeError):
+            JArray.of(a)
+        a = np.random.randint(0, 2*32-1, size=1, dtype=np.uint32)
+        with self.assertRaises(TypeError):
+            JArray.of(a)
+        a = np.random.randint(0, 2*64-1, size=1, dtype=np.uint64)
+        with self.assertRaises(TypeError):
+            JArray.of(a)
+
+    @common.requireInstrumentation
+    def testArrayOfFaults(self):
+        b = bytes([1,2,3])
+        _jpype.fault("JPJavaFrame::assemble")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JInt)
+        _jpype.fault("JPBooleanType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JBoolean)
+        _jpype.fault("JPCharType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JChar)
+        _jpype.fault("JPByteType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JByte)
+        _jpype.fault("JPShortType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JShort)
+        _jpype.fault("JPIntType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JInt)
+        _jpype.fault("JPLongType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JLong)
+        _jpype.fault("JPFloatType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JFloat)
+        _jpype.fault("JPDoubleType::newMultiArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray.of(b, JDouble)
+
     def testJArrayDimTooBig(self):
         with self.assertRaises(ValueError):
             jpype.JArray(jpype.JInt, 10000)
@@ -194,6 +366,3 @@ class ArrayTestCase(common.JPypeTestCase):
             pass
         with self.assertRaises(TypeError):
             jpype.JArray(John)
-
-
-

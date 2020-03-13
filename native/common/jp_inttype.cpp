@@ -285,3 +285,17 @@ void JPIntType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize le
 	jint* b = (jint*) ((char*) memory + offset);
 	frame.GetIntArrayRegion((jintArray) a, start, len, b);
 }
+
+static void pack(jint* d, jvalue v)
+{
+	*d = v.i;
+}
+
+PyObject *JPIntType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPIntType::newMultiArray");
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "i",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}

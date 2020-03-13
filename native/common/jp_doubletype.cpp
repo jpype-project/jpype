@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -341,4 +341,18 @@ void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize
 {
 	jdouble* b = (jdouble*) ((char*) memory + offset);
 	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
+}
+
+static void pack(jdouble* d, jvalue v)
+{
+	*d = v.d;
+}
+
+PyObject *JPDoubleType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPDoubleType::newMultiArray");
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "d",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
 }

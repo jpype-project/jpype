@@ -295,7 +295,7 @@ void JPFloatType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
-			(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException& ex)
 	{
 		// This is called as part of the cleanup routine and exceptions
@@ -320,3 +320,16 @@ void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize 
 	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 
+static void pack(jfloat* d, jvalue v)
+{
+	*d = v.f;
+}
+
+PyObject *JPFloatType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPFloatType::newMultiArray");
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "f",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}

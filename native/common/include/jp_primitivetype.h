@@ -47,6 +47,9 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) = 0;
+
+	virtual PyObject *newMultiArray(JPJavaFrame &frame,
+			JPPyBuffer& view, int subs, int base, jobject dims);
 } ;
 
 #endif

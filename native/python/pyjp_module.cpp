@@ -18,6 +18,7 @@
 #include "pyjp.h"
 #include "jp_arrayclass.h"
 #include "jp_reference_queue.h"
+#include "jp_primitive_accessor.h"
 
 
 extern void PyJPArray_initType(PyObject* module);
@@ -29,6 +30,8 @@ extern void PyJPProxy_initType(PyObject* module);
 extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
+
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
 // To ensure no leaks (requires C++ linkage)
 
@@ -449,6 +452,46 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_CATCH(NULL);
 }
 
+static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPModule_arrayFromBuffer");
+	PyObject *source = 0;
+	PyObject *dtype = 0;
+	if (!PyArg_ParseTuple(args, "OO", &source, &dtype))
+		return NULL;
+	if (source == NULL)
+	{
+		PyErr_Format(PyExc_TypeError, "Buffer source is required");
+		return NULL;
+	}
+	if (!PyObject_CheckBuffer(source))
+	{
+		PyErr_Format(PyExc_TypeError, "'%s' does not support buffers", Py_TYPE(source)->tp_name);
+		return NULL;
+	}
+
+	// NUMPy does a series of probes looking for the best supported format,
+	// we will do the same.
+	{
+		JPPyBuffer	buffer(source, PyBUF_FULL_RO);
+		if (buffer.valid())
+			return PyJPModule_convertBuffer(buffer, dtype);
+	}
+	{
+		JPPyBuffer	buffer(source, PyBUF_RECORDS_RO);
+		if (buffer.valid())
+			return PyJPModule_convertBuffer(buffer, dtype);
+	}
+	{
+		JPPyBuffer	buffer(source, PyBUF_ND | PyBUF_FORMAT);
+		if (buffer.valid())
+			return PyJPModule_convertBuffer(buffer, dtype);
+	}
+	PyErr_Format(PyExc_TypeError, "buffer protocol for '%s' not supported", Py_TYPE(source)->tp_name);
+	return NULL;
+	JP_PY_CATCH(NULL);
+}
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -463,9 +506,9 @@ PyObject* examine(PyObject *module, PyObject *other)
 	if (!PyType_Check(other))
 	{
 		printf("  Object:\n");
-		printf("    size: %lld\n", Py_SIZE(other));
-		printf("    dictoffset: %lld\n", ((long long) _PyObject_GetDictPtr(other)-(long long) other));
-		printf("    javaoffset: %lld\n", PyJPValue_getJavaSlotOffset(other));
+		printf("    size: %d\n", (int) Py_SIZE(other));
+		printf("    dictoffset: %d\n", (int) ((long long) _PyObject_GetDictPtr(other)-(long long) other));
+		printf("    javaoffset: %d\n", (int) PyJPValue_getJavaSlotOffset(other));
 	}
 	printf("  Type: %p\n", type);
 	printf("    name: %s\n", type->tp_name);
@@ -528,9 +571,11 @@ static PyMethodDef moduleMethods[] = {
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
+	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
 #endif
+
 	// sentinel
 	{NULL}
 };
@@ -598,6 +643,112 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	JP_TRACE_OUT;
 }
 
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
+{
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	Py_buffer& view = buffer.getView();
+
+	// Okay two possibilities here.  We have a valid dtype specified,
+	// or we need to figure it out from the buffer.
+	JPClass *cls = NULL;
+
+	if (view.suboffsets != NULL && view.suboffsets[view.ndim - 1] > 0)
+	{
+		PyErr_Format(PyExc_TypeError, "last dimension is not contiguous");
+		return NULL;
+	}
+
+	// First lets find out what we are unpacking
+	Py_ssize_t itemsize = view.itemsize;
+	char *format = view.format;
+	if (format == NULL)
+		format = "B";
+	// Standard size for 'l' is 4 in docs, but numpy uses format 'l' for long long
+	if (itemsize == 8 && format[0] == 'l')
+		format = "q";
+	if (itemsize == 8 && format[0] == 'L')
+		format = "Q";
+
+	if (dtype != NULL && dtype != Py_None )
+	{
+		cls = PyJPClass_getJPClass(dtype);
+		if (cls == NULL  || !cls->isPrimitive())
+		{
+			PyErr_Format(PyExc_TypeError, "'%s' is not a Java primitive type", Py_TYPE(dtype)->tp_name);
+			return NULL;
+		}
+	} else
+	{
+		switch (format[0])
+		{
+			case '?': cls = context->_boolean;
+			case 'c': break;
+			case 'b': cls = context->_byte;
+			case 'B': break;
+			case 'h': cls = context->_short;
+				break;
+			case 'H': break;
+			case 'i':
+			case 'l': cls = context->_int;
+				break;
+			case 'I':
+			case 'L': break;
+			case 'q': cls = context->_long;
+				break;
+			case 'Q': break;
+			case 'f': cls = context->_float;
+				break;
+			case 'd': cls = context->_double;
+				break;
+			case 'n':
+			case 'N':
+			case 'P':
+			default:
+				break;
+		}
+		if (cls == NULL)
+		{
+			PyErr_Format(PyExc_TypeError, "'%s' type code not supported without dtype specified", format);
+			return NULL;
+		}
+	}
+
+	// Now we have a valid format code, so next lets get a converter for
+	// the type.
+	JPPrimitiveType *pcls = (JPPrimitiveType *) cls;
+
+	// Convert the shape
+	int subs = 1;
+	int base = 1;
+	jintArray jdims = (jintArray) context->_int->newArrayInstance(frame, view.ndim);
+	if (view.shape != NULL)
+	{
+		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,
+				&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+		jint *a = accessor.get();
+		for (int i = 0; i < view.ndim; ++i)
+		{
+			a[i] = view.shape[i];
+		}
+		accessor.commit();
+		for (int i = 0; i < view.ndim - 1; ++i)
+		{
+			subs *= view.shape[i];
+		}
+		base = view.shape[view.ndim - 1];
+	} else
+	{
+		if (view.ndim > 1)
+		{
+			PyErr_Format(PyExc_TypeError, "buffer dims inconsistent");
+			return NULL;
+		}
+		base = view.len / view.itemsize;
+	}
+	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
+}
+
 #ifdef JP_INSTRUMENTATION
 
 int PyJPModuleFault_check(uint32_t code)
@@ -614,3 +765,4 @@ void PyJPModuleFault_throw(uint32_t code)
 	}
 }
 #endif
+

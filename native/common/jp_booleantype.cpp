@@ -281,3 +281,17 @@ void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsiz
 	jboolean* b = (jboolean*) ((char*) memory + offset);
 	frame.GetBooleanArrayRegion((jbooleanArray) a, start, len, b);
 }
+
+static void pack(jboolean* d, jvalue v)
+{
+	*d = v.z;
+}
+
+PyObject *JPBooleanType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPBooleanType::newMultiArray");
+	return convertMultiArray<type_t>(
+			frame, this, &pack, "z",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
