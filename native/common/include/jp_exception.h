@@ -148,7 +148,6 @@ public:
 	void from(const JPStackInfo& info);
 
 	string getMessage();
-	string getPythonMessage();
 
 	void convertJavaToPython();
 	void convertPythonToJava(JPContext* context);
@@ -162,8 +161,6 @@ public:
 
 	/** Transfer handling of this exception to java. */
 	void toJava(JPContext* context);
-
-	jthrowable getJavaException();
 
 	int getExceptionType()
 	{
