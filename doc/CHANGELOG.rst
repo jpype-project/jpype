@@ -14,6 +14,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Corrected an issue with creation of Exceptions which lack a
     default constructor.
 
+  - Fixed segfault when methods called by proxy have incorrect number of 
+    arguments.
+
+  - Proxies pass Python exceptions properly rather converting to 
+    java.lang.RuntimeException
+
 - **0.7.2 - 2-28-2019**
 
   - C++ and Java exceptions hold the traceback as a Python exception

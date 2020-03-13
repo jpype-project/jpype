@@ -18,6 +18,7 @@
 #include <frameobject.h>
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_reference_queue.h"
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th);
@@ -187,6 +188,15 @@ void JPypeException::convertJavaToPython()
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context, m_Context->getEnv());
 	jthrowable th = m_Throwable.get();
+	jvalue v;
+	v.l = th;
+	jlong pycls = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcClassID, &v);
+	if (pycls != 0)
+	{
+		jlong value = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcValueID, &v);
+		PyErr_SetObject((PyObject*) pycls, (PyObject*) value);
+		return;
+	}
 	JP_TRACE("Check typemanager");
 	if (!m_Context->isRunning())
 	{
@@ -205,7 +215,6 @@ void JPypeException::convertJavaToPython()
 	}
 
 	// Create the exception object (this may fail)
-	jvalue v;
 	v.l = th;
 	JPPyObject pyvalue = PyJPValue_create(frame, JPValue(cls, v));
 	if (pyvalue.isNull())
@@ -233,27 +242,34 @@ void JPypeException::convertPythonToJava(JPContext* context)
 	JP_TRACE_IN("JPypeException::convertPythonToJava");
 	JPJavaFrame frame(context);
 	jthrowable th;
+	JPPyErrFrame eframe;
+	if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
 	{
-		JPPyErrFrame eframe;
-		if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
+		eframe.good = false;
+		JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
+		if (javaExc != NULL)
 		{
-			eframe.good = false;
-			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
-			if (javaExc != NULL)
-			{
-				th = (jthrowable) javaExc->getJavaObject();
-				JP_TRACE("Throwing Java", frame.toString(th));
-				frame.Throw(th);
-				return;
-			}
+			th = (jthrowable) javaExc->getJavaObject();
+			JP_TRACE("Throwing Java", frame.toString(th));
+			frame.Throw(th);
+			return;
 		}
 	}
 
 	// Otherwise
 	string pyMessage = "Python exception thrown: " + getPythonMessage();
 	JP_TRACE(pyMessage);
-	PyErr_Clear();
-	frame.ThrowNew(context->_java_lang_RuntimeException.get(), pyMessage.c_str());
+	jvalue v[2];
+	v[0].j = (jlong) eframe.exceptionClass.get();
+	v[1].j = (jlong) eframe.exceptionValue.get();
+	th = (jthrowable) frame.CallObjectMethodA(context->getJavaContext(),
+			context->m_Context_CreateExceptionID, v);
+	context->getReferenceQueue()->registerRef((jobject) th,
+			eframe.exceptionClass.get());
+	context->getReferenceQueue()->registerRef((jobject) th,
+			eframe.exceptionValue.get());
+	eframe.clear();
+	frame.Throw(th);
 	JP_TRACE_OUT;
 }
 
