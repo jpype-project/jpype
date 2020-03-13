@@ -61,6 +61,7 @@ import org.jpype.ref.JPypeReferenceQueue;
  */
 public class JPypeContext
 {
+
   private static JPypeContext instance = null;
   // This is the C++ portion of the context.
   private long context;
@@ -232,6 +233,37 @@ public class JPypeContext
     if (!collect(out, o, 0, shape, d))
       return null;
     return out.toArray();
+  }
+
+  public static class PyExceptionProxy extends RuntimeException
+  {
+
+    long cls, value;
+
+    public PyExceptionProxy(long l0, long l1)
+    {
+      cls = l0;
+      value = l1;
+    }
+  }
+
+  public long getExcClass(Throwable th)
+  {
+    if (th instanceof PyExceptionProxy)
+      return ((PyExceptionProxy) th).cls;
+    return 0;
+  }
+
+  public long getExcValue(Throwable th)
+  {
+    if (th instanceof PyExceptionProxy)
+      return ((PyExceptionProxy) th).value;
+    return 0;
+  }
+
+  public Exception createException(long l0, long l1)
+  {
+    return new PyExceptionProxy(l0, l1);
   }
 
 }

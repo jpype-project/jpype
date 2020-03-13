@@ -18,6 +18,7 @@
 #include <frameobject.h>
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_reference_queue.h"
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th);
@@ -107,71 +108,12 @@ string JPypeException::getMessage()
 	JP_TRACE_OUT;
 }
 
-string JPypeException::getPythonMessage()
-{
-	// Must be bullet proof
-	try
-	{
-		JPPyErrFrame eframe;
-		if (!eframe.good)
-			return "no error reported";
-		JPPyObject className(JPPyRef::_claim, PyObject_GetAttrString(eframe.exceptionClass.get(), "__name__"));
-		stringstream ss;
-		ss << JPPyString::asStringUTF8(className.get());
-
-		// Exception value
-		if (!eframe.exceptionValue.isNull())
-		{
-			// Special handling here so that we don't fail on exceptions.
-			string pyStrValue;
-			PyObject *sval = PyObject_Str(eframe.exceptionValue.get());
-			if (sval != NULL)
-			{
-				try
-				{
-					pyStrValue = JPPyString::asStringUTF8(sval);
-					ss << ": " << pyStrValue;
-
-				} catch (...)
-				{
-				}
-				Py_DECREF(sval);
-			}
-		}
-
-		return ss.str();
-	} catch (...)
-	{
-		return "unknown error";
-	}
-}
-
 bool isJavaThrowable(PyObject* exceptionClass)
 {
 	JPClass* cls = PyJPClass_getJPClass(exceptionClass);
 	if (cls == NULL)
 		return false;
 	return cls->isThrowable();
-}
-
-jthrowable JPypeException::getJavaException()
-{
-	// Must be bullet proof
-	try
-	{
-		JPPyErrFrame eframe;
-		if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
-		{
-			eframe.good = false;
-			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionClass.get());
-			if (javaExc != NULL)
-				return (jthrowable) javaExc->getJavaObject();
-		}
-		return NULL;
-	} catch (...)
-	{
-		return NULL;
-	}
 }
 
 void JPypeException::convertJavaToPython()
@@ -187,6 +129,15 @@ void JPypeException::convertJavaToPython()
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context, m_Context->getEnv());
 	jthrowable th = m_Throwable.get();
+	jvalue v;
+	v.l = th;
+	jlong pycls = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcClassID, &v);
+	if (pycls != 0)
+	{
+		jlong value = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcValueID, &v);
+		PyErr_SetObject((PyObject*) pycls, (PyObject*) value);
+		return;
+	}
 	JP_TRACE("Check typemanager");
 	if (!m_Context->isRunning())
 	{
@@ -205,7 +156,6 @@ void JPypeException::convertJavaToPython()
 	}
 
 	// Create the exception object (this may fail)
-	jvalue v;
 	v.l = th;
 	JPPyObject pyvalue = PyJPValue_create(frame, JPValue(cls, v));
 	if (pyvalue.isNull())
@@ -233,27 +183,32 @@ void JPypeException::convertPythonToJava(JPContext* context)
 	JP_TRACE_IN("JPypeException::convertPythonToJava");
 	JPJavaFrame frame(context);
 	jthrowable th;
+	JPPyErrFrame eframe;
+	if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
 	{
-		JPPyErrFrame eframe;
-		if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
+		eframe.good = false;
+		JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
+		if (javaExc != NULL)
 		{
-			eframe.good = false;
-			JPValue* javaExc = PyJPValue_getJavaSlot(eframe.exceptionValue.get());
-			if (javaExc != NULL)
-			{
-				th = (jthrowable) javaExc->getJavaObject();
-				JP_TRACE("Throwing Java", frame.toString(th));
-				frame.Throw(th);
-				return;
-			}
+			th = (jthrowable) javaExc->getJavaObject();
+			JP_TRACE("Throwing Java", frame.toString(th));
+			frame.Throw(th);
+			return;
 		}
 	}
 
 	// Otherwise
-	string pyMessage = "Python exception thrown: " + getPythonMessage();
-	JP_TRACE(pyMessage);
-	PyErr_Clear();
-	frame.ThrowNew(context->_java_lang_RuntimeException.get(), pyMessage.c_str());
+	jvalue v[2];
+	v[0].j = (jlong) eframe.exceptionClass.get();
+	v[1].j = (jlong) eframe.exceptionValue.get();
+	th = (jthrowable) frame.CallObjectMethodA(context->getJavaContext(),
+			context->m_Context_CreateExceptionID, v);
+	context->getReferenceQueue()->registerRef((jobject) th,
+			eframe.exceptionClass.get());
+	context->getReferenceQueue()->registerRef((jobject) th,
+			eframe.exceptionValue.get());
+	eframe.clear();
+	frame.Throw(th);
 	JP_TRACE_OUT;
 }
 
@@ -343,13 +298,16 @@ void JPypeException::toPython()
 		return;
 	} catch (JPypeException& ex)
 	{
+		// GCOVR_EXCL_START
 		// Print our parting words
 		JPTracer::trace("Fatal error in exception handling");
 		JPTracer::trace("Handling:", mesg);
 		JPTracer::trace("Type:", m_Error.l);
 		if (ex.m_Type == JPError::_python_error)
-			JPTracer::trace("Inner Python:", ex.getPythonMessage());
-		else if (ex.m_Type == JPError::_java_error)
+		{
+			JPPyErrFrame eframe;
+			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.exceptionClass.get())->tp_name);
+		} else if (ex.m_Type == JPError::_java_error)
 			JPTracer::trace("Inner Java:", ex.getMessage());
 		else
 			JPTracer::trace("Inner:", ex.getMessage());
@@ -372,6 +330,7 @@ void JPypeException::toPython()
 		int *i = 0;
 		*i = 0;
 	}
+	// GCOVR_EXCL_STOP
 	JP_TRACE_OUT;
 }
 

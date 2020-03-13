@@ -117,3 +117,4 @@ class ExceptionTestCase(common.JPypeTestCase):
         WE = jpype.JClass("jpype.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
+
