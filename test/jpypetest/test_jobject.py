@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 import jpype
+import _jpype
 from jpype.types import *
 import common
 
@@ -166,3 +167,34 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertEqual(self.fixture.object_field, 2.6125)
         self.assertIsInstance(self.fixture.object_field,
                               JClass('java.lang.Double'))
+
+    def testObjectField(self):
+        with self.assertRaises(TypeError):
+            self.fixture.object_field = object()
+        with self.assertRaises(TypeError):
+            self.fixture.static_object_field = object()
+
+    def testArraySetRangeFail(self):
+        ja = JArray(JObject)(4)
+        with self.assertRaises(TypeError):
+            ja[:] = [ 1, 2, object(), 3]
+        ja[:] = [ 1, 2, 3, 4]
+
+    @common.requireInstrumentation
+    def testArraySetRangeFault(self):
+        _jpype.fault("JPClass::setArrayRange")
+        ja = JArray(JObject)(4)
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[:] = [ 1, 2, 3, 4]
+
+    def testAssignClass(self):
+        self.fixture.object_field = JClass("java.lang.StringBuilder")
+        self.assertIsInstance(self.fixture.object_field, jpype.java.lang.Class)
+        self.assertEqual(self.fixture.object_field, JClass("java.lang.StringBuilder"))
+
+    @common.requireInstrumentation
+    def testSetFinalField(self):
+        _jpype.fault("JPField::setStaticAttribute")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            self.fixture.static_object_field = None
+

@@ -14,6 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import _jpype
 import jpype
 from jpype.types import *
 import common
@@ -179,3 +180,16 @@ class JClassTestCase(common.JPypeTestCase):
         cl = JClass('java.lang.Class').class_.getClassLoader()
         self.assertIsInstance(
             JClass('java.lang.StringBuilder', loader=cl), JClass)
+
+    @common.requireInstrumentation
+    def testJavaConversionFault(self):
+        _jpype.fault("JPClass::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(jpype.java.lang.Class._canConvertToJava(None))
+
+    def testJavaConversion(self):
+        a = JString("a")
+        self.assertEqual(jpype.java.lang.Class._canConvertToJava(object()), "none")
+        self.assertEqual(jpype.java.lang.Class._canConvertToJava(a.getClass()), "exact")
+        self.assertEqual(jpype.java.lang.Class._canConvertToJava(JString), "exact")
+

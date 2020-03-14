@@ -91,7 +91,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			PyErr_Clear();
 
 			// If method can't be called, throw an exception
-			if (callable.isNull() || callable.isNone())
+			if (callable.isNull() || callable.get() == Py_None)
 			{
 				JP_TRACE("Callable not found");
 				JP_RAISE_METHOD_NOT_FOUND(cname);

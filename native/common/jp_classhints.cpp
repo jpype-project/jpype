@@ -280,7 +280,7 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		JP_TRACE_IN("JPConversionNull::matches");
-		if (!JPPyObject::isNone(pyobj))
+		if (pyobj != Py_None)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;

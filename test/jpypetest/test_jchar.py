@@ -101,3 +101,5 @@ class JCharTestCase(common.JPypeTestCase):
         ja = JArray(JByte)([1,2,3])
         self.assertIsInstance(hash(ja), int)
 
+    def testNone(self):
+        self.assertEqual(JChar._canConvertToJava(None), "none")
