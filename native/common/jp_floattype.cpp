@@ -214,7 +214,7 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 		double v =  PyFloat_AsDouble(seq[i].get());
 		if (v == -1.)
 			JP_PY_CHECK();
-		val[index] = (type_t) assertRange(v);
+		val[index] = (type_t) v;
 	}
 	accessor.commit();
 	JP_TRACE_OUT;

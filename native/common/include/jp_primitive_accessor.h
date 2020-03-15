@@ -33,7 +33,7 @@ public:
 		{
 			if (_array)
 				((&_frame)->*_release)(_array, _elem, JNI_ABORT);
-		}		catch (JPypeException &ex)
+		}		catch (JPypeException &ex) // GCOVR_EXCL_LINE
 		{
 			// We can't throw here because it would abort.
 			// But this is called on a non-op release, so
@@ -147,6 +147,7 @@ template <class type_t> PyObject *convertMultiArray(
 	return type->convertToPythonObject(frame, v).keep();
 }
 
+extern "C" JPValue* PyJPValue_getJavaSlot(PyObject* self);
 
 template <typename base_t>
 class JPConversionLong : public JPConversion
@@ -183,8 +184,6 @@ public:
 	}
 };
 
-extern "C" JPValue* PyJPValue_getJavaSlot(PyObject* self);
-
 template <typename base_t>
 class JPConversionLongWiden : public JPConversion
 {
@@ -194,7 +193,8 @@ public:
 	{
 		JPValue *value = PyJPValue_getJavaSlot(pyobj);
 		jvalue ret;
-		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
+		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*)
+				value->getClass())->getAsLong(value->getValue());
 		return ret;
 	}
 } ;
@@ -239,10 +239,10 @@ public:
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
-		jlong v = PyLong_AsDouble(pyobj);
+		jdouble v = PyLong_AsDouble(pyobj);
 		if (v == -1.0)
 			JP_PY_CHECK();
-		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(v);
+		base_t::field(res) = (typename base_t::type_t) v;
 		return res;
 	}
 } ;
@@ -260,7 +260,5 @@ public:
 		return ret;
 	}
 } ;
-
-
 
 #endif /* JP_PRIMITIVE_ACCESSOR_H */

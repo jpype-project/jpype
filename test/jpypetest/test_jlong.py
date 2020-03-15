@@ -132,7 +132,7 @@ class JLongTestCase(common.JPypeTestCase):
     def testFromJLongWiden(self):
         self.assertEqual(JLong(JByte(123)), 123)
         self.assertEqual(JLong(JShort(12345)), 12345)
-        self.assertEqual(JLong(JLong(12345678)), 12345678)
+        self.assertEqual(JLong(JInt(12345678)), 12345678)
         self.assertEqual(JLong(JLong(12345678)), 12345678)
 
     def testFromJLongWiden(self):

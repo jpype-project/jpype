@@ -232,9 +232,6 @@ class JMethodTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPMethod_matchReport")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.matchReport()
-        _jpype.fault("PyJPMethod_dump")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            fixture.callInt.dump()
 
     @common.requireInstrumentation
     def testJMethod_callFault(self):

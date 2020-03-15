@@ -317,20 +317,10 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPMethod_dump(PyJPMethod *self, PyObject *args)
-{
-	JP_PY_TRY("PyJPMethod_dump");
-	PyJPModule_getContext();
-	string report = self->m_Method->dump();
-	return JPPyString::fromStringUTF8(report).keep();
-	JP_PY_CATCH(NULL);
-}
-
 static PyMethodDef methodMethods[] = {
 	{"_isBeanAccessor", (PyCFunction) (&PyJPMethod_isBeanAccessor), METH_NOARGS, ""},
 	{"_isBeanMutator", (PyCFunction) (&PyJPMethod_isBeanMutator), METH_NOARGS, ""},
 	{"matchReport", (PyCFunction) (&PyJPMethod_matchReport), METH_VARARGS, ""},
-	{"dump", (PyCFunction) (&PyJPMethod_dump), METH_NOARGS, ""},
 	{NULL},
 };
 

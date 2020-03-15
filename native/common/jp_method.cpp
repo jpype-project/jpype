@@ -80,17 +80,17 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool callInstance,
+JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, bool callInstance,
 		JPPyObjectVector& arg)
 {
 	ensureTypeCache();
 
 	JP_TRACE_IN("JPMethod::matches");
-	match.overload = this;
-	match.offset = 0;
-	match.skip = 0;
-	match.isVarIndirect = false;
-	match.type = JPMatch::_exact;
+	methodMatch.overload = this;
+	methodMatch.offset = 0;
+	methodMatch.skip = 0;
+	methodMatch.isVarIndirect = false;
+	methodMatch.type = JPMatch::_exact;
 
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
@@ -101,13 +101,13 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 	{
 		JP_TRACE("Skip this");
 		len--;
-		match.offset = 1;
+		methodMatch.offset = 1;
 	}
 
 	if (callInstance || isInstance())
 	{
 		JP_TRACE("Take this");
-		match.skip = 1;
+		methodMatch.skip = 1;
 	}
 
 	if (!JPModifier::isVarArgs(m_Modifiers))
@@ -115,15 +115,15 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		if (len != tlen)
 		{
 			JP_TRACE("Argument length mismatch", len, tlen);
-			return match.type = JPMatch::_none;
+			return methodMatch.type = JPMatch::_none;
 		}
 	} else
 	{
 		JP_TRACE("Match vargs");
-		match.type = JPMatch::_none;
+		methodMatch.type = JPMatch::_none;
 		if (len < tlen - 1)
 		{
-			return match.type;
+			return methodMatch.type;
 		}
 
 		JPClass* type = m_ParameterTypes[tlen - 1];
@@ -131,50 +131,50 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& match, bool c
 		if (len == tlen)
 		{
 			// Try direct
-			size_t last = tlen - 1 - match.offset;
-			match.type = type->getJavaConversion(&frame, match.argument[last], arg[last]);
-			JP_TRACE("Direct vargs", match.type);
+			size_t last = tlen - 1 - methodMatch.offset;
+			methodMatch.type = type->getJavaConversion(&frame, methodMatch.argument[last], arg[last]);
+			JP_TRACE("Direct vargs", methodMatch.type);
 		}
 
-		if (match.type < JPMatch::_implicit && len >= tlen)
+		if (methodMatch.type < JPMatch::_implicit && len >= tlen)
 		{
 			// Must match the array type
-			match.type = matchVars(frame, match, arg, tlen - 1 + match.offset, type);
-			match.isVarIndirect = true;
-			JP_TRACE("Indirect vargs", match.type);
+			methodMatch.type = matchVars(frame, methodMatch, arg, tlen - 1 + methodMatch.offset, type);
+			methodMatch.isVarIndirect = true;
+			JP_TRACE("Indirect vargs", methodMatch.type);
 		} else if (len < tlen)
 		{
-			match.isVarIndirect = true;
-			match.type = JPMatch::_exact;
+			methodMatch.isVarIndirect = true;
+			methodMatch.type = JPMatch::_exact;
 			JP_TRACE("Empty vargs");
 		}
 		len = tlen - 1;
 
-		if (match.type < JPMatch::_implicit)
+		if (methodMatch.type < JPMatch::_implicit)
 		{
-			return match.type;
+			return methodMatch.type;
 		}
 	}
 
 	JP_TRACE("Match args");
 	for (size_t i = 0; i < len; i++)
 	{
-		size_t j = i + match.offset;
+		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
 		JP_TRACE("Compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
-		JPMatch::Type ematch = type->getJavaConversion(&frame, match.argument[j], arg[j]);
+		JPMatch::Type ematch = type->getJavaConversion(&frame, methodMatch.argument[j], arg[j]);
 		JP_TRACE("Result", ematch);
-		if (ematch < match.type)
+		if (ematch < methodMatch.type)
 		{
-			match.type = ematch;
+			methodMatch.type = ematch;
 		}
-		if (match.type < JPMatch::_implicit)
+		if (methodMatch.type < JPMatch::_implicit)
 		{
-			return match.type;
+			return methodMatch.type;
 		}
 	}
 
-	return match.type;
+	return methodMatch.type;
 	JP_TRACE_OUT;
 }
 

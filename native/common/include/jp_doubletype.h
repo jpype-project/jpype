@@ -80,11 +80,6 @@ public:
 	}
 	// GCOV_EXCL_STOP
 
-	template <class T> static T assertRange(const T& l)
-	{
-		return l;
-	}
-
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;
