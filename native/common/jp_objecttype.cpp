@@ -34,45 +34,16 @@ JPObjectType::~JPObjectType()
 
 JPMatch::Type JPObjectType::getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj)
 {
-	// Implicit rules for java.lang.Object
+	// Rules for java.lang.Object
 	JP_TRACE_IN("JPObjectType::canConvertToJava");
-	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
-		return match.type;
-	if (javaObjectAnyConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
-		return match.type;
-
-	// User conversions come before general attempts.
-
-	if (JPPyString::check(pyobj))
-	{
-		match.conversion = stringConversion;
-		return match.type = JPMatch::_implicit;
-	}
-	if (PyBool_Check(pyobj))
-	{
-		match.conversion = boxBooleanConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyFloat_Check(pyobj))
-	{
-		match.conversion = boxDoubleConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = boxLongConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyFloat_Check(pyobj))
-	{
-		match.conversion = boxDoubleConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (classConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	if (nullConversion->matches(match, frame, this, pyobj)
+			|| javaObjectAnyConversion->matches(match, frame, this, pyobj)
+			|| stringConversion->matches(match, frame, this, pyobj)
+			|| boxBooleanConversion->matches(match, frame, this, pyobj)
+			|| boxLongConversion->matches(match, frame, this, pyobj)
+			|| boxDoubleConversion->matches(match, frame, this, pyobj)
+			|| classConversion->matches(match, frame, this, pyobj)
+			)
 		return match.type;
 
 	JPProxy* proxy = PyJPProxy_getJPProxy(pyobj);
@@ -80,6 +51,17 @@ JPMatch::Type JPObjectType::getJavaConversion(JPJavaFrame* frame, JPMatch& match
 	{
 		match.conversion = proxyConversion;
 		return match.type = JPMatch::_implicit;
+	}
+
+	// Apply user supplied conversions
+	if (!m_Hints.isNull())
+	{
+		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
+		if (hints->getConversion(match, frame, this, pyobj) != JPMatch::_none)
+		{
+			JP_TRACE("Match custom conversion");
+			return match.type;
+		}
 	}
 
 	return match.type = JPMatch::_none;

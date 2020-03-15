@@ -405,6 +405,39 @@ public:
 	}
 } _javaObjectAnyConversion;
 
+class JPConversionJavaNumberAny : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		if (value == NULL || frame == NULL || value->getClass() == NULL
+				|| value->getClass() == frame->getContext()->_boolean
+				|| value->getClass() == frame->getContext()->_char)
+			return match.type = JPMatch::_none;
+		match.conversion = &_javaObjectAnyConversion;
+		JPClass *oc = value->getClass();
+		if (oc == NULL)
+			return match.type = JPMatch::_none;
+		if (oc->isPrimitive())
+			return match.type = JPMatch::_implicit;
+		if (oc == cls)
+			return match.type = JPMatch::_exact;
+		bool assignable = frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
+		return match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
+		JP_TRACE_OUT;
+	}
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject* pyobj) override
+	{
+		jvalue  v;
+		v.l = 0;
+		return v;
+	}
+} _javaNumberAnyConversion;
+
 class JPConversionJavaValue : public JPConversion
 {
 public:
@@ -459,6 +492,16 @@ class JPConversionBoxBoolean : public JPConversion
 {
 public:
 
+	JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject* pyobj)  override
+	{
+		JP_TRACE_IN("JPConversionBoxBoolean::matches");
+		if (!PyBool_Check(pyobj))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+		JP_TRACE_OUT;
+	}
+
 	jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		return boxConversion->convert(frame, frame->getContext()->_java_lang_Boolean, pyobj);
@@ -485,6 +528,18 @@ public:
 
 	jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj)  override
 	{
+		PyTypeObject* type = Py_TYPE(pyobj);
+		const char *name = type->tp_name;
+		if (strncmp(name, "numpy", 5) == 0)
+		{
+			// We only handle specific sized types, all others go to long.
+			if (strcmp(&name[5], ".int8") == 0)
+				return boxConversion->convert(frame, frame->getContext()->_java_lang_Byte, pyobj);
+			if (strcmp(&name[5], ".int16") == 0)
+				return boxConversion->convert(frame, frame->getContext()->_java_lang_Short, pyobj);
+			if (strcmp(&name[5], ".int32") == 0)
+				return boxConversion->convert(frame, frame->getContext()->_java_lang_Integer, pyobj);
+		}
 		return boxConversion->convert(frame, frame->getContext()->_java_lang_Long, pyobj);
 	}
 } _boxLongConversion;
@@ -498,7 +553,7 @@ public:
 		JP_TRACE_IN("JPConversionBoxDouble::matches");
 		if (frame == NULL)
 			return match.type = JPMatch::_none;
-		if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
+		if (PyNumber_Check(pyobj))
 		{
 			match.conversion = this;
 			return match.type = JPMatch::_implicit;
@@ -509,6 +564,14 @@ public:
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
+		PyTypeObject* type = Py_TYPE(pyobj);
+		const char *name = type->tp_name;
+		if (strncmp(name, "numpy", 5) == 0)
+		{
+			// We only handle specific sized types, all others go to double.
+			if (strcmp(&name[5], ".float32") == 0)
+				return boxConversion->convert(frame, frame->getContext()->_java_lang_Float, pyobj);
+		}
 		return boxConversion->convert(frame, frame->getContext()->_java_lang_Double, pyobj);
 	}
 } _boxDoubleConversion;
@@ -564,6 +627,7 @@ JPConversion *nullConversion = &_nullConversion;
 JPConversion *classConversion = &_classConversion;
 JPConversion *objectConversion = &_objectConversion;
 JPConversion *javaObjectAnyConversion = &_javaObjectAnyConversion;
+JPConversion *javaNumberAnyConversion = &_javaNumberAnyConversion;
 JPConversion *javaValueConversion = &_javaValueConversion;
 JPConversion *stringConversion = &_stringConversion;
 JPConversion *boxConversion = &_boxConversion;
