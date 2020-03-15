@@ -66,10 +66,13 @@ public:
 		return 'J';
 	}
 
+	// GCOVR_EXCL_START
+	// Required but not exercised currently
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jdouble getAsDouble(jvalue v) override
 	{

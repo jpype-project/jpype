@@ -50,6 +50,15 @@ JPClass::~JPClass()
 {
 }
 
+jclass JPClass::getJavaClass() const
+{
+	jclass cls = m_Class.get();
+	// This sanity check should not be possible to exercise
+	if (cls == 0)
+		JP_RAISE(PyExc_RuntimeError, "Class is null"); // GCOVR_EXCL_LINE
+	return cls;
+}
+
 void JPClass::ensureMembers(JPJavaFrame& frame)
 {
 	JPContext* context = frame.getContext();

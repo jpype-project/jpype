@@ -32,8 +32,6 @@
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
           <itemPath>../../native/common/include/jp_objecttype.h</itemPath>
           <itemPath>../../native/common/include/jp_platform.h</itemPath>
-          <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
-          <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
           <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
           <itemPath>../../native/common/include/jp_primitivetype.h</itemPath>
           <itemPath>../../native/common/include/jp_proxy.h</itemPath>
@@ -286,16 +284,6 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_platform.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/common/include/jp_platform_linux.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/common/include/jp_platform_win32.h"
             ex="false"
             tool="3"
             flavor2="0">

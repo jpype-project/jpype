@@ -209,7 +209,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 
 	if (!(JPPyString::check(vmPath)))
 	{
-		JP_RAISE(PyExc_RuntimeError, "Java JVM path must be a string");
+		JP_RAISE(PyExc_TypeError, "Java JVM path must be a string");
 	}
 
 	string cVmPath = JPPyString::asStringUTF8(vmPath);
@@ -230,7 +230,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 			args.push_back(v);
 		} else
 		{
-			JP_RAISE(PyExc_RuntimeError, "VM Arguments must be strings");
+			JP_RAISE(PyExc_TypeError, "VM Arguments must be strings");
 		}
 	}
 
@@ -289,7 +289,7 @@ static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_isThreadAttached");
 	if (!JPContext_global->isRunning())
-		return PyBool_FromLong(0);
+		return PyBool_FromLong(0); // GCOVR_EXCL_LINE
 	return PyBool_FromLong(JPContext_global->isThreadAttached());
 	JP_PY_CATCH(NULL);
 }
@@ -399,7 +399,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
-		Py_RETURN_FALSE;
+		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -427,11 +427,6 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	PyObject *dtype = 0;
 	if (!PyArg_ParseTuple(args, "OO", &source, &dtype))
 		return NULL;
-	if (source == NULL)
-	{
-		PyErr_Format(PyExc_TypeError, "Buffer source is required");
-		return NULL;
-	}
 	if (!PyObject_CheckBuffer(source))
 	{
 		PyErr_Format(PyExc_TypeError, "'%s' does not support buffers", Py_TYPE(source)->tp_name);

@@ -376,8 +376,7 @@ void JPypeException::toJava(JPContext *context)
 		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
 		return;
 	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
-	{
-		// GCOVR_EXCL_START
+	{	// GCOVR_EXCL_START
 		// Print our parting words.
 		JPTracer::trace("Fatal error in exception handling");
 		JPStackInfo info = ex.m_Trace.front();
@@ -386,16 +385,18 @@ void JPypeException::toJava(JPContext *context)
 		// Take one for the team.
 		int *i = 0;
 		*i = 0;
-	} catch (...)
+		// GCOVR_EXCL_STOP
+	} catch (...) // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		// urp?!
 		JPTracer::trace("Fatal error in exception handling");
 
 		// It is pointless, I can't go on.
 		int *i = 0;
 		*i = 0;
+		// GCOVR_EXCL_STOP
 	}
-	// GCOV_EXCL_STOP
 	JP_TRACE_OUT;
 }
 

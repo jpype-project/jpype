@@ -43,7 +43,7 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 			JCleanupHook func = (JCleanupHook) cleanup;
 			(*func)((void*) host);
 		}
-	} catch (...)
+	} catch (...) // GCOVR_EXCL_LINE
 	{
 	}
 }
@@ -70,10 +70,10 @@ JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 	// Get all required methods
 	m_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
 
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-JPReferenceQueue::~JPReferenceQueue()
+JPReferenceQueue::~JPReferenceQueue() // GCOVR_EXCL_LINE
 {
 }
 
@@ -97,5 +97,5 @@ void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 
 	JP_TRACE("Register reference");
 	frame.CallVoidMethodA(m_ReferenceQueue.get(), m_ReferenceQueueRegisterMethod, args);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }

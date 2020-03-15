@@ -64,11 +64,7 @@ public:
 
 	template <class T> static T assertRange(const T& l)
 	{
-		if (l < -3.40282346638528860e+38 || l > 3.40282346638528860e+38)
-		{
-			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
-		}
-		return l;
+		return (jfloat) l;
 	}
 
 	virtual char getTypeCode() override

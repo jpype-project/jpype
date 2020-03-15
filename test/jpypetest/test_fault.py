@@ -1080,4 +1080,39 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(BufferError, "not writable"):
             _jpype.convertToDirectBuffer(bytes([1,2,3]))
 
+    def testStartupBadArg(self):
+        with self.assertRaisesRegex(TypeError, "4 arguments"):
+            _jpype.startup()
+        with self.assertRaisesRegex(TypeError, "must be tuple"):
+            _jpype.startup(object(), object(), True, True)
+        with self.assertRaisesRegex(TypeError, "must be strings"):
+            _jpype.startup("", (object(),), True, True)
+        with self.assertRaisesRegex(TypeError, "must be a string"):
+            _jpype.startup(object(), tuple(), True, True)
+        with self.assertRaisesRegex(OSError, "started"):
+            _jpype.startup("", tuple(), True, True)
+
+    def testGetClass(self):
+        with self.assertRaisesRegex(TypeError, "not found"):
+            _jpype._getClass("not.a.class")
+
+    def testHasClass(self):
+        with self.assertRaisesRegex(TypeError, "not found"):
+            _jpype._hasClass("not.a.class")
+        with self.assertRaisesRegex(TypeError, "str is required"):
+            _jpype._hasClass(object())
+
+    def testArrayFromBuffer(self):
+        with self.assertRaisesRegex(TypeError, "2 arguments"):
+            _jpype.arrayFromBuffer()
+        with self.assertRaisesRegex(TypeError, "does not support buffers"):
+            _jpype.arrayFromBuffer(object(), object())
+
+    def testArrayNewType(self):
+        with self.assertRaisesRegex(TypeError, "2 arguments"):
+            _jpype._newArrayType()
+        with self.assertRaisesRegex(TypeError, "must be an integer"):
+            _jpype._newArrayType(object(), object())
+        with self.assertRaisesRegex(TypeError, "class required"):
+            _jpype._newArrayType(object(), 1)
 
