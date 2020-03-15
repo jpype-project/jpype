@@ -314,11 +314,9 @@ class JDoubleTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testCheckNumpyInt64(self):
         self.checkType(np.random.randint(-2**63, 2**63-1, dtype=np.int64))
-        # FIXME OverflowError
-        #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
+        self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
         self.checkType(np.uint64(0))
-        # FIXME OverflowError
-        # self.checkType(np.uint64(2**64-1))
+        self.checkType(np.uint64(2**64-1))
         self.checkType(np.int64(-2**63))
         self.checkType(np.int64(2**63-1))
 

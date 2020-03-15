@@ -14,6 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import _jpype
 import jpype
 import _jpype
 from jpype.types import *
@@ -198,3 +199,19 @@ class JClassTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             self.fixture.static_object_field = None
 
+    def testHashNone(self):
+        self.assertEqual(hash(JObject(None)), hash(None))
+
+    def testStrPrimitive(self):
+        with self.assertRaisesRegex(TypeError, "requires a Java object"):
+            _jpype._JObject.__str__(JInt(1))
+
+    def testGetAttrFail(self):
+        js = JString("a")
+        with self.assertRaisesRegex(TypeError, "must be string"):
+            getattr(js, object())
+
+    def testSetAttrFail(self):
+        js = JString("a")
+        with self.assertRaisesRegex(TypeError, "must be string"):
+            setattr(js, object(), "b")

@@ -30,7 +30,7 @@ JPFloatType::~JPFloatType()
 
 JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
-	return JPPyFloat::fromFloat(field(val));
+	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(field(val)));
 }
 
 JPValue JPFloatType::getValueFromObject(const JPValue& obj)
@@ -42,35 +42,9 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsFloat : public JPConversion
-{
-	typedef JPFloatType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		double val = PyFloat_AsDouble(pyobj);
-		if (val == -1.0)
-			JP_PY_CHECK();
-		base_t::field(res) = (base_t::type_t) val;
-		return res;
-	}
-} asFloatConversion;
-
-class JPConversionFloatWidenInt : public JPConversion
-{
-	typedef JPFloatType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.f = (jfloat) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
-		return ret;
-	}
-} floatIntWidenConversion;
+static JPConversionAsFloat<JPFloatType> asFloatConversion;
+static JPConversionLongAsFloat<JPFloatType> asFloatLongConversion;
+static JPConversionFloatWiden<JPFloatType> floatWidenConversion;
 
 JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -111,7 +85,7 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 				case 'C':
 				case 'I':
 				case 'J':
-					match.conversion = &floatIntWidenConversion;
+					match.conversion = &floatWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
 					return match.type = JPMatch::_none;
@@ -122,11 +96,9 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyNumber_Check(pyobj))
-	{
-		match.conversion = &asFloatConversion;
-		return match.type = JPMatch::_implicit;
-	}
+	if (asFloatLongConversion.matches(match, frame, this, pyobj)
+			|| asFloatConversion.matches(match, frame, this, pyobj))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;

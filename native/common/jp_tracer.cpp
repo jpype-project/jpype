@@ -18,6 +18,8 @@
 #include "jpype.h"
 #include "jp_tracer.h"
 
+// GCOVR_EXCL_START
+
 #if defined(_MSC_VER) && _MSC_VER<1700
 
 // Welcome to the year 2008!
@@ -148,3 +150,4 @@ void JPypeTracer::traceLocks(const string& msg, void* ref)
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
+// GCOVR_EXCL_STOP

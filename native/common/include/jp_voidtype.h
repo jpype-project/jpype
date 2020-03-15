@@ -48,20 +48,9 @@ public:
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
-	virtual char getTypeCode() override
-	{
-		return 'V';
-	}
-
-	virtual jlong getAsLong(jvalue v) override
-	{
-		return 0;
-	}
-
-	virtual jdouble getAsDouble(jvalue v) override
-	{
-		return 0;
-	}
+	virtual char getTypeCode() override;
+	virtual jlong getAsLong(jvalue v) override;
+	virtual jdouble getAsDouble(jvalue v) override;
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
@@ -70,6 +59,8 @@ public:
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+	virtual PyObject *newMultiArray(JPJavaFrame &frame,
+			JPPyBuffer& view, int subs, int base, jobject dims);
 } ;
 
 #endif // _JP_VOID_TYPE_H_

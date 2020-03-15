@@ -22,10 +22,14 @@ class JPConversion
 public:
 	virtual ~JPConversion();
 
+	// GCOVR_EXCL_START
+	// This is the default method used for any matches that have explicit
+	// type dependent checks.
 	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj)
 	{
 		return JPMatch::_none;
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject*pyobj) = 0;
 } ;

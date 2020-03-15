@@ -281,7 +281,7 @@ class JShortTestCase(common.JPypeTestCase):
         # FIXME OverflowError
         #self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
         # FIXME OverflowError
-        # self.checkType(np.uint64(2**64-1))
+        #self.checkType(np.uint64(2**64-1))
         self.checkTypeFail(np.int64(-2**63), exc=OverflowError)
         self.checkTypeFail(np.int64(2**63-1), exc=OverflowError)
 

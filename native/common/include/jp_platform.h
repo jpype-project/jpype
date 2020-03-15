@@ -23,13 +23,12 @@
 class JPPlatformAdapter
 {
 public:
-
-	virtual ~JPPlatformAdapter()
-	{
-	};
+	virtual ~JPPlatformAdapter();
 	virtual void loadLibrary(const char* path) = 0;
 	virtual void unloadLibrary() = 0;
 	virtual void* getSymbol(const char* name) = 0;
+
+	static JPPlatformAdapter* getAdapter();
 } ;
 
 #endif // _JPENV_H_

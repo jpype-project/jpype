@@ -26,26 +26,6 @@ JPVoidType::~JPVoidType()
 {
 }
 
-JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a static field.");
-}
-
-JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a field.");
-}
-
-JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
-{
-	return JPPyObject::getNone();
-}
-
-JPMatch::Type JPVoidType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
-{
-	return match.type = JPMatch::_none;
-}
-
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
 	{
@@ -67,38 +47,6 @@ JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	return JPPyObject::getNone();
 }
 
-void JPVoidType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject*)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a static field.");
-}
-
-void JPVoidType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of a field.");
-}
-
-void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray,
-		jsize start, jsize length, jsize step,
-		PyObject* sequence)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
-}
-
-JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, jsize)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
-}
-
-void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
-}
-
-jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
-{
-	JP_RAISE(PyExc_RuntimeError, "void cannot be the type of an array.");
-}
-
 JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 {
 	// This is needed if we call a caller sensitive method
@@ -106,6 +54,60 @@ JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 	JP_TRACE_IN("JPVoidType::getValueFromObject");
 	return JPValue(this, (jobject) 0);
 	JP_TRACE_OUT;
+}
+
+// GCOVR_EXCL_START
+
+JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of a static field.");
+}
+
+JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of a field.");
+}
+
+JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+{
+	return JPPyObject::getNone();
+}
+
+JPMatch::Type JPVoidType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+{
+	return match.type = JPMatch::_none;
+}
+
+void JPVoidType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject*)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of a static field.");
+}
+
+void JPVoidType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject*)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of a field.");
+}
+
+void JPVoidType::setArrayRange(JPJavaFrame& frame, jarray,
+		jsize start, jsize length, jsize step,
+		PyObject* sequence)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
+}
+
+JPPyObject JPVoidType::getArrayItem(JPJavaFrame& frame, jarray, jsize)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
+}
+
+void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
+}
+
+jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
+{
+	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
 }
 
 void JPVoidType::getView(JPArrayView& view)
@@ -131,3 +133,26 @@ void JPVoidType::copyElements(JPJavaFrame &frame,
 		void* memory, int offset)
 {
 }
+
+char JPVoidType::getTypeCode()
+{
+	return 'V';
+}
+
+jlong JPVoidType::getAsLong(jvalue v)
+{
+	return 0;
+}
+
+jdouble JPVoidType::getAsDouble(jvalue v)
+{
+	return 0;
+}
+
+PyObject *JPVoidType::newMultiArray(JPJavaFrame &frame,
+		JPPyBuffer& view, int subs, int base, jobject dims)
+{
+	return NULL;
+}
+
+// GCOVR_EXCL_STOP

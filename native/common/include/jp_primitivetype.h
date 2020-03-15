@@ -32,8 +32,6 @@ public:
 	virtual jlong getAsLong(jvalue v) = 0;
 	virtual jdouble getAsDouble(jvalue v) = 0;
 
-	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args);
-
 	void setClass(JPJavaFrame& frame, jclass o)
 	{
 		m_Context = frame.getContext();
@@ -49,7 +47,7 @@ public:
 			void* memory, int offset) = 0;
 
 	virtual PyObject *newMultiArray(JPJavaFrame &frame,
-			JPPyBuffer& view, int subs, int base, jobject dims);
+			JPPyBuffer& view, int subs, int base, jobject dims) = 0;
 } ;
 
 #endif

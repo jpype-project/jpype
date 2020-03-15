@@ -197,7 +197,70 @@ public:
 		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
 		return ret;
 	}
-};
+} ;
+
+template <typename base_t>
+class JPConversionAsFloat : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		if (!PyNumber_Check(pyobj))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+	}
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		double val = PyFloat_AsDouble(pyobj);
+		if (val == -1.0)
+			JP_PY_CHECK();
+		base_t::field(res) = (typename base_t::type_t) val;
+		return res;
+	}
+} ;
+
+template <typename base_t>
+class JPConversionLongAsFloat : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		if (!PyLong_Check(pyobj))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+	}
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		jvalue res;
+		jlong v = PyLong_AsDouble(pyobj);
+		if (v == -1.0)
+			JP_PY_CHECK();
+		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(v);
+		return res;
+	}
+} ;
+
+template <typename base_t>
+class JPConversionFloatWiden : public JPConversion
+{
+public:
+
+	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	{
+		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		jvalue ret;
+		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
+		return ret;
+	}
+} ;
+
 
 
 #endif /* JP_PRIMITIVE_ACCESSOR_H */

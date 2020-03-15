@@ -114,3 +114,7 @@ class JStringTestCase(common.JPypeTestCase):
         d = dict()
         d[JString('foo')] = 'a'
         self.assertEqual(d[JString('foo')], 'a')
+
+    def testNullString(self):
+        self.assertEqual(str(JObject(None, JString)), "null")
+

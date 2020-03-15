@@ -32,16 +32,20 @@ static void releasePython(void* host)
 JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 		JNIEnv *env, jclass clazz, jlong contextPtr, jlong host, jlong cleanup)
 {
-	JP_TRACE_IN("JPype_ReferenceQueue_removeHostReference");
-	JPContext *context = (JPContext*) contextPtr;
-	JPJavaFrame frame((JPContext*) context, env);
-	JPPyCallAcquire callback;
-	if (cleanup != 0)
+	// Exceptions are not allowed here
+	try
 	{
-		JCleanupHook func = (JCleanupHook) cleanup;
-		(*func)((void*) host);
+		JPContext *context = (JPContext*) contextPtr;
+		JPJavaFrame frame((JPContext*) context, env);
+		JPPyCallAcquire callback;
+		if (cleanup != 0)
+		{
+			JCleanupHook func = (JCleanupHook) cleanup;
+			(*func)((void*) host);
+		}
+	} catch (...)
+	{
 	}
-	JP_TRACE_OUT;
 }
 
 JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
@@ -75,7 +79,7 @@ JPReferenceQueue::~JPReferenceQueue()
 
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 {
-	// MATCH TO DECREF IN unreferencePython
+	// MATCH TO DECREF IN releasePython
 	Py_INCREF(hostRef);
 	registerRef(obj, hostRef, &releasePython);
 }

@@ -146,7 +146,7 @@ JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
 	JP_TRACE_IN("PyJPProxy_getCallable");
 	if (Py_TYPE(obj) != PyJPProxy_Type
 			&& Py_TYPE(obj)->tp_base != PyJPProxy_Type)
-		JP_RAISE(PyExc_TypeError, "Incorrect type passed to proxy lookup");
+		JP_RAISE(PyExc_SystemError, "Incorrect type passed to proxy lookup");  // GCOVR_EXCL_LINE
 	PyJPProxy *proxy = (PyJPProxy*) obj;
 	if (proxy->m_Target != Py_None)
 		obj = proxy->m_Target;

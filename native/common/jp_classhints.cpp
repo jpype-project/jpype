@@ -63,7 +63,7 @@ public:
 	{
 	}
 
-	virtual ~JPPythonConversion()
+	virtual ~JPPythonConversion()  // GCOVR_EXCL_LINE
 	{
 	}
 
@@ -110,7 +110,7 @@ public:
 	{
 	}
 
-	virtual ~JPAttributeConversion()
+	virtual ~JPAttributeConversion()  // GCOVR_EXCL_LINE
 	{
 	}
 

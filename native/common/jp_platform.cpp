@@ -14,9 +14,14 @@
    limitations under the License.
 
  *****************************************************************************/
-#ifndef _PLATFORM_WIN32_H_
-#define _PLATFORM_WIN32_H_
+#include "jpype.h"
+#include "jp_platform.h"
 
+JPPlatformAdapter::~JPPlatformAdapter()
+{
+}
+
+#ifdef WIN32
 #include <windows.h>
 
 /**
@@ -77,4 +82,74 @@ public:
 	}
 } ;
 
-#endif // _PLATFORM_WIN32_H_
+#define  PLATFORM_ADAPTER Win32PlatformAdapter
+#else
+
+//AT's comments on porting:
+// this file should be better called jp_platform_unix.h
+#if defined(_HPUX) && !defined(_IA64)
+#include <dl.h>
+#else
+#include <dlfcn.h>
+#endif // HPUX
+#include <errno.h>
+
+// The code in this modules is mostly excluded from coverage as it is only
+// possible to execute during a fatal error.
+class LinuxPlatformAdapter : public JPPlatformAdapter
+{
+private:
+	void* jvmLibrary;
+
+public:
+
+	virtual void loadLibrary(const char* path) override
+	{
+#if defined(_HPUX) && !defined(_IA64)
+		jvmLibrary = shl_load(path, BIND_DEFERRED | BIND_VERBOSE, 0L);
+#else
+		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+#endif // HPUX
+
+		if (jvmLibrary == NULL)
+		{
+			JP_RAISE_OS_ERROR_UNIX( errno, path); // GCOVR_EXCL_LINE
+		}
+	}
+
+	virtual void unloadLibrary() override
+	{
+		int r = dlclose(jvmLibrary);
+		if (r != 0) // error
+		{
+			cerr << dlerror() << endl;  // GCOVR_EXCL_LINE
+		}
+	}
+
+	virtual void* getSymbol(const char* name) override
+	{
+		void* res = dlsym(jvmLibrary, name);
+		if (res == NULL)
+		{
+			// GCOVR_EXCL_START
+			std::stringstream msg;
+			msg << "Unable to load symbol [" << name << "], error = " << dlerror();
+			JP_RAISE(PyExc_RuntimeError,  msg.str().c_str());
+			// GCOVR_EXCL_STOP
+		}
+		return res;
+	}
+} ;
+
+#define  PLATFORM_ADAPTER LinuxPlatformAdapter
+#endif
+
+namespace
+{
+PLATFORM_ADAPTER adapter;
+}
+
+JPPlatformAdapter* JPPlatformAdapter::getAdapter()
+{
+	return &adapter;
+}

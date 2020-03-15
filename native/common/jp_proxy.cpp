@@ -164,7 +164,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 
 JPProxyFactory::JPProxyFactory(JPJavaFrame& frame)
 {
-	JP_TRACE_IN("JPProxy::init");
+	JP_TRACE_IN("JPProxyFactory::JPProxyFactory");
 	m_Context = frame.getContext();
 
 	jclass proxyClass = m_Context->getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");

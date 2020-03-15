@@ -84,16 +84,18 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 
 string JPClass::toString() const
 {
+	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
-		return m_CanonicalName;
+		return m_CanonicalName;  // GCOVR_EXCL_LINE
 	JPJavaFrame frame(m_Context);
 	return frame.toString(m_Class.get());
 }
 
 string JPClass::getName() const
 {
+	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
-		return m_CanonicalName;
+		return m_CanonicalName;  // GCOVR_EXCL_LINE
 	JPJavaFrame frame(m_Context);
 	return frame.toString(frame.CallObjectMethodA(
 			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
@@ -304,9 +306,9 @@ JPMatch::Type JPClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyO
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	JP_TRACE("Python", JPPyObject::getTypeName(pyobj));
-	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| proxyConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	if (nullConversion->matches(match, frame, this, pyobj)
+			|| objectConversion->matches(match, frame, this, pyobj)
+			|| proxyConversion->matches(match, frame, this, pyobj))
 		return match.type;
 
 	// Apply user supplied conversions

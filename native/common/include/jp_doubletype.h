@@ -66,6 +66,9 @@ public:
 		return 'D';
 	}
 
+	// GCOV_EXCL_START
+	// These are required for primitives, but converters for do not currently
+	// use them.
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);
@@ -74,6 +77,12 @@ public:
 	virtual jdouble getAsDouble(jvalue v) override
 	{
 		return (jdouble) field(v);
+	}
+	// GCOV_EXCL_STOP
+
+	template <class T> static T assertRange(const T& l)
+	{
+		return l;
 	}
 
 	virtual void getView(JPArrayView& view) override;

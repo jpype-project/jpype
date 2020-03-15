@@ -30,7 +30,7 @@ JPLongType::~JPLongType()
 
 JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
-	return JPPyLong::fromLong(field(val));
+	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(field(val)));
 }
 
 JPValue JPLongType::getValueFromObject(const JPValue& obj)

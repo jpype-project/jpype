@@ -31,30 +31,10 @@
 #include "jp_doubletype.h"
 #include "jp_reference_queue.h"
 #include "jp_proxy.h"
+#include "jp_platform.h"
 
 JPResource::~JPResource()
 {
-}
-
-/*****************************************************************************/
-// Platform handles the differences in dealing with shared libraries
-// on windows and unix variants.
-
-#ifdef WIN32
-#include "jp_platform_win32.h"
-#define  PLATFORM_ADAPTER Win32PlatformAdapter
-#else
-#include "jp_platform_linux.h"
-#define  PLATFORM_ADAPTER LinuxPlatformAdapter
-#endif
-namespace
-{
-
-JPPlatformAdapter* GetAdapter()
-{
-	static JPPlatformAdapter* adapter = new PLATFORM_ADAPTER();
-	return adapter;
-}
 }
 
 
@@ -141,10 +121,11 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 void JPContext::loadEntryPoints(const string& path)
 {
+	JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
 	// Load symbols from the shared library
-	GetAdapter()->loadLibrary((char*) path.c_str());
-	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )GetAdapter()->getSymbol("JNI_CreateJavaVM");
-	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))GetAdapter()->getSymbol("JNI_GetCreatedJavaVMs");
+	platform->loadLibrary((char*) path.c_str());
+	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
+	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
@@ -303,7 +284,7 @@ void JPContext::shutdownJVM()
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
 	m_JavaVM = NULL;
-	GetAdapter()->unloadLibrary();
+	JPPlatformAdapter::getAdapter()->unloadLibrary();
 	JP_TRACE_OUT;
 }
 
