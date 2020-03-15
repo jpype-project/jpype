@@ -55,17 +55,15 @@ public:
 	}
 } asCharConversion;
 
-JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPCharType::getJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPCharType::getJavaConversion");
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
+	JPContext *context = match.getContext();
 
-	if (pyobj == Py_None)
+	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = PyJPValue_getJavaSlot(pyobj);
+	JPValue *value = PyJPValue_getJavaSlot(match.object);
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
@@ -86,7 +84,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyString::checkCharUTF16(pyobj))
+	if (JPPyString::checkCharUTF16(match.object))
 	{
 		match.conversion = &asCharConversion;
 		return match.type = JPMatch::_implicit;
@@ -140,8 +138,8 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticCharField(c, fid, val);
@@ -149,8 +147,8 @@ void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 
 void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharField(c, fid, val);
@@ -190,8 +188,8 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);

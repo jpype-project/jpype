@@ -184,8 +184,8 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setStaticField");
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << getCanonicalName();
@@ -199,8 +199,8 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setField");
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 	{
 		stringstream err;
 		err << "unable to convert to " << getCanonicalName();
@@ -222,11 +222,11 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 	// to abort once we start
 	JPPySequence seq(JPPyRef::_use, vals);
 	JP_TRACE("Verify argument types");
-	JPMatch match;
 	for (int i = 0; i < length; i++)
 	{
 		JPPyObject v = seq[i];
-		if (getJavaConversion(&frame, match, v.get()) < JPMatch::_implicit)
+		JPMatch match(&frame, v.get());
+		if (getJavaConversion(match) < JPMatch::_implicit)
 			JP_RAISE(PyExc_TypeError, "Unable to convert");
 	}
 
@@ -235,7 +235,8 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (int i = 0; i < length; i++, index += step)
 	{
 		JPPyObject v = seq[i];
-		getJavaConversion(&frame, match, v.get());
+		JPMatch match(&frame, v.get());
+		getJavaConversion(match);
 		frame.SetObjectArrayElement(array, index,
 				match.conversion->convert(&frame, this, v.get()).l);
 	}
@@ -245,8 +246,8 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
 {
 	JP_TRACE_IN("JPClass::setArrayItem");
-	JPMatch match;
-	getJavaConversion(&frame, match, val);
+	JPMatch match(&frame, val);
+	getJavaConversion(match);
 	JP_TRACE("Type", getCanonicalName());
 	if ( match.type < JPMatch::_implicit)
 	{
@@ -311,20 +312,20 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPClass::getJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	JP_TRACE("Python", JPPyObject::getTypeName(pyobj));
-	if (nullConversion->matches(match, frame, this, pyobj)
-			|| objectConversion->matches(match, frame, this, pyobj)
-			|| proxyConversion->matches(match, frame, this, pyobj))
+	if (nullConversion->matches(match, this)
+			|| objectConversion->matches(match, this)
+			|| proxyConversion->matches(match, this))
 		return match.type;
 
 	// Apply user supplied conversions
 	if (!m_Hints.isNull())
 	{
 		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
-		if (hints->getConversion(match, frame, this, pyobj) != JPMatch::_none)
+		if (hints->getConversion(match, this) != JPMatch::_none)
 		{
 			JP_TRACE("Match custom conversion");
 			return match.type;

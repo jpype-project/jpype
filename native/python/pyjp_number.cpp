@@ -47,8 +47,8 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	if (PyTuple_Size(args) == 1)
 	{
 		PyObject *arg = PyTuple_GetItem(args, 0);
-		JPMatch match;
-		cls->getJavaConversion(&frame, match, arg);
+		JPMatch match(&frame, arg);
+		cls->getJavaConversion(match);
 		if (match.type >= JPMatch::_implicit)
 		{
 			val = match.conversion->convert(&frame, cls, arg);
@@ -72,8 +72,8 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 
 	if (!converted)
 	{
-		JPMatch match;
-		cls->getJavaConversion(&frame, match, self);
+		JPMatch match(&frame, self);
+		cls->getJavaConversion(match);
 		val = match.conversion->convert(&frame, cls, self);
 	}
 	PyJPValue_assignJavaSlot(frame, self, JPValue(cls, val));
@@ -273,8 +273,8 @@ static PyObject *PyJPChar_new(PyTypeObject *type, PyObject *args, PyObject *kwar
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Class type incorrect");
-	JPMatch match;
-	cls->getJavaConversion(&frame, match, self);
+	JPMatch match(&frame, self);
+	cls->getJavaConversion(match);
 	jvalue val = match.conversion->convert(&frame, cls, self);
 	PyJPValue_assignJavaSlot(frame, self, JPValue(cls, val));
 	JP_TRACE("new", self);

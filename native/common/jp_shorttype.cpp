@@ -46,17 +46,15 @@ JPConversionLong<JPShortType> shortConversion;
 JPConversionLongNumber<JPShortType> shortNumberConversion;
 JPConversionLongWiden<JPShortType> shortWidenConversion;
 
-JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPShortType::getJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPShortType::getJavaConversion");
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
+	JPContext *context = match.getContext();
 
-	if (pyobj == Py_None)
+	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue* value = PyJPValue_getJavaSlot(pyobj);
+	JPValue* value = PyJPValue_getJavaSlot(match.object);
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
@@ -93,17 +91,9 @@ JPMatch::Type JPShortType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &shortConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyNumber_Check(pyobj))
-	{
-		match.conversion = &shortNumberConversion;
-		return match.type = JPMatch::_explicit;
-	}
+	if (shortConversion.matches(match, this)
+			|| shortNumberConversion.matches(match, this))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -153,8 +143,8 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticShortField(c, fid, val);
@@ -162,8 +152,8 @@ void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyO
 
 void JPShortType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetShortField(c, fid, val);
@@ -237,8 +227,8 @@ JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);

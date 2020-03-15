@@ -125,11 +125,11 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 			}
 
 			// We must box here.
-			JPMatch returnMatch;
+			JPMatch returnMatch(&frame, returnValue.get());
 			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");
-				if (returnClass->getJavaConversion(&frame, returnMatch, returnValue.get()) == JPMatch::_none)
+				if (returnClass->getJavaConversion(returnMatch) == JPMatch::_none)
 					JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
 				jvalue res = returnMatch.conversion->convert(&frame, returnClass, returnValue.get());
 				JPBoxedType *boxed =  (JPBoxedType *) ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
@@ -138,7 +138,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 				return frame.keep(res2.l);
 			}
 
-			if (returnClass->getJavaConversion(&frame, returnMatch, returnValue.get()) == JPMatch::_none)
+			if (returnClass->getJavaConversion(returnMatch) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");
 				JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");

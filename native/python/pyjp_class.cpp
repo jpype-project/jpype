@@ -494,8 +494,8 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match;
-	cls->getJavaConversion(&frame, match, other);
+	JPMatch match(&frame, other);
+	cls->getJavaConversion(match);
 
 	// Report to user
 	if (match.type == JPMatch::_none)
@@ -523,8 +523,8 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	// Cast on non-Java
 	if ( val == NULL || val->getClass()->isPrimitive())
 	{
-		JPMatch match;
-		type->getJavaConversion(&frame, match, other);
+		JPMatch match(&frame, other);
+		type->getJavaConversion(match);
 		// Otherwise, see if we can convert it
 		if (match.type == JPMatch::_none)
 		{
@@ -588,8 +588,8 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match;
-	cls->getJavaConversion(&frame, match, other);
+	JPMatch match(&frame, other);
+	cls->getJavaConversion(match);
 
 	// If there is no conversion report a failure
 	if (match.type == JPMatch::_none)

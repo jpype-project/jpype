@@ -52,14 +52,25 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringType::getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj)
+JPMatch::Type JPStringType::getJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
-	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| stringConversion->matches(match, frame, this, pyobj) != JPMatch::_none
+	if (nullConversion->matches(match, this) != JPMatch::_none
+			|| objectConversion->matches(match, this) != JPMatch::_none
+			|| stringConversion->matches(match, this) != JPMatch::_none
 			)
 		return match.type;
+
+	// Apply user supplied conversions
+	if (!m_Hints.isNull())
+	{
+		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
+		if (hints->getConversion(match, this) != JPMatch::_none)
+		{
+			JP_TRACE("Match custom conversion");
+			return match.type;
+		}
+	}
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

@@ -15,8 +15,20 @@ public:
 		_exact = 3
 	} ;
 public:
+	JPMatch();
+	JPMatch(JPJavaFrame *frame, PyObject *object);
+
 	JPMatch::Type type;
-	JPConversion* conversion;
+	JPConversion *conversion;
+	JPJavaFrame *frame;
+	PyObject *object;
+
+	JPContext *getContext()
+	{
+		if (frame == NULL)
+			return NULL;
+		return frame->getContext();
+	}
 } ;
 
 class JPMethodMatch
@@ -39,14 +51,18 @@ public:
 		return argument[i];
 	}
 
-	JPMethodMatch(size_t size)
-	: argument(size)
+	JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args)
+	: argument(args.size())
 	{
 		type = JPMatch::_none;
 		isVarIndirect = false;
 		overload = 0;
 		offset = 0;
 		skip = 0;
+		for (size_t i = 0; i < args.size(); ++i)
+		{
+			argument[i] = JPMatch(&frame, args[i]);
+		}
 	}
 } ;
 

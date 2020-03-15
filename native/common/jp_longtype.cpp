@@ -46,17 +46,15 @@ JPConversionLong<JPLongType> longConversion;
 JPConversionLongNumber<JPLongType> longNumberConversion;
 JPConversionLongWiden<JPLongType> longWidenConversion;
 
-JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPLongType::getJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPLongType::getJavaConversion");
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
+	JPContext *context = match.getContext();
 
-	if (pyobj == Py_None)
+	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue* value = PyJPValue_getJavaSlot(pyobj);
+	JPValue* value = PyJPValue_getJavaSlot(match.object);
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
@@ -95,17 +93,9 @@ JPMatch::Type JPLongType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, 
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &longNumberConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyNumber_Check(pyobj))
-	{
-		match.conversion = &longNumberConversion;
-		return match.type = JPMatch::_explicit;
-	}
+	if (longConversion.matches(match, this)
+			|| longNumberConversion.matches(match, this))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -155,8 +145,8 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetStaticLongField(c, fid, val);
@@ -164,8 +154,8 @@ void JPLongType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 
 void JPLongType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetLongField(c, fid, val);
@@ -239,8 +229,8 @@ JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (getJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.conversion->convert(&frame, this, obj));
 	frame.SetLongArrayRegion((array_t) a, ndx, 1, &val);

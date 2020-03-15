@@ -1,6 +1,6 @@
 #ifndef JP_PRIMITIVE_ACCESSOR_H
 #define JP_PRIMITIVE_ACCESSOR_H
-
+#include <Python.h>
 #include "jp_exception.h"
 #include "jp_javaframe.h"
 
@@ -154,6 +154,14 @@ class JPConversionLong : public JPConversion
 {
 public:
 
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		if (!PyLong_CheckExact(match.object) && !PyIndex_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+	}
+
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
 		jvalue res;
@@ -169,6 +177,14 @@ template <typename base_t>
 class JPConversionLongNumber : public JPConversion
 {
 public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		if (!PyNumber_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_explicit;
+	}
 
 	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
 	{
@@ -204,9 +220,9 @@ class JPConversionAsFloat : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
-		if (!PyNumber_Check(pyobj))
+		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
@@ -228,9 +244,9 @@ class JPConversionLongAsFloat : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
-		if (!PyLong_Check(pyobj))
+		if (!PyLong_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;

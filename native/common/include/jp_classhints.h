@@ -25,7 +25,7 @@ public:
 	// GCOVR_EXCL_START
 	// This is the default method used for any matches that have explicit
 	// type dependent checks.
-	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj)
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		return JPMatch::_none;
 	}
@@ -47,7 +47,7 @@ public:
 	 *
 	 * @returns the quality of the match
 	 */
-	JPMatch::Type getConversion(JPMatch& match, JPJavaFrame *context, JPClass *cls, PyObject *obj);
+	JPMatch::Type getConversion(JPMatch& match, JPClass *cls);
 
 	/**
 	 * Add a conversion based on a specified attribute.

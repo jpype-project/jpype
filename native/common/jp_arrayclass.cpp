@@ -35,25 +35,25 @@ JPArrayClass::~JPArrayClass()
 {
 }
 
-JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPArrayClass::getJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	if (nullConversion->matches(match, frame, this, pyobj)
-			|| objectConversion->matches(match, frame, this, pyobj)
-			|| charArrayConversion->matches(match, frame, this, pyobj)
-			|| byteArrayConversion->matches(match, frame, this, pyobj))
+	if (nullConversion->matches(match, this)
+			|| objectConversion->matches(match, this)
+			|| charArrayConversion->matches(match, this)
+			|| byteArrayConversion->matches(match, this))
 		return match.type;
 
-	if (JPPyObject::isSequenceOfItems(pyobj))
+	if (JPPyObject::isSequenceOfItems(match.object))
 	{
 		JP_TRACE("Sequence");
-		JPPySequence seq(JPPyRef::_use, pyobj);
+		JPPySequence seq(JPPyRef::_use, match.object);
 		jlong length = seq.size();
 		match.type = JPMatch::_implicit;
-		JPMatch imatch;
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
-			m_ComponentType->getJavaConversion(frame, imatch, seq[i].get());
+			JPMatch imatch(match.frame, seq[i].get());
+			m_ComponentType->getJavaConversion(imatch);
 			if (imatch.type < match.type)
 			{
 				match.type = imatch.type;

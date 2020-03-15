@@ -31,7 +31,7 @@ public:
 
 	virtual~ JPNumberType();
 
-	JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj) override;
+	JPMatch::Type getJavaConversion(JPMatch& match) override;
 } ;
 
 #endif // _JPNUMBERTYPE_H_

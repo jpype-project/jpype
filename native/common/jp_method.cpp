@@ -64,7 +64,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	JPMatch::Type lastMatch = JPMatch::_exact;
 	for (size_t i = start; i < len; i++)
 	{
-		JPMatch::Type quality = type->getJavaConversion(&frame, match[i], arg[i]);
+		JPMatch::Type quality = type->getJavaConversion(match[i]);
 
 		if (quality < JPMatch::_implicit)
 		{
@@ -132,7 +132,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		{
 			// Try direct
 			size_t last = tlen - 1 - methodMatch.offset;
-			methodMatch.type = type->getJavaConversion(&frame, methodMatch.argument[last], arg[last]);
+			methodMatch.type = type->getJavaConversion(methodMatch.argument[last]);
 			JP_TRACE("Direct vargs", methodMatch.type);
 		}
 
@@ -162,7 +162,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
 		JP_TRACE("Compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
-		JPMatch::Type ematch = type->getJavaConversion(&frame, methodMatch.argument[j], arg[j]);
+		JPMatch::Type ematch = type->getJavaConversion(methodMatch.argument[j]);
 		JP_TRACE("Result", ematch);
 		if (ematch < methodMatch.type)
 		{
@@ -292,10 +292,11 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		if (cls->isPrimitive())
 		{
 			JPPrimitiveType* type = (JPPrimitiveType*) cls;
-			JPMatch conv;
+			PyObject *u = arg[i + match.skip];
+			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
-			boxed->getJavaConversion(&frame, conv, arg[i + match.skip]);
-			jvalue v = conv.conversion->convert(&frame, boxed, arg[i + match.skip]);
+			boxed->getJavaConversion(conv);
+			jvalue v = conv.conversion->convert(&frame, boxed, u);
 			frame.SetObjectArrayElement(ja, i, v.l);
 		} else
 		{
@@ -359,7 +360,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 
 	res << ") ==> ";
 
-	JPMethodMatch methodMatch(args.size());
+	JPMethodMatch methodMatch(frame, args);
 	matches(frame, methodMatch, !isStatic(), args);
 	switch (methodMatch.type)
 	{
