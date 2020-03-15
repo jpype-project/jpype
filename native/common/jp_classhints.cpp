@@ -27,6 +27,7 @@ JPMatch::JPMatch()
 	frame = NULL;
 	object = NULL;
 	type = JPMatch::Type::_none;
+	slot = (JPValue*) - 1;
 }
 
 JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj)
@@ -35,8 +36,15 @@ JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj)
 	frame = fr;
 	object = obj;
 	type = JPMatch::Type::_none;
+	slot = (JPValue*) - 1;
 }
 
+JPValue *JPMatch::getJavaSlot()
+{
+	if (slot == (JPValue*) - 1)
+		return slot = PyJPValue_getJavaSlot(object);
+	return slot;
+}
 
 JPConversion::~JPConversion()
 {
@@ -349,7 +357,7 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
 		JP_TRACE_IN("JPConversionObject::matches");
-		JPValue *value = PyJPValue_getJavaSlot(match.object);
+		JPValue *value = match.getJavaSlot();
 		if (value == NULL || match.frame == NULL)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
@@ -393,7 +401,7 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
 		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
-		JPValue *value = PyJPValue_getJavaSlot(match.object);
+		JPValue *value = match.getJavaSlot();
 		if (value == NULL || match.frame == NULL || value->getClass() == NULL)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
@@ -430,19 +438,22 @@ public:
 	{
 		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
 		JPContext *context = match.getContext();
-		JPValue *value = PyJPValue_getJavaSlot(match.object);
+		JPValue *value = match.getJavaSlot();
+		// This converter only works for number types, thus boolean and char
+		// are excluded.
 		if (value == NULL || match.frame == NULL || value->getClass() == NULL
 				|| value->getClass() == context->_boolean
 				|| value->getClass() == context->_char)
 			return match.type = JPMatch::_none;
 		match.conversion = &_javaObjectAnyConversion;
 		JPClass *oc = value->getClass();
-		if (oc == NULL)
-			return match.type = JPMatch::_none;
-		if (oc->isPrimitive())
-			return match.type = JPMatch::_implicit;
+		// If it is the exact type, then it is exact
 		if (oc == cls)
 			return match.type = JPMatch::_exact;
+		// If it is any primitive except char and boolean then implicit
+		if (oc->isPrimitive())
+			return match.type = JPMatch::_implicit;
+		// Otherwise check if it is assignable according to Java
 		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
 		return match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
 		JP_TRACE_OUT;

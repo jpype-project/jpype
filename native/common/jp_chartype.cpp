@@ -63,7 +63,7 @@ JPMatch::Type JPCharType::getJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = PyJPValue_getJavaSlot(match.object);
+	JPValue *value = match.getJavaSlot();
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();

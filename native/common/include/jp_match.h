@@ -22,6 +22,7 @@ public:
 	JPConversion *conversion;
 	JPJavaFrame *frame;
 	PyObject *object;
+	JPValue *slot;
 
 	JPContext *getContext()
 	{
@@ -29,6 +30,15 @@ public:
 			return NULL;
 		return frame->getContext();
 	}
+
+	/**
+	 * Get the Java slot associated with the Python object.
+	 *
+	 * Thus uses caching.
+	 *
+	 * @return the Java slot or 0 if not available.
+	 */
+	JPValue *getJavaSlot();
 } ;
 
 class JPMethodMatch

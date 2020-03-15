@@ -77,7 +77,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPMatch &match)
 		return match.type = JPMatch::_exact;
 	}
 
-	JPValue *value = PyJPValue_getJavaSlot(match.object);
+	JPValue *value = match.getJavaSlot();
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
