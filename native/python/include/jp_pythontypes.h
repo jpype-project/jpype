@@ -139,6 +139,14 @@ public:
 	 */
 	PyObject* keep();
 
+	/** Used in special case of exception handling. */
+	PyObject* keepNull()
+	{
+		PyObject *out = pyobj;
+		pyobj = NULL;
+		return out;
+	}
+
 	/** Access the object.  This should never appear in
 	 * a return statement.
 	 */

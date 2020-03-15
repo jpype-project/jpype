@@ -385,7 +385,7 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 
 void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)
 {
-	PyErr_Restore(exceptionClass.keep(), exceptionValue.keep(), exceptionTrace.keep());
+	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
 JPPyCallAcquire::JPPyCallAcquire()
@@ -469,8 +469,14 @@ JPPyErrFrame::JPPyErrFrame()
 
 JPPyErrFrame::~JPPyErrFrame()
 {
-	if (good)
-		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
+	try
+	{
+		if (good)
+			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
+	}	catch (...)
+	{
+		// No throw is allowed in dtor.
+	}
 }
 
 void JPPyErrFrame::clear()
