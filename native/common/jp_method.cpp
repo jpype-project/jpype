@@ -64,7 +64,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	JPMatch::Type lastMatch = JPMatch::_exact;
 	for (size_t i = start; i < len; i++)
 	{
-		JPMatch::Type quality = type->getJavaConversion(match[i]);
+		JPMatch::Type quality = type->findJavaConversion(match[i]);
 
 		if (quality < JPMatch::_implicit)
 		{
@@ -132,7 +132,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		{
 			// Try direct
 			size_t last = tlen - 1 - methodMatch.offset;
-			methodMatch.type = type->getJavaConversion(methodMatch.argument[last]);
+			methodMatch.type = type->findJavaConversion(methodMatch.argument[last]);
 			JP_TRACE("Direct vargs", methodMatch.type);
 		}
 
@@ -162,7 +162,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
 		JP_TRACE("Compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
-		JPMatch::Type ematch = type->getJavaConversion(methodMatch.argument[j]);
+		JPMatch::Type ematch = type->findJavaConversion(methodMatch.argument[j]);
 		JP_TRACE("Result", ematch);
 		if (ematch < methodMatch.type)
 		{
@@ -200,11 +200,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	for (size_t i = match.skip; i < len; i++)
 	{
 		JPClass* type = m_ParameterTypes[i - match.offset];
-		JPConversion *conversion = match.argument[i].conversion;
-		JP_TRACE("Convert", i - match.offset, i, type->getCanonicalName(), conversion);
-		if (conversion == NULL)
-			JP_RAISE(PyExc_RuntimeError, "Conversion is null");
-		v[i - match.skip] = conversion->convert(&frame, type, arg[i]);
+		v[i - match.skip] = match.argument[i].convert();
 	}
 	JP_TRACE_OUT;
 }
@@ -238,7 +234,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = match.argument[0].conversion->convert(&frame, m_Class, arg[0]);
+			jvalue  v = match.argument[0].convert();
 			c = v.l;
 		} else
 		{
@@ -295,8 +291,8 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 			PyObject *u = arg[i + match.skip];
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
-			boxed->getJavaConversion(conv);
-			jvalue v = conv.conversion->convert(&frame, boxed, u);
+			boxed->findJavaConversion(conv);
+			jvalue v = conv.convert();
 			frame.SetObjectArrayElement(ja, i, v.l);
 		} else
 		{

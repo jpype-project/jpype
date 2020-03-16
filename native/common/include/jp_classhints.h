@@ -31,7 +31,7 @@ public:
 	}
 	// GCOVR_EXCL_STOP
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject*pyobj) = 0;
+	virtual jvalue convert(JPMatch &match) = 0;
 } ;
 
 class JPClassHints

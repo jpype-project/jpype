@@ -33,7 +33,7 @@ JPClassType::~JPClassType()
 {
 }
 
-JPMatch::Type JPClassType::getJavaConversion(JPMatch& match)
+JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	if (nullConversion->matches(match, this) != JPMatch::_none)

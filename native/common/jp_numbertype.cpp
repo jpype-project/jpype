@@ -16,7 +16,7 @@ JPNumberType::~JPNumberType()
 {
 }
 
-JPMatch::Type JPNumberType::getJavaConversion(JPMatch& match)
+JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPNumberType::canConvertToJava");

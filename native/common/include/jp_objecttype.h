@@ -37,7 +37,7 @@ public:
 
 	virtual~ JPObjectType();
 
-	JPMatch::Type getJavaConversion(JPMatch& match) override;
+	JPMatch::Type findJavaConversion(JPMatch& match) override;
 } ;
 
 #endif // _JPOBJECTTYPE_H_

@@ -32,7 +32,7 @@ JPObjectType::~JPObjectType()
 {
 }
 
-JPMatch::Type JPObjectType::getJavaConversion(JPMatch& match)
+JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPObjectType::canConvertToJava");

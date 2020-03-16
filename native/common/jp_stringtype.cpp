@@ -52,7 +52,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPStringType::getJavaConversion(JPMatch& match)
+JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
 	if (nullConversion->matches(match, this) != JPMatch::_none

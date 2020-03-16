@@ -46,7 +46,7 @@ static JPConversionAsFloat<JPDoubleType> asDoubleConversion;
 static JPConversionLongAsFloat<JPDoubleType> asDoubleLongConversion;
 static JPConversionFloatWiden<JPDoubleType> doubleWidenConversion;
 
-JPMatch::Type JPDoubleType::getJavaConversion(JPMatch &match)
+JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPDoubleType::getJavaConversion");
 	JPContext *context = match.getContext();
@@ -65,11 +65,8 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPMatch &match)
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (context != NULL && cls == context->_java_lang_Double)
-		{
-			match.conversion = unboxConversion;
-			return match.type = JPMatch::_implicit;
-		}
+		if (unboxConversion->matches(match, this))
+			return match.type;
 
 		// Consider widening
 		if (cls->isPrimitive())
@@ -154,18 +151,18 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetStaticDoubleField(c, fid, val);
 }
 
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetDoubleField(c, fid, val);
 }
 
@@ -238,9 +235,9 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 

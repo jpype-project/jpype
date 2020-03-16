@@ -31,7 +31,7 @@ public:
 
 	virtual~ JPNumberType();
 
-	JPMatch::Type getJavaConversion(JPMatch& match) override;
+	JPMatch::Type findJavaConversion(JPMatch& match) override;
 } ;
 
 #endif // _JPNUMBERTYPE_H_

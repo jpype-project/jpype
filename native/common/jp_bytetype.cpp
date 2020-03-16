@@ -45,10 +45,9 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 JPConversionLong<JPByteType> byteConversion;
 JPConversionLongNumber<JPByteType> byteNumberConversion;
 
-JPMatch::Type JPByteType::getJavaConversion(JPMatch &match)
+JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPByteType::getJavaConversion");
-	JPContext *context = match.getContext();
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
@@ -64,11 +63,8 @@ JPMatch::Type JPByteType::getJavaConversion(JPMatch &match)
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (context != NULL && cls == context->_java_lang_Byte)
-		{
-			match.conversion = unboxConversion;
-			return match.type = JPMatch::_implicit;
-		}
+		if (unboxConversion->matches(match, this))
+			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return match.type = JPMatch::_none;
@@ -127,18 +123,18 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetStaticByteField(c, fid, val);
 }
 
 void JPByteType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetByteField(c, fid, val);
 }
 
@@ -210,9 +206,9 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-	if (getJavaConversion(match) < JPMatch::_implicit)
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 

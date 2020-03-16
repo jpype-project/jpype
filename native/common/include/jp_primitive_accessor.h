@@ -3,6 +3,7 @@
 #include <Python.h>
 #include "jp_exception.h"
 #include "jp_javaframe.h"
+#include "jp_match.h"
 
 template <typename array_t, typename ptr_t>
 class JPPrimitiveArrayAccessor
@@ -162,10 +163,10 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		jlong val = PyLong_AsLongLong(pyobj);
+		jlong val = PyLong_AsLongLong(match.object);
 		if (val == -1)
 			JP_PY_CHECK();
 		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
@@ -186,10 +187,10 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		PyObject *obj = PyNumber_Long(pyobj);
+		PyObject *obj = PyNumber_Long(match.object);
 		JP_PY_CHECK();
 		jlong val = PyLong_AsLongLong(obj);
 		Py_DECREF(obj);
@@ -205,9 +206,9 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		JPValue *value = match.getJavaSlot();
 		jvalue ret;
 		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*)
 				value->getClass())->getAsLong(value->getValue());
@@ -228,10 +229,10 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		double val = PyFloat_AsDouble(pyobj);
+		double val = PyFloat_AsDouble(match.object);
 		if (val == -1.0)
 			JP_PY_CHECK();
 		base_t::field(res) = (typename base_t::type_t) val;
@@ -252,10 +253,10 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		jdouble v = PyLong_AsDouble(pyobj);
+		jdouble v = PyLong_AsDouble(match.object);
 		if (v == -1.0)
 			JP_PY_CHECK();
 		base_t::field(res) = (typename base_t::type_t) v;
@@ -268,9 +269,9 @@ class JPConversionFloatWiden : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
+	virtual jvalue convert(JPMatch &match) override
 	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
+		JPValue *value = PyJPValue_getJavaSlot(match.object);
 		jvalue ret;
 		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
 		return ret;

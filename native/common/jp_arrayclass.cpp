@@ -35,7 +35,7 @@ JPArrayClass::~JPArrayClass()
 {
 }
 
-JPMatch::Type JPArrayClass::getJavaConversion(JPMatch &match)
+JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
 	if (nullConversion->matches(match, this)
@@ -53,12 +53,13 @@ JPMatch::Type JPArrayClass::getJavaConversion(JPMatch &match)
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
 			JPMatch imatch(match.frame, seq[i].get());
-			m_ComponentType->getJavaConversion(imatch);
+			m_ComponentType->findJavaConversion(imatch);
 			if (imatch.type < match.type)
 			{
 				match.type = imatch.type;
 			}
 		}
+		match.closure = this;
 		match.conversion = sequenceConversion;
 		return match.type;
 	}
