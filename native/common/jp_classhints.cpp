@@ -496,7 +496,7 @@ public:
 	}
 } _javaObjectAnyConversion;
 
-class JPConversionJavaNumberAny : public JPConversion
+class JPConversionJavaNumberAny : public JPConversionJavaObjectAny
 {
 public:
 
@@ -511,7 +511,7 @@ public:
 				|| value->getClass() == context->_boolean
 				|| value->getClass() == context->_char)
 			return match.type = JPMatch::_none;
-		match.conversion = &_javaObjectAnyConversion;
+		match.conversion = this;
 		JPClass *oc = value->getClass();
 		// If it is the exact type, then it is exact
 		if (oc == cls)
@@ -525,12 +525,6 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	virtual jvalue convert(JPMatch &match) override
-	{
-		jvalue  v;
-		v.l = 0;
-		return v;
-	}
 } _javaNumberAnyConversion;
 
 class JPConversionJavaValue : public JPConversion
