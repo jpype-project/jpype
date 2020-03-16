@@ -81,7 +81,7 @@ private:
 	std::list<JPConversion*> conversions;
 } ;
 
-
+extern JPConversion *hintsConversion;
 extern JPConversion *charArrayConversion;
 extern JPConversion *byteArrayConversion;
 extern JPConversion *sequenceConversion;

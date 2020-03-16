@@ -199,7 +199,6 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE("Pack fixed total=", len - match.offset);
 	for (size_t i = match.skip; i < len; i++)
 	{
-		JPClass* type = m_ParameterTypes[i - match.offset];
 		v[i - match.skip] = match.argument[i].convert();
 	}
 	JP_TRACE_OUT;
@@ -212,7 +211,6 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	if (isCallerSensitive())
 		return invokeCallerSensitive(match, arg, instance);
 
-	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
 	JPClass* retType = m_ReturnType;
 

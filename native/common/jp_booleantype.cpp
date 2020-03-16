@@ -48,7 +48,7 @@ public:
 
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
-		if (!PyLong_Check(match.object)
+		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;

@@ -3,7 +3,6 @@ import jpype
 from jpype import *
 import common
 
-
 class FaultTestCase(common.JPypeTestCase):
     """ Test for fault paths in JPype
 
@@ -1116,3 +1115,78 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, "class required"):
             _jpype._newArrayType(object(), 1)
 
+    @common.requireInstrumentation
+    def testClassHintsFaults(self):
+        class CTest(object):
+            pass
+        @JConversion("java.lang.Number", exact=CTest)
+        def _CTestConversion(jcls, obj):
+            return java.lang.Integer(123)
+
+        class ATest(object):
+            def __foo__(self):
+                pass
+        @JConversion("java.lang.Number", attribute="__foo__")
+        def _ATestConversion(jcls, obj):
+            return java.lang.Integer(123)
+
+        fixture = JClass("jpype.common.Fixture")()
+        _jpype.fault("JPPythonConversion::convert")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callNumber(CTest())
+        _jpype.fault("JPAttributeConversion::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callNumber(ATest())
+        _jpype.fault("JPClassHints::addAttributeConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            @JConversion("java.lang.Number", attribute="__woo__")
+            def f(jcls, obj):
+                pass
+        _jpype.fault("JPTypeConversion::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callNumber(CTest())
+        _jpype.fault("JPClassHints::addTypeConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            @JConversion("java.lang.Number", exact=CTest)
+            def f(jcls, obj):
+                pass
+
+    @common.requireInstrumentation
+    def testConversionFaults(self):
+        fixture = JClass("jpype.common.Fixture")()
+        _jpype.fault("JPConversionCharArray::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callCharArray(object())
+        _jpype.fault("JPConversionByteArray::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callByteArray(object())
+        _jpype.fault("JPConversionNull::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(None)
+        _jpype.fault("JPConversionClass::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callClass(object())
+        _jpype.fault("JPConversionObject::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())
+        _jpype.fault("JPConversionJavaObjectAny::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())
+        _jpype.fault("JPConversionJavaNumberAny::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callNumber(object())
+        _jpype.fault("JPConversionString::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callString(object())
+        _jpype.fault("JPConversionBoxBoolean::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())
+        _jpype.fault("JPConversionBoxLong::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())
+        _jpype.fault("JPConversionBoxDouble::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())
+        _jpype.fault("JPConversionProxy::matches")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            fixture.callObject(object())

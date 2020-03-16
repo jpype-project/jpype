@@ -317,19 +317,9 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE("Python", JPPyObject::getTypeName(pyobj));
 	if (nullConversion->matches(match, this)
 			|| objectConversion->matches(match, this)
-			|| proxyConversion->matches(match, this))
+			|| proxyConversion->matches(match, this)
+			|| hintsConversion->matches(match, this))
 		return match.type;
-
-	// Apply user supplied conversions
-	if (!m_Hints.isNull())
-	{
-		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
-		if (hints->getConversion(match, this) != JPMatch::_none)
-		{
-			JP_TRACE("Match custom conversion");
-			return match.type;
-		}
-	}
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;

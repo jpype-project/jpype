@@ -43,27 +43,10 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 			|| boxLongConversion->matches(match, this)
 			|| boxDoubleConversion->matches(match, this)
 			|| classConversion->matches(match, this)
+			|| proxyConversion->matches(match, this)
+			|| hintsConversion->matches(match, this)
 			)
 		return match.type;
-
-	JPProxy* proxy = PyJPProxy_getJPProxy(match.object);
-	if (proxy != NULL)
-	{
-		match.conversion = proxyConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	// Apply user supplied conversions
-	if (!m_Hints.isNull())
-	{
-		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
-		if (hints->getConversion(match, this) != JPMatch::_none)
-		{
-			JP_TRACE("Match custom conversion");
-			return match.type;
-		}
-	}
-
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

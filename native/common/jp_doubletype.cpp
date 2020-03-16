@@ -49,7 +49,6 @@ static JPConversionFloatWiden<JPDoubleType> doubleWidenConversion;
 JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPDoubleType::getJavaConversion");
-	JPContext *context = match.getContext();
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

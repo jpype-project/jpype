@@ -48,7 +48,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = frame.findClassForObject(obj);
 		if (type == NULL)
-			type = reinterpret_cast<JPClass*> (accessor.get()[i]);
+			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
 	}

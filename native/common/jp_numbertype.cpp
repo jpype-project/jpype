@@ -16,6 +16,7 @@ JPNumberType::~JPNumberType()
 {
 }
 
+
 JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
@@ -24,22 +25,9 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 			|| javaNumberAnyConversion->matches(match, this)
 			|| boxLongConversion->matches(match, this)
 			|| boxDoubleConversion->matches(match, this)
+			|| hintsConversion->matches(match, this)
 			)
-	{
 		return match.type;
-	}
-	
-	// Apply user supplied conversions
-	if (!m_Hints.isNull())
-	{
-		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
-		if (hints->getConversion(match, this) != JPMatch::_none)
-		{
-			JP_TRACE("Match custom conversion");
-			return match.type;
-		}
-	}
-
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

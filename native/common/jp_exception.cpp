@@ -105,11 +105,13 @@ string JPypeException::getMessage()
 		str << m_Message << endl;
 		JP_TRACE(str.str());
 		return str.str();
+		// GCOVR_EXCL_START
 	} catch (...)
 	{
 		return "error during get message";
 	}
 	JP_TRACE_OUT;
+	// GCOVR_EXCL_STOP
 }
 
 bool isJavaThrowable(PyObject* exceptionClass)
@@ -124,11 +126,13 @@ void JPypeException::convertJavaToPython()
 {
 	// Welcome to paranoia land, where they really are out to get you!
 	JP_TRACE_IN("JPypeException::convertJavaToPython");
+	// GCOVR_EXCL_START
 	if (m_Context == NULL)
 	{
 		PyErr_SetString(PyExc_RuntimeError, "Unable to convert java error, context is null.");
 		return;
 	}
+	// GCOVR_EXCL_STOP
 
 	// Okay we can get to a frame to talk to the object
 	JPJavaFrame frame(m_Context, m_Context->getEnv());
@@ -143,30 +147,43 @@ void JPypeException::convertJavaToPython()
 		return;
 	}
 	JP_TRACE("Check typemanager");
+	// GCOVR_EXCL_START
 	if (!m_Context->isRunning())
 	{
 		PyErr_SetString(PyExc_RuntimeError, frame.toString((jobject) th).c_str());
 		return;
 	}
+	// GCOVR_EXCL_STOP
 
 	// Convert to Python object
 	JP_TRACE("Convert to python");
 	JPClass* cls = frame.findClassForObject((jobject) th);
+
+	// GCOVR_EXCL_START
+	// This sanity check can only fail if the type system fails to find a
+	// class for the current exception.
 	if (cls == NULL)
 	{
 		// Nope, no class found
 		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
 		return;
 	}
+	// GCOVR_EXCL_STOP
 
 	// Create the exception object (this may fail)
 	v.l = th;
 	JPPyObject pyvalue = PyJPValue_create(frame, JPValue(cls, v));
+
+	// GCOVR_EXCL_START
+	// This sanity check can only be hit if the exception failed during
+	// conversion in some extraordinary way.
 	if (pyvalue.isNull())
 	{
 		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
 		return;
 	}
+	// GCOVR_EXCL_STOP
+
 	PyObject *type = (PyObject*) Py_TYPE(pyvalue.get());
 	Py_INCREF(type);
 
@@ -179,7 +196,7 @@ void JPypeException::convertJavaToPython()
 
 	// Transfer to Python
 	PyErr_SetObject(type, pyvalue.get());
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 void JPypeException::convertPythonToJava(JPContext* context)
@@ -213,7 +230,7 @@ void JPypeException::convertPythonToJava(JPContext* context)
 			eframe.exceptionValue.get());
 	eframe.clear();
 	frame.Throw(th);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 int JPError::_java_error = 1;
@@ -242,6 +259,8 @@ void JPypeException::toPython()
 			// Already on the stack
 		} else if (m_Type == JPError::_method_not_found)
 		{
+			// This is hit when a proxy fails to implement a required
+			// method.  Only older style proxies should be able hit this.
 			JP_TRACE("Runtime error");
 			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
 		}// This section is only reachable during startup of the JVM.
@@ -287,8 +306,10 @@ void JPypeException::toPython()
 			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
 		} else
 		{
+			// This should not be possible unless we failed to cover one of the
+			// exception type codes.
 			JP_TRACE("Unknown error");
-			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+			PyErr_SetString(PyExc_RuntimeError, mesg.c_str()); // GCOVR_EXCL_LINE
 		}
 
 		// Attach our info as the cause
@@ -336,7 +357,7 @@ void JPypeException::toPython()
 		*i = 0;
 	}
 	// GCOVR_EXCL_STOP
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 void JPypeException::toJava(JPContext *context)
@@ -397,7 +418,7 @@ void JPypeException::toJava(JPContext *context)
 		*i = 0;
 		// GCOVR_EXCL_STOP
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 PyTracebackObject *tb_create(
@@ -478,7 +499,7 @@ void JPException_init(JPJavaFrame &frame)
 	s_StackTraceElement_GetMethodName = frame.GetMethodID(s_StackTraceElementClass, "getMethodName", "()Ljava/lang/String;");
 	s_StackTraceElement_GetClassName = frame.GetMethodID(s_StackTraceElementClass, "getClassName", "()Ljava/lang/String;");
 	s_StackTraceElement_GetLineNumber = frame.GetMethodID(s_StackTraceElementClass, "getLineNumber", "()I");
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th)

@@ -44,7 +44,6 @@ public:
 	jclass findClass(JPJavaFrame& frame, string name);
 
 	// Classloader for Proxy
-	jobject getSystemClassLoader();
 	jobject getBootLoader();
 
 private:

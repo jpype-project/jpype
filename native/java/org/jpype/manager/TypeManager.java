@@ -76,12 +76,18 @@ public class TypeManager
 
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
+
+    // Note that order is very important when creating these initial wrapper
+    // types. If something inherits from another type then the super class
+    // will be created without the special flag and the type system won't
+    // be able to handle the duplicate type properly.
     Class[] cls =
     {
-      Class.class, Void.class, Boolean.class, Byte.class, Character.class,
+      Class.class, Number.class, CharSequence.class, Throwable.class,
+      Void.class, Boolean.class, Byte.class, Character.class,
       Short.class, Integer.class, Long.class, Float.class, Double.class,
-      String.class, CharSequence.class, JPypeProxy.class, Method.class,
-      Field.class, Throwable.class, Number.class
+      String.class, JPypeProxy.class,
+      Method.class, Field.class
     };
     for (Class c : cls)
     {

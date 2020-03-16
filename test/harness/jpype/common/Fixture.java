@@ -123,4 +123,8 @@ public class Fixture {
 
 	public static Number callNumber(Number n) { return n; }
 	public Object callSupplier(java.util.function.Supplier s) { return s.get(); }
+
+	public Object callCharArray(char[] c) { return c; }
+	public Object callByteArray(byte[] c) { return c; }
+	public Object callClass(Class c) { return c; }
 }

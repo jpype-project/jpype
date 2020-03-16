@@ -230,6 +230,26 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 	conversions.push_back(new JPTypeConversion(type, method, exact));
 	JP_TRACE_OUT;
 }
+
+class JPHintsConversion : public JPConversion
+{
+public:
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
+		if (pyhints == NULL)
+			return match.type = JPMatch::_none;
+		JPClassHints *hints = pyhints->m_Hints;
+		hints->getConversion(match, cls);
+		return match.type;
+	}
+
+	virtual jvalue convert(JPMatch &match)
+	{
+		return jvalue();
+	}
+} _hintsConversion;
+
 //</editor-fold>
 
 class JPConversionCharArray : public JPConversion
@@ -526,14 +546,12 @@ public:
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		JP_TRACE_IN("JPConversionBox::convert");
 		jvalue res;
 		JPPyObjectVector args(match.object, NULL);
 		JPClass *cls = (JPClass*) match.closure;
 		JPValue pobj = cls->newInstance(*match.frame, args);
 		res.l = pobj.getJavaObject();
 		return res;
-		JP_TRACE_OUT;
 	}
 } _boxConversion;
 
@@ -684,7 +702,7 @@ public:
 	}
 } _proxyConversion;
 
-
+JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
 JPConversion *sequenceConversion = &_sequenceConversion;

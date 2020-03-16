@@ -49,7 +49,6 @@ JPConversionLongWiden<JPLongType> longWidenConversion;
 JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPLongType::getJavaConversion");
-	JPContext *context = match.getContext();
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

@@ -19,11 +19,6 @@
 #include <jp_classloader.h>
 #include <jp_thunk.h>
 
-jobject JPClassLoader::getSystemClassLoader()
-{
-	return m_SystemClassLoader.get();
-}
-
 jobject JPClassLoader::getBootLoader()
 {
 	return m_BootLoader.get();
@@ -62,7 +57,7 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	v.l = jar;
 	jmethodID importJarID = frame.GetMethodID(cls, "importJar", "([B)V");
 	frame.CallVoidMethodA(m_BootLoader.get(), importJarID, &v);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 jclass JPClassLoader::findClass(JPJavaFrame& frame, string name)
