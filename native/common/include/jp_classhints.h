@@ -89,6 +89,7 @@ extern JPConversion *nullConversion;
 extern JPConversion *classConversion;
 extern JPConversion *objectConversion;
 extern JPConversion *javaObjectAnyConversion;
+extern JPConversion *javaNumberAnyConversion;
 extern JPConversion *javaValueConversion;
 extern JPConversion *stringConversion;
 extern JPConversion *boxConversion;

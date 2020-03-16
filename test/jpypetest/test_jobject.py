@@ -18,7 +18,12 @@ import _jpype
 import jpype
 import _jpype
 from jpype.types import *
+from jpype import java
 import common
+try:
+    import numpy as np
+except ImportError:
+    pass
 
 
 class JClassTestCase(common.JPypeTestCase):
@@ -215,3 +220,25 @@ class JClassTestCase(common.JPypeTestCase):
         js = JString("a")
         with self.assertRaisesRegex(TypeError, "must be string"):
             setattr(js, object(), "b")
+    def testJavaPrimitives(self):
+        self.assertIsInstance(self.fixture.callObject(JByte(1)), java.lang.Byte)
+        self.assertIsInstance(self.fixture.callObject(JShort(1)), java.lang.Short)
+        self.assertIsInstance(self.fixture.callObject(JInt(1)), java.lang.Integer)
+        self.assertIsInstance(self.fixture.callObject(JLong(1)), java.lang.Long)
+        self.assertIsInstance(self.fixture.callObject(JFloat(1)), java.lang.Float)
+        self.assertIsInstance(self.fixture.callObject(JDouble(1)), java.lang.Double)
+
+    def testPythonPrimitives(self):
+        self.assertIsInstance(self.fixture.callObject(1), java.lang.Long)
+        self.assertIsInstance(self.fixture.callObject(1.0), java.lang.Double)
+
+    @common.requireNumpy
+    def testNumpyPrimitives(self):
+        self.assertIsInstance(self.fixture.callObject(np.int8(1)), java.lang.Byte)
+        self.assertIsInstance(self.fixture.callObject(np.int16(1)), java.lang.Short)
+        self.assertIsInstance(self.fixture.callObject(np.int32(1)), java.lang.Integer)
+        self.assertIsInstance(self.fixture.callObject(np.int64(1)), java.lang.Long)
+        self.assertIsInstance(self.fixture.callObject(np.float32(1)), java.lang.Float)
+        self.assertIsInstance(self.fixture.callObject(np.float64(1)), java.lang.Double)
+
+

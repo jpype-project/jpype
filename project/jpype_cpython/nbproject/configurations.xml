@@ -30,6 +30,7 @@
           <itemPath>../../native/common/include/jp_methoddispatch.h</itemPath>
           <itemPath>../../native/common/include/jp_modifier.h</itemPath>
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
+          <itemPath>../../native/common/include/jp_numbertype.h</itemPath>
           <itemPath>../../native/common/include/jp_objecttype.h</itemPath>
           <itemPath>../../native/common/include/jp_platform.h</itemPath>
           <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
@@ -83,6 +84,7 @@
         <itemPath>../../native/common/jp_method.cpp</itemPath>
         <itemPath>../../native/common/jp_methoddispatch.cpp</itemPath>
         <itemPath>../../native/common/jp_monitor.cpp</itemPath>
+        <itemPath>../../native/common/jp_numbertype.cpp</itemPath>
         <itemPath>../../native/common/jp_objecttype.cpp</itemPath>
         <itemPath>../../native/common/jp_platform.cpp</itemPath>
         <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
@@ -278,6 +280,11 @@
             tool="3"
             flavor2="0">
       </item>
+      <item path="../../native/common/include/jp_numbertype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
       <item path="../../native/common/include/jp_objecttype.h"
             ex="false"
             tool="3"
@@ -433,6 +440,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/jp_monitor.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_numbertype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../native/common/jp_objecttype.cpp"
             ex="false"

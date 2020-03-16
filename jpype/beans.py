@@ -85,14 +85,14 @@ def _extract_accessor_pairs(members):
 @_jcustomizer.JImplementationFor("java.lang.Object")
 class _BeansCustomizer(object):
     """ Add properties for get/set Bean patterns found in classes.  """
-    def __jclass_init__(cls):
-        accessor_pairs = _extract_accessor_pairs(cls.__dict__)
+    def __jclass_init__(self):
+        accessor_pairs = _extract_accessor_pairs(self.__dict__)
         for attr_name, (getter, setter) in accessor_pairs.items():
             attr_name = pysafe(attr_name)
 
             # Don't mess with an existing member
-            if attr_name in cls.__dict__:
+            if attr_name in self.__dict__:
                 continue
 
             # Add the property
-            type.__setattr__(cls, attr_name, property(getter, setter))
+            type.__setattr__(self, attr_name, property(getter, setter))

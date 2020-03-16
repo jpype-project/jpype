@@ -121,5 +121,8 @@ public class Fixture {
 	private Object callPrivateObject(Object i) { return i; }
 	protected Object callProtectedObject(Object i) { return i; }
 
+
+  public static Number callNumber(Number n) { return n; }
 	public Object callSupplier(java.util.function.Supplier s) { return s.get(); }
+
 }
