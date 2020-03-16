@@ -41,29 +41,10 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 	if (nullConversion->matches(match, this)
 			|| objectConversion->matches(match, this)
 			|| charArrayConversion->matches(match, this)
-			|| byteArrayConversion->matches(match, this))
+			|| byteArrayConversion->matches(match, this)
+			|| sequenceConversion->matches(match, this)
+			)
 		return match.type;
-
-	if (JPPyObject::isSequenceOfItems(match.object))
-	{
-		JP_TRACE("Sequence");
-		JPPySequence seq(JPPyRef::_use, match.object);
-		jlong length = seq.size();
-		match.type = JPMatch::_implicit;
-		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
-		{
-			JPMatch imatch(match.frame, seq[i].get());
-			m_ComponentType->findJavaConversion(imatch);
-			if (imatch.type < match.type)
-			{
-				match.type = imatch.type;
-			}
-		}
-		match.closure = this;
-		match.conversion = sequenceConversion;
-		return match.type;
-	}
-
 	JP_TRACE("None");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -97,9 +78,4 @@ JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
 	jvalue v;
 	v.l = frame.keep(m_ComponentType->newArrayInstance(frame, length));
 	return JPValue(this, v);
-}
-
-JPValue JPArrayClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
-{
-	JP_RAISE(PyExc_SystemError, "Not used");
 }

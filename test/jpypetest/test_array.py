@@ -479,6 +479,7 @@ class ArrayTestCase(common.JPypeTestCase):
     def testArrayOfDoubleCast(self):
         self.checkArrayOfCast(JDouble, np.float64)
 
+    @common.requireNumpy
     def testArrayOfExc(self):
         a = np.random.randint(0, 2*8-1, size=1, dtype=np.uint8)
         with self.assertRaises(TypeError):

@@ -34,7 +34,7 @@ public:
 		{
 			if (_array)
 				((&_frame)->*_release)(_array, _elem, JNI_ABORT);
-		}		catch (JPypeException &ex) // GCOVR_EXCL_LINE
+		}		catch (JPypeException&) // GCOVR_EXCL_LINE
 		{
 			// We can't throw here because it would abort.
 			// But this is called on a non-op release, so
@@ -75,7 +75,7 @@ template <class type_t> PyObject *convertMultiArray(
 {
 	JPContext *context = frame.getContext();
 	Py_buffer& view = buffer.getView();
-	jconverter converter = getConverter(view.format, view.itemsize, code);
+	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
 	if (converter == NULL)
 	{
 		PyErr_Format(PyExc_TypeError, "No type converter found");
@@ -93,7 +93,7 @@ template <class type_t> PyObject *convertMultiArray(
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
 	type_t *dest = (type_t*) mem;
 
-	int step;
+	Py_ssize_t step;
 	if (view.strides == NULL)
 		step = view.itemsize;
 	else

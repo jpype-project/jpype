@@ -207,7 +207,7 @@ void JPCharType::releaseView(JPArrayView& view)
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException& ex)
+	}	catch (JPypeException&)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

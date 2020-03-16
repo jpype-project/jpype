@@ -234,6 +234,7 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 class JPHintsConversion : public JPConversion
 {
 public:
+
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
@@ -321,6 +322,33 @@ class JPConversionSequence : public JPConversion
 {
 public:
 
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		JP_TRACE_IN("JPConversionSequence::matches");
+		if ( !PySequence_Check(match.object) || JPPyString::check(match.object))
+			return match.type = JPMatch::_none;
+		JPArrayClass *acls = (JPArrayClass*) cls;
+		JPClass *componentType = acls->getComponentType();
+		JPPySequence seq(JPPyRef::_use, match.object);
+		jlong length = seq.size();
+		match.type = JPMatch::_implicit;
+		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
+		{
+			// This is a special case.  Sequences produce new references
+			// so we must hold the reference in a container while the
+			// the match is caching it.
+			JPPyObject item = seq[i];
+			JPMatch imatch(match.frame, item.get());
+			componentType->findJavaConversion(imatch);
+			if (imatch.type < match.type)
+				match.type = imatch.type;
+		}
+		match.closure = cls;
+		match.conversion = sequenceConversion;
+		return match.type;
+		JP_TRACE_OUT;
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPJavaFrame frame(*match.frame);
@@ -333,7 +361,8 @@ public:
 		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);
 		for (jsize i = 0; i < length; i++)
 		{
-			acls->getComponentType()->setArrayItem(frame, array, i, seq[i].get());
+			JPPyObject item = seq[i];
+			acls->getComponentType()->setArrayItem(frame, array, i, item.get());
 		}
 		res.l = frame.keep(array);
 		return res;

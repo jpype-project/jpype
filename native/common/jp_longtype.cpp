@@ -248,7 +248,7 @@ void JPLongType::releaseView(JPArrayView& view)
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
 				(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException& ex)
+	}	catch (JPypeException&)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted
