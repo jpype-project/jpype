@@ -133,7 +133,7 @@ static PyObject *PyJPMethod_repr(PyJPMethod *self)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getSelf");
 	PyJPModule_getContext();
@@ -144,12 +144,12 @@ static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *context)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPMethod_getNone(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getNone(PyJPMethod *self, void *ctxt)
 {
 	Py_RETURN_NONE;
 }
 
-static PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getName(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getName");
 	PyJPModule_getContext();
@@ -157,7 +157,7 @@ static PyObject *PyJPMethod_getName(PyJPMethod *self, void *context)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *context)
+static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getQualName");
 	PyJPModule_getContext();
@@ -212,7 +212,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	JP_PY_CATCH(NULL);
 }
 
-int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *context)
+int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	Py_CLEAR(self->m_Doc);
@@ -222,7 +222,7 @@ int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *context)
 	JP_PY_CATCH(-1);
 }
 
-PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *context)
+PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getAnnotations");
 	JPContext *context = PyJPModule_getContext();
@@ -290,19 +290,19 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPMethod_getCode(PyJPMethod *self, void *context)
+PyObject *PyJPMethod_getCode(PyJPMethod *self, void *ctxt)
 {
-	return PyJPMethod_getCodeAttr(self, context, "__code__");
+	return PyJPMethod_getCodeAttr(self, ctxt, "__code__");
 }
 
-PyObject *PyJPMethod_getClosure(PyJPMethod *self, void *context)
+PyObject *PyJPMethod_getClosure(PyJPMethod *self, void *ctxt)
 {
-	return PyJPMethod_getCodeAttr(self, context, "__closure__");
+	return PyJPMethod_getCodeAttr(self, ctxt, "__closure__");
 }
 
-PyObject *PyJPMethod_getGlobals(PyJPMethod *self, void *context)
+PyObject *PyJPMethod_getGlobals(PyJPMethod *self, void *ctxt)
 {
-	return PyJPMethod_getCodeAttr(self, context, "__globals__");
+	return PyJPMethod_getCodeAttr(self, ctxt, "__globals__");
 }
 
 PyObject *PyJPMethod_isBeanAccessor(PyJPMethod *self, PyObject *arg)

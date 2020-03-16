@@ -13,7 +13,6 @@
 #
 # *****************************************************************************
 import _jpype
-import sys as _sys
 
 __all__ = ['JImplementationFor', 'JConversion']
 

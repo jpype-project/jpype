@@ -17,6 +17,7 @@
 #include <Python.h>
 #include <frameobject.h>
 #include "jpype.h"
+#include "jp_exception.h"
 #include "pyjp.h"
 #include "jp_reference_queue.h"
 
@@ -67,6 +68,17 @@ JPypeException::JPypeException(const JPypeException& ex)
 	m_Type = ex.m_Type;
 	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
+}
+
+JPypeException& JPypeException::operator = (const JPypeException& ex)
+{
+	m_Context = ex.m_Context;
+	m_Type = ex.m_Type;
+	m_Trace = ex.m_Trace;
+	m_Throwable = ex.m_Throwable;
+	m_Error = ex.m_Error;
+	m_Message = ex.m_Message;
+	return *this;
 }
 
 JPypeException::~JPypeException()
