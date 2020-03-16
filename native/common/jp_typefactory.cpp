@@ -20,6 +20,7 @@
 #include "jp_boxedtype.h"
 #include "jp_field.h"
 #include "jp_objecttype.h"
+#include "jp_numbertype.h"
 #include "jp_classtype.h"
 #include "jp_method.h"
 #include "jp_methoddispatch.h"
@@ -181,6 +182,10 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 				= new JPObjectType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers));
 
+		if (className == "java.lang.Number")
+			return (jlong) new JPNumberType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
+
 		// Register the box types
 		if (className == "java.lang.Void")
 		{
@@ -285,7 +290,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 		jlong boxedPtr,
 		jint modifiers)
 {
-	// These resources are created by the boxed types 
+	// These resources are created by the boxed types
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame(context, env);
 	JP_JAVA_TRY("JPTypeFactory_definePrimitive");

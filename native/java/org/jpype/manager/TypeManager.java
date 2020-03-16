@@ -76,26 +76,17 @@ public class TypeManager
 
     // Create the required minimum classes
     this.java_lang_Object = createClass(Object.class, true);
-    createClass(Class.class, true);
-
-    // Create the boxed types
-    // These require special rules in the C++ layer so we will tag them
-    // as being different.
-    createClass(Void.class, true);
-    createClass(Boolean.class, true);
-    createClass(Byte.class, true);
-    createClass(Character.class, true);
-    createClass(Short.class, true);
-    createClass(Integer.class, true);
-    createClass(Long.class, true);
-    createClass(Float.class, true);
-    createClass(Double.class, true);
-    createClass(String.class, true);
-    createClass(CharSequence.class, true);
-    createClass(JPypeProxy.class, true);
-    createClass(Method.class, true);
-    createClass(Field.class, true);
-    createClass(Throwable.class, true);
+    Class[] cls =
+    {
+      Class.class, Void.class, Boolean.class, Byte.class, Character.class,
+      Short.class, Integer.class, Long.class, Float.class, Double.class,
+      String.class, CharSequence.class, JPypeProxy.class, Method.class,
+      Field.class, Throwable.class, Number.class
+    };
+    for (Class c : cls)
+    {
+      createClass(c, true);
+    }
 
     // Create the primitive types
     // Link boxed and primitive types so that the wrappers can find them.
