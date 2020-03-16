@@ -49,9 +49,8 @@
 #endif
 #endif
 
-/** This is the type of the exception to issue.
- *
- * FIXME consider adding Type to the name.
+/**
+ * This is the type of the exception to issue.
  */
 namespace JPError
 {
@@ -142,7 +141,7 @@ public:
 	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
-
+	JPypeException& operator = (const JPypeException& ex);
 	~JPypeException();
 
 	void from(const JPStackInfo& info);
@@ -174,37 +173,6 @@ private:
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
-} ;
-
-/**
- * Exception issued with there was a Java exception issued after a java call.
- *
- * This will just be held until it is converted to python or passed
- * back to java.
- */
-class JPJavaException
-{
-public:
-
-	JPJavaException(const char* msg, const JPStackInfo& stackInfo)
-	: file(stackInfo.getFile()), line(stackInfo.getLine())
-	{
-		message = msg;
-	}
-
-	JPJavaException(const JPJavaException& ex)
-	: file(ex.file), line(ex.line)
-	{
-		message = ex.message;
-	}
-
-	virtual ~JPJavaException()
-	{
-	}
-
-	const char* file;
-	int line;
-	string message;
 } ;
 
 void JPException_init(JPJavaFrame &frame);

@@ -277,6 +277,12 @@ public:
 	{
 	}
 
+	JPPyTuple& operator = (const JPPyTuple &self)
+	{
+		JPPyObject::operator=(self);
+		return *this;
+	}
+
 	/** Create a new tuple holding a fixed number of items.
 	 *
 	 * Every item must be set before the tuple is used or we are heading
