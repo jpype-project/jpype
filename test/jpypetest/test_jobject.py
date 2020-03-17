@@ -183,15 +183,15 @@ class JClassTestCase(common.JPypeTestCase):
     def testArraySetRangeFail(self):
         ja = JArray(JObject)(4)
         with self.assertRaises(TypeError):
-            ja[:] = [ 1, 2, object(), 3]
-        ja[:] = [ 1, 2, 3, 4]
+            ja[:] = [1, 2, object(), 3]
+        ja[:] = [1, 2, 3, 4]
 
     @common.requireInstrumentation
     def testArraySetRangeFault(self):
         _jpype.fault("JPClass::setArrayRange")
         ja = JArray(JObject)(4)
         with self.assertRaisesRegex(SystemError, "fault"):
-            ja[:] = [ 1, 2, 3, 4]
+            ja[:] = [1, 2, 3, 4]
 
     def testAssignClass(self):
         self.fixture.object_field = JClass("java.lang.StringBuilder")
