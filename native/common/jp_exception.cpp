@@ -324,6 +324,7 @@ void JPypeException::toPython()
 		}
 
 		// Attach our info as the cause
+		if (_jp_cpp_exceptions)
 		{
 			JPPyErrFrame eframe;
 			eframe.normalize();

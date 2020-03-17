@@ -21,6 +21,8 @@
 #include "jp_primitive_accessor.h"
 
 
+bool _jp_cpp_exceptions = false;
+
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPClass_initType(PyObject* module);
 extern void PyJPField_initType(PyObject* module);
@@ -331,6 +333,12 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 	JP_PY_CATCH(NULL);
 }
 
+static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
+{
+	_jp_cpp_exceptions = PyObject_IsTrue(src);
+	Py_RETURN_TRUE;
+}
+
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
@@ -535,6 +543,7 @@ static PyMethodDef moduleMethods[] = {
 
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
 	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
+	{"enableStacktraces", (PyCFunction) (&PyJPModule_enableStacktraces), METH_O, ""},
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
 #endif

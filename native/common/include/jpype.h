@@ -131,6 +131,8 @@ typedef jvalue (*jconverter)(void*) ;
  */
 extern jconverter getConverter(const char* from, int itemsize, const char* to);
 
+extern bool _jp_cpp_exceptions;
+
 // Types
 class JPClass;
 class JPValue;
