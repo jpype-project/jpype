@@ -24,6 +24,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Proxies pass Python exceptions properly rather converting to 
     java.lang.RuntimeException
 
+  - java.lang.Number converts automatically from Python and Java numbers
+
+  - java.lang.Object and java.lang.Number box signed, sized numpy types 
+    (int8, int16, int32, int64, float32, float64) to the Java boxed type
+    with the same size automatically.  Architecture dependent numpy
+    types map to Long or Double.
+
 - **0.7.2 - 2-28-2019**
 
   - C++ and Java exceptions hold the traceback as a Python exception

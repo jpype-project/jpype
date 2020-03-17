@@ -192,7 +192,7 @@ int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
 	return Py_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
-static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
+static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
 
@@ -201,7 +201,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* args)
 	char ignoreUnrecognized = true;
 	char convertStrings = false;
 
-	if (!PyArg_ParseTuple(args, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
+	if (!PyArg_ParseTuple(pyargs, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
 			&ignoreUnrecognized, &convertStrings))
 	{
 		return NULL;

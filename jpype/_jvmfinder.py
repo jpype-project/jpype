@@ -117,19 +117,18 @@ class JVMFinder(object):
                     continue  # maybe we will find another one?
                 return os.path.join(root, self._libfile)
 
-        else:
-            if found_non_supported_jvm:
-                raise JVMNotSupportedException("Sorry '{0}' is known to be "
-                                               "broken. Please ensure your "
-                                               "JAVA_HOME contains at least "
-                                               "another JVM implementation "
-                                               "(eg. server)"
-                                               .format(candidate))
-            # File not found
-            raise JVMNotFoundException("Sorry no JVM could be found. "
-                                       "Please ensure your JAVA_HOME "
-                                       "environment variable is pointing "
-                                       "to correct installation.")
+        if found_non_supported_jvm:
+            raise JVMNotSupportedException("Sorry '{0}' is known to be "
+                                           "broken. Please ensure your "
+                                           "JAVA_HOME contains at least "
+                                           "another JVM implementation "
+                                           "(eg. server)"
+                                           .format(candidate))
+        # File not found
+        raise JVMNotFoundException("Sorry no JVM could be found. "
+                                   "Please ensure your JAVA_HOME "
+                                   "environment variable is pointing "
+                                   "to correct installation.")
 
     def find_possible_homes(self, parents):
         """
@@ -204,13 +203,12 @@ class JVMFinder(object):
                 if jvm is not None:
                     return jvm
 
-        else:
-            if jvm_notsupport_ext is not None:
-                raise jvm_notsupport_ext
-            raise JVMNotFoundException("No JVM shared library file ({0}) "
-                                       "found. Try setting up the JAVA_HOME "
-                                       "environment variable properly."
-                                       .format(self._libfile))
+        if jvm_notsupport_ext is not None:
+            raise jvm_notsupport_ext
+        raise JVMNotFoundException("No JVM shared library file ({0}) "
+                                   "found. Try setting up the JAVA_HOME "
+                                   "environment variable properly."
+                                   .format(self._libfile))
 
     def _get_from_java_home(self):
         """
