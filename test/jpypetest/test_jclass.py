@@ -189,7 +189,9 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testJavaConversion(self):
         a = JString("a")
-        self.assertEqual(jpype.java.lang.Class._canConvertToJava(object()), "none")
-        self.assertEqual(jpype.java.lang.Class._canConvertToJava(a.getClass()), "exact")
-        self.assertEqual(jpype.java.lang.Class._canConvertToJava(JString), "exact")
-
+        self.assertEqual(
+            jpype.java.lang.Class._canConvertToJava(object()), "none")
+        self.assertEqual(
+            jpype.java.lang.Class._canConvertToJava(a.getClass()), "exact")
+        self.assertEqual(
+            jpype.java.lang.Class._canConvertToJava(JString), "exact")

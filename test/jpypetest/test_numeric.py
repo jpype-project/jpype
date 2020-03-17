@@ -41,26 +41,26 @@ class NumericTestCase(common.JPypeTestCase):
         self.assertEqual(null, None)
         self.assertNotEqual(null, object())
         with self.assertRaisesRegex(TypeError, "null"):
-            null>0
+            null > 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null<0
+            null < 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null>=0
+            null >= 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null<=0
+            null <= 0
 
     def testCompareNullFloat(self):
         null = JObject(None, java.lang.Double)
         self.assertEqual(null, None)
         self.assertNotEqual(null, object())
         with self.assertRaisesRegex(TypeError, "null"):
-            null>0
+            null > 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null<0
+            null < 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null>=0
+            null >= 0
         with self.assertRaisesRegex(TypeError, "null"):
-            null<=0
+            null <= 0
 
     def testHashNull(self):
         null = JObject(None, java.lang.Integer)
@@ -148,4 +148,3 @@ class NumericTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             hash(ji)
         hash(ji)
-

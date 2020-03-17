@@ -196,7 +196,8 @@ class JClassTestCase(common.JPypeTestCase):
     def testAssignClass(self):
         self.fixture.object_field = JClass("java.lang.StringBuilder")
         self.assertIsInstance(self.fixture.object_field, jpype.java.lang.Class)
-        self.assertEqual(self.fixture.object_field, JClass("java.lang.StringBuilder"))
+        self.assertEqual(self.fixture.object_field,
+                         JClass("java.lang.StringBuilder"))
 
     @common.requireInstrumentation
     def testSetFinalField(self):
@@ -222,12 +223,18 @@ class JClassTestCase(common.JPypeTestCase):
             setattr(js, object(), "b")
 
     def testJavaPrimitives(self):
-        self.assertIsInstance(self.fixture.callObject(JByte(1)), java.lang.Byte)
-        self.assertIsInstance(self.fixture.callObject(JShort(1)), java.lang.Short)
-        self.assertIsInstance(self.fixture.callObject(JInt(1)), java.lang.Integer)
-        self.assertIsInstance(self.fixture.callObject(JLong(1)), java.lang.Long)
-        self.assertIsInstance(self.fixture.callObject(JFloat(1)), java.lang.Float)
-        self.assertIsInstance(self.fixture.callObject(JDouble(1)), java.lang.Double)
+        self.assertIsInstance(
+            self.fixture.callObject(JByte(1)), java.lang.Byte)
+        self.assertIsInstance(
+            self.fixture.callObject(JShort(1)), java.lang.Short)
+        self.assertIsInstance(
+            self.fixture.callObject(JInt(1)), java.lang.Integer)
+        self.assertIsInstance(
+            self.fixture.callObject(JLong(1)), java.lang.Long)
+        self.assertIsInstance(
+            self.fixture.callObject(JFloat(1)), java.lang.Float)
+        self.assertIsInstance(self.fixture.callObject(
+            JDouble(1)), java.lang.Double)
 
     def testPythonPrimitives(self):
         self.assertIsInstance(self.fixture.callObject(1), java.lang.Long)
@@ -235,9 +242,15 @@ class JClassTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testNumpyPrimitives(self):
-        self.assertIsInstance(self.fixture.callObject(np.int8(1)), java.lang.Byte)
-        self.assertIsInstance(self.fixture.callObject(np.int16(1)), java.lang.Short)
-        self.assertIsInstance(self.fixture.callObject(np.int32(1)), java.lang.Integer)
-        self.assertIsInstance(self.fixture.callObject(np.int64(1)), java.lang.Long)
-        self.assertIsInstance(self.fixture.callObject(np.float32(1)), java.lang.Float)
-        self.assertIsInstance(self.fixture.callObject(np.float64(1)), java.lang.Double)
+        self.assertIsInstance(
+            self.fixture.callObject(np.int8(1)), java.lang.Byte)
+        self.assertIsInstance(self.fixture.callObject(
+            np.int16(1)), java.lang.Short)
+        self.assertIsInstance(self.fixture.callObject(
+            np.int32(1)), java.lang.Integer)
+        self.assertIsInstance(self.fixture.callObject(
+            np.int64(1)), java.lang.Long)
+        self.assertIsInstance(self.fixture.callObject(
+            np.float32(1)), java.lang.Float)
+        self.assertIsInstance(self.fixture.callObject(
+            np.float64(1)), java.lang.Double)

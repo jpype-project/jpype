@@ -159,7 +159,7 @@ class ArrayTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, 'Not a Java value'):
             _jpype._JObject.__str__(null)
         self.assertEqual(hash(null), hash(None))
- 
+
     @common.requireInstrumentation
     def testJPArrayNew(self):
         ja = JArray(JInt)
@@ -357,71 +357,71 @@ class ArrayTestCase(common.JPypeTestCase):
         ja = JArray.of(a)
         self.assertIsInstance(ja, JArray(jtype))
         self.assertEqual(len(ja), 100)
-        self.assertTrue(np.all(a==ja))
+        self.assertTrue(np.all(a == ja))
 
-        a = np.reshape(a, (20,5))
+        a = np.reshape(a, (20, 5))
         ja = JArray.of(a)
-        self.assertIsInstance(ja, JArray(jtype,2))
+        self.assertIsInstance(ja, JArray(jtype, 2))
         self.assertEqual(len(ja), 20)
         self.assertEqual(len(ja[0]), 5)
-        self.assertTrue(np.all(a==ja))
+        self.assertTrue(np.all(a == ja))
 
-        a = np.reshape(a, (5,2,10))
+        a = np.reshape(a, (5, 2, 10))
         ja = JArray.of(a)
-        self.assertIsInstance(ja, JArray(jtype,3))
+        self.assertIsInstance(ja, JArray(jtype, 3))
         self.assertEqual(len(ja), 5)
         self.assertEqual(len(ja[0]), 2)
         self.assertEqual(len(ja[0][0]), 10)
-        self.assertTrue(np.all(a==ja))
-        self.assertTrue(np.all(a[1,:,:]==JArray.of(a[1,:,:])))
-        self.assertTrue(np.all(a[2::2,:,:]==JArray.of(a[2::2,:,:])))
-        self.assertTrue(np.all(a[:,:,4:-2]==JArray.of(a[:,:,4:-2])))
+        self.assertTrue(np.all(a == ja))
+        self.assertTrue(np.all(a[1, :, :] == JArray.of(a[1, :, :])))
+        self.assertTrue(np.all(a[2::2, :, :] == JArray.of(a[2::2, :, :])))
+        self.assertTrue(np.all(a[:, :, 4:-2] == JArray.of(a[:, :, 4:-2])))
 
     def checkArrayOfCast(self, jtype, dtype):
         a = np.random.randint(0, 1, size=100, dtype=np.bool)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*8-1, size=100, dtype=np.uint8)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*7, 2*7-1, size=100, dtype=np.int8)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*16-1, size=100, dtype=np.uint16)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*15, 2*15-1, size=100, dtype=np.int16)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*32-1, size=100, dtype=np.uint32)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*31, 2*31-1, size=100, dtype=np.int32)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*64-1, size=100, dtype=np.uint64)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*63, 2*63-1, size=100, dtype=np.int64)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
     @common.requireNumpy
     def testArrayOfBoolean(self):
@@ -495,7 +495,7 @@ class ArrayTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testArrayOfFaults(self):
-        b = bytes([1,2,3])
+        b = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::assemble")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JInt)

@@ -260,4 +260,3 @@ class CoverageCase(common.JPypeTestCase):
     def testJClassFromClass(self):
         self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName(
             "java.lang.StringBuilder")), jpype.JClass)
-

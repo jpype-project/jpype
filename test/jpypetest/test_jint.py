@@ -515,13 +515,13 @@ class JIntTestCase(common.JPypeTestCase):
         self.assertEqual(a, n)
 
     def testArrayHash(self):
-        ja = JArray(JInt)([1,2,3])
+        ja = JArray(JInt)([1, 2, 3])
         self.assertIsInstance(hash(ja), int)
 
     @common.requireNumpy
     def testArrayBufferDims(self):
         ja = JArray(JInt)(5)
-        a = np.zeros((5,2))
+        a = np.zeros((5, 2))
         with self.assertRaisesRegex(TypeError, "incorrect"):
             ja[:] = a
 
@@ -529,10 +529,11 @@ class JIntTestCase(common.JPypeTestCase):
         class q(object):
             def __int__(self):
                 raise SystemError("nope")
+
             def __index__(self):
                 raise SystemError("nope")
         ja = JArray(JInt)(5)
-        a = [ 1, -1, q(), 3, 4]
+        a = [1, -1, q(), 3, 4]
         with self.assertRaisesRegex(SystemError, "nope"):
             ja[:] = a
 
@@ -541,7 +542,7 @@ class JIntTestCase(common.JPypeTestCase):
             # Lie about our length
             def __len__(self):
                 return 5
-        a = q([1,2,3])
+        a = q([1, 2, 3])
         ja = JArray(JInt)(5)
         with self.assertRaisesRegex(ValueError, "Slice"):
             ja[:] = [1, 2, 3]

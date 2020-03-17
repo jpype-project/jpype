@@ -122,6 +122,7 @@ class _JMap(object):
     This customizer adds the Python list and len operators to classes
     that implement the Java Map interface.
     """
+
     def __jclass_init__(self):
         Mapping.register(self)
 

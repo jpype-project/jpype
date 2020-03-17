@@ -40,4 +40,3 @@ class _JComparable(object):
         return self.compareTo(o) <= 0
 
     __hash__ = _jpype._JObject.__hash__
-
