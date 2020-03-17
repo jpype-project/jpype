@@ -70,8 +70,8 @@ class FaultTestCase(common.JPypeTestCase):
             print(null.int_field)
         with self.assertRaisesRegex(AttributeError, 'requires'):
             null.int_field = 1
-        #null.callInt(1)
- 
+        # null.callInt(1)
+
     @common.requireInstrumentation
     def testJPClass_new(self):
         _jpype.fault("PyJPClass_new")
@@ -565,7 +565,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JClass("java.math.MathContext")().getPrecision()
         JClass("java.math.MathContext")
-
 
     @common.requireInstrumentation
     def testMethodPack(self):
@@ -1077,7 +1076,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, "buffer support"):
             _jpype.convertToDirectBuffer(1)
         with self.assertRaisesRegex(BufferError, "not writable"):
-            _jpype.convertToDirectBuffer(bytes([1,2,3]))
+            _jpype.convertToDirectBuffer(bytes([1, 2, 3]))
 
     def testStartupBadArg(self):
         with self.assertRaisesRegex(TypeError, "4 arguments"):

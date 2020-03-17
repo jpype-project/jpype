@@ -327,7 +327,7 @@ class ProxyTestCase(common.JPypeTestCase):
             @JOverride
             def equals(self, _obj):
                 return True
-        arr = JArray(JString)(["a","b"])
+        arr = JArray(JString)(["a", "b"])
         java.util.Arrays.sort(arr, ValidComparator())
 
     def testRaisePython(self):
@@ -335,6 +335,7 @@ class ProxyTestCase(common.JPypeTestCase):
         class RaiseException(object):
             def __init__(self, exc):
                 self.exc = exc
+
             @JOverride
             def compare(self, _o1, _o2):
                 raise self.exc("nobody expects the Python exception!")
@@ -342,7 +343,7 @@ class ProxyTestCase(common.JPypeTestCase):
             @JOverride
             def equals(self, _obj):
                 return True
-        arr = JArray(JString)(["a","b"])
+        arr = JArray(JString)(["a", "b"])
         with self.assertRaises(TypeError):
             java.util.Arrays.sort(arr, RaiseException(TypeError))
         with self.assertRaises(ValueError):
@@ -350,7 +351,8 @@ class ProxyTestCase(common.JPypeTestCase):
         with self.assertRaises(SyntaxError):
             java.util.Arrays.sort(arr, RaiseException(SyntaxError))
         with self.assertRaises(java.lang.RuntimeException):
-            java.util.Arrays.sort(arr, RaiseException(java.lang.RuntimeException))
+            java.util.Arrays.sort(
+                arr, RaiseException(java.lang.RuntimeException))
 
     def testBad(self):
         @JImplements("java.util.Comparator")
@@ -373,9 +375,8 @@ class ProxyTestCase(common.JPypeTestCase):
             def equals(self, _obj):
                 return True
 
-        arr = JArray(JString)(["a","b"])
+        arr = JArray(JString)(["a", "b"])
         with self.assertRaises(TypeError):
             java.util.Arrays.sort(arr, TooManyParams())
         with self.assertRaises(TypeError):
             java.util.Arrays.sort(arr, TooFewParams())
-

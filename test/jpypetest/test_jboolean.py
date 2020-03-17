@@ -121,7 +121,7 @@ class JBooleanTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testArrayBufferDims(self):
         ja = JArray(JBoolean)(5)
-        a = np.zeros((5,2))
+        a = np.zeros((5, 2))
         with self.assertRaisesRegex(TypeError, "incorrect"):
             ja[:] = a
 
@@ -130,7 +130,7 @@ class JBooleanTestCase(common.JPypeTestCase):
             def __bool__(self):
                 raise SystemError("nope")
         ja = JArray(JBoolean)(5)
-        a = [ 1, 2, q(), 3, 4]
+        a = [1, 2, q(), 3, 4]
         with self.assertRaisesRegex(SystemError, "nope"):
             ja[:] = a
 
@@ -139,7 +139,7 @@ class JBooleanTestCase(common.JPypeTestCase):
             # Lie about our length
             def __len__(self):
                 return 5
-        a = q([1,2,3])
+        a = q([1, 2, 3])
         ja = JArray(JBoolean)(5)
         with self.assertRaisesRegex(ValueError, "Slice"):
             ja[:] = [1, 2, 3]

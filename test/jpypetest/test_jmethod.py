@@ -191,7 +191,7 @@ class JMethodTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPMethod_getQualName")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__qualname__
- 
+
     @common.requireInstrumentation
     def testJMethod_annotationsFault(self):
         fixture = JClass("jpype.common.Fixture")()
@@ -259,7 +259,7 @@ class JMethodTestCase(common.JPypeTestCase):
         fixture = JClass("jpype.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__annotations__, dict)
         ann = fixture.callInt.__annotations__
-        expected = {'arg0':JInt, 'return':JInt}
+        expected = {'arg0': JInt, 'return': JInt}
         self.assertEqual(ann, expected)
 
     def testJMethod_closure(self):
@@ -268,6 +268,7 @@ class JMethodTestCase(common.JPypeTestCase):
 
     def testJMethod_code(self):
         fixture = JClass("jpype.common.Fixture")()
+
         def f():
             pass
         self.assertIsInstance(fixture.callInt.__code__, type(f.__code__))
@@ -287,4 +288,5 @@ class JMethodTestCase(common.JPypeTestCase):
     def testJMethod_qualname(self):
         fixture = JClass("jpype.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__qualname__, str)
-        self.assertEqual(fixture.callInt.__qualname__, 'jpype.common.Fixture.callInt')
+        self.assertEqual(fixture.callInt.__qualname__,
+                         'jpype.common.Fixture.callInt')

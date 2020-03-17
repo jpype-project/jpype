@@ -314,7 +314,8 @@ class JDoubleTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testCheckNumpyInt64(self):
         self.checkType(np.random.randint(-2**63, 2**63-1, dtype=np.int64))
-        self.checkType(np.uint64(np.random.randint(0,2**64-1, dtype=np.uint64)))
+        self.checkType(
+            np.uint64(np.random.randint(0, 2**64-1, dtype=np.uint64)))
         self.checkType(np.uint64(0))
         self.checkType(np.uint64(2**64-1))
         self.checkType(np.int64(-2**63))
@@ -384,13 +385,13 @@ class JDoubleTestCase(common.JPypeTestCase):
             ja[0:1] = [object()]
 
     def testArrayHash(self):
-        ja = JArray(JDouble)([1,2,3])
+        ja = JArray(JDouble)([1, 2, 3])
         self.assertIsInstance(hash(ja), int)
 
     @common.requireNumpy
     def testArrayBufferDims(self):
         ja = JArray(JDouble)(5)
-        a = np.zeros((5,2))
+        a = np.zeros((5, 2))
         with self.assertRaisesRegex(TypeError, "incorrect"):
             ja[:] = a
 
@@ -399,7 +400,7 @@ class JDoubleTestCase(common.JPypeTestCase):
             def __float__(self):
                 raise SystemError("nope")
         ja = JArray(JDouble)(5)
-        a = [ 1, -1, q(), 3, 4]
+        a = [1, -1, q(), 3, 4]
         with self.assertRaisesRegex(SystemError, "nope"):
             ja[:] = a
 
@@ -408,7 +409,7 @@ class JDoubleTestCase(common.JPypeTestCase):
             # Lie about our length
             def __len__(self):
                 return 5
-        a = q([1,2,3])
+        a = q([1, 2, 3])
         ja = JArray(JDouble)(5)
         with self.assertRaisesRegex(ValueError, "Slice"):
             ja[:] = [1, 2, 3]

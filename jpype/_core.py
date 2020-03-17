@@ -31,7 +31,6 @@ __all__ = [
 ]
 
 
-
 def versionTest():
     if sys.version_info < (3,):
         raise ImportError("Python 2 is not supported")
@@ -320,6 +319,8 @@ def _JTerminate():
         _jpype.shutdown()
     except RuntimeError:
         pass
+
+
 atexit.register(_JTerminate)
 
 
