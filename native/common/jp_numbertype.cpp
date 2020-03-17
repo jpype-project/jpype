@@ -16,30 +16,18 @@ JPNumberType::~JPNumberType()
 {
 }
 
-JPMatch::Type JPNumberType::getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj)
+
+JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPNumberType::canConvertToJava");
-	if (nullConversion->matches(match, frame, this, pyobj)
-			|| javaNumberAnyConversion->matches(match, frame, this, pyobj)
-			|| boxLongConversion->matches(match, frame, this, pyobj)
-			|| boxDoubleConversion->matches(match, frame, this, pyobj)
+	if (nullConversion->matches(match, this)
+			|| javaNumberAnyConversion->matches(match, this)
+			|| boxLongConversion->matches(match, this)
+			|| boxDoubleConversion->matches(match, this)
+			|| hintsConversion->matches(match, this)
 			)
-	{
 		return match.type;
-	}
-
-	// Apply user supplied conversions
-	if (!m_Hints.isNull())
-	{
-		JPClassHints *hints = ((PyJPClassHints*) m_Hints.get())->m_Hints;
-		if (hints->getConversion(match, frame, this, pyobj) != JPMatch::_none)
-		{
-			JP_TRACE("Match custom conversion");
-			return match.type;
-		}
-	}
-
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

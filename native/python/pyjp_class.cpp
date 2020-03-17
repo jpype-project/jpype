@@ -58,6 +58,9 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
+	// GCOVR_EXCL_START
+	// This sanity check is trigger if the user attempts to build their own
+	// type wrapper with a __del__ method defined.  It is hard to trigger.
 	if (typenew->tp_alloc != (allocfunc) PyJPValue_alloc
 			&& typenew->tp_alloc != PyBaseObject_Type.tp_alloc)
 	{
@@ -65,6 +68,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		PyErr_SetString(PyExc_TypeError, "alloc conflict");
 		return NULL;
 	}
+	// GCOVR_EXCL_STOP
 
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
@@ -118,14 +122,8 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	{
 		switch (slot->slot)
 		{
-			case Py_tp_finalize:
-				type->tp_finalize = (destructor) slot->pfunc;
-				break;
 			case Py_tp_free:
 				type->tp_free = (freefunc) slot->pfunc;
-				break;
-			case Py_tp_alloc:
-				type->tp_alloc = (allocfunc) slot->pfunc;
 				break;
 			case Py_tp_new:
 				type->tp_new = (newfunc) slot->pfunc;
@@ -151,9 +149,6 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_tp_methods:
 				type->tp_methods = (PyMethodDef*) slot->pfunc;
 				break;
-			case  Py_sq_ass_item:
-				heap->as_sequence.sq_ass_item = (ssizeobjargproc) slot->pfunc;
-				break;
 			case Py_sq_item:
 				heap->as_sequence.sq_item = (ssizeargfunc) slot->pfunc;
 				break;
@@ -175,16 +170,18 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_tp_richcompare:
 				type->tp_richcompare = (richcmpfunc) slot->pfunc;
 				break;
+				// GCOVR_EXCL_START
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
 				JP_RAISE_PYTHON();
+				// GCOVR_EXCL_STOP
 		}
 	}
 	PyType_Ready(type);
 	//heap->ht_cached_keys = _PyDict_NewKeysForClass();
 	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
 	return (PyObject*) type;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -212,7 +209,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// Call the type init
 	int rc = PyType_Type.tp_init(self, args, kwargs);
 	if (rc == -1)
-		return rc;
+		return rc; // GCOVR_EXCL_LINE no clue how to trigger this one
 
 	return rc;
 	JP_PY_CATCH(-1);
@@ -357,12 +354,16 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if (test == type)
 		Py_RETURN_TRUE;
 
+	// GCOVR_EXCL_START
+	// This is triggered only if the user asks for isInstance when the
+	// JVM is shutdown. It should not happen in normal operations.
 	if (!JPContext_global->isRunning())
 	{
 		if ((PyObject*) type == _JObject)
 			return PyBool_FromLong(Py_IsSubClassSingle(PyJPObject_Type, test));
 		return PyBool_FromLong(Py_IsSubClassSingle(type, test));
 	}
+	// GCOVR_EXCL_STOP
 
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
@@ -443,7 +444,7 @@ static PyObject *PyJPClass_hints(PyObject *self, PyObject *closure)
 	PyJPClass *cls = (PyJPClass*) self;
 	PyObject *hints = cls->m_Class->getHints();
 	if (hints == NULL)
-		Py_RETURN_NONE;
+		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
 	Py_INCREF(hints);
 	return hints;
 	JP_PY_CATCH(NULL);
@@ -494,8 +495,8 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match;
-	cls->getJavaConversion(&frame, match, other);
+	JPMatch match(&frame, other);
+	cls->findJavaConversion(match);
 
 	// Report to user
 	if (match.type == JPMatch::_none)
@@ -508,7 +509,7 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 		return JPPyString::fromStringUTF8("exact").keep();
 
 	// Not sure how this could happen
-	Py_RETURN_NONE;
+	Py_RETURN_NONE; // GCOVR_EXCL_NONE
 	JP_PY_CATCH(NULL);
 }
 
@@ -523,8 +524,8 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	// Cast on non-Java
 	if ( val == NULL || val->getClass()->isPrimitive())
 	{
-		JPMatch match;
-		type->getJavaConversion(&frame, match, other);
+		JPMatch match(&frame, other);
+		type->findJavaConversion(match);
 		// Otherwise, see if we can convert it
 		if (match.type == JPMatch::_none)
 		{
@@ -535,7 +536,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 					);
 			return NULL;
 		}
-		jvalue v = match.conversion->convert(&frame, type, other);
+		jvalue v = match.convert();
 		return PyJPValue_create(frame, JPValue(type, v)).keep();
 	}
 
@@ -588,8 +589,8 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match;
-	cls->getJavaConversion(&frame, match, other);
+	JPMatch match(&frame, other);
+	cls->findJavaConversion(match);
 
 	// If there is no conversion report a failure
 	if (match.type == JPMatch::_none)
@@ -599,7 +600,7 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 	}
 
 	// Otherwise give back a PyJPValue
-	jvalue v = match.conversion->convert(&frame, cls, other);
+	jvalue v = match.convert();
 	return PyJPValue_create(frame, JPValue(cls, v)).keep();
 	JP_PY_CATCH(NULL);
 }
@@ -684,9 +685,9 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 			return NULL;
 		JPJavaFrame frame(cls->getContext());
 		return frame.findClass((jclass) javaSlot->getJavaObject());
-	}	catch (...)
+	}	catch (...) // GCOVR_EXCL_LINE
 	{
-		return NULL;
+		return NULL; // GCOVR_EXCL_LINE
 	}
 }
 

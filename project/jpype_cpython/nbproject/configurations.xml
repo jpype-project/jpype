@@ -71,6 +71,7 @@
         <itemPath>../../native/common/jp_class.cpp</itemPath>
         <itemPath>../../native/common/jp_classhints.cpp</itemPath>
         <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_classtype.cpp</itemPath>
         <itemPath>../../native/common/jp_context.cpp</itemPath>
         <itemPath>../../native/common/jp_convert.cpp</itemPath>
         <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
@@ -390,6 +391,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/jp_classloader.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_classtype.cpp"
             ex="false"
             tool="1"
             flavor2="0">

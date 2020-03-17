@@ -25,13 +25,13 @@ public:
 	// GCOVR_EXCL_START
 	// This is the default method used for any matches that have explicit
 	// type dependent checks.
-	virtual JPMatch::Type matches(JPMatch &match, JPJavaFrame *frame, JPClass *cls, PyObject *pyobj)
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		return JPMatch::_none;
 	}
 	// GCOVR_EXCL_STOP
 
-	virtual jvalue convert(JPJavaFrame *frame, JPClass* cls, PyObject*pyobj) = 0;
+	virtual jvalue convert(JPMatch &match) = 0;
 } ;
 
 class JPClassHints
@@ -47,7 +47,7 @@ public:
 	 *
 	 * @returns the quality of the match
 	 */
-	JPMatch::Type getConversion(JPMatch& match, JPJavaFrame *context, JPClass *cls, PyObject *obj);
+	JPMatch::Type getConversion(JPMatch& match, JPClass *cls);
 
 	/**
 	 * Add a conversion based on a specified attribute.
@@ -81,7 +81,7 @@ private:
 	std::list<JPConversion*> conversions;
 } ;
 
-
+extern JPConversion *hintsConversion;
 extern JPConversion *charArrayConversion;
 extern JPConversion *byteArrayConversion;
 extern JPConversion *sequenceConversion;

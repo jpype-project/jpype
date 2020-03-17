@@ -35,34 +35,16 @@ JPArrayClass::~JPArrayClass()
 {
 }
 
-JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	if (nullConversion->matches(match, frame, this, pyobj)
-			|| objectConversion->matches(match, frame, this, pyobj)
-			|| charArrayConversion->matches(match, frame, this, pyobj)
-			|| byteArrayConversion->matches(match, frame, this, pyobj))
+	if (nullConversion->matches(match, this)
+			|| objectConversion->matches(match, this)
+			|| charArrayConversion->matches(match, this)
+			|| byteArrayConversion->matches(match, this)
+			|| sequenceConversion->matches(match, this)
+			)
 		return match.type;
-
-	if (JPPyObject::isSequenceOfItems(pyobj))
-	{
-		JP_TRACE("Sequence");
-		JPPySequence seq(JPPyRef::_use, pyobj);
-		jlong length = seq.size();
-		match.type = JPMatch::_implicit;
-		JPMatch imatch;
-		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
-		{
-			m_ComponentType->getJavaConversion(frame, imatch, seq[i].get());
-			if (imatch.type < match.type)
-			{
-				match.type = imatch.type;
-			}
-		}
-		match.conversion = sequenceConversion;
-		return match.type;
-	}
-
 	JP_TRACE("None");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -96,9 +78,4 @@ JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
 	jvalue v;
 	v.l = frame.keep(m_ComponentType->newArrayInstance(frame, length));
 	return JPValue(this, v);
-}
-
-JPValue JPArrayClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
-{
-	JP_RAISE(PyExc_SystemError, "Not used");
 }

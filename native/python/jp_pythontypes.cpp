@@ -10,12 +10,7 @@ static void assertValid(PyObject *obj)
 	if (obj->ob_refcnt >= 1)
 		return;
 
-	// This condition can only be triggered by a fatal error in
-	// the reference management system which will result in some
-	// other fatal error later as we have incorrectly registered
-	// a deleted object with Python which most certainly will crash
-	// it at some point.
-#ifndef JP_INSTRUMENTATION
+	// GCOVR_EXCL_START
 	// At this point our car has traveled beyond the end of the
 	// cliff and it will hit the ground some twenty
 	// python calls later with a nearly untracable fault, thus
@@ -23,7 +18,7 @@ static void assertValid(PyObject *obj)
 	// a noble death here.
 	JP_TRACE_PY("pyref FAULT", obj);
 	JP_RAISE(PyExc_SystemError, "Deleted reference");
-#endif
+	// GCOVR_EXCL_STOP
 }
 
 JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)

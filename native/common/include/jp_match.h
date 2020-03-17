@@ -14,20 +14,43 @@ public:
 		_implicit = 2,
 		_exact = 3
 	} ;
+
+public:
+	JPMatch();
+	JPMatch(JPJavaFrame *frame, PyObject *object);
+
+	JPContext *getContext()
+	{
+		if (frame == NULL)
+			return NULL;
+		return frame->getContext();
+	}
+
+	/**
+	 * Get the Java slot associated with the Python object.
+	 *
+	 * Thus uses caching.
+	 *
+	 * @return the Java slot or 0 if not available.
+	 */
+	JPValue *getJavaSlot();
+
+	jvalue convert();
+
 public:
 	JPMatch::Type type;
-	JPConversion* conversion;
+	JPConversion *conversion;
+	JPJavaFrame *frame;
+	PyObject *object;
+	JPValue *slot;
+	void *closure;
 } ;
 
 class JPMethodMatch
 {
 public:
-	JPMatch::Type type;
-	bool isVarIndirect;
-	JPMethod* overload;
-	char offset;
-	char skip;
-	std::vector<JPMatch> argument;
+
+	JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args);
 
 	JPMatch& operator[](size_t i)
 	{
@@ -39,15 +62,13 @@ public:
 		return argument[i];
 	}
 
-	JPMethodMatch(size_t size)
-	: argument(size)
-	{
-		type = JPMatch::_none;
-		isVarIndirect = false;
-		overload = 0;
-		offset = 0;
-		skip = 0;
-	}
+public:
+	JPMatch::Type type;
+	bool isVarIndirect;
+	JPMethod* overload;
+	char offset;
+	char skip;
+	std::vector<JPMatch> argument;
 } ;
 
 #endif /* JP_MATCH_H */

@@ -242,15 +242,10 @@ class JClassTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testNumpyPrimitives(self):
-        self.assertIsInstance(
-            self.fixture.callObject(np.int8(1)), java.lang.Byte)
-        self.assertIsInstance(self.fixture.callObject(
-            np.int16(1)), java.lang.Short)
-        self.assertIsInstance(self.fixture.callObject(
-            np.int32(1)), java.lang.Integer)
-        self.assertIsInstance(self.fixture.callObject(
-            np.int64(1)), java.lang.Long)
-        self.assertIsInstance(self.fixture.callObject(
-            np.float32(1)), java.lang.Float)
-        self.assertIsInstance(self.fixture.callObject(
-            np.float64(1)), java.lang.Double)
+        self.assertIsInstance(self.fixture.callObject(np.int8(1)), java.lang.Byte)
+        self.assertIsInstance(self.fixture.callObject(np.int16(1)), java.lang.Short)
+        self.assertIsInstance(self.fixture.callObject(np.int32(1)), java.lang.Integer)
+        self.assertIsInstance(self.fixture.callObject(np.int64(1)), java.lang.Long)
+        self.assertIsInstance(self.fixture.callObject(np.float32(1)), java.lang.Float)
+        self.assertIsInstance(self.fixture.callObject(np.float64(1)), java.lang.Double)
+

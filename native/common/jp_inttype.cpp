@@ -46,17 +46,14 @@ JPConversionLong<JPIntType> intConversion;
 JPConversionLongNumber<JPIntType> intNumberConversion;
 JPConversionLongWiden<JPIntType> intWidenConversion;
 
-JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPIntType::getJavaConversion");
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
 
-	if (pyobj == Py_None)
+	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = PyJPValue_getJavaSlot(pyobj);
+	JPValue *value = match.getJavaSlot();
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
@@ -67,11 +64,8 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (context != NULL && cls == context->_java_lang_Integer)
-		{
-			match.conversion = unboxConversion;
-			return match.type = JPMatch::_implicit;
-		}
+		if (unboxConversion->matches(match, this))
+			return match.type;
 
 		// Consider widening
 		if (cls->isPrimitive())
@@ -94,17 +88,9 @@ JPMatch::Type JPIntType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, P
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyLong_CheckExact(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &intConversion;
-		return match.type = JPMatch::_implicit;
-	}
-
-	if (PyNumber_Check(pyobj))
-	{
-		match.conversion = &intNumberConversion;
-		return match.type = JPMatch::_explicit;
-	}
+	if (intConversion.matches(match, this)
+			|| intNumberConversion.matches(match, this))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -154,19 +140,19 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 
 void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetStaticIntField(c, fid, val);
 }
 
 void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetIntField(c, fid, val);
 }
 
@@ -238,10 +224,10 @@ JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }
 
@@ -262,7 +248,7 @@ void JPIntType::releaseView(JPArrayView& view)
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
 				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException& ex)
+	}	catch (JPypeException&)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

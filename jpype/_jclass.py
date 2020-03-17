@@ -88,7 +88,6 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
             if len(params) > 0:
                 params = params.split(',')
             if len(params) > 0 and len(params) != len(ret.class_.getTypeParameters()):
-                print(params, len(params))
                 raise TypeError(
                     "Java generic class '%s' length mismatch" % (ret.__name__))
             return ret

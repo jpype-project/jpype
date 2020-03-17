@@ -37,16 +37,17 @@ JPBoxedType::~JPBoxedType()
 {
 }
 
-JPMatch::Type JPBoxedType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPBoxedType::getJavaConversion");
-	JPClass::getJavaConversion(frame, match, pyobj);
+	JPClass::findJavaConversion(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
-	if (m_PrimitiveType->getJavaConversion(frame, match, pyobj) != JPMatch::_none)
+	if (m_PrimitiveType->findJavaConversion(match) != JPMatch::_none)
 	{
 		JP_TRACE("Primitive", match.type);
 		match.conversion = boxConversion;
+		match.closure = this;
 		return match.type = JPMatch::_explicit;
 	}
 	return match.type = JPMatch::_none;

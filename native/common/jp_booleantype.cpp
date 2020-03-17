@@ -46,31 +46,40 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual jvalue convert(JPJavaFrame* frame, JPClass* cls, PyObject* pyobj) override
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		if (!PyLong_CheckExact(match.object)
+				&& !PyIndex_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+	}
+
+	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		res.z = JPPyLong::asLong(pyobj) != 0;
+		jlong v = PyLong_AsLongLong(match.object);
+		if (v == -1)
+			JP_PY_CHECK();
+		res.z = v != 0;
 		return res;
 	}
 } asBooleanConversion;
 
-JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
+JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPBooleanType::getJavaConversion", this);
-	JPContext *context = NULL;
-	if (frame != NULL)
-		context = frame->getContext();
 
-	if (pyobj ==  Py_None)
+	if (match.object ==  Py_None)
 		return match.type = JPMatch::_none;
 
-	if (PyBool_Check(pyobj))
+	if (PyBool_Check(match.object))
 	{
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_exact;
 	}
 
-	JPValue *value = PyJPValue_getJavaSlot(pyobj);
+	JPValue *value = match.getJavaSlot();
 	if (value != NULL)
 	{
 		JPClass *cls = value->getClass();
@@ -81,23 +90,17 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		}
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (context != NULL && cls == context->_java_lang_Boolean)
-		{
-			match.conversion = unboxConversion;
-			return match.type = JPMatch::_implicit;
-		}
+		if (unboxConversion->matches(match, this))
+			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return match.type = JPMatch::_none;
 	}
 
-	if (PyLong_Check(pyobj) || PyIndex_Check(pyobj))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_implicit;
-	}
+	if (asBooleanConversion.matches(match, this))
+		return match.type;
 
-	if (PyNumber_Check(pyobj))
+	if (PyNumber_Check(match.object))
 	{
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_explicit;
@@ -151,19 +154,19 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 
 void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetStaticBooleanField(c, fid, val);
 }
 
 void JPBooleanType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetBooleanField(c, fid, val);
 }
 
@@ -235,10 +238,10 @@ JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match;
-	if (getJavaConversion(&frame, match, obj) < JPMatch::_implicit)
+	JPMatch match(&frame, obj);
+	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java boolean");
-	type_t val = field(match.conversion->convert(&frame, this, obj));
+	type_t val = field(match.convert());
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);
 }
 
@@ -257,8 +260,8 @@ void JPBooleanType::releaseView(JPArrayView& view)
 	{
 		JPJavaFrame frame(view.getContext());
 		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
-			(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException& ex)
+				(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
+	}	catch (JPypeException&)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

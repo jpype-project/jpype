@@ -986,7 +986,7 @@ public:
 		try
 		{
 			frame_.ReleaseStringUTFChars(jstr_, cstr);
-		}		catch (JPypeException &ex)
+		}		catch (JPypeException&)
 		{
 			// Error during release must be eaten.
 			// If Java does not accept a release of the buffer it

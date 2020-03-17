@@ -118,7 +118,7 @@ public:
 	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame* frame, JPMatch& match, PyObject* pyobj);
+	virtual JPMatch::Type findJavaConversion(JPMatch& match);
 
 	/** Create a new Python object to wrap a Java value.
 	 *

@@ -38,7 +38,7 @@ public:
 	virtual~ JPClassType();
 
 public: // JPClass implementation
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
 } ;
 
 #endif // _JPCLASSTYPE_H_

@@ -43,7 +43,7 @@ public:
 		return context->_java_lang_Float;
 	}
 
-	virtual JPMatch::Type getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj) override;
+	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
 	virtual JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val) override;
 	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
