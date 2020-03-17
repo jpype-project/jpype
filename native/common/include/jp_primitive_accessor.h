@@ -148,8 +148,6 @@ template <class type_t> PyObject *convertMultiArray(
 	return type->convertToPythonObject(frame, v).keep();
 }
 
-extern "C" JPValue* PyJPValue_getJavaSlot(PyObject* self);
-
 template <typename base_t>
 class JPConversionLong : public JPConversion
 {
@@ -271,7 +269,7 @@ public:
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		JPValue *value = PyJPValue_getJavaSlot(match.object);
+		JPValue *value = match.getJavaSlot();
 		jvalue ret;
 		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
 		return ret;
