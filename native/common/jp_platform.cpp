@@ -85,8 +85,6 @@ public:
 #define  PLATFORM_ADAPTER Win32PlatformAdapter
 #else
 
-//AT's comments on porting:
-// this file should be better called jp_platform_unix.h
 #if defined(_HPUX) && !defined(_IA64)
 #include <dl.h>
 #else
