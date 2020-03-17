@@ -271,7 +271,14 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_releaseBuffer");
-	JPContext *context = PyJPModule_getContext();
+	JPContext* context = JPContext_global;
+	if (!context->isRunning())
+	{
+		delete self->m_View;
+		self->m_View = NULL;
+		return;
+	}
+	//	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;
