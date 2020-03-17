@@ -22,14 +22,7 @@ class JPConversion
 public:
 	virtual ~JPConversion();
 
-	// GCOVR_EXCL_START
-	// This is the default method used for any matches that have explicit
-	// type dependent checks.
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
-	{
-		return JPMatch::_none;
-	}
-	// GCOVR_EXCL_STOP
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) = 0;
 
 	virtual jvalue convert(JPMatch &match) = 0;
 } ;

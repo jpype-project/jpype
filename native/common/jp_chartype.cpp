@@ -47,6 +47,16 @@ class JPConversionAsChar : public JPConversion
 	typedef JPCharType base_t;
 public:
 
+	JPMatch::Type matches(JPMatch &match, JPClass *cls)  override
+	{
+		JP_TRACE_IN("JPConversionAsChar::matches");
+		if (!JPPyString::checkCharUTF16(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+		JP_TRACE_OUT;
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
@@ -80,11 +90,8 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 		return match.type = JPMatch::_none;
 	}
 
-	if (JPPyString::checkCharUTF16(match.object))
-	{
-		match.conversion = &asCharConversion;
-		return match.type = JPMatch::_implicit;
-	}
+	if (asCharConversion.matches(match, this))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
