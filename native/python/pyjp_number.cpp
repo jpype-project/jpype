@@ -222,7 +222,7 @@ static Py_hash_t PyJPNumberLong_hash(PyObject *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == NULL || javaSlot->getClass() == NULL)
+	if (javaSlot == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	if (!javaSlot->getClass()->isPrimitive())
 	{
@@ -240,7 +240,7 @@ static Py_hash_t PyJPNumberFloat_hash(PyObject *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == NULL || javaSlot->getClass() == NULL)
+	if (javaSlot == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	if (!javaSlot->getClass()->isPrimitive())
 	{

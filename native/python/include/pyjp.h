@@ -180,7 +180,7 @@ inline JPContext* PyJPModule_getContext()
 	PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
 #endif
 	JPContext* context = JPContext_global;
-	_ASSERT_JVM_RUNNING(context);
+	_ASSERT_JVM_RUNNING(context); // GCOVR_EXCL_LINE
 	return context;
 }
 

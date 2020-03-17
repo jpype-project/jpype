@@ -32,16 +32,20 @@ static void releasePython(void* host)
 JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 		JNIEnv *env, jclass clazz, jlong contextPtr, jlong host, jlong cleanup)
 {
-	JP_TRACE_IN("JPype_ReferenceQueue_removeHostReference");
-	JPContext *context = (JPContext*) contextPtr;
-	JPJavaFrame frame((JPContext*) context, env);
-	JPPyCallAcquire callback;
-	if (cleanup != 0)
+	// Exceptions are not allowed here
+	try
 	{
-		JCleanupHook func = (JCleanupHook) cleanup;
-		(*func)((void*) host);
+		JPContext *context = (JPContext*) contextPtr;
+		JPJavaFrame frame((JPContext*) context, env);
+		JPPyCallAcquire callback;
+		if (cleanup != 0)
+		{
+			JCleanupHook func = (JCleanupHook) cleanup;
+			(*func)((void*) host);
+		}
+	} catch (...) // GCOVR_EXCL_LINE
+	{
 	}
-	JP_TRACE_OUT;
 }
 
 JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
@@ -66,16 +70,16 @@ JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 	// Get all required methods
 	m_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
 
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-JPReferenceQueue::~JPReferenceQueue()
+JPReferenceQueue::~JPReferenceQueue() // GCOVR_EXCL_LINE
 {
 }
 
 void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 {
-	// MATCH TO DECREF IN unreferencePython
+	// MATCH TO DECREF IN releasePython
 	Py_INCREF(hostRef);
 	registerRef(obj, hostRef, &releasePython);
 }
@@ -93,5 +97,5 @@ void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 
 	JP_TRACE("Register reference");
 	frame.CallVoidMethodA(m_ReferenceQueue.get(), m_ReferenceQueueRegisterMethod, args);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }

@@ -62,24 +62,18 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	template <class T> static T assertRange(const T& l)
-	{
-		if (l < -3.40282346638528860e+38 || l > 3.40282346638528860e+38)
-		{
-			JP_RAISE(PyExc_OverflowError, "Cannot convert value to Java float");
-		}
-		return l;
-	}
-
 	virtual char getTypeCode() override
 	{
 		return 'F';
 	}
 
+	// GCOVR_EXCL_START
+	// This is required, but is not currently used.
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jdouble getAsDouble(jvalue v) override
 	{

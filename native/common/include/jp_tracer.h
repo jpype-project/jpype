@@ -17,6 +17,8 @@
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
 
+// GCOVR_EXCL_START
+
 #ifdef JP_TRACING_ENABLE
 #define JP_TRACE_IN_C(...) \
   JPypeTracer _trace(__VA_ARGS__); try {
@@ -133,5 +135,7 @@ inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4
 	JPypeTracer::trace1(str.str().c_str());
 }
 }
+
+// GCOVR_EXCL_STOP
 
 #endif // _JP_TRACER_H__

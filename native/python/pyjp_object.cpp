@@ -33,18 +33,19 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JPContext *context = PyJPModule_getContext();
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
-  
+
   // Create an instance (this may fail)
 	JPJavaFrame frame(context);
 	JPPyObjectVector args(pyargs);
-  
+
   // Java exceptions need to create an object to hit the
 	// Python constructor, but this object will not need to construct
 	// a Java object as the slot will be assigned later.   We will pass
 	// the constructor key to avoid assigning the slot here.
 	if (args.size() == 1 && args[0] == _JObjectKey)
 		return self;
-  
+
+	JP_FAULT_RETURN("PyJPObject_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
 	return self;
 	JP_PY_CATCH(NULL);
@@ -56,7 +57,7 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
-	if (javaSlot == NULL || javaSlot->getClass() == NULL)
+	if (javaSlot == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	jobject o = javaSlot->getJavaObject();
 	if (o == NULL)

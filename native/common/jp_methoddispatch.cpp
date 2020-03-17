@@ -39,11 +39,6 @@ const string& JPMethodDispatch::getName() const
 	return m_Name;
 }
 
-string JPMethodDispatch::getClassName() const
-{
-	return m_Class->getCanonicalName();
-}
-
 void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg, bool callInstance)
 {
 	JP_TRACE_IN("JPMethodDispatch::findOverload");
@@ -190,18 +185,3 @@ string JPMethodDispatch::matchReport(JPPyObjectVector& args)
 	return res.str();
 }
 
-string JPMethodDispatch::dump()
-{
-	stringstream res;
-	for (JPMethodList::iterator cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
-	{
-		JPMethod *u = *cur;
-		res << u->toString() << std::endl;
-		for (JPMethodList::iterator iter = u->m_MoreSpecificOverloads.begin();
-				iter != u->m_MoreSpecificOverloads.end(); ++iter)
-		{
-			res << "   " << (*iter)->toString() << std::endl;
-		}
-	}
-	return res.str();
-}

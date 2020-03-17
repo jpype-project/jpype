@@ -28,6 +28,7 @@ import org.jpype.manager.TypeManager;
  */
 public class JPypeProxy implements InvocationHandler
 {
+
   JPypeContext context;
   public long instance;
   public long cleanup;
@@ -56,31 +57,25 @@ public class JPypeProxy implements InvocationHandler
 
   @Override
   public Object invoke(Object proxy, Method method, Object[] args)
+          throws Throwable
   {
-    try
+    // We can save a lot of effort on the C++ side by doing all the
+    // type lookup work here.
+    TypeManager typeManager = context.getTypeManager();
+    long returnType;
+    long[] parameterTypes;
+    synchronized (typeManager)
     {
-      // We can save a lot of effort on the C++ side by doing all the
-      // type lookup work here.
-      TypeManager typeManager = context.getTypeManager();
-      long returnType;
-      long[] parameterTypes;
-      synchronized (typeManager)
+      returnType = typeManager.findClass(method.getReturnType());
+      Class<?>[] types = method.getParameterTypes();
+      parameterTypes = new long[types.length];
+      for (int i = 0; i < types.length; ++i)
       {
-        returnType = typeManager.findClass(method.getReturnType());
-        Class<?>[] types = method.getParameterTypes();
-        parameterTypes = new long[types.length];
-        for (int i = 0; i < types.length; ++i)
-        {
-          parameterTypes[i] = typeManager.findClass(types[i]);
-        }
+        parameterTypes[i] = typeManager.findClass(types[i]);
       }
-
-      return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
-    } catch (Throwable ex)
-    {
-      System.out.println("THROWABLE " + ex);
-      throw ex;
     }
+
+    return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
   }
 
   private static native Object hostInvoke(long context, String name, long pyObject,

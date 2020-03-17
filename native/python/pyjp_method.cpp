@@ -34,20 +34,6 @@ struct PyJPMethod
 	PyObject* m_CodeRep;
 } ;
 
-static PyObject *PyJPMethod_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
-{
-	JP_PY_TRY("PyJPMethod_new");
-	PyJPMethod *self = (PyJPMethod*) type->tp_alloc(type, 0);
-	JP_PY_CHECK();
-	self->m_Method = NULL;
-	self->m_Instance = NULL;
-	self->m_Doc = NULL;
-	self->m_Annotations = NULL;
-	self->m_CodeRep = NULL;
-	return (PyObject*) self;
-	JP_PY_CATCH(NULL);
-}
-
 static int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Instance);
@@ -72,7 +58,7 @@ static void PyJPMethod_dealloc(PyJPMethod *self)
 	PyObject_GC_UnTrack(self);
 	PyJPMethod_clear(self);
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH_NONE();
 }
 
 static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
@@ -214,7 +200,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 
 int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
 {
-	JP_PY_TRY("PyJPMethod_getDoc");
+	JP_PY_TRY("PyJPMethod_setDoc");
 	Py_CLEAR(self->m_Doc);
 	self->m_Doc = obj;
 	Py_XINCREF(self->m_Doc);
@@ -331,20 +317,10 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPMethod_dump(PyJPMethod *self, PyObject *args)
-{
-	JP_PY_TRY("PyJPMethod_dump");
-	PyJPModule_getContext();
-	string report = self->m_Method->dump();
-	return JPPyString::fromStringUTF8(report).keep();
-	JP_PY_CATCH(NULL);
-}
-
 static PyMethodDef methodMethods[] = {
-	{"isBeanAccessor", (PyCFunction) (&PyJPMethod_isBeanAccessor), METH_NOARGS, ""},
-	{"isBeanMutator", (PyCFunction) (&PyJPMethod_isBeanMutator), METH_NOARGS, ""},
+	{"_isBeanAccessor", (PyCFunction) (&PyJPMethod_isBeanAccessor), METH_NOARGS, ""},
+	{"_isBeanMutator", (PyCFunction) (&PyJPMethod_isBeanMutator), METH_NOARGS, ""},
 	{"matchReport", (PyCFunction) (&PyJPMethod_matchReport), METH_VARARGS, ""},
-	{"dump", (PyCFunction) (&PyJPMethod_dump), METH_NOARGS, ""},
 	{NULL},
 };
 
@@ -363,7 +339,6 @@ struct PyGetSetDef methodGetSet[] = {
 };
 
 static PyType_Slot methodSlots[] = {
-	{Py_tp_new,       (void*) PyJPMethod_new},
 	{Py_tp_dealloc,   (void*) PyJPMethod_dealloc},
 	{Py_tp_traverse,  (void*) PyJPMethod_traverse},
 	{Py_tp_clear,     (void*) PyJPMethod_clear},

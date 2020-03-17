@@ -30,7 +30,7 @@ JPDoubleType::~JPDoubleType()
 
 JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 {
-	return JPPyFloat::fromDouble(field(val));
+	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(field(val)));
 }
 
 JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
@@ -42,62 +42,9 @@ JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-class JPConversionAsDouble : public JPConversion
-{
-	typedef JPDoubleType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		double val = PyFloat_AsDouble(pyobj);
-		if (val == -1.0)
-			JP_PY_CHECK();
-		base_t::field(res) = (base_t::type_t) val;
-		return res;
-	}
-} asDoubleConversion;
-
-class JPConversionAsDoubleLong : public JPConversion
-{
-	typedef JPDoubleType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = (base_t::type_t) JPPyLong::asLong(pyobj);
-		return res;
-	}
-} asDoubleLongConversion;
-
-class JPConversionDoubleWidenInt : public JPConversion
-{
-	typedef JPDoubleType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsLong(value->getValue());
-		return ret;
-	}
-} doubleIntWidenConversion;
-
-class JPConversionDoubleWidenFloat : public JPConversion
-{
-	typedef JPDoubleType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		JPValue *value = PyJPValue_getJavaSlot(pyobj);
-		jvalue ret;
-		ret.d = (jdouble) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
-		return ret;
-	}
-} doubleFloatWidenConversion;
+static JPConversionAsFloat<JPDoubleType> asDoubleConversion;
+static JPConversionLongAsFloat<JPDoubleType> asDoubleLongConversion;
+static JPConversionFloatWiden<JPDoubleType> doubleWidenConversion;
 
 JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
@@ -138,10 +85,8 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 				case 'C':
 				case 'I':
 				case 'J':
-					match.conversion = &doubleIntWidenConversion;
-					return match.type = JPMatch::_implicit;
 				case 'F':
-					match.conversion = &doubleFloatWidenConversion;
+					match.conversion = &doubleWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
 					return match.type = JPMatch::_none;
@@ -158,11 +103,9 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 		return match.type = JPMatch::_exact;
 	}
 
-	if (PyNumber_Check(pyobj))
-	{
-		match.conversion = &asDoubleConversion;
-		return match.type = JPMatch::_implicit;
-	}
+	if (asDoubleLongConversion.matches(match, frame, this, pyobj)
+			|| asDoubleConversion.matches(match, frame, this, pyobj))
+		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;

@@ -19,7 +19,6 @@
           <itemPath>../../native/common/include/jp_context.h</itemPath>
           <itemPath>../../native/common/include/jp_doubletype.h</itemPath>
           <itemPath>../../native/common/include/jp_encoding.h</itemPath>
-          <itemPath>../../native/common/include/jp_env.h</itemPath>
           <itemPath>../../native/common/include/jp_exception.h</itemPath>
           <itemPath>../../native/common/include/jp_field.h</itemPath>
           <itemPath>../../native/common/include/jp_floattype.h</itemPath>
@@ -33,8 +32,7 @@
           <itemPath>../../native/common/include/jp_monitor.h</itemPath>
           <itemPath>../../native/common/include/jp_numbertype.h</itemPath>
           <itemPath>../../native/common/include/jp_objecttype.h</itemPath>
-          <itemPath>../../native/common/include/jp_platform_linux.h</itemPath>
-          <itemPath>../../native/common/include/jp_platform_win32.h</itemPath>
+          <itemPath>../../native/common/include/jp_platform.h</itemPath>
           <itemPath>../../native/common/include/jp_primitive_accessor.h</itemPath>
           <itemPath>../../native/common/include/jp_primitivetype.h</itemPath>
           <itemPath>../../native/common/include/jp_proxy.h</itemPath>
@@ -88,6 +86,7 @@
         <itemPath>../../native/common/jp_monitor.cpp</itemPath>
         <itemPath>../../native/common/jp_numbertype.cpp</itemPath>
         <itemPath>../../native/common/jp_objecttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_platform.cpp</itemPath>
         <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
         <itemPath>../../native/common/jp_proxy.cpp</itemPath>
         <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
@@ -226,11 +225,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_env.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_exception.h"
             ex="false"
             tool="3"
@@ -296,12 +290,7 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_platform_linux.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/common/include/jp_platform_win32.h"
+      <item path="../../native/common/include/jp_platform.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -458,6 +447,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/jp_objecttype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/jp_platform.cpp"
             ex="false"
             tool="1"
             flavor2="0">

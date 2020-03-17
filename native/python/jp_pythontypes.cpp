@@ -155,39 +155,9 @@ JPPyObject JPPyObject::getNone()
  * Number types
  ***************************************************************************/
 
-JPPyObject JPPyLong::fromLong(jlong l)
-{
-	return JPPyObject(JPPyRef::_call, PyLong_FromLongLong(l));
-}
-
-bool JPPyLong::checkIndexable(PyObject* obj)
-{
-	return PyObject_HasAttrString(obj, "__index__") != 0;
-}
-
 jlong JPPyLong::asLong(PyObject* obj)
 {
 	jlong res = PyLong_AsLongLong(obj);
-	JP_PY_CHECK();
-	return res;
-}
-
-//=====================================================================
-// JPPyFloat
-
-JPPyObject JPPyFloat::fromFloat(jfloat l)
-{
-	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(l));
-}
-
-JPPyObject JPPyFloat::fromDouble(jdouble l)
-{
-	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(l));
-}
-
-jdouble JPPyFloat::asDouble(PyObject* obj)
-{
-	jdouble res = PyFloat_AsDouble(obj);
 	JP_PY_CHECK();
 	return res;
 }
@@ -220,9 +190,9 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 bool JPPyString::checkCharUTF16(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPPyString::checkCharUTF16");
-	if (JPPyLong::checkIndexable(pyobj))
+	if (PyIndex_Check(pyobj))
 		return true;
-	if (PyUnicode_Check(pyobj) && PyUnicode_GET_LENGTH(pyobj) == 1)
+	if (PyUnicode_Check(pyobj) && PyUnicode_GetLength(pyobj) == 1)
 		return true;
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
@@ -254,7 +224,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GET_LENGTH(pyobj) > 1)
+		if (PyUnicode_GetLength(pyobj) > 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
@@ -278,7 +248,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GET_LENGTH(pyobj) > 1)
+		if (PyUnicode_GetLength(pyobj) > 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
@@ -368,9 +338,9 @@ jlong JPPySequence::size()
 	return PySequence_Size(pyobj);
 }
 
-JPPyObject JPPySequence::getItem(jlong ndx)
+JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, ndx)); // new reference
+	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
@@ -415,7 +385,7 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 
 void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)
 {
-	PyErr_Restore(exceptionClass.keep(), exceptionValue.keep(), exceptionTrace.keep());
+	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
 JPPyCallAcquire::JPPyCallAcquire()
@@ -492,3 +462,39 @@ char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
 	return pointer;
 }
 
+JPPyErrFrame::JPPyErrFrame()
+{
+	good = JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+}
+
+JPPyErrFrame::~JPPyErrFrame()
+{
+	try
+	{
+		if (good)
+			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
+	}	catch (...)
+	{
+		// No throw is allowed in dtor.
+	}
+}
+
+void JPPyErrFrame::clear()
+{
+	good = false;
+}
+
+void JPPyErrFrame::normalize()
+{
+	// Python uses lazy evaluation on exceptions thus we can't modify it until
+	// we have forced it to realize the exception.
+	if (!PyExceptionInstance_Check(exceptionValue.get()))
+	{
+		JPPyTuple args = JPPyTuple::newTuple(1);
+		args.setItem(0, exceptionValue.get());
+		exceptionValue = JPPyObject(JPPyRef::_call, PyObject_Call(exceptionClass.get(), args.get(), NULL));
+		PyException_SetTraceback(exceptionValue.get(), exceptionTrace.get());
+		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
+		JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+	}
+}

@@ -14,9 +14,11 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-from jpype import JPackage, java, JFloat, JByte, JShort, JInt, JLong
+import _jpype
+import jpype
+from jpype import JPackage, java
+from jpype.types import *
 import common
-import sys
 
 
 class NumericTestCase(common.JPypeTestCase):
@@ -34,56 +36,115 @@ class NumericTestCase(common.JPypeTestCase):
         self.assertTrue(java.lang.Double.NaN != 0.0)
         self.assertTrue(java.lang.Double.NEGATIVE_INFINITY != 0.0)
 
-    def testNegativeJFloatWrapper(self):
-        f = JFloat(-1)
+    def testCompareNullLong(self):
+        null = JObject(None, java.lang.Integer)
+        self.assertEqual(null, None)
+        self.assertNotEqual(null, object())
+        with self.assertRaisesRegex(TypeError, "null"):
+            null > 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null < 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null >= 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null <= 0
 
-    def checkJWrapper(self, min_value, max_value, javawrapper, jwrapper, expected=TypeError):
-        self.assertEqual(max_value, javawrapper(max_value).longValue())
-        f = jwrapper(max_value)
-        self.assertEqual(max_value, javawrapper(f).longValue())
+    def testCompareNullFloat(self):
+        null = JObject(None, java.lang.Double)
+        self.assertEqual(null, None)
+        self.assertNotEqual(null, object())
+        with self.assertRaisesRegex(TypeError, "null"):
+            null > 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null < 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null >= 0
+        with self.assertRaisesRegex(TypeError, "null"):
+            null <= 0
 
-        self.assertEqual(min_value, javawrapper(min_value).longValue())
-        f = jwrapper(min_value)
-        self.assertEqual(min_value, javawrapper(f).longValue())
+    def testHashNull(self):
+        null = JObject(None, java.lang.Integer)
+        self.assertEqual(hash(null), hash(None))
+        null = JObject(None, java.lang.Float)
+        self.assertEqual(hash(null), hash(None))
 
-        self.assertRaises(OverflowError, javawrapper, max_value+1)
-        self.assertRaises(OverflowError, jwrapper, max_value+1)
-        self.assertRaises(OverflowError, javawrapper, min_value-1)
-        self.assertRaises(OverflowError, jwrapper, min_value-1)
+    @common.requireInstrumentation
+    def testJPNumber_new(self):
+        _jpype.fault("PyJPNumber_new")
 
-        # test against int overflow
-        if(max_value < 2**32):
-            self.assertRaises(OverflowError, javawrapper, 2**32)
-            self.assertRaises(OverflowError, jwrapper, 2**32)
+        class MyNum(_jpype._JNumberLong):
+            pass
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JInt(1)
+        with self.assertRaises(TypeError):
+            MyNum(1)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JInt(1)
+        JInt(1)
 
-    def testJCharWrapper(self):
-        self.checkJWrapper(-2**7, 2**7-1, java.lang.Byte, JByte)
+    @common.requireInstrumentation
+    def testJPNumberLong_int(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_int")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            int(ji)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            int(ji)
+        int(ji)
 
-    def testJByteWrapper(self):
-        self.checkJWrapper(-2**7, 2**7-1, java.lang.Byte, JByte)
+    @common.requireInstrumentation
+    def testJPNumberLong_float(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_float")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            float(ji)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            float(ji)
+        float(ji)
 
-    def testJShortWrapper(self):
-        self.checkJWrapper(-2**15, 2**15-1, java.lang.Short, JShort)
+    @common.requireInstrumentation
+    def testJPNumberLong_str(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_str")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            str(ji)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            str(ji)
+        str(ji)
 
-    def testJIntWrapper(self):
-        self.checkJWrapper(-2**31, 2**31-1, java.lang.Integer, JInt)
+    @common.requireInstrumentation
+    def testJPNumberLong_repr(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_repr")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            repr(ji)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            repr(ji)
+        repr(ji)
 
-    def testJLongWrapper(self):
-        self.checkJWrapper(-2**63, 2**63-1, java.lang.Long,
-                           JLong, OverflowError)
+    @common.requireInstrumentation
+    def testJPNumberLong_compare(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_compare")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ji == 1
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ji == 1
+        ji == 1
 
-    def testJFloatWrapper(self):
-        jwrapper = JFloat
-        javawrapper = java.lang.Float
-        jwrapper(float(2**127))
-        javawrapper(float(2**127))
-        self.assertEqual(javawrapper(5), 5)
-
-        # this difference might be undesirable,
-        # a double bigger than maxfloat passed to java.lang.Float turns into infinity
-        self.assertEqual(float('inf'), javawrapper(
-            float(2**128)).doubleValue())
-        self.assertEqual(
-            float('-inf'), javawrapper(float(-2**128)).doubleValue())
-        self.assertEqual(jwrapper(float(2**128)), float('inf'))
-        self.assertEqual(jwrapper(float(-2**128)), float('-inf'))
+    @common.requireInstrumentation
+    def testJPNumberLong_hash(self):
+        ji = JInt(1)
+        _jpype.fault("PyJPNumberLong_hash")
+        with self.assertRaises(SystemError):
+            hash(ji)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaises(SystemError):
+            hash(ji)
+        hash(ji)

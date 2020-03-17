@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 import sys
+import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
@@ -308,6 +309,19 @@ def shutdownJVM():
     restart the JVM after being terminated.
     """
     _jpype.shutdown()
+
+
+# In order to shutdown cleanly we need the reference queue stopped
+# otherwise, we can experience a crash if a Java thread is waiting
+# for the GIL.
+def _JTerminate():
+    try:
+        _jpype.shutdown()
+    except RuntimeError:
+        pass
+
+
+atexit.register(_JTerminate)
 
 
 def isThreadAttachedToJVM():

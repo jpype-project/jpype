@@ -65,14 +65,14 @@ def _extract_accessor_pairs(members):
         if name == "getClass":
             continue
 
-        if member.isBeanAccessor():
+        if member._isBeanAccessor():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
                 pair[0] = member
             except KeyError:
                 accessor_pairs[property_name] = [member, None]
-        elif member.isBeanMutator():
+        elif member._isBeanMutator():
             property_name = name[3].lower() + name[4:]
             try:
                 pair = accessor_pairs[property_name]
@@ -85,6 +85,7 @@ def _extract_accessor_pairs(members):
 @_jcustomizer.JImplementationFor("java.lang.Object")
 class _BeansCustomizer(object):
     """ Add properties for get/set Bean patterns found in classes.  """
+
     def __jclass_init__(self):
         accessor_pairs = _extract_accessor_pairs(self.__dict__)
         for attr_name, (getter, setter) in accessor_pairs.items():

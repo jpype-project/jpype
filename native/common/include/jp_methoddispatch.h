@@ -50,7 +50,6 @@ public:
 	}
 
 	const string& getName() const;
-	string getClassName() const;
 
 	bool hasStatic() const
 	{
@@ -71,7 +70,6 @@ public:
 	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 
 	string matchReport(JPPyObjectVector& sequence);
-	string dump();
 
 	const JPMethodList& getMethodOverloads()
 	{

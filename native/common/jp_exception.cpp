@@ -53,6 +53,8 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 	from(stackInfo);
 }
 
+// GCOVR_EXCL_START
+// This is only used during startup for OSError
 JPypeException::JPypeException(int type,  const string& msn, int errType, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
@@ -69,6 +71,7 @@ JPypeException::JPypeException(const JPypeException& ex)
 	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
 }
+// GCOVR_EXCL_STOP
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
 {
@@ -245,22 +248,16 @@ void JPypeException::toPython()
 			JP_TRACE("Java exception");
 			JPypeException::convertJavaToPython();
 			return;
-		}
-
-		if (m_Type == JPError::_python_error)
+		} else if (m_Type == JPError::_python_error)
 		{
-			JP_TRACE("Python exception");
-			// Error is already in the stack
-			return;
-		}
-
-		if (m_Type == JPError::_method_not_found)
+			// Already on the stack
+		} else if (m_Type == JPError::_method_not_found)
 		{
 			JP_TRACE("Runtime error");
 			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-		}
-
-		if (m_Type == JPError::_os_error_unix)
+		}// This section is only reachable during startup of the JVM.
+			// GCOVR_EXCL_START
+		else if (m_Type == JPError::_os_error_unix)
 		{
 			std::stringstream ss;
 			ss << "JVM DLL not found: " << mesg;
@@ -276,10 +273,7 @@ void JPypeException::toPython()
 					Py_DECREF(exc);
 				}
 			}
-			return;
-		}
-
-		if (m_Type == JPError::_os_error_windows)
+		} else if (m_Type == JPError::_os_error_windows)
 		{
 			std::stringstream ss;
 			ss << "JVM DLL not found: " << mesg;
@@ -295,22 +289,35 @@ void JPypeException::toPython()
 					Py_DECREF(exc);
 				}
 			}
-			return;
-		}
+		}// GCOVR_EXCL_STOP
 
-		if (m_Type == JPError::_python_exc)
+		else if (m_Type == JPError::_python_exc)
 		{
 			// All others are Python errors
 			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
 			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
-			return;
+		} else
+		{
+			JP_TRACE("Unknown error");
+			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
 		}
-		JP_TRACE("Unknown error");
-		PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
-		return;
-	} catch (JPypeException& ex)
+
+		// Attach our info as the cause
+		{
+			JPPyErrFrame eframe;
+			eframe.normalize();
+			JPPyObject args(JPPyRef::_call, Py_BuildValue("(s)", "C++ Exception"));
+			JPPyObject trace(JPPyRef::_call, PyTrace_FromJPStackTrace(m_Trace));
+			JPPyObject cause(JPPyRef::_accept, PyObject_Call(PyExc_Exception, args.get(), NULL));
+			if (!cause.isNull())
+			{
+				PyException_SetTraceback(cause.get(), trace.get());
+				PyException_SetCause(eframe.exceptionValue.get(), cause.keep());
+			}
+		}
+	}// GCOVR_EXCL_START
+	catch (JPypeException& ex)
 	{
-		// GCOVR_EXCL_START
 		// Print our parting words
 		JPTracer::trace("Fatal error in exception handling");
 		JPTracer::trace("Handling:", mesg);
@@ -330,9 +337,6 @@ void JPypeException::toPython()
 		// Heghlu'meH QaQ jajvam!
 		PyErr_SetString(PyExc_RuntimeError, "Fatal error occurred");
 		return;
-
-		//		int *i = 0;
-		//		*i = 0;
 	} catch (...)
 	{
 		// urp?!
@@ -382,8 +386,8 @@ void JPypeException::toJava(JPContext *context)
 		JP_TRACE("String exception");
 		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
 		return;
-	} catch (JPypeException& ex)
-	{
+	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
+	{	// GCOVR_EXCL_START
 		// Print our parting words.
 		JPTracer::trace("Fatal error in exception handling");
 		JPStackInfo info = ex.m_Trace.front();
@@ -392,14 +396,17 @@ void JPypeException::toJava(JPContext *context)
 		// Take one for the team.
 		int *i = 0;
 		*i = 0;
-	} catch (...)
+		// GCOVR_EXCL_STOP
+	} catch (...) // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		// urp?!
 		JPTracer::trace("Fatal error in exception handling");
 
 		// It is pointless, I can't go on.
 		int *i = 0;
 		*i = 0;
+		// GCOVR_EXCL_STOP
 	}
 	JP_TRACE_OUT;
 }

@@ -38,10 +38,10 @@ JPArrayClass::~JPArrayClass()
 JPMatch::Type JPArrayClass::getJavaConversion(JPJavaFrame *frame, JPMatch &match, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	if (nullConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| objectConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| charArrayConversion->matches(match, frame, this, pyobj) != JPMatch::_none
-			|| byteArrayConversion->matches(match, frame, this, pyobj) != JPMatch::_none)
+	if (nullConversion->matches(match, frame, this, pyobj)
+			|| objectConversion->matches(match, frame, this, pyobj)
+			|| charArrayConversion->matches(match, frame, this, pyobj)
+			|| byteArrayConversion->matches(match, frame, this, pyobj))
 		return match.type;
 
 	if (JPPyObject::isSequenceOfItems(pyobj))

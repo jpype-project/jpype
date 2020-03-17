@@ -48,7 +48,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
 			: (PyObject *) PyObject_MALLOC(size);
 	if (obj == NULL)
-		return PyErr_NoMemory();
+		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
 	memset(obj, 0, size);
 
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
@@ -61,7 +61,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	// Some versions of Python fail to increment the reference counter of
 	// heap types properly.
 	if (refcnt == ((PyObject*) type)->ob_refcnt)
-		Py_INCREF(type);
+		Py_INCREF(type);  // GCOVR_EXCL_LINE
 
 	if (PyType_IS_GC(type))
 	{
@@ -103,6 +103,8 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 /**
  * Get the Java value if attached.
  *
+ * The Java class is guaranteed not to be null on success.
+ *
  * @param obj
  * @return the Java value or 0 if not found.
  */
@@ -127,8 +129,8 @@ void PyJPValue_free(void* obj)
 	if (type->tp_flags & Py_TPFLAGS_HAVE_GC)
 		PyObject_GC_Del(obj);
 	else
-		PyObject_Free(obj);
-	JP_PY_CATCH();
+		PyObject_Free(obj);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH_NONE();
 }
 
 void PyJPValue_finalize(void* obj)
@@ -136,7 +138,7 @@ void PyJPValue_finalize(void* obj)
 	JP_PY_TRY("PyJPValue_finalize", obj);
 	JP_TRACE("type", Py_TYPE(obj)->tp_name);
 	JPValue* value = PyJPValue_getJavaSlot((PyObject*) obj);
-	if (value == NULL || value->getClass() == NULL)
+	if (value == NULL)
 		return;
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
@@ -163,11 +165,8 @@ PyObject* PyJPValue_str(PyObject* self)
 		JP_RAISE(PyExc_TypeError, "Not a Java value");
 
 	JPClass* cls = value->getClass();
-
-	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class is null");
 	if (cls->isPrimitive())
-		JP_RAISE(PyExc_ValueError, "toString requires a java object");
+		JP_RAISE(PyExc_TypeError, "toString requires a Java object");
 
 	if (cls == context->_java_lang_String)
 	{
@@ -184,7 +183,7 @@ PyObject* PyJPValue_str(PyObject* self)
 			jstring jstr = (jstring) value->getValue().l;
 			string str;
 			if (jstr == NULL)
-				str = "(null)";
+				str = "null";  // match Java behavior on printing null pointers
 			else
 				str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
@@ -193,8 +192,6 @@ PyObject* PyJPValue_str(PyObject* self)
 			return cache;
 		}
 	}
-	if (cls == NULL)
-		JP_RAISE(PyExc_ValueError, "toString called with null class");
 
 	// In general toString is not immutable, so we won't cache it.
 	return JPPyString::fromStringUTF8(frame.toString(value->getValue().l)).keep();
@@ -326,12 +323,14 @@ JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue& value)
 {
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
+	// GCOVR_EXCL_START
 	if (offset == 0)
 	{
 		std::stringstream ss;
 		ss << "Missing Java slot on `" << Py_TYPE(self)->tp_name << "`";
 		JP_RAISE(PyExc_SystemError, ss.str().c_str());
 	}
+	// GCOVR_EXCL_STOP
 
 	JPValue* slot = (JPValue*) (((char*) self) + offset);
 	JPClass* cls = value.getClass();

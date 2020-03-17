@@ -144,7 +144,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 {
 	JP_PY_TRY("Py_GetAttrDescriptor");
 	if (type->tp_mro == NULL)
-		return NULL;
+		return NULL;  // GCOVR_EXCL_LINE
 
 	PyObject *mro = type->tp_mro;
 	Py_ssize_t n = PyTuple_Size(mro);
@@ -176,7 +176,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 {
 	if (type == NULL || obj == NULL)
-		return 0;
+		return 0;  // GCOVR_EXCL_LINE
 	PyObject* mro1 = obj->tp_mro;
 	Py_ssize_t n1 = PyTuple_Size(mro1);
 	Py_ssize_t n2 = PyTuple_Size(type->tp_mro);
@@ -188,18 +188,13 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
 {
 	if (type == NULL || obj == NULL)
-		return 0;
+		return 0; // GCOVR_EXCL_LINE
 	return Py_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
-	if (JPContext_global->isRunning())
-	{
-		PyErr_SetString(PyExc_OSError, "JVM is already started");
-		return NULL;
-	}
 
 	PyObject* vmOpt;
 	PyObject* vmPath;
@@ -214,7 +209,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	if (!(JPPyString::check(vmPath)))
 	{
-		JP_RAISE(PyExc_RuntimeError, "Java JVM path must be a string");
+		JP_RAISE(PyExc_TypeError, "Java JVM path must be a string");
 	}
 
 	string cVmPath = JPPyString::asStringUTF8(vmPath);
@@ -235,8 +230,15 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 			args.push_back(v);
 		} else
 		{
-			JP_RAISE(PyExc_RuntimeError, "VM Arguments must be strings");
+			JP_RAISE(PyExc_TypeError, "VM Arguments must be strings");
 		}
+	}
+
+	// This section was moved down to make it easier to cover error cases
+	if (JPContext_global->isRunning())
+	{
+		PyErr_SetString(PyExc_OSError, "JVM is already started");
+		return NULL;
 	}
 
 	PyJPModule_loadResources(module);
@@ -244,40 +246,6 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
-
-//static PyObject* PyJPModule_attach(PyObject* module, PyObject* args)
-//{
-//	JP_PY_TRY("PyJPModule_attach");
-//	if (JPContext_global->isRunning())
-//	{
-//		PyErr_SetString(PyExc_OSError, "JVM is already started");
-//		return NULL;
-//	}
-//	PyObject* vmPath;
-//
-//	if (!PyArg_ParseTuple(args, "O", &vmPath))
-//	{
-//		return NULL;
-//	}
-//
-//	if (!(JPPyString::check(vmPath)))
-//	{
-//		JP_RAISE(PyExc_RuntimeError, "First parameter must be a string or unicode");
-//	}
-//
-//	string cVmPath = JPPyString::asStringUTF8(vmPath);
-//	JPContext_global->attachJVM(cVmPath);
-//	PyJPModule_loadResources(module);
-//	Py_RETURN_NONE;
-//	JP_PY_CATCH(NULL);
-//}
-
-//static PyObject* PyJPModule_dumpJVMStats(PyObject* obj)
-//{
-//	cerr << "JVM activity report     :" << endl;
-//	cerr << "\tclasses loaded       : " << JPTypeManager::getLoadedClasses() << endl;
-//	Py_RETURN_NONE;
-//}
 
 static PyObject* PyJPModule_shutdown(PyObject* obj)
 {
@@ -321,7 +289,7 @@ static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_isThreadAttached");
 	if (!JPContext_global->isRunning())
-		return PyBool_FromLong(0);
+		return PyBool_FromLong(0); // GCOVR_EXCL_LINE
 	return PyBool_FromLong(JPContext_global->isThreadAttached());
 	JP_PY_CATCH(NULL);
 }
@@ -365,13 +333,13 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
-	JP_PY_TRY("PyJPModule_getArrayType");
+	JP_PY_TRY("PyJPModule_newArrayType");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
-		JP_RAISE_PYTHON();
+		return NULL;
 	if (!PyIndex_Check(dims))
 		JP_RAISE(PyExc_TypeError, "dims must be an integer");
 	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
@@ -429,9 +397,9 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 
 PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 {
-	JP_PY_TRY("PyJPModule_getClass");
+	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
-		Py_RETURN_FALSE;
+		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 
@@ -459,11 +427,6 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	PyObject *dtype = 0;
 	if (!PyArg_ParseTuple(args, "OO", &source, &dtype))
 		return NULL;
-	if (source == NULL)
-	{
-		PyErr_Format(PyExc_TypeError, "Buffer source is required");
-		return NULL;
-	}
 	if (!PyObject_CheckBuffer(source))
 	{
 		PyErr_Format(PyExc_TypeError, "'%s' does not support buffers", Py_TYPE(source)->tp_name);

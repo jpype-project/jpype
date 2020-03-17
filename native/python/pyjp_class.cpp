@@ -680,7 +680,7 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 		if (javaSlot == NULL)
 			return NULL;
 		JPClass *cls = javaSlot->getClass();
-		if (cls == NULL || cls != cls->getContext()->_java_lang_Class)
+		if (cls != cls->getContext()->_java_lang_Class)
 			return NULL;
 		JPJavaFrame frame(cls->getContext());
 		return frame.findClass((jclass) javaSlot->getJavaObject());

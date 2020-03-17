@@ -18,6 +18,181 @@ class ArrayTestCase(common.JPypeTestCase):
         self.VALUES = [12234, 1234, 234, 1324, 424, 234, 234, 142, 5, 251, 242, 35, 235, 62,
                        1235, 46, 245132, 51, 2, 3, 4]
 
+    @common.requireInstrumentation
+    def testJPArray_init(self):
+        _jpype.fault("PyJPArray_init")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JInt)(5)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JArray(JInt)(5)
+
+    def testJPArray_initExc(self):
+        with self.assertRaises(TypeError):
+            _jpype._JArray("foo")
+        with self.assertRaises(TypeError):
+            JArray(JInt)(JArray(JDouble)([1, 2]))
+        with self.assertRaises(TypeError):
+            JArray(JInt)(JString)
+        with self.assertRaises(ValueError):
+            JArray(JInt)(-1)
+        with self.assertRaises(ValueError):
+            JArray(JInt)(10000000000)
+        with self.assertRaises(TypeError):
+            JArray(JInt)(object())
+        self.assertEqual(len(JArray(JInt)(0)), 0)
+        self.assertEqual(len(JArray(JInt)(10)), 10)
+        self.assertEqual(len(JArray(JInt)([1, 2, 3])), 3)
+        self.assertEqual(len(JArray(JInt)(JArray(JInt)([1, 2, 3]))), 3)
+
+        class badlist(list):
+            def __len__(self):
+                return -1
+        with self.assertRaises(ValueError):
+            JArray(JInt)(badlist([1, 2, 3]))
+
+    @common.requireInstrumentation
+    def testJPArray_repr(self):
+        ja = JArray(JInt)(5)
+        _jpype.fault("PyJPArray_repr")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            repr(ja)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            repr(ja)
+
+    @common.requireInstrumentation
+    def testJPArray_len(self):
+        ja = JArray(JInt)(5)
+        _jpype.fault("PyJPArray_len")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            len(ja)
+        _jpype.fault("PyJPArray_len")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja.length
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            len(ja)
+
+    @common.requireInstrumentation
+    def testJPArray_getArrayItem(self):
+        ja = JArray(JInt)(5)
+        _jpype.fault("PyJPArray_getArrayItem")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            print(ja[0])
+
+    def testJPArray_getArrayItemExc(self):
+        ja = JArray(JInt)(5)
+        with self.assertRaises(TypeError):
+            ja[object()]
+        with self.assertRaises(ValueError):
+            ja[slice(0, 0, 0)]
+        self.assertEqual(len(JArray(JInt)(5)[4:1]), 0)
+
+    @common.requireInstrumentation
+    def testJPArray_assignSubscript(self):
+        ja = JArray(JInt)(5)
+        _jpype.fault("PyJPArray_assignSubscript")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:2] = 1
+        _jpype.fault("PyJPArray_assignSubscript")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0] = 1
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja[0:2] = 1
+
+    def testJPArray_assignSubscriptExc(self):
+        ja = JArray(JInt)(5)
+        with self.assertRaises(ValueError):
+            del ja[0:2]
+        with self.assertRaises(ValueError):
+            ja[slice(0, 0, 0)] = 1
+
+    @common.requireInstrumentation
+    def testJPArray_getBuffer(self):
+        _jpype.fault("PyJPArray_getBuffer")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja = JArray(JInt, 2)(5)
+            m = memoryview(ja)
+            del m  # lgtm [py/unnecessary-delete]
+
+    @common.requireInstrumentation
+    def testJPArrayPrimitive_getBuffer(self):
+        _jpype.fault("PyJPArrayPrimitive_getBuffer")
+
+        def f():
+            ja = JArray(JInt)(5)
+            m = memoryview(ja)
+            del m  # lgtm [py/unnecessary-delete]
+        with self.assertRaisesRegex(SystemError, "fault"):
+            f()
+        with self.assertRaises(BufferError):
+            memoryview(JArray(JInt, 2)([[1, 2], [1], [1, 2, 3]]))
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            f()
+
+    @common.requireInstrumentation
+    def testJPArray_null(self):
+        _jpype.fault("PyJPArray_init.null")
+        null = JArray(JInt)(object())
+        with self.assertRaises(ValueError):
+            repr(null)
+        with self.assertRaises(ValueError):
+            len(null)
+        with self.assertRaises(ValueError):
+            null[0]
+        with self.assertRaises(ValueError):
+            null[0] = 1
+        with self.assertRaises(ValueError):
+            memoryview(null)
+        null = JArray(JObject)(object())
+        with self.assertRaises(ValueError):
+            memoryview(null)
+        _jpype.fault("PyJPModule_getContext")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            memoryview(null)
+        with self.assertRaisesRegex(TypeError, 'Not a Java value'):
+            _jpype._JObject.__str__(null)
+        self.assertEqual(hash(null), hash(None))
+
+    @common.requireInstrumentation
+    def testJPArrayNew(self):
+        ja = JArray(JInt)
+        _jpype.fault("JPArray::JPArray")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja(5)
+        j = ja(5)
+        _jpype.fault("JPArray::JPArraySlice")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            j[0:2:1]
+
+    @common.requireInstrumentation
+    def testJArrayClassConvertToVector(self):
+        Path = JClass("java.nio.file.Paths")
+        _jpype.fault("JPArrayClass::convertToJavaVector")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            Path.get("foo", "bar")
+
+    @common.requireInstrumentation
+    def testJArrayGetJavaConversion(self):
+        ja = JArray(JInt)
+        _jpype.fault("JPArrayClass::getJavaConversion")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            ja._canConvertToJava(object())
+
+    @common.requireInstrumentation
+    def testJArrayConvertToPythonObject(self):
+        jl = JClass('java.util.ArrayList')()
+        jl.add(JArray(JInt)(3))
+        _jpype.fault("JPArrayClass::convertToPythonObject")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jl.get(0)
+
     def testReadArray(self):
         t = JClass("jpype.array.TestArray")()
         self.assertNotIsInstance(t, JPackage)
@@ -182,71 +357,71 @@ class ArrayTestCase(common.JPypeTestCase):
         ja = JArray.of(a)
         self.assertIsInstance(ja, JArray(jtype))
         self.assertEqual(len(ja), 100)
-        self.assertTrue(np.all(a==ja))
+        self.assertTrue(np.all(a == ja))
 
-        a = np.reshape(a, (20,5))
+        a = np.reshape(a, (20, 5))
         ja = JArray.of(a)
-        self.assertIsInstance(ja, JArray(jtype,2))
+        self.assertIsInstance(ja, JArray(jtype, 2))
         self.assertEqual(len(ja), 20)
         self.assertEqual(len(ja[0]), 5)
-        self.assertTrue(np.all(a==ja))
+        self.assertTrue(np.all(a == ja))
 
-        a = np.reshape(a, (5,2,10))
+        a = np.reshape(a, (5, 2, 10))
         ja = JArray.of(a)
-        self.assertIsInstance(ja, JArray(jtype,3))
+        self.assertIsInstance(ja, JArray(jtype, 3))
         self.assertEqual(len(ja), 5)
         self.assertEqual(len(ja[0]), 2)
         self.assertEqual(len(ja[0][0]), 10)
-        self.assertTrue(np.all(a==ja))
-        self.assertTrue(np.all(a[1,:,:]==JArray.of(a[1,:,:])))
-        self.assertTrue(np.all(a[2::2,:,:]==JArray.of(a[2::2,:,:])))
-        self.assertTrue(np.all(a[:,:,4:-2]==JArray.of(a[:,:,4:-2])))
+        self.assertTrue(np.all(a == ja))
+        self.assertTrue(np.all(a[1, :, :] == JArray.of(a[1, :, :])))
+        self.assertTrue(np.all(a[2::2, :, :] == JArray.of(a[2::2, :, :])))
+        self.assertTrue(np.all(a[:, :, 4:-2] == JArray.of(a[:, :, 4:-2])))
 
     def checkArrayOfCast(self, jtype, dtype):
         a = np.random.randint(0, 1, size=100, dtype=np.bool)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*8-1, size=100, dtype=np.uint8)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*7, 2*7-1, size=100, dtype=np.int8)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*16-1, size=100, dtype=np.uint16)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*15, 2*15-1, size=100, dtype=np.int16)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*32-1, size=100, dtype=np.uint32)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*31, 2*31-1, size=100, dtype=np.int32)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(0, 2*64-1, size=100, dtype=np.uint64)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
         a = np.random.randint(-2*63, 2*63-1, size=100, dtype=np.int64)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
-        self.assertTrue(np.all(a.astype(dtype)==ja))
+        self.assertTrue(np.all(a.astype(dtype) == ja))
 
     @common.requireNumpy
     def testArrayOfBoolean(self):
@@ -320,7 +495,7 @@ class ArrayTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testArrayOfFaults(self):
-        b = bytes([1,2,3])
+        b = bytes([1, 2, 3])
         _jpype.fault("JPJavaFrame::assemble")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JInt)

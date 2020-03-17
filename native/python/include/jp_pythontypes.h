@@ -139,6 +139,14 @@ public:
 	 */
 	PyObject* keep();
 
+	/** Used in special case of exception handling. */
+	PyObject* keepNull()
+	{
+		PyObject *out = pyobj;
+		pyobj = NULL;
+		return out;
+	}
+
 	/** Access the object.  This should never appear in
 	 * a return statement.
 	 */
@@ -188,26 +196,7 @@ protected:
  */
 namespace JPPyLong
 {
-
-/** Check if this is really an integer type or just can be converted to.
- *
- * PEP-357 says __index__ is defined if we can use it as an array slice.
- * Only integer types can do that.
- */
-bool checkIndexable(PyObject* obj);
 jlong asLong(PyObject* obj);
-JPPyObject fromLong(jlong l);
-}
-
-/** Wrapper for a Python float object. */
-namespace JPPyFloat
-{
-jdouble asDouble(PyObject* obj);
-jfloat asFloat(PyObject* obj);
-
-// The scope of the created object is that of the JPPyFloat
-JPPyObject fromDouble(jdouble l);
-JPPyObject fromFloat(jfloat l);
 }
 
 /****************************************************************************
@@ -306,12 +295,7 @@ public:
 	{
 	}
 
-	JPPyObject getItem(jlong ndx);
-
-	JPPyObject operator[](jlong i)
-	{
-		return getItem(i);
-	}
+	JPPyObject operator[](jlong i);
 
 	jlong size();
 } ;
@@ -407,21 +391,10 @@ public:
 	JPPyObject exceptionTrace;
 	bool good;
 
-	JPPyErrFrame()
-	{
-		good = JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
-	}
-
-	~JPPyErrFrame()
-	{
-		if (good)
-			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
-	}
-
-	void clear()
-	{
-		good = false;
-	}
+	JPPyErrFrame();
+	~JPPyErrFrame();
+	void clear();
+	void normalize();
 } ;
 
 /** Used to establish a python lock when called from a

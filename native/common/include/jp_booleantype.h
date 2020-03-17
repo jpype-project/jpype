@@ -66,6 +66,9 @@ public:
 		return 'Z';
 	}
 
+	// GCOVR_EXCL_START
+	// These methods are required by primitive but are not used for a non
+	// number type
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return field(v);
@@ -75,6 +78,7 @@ public:
 	{
 		return field(v);
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
