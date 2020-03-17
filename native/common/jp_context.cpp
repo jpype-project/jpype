@@ -307,15 +307,6 @@ void JPContext::shutdownJVM()
 	JP_TRACE_OUT;
 }
 
-void JPContext::createJVM(void* arg)
-{
-	JP_TRACE_IN("JPContext::CreateJavaVM");
-	m_JavaVM = NULL;
-	JNIEnv* env;
-	CreateJVM_Method(&m_JavaVM, (void**) &env, arg);
-	JP_TRACE_OUT;
-}
-
 void JPContext::ReleaseGlobalRef(jobject obj)
 {
 	JP_TRACE_IN("JPContext::ReleaseGlobalRef", obj);

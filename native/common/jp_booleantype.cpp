@@ -61,7 +61,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 	if (frame != NULL)
 		context = frame->getContext();
 
-	if (JPPyObject::isNone(pyobj))
+	if (pyobj ==  Py_None)
 		return match.type = JPMatch::_none;
 
 	if (PyBool_Check(pyobj))
@@ -97,7 +97,7 @@ JPMatch::Type JPBooleanType::getJavaConversion(JPJavaFrame *frame, JPMatch &matc
 		return match.type = JPMatch::_implicit;
 	}
 
-	if (PyLong_Check(pyobj))
+	if (PyNumber_Check(pyobj))
 	{
 		match.conversion = &asBooleanConversion;
 		return match.type = JPMatch::_explicit;

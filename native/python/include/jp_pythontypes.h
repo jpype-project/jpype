@@ -165,16 +165,6 @@ public:
 	 *
 	 * @returns true if reference to None, false otherwise.
 	 */
-	bool isNone()
-	{
-		return isNone(pyobj);
-	}
-
-	/** Determine if this python reference refers to
-	 * None.
-	 *
-	 * @returns true if reference to None, false otherwise.
-	 */
 	static bool isNone(PyObject* o);
 
 	static bool isSequenceOfItems(PyObject* obj);

@@ -217,7 +217,6 @@ public:
 private:
 
 	void loadEntryPoints(const string& path);
-	void createJVM(void* arg);	// JVM
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);

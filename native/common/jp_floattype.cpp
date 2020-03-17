@@ -58,19 +58,6 @@ public:
 	}
 } asFloatConversion;
 
-class JPConversionAsFloatLong : public JPConversion
-{
-	typedef JPFloatType base_t;
-public:
-
-	virtual jvalue convert(JPJavaFrame *frame, JPClass *cls, PyObject *pyobj) override
-	{
-		jvalue res;
-		base_t::field(res) = (base_t::type_t) base_t::assertRange(JPPyLong::asLong(pyobj));
-		return res;
-	}
-} asFloatLongConversion;
-
 class JPConversionFloatWidenInt : public JPConversion
 {
 	typedef JPFloatType base_t;
@@ -92,7 +79,7 @@ JPMatch::Type JPFloatType::getJavaConversion(JPJavaFrame *frame, JPMatch &match,
 	if (frame != NULL)
 		context = frame->getContext();
 
-	if (JPPyObject::isNone(pyobj))
+	if (pyobj == Py_None)
 		return match.type = JPMatch::_none;
 
 	JPValue *value = PyJPValue_getJavaSlot(pyobj);

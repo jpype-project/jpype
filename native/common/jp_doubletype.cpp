@@ -106,7 +106,7 @@ JPMatch::Type JPDoubleType::getJavaConversion(JPJavaFrame *frame, JPMatch &match
 	if (frame != NULL)
 		context = frame->getContext();
 
-	if (JPPyObject::isNone(pyobj))
+	if (pyobj == Py_None)
 		return match.type = JPMatch::_none;
 
 	JPValue *value = PyJPValue_getJavaSlot(pyobj);
