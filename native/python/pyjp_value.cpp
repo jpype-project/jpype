@@ -293,7 +293,7 @@ JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
 
 	JPPyObject obj;
 	JPPyObject wrapper = PyJPClass_create(frame, cls);
-	if (dynamic_cast<JPArrayClass*> (cls) == cls)
+	if (cls->isArray())
 	{
 		obj = PyJPArray_create(frame, (PyTypeObject*) wrapper.get(), value);
 	} else if (cls->isThrowable())

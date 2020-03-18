@@ -389,7 +389,7 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if ((PyObject*) type == _JObject)
 		return PyBool_FromLong(!testClass->isPrimitive());
 	if ((PyObject*) type == _JArray)
-		return PyBool_FromLong(dynamic_cast<JPArrayClass*> (testClass) == testClass);
+		return PyBool_FromLong(testClass->isArray());
 	if ((PyObject*) type == _JException)
 		return PyBool_FromLong(testClass->isThrowable());
 
@@ -726,7 +726,7 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 	} else if (cls == context->_java_lang_Throwable)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPException_Type);
-	} else if (dynamic_cast<JPArrayClass*> (cls) != 0)
+	} else if (cls->isArray())
 	{
 		JPArrayClass* acls = (JPArrayClass*) cls;
 		if (acls->getComponentType()->isPrimitive())

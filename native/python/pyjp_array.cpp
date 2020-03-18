@@ -288,6 +288,12 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
+	if (!self->m_Array->getClass()->isPrimitiveArray())
+	{
+		PyErr_SetString(PyExc_BufferError, "Java array is not primitive array");
+		return -1;
+	}
+
 	if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 	{
 		PyErr_SetString(PyExc_BufferError, "Java array buffer is not writable");
@@ -299,8 +305,18 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	if (self->m_Array->isSlice())
 		obj = self->m_Array->clone(frame, (PyObject*) self);
 
-	// Collect the members into a rectangular array if possible.
-	jobject result = frame.collectRectangular(obj);
+	jobject result;
+	try
+	{
+		// Collect the members into a rectangular array if possible.
+		result = frame.collectRectangular(obj);
+	} catch (JPypeException &ex)
+	{
+		// No matter what happens we are only allowed to throw BufferError
+		PyErr_SetString(PyExc_BufferError, "Problem in Java buffer extraction");
+		return -1;
+	}
+
 	if (result == NULL)
 	{
 		PyErr_SetString(PyExc_BufferError, "Java array buffer is not rectangular primitives");
@@ -334,9 +350,12 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		return 0;
 	} catch (JPypeException &ex)
 	{
-
+		// Release the partial buffer so we don't leak
 		PyJPArray_releaseBuffer(self, view);
-		throw ex;
+
+		// We are only allowed to raise BufferError
+		PyErr_SetString(PyExc_BufferError, "Java array view failed");
+		return -1;
 	}
 	JP_PY_CATCH(-1);
 }
@@ -391,7 +410,9 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	} catch (JPypeException &ex)
 	{
 		PyJPArray_releaseBuffer(self, view);
-		ex.toPython();
+
+		// We are only allowed to raise BufferError
+		PyErr_SetString(PyExc_BufferError, "Java array view failed");
 		return -1;
 	}
 	JP_PY_CATCH(-1);

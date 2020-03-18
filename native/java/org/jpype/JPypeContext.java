@@ -211,7 +211,10 @@ public class JPypeContext
     Class c1 = o1.getClass();
     for (int i = 0; i < 5; ++i)
     {
-      shape[d++] = Array.getLength(o1);
+      int l = Array.getLength(o1);
+      if (l == 0)
+        return null;
+      shape[d++] = l;
       o1 = Array.get(o1, 0);
       if (o1 == null)
         return null;
@@ -270,7 +273,7 @@ public class JPypeContext
     }
     return parts;
   }
-    
+
   public static class PyExceptionProxy extends RuntimeException
   {
 

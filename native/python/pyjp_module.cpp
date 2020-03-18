@@ -354,7 +354,7 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 		ss << "[";
 	if (cls->isPrimitive())
 		ss << ((JPPrimitiveType*) cls)->getTypeCode();
-	else if (dynamic_cast<JPArrayClass*> (cls) == cls)
+	else if (cls->isArray())
 		ss << cls->getName();
 	else
 		ss << "L" << cls->getName() << ";";

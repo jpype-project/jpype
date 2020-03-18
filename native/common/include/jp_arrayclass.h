@@ -54,6 +54,11 @@ public:
 		return m_ComponentType;
 	}
 
+	virtual bool isArray() const override
+	{
+		return true;
+	}
+
 private:
 	JPClass* m_ComponentType;
 } ;

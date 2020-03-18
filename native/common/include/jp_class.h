@@ -90,9 +90,19 @@ public:
 		return JPModifier::isInterface(m_Modifiers);
 	}
 
+	virtual bool isArray() const
+	{
+		return false;
+	}
+
 	virtual bool isPrimitive() const
 	{
 		return false;
+	}
+
+	virtual bool isPrimitiveArray() const
+	{
+		return JPModifier::isPrimitiveArray(m_Modifiers);
 	}
 
 	JPMethodDispatch* getCtor()
