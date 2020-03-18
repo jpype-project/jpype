@@ -140,10 +140,12 @@ void PyJPValue_finalize(void* obj)
 	JPValue* value = PyJPValue_getJavaSlot((PyObject*) obj);
 	if (value == NULL)
 		return;
+	JPContext *context = JPContext_global;
+	if (context == NULL || !context->isRunning())
+		return;
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
-	JPContext *context = PyJPModule_getContext();
 	if (cls != NULL && context->isRunning() && !cls->isPrimitive())
 	{
 		JP_TRACE("Value", cls->getCanonicalName(), &(value->getValue()));
