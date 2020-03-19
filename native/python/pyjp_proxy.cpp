@@ -129,7 +129,6 @@ static PyObject *PyJPProxy_toString(PyJPProxy *self)
 
 static PyMethodDef proxyMethods[] = {
 	{"equals", (PyCFunction) (&PyJPProxy_equals), METH_O, ""},
-	{"getClass", (PyCFunction) (&PyJPProxy_class), METH_NOARGS, ""},
 	{"hashCode", (PyCFunction) (&PyJPProxy_hash), METH_NOARGS, ""},
 	{"toString", (PyCFunction) (&PyJPProxy_toString), METH_NOARGS, ""},
 	{NULL},
