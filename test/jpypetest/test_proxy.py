@@ -402,20 +402,21 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testConvert(self):
         fixture = JClass("jpype.common.Fixture")()
+
         class R(object):
             pass
         r = R()
         # Verify with not asked to auto convert it doesn't
         s = JProxy("java.io.Serializable", inst=r)
         s2 = fixture.callObject(s)
-        self.assertEqual( s2, s)
-        self.assertNotEqual( s2, r)
+        self.assertEqual(s2, s)
+        self.assertNotEqual(s2, r)
 
         # Verify that when asked to auto convert it does
         s = JProxy("java.io.Serializable", inst=r, convert=True)
         s2 = fixture.callObject(s)
-        self.assertNotEqual( s2, s)
-        self.assertEqual( s2, r)
+        self.assertNotEqual(s2, s)
+        self.assertEqual(s2, r)
 
     def testMethods(self):
         fixture = JClass("jpype.common.Fixture")()
@@ -432,6 +433,7 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testMethods2(self):
         fixture = JClass("jpype.common.Fixture")()
+
         class R(object):
             pass
         r = JProxy("java.io.Serializable", inst=R())
@@ -441,13 +443,3 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.getClass(), java.lang.Class)
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
-
-       
-
-
-
-        
-
-
-
-        
