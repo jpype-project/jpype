@@ -380,3 +380,66 @@ class ProxyTestCase(common.JPypeTestCase):
             java.util.Arrays.sort(arr, TooManyParams())
         with self.assertRaises(TypeError):
             java.util.Arrays.sort(arr, TooFewParams())
+
+    def testUnwrap(self):
+        fixture = JClass("jpype.common.Fixture")()
+        @JImplements("java.io.Serializable")
+        class Q(object):
+            pass
+
+        q = Q()
+        self.assertEqual(JProxy.unwrap(q), q)
+        q2 = fixture.callObject(q)
+        self.assertEqual(JProxy.unwrap(q2), q)
+
+        class R(object):
+            pass
+        r = R()
+        s = JProxy("java.io.Serializable", inst=r)
+        self.assertEqual(JProxy.unwrap(s), r)
+        s2 = fixture.callObject(s)
+        self.assertEqual(JProxy.unwrap(s2), r)
+
+    def testConvert(self):
+        fixture = JClass("jpype.common.Fixture")()
+
+        class R(object):
+            pass
+        r = R()
+        # Verify with not asked to auto convert it doesn't
+        s = JProxy("java.io.Serializable", inst=r)
+        s2 = fixture.callObject(s)
+        self.assertEqual(s2, s)
+        self.assertNotEqual(s2, r)
+
+        # Verify that when asked to auto convert it does
+        s = JProxy("java.io.Serializable", inst=r, convert=True)
+        s2 = fixture.callObject(s)
+        self.assertNotEqual(s2, s)
+        self.assertEqual(s2, r)
+
+    def testMethods(self):
+        fixture = JClass("jpype.common.Fixture")()
+        @JImplements("java.io.Serializable")
+        class R(object):
+            pass
+        r = R()
+        s = JObject(r)
+        # Check if Java will be able to work with this object safely
+        self.assertTrue(s.equals(s))
+        self.assertIsInstance(s.getClass(), java.lang.Class)
+        self.assertIsInstance(s.toString(), java.lang.String)
+        self.assertIsInstance(s.hashCode(), int)
+
+    def testMethods2(self):
+        fixture = JClass("jpype.common.Fixture")()
+
+        class R(object):
+            pass
+        r = JProxy("java.io.Serializable", inst=R())
+        s = JObject(r)
+        # Check if Java will be able to work with this object safely
+        self.assertTrue(s.equals(s))
+        self.assertIsInstance(s.getClass(), java.lang.Class)
+        self.assertIsInstance(s.toString(), java.lang.String)
+        self.assertIsInstance(s.hashCode(), int)

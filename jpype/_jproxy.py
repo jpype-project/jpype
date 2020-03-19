@@ -167,7 +167,7 @@ class JProxy(_jpype._JProxy):
         inst (object, optional): specifies an object with methods
             whose names matches the java interfaces methods.
     """
-    def __new__(cls, intf, dict=None, inst=None):
+    def __new__(cls, intf, dict=None, inst=None, convert=False):
         # Convert the interfaces
         actualIntf = _convertInterfaces([intf])
 
@@ -176,9 +176,15 @@ class JProxy(_jpype._JProxy):
             raise TypeError("Specify only one of dict and inst")
 
         if dict is not None:
-            return _jpype._JProxy(_JFromDict(dict), actualIntf)
+            return _jpype._JProxy(_JFromDict(dict), actualIntf, convert)
 
         if inst is not None:
-            return _jpype._JProxy.__new__(cls, inst, actualIntf)
+            return _jpype._JProxy.__new__(cls, inst, actualIntf, convert)
 
         raise TypeError("a dict or inst must be specified")
+
+    @staticmethod
+    def unwrap(obj):
+        if not isinstance(obj, _jpype._JProxy):
+            return obj
+        return obj.__javainst__

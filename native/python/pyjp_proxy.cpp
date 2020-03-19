@@ -37,7 +37,8 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	// Parse arguments
 	PyObject *target;
 	PyObject *pyintf;
-	if (!PyArg_ParseTuple(args, "OO", &target, &pyintf))
+	int convert = 0;
+	if (!PyArg_ParseTuple(args, "OO|p", &target, &pyintf, &convert))
 		return NULL;
 
 	// Pack interfaces
@@ -60,6 +61,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
 	self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
 	self->m_Target = target;
+	self->m_Convert = (convert != 0);
 	Py_INCREF(target);
 
 	JP_TRACE("Proxy", self);
@@ -97,7 +99,43 @@ static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 	return PyJPClass_create(frame, cls).keep();
 }
 
+static PyObject *PyJPProxy_inst(PyJPProxy *self, void *context)
+{
+	PyObject *out = self->m_Target;
+	if (out == Py_None)
+		out = (PyObject*) self;
+	Py_INCREF(out);
+	return out;
+}
+
+static PyObject *PyJPProxy_equals(PyJPProxy *self, PyObject *other)
+{
+	return PyObject_RichCompare((PyObject*) self, other, Py_EQ);
+}
+
+static PyObject *PyJPProxy_hash(PyJPProxy *self)
+{
+	if (self->m_Target != Py_None)
+		return PyLong_FromLong((int) PyObject_Hash(self->m_Target));
+	return PyLong_FromLong((int) PyObject_Hash((PyObject*) self));
+}
+
+static PyObject *PyJPProxy_toString(PyJPProxy *self)
+{
+	if (self->m_Target != Py_None)
+		return PyObject_Str(self->m_Target);
+	return PyObject_Str((PyObject*) self);
+}
+
+static PyMethodDef proxyMethods[] = {
+	{"equals", (PyCFunction) (&PyJPProxy_equals), METH_O, ""},
+	{"hashCode", (PyCFunction) (&PyJPProxy_hash), METH_NOARGS, ""},
+	{"toString", (PyCFunction) (&PyJPProxy_toString), METH_NOARGS, ""},
+	{NULL},
+};
+
 static PyGetSetDef proxyGetSets[] = {
+	{"__javainst__", (getter) PyJPProxy_inst, NULL, ""},
 	{"__javaclass__", (getter) PyJPProxy_class, NULL, ""},
 	{0}
 };
@@ -108,6 +146,7 @@ static PyType_Slot proxySlots[] = {
 	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
 	{ Py_tp_clear,    (void*) PyJPProxy_clear},
 	{ Py_tp_getset,   (void*) proxyGetSets},
+	{ Py_tp_methods,  (void*) proxyMethods},
 	{0}
 };
 
@@ -149,7 +188,12 @@ JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
 		JP_RAISE(PyExc_SystemError, "Incorrect type passed to proxy lookup");  // GCOVR_EXCL_LINE
 	PyJPProxy *proxy = (PyJPProxy*) obj;
 	if (proxy->m_Target != Py_None)
-		obj = proxy->m_Target;
+	{
+		// Attempt to use the pointed to object if available
+		JPPyObject ret = JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(proxy->m_Target, name.c_str()));
+		if (!ret.isNull())
+			return ret;
+	}
 	return JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(obj, name.c_str()));
 	JP_TRACE_OUT;
 }

@@ -265,8 +265,10 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
 			m_GetInvocationHandlerID, &val);
-	PyObject *target = (PyObject*) frame.GetLongField(ih, m_InstanceID);
+	PyJPProxy *target = (PyJPProxy*) frame.GetLongField(ih, m_InstanceID);
+	if (target->m_Target != Py_None && target->m_Convert)
+		return JPPyObject(JPPyRef::_use, target->m_Target);
 	JP_TRACE("Target", target);
-	return JPPyObject(JPPyRef::_use, target);
+	return JPPyObject(JPPyRef::_use, (PyObject*) target);
 	JP_TRACE_OUT;
 }
