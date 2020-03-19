@@ -94,6 +94,7 @@ struct PyJPProxy
 	PyObject_HEAD
 	JPProxy* m_Proxy;
 	PyObject* m_Target;
+	bool m_Convert;
 } ;
 
 // JPype types

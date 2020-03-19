@@ -31,6 +31,15 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     with the same size automatically.  Architecture dependent numpy
     types map to Long or Double.
 
+  - Proxies created with JImplements properly implement toString, hashCode,
+    and equals.
+
+  - JProxy.unwrap() will return the original instance object for proxies
+    created with JProxy.  Otherwise will return the proxy.
+
+  - JProxy instances created with the convert=True argument will automatic
+    unwrap when passed from Java to Python. 
+
 - **0.7.2 - 2-28-2019**
 
   - C++ and Java exceptions hold the traceback as a Python exception
