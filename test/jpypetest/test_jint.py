@@ -111,7 +111,8 @@ class JIntTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
         _jpype.fault("JPJavaFrame::GetIntArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
+        # Special case, only BufferError is allowed from getBuffer
+        with self.assertRaises(BufferError):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseIntArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):

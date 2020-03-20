@@ -127,7 +127,8 @@ class JDoubleTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
         _jpype.fault("JPJavaFrame::GetDoubleArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
+        # Special case, only BufferError is allowed from getBuffer
+        with self.assertRaises(BufferError):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseDoubleArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):

@@ -38,7 +38,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JPJavaFrame frame(context);
 	JPPyObjectVector args(pyargs);
 
-  // Java exceptions need to create an object to hit the
+	// Java exceptions need to create an object to hit the
 	// Python constructor, but this object will not need to construct
 	// a Java object as the slot will be assigned later.   We will pass
 	// the constructor key to avoid assigning the slot here.

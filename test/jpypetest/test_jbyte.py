@@ -38,7 +38,7 @@ class JByteTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             print(ja[0])
         _jpype.fault("JPJavaFrame::GetByteArrayElements")
-        with self.assertRaisesRegex(SystemError, "fault"):
+        with self.assertRaises(BufferError):
             memoryview(ja[0:3])
         _jpype.fault("JPJavaFrame::ReleaseByteArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):

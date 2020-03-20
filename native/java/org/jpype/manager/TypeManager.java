@@ -407,11 +407,17 @@ public class TypeManager
     Class componentType = cls.getComponentType();
     long componentTypePtr = this.getClass(componentType).classPtr;
 
+    int modifiers = cls.getModifiers() & 0xffff;
+    String name = cls.getName();
+    if (!name.endsWith(";"))
+      modifiers |= ModifierCode.PRIMITIVE_ARRAY.value;
+
     long classPtr = typeFactory
             .defineArrayClass(context, cls,
-                    cls.getCanonicalName(), this.java_lang_Object.classPtr,
+                    cls.getCanonicalName(),
+                    this.java_lang_Object.classPtr,
                     componentTypePtr,
-                    cls.getModifiers() & 0xffff);
+                    modifiers);
 
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
     this.classMap.put(cls, out);

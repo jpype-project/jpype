@@ -542,3 +542,24 @@ class ArrayTestCase(common.JPypeTestCase):
             pass
         with self.assertRaises(TypeError):
             jpype.JArray(John)
+
+    @common.requireNumpy
+    def testZeroArray(self):
+        ls = []
+        ja = JArray(JInt)(ls)
+        self.assertEqual(len(ja),0)
+        na = np.array(ja)
+        self.assertEqual(len(ja),0)
+        ja = JArray(JString)(ls)
+        with self.assertRaisesRegex(BufferError, "not primitive array"):
+            memoryview(ja)
+        self.assertEqual(len(ja),0)
+        na = np.array(ja)
+        self.assertEqual(len(ja),0)
+        ja = JArray(JInt,2)([[],[1]])
+        with self.assertRaisesRegex(BufferError, "not rectangular"):
+            memoryview(ja)
+        ja = JArray(JInt,2)([[1],[]])
+        with self.assertRaisesRegex(BufferError, "not rectangular"):
+            memoryview(ja)
+

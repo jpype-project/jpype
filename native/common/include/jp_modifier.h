@@ -152,6 +152,11 @@ inline bool isCallerSensitive(jlong modifier)
 	return (modifier & 0x00200000) == 0x00200000;
 }
 
+inline bool isPrimitiveArray(jlong modifier)
+{
+	return (modifier & 0x00400000) == 0x00400000;
+}
+
 inline bool isConstructor(jlong modifier)
 {
 	return (modifier & 0x10000000) == 0x10000000;
