@@ -28,7 +28,23 @@ matrix:
     - python: pypy3
 
   include:
-    - name: "Test document generation"
+    - name: "Python on macOS xcode 11.3"
+      os: osx
+      osx_image: xcode11.3
+      language: java
+      env:
+        - PYTHON=python3
+        - INST=--user
+        - PIP=pip3
+      install:
+        - echo $PYTHON $INST
+        - mvn -f project/ant package
+        - $PYTHON setup.py --ant="project/ant/bin/ant.py" sdist
+        - $PIP install $INST dist/* $NUMPY
+        - $PIP install $INST -r test-requirements.txt
+        - $PYTHON project/ant/bin/ant.py -f test/build.xml
+
+   - name: "Test document generation"
       python: 3.7
       dist: xenial
       language: python
@@ -77,22 +93,6 @@ matrix:
         - java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml
         - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     
-    - name: "Python on macOS xcode 11.3"
-      os: osx
-      osx_image: xcode11.3
-      language: java
-      env:
-        - PYTHON=python3
-        - INST=--user
-        - PIP=pip3
-      install:
-        - echo $PYTHON $INST
-        - mvn -f project/ant package
-        - $PYTHON setup.py --ant="project/ant/bin/ant.py" sdist
-        - $PIP install $INST dist/* $NUMPY
-        - $PIP install $INST -r test-requirements.txt
-        - python project/ant/bin/ant.py -f test/build.xml
-
 
 install:
   - echo $PYTHON $INST
