@@ -52,7 +52,6 @@ rm -r ./pip ./wheel ./setuptools_scm
 
 # Check versions
 echo "==== Check versions"
-"$ANT_HOME/bin/ant" -version
 $PYTHON --version
 "$JAVA_HOME/bin/java.exe" -version
 
@@ -70,7 +69,7 @@ $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
 echo "==== Build test"
-"$ANT_HOME/bin/ant" -f test/build.xml
+$PYTHON "$ANT" -f test/build.xml
 
 # Install the package
 echo "==== Build module"

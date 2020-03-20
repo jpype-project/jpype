@@ -18,6 +18,6 @@ pip.exe install numpy
 ant.exe -f test\\build.xml
 
 # Build the compiled extension and run the project tests
-python.exe setup.py --enable-build-jar bdist_wheel
+python.exe setup.py --ant="$ANT" --enable-build-jar bdist_wheel
 dir .\dist
 Get-ChildItem -File -Path .\dist\*.whl | Foreach {pip install --upgrade $_.fullname}

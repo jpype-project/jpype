@@ -4,7 +4,7 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
-    ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.5"
+    ANT: "project\\ant\\bin\\ant.py"
     NUMPY_: "numpy x.x"
     #JAVA_HOME: "C:\\jdk8"
     JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"
@@ -51,21 +51,11 @@ environment:
 
 
 install:
-  # Force java to be installed where JAVA_HOME points
-  # We can install and test multiple versions of java here
-  # - We will have to move the JAVA_HOME and the build of the harness to the test section.
-  # - We will need to figure out how to run nose multiple times on the same run so that
-  #   we can get the result from each of the java version runs.
-  #
-  #- cinst jdk8 -params 'installdir=C:\\jdk8' %CINST_OPTS%
-
-  # - cinst jdk7 -params 'installdir=C:\\jdk7'
-  # - cinst jdk9 -version 9.0.4.11 -params 'installdir=C:\\jdk9'
-  - cinst ant %CINST_OPTS% --ignore-dependencies
+  - mvn -f project/ant package
   - refreshenv
 
   # Add thinges to path
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%ANT_HOME%\\bin;%PATH%"
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
   - "IF DEFINED CYGWIN (%CYGSH% appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"

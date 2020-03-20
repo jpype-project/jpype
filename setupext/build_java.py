@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import subprocess
 import distutils.cmd
 import distutils.log
@@ -42,6 +43,8 @@ class BuildJavaCommand(distutils.cmd.Command):
         buildXmlFile = os.path.join("native", "build.xml")
         command = [self.distribution.ant, '-Dbuild=%s' %
                    buildDir, '-f', buildXmlFile]
+        if self.distribution.ant.endswith(".py"):
+            command.insert(0, sys.executable)
         cmdStr = ' '.join(command)
         self.announce("  %s" % cmdStr, level=distutils.log.INFO)
         try:

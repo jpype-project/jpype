@@ -85,13 +85,13 @@ matrix:
         - PYTHON=python3
         - INST=--user
         - PIP=pip3
-      addons:
-        homebrew:
-          packages:
-            - ant
-          # Remove the following after bug is resolved
-          # https://travis-ci.community/t/macos-build-fails-because-of-homebrew-bundle-unknown-command/7296/17
-          update: true
+      install:
+        - echo $PYTHON $INST
+        - mvn -f project/ant package
+        - $PYTHON setup.py --ant="project/ant/bin/ant.py" sdist
+        - $PIP install $INST dist/* $NUMPY
+        - $PIP install $INST -r test-requirements.txt
+        - python project/ant/bin/ant.py -f test/build.xml
 
 
 install:
