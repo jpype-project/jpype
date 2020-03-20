@@ -4,7 +4,6 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script intepreter
     # See: http://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\appveyor\\run_with_env.cmd"
-    ANT: "project\\ant\\bin\\ant.py"
     NUMPY_: "numpy x.x"
     #JAVA_HOME: "C:\\jdk8"
     JAVA_HOME: "C:\\Program Files\\Java\\jdk1.8.0"

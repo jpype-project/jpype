@@ -6,7 +6,6 @@ echo JAVA_HOME=$JAVA_HOME
 echo ARCH=$ARCH
 echo PATH=$PATH
 echo PYTHON=$PYTHON
-echo ANT_HOME=$ANT_HOME
 
 # If we do not have Java installed we can't proceed
 if [ ! -d "$JAVA_HOME" ]; then
@@ -69,7 +68,7 @@ $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
 echo "==== Build test"
-$PYTHON "$ANT" -f test/build.xml
+$PYTHON "project/ant/bin/ant.py" -f test/build.xml
 
 # Install the package
 echo "==== Build module"

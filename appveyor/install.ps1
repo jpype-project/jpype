@@ -1,7 +1,6 @@
 $env:Path += ";"+$env:PYTHON
 
 # Check that we have the expected version and architecture for Python
-ant.exe -version
 python.exe --version
 python.exe -c "import struct; print(struct.calcsize('P') * 8)"
 
@@ -15,9 +14,9 @@ pip.exe install numpy
 #pip.exe install pytest==5.2.0
 #pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
-ant.exe -f test\\build.xml
+python project\\ant\\bin\\ant.py -f test\\build.xml
 
 # Build the compiled extension and run the project tests
-python.exe setup.py --ant="$ANT" --enable-build-jar bdist_wheel
+python.exe setup.py --ant="project/ant/bin/ant.py" --enable-build-jar bdist_wheel
 dir .\dist
 Get-ChildItem -File -Path .\dist\*.whl | Foreach {pip install --upgrade $_.fullname}
