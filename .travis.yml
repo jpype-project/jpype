@@ -28,7 +28,7 @@ matrix:
     - python: pypy3
 
   include:
-   - name: "Python on macOS xcode 11.3"
+    - name: "Python on macOS xcode 11.3"
       os: osx
       osx_image: xcode11.3
       language: java
@@ -44,7 +44,7 @@ matrix:
         - $PIP install $INST -r test-requirements.txt
         - $PYTHON project/ant/bin/ant.py -f test/build.xml
 
-   - name: "Test document generation"
+    - name: "Test document generation"
       python: 3.7
       dist: xenial
       language: python
