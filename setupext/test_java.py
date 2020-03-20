@@ -27,6 +27,8 @@ class TestJavaCommand(distutils.cmd.Command):
         distutils.log.info("Building Java testbench")
         buildXmlFile = os.path.join("test", "build.xml")
         command = [self.distribution.ant, '-f', buildXmlFile]
+        if self.distribution.ant.endswith(".py"):
+            command.insert(0, sys.executable)
         cmdStr = ' '.join(command)
         self.announce("  %s" % cmdStr, level=distutils.log.INFO)
         subprocess.check_call(command)
