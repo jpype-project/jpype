@@ -309,13 +309,13 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		JP_TRACE("Return primitive");
 		JPClass *boxed = ((JPPrimitiveType*) retType)->getBoxedClass(context);
 		JPValue out = retType->getValueFromObject(JPValue(boxed, o));
-		return retType->convertToPythonObject(frame, out.getValue());
+		return retType->convertToPythonObject(frame, out.getValue(), false);
 	} else
 	{
 		JP_TRACE("Return object");
 		jvalue v;
 		v.l = o;
-		return retType->convertToPythonObject(frame, v);
+		return retType->convertToPythonObject(frame, v, false);
 	}
 	JP_TRACE_OUT;
 }

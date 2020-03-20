@@ -74,7 +74,7 @@ public:
 	virtual~ JPProxyType();
 
 public: // JPClass implementation
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 private:
 	JPClassRef m_ProxyClass;

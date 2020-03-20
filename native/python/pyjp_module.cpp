@@ -327,7 +327,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		context->getReferenceQueue()->registerRef(v.l, vw.view, &releaseView);
 		vw.view = 0;
 		JPClass *type = frame.findClassForObject(v.l);
-		return type->convertToPythonObject(frame, v).keep();
+		return type->convertToPythonObject(frame, v, false).keep();
 	}
 	JP_RAISE(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(NULL);
@@ -423,7 +423,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 		JP_RAISE(PyExc_TypeError, "str is required");
 	}
 
-	PyObject *host = cls->getHost();
+	PyObject *host = (PyObject*) cls->getHost();
 	return PyBool_FromLong(host != NULL);
 	JP_PY_CATCH(NULL);
 }

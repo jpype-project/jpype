@@ -41,7 +41,6 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Class type incorrect");
 
-	bool converted = false;
 	jvalue val;
 	// One argument tries Java conversion first
 	if (PyTuple_Size(args) == 1)
@@ -51,40 +50,35 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 		cls->findJavaConversion(match);
 		if (match.type >= JPMatch::_implicit)
 		{
+			// Disable OverrangeError
+			match.type = JPMatch::_exact;
 			val = match.convert();
-			converted = true;
+			PyObject *obj = cls->convertToPythonObject(frame, val, true).keep();
+			return obj;
 		}
 	}
-	PyObject *self;
+
 	if (PyObject_IsSubclass((PyObject*) type, (PyObject*) & PyLong_Type))
 	{
-		self = PyLong_Type.tp_new(type, args, kwargs);
+		JPPyObject self = JPPyObject(JPPyRef::_call, PyLong_Type.tp_new(&PyLong_Type, args, kwargs));
+		JPMatch match(&frame, self.get());
+		cls->findJavaConversion(match);
+		match.type = JPMatch::_exact;
+		val = match.convert();
+		return cls->convertToPythonObject(frame, val, true).keep();
 	} else if (PyObject_IsSubclass((PyObject*) type, (PyObject*) & PyFloat_Type))
 	{
-		self = PyFloat_Type.tp_new(type, args, kwargs);
+		JPPyObject self = JPPyObject(JPPyRef::_call, PyFloat_Type.tp_new(&PyFloat_Type, args, kwargs));
+		JPMatch match(&frame, self.get());
+		cls->findJavaConversion(match);
+		match.type = JPMatch::_exact;
+		val = match.convert();
+		return cls->convertToPythonObject(frame, val, true).keep();
 	} else
 	{
 		PyErr_Format(PyExc_TypeError, "Type '%s' is not a number class", type->tp_name);
 		return NULL;
 	}
-	if (!self)
-		JP_RAISE_PYTHON();
-
-	if (!converted)
-	{
-		JPMatch match(&frame, self);
-		cls->findJavaConversion(match);
-		val = match.convert();
-	}
-	PyJPValue_assignJavaSlot(frame, self, JPValue(cls, val));
-
-	if (cls == frame.getContext()->_float)
-		((PyFloatObject*) self)->ob_fval = val.f;
-	if (cls == frame.getContext()->_double)
-		((PyFloatObject*) self)->ob_fval = val.d;
-
-	JP_TRACE("new", self);
-	return self;
 	JP_PY_CATCH(NULL);
 }
 

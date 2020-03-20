@@ -55,6 +55,7 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 
 // GCOVR_EXCL_START
 // This is only used during startup for OSError
+
 JPypeException::JPypeException(int type,  const string& msn, int errType, const JPStackInfo& stackInfo)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
@@ -183,7 +184,7 @@ void JPypeException::convertJavaToPython()
 
 	// Create the exception object (this may fail)
 	v.l = th;
-	JPPyObject pyvalue = PyJPValue_create(frame, JPValue(cls, v));
+	JPPyObject pyvalue = cls->convertToPythonObject(frame, v, false);
 
 	// GCOVR_EXCL_START
 	// This sanity check can only be hit if the exception failed during

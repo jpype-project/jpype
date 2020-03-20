@@ -274,54 +274,6 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 
 // These are from the internal methods when we already have the jvalue
 
-JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value2)
-{
-	JP_TRACE_IN("PyJPValue_create");
-	JPValue value = value2;
-	JPClass* cls = value.getClass();
-	JPContext *context = frame.getContext();
-	if (cls == NULL)
-	{
-		cls = context->_java_lang_Object;
-		value.getValue().l = NULL;
-	}
-
-	if (cls->isPrimitive())
-	{
-		// We could actually get these to cast to the correct
-		// primitive type which would preserve type conversions here.
-		return cls->convertToPythonObject(frame, value.getValue());
-	}
-
-	JPPyObject obj;
-	JPPyObject wrapper = PyJPClass_create(frame, cls);
-	if (cls->isArray())
-	{
-		obj = PyJPArray_create(frame, (PyTypeObject*) wrapper.get(), value);
-	} else if (cls->isThrowable())
-	{
-		// Exceptions need new and init
-		JPPyTuple tuple = JPPyTuple::newTuple(1);
-		tuple.setItem(0, _JObjectKey);
-		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
-	} else if (dynamic_cast<JPBoxedType*> (cls) != NULL)
-	{
-		obj = PyJPNumber_create(frame, wrapper, value);
-	} else
-	{
-		// Simple objects don't have a new or init function
-		PyTypeObject *type = (PyTypeObject*) wrapper.get();
-		PyObject *obj2 = type->tp_alloc(type, 0);
-		JP_PY_CHECK();
-		obj = JPPyObject(JPPyRef::_claim, obj2);
-	}
-
-	// Fill in the Java slot
-	PyJPValue_assignJavaSlot(frame, obj.get(), value);
-	return obj;
-	JP_TRACE_OUT;
-}
-
 void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue& value)
 {
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);

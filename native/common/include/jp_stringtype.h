@@ -30,7 +30,7 @@ public:
 	virtual ~JPStringType();
 
 public:
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPMatch::Type findJavaConversion(JPMatch& match) override;
 	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 } ;

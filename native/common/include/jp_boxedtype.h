@@ -47,6 +47,7 @@ public:
 	}
 
 	jobject box(JPJavaFrame &frame, jvalue v);
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 protected:
 	JPPrimitiveType* m_PrimitiveType;

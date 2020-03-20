@@ -29,3 +29,27 @@ bool JPPrimitiveType::isPrimitive() const
 {
 	return true;
 }
+
+
+// equivalent of long_subtype_new as it isn't exposed
+
+PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
+{
+	if (wrapper == NULL)
+		JP_RAISE(PyExc_SystemError, "bad wrapper");
+	Py_ssize_t n = Py_SIZE(tmp);
+	if (n < 0)
+		n = -n;
+
+	PyLongObject *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
+	if (newobj == NULL)
+		return NULL;
+
+	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
+	for (Py_ssize_t i = 0; i < n; i++)
+	{
+		newobj->ob_digit[i] = tmp->ob_digit[i];
+	}
+	return (PyObject*) newobj;
+}
+

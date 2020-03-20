@@ -133,10 +133,8 @@ class JShortTestCase(common.JPypeTestCase):
     def testFromJShortWiden(self):
         self.assertEqual(JShort(JByte(123)), 123)
         self.assertEqual(JShort(JShort(12345)), 12345)
-        with self.assertRaises(OverflowError):
-            JShort(JInt(12345678))
-        with self.assertRaises(OverflowError):
-            JShort(JLong(12345678))
+        self.assertEqual(JShort(JInt(12345678)), JShort(12345678))
+        self.assertEqual(JShort(JLong(12345678)), JShort(12345678))
 
     def testFromNone(self):
         with self.assertRaises(TypeError):
@@ -224,6 +222,11 @@ class JShortTestCase(common.JPypeTestCase):
         self.checkType(-2**15)
         self.checkTypeFail(2**15, exc=OverflowError)
         self.checkTypeFail(-2**15-1, exc=OverflowError)
+
+    def testExplicitRange(self):
+        # These will not overflow as they are explicit casts
+        self.assertEqual(JShort(2**16), 0)
+        self.assertEqual(JShort(-2**16), 0)
 
     def testCheckBool(self):
         self.checkType(True)

@@ -68,7 +68,7 @@ JPPyObject JPVoidType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	JP_RAISE(PyExc_SystemError, "void cannot be the type of a field.");
 }
 
-JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	return JPPyObject::getNone();
 }

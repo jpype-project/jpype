@@ -150,10 +150,9 @@ int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 #endif
 
 // C++ methods
-JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, JPValue& value);
+JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, const JPValue& value);
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls);
 JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value);
-JPPyObject PyJPValue_create(JPJavaFrame &frame, const JPValue& value);
 JPPyObject PyJPField_create(JPField* m);
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
