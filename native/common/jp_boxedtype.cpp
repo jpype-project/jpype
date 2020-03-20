@@ -46,7 +46,7 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 	if (m_PrimitiveType->findJavaConversion(match) != JPMatch::_none)
 	{
 		JP_TRACE("Primitive", match.type);
-		match.conversion = boxConversion;
+		match.conversion = boxBooleanConversion;
 		match.closure = this;
 		return match.type = JPMatch::_explicit;
 	}

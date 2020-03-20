@@ -458,78 +458,20 @@ public:
 	}
 } _objectConversion;
 
-class JPConversionJavaObjectAny : public JPConversion
-{
-public:
-
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
-	{
-		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
-		JPValue *value = match.getJavaSlot();
-		if (value == NULL || match.frame == NULL || value->getClass() == NULL)
-			return match.type = JPMatch::_none;
-		match.conversion = this;
-		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
-		return match.type;
-		JP_TRACE_OUT;
-	}
-
-	virtual jvalue convert(JPMatch &match) override
-	{
-		jvalue res;
-		JPJavaFrame *frame = match.frame;
-		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
-			JP_RAISE(PyExc_TypeError, "Python object is not a Java value");
-		if (!value->getClass()->isPrimitive())
-		{
-			res.l = frame->NewLocalRef(value->getJavaObject());
-			return res;
-		} else
-		{
-			// Okay we need to box it.
-			JPPrimitiveType* type = (JPPrimitiveType*) (value->getClass());
-			match.closure = type->getBoxedClass(frame->getContext());
-			res = boxConversion->convert(match);
-			return res;
-		}
-	}
-} _javaObjectAnyConversion;
-
-class JPConversionJavaNumberAny : public JPConversionJavaObjectAny
-{
-public:
-
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
-	{
-		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
-		JPContext *context = match.getContext();
-		JPValue *value = match.getJavaSlot();
-		// This converter only works for number types, thus boolean and char
-		// are excluded.
-		if (value == NULL || match.frame == NULL || value->getClass() == NULL
-				|| value->getClass() == context->_boolean
-				|| value->getClass() == context->_char)
-			return match.type = JPMatch::_none;
-		match.conversion = this;
-		JPClass *oc = value->getClass();
-		// If it is the exact type, then it is exact
-		if (oc == cls)
-			return match.type = JPMatch::_exact;
-		// If it is any primitive except char and boolean then implicit
-		if (oc->isPrimitive())
-			return match.type = JPMatch::_implicit;
-		// Otherwise check if it is assignable according to Java
-		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
-		return match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
-		JP_TRACE_OUT;
-	}
-
-} _javaNumberAnyConversion;
-
 class JPConversionJavaValue : public JPConversion
 {
 public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		JP_TRACE_IN("JPConversionJavaValue::matches");
+		JPValue *slot = match.getJavaSlot();
+		if (slot == NULL || slot->getClass() != cls)
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_exact;
+		JP_TRACE_OUT;
+	}
 
 	virtual jvalue convert(JPMatch &match) override
 	{
@@ -576,7 +518,7 @@ public:
 		res.l = pobj.getJavaObject();
 		return res;
 	}
-} _boxConversion;
+} ;
 
 class JPConversionBoxBoolean : public JPConversionBox
 {
@@ -595,7 +537,7 @@ public:
 
 } _boxBooleanConversion;
 
-class JPConversionBoxLong : public JPConversion
+class JPConversionBoxLong : public JPConversionBox
 {
 public:
 
@@ -629,11 +571,11 @@ public:
 			else if (strcmp(&name[5], ".int32") == 0)
 				match.closure = frame->getContext()->_java_lang_Integer;
 		}
-		return _boxConversion.convert(match);
+		return JPConversionBox::convert(match);
 	}
 } _boxLongConversion;
 
-class JPConversionBoxDouble : public JPConversion
+class JPConversionBoxDouble : public JPConversionBox
 {
 public:
 
@@ -663,9 +605,76 @@ public:
 			if (strcmp(&name[5], ".float32") == 0)
 				match.closure = frame->getContext()->_java_lang_Float;
 		}
-		return _boxConversion.convert(match);
+		return JPConversionBox::convert(match);
 	}
 } _boxDoubleConversion;
+
+class JPConversionJavaObjectAny : public JPConversionBox
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL || match.frame == NULL || value->getClass() == NULL)
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
+		return match.type;
+		JP_TRACE_OUT;
+	}
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		jvalue res;
+		JPJavaFrame *frame = match.frame;
+		JPValue *value = match.getJavaSlot();
+		if (!value->getClass()->isPrimitive())
+		{
+			res.l = frame->NewLocalRef(value->getJavaObject());
+			return res;
+		} else
+		{
+			// Okay we need to box it.
+			JPPrimitiveType* type = (JPPrimitiveType*) (value->getClass());
+			match.closure = type->getBoxedClass(frame->getContext());
+			res = JPConversionBox::convert(match);
+			return res;
+		}
+	}
+} _javaObjectAnyConversion;
+
+class JPConversionJavaNumberAny : public JPConversionJavaObjectAny
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
+		JPContext *context = match.getContext();
+		JPValue *value = match.getJavaSlot();
+		// This converter only works for number types, thus boolean and char
+		// are excluded.
+		if (value == NULL || match.frame == NULL || value->getClass() == NULL
+				|| value->getClass() == context->_boolean
+				|| value->getClass() == context->_char)
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		JPClass *oc = value->getClass();
+		// If it is the exact type, then it is exact
+		if (oc == cls)
+			return match.type = JPMatch::_exact;
+		// If it is any primitive except char and boolean then implicit
+		if (oc->isPrimitive())
+			return match.type = JPMatch::_implicit;
+		// Otherwise check if it is assignable according to Java
+		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
+		return match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
+		JP_TRACE_OUT;
+	}
+
+} _javaNumberAnyConversion;
 
 class JPConversionUnbox : public JPConversion
 {
@@ -736,7 +745,6 @@ JPConversion *javaObjectAnyConversion = &_javaObjectAnyConversion;
 JPConversion *javaNumberAnyConversion = &_javaNumberAnyConversion;
 JPConversion *javaValueConversion = &_javaValueConversion;
 JPConversion *stringConversion = &_stringConversion;
-JPConversion *boxConversion = &_boxConversion;
 JPConversion *boxBooleanConversion = &_boxBooleanConversion;
 JPConversion *boxLongConversion = &_boxLongConversion;
 JPConversion *boxDoubleConversion = &_boxDoubleConversion;

@@ -82,15 +82,9 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 	JPValue *value = match.getJavaSlot();
 	if (value != NULL)
 	{
-		JPClass *cls = value->getClass();
-		if (cls == this)
-		{
-			match.conversion = javaValueConversion;
-			return match.type = JPMatch::_exact;
-		}
-
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(match, this)
+				|| unboxConversion->matches(match, this))
 			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)

@@ -204,6 +204,11 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
@@ -266,6 +271,11 @@ template <typename base_t>
 class JPConversionFloatWiden : public JPConversion
 {
 public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+	}
 
 	virtual jvalue convert(JPMatch &match) override
 	{
