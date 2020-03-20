@@ -28,7 +28,7 @@ matrix:
     - python: pypy3
 
   include:
-    - name: "Python on macOS xcode 11.3"
+   - name: "Python on macOS xcode 11.3"
       os: osx
       osx_image: xcode11.3
       language: java
@@ -92,7 +92,6 @@ matrix:
         - gcovr -r . --xml -o coverage.xml -d --exclude-unreachable-branches --exclude-throw-branches
         - java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml
         - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
-    
 
 install:
   - echo $PYTHON $INST
