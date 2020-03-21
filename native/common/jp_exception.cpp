@@ -150,6 +150,11 @@ void JPypeException::convertJavaToPython()
 	jthrowable th = m_Throwable.get();
 	jvalue v;
 	v.l = th;
+	if (m_Context->getJavaContext() == 0)
+	{
+		PyErr_Format(PyExc_SystemError, frame.toString((jobject) th).c_str());
+		return;
+	}
 	jlong pycls = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcClassID, &v);
 	if (pycls != 0)
 	{

@@ -204,7 +204,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_TypeManager = new JPTypeManager(frame);
 		m_ReferenceQueue = new JPReferenceQueue(frame);
 		m_ProxyFactory = new JPProxyFactory(frame);
-		m_GC->init(frame);
 
 		// Prepare to launch
 		JP_TRACE("Start Context");
@@ -248,6 +247,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"()Lorg/jpype/ref/JPypeReferenceQueue;");
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(frame,
 				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
+
+		m_GC->init(frame);
 
 		// Everything is started.
 	}

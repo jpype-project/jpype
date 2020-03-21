@@ -576,7 +576,7 @@ static PyMethodDef moduleMethods[] = {
 	{"examine", (PyCFunction) (&examine), METH_O, ""},
 	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
 	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
-	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_O, ""},
+	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_NOARGS, ""},
 
 	// Threading
 	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},

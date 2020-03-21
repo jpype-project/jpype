@@ -92,7 +92,6 @@ extern "C" void callbackJavaGCTriggered(void* context)
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
-
 	// Install a sentinel to detect when Java has started a GC cycle
 	jobject sentinel = frame.NewByteArray(0);
 	JPContext *context = frame.getContext();
