@@ -183,11 +183,11 @@ public:
 
 struct JPGCStats
 {
-	ssize_t python_rss;
-	ssize_t java_rss;
-	ssize_t current_rss;
-	ssize_t max_rss;
-	ssize_t min_rss;
+	long long python_rss;
+	long long java_rss;
+	long long current_rss;
+	long long max_rss;
+	long long min_rss;
 } ;
 
 class JPGarbageCollection
@@ -202,6 +202,7 @@ public:
 	void init(JPJavaFrame& frame);
 
 	void shutdown();
+	void triggered();
 
 	/**
 	 * Called when Python starts it Garbage collector

@@ -738,8 +738,8 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	JPPrimitiveType *pcls = (JPPrimitiveType *) cls;
 
 	// Convert the shape
-	int subs = 1;
-	int base = 1;
+	Py_ssize_t subs = 1;
+	Py_ssize_t base = 1;
 	jintArray jdims = (jintArray) context->_int->newArrayInstance(frame, view.ndim);
 	if (view.shape != NULL)
 	{

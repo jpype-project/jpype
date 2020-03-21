@@ -7,29 +7,18 @@
 #define USE_PROCESS_INFO
 #include <Windows.h>
 #include <psapi.h>
-#define DELTA_LIMIT 5*1024*1024
-#define SOFT_LIMIT 60*1024*1024
-#define HARD_LIMIT 200*1024*1024
-//#define USE_RESOURCE
-//#include <sys/resource.h>
-//#define DELTA_LIMIT 5*1024
-//#define SOFT_LIMIT 60*1024
-//#define HARD_LIMIT 200*1024
 #elif __APPLE__
 #define USE_TASK_INFO
 #include <unistd.h>
 #include <sys/resource.h>
 #include <mach/mach.h>
-#define DELTA_LIMIT 5*1024*1024
-#define SOFT_LIMIT 60*1024*1024
-#define HARD_LIMIT 200*1024*1024
 #else
+// Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
 #include <malloc.h>
-#define DELTA_LIMIT 5*1024*1024
-#define SOFT_LIMIT 60*1024*1024
-#define HARD_LIMIT 200*1024*1024
 #endif
+#define DELTA_LIMIT 10*1024*1024l
+#define HARD_LIMIT 200*1024*1024l
 
 namespace
 {
@@ -40,24 +29,25 @@ PyObject *python_gc = NULL;
 jclass _SystemClass = NULL;
 jmethodID _gcMethodID;
 
-ssize_t last_python = 0;
-ssize_t last_java = 0;
-ssize_t low_water = 0;
-ssize_t high_water = 0;
-float last_fraction = 0;
+size_t last_python = 0;
+size_t last_java = 0;
+size_t low_water = 0;
+size_t high_water = 0;
+size_t limit = 0;
+size_t last = 0;
 int skip_counter = 0;
 int skip_last = 0;
 int java_count = 0;
 int python_count = 0;
 }
 
-ssize_t getWorkingSize()
+size_t getWorkingSize()
 {
-	ssize_t current = 0;
+	size_t current = 0;
 #if defined(USE_PROCESS_INFO)
 	PROCESS_MEMORY_COUNTERS pmc;
 	GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof (pmc));
-	current = pmc.WorkingSetSize;
+	current = (size_t) pmc.WorkingSetSize;
 
 #elif defined(USE_TASK_INFO)
 	struct mach_task_basic_info info;
@@ -69,34 +59,20 @@ ssize_t getWorkingSize()
 #elif defined(USE_MALLINFO)
 	struct mallinfo mi;
 	mi = mallinfo();
-	current = mi.uordblks;
+	current = (size_t) mi.uordblks;
 #endif
 
 	if (current > high_water)
-	{
 		high_water = current;
-		low_water = high_water;
-	}
 	if (current < low_water)
-	{
 		low_water = current;
-	}
 	return current;
-
 }
 
 void triggerPythonGC();
 
-extern "C" void callbackJavaGCTriggered(void* context)
+void JPGarbageCollection::triggered()
 {
-	// Don't reinstall the sentinel if we are terminated
-	if (!running)
-		return;
-	// Install a new sentinel
-	JPJavaFrame frame((JPContext*) context);
-	jobject sentinel = frame.NewByteArray(0);
-	frame.getContext()->getReferenceQueue()->registerRef(sentinel, context, callbackJavaGCTriggered);
-
 	// If we were triggered from Java call a Python cleanup
 	if (!in_python_gc)
 	{
@@ -104,17 +80,15 @@ extern "C" void callbackJavaGCTriggered(void* context)
 		in_python_gc = true;
 		java_triggered = true;
 		java_count++;
+
+		// Lock Python so we call trigger a GC
+		JPPyCallAcquire callback;
 		PyGC_Collect();
 	}
 }
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
-	// Install a sentinel to detect when Java has started a GC cycle
-	jobject sentinel = frame.NewByteArray(0);
-	JPContext *context = frame.getContext();
-	context->getReferenceQueue()->registerRef(sentinel, context, callbackJavaGCTriggered);
-
 	// Get the Python garbage collector
 	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
 	python_gc = gc.keep();
@@ -132,6 +106,8 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
 
 	running = true;
+	getWorkingSize();
+	limit = high_water + DELTA_LIMIT;
 }
 
 void JPGarbageCollection::shutdown()
@@ -151,38 +127,61 @@ void JPGarbageCollection::onEnd()
 {
 	if (!running)
 		return;
+	if (java_triggered)
+	{
+		// Remove our lock so that we can watch for triggers
+		java_triggered = false;
+		return;
+	}
 	if (in_python_gc)
 	{
+		in_python_gc = false;
 		python_count++;
 		int run_gc = 0;
 
-		ssize_t current = getWorkingSize();
+		size_t current = getWorkingSize();
 
 		if (java_triggered)
 			last_java = current;
 		else
 			last_python = current;
 
-		bool bump = high_water == low_water;
-		float fraction = 0;
-		if (!bump)
-			fraction = (current - low_water) / (float) (high_water - low_water);
-		// Decide the policy
-		if (current > SOFT_LIMIT && bump)
-			run_gc = 1;
-		if (fraction > last_fraction && fraction + 4 * (fraction - last_fraction) > 1.0)
-			run_gc = 2;
-		if (current > HARD_LIMIT)
-			run_gc = 4;
+		// Things are getting better so use high water as limit
+		if (current == low_water)
+		{
+			limit = (limit + high_water) / 2;
+			if ( high_water > low_water + 4 * DELTA_LIMIT)
+				high_water = low_water + 4 * DELTA_LIMIT;
+		}
+
 		if (last_python > current)
 			last_python = current;
 
-		printf("consider gc %d (%ld,%ld) %f\n", run_gc,
-				low_water, high_water, fraction);
+		if (current < last)
+		{
+			last = current;
+			return;
+		}
+		last = current;
+
+		// Decide the policy
+		if (current > limit)
+		{
+			limit = high_water + DELTA_LIMIT;
+			run_gc = 1;
+		}
+
+		// Predict if we will cross the limit soon.
+		ssize_t pred = current + 2 * (current - last);
+		if (pred > limit)
+			run_gc = 2;
+
+		//		printf("consider gc %d (%ld, %ld, %ld, %ld) %ld\n", run_gc,
+		//				current, low_water, high_water, limit, limit - pred);
 
 		if (run_gc > 0)
 		{
-			last_fraction = 1;
+			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
 			if (run_gc != 3 && skip_counter > 0)
 				skip_last = skip_counter + 5;
@@ -191,13 +190,9 @@ void JPGarbageCollection::onEnd()
 			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
 		} else
 		{
-			last_fraction = fraction;
 			skip_counter++;
 		}
 	}
-	// Remove our lock so that we can watch for triggers
-	in_python_gc = false;
-	java_triggered = false;
 }
 
 void JPGarbageCollection::getStats(JPGCStats& stats)

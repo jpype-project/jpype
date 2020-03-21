@@ -10,6 +10,8 @@ class JPypeReference extends PhantomReference
 {
   long hostReference;
   long cleanup;
+  int pool;
+  int index;
 
   public JPypeReference(ReferenceQueue arg1, Object javaObject, long host, long cleanup)
   {

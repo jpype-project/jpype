@@ -1,8 +1,7 @@
 package org.jpype.ref;
 
+import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Reference queue holds the life of python objects to be as long as java items.
@@ -15,14 +14,15 @@ import java.util.Set;
  * @author smenard
  *
  */
-public class JPypeReferenceQueue extends ReferenceQueue
+final public class JPypeReferenceQueue extends ReferenceQueue
 {
 
   public long context = 0;
-  private Set<JPypeReference> hostReferences = new HashSet();
+  private JPypeReferenceSet hostReferences;
   private boolean isStopped = false;
   private Thread queueThread;
   private Object queueStopMutex = new Object();
+  PhantomReference sentinel = null;
 
   public JPypeReferenceQueue()
   {
@@ -32,6 +32,8 @@ public class JPypeReferenceQueue extends ReferenceQueue
   {
     super();
     this.context = context;
+    this.hostReferences = new JPypeReferenceSet(context);
+    addSentinel();
   }
 
   /**
@@ -47,8 +49,17 @@ public class JPypeReferenceQueue extends ReferenceQueue
    */
   public void registerRef(Object javaObject, long host, long cleanup)
   {
-    JPypeReference ref = new JPypeReference(this, javaObject, host, cleanup);
-    hostReferences.add(ref);
+    if (cleanup == 0)
+      return;
+    if (isStopped)
+    {
+      System.out.println("Post stop " + host);
+      removeHostReference(context, host, cleanup);
+    } else
+    {
+      JPypeReference ref = new JPypeReference(this, javaObject, host, cleanup);
+      hostReferences.add(ref);
+    }
   }
 
   /**
@@ -85,8 +96,10 @@ public class JPypeReferenceQueue extends ReferenceQueue
     } catch (InterruptedException ex)
     {
       // who cares ...
-      return;
     }
+
+    // Empty the queue.
+    hostReferences.flush();
   }
 
   /**
@@ -116,7 +129,9 @@ public class JPypeReferenceQueue extends ReferenceQueue
    * @param host is the address of memory in C.
    * @param cleanup is the address the function to cleanup the memory.
    */
-  private static native void removeHostReference(long context, long host, long cleanup);
+  static native void removeHostReference(long context, long host, long cleanup);
+
+  static native void wake(long context);
 
   /**
    * Thread to monitor the queue and delete resources.
@@ -134,37 +149,24 @@ public class JPypeReferenceQueue extends ReferenceQueue
           // Check if a ref has been queued. and check if the thread has been
           // stopped every 0.25 seconds
           JPypeReference ref = (JPypeReference) remove(250);
+          if (ref == sentinel)
+          {
+            addSentinel();
+            wake(context);
+            continue;
+          }
           if (ref != null)
           {
-            synchronized (hostReferences)
-            {
-              hostReferences.remove(ref);
-            }
             long hostRef = ref.hostReference;
             long cleanup = ref.cleanup;
-            ref.hostReference = 0;
-            ref.cleanup = 0;
+            hostReferences.remove(ref);
             removeHostReference(context, hostRef, cleanup);
           }
         } catch (InterruptedException ex)
         {
+
           // don't know why ... don't really care ...
         }
-      }
-
-      synchronized (hostReferences)
-      {
-        // We have references into Python which will never be freed if we don't
-        // remove them now
-        for (JPypeReference ref : hostReferences)
-        {
-          long hostRef = ref.hostReference;
-          long cleanup = ref.cleanup;
-          ref.hostReference = 0;
-          ref.cleanup = 0;
-          removeHostReference(context, hostRef, cleanup);
-        }
-        hostReferences = null;
       }
 
       synchronized (queueStopMutex)
@@ -173,5 +175,11 @@ public class JPypeReferenceQueue extends ReferenceQueue
       }
     }
   }
+
+  final void addSentinel()
+  {
+    sentinel = new JPypeReference(this, new byte[0], 0, 0);
+  }
+
 //</editor-fold>
 }

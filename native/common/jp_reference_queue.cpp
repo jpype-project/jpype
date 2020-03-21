@@ -48,6 +48,21 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 	}
 }
 
+/** Triggered whenever the sentinel is deleted
+ */
+JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_wake(
+		JNIEnv *env, jclass clazz, jlong contextPtr)
+{
+	// Exceptions are not allowed here
+	try
+	{
+		JPContext* context = (JPContext*) contextPtr;
+		context->m_GC->triggered();
+	} catch (...) // GCOVR_EXCL_LINE
+	{
+	}
+}
+
 JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPReferenceQueue::init");
@@ -61,11 +76,16 @@ JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
 	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
 	frame.GetMethodID(cls, "<init>", "()V");
 
-	JNINativeMethod method2[1];
+	JNINativeMethod method2[2];
 	method2[0].name = (char*) "removeHostReference";
 	method2[0].signature = (char*) "(JJJ)V";
 	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
-	frame.RegisterNatives(cls, method2, 1);
+
+	method2[1].name = (char*) "wake";
+	method2[1].signature = (char*) "(J)V";
+	method2[1].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_wake;
+
+	frame.RegisterNatives(cls, method2, 2);
 
 	// Get all required methods
 	m_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
