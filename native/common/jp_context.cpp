@@ -86,6 +86,7 @@ JPContext::JPContext()
 	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
+	m_GC = new JPGarbageCollection(this);
 }
 
 JPContext::~JPContext()
@@ -94,6 +95,7 @@ JPContext::~JPContext()
 	delete m_TypeManager;
 	delete m_ReferenceQueue;
 	delete m_ProxyFactory;
+	delete m_GC;
 }
 
 bool JPContext::isRunning()
@@ -202,6 +204,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_TypeManager = new JPTypeManager(frame);
 		m_ReferenceQueue = new JPReferenceQueue(frame);
 		m_ProxyFactory = new JPProxyFactory(frame);
+		m_GC->init(frame);
 
 		// Prepare to launch
 		JP_TRACE("Start Context");

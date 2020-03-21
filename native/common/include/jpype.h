@@ -180,6 +180,44 @@ public:
 
 // Base utility headers
 #include "jp_javaframe.h"
+
+struct JPGCStats
+{
+	ssize_t python_rss;
+	ssize_t java_rss;
+	ssize_t current_rss;
+	ssize_t max_rss;
+} ;
+
+class JPGarbageCollection
+{
+public:
+
+	JPGarbageCollection(JPContext *context)
+	{
+		m_Context = context;
+	}
+
+	void init(JPJavaFrame& frame);
+
+	void shutdown();
+
+	/**
+	 * Called when Python starts it Garbage collector
+	 */
+	void onStart();
+
+	/**
+	 * Called when Python finishes it Garbage collector
+	 */
+	void onEnd();
+
+	void getStats(JPGCStats& stats);
+
+private:
+	JPContext *m_Context;
+} ;
+
 #include "jp_context.h"
 #include "jp_exception.h"
 #include "jp_pythontypes.h"

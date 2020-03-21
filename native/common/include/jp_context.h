@@ -257,6 +257,8 @@ private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;
 	bool m_ConvertStrings;
+public:
+	JPGarbageCollection *m_GC;
 } ;
 
 extern void JPRef_failed();

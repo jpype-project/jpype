@@ -20,6 +20,7 @@
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 
+void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
 
@@ -243,8 +244,13 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 		return NULL;
 	}
 
+	// install the gc hook
+	PyJPModule_installGC(module);
+
 	PyJPModule_loadResources(module);
 	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
+
+
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -463,6 +469,42 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
+{
+	JPContext* context = JPContext_global;
+	if (context->isShutdown())
+		Py_RETURN_NONE;
+	PyObject *a1 = PyTuple_GetItem(obj, 0);
+	if (!PyUnicode_Check(a1))
+		JP_RAISE(PyExc_TypeError, "Bad callback argument");
+	if (PyUnicode_ReadChar(a1, 2) == 'a')
+	{
+		context->m_GC->onStart();
+	} else
+	{
+		context->m_GC->onEnd();
+	}
+	Py_RETURN_NONE;
+}
+
+PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
+{
+	JPContext *context = PyJPModule_getContext();
+	JPGCStats stats;
+	context->m_GC->getStats(stats);
+	PyObject *out = PyDict_New();
+	PyObject *res;
+	PyDict_SetItemString(out, "current", res = PyLong_FromSsize_t(stats.current_rss));
+	Py_DECREF(res);
+	PyDict_SetItemString(out, "java", res = PyLong_FromSsize_t(stats.java_rss));
+	Py_DECREF(res);
+	PyDict_SetItemString(out, "python", res = PyLong_FromSsize_t(stats.python_rss));
+	Py_DECREF(res);
+	PyDict_SetItemString(out, "max", res = PyLong_FromSsize_t(stats.max_rss));
+	Py_DECREF(res);
+	return out;
+}
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -506,6 +548,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 
 #ifdef JP_INSTRUMENTATION
 uint32_t _PyModule_fault_code = -1;
+
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
 	if (args == Py_None)
@@ -532,6 +575,8 @@ static PyMethodDef moduleMethods[] = {
 	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
 	{"examine", (PyCFunction) (&examine), METH_O, ""},
 	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
+	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
+	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_O, ""},
 
 	// Threading
 	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},
@@ -738,3 +783,16 @@ void PyJPModuleFault_throw(uint32_t code)
 }
 #endif
 
+void PyJPModule_installGC(PyObject* module)
+{
+	// Get the Python garbage collector
+	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+
+	// Find the callbacks
+	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(gc.get(), "callbacks"));
+
+	// Hook up our callback
+	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(module, "_collect"));
+	PyList_Append(callbacks.get(), collect.get());
+	JP_PY_CHECK();
+}
