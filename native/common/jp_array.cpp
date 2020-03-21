@@ -15,7 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
-#include "jp_arrayclass.h"
+#include "jp_bufferclass.h"
 #include "jp_primitive_accessor.h"
 
 // Note: java represents arrays of zero length as null, thus we

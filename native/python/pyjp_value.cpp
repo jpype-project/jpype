@@ -16,7 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_arrayclass.h"
+#include "jp_bufferclass.h"
 #include "jp_boxedtype.h"
 #include "jp_stringtype.h"
 

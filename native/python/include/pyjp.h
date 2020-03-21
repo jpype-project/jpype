@@ -83,6 +83,13 @@ struct PyJPArray
 	JPArrayView *m_View;
 } ;
 
+struct PyJPBuffer
+{
+	PyObject_HEAD
+	JPBuffer *m_Buffer;
+} ;
+
+
 struct PyJPClassHints
 {
 	PyObject_HEAD

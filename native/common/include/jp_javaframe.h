@@ -329,6 +329,9 @@ public:
 	// String
 	jstring NewStringUTF(const char* a0);
 
+	void* GetDirectBufferAddress(jobject obj);
+	jlong GetDirectBufferCapacity(jobject obj);
+
 	/** This returns a UTF16 surogate coded UTF-8 string.
 	 */
 	const char* GetStringUTFChars(jstring a0, jboolean* a1);

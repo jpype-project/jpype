@@ -17,7 +17,7 @@
 #include <Python.h>
 #include "jpype.h"
 #include "jp_classhints.h"
-#include "jp_arrayclass.h"
+#include "jp_bufferclass.h"
 #include "jp_stringtype.h"
 #include "pyjp.h"
 

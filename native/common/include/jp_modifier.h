@@ -157,6 +157,11 @@ inline bool isPrimitiveArray(jlong modifier)
 	return (modifier & 0x00400000) == 0x00400000;
 }
 
+inline bool isBuffer(jlong modifier)
+{
+	return (modifier & 0x00800000) == 0x00800000;
+}
+
 inline bool isConstructor(jlong modifier)
 {
 	return (modifier & 0x10000000) == 0x10000000;
