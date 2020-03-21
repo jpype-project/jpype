@@ -165,10 +165,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		// Create a normal class
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
-	if (JPModifier::isSpecial(modifiers))
-	{
+	if (JPModifier::isBuffer(modifiers))
 		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
-	}
 	// Certain classes require special implementations
 	if (className == "java.lang.Object")
 		return (jlong) (context->_java_lang_Object

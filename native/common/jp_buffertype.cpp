@@ -7,12 +7,17 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 		jclass cls,
 		const string& name,
 		JPClass* superClass,
-		JPClass* componentType,
+		const JPClassList& interfaces,
 		jint modifiers)
-: JPClass(frame, cls, name, superClass, JPClassList(), modifiers)
+: JPClass(frame, cls, name, superClass, interfaces, modifiers)
 {
+	printf("%s\n", name.c_str());
 	// Use name to get the type
-	if (name == "java.nio.ByteBuffer")
+	if (name == "java.nio.Buffer")
+	{
+		m_Type = "b";
+		m_Size = 1;
+	} else if (name == "java.nio.ByteBuffer")
 	{
 		m_Type = "b";
 		m_Size = 1;
@@ -42,11 +47,29 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 		m_Size = 8;
 	} else
 	{
-		m_Type = ((JPBufferType*) m_SuperClass)->m_Type;
-		m_Size = ((JPBufferType*) m_SuperClass)->m_Size;
+		JPBufferType* super = dynamic_cast<JPBufferType*> (m_SuperClass);
+		if (super == NULL)
+			JP_RAISE(PyExc_TypeError, "Unsupported buffer type");
+		m_Type = super->m_Type;
+		m_Size = super->m_Size;
 	}
 }
 
 JPBufferType::~JPBufferType()
 {
+}
+
+JPPyObject JPBufferType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
+{
+	JP_TRACE_IN("JPBufferClass::convertToPythonObject");
+	if (!cast)
+	{
+		if (value.l == NULL)
+			return JPPyObject::getNone();
+	}
+	JPPyObject wrapper = PyJPClass_create(frame, this);
+	JPPyObject obj = PyJPBuffer_create(frame, (PyTypeObject*) wrapper.get(), JPValue(this, value));
+	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
+	return obj;
+	JP_TRACE_OUT;
 }

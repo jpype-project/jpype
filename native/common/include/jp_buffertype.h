@@ -11,7 +11,7 @@ public:
 			jclass cls,
 			const string& name,
 			JPClass* superClass,
-			JPClass* componentType,
+			const JPClassList& interfaces,
 			jint modifiers);
 	virtual~ JPBufferType();
 
@@ -24,6 +24,8 @@ public:
 	{
 		return m_Size;
 	}
+
+	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast) override;
 
 private:
 	const char* m_Type;

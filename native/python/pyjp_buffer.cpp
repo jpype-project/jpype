@@ -1,6 +1,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_buffer.h"
+#include "jp_buffertype.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -107,8 +108,6 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 }
 
 static PyType_Slot bufferSlots[] = {
-	{ Py_tp_new,      (void*) PyJPBuffer_new},
-	{ Py_tp_init,     (void*) PyJPBuffer_init},
 	{ Py_tp_dealloc,  (void*) PyJPBuffer_dealloc},
 	{ Py_tp_repr,     (void*) PyJPBuffer_repr},
 	{0}
@@ -120,7 +119,7 @@ static PyBufferProcs directBuffer = {
 };
 
 PyTypeObject *PyJPBuffer_Type = NULL;
-static PyType_Spec arraySpec = {
+static PyType_Spec bufferSpec = {
 	"_jpype._JBuffer",
 	sizeof (PyJPBuffer),
 	0,
@@ -134,16 +133,17 @@ static PyType_Spec arraySpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
+	printf("Init buffer type");
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
-	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
-	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
+	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
+	//PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JBuffer", (PyObject*) PyJPBuffer_Type);
 	JP_PY_CHECK_INIT();
 }
 
-JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, JPValue & value)
+JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();

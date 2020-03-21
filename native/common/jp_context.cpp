@@ -16,7 +16,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "jp_typemanager.h"
-#include "jp_bufferclass.h"
 #include "jp_boxedtype.h"
 #include "jp_stringtype.h"
 #include "jp_classloader.h"

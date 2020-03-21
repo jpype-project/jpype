@@ -967,13 +967,13 @@ jint JPJavaFrame::RegisterNatives(jclass a0, const JNINativeMethod* a1, jint a2)
 void* JPJavaFrame::GetDirectBufferAddress(jobject obj)
 {
 	JAVA_CALL("JPJavaFrame::GetDirectBufferAddress");
-	return m_Env->functions->GetDirectBufferAddress(obj);
+	return m_Env->functions->GetDirectBufferAddress(m_Env, obj);
 }
 
-jlong JPJavaFrame::GetDirectBufferAddress(jobject obj)
+jlong JPJavaFrame::GetDirectBufferCapacity(jobject obj)
 {
 	JAVA_CALL("JPJavaFrame::GetDirectBufferAddress");
-	return m_Env->functions->GetDirectBufferCapacity(obj);
+	return m_Env->functions->GetDirectBufferCapacity(m_Env, obj);
 }
 
 class JPStringAccessor
