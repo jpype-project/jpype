@@ -182,7 +182,7 @@ public:
 } ;
 
 template <typename base_t>
-class JPConversionLongNumber : public JPConversion
+class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
@@ -196,18 +196,9 @@ public:
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		jvalue res;
-		PyObject *obj = PyNumber_Long(match.object);
-		JP_PY_CHECK();
-		jlong val = PyLong_AsLongLong(obj);
-		Py_DECREF(obj);
-		if (val == -1)
-			JP_PY_CHECK();
-		if (match.type == JPMatch::_exact)
-			base_t::field(res) = (typename base_t::type_t) val;
-		else
-			base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
-		return res;
+		JPPyObject obj = JPPyObject(JPPyRef::_call, PyNumber_Long(match.object));
+		match.object = obj.get();
+		return JPConversionLong<base_t>::convert(match);
 	}
 } ;
 
