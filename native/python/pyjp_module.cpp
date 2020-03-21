@@ -502,6 +502,8 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	Py_DECREF(res);
 	PyDict_SetItemString(out, "max", res = PyLong_FromSsize_t(stats.max_rss));
 	Py_DECREF(res);
+	PyDict_SetItemString(out, "min", res = PyLong_FromSsize_t(stats.min_rss));
+	Py_DECREF(res);
 	return out;
 }
 

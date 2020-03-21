@@ -187,6 +187,7 @@ struct JPGCStats
 	ssize_t java_rss;
 	ssize_t current_rss;
 	ssize_t max_rss;
+	ssize_t min_rss;
 } ;
 
 class JPGarbageCollection
