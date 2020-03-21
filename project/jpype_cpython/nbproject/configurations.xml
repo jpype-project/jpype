@@ -22,6 +22,7 @@
           <itemPath>../../native/common/include/jp_exception.h</itemPath>
           <itemPath>../../native/common/include/jp_field.h</itemPath>
           <itemPath>../../native/common/include/jp_floattype.h</itemPath>
+          <itemPath>../../native/common/include/jp_gc.h</itemPath>
           <itemPath>../../native/common/include/jp_inttype.h</itemPath>
           <itemPath>../../native/common/include/jp_javaframe.h</itemPath>
           <itemPath>../../native/common/include/jp_longtype.h</itemPath>
@@ -238,6 +239,11 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_floattype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_gc.h"
             ex="false"
             tool="3"
             flavor2="0">

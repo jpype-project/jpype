@@ -22,23 +22,6 @@
 
 namespace
 {
-bool running = false;
-bool in_python_gc = false;
-bool java_triggered = false;
-PyObject *python_gc = NULL;
-jclass _SystemClass = NULL;
-jmethodID _gcMethodID;
-
-size_t last_python = 0;
-size_t last_java = 0;
-size_t low_water = 0;
-size_t high_water = 0;
-size_t limit = 0;
-size_t last = 0;
-int skip_counter = 0;
-int skip_last = 0;
-int java_count = 0;
-int python_count = 0;
 }
 
 size_t getWorkingSize()
@@ -62,10 +45,6 @@ size_t getWorkingSize()
 	current = (size_t) mi.uordblks;
 #endif
 
-	if (current > high_water)
-		high_water = current;
-	if (current < low_water)
-		low_water = current;
 	return current;
 }
 
@@ -140,6 +119,10 @@ void JPGarbageCollection::onEnd()
 		int run_gc = 0;
 
 		size_t current = getWorkingSize();
+		if (current > high_water)
+			high_water = current;
+		if (current < low_water)
+			low_water = current;
 
 		if (java_triggered)
 			last_java = current;

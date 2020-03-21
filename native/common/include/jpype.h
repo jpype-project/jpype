@@ -178,48 +178,14 @@ public:
 #define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, NULL, msg, JP_STACKINFO()); }
 #define JP_RAISE(type, msg)                 { throw JPypeException(JPError::_python_exc, type, msg, JP_STACKINFO()); }
 
+#ifndef PyObject_HEAD
+struct _object;
+typedef _object PyObject;
+#endif
+
 // Base utility headers
 #include "jp_javaframe.h"
-
-struct JPGCStats
-{
-	long long python_rss;
-	long long java_rss;
-	long long current_rss;
-	long long max_rss;
-	long long min_rss;
-} ;
-
-class JPGarbageCollection
-{
-public:
-
-	JPGarbageCollection(JPContext *context)
-	{
-		m_Context = context;
-	}
-
-	void init(JPJavaFrame& frame);
-
-	void shutdown();
-	void triggered();
-
-	/**
-	 * Called when Python starts it Garbage collector
-	 */
-	void onStart();
-
-	/**
-	 * Called when Python finishes it Garbage collector
-	 */
-	void onEnd();
-
-	void getStats(JPGCStats& stats);
-
-private:
-	JPContext *m_Context;
-} ;
-
+#include "jp_gc.h"
 #include "jp_context.h"
 #include "jp_exception.h"
 #include "jp_pythontypes.h"
