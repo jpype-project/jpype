@@ -336,6 +336,7 @@ public:
 	jlong GetDirectBufferCapacity(jobject obj);
 	jboolean isBufferReadOnly(jobject obj);
 	jboolean orderBuffer(jobject obj);
+	jclass getClass(jobject obj);
 
 	/** This returns a UTF16 surogate coded UTF-8 string.
 	 */

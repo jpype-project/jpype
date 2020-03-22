@@ -995,6 +995,14 @@ jboolean JPJavaFrame::orderBuffer(jobject obj)
 			m_Context->m_Context_OrderID, &arg);
 }
 
+// GCOVR_EXCL_START
+// This is used when debugging reference counting problems.
+jclass JPJavaFrame::getClass(jobject obj)
+{
+	return (jclass) CallObjectMethodA(obj, m_Context->m_Object_GetClassID, 0);
+}
+// GCOVR_EXCL_STOP
+
 class JPStringAccessor
 {
 	JPJavaFrame& frame_;

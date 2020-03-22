@@ -181,6 +181,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Object_ToStringID = frame.GetMethodID(cls, "toString", "()Ljava/lang/String;");
 		m_Object_EqualsID = frame.GetMethodID(cls, "equals", "(Ljava/lang/Object;)Z");
 		m_Object_HashCodeID = frame.GetMethodID(cls, "hashCode", "()I");
+		m_Object_GetClassID = frame.GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
 
 		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
 		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
