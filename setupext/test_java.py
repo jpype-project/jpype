@@ -11,8 +11,7 @@ import shlex
 
 def getJavaVersion():
     # Find Java version
-    out = subprocess.run(['javac', '-version'], stdout=subprocess.PIPE)
-    version_str = out.stdout.decode('utf-8')
+    version_str = os.popen('javac -version').read()
     result = re.match(r'javac ([0-9]+)\.([0-9]+)\..*', version_str)
     if int(result.group(1)) > 1:
         return int(result.group(1))
