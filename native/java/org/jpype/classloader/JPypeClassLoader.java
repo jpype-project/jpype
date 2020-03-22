@@ -17,6 +17,7 @@
 package org.jpype.classloader;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
@@ -78,7 +79,7 @@ public class JPypeClassLoader extends ClassLoader
    */
   public void importJar(byte[] bytes)
   {
-    try (JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
+    try ( JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
     {
       while (true)
       {
@@ -88,20 +89,14 @@ public class JPypeClassLoader extends ClassLoader
 
         // Skip directories and other non-class resources
         long size = nextEntry.getSize();
-        if (size <= 0)
+        if (size == 0)
           continue;
 
-        byte[] data = new byte[(int) size];
-        int total = 0;
-
-        // Read the contents.
-        while (true)
-        {
-          int r = is.read(data, total, data.length - total);
-          total += r;
-          if (r == 0 || total == size)
-            break;
-        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        int q;
+        while ((q = is.read()) != -1)
+          baos.write(q);
+        byte[] data = baos.toByteArray();
 
         // Store all classes we find
         String name = nextEntry.getName();

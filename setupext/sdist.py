@@ -11,7 +11,7 @@ class BuildSourceDistribution(sdist):
     """
     Override some behavior on sdist
 
-    Copy the build/lib to native/jars to remove ant/jdk dependency
+    Copy the build/lib to native/jars to remove javac/jdk dependency
     """
 
     def run(self):

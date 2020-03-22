@@ -91,6 +91,10 @@ class Makefile(object):
             print("""
 all: $(LIB)
 
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+build/src/jp_thunk.cpp: $(call rwildcard,native/java,*.java)
+	python setup.py build_thunk
+
 DEPDIR = build/deps
 $(DEPDIR): ; @mkdir -p $@
 
