@@ -22,6 +22,8 @@ def compileJava(self):
     cmd2 = shlex.split('javac -d build/classes -g:none -source %s -target %s -cp build/lib' %
                        (target_version, target_version))
     cmd2.extend(src2)
+    os.makedirs("build/lib", exist_ok=True)
+    os.makedirs("build/classes", exist_ok=True)
     self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
     subprocess.check_call(cmd1)
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)

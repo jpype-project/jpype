@@ -30,6 +30,7 @@ def compileJava():
         exports = "--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED"
     cmd = shlex.split(
         'javac -d test/classes %s -g:lines,vars,source' % (exports))
+    os.makedirs("test/classes", exist_ok=True)
     cmd.extend(srcs)
     return cmd
 
