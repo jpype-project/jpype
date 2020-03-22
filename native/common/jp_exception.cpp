@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -150,6 +150,14 @@ void JPypeException::convertJavaToPython()
 	jthrowable th = m_Throwable.get();
 	jvalue v;
 	v.l = th;
+	// GCOVR_EXCL_START
+	// This is code is only hit if something fails during the initial boot
+	if (m_Context->getJavaContext() == NULL || m_Context->m_Context_GetExcClassID == NULL)
+	{
+		PyErr_SetString(PyExc_SystemError, frame.toString(th).c_str());
+		return;
+	}
+	// GCOVR_EXCL_STOP
 	jlong pycls = frame.CallLongMethodA(m_Context->getJavaContext(), m_Context->m_Context_GetExcClassID, &v);
 	if (pycls != 0)
 	{
