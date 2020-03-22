@@ -166,14 +166,8 @@ void JPGarbageCollection::onEnd()
 		{
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
-			if (run_gc != 3 && skip_counter > 0)
-				skip_last = skip_counter + 5;
-			skip_counter = 0;
 			JPJavaFrame frame(m_Context);
 			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
-		} else
-		{
-			skip_counter++;
 		}
 	}
 }

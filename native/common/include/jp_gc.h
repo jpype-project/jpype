@@ -51,8 +51,6 @@ private:
 	size_t high_water = 0;
 	size_t limit = 0;
 	size_t last = 0;
-	int skip_counter = 0;
-	int skip_last = 0;
 	int java_count = 0;
 	int python_count = 0;
 } ;
