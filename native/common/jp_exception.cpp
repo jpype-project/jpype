@@ -151,7 +151,7 @@ void JPypeException::convertJavaToPython()
 	jvalue v;
 	v.l = th;
 	// GCOVR_EXCL_START
-	// This is code is only hit if something fails during the initial boot
+	// This is condition is only hit if something fails during the initial boot
 	if (m_Context->getJavaContext() == NULL || m_Context->m_Context_GetExcClassID == NULL)
 	{
 		PyErr_SetString(PyExc_SystemError, frame.toString(th).c_str());
