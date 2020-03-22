@@ -29,7 +29,7 @@ def compileJava(self):
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)
     subprocess.check_call(cmd2)
     cmd3 = shlex.split(
-        'jar --create --file build/lib/org.jpype.jar -C build/classes/ .')
+        'jar cvf build/lib/org.jpype.jar -C build/classes/ .')
     self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
     subprocess.check_call(cmd3)
 
