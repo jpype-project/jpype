@@ -256,6 +256,7 @@ private:
 	jmethodID m_Context_GetExcClassID;
 	jmethodID m_Context_GetExcValueID;
 	jmethodID m_Buffer_IsReadOnlyID;
+	jmethodID m_Context_OrderID;
 private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;

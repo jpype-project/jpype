@@ -11,7 +11,6 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 		jint modifiers)
 : JPClass(frame, cls, name, superClass, interfaces, modifiers)
 {
-	printf("%s\n", name.c_str());
 	// Use name to get the type
 	if (name == "java.nio.Buffer")
 	{

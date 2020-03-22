@@ -195,6 +195,7 @@ public:
 
 	jfieldID FromReflectedField(jobject a0);
 	jfieldID GetFieldID(jclass a0, const char* a1, const char* a2);
+	jfieldID GetStaticFieldID(jclass a0, const char* a1, const char* a2);
 
 	jmethodID FromReflectedMethod(jobject a0);
 	jmethodID GetMethodID(jclass a0, const char* a1, const char* a2);
@@ -334,6 +335,7 @@ public:
 	void* GetDirectBufferAddress(jobject obj);
 	jlong GetDirectBufferCapacity(jobject obj);
 	jboolean isBufferReadOnly(jobject obj);
+	jboolean orderBuffer(jobject obj);
 
 	/** This returns a UTF16 surogate coded UTF-8 string.
 	 */

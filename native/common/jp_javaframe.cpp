@@ -946,6 +946,12 @@ jfieldID JPJavaFrame::GetFieldID(jclass a0, const char* a1, const char* a2)
 	return m_Env->functions->GetFieldID(m_Env, a0, a1, a2);
 }
 
+jfieldID JPJavaFrame::GetStaticFieldID(jclass a0, const char* a1, const char* a2)
+{
+	JAVA_CALL("JPJavaFrame::GetStaticFieldID");
+	return m_Env->functions->GetStaticFieldID(m_Env, a0, a1, a2);
+}
+
 jsize JPJavaFrame::GetStringUTFLength(jstring a0)
 {
 	JAVA_CALL("JPJavaFrame::GetStringUTFLength");
@@ -979,6 +985,14 @@ jlong JPJavaFrame::GetDirectBufferCapacity(jobject obj)
 jboolean JPJavaFrame::isBufferReadOnly(jobject obj)
 {
 	return CallBooleanMethodA(obj, m_Context->m_Buffer_IsReadOnlyID, 0);
+}
+
+jboolean JPJavaFrame::orderBuffer(jobject obj)
+{
+	jvalue arg;
+	arg.l = obj;
+	return CallBooleanMethodA(m_Context->m_JavaContext.get(),
+			m_Context->m_Context_OrderID, &arg);
 }
 
 class JPStringAccessor

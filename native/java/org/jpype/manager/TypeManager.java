@@ -371,7 +371,6 @@ public class TypeManager
       modifiers |= ModifierCode.SERIALIZABLE.value;
     if (Buffer.class.isAssignableFrom(cls))
     {
-      System.out.println("as buffer " + cls);
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
     }
     if (this.functionalAnnotation != null
