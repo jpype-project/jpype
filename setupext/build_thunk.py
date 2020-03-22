@@ -124,6 +124,7 @@ class BuildThunkCommand(distutils.cmd.Command):
 
     def run(self):
         """Run command."""
+        self.run_command("build_java")
         self.announce(
             'Building thunks',
             level=distutils.log.INFO)
