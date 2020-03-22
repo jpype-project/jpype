@@ -75,16 +75,14 @@ matrix:
         - PYTHON=python3
         - PIP=pip3
       install:
-        - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
-        - $PYTHON setup.py install
-        - $PIP install -e .
-        - $PIP install gcovr pytest-cov jedi
-        - mvn -f project/coverage package
         - $PYTHON setup.py test_java
+        - mvn -q -f project/coverage package
+        - $PIP install gcovr pytest-cov jedi
+        - $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
       script:
-        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="native/org.jpype.jar" --jacoco --checkjni
-        - gcovr -r . --xml -o coverage.xml -d --exclude-unreachable-branches --exclude-throw-branches
-        - java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml
+        - $PYTHON -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="build/classes" --jacoco --checkjni
+        - gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
+        - java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
         - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
 
 install:
