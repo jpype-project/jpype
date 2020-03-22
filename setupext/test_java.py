@@ -14,9 +14,9 @@ def getJavaVersion():
     out = subprocess.run(['javac', '-version'], stdout=subprocess.PIPE)
     version_str = out.stdout.decode('utf-8')
     result = re.match(r'javac ([0-9]+)\.([0-9]+)\..*', version_str)
-    if int(result[1]) > 1:
-        return int(result[1])
-    return int(result[2])
+    if int(result.group(1)) > 1:
+        return int(result.group(1))
+    return int(result.group(2))
 
 
 def compileJava():
