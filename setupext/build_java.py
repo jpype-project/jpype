@@ -72,7 +72,7 @@ class BuildJavaCommand(distutils.cmd.Command):
             raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
 
         # Coverage tool requires special placement of the source
-         if self.distribution.enable_coverage:
+        if self.distribution.enable_coverage:
             import shutil
             shutil.copyfile(os.path.join("build", "lib", "org.jpype.jar"), os.path.join(
                 "native", "org.jpype.jar"))
