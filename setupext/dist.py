@@ -8,13 +8,11 @@ class Distribution(_Distribution):
     global_options = [
         ('enable-build-jar', None, 'Build the java jar portion'),
         ('enable-tracing', None, 'Set for tracing for debugging'),
-        ('ant=', None, 'Set the ant executable (default ant)', 1),
         ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
 
     ] + _Distribution.global_options
 
     def parse_command_line(self):
-        self.ant = "ant"
         self.enable_tracing = False
         self.enable_build_jar = False
         self.enable_coverage = False
