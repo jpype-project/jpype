@@ -11,7 +11,7 @@ import re
 import shlex
 
 
-def compileJava(self):
+def compileJava(self, coverage):
     target_version = "1.7"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]
@@ -19,8 +19,11 @@ def compileJava(self):
     cmd1 = shlex.split('javac -d build/lib -g:none -source %s -target %s' %
                        (target_version, target_version))
     cmd1.extend(src1)
-    cmd2 = shlex.split('javac -d build/classes -g:none -source %s -target %s -cp build/lib' %
-                       (target_version, target_version))
+    debug = "-g:none"
+    if coverage:
+        debug = "-g:lines,vars,source"
+    cmd2 = shlex.split('javac -d build/classes %s -source %s -target %s -cp build/lib' %
+                       (debug, target_version, target_version))
     cmd2.extend(src2)
     os.makedirs("build/lib", exist_ok=True)
     os.makedirs("build/classes", exist_ok=True)
@@ -64,9 +67,11 @@ class BuildJavaCommand(distutils.cmd.Command):
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
+        coverage = self.distribution.enable_coverage
+
         # build the jar
         try:
-            compileJava(self)
+            compileJava(self, coverage)
         except subprocess.CalledProcessError as exc:
             distutils.log.error(exc.output)
             raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
