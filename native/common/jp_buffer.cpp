@@ -14,7 +14,7 @@ JPBuffer::JPBuffer(const JPValue &value)
 	m_Buffer.format = m_Class->getType();
 	m_Buffer.itemsize = (Py_ssize_t) m_Class->getSize();
 	m_Buffer.ndim = 1;
-	m_Buffer.readonly = 0;  // FIXME Need to test the item to get this
+	m_Buffer.readonly = frame.isBufferReadOnly(m_Object.get());
 	m_Buffer.shape = &m_Capacity;
 	m_Buffer.strides = &m_Buffer.itemsize;
 	m_Buffer.suboffsets = 0;
@@ -23,4 +23,19 @@ JPBuffer::JPBuffer(const JPValue &value)
 
 JPBuffer::~JPBuffer()
 {
+}
+
+bool JPBuffer::isReadOnly()
+{
+	return m_Buffer.readonly != 0;
+}
+
+Py_buffer& JPBuffer::getView()
+{
+	return m_Buffer;
+}
+
+bool JPBuffer::isValid()
+{
+	return m_Capacity != -1;
 }

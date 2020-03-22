@@ -24,6 +24,12 @@ public:
 		return m_Object.get();
 	}
 
+	bool isReadOnly();
+
+	Py_buffer& getView();
+
+	bool isValid();
+
 private:
 	JPBufferType* m_Class;
 	JPObjectRef    m_Object;
