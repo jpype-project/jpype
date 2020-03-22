@@ -13,6 +13,8 @@ def getJavaVersion():
     # Find Java version
     version_str = os.popen('javac -version').read()
     result = re.match(r'javac ([0-9]+)\.([0-9]+)\..*', version_str)
+    if not result:
+        return 8
     if int(result.group(1)) > 1:
         return int(result.group(1))
     return int(result.group(2))
