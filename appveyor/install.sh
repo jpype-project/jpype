@@ -68,7 +68,7 @@ $PYTHON -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Build the test harness
 echo "==== Build test"
-$PYTHON "project/ant/bin/ant.py" -f test/build.xml
+$PYTHON setup.py test_java
 
 # Install the package
 echo "==== Build module"

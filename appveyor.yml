@@ -51,7 +51,6 @@ environment:
 
 
 install:
-  - mvn -f project/ant package
   - refreshenv
 
   # Add thinges to path

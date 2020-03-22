@@ -14,9 +14,9 @@ pip.exe install numpy
 #pip.exe install pytest==5.2.0
 #pip.exe install -r "test-requirements.txt" # -r dev-requirements.txt
 
-python project\\ant\\bin\\ant.py -f test\\build.xml
+python setup.py test_java
 
 # Build the compiled extension and run the project tests
-python.exe setup.py --ant="project/ant/bin/ant.py" --enable-build-jar bdist_wheel
+python.exe setup.py --enable-build-jar bdist_wheel
 dir .\dist
 Get-ChildItem -File -Path .\dist\*.whl | Foreach {pip install --upgrade $_.fullname}
