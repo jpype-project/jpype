@@ -185,6 +185,9 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		cls = frame.FindClass("java/lang/String");
 		m_String_ToCharArrayID = frame.GetMethodID(cls, "toCharArray", "()[C");
 
+		cls = frame.FindClass("java/nio/Buffer");
+		m_Buffer_IsReadOnlyID = frame.GetMethodID(cls, "isReadOnly",
+				"()Z");
 
 		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
 		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));

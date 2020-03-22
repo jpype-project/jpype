@@ -62,7 +62,7 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	jobject o = javaSlot->getJavaObject();
 	if (o == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	return frame.CallIntMethodA(o, context->m_Object_HashCodeID, 0);
+	return frame.hashCode(o);
 	JP_PY_CATCH(0);
 }
 

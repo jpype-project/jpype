@@ -976,6 +976,11 @@ jlong JPJavaFrame::GetDirectBufferCapacity(jobject obj)
 	return m_Env->functions->GetDirectBufferCapacity(m_Env, obj);
 }
 
+jboolean JPJavaFrame::isBufferReadOnly(jobject obj)
+{
+	return CallBooleanMethodA(obj, m_Context->m_Buffer_IsReadOnlyID, 0);
+}
+
 class JPStringAccessor
 {
 	JPJavaFrame& frame_;
@@ -1025,11 +1030,21 @@ jstring JPJavaFrame::fromStringUTF8(const string& str)
 	return (jstring) NewStringUTF(mstr.c_str());
 }
 
+jobject JPJavaFrame::toCharArray(jstring jstr)
+{
+	return CallObjectMethodA(jstr, m_Context->m_String_ToCharArrayID, 0);
+}
+
 bool JPJavaFrame::equals(jobject o1, jobject o2 )
 {
 	jvalue args;
 	args.l = o2;
 	return CallBooleanMethodA(o1, m_Context->m_Object_EqualsID, &args) != 0;
+}
+
+jint JPJavaFrame::hashCode(jobject o)
+{
+	return CallIntMethodA(o, m_Context->m_Object_HashCodeID, 0);
 }
 
 jobject JPJavaFrame::collectRectangular(jarray obj)

@@ -137,6 +137,7 @@ public:
 	string toStringUTF8(jstring str);
 
 	bool equals(jobject o1, jobject o2);
+	jint hashCode(jobject o);
 	jobject collectRectangular(jarray obj);
 	jobject assemble(jobject dims, jobject parts);
 
@@ -149,6 +150,7 @@ public:
 	 */
 	jstring fromStringUTF8(const string& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
+	jobject toCharArray(jstring jstr);
 
 	JPClass *findClass(jclass obj);
 	JPClass *findClassByName(const string& name);
@@ -331,6 +333,7 @@ public:
 
 	void* GetDirectBufferAddress(jobject obj);
 	jlong GetDirectBufferCapacity(jobject obj);
+	jboolean isBufferReadOnly(jobject obj);
 
 	/** This returns a UTF16 surogate coded UTF-8 string.
 	 */

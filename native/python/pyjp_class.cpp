@@ -730,6 +730,9 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberFloat_Type);
 		}
+	} else if (JPModifier::isBuffer(cls->getModifiers()))
+	{
+		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPBuffer_Type);
 	} else if (cls == context->_java_lang_Throwable)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPException_Type);

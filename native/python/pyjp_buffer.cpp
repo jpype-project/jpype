@@ -145,6 +145,7 @@ void PyJPBuffer_initType(PyObject * module)
 
 JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)
 {
+	printf("Create JPBuffer\n");
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 	((PyJPBuffer*) obj)->m_Buffer = new JPBuffer(value);
