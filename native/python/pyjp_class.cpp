@@ -782,7 +782,6 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
-
 	// Check the cache for speed
 	PyObject *host = (PyObject*) cls->getHost();
 	if (host != NULL)
@@ -822,6 +821,13 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 			PyDict_SetItem(members, methodName.keep(),
 					PyJPMethod_create(*iter, NULL).keep());
 		}
+	}
+
+	// Catch creation loop,  the process of creating our parent
+	host = cls->getHost();
+	if (host != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, host);
 	}
 
 	// Call the customizer to make any required changes to the tables.
