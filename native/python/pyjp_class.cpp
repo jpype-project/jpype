@@ -783,6 +783,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
 	// Check the cache for speed
+
 	PyObject *host = (PyObject*) cls->getHost();
 	if (host != NULL)
 	{
@@ -824,7 +825,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	}
 
 	// Catch creation loop,  the process of creating our parent
-	host = cls->getHost();
+	host = (PyObject*) cls->getHost();
 	if (host != NULL)
 	{
 		return JPPyObject(JPPyRef::_use, host);
