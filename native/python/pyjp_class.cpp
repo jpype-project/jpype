@@ -545,9 +545,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	jobject obj = val->getJavaObject();
 	if (obj == NULL)
 		return PyJPValue_create(frame, JPValue(type, 0)).keep();
-	printf("A\n");
 	JPClass *otherClass = frame.findClassForObject(obj);
-	printf("B\n");
 	if (otherClass == NULL)
 		return PyJPValue_create(frame, JPValue(type, val->getJavaObject())).keep();
 
