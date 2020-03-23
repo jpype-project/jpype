@@ -34,7 +34,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
-  // Create an instance (this may fail)
+	// Create an instance (this may fail)
 	JPJavaFrame frame(context);
 	JPPyObjectVector args(pyargs);
 
@@ -49,6 +49,58 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
 	return self;
 	JP_PY_CATCH(NULL);
+}
+
+
+static const char* op_names[] = {
+	"<", "<=", "==", "!=", ">", ">="
+};
+
+static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
+{
+	JP_PY_TRY("PyJPObject_compare");
+	if (op == Py_NE)
+	{
+		PyObject *ret = PyJPObject_compare(self, other, Py_EQ);
+		if (ret == NULL)
+			return NULL;
+		int rc = (ret == Py_False);
+		Py_DECREF(ret);
+		return PyBool_FromLong(rc);
+	}
+	if (op != Py_EQ)
+	{
+		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java object", op_names[op]);
+		return NULL;
+	}
+
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
+	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
+
+	// First slot is Null
+	if (javaSlot0 == NULL || javaSlot0->getValue().l == NULL)
+	{
+		if (javaSlot1 == NULL)
+			return PyBool_FromLong(other == Py_None);
+		if (javaSlot1->getClass()->isPrimitive())
+			Py_RETURN_FALSE;
+		if (javaSlot1->getValue().l == NULL)
+			Py_RETURN_TRUE;
+		Py_RETURN_FALSE;
+	}
+
+	// Check second slot is Null
+	if (other == Py_None)
+		Py_RETURN_FALSE;
+	if (javaSlot1->getClass()->isPrimitive())
+		Py_RETURN_FALSE;
+	if (javaSlot1->getValue().l == NULL)
+		Py_RETURN_FALSE;
+
+	return PyBool_FromLong(frame.equals(javaSlot0->getValue().l, javaSlot1->getValue().l));
+	JP_PY_CATCH(0);
 }
 
 static Py_hash_t PyJPObject_hash(PyObject *obj)
@@ -72,6 +124,7 @@ static PyType_Slot objectSlots[] = {
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_str,      (void*) &PyJPValue_str},
+	{Py_tp_richcompare, (void*) &PyJPObject_compare},
 	{Py_tp_hash,     (void*) &PyJPObject_hash},
 	{0}
 };
