@@ -20,10 +20,6 @@
 #define DELTA_LIMIT 10*1024*1024l
 #define HARD_LIMIT 200*1024*1024l
 
-namespace
-{
-}
-
 size_t getWorkingSize()
 {
 	size_t current = 0;
@@ -37,7 +33,6 @@ size_t getWorkingSize()
 	mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
 	if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t) & info, &count) == KERN_SUCCESS)
 		current = (size_t) info.resident_size;
-	return (size_t) 0; /* query failed */
 
 #elif defined(USE_MALLINFO)
 	struct mallinfo mi;
@@ -85,7 +80,7 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
 
 	running = true;
-	getWorkingSize();
+	high_water = getWorkingSize();
 	limit = high_water + DELTA_LIMIT;
 }
 

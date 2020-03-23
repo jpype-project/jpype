@@ -86,7 +86,7 @@ public class JPypeReferenceSet
    * Release all resources.
    *
    * This is triggered by shutdown to release an current Python references that
-   * a being held.
+   * are being held.
    *
    */
   void flush()
@@ -98,11 +98,11 @@ public class JPypeReferenceSet
         JPypeReference ref = pool.entries[i];
         long hostRef = ref.hostReference;
         long cleanup = ref.cleanup;
+        // This is a sanity check to prevent calling a cleanup with a null
+        // pointer, it would only occur if we failed to manage a deleted
+        // item.
         if (cleanup == 0)
-        {
-          System.out.println("Fault 2");
           continue;
-        }
         ref.cleanup = 0;
         JPypeReferenceQueue.removeHostReference(context, hostRef, cleanup);
       }

@@ -53,7 +53,6 @@ final public class JPypeReferenceQueue extends ReferenceQueue
       return;
     if (isStopped)
     {
-      System.out.println("Post stop " + host);
       removeHostReference(context, host, cleanup);
     } else
     {
