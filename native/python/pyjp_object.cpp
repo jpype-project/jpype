@@ -99,11 +99,11 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 		// This block seems like a giant waste as there are very few cases in which
 		// a converted object would ever satisfy equals.  But this was the original
 		// logic in JPype so we will try to match it.
-		JPMatch match(frame, other);
+		JPMatch match(&frame, other);
 		javaSlot0->getClass()->findJavaConversion(match);
 		if (match.type < JPMatch::_implicit)
 			Py_RETURN_FALSE;
-		return PyBool_FromLong(frame.equals(javaSlot0->getValue().l, match->convert().l));
+		return PyBool_FromLong(frame.equals(javaSlot0->getValue().l, match.convert().l));
 	}
 	if (javaSlot1->getClass()->isPrimitive())
 		Py_RETURN_FALSE;

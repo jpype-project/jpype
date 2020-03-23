@@ -43,7 +43,10 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         self.assertEqual(cls.get(cls.decode(1171)), 1171)
 
     def testTypeFactory(self):
-        @JImplements("org.jpype.manager.TypeFactory")
+        bl = self.inst.getBootLoader()
+        TypeFactory = JClass("org.jpype.manager.TypeFactory", bl, True)
+        TypeManager = JClass("org.jpype.manager.TypeManager", bl, True)
+        @JImplements(TypeFactory)
         class TF(object):
             def __init__(self):
                 self.id = 0
@@ -90,7 +93,6 @@ class JavaCoverageTestCase(common.JPypeTestCase):
             def destroy(self, context, resources, sz):
                 for i in range(sz):
                     del self.entities[resources[i]]
-        TypeManager = JClass('org.jpype.manager.TypeManager')
         manager = TypeManager()
         factory = TF()
         manager = TypeManager(62621463, factory)
