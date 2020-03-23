@@ -31,7 +31,7 @@ public:
 			jint modifiers);
 	virtual~ JPArrayClass();
 
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	virtual JPMatch::Type findJavaConversion(JPMatch &match);
 
 	JPValue newInstance(JPJavaFrame& frame, int length);

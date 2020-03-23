@@ -176,7 +176,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		JP_TRACE("Set overload", i);
 		jvalue v;
 		v.l = (*iter)->getJava();
-		JPPyObject obj(PyJPValue_create(frame, JPValue(methodClass, v)));
+		JPPyObject obj(methodClass->convertToPythonObject(frame, v, true));
 		ov.setItem(i++, obj.get());
 	}
 
@@ -187,7 +187,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		args.setItem(0, (PyObject*) self);
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
-		JPPyObject obj(PyJPValue_create(frame, JPValue(context->_java_lang_Class, v)));
+		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
 		args.setItem(1, obj.get());
 		args.setItem(2, ov.get());
 		JP_TRACE("Call Python");
@@ -230,7 +230,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		JP_TRACE("Set overload", i);
 		jvalue v;
 		v.l = (*iter)->getJava();
-		JPPyObject obj(PyJPValue_create(frame, JPValue(methodClass, v)));
+		JPPyObject obj(methodClass->convertToPythonObject(frame, v, true));
 		ov.setItem(i++, obj.get());
 	}
 
@@ -241,7 +241,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		args.setItem(0, (PyObject*) self);
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
-		JPPyObject obj(PyJPValue_create(frame, JPValue(context->_java_lang_Class, v)));
+		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
 		args.setItem(1, obj.get());
 		args.setItem(2, ov.get());
 		JP_TRACE("Call Python");

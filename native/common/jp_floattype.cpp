@@ -28,9 +28,13 @@ JPFloatType::~JPFloatType()
 {
 }
 
-JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(field(val)));
+	PyTypeObject * wrapper = getHost();
+	JPPyObject obj = JPPyObject(JPPyRef::_call, wrapper->tp_alloc(wrapper, 0));
+	((PyFloatObject*) obj.get())->ob_fval = value.f;
+	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
+	return obj;
 }
 
 JPValue JPFloatType::getValueFromObject(const JPValue& obj)
@@ -107,14 +111,14 @@ JPPyObject JPFloatType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fi
 {
 	jvalue v;
 	field(v) = frame.GetStaticFloatField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPFloatType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetFloatField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue *val)
@@ -124,7 +128,7 @@ JPPyObject JPFloatType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID 
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticFloatMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue *val)
@@ -137,7 +141,7 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 		else
 			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPFloatType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject *obj)
@@ -221,7 +225,7 @@ JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetFloatArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

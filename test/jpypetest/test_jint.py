@@ -232,6 +232,11 @@ class JIntTestCase(common.JPypeTestCase):
         self.checkTypeFail(2**31, exc=OverflowError)
         self.checkTypeFail(-2**31-1, exc=OverflowError)
 
+    def testExplicitRange(self):
+        # These will not overflow as they are explicit casts
+        self.assertEqual(JInt(2**32), 0)
+        self.assertEqual(JInt(-2**32), 0)
+
     def testCheckBool(self):
         self.checkType(True)
         self.checkType(False)

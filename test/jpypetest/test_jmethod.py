@@ -243,8 +243,8 @@ class JMethodTestCase(common.JPypeTestCase):
     def testJMethod_self(self):
         Fixture = JClass("jpype.common.Fixture")
         fixture = JClass("jpype.common.Fixture")()
-        self.assertEquals(fixture.callInt.__self__, fixture)
-        self.assertEquals(Fixture.callStaticInt.__self__, None)
+        self.assertEqual(fixture.callInt.__self__, fixture)
+        self.assertEqual(Fixture.callStaticInt.__self__, None)
 
     def testJMethod_name(self):
         fixture = JClass("jpype.common.Fixture")()

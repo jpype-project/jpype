@@ -232,6 +232,11 @@ class JLongTestCase(common.JPypeTestCase):
         self.checkTypeFail(2**63, exc=OverflowError)
         self.checkTypeFail(-2**63-1, exc=OverflowError)
 
+    def testExplicitRange(self):
+        # These will not overflow as they are explicit casts
+        self.assertEqual(JLong(2**64), 0)
+        self.assertEqual(JLong(-2**64), 0)
+
     def testCheckBool(self):
         self.checkType(True)
         self.checkType(False)

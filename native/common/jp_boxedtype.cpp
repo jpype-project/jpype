@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_boxedtype.h"
 
 JPBoxedType::JPBoxedType(JPJavaFrame& frame, jclass clss,
@@ -57,4 +58,26 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 jobject JPBoxedType::box(JPJavaFrame &frame, jvalue v)
 {
 	return frame.NewObjectA(m_Class.get(), m_CtorID, &v);
+}
+
+JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
+{
+	JPClass *cls = this;
+	if (!cast)
+	{
+		// This loses type
+		if (value.l == NULL)
+		{
+			return JPPyObject::getNone();
+		}
+
+		cls = frame.findClassForObject(value.l);
+		if (cls != this)
+			return cls->convertToPythonObject(frame, value, true);
+	}
+
+	JPPyObject wrapper = PyJPClass_create(frame, cls);
+	JPPyObject obj = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
+	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
+	return obj;
 }

@@ -50,7 +50,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		if (type == NULL)
 			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
-		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
+		pyargs.setItem(i, type->convertToPythonObject(frame, val, false).get());
 	}
 	return pyargs;
 	JP_TRACE_OUT;
@@ -260,7 +260,7 @@ JPProxyType::~JPProxyType()
 {
 }
 
-JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
