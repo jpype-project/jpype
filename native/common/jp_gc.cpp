@@ -2,6 +2,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_reference_queue.h"
+#include "jp_gc.h"
 
 #ifdef WIN32
 #define USE_PROCESS_INFO
@@ -151,7 +152,7 @@ void JPGarbageCollection::onEnd()
 
 		// Predict if we will cross the limit soon.
 		ssize_t pred = current + 2 * (current - last);
-		if (pred > limit)
+		if ((ssize_t) pred > (ssize_t) limit)
 			run_gc = 2;
 
 		//		printf("consider gc %d (%ld, %ld, %ld, %ld) %ld\n", run_gc,

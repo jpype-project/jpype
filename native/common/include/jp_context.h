@@ -73,6 +73,7 @@ typedef JPRef<jarray> JPArrayRef;
 typedef JPRef<jthrowable> JPThrowableRef;
 
 class JPStackInfo;
+class JPGarbageCollection;
 
 void assertJVMRunning(JPContext* context, const JPStackInfo& info);
 

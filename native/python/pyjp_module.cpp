@@ -19,6 +19,7 @@
 #include "jp_arrayclass.h"
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
+#include "jp_gc.h"
 
 void PyJPModule_installGC(PyObject* module);
 

@@ -32,6 +32,7 @@
 #include "jp_reference_queue.h"
 #include "jp_proxy.h"
 #include "jp_platform.h"
+#include "jp_gc.h"
 
 JPResource::~JPResource()
 {

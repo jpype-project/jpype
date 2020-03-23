@@ -18,6 +18,7 @@
 #include "jpype.h"
 #include "jp_classloader.h"
 #include "jp_reference_queue.h"
+#include "jp_gc.h"
 
 extern "C"
 {

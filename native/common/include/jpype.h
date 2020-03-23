@@ -185,7 +185,6 @@ typedef _object PyObject;
 
 // Base utility headers
 #include "jp_javaframe.h"
-#include "jp_gc.h"
 #include "jp_context.h"
 #include "jp_exception.h"
 #include "jp_pythontypes.h"
