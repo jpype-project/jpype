@@ -222,8 +222,17 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 
 JPProxy::~JPProxy()
 {
-	if (m_Ref != NULL)
-		getContext()->getEnv()->DeleteWeakGlobalRef(m_Ref);
+	try
+	{
+		JPContext *context = getContext();
+		if (m_Ref != NULL && context->isRunning())
+		{
+			context->getEnv()->DeleteWeakGlobalRef(m_Ref);
+		}
+	} catch (JPypeException &ex)
+	{
+		// Cannot throw
+	}
 }
 
 jvalue JPProxy::getProxy()

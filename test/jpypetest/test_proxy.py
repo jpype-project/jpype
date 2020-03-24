@@ -17,6 +17,7 @@
 from jpype import *
 import common
 import sys
+import time
 
 
 def _testMethod1():
@@ -443,3 +444,24 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.getClass(), java.lang.Class)
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
+
+    def testWeak(self):
+        hc = java.lang.System.identityHashCode
+        @JImplements("java.io.Serializable")
+        class MyObj(object):
+            pass
+        def f():
+            obj = MyObj()
+            jobj = JObject(obj)
+            i = hc(obj)
+            return i, obj
+        i0, obj = f()
+        i1 = hc(obj)
+        java.lang.System.gc()
+        time.sleep(0.5)
+        i2 = hc(obj)
+        # These should be the same if unless the reference was broken
+        self.assertEqual(i0, i1)
+        # This should be different as the weak reference gets recycled
+        self.assertNotEqual(i0, i2)
+
