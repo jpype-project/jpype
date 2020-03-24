@@ -216,11 +216,14 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 	jobject proxy = frame.CallStaticObjectMethodA(m_Factory->m_ProxyClass.get(),
 			m_Factory->m_NewProxyID, v);
 	m_Proxy = JPObjectRef(m_Factory->m_Context, proxy);
+	m_Ref = NULL;
 	JP_TRACE_OUT;
 }
 
 JPProxy::~JPProxy()
 {
+	if (m_Ref != NULL)
+		getContext()->getEnv()->DeleteWeakGlobalRef(m_Ref);
 }
 
 jvalue JPProxy::getProxy()
@@ -229,12 +232,21 @@ jvalue JPProxy::getProxy()
 	JPContext* context = getContext();
 	JPJavaFrame frame(context);
 
-	// Use the proxy to make an instance
-	JP_TRACE("Create handler");
-	Py_INCREF(m_Instance);
-	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
-			m_Factory->m_NewInstanceID, 0);
+	jobject instance = NULL;
+	if (m_Ref != NULL)
+	{
+		instance = frame.NewLocalRef(m_Ref);
+	}
 
+	if (instance == NULL)
+	{
+		// Use the proxy to make an instance
+		JP_TRACE("Create handler");
+		Py_INCREF(m_Instance);
+		instance = frame.CallObjectMethodA(m_Proxy.get(),
+				m_Factory->m_NewInstanceID, 0);
+		m_Ref = frame.NewWeakGlobalRef(instance);
+	}
 	jvalue out;
 	out.l = frame.keep(instance);
 	return out;
