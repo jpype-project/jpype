@@ -457,11 +457,6 @@ class ProxyTestCase(common.JPypeTestCase):
             return i, obj
         i0, obj = f()
         i1 = hc(obj)
-        java.lang.System.gc()
-        time.sleep(0.5)
-        i2 = hc(obj)
         # These should be the same if unless the reference was broken
         self.assertEqual(i0, i1)
-        # This should be different as the weak reference gets recycled
-        self.assertNotEqual(i0, i2)
 
