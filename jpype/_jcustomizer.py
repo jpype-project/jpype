@@ -263,3 +263,5 @@ def getClassHints(name):
 _jpype._hints = {}
 getClassHints("java.lang.IndexOutOfBoundsException").registerClassBase(
     IndexError)
+getClassHints("java.lang.NullPointerException").registerClassBase(
+    ValueError)
