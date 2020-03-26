@@ -796,6 +796,13 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	PyTuple_SetItem(args.get(), 0, JPPyString::fromStringUTF8(cls->getCanonicalName()).keep());
 	PyTuple_SetItem(args.get(), 1, PyJPClass_getBases(frame, cls).keep());
 
+	// Catch creation loop,  the process of creating our parent
+	host = (PyObject*) cls->getHost();
+	if (host != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, host);
+	}
+
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
 
@@ -822,13 +829,6 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 			PyDict_SetItem(members, methodName.keep(),
 					PyJPMethod_create(*iter, NULL).keep());
 		}
-	}
-
-	// Catch creation loop,  the process of creating our parent
-	host = (PyObject*) cls->getHost();
-	if (host != NULL)
-	{
-		return JPPyObject(JPPyRef::_use, host);
 	}
 
 	// Call the customizer to make any required changes to the tables.
