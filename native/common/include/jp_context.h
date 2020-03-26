@@ -252,6 +252,7 @@ public:
 	jmethodID m_Context_CreateExceptionID;
 	jmethodID m_Context_GetExcClassID;
 	jmethodID m_Context_GetExcValueID;
+	jmethodID m_CompareToID;
 
 private:
 	bool m_IsShutdown;

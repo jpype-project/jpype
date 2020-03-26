@@ -1073,3 +1073,10 @@ JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
 	return m_Context->getTypeManager()->findClassForObject(obj);
 }
+
+jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
+{
+	jvalue v;
+	v.l = obj2;
+	return this->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
+}

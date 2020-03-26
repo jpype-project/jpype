@@ -246,6 +246,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(frame,
 				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
 
+		cls = frame.FindClass("java/lang/Comparable");
+		m_CompareToID = frame.GetMethodID(cls, "compareTo",
+				"(Ljava/lang/Object;)I");
+
 		// Everything is started.
 	}
 	m_IsInitialized = true;
