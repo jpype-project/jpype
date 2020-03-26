@@ -738,11 +738,9 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPComparable_Type);
 	} else if (super == NULL)
 	{
-	} else
-	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPObject_Type);
 	}
-	
+
 	const JPClassList& baseItf = cls->getInterfaces();
 	size_t count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != NULL ? 1 : 0);
 
