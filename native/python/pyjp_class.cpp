@@ -782,8 +782,8 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
-
 	// Check the cache for speed
+
 	PyObject *host = (PyObject*) cls->getHost();
 	if (host != NULL)
 	{
@@ -798,6 +798,14 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
+
+	// Catch creation loop,  the process of creating our parent
+	host = (PyObject*) cls->getHost();
+	if (host != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, host);
+	}
+
 
 	const JPFieldList& instFields = cls->getFields();
 	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
