@@ -15,7 +15,6 @@
 #
 # *****************************************************************************
 import _jpype
-from . import _jcustomizer
 
 __all__ = ['JObject']
 
@@ -62,21 +61,6 @@ class JObject(_jpype._JObject):
         if len(args) == 0:
             args = [None]
         return _JObjectFactory(*args, **kwargs)
-
-
-class _JObjectProto(object):
-    # Hash is covered by _jpype._JObject
-    def __eq__(self, other):
-        try:
-            return self.equals(other)
-        except TypeError:
-            return False
-
-    def __ne__(self, other):
-        try:
-            return not self.equals(other)
-        except TypeError:
-            return True
 
 
 def _getDefaultJavaObject(obj):
@@ -131,4 +115,3 @@ def _JObjectFactory(v=None, tp=None):
 
 # Hook up module resources
 _jpype.JObject = JObject
-_jcustomizer._applyCustomizerPost(_jpype._JObject, _JObjectProto)
