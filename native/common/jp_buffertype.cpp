@@ -61,11 +61,8 @@ JPBufferType::~JPBufferType()
 JPPyObject JPBufferType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	JP_TRACE_IN("JPBufferClass::convertToPythonObject");
-	if (!cast)
-	{
-		if (value.l == NULL)
-			return JPPyObject::getNone();
-	}
+	if (!cast && value.l == NULL)
+		return JPPyObject::getNone();
 	JPPyObject wrapper = PyJPClass_create(frame, this);
 	JPPyObject obj = PyJPBuffer_create(frame, (PyTypeObject*) wrapper.get(), JPValue(this, value));
 	return obj;

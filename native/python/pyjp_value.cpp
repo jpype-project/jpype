@@ -287,7 +287,7 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 
 	JPValue* slot = (JPValue*) (((char*) self) + offset);
 	// GCOVR_EXCL_START
-	// This is an sanity check that should never trigger in normal operations.make
+	// This is a sanity check that should never trigger in normal operations.
 	if (slot->getClass() != NULL)
 	{
 		JP_RAISE(PyExc_SystemError, "Slot assigned twice");
