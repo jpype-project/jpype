@@ -23,41 +23,47 @@ __all__ = ["JProxy", "JImplements"]
 # so we can properly handle name mangling on the override.
 
 
+
 def _createJProxy(cls, *intf, **kwargs):
     """ (internal) Create a proxy from a python class with
     @JOverride notation on methods.
     """
-    # Convert the interfaces list
-    actualIntf = _convertInterfaces(intf)
+    if _jpype.isStarted():
+        # Convert the interfaces list
+        actualIntf = _convertInterfaces(intf)
+        _verifyOverrides(cls, actualIntf)
+        members = {}
+        def new(tp, *args, **kwargs):
+            self = _jpype._JProxy.__new__(tp, None, actualIntf)
+            cls.__init__(self, *args, **kwargs)
+            return self
+        members['__new__'] = new
 
-    # Find all class defined overrides
-    overrides = {}
-    for k, v in cls.__dict__.items():
-        try:
-            attr = object.__getattribute__(v, "__joverride__")
-            overrides[k] = (v, attr)
-        except AttributeError:
-            pass
+        # Return the augmented class
+        return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
 
-    # Verify all methods are overriden
-    for interface in actualIntf:
-        for method in interface.class_.getMethods():
-            if method.getModifiers() & 1024 == 0:
-                continue
-            if not str(method.getName()) in overrides:
-                raise NotImplementedError("Interface '%s' requires method '%s' to be implemented." % (
-                    interface.class_.getName(), method.getName()))
+    else:
+        # Defer until later
+        members = {}
+        def init(cls2):
+            actualIntf = getattr(cls2, "_jinterfaces", None)
+            if actualIntf is not None:
+                return actualIntf
+            actualIntf = _convertInterfaces(intf)
+            _verifyOverrides(cls2, actualIntf)
+            setattr(cls2, "_jinterfaces", actualIntf)
+            return actualIntf
 
-    members = {}
+        def new(tp, *args, **kwargs):
+            actualIntf = init(cls)
+            self = _jpype._JProxy.__new__(tp, None, actualIntf)
+            cls.__init__(self, *args, **kwargs)
+            return self
+        members['__new__'] = new
 
-    def new(tp, *args, **kwargs):
-        self = _jpype._JProxy.__new__(tp, None, actualIntf)
-        cls.__init__(self, *args, **kwargs)
-        return self
-    members['__new__'] = new
-
-    # Return the augmented class
-    return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
+        # Return the augmented class
+        return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
+ 
 
 
 def JImplements(*args, **kwargs):
@@ -129,6 +135,26 @@ def _convertInterfaces(intf):
             raise TypeError("'%s' is not a Java interface" % cls.__name__)
 
     return tuple(actualIntf)
+
+
+def _verifyOverrides(cls, actualIntf):
+    # Find all class defined overrides
+    overrides = {}
+    for k, v in cls.__dict__.items():
+        try:
+            attr = object.__getattribute__(v, "__joverride__")
+            overrides[k] = (v, attr)
+        except AttributeError:
+            pass
+
+    # Verify all methods are overriden
+    for interface in actualIntf:
+        for method in interface.class_.getMethods():
+            if method.getModifiers() & 1024 == 0:
+                continue
+            if not str(method.getName()) in overrides:
+                raise NotImplementedError("Interface '%s' requires method '%s' to be implemented." % (
+                    interface.class_.getName(), method.getName()))
 
 
 class _JFromDict(object):
