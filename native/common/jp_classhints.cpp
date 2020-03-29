@@ -80,6 +80,12 @@ JPClassHints::JPClassHints()
 
 JPClassHints::~JPClassHints()
 {
+	for (std::list<JPConversion*>::iterator iter = conversions.begin();
+			iter != conversions.end(); ++iter)
+	{
+		delete *iter;
+	}
+	conversions.clear();
 }
 
 JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
