@@ -122,7 +122,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 		type = frame.findClassForObject(r);
 	jvalue v;
 	v.l = r;
-	return type->convertToPythonObject(frame, v);
+	return type->convertToPythonObject(frame, v, false);
 	JP_TRACE_OUT;
 }
 
@@ -135,7 +135,7 @@ JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 		type = frame.findClassForObject(r);
 	jvalue v;
 	v.l = r;
-	return type->convertToPythonObject(frame, v);
+	return type->convertToPythonObject(frame, v, false);
 	JP_TRACE_OUT;
 }
 
@@ -152,7 +152,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 	if (v.l != NULL)
 		type = frame.findClassForObject(v.l);
 
-	return type->convertToPythonObject(frame, v);
+	return type->convertToPythonObject(frame, v, false);
 
 	JP_TRACE_OUT;
 }
@@ -176,7 +176,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	if (v.l != NULL)
 		type = frame.findClassForObject(v.l);
 
-	return type->convertToPythonObject(frame, v);
+	return type->convertToPythonObject(frame, v, false);
 
 	JP_TRACE_OUT;
 }
@@ -268,7 +268,7 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	v.l = obj;
 	if (obj != NULL)
 		retType = frame.findClassForObject(v.l);
-	return retType->convertToPythonObject(frame, v);
+	return retType->convertToPythonObject(frame, v, false);
 	JP_TRACE_OUT;
 }
 
@@ -282,32 +282,58 @@ JPValue JPClass::getValueFromObject(const JPValue& obj)
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue obj)
+JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
-
-	//  Returning None likely incorrect from java prospective.
-	//  Java still knows the type of null objects thus
-	//  converting to None would pose a problem as we lose type.
-	//  We would need subclass None for this to make sense so we
-	//  can carry both the type and the null, but Python considers
-	//  None a singleton so this is not an option.
-	//
-	//  Of course if we don't mind that "Object is None" would
-	//  fail, but "Object == None" would be true, the we
-	//  could support null objects properly.  However, this would
-	//  need to work as "None == Object" which may be hard to
-	//  achieve.
-	//
-	// We will still need to have the concept of null objects
-	// but we can get those through JObject(None, cls).
-	if (obj.l == NULL)
+	JPClass *cls = this;
+	if (!cast)
 	{
-		return JPPyObject::getNone();
+		//  Returning None likely incorrect from java prospective.
+		//  Java still knows the type of null objects thus
+		//  converting to None would pose a problem as we lose type.
+		//  We would need subclass None for this to make sense so we
+		//  can carry both the type and the null, but Python considers
+		//  None a singleton so this is not an option.
+		//
+		//  Of course if we don't mind that "Object is None" would
+		//  fail, but "Object == None" would be true, the we
+		//  could support null objects properly.  However, this would
+		//  need to work as "None == Object" which may be hard to
+		//  achieve.
+		//
+		// We will still need to have the concept of null objects
+		// but we can get those through JObject(None, cls).
+		if (value.l == NULL)
+		{
+			return JPPyObject::getNone();
+		}
+
+		cls = frame.findClassForObject(value.l);
+		if (cls != this)
+			return cls->convertToPythonObject(frame, value, true);
 	}
 
-	JPClass *cls = frame.findClassForObject(obj.l);
-	return PyJPValue_create(frame, JPValue(cls, obj));
+	JPPyObject obj;
+	JPPyObject wrapper = PyJPClass_create(frame, cls);
+
+	if (isThrowable())
+	{
+		// Exceptions need new and init
+		JPPyTuple tuple = JPPyTuple::newTuple(1);
+		tuple.setItem(0, _JObjectKey);
+		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
+	} else
+	{
+		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
+		// Simple objects don't have a new or init function
+		PyObject *obj2 = type->tp_alloc(type, 0);
+		JP_PY_CHECK();
+		obj = JPPyObject(JPPyRef::_claim, obj2);
+	}
+
+	// Fill in the Java slot
+	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
+	return obj;
 	JP_TRACE_OUT;
 }
 

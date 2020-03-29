@@ -28,7 +28,7 @@ JPBooleanType::~JPBooleanType()
 {
 }
 
-JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	return JPPyObject(JPPyRef::_call, PyBool_FromLong(val.z));
 }
@@ -113,14 +113,14 @@ JPPyObject JPBooleanType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID 
 {
 	jvalue v;
 	field(v) = frame.GetStaticBooleanField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPBooleanType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetBooleanField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -130,7 +130,7 @@ JPPyObject JPBooleanType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodI
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticBooleanMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -143,7 +143,7 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 		else
 			field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPBooleanType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -227,7 +227,7 @@ JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetBooleanArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

@@ -16,6 +16,7 @@
 # *****************************************************************************
 import jpype
 from jpype import JException, java, JProxy, JClass
+from jpype.types import *
 import traceback
 import common
 
@@ -113,7 +114,13 @@ class ExceptionTestCase(common.JPypeTestCase):
         with self.assertRaises(IndexError):
             raise java.lang.IndexOutOfBoundsException("From Java")
 
+    def testValueError(self):
+        js = JObject(None, JString)
+        with self.assertRaises(ValueError):
+            js.substring(0)
+
     def testExcCtor(self):
         WE = jpype.JClass("jpype.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
+

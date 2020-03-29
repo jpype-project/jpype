@@ -250,6 +250,18 @@ please file a ticket with the developer.
     _jpype._java_lang_Float = _jpype.JClass("java.lang.Float")
     _jpype._java_lang_Double = _jpype.JClass("java.lang.Double")
 
+    # Bind types
+    _jpype.JString.class_ = _jpype._java_lang_String
+    _jpype.JObject.class_ = _jpype._java_lang_Object
+    _jtypes.JBoolean.class_ = _jpype._java_lang_Boolean.TYPE
+    _jtypes.JByte.class_ = _jpype._java_lang_Byte.TYPE
+    _jtypes.JChar.class_ = _jpype._java_lang_Character.TYPE
+    _jtypes.JShort.class_ = _jpype._java_lang_Short.TYPE
+    _jtypes.JInt.class_ = _jpype._java_lang_Integer.TYPE
+    _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
+    _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
+    _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
+
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
     _jpype._object_classes[bool] = _jpype._java_lang_Boolean
@@ -282,18 +294,6 @@ please file a ticket with the developer.
     _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
-
-    # Bind types
-    _jpype.JString.class_ = _jpype._java_lang_String
-    _jpype.JObject.class_ = _jpype._java_lang_Object
-    _jtypes.JBoolean.class_ = _jpype._java_lang_Boolean.TYPE
-    _jtypes.JByte.class_ = _jpype._java_lang_Byte.TYPE
-    _jtypes.JChar.class_ = _jpype._java_lang_Character.TYPE
-    _jtypes.JShort.class_ = _jpype._java_lang_Short.TYPE
-    _jtypes.JInt.class_ = _jpype._java_lang_Integer.TYPE
-    _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
-    _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
-    _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
 
 
 def attachToJVM(jvm):

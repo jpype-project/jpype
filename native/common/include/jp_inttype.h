@@ -44,7 +44,7 @@ public:
 	}
 
 	virtual JPMatch::Type findJavaConversion(JPMatch& match) override;
-	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val) override;
+	virtual JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	virtual JPValue     getValueFromObject(const JPValue& obj) override;
 
 	virtual JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;

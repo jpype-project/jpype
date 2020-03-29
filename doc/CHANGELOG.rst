@@ -7,8 +7,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - java.util.Map conforms to Python abc.Mapping API.
 
-  - float properly follows Java rules for conversion from double.
-    floats outside of range map to inf and -inf.
+  - JFloat properly follows Java rules for conversion from JDouble.
+    JFloats outside of range map to inf and -inf.
 
   - Add support for direct conversion of multi-dimensional primitive arrays
     with ``JArray.of(array, [dtype=type])``
@@ -24,12 +24,24 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Proxies pass Python exceptions properly rather converting to 
     java.lang.RuntimeException
 
-  - java.lang.Number converts automatically from Python and Java numbers
+  - java.lang.Number converts automatically from Python and Java numbers.
+    Java primitive types will cast to their proper box type when passed
+    to methods and fields taking Number.
 
   - java.lang.Object and java.lang.Number box signed, sized numpy types 
     (int8, int16, int32, int64, float32, float64) to the Java boxed type
     with the same size automatically.  Architecture dependent numpy
-    types map to Long or Double.
+    types map to Long or Double like other Python types.
+
+  - Explicit casting using primitives such as JInt will not produce an
+    OverflowError.  Implicit casting from Python types such as int or float
+    will.
+
+  - Returns for number type primitives will retain their return type 
+    information.  These are derived from Python int and float types
+    thus no change in behavior unless chaining from a Java methods 
+    which is not allowed in Java without a cast.  
+    JBoolean and JChar still produce Python types only.
 
   - Proxies created with JImplements properly implement toString, hashCode,
     and equals.
@@ -39,6 +51,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - JProxy instances created with the convert=True argument will automatic
     unwrap when passed from Java to Python. 
+
 
 - **0.7.2 - 2-28-2019**
 
@@ -114,6 +127,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - java.lang.IndexOutOfBoundsException can be caught with IndexError
     for complience when accessing ``java.util.List`` elements.
 
+  - java.lang.NullPointerException can be caught with ValueError
+    for consistency with Python exception usage..
 
 - **0.7.1 - 12-16-2019**
 

@@ -63,7 +63,7 @@ public:
 		((&_frame)->*_release)(a, _elem, JNI_ABORT);
 	}
 
-};
+} ;
 
 template <class type_t> PyObject *convertMultiArray(
 		JPJavaFrame &frame,
@@ -145,7 +145,7 @@ template <class type_t> PyObject *convertMultiArray(
 		type = frame.findClassForObject(out);
 	jvalue v;
 	v.l = out;
-	return type->convertToPythonObject(frame, v).keep();
+	return type->convertToPythonObject(frame, v, false).keep();
 }
 
 template <typename base_t>
@@ -164,16 +164,25 @@ public:
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		jlong val = PyLong_AsLongLong(match.object);
-		if (val == -1)
-			JP_PY_CHECK();
-		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
+		if (match.type == JPMatch::_exact)
+		{
+			jlong val = (jlong) PyLong_AsUnsignedLongLongMask(match.object);
+			if (val == -1)
+				JP_PY_CHECK();
+			base_t::field(res) = (typename base_t::type_t) val;
+		} else
+		{
+			jlong val = (jlong) PyLong_AsLongLong(match.object);
+			if (val == -1)
+				JP_PY_CHECK();
+			base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
+		}
 		return res;
 	}
 } ;
 
 template <typename base_t>
-class JPConversionLongNumber : public JPConversion
+class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
@@ -187,17 +196,11 @@ public:
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		jvalue res;
-		PyObject *obj = PyNumber_Long(match.object);
-		JP_PY_CHECK();
-		jlong val = PyLong_AsLongLong(obj);
-		Py_DECREF(obj);
-		if (val == -1)
-			JP_PY_CHECK();
-		base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
-		return res;
+		JPPyObject obj = JPPyObject(JPPyRef::_call, PyNumber_Long(match.object));
+		match.object = obj.get();
+		return JPConversionLong<base_t>::convert(match);
 	}
-};
+} ;
 
 template <typename base_t>
 class JPConversionLongWiden : public JPConversion
