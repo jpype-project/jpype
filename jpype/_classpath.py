@@ -72,7 +72,7 @@ def addClassPath(path1):
     # of the caller rather than the JPype directory.
     path1 = Path(path1)
     if not path1.is_absolute():
-        path2 = Path(inspect.stack(1)[1].filename).parent
+        path2 = Path(inspect.stack(1)[1].filename).parent.resolve()
         path1 = path2.joinpath(path1)
 
     if _sys.platform == 'cygwin':
