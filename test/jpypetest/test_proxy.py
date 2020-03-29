@@ -266,7 +266,6 @@ class ProxyTestCase(common.JPypeTestCase):
         try:
             result = self._triggers.testProxy(proxy)
         except Exception as ex:
-            print(ex.stacktrace())
             raise ex
 
         expected = ['Test Method1 = 43', 'Test Method2 = 42']
@@ -443,3 +442,14 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.getClass(), java.lang.Class)
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
+
+    def testDeferredChecking(self):
+        # We require a testMethod1 to be defined to implement the
+        # interface. Because we defer the checking we only find this out at
+        # class instantiation.
+        @JImplements("jpype.proxy.TestInterface1", deferred=True)
+        class MyImpl(object):
+            pass
+
+        with self.assertRaisesRegex(NotImplementedError, "requires method"):
+            MyImpl()
