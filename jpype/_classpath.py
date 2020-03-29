@@ -1,6 +1,5 @@
 import os as _os
 import sys as _sys
-import glob as _glob
 
 __all__ = ['addClassPath', 'getClassPath']
 
@@ -34,8 +33,9 @@ if _sys.platform == 'cygwin':
         return parts
 
     def _posix2win(directory):
+        directory = str(directory)
         if len(directory) > 3 and directory[1:3] == ":\\":
-            return directory
+            return Path(directory)
         root = _get_root()
         directory = _os.path.abspath(directory)
         paths = _splitpath(directory)
@@ -43,9 +43,9 @@ if _sys.platform == 'cygwin':
             paths.pop(0)
             drive = paths.pop(0)
             paths.insert(0, "%s:" % drive)
-            return '\\'.join(paths)
+            return Path('\\'.join(paths))
         paths.insert(0, root)
-        return '\\'.join(paths)
+        return Path('\\'.join(paths))
     # needed for testing
     __all__.append("_posix2win")
 
@@ -54,18 +54,31 @@ def addClassPath(path1):
     """ Add a path to the Java class path
 
     Classpath items can be a java, a directory, or a
-    glob pattern.
+    glob pattern.  Relative paths are relative to the 
+    caller location.
 
     Arguments:
       path(str):
 
     """
+    # We are deferring these imports until here as we only need them
+    # if this function is used.
+    from pathlib import Path
+    import inspect
     global _CLASSPATHS
 
-    path1 = _os.path.abspath(path1)
+    # Convert to an absolute path.  Note that 
+    # relative paths will be resolve based on the location 
+    # of the caller rather than the JPype directory.
+    path1 = Path(path1)
+    if not path1.is_absolute():
+        path2 = Path(inspect.stack(1)[1].filename).parent
+        path1 = path2.joinpath(path1)
+
     if _sys.platform == 'cygwin':
         path1 = _posix2win(path1)
-    _CLASSPATHS.append(str(path1))
+
+    _CLASSPATHS.append(path1)
 
 
 def getClassPath(env=True):
@@ -84,17 +97,17 @@ def getClassPath(env=True):
     classPath = list(_CLASSPATHS)
     envPath = _os.environ.get("CLASSPATH")
     if env and envPath:
-        classPath.extend(envPath.split(_SEP))
+        classPath.extend([Path(i) for i in envPath.split(_SEP)])
 
     out = []
     for path in classPath:
         if path == '':
             continue
-        if path.endswith('*'):
-            paths = _glob.glob(path+".jar")
-            if len(path) == 0:
+        if path.name == "*":
+            paths = path.parent.glob("*.jar")
+            if len(paths) == 0:
                 continue
             out.extend(paths)
         else:
             out.append(path)
-    return _SEP.join(out)
+    return _SEP.join([str(i) for i in out])
