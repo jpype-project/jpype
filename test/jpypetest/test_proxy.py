@@ -17,7 +17,6 @@
 from jpype import *
 import common
 import sys
-import time
 
 
 def _testMethod1():

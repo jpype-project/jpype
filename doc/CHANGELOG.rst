@@ -128,7 +128,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     for complience when accessing ``java.util.List`` elements.
 
   - java.lang.NullPointerException can be caught with ValueError
-    for consistency with Python exception usage..
+    for consistency with Python exception usage.
+
+  - JProxy only creates one copy of the invocation handler per
+    garbage collection rather than once per use.  Thus proxy objects
+    placed in memory containers will have the same object id so long
+    as Java holds on to it.
 
 - **0.7.1 - 12-16-2019**
 
