@@ -127,6 +127,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - java.lang.IndexOutOfBoundsException can be caught with IndexError
     for complience when accessing ``java.util.List`` elements.
 
+  - java.lang.NullPointerException can be caught with ValueError
+    for consistency with Python exception usage..
 
 - **0.7.1 - 12-16-2019**
 

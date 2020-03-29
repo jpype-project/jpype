@@ -24,6 +24,7 @@ public class JPypeReferenceQueue extends ReferenceQueue
   private Thread queueThread;
   private Object queueStopMutex = new Object();
 
+  // This is required for register natives
   public JPypeReferenceQueue()
   {
   }

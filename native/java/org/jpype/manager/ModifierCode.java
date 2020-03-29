@@ -58,7 +58,7 @@ public enum ModifierCode
     this.value = value;
   }
 
-  public int get(EnumSet<ModifierCode> set)
+  public static int get(EnumSet<ModifierCode> set)
   {
     int out = 0;
     for (ModifierCode m : set)
@@ -68,7 +68,7 @@ public enum ModifierCode
     return out;
   }
 
-  static EnumSet<ModifierCode> decode(long modifiers)
+  public static EnumSet<ModifierCode> decode(long modifiers)
   {
     EnumSet<ModifierCode> out = EnumSet.noneOf(ModifierCode.class);
     for (ModifierCode code : ModifierCode.values())
