@@ -92,11 +92,12 @@ def JImplements(*interfaces, **kwargs):
         this proxy is to implement.
 
     Kwargs:
-      deferred (bool): Whether to validate the override and attach the Proxy at
+      deferred (bool):
+        Whether to validate the override and attach the Proxy at
         import time (requires JVM to be running), or at instance instantiation.
         There is no performance cost to doing the work at instance
-        instantiation as the proxy is attached to the class once and
-        subsequently cached.
+        instantiation as the proxy is attached to the class once and is
+        subsequently cached on the class itself.
 
     Example:
 
