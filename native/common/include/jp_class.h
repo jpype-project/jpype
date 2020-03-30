@@ -213,11 +213,6 @@ public:
 		return m_Context;
 	}
 
-	jint getModifiers()
-	{
-		return m_Modifiers;
-	}
-
 protected:
 	JPContext*           m_Context;
 	JPClassRef           m_Class;
