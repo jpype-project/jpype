@@ -743,9 +743,10 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArrayPrimitive_Type);
 		else
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArray_Type);
-	} else if (super == NULL
-			//			|| !self->m_Class->isPrimitive()
-			)
+	} else if (cls->getCanonicalName() == "java.lang.Comparable")
+	{
+		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPComparable_Type);
+	} else if (super == NULL)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPObject_Type);
 	}

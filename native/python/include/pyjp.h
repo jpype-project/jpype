@@ -109,6 +109,7 @@ extern PyTypeObject *PyJPArray_Type;
 extern PyTypeObject *PyJPArrayPrimitive_Type;
 extern PyTypeObject *PyJPBuffer_Type;
 extern PyTypeObject *PyJPClass_Type;
+extern PyTypeObject *PyJPComparable_Type;
 extern PyTypeObject *PyJPMethod_Type;
 extern PyTypeObject *PyJPObject_Type;
 extern PyTypeObject *PyJPProxy_Type;

@@ -254,6 +254,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Buffer_IsReadOnlyID = frame.GetMethodID(cls, "isReadOnly",
 				"()Z");
 
+		cls = frame.FindClass("java/lang/Comparable");
+		m_CompareToID = frame.GetMethodID(cls, "compareTo",
+				"(Ljava/lang/Object;)I");
+
 		// Everything is started.
 	}
 	m_IsInitialized = true;

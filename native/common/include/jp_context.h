@@ -255,6 +255,7 @@ private:
 	jmethodID m_Context_CreateExceptionID;
 	jmethodID m_Context_GetExcClassID;
 	jmethodID m_Context_GetExcValueID;
+	jmethodID m_CompareToID;
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
