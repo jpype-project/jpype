@@ -83,6 +83,13 @@ struct PyJPArray
 	JPArrayView *m_View;
 } ;
 
+struct PyJPBuffer
+{
+	PyObject_HEAD
+	JPBuffer *m_Buffer;
+} ;
+
+
 struct PyJPClassHints
 {
 	PyObject_HEAD
@@ -100,6 +107,7 @@ struct PyJPProxy
 // JPype types
 extern PyTypeObject *PyJPArray_Type;
 extern PyTypeObject *PyJPArrayPrimitive_Type;
+extern PyTypeObject *PyJPBuffer_Type;
 extern PyTypeObject *PyJPClass_Type;
 extern PyTypeObject *PyJPComparable_Type;
 extern PyTypeObject *PyJPMethod_Type;
@@ -152,6 +160,7 @@ int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 
 // C++ methods
 JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, const JPValue& value);
+JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue & value);
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls);
 JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value);
 JPPyObject PyJPField_create(JPField* m);

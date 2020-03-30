@@ -111,6 +111,9 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info);
 class JPContext
 {
 public:
+	friend class JPJavaFrame;
+	friend class JPypeException;
+
 	JPContext();
 	virtual ~JPContext();
 
@@ -238,7 +241,7 @@ private:
 	JPReferenceQueue *m_ReferenceQueue;
 	JPProxyFactory *m_ProxyFactory;
 
-public:
+private:
 	// Java Functions
 	jmethodID m_Object_ToStringID;
 	jmethodID m_Object_EqualsID;
@@ -253,7 +256,9 @@ public:
 	jmethodID m_Context_GetExcClassID;
 	jmethodID m_Context_GetExcValueID;
 	jmethodID m_CompareToID;
-
+	jmethodID m_Buffer_IsReadOnlyID;
+	jmethodID m_Context_OrderID;
+	jmethodID m_Object_GetClassID;
 private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;

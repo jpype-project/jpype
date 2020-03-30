@@ -60,7 +60,6 @@ JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue value,
 	}
 	JPPyObject wrapper = PyJPClass_create(frame, this);
 	JPPyObject obj = PyJPArray_create(frame, (PyTypeObject*) wrapper.get(), JPValue(this, value));
-	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
 	return obj;
 	JP_TRACE_OUT;
 }

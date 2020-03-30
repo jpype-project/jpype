@@ -201,6 +201,7 @@ public:
 
 // Accessors
 #include "jp_array.h"
+#include "jp_buffer.h"
 
 // Services
 #include "jp_proxy.h"

@@ -19,6 +19,8 @@ package org.jpype;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.Buffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -303,6 +305,25 @@ public class JPypeContext
   public Exception createException(long l0, long l1)
   {
     return new PyExceptionProxy(l0, l1);
+  }
+
+  public boolean order(Buffer b)
+  {
+    if (b instanceof java.nio.ByteBuffer)
+      return ((java.nio.ByteBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.ShortBuffer)
+      return ((java.nio.ShortBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.CharBuffer)
+      return ((java.nio.CharBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.IntBuffer)
+      return ((java.nio.IntBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.LongBuffer)
+      return ((java.nio.LongBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.FloatBuffer)
+      return ((java.nio.FloatBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    if (b instanceof java.nio.DoubleBuffer)
+      return ((java.nio.DoubleBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
+    return true;
   }
 
 }
