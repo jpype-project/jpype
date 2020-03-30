@@ -278,7 +278,6 @@ public:
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPJavaFrame *frame = match.frame;
-		JPContext *context = frame->getContext();
 		JP_TRACE("char[]");
 		jvalue res;
 
@@ -289,7 +288,7 @@ public:
 		jstring jstr = frame->fromStringUTF8(str);
 
 		// call toCharArray()
-		res.l = frame->CallObjectMethodA(jstr, context->m_String_ToCharArrayID, 0);
+		res.l = frame->toCharArray(jstr);
 		return res;
 	}
 } _charArrayConversion;

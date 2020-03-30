@@ -24,6 +24,7 @@
 bool _jp_cpp_exceptions = false;
 
 extern void PyJPArray_initType(PyObject* module);
+extern void PyJPBuffer_initType(PyObject* module);
 extern void PyJPClass_initType(PyObject* module);
 extern void PyJPField_initType(PyObject* module);
 extern void PyJPMethod_initType(PyObject* module);
@@ -584,6 +585,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPObject_initType(module);
 
 	PyJPArray_initType(module);
+	PyJPBuffer_initType(module);
 	PyJPField_initType(module);
 	PyJPMethod_initType(module);
 	PyJPNumber_initType(module);
