@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve MÃ©nard
+   Copyright 2004-2008 Steve MÃƒÂ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -116,12 +116,22 @@ JPJavaFrame::~JPJavaFrame()
 
 void JPJavaFrame::DeleteLocalRef(jobject obj)
 {
-	m_Env->functions->DeleteLocalRef(m_Env, obj);
+	m_Env->DeleteLocalRef(obj);
 }
 
 void JPJavaFrame::DeleteGlobalRef(jobject obj)
 {
-	m_Env->functions->DeleteGlobalRef(m_Env, obj);
+	m_Env->DeleteGlobalRef(obj);
+}
+
+jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
+{
+	return m_Env->NewWeakGlobalRef(obj);
+}
+
+void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)
+{
+	return m_Env->DeleteWeakGlobalRef(obj);
 }
 
 jobject JPJavaFrame::NewLocalRef(jobject a0)

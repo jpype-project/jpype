@@ -58,6 +58,7 @@ private:
 	PyObject*     m_Instance; // This is a PyJPProxy
 	JPObjectRef   m_Proxy;
 	JPClassList   m_InterfaceClasses;
+	jweak         m_Ref;
 } ;
 
 /** Special wrapper for round trip returns

@@ -123,6 +123,9 @@ public:
 	 */
 	void DeleteLocalRef(jobject obj);
 
+	jweak NewWeakGlobalRef(jobject obj);
+	void DeleteWeakGlobalRef(jweak obj);
+
 	JNIEnv* getEnv() const
 	{
 		return m_Env;
