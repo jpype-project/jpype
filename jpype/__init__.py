@@ -35,7 +35,6 @@ from ._jcustomizer import *
 # Customizers are applied in the order that they are defined currently.
 from . import _jmethod      # lgtm [py/import-own-module]
 from . import _jcollection  # lgtm [py/import-own-module]
-from . import _jcomparable  # lgtm [py/import-own-module]
 from . import _jio          # lgtm [py/import-own-module]
 
 

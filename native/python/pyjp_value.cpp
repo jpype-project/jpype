@@ -16,7 +16,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_arrayclass.h"
 #include "jp_boxedtype.h"
 #include "jp_stringtype.h"
 
@@ -287,6 +286,13 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	// GCOVR_EXCL_STOP
 
 	JPValue* slot = (JPValue*) (((char*) self) + offset);
+	// GCOVR_EXCL_START
+	// This is a sanity check that should never trigger in normal operations.
+	if (slot->getClass() != NULL)
+	{
+		JP_RAISE(PyExc_SystemError, "Slot assigned twice");
+	}
+	// GCOVR_EXCL_STOP
 	JPClass* cls = value.getClass();
 	if (cls != NULL && !cls->isPrimitive())
 	{

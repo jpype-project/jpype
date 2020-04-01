@@ -95,6 +95,11 @@ public:
 		return false;
 	}
 
+	jlong getModifiers()
+	{
+		return m_Modifiers;
+	}
+
 	virtual bool isPrimitive() const
 	{
 		return false;

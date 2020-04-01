@@ -12,23 +12,23 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Add support for direct conversion of multi-dimensional primitive arrays
     with ``JArray.of(array, [dtype=type])``
-    
+
   - Fix bug that was causing java.lang.Comparable, byte[], and char[] to be unhashable.
 
   - Corrected an issue with creation of Exceptions which lack a
     default constructor.
 
-  - Fixed segfault when methods called by proxy have incorrect number of 
+  - Fixed segfault when methods called by proxy have incorrect number of
     arguments.
 
-  - Proxies pass Python exceptions properly rather converting to 
+  - Proxies pass Python exceptions properly rather converting to
     java.lang.RuntimeException
 
   - java.lang.Number converts automatically from Python and Java numbers.
     Java primitive types will cast to their proper box type when passed
     to methods and fields taking Number.
 
-  - java.lang.Object and java.lang.Number box signed, sized numpy types 
+  - java.lang.Object and java.lang.Number box signed, sized numpy types
     (int8, int16, int32, int64, float32, float64) to the Java boxed type
     with the same size automatically.  Architecture dependent numpy
     types map to Long or Double like other Python types.
@@ -37,10 +37,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     OverflowError.  Implicit casting from Python types such as int or float
     will.
 
-  - Returns for number type primitives will retain their return type 
+  - Returns for number type primitives will retain their return type
     information.  These are derived from Python int and float types
-    thus no change in behavior unless chaining from a Java methods 
-    which is not allowed in Java without a cast.  
+    thus no change in behavior unless chaining from a Java methods
+    which is not allowed in Java without a cast.
     JBoolean and JChar still produce Python types only.
 
   - Proxies created with JImplements properly implement toString, hashCode,
@@ -50,7 +50,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     created with JProxy.  Otherwise will return the proxy.
 
   - JProxy instances created with the convert=True argument will automatic
-    unwrap when passed from Java to Python. 
+    unwrap when passed from Java to Python.
+
+  - java.nio.Buffer derived objects can convert to memoryview if they
+    are direct.  They can be converted to numpy arrays with
+    ``numpy.asarray(memoryview(obj))``.
 
 
 - **0.7.2 - 2-28-2019**
@@ -72,7 +76,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     types derived from `_jpype` class types.  All private tables have been
     moved to CPython.  Java types must derive from the metaclass `JClass`
     which enforces type slots.  Mixins of Python base classes is not
-    permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays 
+    permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays
     derive directly from internal CPython implementations.
     See the :doc:`ChangeLog-0.7.2` for details of all changes.
 
@@ -81,7 +85,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Memory leak in convertToDirectBuffer has been corrected.
 
   = Arrays slices are now a view which support writeback to the original
-    like numpy array.  Array slices are no longer covariant returns of 
+    like numpy array.  Array slices are no longer covariant returns of
     list or numpy.array depending on the build procedure.
 
   - Array slices support steps for both set and get.
@@ -113,12 +117,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Enhanced error reporting for UnsupportedClassVersion during startup.
 
   - Corrections for collection methods to improve complience with
-    Python containers.  
-    
+    Python containers.
+
     - java.util.Map gives KeyError if the item is not found.  Values that
-      are ``null`` still return ``None`` as expected.  Use ``get()`` if 
+      are ``null`` still return ``None`` as expected.  Use ``get()`` if
       empty keys are to be treated as ``None``.
-      
+
     - java.util.Collection ``__delitem__`` was removed as it overloads
       oddly between ``remove(Object)`` and ``remove(int)`` on Lists.
       Use Java ``remove()`` method to access the original Java behavior,
@@ -128,7 +132,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     for complience when accessing ``java.util.List`` elements.
 
   - java.lang.NullPointerException can be caught with ValueError
-    for consistency with Python exception usage..
+    for consistency with Python exception usage.
+
+  - JProxy only creates one copy of the invocation handler per
+    garbage collection rather than once per use.  Thus proxy objects
+    placed in memory containers will have the same object id so long
+    as Java holds on to it.
 
 - **0.7.1 - 12-16-2019**
 
@@ -140,12 +149,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Hash codes for boxed types work properly in Python 3 and can be
     used as dictionary keys again (same as JPype 0.6).  Java arrays
-    have working hash codes, but as they are mutable should not 
+    have working hash codes, but as they are mutable should not
     be used as dictionary keys.  java.lang.Character, java.lang.Float,
     and java.lang.Double all work as dictionary keys, but due to
     differences in the hashing algorithm do not index to the same
     location as Python native types and thus may cause issues
-    when used as dictionary keys. 
+    when used as dictionary keys.
 
   - Updated getJVMVersion to work with JDK 9+.
 
@@ -156,9 +165,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     incorrectly returning `getMessage` rather than `toString`.
 
   - Fixed an issue with JDK 12 regarding calling methods with reflection.
-  
+
   - Removed limitations having to do with CallerSensitive methods. Methods
-    affected are listed in :doc:`caller_sensitive`. Caller sensitive 
+    affected are listed in :doc:`caller_sensitive`. Caller sensitive
     methods now receive an internal JPype class as the caller
 
   - Fixed segfault when converting null elements while accessing a slice
@@ -168,12 +177,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Tab completion with Jedi is supported.  Jedi is the engine behind
     tab completion in many popular editors and shells such as IPython.
-    Jedi version 0.14.1 is required for tab completion as earlier versions 
+    Jedi version 0.14.1 is required for tab completion as earlier versions
     did not support annotations on compiled classes.  Tab completion
     with older versions requires use of the IPython greedy method.
 
-  - JProxy objects now are returned from Java as the Python objects 
-    that originate from. Older style proxy classes return the 
+  - JProxy objects now are returned from Java as the Python objects
+    that originate from. Older style proxy classes return the
     inst or dict. New style return the proxy class instance.
     Thus proxy classes can be stored on generic Java containers
     and retrieved as Python objects.
@@ -183,7 +192,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Doc strings are generated for classes and methods.
 
   - Complete rewrite of the core module code to deal unattached threads,
-    improved hardening, and member management.  Massive number of internal 
+    improved hardening, and member management.  Massive number of internal
     bugs were identified during the rewrite and corrected.
     See the :doc:`ChangeLog-0.7` for details of all changes.
 
@@ -203,7 +212,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
      - Java exceptions are now derived from Python exception. The old wrapper
        types have been removed. Catch the exception with the actual Java
        exception type rather than ``JException``.
-       
+
      - Undocumented exceptions issued from within JPype have been mapped to the
        corresponding Python exception types such as ``TypeError`` and
        ``ValueError`` appropriately.  Code catching exceptions from previous
@@ -217,7 +226,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - API rework:
 
      - JPype factory methods now act as base classes for dynamic
-       class trees. 
+       class trees.
      - Static fields and methods are now available in object
        instances.
      - Inner classes are now imported with the parent class.
@@ -256,7 +265,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
       conversion has been removed.
     - Artifical base classes ``JavaClass`` and ``JavaObject`` have been removed.
     - Undocumented old style customizers have been removed.
-    - Many internal jpype symbols have been removed from the namespace to 
+    - Many internal jpype symbols have been removed from the namespace to
       prevent leakage of symbols on imports.
 
   - promoted *`--install-option`* to a *`--global-option`* as it applies to the build as well

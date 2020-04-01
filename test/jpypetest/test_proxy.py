@@ -463,6 +463,20 @@ class ProxyTestCase(common.JPypeTestCase):
 
         assert isinstance(MyImpl(), MyImpl)
 
+    def testWeak(self):
+        hc = java.lang.System.identityHashCode
+        @JImplements("java.io.Serializable")
+        class MyObj(object):
+            pass
+        def f():
+            obj = MyObj()
+            jobj = JObject(obj)
+            i = hc(obj)
+            return i, obj
+        i0, obj = f()
+        i1 = hc(obj)
+        # These should be the same if unless the reference was broken
+        self.assertEqual(i0, i1)
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
@@ -515,3 +529,4 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
+

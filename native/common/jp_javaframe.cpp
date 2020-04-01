@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve MÃ©nard
+   Copyright 2004-2008 Steve MÃƒÂ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -116,12 +116,22 @@ JPJavaFrame::~JPJavaFrame()
 
 void JPJavaFrame::DeleteLocalRef(jobject obj)
 {
-	m_Env->functions->DeleteLocalRef(m_Env, obj);
+	m_Env->DeleteLocalRef(obj);
 }
 
 void JPJavaFrame::DeleteGlobalRef(jobject obj)
 {
-	m_Env->functions->DeleteGlobalRef(m_Env, obj);
+	m_Env->DeleteGlobalRef(obj);
+}
+
+jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
+{
+	return m_Env->NewWeakGlobalRef(obj);
+}
+
+void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)
+{
+	return m_Env->DeleteWeakGlobalRef(obj);
 }
 
 jobject JPJavaFrame::NewLocalRef(jobject a0)
@@ -946,6 +956,12 @@ jfieldID JPJavaFrame::GetFieldID(jclass a0, const char* a1, const char* a2)
 	return m_Env->functions->GetFieldID(m_Env, a0, a1, a2);
 }
 
+jfieldID JPJavaFrame::GetStaticFieldID(jclass a0, const char* a1, const char* a2)
+{
+	JAVA_CALL("JPJavaFrame::GetStaticFieldID");
+	return m_Env->functions->GetStaticFieldID(m_Env, a0, a1, a2);
+}
+
 jsize JPJavaFrame::GetStringUTFLength(jstring a0)
 {
 	JAVA_CALL("JPJavaFrame::GetStringUTFLength");
@@ -963,6 +979,39 @@ jint JPJavaFrame::RegisterNatives(jclass a0, const JNINativeMethod* a1, jint a2)
 	JAVA_CALL("JPJavaFrame::RegisterNatives");
 	return m_Env->functions->RegisterNatives(m_Env, a0, a1, a2);
 }
+
+void* JPJavaFrame::GetDirectBufferAddress(jobject obj)
+{
+	JAVA_CALL("JPJavaFrame::GetDirectBufferAddress");
+	return m_Env->functions->GetDirectBufferAddress(m_Env, obj);
+}
+
+jlong JPJavaFrame::GetDirectBufferCapacity(jobject obj)
+{
+	JAVA_CALL("JPJavaFrame::GetDirectBufferAddress");
+	return m_Env->functions->GetDirectBufferCapacity(m_Env, obj);
+}
+
+jboolean JPJavaFrame::isBufferReadOnly(jobject obj)
+{
+	return CallBooleanMethodA(obj, m_Context->m_Buffer_IsReadOnlyID, 0);
+}
+
+jboolean JPJavaFrame::orderBuffer(jobject obj)
+{
+	jvalue arg;
+	arg.l = obj;
+	return CallBooleanMethodA(m_Context->m_JavaContext.get(),
+			m_Context->m_Context_OrderID, &arg);
+}
+
+// GCOVR_EXCL_START
+// This is used when debugging reference counting problems.
+jclass JPJavaFrame::getClass(jobject obj)
+{
+	return (jclass) CallObjectMethodA(obj, m_Context->m_Object_GetClassID, 0);
+}
+// GCOVR_EXCL_STOP
 
 class JPStringAccessor
 {
@@ -1013,11 +1062,21 @@ jstring JPJavaFrame::fromStringUTF8(const string& str)
 	return (jstring) NewStringUTF(mstr.c_str());
 }
 
+jobject JPJavaFrame::toCharArray(jstring jstr)
+{
+	return CallObjectMethodA(jstr, m_Context->m_String_ToCharArrayID, 0);
+}
+
 bool JPJavaFrame::equals(jobject o1, jobject o2 )
 {
 	jvalue args;
 	args.l = o2;
 	return CallBooleanMethodA(o1, m_Context->m_Object_EqualsID, &args) != 0;
+}
+
+jint JPJavaFrame::hashCode(jobject o)
+{
+	return CallIntMethodA(o, m_Context->m_Object_HashCodeID, 0);
 }
 
 jobject JPJavaFrame::collectRectangular(jarray obj)
@@ -1072,4 +1131,11 @@ JPClass *JPJavaFrame::findClassByName(const string& name)
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
 	return m_Context->getTypeManager()->findClassForObject(obj);
+}
+
+jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
+{
+	jvalue v;
+	v.l = obj2;
+	return this->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
 }
