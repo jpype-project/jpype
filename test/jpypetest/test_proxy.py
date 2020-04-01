@@ -14,9 +14,12 @@
 #   limitations under the License.
 #
 # *****************************************************************************
+import contextlib
+import sys
+
 from jpype import *
 import common
-import sys
+import subrun
 
 
 def _testMethod1():
@@ -266,7 +269,6 @@ class ProxyTestCase(common.JPypeTestCase):
         try:
             result = self._triggers.testProxy(proxy)
         except Exception as ex:
-            print(ex.stacktrace())
             raise ex
 
         expected = ['Test Method1 = 43', 'Test Method2 = 42']
@@ -444,6 +446,23 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
 
+    def testDeferredCheckingFailure(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            pass
+
+        with self.assertRaisesRegex(NotImplementedError, "requires method"):
+            MyImpl()
+
+    def testDeferredCheckingValid(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            @JOverride
+            def run(self):
+                pass
+
+        assert isinstance(MyImpl(), MyImpl)
+
     def testWeak(self):
         hc = java.lang.System.identityHashCode
         @JImplements("java.io.Serializable")
@@ -458,4 +477,56 @@ class ProxyTestCase(common.JPypeTestCase):
         i1 = hc(obj)
         # These should be the same if unless the reference was broken
         self.assertEqual(i0, i1)
+
+@subrun.TestCase(individual=True)
+class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
+    def setUp(self):
+        # Explicitly *don't* call the parent setUp as this would start the JVM.
+        pass
+
+    @contextlib.contextmanager
+    def assertRaisesJVMNotRunning(self):
+        with self.assertRaisesRegex(
+                RuntimeError, "Java Virtual Machine is not running"):
+            yield
+
+    def testDeferredCheckingNeedsJVM(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            pass
+
+        with self.assertRaisesJVMNotRunning():
+            MyImpl()
+
+    def testNotDeferredChecking(self):
+        with self.assertRaisesJVMNotRunning():
+            @JImplements("java.lang.Runnable", deferred=False)
+            class MyImpl(object):
+                pass
+
+    def testDeferredDefault(self):
+        with self.assertRaisesJVMNotRunning():
+            @JImplements("java.lang.Runnable")
+            class MyImpl(object):
+                pass
+
+    def testValidDeferredJVMNotRunning(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            @JOverride
+            def run(self):
+                pass
+
+        with self.assertRaisesJVMNotRunning():
+            MyImpl()
+
+    def testValidDeferredJVMRunning(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            @JOverride
+            def run(self):
+                pass
+
+        startJVM()
+        assert isinstance(MyImpl(), MyImpl)
 

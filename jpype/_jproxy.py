@@ -22,25 +22,9 @@ __all__ = ["JProxy", "JImplements"]
 # FIXME the java.lang.method we are overriding should be passes to the lookup function
 # so we can properly handle name mangling on the override.
 
-
-def _createJProxy(cls, *intf, **kwargs):
-    """ (internal) Create a proxy from a python class with
-    @JOverride notation on methods.
-    """
-    # Convert the interfaces list
-    actualIntf = _convertInterfaces(intf)
-
-    # Find all class defined overrides
-    overrides = {}
-    for k, v in cls.__dict__.items():
-        try:
-            attr = object.__getattribute__(v, "__joverride__")
-            overrides[k] = (v, attr)
-        except AttributeError:
-            pass
-
+def _checkInterfaceOverrides(interfaces, overrides):
     # Verify all methods are overriden
-    for interface in actualIntf:
+    for interface in interfaces:
         for method in interface.class_.getMethods():
             if method.getModifiers() & 1024 == 0:
                 continue
@@ -48,20 +32,54 @@ def _createJProxy(cls, *intf, **kwargs):
                 raise NotImplementedError("Interface '%s' requires method '%s' to be implemented." % (
                     interface.class_.getName(), method.getName()))
 
-    members = {}
+
+def _createJProxy(cls, *intf, **kwargs):
+    """ (internal) Create a proxy from a python class with
+    @JOverride notation on methods.
+    """
+    # TODO: When Python2 is dropped these kwargs can become keyword-only kwargs
+    deferred = bool(kwargs.pop('deferred', False))
+    if kwargs:
+        raise TypeError('Invalid keywords: {}'.format(
+            ','.join([str(kwarg) for kwarg in kwargs])))
+
+    def _classOverrides(cls):
+        # Find all class defined overrides
+        overrides = {}
+        for k, v in cls.__dict__.items():
+            try:
+                attr = object.__getattribute__(v, "__joverride__")
+                overrides[k] = (v, attr)
+            except AttributeError:
+                pass
+        return overrides
+
+    def _prepareInterfaces(cls, intf):
+        # Convert the interfaces list
+        actualIntf = _convertInterfaces(intf)
+        overrides = _classOverrides(cls)
+        _checkInterfaceOverrides(actualIntf, overrides)
+        return actualIntf
 
     def new(tp, *args, **kwargs):
-        self = _jpype._JProxy.__new__(tp, None, actualIntf)
-        cls.__init__(self, *args, **kwargs)
+        # Attach a __jpype_interfaces__ attribute to this class if
+        # one doesn't already exist.
+        if getattr(tp, "__jpype_interfaces__", None) is None:
+            tp.__jpype_interfaces__ = _prepareInterfaces(cls, intf)
+        self = _jpype._JProxy.__new__(tp, None, tp.__jpype_interfaces__)
+        tp.__init__(self, *args, **kwargs)
         return self
-    members['__new__'] = new
+
+    members = {'__new__': new}
+    if not deferred:
+        members['__jpype_interfaces__'] = _prepareInterfaces(cls, intf)
 
     # Return the augmented class
     return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
 
 
-def JImplements(*args, **kwargs):
-    """ Annotation for creating a new proxy that implements a list of
+def JImplements(*interfaces, **kwargs):
+    """ Annotation for creating a new proxy that implements one or more
     Java interfaces.
 
     This annotation is placed on an ordinary Python class.  The annotation
@@ -72,6 +90,14 @@ def JImplements(*args, **kwargs):
     Args:
       interfaces (str*,JClass*): Strings or JClasses for each Java interface
         this proxy is to implement.
+
+    Kwargs:
+      deferred (bool):
+        Whether to validate the override and attach the Proxy at
+        import time (requires JVM to be running), or at instance instantiation.
+        There is no performance cost to doing the work at instance
+        instantiation as the proxy is attached to the class once and is
+        subsequently cached on the class itself.
 
     Example:
 
@@ -91,7 +117,7 @@ def JImplements(*args, **kwargs):
 
     """
     def JProxyCreator(cls):
-        return _createJProxy(cls, *args, **kwargs)
+        return _createJProxy(cls, *interfaces, **kwargs)
     return JProxyCreator
 
 
