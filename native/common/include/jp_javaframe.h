@@ -154,6 +154,7 @@ public:
 	jstring fromStringUTF8(const string& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
 	jobject toCharArray(jstring jstr);
+	string getFunctional(jclass c);
 
 	JPClass *findClass(jclass obj);
 	JPClass *findClassByName(const string& name);

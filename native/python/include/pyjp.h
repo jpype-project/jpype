@@ -168,7 +168,6 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
 JPClass*   PyJPClass_getJPClass(PyObject* obj);
 JPProxy*   PyJPProxy_getJPProxy(PyObject* obj);
-JPPyObject PyJPProxy_getCallable(PyObject* obj, const string& name);
 void       PyJPModule_rethrow(const JPStackInfo& info);
 void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
 bool       PyJPValue_isSetJavaSlot(PyObject* self);

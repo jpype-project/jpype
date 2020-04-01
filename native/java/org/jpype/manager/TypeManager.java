@@ -376,7 +376,7 @@ public class TypeManager
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
     if (this.functionalAnnotation != null
             && cls.getAnnotation(this.functionalAnnotation) != null)
-      modifiers |= ModifierCode.FUNCTIONAL.value;
+      modifiers |= ModifierCode.FUNCTIONAL.value | ModifierCode.SPECIAL.value;
 
     // FIXME watch out for anonyous and lambda here.
     String name = cls.getCanonicalName();
