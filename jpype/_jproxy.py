@@ -33,59 +33,72 @@ def _checkInterfaceOverrides(interfaces, overrides):
                     interface.class_.getName(), method.getName()))
 
 
-def _createJProxy(cls, *intf, **kwargs):
-    """ (internal) Create a proxy from a python class with
-    @JOverride notation on methods.
+def _classOverrides(cls):
+    # Find all class defined overrides
+    overrides = {}
+    for k, v in cls.__dict__.items():
+        try:
+            attr = object.__getattribute__(v, "__joverride__")
+            overrides[k] = (v, attr)
+        except AttributeError:
+            pass
+    return overrides
+
+
+def _prepareInterfaces(cls, intf):
+    # Convert the interfaces list
+    actualIntf = _convertInterfaces(intf)
+    overrides = _classOverrides(cls)
+    _checkInterfaceOverrides(actualIntf, overrides)
+    return actualIntf
+
+
+def _createJProxyDeferred(cls, *intf):
+    """ (internal) Create a proxy from a Python class with
+    @JOverride notation on methods evaluated at first
+    instantiation.
     """
-    # TODO: When Python2 is dropped these kwargs can become keyword-only kwargs
-    deferred = bool(kwargs.pop('deferred', False))
-    if kwargs:
-        raise TypeError('Invalid keywords: {}'.format(
-            ','.join([str(kwarg) for kwarg in kwargs])))
-
-    def _classOverrides(cls):
-        # Find all class defined overrides
-        overrides = {}
-        for k, v in cls.__dict__.items():
-            try:
-                attr = object.__getattribute__(v, "__joverride__")
-                overrides[k] = (v, attr)
-            except AttributeError:
-                pass
-        return overrides
-
-    def _prepareInterfaces(cls, intf):
-        # Convert the interfaces list
-        actualIntf = _convertInterfaces(intf)
-        overrides = _classOverrides(cls)
-        _checkInterfaceOverrides(actualIntf, overrides)
-        return actualIntf
-
     def new(tp, *args, **kwargs):
         # Attach a __jpype_interfaces__ attribute to this class if
         # one doesn't already exist.
-        if getattr(tp, "__jpype_interfaces__", None) is None:
-            tp.__jpype_interfaces__ = _prepareInterfaces(cls, intf)
-        self = _jpype._JProxy.__new__(tp, None, tp.__jpype_interfaces__)
+        actualIntf = getattr(tp, "__jpype_interfaces__", None)
+        if actualIntf is None:
+            actualIntf = _prepareInterfaces(cls, intf)
+            tp.__jpype_interfaces__ = actualIntf
+        self = _jpype._JProxy.__new__(tp, None, actualIntf)
         tp.__init__(self, *args, **kwargs)
         return self
 
     members = {'__new__': new}
-    if not deferred:
-        members['__jpype_interfaces__'] = _prepareInterfaces(cls, intf)
-
     # Return the augmented class
     return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
 
 
-def JImplements(*interfaces, **kwargs):
+def _createJProxy(cls, *intf):
+    """ (internal) Create a proxy from a Python class with
+    @JOverride notation on methods evaluated at declaration.
+    """
+    actualIntf = _prepareInterfaces(cls, intf)
+
+    def new(tp, *args, **kwargs):
+        self = _jpype._JProxy.__new__(tp, None, actualIntf)
+        tp.__init__(self, *args, **kwargs)
+        return self
+
+    members = {'__new__': new}
+    # Return the augmented class
+    return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
+
+
+def JImplements(*interfaces, deferred=False, **kwargs):
     """ Annotation for creating a new proxy that implements one or more
     Java interfaces.
 
     This annotation is placed on an ordinary Python class.  The annotation
     requires a list of interfaces.  It must implement all of the java
     methods for each of the interfaces.  Each implemented method
-    should have a @JOverride annotation.
+    should have a @JOverride annotation.  The JVM must be running in
+    order to validate the class.
 
     Args:
       interfaces (str*,JClass*): Strings or JClasses for each Java interface
@@ -93,11 +106,11 @@ def JImplements(*interfaces, **kwargs):
 
     Kwargs:
       deferred (bool):
-        Whether to validate the override and attach the Proxy at
-        import time (requires JVM to be running), or at instance instantiation.
-        There is no performance cost to doing the work at instance
-        instantiation as the proxy is attached to the class once and is
-        subsequently cached on the class itself.
+        Whether to defer validation of the interfaces and overrides until
+        the first instance instantiation (True) or validate at declaration
+        (False). Deferred validation allows a proxy class to be declared prior
+        to starting the JVM.  Validation only occurs once per proxy class,
+        thus there is no performance penalty.  Default False.
 
     Example:
 
@@ -116,8 +129,12 @@ def JImplements(*interfaces, **kwargs):
                pass
 
     """
-    def JProxyCreator(cls):
-        return _createJProxy(cls, *interfaces, **kwargs)
+    if deferred:
+        def JProxyCreator(cls):
+            return _createJProxyDeferred(cls, *interfaces, **kwargs)
+    else:
+        def JProxyCreator(cls):
+            return _createJProxy(cls, *interfaces, **kwargs)
     return JProxyCreator
 
 

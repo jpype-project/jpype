@@ -468,6 +468,7 @@ class ProxyTestCase(common.JPypeTestCase):
         @JImplements("java.io.Serializable")
         class MyObj(object):
             pass
+
         def f():
             obj = MyObj()
             jobj = JObject(obj)
@@ -477,6 +478,7 @@ class ProxyTestCase(common.JPypeTestCase):
         i1 = hc(obj)
         # These should be the same if unless the reference was broken
         self.assertEqual(i0, i1)
+
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
@@ -529,4 +531,3 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
-
