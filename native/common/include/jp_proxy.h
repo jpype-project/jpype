@@ -24,6 +24,7 @@ class JPFunctional;
 class JPProxy
 {
 public:
+	friend class JPProxyType;
 	JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf);
 	virtual ~JPProxy();
 
