@@ -333,7 +333,7 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public static String getFunctional(Class cls)
+  public String getFunctional(Class cls)
   {
     // If we don't find it to be a functional interface, then we won't return
     // the SAM.
