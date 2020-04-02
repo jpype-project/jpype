@@ -33,6 +33,7 @@ if _sys.platform == 'cygwin':
         return parts
 
     def _posix2win(directory):
+        from pathlib import Path
         directory = str(directory)
         if len(directory) > 3 and directory[1:3] == ":\\":
             return Path(directory)
@@ -90,6 +91,7 @@ def getClassPath(env=True):
       env(Optional, bool): If true then environment is included.
         (default True)
     """
+    from pathlib import Path
     global _CLASSPATHS
     global _SEP
 
