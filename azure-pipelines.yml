@@ -42,6 +42,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install gcovr pytest-cov jedi
+      pip install -r test-requirements.txt
     displayName: 'Install requirements'
   - script: |
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
@@ -79,11 +80,12 @@ jobs:
       versionSpec: '$(python.version)'
   - script: |
       python setup.py sdist
-      python -m pip install dist/*
+      pip install dist/*
+    displayName: 'Build module'
   - script: python -c "import jpype"
     displayName: 'Check module'
   - script: |
       python setup.py test_java
-      python install -r test-requirements.txt
+      pip install -r test-requirements.txt
       python -m pytest -v test/jpypetest --checkjni  
     displayName: 'Test module'
