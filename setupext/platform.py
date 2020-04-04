@@ -59,6 +59,7 @@ elif sys.platform == 'cygwin':
 elif sys.platform == 'darwin':
     platform_specific['libraries'] = ['dl']
     platform_specific['define_macros'] = [('MACOSX', 1)]
+    platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
     jni_md_platform = 'darwin'
 
 elif sys.platform.startswith('linux'):
