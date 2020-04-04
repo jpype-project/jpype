@@ -23,7 +23,7 @@ import time
 #
 #gc.callbacks.append(callHook)
 
-trials = 200000
+trials = 100000
 tally = np.zeros((trials,), dtype=np.int8)
 class DestructionTracker:
     del_calls = 0
@@ -62,8 +62,15 @@ if __name__ == '__main__':
         interface_container = fixture.callObject(interface)
 
         if (i%1000)==0:
-            print(DestructionTracker.init_calls, DestructionTracker.del_calls, DestructionTracker.init_calls-DestructionTracker.del_calls)
-            print("Mark")
+            stats = _jpype.gcStats()
+            print("created=",DestructionTracker.init_calls, 
+                "  destroyed=",DestructionTracker.del_calls, 
+                "  delta=",DestructionTracker.init_calls-DestructionTracker.del_calls,
+                "  current=",stats['current'],
+                "  min=",stats['min'],
+                "  max=",stats['max'],
+                "  triggered=",stats['triggered'],
+                )
             time.sleep(1)
 #        print(_jpype.gcStats())
         del interface, interface_container

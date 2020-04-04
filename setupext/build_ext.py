@@ -17,7 +17,7 @@ class BuildExtCommand(build_ext):
 
     # extra compile args
     copt = {'msvc': [],
-            'unix': ['-ggdb', ],
+            'unix': ['-ggdb', '-std=c++11'],
             'mingw32': [],
             }
     # extra link args
@@ -53,6 +53,7 @@ class BuildExtCommand(build_ext):
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
+        print("COMPILER TYPE:", c)
         if c == 'unix' and self.distribution.enable_coverage:
             self.extensions[0].extra_compile_args.extend(
                 ['-O0', '--coverage', '-ftest-coverage'])
