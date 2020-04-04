@@ -83,11 +83,6 @@ public:
 		return m_Object.get();
 	}
 
-	jobject getObject()
-	{
-		return m_Object.get();
-	}
-
 private:
 	JPArrayClass* m_Class;
 	JPArrayRef    m_Object;

@@ -412,7 +412,7 @@ static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 	JPValue* javaSlot = PyJPValue_getJavaSlot(self);
 	if (javaSlot == NULL)
 		JP_RAISE(PyExc_AttributeError, "Java slot is null");
-	return PyJPValue_create(frame, *javaSlot).keep();
+	return javaSlot->getClass()->convertToPythonObject(frame, javaSlot->getValue(), false).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -537,17 +537,23 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 			return NULL;
 		}
 		jvalue v = match.convert();
-		return PyJPValue_create(frame, JPValue(type, v)).keep();
+		return type->convertToPythonObject(frame, v, true).keep();
 	}
 
 	// Cast on java object
 	//	if (!type->isSubTypeOf(val->getClass()))
 	jobject obj = val->getJavaObject();
 	if (obj == NULL)
-		return PyJPValue_create(frame, JPValue(type, 0)).keep();
+	{
+		jvalue v;
+		v.l = NULL;
+		return type->convertToPythonObject(frame, v, true).keep();
+	}
 	JPClass *otherClass = frame.findClassForObject(obj);
 	if (otherClass == NULL)
-		return PyJPValue_create(frame, JPValue(type, val->getJavaObject())).keep();
+	{
+		return type->convertToPythonObject(frame, val->getValue(), true).keep();
+	}
 
 	if (!otherClass->isAssignableFrom(frame, type))
 	{
@@ -567,12 +573,13 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		if (array->m_Array->isSlice())
 		{
 			JPJavaFrame frame(context);
-			jobject ja = frame.keep(array->m_Array->clone(frame, other));
-			return PyJPValue_create(frame, JPValue(type, ja)).keep();
+			jvalue v;
+			v.l = frame.keep(array->m_Array->clone(frame, other));
+			return type->convertToPythonObject(frame, v, true).keep();
 		}
 	}
 
-	return PyJPValue_create(frame, JPValue(type, val->getJavaObject())).keep();
+	return type->convertToPythonObject(frame, val->getValue(), true).keep();
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -601,7 +608,7 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 
 	// Otherwise give back a PyJPValue
 	jvalue v = match.convert();
-	return PyJPValue_create(frame, JPValue(cls, v)).keep();
+	return cls->convertToPythonObject(frame, v, true).keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -723,6 +730,9 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 		{
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberFloat_Type);
 		}
+	} else if (JPModifier::isBuffer(cls->getModifiers()))
+	{
+		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPBuffer_Type);
 	} else if (cls == context->_java_lang_Throwable)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPException_Type);
@@ -733,9 +743,10 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArrayPrimitive_Type);
 		else
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArray_Type);
-	} else if (super == NULL
-			//			|| !self->m_Class->isPrimitive()
-			)
+	} else if (cls->getCanonicalName() == "java.lang.Comparable")
+	{
+		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPComparable_Type);
+	} else if (super == NULL)
 	{
 		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPObject_Type);
 	}
@@ -775,9 +786,9 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
-
 	// Check the cache for speed
-	PyObject *host = cls->getHost();
+
+	PyObject *host = (PyObject*) cls->getHost();
 	if (host != NULL)
 	{
 		return JPPyObject(JPPyRef::_use, host);
@@ -791,6 +802,14 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 
 	PyObject *members = PyDict_New();
 	PyTuple_SetItem(args.get(), 2, members);
+
+	// Catch creation loop,  the process of creating our parent
+	host = (PyObject*) cls->getHost();
+	if (host != NULL)
+	{
+		return JPPyObject(JPPyRef::_use, host);
+	}
+
 
 	const JPFieldList& instFields = cls->getFields();
 	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)

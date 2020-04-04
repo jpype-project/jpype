@@ -512,7 +512,7 @@ void PyJPArray_initType(PyObject * module)
 	JP_PY_CHECK();
 }
 
-JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, JPValue & value)
+JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue & value)
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();

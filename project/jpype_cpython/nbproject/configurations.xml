@@ -10,6 +10,8 @@
           <itemPath>../../native/common/include/jp_arrayclass.h</itemPath>
           <itemPath>../../native/common/include/jp_booleantype.h</itemPath>
           <itemPath>../../native/common/include/jp_boxedtype.h</itemPath>
+          <itemPath>../../native/common/include/jp_buffer.h</itemPath>
+          <itemPath>../../native/common/include/jp_buffertype.h</itemPath>
           <itemPath>../../native/common/include/jp_bytetype.h</itemPath>
           <itemPath>../../native/common/include/jp_chartype.h</itemPath>
           <itemPath>../../native/common/include/jp_class.h</itemPath>
@@ -67,6 +69,8 @@
         <itemPath>../../native/common/jp_arrayclass.cpp</itemPath>
         <itemPath>../../native/common/jp_booleantype.cpp</itemPath>
         <itemPath>../../native/common/jp_boxedtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_buffer.cpp</itemPath>
+        <itemPath>../../native/common/jp_buffertype.cpp</itemPath>
         <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
         <itemPath>../../native/common/jp_chartype.cpp</itemPath>
         <itemPath>../../native/common/jp_class.cpp</itemPath>
@@ -104,6 +108,7 @@
       <logicalFolder name="python" displayName="python" projectFiles="true">
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_buffer.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
@@ -179,6 +184,16 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_boxedtype.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_buffer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../../native/common/include/jp_buffertype.h"
             ex="false"
             tool="3"
             flavor2="0">
@@ -380,6 +395,13 @@
             tool="1"
             flavor2="0">
       </item>
+      <item path="../../native/common/jp_buffer.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/common/jp_buffertype.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
       <item path="../../native/common/jp_bytetype.cpp"
             ex="false"
             tool="1"
@@ -525,6 +547,11 @@
             flavor2="0">
       </item>
       <item path="../../native/python/pyjp_array.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_buffer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
       </item>
       <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
       </item>

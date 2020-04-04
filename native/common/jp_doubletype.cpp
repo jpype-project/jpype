@@ -28,9 +28,13 @@ JPDoubleType::~JPDoubleType()
 {
 }
 
-JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyFloat_FromDouble(field(val)));
+	PyTypeObject * wrapper = getHost();
+	JPPyObject obj = JPPyObject(JPPyRef::_call, wrapper->tp_alloc(wrapper, 0));
+	((PyFloatObject*) obj.get())->ob_fval = value.d;
+	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
+	return obj;
 }
 
 JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
@@ -114,14 +118,14 @@ JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID f
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -131,7 +135,7 @@ JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -144,7 +148,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -228,7 +232,7 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

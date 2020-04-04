@@ -80,6 +80,12 @@ JPClassHints::JPClassHints()
 
 JPClassHints::~JPClassHints()
 {
+	for (std::list<JPConversion*>::iterator iter = conversions.begin();
+			iter != conversions.end(); ++iter)
+	{
+		delete *iter;
+	}
+	conversions.clear();
 }
 
 JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
@@ -272,7 +278,6 @@ public:
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPJavaFrame *frame = match.frame;
-		JPContext *context = frame->getContext();
 		JP_TRACE("char[]");
 		jvalue res;
 
@@ -283,7 +288,7 @@ public:
 		jstring jstr = frame->fromStringUTF8(str);
 
 		// call toCharArray()
-		res.l = frame->CallObjectMethodA(jstr, context->m_String_ToCharArrayID, 0);
+		res.l = frame->toCharArray(jstr);
 		return res;
 	}
 } _charArrayConversion;

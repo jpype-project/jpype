@@ -28,9 +28,12 @@ JPShortType::~JPShortType()
 {
 }
 
-JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
+	return out;
 }
 
 JPValue JPShortType::getValueFromObject(const JPValue& obj)
@@ -99,14 +102,14 @@ JPPyObject JPShortType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fi
 {
 	jvalue v;
 	field(v) = frame.GetStaticShortField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPShortType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetShortField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPShortType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -116,7 +119,7 @@ JPPyObject JPShortType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID 
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticShortMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -129,7 +132,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 		else
 			field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -213,7 +216,7 @@ JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetShortArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

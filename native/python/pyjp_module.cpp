@@ -26,6 +26,7 @@ void PyJPModule_installGC(PyObject* module);
 bool _jp_cpp_exceptions = false;
 
 extern void PyJPArray_initType(PyObject* module);
+extern void PyJPBuffer_initType(PyObject* module);
 extern void PyJPClass_initType(PyObject* module);
 extern void PyJPField_initType(PyObject* module);
 extern void PyJPMethod_initType(PyObject* module);
@@ -334,7 +335,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		context->getReferenceQueue()->registerRef(v.l, vw.view, &releaseView);
 		vw.view = 0;
 		JPClass *type = frame.findClassForObject(v.l);
-		return type->convertToPythonObject(frame, v).keep();
+		return type->convertToPythonObject(frame, v, false).keep();
 	}
 	JP_RAISE(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(NULL);
@@ -430,7 +431,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 		JP_RAISE(PyExc_TypeError, "str is required");
 	}
 
-	PyObject *host = cls->getHost();
+	PyObject *host = (PyObject*) cls->getHost();
 	return PyBool_FromLong(host != NULL);
 	JP_PY_CATCH(NULL);
 }
@@ -632,6 +633,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPObject_initType(module);
 
 	PyJPArray_initType(module);
+	PyJPBuffer_initType(module);
 	PyJPField_initType(module);
 	PyJPMethod_initType(module);
 	PyJPNumber_initType(module);

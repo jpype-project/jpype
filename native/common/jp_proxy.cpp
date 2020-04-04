@@ -50,7 +50,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		if (type == NULL)
 			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
-		pyargs.setItem(i, type->convertToPythonObject(frame, val).get());
+		pyargs.setItem(i, type->convertToPythonObject(frame, val, false).get());
 	}
 	return pyargs;
 	JP_TRACE_OUT;
@@ -216,11 +216,23 @@ JPProxy::JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf)
 	jobject proxy = frame.CallStaticObjectMethodA(m_Factory->m_ProxyClass.get(),
 			m_Factory->m_NewProxyID, v);
 	m_Proxy = JPObjectRef(m_Factory->m_Context, proxy);
+	m_Ref = NULL;
 	JP_TRACE_OUT;
 }
 
 JPProxy::~JPProxy()
 {
+	try
+	{
+		JPContext *context = getContext();
+		if (m_Ref != NULL && context->isRunning())
+		{
+			context->getEnv()->DeleteWeakGlobalRef(m_Ref);
+		}
+	} catch (JPypeException &ex)
+	{
+		// Cannot throw
+	}
 }
 
 jvalue JPProxy::getProxy()
@@ -229,12 +241,21 @@ jvalue JPProxy::getProxy()
 	JPContext* context = getContext();
 	JPJavaFrame frame(context);
 
-	// Use the proxy to make an instance
-	JP_TRACE("Create handler");
-	Py_INCREF(m_Instance);
-	jobject instance = frame.CallObjectMethodA(m_Proxy.get(),
-			m_Factory->m_NewInstanceID, 0);
+	jobject instance = NULL;
+	if (m_Ref != NULL)
+	{
+		instance = frame.NewLocalRef(m_Ref);
+	}
 
+	if (instance == NULL)
+	{
+		// Use the proxy to make an instance
+		JP_TRACE("Create handler");
+		Py_INCREF(m_Instance);
+		instance = frame.CallObjectMethodA(m_Proxy.get(),
+				m_Factory->m_NewInstanceID, 0);
+		m_Ref = frame.NewWeakGlobalRef(instance);
+	}
 	jvalue out;
 	out.l = frame.keep(instance);
 	return out;
@@ -260,7 +281,7 @@ JPProxyType::~JPProxyType()
 {
 }
 
-JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),

@@ -113,6 +113,11 @@ class JByteTestCase(common.JPypeTestCase):
         with self.assertRaises(OverflowError):
             self.fixture.callByte(int(-1e10))
 
+    def testExplicitRange(self):
+        # These will not overflow as they are explicit casts
+        self.assertEqual(JByte(2**8), 0)
+        self.assertEqual(JByte(-2**8), 0)
+
     def testByteFromNone(self):
         with self.assertRaises(TypeError):
             self.fixture.callByte(None)

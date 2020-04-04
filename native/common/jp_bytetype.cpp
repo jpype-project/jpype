@@ -28,9 +28,12 @@ JPByteType::~JPByteType()
 {
 }
 
-JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
+	return out;
 }
 
 JPValue JPByteType::getValueFromObject(const JPValue& obj)
@@ -81,14 +84,14 @@ JPPyObject JPByteType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticByteField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPByteType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetByteField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -98,7 +101,7 @@ JPPyObject JPByteType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticByteMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -111,7 +114,7 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPByteType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -194,7 +197,7 @@ JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetByteArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

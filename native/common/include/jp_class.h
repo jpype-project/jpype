@@ -37,9 +37,9 @@ public:
 		m_Host = JPPyObject(JPPyRef::_use, host);
 	}
 
-	PyObject* getHost()
+	PyTypeObject* getHost()
 	{
-		return m_Host.get();
+		return (PyTypeObject*) m_Host.get();
 	}
 
 	void setHints(PyObject* host)
@@ -95,6 +95,11 @@ public:
 		return false;
 	}
 
+	jlong getModifiers()
+	{
+		return m_Modifiers;
+	}
+
 	virtual bool isPrimitive() const
 	{
 		return false;
@@ -132,9 +137,15 @@ public:
 
 	/** Create a new Python object to wrap a Java value.
 	 *
+	 * Some conversion convert to a Python type such as Java boolean and char.
+	 * Null pointers match to Python None.  Objects convert automatically to
+	 * the most derived type. To disable this behavior the cast option can be
+	 * specified.
+	 *
+	 * @param cast force the wrapper to be the defined type.
 	 * @return a new Python object.
 	 */
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val);
+	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast);
 
 	/**
 	 * Get the Java value representing as an object.

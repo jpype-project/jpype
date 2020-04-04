@@ -47,7 +47,9 @@ public enum ModifierCode
   ANONYMOUS       (0x00080000),
   FUNCTIONAL      (0x00100000),
   CALLER_SENSITIVE(0x00200000),
-  PRIMITIVE_ARRAY(0x00400000),
+  PRIMITIVE_ARRAY (0x00400000),
+  COMPARABLE      (0x00800000),
+  BUFFER          (0x01000000),
   CTOR            (0x10000000),
   BEAN_ACCESSOR   (0x20000000),
   BEAN_MUTATOR    (0x40000000);
@@ -58,7 +60,7 @@ public enum ModifierCode
     this.value = value;
   }
 
-  public int get(EnumSet<ModifierCode> set)
+  public static int get(EnumSet<ModifierCode> set)
   {
     int out = 0;
     for (ModifierCode m : set)
@@ -68,7 +70,7 @@ public enum ModifierCode
     return out;
   }
 
-  static EnumSet<ModifierCode> decode(long modifiers)
+  public static EnumSet<ModifierCode> decode(long modifiers)
   {
     EnumSet<ModifierCode> out = EnumSet.noneOf(ModifierCode.class);
     for (ModifierCode code : ModifierCode.values())

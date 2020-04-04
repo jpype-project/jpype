@@ -28,9 +28,16 @@ JPCharType::~JPCharType()
 {
 }
 
-JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	return JPPyString::fromCharUTF16(val.c);
+	if (!cast)
+	{
+		return JPPyString::fromCharUTF16(val.c);
+	}
+	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
+	return out;
 }
 
 JPValue JPCharType::getValueFromObject(const JPValue& obj)
@@ -106,14 +113,14 @@ JPPyObject JPCharType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid
 {
 	jvalue v;
 	field(v) = frame.GetStaticCharField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPCharType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetCharField(c, fid);
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
@@ -123,7 +130,7 @@ JPPyObject JPCharType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID m
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticCharMethodA(claz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmethodID mth, jvalue* val)
@@ -136,7 +143,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 		else
 			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
 	}
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
@@ -186,7 +193,7 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetCharArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-	return convertToPythonObject(frame, v);
+	return convertToPythonObject(frame, v, false);
 }
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)

@@ -25,6 +25,8 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.util.Arrays;
+import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -368,6 +370,10 @@ public class TypeManager
       modifiers |= ModifierCode.THROWABLE.value;
     if (Serializable.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.SERIALIZABLE.value;
+    if (Arrays.asList(cls.getInterfaces()).contains(Comparable.class))
+      modifiers |= ModifierCode.COMPARABLE.value;
+    if (Buffer.class.isAssignableFrom(cls))
+      modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
     if (this.functionalAnnotation != null
             && cls.getAnnotation(this.functionalAnnotation) != null)
       modifiers |= ModifierCode.FUNCTIONAL.value;

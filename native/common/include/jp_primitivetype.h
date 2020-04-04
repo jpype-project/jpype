@@ -48,6 +48,9 @@ public:
 
 	virtual PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer& view, int subs, int base, jobject dims) = 0;
+
+	// Helper for Long types
+	PyObject *convertLong(PyTypeObject* wrapper, PyLongObject* tmp);
 } ;
 
 #endif

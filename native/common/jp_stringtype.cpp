@@ -32,23 +32,27 @@ JPStringType::~JPStringType()
 {
 }
 
-JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val)
+JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JP_TRACE_IN("JPStringType::asHostObject");
 	JPContext *context = frame.getContext();
 
-	if (val.l == NULL)
+	if (!cast)
 	{
-		return JPPyObject::getNone();
+		// This loses type
+		if (val.l == NULL)
+		{
+			return JPPyObject::getNone();
+		}
+
+		if (context->getConvertStrings())
+		{
+			string str = frame.toStringUTF8((jstring) (val.l));
+			return JPPyObject(JPPyRef::_call, PyUnicode_FromString(str.c_str()));
+		}
 	}
 
-	if (context->getConvertStrings())
-	{
-		string str = frame.toStringUTF8((jstring) (val.l));
-		return JPPyObject(JPPyRef::_call, PyUnicode_FromString(str.c_str()));
-	}
-
-	return PyJPValue_create(frame, JPValue(this, val));
+	return JPClass::convertToPythonObject(frame, val, cast);
 	JP_TRACE_OUT;
 }
 

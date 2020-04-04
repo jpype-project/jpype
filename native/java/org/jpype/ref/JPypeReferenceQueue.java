@@ -24,6 +24,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   private Object queueStopMutex = new Object();
   PhantomReference sentinel = null;
 
+  // This is required for register natives
   public JPypeReferenceQueue()
   {
   }
