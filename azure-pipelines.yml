@@ -12,6 +12,9 @@ jobs:
   pool:
     vmImage: "ubuntu-16.04"
   steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
   - script: |
       pip install  Pygments==2.3.1
       pip install  setuptools==41.0.1
@@ -35,11 +38,7 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.7'
-  - task: Maven@3
-    inputs:
-      mavenOpts: -q -f project/coverage
-      mavenPomFile: 'pom.xml' 
-      goals: 'package' # Optional
+  - script: mvn -q -f project/coverage package
   - script: |
       python setup.py test_java
       pip install gcovr pytest-cov jedi
@@ -78,8 +77,6 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
-  - script: pip install -r requirements.txt
-    displayName: 'Install requirements'
   - script: |
       python setup.py sdist
       python -m pip install dist/*
