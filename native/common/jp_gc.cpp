@@ -14,7 +14,7 @@
 //#include <sys/resource.h>
 //#include <mach/mach.h>
 #define USE_MALLINFO
-#include <malloc.h>
+#include <stdlib.h>
 #else
 // Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
