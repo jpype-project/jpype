@@ -9,10 +9,12 @@
 #include <Windows.h>
 #include <psapi.h>
 #elif __APPLE__
-#define USE_TASK_INFO
-#include <unistd.h>
-#include <sys/resource.h>
-#include <mach/mach.h>
+//#define USE_TASK_INFO
+//#include <unistd.h>
+//#include <sys/resource.h>
+//#include <mach/mach.h>
+#define USE_MALLINFO
+#include <malloc.h>
 #else
 // Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
