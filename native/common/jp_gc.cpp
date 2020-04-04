@@ -63,6 +63,27 @@ void JPGarbageCollection::triggered()
 	}
 }
 
+JPGarbageCollection::JPGarbageCollection(JPContext *context)
+{
+	m_Context = context;
+	running = false;
+	in_python_gc = false;
+	java_triggered = false;
+	python_gc = NULL;
+	_SystemClass = NULL;
+	_gcMethodID = NULL;
+
+	last_python = 0;
+	last_java = 0;
+	low_water = 0;
+	high_water = 0;
+	limit = 0;
+	last = 0;
+	java_count = 0;
+	python_count = 0;
+	python_triggered = 0;
+}
+
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
 	// Get the Python garbage collector
