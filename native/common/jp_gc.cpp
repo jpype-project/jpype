@@ -18,8 +18,7 @@
 #define USE_MALLINFO
 #include <malloc.h>
 #endif
-#define DELTA_LIMIT 10*1024*1024l
-#define HARD_LIMIT 200*1024*1024l
+#define DELTA_LIMIT 20*1024*1024l
 
 size_t getWorkingSize()
 {
@@ -141,7 +140,6 @@ void JPGarbageCollection::onEnd()
 			last = current;
 			return;
 		}
-		last = current;
 
 		// Decide the policy
 		if (current > limit)
@@ -152,6 +150,7 @@ void JPGarbageCollection::onEnd()
 
 		// Predict if we will cross the limit soon.
 		ssize_t pred = current + 2 * (current - last);
+		last = current;
 		if ((ssize_t) pred > (ssize_t) limit)
 			run_gc = 2;
 
@@ -160,10 +159,12 @@ void JPGarbageCollection::onEnd()
 
 		if (run_gc > 0)
 		{
+			// Move up the low water
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
 			JPJavaFrame frame(m_Context);
 			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
+			python_triggered++;
 		}
 	}
 }
@@ -175,4 +176,5 @@ void JPGarbageCollection::getStats(JPGCStats& stats)
 	stats.max_rss = high_water;
 	stats.java_rss = last_java;
 	stats.python_rss = last_python;
+	stats.python_triggered = python_triggered;
 }

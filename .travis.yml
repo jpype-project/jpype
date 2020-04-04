@@ -33,6 +33,7 @@ matrix:
         - $PYTHON setup.py sdist
         - $PIP install $INST dist/* $NUMPY
         - $PIP install $INST -r test-requirements.txt
+        - PYTHONPATH='.' $PYTHON project/utility/testMemoryExh.py
         - $PYTHON setup.py test_java
 
 

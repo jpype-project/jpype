@@ -506,6 +506,8 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	Py_DECREF(res);
 	PyDict_SetItemString(out, "min", res = PyLong_FromSsize_t(stats.min_rss));
 	Py_DECREF(res);
+	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t(stats.python_triggered));
+	Py_DECREF(res);
 	return out;
 }
 

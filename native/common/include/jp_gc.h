@@ -8,6 +8,7 @@ struct JPGCStats
 	long long current_rss;
 	long long max_rss;
 	long long min_rss;
+	long long python_triggered;
 } ;
 
 class JPGarbageCollection
@@ -53,6 +54,7 @@ private:
 	size_t last = 0;
 	int java_count = 0;
 	int python_count = 0;
+	int python_triggered = 0;
 } ;
 
 #endif /* JP_GC_H */
