@@ -31,6 +31,7 @@
 #include "jp_reference_queue.h"
 #include "jp_proxy.h"
 #include "jp_platform.h"
+#include "jp_gc.h"
 
 JPResource::~JPResource()
 {
@@ -85,6 +86,7 @@ JPContext::JPContext()
 	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
+	m_GC = new JPGarbageCollection(this);
 }
 
 JPContext::~JPContext()
@@ -93,6 +95,7 @@ JPContext::~JPContext()
 	delete m_TypeManager;
 	delete m_ReferenceQueue;
 	delete m_ProxyFactory;
+	delete m_GC;
 }
 
 bool JPContext::isRunning()
@@ -258,6 +261,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_CompareToID = frame.GetMethodID(cls, "compareTo",
 				"(Ljava/lang/Object;)I");
 
+		m_GC->init(frame);
 		// Everything is started.
 	}
 	m_IsInitialized = true;

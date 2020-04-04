@@ -19,12 +19,6 @@
 
 #include "jp_javaframe.h"
 
-
-#ifndef PyObject_HEAD
-struct _object;
-typedef _object PyObject;
-#endif
-
 class JPArray;
 
 class JPArrayView
