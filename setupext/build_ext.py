@@ -17,9 +17,8 @@ class BuildExtCommand(build_ext):
 
     # extra compile args
     copt = {'msvc': [],
-            'unix': ['-ggdb', ],
+            'unix': ['-ggdb', '-std=c++11'],
             'mingw32': [],
-            'osx': ['-std=c++11'],
             }
     # extra link args
     lopt = {
