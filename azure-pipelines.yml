@@ -1,0 +1,92 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+pr:
+  - master
+  - releases/*
+
+jobs:
+- job: Documentation
+  pool:
+    vmImage: "ubuntu-16.04"
+  steps:
+  - script: |
+      pip install  Pygments==2.3.1
+      pip install  setuptools==41.0.1
+      pip install  docutils==0.14
+      pip install  mock==1.0.1
+      pip install  commonmark==0.8.1
+      pip install  recommonmark==0.5.0
+      pip install  sphinx
+      pip install  sphinx-rtd-theme
+      pip install  readthedocs-sphinx-ext
+      pip install  --exists-action=w --no-cache-dir -r test-requirements.txt
+    displayName: 'Install requirements'
+  - script: |
+      python -m sphinx -T -b readthedocs -d _build/doctrees-readthedocs -D language=en doc _build/html
+    displayName: 'Check documentation'
+
+- job: Coverage
+  pool:
+    vmImage: "ubuntu-16.04"
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+  - task: Maven@3
+    inputs:
+      mavenOpts: -q -f project/coverage
+      mavenPomFile: 'pom.xml' 
+      goals: 'package' # Optional
+  - script: |
+      python setup.py test_java
+      pip install gcovr pytest-cov jedi
+    displayName: 'Install requirements'
+  - script: |
+      python setup.py --enable-coverage --enable-build-jar build_ext --inplace
+    displayName: 'Build'
+  - script: |
+      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="build/classes" --jacoco --checkjni
+    displayName: 'Test'
+  - script: |
+      gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
+      java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
+  #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
+    displayName: 'Report'
+
+- job: Test
+  strategy:
+    matrix:
+      linux:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.7'
+      windows:
+        imageName: "vs2017-win2016"
+        jdk_version: "1.11"
+        python.version: '3.7'
+      mac:
+        imageName: "macos-10.14"
+        jdk_version: "1.11"
+        python.version: '3.7'
+    maxParallel: 3
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: pip install -r requirements.txt
+    displayName: 'Install requirements'
+  - script: |
+      python setup.py sdist
+      python -m pip install dist/*
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      python install -r test-requirements.txt
+      python -m pytest -v test/jpypetest --checkjni  
+    displayName: 'Test module'
