@@ -1139,3 +1139,25 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 	v.l = obj2;
 	return this->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
 }
+
+jobject JPJavaFrame::getPackage(string str)
+{
+	jvalue v[1];
+	v[0].l = fromStringUTF8(str);
+	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageID, v);
+}
+
+jobject JPJavaFrame::getPackageObject(jobject pkg, jstring str)
+{
+	jvalue v[2];
+	v[0].l = pkg;
+	v[1].l = fromStringUTF8(str);
+	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageObjectID, v);
+}
+
+jarray JPJavaFrame::getPackageContents(jobject pkg)
+{
+	jvalue v[1];
+	v[0].l = pkg;
+	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageContentsID, v);
+}

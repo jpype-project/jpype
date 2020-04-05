@@ -117,6 +117,7 @@
         <itemPath>../../native/python/pyjp_monitor.cpp</itemPath>
         <itemPath>../../native/python/pyjp_number.cpp</itemPath>
         <itemPath>../../native/python/pyjp_object.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_package.cpp</itemPath>
         <itemPath>../../native/python/pyjp_proxy.cpp</itemPath>
         <itemPath>../../native/python/pyjp_value.cpp</itemPath>
       </logicalFolder>
@@ -132,8 +133,23 @@
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>Makefile.linux</itemPath>
     </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile.linux</itemPath>
+    </logicalFolder>
   </logicalFolder>
   <sourceRootList>
+    <Elem>../../native/common</Elem>
+    <Elem>../../native/python</Elem>
+    <Elem>../../native/common</Elem>
+    <Elem>../../native/python</Elem>
     <Elem>../../native/common</Elem>
     <Elem>../../native/python</Elem>
     <Elem>../../native/common</Elem>
@@ -583,6 +599,11 @@
             flavor2="0">
       </item>
       <item path="../../native/python/pyjp_object.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_package.cpp"
             ex="false"
             tool="1"
             flavor2="0">

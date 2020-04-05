@@ -348,6 +348,11 @@ public:
 	jsize GetStringUTFLength(jstring a0);
 
 	jint compareTo(jobject obj, jobject obj2);
+
+	jobject getPackage(string str);
+	jobject getPackageObject(jobject pkg, jstring str);
+	jarray getPackageContents(jobject pkg);
+
 } ;
 
 #endif // _JP_JAVA_FRAME_H_
