@@ -1,5 +1,4 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
+# JPype CI pipeline
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
@@ -56,22 +55,26 @@ jobs:
   #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     displayName: 'Report'
 
-- job: Test
+- job: Test_Linux
   strategy:
     matrix:
-      linux:
+      linux-3.6:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.6'
+      linux-3.7:
         imageName: "ubuntu-16.04"
         jdk_version: "1.11"
         python.version: '3.7'
-      windows:
-        imageName: "vs2017-win2016"
+      linux-3.8:
+        imageName: "ubuntu-16.04"
         jdk_version: "1.11"
-        python.version: '3.7'
-      mac:
+        python.version: '3.8'
+      mac-3.8:
         imageName: "macos-10.14"
         jdk_version: "1.11"
-        python.version: '3.7'
-    maxParallel: 3
+        python.version: '3.8'
+    maxParallel: 2
   pool:
     vmImage: $(imageName)
   steps:
@@ -81,6 +84,43 @@ jobs:
   - script: |
       python setup.py sdist
       pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      python -m pytest -v test/jpypetest --checkjni  
+    displayName: 'Test module'
+
+- job: Test_Windows
+  strategy:
+    matrix:
+#      windows-3.5:
+#        imageName: "vs2017-win2016"
+#        jdk_version: "1.11"
+#        python.version: '3.5'
+#      windows-3.6:
+#        imageName: "vs2017-win2016"
+#        jdk_version: "1.11"
+#        python.version: '3.6'
+#      windows-3.7:
+#        imageName: "vs2017-win2016"
+#        jdk_version: "1.11"
+#        python.version: '3.7'
+      windows-3.8:
+        imageName: "vs2017-win2016"
+        jdk_version: "1.11"
+        python.version: '3.8'
+    maxParallel: 2
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      python setup.py build_ext --inplace
     displayName: 'Build module'
   - script: python -c "import jpype"
     displayName: 'Check module'
