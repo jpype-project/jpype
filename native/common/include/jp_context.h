@@ -260,9 +260,9 @@ private:
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
-	jmethodID m_GetPackageID;
-	jmethodID m_GetPackageObjectID;
-	jmethodID m_GetPackageContextID;
+	jmethodID m_Context_GetPackageID;
+	jmethodID m_Package_GetObjectID;
+	jmethodID m_Package_GetContentsID;
 private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;

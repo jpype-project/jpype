@@ -27,6 +27,8 @@ import java.util.List;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
+import org.jpype.pkg.JPypePackage;
+import org.jpype.pkg.JPypePackageManager;
 import org.jpype.ref.JPypeReferenceQueue;
 
 /**
@@ -326,4 +328,24 @@ public class JPypeContext
     return true;
   }
 
+  public JPypePackage getPackage(String s)
+  {
+    if (!JPypePackageManager.isPackage(s))
+      return null;
+    return new JPypePackage(s, JPypePackageManager.getContentMap(s));
+  }
+
+  public Object getPackageObject(JPypePackage pkg, String name)
+  {
+    if (pkg == null)
+      return null;
+    return pkg.getObject(name);
+  }
+
+  public String[] getPackageContents(JPypePackage pkg)
+  {
+    if (pkg == null)
+      return null;
+    return pkg.getContents();
+  }
 }

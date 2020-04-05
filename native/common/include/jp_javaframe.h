@@ -350,7 +350,7 @@ public:
 	jint compareTo(jobject obj, jobject obj2);
 
 	jobject getPackage(string str);
-	jobject getPackageObject(jobject pkg, jstring str);
+	jobject getPackageObject(jobject pkg, string str);
 	jarray getPackageContents(jobject pkg);
 
 } ;

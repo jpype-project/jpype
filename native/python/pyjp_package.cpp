@@ -1,5 +1,6 @@
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_stringtype.h"
 #include <structmember.h>
 
 class JPPackage
@@ -28,7 +29,7 @@ struct PyJPPackage
 
 PyTypeObject *PyJPPackage_Type = NULL;
 
-static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+static PyJPPackage *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPPackage_new");
 	PyJPPackage *self = (PyJPPackage*) type->tp_alloc(type, 0);
@@ -36,7 +37,7 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 
 	char *v;
 	if (!PyArg_ParseTuple(args, "s", &v))
-		return -1;
+		return NULL;
 
 	self->m_Dict = PyDict_New();
 	self->m_Package = new JPPackage(v);
@@ -44,15 +45,16 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 	JP_PY_CATCH(NULL);
 }
 
-static int PyJPPackage_traverse(PyJPPackage *f, visitproc visit, void *arg)
+static int PyJPPackage_traverse(PyJPPackage *self, visitproc visit, void *arg)
 {
-	Py_VISIT(f->m_Dict);
+	Py_VISIT(self->m_Dict);
 	return 0;
 }
 
-static void PyJPPackage_clear(PyJPPackage *f)
+static int PyJPPackage_clear(PyJPPackage *self)
 {
-	Py_CLEAR(f->m_Dict);
+	Py_CLEAR(self->m_Dict);
+	return 0;
 }
 
 static void PyJPPackage_dealloc(PyJPPackage *self)
@@ -65,6 +67,26 @@ static void PyJPPackage_dealloc(PyJPPackage *self)
 	JP_PY_CATCH_NONE();
 }
 
+static jobject getPackage(JPJavaFrame &frame, PyJPPackage *self)
+{
+	// If we already have a loaded object, use it.
+	if (self->m_Package->m_Object.get() != NULL)
+		return self->m_Package->m_Object.get();
+
+	// Attempt to load the object.
+	self->m_Package->m_Object = JPObjectRef(frame.getContext(),
+			frame.getPackage(self->m_Package->m_Name));
+
+	// Found it, use it.
+	if (self->m_Package->m_Object.get() != NULL)
+		return self->m_Package->m_Object.get();
+
+	// Otherwise, this is a bad package.
+	PyErr_Format(PyExc_AttributeError, "Java package '%s' is not valid",
+			self->m_Package->m_Name.c_str());
+	return NULL;
+}
+
 static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 {
 	JP_PY_TRY("PyJPPackage_getattro");
@@ -74,38 +96,46 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 		return NULL;
 	}
 
-	JPContext* context = JPContext_global;
-	PyObject *value = PyObject_GetAttr((PyObject*) self, attr);
-	if (value == NULL)
 	{
-		PyErr_Format(PyExc_AttributeError, "unable to get attribute `%U`", attr);
-		return NULL;
+		// Check the cache
+		PyObject *out = PyDict_GetItem(self->m_Dict, attr);
+		if (out != NULL)
+		{
+			Py_INCREF(out);
+			return out;
+		}
 	}
 
+	string attrName = JPPyString::asStringUTF8(attr).c_str();
+	// Check for private attribute
+	if (attrName.compare(0, 2, "__") == 0)
+		return Py_TYPE(self)->tp_base->tp_getattro((PyObject*) self, attr);
+
+	JPContext* context = JPContext_global;
 	if (context->isRunning())
 	{
 		JPJavaFrame frame(context);
-		if (self->m_Package->m_Object.get() == NULL)
-		{
-			self->m_Package->m_Object = JPObjectRef(context,
-					frame.getPackage(self->m_Package->m_Name));
-			if (self->m_Package->m_Object.get() == NULL)
-			{
-				PyErr_Format(PyExc_AttributeError, "bad Java package");
-				return NULL;
-			}
-		}
+		jobject pkg = getPackage(frame, self);
+		if (pkg == NULL)
+			return NULL;
 
-		jobject obj = frame.getPackageObject(self->m_Package->m_Object.get(), JPPyString::asStringUTF8(attr));
-		PyObject *out = NULL;
-		if (frame.IsInstanceOf(obj, context->_java_lang_Class))
+		JPPyObject out;
+		jobject obj = frame.getPackageObject(pkg, attrName);
+		if (obj == NULL)
+		{
+			PyErr_Format(PyExc_AttributeError, "Java package '%s' has no attribute '%U'",
+					self->m_Package->m_Name.c_str(), attr);
+			return NULL;
+		} else if (frame.IsInstanceOf(obj, context->_java_lang_Class->getJavaClass()))
 			out = PyJPClass_create(frame, frame.findClass((jclass) obj));
-		else if (frame.IsInstanceOf(obj, context->_java_lang_String))
+		else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass()))
 		{
 			JPPyTuple args = JPPyTuple::newTuple(1);
-			JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U", self->m_Package->m_Name, attr));
+			JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+					self->m_Package->m_Name.c_str(), attr));
 			args.setItem(0, u.get());
-			out = PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL);
+			out = JPPyObject(JPPyRef::_call,
+					PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
 		} else
 		{
 			// We should be able to handle Python classes, datafiles, etc,
@@ -116,15 +146,16 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			return NULL;
 		}
 		// Cache the item for now
-		PyDict_SetItem(self->m_Dict, attr, out); // This does not steal
-		return out;
+		PyDict_SetItem(self->m_Dict, attr, out.get()); // This does not steal
+		return out.keep();
 	} else
 	{
 		// Prior to starting the JVM we always return a package to be
 		// consistent with old behavior.  This is somewhat unsafe as
 		// we cannot check if it is a valid package.
 		JPPyTuple args = JPPyTuple::newTuple(1);
-		JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U", self->m_Package->m_Name, attr));
+		JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+				self->m_Package->m_Name.c_str(), attr));
 		args.setItem(0, u.get());
 
 		// Note that we will not cache packages prior to starting so that
@@ -147,40 +178,34 @@ static PyObject *PyJPPackage_setattro(PyJPPackage *pkg, PyObject *attr, PyObject
 static PyObject *PyJPPackage_str(PyJPPackage *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPPackage_str");
-	return PyUnicode_FromFormat("<Java package '%s'>", self->m_Package->m_Name.c_str());
+	return PyUnicode_FromFormat("<java package '%s'>", self->m_Package->m_Name.c_str());
 	JP_PY_CATCH(NULL);
 }
 
 static PyObject *PyJPPackage_call(PyJPPackage *self, PyObject *args, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPPackage_str");
+	JP_PY_TRY("PyJPPackage_call");
 	PyErr_Format(PyExc_TypeError, "Package `%s` is not callable.", self->m_Package->m_Name.c_str());
 	JP_PY_CATCH(NULL);
 }
 
 static PyObject *PyJPPackage_dir(PyJPPackage *self)
 {
-	JP_PY_TRY("PyJPPackage_str");
+	JP_PY_TRY("PyJPPackage_dir");
 	JPContext* context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
-	if (self->m_Package->m_Object.get() == NULL)
-	{
-		self->m_Package->m_Object = JPObjectRef(context,
-				frame.getPackage(self->m_Package->m_Name));
-		if (self->m_Package->m_Object.get() == NULL)
-		{
-			PyErr_Format(PyExc_AttributeError, "bad Java package");
-			return NULL;
-		}
-	}
+	jobject pkg = getPackage(frame, self);
+	if (pkg == NULL)
+		return NULL;
 
-	jarray o = frame.getPackageContents(self->m_Package->m_Object);
+	jarray o = frame.getPackageContents(pkg);
 	Py_ssize_t len = frame.GetArrayLength(o);
 	JPPyObject out(JPPyRef::_call, PyList_New(len));
 	for (Py_ssize_t i = 0;  i < len; ++i)
 	{
-		string str = frame.toStringUTF8((jstring) frame.GetObjectArrayElement(o, (jsize) i))
-				PyList_SetItem(out.get(), i, PyUnicode_FromFormat("%s", str.c_str()));
+		string str = frame.toStringUTF8((jstring)
+				frame.GetObjectArrayElement((jobjectArray) o, (jsize) i));
+		PyList_SetItem(out.get(), i, PyUnicode_FromFormat("%s", str.c_str()));
 	}
 	return out.keep();
 	JP_PY_CATCH(NULL);
@@ -192,26 +217,27 @@ static PyMemberDef packageMembers[] = {
 };
 
 static PyMethodDef packageMethods[] = {
-	{"__dir__", PyJPPackage_dir, METH_NOARGS},
+	{"__dir__", (PyCFunction) PyJPPackage_dir, METH_NOARGS},
 	{NULL},
 };
 
 static PyType_Slot packageSlots[] = {
-	{Py_tp_new,      (void*) &PyJPPackage_new},
-	{Py_tp_dealloc,  (void*) &PyJPPackage_dealloc},
-	{Py_tp_traverse, (void*) &PyJPPackage_traverse},
-	{Py_tp_clear,    (void*) &PyJPPackage_clear},
-	{Py_tp_getattro, (void*) &PyJPPackage_getattro},
-	{Py_tp_setattro, (void*) &PyJPPackage_setattro},
-	{Py_tp_str,      (void*) &PyJPPackage_str},
-	{Py_tp_call,     (void*) &PyJPPackage_call},
+	{Py_tp_new,      (void*) PyJPPackage_new},
+	{Py_tp_traverse, (void*) PyJPPackage_traverse},
+	{Py_tp_clear,    (void*) PyJPPackage_clear},
+	{Py_tp_dealloc,  (void*) PyJPPackage_dealloc},
+	{Py_tp_getattro, (void*) PyJPPackage_getattro},
+	{Py_tp_setattro, (void*) PyJPPackage_setattro},
+	{Py_tp_str,      (void*) PyJPPackage_str},
+	{Py_tp_call,     (void*) PyJPPackage_call},
 	{Py_tp_members,  (void*) packageMembers},
+	{Py_tp_methods,  (void*) packageMethods},
 	{0}
 };
 
 static PyType_Spec packageSpec = {
 	"_jpype._JPackage",
-	0,
+	sizeof (PyJPPackage),
 	0,
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	packageSlots

@@ -902,6 +902,12 @@ void JPJavaFrame::CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2,
 	m_Env->functions->CallNonvirtualVoidMethodA(m_Env, a0, a1, a2, a3);
 }
 
+jboolean JPJavaFrame::IsInstanceOf(jobject a0, jclass a1)
+{
+	JAVA_CALL("JPJavaFrame::IsInstanceOf");
+	return m_Env->IsInstanceOf(a0, a1);
+}
+
 jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)
 {
 	JAVA_CALL("JPJavaFrame::IsAssignableFrom");
@@ -1142,22 +1148,20 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 
 jobject JPJavaFrame::getPackage(string str)
 {
-	jvalue v[1];
-	v[0].l = fromStringUTF8(str);
-	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageID, v);
+	jvalue v;
+	v.l = fromStringUTF8(str);
+	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_GetPackageID, &v);
 }
 
-jobject JPJavaFrame::getPackageObject(jobject pkg, jstring str)
+jobject JPJavaFrame::getPackageObject(jobject pkg, string str)
 {
-	jvalue v[2];
-	v[0].l = pkg;
-	v[1].l = fromStringUTF8(str);
-	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageObjectID, v);
+	jvalue v;
+	v.l = fromStringUTF8(str);
+	return CallObjectMethodA(pkg, m_Context->m_Package_GetObjectID, &v);
 }
 
 jarray JPJavaFrame::getPackageContents(jobject pkg)
 {
-	jvalue v[1];
-	v[0].l = pkg;
-	return CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_GetPackageContentsID, v);
+	jvalue v;
+	return (jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v);
 }

@@ -139,7 +139,7 @@ public class JPypePackageManager
     {
       if (module.contains(search))
       {
-        if (Files.isDirectory(module.path.resolve(name)))
+        if (Files.isDirectory(module.modulePath.resolve(name)))
           return true;
       }
     }
@@ -158,7 +158,7 @@ public class JPypePackageManager
     {
       if (module.contains(search))
       {
-        Path path2 = module.path.resolve(name);
+        Path path2 = module.modulePath.resolve(name);
         if (Files.isDirectory(path2))
           collectContents(out, path2);
       }
@@ -169,11 +169,11 @@ public class JPypePackageManager
   {
 
     List<String> contents = new ArrayList<>();
-    private final Path path;
+    private final Path modulePath;
 
     ModuleDirectory(Path module)
     {
-      this.path = module;
+      this.modulePath = module;
       listPackages(contents, module, module, 0);
     }
 
@@ -288,10 +288,17 @@ public class JPypePackageManager
     {
       for (Path file : Files.newDirectoryStream(path2))
       {
+        if (Files.isDirectory(file))
+        {
+          out.put(file.getFileName().toString(), file);
+          continue;
+        }
+
         String filename = file.getFileName().toString();
         if (filename.contains("$"))
           continue;
-        out.put(filename, file);
+        if (filename.endsWith(".class"))
+          out.put(filename.substring(0, filename.length() - 6), file);
       }
     } catch (IOException ex)
     {
