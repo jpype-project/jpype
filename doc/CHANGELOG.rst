@@ -56,6 +56,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     are direct.  They can be converted to numpy arrays with
     ``numpy.asarray(memoryview(obj))``.
 
+  - jpype.imports and JPackage verify existance of packages and classes.
+    Imports from Java packages support wildcards.  
+
+  - Bug with JPackage that imported private and protected classes
+    inappropriately has been corrected.  Protected classes can still be
+    imported using JClass.
+
 
 - **0.7.2 - 2-28-2019**
 
