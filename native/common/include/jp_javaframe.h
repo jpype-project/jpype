@@ -349,6 +349,7 @@ public:
 
 	jint compareTo(jobject obj, jobject obj2);
 
+	jboolean isPackage(string str);
 	jobject getPackage(string str);
 	jobject getPackageObject(jobject pkg, string str);
 	jarray getPackageContents(jobject pkg);

@@ -252,6 +252,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Context_GetExcValueID = frame.GetMethodID(cls, "getExcValue",
 				"(Ljava/lang/Throwable;)J");
 		m_Context_OrderID = frame.GetMethodID(cls, "order", "(Ljava/nio/Buffer;)Z");
+		m_Context_IsPackageID = frame.GetMethodID(cls, "isPackage", "(Ljava/lang/String;)Z");
 		m_Context_GetPackageID = frame.GetMethodID(cls, "getPackage", "(Ljava/lang/String;)Lorg/jpype/pkg/JPypePackage;");
 
 		cls = m_ClassLoader->findClass(frame, "org.jpype.pkg.JPypePackage");

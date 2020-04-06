@@ -512,6 +512,20 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	return out;
 }
 
+PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+{
+	JP_PY_TRY("PyJPModule_isPackage");
+	if (!PyUnicode_Check(pkg))
+	{
+		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
+		return NULL;
+	}
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
+	JP_PY_CATCH(NULL);
+}
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -574,28 +588,30 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
-	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
-	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
+	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
+	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, ""},
-	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
-	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
-	{"examine", (PyCFunction) (&examine), METH_O, ""},
-	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
-	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
-	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_NOARGS, ""},
+	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
+	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
+	{"examine", (PyCFunction) examine, METH_O, ""},
+	{"_newArrayType", (PyCFunction) PyJPModule_newArrayType, METH_VARARGS, ""},
+	{"_collect", (PyCFunction) PyJPModule_collect, METH_VARARGS, ""},
+	{"gcStats", (PyCFunction) PyJPModule_gcStats, METH_NOARGS, ""},
 
 	// Threading
-	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},
-	{"attachThreadToJVM", (PyCFunction) (&PyJPModule_attachThread), METH_NOARGS, ""},
-	{"detachThreadFromJVM", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, ""},
-	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
+	{"isThreadAttachedToJVM", (PyCFunction) PyJPModule_isThreadAttached, METH_NOARGS, ""},
+	{"attachThreadToJVM", (PyCFunction) PyJPModule_attachThread, METH_NOARGS, ""},
+	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
+	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
-	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
-	{"enableStacktraces", (PyCFunction) (&PyJPModule_enableStacktraces), METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
+	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
+	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
+
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
 #endif

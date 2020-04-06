@@ -109,7 +109,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	string attrName = JPPyString::asStringUTF8(attr).c_str();
 	// Check for private attribute
 	if (attrName.compare(0, 2, "__") == 0)
-		return Py_TYPE(self)->tp_base->tp_getattro((PyObject*) self, attr);
+		return PyObject_GenericGetAttr((PyObject*) self, attr);
 
 	JPContext* context = JPContext_global;
 	if (context->isRunning())
@@ -167,12 +167,26 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPPackage_setattro(PyJPPackage *pkg, PyObject *attr, PyObject *value)
+static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *value)
 {
 	JP_PY_TRY("PyJPPackage_setattro");
-	PyErr_Format(PyExc_AttributeError, "Cannot set attributes on Java packages");
-	return NULL;
-	JP_PY_CATCH(NULL);
+	if (!PyUnicode_Check(attr))
+	{
+		PyErr_Format(PyExc_TypeError, "str required for setattr");
+		return -1;
+	}
+
+	string attrName = JPPyString::asStringUTF8(attr).c_str();
+	if (attrName.compare(0, 2, "__") == 0)
+	{
+		PyDict_SetItem(self->m_Dict, attr, value);
+		return 0;
+	}
+	if (Py_TYPE(value) == PyJPPackage_Type || Py_IsInstanceSingle(PyJPClass_Type, value))
+		return 0;
+	PyErr_Format(PyExc_AttributeError, "Cannot set '%U' on Java packages", attr);
+	return -1;
+	JP_PY_CATCH(-1);
 }
 
 static PyObject *PyJPPackage_str(PyJPPackage *self, PyObject *args, PyObject *kwargs)
@@ -187,6 +201,21 @@ static PyObject *PyJPPackage_call(PyJPPackage *self, PyObject *args, PyObject *k
 	JP_PY_TRY("PyJPPackage_call");
 	PyErr_Format(PyExc_TypeError, "Package `%s` is not callable.", self->m_Package->m_Name.c_str());
 	JP_PY_CATCH(NULL);
+}
+
+static PyObject *PyJPPackage_name(PyJPPackage *self)
+{
+	return PyUnicode_FromFormat("%s", self->m_Package->m_Name.c_str());
+}
+
+static PyObject *PyJPPackage_package(PyJPPackage *self)
+{
+	return PyUnicode_FromFormat("java");
+}
+
+static PyObject *PyJPPackage_path(PyJPPackage *self)
+{
+	return PyList_New(0);
 }
 
 static PyObject *PyJPPackage_dir(PyJPPackage *self)
@@ -221,6 +250,14 @@ static PyMethodDef packageMethods[] = {
 	{NULL},
 };
 
+static PyGetSetDef packageGetSets[] = {
+	{"__all__", (getter) PyJPPackage_dir, NULL, ""},
+	{"__name__", (getter) PyJPPackage_name, NULL, ""},
+	{"__package__", (getter) PyJPPackage_package, NULL, ""},
+	{"__path__", (getter) PyJPPackage_path, NULL, ""},
+	{0}
+};
+
 static PyType_Slot packageSlots[] = {
 	{Py_tp_new,      (void*) PyJPPackage_new},
 	{Py_tp_traverse, (void*) PyJPPackage_traverse},
@@ -232,6 +269,7 @@ static PyType_Slot packageSlots[] = {
 	{Py_tp_call,     (void*) PyJPPackage_call},
 	{Py_tp_members,  (void*) packageMembers},
 	{Py_tp_methods,  (void*) packageMethods},
+	{Py_tp_getset,   (void*) packageGetSets},
 	{0}
 };
 
