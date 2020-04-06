@@ -330,11 +330,13 @@ public class JPypeContext
 
   public boolean isPackage(String s)
   {
+    s = JPypeKeywords.safepkg(s);
     return JPypePackageManager.isPackage(s);
   }
 
   public JPypePackage getPackage(String s)
   {
+    s = JPypeKeywords.safepkg(s);
     if (!JPypePackageManager.isPackage(s))
       return null;
     return new JPypePackage(s, JPypePackageManager.getContentMap(s));

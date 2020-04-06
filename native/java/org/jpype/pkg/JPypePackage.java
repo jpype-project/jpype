@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.jpype.pkg;
 
 import java.io.IOException;
@@ -12,11 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
+import org.jpype.JPypeKeywords;
 
-/**
- *
- * @author nelson85
- */
 public class JPypePackage
 {
 
@@ -42,7 +34,7 @@ public class JPypePackage
       {
         if (!isPublic(p))
           return null;
-        return Class.forName(pkg + "." + name);
+        return Class.forName(pkg + "." + JPypeKeywords.unwrap(name));
       } catch (ClassNotFoundException ex)
       {
         return null;

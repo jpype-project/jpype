@@ -872,10 +872,10 @@ jclass JPJavaFrame::FindClass(const string& a0)
 	return m_Env->functions->FindClass(m_Env, a0.c_str());
 }
 
-jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass a1, jobject a2)
+jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass elementClass, jobject initialElement)
 {
 	JAVA_CALL("JPJavaFrame::NewObjectArray");
-	return m_Env->functions->NewObjectArray(m_Env, a0, a1, a2);
+	return m_Env->functions->NewObjectArray(m_Env, a0, elementClass, initialElement);
 }
 
 void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2)

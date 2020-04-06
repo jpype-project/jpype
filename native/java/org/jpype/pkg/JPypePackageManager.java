@@ -16,6 +16,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.jpype.JPypeKeywords;
 
 /**
  * Manager for the contents of a package.
@@ -288,17 +289,22 @@ public class JPypePackageManager
     {
       for (Path file : Files.newDirectoryStream(path2))
       {
+        String filename = file.getFileName().toString();
         if (Files.isDirectory(file))
         {
-          out.put(file.getFileName().toString(), file);
+          // Same implementations add the path separator to the end of toString().
+          if (filename.endsWith(file.getFileSystem().getSeparator()))
+            filename = filename.substring(0, filename.length() - 1);
+          out.put(JPypeKeywords.wrap(filename), file);
           continue;
         }
-
-        String filename = file.getFileName().toString();
         if (filename.contains("$"))
           continue;
         if (filename.endsWith(".class"))
-          out.put(filename.substring(0, filename.length() - 6), file);
+        {
+          String key = JPypeKeywords.wrap(filename.substring(0, filename.length() - 6));
+          out.put(key, file);
+        }
       }
     } catch (IOException ex)
     {

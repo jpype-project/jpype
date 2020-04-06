@@ -52,18 +52,10 @@ Example:
    from java.lang import String
 
 """
-
-import _jpype
-
-from importlib.machinery import ModuleSpec as _ModuleSpec
-from types import ModuleType as _ModuleType
-
-
-import _jpype
 import sys
+import _jpype
+from importlib.machinery import ModuleSpec as _ModuleSpec
 from . import _pykeywords
-from . import _jclass
-from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
 
@@ -96,19 +88,19 @@ def _getJavaClass(javaname):
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
     if not _java_lang_Class:
-        _java_lang_Class = _jclass.JClass("java.lang.Class")
-        _java_lang_ClassNotFoundException = _jclass.JClass(
+        _java_lang_Class = _jpype.JClass("java.lang.Class")
+        _java_lang_ClassNotFoundException = _jpype.JClass(
             "java.lang.ClassNotFoundException")
-        _java_lang_NoClassDefFoundError = _jclass.JClass(
+        _java_lang_NoClassDefFoundError = _jpype.JClass(
             "java.lang.NoClassDefFoundError")
-        _java_lang_UnsupportedClassVersionError = _jclass.JClass(
+        _java_lang_UnsupportedClassVersionError = _jpype.JClass(
             "java.lang.UnsupportedClassVersionError")
 
     err = None
     try:
         # Use forname because it give better diagnostics
         cls = _java_lang_Class.forName(javaname)
-        return _jclass.JClass(cls)
+        return _jpype.JClass(cls)
 
     # Not found is acceptable
     except _java_lang_ClassNotFoundException:

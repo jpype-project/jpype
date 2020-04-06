@@ -20,6 +20,7 @@
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
+#include "jp_stringtype.h"
 
 void PyJPModule_installGC(PyObject* module);
 
