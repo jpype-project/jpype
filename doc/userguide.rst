@@ -605,6 +605,7 @@ User supplied conversions are tested after all internal conversions have been ex
 and are always consider to be an implicit conversion.
 
 .. code-block:: python
+
         @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
         def _JSequenceConvert(jcls, obj):
             return _jclass.JClass('java.util.Arrays').asList(obj)
@@ -625,6 +626,7 @@ list comprehensions directly.  A Java list can be converted to a Python list or 
 reverse by simply called the requested type as a copy constructor.
 
 .. code-block:: python
+
      pylist = ['apple', 'orange', 'pears']
 
      # Copy the Python list to Java.
