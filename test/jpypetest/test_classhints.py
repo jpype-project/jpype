@@ -33,16 +33,12 @@ class ClassHintsTestCase(common.JPypeTestCase):
 
     def testPath(self):
         import pathlib
-        if not hasattr(pathlib.Path, '__fspath__'):
-            raise common.unittest.SkipTest("not tested on cygwin")
         JPath = jpype.JClass("java.nio.file.Path")
         self.assertIsInstance(jpype.JObject(
             pathlib.Path(__file__).absolute(), JPath), JPath)
 
     def testFile(self):
         import pathlib
-        if not hasattr(pathlib.Path, '__fspath__'):
-            raise common.unittest.SkipTest("not tested on cygwin")
         JFile = jpype.JClass("java.io.File")
         self.assertIsInstance(jpype.JObject(
             pathlib.Path(__file__).absolute(), JFile), JFile)

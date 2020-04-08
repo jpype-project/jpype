@@ -18,49 +18,8 @@ class CoverageCase(common.JPypeTestCase):
         f = jpype.JIterator("foo")
         self.assertEqual(f, "foo")
 
-    def testCygwin(self):
-        if sys.platform == "win32" or sys.platform == "cygwin":
-            raise common.unittest.SkipTest("not tested on cygwin")
-        try:
-            sys.platform = "cygwin"
-            importlib.reload(jpype._classpath)
-            self.assertEqual(jpype._classpath._SEP, ";")
-            self.assertEqual(jpype._classpath._root, None)
-            jpype._classpath._root = r'C:\cygwin64'
-            self.assertEqual(jpype._classpath._get_root(), r'C:\cygwin64')
-            self.assertEqual(jpype._classpath._splitpath(
-                '/cygdrive/c/cygwin64'), ['cygdrive', 'c', 'cygwin64'])
-            self.assertEqual(jpype._classpath._posix2win(
-                '/cygdrive/c/windows'), 'c:\\windows')
-            self.assertEqual(jpype._classpath._posix2win(
-                '/bin'), r"C:\cygwin64\bin")
-            jpype._classpath._CLASSPATHS = []
-            jpype.addClassPath("/cygdrive/c/windows")
-            jpype.addClassPath("/cygdrive/c/data")
-            self.assertEqual(jpype._classpath._CLASSPATHS,
-                             [r"c:\windows", r"c:\data"])
-            env = os.environ.get("CLASSPATH")
-            os.environ["CLASSPATH"] = r"c:\programs"
-            self.assertEqual(jpype.getClassPath(
-                True), r"c:\windows;c:\data;c:\programs")
-            self.assertEqual(jpype.getClassPath(False), r"c:\windows;c:\data")
-            # jpype.addClassPath("")
-            #self.assertEqual(jpype.getClassPath(False), r"c:\windows;c:\data")
-            jpype.addClassPath("/cygdrive/c/data/*")
-            self.assertEqual(jpype.getClassPath(False), r"c:\windows;c:\data")
-            if not env:
-                del os.environ["CLASSPATH"]
-            jpype._classpath._CLASSPATHS = []
-
-            with self.assertRaises(jpype.JVMNotFoundException):
-                jpype.getDefaultJVMPath()
-
-        finally:
-            sys.platform = self.platform
-            importlib.reload(jpype._classpath)
-
     def testWin32(self):
-        if sys.platform == "win32" or sys.platform == "cygwin":
+        if sys.platform == "win32":
             raise common.unittest.SkipTest("not tested on win32")
         try:
             sys.platform = "win32"

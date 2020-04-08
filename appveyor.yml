@@ -18,12 +18,6 @@ environment:
       CONDA_PY: "3.5.2"
       ARCH: x86
 
-      # Appveyor image is down
-      #    - PYTHON: "python3.7"
-      #      CYGWIN: "C:\\cygwin64"
-      #      ARCH: x86_64
-      #      CYGSH: C:\Cygwin64\bin\bash -c
-
       # Disabling... stuck at 3.7 for a while
       #- PYTHON: "C:\\Miniconda3"
       #ARCH: x86
@@ -57,14 +51,14 @@ install:
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
   # If cygwin installed run install.sh, else run the install.ps1
-  - "IF DEFINED CYGWIN (%CYGSH% appveyor/install.sh) ELSE (powershell ./appveyor/install.ps1)"
+  - "powershell ./appveyor/install.ps1"
 
 build: false # Not a C# project, build stuff at the test step instead.
 
 test_script:
   #- "%CMD_IN_ENV% conda build devtools\\conda-recipe --numpy=112"
   # run testsuite and upload test results to AppVeyor; return exit code of testsuite
-  - "IF DEFINED CYGWIN (%CYGSH% appveyor/runTestSuite.sh) ELSE (powershell ./appveyor/runTestSuite.ps1)"
+  - "powershell ./appveyor/runTestSuite.ps1"
 
 on_finish:
   # upload results to AppVeyor
