@@ -1,5 +1,4 @@
 import os as _os
-import sys as _sys
 import glob as _glob
 
 __all__ = ['addClassPath', 'getClassPath']
