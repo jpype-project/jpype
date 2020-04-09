@@ -44,7 +44,6 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	jlong* types = accessor.get();
 	for (jsize i = 0; i < argLen; i++)
 	{
-		JP_TRACE("Convert", i, type->getCanonicalName());
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = frame.findClassForObject(obj);
 		if (type == NULL)
