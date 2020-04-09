@@ -270,6 +270,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"(Ljava/lang/Object;)I");
 
 		m_GC->init(frame);
+
+		// Testing code to make sure C++ exceptions are handled.
+		// FIXME find a way to call this from instrumentation.
+		// throw std::runtime_error("Failed");
 		// Everything is started.
 	}
 	m_IsInitialized = true;

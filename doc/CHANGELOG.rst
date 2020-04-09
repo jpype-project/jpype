@@ -63,6 +63,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     inappropriately has been corrected.  Protected classes can still be
     imported using JClass.
 
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
+    future release.
+
+  - jpype.reflect will be removed in the next release.  convertStrings
+    default will become false in the next release.
 
 - **0.7.2 - 2-28-2019**
 
