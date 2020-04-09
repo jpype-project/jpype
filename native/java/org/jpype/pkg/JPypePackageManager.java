@@ -111,7 +111,7 @@ public class JPypePackageManager
       return false;
     } catch (Exception ex)
     {
-      throw new RuntimeException("Fail while checking package " + name, ex);
+      throw new RuntimeException("Fail checking package '" + name + "'", ex);
     }
   }
 
