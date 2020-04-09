@@ -103,6 +103,8 @@ public class JPypePackageManager
   {
     try
     {
+      if (name.isEmpty())
+        return false;
       for (FileSystem jar : bases)
       {
         if (Files.isDirectory(jar.getPath(name)))
