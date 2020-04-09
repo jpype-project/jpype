@@ -103,10 +103,10 @@ jobs:
       python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-         testResultsFiles: 'build/test/test.xml'
-         testRunTitle: 'Publish osx test results for Python $(python.version)
+    condition: succeededOrFailed()
+    inputs:
+       testResultsFiles: 'build/test/test.xml'
+       testRunTitle: 'Publish osx test results for Python $(python.version)
 
 - job: Test_OSX
   strategy:
@@ -133,10 +133,10 @@ jobs:
       python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-         testResultsFiles: 'build/test/test.xml'
-         testRunTitle: 'Publish osx test results for Python $(python.version)
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: 'build/test/test.xml'
+      testRunTitle: 'Publish osx test results for Python $(python.version)
 
 - job: Test_Windows
   strategy:
@@ -174,7 +174,7 @@ jobs:
       python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
-      condition: succeededOrFailed()
-      inputs:
-         testResultsFiles: 'build/test/test.xml'
-         testRunTitle: 'Publish windows test results for Python $(python.version)
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: 'build/test/test.xml'
+      testRunTitle: 'Publish windows test results for Python $(python.version)
