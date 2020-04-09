@@ -101,12 +101,18 @@ public class JPypePackageManager
 
   private static boolean isBasePackage(String name)
   {
-    for (FileSystem jar : bases)
+    try
     {
-      if (Files.isDirectory(jar.getPath(name)))
-        return true;
+      for (FileSystem jar : bases)
+      {
+        if (Files.isDirectory(jar.getPath(name)))
+          return true;
+      }
+      return false;
+    } catch (Exception ex)
+    {
+      throw new RuntimeException("Fail while checking package " + name, ex);
     }
-    return false;
   }
 
 //</editor-fold>
