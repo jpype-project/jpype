@@ -52,7 +52,7 @@ jobs:
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
       java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
-  #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
+      bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     displayName: 'Report'
 
 - job: Tracing
@@ -85,11 +85,31 @@ jobs:
         imageName: "ubuntu-16.04"
         jdk_version: "1.11"
         python.version: '3.8'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      python setup.py sdist
+      pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      python -m pytest -v test/jpypetest --checkjni  
+    displayName: 'Test module'
+
+- job: Test_OSX
+  strategy:
+    matrix:
       mac-3.8:
         imageName: "macos-10.14"
         jdk_version: "1.11"
         python.version: '3.8'
-    maxParallel: 2
   pool:
     vmImage: $(imageName)
   steps:
