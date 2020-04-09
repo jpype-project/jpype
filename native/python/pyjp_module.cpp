@@ -663,6 +663,14 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 		ex.from(info); // this likely wont be necessary, but for now we will add the entry point.
 		ex.toPython();
 		return;
+	} catch (std::exception &ex)
+	{
+		PyErr_Format(PyExc_RuntimeError, "Unhandled C++ exception occurred: %s", ex.what());
+		return;
+	} catch (...)
+	{
+		PyErr_Format(PyExc_RuntimeError, "Unhandled C++ exception occurred");
+		return;
 	}
 	JP_TRACE_OUT;
 }
