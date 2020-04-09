@@ -104,6 +104,10 @@ def _JObjectFactory(v=None, tp=None):
     elif isinstance(tp, str):
         tp = _jpype.JClass(tp)
     if tp in _jpype._object_classes:
+        if not isinstance(tp, _jpype.JClass):
+            import warnings
+            warnings.warn("Using JObject with a Python type is deprecated.",
+                              category=DeprecationWarning, stacklevel=3)
         tp = _jpype._object_classes[tp]
 
     # Given a Java class

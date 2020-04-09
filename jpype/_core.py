@@ -264,13 +264,14 @@ please file a ticket with the developer.
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
+    # These need to be deprecated so that we can support casting Python objects
     _jpype._object_classes[bool] = _jpype._java_lang_Boolean
     _jpype._object_classes[int] = _jpype._java_lang_Long
     _jpype._object_classes[float] = _jpype._java_lang_Double
     _jpype._object_classes[str] = _jpype._java_lang_String
     _jpype._object_classes[type] = _jpype._java_lang_Class
-    _jpype._object_classes[_jpype._JClass] = _jpype._java_lang_Class
     _jpype._object_classes[object] = _jpype._java_lang_Object
+    _jpype._object_classes[_jpype._JClass] = _jpype._java_lang_Class
     _jpype._object_classes[_jtypes.JBoolean] = _jpype._java_lang_Boolean
     _jpype._object_classes[_jtypes.JByte] = _jpype._java_lang_Byte
     _jpype._object_classes[_jtypes.JChar] = _jpype._java_lang_Character
