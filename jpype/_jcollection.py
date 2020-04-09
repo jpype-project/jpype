@@ -18,6 +18,7 @@ import datetime
 from collections.abc import Sequence
 from collections.abc import Mapping
 
+import sys
 import _jpype
 from . import _jclass
 from . import _jcustomizer
@@ -224,6 +225,18 @@ def _JInstantConversion(jcls, obj):
     sec = int(utc)
     nsec = int((utc-sec)*1e9)
     return jcls.ofEpochSecond(sec, nsec)
+
+if sys.version_info < (3,6):
+    import pathlib
+    @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
+    def _JPathConvert(jcls, obj):
+        Paths = _jpype.JClass("java.nio.file.Paths")
+        return Paths.get(str(obj))
+
+    @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
+    def _JFileConvert(jcls, obj):
+        return jcls(str(obj))
+
 
 
 @_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
