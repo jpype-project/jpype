@@ -106,7 +106,7 @@ jobs:
     condition: succeededOrFailed()
     inputs:
        testResultsFiles: 'build/test/test.xml'
-       testRunTitle: 'Publish linux test results for Python $(python.version)
+       testRunTitle: 'Publish linux test results for Python $(python.version)'
 
 - job: Test_OSX
   strategy:
@@ -136,7 +136,7 @@ jobs:
     condition: succeededOrFailed()
     inputs:
       testResultsFiles: 'build/test/test.xml'
-      testRunTitle: 'Publish osx test results for Python $(python.version)
+      testRunTitle: 'Publish osx test results for Python $(python.version)'
 
 - job: Test_Windows
   strategy:
@@ -177,4 +177,4 @@ jobs:
     condition: succeededOrFailed()
     inputs:
       testResultsFiles: 'build/test/test.xml'
-      testRunTitle: 'Publish windows test results for Python $(python.version)
+      testRunTitle: 'Publish windows test results for Python $(python.version)'
