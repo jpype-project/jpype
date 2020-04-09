@@ -55,9 +55,24 @@ jobs:
   #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     displayName: 'Report'
 
+- job: Tracing
+  pool:
+    vmImage: "ubuntu-16.04"
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+  - script: |
+      python setup.py --enable-tracing --enable-build-jar build_ext --inplace
+    displayName: 'Build'
+
 - job: Test_Linux
   strategy:
     matrix:
+      linux-3.5:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.5'
       linux-3.6:
         imageName: "ubuntu-16.04"
         jdk_version: "1.11"
@@ -96,23 +111,22 @@ jobs:
 - job: Test_Windows
   strategy:
     matrix:
-#      windows-3.5:
-#        imageName: "vs2017-win2016"
-#        jdk_version: "1.11"
-#        python.version: '3.5'
-#      windows-3.6:
-#        imageName: "vs2017-win2016"
-#        jdk_version: "1.11"
-#        python.version: '3.6'
-#      windows-3.7:
-#        imageName: "vs2017-win2016"
-#        jdk_version: "1.11"
-#        python.version: '3.7'
+      windows-3.5:
+        imageName: "vs2017-win2016"
+        jdk_version: "1.11"
+        python.version: '3.5'
+      windows-3.6:
+        imageName: "vs2017-win2016"
+        jdk_version: "1.11"
+        python.version: '3.6'
+      windows-3.7:
+        imageName: "vs2017-win2016"
+        jdk_version: "1.11"
+        python.version: '3.7'
       windows-3.8:
         imageName: "vs2017-win2016"
         jdk_version: "1.11"
         python.version: '3.8'
-    maxParallel: 2
   pool:
     vmImage: $(imageName)
   steps:

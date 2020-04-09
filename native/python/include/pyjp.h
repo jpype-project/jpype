@@ -28,6 +28,7 @@ class JPStackInfo;
   } catch(...) { \
   PyJPModule_rethrow(JP_STACKINFO()); } \
   return __VA_ARGS__
+#define JP_PY_CATCH_NONE(...)  } catch(...) {} return __VA_ARGS__
 #else
 #ifndef JP_INSTRUMENTATION
 #define JP_PY_TRY(...)  try { do {} while(0)
