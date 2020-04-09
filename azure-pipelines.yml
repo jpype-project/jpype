@@ -106,7 +106,7 @@ jobs:
     condition: succeededOrFailed()
     inputs:
        testResultsFiles: 'build/test/test.xml'
-       testRunTitle: 'Publish osx test results for Python $(python.version)
+       testRunTitle: 'Publish linux test results for Python $(python.version)
 
 - job: Test_OSX
   strategy:
