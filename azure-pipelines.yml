@@ -100,8 +100,13 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
+  - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+         testResultsFiles: 'build/test/test.xml'
+         testRunTitle: 'Publish osx test results for Python $(python.version)
 
 - job: Test_OSX
   strategy:
@@ -125,8 +130,13 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
+  - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+         testResultsFiles: 'build/test/test.xml'
+         testRunTitle: 'Publish osx test results for Python $(python.version)
 
 - job: Test_Windows
   strategy:
@@ -161,5 +171,10 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
+  - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+         testResultsFiles: 'build/test/test.xml'
+         testRunTitle: 'Publish windows test results for Python $(python.version)
