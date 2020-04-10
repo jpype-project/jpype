@@ -100,7 +100,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -130,7 +130,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
@@ -171,7 +171,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v --junit-xml=built/test/test.xml test/jpypetest --checkjni  
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
