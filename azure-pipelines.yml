@@ -54,6 +54,19 @@ jobs:
       java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
       bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
     displayName: 'Report'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: coverage_java.xml
+      pathToSources: native/java
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'Cabertura'
+      summaryFileLocation: coverage.xml
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'Cabertura'
+      summaryFileLocation: coverage_py.xml
 
 - job: Tracing
   pool:
@@ -100,6 +113,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
+      pip install numpy jedi
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
@@ -130,6 +144,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
+      pip install numpy jedi
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
@@ -171,6 +186,7 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
+      pip install numpy jedi
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
