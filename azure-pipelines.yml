@@ -61,11 +61,11 @@ jobs:
       pathToSources: native/java
   - task: PublishCodeCoverageResults@1
     inputs:
-      codeCoverageTool: 'Cabertura'
+      codeCoverageTool: 'cobertura'
       summaryFileLocation: coverage.xml
   - task: PublishCodeCoverageResults@1
     inputs:
-      codeCoverageTool: 'Cabertura'
+      codeCoverageTool: 'cobertura'
       summaryFileLocation: coverage_py.xml
 
 - job: Tracing
