@@ -14,10 +14,6 @@
                 <sourceRootElem>../../native/python</sourceRootElem>
                 <sourceRootElem>../../native/common</sourceRootElem>
                 <sourceRootElem>../../native/python</sourceRootElem>
-                <sourceRootElem>../../native/common</sourceRootElem>
-                <sourceRootElem>../../native/python</sourceRootElem>
-                <sourceRootElem>../../native/common</sourceRootElem>
-                <sourceRootElem>../../native/python</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>

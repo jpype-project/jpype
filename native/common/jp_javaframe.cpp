@@ -1146,14 +1146,14 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 	return this->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
 }
 
-jboolean JPJavaFrame::isPackage(string str)
+jboolean JPJavaFrame::isPackage(const string& str)
 {
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	return CallBooleanMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_IsPackageID, &v);
 }
 
-jobject JPJavaFrame::getPackage(string str)
+jobject JPJavaFrame::getPackage(const string& str)
 {
 	jvalue v;
 	v.l = fromStringUTF8(str);
