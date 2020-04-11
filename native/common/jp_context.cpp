@@ -83,7 +83,6 @@ JPContext::JPContext()
 
 	m_Object_ToStringID = 0;
 	m_Object_EqualsID = 0;
-	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
 	m_GC = new JPGarbageCollection(this);
@@ -210,7 +209,13 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
-		m_ShutdownMethodID = frame.GetMethodID(cls, "shutdown", "()V");
+
+		JNINativeMethod method[1];
+		method[0].name = (char*) "onShutdown";
+		method[0].signature = (char*) "(J)V";
+		method[0].fnPtr = (void*) JPContext::onShutdown;
+		frame.GetMethodID(cls, "<init>", "()V");
+		frame.RegisterNatives(cls, method, 1);
 
 		// Launch
 		jvalue val[2];
@@ -232,7 +237,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(frame,
 				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
 
-		// Set up methods after everthing is start so we get better error
+		// Set up methods after everything is start so we get better error
 		// messages
 		cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
 		m_CallMethodID = frame.GetMethodID(cls, "callMethod",
@@ -272,35 +277,19 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE_OUT;
 }
 
+JNIEXPORT jobject JNICALL JPContext::onShutdown(JNIEnv *env, jlong contextPtr)
+{
+	((JPContext*) contextPtr)->m_IsShutdown = true;
+}
+
 void JPContext::shutdownJVM()
 {
-	m_IsShutdown = true;
-
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
-	//	{
-	//		JPJavaFrame frame(this);
-	//		JP_TRACE("Shutdown services");
-	//		JP_TRACE(m_JavaContext.get());
-	//		JP_TRACE(m_ShutdownMethodID);
-	//
-	//		// Tell Java to shutdown the context
-	//		{
-	//			JPPyCallRelease release;
-	//			if (m_JavaContext.get() != 0)
-	//				frame.CallVoidMethodA(m_JavaContext.get(), m_ShutdownMethodID, 0);
-	//		}
-	//	}
-
 	// Wait for all non-demon threads to terminate
-	// DestroyJVM is rather misnamed.  It is simply a wait call
-	// Our reference queue thunk does not appear to have properly set
-	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
-	printf("shutdown\n");
-	//	m_JavaVM->DetachCurrentThread();
 	{
 		JPPyCallRelease call;
 		m_JavaVM->DestroyJavaVM();
