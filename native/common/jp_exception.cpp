@@ -27,7 +27,7 @@ PyObject *PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th);
 JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackInfo& stackInfo)
 : m_Throwable(frame, th)
 {
-	JP_TRACE("JAVA EXCEPTION THROWN:", msn);
+	JP_TRACE("JAVA EXCEPTION THROWN with java throwable");
 	m_Context = frame.getContext();
 	m_Type = JPError::_java_error;
 	m_Error.l = NULL;
@@ -37,7 +37,7 @@ JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackI
 
 JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackInfo)
 {
-	JP_TRACE("EXCEPTION THROWN:", error, msn);
+	JP_TRACE("EXCEPTION THROWN with error", error);
 	m_Type = type;
 	m_Error.l = error;
 	m_Message = "None";
