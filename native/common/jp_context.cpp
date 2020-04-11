@@ -280,26 +280,31 @@ void JPContext::shutdownJVM()
 	if (m_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
-	{
-		JPJavaFrame frame(this);
-		JP_TRACE("Shutdown services");
-		JP_TRACE(m_JavaContext.get());
-		JP_TRACE(m_ShutdownMethodID);
-
-		// Tell Java to shutdown the context
-		{
-			JPPyCallRelease release;
-			if (m_JavaContext.get() != 0)
-				frame.CallVoidMethodA(m_JavaContext.get(), m_ShutdownMethodID, 0);
-		}
-	}
+	//	{
+	//		JPJavaFrame frame(this);
+	//		JP_TRACE("Shutdown services");
+	//		JP_TRACE(m_JavaContext.get());
+	//		JP_TRACE(m_ShutdownMethodID);
+	//
+	//		// Tell Java to shutdown the context
+	//		{
+	//			JPPyCallRelease release;
+	//			if (m_JavaContext.get() != 0)
+	//				frame.CallVoidMethodA(m_JavaContext.get(), m_ShutdownMethodID, 0);
+	//		}
+	//	}
 
 	// Wait for all non-demon threads to terminate
 	// DestroyJVM is rather misnamed.  It is simply a wait call
 	// Our reference queue thunk does not appear to have properly set
 	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
-	//	s_JavaVM->functions->DestroyJavaVM(s_JavaVM);
+	printf("shutdown\n");
+	//	m_JavaVM->DetachCurrentThread();
+	{
+		JPPyCallRelease call;
+		m_JavaVM->DestroyJavaVM();
+	}
 
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
@@ -369,7 +374,9 @@ JNIEnv* JPContext::getEnv()
 	// If we don't have an environment then we are in a thread, so we must attach
 	if (res == JNI_EDETACHED)
 	{
-		res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, NULL);
+		// We will attach as daemon so that the newly attached thread does
+		// not deadlock the shutdown.  The user can convert later if they want.
+		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, NULL);
 		if (res != JNI_OK)
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 	}

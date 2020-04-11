@@ -24,6 +24,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -100,8 +102,45 @@ public class JPypeContext
     instance.typeManager.init();
     instance.referenceQueue.start();
 
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        watchShutdown();
+      }
+    }));
+
     return instance;
   }
+
+  private static void watchShutdown()
+  {
+    try
+    {
+      ThreadGroup group = Thread.currentThread().getThreadGroup();
+      while (group.getParent() != null)
+      {
+        group = group.getParent();
+      }
+      int threads = group.activeCount();
+      Thread.sleep(10);
+    } catch (InterruptedException ex)
+    {
+      Logger.getLogger(JPypeContext.class.getName()).log(Level.SEVERE, null, ex);
+    }
+    System.out.println("bye");
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        System.out.println("chao");
+      }
+    }));
+
+  }
+
 
   /**
    * Stop all JPype resources.
