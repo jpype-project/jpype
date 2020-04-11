@@ -20,12 +20,3 @@ def common_opts(request):
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
 
-
-@pytest.fixture(scope="session", autouse=True)
-def coverage(request):
-    yield
-    if request.config.getoption("--jacoco") and jpype.isJVMStarted():
-        # Force dump of the jacoco agent
-        RT = jpype.JClass("org.jacoco.agent.rt.RT")
-        agent = RT.getAgent()
-        agent.dump(False)
