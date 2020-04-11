@@ -58,12 +58,13 @@ public class JPypePackageManager
    * Get the list of the contents of a package.
    *
    * @param packageName
-   * @return
+   * @return the list of all resources found.
    */
   public static Map<String, Path> getContentMap(String packageName)
   {
     Map<String, Path> out = new HashMap<>();
     packageName = packageName.replace(".", "/");
+    // We need to merge all the file systems into one view like the classloader
     getJarContents(out, packageName);
     getBaseContents(out, packageName);
     getModuleContents(out, packageName);
@@ -71,6 +72,12 @@ public class JPypePackageManager
   }
 
 //<editor-fold desc="java 8" defaultstate="collapsed">
+  /**
+   * Older versions of Java do not have a file system for boot packages. Thus
+   * rather working through the classloader, we will instead probe java to get
+   * the rt.jar. Crypto is a special case as it has its own jar. All other
+   * resources are sourced through the regular jar loading method.
+   */
   static
   {
     URI uri = null;
@@ -79,13 +86,19 @@ public class JPypePackageManager
       // This is for Java 8 and earlier in which the API jars are in rt.jar
       // and jce.jar
       uri = cl.getResource("java/lang/String.class").toURI();
-      FileSystem fs = getJarFileSystem(uri);
-      if (fs != null)
-        bases.add(fs);
+      if (uri != null)
+      {
+        FileSystem fs = getJarFileSystem(uri);
+        if (fs != null)
+          bases.add(fs);
+      }
       uri = cl.getResource("javax/crypto/Cipher.class").toURI();
-      fs = getJarFileSystem(uri);
-      if (fs != null)
-        bases.add(fs);
+      if (uri != null)
+      {
+        FileSystem fs = getJarFileSystem(uri);
+        if (fs != null)
+          bases.add(fs);
+      }
     } catch (URISyntaxException ex)
     {
     }
@@ -99,6 +112,12 @@ public class JPypePackageManager
     }
   }
 
+  /**
+   * Check if a name is a package in the java bootstrap classloader.
+   *
+   * @param name
+   * @return
+   */
   private static boolean isBasePackage(String name)
   {
     try
@@ -119,6 +138,14 @@ public class JPypePackageManager
 
 //</editor-fold>
 //<editor-fold desc="java 9" defaultstate="collapsed">
+  /**
+   * Get a list of all modules.
+   *
+   * This may be many modules or just a few. Limited distributes created using
+   * jlink will only have a portion of the usual modules.
+   *
+   * @return
+   */
   static List<ModuleDirectory> getModules()
   {
     ArrayList<ModuleDirectory> out = new ArrayList<>();
@@ -136,6 +163,12 @@ public class JPypePackageManager
     return out;
   }
 
+  /**
+   * Check if a name corresponds to a package in a module.
+   *
+   * @param name
+   * @return true if it is a package.
+   */
   private static boolean isModulePackage(String name)
   {
     if (modules.isEmpty())
@@ -155,6 +188,12 @@ public class JPypePackageManager
     return false;
   }
 
+  /**
+   * Retrieve the contents of a module by package name.
+   *
+   * @param out
+   * @param name
+   */
   private static void getModuleContents(Map<String, Path> out, String name)
   {
     if (modules.isEmpty())
@@ -174,6 +213,13 @@ public class JPypePackageManager
     }
   }
 
+  /**
+   * Modules are stored in the jrt filesystem.
+   *
+   * However, that is not a simple flat filesystem by path as the jrt files are
+   * structured by package name. Thus we will need a separate structure which is
+   * rooted at the top of each module.
+   */
   private static class ModuleDirectory
   {
 
@@ -218,6 +264,18 @@ public class JPypePackageManager
 
 //</editor-fold>
 //<editor-fold desc="jar" defaultstate="collapsed">
+  /**
+   * Checks if a name corresponds to package in a jar file or on the classpath
+   * filesystem.
+   *
+   * Classloaders provide a method to get all resources with a given name. This
+   * is needed because the same package name may appear in multiple jars or
+   * filesystems. We do not need to disambiguate it here, but just get a listing
+   * that we can use to find a resource later.
+   *
+   * @param name is the name of the package to search for.
+   * @return true if the name corresponds to a Java package.
+   */
   private static boolean isJarPackage(String name)
   {
     try
@@ -235,6 +293,13 @@ public class JPypePackageManager
     return false;
   }
 
+  /**
+   * Retrieve a list of packages and classes stored on a file system or in a
+   * jar.
+   *
+   * @param out is the map to store the result in.
+   * @param packageName is the name of the package
+   */
   private static void getJarContents(Map<String, Path> out, String packageName)
   {
     try
@@ -252,6 +317,15 @@ public class JPypePackageManager
     }
   }
 
+  /**
+   * Get the "FileSystem" for the internals of a Jar.
+   *
+   * We will use a caching system so that we don't open the same jar multiple
+   * times. It is not clear if this caching is necessary.
+   *
+   * @param uri is the uri with a "jar" scheme
+   * @return the file system or null if not found.
+   */
   private static FileSystem getJarFileSystem(URI uri)
   {
     if (!"jar".equals(uri.getScheme()))
@@ -274,6 +348,17 @@ public class JPypePackageManager
     return zipfs;
   }
 
+  /**
+   * Convert a URI into a Path.
+   *
+   * Jar files are a special file system which extends into the jar structure.
+   * We need to be able to handle both normal class files on a regular file
+   * system and class files inside of jars.
+   *
+   * @param resource is the name of the resource as it appears from the
+   * classloader.
+   * @return is the path to the resource or null if not available.
+   */
   private static Path getJarPath(URI resource)
   {
     if ("file".equals(resource.getScheme()))
@@ -284,13 +369,25 @@ public class JPypePackageManager
     {
       String[] q = resource.toString().split("!");
       FileSystem zipfs = getJarFileSystem(URI.create(q[0]));
-      return zipfs.getPath(q[1]);
+      if (zipfs != null)
+        return zipfs.getPath(q[1]);
     }
     throw new UnsupportedOperationException("Unknown filesystem for " + resource);
   }
 
 //</editor-fold>
 //<editor-fold desc="utility" defaultstate="collapsed">
+  /**
+   * Collect the contents from a path.
+   *
+   * This operates on jars, modules, and filesystems to collect the names of all
+   * resources found. We skip over inner classes as those are accessed under
+   * their included classes. For now we are not screening against other private
+   * symbols.
+   *
+   * @param out is the map to store the result in.
+   * @param path2 is a path holding a directory to probe.
+   */
   private static void collectContents(Map<String, Path> out, Path path2)
   {
     try
@@ -306,13 +403,19 @@ public class JPypePackageManager
           out.put(JPypeKeywords.wrap(filename), file);
           continue;
         }
+        // Skip inner classes
         if (filename.contains("$"))
           continue;
+
+        // Include class files
         if (filename.endsWith(".class"))
         {
           String key = JPypeKeywords.wrap(filename.substring(0, filename.length() - 6));
           out.put(key, file);
         }
+
+        // We can add other types of files here and import them in JPypePackage
+        // as required.
       }
     } catch (IOException ex)
     {

@@ -9,10 +9,20 @@ import java.util.ArrayList;
 import java.util.Map;
 import org.jpype.JPypeKeywords;
 
+/**
+ * Representation of a JPackage in Java.
+ *
+ * This provides the dir and attributes for a JPackage and by extension jpype
+ * imports. Almost all of the actual work happens in the PackageManager which
+ * acts like the classloader to figure out what resource are available.
+ *
+ */
 public class JPypePackage
 {
 
+  // Name of the package
   final String pkg;
+  // A mapping from Python names into Paths into the module/jar file system.
   final Map<String, Path> contents;
 
   public JPypePackage(String pkg, Map<String, Path> contents)
@@ -21,19 +31,47 @@ public class JPypePackage
     this.contents = contents;
   }
 
+  /**
+   * Get an object from the package.
+   *
+   * This is used by the importer to create the attributes for `getattro`. The
+   * type returned is polymorphic. We can potentially support any type of
+   * resource (package, classes, property files, xml, data, etc). But for now we
+   * are primarily interested in packages and classes. Packages are returned as
+   * strings as loading the package info is not guaranteed to work. Classes are
+   * returned as classes which are immediately converted into Python wrappers.
+   * We can return other resource types so long as they have either a wrapper
+   * type to place the instance into an Python object directly or a magic
+   * wrapper which will load the resource into a Python object type.
+   *
+   * This should match the acceptable types in getContents so that everything in
+   * the `dir` is also an attribute of JPackage.
+   *
+   * @param name is the name of the resource.
+   * @return the object or null if no resource is found with a matching name.
+   */
   public Object getObject(String name)
   {
     Path p = contents.get(name);
     if (p == null)
       return null;
+
+    // Directories are packages.  We will just pass them as strings.
     if (Files.isDirectory(p))
       return p.toString().replace("/", ".");
+
+    // Class files need to be probed to make sure they are public.  This
+    // pattern may have problems with non-exported classes in modules.  But
+    // thus far we have not seen any cases of that.
     if (p.toString().endsWith(".class"))
     {
       try
       {
+        // Make sure it is public
         if (!isPublic(p))
           return null;
+
+        // Load the class and return a class type object
         return Class.forName(pkg + "." + JPypeKeywords.unwrap(name));
       } catch (ClassNotFoundException ex)
       {
@@ -43,22 +81,62 @@ public class JPypePackage
     return null;
   }
 
+  /**
+   * Get a list of contents from a Java package.
+   *
+   * This will be used when creating the package `dir`
+   *
+   * @return
+   */
   public String[] getContents()
   {
     ArrayList<String> out = new ArrayList<>();
     for (String key : contents.keySet())
     {
-      Object o = this.getObject(key);
-      if (o != null)
+      Path p = contents.get(key);
+      // If there is anything null, then skip it.
+      if (p == null)
+        continue;
+
+      // package are acceptable
+      if (Files.isDirectory(p))
         out.add(key);
+
+      // classes must be public
+      else if (key.endsWith(".class"))
+      {
+        // Make sure it is public
+        if (isPublic(p))
+          out.add(key);
+      }
     }
     return out.toArray(new String[out.size()]);
   }
 
+  /**
+   * Determine if a class is public.
+   *
+   * This checks if a class file contains a public class. When importing classes
+   * we do not want to instantiate a class which is not public as it may result
+   * in instantiation of static variables or unwanted class resources. The only
+   * alternative is to read the class file and get the class modifier flags.
+   * Unfortunately, the developers of Java were rather stingy on their byte
+   * allocation and thus the field we want is not in the header but rather
+   * buried after the constant pool. Further as they didn't give the actual size
+   * of the tables in bytes, but rather in entries, that means we have to parse
+   * the whole table just to get the access flags after it.
+   *
+   * @param p
+   * @return
+   */
   static boolean isPublic(Path p)
   {
     try (InputStream is = Files.newInputStream(p))
     {
+      // Allocate a three byte buffer for traversing the constant pool.
+      // The minumum entry is a byte for the type and 2 data bytes.  We
+      // will read these three bytes and then based on the type advance
+      // the read pointer to the next entry.
       ByteBuffer buffer3 = ByteBuffer.allocate(3);
 
       // Check the magic
@@ -70,17 +148,19 @@ public class JPypePackage
         return false;
       header.getShort(); // skip major
       header.getShort(); // skip minor
-      int cpitems = header.getShort();
+      short cpitems = header.getShort(); // get the number of items
 
       // Traverse the cp pool
       for (int i = 0; i < cpitems - 1; ++i)
       {
         is.read(buffer3.array());
         buffer3.rewind();
-        int type = buffer3.get();
+        byte type = buffer3.get(); // First byte is the type
+
+        // Now based on the entry type we will advance the pointer
         switch (type)
         {
-          case 1:
+          case 1:  // Strings are variable length
             is.skip(buffer3.getShort());
             break;
           case 7:
@@ -104,7 +184,7 @@ public class JPypePackage
             break;
           case 5:
           case 6:
-            is.skip(6);
+            is.skip(6); // double and long are special as they are double entries
             i++; // long and double take two slots
             break;
           default:
@@ -115,11 +195,11 @@ public class JPypePackage
       // Get the flags
       is.read(buffer3.array());
       buffer3.rewind();
-      int flags = buffer3.getShort();
-      return (flags & 1) == 1;
+      short flags = buffer3.getShort();
+      return (flags & 1) == 1; // it is public if bit zero is set
     } catch (IOException ex)
     {
-      return false;
+      return false; // If anything goes wrong then it won't be considered a public class.
     }
   }
 
