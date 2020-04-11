@@ -144,12 +144,12 @@ jthrowable JPJavaFrame::ExceptionOccurred()
 
 #ifdef JP_INSTRUMENTATION
 #define JAVA_RETURN(X,Y,Z) \
-  PyJPModuleFault_throw(compile_hash(Y)) \
+  PyJPModuleFault_throw(compile_hash(Y)); \
   X ret = Z; \
   check(); \
   return ret;
 #define JAVA_CHECK(Y,Z) \
-  PyJPModuleFault_throw(compile_hash(Y)) \
+  PyJPModuleFault_throw(compile_hash(Y)); \
   Z; \
   check();
 #else
