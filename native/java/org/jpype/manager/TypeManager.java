@@ -48,6 +48,9 @@ public class TypeManager
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
   public Class<? extends Annotation> functionalAnnotation = null;
+  // For reasons that are less than clear, this object cannot be created
+  // during shutdown
+  private Destroyer destroyer = new Destroyer();
 
   public TypeManager()
   {
@@ -286,23 +289,20 @@ public class TypeManager
     // point forward.
     this.isShutdown = true;
 
-    // Next set up a block for deleting resources
-    Destroyer dest = new Destroyer();
-
     // Destroy all the resources held in C++
     for (ClassDescriptor entry : this.classMap.values())
     {
       if (entry.constructorDispatch != 0)
-        dest.add(entry.constructorDispatch);
-      dest.add(entry.constructors);
-      dest.add(entry.methodDispatch);
-      dest.add(entry.methods);
-      dest.add(entry.fields);
+        destroyer.add(entry.constructorDispatch);
+      destroyer.add(entry.constructors);
+      destroyer.add(entry.methodDispatch);
+      destroyer.add(entry.methods);
+      destroyer.add(entry.fields);
       if (entry.anonymous != 0)
-        dest.add(entry.anonymous);
-      dest.add(entry.classPtr);
+        destroyer.add(entry.anonymous);
+      destroyer.add(entry.classPtr);
     }
-    dest.flush();
+    destroyer.flush();
 
     // FIXME. If someone attempts to shutdown the JVM within a Python
     // proxy, everything will crash here.  We would lose the class
