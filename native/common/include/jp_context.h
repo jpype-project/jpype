@@ -225,7 +225,7 @@ private:
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
-	static JNIEXPORT jobject JNICALL onShutdown(JNIEnv *env, jlong contextPtr);
+	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jlong contextPtr);
 
 private:
 	friend class JPJavaFrame;

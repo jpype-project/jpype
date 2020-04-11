@@ -277,7 +277,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jobject JNICALL JPContext::onShutdown(JNIEnv *env, jlong contextPtr)
+JNIEXPORT void JNICALL JPContext::onShutdown(JNIEnv *env, jlong contextPtr)
 {
 	((JPContext*) contextPtr)->m_IsShutdown = true;
 }
