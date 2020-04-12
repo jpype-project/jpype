@@ -5,15 +5,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.ProviderNotFoundException;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import org.jpype.JPypeKeywords;
@@ -34,10 +37,12 @@ import org.jpype.JPypeKeywords;
 public class JPypePackageManager
 {
 
-  final static Map<URI, FileSystem> jars = new HashMap<>();
   final static List<FileSystem> bases = new ArrayList();
   final static ClassLoader cl = ClassLoader.getSystemClassLoader();
   final static List<ModuleDirectory> modules = getModules();
+  final static FileSystemProvider jfsp = getFileSystemProvider("jar");
+  final static Map<String, String> env = new HashMap<>();
+  final static LinkedList<FileSystem> fs = new LinkedList<>();
 
   /**
    * Checks if a package exists.
@@ -60,9 +65,9 @@ public class JPypePackageManager
    * @param packageName
    * @return the list of all resources found.
    */
-  public static Map<String, Path> getContentMap(String packageName)
+  public static Map<String, URI> getContentMap(String packageName)
   {
-    Map<String, Path> out = new HashMap<>();
+    Map<String, URI> out = new HashMap<>();
     packageName = packageName.replace(".", "/");
     // We need to merge all the file systems into one view like the classloader
     getJarContents(out, packageName);
@@ -80,31 +85,33 @@ public class JPypePackageManager
    */
   static
   {
+    env.put("create", "true");
+
     URI uri = null;
     try
     {
       // This is for Java 8 and earlier in which the API jars are in rt.jar
       // and jce.jar
       uri = cl.getResource("java/lang/String.class").toURI();
-      if (uri != null)
+      if (uri != null && uri.getScheme().equals("jar"))
       {
-        FileSystem fs = getJarFileSystem(uri);
+        FileSystem fs = jfsp.newFileSystem(uri, env);
         if (fs != null)
           bases.add(fs);
       }
       uri = cl.getResource("javax/crypto/Cipher.class").toURI();
-      if (uri != null)
+      if (uri != null && uri.getScheme().equals("jar"))
       {
-        FileSystem fs = getJarFileSystem(uri);
+        FileSystem fs = jfsp.newFileSystem(uri, env);
         if (fs != null)
           bases.add(fs);
       }
-    } catch (URISyntaxException ex)
+    } catch (URISyntaxException | IOException ex)
     {
     }
   }
 
-  private static void getBaseContents(Map<String, Path> out, String packageName)
+  private static void getBaseContents(Map<String, URI> out, String packageName)
   {
     for (FileSystem b : bases)
     {
@@ -194,7 +201,7 @@ public class JPypePackageManager
    * @param out
    * @param name
    */
-  private static void getModuleContents(Map<String, Path> out, String name)
+  private static void getModuleContents(Map<String, URI> out, String name)
   {
     if (modules.isEmpty())
       return;
@@ -211,6 +218,54 @@ public class JPypePackageManager
           collectContents(out, path2);
       }
     }
+  }
+
+  /**
+   * Convert a URI into a path.
+   *
+   * This has special magic methods to deal with jar file systems.
+   *
+   * @param uri is the location of the resource.
+   * @return the path to the uri resource.
+   */
+  static Path getPath(URI uri)
+  {
+    try
+    {
+      return Paths.get(uri);
+    } catch (java.nio.file.FileSystemNotFoundException ex)
+    {
+    }
+
+    if (uri.getScheme().equals("jar"))
+    {
+      try
+      {
+        // Limit the number of filesystems open at any one time
+        fs.add(jfsp.newFileSystem(uri, env));
+        if (fs.size() > 8)
+          fs.removeFirst().close();
+        return Paths.get(uri);
+      } catch (IOException ex)
+      {
+      }
+    }
+    throw new FileSystemNotFoundException("Unknown filesystem for " + uri);
+  }
+
+  /**
+   * Retrieve the Jar file system.
+   *
+   * @return
+   */
+  private static FileSystemProvider getFileSystemProvider(String str)
+  {
+    for (FileSystemProvider fsp : FileSystemProvider.installedProviders())
+    {
+      if (fsp.getScheme().equals(str))
+        return fsp;
+    }
+    throw new FileSystemNotFoundException("Unable to find filesystem for " + str);
   }
 
   /**
@@ -284,7 +339,7 @@ public class JPypePackageManager
       while (resources.hasMoreElements())
       {
         URI uri = resources.nextElement().toURI();
-        if (Files.isDirectory(getJarPath(uri)))
+        if (Files.isDirectory(getPath(uri)))
           return true;
       }
     } catch (IOException | URISyntaxException ex)
@@ -300,7 +355,7 @@ public class JPypePackageManager
    * @param out is the map to store the result in.
    * @param packageName is the name of the package
    */
-  private static void getJarContents(Map<String, Path> out, String packageName)
+  private static void getJarContents(Map<String, URI> out, String packageName)
   {
     try
     {
@@ -309,70 +364,12 @@ public class JPypePackageManager
       while (resources.hasMoreElements())
       {
         URI resource = resources.nextElement().toURI();
-        Path path2 = getJarPath(resource);
+        Path path2 = getPath(resource);
         collectContents(out, path2);
       }
     } catch (IOException | URISyntaxException ex)
     {
     }
-  }
-
-  /**
-   * Get the "FileSystem" for the internals of a Jar.
-   *
-   * We will use a caching system so that we don't open the same jar multiple
-   * times. It is not clear if this caching is necessary.
-   *
-   * @param uri is the uri with a "jar" scheme
-   * @return the file system or null if not found.
-   */
-  private static FileSystem getJarFileSystem(URI uri)
-  {
-    if (!"jar".equals(uri.getScheme()))
-      return null;
-    if (jars.containsKey(uri))
-      return jars.get(uri);
-    Map<String, String> env = new HashMap<>();
-    env.put("create", "true");
-    FileSystem zipfs = jars.get(uri);
-    if (zipfs == null)
-    {
-      try
-      {
-        zipfs = FileSystems.newFileSystem(uri, env);
-        jars.put(uri, zipfs);
-      } catch (IOException ex)
-      {
-      }
-    }
-    return zipfs;
-  }
-
-  /**
-   * Convert a URI into a Path.
-   *
-   * Jar files are a special file system which extends into the jar structure.
-   * We need to be able to handle both normal class files on a regular file
-   * system and class files inside of jars.
-   *
-   * @param resource is the name of the resource as it appears from the
-   * classloader.
-   * @return is the path to the resource or null if not available.
-   */
-  private static Path getJarPath(URI resource)
-  {
-    if ("file".equals(resource.getScheme()))
-    {
-      return Paths.get(resource);
-    }
-    if ("jar".equals(resource.getScheme()))
-    {
-      String[] q = resource.toString().split("!");
-      FileSystem zipfs = getJarFileSystem(URI.create(q[0]));
-      if (zipfs != null)
-        return zipfs.getPath(q[1]);
-    }
-    throw new UnsupportedOperationException("Unknown filesystem for " + resource);
   }
 
 //</editor-fold>
@@ -388,7 +385,7 @@ public class JPypePackageManager
    * @param out is the map to store the result in.
    * @param path2 is a path holding a directory to probe.
    */
-  private static void collectContents(Map<String, Path> out, Path path2)
+  private static void collectContents(Map<String, URI> out, Path path2)
   {
     try
     {
@@ -400,7 +397,7 @@ public class JPypePackageManager
           // Same implementations add the path separator to the end of toString().
           if (filename.endsWith(file.getFileSystem().getSeparator()))
             filename = filename.substring(0, filename.length() - 1);
-          out.put(JPypeKeywords.wrap(filename), file);
+          out.put(JPypeKeywords.wrap(filename), file.toUri());
           continue;
         }
         // Skip inner classes
@@ -411,7 +408,7 @@ public class JPypePackageManager
         if (filename.endsWith(".class"))
         {
           String key = JPypeKeywords.wrap(filename.substring(0, filename.length() - 6));
-          out.put(key, file);
+          out.put(key, file.toUri());
         }
 
         // We can add other types of files here and import them in JPypePackage

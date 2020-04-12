@@ -5,6 +5,7 @@
  */
 package org.jpype.pkg;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
@@ -27,9 +28,10 @@ public class JPypePackageNGTest
   {
     assertTrue(JPypePackageManager.isPackage("java.lang"));
     JPypePackage pkg = new JPypePackage("java.lang", JPypePackageManager.getContentMap("java.lang"));
-    for (Map.Entry<String, Path> e : pkg.contents.entrySet())
+    for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
-      JPypePackage.isPublic(e.getValue());
+      Path p = JPypePackageManager.getPath(e.getValue());
+      JPypePackage.isPublic(p);
     }
   }
 
@@ -38,7 +40,7 @@ public class JPypePackageNGTest
   {
     assertTrue(JPypePackageManager.isPackage("java"));
     JPypePackage pkg = new JPypePackage("java", JPypePackageManager.getContentMap("java"));
-    for (Map.Entry<String, Path> e : pkg.contents.entrySet())
+    for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
       System.out.println(e.getKey());
     }
@@ -49,7 +51,7 @@ public class JPypePackageNGTest
   {
     assertTrue(JPypePackageManager.isPackage("org"));
     JPypePackage pkg = new JPypePackage("org", JPypePackageManager.getContentMap("org"));
-    for (Map.Entry<String, Path> e : pkg.contents.entrySet())
+    for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
       System.out.println(e.getKey());
     }

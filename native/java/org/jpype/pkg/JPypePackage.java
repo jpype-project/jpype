@@ -2,6 +2,8 @@ package org.jpype.pkg;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,9 +25,9 @@ public class JPypePackage
   // Name of the package
   final String pkg;
   // A mapping from Python names into Paths into the module/jar file system.
-  final Map<String, Path> contents;
+  final Map<String, URI> contents;
 
-  public JPypePackage(String pkg, Map<String, Path> contents)
+  public JPypePackage(String pkg, Map<String, URI> contents)
   {
     this.pkg = pkg;
     this.contents = contents;
@@ -52,9 +54,10 @@ public class JPypePackage
    */
   public Object getObject(String name)
   {
-    Path p = contents.get(name);
-    if (p == null)
+    URI uri = contents.get(name);
+    if (uri == null)
       return null;
+    Path p = JPypePackageManager.getPath(uri);
 
     // Directories are packages.  We will just pass them as strings.
     if (Files.isDirectory(p))
@@ -93,17 +96,18 @@ public class JPypePackage
     ArrayList<String> out = new ArrayList<>();
     for (String key : contents.keySet())
     {
-      Path p = contents.get(key);
+      URI uri = contents.get(key);
       // If there is anything null, then skip it.
-      if (p == null)
+      if (uri == null)
         continue;
+      Path p = JPypePackageManager.getPath(uri);
 
       // package are acceptable
       if (Files.isDirectory(p))
         out.add(key);
 
       // classes must be public
-      else if (key.endsWith(".class"))
+      else if (uri.toString().endsWith(".class"))
       {
         // Make sure it is public
         if (isPublic(p))
@@ -142,7 +146,7 @@ public class JPypePackage
       // Check the magic
       ByteBuffer header = ByteBuffer.allocate(4 + 2 + 2 + 2);
       is.read(header.array());
-      header.rewind();
+      ((Buffer) header).rewind();
       int magic = header.getInt();
       if (magic != (int) 0xcafebabe)
         return false;
@@ -154,7 +158,7 @@ public class JPypePackage
       for (int i = 0; i < cpitems - 1; ++i)
       {
         is.read(buffer3.array());
-        buffer3.rewind();
+        ((Buffer) buffer3).rewind();
         byte type = buffer3.get(); // First byte is the type
 
         // Now based on the entry type we will advance the pointer
@@ -194,7 +198,7 @@ public class JPypePackage
 
       // Get the flags
       is.read(buffer3.array());
-      buffer3.rewind();
+      ((Buffer) buffer3).rewind();
       short flags = buffer3.getShort();
       return (flags & 1) == 1; // it is public if bit zero is set
     } catch (IOException ex)
