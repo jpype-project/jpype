@@ -410,12 +410,12 @@ void JPypeException::toJava(JPContext *context)
 
 		if (m_Type == JPError::_method_not_found)
 		{
-			frame.ThrowNew(context->_java_lang_NoSuchMethodError.get(), mesg.c_str());
+			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg.c_str());
 			return;
 		}
 		// All others are issued as RuntimeExceptions
 		JP_TRACE("String exception");
-		frame.ThrowNew(context->_java_lang_RuntimeException.get(), mesg.c_str());
+		frame.ThrowNew(context->m_RuntimeException.get(), mesg.c_str());
 		return;
 	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
 	{	// GCOVR_EXCL_START

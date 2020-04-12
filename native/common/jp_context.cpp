@@ -186,8 +186,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Object_HashCodeID = frame.GetMethodID(cls, "hashCode", "()I");
 		m_Object_GetClassID = frame.GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
 
-		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
-		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
+		m_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
+		m_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
 		cls = frame.FindClass("java/lang/String");
 		m_String_ToCharArrayID = frame.GetMethodID(cls, "toCharArray", "()[C");
@@ -252,6 +252,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Context_GetExcValueID = frame.GetMethodID(cls, "getExcValue",
 				"(Ljava/lang/Throwable;)J");
 		m_Context_OrderID = frame.GetMethodID(cls, "order", "(Ljava/nio/Buffer;)Z");
+
+		m_Array = JPClassRef(frame, frame.FindClass("java/lang/reflect/Array"));
+		m_Array_NewInstanceID = frame.GetStaticMethodID(m_Array.get(), "newInstance",
+				"(Ljava/lang/Class;[I)Ljava/lang/Object;");
 
 		cls = frame.FindClass("java/nio/Buffer");
 		m_Buffer_IsReadOnlyID = frame.GetMethodID(cls, "isReadOnly",

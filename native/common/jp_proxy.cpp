@@ -76,7 +76,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		{
 			if (hostObj == 0)
 			{
-				env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+				env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 						"host reference is null");
 				return NULL;
 			}
@@ -153,7 +153,7 @@ JNIEXPORT jobject JNICALL JPype_InvocationHandler_hostInvoke(
 		} catch (...)
 		{
 			JP_TRACE("Other Exception raised");
-			env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+			env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 					"unknown error occurred");
 		}
 		return NULL;

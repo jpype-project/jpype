@@ -358,23 +358,12 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 		return NULL;
 	if (!PyIndex_Check(dims))
 		JP_RAISE(PyExc_TypeError, "dims must be an integer");
-	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
-	if (d > 255)
-		JP_RAISE(PyExc_ValueError, "dims too large");
+	long d = PyLong_AsLong(dims);
 	JPClass* cls = PyJPClass_getJPClass(type);
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Java class required");
 
-	stringstream ss;
-	for (int i = 0; i < d; ++i)
-		ss << "[";
-	if (cls->isPrimitive())
-		ss << ((JPPrimitiveType*) cls)->getTypeCode();
-	else if (cls->isArray())
-		ss << cls->getName();
-	else
-		ss << "L" << cls->getName() << ";";
-	JPClass* arraycls = frame.findClassByName(ss.str());
+	JPClass* arraycls = cls->newArrayType(frame, d);
 	return PyJPClass_create(frame, arraycls).keep();
 	JP_PY_CATCH(NULL);
 }

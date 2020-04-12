@@ -84,6 +84,22 @@ JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 	return m_Constructors->invokeConstructor(frame, args);
 }
 
+JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
+{
+	if (d < 0 || d > 255)
+		JP_RAISE(PyExc_ValueError, "Invalid array dimensions");
+	stringstream ss;
+	for (long i = 0; i < d; ++i)
+		ss << "[";
+	if (isPrimitive())
+		ss << ((JPPrimitiveType*) this)->getTypeCode();
+	else if (isArray())
+		ss << getName();
+	else
+		ss << "L" << getName() << ";";
+	return frame.findClassByName(ss.str());
+}
+
 jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);

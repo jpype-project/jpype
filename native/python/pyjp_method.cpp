@@ -377,10 +377,10 @@ void PyJPMethod_initType(PyObject* module)
 	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
 	PyFunction_Type.tp_flags = flags;
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
 
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)

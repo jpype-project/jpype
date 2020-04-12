@@ -206,9 +206,6 @@ public:
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
 
-	JPClassRef _java_lang_RuntimeException;
-	JPClassRef _java_lang_NoSuchMethodError;
-
 	jmethodID m_BooleanValueID;
 	jmethodID m_ByteValueID;
 	jmethodID m_CharValueID;
@@ -242,7 +239,13 @@ private:
 	JPReferenceQueue *m_ReferenceQueue;
 	JPProxyFactory *m_ProxyFactory;
 
+public:
+	JPClassRef m_RuntimeException;
+	JPClassRef m_NoSuchMethodError;
+
 private:
+	JPClassRef m_Array;
+
 	// Java Functions
 	jmethodID m_Object_ToStringID;
 	jmethodID m_Object_EqualsID;
@@ -260,6 +263,7 @@ private:
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
+	jmethodID m_Array_NewInstanceID;
 private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;

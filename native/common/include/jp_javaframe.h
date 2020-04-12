@@ -146,6 +146,8 @@ public:
 	jobject collectRectangular(jarray obj);
 	jobject assemble(jobject dims, jobject parts);
 
+	jobject newArrayInstance(jclass c, jintArray dims);
+
 	/**
 	 * Convert a UTF8 encoded string into Java.
 	 *
