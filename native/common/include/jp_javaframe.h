@@ -85,6 +85,8 @@ public:
 	 */
 	~JPJavaFrame();
 
+	void check();
+
 	/** Exit the local frame and keep a local reference to an object
 	 *
 	 * This must be called only once when the frame is about to leave

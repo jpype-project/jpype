@@ -188,3 +188,16 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertIsInstance(hm, Iterable)
         self.assertIsInstance(hm, Container)
         self.assertIsInstance(hm, Mapping)
+
+    def testUnmodifiableNext(self):
+        ArrayList = JClass('java.util.ArrayList')
+        Collections = JClass('java.util.Collections')
+        a = ArrayList()
+        a.add("first")
+        a.add("second")
+        a.add("third")
+        for i in a:
+            pass
+
+        for i in Collections.unmodifiableList(a):
+            pass
