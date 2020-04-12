@@ -76,6 +76,54 @@ public class JPypePackageManager
     return out;
   }
 
+  /**
+   * Convert a URI into a path.
+   *
+   * This has special magic methods to deal with jar file systems.
+   *
+   * @param uri is the location of the resource.
+   * @return the path to the uri resource.
+   */
+  static Path getPath(URI uri)
+  {
+    try
+    {
+      return Paths.get(uri);
+    } catch (java.nio.file.FileSystemNotFoundException ex)
+    {
+    }
+
+    if (uri.getScheme().equals("jar"))
+    {
+      try
+      {
+        // Limit the number of filesystems open at any one time
+        fs.add(jfsp.newFileSystem(uri, env));
+        if (fs.size() > 8)
+          fs.removeFirst().close();
+        return Paths.get(uri);
+      } catch (IOException ex)
+      {
+      }
+    }
+    throw new FileSystemNotFoundException("Unknown filesystem for " + uri);
+  }
+
+  /**
+   * Retrieve the Jar file system.
+   *
+   * @return
+   */
+  private static FileSystemProvider getFileSystemProvider(String str)
+  {
+    for (FileSystemProvider fsp : FileSystemProvider.installedProviders())
+    {
+      if (fsp.getScheme().equals(str))
+        return fsp;
+    }
+    throw new FileSystemNotFoundException("Unable to find filesystem for " + str);
+  }
+
 //<editor-fold desc="java 8" defaultstate="collapsed">
   /**
    * Older versions of Java do not have a file system for boot packages. Thus
@@ -221,54 +269,6 @@ public class JPypePackageManager
   }
 
   /**
-   * Convert a URI into a path.
-   *
-   * This has special magic methods to deal with jar file systems.
-   *
-   * @param uri is the location of the resource.
-   * @return the path to the uri resource.
-   */
-  static Path getPath(URI uri)
-  {
-    try
-    {
-      return Paths.get(uri);
-    } catch (java.nio.file.FileSystemNotFoundException ex)
-    {
-    }
-
-    if (uri.getScheme().equals("jar"))
-    {
-      try
-      {
-        // Limit the number of filesystems open at any one time
-        fs.add(jfsp.newFileSystem(uri, env));
-        if (fs.size() > 8)
-          fs.removeFirst().close();
-        return Paths.get(uri);
-      } catch (IOException ex)
-      {
-      }
-    }
-    throw new FileSystemNotFoundException("Unknown filesystem for " + uri);
-  }
-
-  /**
-   * Retrieve the Jar file system.
-   *
-   * @return
-   */
-  private static FileSystemProvider getFileSystemProvider(String str)
-  {
-    for (FileSystemProvider fsp : FileSystemProvider.installedProviders())
-    {
-      if (fsp.getScheme().equals(str))
-        return fsp;
-    }
-    throw new FileSystemNotFoundException("Unable to find filesystem for " + str);
-  }
-
-  /**
    * Modules are stored in the jrt filesystem.
    *
    * However, that is not a simple flat filesystem by path as the jrt files are
@@ -397,7 +397,7 @@ public class JPypePackageManager
           // Same implementations add the path separator to the end of toString().
           if (filename.endsWith(file.getFileSystem().getSeparator()))
             filename = filename.substring(0, filename.length() - 1);
-          out.put(JPypeKeywords.wrap(filename), file.toUri());
+          out.put(JPypeKeywords.wrap(filename), toURI(file));
           continue;
         }
         // Skip inner classes
@@ -408,7 +408,7 @@ public class JPypePackageManager
         if (filename.endsWith(".class"))
         {
           String key = JPypeKeywords.wrap(filename.substring(0, filename.length() - 6));
-          out.put(key, file.toUri());
+          out.put(key, toURI(file));
         }
 
         // We can add other types of files here and import them in JPypePackage
@@ -417,6 +417,15 @@ public class JPypePackageManager
     } catch (IOException ex)
     {
     }
+  }
+
+  // Java 8 windows bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8131067
+  private static URI toURI(Path path)
+  {
+    URI uri = path.toUri();
+    if (uri.getScheme().equals("jar") && uri.toString().contains("%2520"))
+      uri = URI.create("jar:" + uri.getRawSchemeSpecificPart().replaceAll("%25", "%"));
+    return uri;
   }
 //</editor-fold>
 }
