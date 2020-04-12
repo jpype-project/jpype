@@ -132,7 +132,7 @@ PyTypeObject* PyJPMonitor_Type = NULL;
 void PyJPMonitor_initType(PyObject* module)
 {
 	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
