@@ -81,15 +81,17 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JP_TRACE(self->m_Method->getName());
+	PyObject *out = NULL;
 	if (self->m_Instance == NULL)
 	{
 		JPPyObjectVector vargs(args);
-		return self->m_Method->invoke(frame, vargs, false).keep();
+		out = self->m_Method->invoke(frame, vargs, false).keep();
 	} else
 	{
 		JPPyObjectVector vargs(self->m_Instance, args);
-		return self->m_Method->invoke(frame, vargs, true).keep();
+		out = self->m_Method->invoke(frame, vargs, true).keep();
 	}
+	return out;
 	JP_PY_CATCH(NULL);
 }
 

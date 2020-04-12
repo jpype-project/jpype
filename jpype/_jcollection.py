@@ -181,17 +181,9 @@ class _JIterator(object):
     This customizer adds the Python iterator concept to classes
     that implement the Java Iterator interface.
     """
-    # Python 2 requires next to function as python next(), thus
-    # we have a conflict in behavior. Java next is renamed.
-    @JOverride(sticky=True, rename="_next")
-    def next(self):
-        if self.hasNext():
-            return self._next()
-        raise StopIteration
-
     def __next__(self):
         if self.hasNext():
-            return self._next()
+            return self.next()
         raise StopIteration
 
     def __iter__(self):
