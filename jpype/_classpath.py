@@ -106,7 +106,7 @@ def getClassPath(env=True):
         if path == '':
             continue
         if path.name == "*":
-            paths = path.parent.glob("*.jar")
+            paths = list(path.parent.glob("*.jar"))
             if len(paths) == 0:
                 continue
             out.extend(paths)
