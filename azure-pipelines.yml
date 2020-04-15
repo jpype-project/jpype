@@ -31,8 +31,8 @@ jobs:
     displayName: 'Check documentation'
   - task: CopyFiles@2
     inputs:
-    contents: 'build/html/**'
-    targetFolder: $(Build.ArtifactStagingDirectory)
+      contents: 'build/html/**'
+      targetFolder: $(Build.ArtifactStagingDirectory)
   - task: PublishBuildArtifacts@1
     inputs:
       pathToPublish: $(Build.ArtifactStagingDirectory)
