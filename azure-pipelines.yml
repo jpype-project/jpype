@@ -27,7 +27,7 @@ jobs:
       pip install  --exists-action=w --no-cache-dir -r test-requirements.txt
     displayName: 'Install requirements'
   - script: |
-      python -m sphinx -T -b readthedocs -d _build/doctrees-readthedocs -D language=en doc _build/html
+      python -m sphinx -T -b readthedocs -d _build/doctrees-readthedocs -D language=en doc build/html
     displayName: 'Check documentation'
 
 - job: Coverage
