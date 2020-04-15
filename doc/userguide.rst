@@ -1432,7 +1432,7 @@ Java version.
 The older method of importing a class is with the ``JPackage`` factory.
 This factory automatically loads classes as attributes as requested.
 If a class cannot be found it will produce an ``AttributeError``.  The
-symbols ``java`` and ``javax`` in the jpype module are both ``JPackage``
+symbols ``java`` and ``javax`` in the ``jpype`` module are both ``JPackage``
 instances.  Only public classes appear on ``JPackage`` but protected and even
 private classes can be accessed by name.  Though most private classes
 don't have any methods or fields that can be accessed.
@@ -1635,7 +1635,7 @@ Class paths
 JPype supports two styles of classpaths.  The older Matlab style uses the
 functions ``jpype.addClassPath`` and ``getClassPath``.  The first adds a
 directory or jar file to the search path.  Wild cards are accepted in the search.
-once all of the paths are added to internal class path, they can be retrieved
+Once all of the paths are added to internal class path, they can be retrieved
 using ``getClassPath`` which takes a keyword argument ``env`` which defaults to
 true.  When set to false, JPype will ignore the environment variable
 ``CLASSPATH`` which is normally included in the default classpath.
@@ -1658,7 +1658,7 @@ String conversions
 The second setting is how to treat strings.  Early in the life of this project
 return types were often converted to Python types without regard to preserving
 the type information.  Thus strings would automatically convert to a Python
-string effectly transferred the data from Java to Python on each return.
+string effectively transferred the data from Java to Python on each return.
 This was a violation of the Python philosophy that explicit is better than
 implicit. This also prohibited chaining of Java string operations as each
 operation would lose the Java representation and have to be transferred back
@@ -1679,7 +1679,7 @@ can be converted to Java by calling the Python ``str()`` function.
 Failure to specify a policy will give a nasty warning message.
 
 You are strongly encouraged to use convertStrings as False especially if you
-are writting reusable Python modules that use JPype.  The default when
+are writing reusable Python modules that use JPype.  The default when
 not specified will be to not convert strings.
 
 Path to the JVM
@@ -1719,7 +1719,7 @@ To start JPype we would execute the following:
   import jpype
   jpype.startJVM("-ea", classpath=['lib/*', 'classes'], convertStrings=False)
 
-Arugments that start with a dash are passed to the JVM at startup.  Any
+Arguments that start with a dash are passed to the JVM at startup.  Any
 unrecognized argument will raise an exception unless the keyword argument
 ``ignoreUnrecognized`` is set to True.  Details of available arguments can
 be found in the vendor JVM documentation.
@@ -1737,8 +1737,8 @@ process.
    print(java.lang.System.getProperty('java.class.path'))
 
 This should list the absolute path to each of the jars that will be used
-for this JVMs lifespan.  Each of the jars will be written out explicity as
-the JVM does not permit wildcards, thus JPype has expanded each of thme using
+for this JVMs lifespan.  Each of the jars will be written out explicitly as
+the JVM does not permit wild-cards, thus JPype has expanded each of them using
 glob.  If an expected jar file is missing the list then it won't be accessable.
 
 There is a flag to determine the current state of the JVM.  Calling
@@ -1803,7 +1803,7 @@ should be attached to the Java Runtime object.  The following pattern is used:
 
     java.lang.Runtime.getRuntime().addShutdownHook(Thread(MyShutdownHook()))
 
-This thread will be excuted in a new thread once only the main thread is
+This thread will be executed in a new thread once only the main thread is
 the only one remaining alive.  Care should always be taken to complete
 work in a timely fashion and be aware the shutdown threads are inherently
 racing with each other to complete their work.  Thus try to avoid expensive
@@ -1828,7 +1828,7 @@ certain exceptions.  This type of customization required private calls in JPype
 and is not currently exposed to the user.
 
 Second a Python class can be used as a template when a Java class is first
-constructed to add additional functionality.  This type of constomization can
+constructed to add additional functionality.  This type of customization can
 be used to make a Java class appear as a native Python class. Many
 of the Java collection classes have been customized to match Python
 collections.
@@ -1849,7 +1849,7 @@ Class Customizers
 
 Java wrappers can be customized to better match the expected behavior in
 python.  Customizers are defined using annotations. Currently the annotations
-``@JImplementionFor`` and ``@JOverride`` can be applied to a regular class to
+``@JImplementationFor`` and ``@JOverride`` can be applied to a regular class to
 customize an existing class.  ``@JImplementationFor`` requires the class name
 as a string so that it can be applied to the class before the JVM is started.
 ``@JOverride`` can be applied method to hide the java implementation allowing a
@@ -1883,7 +1883,7 @@ Example taken from JPype ``java.util.Map`` customizer:
 
 
 The name of the class does not matter for the purposes of customizer though it
-should probabily be a private class so that it does not get used accidentally.
+should be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
 base class, thus ensuring that the methods will appear on the most derived
 python class and are not hidden by the java implementations. The customizer
@@ -1989,13 +1989,13 @@ Note that the individual list elements are still Java objects when converted
 to Python and thus a list comprehension would be required to force Python
 types if required.  Converting to Java will attempt to convert each argument
 individually to Java.  If there is no conversion it will produce a
-``TypeError``.  The conversion can be forced by casting to the appropraite
+``TypeError``.  The conversion can be forced by casting to the appropriate
 Java type with a list comprehension or by defining a new conversion
 customizer.
 
 Lists also have iterable, length, item deletion, and indexing.  Note that
 indexing of ``java.util.LinkedList`` is supported but can have a large
-performance penality for large lists.  Use of iteration is much for efficient.
+performance penalty for large lists.  Use of iteration is much for efficient.
 
 .. _java.util.Map:
 
@@ -2004,7 +2004,7 @@ Map
 
 A Java classes that implement ``java.util.Map`` inherit the Python
 collections.abc.Mapping interface.  As such they can be iterated, support
-the indexing operator for value lookups, item delection, length, and contains.
+the indexing operator for value lookups, item deletion, length, and contains.
 
 Here is a summary of their capabilities:
 
@@ -2050,13 +2050,13 @@ Working with NumPy
 ******************
 
 As one of the primary focuses of JPype is working with numerical codes such as
-numpy there are a number of numpy specific enhancements.  NumPy is a large
+NumPy there are a number of NumPy specific enhancements.  NumPy is a large
 binary package and thus JPype cannot be compiled against NumPy directly without
 force it to be a requirement.  Thus rather than working directly with the
 binary interface, JPype instead implements interfaces that NumPy can recognize
 and use directly.  The specific enhancements are the following: direct buffer
 transfers of primitive arrays and buffer, direct transfer of regular
-dimensional arrays, buffer backed numpy arrays, and conversion of numpy integer
+dimensional arrays, buffer backed NumPy arrays, and conversion of NumPy integer
 types to Java boxed types.
 
 Transfers to Java
@@ -2097,7 +2097,7 @@ Transfers to NumPy
 ==================
 
 Java arrays can be in two forms.  Java multidimensional arrays are not
-contegous in memory.  If all of the arrays in each dimension are the same than
+contiguous in memory.  If all of the arrays in each dimension are the same than
 an array is rectangular.  If the size of the arrays is differ, then the
 array is jagged.  Jagged arrays are an array of array rather than a rectangular
 block of memory.
@@ -2113,7 +2113,7 @@ to initialize a NumPy array, it creates a memoryview then all of the memory in
 the array can be transferred in bulk.
 
 
-Buffer backed numpy arrays
+Buffer backed NumPy arrays
 ==========================
 
 Java direct buffers provide direct access between foreign memory and Java.
@@ -2127,7 +2127,7 @@ and thus functionality for buffers is in ``jpype.nio``.
 To use a buffer backed numpy array create a memory backed array, we first create
 a direct memory buffer using the Java direct buffer API, or by creating a
 Python ``bytearray`` and use ``jpype.nio.convertToByteBuffer`` to map this
-memory into Python space.  We can then ask numpy to use this as an array.
+memory into Python space.  We can then ask NumPy to use this as an array.
 
 Here is an example where the byte array is backed by Java:
 
@@ -2149,7 +2149,7 @@ Here is an example where the byte array is backed by Python:
 
 Buffer backed arrays does have one downside.  Python and by extension NumPy has
 no way to tell when a buffer becomes invalid.  Thus once the JVM is shutdown,
-all buffers become invalid and thus any access to numpy arrays backed by Java
+all buffers become invalid and thus any access to NumPy arrays backed by Java
 risk crashing.  To avoid this fate, either create the memory for the buffer from
 within Python and pass it to Java.  Or use the Java ``java.lang.Runtime.exit``
 which will terminate both the Java and Python process without leaving any
@@ -2410,7 +2410,7 @@ the Java half, it is recreated again when the proxy is next used.
 This does have some consequences for the use of proxies.  Proxies must never
 be used a synchronization objects.  They cannot be locked on as whenever
 they are garbage collected, they loss their identity.  In addition, their
-hashcode and system id both are reissued whenever they are refreshed.
+hashCode and system id both are reissued whenever they are refreshed.
 Therefore, using a proxy as a Java map key can be problematic.  So long as
 it remains in the Java map, it will maintain the same identify.  But once
 it is removed it is free to switch identities.
@@ -2444,7 +2444,7 @@ cooperative thread.
 Python Threads
 --------------
 
-For the most part, Python threads based on OS level threads (i.e. Posix
+For the most part, Python threads based on OS level threads (i.e. POSIX
 threads) will work without problem. The only challenge is how Java sees threads.
 In order to operate on a Java method, the calling thread must be attached to
 Java.  Failure to attach a thread will result in a segmentation fault.  It used
@@ -2730,7 +2730,7 @@ but each of those handles is holding 1M of memory in Java space.  As the heap
 fills up Java begins garbage collecting, but the resources can't be freed
 because Python hasn't cleanup up these structures.  The reverse occurs if a
 proxy has any large NumPy arrays.  Java doesn't see a problem as it has plenty
-of space to work in but Python is running its gc like mad trying to free up
+of space to work in but Python is running its GC like mad trying to free up
 space to work.
 
 To deal with this issue, JPype links the two garbage collectors.  Python is
@@ -3115,7 +3115,7 @@ JPype.
 Unsupported Platforms
 ---------------------
 
-Some platforms are problematic for JPype due to interactions betten the
+Some platforms are problematic for JPype due to interactions between the
 Python libraries and the JVM implementation.
 
 Cygwin
@@ -3126,7 +3126,7 @@ issues for which there is was not good solution solution.
 
 Cygwin does not appear to pass environment variables to the JVM properly
 resulting in unusual behavior with certain windows calls. The path
-separator for Cygwin does not match that of the Java dll, thus specification
+separator for Cygwin does not match that of the Java DLL, thus specification
 of class paths must account for this.  Threading between the Cygwin libraries
 and the JVM was often unstable.
 
