@@ -29,6 +29,14 @@ jobs:
   - script: |
       python -m sphinx -T -b readthedocs -d _build/doctrees-readthedocs -D language=en doc build/html
     displayName: 'Check documentation'
+  - task: CopyFiles@2
+    inputs:
+    contents: 'build/html/**'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)
+      artifactName: documentation
 
 - job: Coverage
   pool:
