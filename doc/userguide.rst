@@ -375,8 +375,8 @@ the pleasure of many hours reworking stuff under the hood.
 
 For more details on what you can't do with JPype, please see Limitations_.
 
-Jython
-------
+`Jython <https://jython.org/>`_
+-------------------------------
 
 Jython is a reimplementation of Python in Java.  As a result it has much lower
 costs to share data structures between Java and Python and potentially much
@@ -385,8 +385,8 @@ well behind the state of the art in Python; it has a limited selection of
 modules that can be used; and the Python object thrashing is not particularly
 well fit in Java virtual machine leading to some known performance issues.
 
-Py4J
-----
+`Py4J <https://py4j.org/>`_
+---------------------------
 
 Py4J uses a remote tunnel to operate the JVM.  This has the advantage that
 the remote JVM does not share the same memory space and multiple JVMs can
@@ -396,8 +396,8 @@ more like an RPC frontend.  It seems well documented and capable.  Although
 I haven't done benchmarking, a remote access JVM will have a
 transfer penalty when moving data.
 
-Jep
----
+`Jep <https://github.com/ninia/jep>`_
+-------------------------------------
 
 Jep stands for Java embedded Python.  It is a mirror image of JPype.  Rather
 that focusing on accessing Java from within Python, this project is geared
@@ -408,8 +408,8 @@ multiple interpreters many Python modules do not, thus some of the advantages
 of the use of Python many be hard to realize.  In addition, the documentation
 is a bit underwhelming thus see how capable it is from the limited examples.
 
-Javabridge
-----------
+`Javabridge <https://github.com/CellProfiler/python-javabridge/>`_
+------------------------------------------------------------------
 
 Javabridge is direct low level JNI control from Python. The integration level
 is quite low on this, but it does serve the purpose of providing the JNI API
@@ -417,8 +417,8 @@ to Python rather than attempting to wrap Java in a Python skin.  The downside
 being of course you would really have to know a lot of JNI to make effective
 use of it.
 
-jpy
----
+`jpy <https://github.com/bcdev/jpy>`_
+-------------------------------------
 
 This is the most similar package to JPype in terms of project goals.  They have
 achieved more capabilities in terms of a Java from Python than JPype which does
@@ -431,7 +431,7 @@ similar API to JPype.
 About this guide
 ================
 
-The JPype user guide is targeted toward programmers who are strong in either
+The JPype User Guide is targeted toward programmers who are strong in either
 Python who wish to make use of Java or those who are strong with Java and are
 looking to use Python as a Java development tool.  As such we will compare and
 contrast the differences between the languages and provide examples suitable
@@ -502,7 +502,7 @@ import all for the needed factories and types with a single command without
 worrying about importing potentially problematic symbols.
 
 We will detail the starting process more later in the guide.  See
-`Starting the JVM`_..
+`Starting the JVM`_.
 
 
 
