@@ -120,7 +120,7 @@ CPython.  So you just need to get it into Python extract the data structures
 and send it to the plotting routine.
 
 So install conda, follow the install instructions to connect to conda-forge,
-pull JPype1, and launch the first Python interact enviroment that appear to
+pull JPype1, and launch the first Python interact environment that appear to
 produce a plot.
 
 You get the shell open and paste in the boiler plate start commands, and load
@@ -192,7 +192,7 @@ the experiment.  So you pull up Jupyter notebook your boss gave you and
 run through the cells.  Unfortunately, you need to added some brain wave
 monitor to the list of graphed results.
 
-The revent section of the API for the Experment appears to be
+The relevant section of the API for the Experiment appears to be
 
 .. code-block:: java
 
@@ -268,7 +268,7 @@ You make a quick correction and see a nice plot of the last 30 seconds pop up
 in a window.  Job well done, so you set the runtime back to one hour.  Looks
 like you still have time to make the intern woodlands hike and forest picnic.
 Though you wonder if maybe next year you should sign up for another laboratory.
-Maybe next year, you will try to sign up for those orbinal lasers the president
+Maybe next year, you will try to sign up for those orbital lasers the President
 was talking about in the March.  That sounds like real fun.
 
 (This advanced demonstration utilized the concept of Proxies_ and
@@ -292,11 +292,11 @@ design goals.
   learning curve.
 
 - Present everything that Java has to offer to Python.  Thus every
-  library, package, and Java feature if possible should be accessable.
+  library, package, and Java feature if possible should be accessible.
   The goal of bridge is to open up worlds and not to restrict flow.
 
 - Keep design as simple as possible. Mixing languages is already complex
-  enough so don't create a huge arsenel of unique methods that have to be
+  enough so don't create a huge arsenal of unique methods that have to be
   learned.  Instead keep it simple with well defined rules and reuse
   these concepts.  For example, all array types originate from JArray, and
   thus using one can also use isinstance to check if a class is an array
@@ -310,14 +310,14 @@ design goals.
 
 - If a new method has to be introduced make look familiar.
   Java programmers look to a method named "of" to convert to a type on
-  factories such as a Stream, thus ``JArray.of`` converts a Python numpy array
+  factories such as a Stream, thus ``JArray.of`` converts a Python NumPy array
   to Java.  Python programmers expect that memory backed objects can be converted
   into bytes for rapid transfer using a memory view, thus
   ``memoryview(array)`` will perform that task.
 
 - Provide an obvious way for both Python and Java programmers.
   On this front JPype and Python disagree.  In Python's philosophy there should
-  be one -- and perferably only one -- obvious way to do things.  But we
+  be one -- and preferably only one -- obvious way to do things.  But we
   are bridging two worlds and thus obviousness is in the eye of the beholder.
 
 The end result is that JPype has a small footprint while providing
@@ -354,10 +354,10 @@ JPype is not the only Python module of its kind that acts as a bridge to
 Java.  Depending on your programming requirements, one of the alternatives
 may be a better fit.  Specifically JPype is designed for clarity and high
 levels of integration between the Python and Java virtual machine.  As such
-it makes use of JNI and thus inherits all of the benefits and limitiations
+it makes use of JNI and thus inherits all of the benefits and limitations
 that JNI imposes.  With JPype, both virtual machines are running in the
 same process and are sharing the same memory space and threads.  JPype can
-thus intermigle Python and Java threads and exchange memory quickly.  But by
+thus intermingle Python and Java threads and exchange memory quickly.  But by
 extension you can't start and stop the JVM machine but instead must keep
 both machines throughout the lifespan of the program.  High integration means
 tightly coupled and thus it embodies the musketeers motto.  If Python crashes,
@@ -367,10 +367,10 @@ A few alternatives with different philosophies and limitations are given in the
 following section.  Please take my review comments with the appropriate grain of
 salt.  When I was tasked with finding a replacement for Matlab Java integration
 for our project test bench, I evaluated a number of alternatives
-Python bridge codes.  I selected JPype primarily because it presented the
+Python bridge codes.  I selected JPype primarily because it presented
 the most integrated API and documentation which would be suitable for getting
 physicists up to speed quickly.  Thus your criteria may yield a different
-selection.  Its underlaying technology was underwhelming and thus I have had
+selection.  Its underlying technology was underwhelming and thus I have had
 the pleasure of many hours reworking stuff under the hood.
 
 For more details on what you can't do with JPype, please see Limitations_.
@@ -392,7 +392,7 @@ Py4J uses a remote tunnel to operate the JVM.  This has the advantage that
 the remote JVM does not share the same memory space and multiple JVMs can
 be controlled.  It provides a fairly general API, but the overall integration
 to Python is as one would expect when operating a remote channel operating
-more like an RPC frontend.  It seems well documented and capable.  Although
+more like an RPC front-end.  It seems well documented and capable.  Although
 I haven't done benchmarking, a remote access JVM will have a
 transfer penalty when moving data.
 
@@ -401,7 +401,7 @@ transfer penalty when moving data.
 
 Jep stands for Java embedded Python.  It is a mirror image of JPype.  Rather
 that focusing on accessing Java from within Python, this project is geared
-towards allowing Java to access Python as subinterpreter.  The syntax for
+towards allowing Java to access Python as sub-interpreter.  The syntax for
 accessing Java resources from within the embedded Python is quite similar
 with support for imports.  Notable downsides are that although Python supports
 multiple interpreters many Python modules do not, thus some of the advantages
@@ -445,7 +445,7 @@ JPype will hide virtually all of the JNI layer such that there is no direct
 access to JNI concepts.  As such attempting to use JNI knowledge will likely
 lead to incorrect assumptions such as incorrectly attempting to use JNI
 naming and method signatures in the JPype API.  Where JNI limitations do
-appear we will discuss the consequencies imposed in programming.  No knowledge
+appear we will discuss the consequences imposed in programming.  No knowledge
 of JNI is required to use this guide or JPype.
 
 JPype only works with Python 3, thus all examples will be using Python
@@ -485,7 +485,7 @@ the module is assumed to have been started with the following command
 
 This is not the only style used by JPype users.  Some people feel it is
 best to limit the number for symbols in the global scope and instead
-start more like numpy with a minimalistic approach.
+start more like NumPy with a minimalistic approach.
 
 .. code-block:: python
 
@@ -517,7 +517,7 @@ a limited API but instead trying to provide the entirety of the Java language
 with Python.
 
 To do this, JPype maps each of the Java concepts to the nearest concept in
-Python whereever they are similar enough to operate without confusion.  We have
+Python wherever they are similar enough to operate without confusion.  We have
 tried to keep this as Pythonic as possible though it is never without some
 rough edges.
 
@@ -534,12 +534,12 @@ elements serve multiple functions.
 
 Type Factories
   These are meta classes that allow one to declare a particular
-  Java type in Python.  The result of type factories are wrapper classs.
+  Java type in Python.  The result of type factories are wrapper classes.
   (JClass_ and JArray_)  Factories also exist to implement Java classes
   from within Python (JProxy_)
 
 Meta Classes
-  These are clases to describe different properties of Java classes such as
+  These are classes to describe different properties of Java classes such as
   to check if a class is an Interface. (JInterface_)
 
 Base Classes
@@ -547,7 +547,7 @@ Base Classes
   any specific Java class.  Concepts such as Object, String, and Exception are
   defined and can be used in instance checks.  For example, to catch all Java
   exceptions regardless of type, we would catch ``JException``.  These are mainly
-  for convience though they do have some extra functionality.  Most of these
+  for convenience though they do have some extra functionality.  Most of these
   functions are being phased out in favor of Java syntax.  For example,
   catching ``java.lang.Throwable`` will catch everything that ``JException``
   will catch.  (Jarray_, JObject_, JString_, and JException_)
@@ -555,12 +555,12 @@ Base Classes
 Wrapper Classes
   These correspond to each Java class.  Thus can be used to access static
   variables, static methods, cast, and construct object.  They are used
-  whereever a Java type would be used in the Java syntax such as creating an
+  wherever a Java type would be used in the Java syntax such as creating an
   array or accessing the class instance.  These class wrappers are customized in
   Python to allow a direct mapping from Java concepts to Python one.  These
   are all created dynamically corresponding to each Java class.  For most
   of this document we will refer to these simply as a "class".
-  (`java.lang.Object`_, `java.lang.String`_, etc) Many wrapppers
+  (`java.lang.Object`_, `java.lang.String`_, etc) Many wrappers
   are customized to match Python abstract base classes ABC
   (`java.util.List`_, `java.util.Map`_)
 
@@ -608,8 +608,8 @@ Name mangling
 When providing Java package, classes, methods, and field to Python,
 occasionally there are naming conflicts.  For example if one has a method
 called ``with`` then it would conflict with the Python keyword ``with``.
-Whereever this occures, JPype renames the offending symbol with a trailing
-underbar.  Java symbols with a leading or trailing underbars are consider to
+Wherever this occurs, JPype renames the offending symbol with a trailing
+under bar.  Java symbols with a leading or trailing under bars are consider to
 be privates and may not appear in the JPype wrapper entirely with the exception
 of package names.
 
@@ -635,7 +635,7 @@ Stay strong in a weak language
 ==============================
 
 Before we get into the details of the types that JPype provides, we first need
-to contrast some of the fundimental language differences between Java and
+to contrast some of the fundamental language differences between Java and
 Python.  Python is inherently a weakly typed language.  Any variable can take
 any type and the type of a particular variable can change over the course the
 lifetime of the program.  Types themselves can be mutable as you can patch an
@@ -648,21 +648,21 @@ closed and thus can't have their method dictionaries or data members altered
 arbitrarily.  But subject to a few restrictions based implementation, it is
 pretty much the wild west.
 
-In contrast, Java is a strongly typed langauge.  Each variable can only take
+In contrast, Java is a strongly typed language.  Each variable can only take
 an value of the specified class or a class that derives from the specified
 class.  Each Java method takes only a specific number and type of arguments.
 The type and number are all checked as compile type to ensure there is
-little posibility of error.  As each method requires a specific number and type
+little possibility of error.  As each method requires a specific number and type
 of arguments, a method can be overloaded by having two different
-imvplementations which take a different list of types sharing the same method
+implementations which take a different list of types sharing the same method
 name. A primitive variable can never hold an object and it can only be converted
-to or from other primitive types unless it is specifically casted to that type.
+to or from other primitive types unless it is specifically cast to that type.
 Python objects and classes are completely closed.  The methods and fields for a
 particular class and object are defined entirely at compile time.  Though it is
 possible create classes with a dictionary allowing expansion, this is not the
 Java norm and no standard mechanism exists.
 
-Thus we need to introduce a few Java terms to the Python vocabular.  These are
+Thus we need to introduce a few Java terms to the Python vocabulary.  These are
 "conversion" and "cast".
 
 Java conversions
@@ -734,8 +734,8 @@ abstract base class.  No classes actual derive from ``JObject``.
 .. _null:
 
 Of particular interest is the concept of Java ``null``.  In Java, null is a
-typeless entity which can be placed whereever an object is taken to
-indicate that the object is not available.  The equivelant concept in Python is
+typeless entity which can be placed wherever an object is taken to
+indicate that the object is not available.  The equivalent concept in Python is
 ``None``.  Thus all methods that accept any object type that permit a null will
 accept None as an augment with implicit conversion.  However, sometime it is
 necessary to pass an explicit type to the method resolution.  To achieve this
@@ -761,7 +761,7 @@ of the dispatch is chose the method to call.
 
 Enforcement of the strong typing of Java must be performed at runtime within
 Python.  Each time a method is invoked, JPype must match against the list of
-all possible methods that the class implements and match against the best
+all possible methods that the class implements and choose the best
 possible overload.  For this reason the methods that appear in a JPype class
 will not be the actual Java methods, but rather a "dispatch" whose job is
 deciding which method should be called based on the type of the provided
@@ -799,8 +799,8 @@ Changing the line thus:
 
   java.lang.System.out.println(JByte(1)) # <--- wrap the 1 in a JByte
 
-tells JPype to choose the byte version. When dealing Java types, JPype follows
-the standard Java matching rules.  Types can implicitely grow to larger types
+This tells JPype to choose the byte version. When dealing Java types, JPype follows
+the standard Java matching rules.  Types can implicitly grow to larger types
 but will not shrink without an explicit cast.
 
 
@@ -842,9 +842,9 @@ JBoolean
 JChar
   A character is the textual primitive that corresponds to exactly one character
   in a string.  Or at least that was the concept at the time.  Java characters
-  can only represent 16 bits.  But there are currenly 143,924
-  defined characters in unicode.  Thus, there are certain characters that
-  can only be represented as two unicode characters.  The textual primitives
+  can only represent 16 bits.  But there are currently 143,924
+  defined characters in Unicode.  Thus, there are certain characters that
+  can only be represented as two Unicode characters.  The textual primitives
   are not intended to perform numerical functions, but are instead encoded.
   As per the old joke, what does `1` plus `1` equal?  Which of course the
   correct answer is `b`.  As such characters should not be treated as just
@@ -852,7 +852,7 @@ JChar
   Thus when returning a character type, we instead return a string length 1.
   The actually ``JChar`` class is derived from a Python ``int`` and by
   inheritance has all of the numerical operations associated with it.
-  There are of course lots of useful mathematic operations that can be performed
+  There are of course lots of useful mathematical operations that can be performed
   on textual primitives, but doing so risks breaking the encoding
   and can result in uninterpretable data.
 
@@ -861,8 +861,8 @@ JChar
 .. _JInt:
 .. _JLong:
 
-JByte, JShort, JInt, JLong
-  These types repreent fixed point quantities with ranges of 8, 16, 32, and
+JByte, Short, Int, Long
+  These types represent fixed point quantities with ranges of 8, 16, 32, and
   64 bits.  Each of these type inherit from a Python ``int`` type.  A method
   or field returning an integer primitive will return a type derived from
   ``int``.  Methods accepting an integer primitive will take either an
@@ -905,18 +905,18 @@ name you are accessing the class definition.  When you call ``getClass`` on an
 object it returns a class instance.  The class instance is a object whose
 structure can be used to access the data and methods that define the class
 through reflection.  The class instance cannot directly access the fields or
-method with a class but instead provides its own interface for quering the
+method with a class but instead provides its own interface for querying the
 class.  For the purposes of this document a "class" will refer to the class
-definition which corresponds to the Python concept of a class. Whereever the
+definition which corresponds to the Python concept of a class. Wherever the
 Java reflection class is being referred to we will use the term "class
-instance".  The term "type" is synonium with a "class" in Java, though often
+instance".  The term "type" is synonymous with a "class" in Java, though often
 the term "type" is only used when inclusively discussing the type of primitives
 and objects, while the term "class" generally refers to just the types
 associated with objects.
 
 All objects in Java inherit from the same base class ``java.lang.Object``, but
 Java does not support multiple inheritance.  Thus each class can only inherit
-from a single parent.  Multiple inheritance, mixins, and diamond pattern are
+from a single parent.  Multiple inheritance, mix-ins, and diamond pattern are
 not possible in Java.  Instead Java uses the concept of an interface.  Any Java
 class can inherit as many interfaces as it wants, but these interfaces may not
 contain any data elements.  As they do not contain data elements there can
@@ -942,10 +942,10 @@ meta class call ``_jpype._JClass``.  This gatekeeper ensures that the attributes
 of classes cannot be changed accidentally nor extended.  The type tree of Java
 is fixed and closed.
 
-All Java classes have the following functionalty.
+All Java classes have the following functionality.
 
 Class constructor
-  The class constuctor is accessed by using the Python call syntax ``()``.
+  The class constructor is accessed by using the Python call syntax ``()``.
   This special method invokes a dispatch whenever the class is called
   as a function.  If an matching constructor is found a new Java instance
   is created and a Python handle to that instance is returned.  In the case
@@ -965,7 +965,7 @@ Get attribute
   hidden by a derived class.
 
 Set attribute
-  In general, JPype forbids setting of attributes with the expection on
+  In general, JPype forbids setting of attributes with the expectation on
   public non final fields.  If you attempt to set any attribute on an object
   that does not correspond to a settable field it will produce an
   ``AttributeError``.  There is one exception to this rule.  Sometime it is
@@ -995,7 +995,7 @@ String
 Equality
   The Java method ``equal()`` has been mapped to Python ``==`` with special
   augmentations for null pointers.  Java ``==`` is not exposed directly
-  as it would lead to numerous errors.  In princple Java ``==`` should map
+  as it would lead to numerous errors.  In principle, Java ``==`` should map
   to the Python concept of ``is`` but it is not currently possible to overload
   Python in such a way to achieve the desired effect.
 
@@ -1053,7 +1053,7 @@ Get Item
   Arrays are of course a collection of elements.  As such array elements can
   be accessed using the Python ``[]`` operator.  For multidimensional arrays
   JPype uses Java style access with a series of index operations such
-  as ``jarray[4][2]`` rather than numpy like multidimensional access.
+  as ``jarray[4][2]`` rather than NumPy like multidimensional access.
 
 Get Slice
   Arrays can be accessed using a slice as would a Python list.
@@ -1074,8 +1074,8 @@ Set Slice
   will be raised.  If the items to be transferred are in fact a buffer
   then a faster buffer transfer assignment will be used.  When buffer transfers
   are used individual elements are not checked for range, but instead cast
-  just like numpy.  Thus if we have the elements we wish to assign to the
-  array in a numpy array named ``a`` we can transfer all of them using
+  just like NumPy.  Thus if we have the elements we wish to assign to the
+  array in a NumPy array named ``a`` we can transfer all of them using
   ``jarray[:] = a``.
 
 Buffer transfer
@@ -1084,12 +1084,12 @@ Buffer transfer
   that can be used to transfer any portion of a Java array out.  Memory views
   are to Java arrays are not writable.
 
-Foreach
+For each
   Java arrays can be used as the input to a Python for statement.  To iterate
   each element use ``for elem in jarray:``.  They can also be used in
   list comprehensions.
 
-clone
+Clone
   Java arrays can be duplicated using the method clone.  Thus to create a copy
   call ``jarray.clone()``.  This operates both on the original array and slice
   views.
@@ -1179,7 +1179,7 @@ result will be checked.  A null pointer will result in a ``TypeError``.
      a = b+0      # This succeeds and a gets the value of zero
      a = int(b)+0 # This fails and raises TypeError
 
-Boxed objects have the following additional functionalty over a normal object.
+Boxed objects have the following additional functionality over a normal object.
 
 Convert to index
   Integer boxed types can be used as Python indices for arrays and other
@@ -1196,7 +1196,7 @@ Convert to float
   using the ``float()`` method.  The resulting object is always of type
   ``float``.  Casting a null pointer will raise ``TypeError``.
 
-Comparision
+Comparison
   Integer and floating point types implement the Python rich comparison API.
   Comparisons for null pointers only succeed for ``==`` and ``!=`` operations.
   Non-null boxed types act like ordinary numbers for the purposed of
@@ -1217,11 +1217,11 @@ None                       java.lang.Number(null)
 Python int                 java.lang.Long
 Python float               java.lang.Double
 Java byte,   NumPy int8    java.lang.Byte
-Java short,  Numpy int16   java.lang.Short
-Java int,    Numpy int32   java.lang.Integer
-Java long,   Numpy int64   java.lang.Long
-Java float,  Numpy float32 java.lang.Float
-Java double, Numpy float64 java.lang.Double
+Java short,  NumPy int16   java.lang.Short
+Java int,    NumPy int32   java.lang.Integer
+Java long,   NumPy int64   java.lang.Long
+Java float,  NumPy float32 java.lang.Float
+Java double, NumPy float64 java.lang.Double
 ========================== ========================
 
 Additional user defined conversion are also applied.  The primitive types
@@ -1279,7 +1279,7 @@ object.
 
 Length
   Java strings have a length measured in the number of characters required
-  to represent the string.  Encoding of extends unicode characters
+  to represent the string.  Encoding of extends Unicode characters
   counts for double for the purpose of counting characters.  The string length
   can be determined using the Python ``len(str)`` function.
 
@@ -1302,16 +1302,16 @@ Contains
   into something that can be compared with a string.  For example,
   ``"I" in java.lang.String("team")`` would be equal to False.
 
-Concatination
+Concatenation
   Java strings can be appended to create a new string which contains the
-  concatination of the two strings.  This is mapped to the Python operation
+  concatenation of the two strings.  This is mapped to the Python operation
   ``+``.
 
 Comparison
   Java strings are compared using the Java method ``compareTo``.  This
   method does not currently handle null well and will thus raise and exception.
 
-Foreach
+For each
   Java strings are treated as sequences of characters and thus can be used
   with a for loop construct.  To iterate through all of the characters use
   the Python construct ``for c in str:``, as does list comprehensions.
@@ -1348,15 +1348,15 @@ exceptions have a special wrapper.  Most of the mechanics of exceptions happens
 under the surface.  The one difference between Python and Java is the argument
 when queried.  Java arguments can either be the string value, the exception
 itself, or the internal construction key depending on how the exception came
-into existance.  Therefore, the arguments to a Java exception should never be
+into existence.  Therefore, the arguments to a Java exception should never be
 used as there values are not guaranteed.
 
 Java exception can report their stacktrace to Python in two different ways.  If
-printed through the Python stack trace routine, Java expections are split
+printed through the Python stack trace routine, Java exceptions are split
 between the Python code that raised and a phantom Java cause which contains the
 Java exception in Python order.  If the debugging information for the Java
 source is compiled in then Python may even print the Java source code lines
-where the error occurred.  If you perfer Java style stack traces then print the
+where the error occurred.  If you prefer Java style stack traces then print the
 result from the ``stacktrace()`` method.  Unhandled exception that terminate
 the program will print the Python style stack trace information.
 
@@ -1392,7 +1392,7 @@ Lambdas
 The companion of anonymous classes are lambda classes.  These are generated
 dynamically and their parent is always an interface.  Lambdas are always
 Single Abstract Method (SAM) type interfaces.  They can implement additional
-methods in the form of default methods but those are generally not accessable
+methods in the form of default methods but those are generally not accessible
 within JPype.
 
 Inner Classes
@@ -1448,10 +1448,10 @@ JClass so that the tests are only evaluating the desired functionality and not
 the import system.  But this does not imply that JClass is the preferred
 mechanic for importing classes.  The first argument can be a string or
 a Java class instance.  There are two keyword arguments ``loader`` and
-``initialize``.  The loader can point to an alternative classloader which
-is handly when loading custom classes through mechanisms such as over the
-web.  The ``initialize`` argument correspondes to loading a class without
-loading dependencies nor populationg static fields.  This option is likely
+``initialize``.  The loader can point to an alternative ClassLoader which
+is handy when loading custom classes through mechanisms such as over the
+web.  The ``initialize`` argument corresponds to loading a class without
+loading dependencies nor populate static fields.  This option is likely
 not useful for ordinary users, but was provided calling forName was problematic
 due to `caller sensitive`_ issues.
 
@@ -1465,7 +1465,7 @@ types. These levels are:
 
 - **none**, There is no way to convert.
 - **explicit (E)**, JPype can convert the desired type, but only
-  explicitly via casting.  Explicit conversions are only excute automatically
+  explicitly via casting.  Explicit conversions are only execute automatically
   in the case of a return from a proxy.
 - **implicit (I)**, JPype will convert as needed.
 - **exact (X)**, Like implicit, but when deciding with method overload
@@ -1577,7 +1577,7 @@ Multiple java exceptions can be caught together or separately:
 
 Exceptions can be raised in proxies to throw an exception back to java.
 
-Exceptions within the jpype core are issued with the most appropriate python
+Exceptions within the JPype core are issued with the most appropriate python
 exception type such as ``TypeError``, ``ValueError``, ``AttributeError``, or
 ``OSError``.
 
@@ -1592,16 +1592,16 @@ rather than requiring special error handling for Java you can simple catch
 these exceptions using the standard Python exception types.
 
 `java.lang.IndexOutOfBoundsException`
-  This exception is synonomous with the Python exception ``IndexError``.
+  This exception is synonymous with the Python exception ``IndexError``.
   As many slicing or array operations in Java can produce an
   IndexOutOfBoundsException but the Python contract for slicing of an array
-  should produce IndexErrors, this type has been customized to consider
+  should raise an IndexError, this type has been customized to consider
   IndexError to be a base type.
 
 
 `java.lang.NullPointerException`
   This exception is derived from the Python exception ``ValueError``.
-  Numerous Java calls produce a NullPointerException, and in all caese this
+  Numerous Java calls produce a NullPointerException, and in all cases this
   would be a Python ValueError.
 
 
@@ -1634,9 +1634,9 @@ Class paths
 
 JPype supports two styles of classpaths.  The older Matlab style uses the
 functions ``jpype.addClassPath`` and ``getClassPath``.  The first adds a
-directory or jar file to the search path.  Wildcards are accepted in the search.
-once all of the paths are added to internal classpath, they can be retrieved
-using getClassPath which takes a keyword argument ``env`` which defaults to
+directory or jar file to the search path.  Wild cards are accepted in the search.
+once all of the paths are added to internal class path, they can be retrieved
+using ``getClassPath`` which takes a keyword argument ``env`` which defaults to
 true.  When set to false, JPype will ignore the environment variable
 ``CLASSPATH`` which is normally included in the default classpath.
 
@@ -1649,8 +1649,8 @@ as the end of the path to include all jars in a given directory.
 One should note that the class path can only be set prior starting the JVM.
 Calls to set the class path after the JVM is started are silently ignored.
 If a jar must be loaded after the JVM is started, it may be loaded using
-``java.net.URLClassLoader``.  Classes loaded using a URLClassloader are
-not visiable to JPype imports nor to JPackage.
+``java.net.URLClassLoader``.  Classes loaded using a ``URLClassloader`` are
+not visible to JPype imports nor to JPackage.
 
 String conversions
 ------------------
@@ -2191,11 +2191,11 @@ Implementing Java interfaces
 Proxies in Java are foreign elements that allow pretend to implement a Java
 interface. We use this proxy API to allow Python to implement a Java interface.
 Of course, a proxy is not the same as subclassing Java classes in Python.
-However, most Java APIs are built so that subclassing is not needed. Good
+However, most Java APIs are built so that sub-classing is not needed. Good
 examples of this are AWT and SWING. Except for relatively advanced features,
 it is possible to build complete UIs without creating a single subclass.
 
-For those cases where subclassing is absolutely necessary (i.e. using Java's
+For those cases where sub-classing is absolutely necessary (i.e. using Java's
 SAXP classes), it is generally easy to create an interface and a simple
 subclass in Java that delegates the calls to that interface.  The interface
 can then be implemented in Python using a proxy.
@@ -2219,15 +2219,15 @@ use the older style.
 
 Implementing a proxy is simple.  First construct an ordinary Python class with
 method names that match the Java interface to be implemented.  Then add
-a the ``@JImplements`` decorator to the class definition.  The first argument
-to the JImplments decorator is the interface to implement.  Then mark each
+the ``@JImplements`` decorator to the class definition.  The first argument
+to the JImplements decorator is the interface to implement.  Then mark each
 method corresponding to a Java method in the interface with ``@JOverride``.
 When the proxy class is created the methods will be checked against the Java
 interface and raise and exception if the interface is incomplete.
 
 High-level proxies have one other important behavior.  When a proxy created
 using the high-level API returns from Java it unpacks back to the original
-Python object complete with all of its attributes.  This occures whether the
+Python object complete with all of its attributes.  This occurs whether the
 proxy is the self argument resulting when calling a proxy method, or if a
 proxy is returned from a Java container such as a list.  This is accomplished
 because the actually proxy is a temporary Java object with no real presence
@@ -2283,7 +2283,7 @@ achieve this specify the interface using a string and add the keyword argument
 
 Deferred proxies are not checked at declaration time but instead at the time
 for the first usage.  Thus you must be able to handle initialization errors
-whereever the proxy is created and not at the time of declaration.
+wherever the proxy is created and not at the time of declaration.
 
 Other than the raising of exceptions on creation, there is no penalty to
 deferring a proxy class. The implementation is checked only once on the first
@@ -2369,7 +2369,7 @@ serialized. As low-level proxies to not automatically convert back to Python
 upon returning to Java, the special keyword argument ``convert`` should be set
 to True.
 
-For example, let place a generic Python object such as numpy array into Java.
+For example, let place a generic Python object such as NumPy array into Java.
 
 .. code-block:: python
 
@@ -2396,7 +2396,7 @@ reference loop is formed.  Both the Python and Java garbage collectors are
 aware of reference loops within themselves and have appropriate handling for
 them.  But the memory space of the other machine is opaque and neither Java nor
 Python is aware of the reference loop.  Therefore, unless you manually break
-the loop by either clearning the container, or removing the Java reference from
+the loop by either clearing the container, or removing the Java reference from
 Python these objects can never be collected.  Once you lose the handle they
 will both become immortal.
 
@@ -2407,7 +2407,7 @@ as Java is holding onto the proxy.  This is resolved internally by making
 the Python weak reference the Java portion.  If Java ever garbage collects
 the Java half, it is recreated again when the proxy is next used.
 
-This does have some concequences for the use of proxies.  Proxies must never
+This does have some consequences for the use of proxies.  Proxies must never
 be used a synchronization objects.  They cannot be locked on as whenever
 they are garbage collected, they loss their identity.  In addition, their
 hashcode and system id both are reissued whenever they are refreshed.
@@ -2438,13 +2438,13 @@ cooperative that Java threads.
 To deal with this behavior, JPype releases the GIL every time it leaves from
 Python into Java to any user defined method.  Shorter defined calls such as
 to get a string name from from a class may not release the GIL.  Every time
-the GIL is released it is another opertunity for Python to switch to a different
+the GIL is released it is another opportunity for Python to switch to a different
 cooperative thread.
 
 Python Threads
 --------------
 
-For the most part, Python threads based on OS level threads (i.e. posix
+For the most part, Python threads based on OS level threads (i.e. Posix
 threads) will work without problem. The only challenge is how Java sees threads.
 In order to operate on a Java method, the calling thread must be attached to
 Java.  Failure to attach a thread will result in a segmentation fault.  It used
@@ -2453,7 +2453,7 @@ function, but as the user has no control over the spawning of threads by other
 applications such as an IDE, this inevitably lead to unexpected segmentation
 faults.  That that just crashing randomly, JPype automatically attached any
 thread the makes a Java call.  These threads are attached automatically as
-deamon threads so that will not prevent the JVM from shutting down properly
+daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
 ``jpype.attachThreadToJVM()`` from within the thread context.  Once this is
 done the JVM will not shut down until that thread is completed.
@@ -2462,20 +2462,20 @@ There is a function called ``jpype.isThreadAttachedToJVM()`` which will check
 if a thread is attached.  As threads automatically attach to Java the only
 way that a thread would not be attached is if it has never called a Java method.
 
-The downside of automatical attachment is that each attachment allocates a
-small amount of resources in the JVM.  For applications that swawn frequent
+The downside of automatic attachment is that each attachment allocates a
+small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
 to completing the thread with ``jpype.detachThreadFromJVM()``.  Thus for
 dynamic threading one can detach whenever Java is not longer needed,
 because the thread will automatically reattach if Java is needed again.
-There is some performance penality each time a thread is attached and detached.
+There is some performance penalty each time a thread is attached and detached.
 
 Java Threads
 ------------
 
 To use Java threads one has to implement a Java proxy for a
 ``java.lang.Runnable``.  The runnable can then be passed any Java threading
-mechanism to be executabled.  Each time that Java threads transfer control
+mechanism to be executed.  Each time that Java threads transfer control
 back to Python the GIL is reacquired.
 
 Other Threads
@@ -2580,8 +2580,8 @@ multiprocessing using fork.
 
 To use multiprocessing with JPype, processes must be created with "spawn".  As
 the multiprocessing context is usually selected at the start and the default
-for unix is fork, this requires the creating the appropraite spawn context.  To
-launch multiprocessing properly the following receipe can be used.
+for Unix is fork, this requires the creating the appropriate spawn context.  To
+launch multiprocessing properly the following recipe can be used.
 
 .. code-block:: python
 
@@ -2607,7 +2607,7 @@ wrapping any Queue is required.
 Miscellaneous topics
 ********************
 
-This chapter contains all the stuff that did not fit nicely into the narative
+This chapter contains all the stuff that did not fit nicely into the narrative
 about JPype.  Topics include code completion, performance, debugging Java
 within JPype, debugging JNI and other JPype failures, how caller sensitive
 methods are dealt with, and finally limitations of JPype.
@@ -2623,6 +2623,7 @@ above the startJVM statement. This can be avoided by either passing in
 Example:
 
 .. code-block:: python
+
         import jpype
         import jpype.imports
 
@@ -2634,6 +2635,7 @@ Example:
 Result without ``--ignore E402``
 
 .. code-block:: python
+
         from gov.llnl.math import DoubleArray  # Fails, no JVM running
         import jpype
         import jpype.imports
@@ -2666,7 +2668,7 @@ To improves speed issues JPype has converted all of the base classes into
 CPython.  This was a very significant speed up over the previous versions of
 the module.  In addition, JPype provides a number for fast buffer transfer
 methods. These routines are triggered automatically working with any buffer
-aware class such as those in numpy.
+aware class such as those in NumPy.
 
 As a final note, while a JPype program will likely be slower than its pure
 Java counterpart, it has a good chance of being faster than the pure Python
@@ -2677,7 +2679,7 @@ code execution speeds.
 Code completion
 ===============
 
-Python supports a number of different code completiong engines that are
+Python supports a number of different code completion engines that are
 integrated in different Python IDEs.  JPype has been tested with both the
 IPython greedy completion engine and Jedi.  Greedy has the disadvantage
 that is will execute code resulting potentially resulting in an undesirable
@@ -2722,11 +2724,11 @@ memory and neither provided hooks for interacting with an external garbage
 collector.
 
 Typically example, Python is creating a bunch a handles to Java memory for a
-period of time but they are in a stucture with a reference loop internal to
+period of time but they are in a structure with a reference loop internal to
 Python.  The structures and handles are small so Python doesn't see an issue,
 but each of those handles is holding 1M of memory in Java space.  As the heap
-fills up Java begans garbage collecting, but the resources can't be freed
-because Python hasn't cleanup up these structures.  The reverse occures if a
+fills up Java begins garbage collecting, but the resources can't be freed
+because Python hasn't cleanup up these structures.  The reverse occurs if a
 proxy has any large NumPy arrays.  Java doesn't see a problem as it has plenty
 of space to work in but Python is running its gc like mad trying to free up
 space to work.
@@ -2741,7 +2743,7 @@ routine any time it wants.  Instead JPype maintains a low-water and high-water
 mark on Python owned memory.  Each time it nears a high-water mark during a
 Python collection, Java GC gets called.  If the water level shrinks than
 Java was holding up Python memory and the low-water mark is reset.
-Depending on the ammount of memory being exchanged the Java GC may trigger
+Depending on the amount of memory being exchanged the Java GC may trigger
 as few as once every 50 Python GC cycles or as often as every other.
 The sizing on this is dynamic so it should scale to the memory use of
 a process.
@@ -2776,7 +2778,7 @@ altering the Java code to create additional debugging hooks, this process can
 introduce additional errors or alter the flow of the code.  Usually this is
 used by starting the JVM with the agent, placing a pause marker in the Python
 code so that developer can attach the Java debugger, executing the Python code
-until it hits the pause, attaching the debugger, setting break poing in Java,
+until it hits the pause, attaching the debugger, setting break point in Java,
 and then asking Python to proceed.
 
 So lets flesh out the details of how to accomplish this...
@@ -2795,9 +2797,9 @@ in the form of a pause statement.
     myobj.callProblematicMethod()
 
 When Python reaches that point during execution, switch to a Java IDE such as
-Netbeans and select Debug : Attach Debugger. That brings up a window (see
+NetBeans and select Debug : Attach Debugger. That brings up a window (see
 example below).  After attaching (and setting desired break points) go back to
-Python and hit enter to continue.  Netbeans should come to the foreground when
+Python and hit enter to continue.  NetBeans should come to the foreground when
 a breakpoint is hit.
 
 .. image:: attach_debugger.png
@@ -2806,7 +2808,7 @@ Attach data to an Exception
 ---------------------------
 
 Sometimes getting to the level of a debugger is challenging especially if the
-code is large and error occurs rarely. In this case, it is often benefitial to
+code is large and error occurs rarely. In this case, it is often beneficial to
 attach data to an exception. To achieve this, we need to write a small utility
 class. Java exceptions are not strictly speaking expandable, but they can be
 chained. Thus, it we create a dummy exception holding a ``java.util.Map`` and
@@ -2861,7 +2863,7 @@ exactly the process that will be when a method is called or a field is set.
 C++ Exceptions in JPype
 -----------------------
 
-Internally JPype can generage C++ exception which are converted into Python
+Internally JPype can generate C++ exception which are converted into Python
 exceptions for the user.  Sometimes to trace an error back to its source it
 is necessary to see where the original C++ exception was thrown from.  As
 all sensitive block have function names compiled in to the try catch blocks,
@@ -2880,7 +2882,7 @@ Tracing
 Where the process interaction is stateful and thus we need to see what events
 lead up to a failure, JPype provides a tracing mode.  To enable tracing
 recompile JPype with the ``--enable-tracing`` mode set.  It will then write out
-every call along with the object addresses and exceptions that occured through
+every call along with the object addresses and exceptions that occurred through
 out JPype.  This is keyed to macros that appear at the front and back of each
 JPype call which correspond to a try catch block capturing the address.
 
@@ -2933,7 +2935,7 @@ Caller sensitive methods
 
 The Java security model tracks what caller requested the method as a means
 to determine the level of access to provide.  Internal callers are provided
-privilaged access to perform unsafe operations and external callers are given
+privileged access to perform unsafe operations and external callers are given
 safer and more restricted access.  To perform this task the JVM checks what it
 the caller of a method by unraveling the stack and finding who called the
 secure method.
@@ -2946,7 +2948,7 @@ be worked around.  This was finally solved with the release of Java 12 when
 they outright broken all calls to getMethod by throwing a NullPointer exception
 whenever the caller frame was not found.  This inadvertent clued us into
 why Java would act so strangely for certain calls such as constructing a
-sql database or attempting to call ``Class.forName``.  By creating an actual
+SQL database or attempting to call ``Class.forName``.  By creating an actual
 test case to work around we were finally able to resolve this limitation.
 
 Once we identified the issue the work around it to always call Java methods
@@ -2996,7 +2998,7 @@ Running multiple JVM
 --------------------
 
 JPype uses the Python global import module dictionary, a global Python to Java
-class map, and global JNI typemanager map.  These resources are all tied to the
+class map, and global JNI TypeManager map.  These resources are all tied to the
 JVM that is started or attached. Thus operating more than one JVM does not
 appear to be possible under the current implementation.  Further, as of Java
 1.2 there is no support for creating more than one JVM in the same process.
@@ -3032,9 +3034,9 @@ Errors reported by Python fault handler
 The JVM takes over the standard fault handlers resulting in unusual behavior if
 Python handlers are installed.  As part of normal operations the JVM will
 trigger a segmentation fault when starting and when interrupting threads.
-Pythons faulthandler can intercept these operations thus reporting extraneous
+Pythons fault handler can intercept these operations thus reporting extraneous
 fault messages or preventing normal JVM operations if Python handles it.  When
-operating with JPype, Python faulthandler module should be disabled.
+operating with JPype, Python fault handler module should be disabled.
 
 This is particularly a problem for running under pytest as the first action it
 performs is to take over the error handlers. This can be disabled by adding
@@ -3075,7 +3077,7 @@ impeded progress.  When the life support was finally pulled on that beast,
 I like many others breathed a great sigh of relief and gladly cut out the
 Python 2 code.  Since that time JPype operating speed has improved anywhere
 from 300% to 10000% as we can now implement everything back in CPython rather
-than bandaiding it with interpreted Python code.
+than band-aiding it with interpreted Python code.
 
 PyPy
 ~~~~
@@ -3119,12 +3121,12 @@ Python libraries and the JVM implementation.
 Cygwin
 ~~~~~~
 
-Cygwin was usable with previous versions of JPype, but there were numerious
+Cygwin was usable with previous versions of JPype, but there were numerous
 issues for which there is was not good solution solution.
 
 Cygwin does not appear to pass environment variables to the JVM properly
 resulting in unusual behavior with certain windows calls. The path
 separator for Cygwin does not match that of the Java dll, thus specification
-of class paths must account for this.  Threading between the cygwin libraries
+of class paths must account for this.  Threading between the Cygwin libraries
 and the JVM was often unstable.
 
