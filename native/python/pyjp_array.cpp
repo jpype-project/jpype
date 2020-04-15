@@ -447,8 +447,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
 	{ Py_tp_repr,     (void*) PyJPArray_repr},
 	{ Py_tp_methods,  (void*) &arrayMethods},
-	//	{ Py_sq_ass_item, (void*) &PyJPArray_assignItem},
-	{ Py_sq_item,     (void*) &PyJPArray_getItem},
+	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 	{0}
@@ -496,10 +495,10 @@ void PyJPArray_initType(PyObject * module)
 	JPPyTuple tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
+	JP_PY_CHECK();
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
-	JP_PY_CHECK_INIT();
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 
 	tuple = JPPyTuple::newTuple(1);
 	tuple.setItem(0, (PyObject*) PyJPArray_Type);

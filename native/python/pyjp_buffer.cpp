@@ -124,9 +124,9 @@ void PyJPBuffer_initType(PyObject * module)
 	tuple.setItem(0, (PyObject*) PyJPObject_Type);
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JBuffer", (PyObject*) PyJPBuffer_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
 
 JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)

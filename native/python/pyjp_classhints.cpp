@@ -122,7 +122,7 @@ PyType_Spec PyJPClassHintsSpec = {
 void PyJPClassHints_initType(PyObject* module)
 {
 	PyJPClassHints_Type = (PyTypeObject*) PyType_FromSpec(&PyJPClassHintsSpec);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JClassHints", (PyObject*) PyJPClassHints_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }

@@ -272,21 +272,21 @@ void PyJPObject_initType(PyObject* module)
 {
 	PyObject *bases;
 	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 
 	bases = PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type);
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 
 	bases = PyTuple_Pack(1, PyJPObject_Type);
 	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }

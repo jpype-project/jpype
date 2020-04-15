@@ -19,7 +19,7 @@ class CoverageCase(common.JPypeTestCase):
         self.assertEqual(f, "foo")
 
     def testWin32(self):
-        if sys.platform == "win32" or sys.platform == "cygwin":
+        if sys.platform == "win32":
             raise common.unittest.SkipTest("not tested on win32")
         try:
             sys.platform = "win32"

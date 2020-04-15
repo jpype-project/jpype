@@ -104,8 +104,6 @@ def _handleClassPath(clsList):
             out.extend(glob.glob(s+'.jar'))
         else:
             out.append(s)
-    if sys.platform == "cygwin":
-        out = [_classpath._posix2win(i) for i in out]
     return _classpath._SEP.join(out)
 
 

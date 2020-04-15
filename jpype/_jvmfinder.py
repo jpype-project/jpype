@@ -63,9 +63,7 @@ def getDefaultJVMPath():
         Python due to cpu architecture.
 
     """
-    if sys.platform == "cygwin":
-        finder = CygwinJVMFinder()
-    elif sys.platform == "win32":
+    if sys.platform == "win32":
         finder = WindowsJVMFinder()
     elif sys.platform == "darwin":
         finder = DarwinJVMFinder()
@@ -224,7 +222,6 @@ class JVMFinder(object):
             # Get the real installation path
             java_home = os.path.realpath(java_home)
 
-            # Cygwin has a bug in realpath
             if not os.path.exists(java_home):
                 java_home = os.getenv("JAVA_HOME")
 
@@ -388,7 +385,6 @@ class WindowsJVMFinder(JVMFinder):
 
         :return: The path found in the registry, or None
         """
-        # Winreg is an optional package in cygwin
         if not winreg:
             return None
         for location in reg_keys:
@@ -406,48 +402,3 @@ class WindowsJVMFinder(JVMFinder):
                 pass
         return None
 
-
-class CygwinJVMFinder(JVMFinder):
-    """
-    Cygwin JVM library finder class
-    """
-
-    def __init__(self):
-        """
-        Sets up members
-        """
-        # Call the parent constructor
-        JVMFinder.__init__(self)
-
-        # Library file name
-        self._libfile = "jvm.dll"
-
-        # Search methods
-        self._methods = (self._get_from_java_home, self._get_from_registry)
-
-    def check(self, jvm):
-        _checkJVMArch(jvm)
-
-    def _get_from_registry(self):
-        """
-        Retrieves the path to the default Java installation stored in the
-        Windows registry
-
-        :return: The path found in the registry, or None
-        """
-        for location in reg_keys:
-            location = location.replace('\\', '/')
-            jreKey = "/proc/registry/HKEY_LOCAL_MACHINE/{}".format(location)
-            try:
-                with open(jreKey + "/CurrentVersion") as f:
-                    cv = f.read().split('\x00')
-                versionKey = jreKey + "/" + cv[0]
-
-                with open(versionKey + "/RunTimeLib") as f:
-                    cv = f.read().split('\x00')
-
-                return cv[0]
-
-            except OSError:
-                pass
-        return None
