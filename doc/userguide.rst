@@ -1526,8 +1526,8 @@ dictionary
 
 .. [9] Primitives are boxed as per Java rules.
 
-.. [10] Java boxed types are mapped to python primitives, but will
-        produce an implicit conversion even if the python type is an exact
+.. [10] Java boxed types are mapped to Python primitives, but will
+        produce an implicit conversion even if the Python type is an exact
         match. This is to allow for resolution between methods
         that take both a java primitve and a java boxed type.
 
@@ -1577,7 +1577,7 @@ Multiple java exceptions can be caught together or separately:
 
 Exceptions can be raised in proxies to throw an exception back to java.
 
-Exceptions within the JPype core are issued with the most appropriate python
+Exceptions within the JPype core are issued with the most appropriate Python
 exception type such as ``TypeError``, ``ValueError``, ``AttributeError``, or
 ``OSError``.
 
@@ -1848,7 +1848,7 @@ Class Customizers
 =================
 
 Java wrappers can be customized to better match the expected behavior in
-python.  Customizers are defined using annotations. Currently the annotations
+Python.  Customizers are defined using annotations. Currently the annotations
 ``@JImplementationFor`` and ``@JOverride`` can be applied to a regular class to
 customize an existing class.  ``@JImplementationFor`` requires the class name
 as a string so that it can be applied to the class before the JVM is started.
@@ -1886,7 +1886,7 @@ The name of the class does not matter for the purposes of customizer though it
 should be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
 base class, thus ensuring that the methods will appear on the most derived
-python class and are not hidden by the java implementations. The customizer
+Python class and are not hidden by the java implementations. The customizer
 will copy methods, callable objects, ``__new__``, class member strings, and
 properties.
 
