@@ -158,7 +158,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 		if (!cls2->findJavaConversion(match))
 			JP_RAISE(PyExc_TypeError, "Type is not comparable");
 		obj1 = match.convert().l;
-	} else if (!null1)
+	} else if (!null1 && javaSlot1 != NULL)
 		obj1 = javaSlot1->getValue().l;
 
 	switch (op)
