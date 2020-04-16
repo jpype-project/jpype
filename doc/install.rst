@@ -1,8 +1,8 @@
 Installation
 ============
 
-JPype is available either as a pre-compiled binary for Anaconda, or 
-may be build from source though several methods.
+JPype is available either as a pre-compiled binary for Anaconda, or may be
+built from source though various methods.
 
 
 Binary Install
@@ -10,7 +10,7 @@ Binary Install
 
 JPype can be installed as pre-compiled binary if you are using the `Anaconda
 <https://anaconda.org>`_ Python stack. Binaries are available for Linux, OSX,
-ad windows are available on conda-forge.
+and windows on conda-forge.
 
 1. Ensure you have installed Anaconda/Miniconda. Instructions can be found
    `here <http://conda.pydata.org/docs/install/quick.html>`__.  
@@ -23,48 +23,43 @@ ad windows are available on conda-forge.
 Source Install
 --------------
 
-Installing from source requires
+Installing from source requires:
 
 Python
-  JPype works with CPython 2.6 or later including the 3 series. Both the
-  runtime and the development package are required.
+  JPype works CPython 3.5 or later. Both the runtime and the development
+  package are required.
 
 Java
-  Either the Sun/Oracle JDK/JRE Variant or OpenJDK. Python 2.6+ (including
-  Python 3+).  JPype source distribution includes a copy of the Java JNI header
-  and precompiled Java code, so the development kit is not required from the
-  source distribution. JPype has been used with Java versions from 
-  Java 1.7 to Java 11.
+  Either the Sun/Oracle JDK/JRE Variant or OpenJDK.
+
+  JPype source distribution includes a copy of the Java JNI header
+  and precompiled Java code, thus the Java Development Kit (JDK) is not required.
+  JPype has been tested with Java versions from Java 1.7 to Java 13.
 
 C++
   A C++ compiler which matches the ABI used to build CPython.
 
-Ant and JDK
+JDK
   *(Optional)* JPype contains sections of Java code. These sections are
-  precompiled in the source distribution but must be build with installing from
-  git directly.
+  precompiled in the source distribution, but must be built when installing 
+  directly from the git repository.
 
-Once these requirements have been met one can use pip to build either from the
-source distribution or directly from the repo.  Specific requirements from
-different achitectures are shown below_.   
+Once these requirements have been met, one can use pip to build from either the
+source distribution or directly from the repository.  Specific requirements from
+different achitectures are listed below_.   
 
 
 Build using pip
 ~~~~~~~~~~~~~~~
 
-JPype may be build and installed with one easy step using pip.
+JPype may be built and installed with one step using pip.
 
 To install the latest JPype, use: ::
 
   pip install JPype1
 
-Which will install JPype either from source or binary distribution,
-depending on you operating system and pip version.
-If you need numpy support, it is recommended to force pip to install
-JPype from source (with numpy already installed on the system).
-Note both occurrences of "JPype1" are needed: ::
-
-  pip install --no-binary JPype1 JPype1
+This will install JPype either from source or binary distribution, depending on
+your operating system and pip version.  
 
 To install from the current github master use: ::
 
@@ -72,40 +67,35 @@ To install from the current github master use: ::
 
 More details on installing from git can be found at `Pip install
 <https://pip.pypa.io/en/stable/reference/pip_install/#git>`__.  The git version
-does not include a prebuilt jar and thus both ant and JDK are required.
+does not include a prebuilt jar the JDK is required.
 
 
 Build and install manually
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-JPype can be built entirely from source. Just follow these three
-easy steps.
+JPype can be built entirely from source.
 
 **1. Get the JPype source**
 
-Either from 
+The JPype source may be acquired from either 
 `github <https://github.com/jpype-project/jpype>`__ or
 from `PyPi <http://pypi.python.org/pypi/JPype1>`__. 
 
 **2. Build the source with desired options**
 
-Compile JPype using the included ``setup.py`` script with: ::
+Compile JPype using the included ``setup.py`` script: ::
 
   python setup.py build
 
 The setup script recognizes several arguments.
 
---ant                Define the location of ant on your system using 
-                     ``--ant=path``.  This option is useful when building 
-                     when ant is not in the path.
 --enable-build-jar   Force setup to recreate the jar from scratch. 
 --enable-tracing     Build a verison of JPype with full logging to the 
                      console. This can be used to diagnose tricky JNI
                      issues.
---disable-numpy      Do not compile with numpy extenstions.
 
 After building, JPype can be tested using the test bench. The test
-bench requires ant and JDK to build.
+bench requires JDK to build.
 
 **3. Test JPype with (optional):** ::
 
@@ -119,38 +109,36 @@ bench requires ant and JDK to build.
 If it fails...
 ~~~~~~~~~~~~~~
 
-This happens mostly due to the setup not being able to find your ``JAVA_HOME``.
-In case this happens, please do two things:
+Most failures happen when setup.py is unable to find the JDK home directory
+which shouble be set in the enviroment variable ``JAVA_HOME``.  If this
+happens, preform the following steps:
 
-1. You can continue the installation by finding the ``JAVA_HOME`` on your own (
-   the place where the headers etc. are) and explicitly setting it for the
-   installation: ::
+1. Identify the location of your systems JDK installation and explicitly passing
+   it to setup.py. ::
 
      JAVA_HOME=/usr/lib/java/jdk1.8.0/ python setup.py install
 
-2. Please create an Issue `on
+2. If that setup.py still fails please create an Issue `on
    github <https://github.com/jpype-project/jpype/issues?state=open>`__ and
-   post all the information you have.
+   post the relevant logs.
 
 
 .. _below:
 
-Specific requirements
-~~~~~~~~~~~~~~~~~~~~~
+Platform Specific requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-JPype is known to work on Linx, OSX, Windows, and Cygwin.  To make it easier to
-those who have not built CPython modules before here are some helpful tips for
+JPype is known to work on Linx, OSX, and Windows.  To make it easier to those
+who have not built CPython modules before here are some helpful tips for
 different machines.
 
 Debian/Ubuntu
 :::::::::::::
 
-Debian/Ubuntu users will have to install ``g++``, ``python-dev``, and ``ant`` (optional)
+Debian/Ubuntu users will have to install ``g++`` and ``python-dev``.
 Use:
 
-::
-
-    sudo apt-get install g++ python-dev python3-dev ant
+    sudo apt-get install g++ python-dev python3-dev
 
 Windows
 :::::::
@@ -158,26 +146,12 @@ Windows
 Windows users need a CPython installation and C++ compilers specificly for 
 CPython:
 
-1. Install some version of Python (2.7 or higher), e.g., `Anaconda
+1. Install your desired version of Python (3.5 or higher), e.g., `Anaconda
    <https://www.continuum.io/downloads>`_ is a good choice for users not yet
    familiar with the language
-2. For Python 2 series, Install `Windows C++ Compiler
-   <http://landinghub.visualstudio.com/visual-cpp-build-tools>`_
-3. For Python 3 series, Install `Microsoft Visual Studio 2010 Redistributable Package (x64)
-   <https://www.microsoft.com/en-us/download/details.aspx?id=14632>`_ and
-   `Microsoft Build Tools 2015 Update 3
-   <https://visualstudio.microsoft.com/vs/older-downloads/>`_
-4. (optional) Install `Apache Ant (tested using 1.9.13)
-   <https://ant.apache.org/bindownload.cgi>`_
-
-Netbeans ant can be used in place of Apache Ant.  Netbeans ant is located in
-``${netbeans}/extide/ant/bin/ant.bat``.  
-
-Due to differences in the C++ API, only the version specified will work to
-build CPython modules.  The Build Tools 2015 is a pain to find. Microsoft
-really wants people to download the latest version.  To get to it from the
-above URL, click on "Redistributables and Build Tools", then select Microsoft
-Build Tools 2015 Update 3.
+2. For Python 3 series, Install 
+   `Microsoft Visual Studio 2019 Community Edition
+   <https://visualstudio.microsoft.com/downloads/>`_
 
 When building for windows you must use the Visual Studio developer command
 prompt.
@@ -189,7 +163,6 @@ Known Bugs/Limitations
 -  Java classes outside of a package (in the ``<default>``) cannot be
    imported.
 -  Because of lack of JVM support, you cannot shutdown the JVM and then
-   restart it.
--  Structural issues prevent managing objects from more than one JVM
-   at a time.
--  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import jpype.
+   restart it.  Nor can you start more than one copy of the JVM.
+-  Mixing 64 bit Python with 32 bit Java and vice versa crashes on import 
+   of the jpype module.

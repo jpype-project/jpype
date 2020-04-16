@@ -7,18 +7,18 @@ JPype User Guide
 
 JPype Introduction
 ******************
-
-JPype is a CPython module to allow Python programs full access to Java class
-libraries. This is achieved not through re-implementing Python, as
-Jython/JPython has done, but rather through interfacing at the native level
-in both virtual machines using JNI.  This approach allow direct memory access
-between the two machines, implementing Java interfaces using Python, and
-using Java threading in Python.
+JPype is a Python module to provide full access to Java from within Python. 
+Unlike Jython, JPype does not achive this by re-implementing Python, but
+instead, through interfacing both virtual machines at the native level. This
+shared memory based approach achieves good computing performance, while
+providing the access to the entirety of CPython and Java libraries.
+This approach allows direct memory access between the two machine,
+implementation of Java interfaces in Python, and even use of Java threading.
 
 JPype Use Cases
 ===============
 
-There are three typical use cases for JPype.  These are:
+Here are three typical reasonse to use JPype.
 
 - Access to a Java library from a Python program (Python oriented)
 - Visualization of Java data structures (Java oriented)
@@ -30,20 +30,20 @@ Let's explore each of these options.
 Case 1: Access to a Java library
 --------------------------------
 
-Suppose you are a hard core Python programmer.  Lambdas, threading, dictionary
-hacking, monkey patching, been there, done that.  You are hard at work on your
-latest project but you just need to pip in the database driver for your
-customers database and you can call it a night.  But unfortunately, it appears
-that your customers database just won't connect to the Python database API
-no matter what you do.  The whole thing is custom and not a chance they are
-going to get you a Python copy.  They did sent you a Java driver for the
-database but fat lot of good that will do for you.
+Suppose you are a hard core Python programmer.  You can easily use lambdas,
+threading, dictionary hacking, monkey patching, been there, done that.  You are
+hard at work on your latest project but you just need to pip in the database
+driver for your customers database and you can call it a night.  Unfortunately,
+it appears that your customers database will not connect to the Python database
+API.  The whole thing is custom and the customer isn't going to supply you with
+a Python version.   They did sent you a Java driver for the database but fat
+lot of good that will do for you.
 
 Stumbling through the internet you find a module that says it can natively
 load Java packages as Python modules.  Well, it worth a shot...
 
 So first thing the guide says is that you need to install Java and set up
-a JAVA_HOME environmental variable pointing to the JRE.  Then start the
+a ``JAVA_HOME`` environment variable pointing to the JRE.  Then start the
 JVM with classpath pointed to customers jar file. The customer sent over
 an example in Java so you just have to port it into Python.
 
@@ -69,12 +69,12 @@ an example in Java so you just have to port it into Python.
   }
 
 
-Hmm, it doesn't look too horrible to translate.  You just need to look past all
-those pointless type declarations and meaningless braces.  Once you do that you
-can glue this into Python and get back to what you really love like performing
+It does not look too horrible to translate.  You just need to look past all
+those pointless type declarations and meaningless braces.  Once you do, you
+can glue this into Python and get back to what you really love, like performing
 dictionary comprehensions on multiple keys.
 
-So you glance over the JPype quick start guide.  It has a few useful patterns...
+You glance over the JPype quick start guide.  It has a few useful patterns...
 set the class path, start the JVM, remove all the type declarations, and you are done.
 
 .. code-block:: python
@@ -98,8 +98,8 @@ set the class path, start the JVM, remove all the type declarations, and you are
           record = db.nextRecord()
           ...
 
-Launch it in the interactive window. Wow done.  Okay you can get back to
-programming in Python.
+Launch it in the interactive window.  You can get back to programming in Python
+once you get a good night sleep.
 
 
 Case 2: Visualization of Java structures
@@ -115,15 +115,15 @@ visualization and your don't have time to write a whole graphing applet just to
 display this dataset.
 
 So poking around on the internet you find that Python has exactly the
-visualization that you need for the problem, but sad face it only runs in
-CPython.  So you just need to get it into Python extract the data structures
-and send it to the plotting routine.
+visualization that you need for the problem, but it only runs in CPython.  So
+in order to visualize the structure, you need to get it into Python, extract
+the data structures and, send it to the plotting routine.
 
-So install conda, follow the install instructions to connect to conda-forge,
-pull JPype1, and launch the first Python interact environment that appear to
+You install conda, follow the install instructions to connect to conda-forge,
+pull JPype1, and launch the first Python interactive environment that appear to
 produce a plot.
 
-You get the shell open and paste in the boiler plate start commands, and load
+You get the shell open and paste in the boilerplate start commands, and load
 in your serialized object.
 
 .. code-block:: python
@@ -142,7 +142,7 @@ in your serialized object.
 
    print(obj) # prints org.bigstuff.MyObject@7382f612
 
-So it looks like it has it memory.  So the problem structure requires you
+It appears that the structure is loaded.  The problematic structure requires you
 call the getData method with the correct index.
 
 .. code-block:: python
@@ -154,9 +154,9 @@ call the getData method with the correct index.
           public double[] org.bigstuff.MyObject.getData(double)
           public double[] org.bigstuff.MyObject.getData(int)
 
-Well looks like you are going to have to pick the right overload as it can't
+Looks like you are going to have to pick the right overload as it can't
 figure out which overload to use.  Darn weakly typed language, how to get
-the right type in so that you can plot the right data.  Oh it says that
+the right type in so that you can plot the right data.  It says that
 you can use the casting operators.
 
 .. code-block:: python
@@ -165,10 +165,10 @@ you can use the casting operators.
    d = obj.getData(JInt(1))
    print(type(d))  # prints double[]
 
-Great now we just need to figure out how to convert from a Java array into
-our something our visualization code can deal with.  Nothing looks obvious,
-ah we will just go for it.  Lets just copy out of the visualization tool
-example and see what happens.
+Great. Now you just need to figure out how to convert from a Java array into
+our something our visualization code can deal with.  As nothing indicates that
+you need to convert the array, you just copy out of the visualization tool
+example and watch what happens.
 
 .. code-block:: python
 
@@ -176,8 +176,8 @@ example and see what happens.
    plt.plot(d)
    plt.show()
 
-And behold a graph appears on the screen.  Guess it knows how to deal with
-Java arrays.  Ouch it looks like ever 4th element in the array is zero.
+A graph appears on the screen.  Meaning that NumPy has not issue dealing with 
+Java arrays.  It looks like ever 4th element in the array is zero.
 It must be the PR the new guy put in.  And off you go back to the wonderful
 world of Java back to the safety of curly braces and semicolons.
 
@@ -186,11 +186,10 @@ Case 3: Interactive Java
 
 Suppose you are a laboratory intern running experiments at Hawkins National
 Laboratory.  (For the purpose of this exercise we will ignore the fact that
-Hawkins was shut down in 1984 and Java was created in 1995).
-You have the test subject strapped in and you just need to start
-the experiment.  So you pull up Jupyter notebook your boss gave you and
-run through the cells.  Unfortunately, you need to added some brain wave
-monitor to the list of graphed results.
+Hawkins was shut down in 1984 and Java was created in 1995).  You have the test
+subject strapped in and you just need to start the experiment.  So you pull up
+Jupyter notebook your boss gave you and run through the cells.  You need to
+added some heart wave monitor to the list of graphed results.
 
 The relevant section of the API for the Experiment appears to be
 
@@ -278,11 +277,11 @@ was talking about in the March.  That sounds like real fun.
 The JPype Philosophy
 ====================
 
-JPype is designed to make it so the user can exercise Java as fluidly as
+JPype is designed to allow the user to exercise Java as fluidly as
 possible from within Python.  We can break this down into a few specific
 design goals.
 
-- Make Java appear Pythonic.  Thus make it so a Python programmer feels
+- Make Java appear Pythonic.  Make it so a Python programmer feels
   comfortable making use of Java concepts.  This means making use of Python
   concepts to create very Python looking code and at times bending Python
   concepts to conform to Java's expectations.
@@ -293,11 +292,11 @@ design goals.
 
 - Present everything that Java has to offer to Python.  Thus every
   library, package, and Java feature if possible should be accessible.
-  The goal of bridge is to open up worlds and not to restrict flow.
+  The goal of bridge is to open up places and not to restrict flow.
 
-- Keep design as simple as possible. Mixing languages is already complex
-  enough so don't create a huge arsenal of unique methods that have to be
-  learned.  Instead keep it simple with well defined rules and reuse
+- Keep the design as simple as possible. Mixing languages is already complex
+  enough so don't required the user to learn a huge arsenal of unique methods.
+  Instead keep it simple with well defined rules and reuse
   these concepts.  For example, all array types originate from JArray, and
   thus using one can also use isinstance to check if a class is an array
   type.  Rather than introducing factory that does a similar job to an
@@ -308,14 +307,14 @@ design goals.
   requiring writing to maximize speed is a poor long term choice, especially
   in a language such as Python were weak typing can promote bit rot.
 
-- If a new method has to be introduced make look familiar.
+- If a new method has to be introduced, make look familiar.
   Java programmers look to a method named "of" to convert to a type on
   factories such as a Stream, thus ``JArray.of`` converts a Python NumPy array
   to Java.  Python programmers expect that memory backed objects can be converted
   into bytes for rapid transfer using a memory view, thus
   ``memoryview(array)`` will perform that task.
 
-- Provide an obvious way for both Python and Java programmers.
+- Provide an obvious way for both Python and Java programmers to perform tasks.
   On this front JPype and Python disagree.  In Python's philosophy there should
   be one -- and preferably only one -- obvious way to do things.  But we
   are bridging two worlds and thus obviousness is in the eye of the beholder.
@@ -406,7 +405,8 @@ accessing Java resources from within the embedded Python is quite similar
 with support for imports.  Notable downsides are that although Python supports
 multiple interpreters many Python modules do not, thus some of the advantages
 of the use of Python many be hard to realize.  In addition, the documentation
-is a bit underwhelming thus see how capable it is from the limited examples.
+is a bit underwhelming thus it is difficult to see how capable it is from the
+limited examples.
 
 `Javabridge <https://github.com/CellProfiler/python-javabridge/>`_
 ------------------------------------------------------------------
@@ -511,14 +511,13 @@ JPype Concepts
 
 At its heart, JPype is about providing a bridge to use Java within Python.
 Depending on your prospective that can either be a means of accessing Java
-libraries from within Python or to expand the ability to use if Java using
-Python syntax for interactivity and visualization.  This mean not only exposing
-a limited API but instead trying to provide the entirety of the Java language
-with Python.
+libraries from within Python or a way to use Java using Python syntax for
+interactivity and visualization.  This mean not only exposing a limited API but
+instead trying to provide the entirety of the Java language with Python.
 
 To do this, JPype maps each of the Java concepts to the nearest concept in
 Python wherever they are similar enough to operate without confusion.  We have
-tried to keep this as Pythonic as possible though it is never without some
+tried to keep this as Pythonic as possible, though it is never without some
 rough edges.
 
 Python and Java share many of the same concepts.  Types, class, objects,
@@ -587,11 +586,12 @@ Decorators
   can be placed on classes or functions to augment them with Java specific
   information. (`@JImplements`_, `@JOverride`_, `@JImplementationFor`_)
 
-Customized classes and Special functions
-  Some concepts such as Java try with resources can be mapped into Python
-  directly (as the with statement), or Java try, throw, catch mapping to
+Mapping Java syntax to Python
+  Many Java concepts like try with resources can be mapped into Python
+  directly (as the ``with`` statement), or Java try, throw, catch mapping to
   Python try, raise, except.  Others such as synchronize do not have an exact
-  Python match.  Those have instead been mapped to special functions.
+  Python match.  Those have instead been mapped to special functions
+  that interact with Python syntax..
   (synchronized_, `with`, `try`, import_)
 
 JVM control functions
@@ -606,7 +606,7 @@ Name mangling
 =============
 
 When providing Java package, classes, methods, and field to Python,
-occasionally there are naming conflicts.  For example if one has a method
+there are occasionally naming conflicts.  For example, if one has a method
 called ``with`` then it would conflict with the Python keyword ``with``.
 Wherever this occurs, JPype renames the offending symbol with a trailing
 under bar.  Java symbols with a leading or trailing under bars are consider to
@@ -615,11 +615,14 @@ of package names.
 
 The following Python words will trigger name mangling of a Java name:
 
-| ``False`` ``None`` ``True`` ``and`` ``as`` ``async`` ``await`` ``def``
-| ``del`` ``elif`` ``except`` ``exec`` ``from`` ``global`` ``in`` ``is``
-| ``lambda`` ``nonlocal`` ``not`` ``or`` ``pass`` ``print`` ``raise``
-| ``with`` ``yield``
 
+=========== =========== ============= =========== ==========
+``False``   ``None``    ``True``      ``and``     ``as``     
+``async``   ``await``   ``def``       ``del``     ``elif``  
+``except``  ``exec``    ``from``      ``global``  ``in``    
+``is``      ``lambda``  ``nonlocal``  ``not``     ``or``
+``pass``    ``print``   ``raise``     ``with``    ``yield``
+=========== =========== ============= =========== ==========
 
 
 JPype Types
