@@ -82,8 +82,8 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
 
 
 print("""
-QuickStart Guide
-================
+Java QuickStart Guide
+=====================
 
 Quick start quide to using JPype.  This quide will show a series of simple examples with the 
 corresponding commands in both Java and Python for using JPype. 
@@ -148,11 +148,11 @@ section("Starting JPype",
         """
 The hardest thing about using JPype is getting the jars loaded into the JVM.
 Java is curiously unfriendly about reporting problems when it is unable to find
-a jar.  Instead, it will be reported as an ``ImportError`` in python.
+a jar.  Instead, it will be reported as an ``ImportError`` in Python.
 These patterns will help debug problems regarding jar loading.
 
 Once the JVM is started Java packages that are within a top level domain (TLD)
-are exposed as python modules allowing Java to be treated as part of python.
+are exposed as Python modules allowing Java to be treated as part of Python.
 """
         )
 entry("Start Java Virtual Machine (JVM)", None,
@@ -266,7 +266,7 @@ entry("Call a static method",
 entry("Call a member method",
       java("myObject.callMember(1);"),
       python("myObject.callMember(1)"))
-entry("Access member with python naming conflict",
+entry("Access member with Python naming conflict",
       java("myObject.pass()"),
       python("myObject.pass_()"),
       "Underscore is added during wrapping.")
@@ -287,7 +287,7 @@ endSection()
 #####################################################################################
 section("Exceptions",
         """
-Java exceptions extend from python exceptions and can be dealt with no different 
+Java exceptions extend from Python exceptions and can be dealt with no different 
 that Python native exceptions. JException serves as the base class for all Java exceptions.
 """)
 
@@ -347,11 +347,11 @@ endSection()
 #####################################################################################
 section("Primitives",
         """
-Most python primitives directly map into Java primitives. However, python does not
-have the same primitive types, thus sometimes it is necessary to cast to a specific 
-Java primitive type especially if there are 
-Java overloads that would otherwise be in conflict.  Each of the Java types are
-exposed in JPype (``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
+Most Python primitives directly map into Java primitives. However, Python does
+not have the same primitive types, thus sometimes it is necessary to cast to a
+specific Java primitive type especially if there are Java overloads that would
+otherwise be in conflict.  Each of the Java types are exposed in JPype
+(``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``,
 ``JFloat``, ``JDouble``).
 
 Python int is equivalent to Java long.
@@ -397,11 +397,11 @@ endSection()
 
 section("Strings",
         """
-Java strings are similar to python strings.  They are both immutable and
+Java strings are similar to Python strings.  They are both immutable and
 produce a new string when altered.  Most operations can use Java strings
-in place of python strings, with minor exceptions as python strings 
+in place of Python strings, with minor exceptions as Python strings 
 are not completely duck typed.  When comparing or using as dictionary keys
-JString should be converted to python.
+JString should be converted to Python.
 """)
 entry("Create a Java string", java('String javaStr = new String("foo");'), python(
     'myStr = JString("foo")'), "``JString`` constructs a ``java.lang.String``")
@@ -432,7 +432,7 @@ endSection()
 
 section("Arrays",
         """
-Arrays are create using JArray class factory. They operate like python lists, but they are 
+Arrays are create using JArray class factory. They operate like Python lists, but they are 
 fixed in size.
 """)
 entry("Create a single dimension array",
@@ -447,7 +447,7 @@ entry("Access an element",
 entry("Size of an array",
       java("array.length"),
       python("len(array)"))
-entry("Convert to python list", None,
+entry("Convert to Python list", None,
       python("pylist = list(array)"))
 
 entry("Iterate elements",
@@ -473,8 +473,8 @@ endSection()
 
 section("Collections",
         """
-Java standard containers are available and are overloaded with python syntax where 
-possible to operate in a similar fashion to python objects.  It is not
+Java standard containers are available and are overloaded with Python syntax where 
+possible to operate in a similar fashion to Python objects.  It is not
 currently possible to specify the template types for generic containers, but
 that will be introduced in Java 9.
 """)
@@ -577,7 +577,7 @@ entry("Accessing a specific overload", None,
     cls.invoke(myObject, JInt(1))
 """, "types must be exactly specified.")
 
-entry("Convert a ``java.lang.Class`` into python wrapper", None,
+entry("Convert a ``java.lang.Class`` into Python wrapper", None,
       """
 .. code-block:: python
 
@@ -618,12 +618,12 @@ endSection()
 
 section("Implements and Extension",
         """
-JPype can implement a Java interface by annotating a python class.  Each
+JPype can implement a Java interface by annotating a Python class.  Each
 method that is required must be implemented.
 
-JPype does not support extending a class directly in python.  Where it is
+JPype does not support extending a class directly in Python.  Where it is
 necessary to exend a Java class, it is required to create a Java extension
-with an interface for each methods that are to be accessed from python.
+with an interface for each methods that are to be accessed from Python.
 For some deployments this may be be an option.  If that is the case, 
 the JPype inline compiler can be used to create the dynamic class on the 
 fly.
@@ -652,10 +652,10 @@ entry("Implement an interface",
       "")
 
 entry("Extending classes", None, None,
-      """Support for use of python function as Java 8 lambda is WIP.""")
+      """Support for use of Python function as Java 8 lambda is WIP.""")
 
 entry("Lambdas", None, None,
-      """Support for use of python function as Java 8 lambda is WIP.""")
+      """Support for use of Python function as Java 8 lambda is WIP.""")
 endSection()
 
 print(

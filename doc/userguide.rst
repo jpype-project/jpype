@@ -9,7 +9,7 @@ JPype Introduction
 ******************
 JPype is a Python module to provide full access to Java from within Python. 
 Unlike Jython, JPype does not achive this by re-implementing Python, but
-instead, through interfacing both virtual machines at the native level. This
+instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
 providing the access to the entirety of CPython and Java libraries.
 This approach allows direct memory access between the two machine,
@@ -36,7 +36,7 @@ hard at work on your latest project but you just need to pip in the database
 driver for your customers database and you can call it a night.  Unfortunately,
 it appears that your customers database will not connect to the Python database
 API.  The whole thing is custom and the customer isn't going to supply you with
-a Python version.   They did sent you a Java driver for the database but fat
+a Python version.  They did sent you a Java driver for the database but fat
 lot of good that will do for you.
 
 Stumbling through the internet you find a module that says it can natively
@@ -235,7 +235,7 @@ Based on the previous examples, you start by defining a monitor class
      def getResults(self):
         return np.array(self.readings)
 
-There is a bit to unpack.  You have implemented a Java class from within Python.
+There is a bit to unpack here.  You have implemented a Java class from within Python.
 The Java implementation is simply an ordinary Python class which has be
 decorated with ``@JImplements`` and ``@JOverride``.  When you forgot to place
 the ``@JOverride``, it gave you the response::
@@ -243,7 +243,7 @@ the ``@JOverride``, it gave you the response::
   NotImplementedError: Interface 'gov.hnl.experiment.Monitor' requires
   method 'onMeasurement' to be implemented.
 
-But once you added the ``@JOverride`` it worked properly.  The subject appears
+But once you added the ``@JOverride``, it worked properly.  The subject appears
 to be getting impatient so you hurry up and set up a short run to make sure it
 is working.
 
@@ -256,7 +256,7 @@ is working.
   plt.plot(readings[:,0], readings[:,1)
   plt.show()
 
-To your surprise it says unable to find method addMonitor with an error message::
+To your surprise, it says unable to find method addMonitor with an error message::
 
   AttributeError: 'gov.hnl.experiment.Experiment' object has no attribute 'addMonitor'
 
@@ -485,7 +485,7 @@ the module is assumed to have been started with the following command
 
 This is not the only style used by JPype users.  Some people feel it is
 best to limit the number for symbols in the global scope and instead
-start more like NumPy with a minimalistic approach.
+start with a minimalistic approach.
 
 .. code-block:: python
 
@@ -640,10 +640,10 @@ Stay strong in a weak language
 Before we get into the details of the types that JPype provides, we first need
 to contrast some of the fundamental language differences between Java and
 Python.  Python is inherently a weakly typed language.  Any variable can take
-any type and the type of a particular variable can change over the course the
-lifetime of the program.  Types themselves can be mutable as you can patch an
+any type and the type of a particular variable can change over the
+lifetime of a program.  Types themselves can be mutable as you can patch an
 existing type to add new behaviors.  Python methods can in principle take any
-type of object as an argument, and it the interface is limited it will produce
+type of object as an argument, however if the interface is limited it will produce
 a TypeError to indicate a particular argument requires a specific type.  Python
 objects and classes are open.  Each class and object is basically a dictionary
 storing a set of key value pairs.  Types implemented in native C are often more
@@ -652,15 +652,15 @@ arbitrarily.  But subject to a few restrictions based implementation, it is
 pretty much the wild west.
 
 In contrast, Java is a strongly typed language.  Each variable can only take
-an value of the specified class or a class that derives from the specified
+a value of the specified class or a class that derives from the specified
 class.  Each Java method takes only a specific number and type of arguments.
-The type and number are all checked as compile type to ensure there is
+The type and number are all checked at compile type to ensure there is
 little possibility of error.  As each method requires a specific number and type
 of arguments, a method can be overloaded by having two different
 implementations which take a different list of types sharing the same method
 name. A primitive variable can never hold an object and it can only be converted
 to or from other primitive types unless it is specifically cast to that type.
-Python objects and classes are completely closed.  The methods and fields for a
+Java objects and classes are completely closed.  The methods and fields for a
 particular class and object are defined entirely at compile time.  Though it is
 possible create classes with a dictionary allowing expansion, this is not the
 Java norm and no standard mechanism exists.
@@ -671,22 +671,22 @@ Thus we need to introduce a few Java terms to the Python vocabulary.  These are
 Java conversions
 ----------------
 
-A conversion is a permitted change between an object of one type to another.
+A conversion is a permitted change from an object of one type to another.
 Conversions have three different degrees.  These are: exact, implicit, and
 explicit.
 
 Exact conversions are those in which the type of an object is identical.  In
 Java each class has only one definition thus there is no need for an exact
 conversion.  But when dealing with Python we have objects that are effectively
-identical for which exact conversion runs apply.  For example, a Java string
+identical for which exact conversion rules apply.  For example, a Java string
 and a Python string both bind equally well to a method which requires a string,
 thus this is an exact conversion for the purposes of bind types.
 
 The next level of conversion is implicit.  An implicit conversion is one that
 Java would perform automatically.  For example converting a derived class to is
 base class when setting a field would be an implicit conversion.  Java defines
-an number of other conversions such as converting a primitive to a boxed type
-or from a boxed type back to a primitive.
+a number of other conversions such as converting a primitive to a boxed type
+or from a boxed type back to a primitive as implicit conversions..
 
 Of course not every cast is safe to perform.  For example, converting an object
 whose type is currently viewed as a base type to a derived type is not
@@ -696,7 +696,7 @@ explicit conversions.  To request an explicit conversion an object must be
 "cast" using a cast operator.  In Java, a cast is requested by placing the type
 name in parentheses in front of the object to be cast.  Unfortunately, the same
 syntax is not allowed in Python.  Not every conversion is possible between Java
-types.  Those types that cannot be converted are consider to be type "none".
+types.  Types that cannot be converted are considerer to be conversion type "none".
 
 Details on the standard conversions provided by JPype are given in the section
 `Type Matching`_.
@@ -727,7 +727,7 @@ entirely the domain of whatever JPype has defined including user defined casts.
 Casting is performed through the Python class ``JObject``.  JObject is called
 with two arguments which are the object to be cast and the type to cast too.
 The cast first consults the conversion table to decide if the cast it permitted
-and produces a ``TypeError`` if the conversion is none.
+and produces a ``TypeError`` if the conversion is not possible.
 
 ``JObject`` also serves as a abstract base class for testing if an object
 instance belongs to Java.  All objects that belong to Java will return
@@ -743,9 +743,9 @@ indicate that the object is not available.  The equivalent concept in Python is
 accept None as an augment with implicit conversion.  However, sometime it is
 necessary to pass an explicit type to the method resolution.  To achieve this
 in JPype use ``JObject(None, type)`` which will create a null pointer with the
-desired type.  To test is something is null we have to compare the handle to
+desired type.  To test if something is null we have to compare the handle to
 None.  This unfortunately trips up some code quality checkers.  The idiom in
-Python is ``obj is None``, but as is only matches things that Python
+Python is ``obj is None``, but as this only matches things that Python
 considers identical, we must instead use ``obj==None``.
 
 Type enforcement appears in three different places within JPype.  These are
@@ -772,14 +772,14 @@ arguments.
 
 If no method is found that matches the provided arguments, the method dispatch
 will produce a ``TypeError``.  This is the exact same outcome that Python uses
-when enforcing type safety within it function.  If a type doesn't match a
+when enforcing type safety within a function.  If a type doesn't match a
 ``TypeError`` will be produced.
 
 Dispatch example
 ----------------
 
-When JPype is unable to decide with overload of a method to call, the user
-must resolve the ambiguity. That is where casting comes in.
+When JPype is unable to decide which overload of a method to call, the user
+must resolve the ambiguity.  This is where casting comes in.
 
 Take for example the ``java.io.PrintStream`` class. This class has a variant of
 the print and println methods!
@@ -802,7 +802,7 @@ Changing the line thus:
 
   java.lang.System.out.println(JByte(1)) # <--- wrap the 1 in a JByte
 
-This tells JPype to choose the byte version. When dealing Java types, JPype follows
+This tells JPype to choose the byte version. When dealing with Java types, JPype follows
 the standard Java matching rules.  Types can implicitly grow to larger types
 but will not shrink without an explicit cast.
 
@@ -811,19 +811,18 @@ Primitive Types
 ===============
 
 Unlike Python, Java makes a distinction between objects and primitive data
-types.Primitives represent the minimum data that can be manipulated by a
-computer.  These stand in contrast to objects which have the ability any
-combination of data types and object within themselves and can be inherited
+types.  Primitives represent the minimum data that can be manipulated by a
+computer.  These stand in contrast to objects which have the ability to contain any
+combination of data types and object within themselves, and can be inherited
 from.
 
 Java primitives come in three flavors.  The logical primitive ``boolean`` can
 only take the logical value true and false.  The textual primitive ``char``
 represents one character in a string.  Numerical primitives are intended for
-mathematical calculations either for fixed point or floating point
-calculations.  Numerical primitives come in many sizes depending on how
-much storage is required.  In Java, integer numerical primitives are always
-signed and thus can only reach half their range in terms of bits up or down
-relative to their storage size.
+fixed point or floating point calculations.  Numerical primitives come in many
+sizes depending on how much storage is required.  In Java, integer numerical
+primitives are always signed and thus can only reach half their range in terms
+of bits up or down relative to their storage size.
 
 JPype has mapped each of the primitive types into Python classes.  To avoid
 conflicts with Python, JPype has named each primitive with a capital letter
@@ -908,7 +907,7 @@ name you are accessing the class definition.  When you call ``getClass`` on an
 object it returns a class instance.  The class instance is a object whose
 structure can be used to access the data and methods that define the class
 through reflection.  The class instance cannot directly access the fields or
-method with a class but instead provides its own interface for querying the
+method within a class but instead provides its own interface for querying the
 class.  For the purposes of this document a "class" will refer to the class
 definition which corresponds to the Python concept of a class. Wherever the
 Java reflection class is being referred to we will use the term "class
@@ -927,9 +926,9 @@ be no ambiguity as to what data a particular lookup.
 
 .. _JInterface:
 
-The meta class ``JInterface`` is used to check if an class type is an interface
+The meta class ``JInterface`` is used to check if a class type is an interface
 using ``isinstance``.  Classes that are pure interfaces cannot be instantiated,
-thus there is not such thing as an abstract instance.  Therefore, every
+thus, there is not such thing as an abstract instance.  Therefore, every
 Java object should have Objects cannot actual be pure interfaces.  To
 represent this in Python every interface inherits ``java.lang.Object`` methods
 even through it does not have ``java.lang.Object`` as a parent.  This ensures
@@ -939,11 +938,12 @@ Classes
 -------
 
 In JPype, Java classes are instances of the Python ``type`` and function like
-any ordinary Python class.  However unlike Python types, Java classes are closed
-and cannot be extended.  To enforce extension restrictions a special private
-meta class call ``_jpype._JClass``.  This gatekeeper ensures that the attributes
-of classes cannot be changed accidentally nor extended.  The type tree of Java
-is fixed and closed.
+any ordinary Python class.  However unlike Python types, Java classes are
+closed and cannot be extended.  To enforce extension restrictions, all Java
+classes are created from a special private meta class called
+``_jpype._JClass``.  This gatekeeper ensures that the attributes of classes
+cannot be changed accidentally nor extended.  The type tree of Java is fixed
+and closed.
 
 All Java classes have the following functionality.
 
@@ -952,34 +952,33 @@ Class constructor
   This special method invokes a dispatch whenever the class is called
   as a function.  If an matching constructor is found a new Java instance
   is created and a Python handle to that instance is returned.  In the case
-  of primitive types, the constructor create a Java value with the exact
+  of primitive types, the constructor creates a Java value with the exact
   type requested.
 
 Get attribute
   The Python ``.`` operator gets an attribute from a class with a specified
   name.  If no method or field exists a ``AttributeError`` will be raised.
   For public static methods, the getattr will produce a Python descriptor which
-  call be called to invoke the static method.  For public static fields, a Python
+  can be called to invoke the static method.  For public static fields, a Python
   descriptor will be produced that allows the field to be get or set depending
   on whether the field is final or not.  Public instance methods and instance
-  fields will produce a function that can be applied to a Java object to apply
-  execute that method or access the field.  The function accessor are
+  fields will produce a function that can be applied to a Java object to
+  execute that method or access the field.  Function accessors are
   non-virtual and thus they can provide access to behaviors that have been
   hidden by a derived class.
 
 Set attribute
-  In general, JPype forbids setting of attributes with the expectation on
-  public non final fields.  If you attempt to set any attribute on an object
-  that does not correspond to a settable field it will produce an
-  ``AttributeError``.  There is one exception to this rule.  Sometime it is
-  necessary to attach addition private meta data to classes and
-  objects.  Attempting to set attributes that begin with an underbar are consider
-  to be Python private attributes and thus pass to Python to handle.  This can
-  be used to attach data to the Python instance of the variable.  This data is
-  invisible to Java and it retained only on the Python instance.  Thus if an
-  object with Python meta data is passed to Java and Java returns the object,
-  the new Python handle will not contain any of the attached data as this data
-  was lost when the object was passed to Java.
+  In general, JPype only allows the setting of public non-final fields.  If you
+  attempt to set any attribute on an object that does not correspond to a
+  settable field it will produce an ``AttributeError``.  There is one exception
+  to this rule.  Sometime it is necessary to attach addition private meta data to
+  classes and objects.  Attributes that begin with an underbar are consider to be
+  Python private attributes.  Private attributes handled by the default Python
+  attribute handler allowing these attributes to be attached to to attach data to
+  the Python handle.  This data is invisible to Java and it is retained only on
+  the Python instance.  Thus if an object with Python meta data is passed to Java
+  and Java returns the object, the new Python handle will not contain any of the
+  attached data as this data was lost when the object was passed to Java.
 
 ``class_`` Attribute
   For Java classes there is a special attribute called ``class``.  This
@@ -987,8 +986,8 @@ Set attribute
   of type ``java.lang.Class``.  It can be used to access fields and methods.
 
 Inner classes
-  In addition for methods and fields, public inner classes appear as attributes
-  the class.  This are regular types that can be used to construct objects,
+  For methods and fields, public inner classes appear as attributes of
+  the class.  These are regular types that can be used to construct objects,
   create array, or cast.
 
 String
@@ -1009,13 +1008,13 @@ Hash
   strings produce the same dictionary lookups.  Null pointers produce the
   same hash value as None.
 
-  Java defines hashCode on many objects including mutable ones.  Often
-  the hashCode for a mutable object changes when the object it changed.
+  Java defines ``hashCode`` on many objects including mutable ones.  Often
+  the ``hashCode`` for a mutable object changes when the object is changed.
   Only use immutable Java object (String, Instant, Boxed types) as
   dictionary keys or risk undefined behavior.
 
 Java objects are instances of Java classes and have all of the methods defined
-in the Java class including static members.  But the get attribute method
+in the Java class including static members.  However, the get attribute method
 converts public instance members and fields into descriptors which act on
 the object.
 
@@ -1029,11 +1028,11 @@ In Java all arrays are also objects, but they cannot define any methods beyond
 a limited set of Java array operations.  These operations have been mapped into
 Python to their closest Python equivalent.
 
-Arrays are also have a special type factory to produce them.  In principle
+Arrays also have a special type factory to produce them.  In principle
 one can create an array class using ``JClass`` but the signature required
 would need to use the proper name as required for the Java method
 ``java.lang.Class.forName``.  Instead we call the factory to create a new
-type for use.
+type to use.
 
 .. _JArray:
 
@@ -1041,13 +1040,13 @@ The signature for JArray is ``JArray(type, [dims=1])``.  The type argument
 accepts any Java type including primitives and constructs a new array class.
 This class can be used to create new instances, cast, or as the input to
 the array factory.  The resulting object has a constructor method
-which take either a number which is the desired size of the array or a
+which take either a number, which is the desired size of the array, or a
 sequence which hold the elements of the array.  If the members of the
-initializer sequence are not Java members than each will be converted.  If
+initializer sequence are not Java members then each will be converted.  If
 any element cannot be converted a ``TypeError`` will be raised.
 
 JArray is an abstract base class for all Java classes that are produced.
-Thus one can test if something is an array class type using ``issubclass``
+Thus, one can test if something is an array class using ``issubclass``
 and if Java object is an array using ``isinstance``.
 
 Java arrays provide a few additional Python methods:
@@ -1059,7 +1058,7 @@ Get Item
   as ``jarray[4][2]`` rather than NumPy like multidimensional access.
 
 Get Slice
-  Arrays can be accessed using a slice as would a Python list.
+  Arrays can be accessed using a slice like a Python list.
   The slice operator is  ``[start:stop:step]``.  It should be noted that array
   slice are in fact views to the original array and thus any alteration to
   the slice will affect the original array.  Array slices are clones when
@@ -1073,19 +1072,20 @@ Set Item
 
 Set Slice
   Multiple array items can be set using a slice assigned with a sequence.
-  The sequence must have the same length as slice.  If it does not an exception
-  will be raised.  If the items to be transferred are in fact a buffer
+  The sequence must have the same length as the slice.  If this condition is not
+  met, an exception
+  will be raised.  If the items to be transferred are a buffer,
   then a faster buffer transfer assignment will be used.  When buffer transfers
   are used individual elements are not checked for range, but instead cast
-  just like NumPy.  Thus if we have the elements we wish to assign to the
-  array in a NumPy array named ``a`` we can transfer all of them using
-  ``jarray[:] = a``.
+  just like NumPy.  Thus, if we have the elements we wish to assign to the
+  array contained within a NumPy array named ``na`` we can transfer all of them using
+  ``jarray[:] = na``.
 
 Buffer transfer
   Buffer transfers from a Java array also work for primitive types.  Thus we
   can simply call the Python ``memoryview(jarray)`` function to create a buffer
   that can be used to transfer any portion of a Java array out.  Memory views
-  are to Java arrays are not writable.
+  of Java arrays are not writable.
 
 For each
   Java arrays can be used as the input to a Python for statement.  To iterate
@@ -1093,9 +1093,8 @@ For each
   list comprehensions.
 
 Clone
-  Java arrays can be duplicated using the method clone.  Thus to create a copy
-  call ``jarray.clone()``.  This operates both on the original array and slice
-  views.
+  Java arrays can be duplicated using the method clone.  To create a copy
+  call ``jarray.clone()``.  This operates both on arrays and slice views.
 
 Length
   Arrays in Java have a defined an immutable length.  As such the
@@ -1115,9 +1114,9 @@ additional mathematical operations at this time.
 Buffer classes
 --------------
 
-In addition to array types, JPype also supports buffer types.  Buffers in
-Java come in two flavors.  Array backed buffers have no special access, but
-direct buffers are directly able converted to Python buffers with both
+In addition to array types, JPype also supports Java ``nio`` buffer types.
+Buffers in Java come in two flavors.  Array backed buffers have no special
+access.  Direct buffers are can converted to Python buffers with both
 read and write capabilities.
 
 Each primitive type in Java has its own buffer type named based on the
@@ -1130,10 +1129,10 @@ specified primitive type.
 Java buffer provide an additional Python method:
 
 Buffer transfer
-  Buffer transfers from a Java buffer works for direct buffer.  Array backed
+  Buffer transfers from a Java buffer works for a direct buffer.  Array backed
   buffers will raise a ``BufferError``.  Use the Python ``memoryview(jarray)``
   function to create a buffer that can be used to transfer any portion of a Java
-  buffer out.  Memory views are to Java arrays are not writable.
+  buffer out.  Memory views of Java buffers are readable and writable.
 
 Buffers do not currently support element-wise access.
 
@@ -1157,15 +1156,15 @@ type. The type conversion for this is somewhat looser than Java.  While Java
 provides automatic unboxing of a Integer to a double primitive, JPype can
 implicitly convert Integer to a Double boxed.
 
-To box a primitive into a specific type such as to place in on a
-``java.util.List`` use ``JObject`` on the desired boxed type.  Or call
+To box a primitive into a specific type such as to place it into a
+``java.util.List`` use ``JObject`` on the desired boxed type or call
 the constructor for the desired boxed type directly.  For example:
 
 .. code-block:: python
 
      lst = java.util.ArrayList()
      lst.add(JObject(JInt(1)))      # Create a Java integer and box it
-     lst.add(java.lang.Integer(1))  # Explicitly create a boxed object
+     lst.add(java.lang.Integer(1))  # Explicitly create the desired boxed object
 
 JPype boxed classes have some additional functionality.  As they inherit from
 a mathematical type in Python they can be used in mathematical operations.
@@ -1173,14 +1172,14 @@ But unlike Python numerical types they can take an addition state corresponding
 to being equal to a null pointer.  The Python methods are not aware of this
 new state and will treat the boxed type as a zero if the value is a null.
 
-To test for null simply cast the boxed type to a Python type explicitly and the
-result will be checked.  A null pointer will result in a ``TypeError``.
+To test for null, cast the boxed type to a Python type explicitly and the
+result will be checked.  Casting null pointer will raise a ``TypeError``.
 
 .. code-block:: python
 
      b = JObject(None, java.lang.Integer)
      a = b+0      # This succeeds and a gets the value of zero
-     a = int(b)+0 # This fails and raises TypeError
+     a = int(b)+0 # This fails and raises a TypeError
 
 Boxed objects have the following additional functionality over a normal object.
 
@@ -1192,17 +1191,17 @@ Convert to index
 Convert to int
   Integer and floating point boxed types can be cast into a Python integer
   using the ``int()`` method.  The resulting object is always of type ``int``.
-  Casting a null pointer will raise ``TypeError``.
+  Casting a null pointer will raise a ``TypeError``.
 
 Convert to float
   Integer and floating point boxed types can be cast into a Python float
   using the ``float()`` method.  The resulting object is always of type
-  ``float``.  Casting a null pointer will raise ``TypeError``.
+  ``float``.  Casting a null pointer will raise a ``TypeError``.
 
 Comparison
   Integer and floating point types implement the Python rich comparison API.
   Comparisons for null pointers only succeed for ``==`` and ``!=`` operations.
-  Non-null boxed types act like ordinary numbers for the purposed of
+  Non-null boxed types act like ordinary numbers for the purposes of
   comparison.
 
 
@@ -1240,7 +1239,7 @@ Although all classes inherit from Object, the object class itself has special
 properties that are not inherited.  All Java primitives will implicitly convert
 to their box type when placed in an Object.  In addition, a number of Python
 types implicitly convert to a Java object.  To convert to a different object
-type explicitly cast prior to placing in an object.
+type, explicitly cast the Python object prior to placing in a Java object.
 
 Here a table of the conversions:
 
@@ -1269,21 +1268,20 @@ considered to be equivalent classes.
 
 Because Java strings are in fact just pointers to blob of bytes they are
 actually slightly less than a full object in some JVM implementation.  This is
-somewhat of a violation of the OO principle never take something away by
+a violation of the Object Orients (OO) principle, never take something away by
 inheritance.  Unfortunately, Java is a frequent violator of that rule, so
 this is just one of those exceptions you have to trip over.  Therefore, certain
-operations such as using a string as a threading control for notify or wait
+operations such as using a string as a threading control with ``notify`` or ``wait``
 may lead to unexpected results.  If you are thinking about using a Java string
-in synchronized statement then remember it isn't really an object and chose
-some other object.
+in synchronized statement then remember it is not a real object.
 
 Java strings have a number of additional functions beyond a normal
 object.
 
 Length
   Java strings have a length measured in the number of characters required
-  to represent the string.  Encoding of extends Unicode characters
-  counts for double for the purpose of counting characters.  The string length
+  to represent the string.  Extended Unicode characters
+  count for double for the purpose of counting characters.  The string length
   can be determined using the Python ``len(str)`` function.
 
 Indexing
@@ -1291,42 +1289,45 @@ Indexing
   each character can be accessed as using the Python indexing operator ``[]``.
 
 Hash
-  Java strings use a special hash function which matches the Python has code.
-  This ensured that they will always match the same dictionary keys as
+  Java strings use a special hash function which matches the Python hash code.
+  This ensures that they will always match the same dictionary keys as
   the corresponding string in Python.  The Python hash can be determined using
   the Python ``hash(str)`` function.  Null pointers are not currently handled.
-  To get the actually Java hash use ``s.hashCode()``
+  To get the actually Java hash, use ``s.hashCode()``
 
 Contains
-  Java strings implement the concept of ``in`` in using the Java method
-  contains.  The Java implementation is sufficiently similar that it will
-  work fairly well on strings.  Testing other types using the ``in`` operator
-  will like produce a ``TypeError`` as Java can't convert the other item
-  into something that can be compared with a string.  For example,
-  ``"I" in java.lang.String("team")`` would be equal to False.
+  Java strings implement the concept of ``in`` when using the Java method
+  ``contains``.  The Java implementation is sufficiently similar that it will
+  work fairly well on strings.  
+  For example, ``"I" in java.lang.String("team")`` would be equal to False.
+
+  Testing other types using the ``in`` operator
+  will likely raise a ``TypeError`` if Java is unable to convert the other item
+  into something that can be compared with a string.  
 
 Concatenation
   Java strings can be appended to create a new string which contains the
-  concatenation of the two strings.  This is mapped to the Python operation
+  concatenation of the two strings.  This is mapped to the Python operator
   ``+``.
 
 Comparison
   Java strings are compared using the Java method ``compareTo``.  This
-  method does not currently handle null well and will thus raise and exception.
+  method does not currently handle null and will raise an exception.
 
 For each
-  Java strings are treated as sequences of characters and thus can be used
-  with a for loop construct.  To iterate through all of the characters use
-  the Python construct ``for c in str:``, as does list comprehensions.
+  Java strings are treated as sequences of characters and can be used with a
+  for-loop construct and with list comprehension.  To iterate through all of the
+  characters, use the Python construct ``for c in str:``.
 
 Unfortunately, Java strings do not yet implement the complete list of
-requirements to act as Python sequences for the purposed of ``collections.abc``.
+requirements to act as Python sequences for the purposes of 
+``collections.abc.Sequence``.
 
 .. _JString:
 
 The somewhat outdated JString factory is a Python class that pretends to be a
 Java string type.  It has the marginal advantage that it can be imported before
-the JVM is actually started.  Once the JVM is started its class representation
+the JVM is actually started.  Once the JVM is started, its class representation
 is pointed to ``java.lang.String`` and can be used to construct a new string
 object or to test if an object is actually a Java string using ``isinstance``.
 It does not implement any of the other string methods and just serves as
@@ -1347,18 +1348,18 @@ Exception Classes
 
 Both Python and Java treat exception classes differently from other objects.
 Only these types may be caught as part of a try block.  Therefore, the
-exceptions have a special wrapper.  Most of the mechanics of exceptions happens
-under the surface.  The one difference between Python and Java is the argument
-when queried.  Java arguments can either be the string value, the exception
+exceptions have a special wrapper.  Most of the mechanics of exceptions happen
+under the surface.  The one difference between Python and Java is the behavior 
+when the argument is queried.  Java arguments can either be the string value, the exception
 itself, or the internal construction key depending on how the exception came
 into existence.  Therefore, the arguments to a Java exception should never be
-used as there values are not guaranteed.
+used as their values are not guaranteed.
 
 Java exception can report their stacktrace to Python in two different ways.  If
 printed through the Python stack trace routine, Java exceptions are split
-between the Python code that raised and a phantom Java cause which contains the
+between the Python code that raised and a phantom Java ``cause`` which contains the
 Java exception in Python order.  If the debugging information for the Java
-source is compiled in then Python may even print the Java source code lines
+source is enabled, Python may even print the Java source code lines
 where the error occurred.  If you prefer Java style stack traces then print the
 result from the ``stacktrace()`` method.  Unhandled exception that terminate
 the program will print the Python style stack trace information.
@@ -1381,11 +1382,11 @@ Anonymous Classes
 
 Sometimes Java will produce an anonymous class which does to have any actual
 class representation.  These classes are generated when a method implements
-a class directly as part of its body and it serves as a closure with access
+a class directly as part of its body and they serve as a closure with access
 to some of the variables that were used to create it.
 
 For the purpose of JPype these classes are treated as their parents.  But this
-some what problematic when the parent is simply an interface and not an actual
+is somewhat problematic when the parent is simply an interface and not an actual
 object type.
 
 
@@ -1410,7 +1411,7 @@ following differences:
 - Inner classes appear as member of the containing class. Thus to access them
   import the outer class and call them as members.
 - Non-static inner classes cannot be instantiated from Python code.  Instances
-  received from Java code that can be used without problem.
+  received from Java code can be used without problem.
 
 
 .. _import:
@@ -1418,8 +1419,8 @@ following differences:
 Importing Java classes
 ======================
 
-As Java classes are remote from Python cannot be created nor extended with
-Python they must be imported.  JPype provides three different methods for
+As Java classes are remote from Python and can neither be created nor extended within
+Python, they must be imported.  JPype provides three different methods for
 creating classes.  The highest level API is the use of the import system.
 To import a Java class, one must first import the optional module
 ``jpype.imports`` which has the effect of binding the Java package system
@@ -1453,16 +1454,16 @@ mechanic for importing classes.  The first argument can be a string or
 a Java class instance.  There are two keyword arguments ``loader`` and
 ``initialize``.  The loader can point to an alternative ClassLoader which
 is handy when loading custom classes through mechanisms such as over the
-web.  The ``initialize`` argument corresponds to loading a class without
-loading dependencies nor populate static fields.  This option is likely
-not useful for ordinary users, but was provided calling forName was problematic
+web.  A False ``initialize`` argument loads a class without 
+loading dependencies nor populating static fields.  This option is likely
+not useful for ordinary users.  It was provided when calling forName was problematic
 due to `caller sensitive`_ issues.
 
 
 Type Matching
 =============
 
-The section provides tables documenting the JPype conversion rules.
+This section provides tables documenting the JPype conversion rules.
 JPype defines different levels of "match" between Python objects and Java
 types. These levels are:
 
@@ -1477,8 +1478,8 @@ types. These levels are:
 
 See the previous section on `Java Conversions`_ for details.
 
-There are special rules for ``java.lang.Object`` and ``java.lang.Number``
-as compared with a specific Java object.  (`Object Class`_ and `Number Class`_)
+There are special conversion rules for ``java.lang.Object`` and ``java.lang.Number``.  
+(`Object Class`_ and `Number Class`_)
 
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
 Python\\Java    byte      short       int       long       float     double     boolean     char      String      Array       Object    java.lang.Object   java.lang.Class
@@ -1598,7 +1599,7 @@ these exceptions using the standard Python exception types.
   This exception is synonymous with the Python exception ``IndexError``.
   As many slicing or array operations in Java can produce an
   IndexOutOfBoundsException but the Python contract for slicing of an array
-  should raise an IndexError, this type has been customized to consider
+  should raise an ``IndexError``, this type has been customized to consider
   IndexError to be a base type.
 
 
@@ -1702,7 +1703,7 @@ You can get the JVM found during the automatic search by calling
 
 In order to use the JVM, the architecture of the JVM must match the Python
 version.  A 64 bit Python can only use a 64 bit JVM.  If no suitable JVM can be
-found it should raise and error, but in some cases it may generate a crash
+found it should raise an error, but in some cases it may generate a crash
 depending on how the platform reacts to a bad shared library load.
 
 Launching the JVM
@@ -1741,7 +1742,7 @@ process.
 
 This should list the absolute path to each of the jars that will be used
 for this JVMs lifespan.  Each of the jars will be written out explicitly as
-the JVM does not permit wild-cards, thus JPype has expanded each of them using
+the JVM does not permit wild-cards, thus. JPype has expanded each of them using
 glob.  If an expected jar file is missing the list then it won't be accessable.
 
 There is a flag to determine the current state of the JVM.  Calling
@@ -1888,7 +1889,7 @@ Example taken from JPype ``java.util.Map`` customizer:
 The name of the class does not matter for the purposes of customizer though it
 should be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
-base class, thus ensuring that the methods will appear on the most derived
+base class, thus, ensuring that the methods will appear on the most derived
 Python class and are not hidden by the java implementations. The customizer
 will copy methods, callable objects, ``__new__``, class member strings, and
 properties.
@@ -1966,7 +1967,7 @@ Iterable they have iterator, for loop, and list comprehension.
 
 In addition, methods that take a Java collection can convert a Python
 sequence into collection implicitly assuming all of the elements have a
-conversion into Java.  Otherwise a ``TypeError`` is raised..
+conversion into Java.  Otherwise a ``TypeError`` is raised.
 
 .. _java.util.List:
 
@@ -2031,7 +2032,7 @@ raised.
 MapEntry
 ========
 
-Java map entries unpack into a two value tuple thus supporting iterating
+Java map entries unpack into a two value tuple, thus supporting iterating
 through key value pairs.  Thus is useful when iterating map entries in a
 for loop by pairs.
 
@@ -2226,7 +2227,7 @@ the ``@JImplements`` decorator to the class definition.  The first argument
 to the JImplements decorator is the interface to implement.  Then mark each
 method corresponding to a Java method in the interface with ``@JOverride``.
 When the proxy class is created the methods will be checked against the Java
-interface and raise and exception if the interface is incomplete.
+interface and raise an exception if the interface is incomplete.
 
 High-level proxies have one other important behavior.  When a proxy created
 using the high-level API returns from Java it unpacks back to the original

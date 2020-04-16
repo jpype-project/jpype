@@ -143,19 +143,26 @@ Use:
 Windows
 :::::::
 
-Windows users need a CPython installation and C++ compilers specificly for 
-CPython:
+CPython modules must be built with the same C++ compiler used to build Python.
+The tools listed below work for Python 3.5 to 3.8.  Check with `Python dev guide
+<https://devguide.python.org/setup/>`_ for the latest instructions.
 
 1. Install your desired version of Python (3.5 or higher), e.g., `Anaconda
    <https://www.continuum.io/downloads>`_ is a good choice for users not yet
    familiar with the language
-2. For Python 3 series, Install 
+2. For Python 3 series, Install either 2017 or 2019 Visual Studio.
    `Microsoft Visual Studio 2019 Community Edition
-   <https://visualstudio.microsoft.com/downloads/>`_
+   <https://visualstudio.microsoft.com/downloads/>`_ is known to work.
+
+From the Python developer page: 
+
+   When installing Visual Studio 2019, select the Python development workload and
+   the optional Python native development tools component to obtain all of the
+   necessary build tools. If you do not already have git installed, you can find
+   git for Windows on the Individual components tab of the installer.
 
 When building for windows you must use the Visual Studio developer command
 prompt.
-
 
 Known Bugs/Limitations
 ----------------------
