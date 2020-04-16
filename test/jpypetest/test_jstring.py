@@ -117,3 +117,37 @@ class JStringTestCase(common.JPypeTestCase):
 
     def testNullString(self):
         self.assertEqual(str(JObject(None, JString)), "null")
+
+    def testNullCompare(self):
+        jsn = JObject(None, JString)
+        self.assertFalse("a" == jsn)
+        self.assertTrue("a" != jsn)
+        self.assertFalse(jsn == "a")
+        self.assertTrue(jsn != "a")
+        self.assertTrue(jsn == jsn)
+        self.assertFalse(jsn != jsn)
+        with self.assertRaises(ValueError):
+            jsn < "a"
+        with self.assertRaises(ValueError):
+            jsn <= "a"
+        with self.assertRaises(ValueError):
+            jsn > "a"
+        with self.assertRaises(ValueError):
+            jsn >= "a"
+        with self.assertRaises(ValueError):
+            "a" < jsn
+        with self.assertRaises(ValueError):
+            "a" <= jsn
+        with self.assertRaises(ValueError):
+            "a" > jsn
+        with self.assertRaises(ValueError):
+            "a" >= jsn
+
+    def testNullAdd(self):
+        jsn = JObject(None, JString)
+        with self.assertRaises(ValueError):
+            jsn+"a"
+
+    def testNullHash(self):
+        jsn = JObject(None, JString)
+        self.assertEqual(hash(jsn), hash(None))

@@ -169,6 +169,9 @@ PyObject* PyJPValue_str(PyObject* self)
 	if (cls->isPrimitive())
 		JP_RAISE(PyExc_TypeError, "toString requires a Java object");
 
+	if (value->getValue().l == NULL)
+		return JPPyString::fromStringUTF8("null").keep();
+
 	if (cls == context->_java_lang_String)
 	{
 		PyObject *cache;
