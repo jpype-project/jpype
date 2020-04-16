@@ -185,7 +185,7 @@ def unwrap(name):
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
 
-    def find_spec(self, name, path, target):
+    def find_spec(self, name, path, target=None):
         # If jvm is not started then we just check against the TLDs
         if not _jpype.isStarted():
             base = name.partition('.')[0]

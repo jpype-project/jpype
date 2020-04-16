@@ -152,6 +152,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     placed in memory containers will have the same object id so long
     as Java holds on to it.
 
+  - Dropped support for Cygwin.
+
 - **0.7.1 - 12-16-2019**
 
   - Updated the keyword safe list for Python 3.
