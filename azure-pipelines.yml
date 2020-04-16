@@ -80,6 +80,7 @@ jobs:
     displayName: 'Build'
 
 - job: Test_Linux
+  condition: eq(1,2)
   strategy:
     matrix:
       linux-3.5:
@@ -123,6 +124,7 @@ jobs:
        testRunTitle: 'Publish linux test results for Python $(python.version)'
 
 - job: Test_OSX
+  condition: eq(1,2)
   strategy:
     matrix:
       mac-3.8:
@@ -154,6 +156,7 @@ jobs:
       testRunTitle: 'Publish osx test results for Python $(python.version)'
 
 - job: Test_Windows
+  condition: eq(1,2)
   strategy:
     matrix:
       windows-3.5:
@@ -194,3 +197,31 @@ jobs:
     inputs:
       testResultsFiles: 'build/test/test.xml'
       testRunTitle: 'Publish windows test results for Python $(python.version)'
+
+- job: Test_debug
+  strategy:
+    matrix:
+      linux-3.8:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.8'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      python setup.py sdist
+      pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      pip install numpy jedi
+      gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest/test_jstring.py --checkjni"  -ex "bt" -ex "quit" python
+    displayName: 'Debug module'
+
+
