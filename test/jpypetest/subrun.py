@@ -54,7 +54,7 @@ class Client(object):
         self.process = ctx.Process(target=_execute, args=[
                                    self.inQueue, self.outQueue], daemon=True)
         self.process.start()
-        self.timeout = 5
+        self.timeout = 20
 
     def execute(self, function, *args, **kwargs):
         self.inQueue.put([function.__name__, os.path.abspath(

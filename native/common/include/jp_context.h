@@ -73,6 +73,7 @@ typedef JPRef<jarray> JPArrayRef;
 typedef JPRef<jthrowable> JPThrowableRef;
 
 class JPStackInfo;
+class JPGarbageCollection;
 
 void assertJVMRunning(JPContext* context, const JPStackInfo& info);
 
@@ -200,9 +201,6 @@ public:
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
 
-	JPClassRef _java_lang_RuntimeException;
-	JPClassRef _java_lang_NoSuchMethodError;
-
 	jmethodID m_BooleanValueID;
 	jmethodID m_ByteValueID;
 	jmethodID m_CharValueID;
@@ -235,6 +233,10 @@ private:
 	JPClassLoader *m_ClassLoader;
 	JPReferenceQueue *m_ReferenceQueue;
 
+public:
+	JPClassRef m_RuntimeException;
+	JPClassRef m_NoSuchMethodError;
+
 private:
 	// Java Functions
 	jmethodID m_Object_ToStringID;
@@ -264,6 +266,8 @@ private:
 	bool m_IsShutdown;
 	bool m_IsInitialized;
 	bool m_ConvertStrings;
+public:
+	JPGarbageCollection *m_GC;
 } ;
 
 extern void JPRef_failed();

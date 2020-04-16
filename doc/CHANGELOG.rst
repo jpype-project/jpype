@@ -56,6 +56,19 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     are direct.  They can be converted to numpy arrays with
     ``numpy.asarray(memoryview(obj))``.
 
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
+    future release.
+
+  - jpype.reflect will be removed in the next release.  convertStrings
+    default will become false in the next release.
+
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
+    This allows functions, lambdas, and class constructors to be used
+    whereever Java accepts a lambda.
+
+  - Dropped support for Cygwin.
 
 - **0.7.2 - 2-28-2019**
 
@@ -138,11 +151,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     garbage collection rather than once per use.  Thus proxy objects
     placed in memory containers will have the same object id so long
     as Java holds on to it.
-
-  - Java classes annotated with ``@FunctionalInterface`` can be 
-    converted from any Python object that implements ``__call__``. 
-    This allows functions, lambdas, and class constructors to be used
-    whereever Java accepts a lambda.
 
 - **0.7.1 - 12-16-2019**
 

@@ -31,6 +31,7 @@
 #include "jp_reference_queue.h"
 #include "jp_proxy.h"
 #include "jp_platform.h"
+#include "jp_gc.h"
 
 JPResource::~JPResource()
 {
@@ -84,6 +85,7 @@ JPContext::JPContext()
 	m_ShutdownMethodID = 0;
 	m_IsShutdown = false;
 	m_IsInitialized = false;
+	m_GC = new JPGarbageCollection(this);
 }
 
 JPContext::~JPContext()
@@ -91,6 +93,8 @@ JPContext::~JPContext()
 	delete m_TypeFactory;
 	delete m_TypeManager;
 	delete m_ReferenceQueue;
+	delete m_ProxyFactory;
+	delete m_GC;
 }
 
 bool JPContext::isRunning()
@@ -181,8 +185,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Object_HashCodeID = frame.GetMethodID(cls, "hashCode", "()I");
 		m_Object_GetClassID = frame.GetMethodID(cls, "getClass", "()Ljava/lang/Class;");
 
-		_java_lang_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
-		_java_lang_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
+		m_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
+		m_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
 		cls = frame.FindClass("java/lang/String");
 		m_String_ToCharArrayID = frame.GetMethodID(cls, "toCharArray", "()[C");
@@ -277,6 +281,11 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"newInstance",
 				"()Ljava/lang/Object;");
 
+		m_GC->init(frame);
+
+		// Testing code to make sure C++ exceptions are handled.
+		// FIXME find a way to call this from instrumentation.
+		// throw std::runtime_error("Failed");
 		// Everything is started.
 	}
 	m_IsInitialized = true;

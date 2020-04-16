@@ -35,7 +35,6 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	jlong* types = accessor.get();
 	for (jsize i = 0; i < argLen; i++)
 	{
-		JP_TRACE("Convert", i, type->getCanonicalName());
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = frame.findClassForObject(obj);
 		if (type == NULL)
@@ -68,7 +67,7 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 		{
 			if (hostObj == 0)
 			{
-				env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+				env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 						"host reference is null");
 				return NULL;
 			}
@@ -144,7 +143,7 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 		} catch (...)
 		{
 			JP_TRACE("Other Exception raised");
-			env->functions->ThrowNew(env, context->_java_lang_RuntimeException.get(),
+			env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 					"unknown error occurred");
 		}
 		return NULL;

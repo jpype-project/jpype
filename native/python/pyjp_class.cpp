@@ -25,6 +25,7 @@
 #include "jp_field.h"
 #include "jp_method.h"
 #include "jp_methoddispatch.h"
+#include "jp_primitive_accessor.h"
 
 struct PyJPClass
 {
@@ -169,6 +170,9 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				break;
 			case Py_tp_richcompare:
 				type->tp_richcompare = (richcmpfunc) slot->pfunc;
+				break;
+			case Py_mp_subscript:
+				heap->as_mapping.mp_subscript = (binaryfunc) slot->pfunc;
 				break;
 				// GCOVR_EXCL_START
 			default:
@@ -655,7 +659,7 @@ static PyType_Slot classSlots[] = {
 
 PyTypeObject* PyJPClass_Type = NULL;
 static PyType_Spec classSpec = {
-	"_jpype.PyJPClass",
+	"_jpype._JClass",
 	sizeof (PyJPClass),
 	0,
 	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE,
@@ -671,9 +675,9 @@ void PyJPClass_initType(PyObject* module)
 	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
 	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JClass", (PyObject*) PyJPClass_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
 
 JPClass* PyJPClass_getJPClass(PyObject* obj)

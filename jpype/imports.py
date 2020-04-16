@@ -312,7 +312,7 @@ def _JModule(spec, javaname):
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
 
-    def find_spec(self, name, path, target):
+    def find_spec(self, name, path=None, target=None):
         parts = name.split('.', 1)
         if not parts[0] in _JDOMAINS:
             return None

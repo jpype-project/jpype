@@ -50,9 +50,10 @@ class Makefile(object):
     def captureLink(self, x):
         self.link_command = x[0]
         x = x[1:]
-        self.library = x[-1]
-        print(x[-3:])
-        x = x[:-3]
+        i = x.index("-o")
+        self.library = x[i+1]
+        del x[i]
+        del x[i]
         self.objects = [i for i in x if i.endswith(".o")]
         self.link_options = [i for i in x if not i.endswith(".o")]
         u = self.objects[0].split("/")

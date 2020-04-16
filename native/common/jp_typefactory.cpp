@@ -49,7 +49,7 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 		ex.toJava(frame.getContext());
 	} catch (...)
 	{
-		frame.ThrowNew(frame.getContext()->_java_lang_RuntimeException.get(),
+		frame.ThrowNew(frame.getContext()->m_RuntimeException.get(),
 				"unknown error occurred");
 	}
 }

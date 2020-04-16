@@ -81,15 +81,17 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JP_TRACE(self->m_Method->getName());
+	PyObject *out = NULL;
 	if (self->m_Instance == NULL)
 	{
 		JPPyObjectVector vargs(args);
-		return self->m_Method->invoke(frame, vargs, false).keep();
+		out = self->m_Method->invoke(frame, vargs, false).keep();
 	} else
 	{
 		JPPyObjectVector vargs(self->m_Instance, args);
-		return self->m_Method->invoke(frame, vargs, true).keep();
+		out = self->m_Method->invoke(frame, vargs, true).keep();
 	}
+	return out;
 	JP_PY_CATCH(NULL);
 }
 
@@ -375,10 +377,10 @@ void PyJPMethod_initType(PyObject* module)
 	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
 	PyFunction_Type.tp_flags = flags;
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
 
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)

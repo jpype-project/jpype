@@ -55,15 +55,12 @@ class StartJVMCase(unittest.TestCase):
     def testClasspathArgKeyword(self):
         runStartJVMTest(classpath=cp, convertStrings=False)
 
-    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgList(self):
         runStartJVMTest(classpath=[cp], convertStrings=False)
 
-    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgListEmpty(self):
         runStartJVMTest(classpath=[cp, ''], convertStrings=False)
 
-    @common.unittest.skipIf(sys.platform == "cygwin", "Not supported on cygwin")
     def testClasspathArgDef(self):
         runStartJVMTest('-Djava.class.path=%s' % cp, convertStrings=False)
 
