@@ -44,6 +44,7 @@ public:
 		self->m_Convert = true;
 		Py_INCREF(match.object);
 		jvalue v = self->m_Proxy->getProxy();
+		v.l = frame.keep(v.l);
 		Py_DECREF(self);
 		return v;
 		JP_TRACE_OUT;
