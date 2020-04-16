@@ -212,7 +212,7 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
   - script: |
-      apt install -y gdb
+      sudo apt install gdb
       python setup.py sdist
       pip install dist/*
     displayName: 'Build module'
