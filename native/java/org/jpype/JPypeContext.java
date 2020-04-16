@@ -189,7 +189,7 @@ public class JPypeContext
   /**
    * Stop all JPype resources.
    *
-   * This code is parr of a shutdown hook so it should be bomb proof.
+   * This code is part of a shutdown hook so it should be bomb proof.
    *
    */
   void shutdown()
