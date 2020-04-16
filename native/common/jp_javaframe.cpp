@@ -1131,7 +1131,7 @@ jobject JPJavaFrame::getPackage(const string& str)
 		CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_GetPackageID, &v));
 }
 
-jobject JPJavaFrame::getPackageObject(jobject pkg, string str)
+jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
 {
 	jvalue v;
 	v.l = fromStringUTF8(str);
