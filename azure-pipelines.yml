@@ -80,7 +80,6 @@ jobs:
     displayName: 'Build'
 
 - job: Test_Linux
-  condition: eq(1,2)
   strategy:
     matrix:
       linux-3.5:
@@ -124,7 +123,6 @@ jobs:
        testRunTitle: 'Publish linux test results for Python $(python.version)'
 
 - job: Test_OSX
-  condition: eq(1,2)
   strategy:
     matrix:
       mac-3.8:
@@ -156,7 +154,6 @@ jobs:
       testRunTitle: 'Publish osx test results for Python $(python.version)'
 
 - job: Test_Windows
-  condition: eq(1,2)
   strategy:
     matrix:
       windows-3.5:
@@ -199,6 +196,7 @@ jobs:
       testRunTitle: 'Publish windows test results for Python $(python.version)'
 
 - job: Test_debug
+  condition: eq(1,2)
   strategy:
     matrix:
       linux-3.8:
