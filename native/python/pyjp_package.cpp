@@ -288,7 +288,7 @@ static PyType_Spec packageSpec = {
 void PyJPPackage_initType(PyObject* module)
 {
 	PyJPPackage_Type = (PyTypeObject*) PyType_FromSpecWithBases(&packageSpec, NULL);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JPackage", (PyObject*) PyJPPackage_Type);
-	JP_PY_CHECK_INIT();
+	JP_PY_CHECK();
 }
