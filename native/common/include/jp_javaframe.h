@@ -353,7 +353,7 @@ public:
 
 	jboolean isPackage(const string& str);
 	jobject getPackage(const string& str);
-	jobject getPackageObject(jobject pkg, string str);
+	jobject getPackageObject(jobject pkg, const string& str);
 	jarray getPackageContents(jobject pkg);
 
 } ;
