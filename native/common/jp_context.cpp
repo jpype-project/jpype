@@ -93,7 +93,6 @@ JPContext::~JPContext()
 	delete m_TypeFactory;
 	delete m_TypeManager;
 	delete m_ReferenceQueue;
-	delete m_ProxyFactory;
 	delete m_GC;
 }
 
