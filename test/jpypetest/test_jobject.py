@@ -213,14 +213,19 @@ class JClassTestCase(common.JPypeTestCase):
             _jpype._JObject.__str__(JInt(1))
 
     def testGetAttrFail(self):
-        js = JString("a")
+        jo = JClass("java.lang.Object")()
         with self.assertRaisesRegex(TypeError, "must be string"):
-            getattr(js, object())
+            getattr(jo, object())
 
     def testSetAttrFail(self):
-        js = JString("a")
+        jo = JClass("java.lang.Object")()
         with self.assertRaisesRegex(TypeError, "must be string"):
-            setattr(js, object(), "b")
+            setattr(jo, object(), 1)
+
+    def testSetAttrFail2(self):
+        fixture = JClass("jpype.common.Fixture")()
+        with self.assertRaisesRegex(AttributeError, "is not settable"):
+            setattr(fixture,"callObject",4)
 
     def testJavaPrimitives(self):
         self.assertIsInstance(
@@ -248,4 +253,15 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertIsInstance(self.fixture.callObject(np.int64(1)), java.lang.Long)
         self.assertIsInstance(self.fixture.callObject(np.float32(1)), java.lang.Float)
         self.assertIsInstance(self.fixture.callObject(np.float64(1)), java.lang.Double)
+
+    def testCompare(self):
+        jo = JClass("java.lang.Object")()
+        with self.assertRaisesRegex(TypeError, 'not supported'):
+            jo<0
+        with self.assertRaisesRegex(TypeError, 'not supported'):
+            jo<=0
+        with self.assertRaisesRegex(TypeError, 'not supported'):
+            jo>0
+        with self.assertRaisesRegex(TypeError, 'not supported'):
+            jo>=0
 

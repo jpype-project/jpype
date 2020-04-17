@@ -70,7 +70,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (op != Py_EQ)
 	{
-		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java object", op_names[op]);
+		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java `%s`", op_names[op], Py_TYPE(self)->tp_name);
 		return NULL;
 	}
 

@@ -186,10 +186,7 @@ PyObject* PyJPValue_str(PyObject* self)
 			}
 			jstring jstr = (jstring) value->getValue().l;
 			string str;
-			if (jstr == NULL)
-				str = "null";  // match Java behavior on printing null pointers
-			else
-				str = frame.toStringUTF8(jstr);
+			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
 			PyDict_SetItemString(dict.get(), "_jstr", cache);
 			Py_INCREF(cache);
