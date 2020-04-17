@@ -52,7 +52,7 @@ jobs:
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
       java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
-  #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
+      bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml -X gcov
     displayName: 'Report'
   - task: PublishCodeCoverageResults@1
     inputs:
