@@ -380,12 +380,6 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             JObject(f(), "java.util.function.DoubleUnaryOperator")
         jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
-        # FIXME special case Java does not reflect the SystemError back to Python
-        # Instead it gets changed to a RuntimeError.  We will correct this
-        # once we have pass through of Python exceptions.
-        _jpype.fault("PyJPProxy_getCallable")
-        with self.assertRaises(jpype.JException):
-            jo.applyAsDouble(1)
         with self.assertRaises(jpype.JException):
             jo.applyAsDouble(2)
 
