@@ -15,3 +15,17 @@ class JCharTestCase(common.JPypeTestCase):
             jpype._core.versionTest()
         mock_sys.version_info = (3, 8)
         jpype._core.versionTest()
+
+    def testShutdownHook(self):
+        Thread = JClass("java.lang.Thread")
+        Runnable = JClass("java.lang.Runnable")
+        Runtime = JClass("java.lang.Runtime")
+        @jpype.JImplements(Runnable)
+        class Run:
+            @jpype.JOverride
+            def run(self):
+                pass
+        th = Thread(Run())
+        Runtime.getRuntime().addShutdownHook(th)
+        self.assertTrue(Runtime.getRuntime().removeShutdownHook(th))
+
