@@ -12,13 +12,13 @@ Unlike Jython, JPype does not achive this by re-implementing Python, but
 instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
 providing the access to the entirety of CPython and Java libraries.
-This approach allows direct memory access between the two machine,
+This approach allows direct memory access between the two machines,
 implementation of Java interfaces in Python, and even use of Java threading.
 
 JPype Use Cases
 ===============
 
-Here are three typical reasonse to use JPype.
+Here are three typical reasons to use JPype.
 
 - Access to a Java library from a Python program (Python oriented)
 - Visualization of Java data structures (Java oriented)
