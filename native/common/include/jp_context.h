@@ -114,6 +114,7 @@ class JPContext
 public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
+	friend class JPClass;
 
 	JPContext();
 	virtual ~JPContext();
@@ -223,8 +224,6 @@ private:
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
 private:
-	friend class JPJavaFrame;
-	friend class JPClass;
 	JPContext(const JPContext& orig);
 
 	JavaVM *m_JavaVM;
