@@ -31,6 +31,7 @@ access to the entirety of CPython and Java libraries.
 :Build status:  |testsCI|_ |Docs|_
 :Quality status:  |codecov|_ |lgtm_python|_ |lgtm_java|_ |lgtm_cpp|_
 :Version: |pypiVersion|_ |conda|_
+
      
     .. |testsCI| https://dev.azure.com/jpype-project/jpype/_apis/build/status/jpype-project.jpype?branchName=master
     .. _testsCI: https://dev.azure.com/jpype-project/jpype/_build/latest?definitionId=1&branchName=master
@@ -50,17 +51,14 @@ access to the entirety of CPython and Java libraries.
     .. |lgtm_cpp| https://img.shields.io/lgtm/grade/cpp/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=C++
     .. _lgtm_cpp: https://lgtm.com/projects/g/jpype-project/jpype/context:cpp
 
-
     .. |pypiVersion| image:: https://img.shields.io/pypi/v/Jpype1.svg
     .. _pypiVersion: https://badge.fury.io/py/JPype1
     
     .. |conda| image:: https://img.shields.io/conda/v/conda-forge/jpype1.svg
     .. _conda: https://anaconda.org/conda-forge/jpype1
 
-    .. |Docs| image:: https://img.shields.io/readthedocs/jpype.svg
-    .. _Docs: http://jpype.readthedocs.org/en/latest/
-
-   
+.. |Docs| image:: https://img.shields.io/readthedocs/jpype.svg
+.. _Docs: http://jpype.readthedocs.org/en/latest/
 .. |implementation| image:: https://img.shields.io/pypi/implementation/jpype1.svg
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/jpype1.svg
 .. |javaversions| image:: https://img.shields.io/badge/java-8%20%7C%209%20%7C%2011-purple.svg
