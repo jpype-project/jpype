@@ -28,19 +28,29 @@ access to the entirety of CPython and Java libraries.
  <https://github.com/jpype-project/jpype/issues>`_
 :Documentation: `Python Docs`_
 :License: `Apache 2 License`_
-:Build status:  |travisCI|_ |appveyorCI|_ |Docs|_
-:Test status:  |testsCI|_ 
+:Build status:  |testsCI|_ |Docs|_
+:Quality status:  |codecov|_ |lgtm_python|_ |lgtm_java|_ |lgtm_cpp|_
 :Version: |pypiVersion|_ |conda|_
      
-    .. |travisCI| image:: https://img.shields.io/travis/jpype-project/jpype.svg?label=linux
-    .. _travisCI: https://travis-ci.org/jpype-project/jpype
-    
-    .. |appveyorCI| image:: https://img.shields.io/appveyor/ci/jpype-project/jpype.svg?label=windows
-    .. _appveyorCI: https://ci.appveyor.com/project/jpype-project/jpype
-    
-    .. |testsCI| image:: https://img.shields.io/appveyor/tests/jpype-project/jpype.svg
-    .. _testsCI: https://ci.appveyor.com/project/jpype-project/jpype
-    
+    .. |testsCI| https://dev.azure.com/jpype-project/jpype/_apis/build/status/jpype-project.jpype?branchName=master
+    .. _testsCI: https://dev.azure.com/jpype-project/jpype/_build/latest?definitionId=1&branchName=master
+
+    .. |codecov| https://codecov.io/gh/jpype-project/jpype/branch/master/graph/badge.svg
+    .. _codecov: https://codecov.io/gh/jpype-project/jpype
+
+    .. |alerts| https://img.shields.io/lgtm/alerts/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18
+    .. _alerts: https://lgtm.com/projects/g/jpype-project/jpype/alerts/
+
+    .. |lgtm_python| https://img.shields.io/lgtm/grade/python/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=python
+    .. _lgtm_python: https://lgtm.com/projects/g/jpype-project/jpype/context:python
+
+    .. |lgtm_java| https://img.shields.io/lgtm/grade/java/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=java
+    .. _lgtm_java: https://lgtm.com/projects/g/jpype-project/jpype/context:java
+
+    .. |lgtm_cpp| https://img.shields.io/lgtm/grade/cpp/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=C++
+    .. _lgtm_cpp: https://lgtm.com/projects/g/jpype-project/jpype/context:cpp
+
+
     .. |pypiVersion| image:: https://img.shields.io/pypi/v/Jpype1.svg
     .. _pypiVersion: https://badge.fury.io/py/JPype1
     
