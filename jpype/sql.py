@@ -35,7 +35,7 @@ class ProgrammingError(DatabaseError):
 class NotSupportedError(DatabaseError):
     pass
 
-class _JConnection:
+class Connection:
     def close():
         """ Close the connection now (rather than whenever .__del__() is called).
         
@@ -68,7 +68,7 @@ class _JConnection:
         """ Return a new Cursor Object using the connection. """
         pass
 
-class _JCursor:
+class Cursor:
     @property
     def description(self):
         """

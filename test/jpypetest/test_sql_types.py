@@ -41,6 +41,8 @@ try:
 except ImportError:
     zlib = None
 
+def getConnection():
+    return "jdbc:sqlite::memory:"
 
 class SqliteTypeTests(common.JPypeTestCase):
 
