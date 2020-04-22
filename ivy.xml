@@ -1,0 +1,11 @@
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
+    <info organisation="org.jpype" module="jpype"/>
+
+   <configurations defaultconf="deps">
+       <conf name="deps" description="binary jars"/>
+   </configurations>
+
+   <dependencies>
+       <dependency org="org.xerial" name="sqlite-jdbc" rev="3.27.2.1" conf="deps->default"/>
+   </dependencies>
+</ivy-module>

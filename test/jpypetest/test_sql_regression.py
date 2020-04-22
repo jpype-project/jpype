@@ -39,7 +39,6 @@ import unittest
 import jpype.sql as dbapi2
 import weakref
 import functools
-from test import support
 
 def getConnection():
     return "jdbc:sqlite::memory:"

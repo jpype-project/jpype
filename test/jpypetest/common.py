@@ -99,7 +99,9 @@ class JPypeTestCase(unittest.TestCase):
                 args.append(
                     "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
-
+            import pathlib
+            jpype.addClassPath(pathlib.Path("lib/*").absolute())
+            print("XXX", jpype.getClassPath())
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))

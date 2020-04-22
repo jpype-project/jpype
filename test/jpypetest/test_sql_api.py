@@ -35,9 +35,6 @@ import threading
 import unittest
 import jpype.sql as dbapi2
 
-from test.support import TESTFN, unlink
-
-
 def getConnection():
     return "jdbc:sqlite::memory:"
 
@@ -373,11 +370,11 @@ class CursorTests(common.JPypeTestCase):
             "insert into test(name) values (?)", [(1,), (2,), (3,)])
         self.assertEqual(self.cu.rowcount, 3)
 
-    def testTotalChanges(self):
-        self.cu.execute("insert into test(name) values ('foo')")
-        self.cu.execute("insert into test(name) values ('foo')")
-        self.assertLess(2, self.cx.total_changes,
-                        msg='total changes reported wrong value')
+#    def testTotalChanges(self):
+#        self.cu.execute("insert into test(name) values ('foo')")
+#        self.cu.execute("insert into test(name) values ('foo')")
+#        self.assertLess(2, self.cx.total_changes,
+#                        msg='total changes reported wrong value')
 
     # Checks for executemany:
     # Sequences are required by the DB-API, iterators
@@ -740,69 +737,69 @@ class ConstructorTests(common.JPypeTestCase):
         b = dbapi2.Binary(b"\0'")
 
 
-class ExtensionTests(common.JPypeTestCase):
-
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
-    def testScriptStringSql(self):
-        con = dbapi2.connect(getConnection())
-        cur = con.cursor()
-        cur.executescript("""
-            -- bla bla
-            /* a stupid comment */
-            create table a(i);
-            insert into a(i) values (5);
-            """)
-        cur.execute("select i from a")
-        res = cur.fetchone()[0]
-        self.assertEqual(res, 5)
-
-    def testScriptSyntaxError(self):
-        con = dbapi2.connect(getConnection())
-        cur = con.cursor()
-        with self.assertRaises(dbapi2.OperationalError):
-            cur.executescript(
-                "create table test(x); asdf; create table test2(x)")
-
-    def testScriptErrorNormal(self):
-        con = dbapi2.connect(getConnection())
-        cur = con.cursor()
-        with self.assertRaises(dbapi2.OperationalError):
-            cur.executescript(
-                "create table test(sadfsadfdsa); select foo from hurz;")
-
-    def testCursorExecutescriptAsBytes(self):
-        con = dbapi2.connect(getConnection())
-        cur = con.cursor()
-        with self.assertRaises(ValueError) as cm:
-            cur.executescript(
-                b"create table test(foo); insert into test(foo) values (5);")
-        self.assertEqual(str(cm.exception), 'script argument must be unicode.')
-
-    def testConnectionExecute(self):
-        con = dbapi2.connect(getConnection())
-        result = con.execute("select 5").fetchone()[0]
-        self.assertEqual(result, 5, "Basic test of Connection.execute")
-
-    def testConnectionExecutemany(self):
-        con = dbapi2.connect(getConnection())
-        con.execute("create table test(foo)")
-        con.executemany("insert into test(foo) values (?)", [(3,), (4,)])
-        result = con.execute("select foo from test order by foo").fetchall()
-        self.assertEqual(
-            result[0][0], 3, "Basic test of Connection.executemany")
-        self.assertEqual(
-            result[1][0], 4, "Basic test of Connection.executemany")
-
-    def testConnectionExecutescript(self):
-        con = dbapi2.connect(getConnection())
-        con.executescript(
-            "create table test(foo); insert into test(foo) values (5);")
-        result = con.execute("select foo from test").fetchone()[0]
-        self.assertEqual(result, 5, "Basic test of Connection.executescript")
-
-
+#class ExtensionTests(common.JPypeTestCase):
+#
+#    def setUp(self):
+#        common.JPypeTestCase.setUp(self)
+#
+#    def testScriptStringSql(self):
+#        con = dbapi2.connect(getConnection())
+#        cur = con.cursor()
+#        cur.executescript("""
+#            -- bla bla
+#            /* a stupid comment */
+#            create table a(i);
+#            insert into a(i) values (5);
+#            """)
+#        cur.execute("select i from a")
+#        res = cur.fetchone()[0]
+#        self.assertEqual(res, 5)
+#
+#    def testScriptSyntaxError(self):
+#        con = dbapi2.connect(getConnection())
+#        cur = con.cursor()
+#        with self.assertRaises(dbapi2.OperationalError):
+#            cur.executescript(
+#                "create table test(x); asdf; create table test2(x)")
+#
+#    def testScriptErrorNormal(self):
+#        con = dbapi2.connect(getConnection())
+#        cur = con.cursor()
+#        with self.assertRaises(dbapi2.OperationalError):
+#            cur.executescript(
+#                "create table test(sadfsadfdsa); select foo from hurz;")
+#
+#    def testCursorExecutescriptAsBytes(self):
+#        con = dbapi2.connect(getConnection())
+#        cur = con.cursor()
+#        with self.assertRaises(ValueError) as cm:
+#            cur.executescript(
+#                b"create table test(foo); insert into test(foo) values (5);")
+#        self.assertEqual(str(cm.exception), 'script argument must be unicode.')
+#
+#    def testConnectionExecute(self):
+#        con = dbapi2.connect(getConnection())
+#        result = con.execute("select 5").fetchone()[0]
+#        self.assertEqual(result, 5, "Basic test of Connection.execute")
+#
+#    def testConnectionExecutemany(self):
+#        con = dbapi2.connect(getConnection())
+#        con.execute("create table test(foo)")
+#        con.executemany("insert into test(foo) values (?)", [(3,), (4,)])
+#        result = con.execute("select foo from test order by foo").fetchall()
+#        self.assertEqual(
+#            result[0][0], 3, "Basic test of Connection.executemany")
+#        self.assertEqual(
+#            result[1][0], 4, "Basic test of Connection.executemany")
+#
+#    def testConnectionExecutescript(self):
+#        con = dbapi2.connect(getConnection())
+#        con.executescript(
+#            "create table test(foo); insert into test(foo) values (5);")
+#        result = con.execute("select foo from test").fetchone()[0]
+#        self.assertEqual(result, 5, "Basic test of Connection.executescript")
+ 
+ 
 class ClosedConTests(common.JPypeTestCase):
 
     def setUp(self):
@@ -833,44 +830,44 @@ class ClosedConTests(common.JPypeTestCase):
         with self.assertRaises(dbapi2.ProgrammingError):
             cur.execute("select 4")
 
-    def testClosedCreateFunction(self):
-        con = dbapi2.connect(getConnection())
-        con.close()
-        def f(x): return 17
-        with self.assertRaises(dbapi2.ProgrammingError):
-            con.create_function("foo", 1, f)
+#    def testClosedCreateFunction(self):
+#        con = dbapi2.connect(getConnection())
+#        con.close()
+#        def f(x): return 17
+#        with self.assertRaises(dbapi2.ProgrammingError):
+#            con.create_function("foo", 1, f)
 
-    def testClosedCreateAggregate(self):
-        con = dbapi2.connect(getConnection())
-        con.close()
+#    def testClosedCreateAggregate(self):
+#        con = dbapi2.connect(getConnection())
+#        con.close()
+#
+#        class Agg:
+#            def __init__(self):
+#                pass
+#
+#            def step(self, x):
+#                pass
+#
+#            def finalize(self):
+#                return 17
+#        with self.assertRaises(dbapi2.ProgrammingError):
+#            con.create_aggregate("foo", 1, Agg)
 
-        class Agg:
-            def __init__(self):
-                pass
+#    def testClosedSetAuthorizer(self):
+#        con = dbapi2.connect(getConnection())
+#        con.close()
+#
+#        def authorizer(*args):
+#            return dbapi2.DENY
+#        with self.assertRaises(dbapi2.ProgrammingError):
+#            con.set_authorizer(authorizer)
 
-            def step(self, x):
-                pass
-
-            def finalize(self):
-                return 17
-        with self.assertRaises(dbapi2.ProgrammingError):
-            con.create_aggregate("foo", 1, Agg)
-
-    def testClosedSetAuthorizer(self):
-        con = dbapi2.connect(getConnection())
-        con.close()
-
-        def authorizer(*args):
-            return dbapi2.DENY
-        with self.assertRaises(dbapi2.ProgrammingError):
-            con.set_authorizer(authorizer)
-
-    def testClosedSetProgressCallback(self):
-        con = dbapi2.connect(getConnection())
-        con.close()
-        def progress(): pass
-        with self.assertRaises(dbapi2.ProgrammingError):
-            con.set_progress_handler(progress, 100)
+#    def testClosedSetProgressCallback(self):
+#        con = dbapi2.connect(getConnection())
+#        con.close()
+#        def progress(): pass
+#        with self.assertRaises(dbapi2.ProgrammingError):
+#            con.set_progress_handler(progress, 100)
 
     def testClosedCall(self):
         con = dbapi2.connect(getConnection())
