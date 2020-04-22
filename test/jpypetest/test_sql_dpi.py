@@ -1,4 +1,4 @@
-#-*- coding: iso-8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 # pysqlite2/test/dbapi.py: tests for DB-API compliance
 #
 # Copyright (C) 2004-2010 Gerhard Häring <gh@ghaering.de>
@@ -37,14 +37,16 @@ import jpype.sql as dbapi2
 
 from test.support import TESTFN, unlink
 
+
 def getConnection():
     return "jdbc:sqlite::memory:"
+
 
 class ModuleTests(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
- 
+
     def testAPILevel(self):
         self.assertEqual(dbapi2.apilevel, "2.0",
                          "apilevel is %s, should be 2.0" % dbapi2.apilevel)
@@ -60,7 +62,7 @@ class ModuleTests(common.JPypeTestCase):
 
     def testWarning(self):
         self.assertTrue(issubclass(dbapi2.Warning, Exception),
-                     "Warning is not a subclass of Exception")
+                        "Warning is not a subclass of Exception")
 
     def testError(self):
         self.assertTrue(issubclass(dbapi2.Error, Exception),
@@ -98,6 +100,7 @@ class ModuleTests(common.JPypeTestCase):
         self.assertTrue(issubclass(dbapi2.NotSupportedError,
                                    dbapi2.DatabaseError),
                         "NotSupportedError is not a subclass of DatabaseError")
+
 
 class ConnectionTests(common.JPypeTestCase):
 
@@ -160,7 +163,8 @@ class ConnectionTests(common.JPypeTestCase):
         cx = dbapi2.connect(getConnection())
         cu = cx.cursor()
         self.assertEqual(cx.in_transaction, False)
-        cu.execute("create table transactiontest(id integer primary key, name text)")
+        cu.execute(
+            "create table transactiontest(id integer primary key, name text)")
         self.assertEqual(cx.in_transaction, False)
         cu.execute("insert into transactiontest(name) values (?)", ("foo",))
         self.assertEqual(cx.in_transaction, True)
@@ -181,6 +185,7 @@ class ConnectionTests(common.JPypeTestCase):
         """ Checks that we can successfully connect to a database using an object that
             is PathLike, i.e. has __fspath__(). """
         self.addCleanup(unlink, TESTFN)
+
         class Path:
             def __fspath__(self):
                 return TESTFN
@@ -263,14 +268,16 @@ class CursorTests(common.JPypeTestCase):
     def testExecuteArgStringWithZeroByte(self):
         self.cu.execute("insert into test(name) values (?)", ("Hu\x00go",))
 
-        self.cu.execute("select name from test where id=?", (self.cu.lastrowid,))
+        self.cu.execute("select name from test where id=?",
+                        (self.cu.lastrowid,))
         row = self.cu.fetchone()
         self.assertEqual(row[0], "Hu\x00go")
 
     def testExecuteNonIterable(self):
         with self.assertRaises(ValueError) as cm:
             self.cu.execute("insert into test(id) values (?)", 42)
-        self.assertEqual(str(cm.exception), 'parameters are of unsupported type')
+        self.assertEqual(str(cm.exception),
+                         'parameters are of unsupported type')
 
     def testExecuteWrongNoOfArgs1(self):
         # too many parameters
@@ -297,6 +304,7 @@ class CursorTests(common.JPypeTestCase):
         class L(object):
             def __len__(self):
                 return 1
+
             def __getitem__(self, x):
                 assert x == 0
                 return "foo"
@@ -308,7 +316,8 @@ class CursorTests(common.JPypeTestCase):
 
     def testExecuteDictMapping(self):
         self.cu.execute("insert into test(name) values ('foo')")
-        self.cu.execute("select name from test where name=:name", {"name": "foo"})
+        self.cu.execute(
+            "select name from test where name=:name", {"name": "foo"})
         row = self.cu.fetchone()
         self.assertEqual(row[0], "foo")
 
@@ -325,7 +334,8 @@ class CursorTests(common.JPypeTestCase):
     def testExecuteDictMappingTooLittleArgs(self):
         self.cu.execute("insert into test(name) values ('foo')")
         with self.assertRaises(dbapi2.ProgrammingError):
-            self.cu.execute("select name from test where name=:name and id=:id", {"name": "foo"})
+            self.cu.execute(
+                "select name from test where name=:name and id=:id", {"name": "foo"})
 
     def testExecuteDictMappingNoArgs(self):
         self.cu.execute("insert into test(name) values ('foo')")
@@ -335,7 +345,8 @@ class CursorTests(common.JPypeTestCase):
     def testExecuteDictMappingUnnamed(self):
         self.cu.execute("insert into test(name) values ('foo')")
         with self.assertRaises(dbapi2.ProgrammingError):
-            self.cu.execute("select name from test where name=?", {"name": "foo"})
+            self.cu.execute(
+                "select name from test where name=?", {"name": "foo"})
 
     def testClose(self):
         self.cu.close()
@@ -358,20 +369,23 @@ class CursorTests(common.JPypeTestCase):
 
     def testRowcountExecutemany(self):
         self.cu.execute("delete from test")
-        self.cu.executemany("insert into test(name) values (?)", [(1,), (2,), (3,)])
+        self.cu.executemany(
+            "insert into test(name) values (?)", [(1,), (2,), (3,)])
         self.assertEqual(self.cu.rowcount, 3)
 
     def testTotalChanges(self):
         self.cu.execute("insert into test(name) values ('foo')")
         self.cu.execute("insert into test(name) values ('foo')")
-        self.assertLess(2, self.cx.total_changes, msg='total changes reported wrong value')
+        self.assertLess(2, self.cx.total_changes,
+                        msg='total changes reported wrong value')
 
     # Checks for executemany:
     # Sequences are required by the DB-API, iterators
     # enhancements in pydbapi2.
 
     def testExecuteManySequence(self):
-        self.cu.executemany("insert into test(income) values (?)", [(x,) for x in range(100, 110)])
+        self.cu.executemany("insert into test(income) values (?)", [
+                            (x,) for x in range(100, 110)])
 
     def testExecuteManyIterator(self):
         class MyIter:
@@ -486,7 +500,8 @@ class CursorTests(common.JPypeTestCase):
             cur = self.cx.cursor(f)
 
     def testCursorWrongClass(self):
-        class Foo: pass
+        class Foo:
+            pass
         foo = Foo()
         with self.assertRaises(TypeError):
             cur = dbapi2.Cursor(foo)
@@ -535,7 +550,8 @@ class ThreadTests(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         self.con = dbapi2.connect(getConnection())
         self.cur = self.con.cursor()
-        self.cur.execute("create table test(id integer primary key, name text, bin binary, ratio number, ts timestamp)")
+        self.cur.execute(
+            "create table test(id integer primary key, name text, bin binary, ratio number, ts timestamp)")
 
     def tearDown(self):
         self.cur.close()
@@ -553,7 +569,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"con": self.con, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "con": self.con, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -571,7 +588,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"con": self.con, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "con": self.con, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -589,7 +607,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"con": self.con, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "con": self.con, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -607,7 +626,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"con": self.con, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "con": self.con, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -625,7 +645,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"cur": self.cur, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "cur": self.cur, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -643,7 +664,8 @@ class ThreadTests(common.JPypeTestCase):
                 errors.append("raised wrong exception")
 
         errors = []
-        t = threading.Thread(target=run, kwargs={"cur": self.cur, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "cur": self.cur, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -662,7 +684,8 @@ class ThreadTests(common.JPypeTestCase):
 
         errors = []
         self.cur.execute("insert into test(name) values ('a')")
-        t = threading.Thread(target=run, kwargs={"cur": self.cur, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "cur": self.cur, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -682,7 +705,8 @@ class ThreadTests(common.JPypeTestCase):
         errors = []
         self.cur.execute("insert into test(name) values ('a')")
         self.cur.execute("select name from test")
-        t = threading.Thread(target=run, kwargs={"cur": self.cur, "errors": errors})
+        t = threading.Thread(target=run, kwargs={
+                             "cur": self.cur, "errors": errors})
         t.start()
         t.join()
         if len(errors) > 0:
@@ -738,19 +762,22 @@ class ExtensionTests(common.JPypeTestCase):
         con = dbapi2.connect(getConnection())
         cur = con.cursor()
         with self.assertRaises(dbapi2.OperationalError):
-            cur.executescript("create table test(x); asdf; create table test2(x)")
+            cur.executescript(
+                "create table test(x); asdf; create table test2(x)")
 
     def testScriptErrorNormal(self):
         con = dbapi2.connect(getConnection())
         cur = con.cursor()
         with self.assertRaises(dbapi2.OperationalError):
-            cur.executescript("create table test(sadfsadfdsa); select foo from hurz;")
+            cur.executescript(
+                "create table test(sadfsadfdsa); select foo from hurz;")
 
     def testCursorExecutescriptAsBytes(self):
         con = dbapi2.connect(getConnection())
         cur = con.cursor()
         with self.assertRaises(ValueError) as cm:
-            cur.executescript(b"create table test(foo); insert into test(foo) values (5);")
+            cur.executescript(
+                b"create table test(foo); insert into test(foo) values (5);")
         self.assertEqual(str(cm.exception), 'script argument must be unicode.')
 
     def testConnectionExecute(self):
@@ -763,12 +790,15 @@ class ExtensionTests(common.JPypeTestCase):
         con.execute("create table test(foo)")
         con.executemany("insert into test(foo) values (?)", [(3,), (4,)])
         result = con.execute("select foo from test order by foo").fetchall()
-        self.assertEqual(result[0][0], 3, "Basic test of Connection.executemany")
-        self.assertEqual(result[1][0], 4, "Basic test of Connection.executemany")
+        self.assertEqual(
+            result[0][0], 3, "Basic test of Connection.executemany")
+        self.assertEqual(
+            result[1][0], 4, "Basic test of Connection.executemany")
 
     def testConnectionExecutescript(self):
         con = dbapi2.connect(getConnection())
-        con.executescript("create table test(foo); insert into test(foo) values (5);")
+        con.executescript(
+            "create table test(foo); insert into test(foo) values (5);")
         result = con.execute("select foo from test").fetchone()[0]
         self.assertEqual(result, 5, "Basic test of Connection.executescript")
 
@@ -813,11 +843,14 @@ class ClosedConTests(common.JPypeTestCase):
     def testClosedCreateAggregate(self):
         con = dbapi2.connect(getConnection())
         con.close()
+
         class Agg:
             def __init__(self):
                 pass
+
             def step(self, x):
                 pass
+
             def finalize(self):
                 return 17
         with self.assertRaises(dbapi2.ProgrammingError):
@@ -826,6 +859,7 @@ class ClosedConTests(common.JPypeTestCase):
     def testClosedSetAuthorizer(self):
         con = dbapi2.connect(getConnection())
         con.close()
+
         def authorizer(*args):
             return dbapi2.DENY
         with self.assertRaises(dbapi2.ProgrammingError):
@@ -843,6 +877,7 @@ class ClosedConTests(common.JPypeTestCase):
         con.close()
         with self.assertRaises(dbapi2.ProgrammingError):
             con()
+
 
 class ClosedCurTests(common.JPypeTestCase):
 
@@ -866,14 +901,14 @@ class ClosedCurTests(common.JPypeTestCase):
                 method = getattr(cur, method_name)
                 method(*params)
 
-#  
+#
 #  class SqliteOnConflictTests(unittest.TestCase):
 #      """
 #      Tests for SQLite's "insert on conflict" feature.
-#  
+#
 #      See https://www.dbapi2.org/lang_conflict.html for details.
 #      """
-#  
+#
 #      def setUp(self):
 #          self.cx = dbapi2.connect(getConnection())
 #          self.cu = self.cx.cursor()
@@ -882,11 +917,11 @@ class ClosedCurTests(common.JPypeTestCase):
 #              id INTEGER PRIMARY KEY, name TEXT, unique_name TEXT UNIQUE
 #            );
 #          """)
-#  
+#
 #      def tearDown(self):
 #          self.cu.close()
 #          self.cx.close()
-#  
+#
 #      def testOnConflictRollbackWithExplicitTransaction(self):
 #          self.cx.isolation_level = None  # autocommit mode
 #          self.cu = self.cx.cursor()
@@ -901,7 +936,7 @@ class ClosedCurTests(common.JPypeTestCase):
 #          self.cu.execute("SELECT name, unique_name from test")
 #          # Transaction should have rolled back and nothing should be in table.
 #          self.assertEqual(self.cu.fetchall(), [])
-#  
+#
 #      def testOnConflictAbortRaisesWithExplicitTransactions(self):
 #          # Abort cancels the current sql statement but doesn't change anything
 #          # about the current transaction.
@@ -917,7 +952,7 @@ class ClosedCurTests(common.JPypeTestCase):
 #          self.cu.execute("SELECT name, unique_name FROM test")
 #          # Expect the first two inserts to work, third to do nothing.
 #          self.assertEqual(self.cu.fetchall(), [('abort_test', None), (None, 'foo',)])
-#  
+#
 #      def testOnConflictRollbackWithoutTransaction(self):
 #          # Start of implicit transaction
 #          self.cu.execute("INSERT INTO test(name) VALUES ('abort_test')")
@@ -927,7 +962,7 @@ class ClosedCurTests(common.JPypeTestCase):
 #          self.cu.execute("SELECT name, unique_name FROM test")
 #          # Implicit transaction is rolled back on error.
 #          self.assertEqual(self.cu.fetchall(), [])
-#  
+#
 #      def testOnConflictAbortRaisesWithoutTransactions(self):
 #          # Abort cancels the current sql statement but doesn't change anything
 #          # about the current transaction.
@@ -938,25 +973,25 @@ class ClosedCurTests(common.JPypeTestCase):
 #          # Make sure all other values were inserted.
 #          self.cu.execute("SELECT name, unique_name FROM test")
 #          self.assertEqual(self.cu.fetchall(), [('abort_test', None), (None, 'foo',)])
-#  
+#
 #      def testOnConflictFail(self):
 #          self.cu.execute("INSERT OR FAIL INTO test(unique_name) VALUES ('foo')")
 #          with self.assertRaises(dbapi2.IntegrityError):
 #              self.cu.execute("INSERT OR FAIL INTO test(unique_name) VALUES ('foo')")
 #          self.assertEqual(self.cu.fetchall(), [])
-#  
+#
 #      def testOnConflictIgnore(self):
 #          self.cu.execute("INSERT OR IGNORE INTO test(unique_name) VALUES ('foo')")
 #          # Nothing should happen.
 #          self.cu.execute("INSERT OR IGNORE INTO test(unique_name) VALUES ('foo')")
 #          self.cu.execute("SELECT unique_name FROM test")
 #          self.assertEqual(self.cu.fetchall(), [('foo',)])
-#  
+#
 #      def testOnConflictReplace(self):
 #          self.cu.execute("INSERT OR REPLACE INTO test(name, unique_name) VALUES ('Data!', 'foo')")
 #          # There shouldn't be an IntegrityError exception.
 #          self.cu.execute("INSERT OR REPLACE INTO test(name, unique_name) VALUES ('Very different data!', 'foo')")
 #          self.cu.execute("SELECT name, unique_name FROM test")
 #          self.assertEqual(self.cu.fetchall(), [('Very different data!', 'foo')])
-#  
-#  
+#
+#

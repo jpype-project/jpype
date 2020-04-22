@@ -1,4 +1,4 @@
-#-*- coding: iso-8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 # pysqlite2/test/regression.py: pysqlite regression tests
 #
 # Copyright (C) 2006-2010 Gerhard Häring <gh@ghaering.de>
@@ -40,6 +40,7 @@ import weakref
 import functools
 from test import support
 
+
 class RegressionTests(unittest.TestCase):
     def setUp(self):
         self.con = dbapi2.connect(getConnection())
@@ -54,7 +55,8 @@ class RegressionTests(unittest.TestCase):
 
     def CheckPragmaSchemaVersion(self):
         # This still crashed pysqlite <= 2.2.1
-        con = dbapi2.connect(getConnection(), detect_types=dbapi2.PARSE_COLNAMES)
+        con = dbapi2.connect(
+            getConnection(), detect_types=dbapi2.PARSE_COLNAMES)
         try:
             cur = self.con.cursor()
             cur.execute("pragma schema_version")
@@ -70,7 +72,8 @@ class RegressionTests(unittest.TestCase):
         cursors = [con.cursor() for x in range(5)]
         cursors[0].execute("create table test(x)")
         for i in range(10):
-            cursors[0].executemany("insert into test(x) values (?)", [(x,) for x in range(10)])
+            cursors[0].executemany("insert into test(x) values (?)", [
+                                   (x,) for x in range(10)])
 
         for i in range(5):
             cursors[i].execute(" " * i + "select x from test")
@@ -135,9 +138,11 @@ class RegressionTests(unittest.TestCase):
         a statement. This test exhibits the problem.
         """
         SELECT = "select * from foo"
-        con = dbapi2.connect(getConnection(),detect_types=sqlite.PARSE_DECLTYPES)
+        con = dbapi2.connect(
+            getConnection(), detect_types=sqlite.PARSE_DECLTYPES)
         con.execute("create table foo(bar timestamp)")
-        con.execute("insert into foo(bar) values (?)", (datetime.datetime.now(),))
+        con.execute("insert into foo(bar) values (?)",
+                    (datetime.datetime.now(),))
         con.execute(SELECT)
         con.execute("drop table foo")
         con.execute("create table foo(bar integer)")
@@ -164,6 +169,7 @@ class RegressionTests(unittest.TestCase):
         class CustomStr(str):
             def upper(self):
                 return None
+
             def __del__(self):
                 con.isolation_level = ""
 
@@ -210,7 +216,8 @@ class RegressionTests(unittest.TestCase):
         """
         The Python 3.0 port of the module didn't cope with values of subclasses of str.
         """
-        class MyStr(str): pass
+        class MyStr(str):
+            pass
         self.con.execute("select ?", (MyStr("abc"),))
 
     def CheckConnectionConstructorCallCheck(self):
@@ -279,8 +286,8 @@ class RegressionTests(unittest.TestCase):
         def collation_cb(a, b):
             return 1
         self.assertRaises(dbapi2.ProgrammingError, self.con.create_collation,
-            # Lone surrogate cannot be encoded to the default encoding (utf8)
-            "\uDC80", collation_cb)
+                          # Lone surrogate cannot be encoded to the default encoding (utf8)
+                          "\uDC80", collation_cb)
 
     def CheckRecursiveCursorUse(self):
         """
@@ -311,7 +318,8 @@ class RegressionTests(unittest.TestCase):
         since the microsecond string "456" actually represents "456000".
         """
 
-        con = dbapi2.connect(getConnection(), detect_types=dbapi2.PARSE_DECLTYPES)
+        con = dbapi2.connect(
+            getConnection(), detect_types=dbapi2.PARSE_DECLTYPES)
         cur = con.cursor()
         cur.execute("CREATE TABLE t (x TIMESTAMP)")
 
@@ -319,7 +327,8 @@ class RegressionTests(unittest.TestCase):
         cur.execute("INSERT INTO t (x) VALUES ('2012-04-04 15:06:00.456')")
 
         # Microseconds should be truncated to 123456
-        cur.execute("INSERT INTO t (x) VALUES ('2012-04-04 15:06:00.123456789')")
+        cur.execute(
+            "INSERT INTO t (x) VALUES ('2012-04-04 15:06:00.123456789')")
 
         cur.execute("SELECT * FROM t")
         values = [x[0] for x in cur.fetchall()]
@@ -333,7 +342,6 @@ class RegressionTests(unittest.TestCase):
         # isolation level is a string, not an integer
         self.assertRaises(TypeError,
                           dbapi2.connect, getConnection(), isolation_level=123)
-
 
     def CheckNullCharacter(self):
         # Issue #21147
@@ -408,6 +416,3 @@ class RegressionTests(unittest.TestCase):
             method(printer_instance.log)
             self.con.execute("select 1")  # trigger seg fault
             method(None)
-
-
-

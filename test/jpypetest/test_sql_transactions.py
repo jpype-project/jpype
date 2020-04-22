@@ -1,4 +1,4 @@
-#-*- coding: iso-8859-1 -*-
+# -*- coding: iso-8859-1 -*-
 # pysqlite2/test/transactions.py: tests transactions
 #
 # Copyright (C) 2005-2007 Gerhard Häring <gh@ghaering.de>
@@ -31,11 +31,14 @@ from jpype.types import *
 from jpype import JPackage, java
 import common
 import pytest
-import os, unittest
+import os
+import unittest
 import jpype.sql as dbapi2
+
 
 def get_db_path():
     return "sqlite_testdb"
+
 
 class TransactionTests(unittest.TestCase):
     def setUp(self):
@@ -115,7 +118,7 @@ class TransactionTests(unittest.TestCase):
         self.assertEqual(len(res), 1)
 
         self.con1.isolation_level = "DEFERRED"
-        self.assertEqual(self.con1.isolation_level , "DEFERRED")
+        self.assertEqual(self.con1.isolation_level, "DEFERRED")
         self.cur1.execute("insert into test(i) values (5)")
         self.cur2.execute("select i from test")
         res = self.cur2.fetchall()
@@ -154,6 +157,7 @@ class TransactionTests(unittest.TestCase):
         with self.assertRaises(dbapi2.InterfaceError):
             cur.fetchall()
 
+
 class SpecialCommandTests(unittest.TestCase):
     def setUp(self):
         self.con = dbapi2.connect(getConnection())
@@ -172,6 +176,7 @@ class SpecialCommandTests(unittest.TestCase):
     def tearDown(self):
         self.cur.close()
         self.con.close()
+
 
 class TransactionalDDL(unittest.TestCase):
     def setUp(self):
@@ -205,4 +210,3 @@ class TransactionalDDL(unittest.TestCase):
 
     def tearDown(self):
         self.con.close()
-
