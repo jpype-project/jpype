@@ -2625,9 +2625,12 @@ methods are dealt with, and finally limitations of JPype.
 Autopep8
 ========
 
-Autopep8 reorganize the imports which breaks JPype by moving the Java imports
-above the startJVM statement. This can be avoided by either passing in
-``--ignore E402`` or setting the ignore in ``.pep8``.
+When Autopep8 is applied a Python script, it reorganizes the imports to conform
+to E402_. This has the unfortunate side effect of moving the Java imports above
+the startJVM statement.  This can be avoided by either passing in ``--ignore
+E402`` or setting the ignore in ``.pep8``.
+
+.. _E402: https://www.flake8rules.com/rules/E402.html
 
 Example:
 
@@ -2661,21 +2664,21 @@ can impose performance bottlenecks.
 
 JNI is the standard native interface for most, if not all, JVMs, so there is
 no getting around it. Down the road, it is possible that interfacing with CNI
-(GCC's java native interface) may be used. Right now, the only best to minimize
+(GCC's java native interface) may be used. Right now, the best way to reduce
 the JNI cost is to move time critical code over to Java.
 
 Follow the regular Python philosophy : **Write it all in Python, then write
 only those parts that need it in C.** Except this time, it's write the parts
 that need it in Java.
 
-For the conversion costs, again, nothing much can be done. In cases where a
-given object (be it a string, an object, an array, etc ...) is passed often
-into Java, you can pre-convert it once using the wrappers, and then pass in
-the wrappers. For most situations, this should solve the problem.
+Everytime an object is passed back and forth, it will incure a conversion
+cost.. In cases where a given object (be it a string, an object, an array, etc ...) is passed often
+into Java, the object should be converted once and cached.
+For most situations, this will address speed issues.
 
-To improves speed issues JPype has converted all of the base classes into
-CPython.  This was a very significant speed up over the previous versions of
-the module.  In addition, JPype provides a number for fast buffer transfer
+To improve speed issues, JPype has converted all of the base classes into
+CPython.  This is a very significant speed up over the previous versions of
+the module.  In addition, JPype provides a number of fast buffer transfer
 methods. These routines are triggered automatically working with any buffer
 aware class such as those in NumPy.
 
@@ -2732,7 +2735,7 @@ with the fact that both Java and Python provide garbage collection for their
 memory and neither provided hooks for interacting with an external garbage
 collector.
 
-Typically example, Python is creating a bunch a handles to Java memory for a
+For example, Python is creating a bunch a handles to Java memory for a
 period of time but they are in a structure with a reference loop internal to
 Python.  The structures and handles are small so Python doesn't see an issue,
 but each of those handles is holding 1M of memory in Java space.  As the heap
@@ -2761,11 +2764,10 @@ a process.
 Using JPype for debugging Java code
 ===================================
 
-One common use of JPype is not to develop programs in Python, but rather to
-function as a Read-Eval-Print Loop for Java. When operating Java though
-Python as a method of developing or debugging Java there are a few tricks
-that can be used to simplify the job, beyond being able to probe and plot the
-Java data structures interactively. These methods include:
+One common use of JPype is to function as a Read-Eval-Print Loop for Java. When
+operating Java though Python as a method of developing or debugging Java there
+are a few tricks that can be used to simplify the job.  Beyond being able to
+probe and plot the Java data structures interactively, these methods include:
 
 1) Attaching a debugger to the Java JVM being run under JPype.
 2) Attaching debugging information to a Java exception.
@@ -2797,8 +2799,8 @@ So lets flesh out the details of how to accomplish this...
     jpype.startJVM("-Xint", "-Xdebug", "-Xnoagent",
       "-Xrunjdwp:transport=dt_socket,server=y,address=12999,suspend=n")
 
-Then add a marker in your program when it is time to attach the debugger
-in the form of a pause statement.
+Next, add a marker in the form of a pause statement at the location where
+the debugger should be attached.
 
 .. code-block:: python
 
@@ -2806,7 +2808,7 @@ in the form of a pause statement.
     myobj.callProblematicMethod()
 
 When Python reaches that point during execution, switch to a Java IDE such as
-NetBeans and select Debug : Attach Debugger. That brings up a window (see
+NetBeans and select Debug : Attach Debugger.  This brings up a window (see
 example below).  After attaching (and setting desired break points) go back to
 Python and hit enter to continue.  NetBeans should come to the foreground when
 a breakpoint is hit.
@@ -2831,56 +2833,57 @@ Capturing the state
 If the program is not running in an interactive shell or the program run time
 is long, we may not want to deal with the problem during execution. In this
 case, we can serialize the state of the relevant classes and variables. To use
-this option, we simply make sure all of the classes in Java that we are using
-are Serializable, then add a condition that detects the faulty algorithm state.
-When the fault occurs, we create a ``java.util.HashMap`` and populate it with
-the values we wish to be able to examine from within Python. We then use Java
-serialization to write this state file to disk. We then execute the program and
-collect the resulting state files.
+this option, we mus make sure all of the classes in Java that we are using
+are ``Serializable``.  Then add a condition that detects the faulty algorithm state.
+When the fault occurs, create a ``java.util.HashMap`` and populate it with
+the values to be examined from within Python.  Use serialization to write
+the entire structure to a file.  Execute the program and collect all of the
+state files.
 
-We can then return later with an interactive Python shell, and launch JPype
-with a classpath for the jars and possibly a connection to debugger.
-We load the state file into memory and we can then probe or execute the
-methods that lead up to the fault.
+Once the state files have been collected, start Python with an interactive
+shell and launch JPype with a classpath for the jars.  Finally,
+deserialize the state files to access the Java structures that have
+been recorded.
 
 
 Getting additional diagnostics
 ==============================
 
-For the most part JPype does what its told but that does not mean there can't
-be bugs.  With some many different interactions between Python and Java
-there is always some untested edge case to deal with.
+For the most part JPype does what its told, but that does not mean that 
+there are no bugs.  With some many different interactions between Python and Java
+there is always some untested edge-cases.
 
 JPype has a few diagnostic tools to help deal with these sorts of problems
-but each of them require accessing a "private" JPype symbol which is not
-guaranteed to not be altered, removed, spindled, or mutilated in the future.
-Thus none of the following should every be used in production code.
+but each of them require accessing a "private" JPype symbol which may be
+altered, removed, folded, spindled, or mutilated in any future release.
+Thus none of the following should be used in production code.
 
 Checking the type of a cast
 ---------------------------
 
-Some times it is difficult to understand why a particular overloading is being
-selected by the method dispatch.  To check what type match for a conversion
+Sometimes it is difficult to understand why a particular method overload is being
+selected by the method dispatch.  To check the match type for a conversion
 call the private method ``Class._canConvertToJava``.  This will produce a string
-naming the type of conversion that will be performed.
+naming the type of conversion that will be performed as one of ``none``,
+``explicit``, ``implicit``, or ``exact``..
 
-To test the result of the conversion process call ``Class._convertToJava``.
+To test the result of the conversion process, call ``Class._convertToJava``.
 Unlike an explicit cast, this just attempts to perform the conversion without
-bypassing all of the other logic involved in casting.  Thus it replicates
-exactly the process that will be when a method is called or a field is set.
+bypassing all of the other logic involved in casting.  It replicates
+the exact process used when a method is called or a field is set.
 
 C++ Exceptions in JPype
 -----------------------
 
-Internally JPype can generate C++ exception which are converted into Python
-exceptions for the user.  Sometimes to trace an error back to its source it
-is necessary to see where the original C++ exception was thrown from.  As
+Internally JPype can generate C++ exception which is converted into Python
+exceptions for the user.  To trace an error back to its C++ source, it
+is necessary to obtain the original C++ exception.  As
 all sensitive block have function names compiled in to the try catch blocks,
 these C++ exception stack frames can be extracted as the "cause" of a Python
 exception.  To enable C++ stack traces use the command
 ``_jpype.enableStacktraces(True)``.  Once executed all C++ exceptions that
 fell through a C++ exception handling block will produce an augmented C++
-stack trace.  If the JPype source code is in view of Python, it can even
+stack trace.  If the JPype source code is available to Python, it can even
 print out each line where the stack frame was caught.  This is usually at the
 end of each function that was executed.  JPype does not need to be recompiled
 to use this option.
@@ -2888,27 +2891,27 @@ to use this option.
 Tracing
 -------
 
-Where the process interaction is stateful and thus we need to see what events
-lead up to a failure, JPype provides a tracing mode.  To enable tracing
-recompile JPype with the ``--enable-tracing`` mode set.  It will then write out
-every call along with the object addresses and exceptions that occurred through
-out JPype.  This is keyed to macros that appear at the front and back of each
-JPype call which correspond to a try catch block capturing the address.
+To debug a problem that resulted from a stateful interaction of elements the use
+of the JPype tracing mode may helpful.  To enable tracing
+recompile JPype with the ``--enable-tracing`` mode set.  When code is executed
+with tracing, every JNI call along with the object addresses and exceptions will
+be printed to the console.  This is keyed to macros that appear at the start and end of each
+JPype function.  These macros correspond to a try catch block.
 
-This will often produce very large and verbose tracing logs.  But often that
-is the only good way to see a failure that started in one JNI call but did
-not die until many calls later.
+This will often produce very large and verbose tracing logs.  However, tracing
+is often the only way to observe a failure that originated in one JNI call but did
+not fail until many calls later.
 
 Instrumentation
 ---------------
 
-In order to support coverage tools, JPype can also be compiled with a special
+In order to support coverage tools, JPype can be compiled with a special
 instrumentation mode in which the private module command ``_jpype.fault``
 can be used to trigger an error.  The argument to the fault must be a function
 name as given in the ``JP_TRACE_IN`` macro at the start of each JPype function
-or a special trigger point defined in the code.  We then execute the desired
-JPype Python code which will trigger a ``SystemError`` when it encounters the
-fault point.  This mode of operation can be used to replicate the path
+or a special trigger point defined in the code.  When the fault point is
+encounter it will trigger a ``SystemError``.
+This mode of operation can be used to replicate the path
 that a particular call took and verify that the error handling from that point
 back to Java is safe.
 
@@ -2919,22 +2922,27 @@ JPype module with ``--enable-coverage`` option.
 Using a debugger
 ----------------
 
-If there is a crash in the JPype module, it is often necessary to try to get
-backtrace using a debugger. Unfortunately Java make this task a bit
-complicated.  As part of its memory handling routine, Java takes of the
-segmentation fault handler.  If a fault is triggered to something like a stack
-requiring additional space, Java handles the exception by allocating addition
-memory.  If a fault was triggered by some external source, Java constructs a
-JVM fault report and then transfers control back to the usual segmentation
-fault handler.  In the process this is often corrupt the stack frame.  The
-result is that any debugger attempting to unpack the core file will instead get
-random function addresses.  This forces the user to start JPype with an
-interactive debugger.  But this option also presents challenges.  The first
-action after starting the JVM is a test to see if its segmentation fault
-handler was installed properly which will trigger the debugger to stop
-immediately after the JVM starts.  To avoid this problem debuggers such as gdb
-must to set to ignore the first segmentation fault.  Further details on this
-can be found in the developer guide.
+If there is a crash in the JPype module, it may be necessary to get a backtrace
+using a debugger. Unfortunately Java makes this task a bit complicated.  As
+part of its memory handling routine, Java takes over the segmentation fault
+handler.  Whenever the fault is triggered, Java checks to see if it was the
+result the growth of an internal structure.  If it was simply a need for
+additional space, Java handles the exception by allocating addition memory.  On
+the other hand, if a fault was triggered by some external source, Java
+constructs a JVM fault report and then transfers control back to the usual
+segmentation fault handler.  Java will often corrupt the stack frame.  Any
+debugger attempting to unpack the corrupted core file will instead get random
+function addresses.  
+
+The alternative is for the user to start JPype with an interactive debugger and
+execute to the fault point.  But this option also presents challenges.  The
+first action after starting the JVM is a test to see if its segmentation fault
+handler was installed properly.  Thus it will trigger an intentional
+segmentation fault.  The debugger can not recognize the difference between an
+intentional test and an actual fault, so the test will stop the debugger.  To
+avoid this problem debuggers such as gdb must be set to ignore the first
+segmentation fault.  Further details on this can be found in the developer
+guide.
 
 
 .. _caller sensitive:
@@ -2942,32 +2950,32 @@ can be found in the developer guide.
 Caller sensitive methods
 ========================
 
-The Java security model tracks what caller requested the method as a means
-to determine the level of access to provide.  Internal callers are provided
+The Java security model tracks what caller requested the method as a means to
+determine the level of access to provide.  Internal callers are provided
 privileged access to perform unsafe operations and external callers are given
-safer and more restricted access.  To perform this task the JVM checks what it
-the caller of a method by unraveling the stack and finding who called the
-secure method.
+safer and more restricted access.  To perform this task, the JVM seaches the
+call stack to obtain the calling methods module.
 
-This presents a rather large difficult for method invoked from JNI.  A
-method called from JNI has not stack frame to investigate.  Thus worse than
-been relegated to a safer access, JPype calls were outright denied.  Thus
-resulted in a number of strange behaviors over the years that were forced to
-be worked around.  This was finally solved with the release of Java 12 when
-they outright broken all calls to getMethod by throwing a NullPointer exception
+This presents a difficulty for method invoked from JNI.  A method called from
+JNI lacks any call stack to unravel.  Rather than relegating the call 
+to a safer level of access, the security model would outright deny access to
+certain JPype calls.  This resulted in a number of strange
+behaviors over the years that were forced to be worked around.  This issue was
+finally solved with the release of Java 12 when they outright broken all calls
+to getMethod by throwing a NullPointer exception
 whenever the caller frame was not found.  This inadvertent clued us into
 why Java would act so strangely for certain calls such as constructing a
 SQL database or attempting to call ``Class.forName``.  By creating an actual
-test case to work around we were finally able to resolve this limitation.
+test case to work around we were able to resolve this limitation.
 
-Once we identified the issue the work around it to always call Java methods
-with a stack frame.  But given that we call methods through JNI and the JNI
-interface defines no way to specify an origin for the call, the means we needed
-to develop a different mechanism to access these methods.  Thus rather than
-calling them directly, we instead pass the method id and the list of desired
-arguments to the internal ``org.jpype`` Java package.  It unpacks the request
-and calls the desired method from within Java which means that it now has a
-proper stack frame to refer to allowing access at the safe and restricted level.
+Once we identified the issue, the workaround is only call caller sensitive
+methods from within Java.  But given that we call methods through JNI and the
+JNI interface defines no way to specify an origin for the call, the means we
+needed to develop an alternative calling mechanism.  Instead of calling methods
+directly, we instead pass the method id and the list of desired arguments to
+the internal ``org.jpype`` Java package.  This package unpacks the request and
+executes the desired method from within Java.  The call stack will indicate the
+caller is an external jar and be given the safe and restricted level of access.
 The result is then passed back to through the JNI layer.
 
 This special calling mechanism is slower and more indirect than the normal
@@ -2977,12 +2985,12 @@ are caller sensitive depends on the internals of Java and have changed with
 Java versions.  Older Java versions did not directly mark the caller sensitive
 methods and we must instead blanket bomb all methods belonging to
 ``java.lang.Class``, ``java.lang.ClassLoader``, and  ``java.sql.DriverManager``.
-Newer version specifically annotate the methods requiring caller sensitive
+Newer versions specifically annotate the methods requiring caller sensitive
 treatment, but for some reason this annotation is a package private and thus
-we are forced to search through method annotations by name to find the
+we must search through method annotations by name to find the
 caller sensitive annotation.  Fortunately, this process is only performed once
 when the class is created, and very few methods have a large number of
-annotation so this isn't a performance hit.
+annotations so this isn't a performance hit.
 
 
 .. _limitations:
@@ -3001,7 +3009,7 @@ after the JVM is shutdown as there are still Python objects that point to those
 resources.  If the JVM is restarted, those stale Python objects will be in a
 broken state and the new JVM instance will obtain the references to these
 resulting in a memory leak. Thus it is not possible to start the JVM after it
-has been shutdown with the current implementation.
+has been shut down with the current implementation.
 
 Running multiple JVM
 --------------------
@@ -3022,9 +3030,9 @@ Difficulties that would need to be overcome to remove this limitation include:
   class from JPype to another process. But this has the distinct problem that
   remote JVMs cannot register native methods nor share memory without
   considerable effort.
-- Which JVM would a static class method call. Thus the class types
+- Which JVM would a static class method call. The class types
   would need to be JVM specific (ie. ``JClass('org.MyObject', jvm=JVM1)``)
-- How would can a wrapper for two different JVM coexist in the
+- How would a wrapper from two different JVM coexist in the
   ``jpype._jclass`` module with the same name if different class
   is required for each JVM.
 - How would the user specify which JVM a class resource is created in
@@ -3043,9 +3051,10 @@ Errors reported by Python fault handler
 The JVM takes over the standard fault handlers resulting in unusual behavior if
 Python handlers are installed.  As part of normal operations the JVM will
 trigger a segmentation fault when starting and when interrupting threads.
-Pythons fault handler can intercept these operations thus reporting extraneous
-fault messages or preventing normal JVM operations if Python handles it.  When
-operating with JPype, Python fault handler module should be disabled.
+Pythons fault handler can intercept these operations and interpret these as
+real faults.  The Python fault handler with then reporting extraneous fault
+messages or prevent normal JVM operations.  When operating with JPype, Python
+fault handler module should be disabled.
 
 This is particularly a problem for running under pytest as the first action it
 performs is to take over the error handlers. This can be disabled by adding
@@ -3074,7 +3083,7 @@ The oldest version of Python that we currently support is Python 3.5.  Before
 Python 3.5 there were a number of structural difficulties in the object model
 and the buffering API.  In principle, those features could be excised from
 JPype to extend support to older Python 3 series version, but that is unlikely
-to happen without a lot of effort on your part.
+to happen without a significant effort.
 
 Python 2
 ~~~~~~~~
@@ -3108,11 +3117,11 @@ Jython Python
 ~~~~~~~~~~~~~
 
 If for some reason you wandered here to figure out how to use Java from
-Jython using JPype, you are clearly in the wrong place. On the other hand
+Jython using JPype, you are clearly in the wrong place. On the other hand,
 if you happen to be a Jython developer who is looking for inspiration on how
 to support a more JPype like API that perhaps we can assist you.  Jython aware
-Python module often mistake JPype for Jython resulting in fun to track down
-errors.
+Python modules often mistake JPype for Jython at least up until the point
+that differences in the API triggers an error.
 
 
 Unsupported Java virtual machines
