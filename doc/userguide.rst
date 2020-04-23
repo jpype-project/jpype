@@ -523,7 +523,7 @@ rough edges.
 Python and Java share many of the same concepts.  Types, class, objects,
 function, methods, and members.  But in other places they are rather different.
 Python lacks casting, type declarations, overloading, and many other features of
-a strongly typed language, thus we must exposed those concepts into the Python
+a strongly typed language, thus we must expose those concepts into the Python
 syntax as best we can.  Java for instance has class annotation and Python
 have class decorators.  Both serve the purpose of augmenting a class with
 further information, but are very different in execution.
@@ -605,7 +605,7 @@ We will detail each of these concepts in greater detail in the later sections.
 Name mangling
 =============
 
-When providing Java package, classes, methods, and field to Python,
+When providing Java package, classes, methods, and fields to Python,
 there are occasionally naming conflicts.  For example, if one has a method
 called ``with`` then it would conflict with the Python keyword ``with``.
 Wherever this occurs, JPype renames the offending symbol with a trailing
@@ -976,7 +976,7 @@ Set attribute
   Python private attributes.  Private attributes handled by the default Python
   attribute handler allowing these attributes to be attached to to attach data to
   the Python handle.  This data is invisible to Java and it is retained only on
-  the Python instance.  Thus if an object with Python meta data is passed to Java
+  the Python instance.  If an object with Python meta data is passed to Java
   and Java returns the object, the new Python handle will not contain any of the
   attached data as this data was lost when the object was passed to Java.
 
@@ -992,10 +992,9 @@ Inner classes
 
 String
   The Java method ``toString`` is mapped into the Python function ``str(obj)``.
-  This currently does not operate on null pointers.
 
 Equality
-  The Java method ``equal()`` has been mapped to Python ``==`` with special
+  The Java method ``equals()`` has been mapped to Python ``==`` with special
   augmentations for null pointers.  Java ``==`` is not exposed directly
   as it would lead to numerous errors.  In principle, Java ``==`` should map
   to the Python concept of ``is`` but it is not currently possible to overload
@@ -1060,8 +1059,8 @@ Get Item
 Get Slice
   Arrays can be accessed using a slice like a Python list.
   The slice operator is  ``[start:stop:step]``.  It should be noted that array
-  slice are in fact views to the original array and thus any alteration to
-  the slice will affect the original array.  Array slices are clones when
+  slice are in fact views to the original array so any alteration to
+  the slice will affect the original array.  Array slices are cloned when
   passed back to Java.  To force a clone immediately, use the ``clone`` method.
   Please note that applying the slice operator to a slice produces a new
   slice.  Thus there can sometimes be an ambiguity between multidimensional
