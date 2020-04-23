@@ -1216,8 +1216,7 @@ Java Number.
 Input                      Result
 ========================== ========================
 None                       java.lang.Number(null)
-Python int                 java.lang.Long
-Python float               java.lang.Double
+Python int, float          java.lang.Number
 Java byte,   NumPy int8    java.lang.Byte
 Java short,  NumPy int16   java.lang.Short
 Java int,    NumPy int32   java.lang.Integer
@@ -1249,8 +1248,8 @@ Input            Result
 None             java.lang.Object(null)
 Python str       java.lang.String
 Python bool      java.lang.Boolean
-Python int       java.lang.Long
-Python float     java.lang.Double
+Python int       java.lang.Number
+Python float     java.lang.Number
 ================ =======================
 
 In addition it inherits the conversions from ``java.lang.Number``.
@@ -1494,7 +1493,7 @@ Python\\Java    byte      short       int       long       float     double     
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
     int         I [1]_     I [1]_       X          I        I [3]_     I [3]_     X [8]_                                                       I [11]_
    long         I [1]_     I [1]_     I [1]_       X        I [3]_     I [3]_                                                                  I [11]_
-   float                                                    I [1]_       X                                                                     I [12]_
+   float                                                    I [1]_       X                                                                     I [11]_
  sequence
 dictionary
   string                                                                                     I [2]_       X                                    I
@@ -1543,10 +1542,7 @@ dictionary
         match. This is to allow for resolution between methods
         that take both a Java primitve and a Java boxed type.
 
-.. [11] Boxed to ``java.lang.Long`` as there is no difference
-        between long and int in Python3,
-
-.. [12] Boxed to ``java.lang.Double``
+.. [11] Boxed to ``java.lang.Number``
 
 
 Exception Handling
