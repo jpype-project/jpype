@@ -26,8 +26,8 @@ from . import _jexception
 class _JCloseable(object):
     """ Customizer for ``java.lang.AutoCloseable`` and ``java.io.Closeable``
 
-    This customizer adds support of the `with` operator to all Java
-    classes that implement Java AutoCloseable interface.
+    This customizer adds support of the ``with`` operator to all Java
+    classes that implement the Java ``AutoCloseable`` interface.
 
     Example:
 

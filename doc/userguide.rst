@@ -1421,7 +1421,9 @@ Importing Java classes
 
 As Java classes are remote from Python and can neither be created nor extended within
 Python, they must be imported.  JPype provides three different methods for
-creating classes.  The highest level API is the use of the import system.
+creating classes.
+
+The highest level API is the use of the import system.
 To import a Java class, one must first import the optional module
 ``jpype.imports`` which has the effect of binding the Java package system
 to the Python module lookup.  Once this is completed package or class can
@@ -1430,6 +1432,12 @@ offers a very rich error reporting system.  All failed imports produce
 an ``ImportError`` with diagnostics as to what went wrong.  Errors include
 unable to find the class, unable to find a required dependency, and incorrect
 Java version.
+
+One important caveat when dealing with importing Java modules.  Python always
+imports local directories as modules before calling the Java importer.  So any
+directory named ``java``, ``com``, or ``org`` will hide corresponding Java
+package.  We recommend against naming directories as ``java`` or top level
+domain.
 
 .. _JPackage:
 
