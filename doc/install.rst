@@ -13,7 +13,7 @@ JPype can be installed as pre-compiled binary if you are using the `Anaconda
 and windows on conda-forge.
 
 1. Ensure you have installed Anaconda/Miniconda. Instructions can be found
-   `here <http://conda.pydata.org/docs/install/quick.html>`__.  
+   `here <http://conda.pydata.org/docs/install/quick.html>`__.
 2. Install from
    the conda-forge software channel::
 
@@ -46,7 +46,7 @@ JDK
 
 Once these requirements have been met, one can use pip to build from either the
 source distribution or directly from the repository.  Specific requirements from
-different achitectures are listed below_.   
+different achitectures are listed below_.
 
 
 Build using pip
@@ -59,7 +59,7 @@ To install the latest JPype, use: ::
   pip install JPype1
 
 This will install JPype either from source or binary distribution, depending on
-your operating system and pip version.  
+your operating system and pip version.
 
 To install from the current github master use: ::
 
