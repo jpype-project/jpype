@@ -618,14 +618,14 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 
 static PyObject *PyJPClass_repr(PyJPClass *self)
 {
-	std::stringstream ss;
+	JP_PY_TRY("PyJPClass_repr");
 	string name;
 	if (self->m_Class == NULL)
 		name = ((PyTypeObject*) self)->tp_name;
 	else
 		name = self->m_Class->getCanonicalName();
-	ss << "<java class '" << name << "'>";
-	return PyUnicode_FromString(ss.str().c_str());
+	return PyUnicode_FromFormat("<java class '%s'>", name.c_str());
+	JP_PY_CATCH(0);
 }
 
 static PyMethodDef classMethods[] = {
