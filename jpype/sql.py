@@ -1,4 +1,6 @@
 from _jpype import JClass
+from . import _jinit
+from . import types as _jtypes
 import time
 # This a generic implementation of PEP-249
 __all__ = ['BINARY', 'Binary', 'Connection', 'Cursor', 'DATE', 'DATETIME',
@@ -18,18 +20,14 @@ paramstyle = 'qmark'
 # For compatiblity with sqlite (not implemented)
 PARSE_DECLTYPES = None
 
-SQLException = None
-SQLTimeoutException = None
+_SQLException = None
+_SQLTimeoutException = None
+_conversionTable = {}
 
 def connect(url, driver=None, **kwargs):
     if driver:
         JClass('java.lang.Class').forName(driver).newInstance()
     connection = JClass('java.sql.DriverManager').getConnection(url)
-    global SQLException, SQLTimeoutException
-    if not SQLException:
-        SQLException = JClass("java.sql.SQLException")
-    if not SQLTimeoutException:
-        SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
     return Connection(connection)
 
 
@@ -126,6 +124,7 @@ class Connection:
 class Cursor:
 
     def __init__(self, connection):
+        self._converters = {}
         self._connection = connection
         self._resultSet = None
         self._preparedStatement = None
@@ -158,8 +157,8 @@ class Cursor:
         desc = []
         self._fetchColumns()
         for i in range(1,self._columns+1):
-            desc = (self._metaData.getColumnName(i),
-                    self._metaData.getColumnTypeName(i))
+            desc = (self._resultMetaData.getColumnName(i),
+                    self._resultMetaData.getColumnTypeName(i))
         self._description = desc
         return desc
 
@@ -207,14 +206,19 @@ class Cursor:
         if self._resultSet is not None:
             self._resultSet.close()
             self._resultSet = None
-        self._columns = None
+        self._resultColumns = None
+        self._paramColumns = None
         self._rowcount = -1
         self._preparedStatement = None
-        self._metaData = None
+        self._resultMetaData = None
+        self._paramMetaData = None
         self._description = None
 
     def _setParams(self, params):
-        pass
+        if len(self._paramColumns)!=len(params):
+            raise Error
+        for i in range(0,len(params)):
+            self._preparedStatement.setObject(i+1, params[i])
 
     def execute(self, operation, *params):
         """
@@ -250,16 +254,17 @@ class Cursor:
         self._finish()
         try:
             self._preparedStatement = self._connection.prepareStatement(operation)
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except TypeError:
             raise Error()
         self._setParams(params)
         try:
             if self._preparedStatement.execute():
                 self._resultSet = self._preparedStatement.getResultSet()
-                self._metaData = self._resultSet.getMetaData()
+                self._resultMetaData = self._resultSet.getMetaData()
             else:
                 self._rowcount = self._preparedStatement.getUpdateCount()
-        except SQLException:
+        except _SQLException:
             pass
 
     def executemany(self, operation, *seq_of_parameters):
@@ -283,18 +288,27 @@ class Cursor:
         """
         pass
 
+    def _fetchParams(self):
+        paramsMetaData = self._preparedStatement.getParameterMetaData()
+        self._paramColumns = []
+        for i in range(1, paramsMetaData.getColumnCount()+1):
+            param = getParameterClassName(i)
+            self._paramColumns.append(_conversionTable[param])
+
     def _fetchColumns(self):
         self._validate()
-        if self._columns is not None:
-            return self.columns_
-        self._columns = []
-        for i in range(0, self._metaData.getColumnCount()):
-            self._columns.append(self._converter[self._metaData.getColumnType()])
+        if self._resultColumns is not None:
+            return self._resultColumns
+        self._resultColumns = []
+        for i in range(0, self._resultMetaData.getColumnCount()):
+            result = self._resultMetaData.getColumnClassName()
+            self._resultColumns.append(_conversionTable[result])
+        return self._resultColumns
 
     def _fetchRow(self):
         row = []
-        for index in range(1, len(self._columns)):
-            row.append(self._columns[i].fetch(self._resultSet))
+        for index in range(1, len(self._resultColumns)):
+            row.append(self._resultColumns[i].fetch(self._resultSet))
         return row
 
     def fetchone(self):
@@ -389,7 +403,7 @@ class Cursor:
         self._resultSet.close()
         if self._preparedStatement.getMoreResults():
            self._resultSet = self._prepareStatement.getResultSet()
-           self._metaData = self._resultSet.getMetaData()
+           self._resultMetaData = self._resultSet.getMetaData()
            return True
         else:
            self._rowcount = self._preparedStatement.getUpdageCount()
@@ -488,15 +502,25 @@ def TimestampFromTicks(ticks):
     return Timestamp(*time.localtime(ticks)[:6])
 
 
-def Binary(string):
+def Binary(data):
     """
     This function constructs an object capable of holding a binary (long)
     string value.
     """
-    raise Error()
+    return _jtypes.JArray(_jtypes.JByte)(data)
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
 
+def _populateTypes():
+    global _SQLException, _SQLTimeoutException
+    _SQLException = JClass("java.sql.SQLException")
+    _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
+
+_jinit.registerJVMInitializer(_populateTypes)
+
+##################
+# I honestly have no clue what these are supposed to do.  
+# They don't even appear in sqlite3 dbapi2 interface??
 
 class DBAPITypeObject:
     def __init__(self, *values):
@@ -509,7 +533,6 @@ class DBAPITypeObject:
             return 1
         else:
             return -1
-
 
 STRING = DBAPITypeObject('CHAR', 'NCHAR', 'NVARCHAR', 'VARCHAR', 'OTHER')
 
