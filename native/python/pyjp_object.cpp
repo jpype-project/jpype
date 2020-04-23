@@ -211,12 +211,20 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	JP_PY_CATCH(0);
 }
 
+static PyObject *PyJPObject_repr(PyObject *self)
+{
+	JP_PY_TRY("PyJPObject_repr");
+	return PyUnicode_FromFormat("<java object '%s'>", Py_TYPE(self)->tp_name);
+	JP_PY_CATCH(0);
+}
+
 static PyType_Slot objectSlots[] = {
 	{Py_tp_new,      (void*) &PyJPObject_new},
 	{Py_tp_free,     (void*) &PyJPValue_free},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_str,      (void*) &PyJPValue_str},
+	{Py_tp_repr,     (void*) &PyJPObject_repr},
 	{Py_tp_richcompare, (void*) &PyJPObject_compare},
 	{Py_tp_hash,     (void*) &PyJPObject_hash},
 	{0}
