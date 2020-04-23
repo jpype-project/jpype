@@ -214,13 +214,21 @@ class Cursor:
         self._paramMetaData = None
         self._description = None
 
+    def _fetchParams(self):
+        paramsMetaData = self._preparedStatement.getParameterMetaData()
+        self._paramColumns = []
+        for i in range(1, paramsMetaData.getParameterCount()+1):
+            param = paramsMetaData.getParameterClassName(i)
+            self._paramColumns.append(_conversionTable[param])
+
     def _setParams(self, params):
+        self._fetchParams()
         if len(self._paramColumns)!=len(params):
             raise Error
         for i in range(0,len(params)):
             self._preparedStatement.setObject(i+1, params[i])
 
-    def execute(self, operation, *params):
+    def execute(self, operation, params=None):
         """
         Prepare and execute a database operation (query or command).
 
@@ -248,7 +256,7 @@ class Cursor:
         Return values are not defined.
         """
         self._validate()
-        if not params:
+        if params is None:
             params = ()
         # complete the previous operation
         self._finish()
@@ -288,12 +296,6 @@ class Cursor:
         """
         pass
 
-    def _fetchParams(self):
-        paramsMetaData = self._preparedStatement.getParameterMetaData()
-        self._paramColumns = []
-        for i in range(1, paramsMetaData.getColumnCount()+1):
-            param = getParameterClassName(i)
-            self._paramColumns.append(_conversionTable[param])
 
     def _fetchColumns(self):
         self._validate()
@@ -301,7 +303,7 @@ class Cursor:
             return self._resultColumns
         self._resultColumns = []
         for i in range(0, self._resultMetaData.getColumnCount()):
-            result = self._resultMetaData.getColumnClassName()
+            result = self._resultMetaData.getColumnClassName(i+1)
             self._resultColumns.append(_conversionTable[result])
         return self._resultColumns
 
@@ -426,6 +428,15 @@ class Cursor:
     def arraysize(self, sz):
         self._arraysize = sz
 
+    @property
+    def lastrowid(self):
+        rs = self._preparedStatement.getGeneratedKeys()
+        rs.next()
+        rowId = rs.getLong(1)
+        rs.close()
+        return rowId
+        
+
     def setinputsizes(self, sizes):
         """ This can be used before a call to .execute*() to
         predefine memory areas for the operation's parameters.
@@ -511,13 +522,6 @@ def Binary(data):
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
 
-def _populateTypes():
-    global _SQLException, _SQLTimeoutException
-    _SQLException = JClass("java.sql.SQLException")
-    _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
-
-_jinit.registerJVMInitializer(_populateTypes)
-
 ##################
 # I honestly have no clue what these are supposed to do.  
 # They don't even appear in sqlite3 dbapi2 interface??
@@ -555,3 +559,19 @@ TIME = DBAPITypeObject('TIME')
 DATETIME = DBAPITypeObject('TIMESTAMP')
 
 ROWID = DBAPITypeObject('ROWID')
+
+class _StringConverter:
+    def get(self, rs, column):
+        pass
+    def set(self, st, column, value):
+        pass
+
+def _populateTypes():
+    global _SQLException, _SQLTimeoutException
+    _SQLException = JClass("java.sql.SQLException")
+    _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
+    _conversionTable["java.lang.String"] = _StringConverter()
+
+_jinit.registerJVMInitializer(_populateTypes)
+
+
