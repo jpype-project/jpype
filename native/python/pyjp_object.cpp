@@ -70,7 +70,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (op != Py_EQ)
 	{
-		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java object", op_names[op]);
+		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java `%s`", op_names[op], Py_TYPE(self)->tp_name);
 		return NULL;
 	}
 
@@ -129,7 +129,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 	if (self == Py_None || javaSlot0 == NULL ||
 			(!javaSlot0->getClass()->isPrimitive() && javaSlot0->getValue().l == NULL))
 		null0  = true;
-	if (other == Py_None || ( javaSlot0 != NULL &&
+	if (other == Py_None || (javaSlot1 != NULL &&
 			!javaSlot1->getClass()->isPrimitive() && javaSlot1->getValue().l == NULL))
 		null1  = true;
 
@@ -138,8 +138,6 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 
 	if (!null0)
 		obj0 = javaSlot0->getValue().l;
-	if (!null1)
-		obj1 = javaSlot1->getValue().l;
 
 	if (!null0 && !null1 && javaSlot1 == NULL)
 	{
@@ -160,7 +158,8 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 		if (!cls2->findJavaConversion(match))
 			JP_RAISE(PyExc_TypeError, "Type is not comparable");
 		obj1 = match.convert().l;
-	}
+	} else if (!null1 && javaSlot1 != NULL)
+		obj1 = javaSlot1->getValue().l;
 
 	switch (op)
 	{

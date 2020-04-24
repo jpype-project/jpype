@@ -97,14 +97,12 @@ JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 
 PyObject* JPPyObject::keep()
 {
-#ifndef JP_INSTRUMENTATION
 	// This can only happen if we have a fatal error in our reference
 	// management system.  It should never be triggered by the user.
 	if (pyobj == NULL)
 	{
 		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference");
 	}
-#endif
 	JP_TRACE_PY("pyref keep ", pyobj);
 	PyObject *out = pyobj;
 	pyobj = NULL;

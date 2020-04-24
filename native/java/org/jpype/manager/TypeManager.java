@@ -18,6 +18,7 @@ package org.jpype.manager;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
@@ -48,6 +49,9 @@ public class TypeManager
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
   public Class<? extends Annotation> functionalAnnotation = null;
+  // For reasons that are less than clear, this object cannot be created
+  // during shutdown
+  private Destroyer destroyer = new Destroyer();
 
   public TypeManager()
   {
@@ -159,61 +163,91 @@ public class TypeManager
    */
   public long findClassByName(String name)
   {
-    // Try it directly
-    Class<?> cls = null;
+    Class<?> cls = lookupByName(name);
+    if (cls == null)
+      return 0;
+    return this.findClass(cls);
+  }
+
+  public Class<?> lookupByName(String name)
+  {
+    // Handle arrays
+    if (name.endsWith("[]"))
+    {
+      int dims = 0;
+      while (name.endsWith("[]"))
+      {
+        dims++;
+        name = name.substring(0, name.length() - 2);
+      }
+      Class<?> cls = lookupByName(name);
+      if (cls == null)
+        return null;
+      return Array.newInstance(cls, new int[dims]).getClass();
+    }
+
     try
     {
-      cls = Class.forName(name);
+      // Attempt direct lookup
+      return Class.forName(name);
     } catch (ClassNotFoundException ex)
     {
     }
 
+    // Deal with JNI style names
+    if (name.contains("/"))
+    {
+      try
+      {
+        return Class.forName(name.replaceAll("/", "."));
+      } catch (ClassNotFoundException ex)
+      {
+      }
+    }
+
     // Special case for primitives
-    if (cls == null && !name.contains("."))
+    if (!name.contains("."))
     {
       if ("boolean".equals(name))
-        cls = Boolean.TYPE;
+        return Boolean.TYPE;
       if ("byte".equals(name))
-        cls = Byte.TYPE;
+        return Byte.TYPE;
       if ("char".equals(name))
-        cls = Character.TYPE;
+        return Character.TYPE;
       if ("short".equals(name))
-        cls = Short.TYPE;
+        return Short.TYPE;
       if ("long".equals(name))
-        cls = Long.TYPE;
+        return Long.TYPE;
       if ("int".equals(name))
-        cls = Integer.TYPE;
+        return Integer.TYPE;
       if ("float".equals(name))
-        cls = Float.TYPE;
+        return Float.TYPE;
       if ("double".equals(name))
-        cls = Double.TYPE;
+        return Double.TYPE;
     }
 
     // Attempt to find an inner class
-    if (cls == null)
+    String[] parts = name.split("\\.");
+    StringBuilder sb = new StringBuilder();
+    sb.append(parts[0]);
+    for (int i = 1; i < parts.length; ++i)
     {
-      String[] parts = name.split("\\.");
-      StringBuilder sb = new StringBuilder();
-      sb.append(parts[0]);
-      for (int i = 1; i < parts.length; ++i)
+      try
       {
-        try
+        sb.append(".");
+        sb.append(parts[i]);
+        Class<?> cls = Class.forName(sb.toString());
+        for (int j = i + 1; j < parts.length; ++j)
         {
-          sb.append(".");
-          sb.append(parts[i]);
-          cls = Class.forName(sb.toString());
-          for (int j = i + 1; j < parts.length; ++j)
-          {
-            sb.append("$");
-            sb.append(parts[j]);
-          }
-          cls = Class.forName(sb.toString());
-        } catch (ClassNotFoundException ex)
-        {
+          sb.append("$");
+          sb.append(parts[j]);
         }
+        return Class.forName(sb.toString());
+      } catch (ClassNotFoundException ex)
+      {
       }
     }
-    return this.findClass(cls);
+    return null;
   }
 
   public synchronized void populateMethod(long wrapper, Executable method)
@@ -286,23 +320,20 @@ public class TypeManager
     // point forward.
     this.isShutdown = true;
 
-    // Next set up a block for deleting resources
-    Destroyer dest = new Destroyer();
-
     // Destroy all the resources held in C++
     for (ClassDescriptor entry : this.classMap.values())
     {
       if (entry.constructorDispatch != 0)
-        dest.add(entry.constructorDispatch);
-      dest.add(entry.constructors);
-      dest.add(entry.methodDispatch);
-      dest.add(entry.methods);
-      dest.add(entry.fields);
+        destroyer.add(entry.constructorDispatch);
+      destroyer.add(entry.constructors);
+      destroyer.add(entry.methodDispatch);
+      destroyer.add(entry.methods);
+      destroyer.add(entry.fields);
       if (entry.anonymous != 0)
-        dest.add(entry.anonymous);
-      dest.add(entry.classPtr);
+        destroyer.add(entry.anonymous);
+      destroyer.add(entry.classPtr);
     }
-    dest.flush();
+    destroyer.flush();
 
     // FIXME. If someone attempts to shutdown the JVM within a Python
     // proxy, everything will crash here.  We would lose the class

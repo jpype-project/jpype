@@ -114,6 +114,7 @@ class JPContext
 public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
+	friend class JPClass;
 
 	JPContext();
 	virtual ~JPContext();
@@ -217,9 +218,9 @@ private:
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
+	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jlong contextPtr);
+
 private:
-	friend class JPJavaFrame;
-	friend class JPClass;
 	JPContext(const JPContext& orig);
 
 	JavaVM *m_JavaVM;
@@ -242,7 +243,6 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_Object_EqualsID;
 	jmethodID m_Object_HashCodeID;
-	jmethodID m_ShutdownMethodID;
 	jmethodID m_CallMethodID;
 	jmethodID m_Class_GetNameID;
 	jmethodID m_Context_collectRectangularID;

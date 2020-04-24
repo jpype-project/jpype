@@ -20,6 +20,7 @@ import _jpype
 from . import types as _jtypes
 from . import _classpath
 from . import _jinit
+from . import _jcustomizer
 
 from ._jvmfinder import *
 
@@ -307,20 +308,10 @@ def shutdownJVM():
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
+    import threading
+    if threading.current_thread() is not threading.main_thread():
+        raise RuntimeError("Shutdown must be called from main thread")
     _jpype.shutdown()
-
-
-# In order to shutdown cleanly we need the reference queue stopped
-# otherwise, we can experience a crash if a Java thread is waiting
-# for the GIL.
-def _JTerminate():
-    try:
-        _jpype.shutdown()
-    except RuntimeError:
-        pass
-
-
-atexit.register(_JTerminate)
 
 
 def isThreadAttachedToJVM():
@@ -415,3 +406,12 @@ def getJVMVersion():
         version = runtime.version()
     version = (re.match("([0-9.]+)", str(version)).group(1))
     return tuple([int(i) for i in version.split('.')])
+
+@_jcustomizer.JImplementationFor("java.lang.Runtime")
+class _JRuntime(object):
+    # We need to redirect hooks so that we control the order
+    def addShutdownHook(self, thread):
+        return _jpype.JClass("org.jpype.JPypeContext").getInstance().addShutdownHook(thread)
+    def removeShutdownHook(self, thread):
+        return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+

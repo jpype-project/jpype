@@ -416,3 +416,6 @@ class JDoubleTestCase(common.JPypeTestCase):
             ja[:] = [1, 2, 3]
         with self.assertRaisesRegex(ValueError, "mismatch"):
             ja[:] = a
+
+    def testCastBoolean(self):
+        self.assertEquals(JDouble._canConvertToJava(JBoolean(True)), "none")

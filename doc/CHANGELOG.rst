@@ -3,74 +3,124 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **Next version - unreleased**
-
-  - java.util.Map conforms to Python abc.Mapping API.
-
-  - JFloat properly follows Java rules for conversion from JDouble.
-    JFloats outside of range map to inf and -inf.
-
-  - Add support for direct conversion of multi-dimensional primitive arrays
-    with ``JArray.of(array, [dtype=type])``
-
-  - Fix bug that was causing java.lang.Comparable, byte[], and char[] to be unhashable.
-
-  - Corrected an issue with creation of Exceptions which lack a
-    default constructor.
-
-  - Fixed segfault when methods called by proxy have incorrect number of
-    arguments.
-
-  - Proxies pass Python exceptions properly rather converting to
-    java.lang.RuntimeException
-
-  - java.lang.Number converts automatically from Python and Java numbers.
-    Java primitive types will cast to their proper box type when passed
-    to methods and fields taking Number.
-
-  - java.lang.Object and java.lang.Number box signed, sized numpy types
-    (int8, int16, int32, int64, float32, float64) to the Java boxed type
-    with the same size automatically.  Architecture dependent numpy
-    types map to Long or Double like other Python types.
-
-  - Explicit casting using primitives such as JInt will not produce an
-    OverflowError.  Implicit casting from Python types such as int or float
-    will.
-
-  - Returns for number type primitives will retain their return type
-    information.  These are derived from Python int and float types
-    thus no change in behavior unless chaining from a Java methods
-    which is not allowed in Java without a cast.
-    JBoolean and JChar still produce Python types only.
-
-  - Proxies created with JImplements properly implement toString, hashCode,
-    and equals.
-
-  - JProxy.unwrap() will return the original instance object for proxies
-    created with JProxy.  Otherwise will return the proxy.
-
-  - JProxy instances created with the convert=True argument will automatic
-    unwrap when passed from Java to Python.
-
-  - java.nio.Buffer derived objects can convert to memoryview if they
-    are direct.  They can be converted to numpy arrays with
-    ``numpy.asarray(memoryview(obj))``.
-
-  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
-    is deprecated to support casting to Python wrapper types in Java in a 
-    future release.
-
-  - jpype.reflect will be removed in the next release.  convertStrings
-    default will become false in the next release.
+- **Next Release**
 
   - Java classes annotated with ``@FunctionalInterface`` can be 
     converted from any Python object that implements ``__call__``. 
     This allows functions, lambdas, and class constructors to be used
     whereever Java accepts a lambda.
 
-  - Dropped support for Cygwin.
+
+- **0.7.3 - 4-17-2020**
+
+  - **Replaced type management system**, memory management for internal
+    classes is now completely in Java to allow enhancements for
+    buffer support and revised type conversion system.
+
+  - Python module ``jpype.reflect`` will be removed in the next release.  
+    
+  - ``jpype.startJVM`` option ``convertStrings`` default will become False
+    in the next release.
+
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
+    future release.
+
+  - Dropped support for Cygwin platform.
+
+  - ``JFloat`` properly follows Java rules for conversion from ``JDouble``.
+    Floats outside of range map to inf and -inf.
+
+  - ``java.lang.Number`` converts automatically from Python and Java numbers.
+    Java primitive types will cast to their proper box type when passed
+    to methods and fields taking Number.
+
+  - ``java.lang.Object`` and ``java.lang.Number`` box signed, sized numpy types
+    (int8, int16, int32, int64, float32, float64) to the Java boxed type
+    with the same size automatically.  Architecture dependent numpy
+    types map to Long or Double like other Python types.
+
+  - Explicit casting using primitives such as JInt will not produce an
+    ``OverflowError``.  Implicit casting from Python types such as int or float
+    will.
+
+  - Returns for number type primitives will retain their return type
+    information.  These are derived from Python ``int`` and ``float`` types
+    thus no change in behavior unless chaining from a Java methods
+    which is not allowed in Java without a cast.
+    ``JBoolean`` and ``JChar`` still produce Python types only.
+
+  - Add support for direct conversion of multi-dimensional primitive arrays
+    with ``JArray.of(array, [dtype=type])``
+
+  - ``java.nio.Buffer`` derived objects can convert to memoryview if they
+    are direct.  They can be converted to NumPy arrays with
+    ``numpy.asarray(memoryview(obj))``.
+
+  - Proxies created with ``@JImplements`` properly implement ``toString``, 
+    ``hashCode``, and ``equals``.
+
+  - Proxies pass Python exceptions properly rather converting to
+    ``java.lang.RuntimeException``
+
+  - ``JProxy.unwrap()`` will return the original instance object for proxies
+    created with JProxy.  Otherwise will return the proxy.
+
+  - JProxy instances created with the ``convert=True`` argument will automatic
+    unwrap when passed from Java to Python.
+
+  - JProxy only creates one copy of the invocation handler per
+    garbage collection rather than once per use.  Thus proxy objects
+    placed in memory containers will have the same object id so long
+    as Java holds on to it.
+
+  - ``@JImplements`` with keyword argument ``deferred`` can be started 
+    prior to starting the JVM.  Methods are checked at first object
+    creation.
+
+  - Fix bug that was causing ``java.lang.Comparable``, ``byte[]``,
+    and ``char[]`` to be unhashable.
+
+  - Fix bug causing segfault when throwing Exceptions which lack a
+    default constructor.
+
+  - Fixed segfault when methods called by proxy have incorrect number of
+    arguments.
+
+  - Fixed stack overflow crash on iterating ImmutableList
+
+  - ``java.util.Map`` conforms to Python ``collections.abc.Mapping`` API.
+
+  - ``java.lang.ArrayIndexOutOfBoundsException`` can be caught with
+    ``IndexError`` for consistency with Python exception usage.
+
+  - ``java.lang.NullPointerException`` can be caught with ``ValueError``
+    for consistency with Python exception usage.
+
+  - **Replaced type conversion system**, type conversions test conversion
+    once per type improving speed and increasing flexiblity.
+
 
 - **0.7.2 - 2-28-2019**
+
+  - User defined implicit conversions can be created with ``@JConversion``
+    decorator on Python function taking Java class and Python object.
+    Converter function must produce a Java class instance.
+
+  - ``pathlib.Path`` can be implicitly converted into ``java.lang.File``
+    and ``java.lang.Path``.  
+
+  - ``datetime.datatime`` can implicitly convert to ``java.time.Instant``.
+
+  - ``dict`` and ``collections.abc.Mapping`` can convert to ``java.util.Map``
+    if all element are convertable to Java.  Otherwise, ``TypeError`` is
+    raised.
+
+  - ``list`` and ``collections.abc.Sequence`` can convert to ``java.util.Collection``
+    if all elements are convertable to Java.  Otherwise, ``TypeError`` is
+    raised.
+
+- **0.7.2 - 2-28-2020**
 
   - C++ and Java exceptions hold the traceback as a Python exception
     cause.  It is no longer necessary to call stacktrace() to retrieve
@@ -111,13 +161,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - Java arrays now properly assert range checks when setting elements
     from sequences.
 
-  - Java arrays support memoryview API and no longer required numpy
+  - Java arrays support memoryview API and no longer required NumPy
     to transfer buffer contents.
 
-  - Numpy is no longer an optional extra.  Memory transfer to numpy
+  - Numpy is no longer an optional extra.  Memory transfer to NumPy
     is available without compiling for numpy support.
 
-  - JInterface is now a meta class.  Use isinstance(cls, JInterface)
+  - JInterface is now a meta class.  Use ``isinstance(cls, JInterface)``
     to test for interfaces.
 
   - Fixed memory leak in Proxy invocation
@@ -144,13 +194,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   - java.lang.IndexOutOfBoundsException can be caught with IndexError
     for complience when accessing ``java.util.List`` elements.
 
-  - java.lang.NullPointerException can be caught with ValueError
-    for consistency with Python exception usage.
-
-  - JProxy only creates one copy of the invocation handler per
-    garbage collection rather than once per use.  Thus proxy objects
-    placed in memory containers will have the same object id so long
-    as Java holds on to it.
 
 - **0.7.1 - 12-16-2019**
 
