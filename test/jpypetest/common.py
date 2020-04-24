@@ -87,9 +87,10 @@ class JPypeTestCase(unittest.TestCase):
                 args.append("-Xcheck:jni")
             # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
             # "-Xcheck:jni",
-            if self._jar:
+            if self._classpath:
+                from pathlib import Path
                 import warnings
-                jpype.addClassPath(self._jar)
+                jpype.addClassPath(Path(self._classpath).resolve())  # This needs to be relative to run location
                 warnings.warn("using jar instead of thunks")
             if self._convertStrings:
                 import warnings
@@ -97,7 +98,7 @@ class JPypeTestCase(unittest.TestCase):
             if self._jacoco:
                 import warnings
                 args.append(
-                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=jacoco.exec,includes=org.jpype.*")
+                        "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
 
             classpath_arg %= jpype.getClassPath()
