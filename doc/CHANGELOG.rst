@@ -3,6 +3,14 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+- **Next Release**
+
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
+    This allows functions, lambdas, and class constructors to be used
+    whereever Java accepts a lambda.
+
+
 - **0.7.3 - 4-17-2020**
 
   - **Replaced type management system**, memory management for internal

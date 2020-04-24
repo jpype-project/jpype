@@ -47,5 +47,3 @@ class JCharTestCase(common.JPypeTestCase):
         th.start()
         th.join()
         self.assertTrue(run.rc)
-
-

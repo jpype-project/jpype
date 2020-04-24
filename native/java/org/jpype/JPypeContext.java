@@ -19,6 +19,7 @@ package org.jpype;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -110,7 +111,7 @@ public class JPypeContext
       @Override
       public void run()
       {
-        instance.watchShutdown();
+        instance.shutdown();
       }
     }));
 
@@ -128,7 +129,7 @@ public class JPypeContext
    * fashion. Inherently this is a very dangerous time as portions of Java have
    * already been deactivated.
    */
-  private void watchShutdown()
+  private void shutdown()
   {
     // Try to yield in case there is a race condition.  The user
     // may have installed a shutdown hook, but we cannot verify
@@ -182,18 +183,6 @@ public class JPypeContext
       }
     }
 
-    // Kill all remaining Python resources
-    shutdown();
-  }
-
-  /**
-   * Stop all JPype resources.
-   *
-   * This code is part of a shutdown hook so it should be bomb proof.
-   *
-   */
-  void shutdown()
-  {
     // Inform Python no more calls are permitted
     onShutdown(this.context);
 
@@ -457,6 +446,38 @@ public class JPypeContext
     if (b instanceof java.nio.DoubleBuffer)
       return ((java.nio.DoubleBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
     return true;
+  }
+
+  /**
+   * Utility to probe functional interfaces.
+   *
+   * @param cls
+   * @return
+   */
+  public String getFunctional(Class cls)
+  {
+    // If we don't find it to be a functional interface, then we won't return
+    // the SAM.
+    if (cls.getDeclaredAnnotation(FunctionalInterface.class) == null)
+      return null;
+    for (Method m : cls.getMethods())
+    {
+      if (Modifier.isAbstract(m.getModifiers()))
+      {
+        // This is a very odd construct.  Java allows for java.lang.Object
+        // methods to declared in FunctionalInterfaces and they don't count
+        // towards the single abstract method. So we have to probe the class
+        // until we find something that fails.
+        try
+        {
+          Object.class.getMethod(m.getName(), m.getParameterTypes());
+        } catch (NoSuchMethodException | SecurityException ex)
+        {
+          return m.getName();
+        }
+      }
+    }
+    return null;
   }
 
 }

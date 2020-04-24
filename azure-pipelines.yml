@@ -220,7 +220,7 @@ jobs:
       python setup.py test_java
       pip install -r test-requirements.txt
       pip install numpy jedi
-      gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest/test_jstring.py --checkjni"  -ex "bt" -ex "quit" python
+      gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest/test_proxy.py --checkjni"  -ex "bt" -ex "quit" python
     displayName: 'Debug module'
 
 

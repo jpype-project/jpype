@@ -976,6 +976,7 @@ jboolean JPJavaFrame::orderBuffer(jobject obj)
 
 // GCOVR_EXCL_START
 // This is used when debugging reference counting problems.
+
 jclass JPJavaFrame::getClass(jobject obj)
 {
 	return (jclass) CallObjectMethodA(obj, m_Context->m_Object_GetClassID, 0);
@@ -1085,6 +1086,15 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	v[2].l = args;
 	return frame.keep(frame.CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_CallMethodID, v));
 	JP_TRACE_OUT;
+}
+
+string JPJavaFrame::getFunctional(jclass c)
+{
+	jvalue v;
+	v.l = (jobject) c;
+	return toStringUTF8((jstring) CallObjectMethodA(
+			m_Context->m_JavaContext.get(),
+			m_Context->m_Context_GetFunctionalID, &v));
 }
 
 JPClass *JPJavaFrame::findClass(jclass obj)

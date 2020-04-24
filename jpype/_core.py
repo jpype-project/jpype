@@ -389,11 +389,7 @@ def synchronized(obj):
       # lock is freed when with block ends
 
     """
-    try:
-        return _jpype._JMonitor(obj)
-    except AttributeError as ex:
-        pass
-    raise TypeError("synchronized only applies to java objects")
+    return _jpype._JMonitor(obj)
 
 
 # Naming compatibility
