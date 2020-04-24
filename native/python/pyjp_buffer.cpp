@@ -35,7 +35,7 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	if (self->m_Buffer == NULL)
-		JP_RAISE(PyExc_ValueError, "Null buffer");
+		JP_RAISE(PyExc_ValueError, "Null buffer"); // GCOVR_EXCL_LINE
 	try
 	{
 		JPBuffer *buffer = self->m_Buffer;
