@@ -50,6 +50,7 @@ jobs:
   - script: |
       gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath='build/classes' --jacoco --checkjni"  -ex "bt" -ex "quit" python
       #python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath="build/classes" --jacoco --checkjni
+      cat hs_err*.log
     displayName: 'Test'
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
