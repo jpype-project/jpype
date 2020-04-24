@@ -15,16 +15,7 @@ jobs:
     inputs:
       versionSpec: '3.7'
   - script: |
-      pip install  Pygments==2.3.1
-      pip install  setuptools==41.0.1
-      pip install  docutils==0.14
-      pip install  mock==1.0.1
-      pip install  commonmark==0.8.1
-      pip install  recommonmark==0.5.0
-      pip install  sphinx
-      pip install  sphinx-rtd-theme
-      pip install  readthedocs-sphinx-ext
-      pip install  --exists-action=w --no-cache-dir -r test-requirements.txt
+      pip install  --exists-action=w --no-cache-dir -r test-requirements.txt -r doc/doc-requirements.txt
     displayName: 'Install requirements'
   - script: |
       python -m sphinx -T -b readthedocs -W -d _build/doctrees-readthedocs -D language=en doc build/html
