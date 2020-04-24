@@ -1,4 +1,3 @@
-
 Java QuickStart Guide
 =====================
 
@@ -20,7 +19,6 @@ Lastly, there are a few annotations used to create customized wrappers.
 For the purpose of this guide, we will assume that the following classes were
 defined in Java.  We will also assume the reader knows enough Java and Python
 to be dangerous.  
-
 
 
 .. code-block:: java
@@ -89,7 +87,8 @@ are exposed as Python modules allowing Java to be treated as part of Python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Start Java Virtual        |                                                         | .. code-block:: python                                  |
-| Machine (JVM) with a      |                                                         |     # Launch the JVM                                    |
+| Machine (JVM) with a      |                                                         |                                                         |
+|                           |                                                         |     # Launch the JVM                                    |
 | classpath                 |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+

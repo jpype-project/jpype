@@ -45,7 +45,7 @@ when creating or casting to strings.
 .. autoclass:: jpype.JObject
 .. autoclass:: jpype.JString
 
-.. _synchronized:
+.. _threading:
 
 Threading
 ~~~~~~~~~
