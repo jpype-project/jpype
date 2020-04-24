@@ -125,7 +125,7 @@ class JVMFinderTest(unittest.TestCase):
             pathmock.join = os.path.join
             finder._get_from_bin()
             self.assertEqual(
-                pathmock.dirname.mock_calls[0].args, (finder._java,))
+                pathmock.dirname.mock_calls[0][1], (finder._java,))
 
     # FIXME this test is faking files using the mock system.  Replace it with stub
     # files so that we have a more accurate test rather than just testing the implementation.
