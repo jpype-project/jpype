@@ -111,7 +111,7 @@ public class JPypeContext
       @Override
       public void run()
       {
-        instance.watchShutdown();
+        instance.shutdown();
       }
     }));
 
@@ -129,7 +129,7 @@ public class JPypeContext
    * fashion. Inherently this is a very dangerous time as portions of Java have
    * already been deactivated.
    */
-  private void watchShutdown()
+  private void shutdown()
   {
     // Try to yield in case there is a race condition.  The user
     // may have installed a shutdown hook, but we cannot verify
@@ -183,18 +183,6 @@ public class JPypeContext
       }
     }
 
-    // Kill all remaining Python resources
-    shutdown();
-  }
-
-  /**
-   * Stop all JPype resources.
-   *
-   * This code is part of a shutdown hook so it should be bomb proof.
-   *
-   */
-  void shutdown()
-  {
     // Inform Python no more calls are permitted
     onShutdown(this.context);
 
