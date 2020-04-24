@@ -270,7 +270,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 		jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
 
-		JNINativeMethod method[1];
 		method[0].name = (char*) "hostInvoke";
 		method[0].signature = (char*) "(JLjava/lang/String;JJ[J[Ljava/lang/Object;)Ljava/lang/Object;";
 		method[0].fnPtr = (void*) &JPProxy::hostInvoke;
