@@ -1,7 +1,6 @@
 package org.jpype.ref;
 
 import java.util.ArrayList;
-import static org.jpype.ref.JPypeReferenceQueue.removeHostReference;
 
 /**
  *

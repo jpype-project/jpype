@@ -19,11 +19,13 @@ package org.jpype;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
@@ -110,7 +112,7 @@ public class JPypeContext
       @Override
       public void run()
       {
-        instance.watchShutdown();
+        instance.shutdown();
       }
     }));
 
@@ -128,74 +130,97 @@ public class JPypeContext
    * fashion. Inherently this is a very dangerous time as portions of Java have
    * already been deactivated.
    */
-  private void watchShutdown()
+  @SuppressWarnings(
+          {
+            "CallToThreadYield", "SleepWhileInLoop"
+          })
+  private void shutdown()
   {
-    // Try to yield in case there is a race condition.  The user
-    // may have installed a shutdown hook, but we cannot verify
-    // the order that shutdown hook threads are executed.  Thus we will
-    // try to intentionally lose the race.
-    //
-    // This will only occur if something registered a shutdown hook through
-    // a Java API.  Those registered though the JPype API will be joined
-    // manually.
-    for (int i = 0; i < 5; i++)
+    try
     {
-      try
-      {
-        Thread.sleep(1);
-        Thread.yield();
-      } catch (InterruptedException ex)
-      {
-      }
-    }
-
-    // Execute any used defined shutdown hooks registered with JPype.
-    if (!this.shutdownHooks.isEmpty())
-    {
-      for (Thread thread : this.shutdownHooks)
-      {
-        thread.start();
-      }
-      for (Thread thread : this.shutdownHooks)
+      // Try to yield in case there is a race condition.  The user
+      // may have installed a shutdown hook, but we cannot verify
+      // the order that shutdown hook threads are executed.  Thus we will
+      // try to intentionally lose the race.
+      //
+      // This will only occur if something registered a shutdown hook through
+      // a Java API.  Those registered though the JPype API will be joined
+      // manually.
+      for (int i = 0; i < 5; i++)
       {
         try
         {
-          thread.join();
+          Thread.sleep(1);
+          Thread.yield();
         } catch (InterruptedException ex)
         {
         }
       }
-    }
 
-    // Disable all future calls to proxies
-    this.shutdownFlag.incrementAndGet();
-
-    // Wait for any unregistered proxies to finish so that we don't yank
-    // the rug out from under them result in a segfault.
-    while (this.proxyCount.get() > 0)
-    {
-      try
+      // Execute any used defined shutdown hooks registered with JPype.
+      if (!this.shutdownHooks.isEmpty())
       {
-        Thread.sleep(100);
-      } catch (InterruptedException ex)
-      {
+        for (Thread thread : this.shutdownHooks)
+        {
+          thread.start();
+        }
+        for (Thread thread : this.shutdownHooks)
+        {
+          try
+          {
+            thread.join();
+          } catch (InterruptedException ex)
+          {
+          }
+        }
       }
+
+      // Disable all future calls to proxies
+      this.shutdownFlag.incrementAndGet();
+
+      // Past this point any further execution of a Python proxy would
+      // be fatal.
+      Thread t1 = Thread.currentThread();
+      Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
+
+      for (Thread t : threads.keySet())
+      {
+        if (t1 == t)
+          continue;
+//      if (t.getState() == Thread.State.RUNNABLE)
+        t.interrupt();
+      }
+
+      // Inform Python no more calls are permitted
+      onShutdown(this.context);
+      Thread.yield();
+
+      // Wait for any unregistered proxies to finish so that we don't yank
+      // the rug out from under them result in a segfault.
+      while (this.proxyCount.get() > 0)
+      {
+        try
+        {
+          Thread.sleep(10);
+        } catch (InterruptedException ex)
+        {
+        }
+      }
+
+//    // Check to see if who is alive
+//    threads = Thread.getAllStackTraces();
+//    System.out.println("Check for remaining");
+//    for (Thread t : threads.keySet())
+//    {
+//      System.out.println("  " + t.getName() + " " + t.getState());
+//      for (StackTraceElement e : t.getValue())
+//      {
+//        System.out.println("    " + e.getClassName());
+//      }
+//    }
+    } catch (Throwable th)
+    {
     }
-
-    // Kill all remaining Python resources
-    shutdown();
-  }
-
-  /**
-   * Stop all JPype resources.
-   *
-   * This code is part of a shutdown hook so it should be bomb proof.
-   *
-   */
-  void shutdown()
-  {
-    // Inform Python no more calls are permitted
-    onShutdown(this.context);
 
     // Release all Python references
     try
@@ -457,6 +482,38 @@ public class JPypeContext
     if (b instanceof java.nio.DoubleBuffer)
       return ((java.nio.DoubleBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
     return true;
+  }
+
+  /**
+   * Utility to probe functional interfaces.
+   *
+   * @param cls
+   * @return
+   */
+  public String getFunctional(Class cls)
+  {
+    // If we don't find it to be a functional interface, then we won't return
+    // the SAM.
+    if (cls.getDeclaredAnnotation(FunctionalInterface.class) == null)
+      return null;
+    for (Method m : cls.getMethods())
+    {
+      if (Modifier.isAbstract(m.getModifiers()))
+      {
+        // This is a very odd construct.  Java allows for java.lang.Object
+        // methods to declared in FunctionalInterfaces and they don't count
+        // towards the single abstract method. So we have to probe the class
+        // until we find something that fails.
+        try
+        {
+          Object.class.getMethod(m.getName(), m.getParameterTypes());
+        } catch (NoSuchMethodException | SecurityException ex)
+        {
+          return m.getName();
+        }
+      }
+    }
+    return null;
   }
 
 }

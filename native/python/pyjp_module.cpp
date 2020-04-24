@@ -474,7 +474,7 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 {
 	JPContext* context = JPContext_global;
-	if (context->isShutdown())
+	if (!context->isRunning())
 		Py_RETURN_NONE;
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
 	if (!PyUnicode_Check(a1))

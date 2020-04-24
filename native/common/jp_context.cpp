@@ -83,8 +83,7 @@ JPContext::JPContext()
 
 	m_Object_ToStringID = 0;
 	m_Object_EqualsID = 0;
-	m_IsShutdown = false;
-	m_IsInitialized = false;
+	m_Running = false;
 	m_GC = new JPGarbageCollection(this);
 }
 
@@ -99,7 +98,7 @@ JPContext::~JPContext()
 
 bool JPContext::isRunning()
 {
-	if (m_JavaVM == NULL || !m_IsInitialized)
+	if (m_JavaVM == NULL || !m_Running)
 	{
 		return false;
 	}
@@ -273,13 +272,13 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		// throw std::runtime_error("Failed");
 		// Everything is started.
 	}
-	m_IsInitialized = true;
+	m_Running = true;
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT void JNICALL JPContext::onShutdown(JNIEnv *env, jlong contextPtr)
+JNIEXPORT void JNICALL JPContext::onShutdown(JNIEnv *env, jobject obj, jlong contextPtr)
 {
-	((JPContext*) contextPtr)->m_IsShutdown = true;
+	((JPContext*) contextPtr)->m_Running = false;
 }
 
 void JPContext::shutdownJVM()
