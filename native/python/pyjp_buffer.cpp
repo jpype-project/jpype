@@ -16,17 +16,10 @@ static void PyJPBuffer_dealloc(PyJPBuffer *self)
 	JP_PY_CATCH();
 }
 
-static PyObject *PyJPBuffer_repr(PyJPBuffer *self)
+static PyObject *PyJPBuffer_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPBuffer_repr");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-	if (self->m_Buffer == NULL)
-		JP_RAISE(PyExc_ValueError, "Null array");
-	stringstream sout;
-
-	sout << "<java beffer " << self->m_Buffer->getClass()->toString() << ">";
-	return JPPyString::fromStringUTF8(sout.str()).keep();
+	return PyUnicode_FromFormat("<java buffer '%s'>", Py_TYPE(self)->tp_name);
 	JP_PY_CATCH(0);
 }
 

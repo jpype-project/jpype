@@ -91,6 +91,8 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
 
+// GCOVR_EXCL_START
+// This is currently only used in tracing
 string JPClass::toString() const
 {
 	// This sanity check will not be hit in normal operation
@@ -99,6 +101,7 @@ string JPClass::toString() const
 	JPJavaFrame frame(m_Context);
 	return frame.toString(m_Class.get());
 }
+// GCOVR_EXCL_STOP
 
 string JPClass::getName() const
 {
