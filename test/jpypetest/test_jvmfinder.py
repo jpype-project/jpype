@@ -2,7 +2,7 @@
 
 
 import unittest
-import mock
+from unittest import mock
 import common
 import os
 
