@@ -87,3 +87,11 @@ class SynchronizedTestCase(common.JPypeTestCase):
 
         # Verify they did not trample each other
         self.assertTrue(success)
+
+    def testSyncronizedFail(self):
+        with self.assertRaisesRegex(TypeError, "Java object is required"):
+            with jpype.synchronized(object()):
+                pass
+        with self.assertRaisesRegex(TypeError, "Java primitives cannot be used"):
+            with jpype.synchronized(jpype.JInt(1)):
+                pass
