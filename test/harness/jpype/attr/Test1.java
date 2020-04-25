@@ -62,11 +62,11 @@ public class Test1
 	
 	public String stringValue = "Foo";
 	public char charValue = 'a';
-	public static Object objectValue= new Integer(234);
+	public static Object objectValue= (int)234;
 	
 	public static void reset()
 	{
-	    objectValue= new Integer(234);
+	    objectValue= (int)234;
 	}
 	
 	public Object getSubClass()

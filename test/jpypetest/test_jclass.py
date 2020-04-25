@@ -204,3 +204,21 @@ class JClassTestCase(common.JPypeTestCase):
         test = JClass("jpype.types.InnerTest")()
         test.test()
 
+    def testLookupGeneric(self):
+        self.assertEqual(JClass('java.util.ArrayList<>'), JClass("java.util.ArrayList"))
+
+    def testLookupJNI(self):
+        self.assertEqual(JClass('java/lang/Object'), JClass("java.lang.Object"))
+
+    def testLookupArray(self):
+        self.assertEqual(JClass('int[]'), JArray(JInt))
+        self.assertEqual(JClass('int[][]'), JArray(JInt,2))
+        self.assertEqual(JClass('int[][][]'), JArray(JInt,3))
+        self.assertEqual(JClass('java.lang.Object[][][]'), JArray(JObject,3))
+
+    def testLookupArrayJNI(self):
+        self.assertEqual(JClass('[I'), JArray(JInt))
+        self.assertEqual(JClass('[[J'), JArray(JLong,2))
+        self.assertEqual(JClass('[Ljava.lang.Object;'), JArray(JObject))
+        self.assertEqual(JClass('[Ljava/lang/Object;'), JArray(JObject))
+

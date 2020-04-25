@@ -219,3 +219,7 @@ class CoverageCase(common.JPypeTestCase):
     def testJClassFromClass(self):
         self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName(
             "java.lang.StringBuilder")), jpype.JClass)
+
+    def testHints(self):
+        with self.assertRaises(AttributeError):
+            jpype.JObject._hints = object()

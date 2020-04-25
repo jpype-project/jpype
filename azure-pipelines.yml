@@ -47,12 +47,12 @@ jobs:
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
     displayName: 'Build'
   - script: |
-      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="build/classes" --jacoco --checkjni
+      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath="build/classes" --jacoco --checkjni
     displayName: 'Test'
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
-      java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
-      bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
+      java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
+      bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml -X gcov
     displayName: 'Report'
   - task: PublishCodeCoverageResults@1
     inputs:
@@ -194,3 +194,33 @@ jobs:
     inputs:
       testResultsFiles: 'build/test/test.xml'
       testRunTitle: 'Publish windows test results for Python $(python.version)'
+
+- job: Test_debug
+  condition: eq(1,2)
+  strategy:
+    matrix:
+      linux-3.8:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.8'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      sudo apt install gdb
+      python setup.py sdist
+      pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      pip install numpy jedi
+      gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest/test_jstring.py --checkjni"  -ex "bt" -ex "quit" python
+    displayName: 'Debug module'
+
+
