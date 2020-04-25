@@ -286,11 +286,11 @@ design goals.
   concepts to create very Python looking code and at times bending Python
   concepts to conform to Java's expectations.
 
-- Make Python appear like Python.  Present concepts from Java with a syntax
+- Make Python appear like Java.  Present concepts from Java with a syntax
   that resembles Java so that Java users can work with Python without a huge
   learning curve.
 
-- Present everything that Java has to offer to Python.  Thus every
+- Present everything that Java has to offer to Python.  Every
   library, package, and Java feature if possible should be accessible.
   The goal of bridge is to open up places and not to restrict flow.
 
