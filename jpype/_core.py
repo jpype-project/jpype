@@ -19,6 +19,7 @@ import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
+from . import _jcustomizer
 from . import _jinit
 from . import _pykeywords
 

@@ -68,28 +68,28 @@ public class JPypeProxy implements InvocationHandler
   public Object invoke(Object proxy, Method method, Object[] args)
           throws Throwable
   {
-    if (context.isShutdown())
-      throw new RuntimeException("Proxy called during shutdown");
-
-    // We can save a lot of effort on the C++ side by doing all the
-    // type lookup work here.
-    TypeManager typeManager = context.getTypeManager();
-    long returnType;
-    long[] parameterTypes;
-    synchronized (typeManager)
-    {
-      returnType = typeManager.findClass(method.getReturnType());
-      Class<?>[] types = method.getParameterTypes();
-      parameterTypes = new long[types.length];
-      for (int i = 0; i < types.length; ++i)
-      {
-        parameterTypes[i] = typeManager.findClass(types[i]);
-      }
-    }
-
     try
     {
       context.incrementProxy();
+      if (context.isShutdown())
+        throw new RuntimeException("Proxy called during shutdown");
+
+      // We can save a lot of effort on the C++ side by doing all the
+      // type lookup work here.
+      TypeManager typeManager = context.getTypeManager();
+      long returnType;
+      long[] parameterTypes;
+      synchronized (typeManager)
+      {
+        returnType = typeManager.findClass(method.getReturnType());
+        Class<?>[] types = method.getParameterTypes();
+        parameterTypes = new long[types.length];
+        for (int i = 0; i < types.length; ++i)
+        {
+          parameterTypes[i] = typeManager.findClass(types[i]);
+        }
+      }
+
       return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
     } finally
     {
