@@ -1,28 +1,24 @@
+Java QuickStart Guide
+=====================
 
-QuickStart Guide
-================
+This is a quick start guide to using JPype with Java.  This guide will show a
+series of snippets with the corresponding commands in both Java and Python for
+using JPype.  The :doc:`userguide` and :doc:`api` have additional details on
+the use of the JPype module.
 
-Quick start quide to using JPype.  This quide will show a series of simple examples with the 
-corresponding commands in both Java and Python for using JPype. 
-The JPype :doc:`userguide` and :doc:`api` have addition details on the use of 
-the JPype module.
+JPype uses two factory classes (``JArray`` and ``JClass``) to produce class
+wrappers which can be used to create all Java objects.  These serve as both the
+base class for the corresponding hierarchy and as the factory to produce new
+wrappers.  Casting operators are used to construct specify types of Java types
+(``JObject``, ``JString``, ``JBoolean``, ``JByte``, ``JChar``, ``JShort``,
+``JInt``, ``JLong``, ``JFloat``, ``JDouble``). Two special classes serve as the
+base classes for exceptions (``JException``) and interfaces (``JInterface``).
+There are a small number of support methods to help in controlling the JVM.
+Lastly, there are a few annotations used to create customized wrappers.
 
-
-JPype uses two factory classes (``JArray`` and ``JClass``) to produce class 
-wrappers which can be used to create all Java objects.  These serve as both 
-the base class for the corresponding hierarchy and as the factory to produce 
-new wrappers.  Casting operators are used to construct specify types of Java
-types (``JObject``, ``JString``, ``JBoolean``, ``JByte``, ``JChar``, 
-``JShort``, ``JInt``, ``JLong``, ``JFloat``, ``JDouble``). Two special
-classes serve as the base classes for exceptions (``JException``) and 
-interfaces (``JInterface``).
-There are a small number of support methods to help in controlling the JVM.  
-Last, there are a few annotations used to create customized wrappers.
-
-For the purpose of this guide, we will assume that the following classes were defined
-in Java.  We will also assume the reader knows enough Java and Python to be 
-dangerous.  
-
+For the purpose of this guide, we will assume that the following classes were
+defined in Java.  We will also assume the reader knows enough Java and Python
+to be dangerous.  
 
 
 .. code-block:: java
@@ -63,11 +59,11 @@ Starting JPype
 
 The hardest thing about using JPype is getting the jars loaded into the JVM.
 Java is curiously unfriendly about reporting problems when it is unable to find
-a jar.  Instead, it will be reported as an ``ImportError`` in python.
-These patterns will help debug problems regarding jar loading.
+a jar.  Instead, it will be reported as an ``ImportError`` in Python.
+These patterns will help debug problems with jar loading.
 
 Once the JVM is started Java packages that are within a top level domain (TLD)
-are exposed as python modules allowing Java to be treated as part of python.
+are exposed as Python modules allowing Java to be treated as part of Python.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -87,6 +83,13 @@ are exposed as python modules allowing Java to be treated as part of python.
 |                           |                                                         |                                                         |
 |                           |                                                         |     # Launch the JVM                                    |
 |                           |                                                         |     jpype.startJVM()                                    |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Start Java Virtual        |                                                         | .. code-block:: python                                  |
+| Machine (JVM) with a      |                                                         |                                                         |
+|                           |                                                         |     # Launch the JVM                                    |
+| classpath                 |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -123,11 +126,11 @@ are exposed as python modules allowing Java to be treated as part of python.
 Classes/Objects
 ---------------
 
-Java classes are presented whereever possible exactly like Python classes. The only
-major difference is that Java classes and objects are closed and cannot be modified.
-As Java is strongly typed, casting operators are used to select specific 
-overloads when calling methods.  Classes are either imported using as a module
-or loaded with the ``JClass`` factory.
+Java classes are presented wherever possible similar to Python classes. The
+only major difference is that Java classes and objects are closed and cannot be
+modified.  As Java is strongly typed, casting operators are used to select
+specific overloads when calling methods.  Classes are either imported using a
+module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -185,13 +188,13 @@ or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 | Get a static field        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     int vr = MyClass.staticField;                       |     var = MyClass.staticField                           |
+|                           |     int var = MyClass.staticField;                      |     var = MyClass.staticField                           |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Get a member field        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     int vr = myObject.memberField;                      |     var = myObject.memberField                          |
+|                           |     int var = myObject.memberField;                     |     var = myObject.memberField                          |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -219,7 +222,7 @@ or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Access member with python | .. code-block:: java                                    | .. code-block:: python                                  |
+| Access member with Python | .. code-block:: java                                    | .. code-block:: python                                  |
 | naming conflict [10]_     |                                                         |                                                         |
 |                           |     myObject.pass()                                     |     myObject.pass_()                                    |
 |                           |                                                         |                                                         |
@@ -250,19 +253,20 @@ or loaded with the ``JClass`` factory.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
     .. [4] This will report an error if the class is not found.
-    .. [5] This will report an error if the classes are not found
-    .. [6] Does not report errors if the package is invalid
+    .. [5] This will report an error if the classes are not found.
+    .. [6] Does not report errors if the package is invalid.
     .. [7] Constants, static fields, and static methods can be imported.
     .. [8] ``JClass`` loads any class by name including inner classes.
-    .. [9] Produces error for final fields
+    .. [9] This produces an error for final fields.
     .. [10] Underscore is added during wrapping.
 
 
 Exceptions
 ----------
 
-Java exceptions extend from python exceptions and can be dealt with no different 
-that Python native exceptions. JException serves as the base class for all Java exceptions.
+Java exceptions extend from Python exceptions and can be dealt with in the same
+way as Python native exceptions. JException serves as the base class for all
+Java exceptions.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -305,14 +309,13 @@ that Python native exceptions. JException serves as the base class for all Java 
 Primitives
 ----------
 
-Most python primitives directly map into Java primitives. However, python does not
-have the same primitive types, thus sometimes it is necessary to cast to a specific 
-Java primitive type especially if there are 
-Java overloads that would otherwise be in conflict.  Each of the Java types are
-exposed in JPype (``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
+Most Python primitives directly map into Java primitives. However, Python does
+not have the same primitive types, and it is necessary to cast to a
+specific Java primitive type whenever there are Java overloads that would
+otherwise be in conflict.  Each of the Java types are exposed in JPype
+(``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``,
 ``JFloat``, ``JDouble``).
 
-Python int is equivalent to Java long.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -360,11 +363,11 @@ Python int is equivalent to Java long.
 Strings
 -------
 
-Java strings are similar to python strings.  They are both immutable and
+Java strings are similar to Python strings.  They are both immutable and
 produce a new string when altered.  Most operations can use Java strings
-in place of python strings, with minor exceptions as python strings 
-are not completely duck typed.  When comparing or using as dictionary keys
-JString should be converted to python.
+in place of Python strings, with minor exceptions as Python strings 
+are not completely duck typed.  When comparing or using as dictionary keys,
+all JString objects should be converted to Python.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -416,7 +419,7 @@ JString should be converted to python.
 Arrays
 ------
 
-Arrays are create using JArray class factory. They operate like python lists, but they are 
+Arrays are create using the JArray class factory. They operate like Python lists, but they are 
 fixed in size.
 
 
@@ -448,7 +451,7 @@ fixed in size.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Convert to python list    |                                                         | .. code-block:: python                                  |
+| Convert to Python list    |                                                         | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |                                                         |     pylist = list(array)                                |
 |                           |                                                         |                                                         |
@@ -472,10 +475,8 @@ fixed in size.
 Collections
 -----------
 
-Java standard containers are available and are overloaded with python syntax where 
-possible to operate in a similar fashion to python objects.  It is not
-currently possible to specify the template types for generic containers, but
-that will be introduced in Java 9.
+Java standard containers are available and are overloaded with Python syntax where 
+possible to operate in a similar fashion to Python objects.  
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -563,9 +564,9 @@ that will be introduced in Java 9.
 Reflection
 ----------
 
-For operations that are outside the scope of the JPype syntax, Using
-Java reflection, any Java operation include calling a specific overload
-or even accessing private methods and fields.
+Java reflection can be used to access operations that are outside the scope of
+the JPype syntax.  This includes calling a specific overload or even accessing
+private methods and fields.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -579,7 +580,7 @@ or even accessing private methods and fields.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Access a private field by |                                                         | .. code-block:: python                                  |
-| name                      |                                                         |                                                         |
+| name [18]_                |                                                         |                                                         |
 |                           |                                                         |     cls = myObject.class_                               |
 |                           |                                                         |     field = cls.getDeclaredField(                       |
 |                           |                                                         |         "internalField")                                |
@@ -589,7 +590,7 @@ or even accessing private methods and fields.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Accessing a specific      |                                                         | .. code-block:: python                                  |
-| overload [18]_            |                                                         |                                                         |
+| overload [19]_            |                                                         |                                                         |
 |                           |                                                         |     cls = MyClass.class_                                |
 |                           |                                                         |     cls.getDeclaredMethod("call", JInt)                 |
 |                           |                                                         |     cls.invoke(myObject, JInt(1))                       |
@@ -598,7 +599,7 @@ or even accessing private methods and fields.
 |                           |                                                         |                                                         |
 | Convert a                 |                                                         | .. code-block:: python                                  |
 | ``java.lang.Class`` into  |                                                         |                                                         |
-| python wrapper [19]_      |                                                         |     # Something returned a java.lang.Class              |
+| Python wrapper [20]_      |                                                         |     # Something returned a java.lang.Class              |
 |                           |                                                         |     MyClassJava = getClassMethod()                      |
 |                           |                                                         |                                                         |
 |                           |                                                         |     # Convert to it to Python                           |
@@ -625,22 +626,20 @@ or even accessing private methods and fields.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [18] types must be exactly specified.
-    .. [19] Rarely required unless the class was supplied external such as generics.
+    .. [18] This is prohibited after Java 8
+    .. [19] types must be exactly specified.
+    .. [20] Rarely required unless the class was supplied external such as generics.
 
 
 Implements and Extension
 ------------------------
 
-JPype can implement a Java interface by annotating a python class.  Each
+JPype can implement a Java interface by annotating a Python class.  Each
 method that is required must be implemented.
 
-JPype does not support extending a class directly in python.  Where it is
+JPype does not support extending a class directly in Python.  Where it is
 necessary to exend a Java class, it is required to create a Java extension
-with an interface for each methods that are to be accessed from python.
-For some deployments this may be be an option.  If that is the case, 
-the JPype inline compiler can be used to create the dynamic class on the 
-fly.
+with an interface for each methods that are to be accessed from Python.
 
 
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -658,13 +657,13 @@ fly.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         | None                                                    |
-| Extending classes [20]_   |                                                         |                                                         |
+| Extending classes [21]_   |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         | None                                                    |
-| Lambdas [20]_             |                                                         |                                                         |
+| Lambdas [21]_             |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [20] Support for use of python function as Java 8 lambda is WIP.
+    .. [21] Support for use of Python function as Java 8 lambda is WIP.
 
 
 

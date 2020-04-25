@@ -126,12 +126,12 @@ def startJVM(*args, **kwargs):
       jvmpath (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...)
         Using None will apply the default jvmpath.
-      classpath (str,[str]): Set the classpath for the jvm.
+      classpath (str,[str]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
-      ignoreUnrecognized (bool): Option to JVM to ignore
+      ignoreUnrecognized (bool): Option to ignore
         invalid JVM arguments. Default is False.
-      convertStrings (bool): Option to JPype to force Java strings to
+      convertStrings (bool): Option to force Java strings to
         cast to Python strings. This option is to support legacy code
         for which conversion of Python strings was the default. This
         will globally change the behavior of all calls using
@@ -304,7 +304,7 @@ def attachToJVM(jvm):
 def shutdownJVM():
     """ Shuts down the JVM.
 
-    This method shuts down the JVM and thus disables access to existing
+    This method shuts down the JVM and disables access to existing
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
@@ -370,7 +370,7 @@ def detachThreadFromJVM():
 def synchronized(obj):
     """ Creates a resource lock for a Java object.
 
-    Produces a monitor object. During the lifespan of the monitor the Java
+    Produces a monitor object. During the lifespan of the monitor Java
     will not be able to acquire a thread lock on the object. This will
     prevent multiple threads from modifying a shared resource.
 
