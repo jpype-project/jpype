@@ -190,7 +190,7 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
+int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
 	if (type == NULL || obj == NULL)
 		return 0; // GCOVR_EXCL_LINE

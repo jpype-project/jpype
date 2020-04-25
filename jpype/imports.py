@@ -137,7 +137,8 @@ def _getJavaClass(javaname):
     except _java_lang_ExceptionInInitializerError as ex:
         err = "Unable to import '%s' due to initializer error" % (
             javaname)
-        ex1 = ex.getCause()
+        ex1 = ex
+        ex1._expandStacktrace()
 
     # Otherwise!?
     except Exception as ex:

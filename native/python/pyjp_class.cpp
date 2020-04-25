@@ -40,7 +40,7 @@ extern "C"
 
 int PyJPClass_Check(PyObject* obj)
 {
-	return Py_IsInstanceSingle(PyJPClass_Type, obj);
+	return Py_IsInstanceSingle(obj, PyJPClass_Type);
 }
 
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)

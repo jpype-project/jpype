@@ -84,6 +84,34 @@ JPContext::JPContext()
 	m_Object_ToStringID = 0;
 	m_Object_EqualsID = 0;
 	m_Running = false;
+
+	// Java Functions
+	m_Object_ToStringID = NULL;
+	m_Object_EqualsID = NULL;
+	m_Object_HashCodeID = NULL;
+	m_CallMethodID = NULL;
+	m_Class_GetNameID = NULL;
+	m_Context_collectRectangularID = NULL;
+	m_Context_assembleID = NULL;
+	m_String_ToCharArrayID = NULL;
+	m_Context_CreateExceptionID = NULL;
+	m_Context_GetExcClassID = NULL;
+	m_Context_GetExcValueID = NULL;
+	m_CompareToID = NULL;
+	m_Buffer_IsReadOnlyID = NULL;
+	m_Context_OrderID = NULL;
+	m_Object_GetClassID = NULL;
+	m_Throwable_GetCauseID = NULL;
+	m_BooleanValueID = NULL;
+	m_ByteValueID = NULL;
+	m_CharValueID = NULL;
+	m_ShortValueID = NULL;
+	m_IntValueID = NULL;
+	m_LongValueID = NULL;
+	m_FloatValueID = NULL;
+	m_DoubleValueID = NULL;
+	m_Context_GetStackFrameID = NULL;
+
 	m_GC = new JPGarbageCollection(this);
 }
 
@@ -171,14 +199,16 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		// is initialized.  Any other frame creation will result in an error.
 		JPJavaFrame frame(this, env);
 
-		JPException_init(frame);
+		jclass cls = (jclass) frame.FindClass("java/lang/Throwable");
+		m_Throwable_GetCauseID = frame.GetMethodID(cls, "getCause", "()Ljava/lang/Throwable;");
+
 		// After the JVM is created but before the context is started, we need
 		// to set up all the services that the context will need.
 		JP_TRACE("Initialize");
 
 		// We need these first because if anything goes south this is the first
 		// thing that will get hit.
-		jclass cls = frame.FindClass("java/lang/Object");
+		cls = frame.FindClass("java/lang/Object");
 		m_Object_ToStringID = frame.GetMethodID(cls, "toString", "()Ljava/lang/String;");
 		m_Object_EqualsID = frame.GetMethodID(cls, "equals", "(Ljava/lang/Object;)Z");
 		m_Object_HashCodeID = frame.GetMethodID(cls, "hashCode", "()I");
@@ -206,6 +236,9 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		// Prepare to launch
 		JP_TRACE("Start Context");
 		cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
+		m_Context_GetStackFrameID = frame.GetMethodID(cls, "getStackTrace",
+				"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
+
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
 
