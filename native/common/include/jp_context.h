@@ -140,11 +140,6 @@ public:
 		return m_JavaContext.get();
 	}
 
-	bool isShutdown()
-	{
-		return m_IsShutdown;
-	}
-
 	/** Release a global reference checking for shutdown.
 	 *
 	 * This should be used in any calls to release resources from a destructor.
@@ -218,7 +213,7 @@ private:
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
-	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jlong contextPtr);
+	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jobject obj, jlong contextPtr);
 
 private:
 	JPContext(const JPContext& orig);
@@ -263,8 +258,7 @@ private:
 	jmethodID m_Proxy_NewInstanceID;
 
 private:
-	bool m_IsShutdown;
-	bool m_IsInitialized;
+	bool m_Running;
 	bool m_ConvertStrings;
 public:
 	JPGarbageCollection *m_GC;

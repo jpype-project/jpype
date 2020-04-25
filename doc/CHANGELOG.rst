@@ -10,6 +10,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     This allows functions, lambdas, and class constructors to be used
     whereever Java accepts a lambda.
 
+  - Updated the repr methods on Java classes.
+
 
 - **0.7.3 - 4-17-2020**
 
