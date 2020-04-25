@@ -112,14 +112,21 @@ void JPGarbageCollection::shutdown()
 
 void JPGarbageCollection::onStart()
 {
+	// GCOVR_EXCL_START
+	// GC is triggered outside of user control.  Including it in
+	// coverage just creates random statistics.
 	if (!running)
 		return;
 	getWorkingSize();
 	in_python_gc = true;
+	// GCOVR_EXCL_STOP
 }
 
 void JPGarbageCollection::onEnd()
 {
+	// GCOVR_EXCL_START
+	// GC is triggered outside of user control.  Including it in
+	// coverage just creates random statistics.
 	if (!running)
 		return;
 	if (java_triggered)
@@ -188,6 +195,7 @@ void JPGarbageCollection::onEnd()
 			python_triggered++;
 		}
 	}
+	// GCOVR_EXCL_END
 }
 
 void JPGarbageCollection::getStats(JPGCStats& stats)

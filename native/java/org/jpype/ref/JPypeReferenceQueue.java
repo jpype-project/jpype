@@ -68,7 +68,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   public void start()
   {
     isStopped = false;
-    queueThread = new Thread(new Worker());
+    queueThread = new Thread(new Worker(), "Python Reference Queue");
     queueThread.setDaemon(true);
     queueThread.start();
   }

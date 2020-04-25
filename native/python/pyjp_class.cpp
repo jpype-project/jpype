@@ -619,11 +619,7 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 static PyObject *PyJPClass_repr(PyJPClass *self)
 {
 	JP_PY_TRY("PyJPClass_repr");
-	string name;
-	if (self->m_Class == NULL)
-		name = ((PyTypeObject*) self)->tp_name;
-	else
-		name = self->m_Class->getCanonicalName();
+	string name = ((PyTypeObject*) self)->tp_name;
 	return PyUnicode_FromFormat("<java class '%s'>", name.c_str());
 	JP_PY_CATCH(0);
 }
