@@ -90,6 +90,7 @@ _java_lang_Class = None
 _java_lang_NoClassDefFoundError = None
 _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
+_java_lang_ExceptionInInitializerError = None
 
 
 def _getJavaClass(javaname):
@@ -97,6 +98,7 @@ def _getJavaClass(javaname):
     global _java_lang_NoClassDefFoundError
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
+    global _java_lang_ExceptionInInitializerError
     if not _java_lang_Class:
         _java_lang_Class = _jclass.JClass("java.lang.Class")
         _java_lang_ClassNotFoundException = _jclass.JClass(
@@ -105,6 +107,9 @@ def _getJavaClass(javaname):
             "java.lang.NoClassDefFoundError")
         _java_lang_UnsupportedClassVersionError = _jclass.JClass(
             "java.lang.UnsupportedClassVersionError")
+        _java_lang_ExceptionInInitializerError = _jclass.JClass(
+            "java.lang.ExceptionInInitializerError")
+
 
     err = None
     try:
@@ -121,17 +126,25 @@ def _getJavaClass(javaname):
         missing = str(ex).replace('/', '.')
         err = "Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)
+        ex1 = ex
 
     # Wrong Java version
     except _java_lang_UnsupportedClassVersionError as ex:
         err = "Unable to import '%s' due to incorrect Java version" % (
             javaname)
+        ex1 = ex
+
+    except _java_lang_ExceptionInInitializerError as ex:
+        err = "Unable to import '%s' due to initializer error" % (
+            javaname)
+        ex1 = ex.getCause()
 
     # Otherwise!?
     except Exception as ex:
         err = "Unable to import '%s' due to unexpected exception, '%s'" % (
             javaname, ex)
-    raise ImportError(err)
+        ex1 = ex
+    raise ImportError(err) from ex1
 
 # FIXME imports of static fields not working for now.
 

@@ -23,6 +23,7 @@ def getJavaVersion():
 def compileJava():
     version = getJavaVersion()
     srcs = glob.glob('test/harness/jpype/**/*.java', recursive=True)
+    srcs.extend(glob.glob('test/harness/org/**/*.java', recursive=True))
     exports = ""
     if version > 7:
         srcs.extend(glob.glob('test/harness/java8/**/*.java', recursive=True))
