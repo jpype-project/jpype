@@ -203,13 +203,13 @@ class CollectionTestCase(common.JPypeTestCase):
         for i in Collections.unmodifiableList(a):
             pass
 
-    @common.requirePythonAfter((3,6,0))
+    @common.requirePythonAfter((3, 6, 0))
     def testListABC(self):
-        l=['a','b','c', 'b']
+        l = ['a', 'b', 'c', 'b']
         JList = jpype.JClass('java.util.ArrayList')
         al = JList(l)
-        for i,j in zip(reversed(al),reversed(l)):
-            self.assertEqual(i,j)
+        for i, j in zip(reversed(al), reversed(l)):
+            self.assertEqual(i, j)
         self.assertEqual(object() in al, object() in l)
         self.assertEqual('a' in al, 'a' in l)
         self.assertEqual(al.index('b'), l.index('b'))
@@ -223,7 +223,7 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertIsInstance(al, collections.abc.Iterable)
         self.assertIsInstance(al, collections.abc.Sized)
 
-    @common.requirePythonAfter((3,6,0))
+    @common.requirePythonAfter((3, 6, 0))
     def testCollectionABC(self):
         JCollection = jpype.JClass('java.util.Collection')
         self.assertFalse(issubclass(JCollection, collections.abc.Sequence))
@@ -231,7 +231,3 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertTrue(issubclass(JCollection, collections.abc.Collection))
         self.assertTrue(issubclass(JCollection, collections.abc.Iterable))
         self.assertTrue(issubclass(JCollection, collections.abc.Sized))
-
-
-
-

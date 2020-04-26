@@ -125,15 +125,15 @@ class _JList(object):
         try:
             return self.indexOf(obj)
         except TypeError:
-            raise ValueError("%s is not in list"%repr(obj))
-    
+            raise ValueError("%s is not in list" % repr(obj))
+
     def count(self, obj):
         try:
             jo = _jpype.JObject(obj)
             c = 0
             for i in self:
                 if i.equals(jo):
-                    c+=1
+                    c += 1
             return c
         except TypeError:
             return 0
