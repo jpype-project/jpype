@@ -21,6 +21,7 @@ import logging
 from os import path
 import sys
 import unittest
+import platform
 
 CLASSPATH = None
 
@@ -28,6 +29,15 @@ CLASSPATH = None
 def version(v):
     return tuple([int(i) for i in v.split('.')])
 
+def requirePythonAfter(required):
+    pversion = tuple([int(i) for i in platform.python_version_tuple()])
+    def g(func):
+        def f(self):
+            if pversion<required:
+                raise unittest.SkipTest("numpy required")
+            return func(self)
+        return f
+    return g
 
 def requireInstrumentation(func):
     def f(self):

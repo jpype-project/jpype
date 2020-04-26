@@ -203,6 +203,7 @@ class CollectionTestCase(common.JPypeTestCase):
         for i in Collections.unmodifiableList(a):
             pass
 
+    @common.requirePythonAfter((3,6,0))
     def testListABC(self):
         l=['a','b','c', 'b']
         JList = jpype.JClass('java.util.ArrayList')
@@ -222,6 +223,7 @@ class CollectionTestCase(common.JPypeTestCase):
         self.assertIsInstance(al, collections.abc.Iterable)
         self.assertIsInstance(al, collections.abc.Sized)
 
+    @common.requirePythonAfter((3,6,0))
     def testCollectionABC(self):
         JCollection = jpype.JClass('java.util.Collection')
         self.assertFalse(issubclass(JCollection, collections.abc.Sequence))
