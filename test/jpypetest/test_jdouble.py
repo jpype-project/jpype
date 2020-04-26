@@ -418,4 +418,4 @@ class JDoubleTestCase(common.JPypeTestCase):
             ja[:] = a
 
     def testCastBoolean(self):
-        self.assertEquals(JDouble._canConvertToJava(JBoolean(True)), "none")
+        self.assertEqual(JDouble._canConvertToJava(JBoolean(True)), "none")

@@ -5,6 +5,23 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next Release**
 
+  - Deprecated class and functions were removed.  ``JIterator``,
+    use of ``JException`` as a factory,  ``get_default_jvm_path``,
+    ``jpype.reflect`` module.
+
+  - Default for starting JVM is now to return Java strings rather
+    than convert.
+
+  - Python deprecated ``__int__`` so implicit conversions between
+    float and integer types will produce a ``TypeError``.
+
+  - Use of ``JException`` is discouraged.  To catch all exceptions
+    or test if an object is a Java exception type, 
+    use ``java.lang.Throwable``.
+
+  - Use of ``JString`` is discouraged.  To create a Java string or
+    test if an object is a Java string type, use ``java.lang.String``.
+
   - Updated the repr methods on Java classes.
 
 
