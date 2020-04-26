@@ -7,6 +7,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Updated the repr methods on Java classes.
 
+  - ``java.util.List`` completes the contract for ``collections.abc.Sequence``.
+
+  - ``java.util.Collection`` completes the contract for ``collections.abc.Collection``.
+
 
 - **0.7.3 - 4-17-2020**
 
