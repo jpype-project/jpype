@@ -36,6 +36,7 @@ class JCharTestCase(common.JPypeTestCase):
         class Run:
             def __init__(self):
                 self.rc = False
+
             @jpype.JOverride
             def run(self):
                 try:
@@ -47,5 +48,3 @@ class JCharTestCase(common.JPypeTestCase):
         th.start()
         th.join()
         self.assertTrue(run.rc)
-
-

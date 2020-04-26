@@ -401,4 +401,3 @@ class WindowsJVMFinder(JVMFinder):
             except OSError:
                 pass
         return None
-
