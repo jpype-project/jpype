@@ -246,9 +246,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	JPValue *val = PyJPValue_getJavaSlot(self);
-	if (val == NULL || !PyObject_IsInstance(self, PyExc_Exception))
-		JP_RAISE(PyExc_TypeError, "Must be a Java exception");
-
+	
 	// These two are loop invariants and must match each time
 	jthrowable th = (jthrowable) val->getValue().l;
 	JPPyObject exc(JPPyRef::_use, self);

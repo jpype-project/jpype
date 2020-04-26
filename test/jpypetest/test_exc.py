@@ -146,5 +146,8 @@ class ExceptionTestCase(common.JPypeTestCase):
         self.assertTrue(ex1.__cause__.__traceback__ is not None)
         self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
 
-
-
+    def testExpandStacktrace(self):
+        Th = jpype.JClass('java.lang.Throwable')
+        null = jpype.JObject(None, Th)
+        # The next line should not fail
+        Th._expandStacktrace(null)
