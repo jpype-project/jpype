@@ -19,7 +19,7 @@ import _jpype
 __all__ = ['JObject']
 
 
-class JObject(_jpype._JObject):
+class JObject(_jpype._JObject, internal=True):
     """ Base class for all object instances.
 
     It can be used to test if an object is a Java object instance with
@@ -103,7 +103,7 @@ def _JObjectFactory(v=None, tp=None):
         if not isinstance(tp, _jpype.JClass):
             import warnings
             warnings.warn("Using JObject with a Python type is deprecated.",
-                              category=DeprecationWarning, stacklevel=3)
+                          category=DeprecationWarning, stacklevel=3)
         tp = _jpype._object_classes[tp]
 
     # Given a Java class

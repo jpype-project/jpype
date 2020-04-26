@@ -424,11 +424,12 @@ def getJVMVersion():
     version = (re.match("([0-9.]+)", str(version)).group(1))
     return tuple([int(i) for i in version.split('.')])
 
+
 @_jcustomizer.JImplementationFor("java.lang.Runtime")
 class _JRuntime(object):
     # We need to redirect hooks so that we control the order
     def addShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().addShutdownHook(thread)
+
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
-

@@ -23,6 +23,7 @@ import sys
 import unittest
 
 CLASSPATH = None
+fast = False
 
 
 def version(v):
@@ -89,7 +90,8 @@ class JPypeTestCase(unittest.TestCase):
             if self._classpath:
                 from pathlib import Path
                 import warnings
-                jpype.addClassPath(Path(self._classpath).resolve())  # This needs to be relative to run location
+                # This needs to be relative to run location
+                jpype.addClassPath(Path(self._classpath).resolve())
                 warnings.warn("using jar instead of thunks")
             if self._convertStrings:
                 import warnings
@@ -97,7 +99,7 @@ class JPypeTestCase(unittest.TestCase):
             if self._jacoco:
                 import warnings
                 args.append(
-                        "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
 
             classpath_arg %= jpype.getClassPath()

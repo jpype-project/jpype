@@ -7,6 +7,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Updated the repr methods on Java classes.
 
+  - Java classes are closed and will raise ``TypeError`` if extended in Python.
+
 
 - **0.7.3 - 4-17-2020**
 

@@ -3,6 +3,7 @@ import jpype
 from jpype import *
 import common
 
+
 class FaultTestCase(common.JPypeTestCase):
     """ Test for fault paths in JPype
 
@@ -86,10 +87,10 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPClass_init(self):
         _jpype.fault("PyJPClass_init")
         with self.assertRaises(SystemError):
-            _jpype._JClass("foo", (object,), {})
+            _jpype._JClass("foo", (_jpype._JObject,), {}, internal=True)
         with self.assertRaises(TypeError):
             _jpype._JClass("foo", (object,), {})
-        _jpype._JClass("foo", (_jpype._JObject,), {})
+        _jpype._JClass("foo", (_jpype._JObject,), {}, internal=True)
 
     @common.requireInstrumentation
     def testJPClass_getattro(self):
@@ -134,7 +135,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             js.class_
         with self.assertRaises(AttributeError):
-            _jpype._JClass("foo", (_jpype.JObject,), {}).class_
+            _jpype._JClass("foo", (_jpype.JObject,), {}, internal=True).class_
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             js.class_
@@ -1118,6 +1119,7 @@ class FaultTestCase(common.JPypeTestCase):
     def testClassHintsFaults(self):
         class CTest(object):
             pass
+
         @JConversion("java.lang.Number", exact=CTest)
         def _CTestConversion(jcls, obj):
             return java.lang.Integer(123)
@@ -1125,6 +1127,7 @@ class FaultTestCase(common.JPypeTestCase):
         class ATest(object):
             def __foo__(self):
                 pass
+
         @JConversion("java.lang.Number", attribute="__foo__")
         def _ATestConversion(jcls, obj):
             return java.lang.Integer(123)

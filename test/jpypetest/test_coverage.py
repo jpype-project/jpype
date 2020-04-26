@@ -177,13 +177,16 @@ class CoverageCase(common.JPypeTestCase):
 #        self.assertTrue(jpype.java.lang.Boolean(jpype.JInt(40))==True)
 
     def testJArrayFail(self):
-        class JArray2(jpype.JArray):
+        class JArray2(jpype.JArray, internal=True):
             pass
         with self.assertRaises(TypeError):
             JArray2(jpype.JInt)
 
+    @common.requireInstrumentation
     def testJStringFail(self):
-        class JString2(jpype.JString):
+        _jpype.fault("PyJPClass_new::verify")
+
+        class JString2(jpype.JString, internal=True):
             pass
         with self.assertRaises(TypeError):
             JString2("foo")
