@@ -56,7 +56,7 @@ class _JStringProto(object):
         return self.contains(other)
 
     def __hash__(self):
-        if self == None: # lgtm [py/test-equals-none]
+        if self == None:  # lgtm [py/test-equals-none]
             return hash(None)
         return self.__str__().__hash__()
 

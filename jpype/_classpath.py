@@ -6,6 +6,7 @@ __all__ = ['addClassPath', 'getClassPath']
 _CLASSPATHS = []
 _SEP = _os.path.pathsep
 
+
 def addClassPath(path1):
     """ Add a path to the Java class path
 
@@ -35,7 +36,7 @@ def addClassPath(path1):
 
 
 def getClassPath(env=True):
-    """ Get the full java class path.
+    """ Get the full Java class path.
 
     Includes user added paths and the environment CLASSPATH.
 

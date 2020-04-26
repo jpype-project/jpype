@@ -20,10 +20,10 @@
 JPype Imports Module
 --------------------
 
-Once imported this module will place the standard TLDs into the python
-scope. These tlds are ``java``, ``com``, ``org``, ``gov``, ``mil``, 
-``net`` and ``edu``. Java symbols from these domains can be imported 
-using the standard Python syntax.
+Once imported this module will place the standard Top Level Domains (TLD) into
+the Python scope. These TLDs are ``java``, ``com``, ``org``, ``gov``, ``mil``,
+``net`` and ``edu``. Java symbols from these domains can be imported using the
+standard Python syntax.
 
 Import customizers are supported in Python 3.6 or greater.
 
@@ -377,7 +377,7 @@ _JDOMAINS = {}
 
 
 def registerDomain(mod, alias=None):
-    """ Add a java domain to python as a dynamic module.
+    """ Add a Java domain to Python as a dynamic module.
 
     This can be used to bind a Java path to a Python path.
 

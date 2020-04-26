@@ -131,8 +131,10 @@ class ExceptionTestCase(common.JPypeTestCase):
         except Exception as ex:
             ex1 = ex
         self.assertIsInstance(ex1, ImportError)
-        self.assertIsInstance(ex1.__cause__, JClass("java.lang.ExceptionInInitializerError"))
-        self.assertIsInstance(ex1.__cause__.__cause__, JClass("java.lang.ArrayIndexOutOfBoundsException"))
+        self.assertIsInstance(ex1.__cause__, JClass(
+            "java.lang.ExceptionInInitializerError"))
+        self.assertIsInstance(ex1.__cause__.__cause__, JClass(
+            "java.lang.ArrayIndexOutOfBoundsException"))
         self.assertTrue(ex1.__cause__.__traceback__ is not None)
         self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
 
@@ -141,8 +143,10 @@ class ExceptionTestCase(common.JPypeTestCase):
             JClass('org.jpype.fail.BadInitializer2')
         except Exception as ex:
             ex1 = ex
-        self.assertIsInstance(ex1, JClass('java.lang.ExceptionInInitializerError'))
-        self.assertIsInstance(ex1.__cause__.__cause__, JClass("java.lang.ArrayIndexOutOfBoundsException"))
+        self.assertIsInstance(ex1, JClass(
+            'java.lang.ExceptionInInitializerError'))
+        self.assertIsInstance(ex1.__cause__.__cause__, JClass(
+            "java.lang.ArrayIndexOutOfBoundsException"))
         self.assertTrue(ex1.__cause__.__traceback__ is not None)
         self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
 

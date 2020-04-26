@@ -22,8 +22,8 @@ __all__ = ['JClass', 'JInterface', 'JOverride']
 def JOverride(*args, **kwargs):
     """Annotation to denote a method as overriding a Java method.
 
-    This annotation applies to customizers, proxies, and extension
-    to Java class. Apply it to methods to mark them as implementing
+    This annotation applies to customizers, proxies, and extensions
+    to Java classes. Apply it to methods to mark them as implementing
     or overriding Java methods.  Keyword arguments are passed to the
     corresponding implementation factory.
 
@@ -49,22 +49,22 @@ class JClassMeta(type):
 
 
 class JClass(_jpype._JClass, metaclass=JClassMeta):
-    """Meta class for all java class instances.
+    """Meta class for all Java class instances.
 
-    JClass when called as an object will contruct a new java Class wrapper.
+    When called as an object, JClass will contruct a new Java class wrapper.
 
-    All python wrappers for java classes derived from this type.
-    To test if a python class is a java wrapper use
+    All Python wrappers for Java classes derive from this type.
+    To test if a Python class is a Java wrapper use
     ``isinstance(obj, jpype.JClass)``.
 
     Args:
-      className (str): name of a java type.
+      className (str): name of a Java type.
 
     Keyword Args:
       loader (java.lang.ClassLoader): specifies a class loader to use
         when creating a class.
-      initialize (bool): Passed to class loader when loading a class
-        using the class loader.
+      initialize (bool): If true the class will be loaded and initialized.
+        Otherwise, static members will be uninitialized.
 
     Returns:
       JavaClass: a new wrapper for a Java class

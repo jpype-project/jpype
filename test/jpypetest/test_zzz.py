@@ -20,4 +20,3 @@ class ZZZTestCase(common.JPypeTestCase):
         jpype.shutdownJVM()
         # Check that shutdown does not raise
         jpype._core._JTerminate()
-
