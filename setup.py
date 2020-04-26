@@ -41,7 +41,6 @@ setup(
         'build_java': setupext.build_java.BuildJavaCommand,
         'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
-        'build_makefile': setupext.build_makefile.BuildMakefileCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
