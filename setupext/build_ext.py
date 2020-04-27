@@ -209,8 +209,8 @@ class BuildExtCommand(build_ext):
 
     def build_extensions(self):
         # We need to create the thunk code
-        # self.run_command("build_java")
-        # self.run_command("build_thunk")
+        self.run_command("build_java")
+        self.run_command("build_thunk")
 
         if self.makefile:
             self.compiler = Makefile(self.compiler)
