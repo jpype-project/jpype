@@ -552,22 +552,30 @@ PyObject* examine(PyObject *module, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+int _PyJPModule_trace = 0;
+static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
+{
+	bool old = _PyJPModule_trace;
+	_PyJPModule_trace = PyLong_AsLong(args);
+	return PyLong_FromLong(old);
+}
+
 #ifdef JP_INSTRUMENTATION
-uint32_t _PyModule_fault_code = -1;
+uint32_t _PyJPModule_fault_code = -1;
 
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
 	if (args == Py_None)
 	{
-		_PyModule_fault_code = 0;
+		_PyJPModule_fault_code = 0;
 		Py_RETURN_NONE;
 	}
 	string code = JPPyString::asStringUTF8(args);
 	uint32_t u = 0;
 	for (size_t i = 0; i < code.size(); ++i)
 		u = u * 0x1a481023 + code[i];
-	_PyModule_fault_code = u;
-	return PyLong_FromLong(_PyModule_fault_code);
+	_PyJPModule_fault_code = u;
+	return PyLong_FromLong(_PyJPModule_fault_code);
 }
 #endif
 
@@ -595,6 +603,7 @@ static PyMethodDef moduleMethods[] = {
 	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
 	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
 	{"enableStacktraces", (PyCFunction) (&PyJPModule_enableStacktraces), METH_O, ""},
+	{"trace", (PyCFunction) (&PyJPModule_trace), METH_O, ""},
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
 #endif
@@ -643,6 +652,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPProxy_initType(module);
 	PyJPClassHints_initType(module);
 
+	_PyJPModule_trace = true;
 	return module;
 	JP_PY_CATCH(NULL);
 }
@@ -785,14 +795,14 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 int PyJPModuleFault_check(uint32_t code)
 {
-	return (code == _PyModule_fault_code);
+	return (code == _PyJPModule_fault_code);
 }
 
 void PyJPModuleFault_throw(uint32_t code)
 {
-	if (code == _PyModule_fault_code)
+	if (code == _PyJPModule_fault_code)
 	{
-		_PyModule_fault_code = -1;
+		_PyJPModule_fault_code = -1;
 		JP_RAISE(PyExc_SystemError, "fault");
 	}
 }

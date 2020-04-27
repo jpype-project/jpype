@@ -142,6 +142,7 @@ void PyJPValue_finalize(void* obj)
 	JPContext *context = JPContext_global;
 	if (context == NULL || !context->isRunning())
 		return;
+	JPJavaFrame frame(context);
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
@@ -219,6 +220,9 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	// Private members go regardless
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
 		return attr.keep();
+
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
 
 	// Methods
 	if (Py_TYPE(attr.get()) == (PyTypeObject*) PyJPMethod_Type)

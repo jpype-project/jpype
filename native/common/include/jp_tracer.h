@@ -81,13 +81,15 @@ private:
 	static void traceOut(const char *msg, bool error);
 } ;
 
-
+extern "C" bool _PyJPModule_trace;
 namespace JPTracer
 {
 
 template <class T>
 inline void trace(const T& msg)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	stringstream str;
 	str << msg;
 	JPypeTracer::trace1(str.str().c_str());
@@ -95,12 +97,16 @@ inline void trace(const T& msg)
 
 inline void trace(const char *msg)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	JPypeTracer::trace1(msg);
 }
 
 template <class T1, class T2>
 inline void trace(const T1& msg1, const T2 & msg2)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	stringstream str;
 	str << msg1 << " " << msg2;
 	JPypeTracer::trace1(str.str().c_str());
@@ -108,12 +114,16 @@ inline void trace(const T1& msg1, const T2 & msg2)
 
 inline void trace(const char *msg1, const char *msg2)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	JPypeTracer::trace2(msg1, msg2);
 }
 
 template <class T1, class T2, class T3>
 inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3;
 	JPypeTracer::trace1(str.str().c_str());
@@ -122,6 +132,8 @@ inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
 template <class T1, class T2, class T3, class T4>
 inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg4)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
 	JPypeTracer::trace1(str.str().c_str());
@@ -130,6 +142,8 @@ inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg
 template <class T1, class T2, class T3, class T4, class T5>
 inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5 & msg5)
 {
+	if (_PyJPModule_trace & 1 == 0)
+		return;
 	stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
 	JPypeTracer::trace1(str.str().c_str());
