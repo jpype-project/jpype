@@ -25,8 +25,10 @@
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
 : m_Context(context), m_Env(p_env), popped(false)
 {
+
 	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, i);
+	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
 }
 
 JPJavaFrame::JPJavaFrame(JPContext* context, int i)
@@ -36,6 +38,7 @@ JPJavaFrame::JPJavaFrame(JPContext* context, int i)
 
 	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, i);
+	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
 }
 
 JPJavaFrame::JPJavaFrame(const JPJavaFrame& frame)
@@ -43,12 +46,17 @@ JPJavaFrame::JPJavaFrame(const JPJavaFrame& frame)
 {
 	// Create a memory management frame to live in
 	m_Env->functions->PushLocalFrame(m_Env, LOCAL_FRAME_DEFAULT);
+	JP_TRACE_JAVA("JavaFrame (copy)", (jobject) - 1);
 }
 
 jobject JPJavaFrame::keep(jobject obj)
 {
 	popped = true;
-	return m_Env->functions->PopLocalFrame(m_Env, obj);
+	JP_TRACE_JAVA("Keep", obj);
+	JP_TRACE_JAVA("~JavaFrame (keep)", (jobject) - 2);
+	obj = m_Env->functions->PopLocalFrame(m_Env, obj);
+	JP_TRACE_JAVA("Return", obj);
+	return obj;
 }
 
 JPJavaFrame::~JPJavaFrame()
@@ -56,6 +64,7 @@ JPJavaFrame::~JPJavaFrame()
 	// Check if we have already closed the frame.
 	if (!popped)
 	{
+		JP_TRACE_JAVA("~JavaFrame", (jobject) - 2);
 		m_Env->functions->PopLocalFrame(m_Env, NULL);
 	}
 
@@ -65,37 +74,44 @@ JPJavaFrame::~JPJavaFrame()
 
 void JPJavaFrame::DeleteLocalRef(jobject obj)
 {
+	JP_TRACE_JAVA("Delete local", obj);
 	m_Env->DeleteLocalRef(obj);
 }
 
 void JPJavaFrame::DeleteGlobalRef(jobject obj)
 {
+	JP_TRACE_JAVA("Delete global", obj);
 	m_Env->DeleteGlobalRef(obj);
 }
 
 jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
 {
-	return m_Env->NewWeakGlobalRef(obj);
+	JP_TRACE_JAVA("New weak", obj);
+	obj = m_Env->NewWeakGlobalRef(obj);
+	JP_TRACE_JAVA("Weak", obj);
+	return obj;
 }
 
 void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)
 {
+	JP_TRACE_JAVA("Delete weak", obj);
 	return m_Env->DeleteWeakGlobalRef(obj);
 }
 
-jobject JPJavaFrame::NewLocalRef(jobject a0)
+jobject JPJavaFrame::NewLocalRef(jobject obj)
 {
-	jobject res = m_Env->functions->NewLocalRef(m_Env, a0);
-	return res;
+	JP_TRACE_JAVA("New local", obj);
+	obj = m_Env->functions->NewLocalRef(m_Env, obj);
+	JP_TRACE_JAVA("Local", obj);
+	return obj;
 }
 
-jobject JPJavaFrame::NewGlobalRef(jobject a0)
+jobject JPJavaFrame::NewGlobalRef(jobject obj)
 {
-	JP_TRACE_IN("JPJavaFrame::NewGlobalRef", a0);
-	jobject res = m_Env->functions->NewGlobalRef(m_Env, a0);
-	JP_TRACE("got", res);
-	return res;
-	JP_TRACE_OUT;
+	JP_TRACE_JAVA("New Global", obj);
+	obj = m_Env->functions->NewGlobalRef(m_Env, obj);
+	JP_TRACE_JAVA("Global", obj);
+	return obj;
 }
 
 /*****************************************************************************/
@@ -128,22 +144,28 @@ jint JPJavaFrame::Throw(jthrowable th)
 
 jthrowable JPJavaFrame::ExceptionOccurred()
 {
-	jthrowable res;
+	jthrowable obj;
 
-	res = m_Env->functions->ExceptionOccurred(m_Env);
+	obj = m_Env->functions->ExceptionOccurred(m_Env);
 #ifdef JP_TRACING_ENABLE
-	if (res)
+	if (obj)
 	{
 		m_Env->functions->ExceptionDescribe(m_Env);
 	}
 #endif
-	return res;
+	JP_TRACE_JAVA("Exception", obj);
+	return obj;
 }
 
 /*****************************************************************************/
 
 #ifdef JP_INSTRUMENTATION
 #define JAVA_RETURN(X,Y,Z) \
+  PyJPModuleFault_throw(compile_hash(Y)); \
+  X ret = Z; \
+  check(); \
+  return ret;
+#define JAVA_RETURN_OBJ(X,Y,Z) \
   PyJPModuleFault_throw(compile_hash(Y)); \
   X ret = Z; \
   check(); \
@@ -155,6 +177,11 @@ jthrowable JPJavaFrame::ExceptionOccurred()
 #else
 #define JAVA_RETURN(X,Y,Z) \
   X ret = Z; \
+  check(); \
+  return ret;
+#define JAVA_RETURN_OBJ(X,Y,Z) \
+  X ret = Z; \
+  JP_TRACE_JAVA("ret", Y); \
   check(); \
   return ret;
 #define JAVA_CHECK(Y,Z) \
@@ -181,13 +208,14 @@ jobject JPJavaFrame::NewObjectA(jclass a0, jmethodID a1, jvalue* a2)
 	JAVA_CHECK("JPJavaFrame::NewObjectA::AllocObject",
 			m_Env->functions->CallVoidMethodA(m_Env, res, a1, a2));
 
+	JP_TRACE_JAVA("NewObjectA", res);
 	// Initialize the object
 	return res;
 }
 
 jobject JPJavaFrame::NewDirectByteBuffer(void* address, jlong capacity)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::NewDirectByteBuffer",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::NewDirectByteBuffer",
 		m_Env->functions->NewDirectByteBuffer(m_Env, address, capacity));
 }
 
@@ -531,13 +559,13 @@ jboolean JPJavaFrame::CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jme
 
 jobject JPJavaFrame::GetStaticObjectField(jclass clazz, jfieldID fid)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::GetStaticObjectField",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::GetStaticObjectField",
 		m_Env->functions->GetStaticObjectField(m_Env, clazz, fid));
 }
 
 jobject JPJavaFrame::GetObjectField(jobject clazz, jfieldID fid)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::GetObjectField",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::GetObjectField",
 		m_Env->functions->GetObjectField(m_Env, clazz, fid));
 }
 
@@ -555,25 +583,25 @@ void JPJavaFrame::SetObjectField(jobject clazz, jfieldID fid, jobject val)
 
 jobject JPJavaFrame::CallStaticObjectMethodA(jclass clazz, jmethodID mid, jvalue* val)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::CallStaticObjectMethodA",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::CallStaticObjectMethodA",
 		m_Env->functions->CallStaticObjectMethodA(m_Env, clazz, mid, val));
 }
 
 jobject JPJavaFrame::CallObjectMethodA(jobject obj, jmethodID mid, jvalue* val)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::CallObjectMethodA",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::CallObjectMethodA",
 		m_Env->functions->CallObjectMethodA(m_Env, obj, mid, val));
 }
 
 jobject JPJavaFrame::CallNonvirtualObjectMethodA(jobject obj, jclass claz, jmethodID mid, jvalue* val)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::CallNonvirtualObjectMethodA",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::CallNonvirtualObjectMethodA",
 		m_Env->functions->CallNonvirtualObjectMethodA(m_Env, obj, claz, mid, val));
 }
 
 jbyteArray JPJavaFrame::NewByteArray(jsize len)
 {
-	JAVA_RETURN(jbyteArray, "JPJavaFrame::NewByteArray",
+	JAVA_RETURN_OBJ(jbyteArray, "JPJavaFrame::NewByteArray",
 		m_Env->functions->NewByteArray(m_Env, len));
 }
 
@@ -603,7 +631,7 @@ void JPJavaFrame::ReleaseByteArrayElements(jbyteArray array, jbyte* v, jint mode
 
 jshortArray JPJavaFrame::NewShortArray(jsize len)
 {
-	JAVA_RETURN(jshortArray, "JPJavaFrame::NewShortArray",
+	JAVA_RETURN_OBJ(jshortArray, "JPJavaFrame::NewShortArray",
 		m_Env->functions->NewShortArray(m_Env, len));
 }
 
@@ -633,7 +661,7 @@ void JPJavaFrame::ReleaseShortArrayElements(jshortArray array, jshort* v, jint m
 
 jintArray JPJavaFrame::NewIntArray(jsize len)
 {
-	JAVA_RETURN(jintArray, "JPJavaFrame::NewIntArray",
+	JAVA_RETURN_OBJ(jintArray, "JPJavaFrame::NewIntArray",
 		m_Env->functions->NewIntArray(m_Env, len));
 }
 
@@ -663,7 +691,7 @@ void JPJavaFrame::ReleaseIntArrayElements(jintArray array, jint* v, jint mode)
 
 jlongArray JPJavaFrame::NewLongArray(jsize len)
 {
-	JAVA_RETURN(jlongArray, "JPJavaFrame::NewLongArray",
+	JAVA_RETURN_OBJ(jlongArray, "JPJavaFrame::NewLongArray",
 		m_Env->functions->NewLongArray(m_Env, len));
 }
 
@@ -693,7 +721,7 @@ void JPJavaFrame::ReleaseLongArrayElements(jlongArray array, jlong* v, jint mode
 
 jfloatArray JPJavaFrame::NewFloatArray(jsize len)
 {
-	JAVA_RETURN(jfloatArray, "JPJavaFrame::NewFloatArray",
+	JAVA_RETURN_OBJ(jfloatArray, "JPJavaFrame::NewFloatArray",
 		m_Env->functions->NewFloatArray(m_Env, len));
 }
 
@@ -723,7 +751,7 @@ void JPJavaFrame::ReleaseFloatArrayElements(jfloatArray array, jfloat* v, jint m
 
 jdoubleArray JPJavaFrame::NewDoubleArray(jsize len)
 {
-	JAVA_RETURN(jdoubleArray, "JPJavaFrame::NewDoubleArray",
+	JAVA_RETURN_OBJ(jdoubleArray, "JPJavaFrame::NewDoubleArray",
 		m_Env->functions->NewDoubleArray(m_Env, len));
 }
 
@@ -753,7 +781,7 @@ void JPJavaFrame::ReleaseDoubleArrayElements(jdoubleArray array, jdouble* v, jin
 
 jcharArray JPJavaFrame::NewCharArray(jsize len)
 {
-	JAVA_RETURN(jcharArray, "JPJavaFrame::NewCharArray",
+	JAVA_RETURN_OBJ(jcharArray, "JPJavaFrame::NewCharArray",
 		m_Env->functions->NewCharArray(m_Env, len));
 }
 
@@ -783,7 +811,7 @@ void JPJavaFrame::ReleaseCharArrayElements(jcharArray array, jchar* v, jint mode
 
 jbooleanArray JPJavaFrame::NewBooleanArray(jsize len)
 {
-	JAVA_RETURN(jbooleanArray, "JPJavaFrame::NewBooleanArray",
+	JAVA_RETURN_OBJ(jbooleanArray, "JPJavaFrame::NewBooleanArray",
 		m_Env->functions->NewBooleanArray(m_Env, len));
 }
 
@@ -843,7 +871,7 @@ jclass JPJavaFrame::FindClass(const string& a0)
 
 jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass a1, jobject a2)
 {
-	JAVA_RETURN(jobjectArray, "JPJavaFrame::NewObjectArray",
+	JAVA_RETURN_OBJ(jobjectArray, "JPJavaFrame::NewObjectArray",
 		m_Env->functions->NewObjectArray(m_Env, a0, a1, a2));
 }
 
@@ -879,7 +907,7 @@ jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)
 
 jstring JPJavaFrame::NewStringUTF(const char* a0)
 {
-	JAVA_RETURN(jstring, "JPJavaFrame::NewString",
+	JAVA_RETURN_OBJ(jstring, "JPJavaFrame::NewString",
 		m_Env->functions->NewStringUTF(m_Env, a0));
 }
 
@@ -903,7 +931,7 @@ jsize JPJavaFrame::GetArrayLength(jarray a0)
 
 jobject JPJavaFrame::GetObjectArrayElement(jobjectArray a0, jsize a1)
 {
-	JAVA_RETURN(jobject, "JPJavaFrame::GetObjectArrayElement",
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::GetObjectArrayElement",
 		m_Env->functions->GetObjectArrayElement(m_Env, a0, a1));
 }
 

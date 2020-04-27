@@ -16,6 +16,8 @@
  *****************************************************************************/
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
+#include <string>
+#include <sstream>
 
 // GCOVR_EXCL_START
 
@@ -33,6 +35,7 @@
 #define JP_TRACE(...) JPTracer::trace(__VA_ARGS__)
 #define JP_TRACE_LOCKS(...) JPypeTracer::traceLocks(__VA_ARGS__)
 #define JP_TRACE_PY(m, obj) JPypeTracer::tracePythonObject(m, obj)
+#define JP_TRACE_JAVA(m, obj) JPypeTracer::traceJavaObject(m, obj)
 #else
 #ifndef JP_INSTRUMENTATION
 #define JP_TRACE_IN(...) try { do {} while (0)
@@ -41,6 +44,7 @@
 #define JP_TRACE(...)
 #define JP_TRACE_LOCKS(...)
 #define JP_TRACE_PY(m, obj)
+#define JP_TRACE_JAVA(m, obj)
 #endif
 
 // Enable this option to get all the py referencing information
@@ -71,50 +75,51 @@ public:
 		}
 	}
 
+	static void traceJavaObject(const char *msg, const void* obj);
 	static void tracePythonObject(const char *msg, PyObject *ref);
 	static void traceLocks(const string& msg, void *ref);
 
-	static void trace1(const char *msg);
+	static void trace1(const char *src, const char *msg);
 	static void trace2(const char *msg1, const char *msg2);
 private:
 	static void traceIn(const char *msg, void *ref);
 	static void traceOut(const char *msg, bool error);
 } ;
 
-extern "C" bool _PyJPModule_trace;
+extern "C" int _PyJPModule_trace;
 namespace JPTracer
 {
 
 template <class T>
 inline void trace(const T& msg)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	stringstream str;
+	std::stringstream str;
 	str << msg;
-	JPypeTracer::trace1(str.str().c_str());
+	JPypeTracer::trace1(NULL, str.str().c_str());
 }
 
 inline void trace(const char *msg)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	JPypeTracer::trace1(msg);
+	JPypeTracer::trace1(NULL, msg);
 }
 
 template <class T1, class T2>
 inline void trace(const T1& msg1, const T2 & msg2)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	stringstream str;
+	std::stringstream str;
 	str << msg1 << " " << msg2;
-	JPypeTracer::trace1(str.str().c_str());
+	JPypeTracer::trace1(NULL, str.str().c_str());
 }
 
 inline void trace(const char *msg1, const char *msg2)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
 	JPypeTracer::trace2(msg1, msg2);
 }
@@ -122,31 +127,31 @@ inline void trace(const char *msg1, const char *msg2)
 template <class T1, class T2, class T3>
 inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	stringstream str;
+	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3;
-	JPypeTracer::trace1(str.str().c_str());
+	JPypeTracer::trace1(NULL, str.str().c_str());
 }
 
 template <class T1, class T2, class T3, class T4>
 inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg4)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	stringstream str;
+	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
-	JPypeTracer::trace1(str.str().c_str());
+	JPypeTracer::trace1(NULL, str.str().c_str());
 }
 
 template <class T1, class T2, class T3, class T4, class T5>
 inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4, const T5 & msg5)
 {
-	if (_PyJPModule_trace & 1 == 0)
+	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	stringstream str;
+	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
-	JPypeTracer::trace1(str.str().c_str());
+	JPypeTracer::trace1(NULL, str.str().c_str());
 }
 }
 
