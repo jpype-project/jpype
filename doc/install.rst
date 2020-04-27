@@ -164,6 +164,18 @@ From the Python developer page:
 When building for windows you must use the Visual Studio developer command
 prompt.
 
+
+Path requirements
+-----------------
+
+On certain systems such as Windows 2016 Server, the JDK will not load properly
+despite JPype properly locating the JVM library.  The work around for this 
+issue is add the JRE bin directory to the system PATH.  Apparently, the 
+shared library requires dependencies which are located in the bin directory.
+If a JPype fails to load despite having the correct JAVA_HOME and 
+system architecture, it may be this issue.
+
+
 Known Bugs/Limitations
 ----------------------
 
