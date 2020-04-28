@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -235,6 +237,19 @@ public class JPypeContext
     {
       this.typeManager.shutdown();
     } catch (Throwable th)
+    {
+    }
+
+    // If coverage tools are being used, we need to dump last before everything
+    // shuts down
+    try
+    {
+      Class<?> RT = Class.forName("org.jacoco.agent.rt.RT");
+      Method getAgent = RT.getMethod("getAgent");
+      Object agent = getAgent.invoke(null);
+      Thread.sleep(100);  // make sure we don't clober
+      agent.getClass().getMethod("dump", boolean.class).invoke(agent, false);
+    } catch (InterruptedException | NullPointerException | ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex)
     {
     }
   }
