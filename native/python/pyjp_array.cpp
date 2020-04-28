@@ -120,14 +120,7 @@ static void PyJPArray_dealloc(PyJPArray *self)
 static PyObject *PyJPArray_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_repr");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_ValueError, "Null array");
-	stringstream sout;
-
-	sout << "<java array " << self->m_Array->getClass()->toString() << ">";
-	return JPPyString::fromStringUTF8(sout.str()).keep();
+	return PyUnicode_FromFormat("<java array '%s'>", Py_TYPE(self)->tp_name);
 	JP_PY_CATCH(0);
 }
 
@@ -136,7 +129,7 @@ static Py_ssize_t PyJPArray_len(PyJPArray *self)
 	JP_PY_TRY("PyJPArray_len");
 	PyJPModule_getContext();
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_ValueError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array"); // GCOVR_EXCL_LINE
 	return self->m_Array->getLength();
 	JP_PY_CATCH(-1);
 }

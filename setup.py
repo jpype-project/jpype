@@ -37,7 +37,7 @@ setup(
     package_dir={
         'jpype': 'jpype',
     },
-    tests_require=['pytest', 'mock', 'unittest2'],
+    tests_require=['pytest'],
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,
         'build_thunk': setupext.build_thunk.BuildThunkCommand,

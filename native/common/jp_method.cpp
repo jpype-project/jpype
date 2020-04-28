@@ -299,7 +299,12 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	}
 
 	// Call the method
-	jobject o = frame.callMethod(m_Method.get(), self, ja);
+	jobject o;
+	{
+		JPPyCallRelease call;
+		o =	 frame.callMethod(m_Method.get(), self, ja);
+	}
+
 
 	JP_TRACE("ReturnType", retType->getCanonicalName());
 

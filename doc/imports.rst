@@ -4,8 +4,8 @@ Module for dynamically loading Java Classes using the import system.
 
 This is a replacement for the jpype.JPackage("com").fuzzy.Main type syntax.
 It features better safety as the objects produced are checked for class
-existence. To use java imports, import the domains package prior to
-importing a java class.
+existence. To use Java imports, import the domains package prior to
+importing a Java class.
 
 This module supports three different styles of importing java classes.
 
@@ -34,7 +34,7 @@ added to the directory of the base module.
 **import <java_package> as <var>**
 
 A package can be imported as a local variable. This provides access to
-all java classes in that package. Contained packages are not available.
+all Java classes in that package. Contained packages are not available.
 
 Example:
  .. code-block:: python
@@ -83,15 +83,10 @@ it is not possible to determine what classes are currently loaded. Some
 classes are loaded by the boot strap loader and thus are not available
 for discovery.
 
-As currently implemented [from <java_package> import \*] will import
+As currently implemented ``from <java_package> import *`` will import
 all classes and static variables which have already been imported by
 another import call. As a result which classes will be imported
-is based on the code pat and thus very unreliable.
-
-It is possible to determine the classes available using Guava for
-java extension jars or for jars specifically loaded in the class path.
-But this is sufficiently unreliable that we recommend not using wildcards
-for any purpose.
+is based on the code path and thus unreliable.
 
 Keyword naming
 ~~~~~~~~~~~~~~
@@ -106,9 +101,9 @@ Example::
 Controlling Java package imports
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default domains imports four top level domains (TLD) into the python
-import system (com, gov, java, org). Additional domains can be added
-by calling registerDomain. Domains can be an alias for a java package
+By default, JPype imports seven top level domains (TLD) into the Python
+import system (com, gov, java, org, net, mil, edu). Additional domains can be added
+by calling registerDomain. Domains can be an alias for a Java package
 path.
 
 Example:

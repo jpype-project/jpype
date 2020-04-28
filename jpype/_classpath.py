@@ -36,7 +36,7 @@ def addClassPath(path1):
 
 
 def getClassPath(env=True):
-    """ Get the full java class path.
+    """ Get the full Java class path.
 
     Includes user added paths and the environment CLASSPATH.
 
