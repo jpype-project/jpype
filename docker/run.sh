@@ -13,7 +13,7 @@
 #   cp38-cp38
 
 # Build each wheel
-VER=0.7.3
+VER=0.7.4
 root=`pwd`
 root=${root#/mnt}
 for PLAT in x86_64 i686

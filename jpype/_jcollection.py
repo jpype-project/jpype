@@ -182,6 +182,7 @@ class _JIterator(object):
     This customizer adds the Python iterator concept to classes
     that implement the Java Iterator interface.
     """
+
     def __next__(self):
         if self.hasNext():
             return self.next()
@@ -218,7 +219,8 @@ def _JInstantConversion(jcls, obj):
     nsec = int((utc-sec)*1e9)
     return jcls.ofEpochSecond(sec, nsec)
 
-if sys.version_info < (3,6):
+
+if sys.version_info < (3, 6):
     import pathlib
     @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
     def _JPathConvert(jcls, obj):
@@ -228,7 +230,6 @@ if sys.version_info < (3,6):
     @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
     def _JFileConvert(jcls, obj):
         return jcls(str(obj))
-
 
 
 @_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
