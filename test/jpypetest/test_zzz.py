@@ -18,4 +18,3 @@ class ZZZTestCase(common.JPypeTestCase):
 
     def testShutdown(self):
         jpype.shutdownJVM()
-

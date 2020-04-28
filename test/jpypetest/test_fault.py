@@ -3,6 +3,7 @@ import jpype
 from jpype import *
 import common
 
+
 class FaultTestCase(common.JPypeTestCase):
     """ Test for fault paths in JPype
 
@@ -1118,6 +1119,7 @@ class FaultTestCase(common.JPypeTestCase):
     def testClassHintsFaults(self):
         class CTest(object):
             pass
+
         @JConversion("java.lang.Number", exact=CTest)
         def _CTestConversion(jcls, obj):
             return java.lang.Integer(123)
@@ -1125,6 +1127,7 @@ class FaultTestCase(common.JPypeTestCase):
         class ATest(object):
             def __foo__(self):
                 pass
+
         @JConversion("java.lang.Number", attribute="__foo__")
         def _ATestConversion(jcls, obj):
             return java.lang.Integer(123)

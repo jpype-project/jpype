@@ -196,11 +196,9 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertEqual(
             jpype.java.lang.Class._canConvertToJava(JString), "exact")
 
-
     def testInnerClass(self):
         # This tests for problems when the inner class implements the
-        # outer interface which creates a race condition.  Success is 
+        # outer interface which creates a race condition.  Success is
         # not throwing an exception
         test = JClass("jpype.types.InnerTest")()
         test.test()
-

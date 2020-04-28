@@ -6,6 +6,7 @@ __all__ = ['addClassPath', 'getClassPath']
 _CLASSPATHS = []
 _SEP = _os.path.pathsep
 
+
 def addClassPath(path1):
     """ Add a path to the Java class path
 
