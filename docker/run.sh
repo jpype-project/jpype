@@ -12,7 +12,7 @@
 #   cp38-cp38
 
 # Build each wheel
-VER=0.7.1
+VER=0.7.4
 for PLAT in x86_64 i686
 do
 	DOCKER_IMAGE=quay.io/pypa/manylinux1_$PLAT

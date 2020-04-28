@@ -51,7 +51,7 @@ Example:
 Proxies and other JPype specific module resources cannot be pickled currently.
 
 Requires:
-    Python 2.7 or 3.6 or later
+    Python 3.6 or later
 
 """
 from __future__ import absolute_import

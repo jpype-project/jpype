@@ -3,10 +3,12 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+- **0.7.4 - 4-28-2020**
+
   - Corrected a resource leak in arrays that affects array initialization, and variable
     argument methods.  
 
-  - Upgraded tracing and JNI checks to prevent future resource leaks.
+  - Upgraded diagnostic tracing and JNI checks to prevent future resource leaks.
 
 - **0.7.3 - 4-17-2020**
 
