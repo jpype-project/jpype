@@ -221,9 +221,6 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
 		return attr.keep();
 
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-
 	// Methods
 	if (Py_TYPE(attr.get()) == (PyTypeObject*) PyJPMethod_Type)
 		return attr.keep();

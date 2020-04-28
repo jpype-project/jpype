@@ -125,7 +125,6 @@ void JPypeTracer::traceJavaObject(const char* msg, const void* ref)
 	if (ref == (void*) 0)
 	{
 		JPypeTracer::trace1("JNI", msg);
-		jpype_traceLevel++;
 		return;
 	}
 	if (ref == (void*) - 1)
