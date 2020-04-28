@@ -296,8 +296,13 @@ public class TypeManager
    * @param object is the object to interrogate.
    * @return the C++ portion or null if the object is null.
    */
-  public long findClassForObject(Object object)
+  public long findClassForObject(Object object) throws InterruptedException
   {
+    Thread th = Thread.currentThread();
+    if (th.isInterrupted())
+    {
+      th.sleep(1);
+    }
     if (object == null)
       return 0;
 
