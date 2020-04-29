@@ -50,32 +50,42 @@ static JPConversionAsFloat<JPDoubleType> asDoubleConversion;
 static JPConversionLongAsFloat<JPDoubleType> asDoubleLongConversion;
 static JPConversionFloatWiden<JPDoubleType> doubleWidenConversion;
 
-JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+class JPConversionAsDoubleExact : public JPConversionAsFloat<JPDoubleType>
 {
-	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
-		JPClass *cls = value->getClass();
-		if (cls == this)
-		{
-			match.conversion = javaValueConversion;
-			return match.type = JPMatch::_exact;
-		}
+		if (!PyFloat_CheckExact(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_exact;
+	}
+
+} asDoubleExactConversion;
+
+class JPConversionAsJDouble : public JPConversionJavaValue
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	{
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -87,21 +97,27 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 					match.conversion = &doubleWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit;
+
+	}
+
+} asJDoubleConversion;
+
+JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+
+	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
-	}
 
-	if (PyFloat_CheckExact(match.object))
-	{
-		match.conversion = &asDoubleConversion;
-		return match.type = JPMatch::_exact;
-	}
-
-	if (asDoubleLongConversion.matches(match, this)
+	if (asJDoubleConversion.matches(match, this)
+			|| asDoubleExactConversion.matches(match, this)
+			|| asDoubleLongConversion.matches(match, this)
 			|| asDoubleConversion.matches(match, this))
 		return match.type;
 
@@ -111,6 +127,7 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
+
 	return frame.NewDoubleArray(sz);
 }
 
@@ -118,6 +135,7 @@ JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID f
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
+
 	return convertToPythonObject(frame, v, false);
 }
 
@@ -125,6 +143,7 @@ JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
+
 	return convertToPythonObject(frame, v, false);
 }
 
@@ -132,6 +151,7 @@ JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID
 {
 	jvalue v;
 	{
+
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
 	}
@@ -145,6 +165,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 		JPPyCallRelease call;
 		if (clazz == NULL)
 			field(v) = frame.CallDoubleMethodA(obj, mth, val);
+
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
@@ -154,6 +175,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
+
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -163,6 +185,7 @@ void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, Py
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
+
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -217,6 +240,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
+
 		if (v == -1)
 			JP_PY_CHECK();
 		val[index] = v;
@@ -232,12 +256,14 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
+
 	return convertToPythonObject(frame, v, false);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
+
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -246,6 +272,7 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 
 void JPDoubleType::getView(JPArrayView& view)
 {
+
 	JPJavaFrame frame(view.getContext());
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
@@ -269,23 +296,27 @@ void JPDoubleType::releaseView(JPArrayView& view)
 
 const char* JPDoubleType::getBufferFormat()
 {
+
 	return "d";
 }
 
 ssize_t JPDoubleType::getItemSize()
 {
+
 	return sizeof (jdouble);
 }
 
 void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
+
 	jdouble* b = (jdouble*) ((char*) memory + offset);
 	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
 }
 
 static void pack(jdouble* d, jvalue v)
 {
+
 	*d = v.d;
 }
 

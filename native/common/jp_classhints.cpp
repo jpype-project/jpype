@@ -463,27 +463,24 @@ public:
 	}
 } _objectConversion;
 
-class JPConversionJavaValue : public JPConversion
+JPMatch::Type JPConversionJavaValue::matches(JPMatch &match, JPClass *cls)
 {
-public:
+	JP_TRACE_IN("JPConversionJavaValue::matches");
+	JPValue *slot = match.getJavaSlot();
+	if (slot == NULL || slot->getClass() != cls)
+		return match.type = JPMatch::_none;
+	match.conversion = this;
+	return match.type = JPMatch::_exact;
+	JP_TRACE_OUT;
+}
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
-	{
-		JP_TRACE_IN("JPConversionJavaValue::matches");
-		JPValue *slot = match.getJavaSlot();
-		if (slot == NULL || slot->getClass() != cls)
-			return match.type = JPMatch::_none;
-		match.conversion = this;
-		return match.type = JPMatch::_exact;
-		JP_TRACE_OUT;
-	}
+jvalue JPConversionJavaValue::convert(JPMatch &match)
+{
+	JPValue* value = match.getJavaSlot();
+	return *value;
+}
 
-	virtual jvalue convert(JPMatch &match) override
-	{
-		JPValue* value = match.getJavaSlot();
-		return *value;
-	}
-} _javaValueConversion;
+JPConversionJavaValue _javaValueConversion;
 
 class JPConversionString : public JPConversion
 {

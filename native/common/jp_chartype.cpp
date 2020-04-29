@@ -72,6 +72,36 @@ public:
 	}
 } asCharConversion;
 
+class JPConversionAsJChar : public JPConversion
+{
+public:
+
+	JPMatch::Type matches(JPMatch &match, JPClass *cls)  override
+	{
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+
+		// Exact
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
+			return match.type;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit;  // stop search
+	}
+
+	// GCOVR_EXCL_START
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		return jvalue();
+	}
+	// GCOVR_EXCL_STOP
+} asJCharConversion;
+
 JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPCharType::getJavaConversion");
@@ -79,23 +109,6 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
-	{
-		JPClass *cls = value->getClass();
-		if (cls == this)
-		{
-			match.conversion = javaValueConversion;
-			return match.type = JPMatch::_exact;
-		}
-
-		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (unboxConversion->matches(match, this))
-			return match.type;
-
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
-	}
 
 	if (asCharConversion.matches(match, this))
 		return match.type;

@@ -27,6 +27,13 @@ public:
 	virtual jvalue convert(JPMatch &match) = 0;
 } ;
 
+class JPConversionJavaValue : public JPConversion
+{
+public:
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override;
+	virtual jvalue convert(JPMatch &match) override;
+} ;
+
 class JPClassHints
 {
 public:

@@ -79,7 +79,7 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 					match.conversion = &longWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 

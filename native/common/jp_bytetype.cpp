@@ -48,6 +48,34 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 JPConversionLong<JPByteType> byteConversion;
 JPConversionLongNumber<JPByteType> byteNumberConversion;
 
+class JPConversionJByte : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
+			return match.type;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit; // stop the search
+	}
+
+	// GCOVR_EXCL_START
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		return jvalue();
+	}
+	// GCOVR_EXCL_STOP
+} jbyteConversion;
+
 JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPByteType::getJavaConversion");
@@ -55,19 +83,8 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
-	{
-		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
-			return match.type;
-
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
-	}
-
-	if (byteConversion.matches(match, this)
+	if (jbyteConversion.matches(match, this)
+			|| byteConversion.matches(match, this)
 			|| byteNumberConversion.matches(match, this))
 		return match.type;
 

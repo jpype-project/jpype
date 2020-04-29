@@ -44,6 +44,59 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 
 class JPConversionAsBoolean : public JPConversion
 {
+
+public:
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+		if (!PyBool_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_exact;
+	}
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		jvalue res;
+		jlong v = PyObject_IsTrue(match.object);
+		if (v == -1)
+			JP_PY_CHECK();
+		res.z = v != 0;
+		return res;
+	}
+} asBooleanExact;
+
+class JPConversionAsBooleanJBool : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	{
+
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
+			return match.type;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit; // search no further.
+	}
+
+	// GCOVR_EXCL_START
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		return jvalue();
+	}
+	// GCOVR_EXCL_STOP
+
+} asBooleanJBool;
+
+class JPConversionAsBooleanLong : public JPConversionAsBoolean
+{
 public:
 
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
@@ -54,17 +107,19 @@ public:
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
 	}
+} asBooleanLong;
 
-	virtual jvalue convert(JPMatch &match) override
+class JPConversionAsBooleanNumber : public JPConversionAsBoolean
+{
+public:
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
-		jvalue res;
-		jlong v = PyLong_AsLongLong(match.object);
-		if (v == -1)
-			JP_PY_CHECK();
-		res.z = v != 0;
-		return res;
+		if (!PyNumber_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_explicit;
 	}
-} asBooleanConversion;
+} asBooleanNumber;
 
 JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 {
@@ -73,33 +128,12 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 	if (match.object ==  Py_None)
 		return match.type = JPMatch::_none;
 
-	if (PyBool_Check(match.object))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_exact;
-	}
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
-	{
-		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
-			return match.type;
-
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
-	}
-
-	if (asBooleanConversion.matches(match, this))
+	if (asBooleanExact.matches(match, this)
+			|| asBooleanJBool.matches(match, this)
+			|| asBooleanLong.matches(match, this)
+			|| asBooleanNumber.matches(match, this)
+			)
 		return match.type;
-
-	if (PyNumber_Check(match.object))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_explicit;
-	}
-
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }

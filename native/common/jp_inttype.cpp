@@ -47,31 +47,33 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
+
 JPConversionLong<JPIntType> intConversion;
 JPConversionLongNumber<JPIntType> intNumberConversion;
 JPConversionLongWiden<JPIntType> intWidenConversion;
 
-JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+class JPConversionJInt : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
-		JPClass *cls = value->getClass();
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return JPMatch::_none;
+		match.type = JPMatch::_none;
+
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'C':
@@ -80,15 +82,25 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 					match.conversion = &intWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	if (intConversion.matches(match, this)
+} jintConversion;
+
+JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPIntType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+	if (jintConversion.matches(match, this)
+			|| intConversion.matches(match, this)
 			|| intNumberConversion.matches(match, this))
 		return match.type;
 
