@@ -64,5 +64,5 @@ jclass JPClassLoader::findClass(JPJavaFrame& frame, string name)
 {
 	jvalue v;
 	v.l = frame.NewStringUTF(name.c_str());
-	return (jclass) frame.keep(frame.CallObjectMethodA(m_BootLoader.get(), m_FindClass, &v));
+	return (jclass) frame.CallObjectMethodA(m_BootLoader.get(), m_FindClass, &v);
 }

@@ -142,6 +142,7 @@ void PyJPValue_finalize(void* obj)
 	JPContext *context = JPContext_global;
 	if (context == NULL || !context->isRunning())
 		return;
+	JPJavaFrame frame(context);
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
