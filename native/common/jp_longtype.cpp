@@ -49,27 +49,27 @@ JPConversionLong<JPLongType> longConversion;
 JPConversionLongNumber<JPLongType> longNumberConversion;
 JPConversionLongWiden<JPLongType> longWidenConversion;
 
-JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+class JPConversionJLong : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPLongType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue* value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
-		JPClass *cls = value->getClass();
+		JPValue* value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(match, cls)
+				|| unboxConversion->matches(match, cls))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'I':
@@ -84,10 +84,22 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		return JPMatch::_implicit;
 	}
 
-	if (longConversion.matches(match, this)
+} jlongConversion;
+
+JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPLongType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+
+	if (jlongConversion.matches(match, this)
+			|| longConversion.matches(match, this)
 			|| longNumberConversion.matches(match, this))
 		return match.type;
 
