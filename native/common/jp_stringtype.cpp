@@ -53,7 +53,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 	}
 
 	return JPClass::convertToPythonObject(frame, val, cast);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
 JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
@@ -66,7 +66,7 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
 JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
@@ -80,5 +80,5 @@ JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 		return JPValue(this, frame.fromStringUTF8(str));
 	}
 	return JPClass::newInstance(frame, args);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
