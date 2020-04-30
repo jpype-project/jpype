@@ -246,6 +246,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"assemble",
 				"([ILjava/lang/Object;)Ljava/lang/Object;");
 
+		m_Context_GetFunctionalID = frame.GetMethodID(cls,
+				"getFunctional",
+				"(Ljava/lang/Class;)Ljava/lang/String;");
+
 		m_Context_CreateExceptionID = frame.GetMethodID(cls, "createException",
 				"(JJ)Ljava/lang/Exception;");
 		m_Context_GetExcClassID = frame.GetMethodID(cls, "getExcClass",
@@ -261,11 +265,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"(Ljava/lang/String;)Ljava/lang/Object;");
 		m_Package_GetContentsID = frame.GetMethodID(cls, "getContents",
 				"()[Ljava/lang/String;");
-
-		m_Context_GetFunctionalID = frame.GetMethodID(cls,
-				"getFunctional",
-				"(Ljava/lang/Class;)Ljava/lang/String;");
-
 
 		cls = frame.FindClass("java/nio/Buffer");
 		m_Buffer_IsReadOnlyID = frame.GetMethodID(cls, "isReadOnly",
