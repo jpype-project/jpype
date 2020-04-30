@@ -19,8 +19,9 @@ import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
-from . import _jinit
 from . import _jcustomizer
+from . import _jinit
+from . import _pykeywords
 
 from ._jvmfinder import *
 
@@ -216,6 +217,7 @@ def startJVM(*args, **kwargs):
                     jvmpath, version)) from ex
         raise
 
+
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
     _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")
@@ -282,6 +284,7 @@ def startJVM(*args, **kwargs):
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
 
+    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(list(_pykeywords._KEYWORDS))
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)

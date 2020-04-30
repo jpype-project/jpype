@@ -105,6 +105,7 @@ mockModule._JClass = _JClass
 mockModule._JField = TypeMock("_JField") 
 mockModule._JMethod = TypeMock("_JMethod")
 mockModule._JObject = TypeMock("_JObject")
+mockModule._JPackage = TypeMock("_JPackage")
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
 sys.modules['_jpype']=mockModule

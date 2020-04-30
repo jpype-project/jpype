@@ -257,6 +257,10 @@ private:
 	jmethodID m_Proxy_NewID;
 	jmethodID m_Proxy_NewInstanceID;
 
+	jmethodID m_Context_IsPackageID;
+	jmethodID m_Context_GetPackageID;
+	jmethodID m_Package_GetObjectID;
+	jmethodID m_Package_GetContentsID;
 private:
 	bool m_Running;
 	bool m_ConvertStrings;
