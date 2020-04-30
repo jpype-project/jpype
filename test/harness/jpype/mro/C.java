@@ -16,7 +16,7 @@
 //*****************************************************************************
 package jpype.mro;
 
-class C implements A, B
+public class C implements A, B
 {
 	public void foo()
 	{}

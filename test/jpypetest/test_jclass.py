@@ -222,3 +222,4 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertEqual(JClass('[[J'), JArray(JLong, 2))
         self.assertEqual(JClass('[Ljava.lang.Object;'), JArray(JObject))
         self.assertEqual(JClass('[Ljava/lang/Object;'), JArray(JObject))
+
