@@ -94,6 +94,16 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     placed in memory containers will have the same object id so long
     as Java holds on to it.
 
+  - jpype.imports and JPackage verify existance of packages and classes.
+    Imports from Java packages support wildcards.  
+
+  - Bug with JPackage that imported private and protected classes
+    inappropriately has been corrected.  Protected classes can still be
+    imported using JClass.
+
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
+
   - ``@JImplements`` with keyword argument ``deferred`` can be started 
     prior to starting the JVM.  Methods are checked at first object
     creation.
