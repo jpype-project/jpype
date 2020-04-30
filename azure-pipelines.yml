@@ -4,6 +4,7 @@
 
 pr:
   - master
+  - release
   - releases/*
 
 jobs:

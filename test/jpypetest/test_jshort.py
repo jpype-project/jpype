@@ -369,10 +369,13 @@ class JShortTestCase(common.JPypeTestCase):
         self.assertEqual(ja[0], 123)
         ja[0:1] = [-1]
         self.assertEqual(ja[0], -1)
-        ja[0:1] = [java.lang.Double(321)]
-        self.assertEqual(ja[0], 321)
+        with self.assertRaises(TypeError):
+            ja[0:1] = [1.000]
+        with self.assertRaises(TypeError):
+            ja[0:1] = [java.lang.Double(321)]
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
+
 
     def testArrayConversionFail(self):
         jarr = JArray(JShort)(VALUES)
@@ -496,7 +499,7 @@ class JShortTestCase(common.JPypeTestCase):
         JA = JArray(JShort)
         ja = JA(VALUES)
         ja2 = ja[::2]
-        jo = jpype.JObject(ja2, object)
+        jo = jpype.JObject(ja2, jpype.JObject)
         ja3 = jpype.JObject(jo, JA)
         self.assertEqual(type(jo), jpype.JClass("java.lang.Object"))
         self.assertEqual(type(ja2), JA)
