@@ -22,16 +22,16 @@ __all__ = ['JArray']
 
 
 class JArray(_jpype._JObject):
-    """ Create a java array class for a Java type of a given dimension.
+    """ Creates a Java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.
     The resulting Java array class can be used to construct a new
-    array with a given size or members.
+    array with a given size or specified members.
 
     JPype arrays support Python operators for iterating, length, equals, 
-    not equals, subscripting, and limited slicing. They also support Java
+    not equals, subscripting, and slicing. They also support Java
     object methods, clone, and length property. Java arrays may not
-    be resized, thus elements cannot be added nor deleted. Currently,
+    be resized, and as such elements cannot be added nor deleted. Currently,
     applying the slice operator produces a new Python sequence.
 
     Example:

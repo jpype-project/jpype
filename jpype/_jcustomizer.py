@@ -21,22 +21,22 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
-    are applied, but sometimes this is insufficient.  If only a
+    are applied, but this may be insufficient.  If only a
     single method requires modification then a class customizer can
     be applied.  But if many interfaces require the same conversion
-    than a user conversion may be an option.
+    than a user conversion may be a better option.
 
     To add a user conversion define a method which take the requested
     Java type as the first argument, the target object to be converted
     as the second argument and returns a Java object or Java proxy that
     matches the required type.  If the type is not a Java type then
-    a TypeError will be produce.  This method is only evaluated
+    a TypeError will be raised.  This method is only evaluated
     after the match has been determine prior to calling.
 
     Care should be used when defining a user conversion. If example
     if one has an interface that requires a specific class and you
     want it to take a Python string, then a user conversion can
-    do that.  On the other hand if you define a generic converter
+    do that.  On the other hand, if you define a generic converter
     of any Python object to a Java string, then every interface
     will attempt to call the conversion method whenever a Java string
     is being matched, which can cause many methods to potentially
@@ -49,12 +49,12 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
     Args:
       cls(str, JClass): The class that will be produced by this
         conversion.
-      exact(type): this conversion applies only to objects that have
+      exact(type): This conversion applies only to objects that have
         a type exactly equal to the argument.
-      instanceof(type): this conversion applies to any object that
-        pass isinstance(obj, arg)
-      attribute(str): this conversion applies to any object that has
-        passes hasattr(obj, arg)
+      instanceof(type): This conversion applies to any object that
+        pass isinstance(obj, arg).
+      attribute(str): This conversion applies to any object that has
+        passes hasattr(obj, arg).
     """
     def customizer(func):
         hints = getClassHints(cls)
@@ -71,18 +71,18 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
 def JImplementationFor(clsname, base=False):
     """ Decorator to define an implementation for a class.
 
-    Applies to a class which will serve as a prototype as for the java class
+    Applies to a class which will serve as a prototype as for the Java class
     wrapper.  If it is registered as a base class, then the class must
     derive from JObject.  Otherwise, the methods are copied from
-    the prototype to java class wrapper.
+    the prototype to the Java class wrapper.
 
     The method ``__jclass_init__(cls)`` will be called with the constructed
-    class as the argument.  This call be used to set methods for all classes
+    class as the argument.  This call is used to set methods for all classes
     that derive from the specified class.  Use ``type.__setattr__()`` to
     alter the class methods.
 
     Using the prototype class as a base class is used mainly to support
-    classes which must be derived from a python type by design.  Use
+    classes which must be derived from a Python type by design.  Use
     of a base class will produce a RuntimeError if the class has already
     been created.
 

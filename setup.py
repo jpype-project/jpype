@@ -8,7 +8,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
 setup(
     name='JPype1',
-    version='0.7.3',
+    version='0.7.4',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
@@ -28,6 +28,7 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
     ],
@@ -36,12 +37,11 @@ setup(
     package_dir={
         'jpype': 'jpype',
     },
-    tests_require=['pytest', 'mock', 'unittest2'],
+    tests_require=['pytest'],
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,
         'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
-        'build_makefile': setupext.build_makefile.BuildMakefileCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,

@@ -117,16 +117,16 @@ class JBufferTestCase(common.JPypeTestCase):
         bf = method(obj)
         mv = np.asarray(memoryview(bf))
         ja = JArray(dtype)(5)
-        mv[:] = [1,2,3,4,5]
+        mv[:] = [1, 2, 3, 4, 5]
         bf.get(ja)
-        self.assertEqual(list(ja), [1,2,3,4,5])
+        self.assertEqual(list(ja), [1, 2, 3, 4, 5])
         obj.order(self.bo.LITTLE_ENDIAN)
         bf = method(obj)
         mv = np.asarray(memoryview(bf))
         ja = JArray(dtype)(5)
-        mv[:] = [1,2,3,4,5]
+        mv[:] = [1, 2, 3, 4, 5]
         bf.get(ja)
-        self.assertEqual(list(ja), [1,2,3,4,5])
+        self.assertEqual(list(ja), [1, 2, 3, 4, 5])
 
     @common.requireNumpy
     def testMemoryViewShortNP(self):
@@ -147,6 +147,3 @@ class JBufferTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testMemoryViewDoubleNP(self):
         self.checkNP(self.cls.asDoubleBuffer, JDouble, 8)
-
- 
-
