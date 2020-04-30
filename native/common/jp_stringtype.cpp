@@ -59,6 +59,9 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
+	// Update the Python class cache
+	if (this->m_Hints.isNull())
+		PyJPClass_create(*match.frame, this);
 	if (nullConversion->matches(match, this)
 			|| objectConversion->matches(match, this)
 			|| stringConversion->matches(match, this)

@@ -21,6 +21,9 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPNumberType::canConvertToJava");
+	// Update the Python class cache
+	if (this->m_Hints.isNull())
+		PyJPClass_create(*match.frame, this);
 	if (nullConversion->matches(match, this)
 			|| javaNumberAnyConversion->matches(match, this)
 			|| boxLongConversion->matches(match, this)
