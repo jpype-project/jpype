@@ -91,6 +91,7 @@ template <class type_t> PyObject *convertMultiArray(
 	frame.SetObjectArrayElement(contents, k++, a0);
 	jboolean isCopy;
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+	JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
 	type_t *dest = (type_t*) mem;
 
 	Py_ssize_t step;
@@ -117,6 +118,7 @@ template <class type_t> PyObject *convertMultiArray(
 			}
 			// Commit the current section
 			indices[u] = 0;
+			JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
 			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, JNI_COMMIT);
 			frame.DeleteLocalRef(a0);
 
@@ -127,6 +129,7 @@ template <class type_t> PyObject *convertMultiArray(
 			a0 = cls->newArrayInstance(frame, base);
 			frame.SetObjectArrayElement(contents, k++, a0);
 			mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+			JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
 			dest = (type_t*) mem;
 			src = buffer.getBufferPtr(indices);
 		}
