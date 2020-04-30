@@ -90,7 +90,6 @@ struct PyJPBuffer
 	JPBuffer *m_Buffer;
 } ;
 
-
 struct PyJPClassHints
 {
 	PyObject_HEAD
@@ -104,6 +103,16 @@ struct PyJPProxy
 	PyObject* m_Target;
 	bool m_Convert;
 } ;
+
+struct PyJPConversionInfo
+{
+	PyObject *dict;
+	PyObject *ret;
+	PyObject *exact;
+	PyObject *implicit;
+	PyObject *attributes;
+} ;
+
 
 // JPype types
 extern PyTypeObject *PyJPArray_Type;
@@ -175,6 +184,7 @@ void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPV
 bool       PyJPValue_isSetJavaSlot(PyObject* self);
 
 #define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
+
 /**
  * Use this when getting the context where the context must be running.
  *

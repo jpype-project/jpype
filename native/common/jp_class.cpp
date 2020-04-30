@@ -353,6 +353,14 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPClass::getConversionInfo(PyJPConversionInfo &info)
+{
+	objectConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(this));
+}
+
+
 //</editor-fold>
 //<editor-fold desc="hierarchy" defaultstate="collapsed">
 

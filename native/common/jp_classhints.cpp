@@ -106,6 +106,17 @@ JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 	return match.type = JPMatch::_explicit;
 }
 
+void JPIndexConversion::getInfo(JPClass *cls, PyJPConversionInfo &info) override
+{
+	PyList_Append(info.attributes, JPPyString::fromStringUTF8("__index__").get());
+}
+
+void JPNumberConversion::getInfo(JPClass *cls, PyJPConversionInfo &info)
+{
+	PyList_Append(info.attributes, JPPyString::fromStringUTF8("__float__").get());
+	PyList_Append(info.attributes, JPPyString::fromStringUTF8("__index__").get());
+}
+
 /**
  * Conversion for all user specified conversions.
  */
@@ -182,6 +193,12 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info)
+	{
+		PyList_Append(info.attributes, JPPyString::fromStringUTF8(attribute_).get());
+	}
+
+
 private:
 	std::string attribute_;
 
@@ -225,6 +242,11 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, type_.get());
+	}
+
 private:
 	JPPyObject type_;
 	bool exact_;
@@ -235,6 +257,15 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
 	conversions.push_back(new JPTypeConversion(type, method, exact));
 	JP_TRACE_OUT;
+}
+
+void JPClassHints::getInfo(JPClass *cls, PyJPConversionInfo &info)
+{
+	for (std::list<JPConversion*>::iterator iter = conversions.begin();
+			iter != conversions.end(); ++iter)
+	{
+		(*iter)->getInfo(cls, info);
+	}
 }
 
 class JPHintsConversion : public JPConversion
@@ -249,6 +280,15 @@ public:
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
 		return match.type;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
+		if (pyhints == NULL)
+			return;
+		JPClassHints *hints = pyhints->m_Hints;
+		hints->getInfo(cls, info);
 	}
 
 	virtual jvalue convert(JPMatch &match)
@@ -273,6 +313,11 @@ public:
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, &PyUnicode_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -307,6 +352,11 @@ public:
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyBytes_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -354,6 +404,17 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyObject *module = PyImport_GetModule("collections.abc");
+		if (module == NULL)
+			return;
+		PyObject *cls2 = PyObject_GetAttrString("Sequence");
+		PyList_Append(info.implicit, cls2);
+		Py_DECREF(cls2);
+		Py_DECREF(module);
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPJavaFrame frame(*match.frame);
@@ -388,6 +449,10 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue v;
@@ -412,6 +477,12 @@ public:
 		match.closure = cls2;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyJPClass_Type);
+		PyList_Append(info.implicit, PyJPClass_create(cls->getContext()->_java_lang_Class).get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -454,6 +525,11 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyJPClass_create(cls).get());
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
@@ -472,6 +548,12 @@ JPMatch::Type JPConversionJavaValue::matches(JPMatch &match, JPClass *cls)
 	match.conversion = this;
 	return match.type = JPMatch::_exact;
 	JP_TRACE_OUT;
+}
+
+void JPConversionJavaValue::getInfo(JPClass *cls, PyJPConversionInfo &info)
+{
+	PyList_Append(info.implicit, PyJPClass_create(cls));
+	unboxConversion->getInfo(cls, info);
 }
 
 jvalue JPConversionJavaValue::convert(JPMatch &match)
@@ -496,6 +578,11 @@ public:
 			return match.type = JPMatch::_exact;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, &PyUnicode_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -537,6 +624,11 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyJPClass_create(cls->getContext()->_java_lang_Boolean).get());
+	}
+
 } _boxBooleanConversion;
 
 class JPConversionBoxLong : public JPConversionBox
@@ -555,6 +647,11 @@ public:
 		}
 		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyLong_Type);
 	}
 
 	jvalue convert(JPMatch &match)  override
@@ -595,6 +692,23 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyObject *obj = PyUnicode_Format("__float__");
+		PyList_Append(info.attributes, obj);
+		Py_DECREF(obj);
+		PyObject *obj = PyUnicode_Format("__index__");
+		PyList_Append(info.attributes, obj);
+		Py_DECREF(obj);
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		// FIXME what is the type for all numbers
+		PyList_Append(info.implicit, PyLong_Type);
+		PyList_Append(info.implicit, PyFloat_Type);
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPJavaFrame *frame = match.frame;
@@ -625,6 +739,11 @@ public:
 		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
 		return match.type;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyJPClass_create(cls->getContext()->_java_lang_Object).get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -676,6 +795,12 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, PyJPNumberLong_Type);
+		PyList_Append(info.implicit, PyJPNumberFloat_Type);
+	}
+
 } _javaNumberAnyConversion;
 
 class JPConversionUnbox : public JPConversion
@@ -694,6 +819,14 @@ public:
 		match.conversion = this;
 		match.closure = cls;
 		return match.type = JPMatch::_implicit;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		JPPrimitiveType *pcls = (JPPrimitiveType*) cls;
+		JPContext *context = cls->getContext();
+		PyList_Append(info.implicit,
+				PyJPClass_create(pcls->getBoxedClass(context)).get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -728,6 +861,10 @@ public:
 		}
 		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
 	}
 
 	virtual jvalue convert(JPMatch &match) override

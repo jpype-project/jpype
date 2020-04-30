@@ -44,14 +44,19 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 
 class JPConversionAsBoolean : public JPConversion
 {
-
 public:
+
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_exact;
+	}
+
+	virtual void getInfo(JPClass * cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -65,7 +70,7 @@ public:
 	}
 } asBooleanExact;
 
-class JPConversionAsBooleanJBool : public JPConversion
+class JPConversionAsBooleanJBool : public JPConversionJavaValue
 {
 public:
 
@@ -85,14 +90,6 @@ public:
 		return JPMatch::_implicit; // search no further.
 	}
 
-	// GCOVR_EXCL_START
-
-	virtual jvalue convert(JPMatch &match) override
-	{
-		return jvalue();
-	}
-	// GCOVR_EXCL_STOP
-
 } asBooleanJBool;
 
 class JPConversionAsBooleanLong : public JPConversionAsBoolean
@@ -107,11 +104,18 @@ public:
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
 	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
+	}
+
 } asBooleanLong;
 
 class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
+
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		if (!PyNumber_Check(match.object))
@@ -119,6 +123,12 @@ public:
 		match.conversion = this;
 		return match.type = JPMatch::_explicit;
 	}
+
+	virtual void getInfo(JPClass * cls, PyJPConversionInfo &info) override
+	{
+		// explicit does not add to info
+	}
+
 } asBooleanNumber;
 
 JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)

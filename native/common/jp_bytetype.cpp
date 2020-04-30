@@ -48,7 +48,7 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 JPConversionLong<JPByteType> byteConversion;
 JPConversionLongNumber<JPByteType> byteNumberConversion;
 
-class JPConversionJByte : public JPConversion
+class JPConversionJByte : public JPConversionJavaValue
 {
 public:
 
@@ -67,13 +67,6 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	// GCOVR_EXCL_START
-
-	virtual jvalue convert(JPMatch &match) override
-	{
-		return jvalue();
-	}
-	// GCOVR_EXCL_STOP
 } jbyteConversion;
 
 JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)

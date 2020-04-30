@@ -64,6 +64,11 @@ public:
 		JP_TRACE_OUT;
 	}
 
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, &PyUnicode_Type);
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;

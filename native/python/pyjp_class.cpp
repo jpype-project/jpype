@@ -454,6 +454,30 @@ static PyObject *PyJPClass_hints(PyObject *self, PyObject *closure)
 	JP_PY_CATCH(NULL);
 }
 
+static PyObject *PyJPClass_info(PyJPClass *self, PyObject *closure)
+{
+	JP_PY_TRY("PyJPClass_hints");
+	PyJPModule_getContext();
+	PyJPConversionInfo info;
+	JPPyObject dict(JPPyRef::_call, PyDict_New());
+	JPPyObject ret(JPPyRef::_call, PyList_New(0));
+	JPPyObject implicit(JPPyRef::_call, PyList_New(0));
+	JPPyObject attribs(JPPyRef::_call, PyList_New(0));
+	JPPyObject exact(JPPyRef::_call, PyList_New(0));
+	info.dict = dict.get();
+	info.ret = ret.get();
+	info.implicit = implicit.get();
+	info.attributes = attribs.get();
+	info.exact = exact.get();
+	PyDict_SetItemString(dict.get(), "return", ret.get());
+	PyDict_SetItemString(dict.get(), "implicit", implicit.get());
+	PyDict_SetItemString(dict.get(), "exact", exact.get());
+	PyDict_SetItemString(dict.get(), "attributes", attribs.get());
+	self->m_Class->getConversionInfo(info);
+	return dict.keep();
+	JP_PY_CATCH(NULL);
+}
+
 static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_setHints", self);
@@ -637,6 +661,7 @@ static PyMethodDef classMethods[] = {
 static PyGetSetDef classGetSets[] = {
 	{"class_", (getter) PyJPClass_class, (setter) PyJPClass_setClass, ""},
 	{"_hints", (getter) PyJPClass_hints, (setter) PyJPClass_setHints, ""},
+	{"_info",  (getter) PyJPClass_info, (setter) PyJPClass_setHints, ""},
 	{0}
 };
 

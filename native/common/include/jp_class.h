@@ -135,6 +135,8 @@ public:
 	 */
 	virtual JPMatch::Type findJavaConversion(JPMatch& match);
 
+	virtual void getConversionInfo(PyJPConversionInfo &info);
+
 	/** Create a new Python object to wrap a Java value.
 	 *
 	 * Some conversion convert to a Python type such as Java boolean and char.

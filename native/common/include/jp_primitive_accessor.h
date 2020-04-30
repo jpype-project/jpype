@@ -149,7 +149,7 @@ template <class type_t> PyObject *convertMultiArray(
 }
 
 template <typename base_t>
-class JPConversionLong : public JPConversion
+class JPConversionLong : public JPIndexConversion
 {
 public:
 
@@ -194,6 +194,17 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
+	virtual void getInfo(PyJPConversionInfo &info)
+	{
+		PyObject *obj = PyUnicode_Format("__float__");
+		PyList_Append(attributes, obj);
+		Py_DECREF(obj);
+		PyObject *obj = PyUnicode_Format("__index__");
+		PyList_Append(attributes, obj);
+		Py_DECREF(obj);
+	}
+
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JPPyObject obj = JPPyObject(JPPyRef::_call, PyNumber_Long(match.object));
@@ -223,7 +234,7 @@ public:
 } ;
 
 template <typename base_t>
-class JPConversionAsFloat : public JPConversion
+class JPConversionAsFloat : public JPNumberConversion
 {
 public:
 
@@ -259,6 +270,11 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
+	virtual void getInfo(PyJPConversionInfo &info) override
+	{
+		PyList_Append(types, (PyObject*) & PyLong_Type);
+	}
+
 	virtual jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
@@ -278,6 +294,10 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
 		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+	}
+
+	virtual void getInfo(PyJPConversionInfo &info) override
+	{
 	}
 
 	virtual jvalue convert(JPMatch &match) override
