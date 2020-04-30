@@ -253,8 +253,8 @@ private:
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
-	jmethodID m_Context_GetStackFrameID;
 public:
+	jmethodID m_Context_GetStackFrameID;
 
 	jmethodID m_BooleanValueID;
 	jmethodID m_ByteValueID;

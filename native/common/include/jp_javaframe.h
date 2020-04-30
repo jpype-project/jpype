@@ -361,8 +361,6 @@ public:
 	void ReleaseStringUTFChars(jstring a0, const char* a1);
 	jsize GetStringUTFLength(jstring a0);
 
-	jint compareTo(jobject obj, jobject obj2);
-
 	jboolean isPackage(const string& str);
 	jobject getPackage(const string& str);
 	jobject getPackageObject(jobject pkg, const string& str);
