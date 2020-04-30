@@ -27,8 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -81,6 +79,7 @@ public class JPypeContext
   private AtomicInteger shutdownFlag = new AtomicInteger();
   private AtomicInteger proxyCount = new AtomicInteger();
   private List<Thread> shutdownHooks = new ArrayList<>();
+  private List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
@@ -242,17 +241,10 @@ public class JPypeContext
     {
     }
 
-    // If coverage tools are being used, we need to dump last before everything
-    // shuts down
-    try
+    // Execute post hooks
+    for (Runnable run : this.postHooks)
     {
-      Class<?> RT = Class.forName("org.jacoco.agent.rt.RT");
-      Method getAgent = RT.getMethod("getAgent");
-      Object agent = getAgent.invoke(null);
-      Thread.sleep(100);  // make sure we don't clober
-      agent.getClass().getMethod("dump", boolean.class).invoke(agent, false);
-    } catch (InterruptedException | NullPointerException | ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex)
-    {
+      run.run();
     }
   }
 
@@ -301,6 +293,18 @@ public class JPypeContext
   public JPypeReferenceQueue getReferenceQueue()
   {
     return this.referenceQueue;
+  }
+
+  /**
+   * Add a hook to run after Python interface is shutdown.
+   *
+   * This must never have a Python method attached.
+   *
+   * @param run
+   */
+  public void _addPost(Runnable run)
+  {
+    this.postHooks.add(run);
   }
 
   /**
