@@ -245,7 +245,10 @@ public:
 	{
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
 		if (pyhints == NULL)
-			return match.type = JPMatch::_none;
+			PyJPClass_create(*match.frame, cls);
+		pyhints = (PyJPClassHints*) cls->getHints();
+		if (pyhints == NULL) // GCOVR_EXCL_LINE
+			return match.type = JPMatch::_none;  // GCOVR_EXCL_LINE
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
 		return match.type;
