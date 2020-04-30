@@ -19,8 +19,10 @@ class JavaCoverageTestCase(common.JPypeTestCase):
     def testContext(self):
         self.assertEqual(self.inst.collectRectangular(None), None)
         self.assertEqual(self.inst.collectRectangular(JString('hello')), None)
-        self.assertEqual(self.inst.collectRectangular(JArray(JObject,2)([JArray(JObject)(0)])), None)
-        self.assertEqual(self.inst.collectRectangular(JArray(JObject)([None,None])), None)
+        self.assertEqual(self.inst.collectRectangular(
+            JArray(JObject, 2)([JArray(JObject)(0)])), None)
+        self.assertEqual(self.inst.collectRectangular(
+            JArray(JObject)([None, None])), None)
         self.assertEqual(self.inst.getExcValue(None), 0)
 
     def testRefQueue(self):
@@ -36,7 +38,7 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         u2 = JPypeReference(None, None, 1, 0)
         self.assertTrue(u.equals(u))
         self.assertFalse(u.equals(u2))
-        self.assertFalse(u.equals(JString("a"))) 
+        self.assertFalse(u.equals(JString("a")))
 
     def testModifiers(self):
         cls = JClass('org.jpype.manager.ModifierCode')
@@ -71,7 +73,7 @@ class JavaCoverageTestCase(common.JPypeTestCase):
 
             @JOverride
             def assignMembers(self, context, cls, ctorMethod, methodList, fieldList):
-                return 
+                return
 
             @JOverride
             def defineField(self, context, cls, name, field, fieldType, modifiers):
@@ -102,26 +104,36 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         with self.assertRaises(JException):
             manager.init()
 
-        self.assertEqual(factory.entities[manager.findClassByName('boolean')], 'boolean')
-        self.assertEqual(factory.entities[manager.findClassByName('byte')], 'byte')
-        self.assertEqual(factory.entities[manager.findClassByName('char')], 'char')
-        self.assertEqual(factory.entities[manager.findClassByName('short')], 'short')
-        self.assertEqual(factory.entities[manager.findClassByName('int')], 'int')
-        self.assertEqual(factory.entities[manager.findClassByName('long')], 'long')
-        self.assertEqual(factory.entities[manager.findClassByName('float')], 'float')
-        self.assertEqual(factory.entities[manager.findClassByName('double')], 'double')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('boolean')], 'boolean')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('byte')], 'byte')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('char')], 'char')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('short')], 'short')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('int')], 'int')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('long')], 'long')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('float')], 'float')
+        self.assertEqual(
+            factory.entities[manager.findClassByName('double')], 'double')
 
-        self.assertEqual(factory.entities[manager.findClass(JBoolean)], "boolean")
+        self.assertEqual(
+            factory.entities[manager.findClass(JBoolean)], "boolean")
         self.assertEqual(factory.entities[manager.findClass(JChar)], "char")
         self.assertEqual(factory.entities[manager.findClass(JByte)], "byte")
         self.assertEqual(factory.entities[manager.findClass(JShort)], "short")
         self.assertEqual(factory.entities[manager.findClass(JInt)], "int")
         self.assertEqual(factory.entities[manager.findClass(JLong)], "long")
         self.assertEqual(factory.entities[manager.findClass(JFloat)], "float")
-        self.assertEqual(factory.entities[manager.findClass(JDouble)], "double")
+        self.assertEqual(
+            factory.entities[manager.findClass(JDouble)], "double")
 
         self.assertEqual(manager.populateMethod(0, None), None)
-        
+
         sb = JClass("java.lang.StringBuilder")
         with self.assertRaises(JException):
             manager.populateMembers(sb)
@@ -129,11 +141,3 @@ class JavaCoverageTestCase(common.JPypeTestCase):
 
         # See if we leaked any entities
         self.assertEqual(len(factory.entities), 0)
-
-
-
-
-
-
-
-

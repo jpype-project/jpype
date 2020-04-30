@@ -53,7 +53,7 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # built documents.
 #
 # The short X.Y version.
-import mock
+from unittest import mock
 
 def TypeMock_init(self, *args, **kwargs):
     object.__init__(self)
@@ -105,6 +105,7 @@ mockModule._JClass = _JClass
 mockModule._JField = TypeMock("_JField") 
 mockModule._JMethod = TypeMock("_JMethod")
 mockModule._JObject = TypeMock("_JObject")
+mockModule._JPackage = TypeMock("_JPackage")
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
 sys.modules['_jpype']=mockModule

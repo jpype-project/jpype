@@ -114,6 +114,7 @@ class JPContext
 public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
+	friend class JPClass;
 
 	JPContext();
 	virtual ~JPContext();
@@ -137,11 +138,6 @@ public:
 	jobject getJavaContext()
 	{
 		return m_JavaContext.get();
-	}
-
-	bool isShutdown()
-	{
-		return m_IsShutdown;
 	}
 
 	/** Release a global reference checking for shutdown.
@@ -222,9 +218,9 @@ private:
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
 
+	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jobject obj, jlong contextPtr);
+
 private:
-	friend class JPJavaFrame;
-	friend class JPClass;
 	JPContext(const JPContext& orig);
 
 	JavaVM *m_JavaVM;
@@ -250,7 +246,6 @@ private:
 	jmethodID m_Object_ToStringID;
 	jmethodID m_Object_EqualsID;
 	jmethodID m_Object_HashCodeID;
-	jmethodID m_ShutdownMethodID;
 	jmethodID m_CallMethodID;
 	jmethodID m_Class_GetNameID;
 	jmethodID m_Context_collectRectangularID;
@@ -264,9 +259,12 @@ private:
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
 	jmethodID m_Array_NewInstanceID;
+	jmethodID m_Context_IsPackageID;
+	jmethodID m_Context_GetPackageID;
+	jmethodID m_Package_GetObjectID;
+	jmethodID m_Package_GetContentsID;
 private:
-	bool m_IsShutdown;
-	bool m_IsInitialized;
+	bool m_Running;
 	bool m_ConvertStrings;
 public:
 	JPGarbageCollection *m_GC;

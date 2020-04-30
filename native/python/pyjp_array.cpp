@@ -68,7 +68,6 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JPValue *value = PyJPValue_getJavaSlot(v);
 	if (value != NULL)
 	{
-		JPJavaFrame frame(context);
 		JPArrayClass* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
 		if (arrayClass2 == NULL)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
@@ -81,7 +80,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	if (PySequence_Check(v))
 	{
-		JPJavaFrame frame(context);
+		JP_TRACE("Sequence");
 		jlong length =  PySequence_Size(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
@@ -94,6 +93,8 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	if (PyIndex_Check(v))
 	{
+		//		JPJavaFrame frame(context);
+		JP_TRACE("Index");
 		long long length = PyLong_AsLongLong(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
@@ -119,14 +120,7 @@ static void PyJPArray_dealloc(PyJPArray *self)
 static PyObject *PyJPArray_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_repr");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_ValueError, "Null array");
-	stringstream sout;
-
-	sout << "<java array " << self->m_Array->getClass()->toString() << ">";
-	return JPPyString::fromStringUTF8(sout.str()).keep();
+	return PyUnicode_FromFormat("<java array '%s'>", Py_TYPE(self)->tp_name);
 	JP_PY_CATCH(0);
 }
 
@@ -135,7 +129,7 @@ static Py_ssize_t PyJPArray_len(PyJPArray *self)
 	JP_PY_TRY("PyJPArray_len");
 	PyJPModule_getContext();
 	if (self->m_Array == NULL)
-		JP_RAISE(PyExc_ValueError, "Null array");
+		JP_RAISE(PyExc_ValueError, "Null array"); // GCOVR_EXCL_LINE
 	return self->m_Array->getLength();
 	JP_PY_CATCH(-1);
 }

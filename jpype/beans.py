@@ -18,17 +18,16 @@
 JPype Beans Module
 ------------------
 
-This customizer finds all occurances of methods with get or set and converts
+This customizer finds all occurences of methods with get or set and converts
 them into Python properties. This behavior is sometimes useful in programming
 with JPype with interactive shells, but also leads to a lot of confusion.
-Is this class exposing a variable or is this a property added JPype.  It was
-the default behavior until 0.7.
+Is this class exposing a variable or is this a property added JPype.  
 
 As an unnecessary behavior that violates both the Python principle
 *"There should be one-- and preferably only one --obvious way to do it."* and
-the C++ principle *"You only pay for what you use"*. Thus this misfeature
+the C++ principle *"You only pay for what you use"*.  This misfeature
 was removed from the distribution as a default. However, given that it is
-at times useful to have methods appear as properties, it was moved to a
+useful to have methods appear as properties, it was moved to a
 an optional module.
 
 To use beans as properties:
@@ -38,7 +37,7 @@ To use beans as properties:
   import jpype.beans
 
 The beans property modification is a global behavior and applies retroactively
-to all classes currently loaded.  Once started it can never be undone.
+to all classes currently loaded.  Once started it can not be undone.
 """
 import _jpype
 from . import _jcustomizer

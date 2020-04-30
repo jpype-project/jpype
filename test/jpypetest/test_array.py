@@ -57,9 +57,6 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_repr")
         with self.assertRaisesRegex(SystemError, "fault"):
             repr(ja)
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            repr(ja)
 
     @common.requireInstrumentation
     def testJPArray_len(self):
@@ -140,8 +137,6 @@ class ArrayTestCase(common.JPypeTestCase):
     def testJPArray_null(self):
         _jpype.fault("PyJPArray_init.null")
         null = JArray(JInt)(object())
-        with self.assertRaises(ValueError):
-            repr(null)
         with self.assertRaises(ValueError):
             len(null)
         with self.assertRaises(ValueError):
@@ -547,19 +542,18 @@ class ArrayTestCase(common.JPypeTestCase):
     def testZeroArray(self):
         ls = []
         ja = JArray(JInt)(ls)
-        self.assertEqual(len(ja),0)
+        self.assertEqual(len(ja), 0)
         na = np.array(ja)
-        self.assertEqual(len(ja),0)
+        self.assertEqual(len(ja), 0)
         ja = JArray(JString)(ls)
         with self.assertRaisesRegex(BufferError, "not primitive array"):
             memoryview(ja)
-        self.assertEqual(len(ja),0)
+        self.assertEqual(len(ja), 0)
         na = np.array(ja)
-        self.assertEqual(len(ja),0)
-        ja = JArray(JInt,2)([[],[1]])
+        self.assertEqual(len(ja), 0)
+        ja = JArray(JInt, 2)([[], [1]])
         with self.assertRaisesRegex(BufferError, "not rectangular"):
             memoryview(ja)
-        ja = JArray(JInt,2)([[1],[]])
+        ja = JArray(JInt, 2)([[1], []])
         with self.assertRaisesRegex(BufferError, "not rectangular"):
             memoryview(ja)
-

@@ -19,14 +19,16 @@ import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
+from . import _jcustomizer
 from . import _jinit
+from . import _pykeywords
 
 from ._jvmfinder import *
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
+    'detachThreadFromJVM', 'synchronized',
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
@@ -103,8 +105,6 @@ def _handleClassPath(clsList):
             out.extend(glob.glob(s+'.jar'))
         else:
             out.append(s)
-    if sys.platform == "cygwin":
-        out = [_classpath._posix2win(i) for i in out]
     return _classpath._SEP.join(out)
 
 
@@ -127,12 +127,12 @@ def startJVM(*args, **kwargs):
       jvmpath (str):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...)
         Using None will apply the default jvmpath.
-      classpath (str,[str]): Set the classpath for the jvm.
+      classpath (str,[str]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
-      ignoreUnrecognized (bool): Option to JVM to ignore
+      ignoreUnrecognized (bool): Option to ignore
         invalid JVM arguments. Default is False.
-      convertStrings (bool): Option to JPype to force Java strings to
+      convertStrings (bool): Option to force Java strings to
         cast to Python strings. This option is to support legacy code
         for which conversion of Python strings was the default. This
         will globally change the behavior of all calls using
@@ -197,20 +197,7 @@ def startJVM(*args, **kwargs):
             raise TypeError("Unknown class path element")
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
-
-    if not "convertStrings" in kwargs:
-        import warnings
-        warnings.warn("""
--------------------------------------------------------------------------------
-Deprecated: convertStrings was not specified when starting the JVM. The default
-behavior in JPype will be False starting in JPype 0.8. The recommended setting
-for new code is convertStrings=False.  The legacy value of True was assumed for
-this session. If you are a user of an application that reported this warning,
-please file a ticket with the developer.
--------------------------------------------------------------------------------
-""")
-
-    convertStrings = kwargs.pop('convertStrings', True)
+    convertStrings = kwargs.pop('convertStrings', False)
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
@@ -229,6 +216,7 @@ please file a ticket with the developer.
                 raise RuntimeError("%s is older than required Java version %d" % (
                     jvmpath, version)) from ex
         raise
+
 
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
@@ -296,6 +284,7 @@ please file a ticket with the developer.
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
 
+    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(list(_pykeywords._KEYWORDS))
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)
@@ -305,10 +294,13 @@ def attachToJVM(jvm):
 def shutdownJVM():
     """ Shuts down the JVM.
 
-    This method shuts down the JVM and thus disables access to existing
+    This method shuts down the JVM and disables access to existing
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
+    import threading
+    if threading.current_thread() is not threading.main_thread():
+        raise RuntimeError("Shutdown must be called from main thread")
     _jpype.shutdown()
 
 
@@ -368,7 +360,7 @@ def detachThreadFromJVM():
 def synchronized(obj):
     """ Creates a resource lock for a Java object.
 
-    Produces a monitor object. During the lifespan of the monitor the Java
+    Produces a monitor object. During the lifespan of the monitor Java
     will not be able to acquire a thread lock on the object. This will
     prevent multiple threads from modifying a shared resource.
 
@@ -394,12 +386,6 @@ def synchronized(obj):
     raise TypeError("synchronized only applies to java objects")
 
 
-# Naming compatibility
-@deprecated("getDefaultJVMPath")
-def get_default_jvm_path(*args, **kwargs):
-    return getDefaultJVMPath(*args, **kwargs)
-
-
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
 
@@ -421,3 +407,13 @@ def getJVMVersion():
         version = runtime.version()
     version = (re.match("([0-9.]+)", str(version)).group(1))
     return tuple([int(i) for i in version.split('.')])
+
+
+@_jcustomizer.JImplementationFor("java.lang.Runtime")
+class _JRuntime(object):
+    # We need to redirect hooks so that we control the order
+    def addShutdownHook(self, thread):
+        return _jpype.JClass("org.jpype.JPypeContext").getInstance().addShutdownHook(thread)
+
+    def removeShutdownHook(self, thread):
+        return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)

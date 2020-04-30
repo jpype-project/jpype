@@ -27,7 +27,6 @@ from . import _jarray       # lgtm [py/import-own-module]
 from . import _jexception   # lgtm [py/import-own-module]
 from .types import *
 from ._jcustomizer import *
-from . import reflect       # lgtm [py/import-own-module]
 from . import nio           # lgtm [py/import-own-module]
 from . import types         # lgtm [py/import-own-module]
 from ._jcustomizer import *
@@ -48,14 +47,8 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version_info__ = (0, 7, 2)
+__version_info__ = (0, 7, 4)
 __version__ = ".".join(str(i) for i in __version_info__)
-
-
-@_core.deprecated
-def JIterator(it):
-    """Deprecated"""
-    return it
 
 
 # FIXME these should be deprecated. The old JPackage system is only for

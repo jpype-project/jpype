@@ -8,8 +8,8 @@
                 <root id="src.java.dir" name="Source Packages"/>
             </source-roots>
             <test-roots>
-                <root id="test.harness.dir" name="Harness Packages"/>
                 <root id="test.src.dir"/>
+                <root id="test.harness.dir" name="Harness Packages"/>
             </test-roots>
         </data>
     </configuration>

@@ -20,10 +20,10 @@
 JPype Imports Module
 --------------------
 
-Once imported this module will place the standard TLDs into the python
-scope. These tlds are ``java``, ``com``, ``org``, ``gov``, ``mil``, 
-``net`` and ``edu``. Java symbols from these domains can be imported 
-using the standard Python syntax.
+Once imported this module will place the standard Top Level Domains (TLD) into
+the Python scope. These TLDs are ``java``, ``com``, ``org``, ``gov``, ``mil``,
+``net`` and ``edu``. Java symbols from these domains can be imported using the
+standard Python syntax.
 
 Import customizers are supported in Python 3.6 or greater.
 
@@ -52,22 +52,12 @@ Example:
    from java.lang import String
 
 """
-
+import sys
 import _jpype
-
 from importlib.machinery import ModuleSpec as _ModuleSpec
-from types import ModuleType as _ModuleType
-
-
-import _jpype
-import sys as _sys
 from . import _pykeywords
-from . import _jclass
-from . import _jinit
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
-_exportTypes = ()
-_modifier = None
 
 # %% Utility
 
@@ -91,30 +81,31 @@ _java_lang_NoClassDefFoundError = None
 _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
 
-
 def _getJavaClass(javaname):
+    """ This produces diagnostics on failing to find a Java class """
     global _java_lang_Class
     global _java_lang_NoClassDefFoundError
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
     if not _java_lang_Class:
-        _java_lang_Class = _jclass.JClass("java.lang.Class")
-        _java_lang_ClassNotFoundException = _jclass.JClass(
+        _java_lang_Class = _jpype.JClass("java.lang.Class")
+        _java_lang_ClassNotFoundException = _jpype.JClass(
             "java.lang.ClassNotFoundException")
-        _java_lang_NoClassDefFoundError = _jclass.JClass(
+        _java_lang_NoClassDefFoundError = _jpype.JClass(
             "java.lang.NoClassDefFoundError")
-        _java_lang_UnsupportedClassVersionError = _jclass.JClass(
+        _java_lang_UnsupportedClassVersionError = _jpype.JClass(
             "java.lang.UnsupportedClassVersionError")
 
     err = None
     try:
         # Use forname because it give better diagnostics
         cls = _java_lang_Class.forName(javaname)
-        return _jclass.JClass(cls)
+        return _jpype.JClass(cls)
 
     # Not found is acceptable
     except _java_lang_ClassNotFoundException:
-        return None
+        p = javaname.rpartition('.')
+        err = "'%s' not found in '%s'" % (p[2], p[0])
 
     # Missing dependency
     except _java_lang_NoClassDefFoundError as ex:
@@ -132,30 +123,6 @@ def _getJavaClass(javaname):
         err = "Unable to import '%s' due to unexpected exception, '%s'" % (
             javaname, ex)
     raise ImportError(err)
-
-# FIXME imports of static fields not working for now.
-
-
-def _copyProperties(out, mc):
-    #    for jf in mc.__javaclass__.getClassFields():
-    #        out[_keywordWrap(jf.getName())] = jf
-    pass
-
-
-def _getStaticMethods(cls):
-    global _modifier
-    static = {}
-    for u in cls.class_.getMethods():
-        if not _modifier.isStatic(u.getModifiers()):
-            continue
-        name = _keywordWrap(str(u.getName()))
-        static[name] = getattr(cls, name)
-    return static
-
-
-def _copyStaticMethods(out, cls):
-    for u, v in _getStaticMethods(cls).items():
-        out[u] = v
 
 
 # %% Customizer
@@ -207,120 +174,49 @@ class JImportCustomizer(object):
         raise NotImplementedError
 
 
-# %% Import
-class _JImport(object):
-    """ (internal) Base class for import java modules """
-    # Module requirements
-    __doc__ = None
-    __loader__ = None
-    __path__ = []
-    __package__ = "java"
-
-    def __init__(self, name):
-        pass
-
-    def __getattr__(self, name):
-        if name.startswith('_'):
-            return object.__getattribute__(self, name)
-
-        name = _keywordUnwrap(name)
-
-        # Inner class support
-        jname = object.__getattribute__(self, '__javaname__')
-        try:
-            object.__getattribute__(self, '__javaclass__')
-            jname = "$".join([jname, name])
-        except AttributeError:
-            jname = ".".join([jname, name])
-
-        # Get the class (if it exists)
-        jtype = _getJavaClass(jname)
-        if jtype:
-            # Cache it for later
-            object.__setattr__(self, name, jtype)
-            return jtype
-
-        # If the java class does not exist, throw a ClassNotFound exception
-        raise ImportError("Unable to find java class '%s'" % jname)
-
-    def __setattr__(self, name, value):
-        if name.startswith('__'):
-            raise AttributeError(
-                "Module does not allow setting of '%s'" % name)
-        if hasattr(value, '__javaclass__'):
-            return object.__setattr__(self, name, getattr(value, '__javaclass__'))
-        if isinstance(value, (_JImport, _ModuleType)):
-            return object.__setattr__(self, name, value)
-        raise AttributeError("JImport may not set attribute '%s'" % name)
-
-
-# In order to get properties to be attached to the _JImport class,
-# we must create a dynamic class between
-def _JImportFactory(spec, javaname, cls=_JImport):
-    """ (internal) Factory for creating java modules dynamically.
-
-    This is needed to create a new type node to hold static methods.
-    """
-
-    def init(self, name):
-        # Call the base class
-        cls.__init__(self, name)
-
-    def getall(self):
-        global _exportTypes
-        d1 = self.__dict__.items()
-        d2 = self.__class__.__dict__.items()
-        local = [name for name, attr in d1 if not name.startswith('_')
-                 and isinstance(attr, _exportTypes)]
-        glob = [name for name, attr in d2 if not name.startswith('_')
-                and isinstance(attr, _exportTypes)]
-        local.extend(glob)
-        return local
-
-    # Set up a new class for this type
-    bases = [cls]
-    members = {
-        "__init__": init,
-        "__javaname__": javaname,
-        "__name__": spec.name,
-        "__all__": property(getall),
-        "__spec__": spec,
-    }
-
-    # Is this module also a class, if so insert class info
-    jclass = _getJavaClass(javaname)
-    if jclass:
-        # Mark this as a class (will cause children to be inner classes)
-        members['__javaclass__'] = jclass
-
-        # Exposed static members as part of the module
-        _copyProperties(members, jclass)
-        _copyStaticMethods(members, jclass)
-
-    return type("module." + spec.name, tuple(bases), members)
-
-
-def _JModule(spec, javaname):
-    """ (internal) Front end for creating a java module dynamically """
-    cls = _JImportFactory(spec, javaname)
-    out = cls(spec.name)
-    return out
-
 # %% Finder
 
+def unwrap(name):
+    # Deal with Python keywords in the Java path
+    if not '_' in name:
+        return name
+    return ".".join([_keywordUnwrap(i) for i in name.split('.')])
 
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
 
-    def find_spec(self, name, path, target):
-        parts = name.split('.', 1)
-        if not parts[0] in _JDOMAINS:
+    def find_spec(self, name, path, target=None):
+        # If jvm is not started then we just check against the TLDs
+        if not _jpype.isStarted():
+            base = name.partition('.')[0]
+            if not base in _JDOMAINS:
+                return None
+            raise ImportError("Attempt to create java modules without jvm")
+
+        # Check if it is a TLD
+        parts = name.rpartition('.')
+        if not parts[1] and _jpype.isPackage(parts[2]):
+            return _ModuleSpec(name, self)
+
+        if not parts[1] and not _jpype.isPackage(parts[0]):
+            return None
+
+        base = sys.modules.get(parts[0], None)
+        if not base or not isinstance(base, _jpype._JPackage):
             return None
 
         # Support for external modules in java tree
+        name = unwrap(name)
         for customizer in _CUSTOMIZERS:
             if customizer.canCustomize(name):
                 return customizer.getSpec(name)
+  
+        # Using isPackage eliminates need for registering tlds
+        if not hasattr(base, parts[2]):
+            # If the base is a Java package and it wasn't found in the 
+            # package using getAttr, then we need to emit an error
+            # so we produce a meaningful diagnositic.
+            _getJavaClass(name)
 
         # Import the java module
         return _ModuleSpec(name, self)
@@ -328,42 +224,24 @@ class _JImportLoader:
     """ (internal) Loader hook for importlib. """
 
     def create_module(self, spec):
-        if not _jpype.isStarted():
-            raise ImportError("Attempt to create java modules without jvm")
-
-        # Handle creating the java name based on the path
-        parts = spec.name.split('.')
-        if len(parts) == 1:
-            return _JModule(spec, _JDOMAINS[spec.name])
-
-        # Use the parent module to simplify name mangling
-        base = _sys.modules[".".join(parts[:-1])]
-
-        # Support of inner classes
-        if not isinstance(base, _JImport):
-            return getattr(base, parts[-1])
-        jbasename = object.__getattribute__(base, '__javaname__')
-        try:
-            object.__getattribute(base, '__javaclass__')
-            javaname = "$".join([jbasename, _keywordUnwrap(parts[-1])])
-        except AttributeError:
-            javaname = ".".join([jbasename, _keywordUnwrap(parts[-1])])
-
-        return _JModule(spec, javaname)
+        if spec.parent == "":
+            return _jpype._JPackage(spec.name)
+        parts = spec.name.rsplit('.', 1)
+        return getattr(sys.modules[spec.parent], parts[1])
 
     def exec_module(self, fullname):
         pass
 
 
 # Install hooks into python importlib
-_sys.meta_path.append(_JImportLoader())
+sys.meta_path.append(_JImportLoader())
 
 # %% Domains
 _JDOMAINS = {}
 
 
 def registerDomain(mod, alias=None):
-    """ Add a java domain to python as a dynamic module.
+    """ Add a Java domain to Python as a dynamic module.
 
     This can be used to bind a Java path to a Python path.
 
@@ -386,15 +264,3 @@ registerDomain('mil')
 registerDomain('edu')
 registerDomain('net')
 
-# %% Initialize
-
-
-def _initialize():
-    global _exportTypes
-    global _modifier
-    _JMethod = type(_jclass.JClass('java.lang.Class').forName)
-    _modifier = _jclass.JClass('java.lang.reflect.Modifier')
-    _exportTypes = (property, _jclass.JClass, _JImport, _JMethod)
-
-
-_jinit.registerJVMInitializer(_initialize)

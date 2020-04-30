@@ -20,6 +20,7 @@
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
+#include "jp_stringtype.h"
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -35,6 +36,7 @@ extern void PyJPProxy_initType(PyObject* module);
 extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
+extern void PyJPPackage_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -463,7 +465,7 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 {
 	JPContext* context = JPContext_global;
-	if (context->isShutdown())
+	if (!context->isRunning())
 		Py_RETURN_NONE;
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
 	if (!PyUnicode_Check(a1))
@@ -498,6 +500,20 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t(stats.python_triggered));
 	Py_DECREF(res);
 	return out;
+}
+
+PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+{
+	JP_PY_TRY("PyJPModule_isPackage");
+	if (!PyUnicode_Check(pkg))
+	{
+		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
+		return NULL;
+	}
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
+	JP_PY_CATCH(NULL);
 }
 
 PyObject* examine(PyObject *module, PyObject *other)
@@ -541,51 +557,61 @@ PyObject* examine(PyObject *module, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+int _PyJPModule_trace = 0;
+static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
+{
+	bool old = _PyJPModule_trace;
+	_PyJPModule_trace = PyLong_AsLong(args);
+	return PyLong_FromLong(old);
+}
+
 #ifdef JP_INSTRUMENTATION
-uint32_t _PyModule_fault_code = -1;
+uint32_t _PyJPModule_fault_code = -1;
 
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
 	if (args == Py_None)
 	{
-		_PyModule_fault_code = 0;
+		_PyJPModule_fault_code = 0;
 		Py_RETURN_NONE;
 	}
 	string code = JPPyString::asStringUTF8(args);
 	uint32_t u = 0;
 	for (size_t i = 0; i < code.size(); ++i)
 		u = u * 0x1a481023 + code[i];
-	_PyModule_fault_code = u;
-	return PyLong_FromLong(_PyModule_fault_code);
+	_PyJPModule_fault_code = u;
+	return PyLong_FromLong(_PyJPModule_fault_code);
 }
 #endif
 
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
-	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
-	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
+	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
+	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, ""},
-	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
-	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
-	{"examine", (PyCFunction) (&examine), METH_O, ""},
-	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
-	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
-	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_NOARGS, ""},
+	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
+	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
+	{"examine", (PyCFunction) examine, METH_O, ""},
+	{"_newArrayType", (PyCFunction) PyJPModule_newArrayType, METH_VARARGS, ""},
+	{"_collect", (PyCFunction) PyJPModule_collect, METH_VARARGS, ""},
+	{"gcStats", (PyCFunction) PyJPModule_gcStats, METH_NOARGS, ""},
 
 	// Threading
-	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},
-	{"attachThreadToJVM", (PyCFunction) (&PyJPModule_attachThread), METH_NOARGS, ""},
-	{"detachThreadFromJVM", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, ""},
-	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
+	{"isThreadAttachedToJVM", (PyCFunction) PyJPModule_isThreadAttached, METH_NOARGS, ""},
+	{"attachThreadToJVM", (PyCFunction) PyJPModule_attachThread, METH_NOARGS, ""},
+	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
+	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
-	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
-	{"enableStacktraces", (PyCFunction) (&PyJPModule_enableStacktraces), METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
+	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
+	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
+	{"trace", (PyCFunction) PyJPModule_trace, METH_O, ""},
 #ifdef JP_INSTRUMENTATION
-	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
+	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 
 	// sentinel
@@ -617,7 +643,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "0.7.2");
+	PyModule_AddStringConstant(module, "__version__", "0.7.4");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
@@ -631,7 +657,9 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPMonitor_initType(module);
 	PyJPProxy_initType(module);
 	PyJPClassHints_initType(module);
+	PyJPPackage_initType(module);
 
+	_PyJPModule_trace = true;
 	return module;
 	JP_PY_CATCH(NULL);
 }
@@ -774,14 +802,14 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 int PyJPModuleFault_check(uint32_t code)
 {
-	return (code == _PyModule_fault_code);
+	return (code == _PyJPModule_fault_code);
 }
 
 void PyJPModuleFault_throw(uint32_t code)
 {
-	if (code == _PyModule_fault_code)
+	if (code == _PyJPModule_fault_code)
 	{
-		_PyModule_fault_code = -1;
+		_PyJPModule_fault_code = -1;
 		JP_RAISE(PyExc_SystemError, "fault");
 	}
 }

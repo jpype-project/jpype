@@ -14,12 +14,8 @@ class CoverageCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         self.platform = sys.platform
 
-    def testJInterator(self):
-        f = jpype.JIterator("foo")
-        self.assertEqual(f, "foo")
-
     def testWin32(self):
-        if sys.platform == "win32" or sys.platform == "cygwin":
+        if sys.platform == "win32":
             raise common.unittest.SkipTest("not tested on win32")
         try:
             sys.platform = "win32"
@@ -43,9 +39,6 @@ class CoverageCase(common.JPypeTestCase):
     def testSynchronizeFail(self):
         with self.assertRaises(TypeError):
             jpype.synchronized("hello")
-
-    def testJVMPathDepecated(self):
-        jpype.get_default_jvm_path()
 
     def testJArrayFail1(self):
         with self.assertRaises(TypeError):
@@ -219,3 +212,7 @@ class CoverageCase(common.JPypeTestCase):
     def testJClassFromClass(self):
         self.assertIsInstance(jpype.JClass(jpype.java.lang.Class.forName(
             "java.lang.StringBuilder")), jpype.JClass)
+
+    def testHints(self):
+        with self.assertRaises(AttributeError):
+            jpype.JObject._hints = object()

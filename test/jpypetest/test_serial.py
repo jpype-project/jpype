@@ -34,9 +34,6 @@ class SerializationTestCase(common.JPypeTestCase):
     def testSerialize(self):
         o = JClass("jpype.serial.SerializationTest")()
         tmp = self.tempname
-        if sys.platform == 'cygwin':
-            from jpype import _posix2win
-            tmp = _posix2win(tmp)
         fos = java.io.FileOutputStream(tmp)
         oos = java.io.ObjectOutputStream(fos)
         oos.writeObject(o)

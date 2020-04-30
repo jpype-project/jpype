@@ -83,9 +83,7 @@ JPContext::JPContext()
 
 	m_Object_ToStringID = 0;
 	m_Object_EqualsID = 0;
-	m_ShutdownMethodID = 0;
-	m_IsShutdown = false;
-	m_IsInitialized = false;
+	m_Running = false;
 	m_GC = new JPGarbageCollection(this);
 }
 
@@ -100,7 +98,7 @@ JPContext::~JPContext()
 
 bool JPContext::isRunning()
 {
-	if (m_JavaVM == NULL || !m_IsInitialized)
+	if (m_JavaVM == NULL || !m_Running)
 	{
 		return false;
 	}
@@ -210,7 +208,13 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
 		jmethodID startMethod = frame.GetStaticMethodID(cls, "createContext",
 				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
-		m_ShutdownMethodID = frame.GetMethodID(cls, "shutdown", "()V");
+
+		JNINativeMethod method[1];
+		method[0].name = (char*) "onShutdown";
+		method[0].signature = (char*) "(J)V";
+		method[0].fnPtr = (void*) JPContext::onShutdown;
+		frame.GetMethodID(cls, "<init>", "()V");
+		frame.RegisterNatives(cls, method, 1);
 
 		// Launch
 		jvalue val[2];
@@ -232,7 +236,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_ReferenceQueue->m_ReferenceQueue = JPObjectRef(frame,
 				frame.CallObjectMethodA(m_JavaContext.get(), getReferenceQueue, 0));
 
-		// Set up methods after everthing is start so we get better error
+		// Set up methods after everything is start so we get better error
 		// messages
 		cls = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
 		m_CallMethodID = frame.GetMethodID(cls, "callMethod",
@@ -252,6 +256,14 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Context_GetExcValueID = frame.GetMethodID(cls, "getExcValue",
 				"(Ljava/lang/Throwable;)J");
 		m_Context_OrderID = frame.GetMethodID(cls, "order", "(Ljava/nio/Buffer;)Z");
+		m_Context_IsPackageID = frame.GetMethodID(cls, "isPackage", "(Ljava/lang/String;)Z");
+		m_Context_GetPackageID = frame.GetMethodID(cls, "getPackage", "(Ljava/lang/String;)Lorg/jpype/pkg/JPypePackage;");
+
+		cls = m_ClassLoader->findClass(frame, "org.jpype.pkg.JPypePackage");
+		m_Package_GetObjectID = frame.GetMethodID(cls, "getObject",
+				"(Ljava/lang/String;)Ljava/lang/Object;");
+		m_Package_GetContentsID = frame.GetMethodID(cls, "getContents",
+				"()[Ljava/lang/String;");
 
 		m_Array = JPClassRef(frame, frame.FindClass("java/lang/reflect/Array"));
 		m_Array_NewInstanceID = frame.GetStaticMethodID(m_Array.get(), "newInstance",
@@ -272,38 +284,27 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		// throw std::runtime_error("Failed");
 		// Everything is started.
 	}
-	m_IsInitialized = true;
+	m_Running = true;
 	JP_TRACE_OUT;
+}
+
+JNIEXPORT void JNICALL JPContext::onShutdown(JNIEnv *env, jobject obj, jlong contextPtr)
+{
+	((JPContext*) contextPtr)->m_Running = false;
 }
 
 void JPContext::shutdownJVM()
 {
-	m_IsShutdown = true;
-
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 
-	{
-		JPJavaFrame frame(this);
-		JP_TRACE("Shutdown services");
-		JP_TRACE(m_JavaContext.get());
-		JP_TRACE(m_ShutdownMethodID);
-
-		// Tell Java to shutdown the context
-		{
-			JPPyCallRelease release;
-			if (m_JavaContext.get() != 0)
-				frame.CallVoidMethodA(m_JavaContext.get(), m_ShutdownMethodID, 0);
-		}
-	}
-
 	// Wait for all non-demon threads to terminate
-	// DestroyJVM is rather misnamed.  It is simply a wait call
-	// Our reference queue thunk does not appear to have properly set
-	// as daemon so we hang here
 	JP_TRACE("Destroy JVM");
-	//	s_JavaVM->functions->DestroyJavaVM(s_JavaVM);
+	{
+		JPPyCallRelease call;
+		m_JavaVM->DestroyJavaVM();
+	}
 
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
@@ -373,7 +374,9 @@ JNIEnv* JPContext::getEnv()
 	// If we don't have an environment then we are in a thread, so we must attach
 	if (res == JNI_EDETACHED)
 	{
-		res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, NULL);
+		// We will attach as daemon so that the newly attached thread does
+		// not deadlock the shutdown.  The user can convert later if they want.
+		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, NULL);
 		if (res != JNI_OK)
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 	}

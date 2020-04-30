@@ -1,4 +1,2 @@
-unittest2==1.1
-mock==3.0.5
 pytest==4.6.9
-jedi
+jedi==0.17.0

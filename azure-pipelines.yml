@@ -4,6 +4,7 @@
 
 pr:
   - master
+  - release
   - releases/*
 
 jobs:
@@ -15,20 +16,19 @@ jobs:
     inputs:
       versionSpec: '3.7'
   - script: |
-      pip install  Pygments==2.3.1
-      pip install  setuptools==41.0.1
-      pip install  docutils==0.14
-      pip install  mock==1.0.1
-      pip install  commonmark==0.8.1
-      pip install  recommonmark==0.5.0
-      pip install  sphinx
-      pip install  sphinx-rtd-theme
-      pip install  readthedocs-sphinx-ext
-      pip install  --exists-action=w --no-cache-dir -r test-requirements.txt
+      pip install  --exists-action=w --no-cache-dir -r test-requirements.txt -r doc/doc-requirements.txt
     displayName: 'Install requirements'
   - script: |
-      python -m sphinx -T -b readthedocs -d _build/doctrees-readthedocs -D language=en doc _build/html
+      python -m sphinx -T -b readthedocs -W -d _build/doctrees-readthedocs -D language=en doc build/html
     displayName: 'Check documentation'
+  - task: CopyFiles@2
+    inputs:
+      contents: 'build/html/**'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: $(Build.ArtifactStagingDirectory)
+      artifactName: documentation
 
 - job: Coverage
   pool:
@@ -47,13 +47,26 @@ jobs:
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
     displayName: 'Build'
   - script: |
-      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --jar="build/classes" --jacoco --checkjni
+      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath="build/classes" --jacoco --checkjni
     displayName: 'Test'
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
-      java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
-  #      - bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml
+      java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec --classfiles build/classes/ --xml coverage_java.xml --sourcefiles native/java
+      bash <(curl -s https://codecov.io/bash) -f coverage.xml -f coverage_py.xml -f coverage_java.xml -X gcov
     displayName: 'Report'
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'JaCoCo'
+      summaryFileLocation: coverage_java.xml
+      pathToSources: native/java
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: coverage.xml
+  - task: PublishCodeCoverageResults@1
+    inputs:
+      codeCoverageTool: 'cobertura'
+      summaryFileLocation: coverage_py.xml
 
 - job: Tracing
   pool:
@@ -85,11 +98,6 @@ jobs:
         imageName: "ubuntu-16.04"
         jdk_version: "1.11"
         python.version: '3.8'
-      mac-3.8:
-        imageName: "macos-10.14"
-        jdk_version: "1.11"
-        python.version: '3.8'
-    maxParallel: 2
   pool:
     vmImage: $(imageName)
   steps:
@@ -105,8 +113,45 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v test/jpypetest --checkjni  
+      pip install numpy jedi
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+       testResultsFiles: 'build/test/test.xml'
+       testRunTitle: 'Publish linux test results for Python $(python.version)'
+
+- job: Test_OSX
+  strategy:
+    matrix:
+      mac-3.8:
+        imageName: "macos-10.14"
+        jdk_version: "1.11"
+        python.version: '3.8'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      python setup.py sdist
+      pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      pip install numpy jedi
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
+    displayName: 'Test module'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: 'build/test/test.xml'
+      testRunTitle: 'Publish osx test results for Python $(python.version)'
 
 - job: Test_Windows
   strategy:
@@ -141,5 +186,41 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      python -m pytest -v test/jpypetest --checkjni  
+      pip install numpy jedi
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: 'build/test/test.xml'
+      testRunTitle: 'Publish windows test results for Python $(python.version)'
+
+- job: Test_debug
+  condition: eq(1,2)
+  strategy:
+    matrix:
+      linux-3.8:
+        imageName: "ubuntu-16.04"
+        jdk_version: "1.11"
+        python.version: '3.8'
+  pool:
+    vmImage: $(imageName)
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+  - script: |
+      sudo apt install gdb
+      python setup.py sdist
+      pip install dist/*
+    displayName: 'Build module'
+  - script: python -c "import jpype"
+    displayName: 'Check module'
+  - script: |
+      python setup.py test_java
+      pip install -r test-requirements.txt
+      pip install numpy jedi
+      gdb -ex 'handle SIGSEGV nostop noprint pass' -ex "run -m pytest -v test/jpypetest/test_jstring.py --checkjni"  -ex "bt" -ex "quit" python
+    displayName: 'Debug module'
+
+

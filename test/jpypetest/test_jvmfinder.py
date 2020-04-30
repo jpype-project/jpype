@@ -2,7 +2,7 @@
 
 
 import unittest
-import mock
+from unittest import mock
 import common
 import os
 
@@ -111,11 +111,6 @@ class JVMFinderTest(unittest.TestCase):
             getDefaultJVMPath()
             self.assertIn(finder().get_jvm_path, finder.mock_calls)
 
-        with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.CygwinJVMFinder') as finder:
-            mocksys.platform = 'cygwin'
-            getDefaultJVMPath()
-            self.assertIn(finder().get_jvm_path, finder.mock_calls)
-
     def testLinuxGetFromBin(self):
         finder = jpype._jvmfinder.LinuxJVMFinder()
 
@@ -130,7 +125,7 @@ class JVMFinderTest(unittest.TestCase):
             pathmock.join = os.path.join
             finder._get_from_bin()
             self.assertEqual(
-                pathmock.dirname.mock_calls[0].args, (finder._java,))
+                pathmock.dirname.mock_calls[0][1], (finder._java,))
 
     # FIXME this test is faking files using the mock system.  Replace it with stub
     # files so that we have a more accurate test rather than just testing the implementation.
@@ -169,13 +164,6 @@ class JVMFinderTest(unittest.TestCase):
             winregmock.QueryValueEx.return_value = ('success', '')
             self.assertEqual(finder._get_from_registry(), 'success')
             winregmock.OpenKey.side_effect = OSError()
-            self.assertEqual(finder._get_from_registry(), None)
-
-    def testCygwinRegistry(self):
-        finder = jpype._jvmfinder.CygwinJVMFinder()
-        with mock.patch("builtins.open", mock.mock_open(read_data='success')) as mock_file:
-            self.assertEqual(finder._get_from_registry(), 'success')
-        with mock.patch("builtins.open", side_effect=OSError()) as mock_file:
             self.assertEqual(finder._get_from_registry(), None)
 
 
