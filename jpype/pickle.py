@@ -22,16 +22,16 @@ JPype Pickle Module
 
 This module contains overloaded Pickler and Unpickler classes that operate
 on Java classes. Pickling of Java objects is restricted to classes
-that implement Serializable.  Mixed pickles files containing both
+that implement Serializable.  Mixed pickle files containing both
 Java and Python objects are allowed.  Only one copy of each Java object
 will appear in the pickle file even it is appears multiple times in the
 data structure.
 
 JPicklers and JUnpickler use Java ObjectOutputStream and ObjectInputStream
-to serial objects. All of the usual java serialization errors may be
+to serialize objects. All of the usual Java serialization errors may be
 thrown.
 
-For Python 3 series, this is backed by the native cPickler implementation.
+This is backed by the native cPickler implementation.
 
 Example:
 
@@ -51,7 +51,7 @@ Example:
 Proxies and other JPype specific module resources cannot be pickled currently.
 
 Requires:
-    Python 2.7 or 3.6 or later
+    Python 3.6 or later
 
 """
 from __future__ import absolute_import

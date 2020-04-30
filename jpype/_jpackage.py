@@ -26,7 +26,7 @@ class JPackage(_jpype._JPackage):
     This functionality has been replaced by ``jpype.imports``, but is still
     useful in some cases.
 
-    Only the root of the package tree need be declared with the ``JPackage``
+    Only the root of the package tree needs to be declared with the ``JPackage``
     constructor. Sub-packages will be created on demand.
 
     For example, to import the w3c DOM package:
@@ -35,12 +35,13 @@ class JPackage(_jpype._JPackage):
 
       Document = JPackage('org').w3c.dom.Document
 
-    Under some situations such as a missing jar the resulting object
+    Under some situations such as a missing jar file, the resulting object
     will be a JPackage object rather than the expected java class. This
-    results in rather challanging debugging messages. Thus the
-    ``jpype.imports`` module is preferred. To prevent these types of errors
-    a package can be declares as ``strict`` which prevents expanding
-    package names that do not comply with Java package name conventions.
+    results in rather challanging debugging messages. Due to this 
+    restriction, the ``jpype.imports`` module is preferred. To prevent these
+    types of errors, a package can be declares as ``strict`` which prevents
+    expanding package names that do not comply with Java package name
+    conventions.
 
     Args:
       path (str): Path into the Java class tree.

@@ -4,8 +4,8 @@ Module for dynamically loading Java Classes using the import system.
 
 This is a replacement for the jpype.JPackage("com").fuzzy.Main type syntax.
 It features better safety as the objects produced are checked for class
-existence. To use java imports, import the domains package prior to
-importing a java class.
+existence. To use Java imports, import the domains package prior to
+importing a Java class.
 
 This module supports three different styles of importing java classes.
 

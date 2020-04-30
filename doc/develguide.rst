@@ -112,7 +112,7 @@ orders each of the classes in the tree such that the most drived
 class methods are exposed, followed by each parent class. This
 must be ordered to break ties resulting from multiple inheritance
 of interfaces.  The factory classes are grafted into the type system
-using `__instancecheck__` and `__subtypecheck__`.
+using ``__instancecheck__`` and ``__subtypecheck__``.
 
 resource types
 ~~~~~~~~~~~~~~

@@ -47,7 +47,7 @@ class ExceptionTestCase(common.JPypeTestCase):
         try:
             ext.throwRuntime()
             self.fail()
-        except JException(java.lang.RuntimeException) as ex:
+        except java.lang.RuntimeException as ex:
             self.assertIs(type(ex), java.lang.RuntimeException)
             self.assertEqual('Foo', ex.message())
             trace = ex.stacktrace()
@@ -87,7 +87,7 @@ class ExceptionTestCase(common.JPypeTestCase):
         try:
             self.jpype.exc.ExceptionTest.throwChildTestException()
             self.fail()
-        except JException(self.jpype.exc.ParentTestException) as ex:
+        except self.jpype.exc.ParentTestException as ex:
             self.assertIsInstance(ex, self.jpype.exc.ChildTestException)
 
     def testCause(self):
@@ -123,4 +123,3 @@ class ExceptionTestCase(common.JPypeTestCase):
         WE = jpype.JClass("jpype.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
-

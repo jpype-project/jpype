@@ -53,7 +53,7 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # built documents.
 #
 # The short X.Y version.
-import mock
+from unittest import mock
 
 def TypeMock_init(self, *args, **kwargs):
     object.__init__(self)

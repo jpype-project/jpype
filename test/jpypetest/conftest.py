@@ -19,4 +19,3 @@ def common_opts(request):
     request.cls._convertStrings = request.config.getoption("--convertStrings")
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
-
