@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_classloader.h"
 #include "jp_boxedtype.h"

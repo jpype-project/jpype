@@ -15,10 +15,10 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_method.h"
-#include "pyjp.h"
 
 JPClass::JPClass(
 		const string& name,
@@ -355,9 +355,10 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 
 void JPClass::getConversionInfo(PyJPConversionInfo &info)
 {
+	JPJavaFrame frame(m_Context);
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
-	PyList_Append(info.ret, PyJPClass_create(this));
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
 

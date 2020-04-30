@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_booleantype.h"
-#include "pyjp.h"
 
 JPBooleanType::JPBooleanType()
 : JPPrimitiveType("boolean")

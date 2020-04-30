@@ -199,14 +199,8 @@ public:
 
 	virtual void getInfo(PyJPConversionInfo &info)
 	{
-		PyObject *obj = PyUnicode_Format("__float__");
-		PyList_Append(attributes, obj);
-		Py_DECREF(obj);
-		PyObject *obj = PyUnicode_Format("__index__");
-		PyList_Append(attributes, obj);
-		Py_DECREF(obj);
+		// explicit attributes is not recorded
 	}
-
 
 	virtual jvalue convert(JPMatch &match) override
 	{
@@ -224,6 +218,11 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
 	{
 		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+	}
+
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info)  override
+	{
+		// Not used
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -273,9 +272,9 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
 	{
-		PyList_Append(types, (PyObject*) & PyLong_Type);
+		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -299,7 +298,7 @@ public:
 		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
 	}
 
-	virtual void getInfo(PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
 	{
 	}
 

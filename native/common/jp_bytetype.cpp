@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_bytetype.h"
-#include "pyjp.h"
 
 JPByteType::JPByteType()
 : JPPrimitiveType("byte")

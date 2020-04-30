@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_inttype.h"
-#include "pyjp.h"
 
 JPIntType::JPIntType()
 : JPPrimitiveType("int")

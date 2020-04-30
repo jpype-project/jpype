@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
-#include "pyjp.h"
 
 JPCharType::JPCharType()
 : JPPrimitiveType("char")
@@ -66,7 +66,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
 	{
-		PyList_Append(info.implicit, &PyUnicode_Type);
+		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -77,7 +77,7 @@ public:
 	}
 } asCharConversion;
 
-class JPConversionAsJChar : public JPConversion
+class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
@@ -98,13 +98,6 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
-	// GCOVR_EXCL_START
-
-	virtual jvalue convert(JPMatch &match) override
-	{
-		return jvalue();
-	}
-	// GCOVR_EXCL_STOP
 } asJCharConversion;
 
 JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)

@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
-#include "pyjp.h"
 
 JPFloatType::JPFloatType()
 : JPPrimitiveType("float")
