@@ -121,11 +121,13 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 void JPContext::loadEntryPoints(const string& path)
 {
+	JP_TRACE_IN("JPContext::loadEntryPoints");
 	JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
 	// Load symbols from the shared library
 	platform->loadLibrary((char*) path.c_str());
 	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
+	JP_TRACE_OUT;
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
@@ -133,12 +135,22 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
+	JP_TRACE("convert strings", convertStrings);
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
-	loadEntryPoints(vmPath);
+	try
+	{
+		JP_TRACE("load entry points");
+		loadEntryPoints(vmPath);
+	} catch (JPypeException& ex)
+	{
+		ex.getMessage();
+		throw;
+	}
 
 	// Pack the arguments
+	JP_TRACE("pack arguments");
 	JavaVMInitArgs jniArgs;
 	jniArgs.options = NULL;
 
@@ -156,6 +168,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// Launch the JVM
 	JNIEnv* env;
+	JP_TRACE("create JVM");
 	CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
 	free(jniArgs.options);
 

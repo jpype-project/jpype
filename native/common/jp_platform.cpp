@@ -56,11 +56,13 @@ public:
 
 	virtual void loadLibrary(const char* path) override
 	{
+		JP_TRACE_IN("Win32PlatformAdapter::loadLibrary");
 		jvmLibrary = LoadLibrary(path);
 		if (jvmLibrary == NULL)
 		{
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
 		}
+		JP_TRACE_OUT;
 	}
 
 	virtual void unloadLibrary() override
@@ -103,16 +105,21 @@ public:
 
 	virtual void loadLibrary(const char* path) override
 	{
+		JP_TRACE_IN("LinuxPlatformAdapter::loadLibrary");
 #if defined(_HPUX) && !defined(_IA64)
+		JP_TRACE("shl_load", path);
 		jvmLibrary = shl_load(path, BIND_DEFERRED | BIND_VERBOSE, 0L);
 #else
+		JP_TRACE("dlopen", path);
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
 
 		if (jvmLibrary == NULL)
 		{
+			JP_TRACE("null library");
 			JP_RAISE_OS_ERROR_UNIX( errno, path); // GCOVR_EXCL_LINE
 		}
+		JP_TRACE_OUT;
 	}
 
 	virtual void unloadLibrary() override
@@ -126,6 +133,7 @@ public:
 
 	virtual void* getSymbol(const char* name) override
 	{
+		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
 		void* res = dlsym(jvmLibrary, name);
 		if (res == NULL)
 		{
@@ -136,6 +144,7 @@ public:
 			// GCOVR_EXCL_STOP
 		}
 		return res;
+		JP_TRACE_OUT;
 	}
 } ;
 
