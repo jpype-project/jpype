@@ -18,9 +18,12 @@
 
 jobject JPValue::getJavaObject() const
 {
+	// This is all sanity check
+	// GCOVR_EXCL_START
 	if (m_Class == NULL)
-		JP_RAISE(PyExc_RuntimeError, "Null class");  // GCOVR_EXCL_LINE
+		JP_RAISE(PyExc_RuntimeError, "Null class");
 	if (!m_Class->isPrimitive())
+		// GCOVR_EXCL_STOP
 		return m_Value.l;
 
 	// This method is only used internally, thus it requires a logical code

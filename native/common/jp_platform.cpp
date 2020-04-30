@@ -109,7 +109,7 @@ public:
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
 
-		if (jvmLibrary == NULL)
+		if (jvmLibrary == NULL) // GCOVR_EXCL_LINE
 		{
 			JP_RAISE_OS_ERROR_UNIX( errno, path); // GCOVR_EXCL_LINE
 		}
@@ -118,7 +118,7 @@ public:
 	virtual void unloadLibrary() override
 	{
 		int r = dlclose(jvmLibrary);
-		if (r != 0) // error
+		if (r != 0) // error // GCOVR_EXCL_LINE
 		{
 			cerr << dlerror() << endl;  // GCOVR_EXCL_LINE
 		}
@@ -127,7 +127,7 @@ public:
 	virtual void* getSymbol(const char* name) override
 	{
 		void* res = dlsym(jvmLibrary, name);
-		if (res == NULL)
+		if (res == NULL) // GCOVR_EXCL_LINE
 		{
 			// GCOVR_EXCL_START
 			std::stringstream msg;
