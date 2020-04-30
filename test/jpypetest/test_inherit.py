@@ -92,9 +92,6 @@ class InheritTestCase(common.JPypeTestCase):
         self.assertNotIsSubclass(java.lang.Throwable, JInterface)
         self.assertIsSubclass(JException, Exception)
         self.assertIsSubclass(JException, JException)
-        self.assertIsInstance(JException("java.lang.RuntimeException"), JClass)
-        self.assertIsInstance(JException(
-            "java.lang.RuntimeException"), JException)
         self.assertNotIsInstance(java.lang.Throwable("f"), JInterface)
         th = java.lang.Throwable("foo")
         self.assertIsInstance(th, JObject)

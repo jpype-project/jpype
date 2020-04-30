@@ -181,7 +181,13 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
-		jlong v = PyLong_AsLongLong(seq[i].get());
+		PyObject *item = seq[i].get();
+		if (!PyIndex_Check(item))
+		{
+			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
+			JP_RAISE_PYTHON();
+		}
+		jlong v = PyLong_AsLongLong(item);
 		if (v == -1)
 			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);

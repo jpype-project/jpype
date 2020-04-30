@@ -4,6 +4,7 @@
 
 pr:
   - master
+  - release
   - releases/*
 
 jobs:
@@ -41,6 +42,7 @@ jobs:
       python setup.py test_java
       pip install gcovr pytest-cov jedi
       pip install -r test-requirements.txt
+      pip install numpy
     displayName: 'Install requirements'
   - script: |
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace

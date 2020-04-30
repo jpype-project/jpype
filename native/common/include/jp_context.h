@@ -248,9 +248,12 @@ private:
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
-
 	jmethodID m_Throwable_GetCauseID;
-
+	jmethodID m_Context_IsPackageID;
+	jmethodID m_Context_GetPackageID;
+	jmethodID m_Package_GetObjectID;
+	jmethodID m_Package_GetContentsID;
+	jmethodID m_Context_GetStackFrameID;
 public:
 
 	jmethodID m_BooleanValueID;
@@ -261,7 +264,6 @@ public:
 	jmethodID m_LongValueID;
 	jmethodID m_FloatValueID;
 	jmethodID m_DoubleValueID;
-	jmethodID m_Context_GetStackFrameID;
 
 private:
 	bool m_Running;

@@ -47,6 +47,8 @@ JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	return JPPyObject::getNone();
 }
 
+// GCOVR_EXCL_START
+
 JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 {
 	// This is needed if we call a caller sensitive method
@@ -55,8 +57,6 @@ JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, (jobject) 0);
 	JP_TRACE_OUT;
 }
-
-// GCOVR_EXCL_START
 
 JPPyObject JPVoidType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 {
