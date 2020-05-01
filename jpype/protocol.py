@@ -1,6 +1,5 @@
 import _jpype
 import datetime
-from typing import Protocol, Sequence, Mapping, runtime_checkable, abstractmethod
 
 import sys
 import _jpype
@@ -18,6 +17,8 @@ _JChar = _jpype._JChar
 _JBoolean = _jpype._JBoolean
 _JArray = _jpype._JArray
 _JBuffer = _jpype._JBuffer
+
+from typing import Protocol, Sequence, Mapping, runtime_checkable, abstractmethod
 
 # Types we need
 @runtime_checkable

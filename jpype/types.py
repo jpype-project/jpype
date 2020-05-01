@@ -55,6 +55,7 @@ __all__ = [
     'JException',
 ]
 
+JException = _jpype.JException
 
 class JBoolean(_jpype._JBoolean):
     pass

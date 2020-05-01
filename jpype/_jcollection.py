@@ -14,15 +14,9 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import datetime
-from collections.abc import Sequence
-from collections.abc import Mapping
-
-import sys
 import _jpype
 from . import _jclass
 from . import _jcustomizer
-from . import types as _jtypes
 
 JOverride = _jclass.JOverride
 
