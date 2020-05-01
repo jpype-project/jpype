@@ -321,6 +321,9 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
+		JPArrayClass* acls = (JPArrayClass*) cls;
+		if (acls->getComponentType() != cls->getContext()->_char)
+			return;
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
 
@@ -360,6 +363,9 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
+		JPArrayClass* acls = (JPArrayClass*) cls;
+		if (acls->getComponentType() != cls->getContext()->_byte)
+			return;
 		PyList_Append(info.implicit, (PyObject*) & PyBytes_Type);
 	}
 
@@ -413,6 +419,10 @@ public:
 		PyObject *typing = PyImport_AddModule("typing");
 		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "Sequence"));
 		PyList_Append(info.implicit, proto.get());
+		JPArrayClass* acls = (JPArrayClass*) cls;
+		if (acls->getComponentType() == cls->getContext()->_char)
+			return;
+		PyList_Append(info.none, (PyObject*) & PyUnicode_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override

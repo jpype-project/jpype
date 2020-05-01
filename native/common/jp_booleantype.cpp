@@ -97,7 +97,6 @@ public:
 		unboxConversion->getInfo(cls, info);
 	}
 
-
 } asBooleanJBool;
 
 class JPConversionAsBooleanLong : public JPConversionAsBoolean
@@ -115,7 +114,9 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
+		PyObject *typing = PyImport_AddModule("typing");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+		PyList_Append(info.expl, proto.get());
 	}
 
 } asBooleanLong;
@@ -134,7 +135,9 @@ public:
 
 	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
-		// explicit does not add to info
+		PyObject *typing = PyImport_AddModule("typing");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		PyList_Append(info.expl, proto.get());
 	}
 
 } asBooleanNumber;

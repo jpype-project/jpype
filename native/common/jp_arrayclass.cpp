@@ -50,6 +50,16 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPArrayClass::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	objectConversion->getInfo(this, info);
+	charArrayConversion->getInfo(this, info);
+	byteArrayConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
 JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	JP_TRACE_IN("JPArrayClass::convertToPythonObject");

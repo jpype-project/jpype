@@ -125,6 +125,7 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 void JPCharType::getConversionInfo(JPConversionInfo &info)
 {
 	JPJavaFrame frame(m_Context);
+	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
 	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
 }

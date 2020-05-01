@@ -201,7 +201,7 @@ public:
 	{
 		PyObject *typing = PyImport_AddModule("typing");
 		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
-		PyList_Append(info.implicit, proto.get());
+		PyList_Append(info.expl, proto.get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
