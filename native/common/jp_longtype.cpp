@@ -53,15 +53,15 @@ class JPConversionJLong : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		JPValue* value = match.getJavaSlot();
 		if (value == NULL)
 			return match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
@@ -88,6 +88,16 @@ public:
 		return JPMatch::_implicit;
 	}
 
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_long->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
 } jlongConversion;
 
 JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
@@ -98,9 +108,9 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 		return match.type = JPMatch::_none;
 
 
-	if (jlongConversion.matches(match, this)
-			|| longConversion.matches(match, this)
-			|| longNumberConversion.matches(match, this))
+	if (jlongConversion.matches(this, match)
+			|| longConversion.matches(this, match)
+			|| longNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;

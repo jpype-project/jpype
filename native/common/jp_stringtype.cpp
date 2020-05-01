@@ -59,10 +59,10 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPStringType::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| stringConversion->matches(match, this)
-			|| hintsConversion->matches(match, this)
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| stringConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;

@@ -343,17 +343,17 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| proxyConversion->matches(match, this)
-			|| hintsConversion->matches(match, this))
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| proxyConversion->matches(this, match)
+			|| hintsConversion->matches(this, match))
 		return match.type;
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
 
-void JPClass::getConversionInfo(PyJPConversionInfo &info)
+void JPClass::getConversionInfo(JPConversionInfo &info)
 {
 	JPJavaFrame frame(m_Context);
 	objectConversion->getInfo(this, info);

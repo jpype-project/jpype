@@ -21,11 +21,11 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPNumberType::canConvertToJava");
-	if (nullConversion->matches(match, this)
-			|| javaNumberAnyConversion->matches(match, this)
-			|| boxLongConversion->matches(match, this)
-			|| boxDoubleConversion->matches(match, this)
-			|| hintsConversion->matches(match, this)
+	if (nullConversion->matches(this, match)
+			|| javaNumberAnyConversion->matches(this, match)
+			|| boxLongConversion->matches(this, match)
+			|| boxDoubleConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;

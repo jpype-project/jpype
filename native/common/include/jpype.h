@@ -157,7 +157,7 @@ class JPReferenceQueue;
 class JPProxyFactory;
 class JPContext;
 
-extern "C" struct PyJPConversionInfo;
+extern "C" struct JPConversionInfo;
 
 typedef vector<JPClass*> JPClassList;
 typedef vector<JPField*> JPFieldList;

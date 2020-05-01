@@ -54,7 +54,7 @@ class JPConversionAsJFloat : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -62,8 +62,8 @@ public:
 		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
@@ -89,6 +89,19 @@ public:
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return JPMatch::_implicit; // stop search
 	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
 } asJFloatConversion;
 
 JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
@@ -98,9 +111,9 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	if (asJFloatConversion.matches(match, this)
-			|| asFloatLongConversion.matches(match, this)
-			|| asFloatConversion.matches(match, this))
+	if (asJFloatConversion.matches(this, match)
+			|| asFloatLongConversion.matches(this, match)
+			|| asFloatConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;

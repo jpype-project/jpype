@@ -104,13 +104,14 @@ struct PyJPProxy
 	bool m_Convert;
 } ;
 
-struct PyJPConversionInfo
+struct JPConversionInfo
 {
-	PyObject *dict;
 	PyObject *ret;
 	PyObject *exact;
 	PyObject *implicit;
 	PyObject *attributes;
+	PyObject *expl;
+	PyObject *none;
 } ;
 
 

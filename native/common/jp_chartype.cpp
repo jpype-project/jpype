@@ -54,7 +54,7 @@ class JPConversionAsChar : public JPConversion
 	typedef JPCharType base_t;
 public:
 
-	JPMatch::Type matches(JPMatch &match, JPClass *cls)  override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JP_TRACE_IN("JPConversionAsChar::matches");
 		if (!JPPyString::checkCharUTF16(match.object))
@@ -64,7 +64,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
@@ -81,7 +81,7 @@ class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
-	JPMatch::Type matches(JPMatch &match, JPClass *cls)  override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -90,8 +90,8 @@ public:
 
 		// Exact
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
@@ -108,7 +108,7 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 		return match.type = JPMatch::_none;
 
 
-	if (asCharConversion.matches(match, this))
+	if (asCharConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;

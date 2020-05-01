@@ -38,11 +38,11 @@ JPArrayClass::~JPArrayClass()
 JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| charArrayConversion->matches(match, this)
-			|| byteArrayConversion->matches(match, this)
-			|| sequenceConversion->matches(match, this)
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| charArrayConversion->matches(this, match)
+			|| byteArrayConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
 			)
 		return match.type;
 	JP_TRACE("None");

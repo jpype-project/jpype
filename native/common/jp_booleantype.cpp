@@ -46,7 +46,7 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -54,7 +54,7 @@ public:
 		return match.type = JPMatch::_exact;
 	}
 
-	virtual void getInfo(JPClass * cls, PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
@@ -74,7 +74,7 @@ class JPConversionAsBooleanJBool : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 
 		JPValue *value = match.getJavaSlot();
@@ -82,8 +82,8 @@ public:
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
@@ -96,7 +96,7 @@ class JPConversionAsBooleanLong : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -105,7 +105,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
 	}
@@ -116,7 +116,7 @@ class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -124,7 +124,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass * cls, PyJPConversionInfo &info) override
+	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		// explicit does not add to info
 	}
@@ -138,10 +138,10 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 	if (match.object ==  Py_None)
 		return match.type = JPMatch::_none;
 
-	if (asBooleanExact.matches(match, this)
-			|| asBooleanJBool.matches(match, this)
-			|| asBooleanLong.matches(match, this)
-			|| asBooleanNumber.matches(match, this)
+	if (asBooleanExact.matches(this, match)
+			|| asBooleanJBool.matches(this, match)
+			|| asBooleanLong.matches(this, match)
+			|| asBooleanNumber.matches(this, match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;

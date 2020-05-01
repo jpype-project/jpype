@@ -22,9 +22,9 @@ class JPConversion
 public:
 	virtual ~JPConversion();
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) = 0;
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) = 0;
 
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) = 0;
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) = 0;
 
 	virtual jvalue convert(JPMatch &match) = 0;
 } ;
@@ -33,15 +33,15 @@ class JPIndexConversion : public JPConversion
 {
 public:
 
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override;
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
-class JPNumberConversion : public JPConversion
+class JPNumberConversion : public JPIndexConversion
 {
 public:
 
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override;
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -49,8 +49,8 @@ public:
 class JPConversionJavaValue : public JPConversion
 {
 public:
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override;
-	virtual void getInfo(JPClass *cls, PyJPConversionInfo &info) override;
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override;
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
 	virtual jvalue convert(JPMatch &match) override;
 } ;
 
@@ -96,7 +96,7 @@ public:
 	 */
 	void addTypeConversion(PyObject* type, PyObject* method, bool exact);
 
-	void getInfo(JPClass *cls, PyJPConversionInfo &info);
+	void getInfo(JPClass *cls, JPConversionInfo &info);
 
 private:
 	std::list<JPConversion*> conversions;

@@ -52,19 +52,26 @@ class JPConversionJByte : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
 		return JPMatch::_implicit; // stop the search
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
+		unboxConversion->getInfo(cls, info);
 	}
 
 } jbyteConversion;
@@ -76,9 +83,9 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	if (jbyteConversion.matches(match, this)
-			|| byteConversion.matches(match, this)
-			|| byteNumberConversion.matches(match, this))
+	if (jbyteConversion.matches(this, match)
+			|| byteConversion.matches(this, match)
+			|| byteNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;

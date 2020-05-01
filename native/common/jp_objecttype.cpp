@@ -36,17 +36,32 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPObjectType::canConvertToJava");
-	if (nullConversion->matches(match, this)
-			|| javaObjectAnyConversion->matches(match, this)
-			|| stringConversion->matches(match, this)
-			|| boxBooleanConversion->matches(match, this)
-			|| boxLongConversion->matches(match, this)
-			|| boxDoubleConversion->matches(match, this)
-			|| classConversion->matches(match, this)
-			|| proxyConversion->matches(match, this)
-			|| hintsConversion->matches(match, this)
+	if (nullConversion->matches(this, match)
+			|| javaObjectAnyConversion->matches(this, match)
+			|| stringConversion->matches(this, match)
+			|| boxBooleanConversion->matches(this, match)
+			|| boxLongConversion->matches(this, match)
+			|| boxDoubleConversion->matches(this, match)
+			|| classConversion->matches(this, match)
+			|| proxyConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPObjectType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	nullConversion->getInfo(this, info);
+	javaObjectAnyConversion->getInfo(this, info);
+	stringConversion->getInfo(this, info);
+	boxBooleanConversion->getInfo(this, info);
+	boxLongConversion->getInfo(this, info);
+	boxDoubleConversion->getInfo(this, info);
+	classConversion->getInfo(this, info);
+	proxyConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }

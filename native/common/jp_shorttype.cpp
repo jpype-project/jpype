@@ -53,7 +53,7 @@ class JPConversionJShort : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		JPValue* value = match.getJavaSlot();
 		if (value == NULL)
@@ -61,8 +61,8 @@ public:
 		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
@@ -86,6 +86,16 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+
 } jshortConversion;
 
 JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
@@ -95,9 +105,9 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	if (jshortConversion.matches(match, this)
-			|| shortConversion.matches(match, this)
-			|| shortNumberConversion.matches(match, this))
+	if (jshortConversion.matches(this, match)
+			|| shortConversion.matches(this, match)
+			|| shortNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;

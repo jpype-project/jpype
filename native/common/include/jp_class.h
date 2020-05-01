@@ -135,7 +135,7 @@ public:
 	 */
 	virtual JPMatch::Type findJavaConversion(JPMatch& match);
 
-	virtual void getConversionInfo(PyJPConversionInfo &info);
+	virtual void getConversionInfo(JPConversionInfo &info);
 
 	/** Create a new Python object to wrap a Java value.
 	 *

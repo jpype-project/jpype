@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class JPConversionJInt : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -64,8 +64,8 @@ public:
 		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, cls)
-				|| unboxConversion->matches(match, cls))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
@@ -90,6 +90,17 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+
 } jintConversion;
 
 JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
@@ -99,13 +110,22 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	if (jintConversion.matches(match, this)
-			|| intConversion.matches(match, this)
-			|| intNumberConversion.matches(match, this))
+	if (jintConversion.matches(this, match)
+			|| intConversion.matches(this, match)
+			|| intNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPIntType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jintConversion.getInfo(this, info);
+	intConversion.getInfo(this, info);
+	intNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
 jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)
