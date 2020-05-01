@@ -137,6 +137,16 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPDoubleType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asJDoubleConversion.getInfo(this, info);
+	asDoubleExactConversion.getInfo(this, info);
+	asDoubleLongConversion.getInfo(this, info);
+	asDoubleConversion.getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 

@@ -555,7 +555,6 @@ void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
 {
 	JPJavaFrame frame(cls->getContext());
 	PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
-	unboxConversion->getInfo(cls, info);
 }
 
 jvalue JPConversionJavaValue::convert(JPMatch &match)
@@ -792,8 +791,8 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		PyList_Append(info.implicit, (PyObject*) & PyJPNumberLong_Type);
-		PyList_Append(info.implicit, (PyObject*) & PyJPNumberFloat_Type);
+		PyList_Append(info.implicit, (PyObject*) PyJPNumberLong_Type);
+		PyList_Append(info.implicit, (PyObject*) PyJPNumberFloat_Type);
 	}
 
 } _javaNumberAnyConversion;

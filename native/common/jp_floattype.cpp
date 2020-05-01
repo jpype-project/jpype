@@ -120,6 +120,15 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPFloatType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asJFloatConversion.getInfo(this, info);
+	asFloatLongConversion.getInfo(this, info);
+	asFloatConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_float->getHost());
+}
+
 jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewFloatArray(sz);

@@ -114,6 +114,15 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPShortType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jshortConversion.getInfo(this, info);
+	shortConversion.getInfo(this, info);
+	shortNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_short->getHost());
+}
+
 jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewShortArray(sz);

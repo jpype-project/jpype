@@ -92,6 +92,15 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPByteType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jbyteConversion.getInfo(this, info);
+	byteConversion.getInfo(this, info);
+	byteNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
+}
+
 jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewByteArray(sz);

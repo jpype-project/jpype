@@ -55,7 +55,7 @@ void JPObjectType::getConversionInfo(JPConversionInfo &info)
 {
 	JPJavaFrame frame(m_Context);
 	nullConversion->getInfo(this, info);
-	javaObjectAnyConversion->getInfo(this, info);
+	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);
 	boxBooleanConversion->getInfo(this, info);
 	boxLongConversion->getInfo(this, info);

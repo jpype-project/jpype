@@ -90,6 +90,14 @@ public:
 		return JPMatch::_implicit; // search no further.
 	}
 
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_boolean->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+
 } asBooleanJBool;
 
 class JPConversionAsBooleanLong : public JPConversionAsBoolean
@@ -146,6 +154,16 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 		return match.type;
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPBooleanType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asBooleanExact.getInfo(this, info);
+	asBooleanJBool.getInfo(this, info);
+	asBooleanLong.getInfo(this, info);
+	asBooleanNumber.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

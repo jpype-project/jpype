@@ -69,6 +69,18 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
+void JPStringType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	objectConversion->getInfo(this, info);
+	stringConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	if (m_Context->getConvertStrings())
+		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
+	else
+		PyList_Append(info.ret, (PyObject*) getHost());
+}
+
 JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPStringType::newInstance");

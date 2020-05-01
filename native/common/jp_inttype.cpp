@@ -100,7 +100,6 @@ public:
 		unboxConversion->getInfo(cls, info);
 	}
 
-
 } jintConversion;
 
 JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
@@ -125,7 +124,7 @@ void JPIntType::getConversionInfo(JPConversionInfo &info)
 	jintConversion.getInfo(this, info);
 	intConversion.getInfo(this, info);
 	intNumberConversion.getInfo(this, info);
-	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
 jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)

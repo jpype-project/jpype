@@ -98,6 +98,13 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
 } asJCharConversion;
 
 JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
@@ -107,12 +114,19 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-
-	if (asCharConversion.matches(this, match))
+	if (asJCharConversion.matches(this, match)
+			|| asCharConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPCharType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asCharConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
 }
 
 jarray JPCharType::newArrayInstance(JPJavaFrame& frame, jsize sz)

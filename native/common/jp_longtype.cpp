@@ -117,6 +117,15 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+void JPLongType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jlongConversion.getInfo(this, info);
+	longConversion.getInfo(this, info);
+	longNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_long->getHost());
+}
+
 jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewLongArray(sz);
