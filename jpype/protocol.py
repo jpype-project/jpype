@@ -6,7 +6,6 @@ import sys
 import _jpype
 from . import _jclass
 from . import _jcustomizer
-from . import types as _jtypes
 
 # Copies of all private base types for reference
 _JClass = _jpype._JClass

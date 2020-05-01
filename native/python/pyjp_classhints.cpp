@@ -90,9 +90,22 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPClassHints_addProtocolConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+{
+	JP_PY_TRY("PyJPClassHints_addProtocolConversion", self);
+	PyObject *type;
+	PyObject *method;
+	if (!PyArg_ParseTuple(args, "OO", &type, &method))
+		return NULL;
+	self->m_Hints->addTypeConversion(type, method, false);
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
 static PyMethodDef classMethods[] = {
 	{"addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
 	{"addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
+	{"addProtocolConversion", (PyCFunction) & PyJPClassHints_addProtocolConversion, METH_VARARGS, ""},
 	{NULL},
 };
 

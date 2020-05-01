@@ -13,11 +13,12 @@
 #
 # *****************************************************************************
 import _jpype
+import typing
 
 __all__ = ['JImplementationFor', 'JConversion']
 
 
-def JConversion(cls, exact=None, instanceof=None, attribute=None):
+def JConversion(cls, exact=None, instanceof=None, attribute=None, protocol=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
@@ -60,6 +61,10 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
         hints = getClassHints(cls)
         if exact:
             hints.addTypeConversion(exact, func, True)
+        if protocol:
+            if not isinstance(protocol, (typing._GenericAlias, typing._ProtocolMeta)):
+                raise TypeError("Must be protocol")
+            hints.addProtocolConversion(protocol, func)
         if instanceof:
             hints.addTypeConversion(instanceof, func, False)
         if attribute:
