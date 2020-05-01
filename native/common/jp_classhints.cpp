@@ -244,11 +244,13 @@ public:
 	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
 	{
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
+		// GCOVR_EXCL_START
 		if (pyhints == NULL)
 			PyJPClass_create(*match.frame, cls);
 		pyhints = (PyJPClassHints*) cls->getHints();
-		if (pyhints == NULL) // GCOVR_EXCL_LINE
-			return match.type = JPMatch::_none;  // GCOVR_EXCL_LINE
+		if (pyhints == NULL)
+			return match.type = JPMatch::_none;
+		// GCOVR_EXCL_STOP
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
 		return match.type;
