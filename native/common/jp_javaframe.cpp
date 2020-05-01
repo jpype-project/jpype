@@ -124,9 +124,9 @@ void JPJavaFrame::DeleteGlobalRef(jobject obj)
 jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
 {
 	JP_TRACE_JAVA("New weak", obj);
-	obj = m_Env->NewWeakGlobalRef(obj);
-	JP_TRACE_JAVA("Weak", obj);
-	return obj;
+	jweak obj2 = m_Env->NewWeakGlobalRef(obj);
+	JP_TRACE_JAVA("Weak", obj2);
+	return obj2;
 }
 
 void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)

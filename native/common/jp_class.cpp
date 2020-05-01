@@ -344,8 +344,6 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
 	// Update the Python class cache
-	if (this->m_Hints.isNull())
-		PyJPClass_create(*match.frame, this);
 	if (nullConversion->matches(match, this)
 			|| objectConversion->matches(match, this)
 			|| proxyConversion->matches(match, this)
