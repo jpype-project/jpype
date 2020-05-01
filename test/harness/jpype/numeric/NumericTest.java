@@ -16,7 +16,7 @@
 //*****************************************************************************
 package jpype.numeric;
 
-class NumericTest
+public class NumericTest
 {
 	public static boolean doubleIsTwiceMaxFloat(double d)
 	{
