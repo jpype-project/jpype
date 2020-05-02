@@ -16,7 +16,9 @@
 # *****************************************************************************
 import _jpype
 from . import _jclass
+from . import types as _jtypes
 from . import _jcustomizer
+from collections.abc import Mapping
 
 JOverride = _jclass.JOverride
 
@@ -203,5 +205,3 @@ class _JEnumeration(object):
         return self
 
     next = __next__
-
-

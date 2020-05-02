@@ -199,7 +199,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
 	{
-		PyObject *typing = PyImport_AddModule("typing");
+		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}

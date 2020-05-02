@@ -18,7 +18,7 @@ import typing
 __all__ = ['JImplementationFor', 'JConversion']
 
 
-def JConversion(cls, exact=None, instanceof=None, attribute=None, protocol=None):
+def JConversion(cls, exact=None, instanceof=None, attribute=None, none=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
@@ -57,18 +57,16 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None, protocol=None)
       attribute(str): This conversion applies to any object that has
         passes hasattr(obj, arg).
     """
-    def customizer(func):
-        hints = getClassHints(cls)
-        if exact:
-            hints.addTypeConversion(exact, func, True)
-        if protocol:
-            if not isinstance(protocol, (typing._GenericAlias, typing._ProtocolMeta)):
-                raise TypeError("Must be protocol")
-            hints.addProtocolConversion(protocol, func)
-        if instanceof:
-            hints.addTypeConversion(instanceof, func, False)
-        if attribute:
-            hints.addAttributeConversion(attribute, func)
+    hints = getClassHints(cls)
+    if none is not None:
+        hints._denyConversion(none)
+    def customizer(func=None):
+        if exact is not None:
+            hints._addTypeConversion(exact, func, True)
+        if instanceof is not None:
+            hints._addTypeConversion(instanceof, func, False)
+        if attribute is not None:
+            hints._addAttributeConversion(attribute, func)
         return func
     return customizer
 

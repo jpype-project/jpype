@@ -96,6 +96,8 @@ public:
 	 */
 	void addTypeConversion(PyObject* type, PyObject* method, bool exact);
 
+	void denyConversion(PyObject* type);
+
 	void getInfo(JPClass *cls, JPConversionInfo &info);
 
 private:

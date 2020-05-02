@@ -81,8 +81,8 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	unsigned char exact;
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
 		return NULL;
-	if (!PyType_Check(type))
-		JP_RAISE(PyExc_TypeError, "type is required");
+	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
+		JP_RAISE(PyExc_TypeError, "type or protocol is required");
 	if (!PyCallable_Check(method))
 		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
@@ -90,22 +90,23 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPClassHints_addProtocolConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+PyObject *PyJPClassHints_denyConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
 {
-	JP_PY_TRY("PyJPClassHints_addProtocolConversion", self);
+	JP_PY_TRY("PyJPClassHints_denyConversion", self);
 	PyObject *type;
-	PyObject *method;
-	if (!PyArg_ParseTuple(args, "OO", &type, &method))
+	if (!PyArg_ParseTuple(args, "O", &type))
 		return NULL;
-	self->m_Hints->addTypeConversion(type, method, false);
+	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
+		JP_RAISE(PyExc_TypeError, "type or protocol is required");
+	self->m_Hints->denyConversion(type);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
 
 static PyMethodDef classMethods[] = {
-	{"addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
-	{"addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
-	{"addProtocolConversion", (PyCFunction) & PyJPClassHints_addProtocolConversion, METH_VARARGS, ""},
+	{"_addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
+	{"_addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
+	{"_denyConversion", (PyCFunction) & PyJPClassHints_denyConversion, METH_VARARGS, ""},
 	{NULL},
 };
 
