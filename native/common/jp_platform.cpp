@@ -144,7 +144,7 @@ public:
 	virtual void* getSymbol(const char* name) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
-                JP_TRACE("Load", name):
+                JP_TRACE("Load", name);
 		void* res = dlsym(jvmLibrary, name);
                 JP_TRACE("Res", res);
 		// GCOVR_EXCL_START
