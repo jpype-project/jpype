@@ -234,29 +234,29 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPClassHints_addAttributeConversion(self):
         _jpype.fault("PyJPClassHints_addAttributeConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            _jpype._JClassHints().addAttributeConversion("f", None)
+            _jpype._JClassHints()._addAttributeConversion("f", None)
 
         def f():
             pass
         with self.assertRaises(TypeError):
-            _jpype._JClassHints().addAttributeConversion(None, f)
+            _jpype._JClassHints()._addAttributeConversion(None, f)
         with self.assertRaises(TypeError):
-            _jpype._JClassHints().addAttributeConversion("f", None)
-        _jpype._JClassHints().addAttributeConversion("f", f)
+            _jpype._JClassHints()._addAttributeConversion("f", None)
+        _jpype._JClassHints()._addAttributeConversion("f", f)
 
     @common.requireInstrumentation
     def testJPClassHints_addTypeConversion(self):
         _jpype.fault("PyJPClassHints_addTypeConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
-            _jpype._JClassHints().addTypeConversion("f", None)
+            _jpype._JClassHints()._addTypeConversion("f", None)
 
         def f():
             pass
+        #with self.assertRaises(TypeError):
+        #    _jpype._JClassHints()._addTypeConversion(None, f, 1)
         with self.assertRaises(TypeError):
-            _jpype._JClassHints().addTypeConversion(None, f, 1)
-        with self.assertRaises(TypeError):
-            _jpype._JClassHints().addTypeConversion(str, None, 1)
-        _jpype._JClassHints().addTypeConversion(str, f, 1)
+            _jpype._JClassHints()._addTypeConversion(str, None, 1)
+        _jpype._JClassHints()._addTypeConversion(str, f, 1)
 
 
 # pyjp_module.cpp:	JP_PY_TRY("Py_GetAttrDescriptor");
