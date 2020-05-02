@@ -135,13 +135,13 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
-	JP_TRACE("convert strings", convertStrings);
+	JP_TRACE("Convert strings", convertStrings);
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
 	try
 	{
-		JP_TRACE("load entry points");
+		JP_TRACE("Load entry points");
 		loadEntryPoints(vmPath);
 	} catch (JPypeException& ex)
 	{
@@ -150,26 +150,37 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	}
 
 	// Pack the arguments
-	JP_TRACE("pack arguments");
+	JP_TRACE("Pack arguments");
 	JavaVMInitArgs jniArgs;
 	jniArgs.options = NULL;
 
 	// prepare this ...
 	jniArgs.version = USE_JNI_VERSION;
 	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
+        JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
 	jniArgs.nOptions = (jint) args.size();
+        JP_TRACE("NumOptions", jniArgs.nOptions);
 	jniArgs.options = (JavaVMOption*) malloc(sizeof (JavaVMOption) * jniArgs.nOptions);
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
+                JP_TRACE("Option", args[i]);
 		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
 
 	// Launch the JVM
-	JNIEnv* env;
-	JP_TRACE("create JVM");
-	CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+	JNIEnv* env = NULL;
+	JP_TRACE("Create JVM");
+        try
+        {
+	        CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+        }
+        catch (...)
+        {
+                JP_TRACE("Exception in CreateJVM?");
+        }
+        JP_TRACE("JVM created");
 	free(jniArgs.options);
 
 	if (m_JavaVM == NULL)
