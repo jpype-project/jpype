@@ -149,7 +149,6 @@ void JPDoubleType::getConversionInfo(JPConversionInfo &info)
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
-
 	return frame.NewDoubleArray(sz);
 }
 
@@ -157,7 +156,6 @@ JPPyObject JPDoubleType::getStaticField(JPJavaFrame& frame, jclass c, jfieldID f
 {
 	jvalue v;
 	field(v) = frame.GetStaticDoubleField(c, fid);
-
 	return convertToPythonObject(frame, v, false);
 }
 
@@ -165,7 +163,6 @@ JPPyObject JPDoubleType::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 {
 	jvalue v;
 	field(v) = frame.GetDoubleField(c, fid);
-
 	return convertToPythonObject(frame, v, false);
 }
 
@@ -173,7 +170,6 @@ JPPyObject JPDoubleType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID
 {
 	jvalue v;
 	{
-
 		JPPyCallRelease call;
 		field(v) = frame.CallStaticDoubleMethodA(claz, mth, val);
 	}
@@ -187,7 +183,6 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 		JPPyCallRelease call;
 		if (clazz == NULL)
 			field(v) = frame.CallDoubleMethodA(obj, mth, val);
-
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
 	}
@@ -197,7 +192,6 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -207,7 +201,6 @@ void JPDoubleType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, Py
 void JPDoubleType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -262,7 +255,6 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
 		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
-
 		if (v == -1)
 			JP_PY_CHECK();
 		val[index] = v;
@@ -278,14 +270,12 @@ JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
 	field(v) = val;
-
 	return convertToPythonObject(frame, v, false);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
 	JPMatch match(&frame, obj);
-
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
@@ -294,7 +284,6 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 
 void JPDoubleType::getView(JPArrayView& view)
 {
-
 	JPJavaFrame frame(view.getContext());
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
@@ -318,27 +307,23 @@ void JPDoubleType::releaseView(JPArrayView& view)
 
 const char* JPDoubleType::getBufferFormat()
 {
-
 	return "d";
 }
 
 ssize_t JPDoubleType::getItemSize()
 {
-
 	return sizeof (jdouble);
 }
 
 void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-
 	jdouble* b = (jdouble*) ((char*) memory + offset);
 	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
 }
 
 static void pack(jdouble* d, jvalue v)
 {
-
 	*d = v.d;
 }
 

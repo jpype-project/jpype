@@ -47,7 +47,6 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	return JPValue(this, v);
 }
 
-
 JPConversionLong<JPIntType> intConversion;
 JPConversionLongNumber<JPIntType> intNumberConversion;
 JPConversionLongWiden<JPIntType> intWidenConversion;

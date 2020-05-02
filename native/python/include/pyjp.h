@@ -90,6 +90,7 @@ struct PyJPBuffer
 	JPBuffer *m_Buffer;
 } ;
 
+
 struct PyJPClassHints
 {
 	PyObject_HEAD
@@ -185,7 +186,6 @@ void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPV
 bool       PyJPValue_isSetJavaSlot(PyObject* self);
 
 #define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
-
 /**
  * Use this when getting the context where the context must be running.
  *
