@@ -97,7 +97,7 @@ class _JClassHints(object):
         pass
     def _addAttributeConversion(self, *args):
         pass
-    def _denyConversion(self, *args):
+    def _excludeConversion(self, *args):
         pass
 
 mockModule = mock.MagicMock()
