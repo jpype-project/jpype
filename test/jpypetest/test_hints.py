@@ -7,6 +7,12 @@ import jpype.protocol as proto
 
 class HintsTestCase(common.JPypeTestCase):
 
+    def testCache(self):
+        cls = JClass('java.lang.Object')
+        hints = cls._hints
+        hints2 = cls._hints
+        self.assertEqual(hints, hints2)
+
     def testObject(self):
         cls = JClass('java.lang.Object')
         hints = cls._hints

@@ -217,15 +217,17 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
+	// GCOV_EXCL_START
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+		return JPMatch::_none; // Not used
 	}
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
 	{
 		// Not used
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{
@@ -295,14 +297,16 @@ class JPConversionFloatWiden : public JPConversion
 {
 public:
 
+	// GCOVR_EXCL_START
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+		return JPMatch::_none;  // not used
 	}
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{

@@ -76,7 +76,7 @@ void JPStringType::getConversionInfo(JPConversionInfo &info)
 	stringConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	if (m_Context->getConvertStrings())
-		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
+		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type); // GCOVR_EXCL_LINE
 	else
 		PyList_Append(info.ret, (PyObject*) getHost());
 }
