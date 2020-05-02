@@ -14,8 +14,7 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import _jpype
-from . import _jclass # lgtm [py/unused-import]
+from . import _jclass
 from . import types as _jtypes
 from . import _jcustomizer
 from collections.abc import Mapping
