@@ -58,12 +58,12 @@ def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
 
 
-@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
+@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
+        exclude=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
 
 
-@_jcustomizer.JConversion("java.util.Collection", none=str)
 @_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
 def _JMapConvert(jcls, obj):
     hm = _jclass.JClass('java.util.HashMap')()

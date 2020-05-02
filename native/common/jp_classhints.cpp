@@ -302,7 +302,7 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 	JP_TRACE_OUT;
 }
 
-void JPClassHints::denyConversion(PyObject *type)
+void JPClassHints::excludeConversion(PyObject *type)
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
 	conversions.push_front(new JPNoneConversion(type));

@@ -90,15 +90,31 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	JP_PY_CATCH(NULL);
 }
 
-PyObject *PyJPClassHints_denyConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
 {
-	JP_PY_TRY("PyJPClassHints_denyConversion", self);
-	PyObject *type;
-	if (!PyArg_ParseTuple(args, "O", &type))
+	JP_PY_TRY("PyJPClassHints_excludeConversion", self);
+	PyObject *types;
+	if (!PyArg_ParseTuple(args, "O", &types))
 		return NULL;
-	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
-		JP_RAISE(PyExc_TypeError, "type or protocol is required");
-	self->m_Hints->denyConversion(type);
+	if (PyTuple_Check(types))
+	{
+		Py_ssize_t sz = PyTuple_Size(types);
+		for (Py_ssize_t i = 0; i < sz; ++i)
+		{
+			PyObject *t = PyTuple_GetItem(types, i);
+			if (!PyType_Check(t) && !PyObject_HasAttrString((PyObject*) Py_TYPE(t), "__instancecheck__"))
+				JP_RAISE(PyExc_TypeError, "type or protocol is required");
+		}
+		for (Py_ssize_t i = 0; i < sz; ++i)
+		{
+			self->m_Hints->excludeConversion(PyTuple_GetItem(types, i));
+		}
+	} else
+	{
+		if (!PyType_Check(types) && !PyObject_HasAttrString((PyObject*) Py_TYPE(types), "__instancecheck__"))
+			JP_RAISE(PyExc_TypeError, "type or protocol is required");
+		self->m_Hints->excludeConversion(types);
+	}
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -106,7 +122,7 @@ PyObject *PyJPClassHints_denyConversion(PyJPClassHints *self, PyObject* args, Py
 static PyMethodDef classMethods[] = {
 	{"_addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
 	{"_addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
-	{"_denyConversion", (PyCFunction) & PyJPClassHints_denyConversion, METH_VARARGS, ""},
+	{"_excludeConversion", (PyCFunction) & PyJPClassHints_excludeConversion, METH_VARARGS, ""},
 	{NULL},
 };
 

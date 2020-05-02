@@ -17,7 +17,7 @@ import _jpype
 __all__ = ['JImplementationFor', 'JConversion']
 
 
-def JConversion(cls, exact=None, instanceof=None, attribute=None, none=None):
+def JConversion(cls, exact=None, instanceof=None, attribute=None, exclude=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
@@ -52,13 +52,20 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None, none=None):
       exact(type): This conversion applies only to objects that have
         a type exactly equal to the argument.
       instanceof(type): This conversion applies to any object that
-        pass isinstance(obj, arg).
+        passes isinstance(obj, type).  This can be used with a
+        type or a protocol.
       attribute(str): This conversion applies to any object that has
-        passes hasattr(obj, arg).
+        passes hasattr(obj, arg). (deprecated)
+      exclude(type): Prevents a conversion for a specified type.
+        Can be used to prevent a specific type from being converted.
+        For example, to prevent maps or strings from passing 
+        a check for Sequence.  Exclusions are applied before all 
+        other user specificied conversions.
     """
     hints = getClassHints(cls)
-    if none is not None:
-        hints._denyConversion(none)
+    if exclude is not None:
+        hints._excludeConversion(exclude)
+
     def customizer(func=None):
         if exact is not None:
             hints._addTypeConversion(exact, func, True)
