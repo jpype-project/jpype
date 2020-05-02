@@ -91,11 +91,13 @@ class _JClass(type):
 class _JClassHints(object):
     def __init__(self):
         self.bases = []
-    def addClassBases(self, *args):
+    def _addClassBases(self, *args):
         pass
-    def addTypeConversion(self, *args):
+    def _addTypeConversion(self, *args):
         pass
-    def addAttributeConversion(self, *args):
+    def _addAttributeConversion(self, *args):
+        pass
+    def _denyConversion(self, *args):
         pass
 
 mockModule = mock.MagicMock()
