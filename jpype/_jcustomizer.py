@@ -13,7 +13,6 @@
 #
 # *****************************************************************************
 import _jpype
-import typing
 
 __all__ = ['JImplementationFor', 'JConversion']
 
