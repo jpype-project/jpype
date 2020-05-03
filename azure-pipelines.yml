@@ -42,7 +42,7 @@ jobs:
       python setup.py test_java
       pip install gcovr pytest-cov jedi
       pip install -r test-requirements.txt
-      pip install numpy
+      pip install numpy typing_extensions
     displayName: 'Install requirements'
   - script: |
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
@@ -109,12 +109,13 @@ jobs:
       python setup.py sdist
       pip install dist/*
     displayName: 'Build module'
-  - script: python -c "import jpype"
+  - script: |
+      pip install numpy jedi typing_extensions
+      python -c "import jpype"
     displayName: 'Check module'
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      pip install numpy jedi typing_extensions
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
@@ -182,12 +183,13 @@ jobs:
   - script: |
       python setup.py build_ext --inplace
     displayName: 'Build module'
-  - script: python -c "import jpype"
+  - script: |
+      pip install numpy jedi typing_extensions
+      python -c "import jpype"
     displayName: 'Check module'
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      pip install numpy jedi typing_extensions
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2
