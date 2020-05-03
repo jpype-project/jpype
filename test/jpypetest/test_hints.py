@@ -13,6 +13,17 @@ class HintsTestCase(common.JPypeTestCase):
         hints2 = cls._hints
         self.assertEqual(hints, hints2)
 
+    def testProtocol(self):
+        protocol = jpype.protocol.SupportsFloat
+        annot = protocol.__float__.__annotations__
+        self.assertEqual(annot['return'], float)
+        protocol = jpype.protocol.SupportsIndex
+        annot = protocol.__index__.__annotations__
+        self.assertEqual(annot['return'], int)
+        self.assertTrue(hasattr(proto, "Sequence"))
+        self.assertTrue(hasattr(proto, "Mapping"))
+        self.assertTrue(hasattr(proto, "Protocol"))
+
     def testObject(self):
         cls = JClass('java.lang.Object')
         hints = cls._hints
