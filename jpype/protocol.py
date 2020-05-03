@@ -19,7 +19,7 @@ _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol, runtime_checkable
-    from typing import Sequence, Mapping, SupportsFloat
+    from typing import Sequence, Mapping, SupportsFloat # lgtm [py/unused-import]
 
     @runtime_checkable
     class SupportsIndex(Protocol):
