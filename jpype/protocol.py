@@ -17,35 +17,29 @@ _JBoolean = _jpype._JBoolean
 _JArray = _jpype._JArray
 _JBuffer = _jpype._JBuffer
 
-
 if sys.version_info < (3, 8):
-    # Before 3.8 we have to use attribute type converters
+    from typing_extensions import Protocol, runtime_checkable
     from collections.abc import Sequence, Mapping
 
-    class _AttributeMeta(type):
-        def __instancecheck__(self, obj):
-            return hasattr(obj, self._attrib)
-    SupportsPath = _AttributeMeta("SupportsPath", (object,), {
-                                  "_attrib": "__fspath__"})
-    SupportsIndex = _AttributeMeta("SupportsIndex", (object,), {
-                                   "_attrib": "__index__"})
-    SupportsFloat = _AttributeMeta("SupportsFlaot", (object,), {
-                                   "_attrib": "__float__"})
+    @runtime_checkable
+    class SupportsFloat(Protocol):
+        def __float__(self) -> str: ...
+
+    @runtime_checkable
+    class SupportsIndex(Protocol):
+        def __index__(self) -> str: ...
+
+
 else:
-    from typing import Protocol, runtime_checkable, abstractmethod
+    # 3.8 onward
+    from typing import Protocol, runtime_checkable
     from typing import SupportsIndex, SupportsFloat
     from typing import Sequence, Mapping
 
-    # Types we need
-    @runtime_checkable
-    class SupportsPath(Protocol):
-        """An ABC with one abstract method __fspath__."""
-        __slots__ = ()
-
-        @abstractmethod
-        def __fspath__(self) -> str:
-            pass
-
+# Types we need
+@runtime_checkable
+class SupportsPath(Protocol):
+    def __fspath__(self) -> str: ...
 
 @_jcustomizer.JConversion("java.nio.file.Path", instanceof=SupportsPath)
 def _JPathConvert(jcls, obj):
