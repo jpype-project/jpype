@@ -19,15 +19,11 @@ _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol, runtime_checkable
-    from collections.abc import Sequence, Mapping
-
-    @runtime_checkable
-    class SupportsFloat(Protocol):
-        def __float__(self) -> str: ...
+    from typing import Sequence, Mapping, SupportsFloat
 
     @runtime_checkable
     class SupportsIndex(Protocol):
-        def __index__(self) -> str: ...
+        def __index__(self) -> int: ...
 
 
 else:
