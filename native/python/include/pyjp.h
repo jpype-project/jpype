@@ -105,6 +105,17 @@ struct PyJPProxy
 	bool m_Convert;
 } ;
 
+struct JPConversionInfo
+{
+	PyObject *ret;
+	PyObject *exact;
+	PyObject *implicit;
+	PyObject *attributes;
+	PyObject *expl;
+	PyObject *none;
+} ;
+
+
 // JPype types
 extern PyTypeObject *PyJPArray_Type;
 extern PyTypeObject *PyJPArrayPrimitive_Type;

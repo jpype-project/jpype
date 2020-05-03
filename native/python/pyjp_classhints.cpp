@@ -81,8 +81,8 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	unsigned char exact;
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
 		return NULL;
-	if (!PyType_Check(type))
-		JP_RAISE(PyExc_TypeError, "type is required");
+	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
+		JP_RAISE(PyExc_TypeError, "type or protocol is required");
 	if (!PyCallable_Check(method))
 		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
@@ -90,9 +90,39 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+{
+	JP_PY_TRY("PyJPClassHints_excludeConversion", self);
+	PyObject *types;
+	if (!PyArg_ParseTuple(args, "O", &types))
+		return NULL;
+	if (PyTuple_Check(types))
+	{
+		Py_ssize_t sz = PyTuple_Size(types);
+		for (Py_ssize_t i = 0; i < sz; ++i)
+		{
+			PyObject *t = PyTuple_GetItem(types, i);
+			if (!PyType_Check(t) && !PyObject_HasAttrString((PyObject*) Py_TYPE(t), "__instancecheck__"))
+				JP_RAISE(PyExc_TypeError, "type or protocol is required");
+		}
+		for (Py_ssize_t i = 0; i < sz; ++i)
+		{
+			self->m_Hints->excludeConversion(PyTuple_GetItem(types, i));
+		}
+	} else
+	{
+		if (!PyType_Check(types) && !PyObject_HasAttrString((PyObject*) Py_TYPE(types), "__instancecheck__"))
+			JP_RAISE(PyExc_TypeError, "type or protocol is required");
+		self->m_Hints->excludeConversion(types);
+	}
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
 static PyMethodDef classMethods[] = {
-	{"addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
-	{"addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
+	{"_addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
+	{"_addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
+	{"_excludeConversion", (PyCFunction) & PyJPClassHints_excludeConversion, METH_VARARGS, ""},
 	{NULL},
 };
 

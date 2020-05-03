@@ -1,5 +1,5 @@
 MANIFEST
-Makefile
+Makefile*
 *~
 /test/classes/
 /test/jars/

@@ -36,7 +36,7 @@ import _jpype
 from ._jclass import *
 from ._jobject import *
 from ._jarray import *
-from ._jexception import *
+from ._jexception import JException
 from ._jstring import *
 
 __all__ = [

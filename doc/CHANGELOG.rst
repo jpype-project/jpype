@@ -5,6 +5,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next Release**
 
+  - Support for Protocol on type conversions.  Attribute based
+    conversions deprecated in favor of Protocol.  Internal API
+    for stubbing.
+
   - Deprecated class and functions were removed.  ``JIterator``,
     use of ``JException`` as a factory,  ``get_default_jvm_path``,
     ``jpype.reflect`` module.
