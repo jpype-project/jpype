@@ -441,16 +441,39 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JP_PY_CATCH(-1);
 }
 
-static PyObject *PyJPClass_hints(PyObject *self, PyObject *closure)
+static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	PyJPClass *cls = (PyJPClass*) self;
-	PyObject *hints = cls->m_Class->getHints();
-	if (hints == NULL)
+	JPPyObject hints(JPPyRef::_use, self->m_Class->getHints());
+	if (hints.get() == NULL)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
-	Py_INCREF(hints);
-	return hints;
+
+	if (PyObject_HasAttrString((PyObject*) self, "returns") == 1)
+		return hints.keep();
+
+	// Copy in info.
+	JPConversionInfo info;
+	JPPyObject ret(JPPyRef::_call, PyList_New(0));
+	JPPyObject implicit(JPPyRef::_call, PyList_New(0));
+	JPPyObject attribs(JPPyRef::_call, PyList_New(0));
+	JPPyObject exact(JPPyRef::_call, PyList_New(0));
+	JPPyObject expl(JPPyRef::_call, PyList_New(0));
+	JPPyObject none(JPPyRef::_call, PyList_New(0));
+	info.ret = ret.get();
+	info.implicit = implicit.get();
+	info.attributes = attribs.get();
+	info.exact = exact.get();
+	info.expl = expl.get();
+	info.none = none.get();
+	self->m_Class->getConversionInfo(info);
+	PyObject_SetAttrString(hints.get(), "returns", ret.get());
+	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
+	PyObject_SetAttrString(hints.get(), "exact", exact.get());
+	PyObject_SetAttrString(hints.get(), "explicit", expl.get());
+	PyObject_SetAttrString(hints.get(), "none", none.get());
+	PyObject_SetAttrString(hints.get(), "attributes", attribs.get());
+	return hints.keep();
 	JP_PY_CATCH(NULL);
 }
 

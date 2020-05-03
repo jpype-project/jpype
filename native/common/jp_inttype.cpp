@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_inttype.h"
-#include "pyjp.h"
 
 JPIntType::JPIntType()
 : JPPrimitiveType("int")
@@ -51,27 +51,28 @@ JPConversionLong<JPIntType> intConversion;
 JPConversionLongNumber<JPIntType> intNumberConversion;
 JPConversionLongWiden<JPIntType> intWidenConversion;
 
-JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+class JPConversionJInt : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
-		JPClass *cls = value->getClass();
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return JPMatch::_none;
+		match.type = JPMatch::_none;
+
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'C':
@@ -80,20 +81,49 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 					match.conversion = &intWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	if (intConversion.matches(match, this)
-			|| intNumberConversion.matches(match, this))
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+} jintConversion;
+
+JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPIntType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+	if (jintConversion.matches(this, match)
+			|| intConversion.matches(this, match)
+			|| intNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPIntType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jintConversion.getInfo(this, info);
+	intConversion.getInfo(this, info);
+	intNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
 jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)

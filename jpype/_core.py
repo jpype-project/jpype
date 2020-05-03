@@ -16,6 +16,7 @@
 # *****************************************************************************
 import sys
 import atexit
+import typing
 import _jpype
 from . import types as _jtypes
 from . import _classpath
@@ -249,6 +250,14 @@ def startJVM(*args, **kwargs):
     _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
     _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
     _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
+    _jtypes.JBoolean._hints = _jcustomizer.getClassHints("boolean")
+    _jtypes.JByte._hints = _jcustomizer.getClassHints("byte")
+    _jtypes.JChar._hints = _jcustomizer.getClassHints("char")
+    _jtypes.JShort._hints = _jcustomizer.getClassHints("short")
+    _jtypes.JInt._hints = _jcustomizer.getClassHints("int")
+    _jtypes.JLong._hints = _jcustomizer.getClassHints("long")
+    _jtypes.JFloat._hints = _jcustomizer.getClassHints("float")
+    _jtypes.JDouble._hints = _jcustomizer.getClassHints("double")
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
@@ -417,3 +426,5 @@ class _JRuntime(object):
 
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+
+_jpype.typing = typing

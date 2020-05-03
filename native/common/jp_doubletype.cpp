@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_doubletype.h"
-#include "pyjp.h"
 
 JPDoubleType::JPDoubleType()
 : JPPrimitiveType("double")
@@ -50,32 +50,42 @@ static JPConversionAsFloat<JPDoubleType> asDoubleConversion;
 static JPConversionLongAsFloat<JPDoubleType> asDoubleLongConversion;
 static JPConversionFloatWiden<JPDoubleType> doubleWidenConversion;
 
-JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+class JPConversionAsDoubleExact : public JPConversionAsFloat<JPDoubleType>
 {
-	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPClass *cls = value->getClass();
-		if (cls == this)
-		{
-			match.conversion = javaValueConversion;
-			return match.type = JPMatch::_exact;
-		}
+		if (!PyFloat_CheckExact(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_exact;
+	}
+
+} asDoubleExactConversion;
+
+class JPConversionAsJDouble : public JPConversionJavaValue
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -87,26 +97,54 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 					match.conversion = &doubleWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		return JPMatch::_implicit;
+
 	}
 
-	if (PyFloat_CheckExact(match.object))
+	void getInfo(JPClass *cls, JPConversionInfo &info)
 	{
-		match.conversion = &asDoubleConversion;
-		return match.type = JPMatch::_exact;
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_float->getHost());
+		unboxConversion->getInfo(cls, info);
 	}
+} asJDoubleConversion;
 
-	if (asDoubleLongConversion.matches(match, this)
-			|| asDoubleConversion.matches(match, this))
+JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPDoubleType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+	if (asJDoubleConversion.matches(this, match)
+			|| asDoubleExactConversion.matches(this, match)
+			|| asDoubleLongConversion.matches(this, match)
+			|| asDoubleConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPDoubleType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asJDoubleConversion.getInfo(this, info);
+	asDoubleExactConversion.getInfo(this, info);
+	asDoubleLongConversion.getInfo(this, info);
+	asDoubleConversion.getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
 jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
