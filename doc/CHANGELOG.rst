@@ -3,6 +3,8 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+
+  
 - **Next Release**
 
   - Java classes annotated with ``@FunctionalInterface`` can be 
@@ -33,6 +35,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - Updated the repr methods on Java classes.
   
+  - Handles Control-C gracefully.  Previous versions crash whenever
+    Java handles the Control-C signal as they would shutdown Java
+    during a call.  Now JPype will produce a ``InterruptedException``
+    when returning from Java.  Control-C will not break out of large
+    Java procedures as currently implemented as Java does not have
+    a specific provision for this.
+
 - **0.7.4 - 4-28-2020**
 
   - Corrected a resource leak in arrays that affects array initialization, and variable
