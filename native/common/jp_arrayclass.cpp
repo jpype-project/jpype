@@ -37,7 +37,7 @@ JPArrayClass::~JPArrayClass()
 
 JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPArrayClass::getJavaConversion");
+	JP_TRACE_IN("JPArrayClass::findJavaConversion");
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
 			|| charArrayConversion->matches(this, match)

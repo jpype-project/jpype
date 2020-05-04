@@ -102,7 +102,7 @@ public:
 
 JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPLongType::getJavaConversion");
+	JP_TRACE_IN("JPLongType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

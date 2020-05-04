@@ -41,7 +41,7 @@ class JBooleanTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJBooleanGetJavaConversion(self):
-        _jpype.fault("JPBooleanType::getJavaConversion")
+        _jpype.fault("JPBooleanType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JBoolean._canConvertToJava(object())
 

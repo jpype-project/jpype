@@ -103,7 +103,7 @@ public:
 
 JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPIntType::getJavaConversion");
+	JP_TRACE_IN("JPIntType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

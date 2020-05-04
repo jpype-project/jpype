@@ -19,7 +19,7 @@ class JByteTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPByteType::getJavaConversion")
+        _jpype.fault("JPByteType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JByte._canConvertToJava(object())
 

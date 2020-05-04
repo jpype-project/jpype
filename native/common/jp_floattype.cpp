@@ -106,7 +106,7 @@ public:
 
 JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPFloatType::getJavaConversion");
+	JP_TRACE_IN("JPFloatType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

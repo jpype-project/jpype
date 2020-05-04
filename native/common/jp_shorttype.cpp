@@ -100,7 +100,7 @@ public:
 
 JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPShortType::getJavaConversion");
+	JP_TRACE_IN("JPShortType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

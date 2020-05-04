@@ -5,6 +5,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next Release**
 
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
+    This allows functions, lambdas, and class constructors to be used
+    whereever Java accepts a lambda.
+
   - Support for Protocol on type conversions.  Attribute based
     conversions deprecated in favor of Protocol.  Internal API
     for stubbing.

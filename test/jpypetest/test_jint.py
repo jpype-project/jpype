@@ -88,13 +88,13 @@ class JIntTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPIntType::getJavaConversion")
+        _jpype.fault("JPIntType::findJavaConversion")
         with self.assertRaises(SystemError):
             JInt(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPIntType::getJavaConversion")
+        _jpype.fault("JPIntType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JInt._canConvertToJava(object())
 

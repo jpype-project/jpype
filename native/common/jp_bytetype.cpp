@@ -78,7 +78,7 @@ public:
 
 JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPByteType::getJavaConversion");
+	JP_TRACE_IN("JPByteType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

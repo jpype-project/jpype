@@ -16,6 +16,7 @@
 # *****************************************************************************
 
 import pytest
+import _jpype
 import jpype
 import logging
 from os import path
@@ -103,6 +104,7 @@ class JPypeTestCase(unittest.TestCase):
 
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
+            _jpype.enableStacktraces(True)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, *args,
                            convertStrings=self._convertStrings)

@@ -1164,6 +1164,15 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	JP_TRACE_OUT;
 }
 
+string JPJavaFrame::getFunctional(jclass c)
+{
+	jvalue v;
+	v.l = (jobject) c;
+	return toStringUTF8((jstring) CallObjectMethodA(
+			m_Context->m_JavaContext.get(),
+			m_Context->m_Context_GetFunctionalID, &v));
+}
+
 JPClass *JPJavaFrame::findClass(jclass obj)
 {
 	return m_Context->getTypeManager()->findClass(obj);

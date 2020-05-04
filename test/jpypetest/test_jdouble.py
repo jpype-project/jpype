@@ -104,13 +104,13 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPDoubleType::getJavaConversion")
+        _jpype.fault("JPDoubleType::findJavaConversion")
         with self.assertRaises(SystemError):
             JDouble(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPDoubleType::getJavaConversion")
+        _jpype.fault("JPDoubleType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JDouble._canConvertToJava(object())
 
