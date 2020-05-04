@@ -20,13 +20,20 @@ class JPConversionFunctional : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyCallable_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		match.closure = cls;
 		return match.type = JPMatch::_implicit;
+	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		PyObject *typing = PyImport_AddModule("jpype.protocol");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "Callable"));
+		PyList_Append(info.implicit, proto.get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -53,12 +60,20 @@ public:
 
 JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPJPFunctional::getJavaConversion");
+	JP_TRACE_IN("JPJPFunctional::findJavaConversiocdn");
 	JPClass::findJavaConversion(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
-	if (functional_conversion.matches(match, this))
+	if (functional_conversion.matches(this, match))
 		return match.type;
 	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPFunctional::getConversionInfo(JPConversionInfo &info)
+{
+	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
+	JPClass::getConversionInfo(info);
+	functional_conversion.getInfo(this, info);
 	JP_TRACE_OUT;
 }

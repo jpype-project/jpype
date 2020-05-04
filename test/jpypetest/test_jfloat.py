@@ -104,13 +104,13 @@ class JFloatTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPFloatType::getJavaConversion")
+        _jpype.fault("JPFloatType::findJavaConversion")
         with self.assertRaises(SystemError):
             JFloat(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPFloatType::getJavaConversion")
+        _jpype.fault("JPFloatType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JFloat._canConvertToJava(object())
 

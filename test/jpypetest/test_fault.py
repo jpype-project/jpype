@@ -570,28 +570,28 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJBoxedGetJavaConversion(self):
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Boolean._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Character._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Byte._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Short._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Integer._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Long._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Float._canConvertToJava(object())
-        _jpype.fault("JPBoxedType::getJavaConversion")
+        _jpype.fault("JPBoxedType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             java.lang.Double._canConvertToJava(object())
 
@@ -1009,7 +1009,7 @@ class FaultTestCase(common.JPypeTestCase):
     @common.requireInstrumentation
     def testJPClassTypeGetJavaConversion(self):
         jc = JClass("java.lang.StringBuilder")
-        _jpype.fault("JPClass::getJavaConversion")
+        _jpype.fault("JPClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             jc._canConvertToJava(object())
 

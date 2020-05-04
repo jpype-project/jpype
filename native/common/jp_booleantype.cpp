@@ -144,7 +144,7 @@ public:
 
 JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPBooleanType::getJavaConversion", this);
+	JP_TRACE_IN("JPBooleanType::findJavaConversion", this);
 
 	if (match.object ==  Py_None)
 		return match.type = JPMatch::_none;

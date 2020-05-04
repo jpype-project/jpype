@@ -88,13 +88,13 @@ class JShortTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPShortType::getJavaConversion")
+        _jpype.fault("JPShortType::findJavaConversion")
         with self.assertRaises(SystemError):
             JShort(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPShortType::getJavaConversion")
+        _jpype.fault("JPShortType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JShort._canConvertToJava(object())
 
