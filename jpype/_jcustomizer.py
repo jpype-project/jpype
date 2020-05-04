@@ -17,7 +17,7 @@ import _jpype
 __all__ = ['JImplementationFor', 'JConversion']
 
 
-def JConversion(cls, exact=None, instanceof=None, attribute=None):
+def JConversion(cls, exact=None, instanceof=None, attribute=None, excludes=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
@@ -51,19 +51,27 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
         conversion.
       exact(type): This conversion applies only to objects that have
         a type exactly equal to the argument.
-      instanceof(type): This conversion applies to any object that
-        pass isinstance(obj, arg).
+      instanceof(type or protocol): This conversion applies to 
+        any object that passes isinstance(obj, type).
       attribute(str): This conversion applies to any object that has
-        passes hasattr(obj, arg).
+        passes hasattr(obj, arg). (deprecated)
+      excludes(type): Prevents a conversion for a specified type.
+        Can be used to prevent a specific type from being converted.
+        For example, to prevent maps or strings from passing 
+        a check for Sequence.  Exclusions are applied before all 
+        other user specificied conversions.
     """
-    def customizer(func):
-        hints = getClassHints(cls)
-        if exact:
-            hints.addTypeConversion(exact, func, True)
-        if instanceof:
-            hints.addTypeConversion(instanceof, func, False)
-        if attribute:
-            hints.addAttributeConversion(attribute, func)
+    hints = getClassHints(cls)
+    if excludes is not None:
+        hints._excludeConversion(excludes)
+
+    def customizer(func=None):
+        if exact is not None:
+            hints._addTypeConversion(exact, func, True)
+        if instanceof is not None:
+            hints._addTypeConversion(instanceof, func, False)
+        if attribute is not None:
+            hints._addAttributeConversion(attribute, func)
         return func
     return customizer
 

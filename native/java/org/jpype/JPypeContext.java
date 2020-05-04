@@ -79,6 +79,7 @@ public class JPypeContext
   private AtomicInteger shutdownFlag = new AtomicInteger();
   private AtomicInteger proxyCount = new AtomicInteger();
   private List<Thread> shutdownHooks = new ArrayList<>();
+  private List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
@@ -107,6 +108,7 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
+    JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
@@ -239,6 +241,12 @@ public class JPypeContext
     } catch (Throwable th)
     {
     }
+
+    // Execute post hooks
+    for (Runnable run : this.postHooks)
+    {
+      run.run();
+    }
   }
 
   static native void onShutdown(long ctxt);
@@ -286,6 +294,18 @@ public class JPypeContext
   public JPypeReferenceQueue getReferenceQueue()
   {
     return this.referenceQueue;
+  }
+
+  /**
+   * Add a hook to run after Python interface is shutdown.
+   *
+   * This must never have a Python method attached.
+   *
+   * @param run
+   */
+  public void _addPost(Runnable run)
+  {
+    this.postHooks.add(run);
   }
 
   /**

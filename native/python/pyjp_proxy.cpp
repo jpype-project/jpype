@@ -59,7 +59,10 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	self->m_Proxy = context->getProxyFactory()->newProxy((PyObject*) self, interfaces);
+	if (target == Py_None)
+		self->m_Proxy = new JPProxyDirect(context, self, interfaces);
+	else
+		self->m_Proxy = new JPProxyIndirect(context, self, interfaces);
 	self->m_Target = target;
 	self->m_Convert = (convert != 0);
 	Py_INCREF(target);
@@ -180,20 +183,3 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 	return NULL;
 }
 
-JPPyObject PyJPProxy_getCallable(PyObject *obj, const string& name)
-{
-	JP_TRACE_IN("PyJPProxy_getCallable");
-	if (Py_TYPE(obj) != PyJPProxy_Type
-			&& Py_TYPE(obj)->tp_base != PyJPProxy_Type)
-		JP_RAISE(PyExc_SystemError, "Incorrect type passed to proxy lookup");  // GCOVR_EXCL_LINE
-	PyJPProxy *proxy = (PyJPProxy*) obj;
-	if (proxy->m_Target != Py_None)
-	{
-		// Attempt to use the pointed to object if available
-		JPPyObject ret = JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(proxy->m_Target, name.c_str()));
-		if (!ret.isNull())
-			return ret;
-	}
-	return JPPyObject(JPPyRef::_accept, PyObject_GetAttrString(obj, name.c_str()));
-	JP_TRACE_OUT;
-}
