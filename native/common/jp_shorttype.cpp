@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve MÃ©nard
+   Copyright 2004-2008 Steve Ménard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_shorttype.h"
-#include "pyjp.h"
 
 JPShortType::JPShortType()
 : JPPrimitiveType("short")
@@ -49,27 +49,28 @@ JPConversionLong<JPShortType> shortConversion;
 JPConversionLongNumber<JPShortType> shortNumberConversion;
 JPConversionLongWiden<JPShortType> shortWidenConversion;
 
-JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
+class JPConversionJShort : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPShortType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue* value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
-		JPClass *cls = value->getClass();
+		JPValue* value = match.getJavaSlot();
+		if (value == NULL)
+			return JPMatch::_none;
+		match.type = JPMatch::_none;
+
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'C':
@@ -77,20 +78,49 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 					match.conversion = &shortWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	if (shortConversion.matches(match, this)
-			|| shortNumberConversion.matches(match, this))
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+
+} jshortConversion;
+
+JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPShortType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+	if (jshortConversion.matches(this, match)
+			|| shortConversion.matches(this, match)
+			|| shortNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPShortType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jshortConversion.getInfo(this, info);
+	shortConversion.getInfo(this, info);
+	shortNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_short->getHost());
 }
 
 jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -200,7 +230,13 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
-		jlong v = PyLong_AsLongLong(seq[i].get());
+		PyObject *item = seq[i].get();
+		if (!PyIndex_Check(item))
+		{
+			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to short", Py_TYPE(item)->tp_name);
+			JP_RAISE_PYTHON();
+		}
+		jlong v = PyLong_AsLongLong(item);
 		if (v == -1)
 			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);

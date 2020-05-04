@@ -16,7 +16,7 @@
 //*****************************************************************************
 package jpype.exc;
 
-class ExceptionTest
+public class ExceptionTest
 {
   public static void throwRuntime()
   {

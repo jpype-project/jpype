@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include <jpype.h>
+#include <pyjp.h>
 #include <jp_classtype.h>
 
 // Class<java.lang.Class> has special rules
@@ -36,12 +37,21 @@ JPClassType::~JPClassType()
 JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPClass::getJavaConversion");
-	if (nullConversion->matches(match, this) != JPMatch::_none)
+	if (nullConversion->matches(this, match) != JPMatch::_none)
 		return match.type;
-	if (objectConversion->matches(match, this) != JPMatch::_none)
+	if (objectConversion->matches(this, match) != JPMatch::_none)
 		return match.type;
-	if (classConversion->matches(match, this) != JPMatch::_none)
+	if (classConversion->matches(this, match) != JPMatch::_none)
 		return match.type;
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPClassType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	nullConversion->getInfo(this, info);
+	objectConversion->getInfo(this, info);
+	classConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }

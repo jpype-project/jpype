@@ -1,4 +1,5 @@
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_buffertype.h"
 

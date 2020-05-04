@@ -22,11 +22,6 @@ __all__ = ['JException']
 class JException(_jpype._JException, internal=True):
     """ Base class for all ``java.lang.Throwable`` objects.
 
-    When called as an object ``JException`` will produce a new exception class.
-    The arguments may either be a string or an existing Java throwable.
-    This functionality is deprecated as exception classes can be created with
-    ``JClass``.
-
     Use ``issubclass(cls, JException)`` to test if a class is derived
     from ``java.lang.Throwable.``
 
@@ -35,13 +30,6 @@ class JException(_jpype._JException, internal=True):
 
     """
     def __new__(cls, *args, **kwargs):
-        if cls == JException:
-            import warnings
-            if not hasattr(JException, '_warned'):
-                warnings.warn("Using JException to construct an exception type is deprecated.",
-                              category=DeprecationWarning, stacklevel=2)
-                JException._warned = True
-            return _JExceptionClassFactory(*args, **kwargs)
         self = _jpype._JException.__new__(cls, *args)
         _jpype._JException.__init__(self, *args)
         return self
@@ -82,15 +70,6 @@ class JException(_jpype._JException, internal=True):
         if cause is None:
             return (str(self.getMessage()),)
         return (str(self.getMessage()), cause,)
-
-
-def _JExceptionClassFactory(tp):
-    if isinstance(tp, str):
-        return _jpype.JClass(tp)
-    if isinstance(tp, _jpype.JClass):
-        return tp
-    raise TypeError(
-        "JException requires a string or java throwable type, got %s." % tp)
 
 
 # Hook up module resources

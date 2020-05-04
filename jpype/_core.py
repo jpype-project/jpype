@@ -19,15 +19,16 @@ import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
-from . import _jinit
 from . import _jcustomizer
+from . import _jinit
+from . import _pykeywords
 
 from ._jvmfinder import *
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
-    'detachThreadFromJVM', 'synchronized', 'get_default_jvm_path',
+    'detachThreadFromJVM', 'synchronized',
     'JVMNotFoundException', 'JVMNotSupportedException'
 ]
 
@@ -196,20 +197,7 @@ def startJVM(*args, **kwargs):
             raise TypeError("Unknown class path element")
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
-
-    if not "convertStrings" in kwargs:
-        import warnings
-        warnings.warn("""
--------------------------------------------------------------------------------
-Deprecated: convertStrings was not specified when starting the JVM. The default
-behavior in JPype will be False starting in JPype 0.8. The recommended setting
-for new code is convertStrings=False.  The legacy value of True was assumed for
-this session. If you are a user of an application that reported this warning,
-please file a ticket with the developer.
--------------------------------------------------------------------------------
-""")
-
-    convertStrings = kwargs.pop('convertStrings', True)
+    convertStrings = kwargs.pop('convertStrings', False)
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
@@ -228,6 +216,7 @@ please file a ticket with the developer.
                 raise RuntimeError("%s is older than required Java version %d" % (
                     jvmpath, version)) from ex
         raise
+
 
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
@@ -260,6 +249,14 @@ please file a ticket with the developer.
     _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
     _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
     _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
+    _jtypes.JBoolean._hints = _jcustomizer.getClassHints("boolean")
+    _jtypes.JByte._hints = _jcustomizer.getClassHints("byte")
+    _jtypes.JChar._hints = _jcustomizer.getClassHints("char")
+    _jtypes.JShort._hints = _jcustomizer.getClassHints("short")
+    _jtypes.JInt._hints = _jcustomizer.getClassHints("int")
+    _jtypes.JLong._hints = _jcustomizer.getClassHints("long")
+    _jtypes.JFloat._hints = _jcustomizer.getClassHints("float")
+    _jtypes.JDouble._hints = _jcustomizer.getClassHints("double")
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
@@ -295,6 +292,7 @@ please file a ticket with the developer.
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
 
+    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(list(_pykeywords._KEYWORDS))
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)
@@ -396,12 +394,6 @@ def synchronized(obj):
     raise TypeError("synchronized only applies to java objects")
 
 
-# Naming compatibility
-@deprecated("getDefaultJVMPath")
-def get_default_jvm_path(*args, **kwargs):
-    return getDefaultJVMPath(*args, **kwargs)
-
-
 def getJVMVersion():
     """ Get the JVM version if the JVM is started.
 
@@ -433,3 +425,4 @@ class _JRuntime(object):
 
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+
