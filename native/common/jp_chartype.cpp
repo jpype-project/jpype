@@ -109,7 +109,7 @@ public:
 
 JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPCharType::getJavaConversion");
+	JP_TRACE_IN("JPCharType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;

@@ -3,7 +3,14 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+
+  
 - **Next Release**
+
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
+    This allows functions, lambdas, and class constructors to be used
+    whereever Java accepts a lambda.
 
   - Support for Protocol on type conversions.  Attribute based
     conversions deprecated in favor of Protocol.  Internal API
@@ -30,6 +37,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
   
   - Java classes are closed and will raise ``TypeError`` if extended in Python.
 
+  - Handles Control-C gracefully.  Previous versions crash whenever
+    Java handles the Control-C signal as they would shutdown Java
+    during a call.  Now JPype will produce a ``InterruptedException``
+    when returning from Java.  Control-C will not break out of large
+    Java procedures as currently implemented as Java does not have
+    a specific provision for this.
 
 - **0.7.4 - 4-28-2020**
 

@@ -183,7 +183,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJavaConversionFault(self):
-        _jpype.fault("JPClass::getJavaConversion")
+        _jpype.fault("JPClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(jpype.java.lang.Class._canConvertToJava(None))
 

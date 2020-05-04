@@ -40,7 +40,7 @@ JPBoxedType::~JPBoxedType()
 
 JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPBoxedType::getJavaConversion");
+	JP_TRACE_IN("JPBoxedType::findJavaConversion");
 	JPClass::findJavaConversion(match);
 	if (match.type != JPMatch::_none)
 		return match.type;

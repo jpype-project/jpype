@@ -342,7 +342,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 
 JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPClass::getJavaConversion");
+	JP_TRACE_IN("JPClass::findJavaConversion");
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
 			|| proxyConversion->matches(this, match)

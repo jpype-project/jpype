@@ -38,6 +38,7 @@
 #include "jp_longtype.h"
 #include "jp_floattype.h"
 #include "jp_doubletype.h"
+#include "jp_functional.h"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
@@ -166,6 +167,9 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 		// Create a normal class
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
+
+	if (JPModifier::isFunctional(modifiers))
+		return (jlong) new JPFunctional(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	if (JPModifier::isBuffer(modifiers))
 		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	// Certain classes require special implementations
