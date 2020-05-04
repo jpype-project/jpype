@@ -242,7 +242,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	// Call the type init
-	int rc = PyType_Type.tp_init(self, args, kwargs);
+	int rc = PyType_Type.tp_init(self, args, NULL);
 	if (rc == -1)
 		return rc; // GCOVR_EXCL_LINE no clue how to trigger this one
 
