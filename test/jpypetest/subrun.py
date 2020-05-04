@@ -5,6 +5,7 @@ import sys
 import traceback
 import queue
 import unittest
+import common
 
 _modules = {}
 
@@ -108,6 +109,9 @@ def _prepare(orig, individual=False):
     filename = os.path.abspath(inspect.getfile(orig))
 
     class ProxyClass(orig):
+        def __init__(self, *args):
+            orig.__init__(self, *args)
+
         @classmethod
         def tearDownClass(cls):
             ProxyClass._client.execute(
@@ -120,6 +124,8 @@ def _prepare(orig, individual=False):
             ProxyClass._client.execute(_hook, filename, clsname, '_setUpClass')
 
         def setUp(self):
+            if common.fast:
+                raise unittest.SkipTest("fast")
             if individual:
                 ProxyClass._client.restart()
             ProxyClass._client.execute(_hook, filename, clsname, '_setUp')

@@ -24,6 +24,7 @@ import sys
 import unittest
 
 CLASSPATH = None
+fast = False
 
 
 def version(v):

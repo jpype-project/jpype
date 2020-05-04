@@ -20,7 +20,7 @@ from . import _jcustomizer
 __all__ = ['JString']
 
 
-class JString(_jpype._JObject):
+class JString(_jpype._JObject, internal=True):
     """ Base class for ``java.lang.String`` objects
 
     When called as a function, this class will produce a ``java.lang.String``
