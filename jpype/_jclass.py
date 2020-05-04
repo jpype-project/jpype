@@ -102,7 +102,7 @@ class _JClassProto(object):
         return _jclassDoc(self)
 
 
-class JInterface(_jpype._JObject):
+class JInterface(_jpype._JObject, internal=True):
     """A meta class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any Java class that is

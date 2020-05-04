@@ -16,7 +16,6 @@
 # *****************************************************************************
 import sys
 import atexit
-import typing
 import _jpype
 from . import types as _jtypes
 from . import _classpath
@@ -423,4 +422,3 @@ class _JRuntime(object):
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
 
-_jpype.typing = typing

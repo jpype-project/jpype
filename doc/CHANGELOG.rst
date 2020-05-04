@@ -39,6 +39,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
   - ``java.util.Collection`` completes the contract for ``collections.abc.Collection``.
   
+  - Java classes are closed and will raise ``TypeError`` if extended in Python.
+
   - Handles Control-C gracefully.  Previous versions crash whenever
     Java handles the Control-C signal as they would shutdown Java
     during a call.  Now JPype will produce a ``InterruptedException``

@@ -33,6 +33,8 @@ struct PyJPClass
 	JPClass* m_Class;
 } ;
 
+static PyObject* classMagic = PyDict_New();
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -49,7 +51,36 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	if (PyTuple_Size(args) != 3)
 		JP_RAISE(PyExc_TypeError, "Java class meta required 3 arguments");
 
+	JP_BLOCK("PyJPClass_new::verify")
+	{
+		// Watch for final classes
+		PyObject *bases = PyTuple_GetItem(args, 1);
+		Py_ssize_t len = PyTuple_Size(bases);
+		for (Py_ssize_t i = 0; i < len; ++i)
+		{
+			PyObject *item  = PyTuple_GetItem(bases, i);
+			JPClass *cls = PyJPClass_getJPClass(item);
+			if (cls != NULL && cls->isFinal())
+			{
+				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'", ((PyTypeObject*) item)->tp_name);
+			}
+		}
+	}
+
+	int magic = 0;
+	if (kwargs == classMagic || (kwargs != NULL && PyDict_GetItemString(kwargs, "internal") != 0))
+	{
+		magic = 1;
+		kwargs = NULL;
+	}
+	if (magic == 0)
+	{
+		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
+		return 0;
+	}
+
 	PyTypeObject *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
+
 	if (typenew == 0)
 		return NULL;
 	if (typenew->tp_finalize != NULL && typenew->tp_finalize != (destructor) PyJPValue_finalize)
@@ -211,7 +242,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	// Call the type init
-	int rc = PyType_Type.tp_init(self, args, kwargs);
+	int rc = PyType_Type.tp_init(self, args, NULL);
 	if (rc == -1)
 		return rc; // GCOVR_EXCL_LINE no clue how to trigger this one
 
@@ -864,7 +895,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	JPPyObject rc(JPPyRef::_call, PyObject_Call(_JClassPre, args.get(), NULL));
 
 	// Create the type using the meta class magic
-	JPPyObject vself(JPPyRef::_call, PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), NULL));
+	JPPyObject vself(JPPyRef::_call, PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), classMagic));
 	PyJPClass *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot

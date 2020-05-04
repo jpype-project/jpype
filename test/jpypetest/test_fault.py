@@ -87,10 +87,10 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPClass_init(self):
         _jpype.fault("PyJPClass_init")
         with self.assertRaises(SystemError):
-            _jpype._JClass("foo", (object,), {})
+            _jpype._JClass("foo", (_jpype._JObject,), {}, internal=True)
         with self.assertRaises(TypeError):
             _jpype._JClass("foo", (object,), {})
-        _jpype._JClass("foo", (_jpype._JObject,), {})
+        _jpype._JClass("foo", (_jpype._JObject,), {}, internal=True)
 
     @common.requireInstrumentation
     def testJPClass_getattro(self):
@@ -135,7 +135,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             js.class_
         with self.assertRaises(AttributeError):
-            _jpype._JClass("foo", (_jpype.JObject,), {}).class_
+            _jpype._JClass("foo", (_jpype.JObject,), {}, internal=True).class_
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             js.class_
