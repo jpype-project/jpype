@@ -325,8 +325,16 @@ public:
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
+		// GCOVR_EXCL_START
 		if (pyhints == NULL)
-			return match.type = JPMatch::_none;
+                {
+                        // Force creation of the class that will create the hints
+			PyJPClass_create(*match.frame, cls);
+		        pyhints = (PyJPClassHints*) cls->getHints();
+                        if (pyhints == NULL)
+                                return match.type = JPMatch::_none;
+                }
+		// GCOVR_EXCL_STOP
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
 		return match.type;
