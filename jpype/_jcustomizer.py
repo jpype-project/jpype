@@ -63,7 +63,7 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None, excludes=None)
     """
     hints = getClassHints(cls)
     if excludes is not None:
-        hints._excludeConversion(exclude)
+        hints._excludeConversion(excludes)
 
     def customizer(func=None):
         if exact is not None:
