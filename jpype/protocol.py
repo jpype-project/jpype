@@ -49,7 +49,7 @@ def _JFileConvert(jcls, obj):
 
 
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
-        exclude=str)
+        excludes=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
 
