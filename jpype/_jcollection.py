@@ -14,15 +14,10 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import datetime
-from collections.abc import Sequence
-from collections.abc import Mapping
-
-import sys
-import _jpype
 from . import _jclass
-from . import _jcustomizer
 from . import types as _jtypes
+from . import _jcustomizer
+from collections.abc import Mapping
 
 JOverride = _jclass.JOverride
 
@@ -209,48 +204,3 @@ class _JEnumeration(object):
         return self
 
     next = __next__
-
-
-# These methods need a home.
-@_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
-def _JInstantConversion(jcls, obj):
-    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
-    sec = int(utc)
-    nsec = int((utc-sec)*1e9)
-    return jcls.ofEpochSecond(sec, nsec)
-
-
-if sys.version_info < (3, 6):
-    import pathlib
-    @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
-    def _JPathConvert(jcls, obj):
-        Paths = _jpype.JClass("java.nio.file.Paths")
-        return Paths.get(str(obj))
-
-    @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
-    def _JFileConvert(jcls, obj):
-        return jcls(str(obj))
-
-
-@_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
-def _JPathConvert(jcls, obj):
-    Paths = _jpype.JClass("java.nio.file.Paths")
-    return Paths.get(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
-def _JFileConvert(jcls, obj):
-    return jcls(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
-def _JSequenceConvert(jcls, obj):
-    return _jclass.JClass('java.util.Arrays').asList(obj)
-
-
-@_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
-def _JMapConvert(jcls, obj):
-    hm = _jclass.JClass('java.util.HashMap')()
-    for p, v in obj.items():
-        hm[p] = v
-    return hm

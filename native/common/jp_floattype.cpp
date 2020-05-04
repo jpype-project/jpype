@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
-#include "pyjp.h"
 
 JPFloatType::JPFloatType()
 : JPPrimitiveType("float")
@@ -50,32 +50,28 @@ static JPConversionAsFloat<JPFloatType> asFloatConversion;
 static JPConversionLongAsFloat<JPFloatType> asFloatLongConversion;
 static JPConversionFloatWiden<JPFloatType> floatWidenConversion;
 
-JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
+class JPConversionAsJFloat : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPFloatType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPClass *cls = value->getClass();
-		if (cls == this)
-		{
-			match.conversion = javaValueConversion;
-			return match.type = JPMatch::_exact;
-		}
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -86,20 +82,51 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 					match.conversion = &floatWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		return JPMatch::_implicit; // stop search
 	}
 
-	if (asFloatLongConversion.matches(match, this)
-			|| asFloatConversion.matches(match, this))
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+} asJFloatConversion;
+
+JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPFloatType::getJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+	if (asJFloatConversion.matches(this, match)
+			|| asFloatLongConversion.matches(this, match)
+			|| asFloatConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPFloatType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asJFloatConversion.getInfo(this, info);
+	asFloatLongConversion.getInfo(this, info);
+	asFloatConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_float->getHost());
 }
 
 jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)
