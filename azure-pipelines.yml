@@ -39,7 +39,12 @@ jobs:
       versionSpec: '3.8'
   - task: JavaToolInstaller@0
     inputs:
-      versionSpec: '11'
+      versionSpec: "11"
+      jdkArchitectureOption: x64
+      jdkSourceOption: localDirectory
+      jdkFile: "/builds/openjdk-11.0.2_linux-x64_bin.tar.gz"
+      jdkDestinationDirectory: "/builds/binaries/externals"
+      cleanDestinationDirectory: true
   - script: mvn -q -f project/coverage package
   - script: |
       python setup.py test_java
@@ -116,12 +121,17 @@ jobs:
       python setup.py test_java
       pip install -r test-requirements.txt
     displayName: 'Install test'
-  - task: JavaToolInstaller@0
-    inputs:
-      versionSpec: '1.8'
   - script: |
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test JDK 8'
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: "11"
+      jdkArchitectureOption: x64
+      jdkSourceOption: localDirectory
+      jdkFile: "/builds/openjdk-11.0.2_linux-x64_bin.tar.gz"
+      jdkDestinationDirectory: "/builds/binaries/externals"
+      cleanDestinationDirectory: true
   - task: JavaToolInstaller@0
     inputs:
       versionSpec: '11'
