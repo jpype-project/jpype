@@ -45,8 +45,9 @@ jobs:
   - script: mvn -q -f project/coverage package
   - script: |
       echo "$PATH"
-      java -version
       javac -version
+      $JAVA_HOME_11_X64/bin/javac -version
+      which javac
       echo "$JAVA_HOME"
       echo "$JAVA_HOME_11_X64"
       echo "$JAVA_HOME_8_X64"
