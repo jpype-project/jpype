@@ -37,14 +37,10 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8'
-  - task: JavaToolInstaller@0
-    inputs:
-      versionSpec: "11"
-      jdkArchitectureOption: x64
-      jdkSourceOption: localDirectory
-      jdkFile: "/builds/openjdk-11.0.2_linux-x64_bin.tar.gz"
-      jdkDestinationDirectory: "/builds/binaries/externals"
-      cleanDestinationDirectory: true
+  - script: |
+       echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+       echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin;$(PATH)"
+    displayName: "Set Java Version 11"
   - script: mvn -q -f project/coverage package
   - script: |
       python setup.py test_java
@@ -124,14 +120,16 @@ jobs:
   - script: |
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test JDK 8'
-  - task: JavaToolInstaller@0
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
     inputs:
-      versionSpec: "11"
-      jdkArchitectureOption: x64
-      jdkSourceOption: localDirectory
-      jdkFile: "/builds/openjdk-11.0.2_linux-x64_bin.tar.gz"
-      jdkDestinationDirectory: "/builds/binaries/externals"
-      cleanDestinationDirectory: true
+       testResultsFiles: 'build/test/test.xml'
+       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 8'
+
+  - script: |
+       echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+       echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin;$(PATH)"
+    displayName: "Set Java Version 11"
   - task: JavaToolInstaller@0
     inputs:
       versionSpec: '11'
@@ -142,7 +140,7 @@ jobs:
     condition: succeededOrFailed()
     inputs:
        testResultsFiles: 'build/test/test.xml'
-       testRunTitle: 'Publish linux test results for Python $(python.version)'
+       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 11'
 
 - job: Test_OSX
   strategy:
