@@ -130,9 +130,6 @@ jobs:
        echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
        echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin;$(PATH)"
     displayName: "Set Java Version 11"
-  - task: JavaToolInstaller@0
-    inputs:
-      versionSpec: '11'
   - script: |
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test JDK 11'
