@@ -134,6 +134,26 @@ class _JList(object):
         except TypeError:
             return 0
 
+    def insert(self, idx, obj):
+        return self.add(idx, obj)
+
+    def append(self, obj):
+        return self.add(obj)
+
+    def reverse(self):
+        _jpype.JClass("java.util.Collections").reverse(self)
+
+    def extend(self, lst):
+        self.addAll(lst)
+
+    def pop(self, idx=None):
+        if idx is None:
+            idx = len(self)-1
+        return self.remove(_jtypes.JInt(idx))
+
+    def __iadd__(self, obj):
+        self.add(self, obj)
+
 
 def isPythonMapping(v):
     if isinstance(v, Mapping):

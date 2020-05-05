@@ -166,3 +166,57 @@ class JListTestCase(common.JPypeTestCase):
         cls = jpype.JClass('java.util.ArrayList')
         obj = cls(self.Arrays.asList(['a', 'b', 'c']))
         self.assertEqual(tuple(i for i in obj), ('a', 'b', 'c'))
+
+    def testInsert(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        obj.insert(0,'1')
+        obj.insert(3,'2')
+        lst.insert(0,'1')
+        lst.insert(3,'2')
+        self.assertElementsEqual(obj, lst)
+
+    def testAppend(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        obj.append('2')
+        lst.append('2')
+        lst[len(lst):] = ['3']
+        obj[len(obj):] = ['3']
+        self.assertElementsEqual(obj, lst)
+
+    def testReverse(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        obj.reverse()
+        lst.reverse()
+        self.assertElementsEqual(obj, lst)
+
+    def testExtend(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        obj.extend(range(0,3))
+        lst.extend(range(0,3))
+        self.assertElementsEqual(obj, lst)
+
+    def testPop(self):
+        lst = ['A', 'B', 'C', 'D', 'E']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        self.assertEqual(obj.pop(), lst.pop())
+        self.assertEqual(obj.pop(0), lst.pop(0))
+        self.assertEqual(obj.pop(2), lst.pop(2))
+        self.assertElementsEqual(obj, lst)
+
+    def testIAdd(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        obj += 'D'
+        lst += 'D'
+        self.assertElementsEqual(obj, lst)
+
