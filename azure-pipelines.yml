@@ -44,12 +44,13 @@ jobs:
     displayName: "Set JDK 11"
   - script: mvn -q -f project/coverage package
   - script: |
+      echo "$PATH"
       java -version
       javac -version
       echo "$JAVA_HOME"
       echo "$JAVA_HOME_11_X64"
       echo "$JAVA_HOME_8_X64"
-      PATH="$(JAVA_HOME_11_X64)/bin;$(PATH)" python setup.py test_java
+      python setup.py test_java
       pip install gcovr pytest-cov jedi
       pip install -r test-requirements.txt
       pip install numpy typing_extensions
@@ -58,7 +59,7 @@ jobs:
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
     displayName: 'Build'
   - script: |
-      JAVA_HOME="$JAVA_HOME_11_X64" python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath="build/classes" --jacoco --checkjni
+      python -m pytest -v test/jpypetest --cov=jpype --cov-report=xml:coverage_py.xml --classpath="build/classes" --jacoco --checkjni
     displayName: 'Test'
   - script: |
       gcovr -r . --xml -o coverage.xml --exclude-unreachable-branches --exclude-throw-branches
