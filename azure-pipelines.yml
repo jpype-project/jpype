@@ -37,6 +37,9 @@ jobs:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.8'
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '11'
   - script: mvn -q -f project/coverage package
   - script: |
       python setup.py test_java
@@ -85,19 +88,15 @@ jobs:
     matrix:
       linux-3.5:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.5'
       linux-3.6:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.6'
       linux-3.7:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.7'
       linux-3.8:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.8'
   pool:
     vmImage: $(imageName)
@@ -116,8 +115,19 @@ jobs:
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
+    displayName: 'Install test'
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '1.8'
+  - script: |
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
-    displayName: 'Test module'
+    displayName: 'Test JDK 8'
+  - task: JavaToolInstaller@0
+    inputs:
+      versionSpec: '11'
+  - script: |
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
+    displayName: 'Test JDK 11'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
