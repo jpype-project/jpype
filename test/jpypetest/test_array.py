@@ -176,7 +176,7 @@ class ArrayTestCase(common.JPypeTestCase):
     @common.requireInstrumentation
     def testJArrayGetJavaConversion(self):
         ja = JArray(JInt)
-        _jpype.fault("JPArrayClass::getJavaConversion")
+        _jpype.fault("JPArrayClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja._canConvertToJava(object())
 

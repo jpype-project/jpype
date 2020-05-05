@@ -37,17 +37,27 @@ JPArrayClass::~JPArrayClass()
 
 JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPArrayClass::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| charArrayConversion->matches(match, this)
-			|| byteArrayConversion->matches(match, this)
-			|| sequenceConversion->matches(match, this)
+	JP_TRACE_IN("JPArrayClass::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| charArrayConversion->matches(this, match)
+			|| byteArrayConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
 			)
 		return match.type;
 	JP_TRACE("None");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPArrayClass::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	objectConversion->getInfo(this, info);
+	charArrayConversion->getInfo(this, info);
+	byteArrayConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
 JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)

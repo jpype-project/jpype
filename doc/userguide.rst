@@ -1906,19 +1906,22 @@ Type Conversion Customizers
 One can add a custom converter method which is called whenever a specified
 Python type is passed to a particular Java type.  To specify a conversion
 method add ``@JConversion`` to an ordinary Python function with the name of
-Java class to be converted to and one keyword of ``exact``, ``instanceof`` or
-``attribute`` specified.  The keyword control how strictly the conversion will
-be applied.  ``exact`` is restricted to Python objects whose type exactly
-matched the specified type.  ``instanceof`` accepts anything that matches
-isinstance to the specified type.  ``attribute`` checks for a particular
-attribute being on the supplied type and thus allows a duck typing conversion.
+Java class to be converted to and one keyword of ``exact`` or ``instanceof``.
+The keyword controls how strictly the conversion will be applied.  ``exact`` is
+restricted to Python objects whose type exactly matches the specified type.
+``instanceof`` accepts anything that matches isinstance to the specified type
+or protocol.  In some cases, the existing protocol definition will be overly
+broad.  Adding the keyword argument ``excludes`` with a type or tuple of types
+can be used to prevent the conversion from being applied.  Exclusions always
+apply first.
 
 User supplied conversions are tested after all internal conversions have been
 exhausted and are always considered to be an implicit conversion.
 
 .. code-block:: python
 
-        @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
+        @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
+          excludes=str)
         def _JSequenceConvert(jcls, obj):
             return _jclass.JClass('java.util.Arrays').asList(obj)
 

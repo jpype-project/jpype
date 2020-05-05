@@ -88,13 +88,13 @@ class JLongTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPLongType::getJavaConversion")
+        _jpype.fault("JPLongType::findJavaConversion")
         with self.assertRaises(SystemError):
             JLong(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPLongType::getJavaConversion")
+        _jpype.fault("JPLongType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JLong._canConvertToJava(object())
 

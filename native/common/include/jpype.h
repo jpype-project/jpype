@@ -99,8 +99,10 @@ extern void PyJPModuleFault_throw(uint32_t code);
 extern int PyJPModuleFault_check(uint32_t code);
 #define JP_TRACE_IN(X, ...) try { PyJPModuleFault_throw(compile_hash(X));
 #define JP_FAULT_RETURN(X, Y)  if (PyJPModuleFault_check(compile_hash(X))) return Y
+#define JP_BLOCK(X)  if (PyJPModuleFault_check(compile_hash(X))==0)
 #else
 #define JP_FAULT_RETURN(X, Y)  if (false)
+#define JP_BLOCK(X)  if (true)
 #endif
 
 /** Definition of commonly used template types */
@@ -156,6 +158,8 @@ class JPClassLoader;
 class JPReferenceQueue;
 class JPProxyFactory;
 class JPContext;
+
+extern "C" struct JPConversionInfo;
 
 typedef vector<JPClass*> JPClassList;
 typedef vector<JPField*> JPFieldList;

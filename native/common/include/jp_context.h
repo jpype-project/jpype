@@ -149,11 +149,6 @@ public:
 
 	// JPype services
 
-	JPProxyFactory* getProxyFactory()
-	{
-		return m_ProxyFactory;
-	}
-
 	JPTypeManager* getTypeManager()
 	{
 		return m_TypeManager;
@@ -233,7 +228,6 @@ private:
 	JPTypeManager *m_TypeManager;
 	JPClassLoader *m_ClassLoader;
 	JPReferenceQueue *m_ReferenceQueue;
-	JPProxyFactory *m_ProxyFactory;
 
 public:
 	JPClassRef m_RuntimeException;
@@ -259,6 +253,11 @@ private:
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
 	jmethodID m_Array_NewInstanceID;
+	jmethodID m_Context_GetFunctionalID;
+	friend class JPProxy;
+	JPClassRef m_ProxyClass;
+	jmethodID m_Proxy_NewID;
+	jmethodID m_Proxy_NewInstanceID;
 	jmethodID m_Context_IsPackageID;
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;

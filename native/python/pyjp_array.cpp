@@ -65,6 +65,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	if (arrayClass == NULL)
 		JP_RAISE(PyExc_TypeError, "Class must be array type");
 
+
 	JPValue *value = PyJPValue_getJavaSlot(v);
 	if (value != NULL)
 	{

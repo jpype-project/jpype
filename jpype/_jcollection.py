@@ -14,15 +14,11 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import datetime
-from collections.abc import Sequence
-from collections.abc import Mapping
-
-import sys
 import _jpype
 from . import _jclass
-from . import _jcustomizer
 from . import types as _jtypes
+from . import _jcustomizer
+from collections.abc import Mapping, Sequence
 
 JOverride = _jclass.JOverride
 
@@ -54,6 +50,12 @@ class _JCollection(object):
         raise TypeError(
             "'%s' does not support item deletion, use remove() method" % type(self).__name__)
 
+    def __contains__(self, i):
+        try:
+            return self.contains(i)
+        except TypeError:
+            return False
+
 
 def _sliceAdjust(slc, size):
     start = slc.start
@@ -78,6 +80,9 @@ class _JList(object):
     This customizer adds the Python list operator to function on classes
     that implement the Java List interface.
     """
+
+    def __jclass_init__(self):
+        Sequence.register(self)
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
@@ -106,6 +111,28 @@ class _JList(object):
             return self.remove(_jtypes.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
+
+    def __reversed__(self):
+        iterator = self.listIterator(len(self))
+        while iterator.hasPrevious():
+            yield iterator.previous()
+
+    def index(self, obj):
+        try:
+            return self.indexOf(obj)
+        except TypeError:
+            raise ValueError("%s is not in list" % repr(obj))
+
+    def count(self, obj):
+        try:
+            jo = _jpype.JObject(obj)
+            c = 0
+            for i in self:
+                if i.equals(jo):
+                    c += 1
+            return c
+        except TypeError:
+            return 0
 
 
 def isPythonMapping(v):
@@ -209,48 +236,3 @@ class _JEnumeration(object):
         return self
 
     next = __next__
-
-
-# These methods need a home.
-@_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
-def _JInstantConversion(jcls, obj):
-    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
-    sec = int(utc)
-    nsec = int((utc-sec)*1e9)
-    return jcls.ofEpochSecond(sec, nsec)
-
-
-if sys.version_info < (3, 6):
-    import pathlib
-    @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
-    def _JPathConvert(jcls, obj):
-        Paths = _jpype.JClass("java.nio.file.Paths")
-        return Paths.get(str(obj))
-
-    @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
-    def _JFileConvert(jcls, obj):
-        return jcls(str(obj))
-
-
-@_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
-def _JPathConvert(jcls, obj):
-    Paths = _jpype.JClass("java.nio.file.Paths")
-    return Paths.get(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
-def _JFileConvert(jcls, obj):
-    return jcls(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
-def _JSequenceConvert(jcls, obj):
-    return _jclass.JClass('java.util.Arrays').asList(obj)
-
-
-@_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
-def _JMapConvert(jcls, obj):
-    hm = _jclass.JClass('java.util.HashMap')()
-    for p, v in obj.items():
-        hm[p] = v
-    return hm
