@@ -15,7 +15,7 @@ except ImportError:
 class JDoubleTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.value = 1.0+1.0/65536
+        self.value = 1.0 + 1.0 / 65536
         self.cls = JClass("jpype.common.Fixture")
         self.fixture = self.cls()
 
@@ -26,11 +26,11 @@ class JDoubleTestCase(common.JPypeTestCase):
             x = -x
         if y < 0:
             y = -y
-        a = (x+y)/2
-        b = (x-y)
+        a = (x + y) / 2
+        b = (x - y)
         if b < 0:
             b = -b
-        if b < a*1e-14:
+        if b < a * 1e-14:
             return
         msg = self._formatMessage(msg, '%s == %s' % (safe_repr(first),
                                                      safe_repr(second)))
@@ -268,16 +268,16 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     def testCheckJShort(self):
         self.checkType(JShort(-2**15))
-        self.checkType(JShort(2**15-1))
+        self.checkType(JShort(2**15 - 1))
 
     def testCheckJInt(self):
-        self.checkType(JInt(-2**31+1))
-        self.checkType(JInt(2**31-1))
+        self.checkType(JInt(-2**31 + 1))
+        self.checkType(JInt(2**31 - 1))
 
     def testCheckJLong(self):
         with self.useEqualityFunc(self.compareDoubleEqual):
-            self.checkType(JLong(-2**63+1))
-            self.checkType(JLong(2**63-1))
+            self.checkType(JLong(-2**63 + 1))
+            self.checkType(JLong(2**63 - 1))
 
     def testCheckJFloat(self):
         self.checkType(JFloat(1.515313))
@@ -296,31 +296,31 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyInt16(self):
-        self.checkType(np.random.randint(-2**15, 2**15-1, dtype=np.int16))
-        self.checkType(np.random.randint(0, 2**16-1, dtype=np.uint16))
+        self.checkType(np.random.randint(-2**15, 2**15 - 1, dtype=np.int16))
+        self.checkType(np.random.randint(0, 2**16 - 1, dtype=np.uint16))
         self.checkType(np.uint16(0))
-        self.checkType(np.uint16(2**16-1))
+        self.checkType(np.uint16(2**16 - 1))
         self.checkType(np.int16(-2**15))
-        self.checkType(np.int16(2**15-1))
+        self.checkType(np.int16(2**15 - 1))
 
     @common.requireNumpy
     def testCheckNumpyInt32(self):
-        self.checkType(np.random.randint(-2**31, 2**31-1, dtype=np.int32))
-        self.checkType(np.random.randint(0, 2**32-1, dtype=np.uint32))
+        self.checkType(np.random.randint(-2**31, 2**31 - 1, dtype=np.int32))
+        self.checkType(np.random.randint(0, 2**32 - 1, dtype=np.uint32))
         self.checkType(np.uint32(0))
-        self.checkType(np.uint32(2**32-1))
+        self.checkType(np.uint32(2**32 - 1))
         self.checkType(np.int32(-2**31))
-        self.checkType(np.int32(2**31-1))
+        self.checkType(np.int32(2**31 - 1))
 
     @common.requireNumpy
     def testCheckNumpyInt64(self):
-        self.checkType(np.random.randint(-2**63, 2**63-1, dtype=np.int64))
+        self.checkType(np.random.randint(-2**63, 2**63 - 1, dtype=np.int64))
         self.checkType(
-            np.uint64(np.random.randint(0, 2**64-1, dtype=np.uint64)))
+            np.uint64(np.random.randint(0, 2**64 - 1, dtype=np.uint64)))
         self.checkType(np.uint64(0))
-        self.checkType(np.uint64(2**64-1))
+        self.checkType(np.uint64(2**64 - 1))
         self.checkType(np.int64(-2**63))
-        self.checkType(np.int64(2**63-1))
+        self.checkType(np.int64(2**63 - 1))
 
     @common.requireNumpy
     def testCheckNumpyFloat32(self):

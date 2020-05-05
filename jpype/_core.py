@@ -102,7 +102,7 @@ def _handleClassPath(clsList):
             raise TypeError("Classpath elements must be strings")
         if s.endswith('*'):
             import glob
-            out.extend(glob.glob(s+'.jar'))
+            out.extend(glob.glob(s + '.jar'))
         else:
             out.append(s)
     return _classpath._SEP.join(out)
@@ -212,7 +212,7 @@ def startJVM(*args, **kwargs):
             import re
             match = re.search("([0-9]+)\.[0-9]+", source)
             if match:
-                version = int(match.group(1))-44
+                version = int(match.group(1)) - 44
                 raise RuntimeError("%s is older than required Java version %d" % (
                     jvmpath, version)) from ex
         raise

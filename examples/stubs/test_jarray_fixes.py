@@ -20,6 +20,7 @@ ITERATIONS = 10
 #   - sets a cap to allow memory leak detection.
 MAX_JVM_HEAP_SIZE_BYTES = 128647168
 
+
 def setup_module(module):
     #   Module-level setup.
     if not jpype.isJVMStarted():
@@ -28,6 +29,7 @@ def setup_module(module):
         ]
         jpype.startJVM(jpype.getDefaultJVMPath(), *jvm_args)
     module.JavaDoubleArray = jpype.JArray(jpype.JDouble, 1)
+
 
 def test_memory_leak_fix():
     """
@@ -48,16 +50,19 @@ def test_memory_leak_fix():
         py_list2 = j_array1[:]
         assert py_list1 == py_list2
 
+
 def test_jarray_basic_slicing_fix():
     jl1 = JavaDoubleArray([1., 2., 3.])
     assert list(jl1) == [1., 2., 3.]
     assert list(jl1[0:-1]) == [1., 2.]
     assert list(jl1[0:1]) == [1.]
 
+
 def test_jarray_slice_copy_fix():
     jl1 = JavaDoubleArray([1., 2., 3.])
     pl1 = jl1[:]
     assert list(jl1) == pl1
+
 
 def test_jarray_slice_assignment_fix():
     jl2 = JavaDoubleArray([1., 2., 3.])

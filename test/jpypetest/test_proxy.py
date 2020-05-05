@@ -486,7 +486,7 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertEqual(js.get(), 561)
 
     def testFunctionalLambda(self):
-        js = JObject(lambda x: 2*x, "java.util.function.DoubleUnaryOperator")
+        js = JObject(lambda x: 2 * x, "java.util.function.DoubleUnaryOperator")
         self.assertEqual(js.applyAsDouble(1), 2.0)
 
 

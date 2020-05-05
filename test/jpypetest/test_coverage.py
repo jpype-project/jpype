@@ -103,9 +103,9 @@ class CoverageCase(common.JPypeTestCase):
 
     def testJStringAppend(self):
         js = jpype.JString("foo")
-        self.assertEqual(js+"bar", "foobar")
+        self.assertEqual(js + "bar", "foobar")
         if not self._convertStrings:
-            self.assertIsInstance(js+"bar", jpype.java.lang.String)
+            self.assertIsInstance(js + "bar", jpype.java.lang.String)
 
     def testJStringNE(self):
         js = jpype.JString("foo")

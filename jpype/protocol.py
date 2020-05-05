@@ -68,7 +68,7 @@ def _JMapConvert(jcls, obj):
 def _JInstantConversion(jcls, obj):
     utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
     sec = int(utc)
-    nsec = int((utc-sec)*1e9)
+    nsec = int((utc - sec) * 1e9)
     return jcls.ofEpochSecond(sec, nsec)
 
 

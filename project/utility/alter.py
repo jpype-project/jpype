@@ -17,31 +17,30 @@ target = JarOutputStream(FileOutputStream(File("build/lib/org.jpype2.jar")), man
 
 
 while 1:
-    entry=jar.getNextEntry()
+    entry = jar.getNextEntry()
     if not entry:
         break
     out = []
     l3 = 512
     while 1:
-        bt=jpype.JArray(jpype.JByte)(l3)
+        bt = jpype.JArray(jpype.JByte)(l3)
         l = jar.read(bt, 0, l3)
-        if l==-1:
+        if l == -1:
             break
-        out.append((l,bt))
+        out.append((l, bt))
 
     if out:
         out[0][1][7] = 57
 
         crc = CRC32()
         for v in out:
-            crc.update(v[1],0,v[0])
+            crc.update(v[1], 0, v[0])
 
         entry.setCrc(crc.getValue())
         entry.setCompressedSize(-1)
 
     target.putNextEntry(entry)
     for v in out:
-        target.write(v[1],0,v[0])
+        target.write(v[1], 0, v[0])
     target.closeEntry()
 target.close()
-

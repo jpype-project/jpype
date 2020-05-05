@@ -109,7 +109,7 @@ class _JList(object):
             ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
         elif hasattr(ndx, '__index__'):
-            if ndx<0:
+            if ndx < 0:
                 ndx += self.size()
             return self.remove_(_jtypes.JInt(ndx))
         else:
@@ -138,7 +138,7 @@ class _JList(object):
             return 0
 
     def insert(self, idx, obj):
-        if idx<0:
+        if idx < 0:
             idx += self.size()
         return self.add(idx, obj)
 
@@ -152,7 +152,7 @@ class _JList(object):
         self.addAll(lst)
 
     def pop(self, idx=-1):
-        if idx<0:
+        if idx < 0:
             idx += self.size()
         return self.remove_(_jtypes.JInt(idx))
 
@@ -174,7 +174,6 @@ class _JList(object):
         except TypeError:
             pass
         raise ValueError("item not in list")
-
 
 
 def isPythonMapping(v):

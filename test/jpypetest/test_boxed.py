@@ -49,8 +49,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.TestBoxed.callShort(c1),
                          self.TestBoxed.callShort(d2))
         # Verify ops
-        self.assertEqual(d1+2, d1+2)
-        self.assertEqual(d1*2, d1*2)
+        self.assertEqual(d1 + 2, d1 + 2)
+        self.assertEqual(d1 * 2, d1 * 2)
 
     def testInteger(self):
         c1 = 12345
@@ -65,8 +65,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.TestBoxed.callInteger(c1),
                          self.TestBoxed.callInteger(d2))
         # Verify ops
-        self.assertEqual(d1+2, d1+2)
-        self.assertEqual(d1*2, d1*2)
+        self.assertEqual(d1 + 2, d1 + 2)
+        self.assertEqual(d1 * 2, d1 * 2)
 
     def testLong(self):
         c1 = 12345
@@ -81,8 +81,8 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.TestBoxed.callLong(c1),
                          self.TestBoxed.callLong(d2))
         # Verify ops
-        self.assertEqual(d1+2, d1+2)
-        self.assertEqual(d1*2, d1*2)
+        self.assertEqual(d1 + 2, d1 + 2)
+        self.assertEqual(d1 * 2, d1 * 2)
 
     def testDoubleFromFloat(self):
         java.lang.Double(1.0)
@@ -104,7 +104,7 @@ class BoxedTestCase(common.JPypeTestCase):
         java.lang.Double(java.lang.Float(1))
 
     def testFloat(self):
-        c1 = 123124/256.0
+        c1 = 123124 / 256.0
         # Check passed from and passed to
         d1 = self.TestBoxed.newFloat(c1)
         d2 = java.lang.Float(c1)
@@ -116,13 +116,13 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.TestBoxed.callFloat(c1),
                          self.TestBoxed.callFloat(d2))
         # Verify ops
-        self.assertEqual(d1+2, d1+2)
-        self.assertEqual(d1*2, d1*2)
-        self.assertTrue(d2 < c1+1)
-        self.assertTrue(d2 > c1-1)
+        self.assertEqual(d1 + 2, d1 + 2)
+        self.assertEqual(d1 * 2, d1 * 2)
+        self.assertTrue(d2 < c1 + 1)
+        self.assertTrue(d2 > c1 - 1)
 
     def testDouble(self):
-        c1 = 123124/256.0
+        c1 = 123124 / 256.0
         # Check passed from and passed to
         d1 = self.TestBoxed.newDouble(c1)
         d2 = java.lang.Double(c1)
@@ -134,10 +134,10 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertEqual(self.TestBoxed.callDouble(c1),
                          self.TestBoxed.callDouble(d2))
         # Verify ops
-        self.assertEqual(d1+2, d1+2)
-        self.assertEqual(d1*2, d1*2)
-        self.assertTrue(d2 < c1+1)
-        self.assertTrue(d2 > c1-1)
+        self.assertEqual(d1 + 2, d1 + 2)
+        self.assertEqual(d1 * 2, d1 * 2)
+        self.assertTrue(d2 < c1 + 1)
+        self.assertTrue(d2 > c1 - 1)
 
     def testShortResolve(self):
         self.assertEqual(self.TestBoxed.whichShort(1), 1)
@@ -234,15 +234,15 @@ class BoxedTestCase(common.JPypeTestCase):
 
     def compareTest(self, u, v):
         self.assertEqual(u, v)
-        self.assertNotEqual(u, v-1)
-        self.assertTrue(u > v-1)
-        self.assertFalse(u > v+1)
+        self.assertNotEqual(u, v - 1)
+        self.assertTrue(u > v - 1)
+        self.assertFalse(u > v + 1)
         self.assertTrue(u >= v)
         self.assertTrue(u <= v)
         self.assertFalse(u < v)
         self.assertFalse(u > v)
-        self.assertTrue(u < v+1)
-        self.assertTrue(u > v-1)
+        self.assertTrue(u < v + 1)
+        self.assertTrue(u > v - 1)
 
     def testByteBoxOps(self):
         u = JObject(81, JByte)

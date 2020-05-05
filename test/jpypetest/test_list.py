@@ -250,7 +250,6 @@ class JListTestCase(common.JPypeTestCase):
         with self.assertRaises(ValueError):
             obj.remove(object())
         self.assertElementsEqual(obj, lst)
-        
 
     def testProtocol(self):
         from collections.abc import Sequence, MutableSequence
