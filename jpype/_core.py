@@ -217,7 +217,6 @@ def startJVM(*args, **kwargs):
                     jvmpath, version)) from ex
         raise
 
-
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
     _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")
@@ -292,7 +291,9 @@ def startJVM(*args, **kwargs):
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
 
-    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(list(_pykeywords._KEYWORDS))
+    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
+        list(_pykeywords._KEYWORDS))
+
 
 def attachToJVM(jvm):
     _jpype.attach(jvm)
@@ -421,4 +422,3 @@ class _JRuntime(object):
 
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
-

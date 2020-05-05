@@ -34,8 +34,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.implicit)
         self.assertTrue(proto._JClass in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testNumber(self):
         cls = JClass('java.lang.Number')
@@ -45,8 +45,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto._JNumberFloat in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testString(self):
         cls = JClass('java.lang.String')
@@ -54,8 +54,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(str in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testClass(self):
         cls = JClass('java.lang.Class')
@@ -63,8 +63,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto._JClass in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testCollection(self):
         cls = JClass('java.util.Collection')
@@ -72,7 +72,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testList(self):
@@ -80,9 +80,9 @@ class HintsTestCase(common.JPypeTestCase):
         hints = cls._hints
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
-        self.assertTrue(len(hints.implicit)==0)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.implicit) == 0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJBoolean(self):
         cls = JBoolean
@@ -93,7 +93,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JClass("java.lang.Boolean") in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJChar(self):
         cls = JChar
@@ -102,8 +102,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.exact)
         self.assertTrue(JClass("java.lang.Character") in hints.implicit)
         self.assertTrue(str in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJShort(self):
         cls = JShort
@@ -115,7 +115,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JClass("java.lang.Short") in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJInt(self):
         cls = JInt
@@ -128,7 +128,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JClass('java.lang.Integer') in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJLong(self):
         cls = JLong
@@ -142,7 +142,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JClass('java.lang.Long') in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJFloat(self):
         cls = JFloat
@@ -158,8 +158,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(int in hints.implicit)
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testJDouble(self):
         cls = JDouble
@@ -176,8 +176,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto.SupportsIndex in hints.implicit)
         self.assertTrue(proto.SupportsFloat in hints.implicit)
         self.assertTrue(int in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedByte(self):
         cls = JClass('java.lang.Byte')
@@ -188,7 +188,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto.SupportsFloat in hints.explicit)
         self.assertTrue(JClass('java.lang.Byte') in hints.explicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedBoolean(self):
         cls = JClass('java.lang.Boolean')
@@ -200,7 +200,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto.SupportsIndex in hints.explicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
         self.assertTrue(JClass('java.lang.Boolean') in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedCharacter(self):
         cls = JClass('java.lang.Character')
@@ -210,7 +210,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JChar in hints.implicit)
         self.assertTrue(JClass('java.lang.Character') in hints.explicit)
         self.assertTrue(str in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedShort(self):
         cls = JClass('java.lang.Short')
@@ -223,7 +223,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JChar in hints.explicit)
         self.assertTrue(JClass('java.lang.Short') in hints.explicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedInteger(self):
         cls = JClass('java.lang.Integer')
@@ -237,7 +237,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JShort in hints.explicit)
         self.assertTrue(JClass('java.lang.Integer') in hints.explicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedLong(self):
         cls = JClass('java.lang.Long')
@@ -252,7 +252,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(JInt in hints.explicit)
         self.assertTrue(JClass('java.lang.Long') in hints.explicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedFloat(self):
         cls = JClass('java.lang.Float')
@@ -269,7 +269,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(int in hints.explicit)
         self.assertTrue(proto.SupportsIndex in hints.explicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testBoxedDouble(self):
         cls = JClass('java.lang.Double')
@@ -287,7 +287,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(proto.SupportsIndex in hints.explicit)
         self.assertTrue(proto.SupportsFloat in hints.explicit)
         self.assertTrue(int in hints.explicit)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testObjectArray(self):
         cls = JClass('java.lang.Object[]')
@@ -295,7 +295,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testBooleanArray(self):
@@ -304,7 +304,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testCharArray(self):
@@ -314,8 +314,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.exact)
         self.assertTrue(str in hints.implicit)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testShortArray(self):
         cls = JClass('short[]')
@@ -323,7 +323,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testIntArray(self):
@@ -332,7 +332,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testLongArray(self):
@@ -341,7 +341,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testFloatArray(self):
@@ -350,7 +350,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testDoubleArray(self):
@@ -359,7 +359,7 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.Sequence in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
+        self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(str in hints.none)
 
     def testPath(self):
@@ -368,8 +368,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.SupportsPath in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testFile(self):
         cls = JClass('java.io.File')
@@ -377,8 +377,8 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(proto.SupportsPath in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
 
     def testInstant(self):
         import datetime
@@ -387,6 +387,5 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(datetime.datetime in hints.implicit)
-        self.assertTrue(len(hints.explicit)==0)
-        self.assertTrue(len(hints.none)==0)
-
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)

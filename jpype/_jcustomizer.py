@@ -16,6 +16,9 @@ import _jpype
 
 __all__ = ['JImplementationFor', 'JConversion']
 
+# Member types that are copied from the prototype
+_jcopymembers = (str, property, staticmethod, classmethod)
+
 
 def JConversion(cls, exact=None, instanceof=None, attribute=None, excludes=None):
     """ Decorator to define a method as a converted a Java type.
@@ -121,10 +124,11 @@ def _applyStickyMethods(cls, sticky):
     for method in sticky:
         attr = getattr(method, '__joverride__')
         rename = attr.get('rename', None)
+        name = method.__name__
         if rename:
-            type.__setattr__(
-                cls, rename, type.__getattribute__(cls, method.__name__))
-        type.__setattr__(cls, method.__name__, method)
+            orig = type.__getattribute__(cls, name)
+            type.__setattr__(cls, rename, orig)
+        type.__setattr__(cls, name, method)
 
 
 def _applyCustomizerImpl(members, proto, sticky, setter):
@@ -139,20 +143,17 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
 
     """
     for p, v in proto.__dict__.items():
-        if callable(v) or isinstance(v, (str, property, staticmethod, classmethod)):
-            rename = "_"+p
-
+        if callable(v) or isinstance(v, _jcopymembers):
             # Apply JOverride annotation
             attr = getattr(v, '__joverride__', None)
             if attr is not None:
                 if attr.get('sticky', False):
                     sticky.append(v)
-                rename = attr.get('rename', rename)
-
-            # Apply rename
-            if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
-                setter(rename, members[p])
-
+                    continue
+                # Apply rename
+                rename = attr.get('rename', "_"+p)
+                if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
+                    setter(rename, members[p])
             setter(p, v)
 
 
@@ -174,22 +175,21 @@ def _applyCustomizerPost(cls, proto):
     _applyCustomizerImpl(cls.__dict__, proto, sticky,
                          lambda p, v: type.__setattr__(cls, p, v))
 
-    # Apply a customizer to all derived classes
-    if '__jclass_init__' in proto.__dict__:
-        method = proto.__dict__['__jclass_init__']
-        _applyAll(cls, method)
-
     # Merge sticky into existing __jclass_init__
     if len(sticky) > 0:
         method = proto.__dict__.get('__jclass_init__', None)
-
         def init(cls):
             if method:
                 method(cls)
             _applyStickyMethods(cls, sticky)
         type.__setattr__(cls, '__jclass_init__', init)
-        _applyAll(cls, init)
 
+    # Apply a customizer to all derived classes
+    if '__jclass_init__' in proto.__dict__:
+        method = proto.__dict__['__jclass_init__']
+        _applyAll(cls, method)
+
+ 
 
 class JClassHints(_jpype._JClassHints):
     """ ClassHints holds class customizers and conversions.
@@ -240,7 +240,10 @@ class JClassHints(_jpype._JClassHints):
                                  lambda p, v: members.__setitem__(p, v))
 
         if len(sticky) > 0:
+            method = members.get('__jclass_init__', None)
             def init(cls):
+                if method is not None:
+                   method(cls) 
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 

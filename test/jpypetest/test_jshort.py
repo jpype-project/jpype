@@ -376,7 +376,6 @@ class JShortTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
 
-
     def testArrayConversionFail(self):
         jarr = JArray(JShort)(VALUES)
         with self.assertRaises(TypeError):

@@ -13,11 +13,13 @@ class ConversionTestCase(common.JPypeTestCase):
 
     def testList(self):
         cls = JClass('jpype.collection.CollectionTest')
-        self.assertIsInstance(cls.testList([1,2,3]), JClass('java.util.List'))
+        self.assertIsInstance(cls.testList(
+            [1, 2, 3]), JClass('java.util.List'))
 
     def testMap(self):
         cls = JClass('jpype.collection.CollectionTest')
-        self.assertIsInstance(cls.testMap({'a':1, 'b':2}), JClass('java.util.Map'))
+        self.assertIsInstance(cls.testMap(
+            {'a': 1, 'b': 2}), JClass('java.util.Map'))
 
     def testCanConvertExact(self):
         self.assertEqual(self.jc1._canConvertToJava("a"), "exact")

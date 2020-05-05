@@ -252,7 +252,7 @@ class FaultTestCase(common.JPypeTestCase):
 
         def f():
             pass
-        #with self.assertRaises(TypeError):
+        # with self.assertRaises(TypeError):
         #    _jpype._JClassHints()._addTypeConversion(None, f, 1)
         with self.assertRaises(TypeError):
             _jpype._JClassHints()._addTypeConversion(str, None, 1)
