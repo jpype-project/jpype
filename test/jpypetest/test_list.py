@@ -127,13 +127,16 @@ class JListTestCase(common.JPypeTestCase):
         obj.add("b")
         obj.add("c")
         del obj[1]
-        self.assertEqual(tuple(i for i in obj), ('a', 'c'))
+        self.assertElementsEqual(obj, ('a', 'c'))
         obj.add("a")
         obj.add("b")
         obj.add("c")
         del obj[1:3]
+        self.assertElementsEqual(obj, ('a', 'b', 'c'))
         with self.assertRaises(TypeError):
             del obj[1.0]
+        del obj[-1]
+        self.assertElementsEqual(obj, ('a', 'b'))
 
     def testAddAll(self):
         obj = self.cls()
@@ -244,6 +247,8 @@ class JListTestCase(common.JPypeTestCase):
             obj.remove(1)
         with self.assertRaises(ValueError):
             obj.remove('1')
+        with self.assertRaises(ValueError):
+            obj.remove(object())
         self.assertElementsEqual(obj, lst)
         
 
