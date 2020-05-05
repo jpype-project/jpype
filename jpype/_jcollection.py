@@ -18,7 +18,7 @@ import _jpype
 from . import _jclass
 from . import types as _jtypes
 from . import _jcustomizer
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, MutableSequence
 
 JOverride = _jclass.JOverride
 
@@ -83,6 +83,7 @@ class _JList(object):
 
     def __jclass_init__(self):
         Sequence.register(self)
+        MutableSequence.register(self)
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
@@ -90,7 +91,7 @@ class _JList(object):
             return self.subList(ndx.start, ndx.stop)
         else:
             if ndx < 0:
-                ndx = self.size() + ndx
+                ndx += self.size()
             return self.get(ndx)
 
     def __setitem__(self, ndx, v):
@@ -100,7 +101,7 @@ class _JList(object):
             self.addAll(ndx.start, v)
         else:
             if ndx < 0:
-                ndx = self.size() + ndx
+                ndx += self.size()
             self.set(ndx, v)
 
     def __delitem__(self, ndx):
@@ -108,12 +109,14 @@ class _JList(object):
             ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
         elif hasattr(ndx, '__index__'):
-            return self.remove(_jtypes.JInt(ndx))
+            if ndx<0:
+                ndx += self.size()
+            return self.remove_(_jtypes.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
 
     def __reversed__(self):
-        iterator = self.listIterator(len(self))
+        iterator = self.listIterator(self.size())
         while iterator.hasPrevious():
             yield iterator.previous()
 
@@ -135,6 +138,8 @@ class _JList(object):
             return 0
 
     def insert(self, idx, obj):
+        if idx<0:
+            idx += self.size()
         return self.add(idx, obj)
 
     def append(self, obj):
@@ -146,13 +151,30 @@ class _JList(object):
     def extend(self, lst):
         self.addAll(lst)
 
-    def pop(self, idx=None):
-        if idx is None:
-            idx = len(self)-1
-        return self.remove(_jtypes.JInt(idx))
+    def pop(self, idx=-1):
+        if idx<0:
+            idx += self.size()
+        return self.remove_(_jtypes.JInt(idx))
 
     def __iadd__(self, obj):
-        self.add(self, obj)
+        self.add(obj)
+        return self
+
+    def __add__(self, obj):
+        new = self.clone()
+        new.extend(obj)
+        return new
+
+    @JOverride(sticky=True, rename='remove_')
+    def remove(self, obj):
+        try:
+            rc = self.remove_(_jpype.JObject(obj, _jpype.JObject))
+            if rc is True:
+                return
+        except TypeError:
+            pass
+        raise ValueError("item not in list")
+
 
 
 def isPythonMapping(v):

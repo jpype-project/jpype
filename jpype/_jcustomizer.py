@@ -153,7 +153,7 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
                 # Apply rename
                 rename = attr.get('rename', "_"+p)
                 if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
-                   setter(rename, members[p])
+                    setter(rename, members[p])
             setter(p, v)
 
 
@@ -175,22 +175,21 @@ def _applyCustomizerPost(cls, proto):
     _applyCustomizerImpl(cls.__dict__, proto, sticky,
                          lambda p, v: type.__setattr__(cls, p, v))
 
-    # Apply a customizer to all derived classes
-    if '__jclass_init__' in proto.__dict__:
-        method = proto.__dict__['__jclass_init__']
-        _applyAll(cls, method)
-
     # Merge sticky into existing __jclass_init__
     if len(sticky) > 0:
         method = proto.__dict__.get('__jclass_init__', None)
-
         def init(cls):
             if method:
                 method(cls)
             _applyStickyMethods(cls, sticky)
         type.__setattr__(cls, '__jclass_init__', init)
-        _applyAll(cls, init)
 
+    # Apply a customizer to all derived classes
+    if '__jclass_init__' in proto.__dict__:
+        method = proto.__dict__['__jclass_init__']
+        _applyAll(cls, method)
+
+ 
 
 class JClassHints(_jpype._JClassHints):
     """ ClassHints holds class customizers and conversions.
@@ -241,7 +240,10 @@ class JClassHints(_jpype._JClassHints):
                                  lambda p, v: members.__setitem__(p, v))
 
         if len(sticky) > 0:
+            method = members.get('__jclass_init__', None)
             def init(cls):
+                if method is not None:
+                   method(cls) 
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 

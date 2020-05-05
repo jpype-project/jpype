@@ -207,5 +207,3 @@ class JByteTestCase(common.JPypeTestCase):
             ja[0:1] = [java.lang.Double(321)]
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
-
-

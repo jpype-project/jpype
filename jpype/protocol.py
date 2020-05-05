@@ -19,8 +19,8 @@ _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol, runtime_checkable
-    from typing import Sequence, Mapping # lgtm [py/unused-import]
-    from typing import SupportsFloat, Callable # lgtm [py/unused-import]
+    from typing import Sequence, Mapping  # lgtm [py/unused-import]
+    from typing import SupportsFloat, Callable  # lgtm [py/unused-import]
 
     @runtime_checkable
     class SupportsIndex(Protocol):
@@ -30,13 +30,14 @@ if sys.version_info < (3, 8):
 else:
     # 3.8 onward
     from typing import Protocol, runtime_checkable
-    from typing import SupportsIndex, SupportsFloat # lgtm [py/unused-import]
-    from typing import Sequence, Mapping, Callable # lgtm [py/unused-import]
+    from typing import SupportsIndex, SupportsFloat  # lgtm [py/unused-import]
+    from typing import Sequence, Mapping, Callable  # lgtm [py/unused-import]
 
 # Types we need
 @runtime_checkable
 class SupportsPath(Protocol):
     def __fspath__(self) -> str: ...
+
 
 @_jcustomizer.JConversion("java.nio.file.Path", instanceof=SupportsPath)
 def _JPathConvert(jcls, obj):
@@ -50,7 +51,7 @@ def _JFileConvert(jcls, obj):
 
 
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
-        excludes=str)
+                          excludes=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
 

@@ -171,10 +171,12 @@ class JListTestCase(common.JPypeTestCase):
         lst = ['A', 'B', 'C']
         cls = jpype.JClass('java.util.ArrayList')
         obj = cls(lst)
-        obj.insert(0,'1')
-        obj.insert(3,'2')
-        lst.insert(0,'1')
-        lst.insert(3,'2')
+        lst.insert(0, '1')
+        obj.insert(0, '1')
+        lst.insert(3, '2')
+        obj.insert(3, '2')
+        lst.insert(-1, '3')
+        obj.insert(-1, '3')
         self.assertElementsEqual(obj, lst)
 
     def testAppend(self):
@@ -199,8 +201,8 @@ class JListTestCase(common.JPypeTestCase):
         lst = ['A', 'B', 'C']
         cls = jpype.JClass('java.util.ArrayList')
         obj = cls(lst)
-        obj.extend(range(0,3))
-        lst.extend(range(0,3))
+        obj.extend(range(0, 3))
+        lst.extend(range(0, 3))
         self.assertElementsEqual(obj, lst)
 
     def testPop(self):
@@ -210,6 +212,7 @@ class JListTestCase(common.JPypeTestCase):
         self.assertEqual(obj.pop(), lst.pop())
         self.assertEqual(obj.pop(0), lst.pop(0))
         self.assertEqual(obj.pop(2), lst.pop(2))
+        self.assertEqual(obj.pop(-1), lst.pop(-1))
         self.assertElementsEqual(obj, lst)
 
     def testIAdd(self):
@@ -220,3 +223,38 @@ class JListTestCase(common.JPypeTestCase):
         lst += 'D'
         self.assertElementsEqual(obj, lst)
 
+    def testAdd(self):
+        lst = ['A', 'B', 'C']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        lst2 = lst + ['D']
+        obj2 = obj + ['D']
+        self.assertElementsEqual(obj, lst)
+        self.assertElementsEqual(obj2, lst2)
+
+    def testRemove(self):
+        lst = ['A', 'B', 'C', 'D', 'E']
+        cls = jpype.JClass('java.util.ArrayList')
+        obj = cls(lst)
+        lst.remove('C')
+        obj.remove('C')
+        with self.assertRaises(ValueError):
+            lst.remove('C')
+        with self.assertRaises(ValueError):
+            obj.remove(1)
+        with self.assertRaises(ValueError):
+            obj.remove('1')
+        self.assertElementsEqual(obj, lst)
+        
+
+    def testProtocol(self):
+        from collections.abc import Sequence, MutableSequence
+        List = jpype.JClass('java.util.List')
+        ArrayList = jpype.JClass('java.util.ArrayList')
+        LinkedList = jpype.JClass('java.util.LinkedList')
+        self.assertTrue(issubclass(List, Sequence))
+        self.assertTrue(issubclass(List, MutableSequence))
+        self.assertTrue(issubclass(ArrayList, Sequence))
+        self.assertTrue(issubclass(ArrayList, MutableSequence))
+        self.assertTrue(issubclass(LinkedList, Sequence))
+        self.assertTrue(issubclass(LinkedList, MutableSequence))
