@@ -112,7 +112,7 @@ class JBufferTestCase(common.JPypeTestCase):
         self.assertEqual(mv.format, ">d")
 
     def checkNP(self, method, dtype, sz):
-        obj = self.cls.allocateDirect(sz*5)
+        obj = self.cls.allocateDirect(sz * 5)
         obj.order(self.bo.BIG_ENDIAN)
         bf = method(obj)
         mv = np.asarray(memoryview(bf))

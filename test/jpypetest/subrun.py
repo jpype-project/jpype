@@ -151,10 +151,10 @@ def _prepare(orig, individual=False):
 
     for k, v in orig.__dict__.items():
         if k.startswith("test"):
-            test = ProxyMethod("_"+k)
+            test = ProxyMethod("_" + k)
             test.__name__ = k
             type.__setattr__(ProxyClass, k, test)
-            type.__setattr__(ProxyClass, "_"+k, v)
+            type.__setattr__(ProxyClass, "_" + k, v)
 
     type.__setattr__(ProxyClass, "_setUp", orig.setUp)
     type.__setattr__(ProxyClass, "_setUpClass", orig.setUpClass)

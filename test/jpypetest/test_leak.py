@@ -74,8 +74,8 @@ class LeakChecker():
             jvm_total_mem.append(jvm_total_mem1)
             jvm_free_mem.append(jvm_free_mem1)
 
-            growth0 = (rss_memory1-rss_memory0)/(float(size))
-            growth1 = (jvm_total_mem1-jvm_total_mem0)/(float(size))
+            growth0 = (rss_memory1 - rss_memory0) / (float(size))
+            growth1 = (jvm_total_mem1 - jvm_total_mem0) / (float(size))
             rss_memory0 = rss_memory1
             jvm_total_mem0 = jvm_total_mem1
             jvm_free_mem0 = jvm_total_mem1

@@ -79,7 +79,7 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
         # Handle generics
         if isinstance(jc, str) and jc.endswith(">"):
             i = jc.find("<")
-            params = jc[i+1:-1]
+            params = jc[i + 1:-1]
             ret = _jpype._getClass(jc[:i])
             acceptParams = len(ret.class_.getTypeParameters())
             if acceptParams == 0:

@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +13,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 
-#the hava classes used are defined the the test harness. the class jpype.rmi.ServerImpl must be started before this script can be run.
+# the hava classes used are defined the the test harness. the class jpype.rmi.ServerImpl must be started before this script can be run.
 
 from jpype import *
 
