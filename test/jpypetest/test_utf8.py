@@ -57,8 +57,7 @@
 '''
 
 import sys
-
-from jpype import JPackage
+from jpype.types import *
 import common
 
 
@@ -68,7 +67,7 @@ class Utf8TestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
 
         # Java IO test class
-        self.Utf8Test = JPackage('jpype').utf8.Utf8Test
+        self.Utf8Test = JClass('jpype.utf8.Utf8Test')
 
         # Test strings
         # IMPORTANT: they should be identical, and in the same order, as the test strings difned in the
@@ -111,7 +110,7 @@ class Utf8TestCase(common.JPypeTestCase):
         Test binary upload and check in Java if the strings are correct.
         Assumes synchronized test strings in the java class and in this test class.
         """
-        String = JPackage('java').lang.String
+        String = JClass('java.lang.String')
         indx = 0
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(String(val.encode('utf-8'), 'UTF8'))
@@ -124,7 +123,7 @@ class Utf8TestCase(common.JPypeTestCase):
         Test binary upload and download of utf strings.
         Allow for surrogate unicode substitution of the return value.
         """
-        String = JPackage('java').lang.String
+        String = JClass('java.lang.String')
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(String(val.encode('utf-8'), 'UTF8'))
             try:
@@ -141,7 +140,7 @@ class Utf8TestCase(common.JPypeTestCase):
         """
         Test pure binary upload and download of utf strings.
         """
-        String = JPackage('java').lang.String
+        String = JClass('java.lang.String')
         for lbl, val in self.TDICT:
             utf8_test = self.Utf8Test(String(val.encode('utf-8'), 'UTF8'))
             self.assertEqual(val, str(utf8_test.get()),
