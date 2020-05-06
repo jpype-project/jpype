@@ -40,17 +40,9 @@ jobs:
       versionSpec: '3.8'
   - script: |
       echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
-      echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin;$(PATH)"
     displayName: "Set JDK 11"
   - script: mvn -q -f project/coverage package
   - script: |
-      echo "$PATH"
-      javac -version
-      $JAVA_HOME_11_X64/bin/javac -version
-      which javac
-      echo "$JAVA_HOME"
-      echo "$JAVA_HOME_11_X64"
-      echo "$JAVA_HOME_8_X64"
       python setup.py test_java
       pip install gcovr pytest-cov jedi
       pip install -r test-requirements.txt
@@ -116,8 +108,7 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
   - script: |
-       echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
-       echo "##vso[task.setvariable variable=PATH]$(JAVA_HOME_11_X64)/bin;$(PATH)"
+      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
     displayName: "Set JDK 11"
   - script: |
       python setup.py sdist
@@ -132,17 +123,6 @@ jobs:
       pip install -r test-requirements.txt
     displayName: 'Install test'
   - script: |
-      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_8_X64)"
-      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
-    displayName: 'Test JDK 8'
-  - task: PublishTestResults@2
-    condition: succeededOrFailed()
-    inputs:
-       testResultsFiles: 'build/test/test.xml'
-       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 8'
-
-  - script: |
-      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test JDK 11'
   - task: PublishTestResults@2
@@ -150,6 +130,18 @@ jobs:
     inputs:
        testResultsFiles: 'build/test/test.xml'
        testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 11'
+
+  - script: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+    displayName: "Set JDK 8"
+  - script: |
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
+    displayName: 'Test JDK 8'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+       testResultsFiles: 'build/test/test.xml'
+       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 8'
 
 - job: Test_OSX
   strategy:

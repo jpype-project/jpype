@@ -12,18 +12,21 @@ import shlex
 
 
 def compileJava(self, coverage):
+    javac = "javac"
+    if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
+        javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
     target_version = "1.7"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]
     src2 = [i for i in srcs if not "JPypeClassLoader" in i]
-    cmd1 = shlex.split('javac -d build/lib -g:none -source %s -target %s' %
-                       (target_version, target_version))
+    cmd1 = shlex.split('%s -d build/lib -g:none -source %s -target %s' %
+                       (javac, target_version, target_version))
     cmd1.extend(src1)
     debug = "-g:none"
     if coverage:
         debug = "-g:lines,vars,source"
-    cmd2 = shlex.split('javac -d build/classes %s -source %s -target %s -cp build/lib' %
-                       (debug, target_version, target_version))
+    cmd2 = shlex.split('%s -d build/classes %s -source %s -target %s -cp build/lib' %
+                       (javac, debug, target_version, target_version))
     cmd2.extend(src2)
     os.makedirs("build/lib", exist_ok=True)
     os.makedirs("build/classes", exist_ok=True)
