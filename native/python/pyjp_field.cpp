@@ -132,5 +132,5 @@ JPPyObject PyJPField_create(JPField* m)
 	JP_PY_CHECK();
 	self->m_Field = m;
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }

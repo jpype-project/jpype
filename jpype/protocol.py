@@ -17,7 +17,7 @@ _JBoolean = _jpype._JBoolean
 _JArray = _jpype._JArray
 _JBuffer = _jpype._JBuffer
 
-if sys.version_info < (3, 8):
+if sys.version_info < (3, 8):  # pragma: no cover
     from typing_extensions import Protocol, runtime_checkable
     from typing import Sequence, Mapping  # lgtm [py/unused-import]
     from typing import SupportsFloat, Callable  # lgtm [py/unused-import]
@@ -72,7 +72,7 @@ def _JInstantConversion(jcls, obj):
     return jcls.ofEpochSecond(sec, nsec)
 
 
-if sys.version_info < (3, 6):
+if sys.version_info < (3, 6):  # pragma: no cover
     import pathlib
     @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
     def _JPathConvert(jcls, obj):

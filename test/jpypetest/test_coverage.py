@@ -1,8 +1,11 @@
 import jpype
+import jpype.imports
 import common
 import sys
 import os
 import importlib
+import pytest
+from unittest import mock
 import _jpype
 
 # Tests just for coverage
@@ -219,3 +222,51 @@ class CoverageCase(common.JPypeTestCase):
     def testHints(self):
         with self.assertRaises(AttributeError):
             jpype.JObject._hints = object()
+
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    def testDeprecated(self):
+        @jpype._core.deprecated
+        def foo():
+            pass
+
+        @jpype._core.deprecated("foo")
+        def bar():
+            pass
+        bar()
+        foo()
+
+    def testVersionPreStart(self):
+        with mock.patch('_jpype.isStarted') as func:
+            func.return_value = False
+            self.assertEqual(jpype.getJVMVersion(), (0, 0, 0))
+
+    def testGui(self):
+        def foo():
+            pass  # this is executed in a thread which may start later
+        magic = mock.MagicMock()
+        with mock.patch("sys.platform", "other"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}):
+            from PyObjCTools import AppHelper
+            self.assertEqual(sys.platform, "other")
+            jpype.setupGuiEnvironment(foo)
+            self.assertFalse(magic.AppHelper.runConsoleEventLoop.called)
+            jpype.shutdownGuiEnvironment()
+            self.assertFalse(magic.AppHelper.stopEventLoop.called)
+        with mock.patch("sys.platform", "darwin"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}):
+            from PyObjCTools import AppHelper
+            self.assertEqual(sys.platform, "darwin")
+            jpype.setupGuiEnvironment(foo)
+            self.assertTrue(magic.AppHelper.runConsoleEventLoop.called)
+            jpype.shutdownGuiEnvironment()
+            self.assertTrue(magic.AppHelper.stopEventLoop.called)
+
+    def testImportKey(self):
+        self.assertEqual(jpype.imports._keywordUnwrap("with_"), "with")
+        self.assertEqual(jpype.imports._keywordUnwrap("func"), "func")
+        self.assertEqual(jpype.imports._keywordWrap("with"), "with_")
+        self.assertEqual(jpype.imports._keywordWrap("func"), "func")
+
+    def testImportNotStarted(self):
+        with mock.patch('_jpype.isStarted') as func:
+            func.return_value = False
+            with self.assertRaisesRegex(ImportError, "jvm"):
+                import mil.spec

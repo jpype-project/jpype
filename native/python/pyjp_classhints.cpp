@@ -45,7 +45,7 @@ void PyJPClassHints_dealloc(PyJPClassHints *self)
 
 	// Free self
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPClassHints_str(PyJPClassHints *self)
@@ -70,7 +70,7 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addAttributeConversion(string(attribute), method);
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
@@ -87,7 +87,7 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 		JP_RAISE(PyExc_TypeError, "callable method is required");
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
@@ -116,7 +116,7 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args,
 		self->m_Hints->excludeConversion(types);
 	}
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyMethodDef classMethods[] = {
@@ -152,7 +152,7 @@ PyType_Spec PyJPClassHintsSpec = {
 void PyJPClassHints_initType(PyObject* module)
 {
 	PyJPClassHints_Type = (PyTypeObject*) PyType_FromSpec(&PyJPClassHintsSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE sanity check
 	PyModule_AddObject(module, "_JClassHints", (PyObject*) PyJPClassHints_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE sanity check
 }

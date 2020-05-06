@@ -81,6 +81,8 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 	PyTypeObject *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
 
+	// GCOVR_EXCL_START
+	// Sanity checks.  Not testable
 	if (typenew == 0)
 		return NULL;
 	if (typenew->tp_finalize != NULL && typenew->tp_finalize != (destructor) PyJPValue_finalize)
@@ -90,7 +92,6 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	// GCOVR_EXCL_START
 	// This sanity check is trigger if the user attempts to build their own
 	// type wrapper with a __del__ method defined.  It is hard to trigger.
 	if (typenew->tp_alloc != (allocfunc) PyJPValue_alloc
@@ -567,7 +568,7 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 		return JPPyString::fromStringUTF8("exact").keep();
 
 	// Not sure how this could happen
-	Py_RETURN_NONE; // GCOVR_EXCL_NONE
+	Py_RETURN_NONE; // GCOVR_EXCL_LINE
 	JP_PY_CATCH(NULL);
 }
 
@@ -675,7 +676,7 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 	JP_PY_TRY("PyJPClass_repr");
 	string name = ((PyTypeObject*) self)->tp_name;
 	return PyUnicode_FromFormat("<java class '%s'>", name.c_str());
-	JP_PY_CATCH(0);
+	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
 static PyMethodDef classMethods[] = {
