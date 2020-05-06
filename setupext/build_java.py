@@ -13,8 +13,11 @@ import shlex
 
 def compileJava(self, coverage):
     javac = "javac"
-    if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
-        javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
+            javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    except KeyError:
+        pass
     target_version = "1.7"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]

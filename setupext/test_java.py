@@ -22,8 +22,11 @@ def getJavaVersion(javac):
 
 def compileJava():
     javac = "javac"
-    if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
-        javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
+            javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    except KeyError:
+        pass
     version = getJavaVersion(javac)
     srcs = glob.glob('test/harness/jpype/**/*.java', recursive=True)
     exports = ""
