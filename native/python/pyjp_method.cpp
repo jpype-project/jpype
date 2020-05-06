@@ -58,7 +58,7 @@ static void PyJPMethod_dealloc(PyJPMethod *self)
 	PyObject_GC_UnTrack(self);
 	PyJPMethod_clear(self);
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH_NONE();
+	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
@@ -72,7 +72,7 @@ static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 		return (PyObject*) self;
 	}
 	return PyJPMethod_create(self->m_Method, obj).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
@@ -92,7 +92,7 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 		out = self->m_Method->invoke(frame, vargs, true).keep();
 	}
 	return out;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_str(PyJPMethod *self)
@@ -103,7 +103,7 @@ static PyObject *PyJPMethod_str(PyJPMethod *self)
 	stringstream sout;
 	sout << self->m_Method->getClass()->getCanonicalName() << "." << self->m_Method->getName();
 	return JPPyString::fromStringUTF8(sout.str()).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_repr(PyJPMethod *self)
@@ -118,7 +118,7 @@ static PyObject *PyJPMethod_repr(PyJPMethod *self)
 	ss << self->m_Method->getName() << "' of '" <<
 			self->m_Method->getClass()->getCanonicalName() << "'>";
 	return JPPyString::fromStringUTF8(ss.str()).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *ctxt)
@@ -395,5 +395,5 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 	self->m_CodeRep = NULL;
 	Py_XINCREF(self->m_Instance);
 	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; /// GCOVR_EXCL_LINE
 }

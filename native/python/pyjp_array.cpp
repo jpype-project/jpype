@@ -115,7 +115,7 @@ static void PyJPArray_dealloc(PyJPArray *self)
 	JP_PY_TRY("PyJPArray_dealloc");
 	delete self->m_Array;
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPArray_repr(PyJPArray *self)
@@ -279,7 +279,7 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 		return;
 	delete self->m_View;
 	self->m_View = NULL;
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
 int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
@@ -350,16 +350,18 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex)
+	} catch (JPypeException &ex) // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		// Release the partial buffer so we don't leak
 		PyJPArray_releaseBuffer(self, view);
 
 		// We are only allowed to raise BufferError
 		PyErr_SetString(PyExc_BufferError, "Java array view failed");
 		return -1;
+		// GCOVR_EXCL_STOP
 	}
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1); // GCOVR_EXCL_LINE
 }
 
 int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
