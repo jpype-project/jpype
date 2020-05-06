@@ -39,6 +39,8 @@ public:
 
 public: // JPClass implementation
 	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
+	void getConversionInfo(JPConversionInfo &info) override;
+
 } ;
 
 #endif // _JPCLASSTYPE_H_

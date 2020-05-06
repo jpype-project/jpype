@@ -3,7 +3,18 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
+
+  
 - **Next Release**
+
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
+    This allows functions, lambdas, and class constructors to be used
+    whereever Java accepts a lambda.
+
+  - Support for Protocol on type conversions.  Attribute based
+    conversions deprecated in favor of Protocol.  Internal API
+    for stubbing.
 
   - Deprecated class and functions were removed.  ``JIterator``,
     use of ``JException`` as a factory,  ``get_default_jvm_path``,
@@ -23,7 +34,22 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     test if an object is a Java string type, use ``java.lang.String``.
 
   - Updated the repr methods on Java classes.
+
+  - ``java.util.List`` completes the contract for ``collections.abc.Sequence``
+    and ``collections.abc.MutableSequence``.
+
+  - ``java.util.Collection`` completes the contract for ``collections.abc.Collection``.
   
+  - Java classes are closed and will raise ``TypeError`` if extended in Python.
+
+  - Handles Control-C gracefully.  Previous versions crash whenever
+    Java handles the Control-C signal as they would shutdown Java
+    during a call.  Now JPype will produce a ``InterruptedException``
+    when returning from Java.  Control-C will not break out of large
+    Java procedures as currently implemented as Java does not have
+    a specific provision for this.
+
+
 - **0.7.4 - 4-28-2020**
 
   - Corrected a resource leak in arrays that affects array initialization, and variable
@@ -93,6 +119,16 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     garbage collection rather than once per use.  Thus proxy objects
     placed in memory containers will have the same object id so long
     as Java holds on to it.
+
+  - jpype.imports and JPackage verify existance of packages and classes.
+    Imports from Java packages support wildcards.  
+
+  - Bug with JPackage that imported private and protected classes
+    inappropriately has been corrected.  Protected classes can still be
+    imported using JClass.
+
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
 
   - ``@JImplements`` with keyword argument ``deferred`` can be started 
     prior to starting the JVM.  Methods are checked at first object

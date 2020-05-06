@@ -1,7 +1,7 @@
 from jpype import *
 import time
 
-remote_pack="c:/tools/netbeean-remote-pack"
+remote_pack = "c:/tools/netbeean-remote-pack"
 
 profiler_options = [
     "-agentpath:%s/lib/deployed/jdk15/windows/profilerinterface.dll=%s/lib,5140" % (remote_pack, remote_pack)
@@ -9,18 +9,19 @@ profiler_options = [
 
 
 options = [
-    #'-verbose:gc',
+    # '-verbose:gc',
     '-Xmx64m',
     '-Djava.class.path=classes'
-] #+ profiler_options
+]  # + profiler_options
 
 cnt = 0
 
-#setUsePythonThreadForDeamon(True)
+# setUsePythonThreadForDeamon(True)
 startJVM(getDefaultJVMPath(), *options)
 
+
 class MyStr(str):
-    def __init__ (self, val):
+    def __init__(self, val):
         str.__init__(self, val)
         global cnt
         cnt += 1
@@ -30,6 +31,7 @@ class MyStr(str):
         global cnt
         cnt -= 1
         print 'deleted string', cnt
+
 
 receive = JClass("jpype.nio.NioReceive")
 
@@ -48,7 +50,7 @@ while True:
     # forget the direct buffer for now....
     #
     buf = nio.convertToDirectBuffer(MyStr('5' * 1024 * 1024 * 5))
-    try :
+    try:
         receive.receiveBufferWithException(buf)
-    except :
+    except:
         pass

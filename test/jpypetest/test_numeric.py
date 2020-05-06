@@ -72,7 +72,7 @@ class NumericTestCase(common.JPypeTestCase):
     def testJPNumber_new(self):
         _jpype.fault("PyJPNumber_new")
 
-        class MyNum(_jpype._JNumberLong):
+        class MyNum(_jpype._JNumberLong, internal=True):
             pass
         with self.assertRaisesRegex(SystemError, "fault"):
             JInt(1)

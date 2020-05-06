@@ -14,7 +14,7 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7'
+      versionSpec: '3.8'
   - script: |
       pip install  --exists-action=w --no-cache-dir -r test-requirements.txt -r doc/doc-requirements.txt
     displayName: 'Install requirements'
@@ -36,12 +36,16 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7'
+      versionSpec: '3.8'
+  - script: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+    displayName: "Set JDK 11"
   - script: mvn -q -f project/coverage package
   - script: |
       python setup.py test_java
       pip install gcovr pytest-cov jedi
       pip install -r test-requirements.txt
+      pip install numpy typing_extensions
     displayName: 'Install requirements'
   - script: |
       python setup.py --enable-coverage --enable-build-jar build_ext --inplace
@@ -74,7 +78,7 @@ jobs:
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: '3.7'
+      versionSpec: '3.8'
   - script: |
       python setup.py --enable-tracing --enable-build-jar build_ext --inplace
     displayName: 'Build'
@@ -84,19 +88,15 @@ jobs:
     matrix:
       linux-3.5:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.5'
       linux-3.6:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.6'
       linux-3.7:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.7'
       linux-3.8:
         imageName: "ubuntu-16.04"
-        jdk_version: "1.11"
         python.version: '3.8'
   pool:
     vmImage: $(imageName)
@@ -105,22 +105,40 @@ jobs:
     inputs:
       versionSpec: '$(python.version)'
   - script: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+    displayName: "Set JDK 11"
+  - script: |
       python setup.py sdist
       pip install dist/*
     displayName: 'Build module'
-  - script: python -c "import jpype"
+  - script: |
+      pip install numpy jedi typing_extensions
+      python -c "import jpype"
     displayName: 'Check module'
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      pip install numpy jedi
+    displayName: 'Install test'
+  - script: |
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
-    displayName: 'Test module'
+    displayName: 'Test JDK 11'
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
        testResultsFiles: 'build/test/test.xml'
-       testRunTitle: 'Publish linux test results for Python $(python.version)'
+       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 11'
+
+  - script: |
+      echo "##vso[task.setvariable variable=JAVA_HOME]$(JAVA_HOME_11_X64)"
+    displayName: "Set JDK 8"
+  - script: |
+      python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
+    displayName: 'Test JDK 8'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+       testResultsFiles: 'build/test/test.xml'
+       testRunTitle: 'Publish linux test results for Python $(python.version) with JDK 8'
 
 - job: Test_OSX
   strategy:
@@ -181,12 +199,13 @@ jobs:
   - script: |
       python setup.py build_ext --inplace
     displayName: 'Build module'
-  - script: python -c "import jpype"
+  - script: |
+      pip install numpy jedi typing_extensions
+      python -c "import jpype"
     displayName: 'Check module'
   - script: |
       python setup.py test_java
       pip install -r test-requirements.txt
-      pip install numpy jedi
       python -m pytest -v --junit-xml=build/test/test.xml test/jpypetest --checkjni  
     displayName: 'Test module'
   - task: PublishTestResults@2

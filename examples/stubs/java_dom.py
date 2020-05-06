@@ -1,4 +1,4 @@
-#*****************************************************************************
+# *****************************************************************************
 #   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-#*****************************************************************************
+# *****************************************************************************
 from os import path
 import time
 from jpype import *
@@ -23,28 +23,29 @@ startJVM(getDefaultJVMPath(), "-ea")
 # XML test
 Element = JPackage("org").w3c.dom.Element
 
-def output(el, prefix="") :
-    if not isinstance(el, Element) :
+
+def output(el, prefix=""):
+    if not isinstance(el, Element):
         return
 
-    #print prefix, "<", el.getTagName(),
+    # print prefix, "<", el.getTagName(),
 
     atts = el.getAttributes()
-    for i in range(atts.getLength()) :
-        a = atts.item(i);
-        #print a.getNodeName(), '="%s"' % a.getNodeValue(),
-    #print '>'
+    for i in range(atts.getLength()):
+        a = atts.item(i)
+        # print a.getNodeName(), '="%s"' % a.getNodeValue(),
+    # print '>'
 
     nl = el.getChildNodes()
-    for i in range(nl.getLength()) :
-        output(nl.item(i), prefix+"  ")
+    for i in range(nl.getLength()):
+        output(nl.item(i), prefix + "  ")
 
+    # print prefix, "</", el.getTagName(), ">"
 
-    #print prefix, "</", el.getTagName(), ">"
 
 t = time.time()
 count = 30
-for i in range(count) :
+for i in range(count):
     build = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
     doc = build.parse(path.join(path.dirname(__file__), "sample", "big.xml"))
 
@@ -52,6 +53,6 @@ for i in range(count) :
     output(el)
 
 t2 = time.time()
-print( count, "iterations in", t2-t, "seconds")
+print(count, "iterations in", t2 - t, "seconds")
 
 shutdownJVM()

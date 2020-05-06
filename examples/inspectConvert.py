@@ -18,9 +18,9 @@ def runTest(cases, types, abbrev=lambda x: x):
         m = {}
         q = str(type(case)).replace('<class ', '').replace('>', '')
         if 'jpype' in q:
-            q = "Java "+abbrev(q.replace('jpype._jclass.', ''))
+            q = "Java " + abbrev(q.replace('jpype._jclass.', ''))
         else:
-            q = "Py "+q
+            q = "Py " + q
 
         m['Name'] = abbrev(name)
         m['Type'] = abbrev(q)

@@ -19,8 +19,9 @@ import atexit
 import _jpype
 from . import types as _jtypes
 from . import _classpath
-from . import _jinit
 from . import _jcustomizer
+from . import _jinit
+from . import _pykeywords
 
 from ._jvmfinder import *
 
@@ -101,7 +102,7 @@ def _handleClassPath(clsList):
             raise TypeError("Classpath elements must be strings")
         if s.endswith('*'):
             import glob
-            out.extend(glob.glob(s+'.jar'))
+            out.extend(glob.glob(s + '.jar'))
         else:
             out.append(s)
     return _classpath._SEP.join(out)
@@ -211,7 +212,7 @@ def startJVM(*args, **kwargs):
             import re
             match = re.search("([0-9]+)\.[0-9]+", source)
             if match:
-                version = int(match.group(1))-44
+                version = int(match.group(1)) - 44
                 raise RuntimeError("%s is older than required Java version %d" % (
                     jvmpath, version)) from ex
         raise
@@ -247,6 +248,14 @@ def startJVM(*args, **kwargs):
     _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
     _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
     _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
+    _jtypes.JBoolean._hints = _jcustomizer.getClassHints("boolean")
+    _jtypes.JByte._hints = _jcustomizer.getClassHints("byte")
+    _jtypes.JChar._hints = _jcustomizer.getClassHints("char")
+    _jtypes.JShort._hints = _jcustomizer.getClassHints("short")
+    _jtypes.JInt._hints = _jcustomizer.getClassHints("int")
+    _jtypes.JLong._hints = _jcustomizer.getClassHints("long")
+    _jtypes.JFloat._hints = _jcustomizer.getClassHints("float")
+    _jtypes.JDouble._hints = _jcustomizer.getClassHints("double")
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
@@ -281,6 +290,9 @@ def startJVM(*args, **kwargs):
     _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jinit.runJVMInitializers()
+
+    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
+        list(_pykeywords._KEYWORDS))
 
 
 def attachToJVM(jvm):
@@ -376,11 +388,7 @@ def synchronized(obj):
       # lock is freed when with block ends
 
     """
-    try:
-        return _jpype._JMonitor(obj)
-    except AttributeError as ex:
-        pass
-    raise TypeError("synchronized only applies to java objects")
+    return _jpype._JMonitor(obj)
 
 
 def getJVMVersion():
