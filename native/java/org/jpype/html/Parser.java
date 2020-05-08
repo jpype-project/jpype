@@ -16,13 +16,17 @@ import java.util.ListIterator;
 public class Parser<T>
 {
 
-  final Grammar grammar;
+  Grammar grammar;
   State state = null;
   Token last = null;
   Rule lookahead = null;
   LinkedList<Entity> stack = new LinkedList<>();
 
-  public Parser(Grammar g)
+  public Parser()
+  {
+  }
+
+  void setGrammar(Grammar g)
   {
     this.grammar = g;
     this.state = g.initialState();
@@ -76,11 +80,6 @@ public class Parser<T>
     } catch (IOException ex)
     {
       throw new RuntimeException(ex);
-    }
-    System.out.println("Done");
-    for (Entity e : this.stack)
-    {
-      System.out.println(e);
     }
     return (T) grammar.end();
   }

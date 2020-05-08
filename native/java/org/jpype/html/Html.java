@@ -19,9 +19,12 @@ public class Html
   private static class HtmlParser extends Parser<Document>
   {
 
+    HtmlHandler handler = new HtmlTreeHandler();
+    HtmlGrammar grammar = new HtmlGrammar(handler);
     public HtmlParser()
     {
-      super(new HtmlGrammar(new HtmlTreeHandler()));
+      super();
+      setGrammar(grammar);
     }
   }
 

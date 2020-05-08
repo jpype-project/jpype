@@ -86,8 +86,9 @@ public class HtmlWriter implements Closeable
         writer.write(" ");
         Attr attr = (Attr) attributes.item(i);
         writer.write(attr.getName());
-        writer.write("=");
+        writer.write("=\"");
         writer.write(attr.getValue());
+        writer.write('"');
       }
     }
     if (Html.VOID_ELEMENTS.contains(name))

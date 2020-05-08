@@ -258,7 +258,7 @@ public class HtmlGrammar implements Parser.Grammar
         return false;
       getGrammar(parser).flushText(parser);
       parser.state = State.ELEMENT;
-//      parser.lookahead = this::next;
+      parser.lookahead = this::next;
       return true;
     }
 
@@ -425,7 +425,7 @@ public class HtmlGrammar implements Parser.Grammar
     {
       if (entity.token != Token.TEXT)
         parser.error("Expected CDATA");
-//      parser.lookahead = this::next;
+      parser.lookahead = this::next;
       return true;
     }
 
@@ -475,7 +475,7 @@ public class HtmlGrammar implements Parser.Grammar
     {
       if (entity.token != Token.DASH)
         parser.error("Expected -");
-//      parser.lookahead = this::next;
+      parser.lookahead = this::next;
       parser.stack.clear();
       parser.state = State.COMMENT;
       return true;
@@ -502,7 +502,7 @@ public class HtmlGrammar implements Parser.Grammar
     @Override
     public void execute(Parser parser)
     {
-//      parser.lookahead = this::next;
+      parser.lookahead = this::next;
     }
 
     public boolean next(Parser parser, Parser.Entity entity)

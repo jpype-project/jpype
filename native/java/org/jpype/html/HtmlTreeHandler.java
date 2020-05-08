@@ -1,11 +1,16 @@
 package org.jpype.html;
 
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
 
 /**
  * HTML document handler which creates an HTML tree.
@@ -13,21 +18,45 @@ import org.w3c.dom.Node;
 public class HtmlTreeHandler implements HtmlHandler
 {
 
+  final Document root;
   LinkedList<Element> elementStack = new LinkedList<>();
-  DocumentBuilder db = null;
-  Document root = db.newDocument();
-  Node current = root;
+  Node current;
+  Pattern attribPattern = Pattern.compile("^\\s*([A-z:_][A-z0-9:_.-]*)\\s*=\\s*\"([^<\"]*)\"\\s*");
+
+  public HtmlTreeHandler()
+  {
+    try
+    {
+      DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+      root = db.newDocument();
+      current = root;
+    } catch (ParserConfigurationException ex)
+    {
+      throw new RuntimeException(ex);
+    }
+  }
 
   @Override
   public void startElement(String name, String attr)
   {
     Element elem = root.createElement(name);
-
-    elem.setAttribute(name, name);
-//    Attr attr = root.createAttribute(name);
-
-    // FIXME handle attributes
-    //new Element(name, attr);
+    if (attr != null)
+    {
+      while (!attr.isEmpty())
+      {
+        Matcher m = attribPattern.matcher(attr);
+        if (!m.find())
+        {
+          break;
+        }
+        attr = m.replaceFirst("");
+        elem.setAttribute(m.group(1), m.group(2));
+      }
+      if (!attr.isEmpty())
+      {
+        throw new RuntimeException("Bad attr " + attr);
+      }
+    }
     current.appendChild(elem);
     if (Html.VOID_ELEMENTS.contains(name))
       return;
@@ -60,6 +89,9 @@ public class HtmlTreeHandler implements HtmlHandler
   @Override
   public void text(String text)
   {
+    if (current == root)
+      return;
+    System.out.println(current + " " + current.getNodeType());
     current.appendChild(root.createTextNode(text));
   }
 

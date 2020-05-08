@@ -18,7 +18,8 @@ public class Main
   public static void main(String[] args) throws IOException
   {
     //<editor-fold desc="elements" defaultstate="collapsed">
-    try (InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("com/google/gson/JsonArray.html"))
+//    try (InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("com/google/gson/JsonArray.html"))
+    try (InputStream is = Files.newInputStream(Paths.get("in.html")))
     {
       Parser<Document> parser = Html.newParser();
       Document doc = parser.parse(is);
