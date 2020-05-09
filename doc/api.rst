@@ -39,11 +39,9 @@ Java Types
 JPype has types for each of the Java primitives: ``JBoolean``, ``JByte``,
 ``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  There is one
 class for working with Java objects, ``JObject``.  This serves to cast to a
-specific object type.  There is a ``JString`` type provided for convenience
-when creating or casting to strings.
+specific object type.  
 
 .. autoclass:: jpype.JObject
-.. autoclass:: jpype.JString
 
 .. _threading:
 
@@ -51,9 +49,8 @@ Threading
 ~~~~~~~~~
 
 .. autofunction:: jpype.synchronized
-.. autofunction:: jpype.isThreadAttachedToJVM
-.. autofunction:: jpype.attachThreadToJVM
-.. autofunction:: jpype.detachThreadFromJVM
+.. autoclass:: java.lang.Thread
+    :members:
 
 
 Decorators
@@ -85,19 +82,28 @@ Customized Classes
 JPype provides standard customizers for Java interfaces so that Java objects 
 have syntax matching the corresponding Python objects. The customizers are 
 automatically bound to the class on creation without user intervention.  We are 
-documentating the functions that each customizer adds here.
+documentating the functions that each customizer adds here.  Information about
+Java methods can be found in the Javadoc.
 
 These internal classes can be used as example of how to implement your own 
 customizers for Java classes.
 
-.. autoclass:: jpype._jcollection._JIterable
-.. autoclass:: jpype._jcollection._JCollection
-.. autoclass:: jpype._jcollection._JList
-.. autoclass:: jpype._jcollection._JMap
-.. autoclass:: jpype._jcollection._JIterator
-.. autoclass:: jpype._jcollection._JEnumeration
-.. autoclass:: jpype._jio._JCloseable
-
+.. autoclass:: java.util.Iterable
+    :members:
+    :special-members:
+.. autoclass:: java.util.Collection
+    :members:
+    :special-members:
+.. autoclass:: java.util.List
+    :members:
+    :special-members:
+.. autoclass:: java.util.Map
+    :members:
+    :special-members:
+.. autoclass:: java.util.Set
+.. autoclass:: java.util.Iterator
+.. autoclass:: java.util.Enumeration
+.. autoclass:: java.lang.AutoCloseable
 
 Modules
 ~~~~~~~
@@ -108,9 +114,6 @@ imported to add additional functionality.
 .. _imports:
 
 .. automodule:: jpype.imports
-.. autofunction:: jpype.imports.registerDomain
-.. autofunction:: jpype.imports.registerImportCustomizer
-.. autoclass:: jpype.imports.JImportCustomizer
 
 .. automodule:: jpype.pickle
 .. autoclass:: jpype.pickle.JPickler
