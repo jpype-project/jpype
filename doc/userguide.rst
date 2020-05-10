@@ -2429,7 +2429,7 @@ it remains in the Java map, it will maintain the same identify.  But once
 it is removed, it is free to switch identities every time it is garbage
 collected.
 
-Swing
+AWT/Swing
 *****
 
 Java GUI elements can be used from Python.  To use Swing
@@ -3190,4 +3190,3 @@ resulting in unusual behavior with certain windows calls. The path
 separator for Cygwin does not match that of the Java DLL, thus specification
 of class paths must account for this.  Threading between the Cygwin libraries
 and the JVM was often unstable.
-
