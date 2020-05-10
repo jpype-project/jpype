@@ -3,9 +3,18 @@
 # https://aka.ms/yaml
 
 pr:
-  - master
-  - release
-  - releases/*
+  branches:
+    include:
+    - master
+    - releases/*
+  paths:
+    include:
+    - doc/*
+    - setup.py
+    - setupext/*
+    - jpype/*
+    - native/*
+    - test/*
 
 jobs:
 - job: Documentation

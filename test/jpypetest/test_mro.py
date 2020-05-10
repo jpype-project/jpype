@@ -14,15 +14,16 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-from jpype import JPackage, java
+from jpype.types import *
+from jpype import java
 import sys
 import common
 
 
 class MroTestCase(common.JPypeTestCase):
     def testMro(self):
-        C = JPackage('jpype.mro').C
+        C = JClass('jpype.mro.C')
 
     def testMultipleInterfaces(self):
-        j = JPackage("jpype").mro.MultipleInterfaces
+        j = JClass("jpype.mro.MultipleInterfaces")
         myinstance = j()
