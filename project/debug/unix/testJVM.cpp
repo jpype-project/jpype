@@ -1,67 +1,59 @@
-#include <Windows.h>
+#if defined(_HPUX) && !defined(_IA64)
+#include <dl.h>
+#else
+#include <dlfcn.h>
+#endif // HPUX
+#include <errno.h>
 #include <string>
+#include <cstring>
+#include <cstdio>
+#include <sstream>
 //#include <jni.h>
 #include "../../../native/jni_include/jni.h"
 
-HINSTANCE jvmLibrary;
+void* jvmLibrary;
 jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 #define USE_JNI_VERSION JNI_VERSION_1_4
 JavaVM *jvm;
 
-std::string formatMessage(DWORD msgCode)
-{
-	LPVOID lpMsgBuf;
-	DWORD rc = ::FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			msgCode,
-			0,
-			(LPTSTR) & lpMsgBuf,
-			0, NULL );
-	if (rc == 0)
-	{
-		printf("format message returned 0 (%d)", ::GetLastError());
-		exit(-1);
-	}
-
-	std::string res((LPTSTR) lpMsgBuf);
-	::LocalFree(lpMsgBuf);
-	return res;
-}
-
 void loadLibrary(const char* path)
 {
-	jvmLibrary = ::LoadLibrary(path);
+#if defined(_HPUX) && !defined(_IA64)
+	jvmLibrary = shl_load(path, BIND_DEFERRED | BIND_VERBOSE, 0L);
+#else
+	jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+#endif // HPUX
 	if (jvmLibrary == NULL)
 	{
 		printf("Failed to load JVM from %s\n", path);
-		printf("LastError %d\n", GetLastError());
-		printf("Message: %s\n", formatMessage(GetLastError()).c_str());
+		printf("Errno: %d\n", errno);
+		if (errno == ENOEXEC)
+		{
+			printf("diagnostics: %s\n", dlerror());
+		}
 		exit(-1);
 	}
 }
 
 void unloadLibrary()
 {
-	if (::FreeLibrary(jvmLibrary) == 0)
+	int r = dlclose(jvmLibrary);
+	if (r != 0) // error
 	{
 		printf("  Failed to unload JVM\n");
-		printf("  LastError %d\n", GetLastError());
-		printf("  Message: %s\n", formatMessage(GetLastError()).c_str());
+		printf("Errno: %d\n", errno);
+		printf("Dlerror: %s\n", dlerror());
 		exit(-1);
 	}
 }
 
 void* getSymbol(const char* name)
 {
-	void* res = (void*) ::GetProcAddress(jvmLibrary, name);
+	void* res = dlsym(jvmLibrary, name);
 	if (res == NULL)
 	{
 		printf("  Failed to get Symbol %s\n", name);
-		printf("  LastError %d\n", GetLastError());
-		printf("  Message: %s\n", formatMessage(GetLastError()).c_str());
+		printf("errno %d\n", errno);
 		exit(-1);
 	}
 	return res;
@@ -77,26 +69,9 @@ int main(int argc, char** argv)
 {
 	if (argc < 2)
 	{
-		printf("Usage:  %s %%JAVA_HOME%%/bin/server/jvm.dll [JVM_ARGS]", argv[0]);
+		printf("Usage:  %s $JAVA_HOME/lib/server/libjvm.so [JVM_ARGS]\n", argv[0]);
 		exit(-1);
 	}
-
-	printf("Check paths\n");
-	char directory[1024];
-	int sz = ::GetSystemDirectoryA(directory, 1024);
-	if (sz == 0)
-	{
-		printf("GetSystemDirectory failed\n");
-		exit(-1);
-	}
-	printf("  SystemDirectory: %s\n", std::string(directory, sz).c_str());
-	sz = ::GetWindowsDirectoryA(directory, 1024);
-	if (sz == 0)
-	{
-		printf("GetWindowsDirectory failed\n");
-		exit(-1);
-	}
-	printf("  WindowsDirectory: %s\n", std::string(directory, sz).c_str());
 
 	printf("Load library\n");
 	loadLibrary(argv[1]);

@@ -73,3 +73,4 @@ docker/*.tar.gz
 docker/wheelhouse
 /.eggs
 /tmp*
+a.out
