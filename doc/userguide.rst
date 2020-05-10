@@ -2430,7 +2430,7 @@ it is removed, it is free to switch identities every time it is garbage
 collected.
 
 AWT/Swing
-*****
+*********
 
 Java GUI elements can be used from Python.  To use Swing
 elements the event loop in java must be started from a user thread. 
