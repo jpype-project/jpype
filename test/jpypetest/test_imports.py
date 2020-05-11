@@ -42,7 +42,6 @@ class ImportsTestCase(common.JPypeTestCase):
         #        logger = logging.getLogger(__name__)
         #        logger.info("TEST:JImports")
         common.JPypeTestCase.setUp(self)
-        self.__jp = self.jpype.attr
 
     @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportPackage(self):

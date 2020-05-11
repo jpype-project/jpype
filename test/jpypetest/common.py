@@ -16,18 +16,32 @@
 # *****************************************************************************
 
 import pytest
+import _jpype
 import jpype
 import logging
-import os
 from os import path
 import sys
 import unittest
+import platform
 
 CLASSPATH = None
+fast = False
 
 
 def version(v):
     return tuple([int(i) for i in v.split('.')])
+
+
+def requirePythonAfter(required):
+    pversion = tuple([int(i) for i in platform.python_version_tuple()])
+
+    def g(func):
+        def f(self):
+            if pversion < required:
+                raise unittest.SkipTest("numpy required")
+            return func(self)
+        return f
+    return g
 
 
 def requireInstrumentation(func):
@@ -87,9 +101,11 @@ class JPypeTestCase(unittest.TestCase):
                 args.append("-Xcheck:jni")
             # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
             # "-Xcheck:jni",
-            if self._jar:
+            if self._classpath:
+                from pathlib import Path
                 import warnings
-                jpype.addClassPath(self._jar)
+                # This needs to be relative to run location
+                jpype.addClassPath(Path(self._classpath).resolve())
                 warnings.warn("using jar instead of thunks")
             if self._convertStrings:
                 import warnings
@@ -97,13 +113,14 @@ class JPypeTestCase(unittest.TestCase):
             if self._jacoco:
                 import warnings
                 args.append(
-                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=jacoco.exec,includes=org.jpype.*")
+                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
             import pathlib
             jpype.addClassPath(pathlib.Path("lib/*").absolute())
             print("XXX", jpype.getClassPath())
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
+            _jpype.enableStacktraces(True)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, *args,
                            convertStrings=self._convertStrings)

@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-VALUES = [random.randint(-2**15, 2**15-1) for i in range(10)]
+VALUES = [random.randint(-2**15, 2**15 - 1) for i in range(10)]
 
 
 class JShortTestCase(common.JPypeTestCase):
@@ -88,13 +88,13 @@ class JShortTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testFault(self):
-        _jpype.fault("JPShortType::getJavaConversion")
+        _jpype.fault("JPShortType::findJavaConversion")
         with self.assertRaises(SystemError):
             JShort(1.0)
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPShortType::getJavaConversion")
+        _jpype.fault("JPShortType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JShort._canConvertToJava(object())
 
@@ -218,10 +218,10 @@ class JShortTestCase(common.JPypeTestCase):
         self.checkTypeFail(2.0)
 
     def testCheckRange(self):
-        self.checkType(2**15-1)
+        self.checkType(2**15 - 1)
         self.checkType(-2**15)
         self.checkTypeFail(2**15, exc=OverflowError)
-        self.checkTypeFail(-2**15-1, exc=OverflowError)
+        self.checkTypeFail(-2**15 - 1, exc=OverflowError)
 
     def testExplicitRange(self):
         # These will not overflow as they are explicit casts
@@ -245,15 +245,15 @@ class JShortTestCase(common.JPypeTestCase):
 
     def testCheckJShort(self):
         self.checkType(JShort(-2**15))
-        self.checkType(JShort(2**15-1))
+        self.checkType(JShort(2**15 - 1))
 
     def testCheckJInt(self):
-        self.checkTypeFail(JInt(-2**31+1))
-        self.checkTypeFail(JInt(2**31-1))
+        self.checkTypeFail(JInt(-2**31 + 1))
+        self.checkTypeFail(JInt(2**31 - 1))
 
     def testCheckJLong(self):
-        self.checkTypeFail(JLong(-2**63+1))
-        self.checkTypeFail(JLong(2**63-1))
+        self.checkTypeFail(JLong(-2**63 + 1))
+        self.checkTypeFail(JLong(2**63 - 1))
 
     @common.requireNumpy
     def testCheckNumpyInt8(self):
@@ -266,18 +266,18 @@ class JShortTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testCheckNumpyInt16(self):
-        self.checkType(np.random.randint(-2**15, 2**15-1, dtype=np.int16))
+        self.checkType(np.random.randint(-2**15, 2**15 - 1, dtype=np.int16))
         self.checkType(np.uint16(0))
-        self.checkTypeFail(np.uint16(2**16-1), exc=OverflowError)
+        self.checkTypeFail(np.uint16(2**16 - 1), exc=OverflowError)
         self.checkType(np.int16(-2**15))
-        self.checkType(np.int16(2**15-1))
+        self.checkType(np.int16(2**15 - 1))
 
     @common.requireNumpy
     def testCheckNumpyInt32(self):
         self.checkType(np.uint32(0))
-        self.checkTypeFail(np.uint32(2**32-1), exc=OverflowError)
+        self.checkTypeFail(np.uint32(2**32 - 1), exc=OverflowError)
         self.checkTypeFail(np.int32(-2**31), exc=OverflowError)
-        self.checkTypeFail(np.int32(2**31-1), exc=OverflowError)
+        self.checkTypeFail(np.int32(2**31 - 1), exc=OverflowError)
 
     @common.requireNumpy
     def testCheckNumpyInt64(self):
@@ -287,7 +287,7 @@ class JShortTestCase(common.JPypeTestCase):
         # FIXME OverflowError
         # self.checkType(np.uint64(2**64-1))
         self.checkTypeFail(np.int64(-2**63), exc=OverflowError)
-        self.checkTypeFail(np.int64(2**63-1), exc=OverflowError)
+        self.checkTypeFail(np.int64(2**63 - 1), exc=OverflowError)
 
     @common.requireNumpy
     def testCheckNumpyFloat32(self):
@@ -313,7 +313,7 @@ class JShortTestCase(common.JPypeTestCase):
         ja[:] = a
 
     def testArrayConversion(self):
-        a = [random.randint(-2**15, 2**15-1) for i in range(100)]
+        a = [random.randint(-2**15, 2**15 - 1) for i in range(100)]
         jarr = self.checkArrayType(a, a)
         result = jarr[2:10]
         self.assertEqual(len(a[2:10]), len(result))
@@ -369,8 +369,10 @@ class JShortTestCase(common.JPypeTestCase):
         self.assertEqual(ja[0], 123)
         ja[0:1] = [-1]
         self.assertEqual(ja[0], -1)
-        ja[0:1] = [java.lang.Double(321)]
-        self.assertEqual(ja[0], 321)
+        with self.assertRaises(TypeError):
+            ja[0:1] = [1.000]
+        with self.assertRaises(TypeError):
+            ja[0:1] = [java.lang.Double(321)]
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
 
@@ -496,7 +498,7 @@ class JShortTestCase(common.JPypeTestCase):
         JA = JArray(JShort)
         ja = JA(VALUES)
         ja2 = ja[::2]
-        jo = jpype.JObject(ja2, object)
+        jo = jpype.JObject(ja2, jpype.JObject)
         ja3 = jpype.JObject(jo, JA)
         self.assertEqual(type(jo), jpype.JClass("java.lang.Object"))
         self.assertEqual(type(ja2), JA)

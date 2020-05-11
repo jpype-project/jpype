@@ -146,7 +146,7 @@ class JStringTestCase(common.JPypeTestCase):
     def testNullAdd(self):
         jsn = JObject(None, JString)
         with self.assertRaises(ValueError):
-            jsn+"a"
+            jsn + "a"
 
     def testNullHash(self):
         jsn = JObject(None, JString)

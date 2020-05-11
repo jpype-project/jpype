@@ -19,17 +19,17 @@ import _jpype
 __all__ = ['JObject']
 
 
-class JObject(_jpype._JObject):
+class JObject(_jpype._JObject, internal=True):
     """ Base class for all object instances.
 
-    It can be used to test if an object is a java object instance with
+    It can be used to test if an object is a Java object instance with
     ``isinstance(obj, JObject)``.
 
     Calling ``JObject`` as a function can be used to covert or cast to
     specific Java type.  It will box primitive types and supports an
     option type to box to.
 
-    This wrapper functions four ways.
+    This wrapper functions in three ways.
 
       - If the no type is given the object is automatically
         cast to type best matched given the value.  This can be used
@@ -42,10 +42,6 @@ class JObject(_jpype._JObject):
         object will be cast to the Java class and will be an exact match to
         the class for the purposes of matching arguments. If the object
         is not compatible, an exception will be raised.
-
-      - If the value is a python wrapper for class it will create a class
-        instance.  This is aliased to be much more obvious as the ``class_``
-        member of each Java class.
 
     Args:
        value: The value to be cast into an Java object.
@@ -107,7 +103,7 @@ def _JObjectFactory(v=None, tp=None):
         if not isinstance(tp, _jpype.JClass):
             import warnings
             warnings.warn("Using JObject with a Python type is deprecated.",
-                              category=DeprecationWarning, stacklevel=3)
+                          category=DeprecationWarning, stacklevel=3)
         tp = _jpype._object_classes[tp]
 
     # Given a Java class

@@ -53,10 +53,12 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # built documents.
 #
 # The short X.Y version.
-import mock
+from unittest import mock
+
 
 def TypeMock_init(self, *args, **kwargs):
     object.__init__(self)
+
 
 def TypeMock_getattr(self, key):
     kwargs = self._kwargs
@@ -64,13 +66,14 @@ def TypeMock_getattr(self, key):
     object.__setattr__(self, key, m)
     return m
 
+
 class TypeMock(type):
     def __new__(cls, name, bases=None, members={}, to=mock.Mock, **kwargs):
         if not bases:
             bases = tuple([])
 
-        members['__init__'] =  TypeMock_init
-        members['__getattr__'] =  TypeMock_getattr
+        members['__init__'] = TypeMock_init
+        members['__getattr__'] = TypeMock_getattr
         members['_kwargs'] = kwargs
         members['_to'] = to
         members['__slots__'] = []
@@ -85,29 +88,39 @@ class TypeMock(type):
         type.__setattr__(self, key, m)
         return m
 
+
 class _JClass(type):
     pass
+
 
 class _JClassHints(object):
     def __init__(self):
         self.bases = []
-    def addClassBases(self, *args):
+
+    def _addClassBases(self, *args):
         pass
-    def addTypeConversion(self, *args):
+
+    def _addTypeConversion(self, *args):
         pass
-    def addAttributeConversion(self, *args):
+
+    def _addAttributeConversion(self, *args):
         pass
+
+    def _excludeConversion(self, *args):
+        pass
+
 
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
 mockModule._JArray = TypeMock("_JArray")
 mockModule._JClass = _JClass
-mockModule._JField = TypeMock("_JField") 
+mockModule._JField = TypeMock("_JField")
 mockModule._JMethod = TypeMock("_JMethod")
 mockModule._JObject = TypeMock("_JObject")
+mockModule._JPackage = TypeMock("_JPackage")
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
-sys.modules['_jpype']=mockModule
+sys.modules['_jpype'] = mockModule
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
 # it here solved the problem.
@@ -204,8 +217,8 @@ html_static_path = ['_static']
 html_context = {
     'css_files': [
         '_static/theme_overrides.css',  # override wide tables in RTD theme
-        ],
-     }
+    ],
+}
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -260,22 +273,22 @@ htmlhelp_basename = 'JPypedoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'JPype.tex', u'JPype Documentation',
-   u'Steve Menard, Luis Nell and others', 'manual'),
+    ('index', 'JPype.tex', u'JPype Documentation',
+     u'Steve Menard, Luis Nell and others', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -318,9 +331,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'JPype', u'JPype Documentation',
-   u'Steve Menard, Luis Nell and others', 'JPype', 'One line description of project.',
-   'Miscellaneous'),
+    ('index', 'JPype', u'JPype Documentation',
+     u'Steve Menard, Luis Nell and others', 'JPype', 'One line description of project.',
+     'Miscellaneous'),
 ]
 
 # Documents to append as an appendix to all manuals.
@@ -335,4 +348,4 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-napoleon_custom_sections = ["Static Methods","Virtual Methods","Constructors"]
+napoleon_custom_sections = ["Static Methods", "Virtual Methods", "Constructors"]

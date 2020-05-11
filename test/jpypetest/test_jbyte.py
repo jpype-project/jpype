@@ -1,6 +1,7 @@
 import _jpype
 import jpype
 from jpype.types import *
+from jpype import java
 import sys
 import logging
 import time
@@ -18,7 +19,7 @@ class JByteTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testConversionFault(self):
-        _jpype.fault("JPByteType::getJavaConversion")
+        _jpype.fault("JPByteType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JByte._canConvertToJava(object())
 
@@ -193,3 +194,16 @@ class JByteTestCase(common.JPypeTestCase):
             ja[:] = [1, 2, 3]
         with self.assertRaisesRegex(ValueError, "mismatch"):
             ja[:] = a
+
+    def testArraySetRange(self):
+        ja = JArray(JByte)(3)
+        ja[0:1] = [123]
+        self.assertEqual(ja[0], 123)
+        ja[0:1] = [-1]
+        self.assertEqual(ja[0], -1)
+        with self.assertRaises(TypeError):
+            ja[0:1] = [1.000]
+        with self.assertRaises(TypeError):
+            ja[0:1] = [java.lang.Double(321)]
+        with self.assertRaises(TypeError):
+            ja[0:1] = [object()]

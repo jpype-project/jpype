@@ -77,7 +77,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 	}
 
 	return lastMatch;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, bool callInstance,
@@ -161,7 +161,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	{
 		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
-		JP_TRACE("Compare", i, j, type->toString(), JPPyObject::getTypeName(arg[j]));
+		JP_TRACE("Compare", i, j, type->getCanonicalName(), JPPyObject::getTypeName(arg[j]));
 		JPMatch::Type ematch = type->findJavaConversion(methodMatch.argument[j]);
 		JP_TRACE("Result", ematch);
 		if (ematch < methodMatch.type)
@@ -175,7 +175,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	}
 
 	return methodMatch.type;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
@@ -201,7 +201,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	{
 		v[i - match.skip] = match.argument[i].convert();
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
@@ -249,7 +249,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		}
 		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
@@ -274,7 +274,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		len--;
 		JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
 		if (selfObj == NULL)
-			JP_RAISE(PyExc_RuntimeError, "Null object");
+			JP_RAISE(PyExc_RuntimeError, "Null object"); // GCOVR_EXCL_LINE
 		self = selfObj->getJavaObject();
 	}
 
@@ -299,7 +299,12 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	}
 
 	// Call the method
-	jobject o = frame.callMethod(m_Method.get(), self, ja);
+	jobject o;
+	{
+		JPPyCallRelease call;
+		o =	 frame.callMethod(m_Method.get(), self, ja);
+	}
+
 
 	JP_TRACE("ReturnType", retType->getCanonicalName());
 

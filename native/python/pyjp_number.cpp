@@ -398,30 +398,30 @@ void PyJPNumber_initType(PyObject* module)
 	bases = PyTuple_Pack(2, &PyLong_Type, PyJPObject_Type);
 	PyJPNumberLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberLongSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JNumberLong", (PyObject*) PyJPNumberLong_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = PyTuple_Pack(2, &PyFloat_Type, PyJPObject_Type);
 	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JNumberFloat", (PyObject*) PyJPNumberFloat_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = PyTuple_Pack(1, &PyLong_Type, PyJPObject_Type);
 	PyJPNumberChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberCharSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPNumberChar_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = PyTuple_Pack(1, &PyLong_Type, PyJPObject_Type);
 	PyJPNumberBool_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberBooleanSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JBoolean", (PyObject*) PyJPNumberBool_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }
 
 JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value)

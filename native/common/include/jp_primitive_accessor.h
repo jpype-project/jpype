@@ -91,6 +91,7 @@ template <class type_t> PyObject *convertMultiArray(
 	frame.SetObjectArrayElement(contents, k++, a0);
 	jboolean isCopy;
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+	JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
 	type_t *dest = (type_t*) mem;
 
 	Py_ssize_t step;
@@ -117,6 +118,7 @@ template <class type_t> PyObject *convertMultiArray(
 			}
 			// Commit the current section
 			indices[u] = 0;
+			JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
 			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, JNI_COMMIT);
 			frame.DeleteLocalRef(a0);
 
@@ -127,6 +129,7 @@ template <class type_t> PyObject *convertMultiArray(
 			a0 = cls->newArrayInstance(frame, base);
 			frame.SetObjectArrayElement(contents, k++, a0);
 			mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
+			JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
 			dest = (type_t*) mem;
 			src = buffer.getBufferPtr(indices);
 		}
@@ -149,11 +152,11 @@ template <class type_t> PyObject *convertMultiArray(
 }
 
 template <typename base_t>
-class JPConversionLong : public JPConversion
+class JPConversionLong : public JPIndexConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyLong_CheckExact(match.object) && !PyIndex_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -186,12 +189,19 @@ class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_explicit;
+	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		PyObject *typing = PyImport_AddModule("jpype.protocol");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		PyList_Append(info.expl, proto.get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -207,10 +217,17 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	// GCOV_EXCL_START
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+		return JPMatch::_none; // Not used
 	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
+	{
+		// Not used
+	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{
@@ -223,11 +240,11 @@ public:
 } ;
 
 template <typename base_t>
-class JPConversionAsFloat : public JPConversion
+class JPConversionAsFloat : public JPNumberConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -251,12 +268,17 @@ class JPConversionLongAsFloat : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
+	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
 	}
 
 	virtual jvalue convert(JPMatch &match) override
@@ -275,10 +297,16 @@ class JPConversionFloatWiden : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls) override
+	// GCOVR_EXCL_START
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		return JPMatch::_none;  // GCOVR_EXCL_LINE not used
+		return JPMatch::_none;  // not used
 	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{

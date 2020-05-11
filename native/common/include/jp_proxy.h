@@ -17,28 +17,15 @@
 #ifndef _JPPROXY_H_
 #define _JPPROXY_H_
 
+struct PyJPProxy;
 class JPProxy;
-
-class JPProxyFactory
-{
-	friend class JPProxy;
-public:
-	explicit JPProxyFactory(JPJavaFrame& frame);
-	JPProxy* newProxy(PyObject* inst, JPClassList& intf);
-
-private:
-	JPContext* m_Context;
-	JPClassRef m_ProxyClass;
-	jmethodID m_NewProxyID;
-	jmethodID m_NewInstanceID;
-} ;
+class JPFunctional;
 
 class JPProxy
 {
-	friend class JPProxyFactory;
-	JPProxy(JPProxyFactory* factory, PyObject* inst, JPClassList& intf);
-
 public:
+	friend class JPProxyType;
+	JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf);
 	virtual ~JPProxy();
 
 	const JPClassList& getInterfaces() const
@@ -50,15 +37,51 @@ public:
 
 	JPContext* getContext()
 	{
-		return m_Factory->m_Context;
+		return m_Context;
 	}
 
-private:
-	JPProxyFactory* m_Factory;
-	PyObject*     m_Instance; // This is a PyJPProxy
+	virtual JPPyObject getCallable(const string& cname) = 0;
+	static void releaseProxyPython(void* host);
+	static JNIEXPORT jobject JNICALL hostInvoke(
+			JNIEnv *env, jclass clazz,
+			jlong contextPtr, jstring name,
+			jlong hostObj,
+			jlong returnTypePtr,
+			jlongArray parameterTypePtrs,
+			jobjectArray args);
+
+protected:
+	JPContext*    m_Context;
+	PyJPProxy*    m_Instance;
 	JPObjectRef   m_Proxy;
 	JPClassList   m_InterfaceClasses;
 	jweak         m_Ref;
+} ;
+
+class JPProxyDirect : public JPProxy
+{
+public:
+	JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	virtual ~JPProxyDirect();
+	virtual JPPyObject getCallable(const string& cname) override;
+} ;
+
+class JPProxyIndirect : public JPProxy
+{
+public:
+	JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	virtual ~JPProxyIndirect();
+	virtual JPPyObject getCallable(const string& cname) override;
+} ;
+
+class JPProxyFunctional : public JPProxy
+{
+public:
+	JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	virtual ~JPProxyFunctional();
+	virtual JPPyObject getCallable(const string& cname) override;
+private:
+	JPFunctional *m_Functional;
 } ;
 
 /** Special wrapper for round trip returns

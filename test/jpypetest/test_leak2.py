@@ -6,13 +6,16 @@ import logging
 import time
 import common
 
+
 class Tracer(object):
     ctor = 0
     dtor = 0
+
     def __init__(self):
-        Tracer.ctor +=1 
+        Tracer.ctor += 1
+
     def __del__(self):
-        Tracer.dtor +=1 
+        Tracer.dtor += 1
 
     @staticmethod
     def reset():
@@ -21,15 +24,15 @@ class Tracer(object):
 
     @staticmethod
     def leaked():
-        return Tracer.ctor-Tracer.dtor
+        return Tracer.ctor - Tracer.dtor
 
     @staticmethod
     def attach(obj):
         object.__setattr__(obj, "_trace", Tracer())
-    
 
-# This test finds reference counting leak by attaching an 
-# object that lives as long as the wrapper is alive.  
+
+# This test finds reference counting leak by attaching an
+# object that lives as long as the wrapper is alive.
 # It can't detect Java reference counter leaks.
 class Leak2TestCase(common.JPypeTestCase):
 
@@ -40,6 +43,7 @@ class Leak2TestCase(common.JPypeTestCase):
 
     def testArrayCall(self):
         JA = JArray(JInt)
+
         def call():
             inst = JA(100)
             Tracer.attach(inst)
@@ -50,6 +54,7 @@ class Leak2TestCase(common.JPypeTestCase):
 
     def testArrayMemoryView(self):
         JA = JArray(JInt)
+
         def call():
             inst = JA(100)
             Tracer.attach(inst)
@@ -60,6 +65,7 @@ class Leak2TestCase(common.JPypeTestCase):
 
     def testBufferCall(self):
         byte_buffer = jpype.JClass('java.nio.ByteBuffer')
+
         def call():
             inst = byte_buffer.allocateDirect(10)
             Tracer.attach(inst)
@@ -70,6 +76,7 @@ class Leak2TestCase(common.JPypeTestCase):
 
     def testBufferMemoryView(self):
         byte_buffer = jpype.JClass('java.nio.ByteBuffer')
+
         def call():
             inst = byte_buffer.allocateDirect(10)
             Tracer.attach(inst)
@@ -77,4 +84,3 @@ class Leak2TestCase(common.JPypeTestCase):
         for i in range(100):
             call()
         self.assertEqual(Tracer.leaked(), 0)
-
