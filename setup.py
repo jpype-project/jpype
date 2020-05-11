@@ -14,7 +14,7 @@ else:
 
 setup(
     name='JPype1',
-    version='0.7.5',
+    version='0.7.6_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
