@@ -1,20 +1,24 @@
 from _jpype import JClass
 from . import _jinit
 from . import types as _jtypes
+import typing
+import _jpype
 import time
+import threading
+
 # This a generic implementation of PEP-249
 __all__ = ['BINARY', 'Binary', 'Connection', 'Cursor', 'DATE', 'DATETIME',
-        'DBAPITypeObject', 'DECIMAL', 'DataError', 'DatabaseError', 'Date',
-        'DateFromTicks', 'Error', 'FLOAT', 'IntegrityError', 'InterfaceError',
-        'InternalError', 'NUMBER', 'NotSupportedError', 'OperationalError',
-        'ProgrammingError', 'ROWID', 'STRING', 'TEXT', 'TIME', 'Time',
-        'TimeFromTicks', 'Timestamp', 'TimestampFromTicks', 'Warning',
-        '__builtins__', '__cached__', '__doc__', '__file__', '__loader__',
-        '__name__', '__package__', '__spec__', 'apilevel', 'connect',
-        'paramstyle', 'threadsafely']
+           'DBAPITypeObject', 'DECIMAL', 'DataError', 'DatabaseError', 'Date',
+           'DateFromTicks', 'Error', 'FLOAT', 'IntegrityError', 'InterfaceError',
+           'InternalError', 'NUMBER', 'NotSupportedError', 'OperationalError',
+           'ProgrammingError', 'ROWID', 'STRING', 'TEXT', 'TIME', 'Time',
+           'TimeFromTicks', 'Timestamp', 'TimestampFromTicks', 'Warning',
+           '__builtins__', '__cached__', '__doc__', '__file__', '__loader__',
+           '__name__', '__package__', '__spec__', 'apilevel', 'connect',
+           'paramstyle', 'threadsafely']
 
 apilevel = "2.0"
-threadsafely = 0
+threadsafety = 1
 paramstyle = 'qmark'
 
 # For compatiblity with sqlite (not implemented)
@@ -23,6 +27,7 @@ PARSE_DECLTYPES = None
 _SQLException = None
 _SQLTimeoutException = None
 _conversionTable = {}
+
 
 def connect(url, driver=None, **kwargs):
     if driver:
@@ -74,8 +79,11 @@ class NotSupportedError(DatabaseError):
 class Connection:
     def __init__(self, jconnection):
         self._jconnection = jconnection
+        self._thread = threading.get_ident()
 
     def __del__(self):
+        if not _jpype.isStarted():
+            return
         if self._jconnection.isClosed():
             self.close()
         # FIXME hande the case in which the JVM was terminated before __del__
@@ -88,15 +96,13 @@ class Connection:
         the connection. The same applies to all cursor objects trying to use
         the connection. Note that closing a connection without committing the
         changes first will cause an implicit rollback to be performed.  """
-        if self._jconnection.isClosed():
-            raise ProgrammingError
+        self._validate()
         self._jconnection.close()
 
     def commit(self):
         """Commit any pending transaction to the database.
         """
-        if self._jconnection.isClosed():
-            raise ProgrammingError
+        self._validate()
         self._jconnection.commit()
 
     def rollback(self):
@@ -110,22 +116,29 @@ class Connection:
         a connection without committing the changes first will cause an
         implicit rollback to be performed.
         """
-        if self._jconnection.isClosed():
-            raise ProgrammingError
+        self._validate()
         pass
 
     def cursor(self):
         """ Return a new Cursor Object using the connection. """
-        if self._jconnection.isClosed():
+        self._validate()
+        return Cursor(self)
+
+    def _validate(self):
+        if self._jconnection.isClosed() or threading.get_ident() != self._thread:
             raise ProgrammingError
-        return Cursor(self._jconnection)
+
+    def __call__(self):
+        self._validate()
 
 
 class Cursor:
 
     def __init__(self, connection):
+        if not isinstance(connection, Connection):
+            raise TypeError
         self._converters = {}
-        self._connection = connection
+        self._connection = connection._jconnection
         self._resultSet = None
         self._preparedStatement = None
         self._rowcount = -1
@@ -133,6 +146,7 @@ class Cursor:
         self._arraysize = 1
         self._description = None
         self._closed = False
+        self._thread = threading.get_ident()
 
     @property
     def description(self):
@@ -156,7 +170,7 @@ class Cursor:
             return self._description
         desc = []
         self._fetchColumns()
-        for i in range(1,self._columns+1):
+        for i in range(1, self._columns + 1):
             desc = (self._resultMetaData.getColumnName(i),
                     self._resultMetaData.getColumnTypeName(i))
         self._description = desc
@@ -195,12 +209,13 @@ class Cursor:
         The cursor will be unusable from this point forward; an Error (or
         subclass) exception will be raised if any operation is attempted with
         the cursor.  """
+        self._validate()
         self._finish()
         self._closed = True
 
     def _validate(self):
-        if self._closed or self._connection.isClosed():
-            raise Error()
+        if self._closed or self._connection.isClosed() or threading.get_ident() != self._thread:
+            raise ProgrammingError()
 
     def _finish(self):
         if self._resultSet is not None:
@@ -217,16 +232,21 @@ class Cursor:
     def _fetchParams(self):
         paramsMetaData = self._preparedStatement.getParameterMetaData()
         self._paramColumns = []
-        for i in range(1, paramsMetaData.getParameterCount()+1):
+        for i in range(1, paramsMetaData.getParameterCount() + 1):
             param = paramsMetaData.getParameterClassName(i)
             self._paramColumns.append(_conversionTable[param])
 
     def _setParams(self, params):
         self._fetchParams()
-        if len(self._paramColumns)!=len(params):
-            raise Error
-        for i in range(0,len(params)):
-            self._preparedStatement.setObject(i+1, params[i])
+        if len(self._paramColumns) != len(params):
+            raise Error("incorrect number of parameters")
+
+        if isinstance(params, typing.sequence):
+            for i in range(0, len(params)):
+                self._preparedStatement.setObject(i + 1, params[i])
+        elif isinstance(params, typing.mapping):
+            # FIXME we need the column names here
+            raise RuntimeError()
 
     def execute(self, operation, params=None):
         """
@@ -258,10 +278,17 @@ class Cursor:
         self._validate()
         if params is None:
             params = ()
+        if not isinstance(params, (typing.Sequence, typing.Mapping)):
+            raise ValueError("parameters are of unsupported type")
         # complete the previous operation
         self._finish()
         try:
             self._preparedStatement = self._connection.prepareStatement(operation)
+        except JClass("java.sql.SQLException") as ex:
+            raise OperationalError from ex
+        except TypeError as ex:
+            raise ValueError from ex
+        try:
             self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except TypeError:
             raise Error()
@@ -275,7 +302,7 @@ class Cursor:
         except _SQLException:
             pass
 
-    def executemany(self, operation, *seq_of_parameters):
+    def executemany(self, operation, seq_of_parameters):
         """
         Prepare a database operation (query or command) and then execute it
         against all parameter sequences or mappings found in the sequence
@@ -294,8 +321,52 @@ class Cursor:
 
         Return values are not defined.
         """
-        pass
+        self._validate()
+        if seq_of_parameters is None:
+            seq_of_parameters = ()
+        # complete the previous operation
+        self._finish()
+        try:
+            self._preparedStatement = self._connection.prepareStatement(operation)
+        except TypeError as ex:
+            raise ValueError from ex
+        try:
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
+        except TypeError:
+            raise Error()
+        self._rowcount = 0
 
+        if isinstance(seq_of_parameters, typing.Iterable):
+            for params in seq_of_parameters:
+                try:
+                    self._execute(params)
+                except _SQLException:
+                    break
+        elif hasattr(seq_of_parameters, '__next__'):
+            while True:
+                try:
+                    params = next(seq_of_parameters)
+                    self._execute(params)
+                except _SQLException:
+                    break
+                except StopIteration:
+                    break
+
+        else:
+            raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
+
+    def _execute(self, params):
+        self._setParams(params)
+        if self._preparedStatement.execute():
+            self._resultSet = self._preparedStatement.getResultSet()
+            self._resultMetaData = self._resultSet.getMetaData()
+        else:
+            self._rowcount += self._preparedStatement.getUpdateCount()
+
+    def executescript(self, params):
+        # FIXME not in spec
+        self._validate()
+        pass
 
     def _fetchColumns(self):
         self._validate()
@@ -303,7 +374,7 @@ class Cursor:
             return self._resultColumns
         self._resultColumns = []
         for i in range(0, self._resultMetaData.getColumnCount()):
-            result = self._resultMetaData.getColumnClassName(i+1)
+            result = self._resultMetaData.getColumnClassName(i + 1)
             self._resultColumns.append(_conversionTable[result])
         return self._resultColumns
 
@@ -321,6 +392,7 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         .execute*() did not produce any result set or no call was issued yet.
         """
+        self._validate()
         if not self._resultSet:
             raise Error()
         if not self._resultSet.next():
@@ -349,15 +421,18 @@ class Cursor:
         attribute. If the size parameter is used, then it is best for it to retain
         the same value from one .fetchmany() call to the next.
         """
+        self._validate()
         if not self._resultSet:
             raise Error()
-        if not size:
+        if size is None:
             size = self._arraysize
         # Set a fetch size
         self._resultSet.setFetchSize(size)
         self._fetchColumns()
         rows = []
         for i in range(size):
+            if not self._resultSet.next():
+                break
             row = self._fetchRow()
             if row is None:
                 break
@@ -366,7 +441,7 @@ class Cursor:
         self._resultSet.setFetchSize(0)
         return rows
 
-    def fetchall():
+    def fetchall(self):
         """ Fetch all (remaining) rows of a query result, returning them as
         a sequence of sequences (e.g. a list of tuples). Note that the cursor's
         arraysize attribute can affect the performance of this operation.
@@ -374,14 +449,13 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         .execute*() did not produce any result set or no call was issued yet.
         """
+        self._validate()
         if not self._resultSet:
             raise Error()
-        if not size:
-            size = self._rowsize
         # Set a fetch size
         self._fetchColumns()
         rows = []
-        while True:
+        while self._resultSet.next():
             row = self._fetchRow()
             if row is None:
                 break
@@ -404,12 +478,12 @@ class Cursor:
         """
         self._resultSet.close()
         if self._preparedStatement.getMoreResults():
-           self._resultSet = self._prepareStatement.getResultSet()
-           self._resultMetaData = self._resultSet.getMetaData()
-           return True
+            self._resultSet = self._prepareStatement.getResultSet()
+            self._resultMetaData = self._resultSet.getMetaData()
+            return True
         else:
-           self._rowcount = self._preparedStatement.getUpdageCount()
-           return None
+            self._rowcount = self._preparedStatement.getUpdageCount()
+            return None
 
     @property
     def arraysize(self):
@@ -435,7 +509,6 @@ class Cursor:
         rowId = rs.getLong(1)
         rs.close()
         return rowId
-        
 
     def setinputsizes(self, sizes):
         """ This can be used before a call to .execute*() to
@@ -468,6 +541,15 @@ class Cursor:
         to not use it.
         """
         pass
+
+    def __iter__(self):
+        self._validate()
+        if not self._resultSet:
+            raise Error()
+        # Set a fetch size
+        self._fetchColumns()
+        while self._resultSet.next():
+            yield self._fetchRow()
 
 
 def Date(year, month, day):
@@ -523,8 +605,9 @@ def Binary(data):
 #  SQL NULL values are represented by the Python None singleton on input and output.
 
 ##################
-# I honestly have no clue what these are supposed to do.  
+# I honestly have no clue what these are supposed to do.
 # They don't even appear in sqlite3 dbapi2 interface??
+
 
 class DBAPITypeObject:
     def __init__(self, *values):
@@ -537,6 +620,7 @@ class DBAPITypeObject:
             return 1
         else:
             return -1
+
 
 STRING = DBAPITypeObject('CHAR', 'NCHAR', 'NVARCHAR', 'VARCHAR', 'OTHER')
 
@@ -560,18 +644,21 @@ DATETIME = DBAPITypeObject('TIMESTAMP')
 
 ROWID = DBAPITypeObject('ROWID')
 
+
 class _StringConverter:
     def get(self, rs, column):
         pass
+
     def set(self, st, column, value):
         pass
+
 
 def _populateTypes():
     global _SQLException, _SQLTimeoutException
     _SQLException = JClass("java.sql.SQLException")
     _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
     _conversionTable["java.lang.String"] = _StringConverter()
+    _conversionTable["java.lang.Object"] = _StringConverter()
+
 
 _jinit.registerJVMInitializer(_populateTypes)
-
-

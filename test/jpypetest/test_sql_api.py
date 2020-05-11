@@ -35,6 +35,7 @@ import threading
 import unittest
 import jpype.sql as dbapi2
 
+
 def getConnection():
     return "jdbc:sqlite::memory:"
 
@@ -737,7 +738,7 @@ class ConstructorTests(common.JPypeTestCase):
         b = dbapi2.Binary(b"\0'")
 
 
-#class ExtensionTests(common.JPypeTestCase):
+# class ExtensionTests(common.JPypeTestCase):
 #
 #    def setUp(self):
 #        common.JPypeTestCase.setUp(self)
@@ -798,8 +799,8 @@ class ConstructorTests(common.JPypeTestCase):
 #            "create table test(foo); insert into test(foo) values (5);")
 #        result = con.execute("select foo from test").fetchone()[0]
 #        self.assertEqual(result, 5, "Basic test of Connection.executescript")
- 
- 
+
+
 class ClosedConTests(common.JPypeTestCase):
 
     def setUp(self):
@@ -892,11 +893,15 @@ class ClosedCurTests(common.JPypeTestCase):
             elif method_name == "executemany":
                 params = ("insert into foo(bar) values (?)", [(3,), (4,)])
             else:
-                params = []
+                params = None
 
+            print(method_name)
             with self.assertRaises(dbapi2.ProgrammingError):
                 method = getattr(cur, method_name)
-                method(*params)
+                if params is not None:
+                    method(*params)
+                else:
+                    method()
 
 #
 #  class SqliteOnConflictTests(unittest.TestCase):
