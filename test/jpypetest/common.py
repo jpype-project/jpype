@@ -87,9 +87,11 @@ class JPypeTestCase(unittest.TestCase):
                 args.append("-Xcheck:jni")
             # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
             # "-Xcheck:jni",
-            if self._jar:
+            if self._classpath:
+                from pathlib import Path
                 import warnings
-                jpype.addClassPath(self._jar)
+                # This needs to be relative to run location
+                jpype.addClassPath(Path(self._classpath).resolve())
                 warnings.warn("using jar instead of thunks")
             if self._convertStrings:
                 import warnings

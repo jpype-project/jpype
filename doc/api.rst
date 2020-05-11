@@ -19,7 +19,7 @@ provided by the imports_ module. The older ``JPackage`` method is available for
 accessing package trees with less error checking.  Direct loading of Java 
 classes can be made with JClass_.
 
-For convenience, the JPpype module predefines the following ``JPackage`` 
+For convenience, the JPype module predefines the following ``JPackage`` 
 instances for ``java`` and ``javax``.
 
 .. autoclass:: jpype.JPackage
@@ -37,16 +37,15 @@ Java Types
 ~~~~~~~~~~
 
 JPype has types for each of the Java primitives: ``JBoolean``, ``JByte``,
-``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  In addition
-there is one class for working with Java objects, ``JObject``.  These serve
-to be able to cast to a specified type and specify types with the ``JArray``
-factory. There is a ``JString`` type provided for convenience when creating
-or casting to strings.
+``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  There is one
+class for working with Java objects, ``JObject``.  This serves to cast to a
+specific object type.  There is a ``JString`` type provided for convenience
+when creating or casting to strings.
 
 .. autoclass:: jpype.JObject
 .. autoclass:: jpype.JString
 
-.. _synchronized:
+.. _threading:
 
 Threading
 ~~~~~~~~~
@@ -64,6 +63,7 @@ JPype uses ordinary Python classes to implement functionality in Java. Adding
 these decorators to a Python class will mark them for use by JPype to interact 
 with Java classes.
 
+.. autodecorator:: jpype.JConversion
 .. autodecorator:: jpype.JImplementationFor
 .. autodecorator:: jpype.JImplements
 .. autodecorator:: jpype.JOverride
@@ -72,7 +72,7 @@ with Java classes.
 Proxies
 ~~~~~~~
 
-JPype can implement Java interfaces either using decorators or by manually 
+JPype can implement Java interfaces either by using decorators or by manually 
 creating a JProxy.  Java only support proxying interfaces, thus we cannot 
 extend an existing Java class.
 
@@ -84,7 +84,7 @@ Customized Classes
 
 JPype provides standard customizers for Java interfaces so that Java objects 
 have syntax matching the corresponding Python objects. The customizers are 
-automatically bound the class on creation without user intervention.  We are 
+automatically bound to the class on creation without user intervention.  We are 
 documentating the functions that each customizer adds here.
 
 These internal classes can be used as example of how to implement your own 

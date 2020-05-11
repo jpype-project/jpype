@@ -3,25 +3,26 @@ import textwrap
 footnotes = []
 footnotecounter = 1
 
+
 def section(Title=None, Desc=None):
     print("%s" % Title)
-    print("-"*len(Title))
+    print("-" * len(Title))
     if Desc:
         print("%s" % Desc)
         print()
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
+    print("+" + ("-" * 27) + "+" + ("-" * 57) + "+" + ("-" * 57) + "+")
     print("| %-25s | %-55s | %-55s |" %
           ("Description", "Java", "Python"))
-    print("+"+("="*27)+"+"+("="*57)+"+"+("="*57)+"+")
+    print("+" + ("=" * 27) + "+" + ("=" * 57) + "+" + ("=" * 57) + "+")
 
 
 def endSection():
     print()
     global footnotes, footnotecounter
-    for i in range(0,len(footnotes)):
-        print("    .. [%d] %s"%(i+footnotecounter, footnotes[i]))
-    footnotecounter+=len(footnotes)
-    footnotes=[]
+    for i in range(0, len(footnotes)):
+        print("    .. [%d] %s" % (i + footnotecounter, footnotes[i]))
+    footnotecounter += len(footnotes)
+    footnotes = []
     print()
     print()
 
@@ -51,11 +52,11 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
     if Notes:
         global footnotes
         if Notes in footnotes:
-            Desc += " [%d]_"%(footnotes.index(Notes)+footnotecounter)
+            Desc += " [%d]_" % (footnotes.index(Notes) + footnotecounter)
         else:
-            Desc += " [%d]_"%(len(footnotes)+footnotecounter)
+            Desc += " [%d]_" % (len(footnotes) + footnotecounter)
             footnotes.append(Notes)
-    DescLines = textwrap.wrap(Desc,25)
+    DescLines = textwrap.wrap(Desc, 25)
     DescLines.insert(0, "")
     JavaLines = Java.split("\n")
     PythonLines = Python.split("\n")
@@ -76,35 +77,33 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
         else:
             print(" %-55s |" % "")
 
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
+    print("+" + ("-" * 27) + "+" + ("-" * 57) + "+" + ("-" * 57) + "+")
 
 ########################################################
 
 
 print("""
-QuickStart Guide
-================
+Java QuickStart Guide
+=====================
 
-Quick start quide to using JPype.  This quide will show a series of simple examples with the 
-corresponding commands in both Java and Python for using JPype. 
-The JPype :doc:`userguide` and :doc:`api` have addition details on the use of 
-the JPype module.
+This is a quick start guide to using JPype with Java.  This guide will show a
+series of snippets with the corresponding commands in both Java and Python for
+using JPype.  The :doc:`userguide` and :doc:`api` have additional details on
+the use of the JPype module.
 
+JPype uses two factory classes (``JArray`` and ``JClass``) to produce class
+wrappers which can be used to create all Java objects.  These serve as both the
+base class for the corresponding hierarchy and as the factory to produce new
+wrappers.  Casting operators are used to construct specify types of Java types
+(``JObject``, ``JString``, ``JBoolean``, ``JByte``, ``JChar``, ``JShort``,
+``JInt``, ``JLong``, ``JFloat``, ``JDouble``). Two special classes serve as the
+base classes for exceptions (``JException``) and interfaces (``JInterface``).
+There are a small number of support methods to help in controlling the JVM.
+Lastly, there are a few annotations used to create customized wrappers.
 
-JPype uses two factory classes (``JArray`` and ``JClass``) to produce class 
-wrappers which can be used to create all Java objects.  These serve as both 
-the base class for the corresponding hierarchy and as the factory to produce 
-new wrappers.  Casting operators are used to construct specify types of Java
-types (``JObject``, ``JString``, ``JBoolean``, ``JByte``, ``JChar``, 
-``JShort``, ``JInt``, ``JLong``, ``JFloat``, ``JDouble``). Two special
-classes serve as the base classes for exceptions (``JException``) and 
-interfaces (``JInterface``).
-There are a small number of support methods to help in controlling the JVM.  
-Last, there are a few annotations used to create customized wrappers.
-
-For the purpose of this guide, we will assume that the following classes were defined
-in Java.  We will also assume the reader knows enough Java and Python to be 
-dangerous.  
+For the purpose of this guide, we will assume that the following classes were
+defined in Java.  We will also assume the reader knows enough Java and Python
+to be dangerous.  
 
 """)
 
@@ -148,11 +147,11 @@ section("Starting JPype",
         """
 The hardest thing about using JPype is getting the jars loaded into the JVM.
 Java is curiously unfriendly about reporting problems when it is unable to find
-a jar.  Instead, it will be reported as an ``ImportError`` in python.
-These patterns will help debug problems regarding jar loading.
+a jar.  Instead, it will be reported as an ``ImportError`` in Python.
+These patterns will help debug problems with jar loading.
 
 Once the JVM is started Java packages that are within a top level domain (TLD)
-are exposed as python modules allowing Java to be treated as part of python.
+are exposed as Python modules allowing Java to be treated as part of Python.
 """
         )
 entry("Start Java Virtual Machine (JVM)", None,
@@ -171,9 +170,16 @@ entry("Start Java Virtual Machine (JVM)", None,
     # Launch the JVM
     jpype.startJVM()
 """)
+entry("Start Java Virtual Machine (JVM) with a classpath", None,
+      """
+.. code-block:: python
+    # Launch the JVM
+    jpype.startJVM(classpath = ['jars/*'])
+""")
+
 
 entry("Import default Java namespace", None,
-      python("import java.lang"), 
+      python("import java.lang"),
       "All ``java.lang.*`` classes are available.")
 
 entry("Add a set of jars from a directory", None,
@@ -196,11 +202,11 @@ endSection()
 #####################################################################################
 section("Classes/Objects",
         """
-Java classes are presented whereever possible exactly like Python classes. The only
-major difference is that Java classes and objects are closed and cannot be modified.
-As Java is strongly typed, casting operators are used to select specific 
-overloads when calling methods.  Classes are either imported using as a module
-or loaded with the ``JClass`` factory.
+Java classes are presented wherever possible similar to Python classes. The
+only major difference is that Java classes and objects are closed and cannot be
+modified.  As Java is strongly typed, casting operators are used to select
+specific overloads when calling methods.  Classes are either imported using a
+module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 """)
 
 # Importing
@@ -215,11 +221,11 @@ entry("Import a class and rename", None,
 
 entry("Import multiple classes from a package", None,
       python("from org.pkg import MyClass, AnotherClass"),
-      "This will report an error if the classes are not found")
+      "This will report an error if the classes are not found.")
 
 entry("Import a java package for long name access", None,
       python("import org.pkg"),
-      "Does not report errors if the package is invalid")
+      "Does not report errors if the package is invalid.")
 
 entry("Import a class static",
       java("import org.pkg.MyClass.CONST_FIELD"),
@@ -253,11 +259,11 @@ entry("Get a member field",
 entry("Set a static field",
       java("MyClass.staticField = 2;"),
       python("MyClass.staticField = 2"),
-      "Produces error for final fields")
+      "This produces an error for final fields.")
 entry("Set a member field",
       java("myObject.memberField = 2;"),
       python("myObject.memberField = 2"),
-      "Produces error for final fields")
+      "This produces an error for final fields.")
 
 # Methods
 entry("Call a static method",
@@ -266,7 +272,7 @@ entry("Call a static method",
 entry("Call a member method",
       java("myObject.callMember(1);"),
       python("myObject.callMember(1)"))
-entry("Access member with python naming conflict",
+entry("Access member with Python naming conflict",
       java("myObject.pass()"),
       python("myObject.pass_()"),
       "Underscore is added during wrapping.")
@@ -287,8 +293,9 @@ endSection()
 #####################################################################################
 section("Exceptions",
         """
-Java exceptions extend from python exceptions and can be dealt with no different 
-that Python native exceptions. JException serves as the base class for all Java exceptions.
+Java exceptions extend from Python exceptions and can be dealt with in the same
+way as Python native exceptions. JException serves as the base class for all
+Java exceptions.
 """)
 
 entry("Catch an exception",
@@ -310,14 +317,14 @@ entry("Catch an exception",
 """)
 
 entry("Throw an exception to Java",
-"""
+      """
 .. code-block:: java
 
   throw new java.lang.Exception(
           "Problem");
           
 """,
-"""
+      """
 .. code-block:: python
 
   raise java.lang.Exception(
@@ -347,14 +354,13 @@ endSection()
 #####################################################################################
 section("Primitives",
         """
-Most python primitives directly map into Java primitives. However, python does not
-have the same primitive types, thus sometimes it is necessary to cast to a specific 
-Java primitive type especially if there are 
-Java overloads that would otherwise be in conflict.  Each of the Java types are
-exposed in JPype (``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``, 
+Most Python primitives directly map into Java primitives. However, Python does
+not have the same primitive types, and it is necessary to cast to a
+specific Java primitive type whenever there are Java overloads that would
+otherwise be in conflict.  Each of the Java types are exposed in JPype
+(``JBoolean``, ``JByte``, ``JChar``, ``JShort``, ``JInt``, ``JLong``,
 ``JFloat``, ``JDouble``).
 
-Python int is equivalent to Java long.
 """)
 entry("Casting to hit an overload",
       java("myObject.call((int)v);"),
@@ -397,11 +403,11 @@ endSection()
 
 section("Strings",
         """
-Java strings are similar to python strings.  They are both immutable and
+Java strings are similar to Python strings.  They are both immutable and
 produce a new string when altered.  Most operations can use Java strings
-in place of python strings, with minor exceptions as python strings 
-are not completely duck typed.  When comparing or using as dictionary keys
-JString should be converted to python.
+in place of Python strings, with minor exceptions as Python strings 
+are not completely duck typed.  When comparing or using as dictionary keys,
+all JString objects should be converted to Python.
 """)
 entry("Create a Java string", java('String javaStr = new String("foo");'), python(
     'myStr = JString("foo")'), "``JString`` constructs a ``java.lang.String``")
@@ -432,7 +438,7 @@ endSection()
 
 section("Arrays",
         """
-Arrays are create using JArray class factory. They operate like python lists, but they are 
+Arrays are create using the JArray class factory. They operate like Python lists, but they are 
 fixed in size.
 """)
 entry("Create a single dimension array",
@@ -447,7 +453,7 @@ entry("Access an element",
 entry("Size of an array",
       java("array.length"),
       python("len(array)"))
-entry("Convert to python list", None,
+entry("Convert to Python list", None,
       python("pylist = list(array)"))
 
 entry("Iterate elements",
@@ -473,10 +479,8 @@ endSection()
 
 section("Collections",
         """
-Java standard containers are available and are overloaded with python syntax where 
-possible to operate in a similar fashion to python objects.  It is not
-currently possible to specify the template types for generic containers, but
-that will be introduced in Java 9.
+Java standard containers are available and are overloaded with Python syntax where 
+possible to operate in a similar fashion to Python objects.  
 """)
 entry("Import list type",
       java("import java.util.ArrayList;"),
@@ -549,9 +553,9 @@ endSection()
 
 section("Reflection",
         """
-For operations that are outside the scope of the JPype syntax, Using
-Java reflection, any Java operation include calling a specific overload
-or even accessing private methods and fields.
+Java reflection can be used to access operations that are outside the scope of
+the JPype syntax.  This includes calling a specific overload or even accessing
+private methods and fields.
 """)
 entry("Access Java reflection class",
       java("MyClass.class"),
@@ -566,7 +570,7 @@ entry("Access a private field by name", None,
         "internalField")
     field.setAccessible(True)
     field.get()
-""")
+""", """This is prohibited after Java 8""")
 
 entry("Accessing a specific overload", None,
       """
@@ -577,7 +581,7 @@ entry("Accessing a specific overload", None,
     cls.invoke(myObject, JInt(1))
 """, "types must be exactly specified.")
 
-entry("Convert a ``java.lang.Class`` into python wrapper", None,
+entry("Convert a ``java.lang.Class`` into Python wrapper", None,
       """
 .. code-block:: python
 
@@ -618,15 +622,12 @@ endSection()
 
 section("Implements and Extension",
         """
-JPype can implement a Java interface by annotating a python class.  Each
+JPype can implement a Java interface by annotating a Python class.  Each
 method that is required must be implemented.
 
-JPype does not support extending a class directly in python.  Where it is
+JPype does not support extending a class directly in Python.  Where it is
 necessary to exend a Java class, it is required to create a Java extension
-with an interface for each methods that are to be accessed from python.
-For some deployments this may be be an option.  If that is the case, 
-the JPype inline compiler can be used to create the dynamic class on the 
-fly.
+with an interface for each methods that are to be accessed from Python.
 """)
 
 entry("Implement an interface",
@@ -652,10 +653,10 @@ entry("Implement an interface",
       "")
 
 entry("Extending classes", None, None,
-      """Support for use of python function as Java 8 lambda is WIP.""")
+      """Support for use of Python function as Java 8 lambda is WIP.""")
 
 entry("Lambdas", None, None,
-      """Support for use of python function as Java 8 lambda is WIP.""")
+      """Support for use of Python function as Java 8 lambda is WIP.""")
 endSection()
 
 print(

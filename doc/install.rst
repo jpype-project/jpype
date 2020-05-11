@@ -46,7 +46,7 @@ JDK
 
 Once these requirements have been met, one can use pip to build from either the
 source distribution or directly from the repository.  Specific requirements from
-different achitectures are listed below_. 
+different achitectures are listed below_.
 
 
 Build using pip
@@ -147,8 +147,8 @@ CPython modules must be built with the same C++ compiler used to build Python.
 The tools listed below work for Python 3.5 to 3.8.  Check with `Python dev guide
 <https://devguide.python.org/setup/>`_ for the latest instructions.
 
-1. Install your desired version of Python (3.5 or higher), e.g., `Anaconda
-   <https://www.continuum.io/downloads>`_ is a good choice for users not yet
+1. Install your desired version of Python (3.5 or higher), e.g., `Miniconda
+   <https://docs.conda.io/en/latest/miniconda.html#windows-installers>`_ is a good choice for users not yet
    familiar with the language
 2. For Python 3 series, Install either 2017 or 2019 Visual Studio.
    `Microsoft Visual Studio 2019 Community Edition
@@ -163,6 +163,18 @@ From the Python developer page:
 
 When building for windows you must use the Visual Studio developer command
 prompt.
+
+
+Path requirements
+-----------------
+
+On certain systems such as Windows 2016 Server, the JDK will not load properly
+despite JPype properly locating the JVM library.  The work around for this 
+issue is add the JRE bin directory to the system PATH.  Apparently, the 
+shared library requires dependencies which are located in the bin directory.
+If a JPype fails to load despite having the correct JAVA_HOME and 
+system architecture, it may be this issue.
+
 
 Known Bugs/Limitations
 ----------------------

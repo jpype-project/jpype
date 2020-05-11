@@ -28,29 +28,31 @@ access to the entirety of CPython and Java libraries.
  <https://github.com/jpype-project/jpype/issues>`_
 :Documentation: `Python Docs`_
 :License: `Apache 2 License`_
-:Build status:  |travisCI|_ |appveyorCI|_ |Docs|_
-:Test status:  |testsCI|_ 
-:Version: |pypiVersion|_ |conda|_
-     
-    .. |travisCI| image:: https://img.shields.io/travis/jpype-project/jpype.svg?label=linux
-    .. _travisCI: https://travis-ci.org/jpype-project/jpype
-    
-    .. |appveyorCI| image:: https://img.shields.io/appveyor/ci/jpype-project/jpype.svg?label=windows
-    .. _appveyorCI: https://ci.appveyor.com/project/jpype-project/jpype
-    
-    .. |testsCI| image:: https://img.shields.io/appveyor/tests/jpype-project/jpype.svg
-    .. _testsCI: https://ci.appveyor.com/project/jpype-project/jpype
-    
-    .. |pypiVersion| image:: https://img.shields.io/pypi/v/Jpype1.svg
-    .. _pypiVersion: https://badge.fury.io/py/JPype1
-    
-    .. |conda| image:: https://img.shields.io/conda/v/conda-forge/jpype1.svg
-    .. _conda: https://anaconda.org/conda-forge/jpype1
+:Build status:  |TestsCI|_ |Docs|_
+:Quality status:  |Codecov|_ |lgtm_python|_ |lgtm_java|_ |lgtm_cpp|_
+:Version: |PypiVersion|_ |Conda|_
 
-    .. |Docs| image:: https://img.shields.io/readthedocs/jpype.svg
-    .. _Docs: http://jpype.readthedocs.org/en/latest/
+The work on this project began on `Sourceforge <http://sourceforge.net/projects/jpype/>`__.
 
-   
+
+.. |alerts| image:: https://img.shields.io/lgtm/alerts/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18
+.. _alerts: https://lgtm.com/projects/g/jpype-project/jpype/alerts/
+.. |lgtm_python| image:: https://img.shields.io/lgtm/grade/python/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=python
+.. _lgtm_python: https://lgtm.com/projects/g/jpype-project/jpype/context:python
+.. |lgtm_java| image:: https://img.shields.io/lgtm/grade/java/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=java
+.. _lgtm_java: https://lgtm.com/projects/g/jpype-project/jpype/context:java
+.. |lgtm_cpp| image:: https://img.shields.io/lgtm/grade/cpp/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=C++
+.. _lgtm_cpp: https://lgtm.com/projects/g/jpype-project/jpype/context:cpp
+.. |PypiVersion| image:: https://img.shields.io/pypi/v/Jpype1.svg
+.. _PypiVersion: https://badge.fury.io/py/JPype1
+.. |Conda| image:: https://img.shields.io/conda/v/conda-forge/jpype1.svg
+.. _Conda: https://anaconda.org/conda-forge/jpype1
+.. |TestsCI| image:: https://dev.azure.com/jpype-project/jpype/_apis/build/status/jpype-project.jpype?branchName=master
+.. _TestsCI: https://dev.azure.com/jpype-project/jpype/_build/latest?definitionId=1&branchName=master
+.. |Docs| image:: https://img.shields.io/readthedocs/jpype.svg
+.. _Docs: http://jpype.readthedocs.org/en/latest/
+.. |Codecov| image:: https://codecov.io/gh/jpype-project/jpype/branch/master/graph/badge.svg
+.. _Codecov: https://codecov.io/gh/jpype-project/jpype
 .. |implementation| image:: https://img.shields.io/pypi/implementation/jpype1.svg
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/jpype1.svg
 .. |javaversions| image:: https://img.shields.io/badge/java-8%20%7C%209%20%7C%2011-purple.svg
@@ -60,4 +62,4 @@ access to the entirety of CPython and Java libraries.
 .. _Apache 2 License: https://github.com/jpype-project/jpype/blob/master/LICENSE
 .. _Python Docs: http://jpype.readthedocs.org/en/latest/
 
-The work on this project began on `Sourceforge <http://sourceforge.net/projects/jpype/>`__.
+

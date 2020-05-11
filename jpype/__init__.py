@@ -48,8 +48,7 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version_info__ = (0, 7, 4)
-__version__ = ".".join(str(i) for i in __version_info__)
+__version__ = "0.7.5"
 
 
 @_core.deprecated
