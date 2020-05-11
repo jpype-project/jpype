@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_bytetype.h"
-#include "pyjp.h"
 
 JPByteType::JPByteType()
 : JPPrimitiveType("byte")
@@ -48,31 +48,57 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 JPConversionLong<JPByteType> byteConversion;
 JPConversionLongNumber<JPByteType> byteNumberConversion;
 
+class JPConversionJByte : public JPConversionJavaValue
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	{
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
+			return match.type;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit; // stop the search
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+} jbyteConversion;
+
 JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPByteType::getJavaConversion");
+	JP_TRACE_IN("JPByteType::findJavaConversion");
 
 	if (match.object == Py_None)
 		return match.type = JPMatch::_none;
 
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
-	{
-		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
-			return match.type;
-
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
-	}
-
-	if (byteConversion.matches(match, this)
-			|| byteNumberConversion.matches(match, this))
+	if (jbyteConversion.matches(this, match)
+			|| byteConversion.matches(this, match)
+			|| byteNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPByteType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jbyteConversion.getInfo(this, info);
+	byteConversion.getInfo(this, info);
+	byteNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
 jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -181,7 +207,13 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
-		jlong v = PyLong_AsLongLong(seq[i].get());
+		PyObject *item = seq[i].get();
+		if (!PyIndex_Check(item))
+		{
+			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
+			JP_RAISE_PYTHON();
+		}
+		jlong v = PyLong_AsLongLong(item);
 		if (v == -1)
 			JP_PY_CHECK();
 		val[index] = (type_t) assertRange(v);

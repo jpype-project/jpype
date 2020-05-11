@@ -19,14 +19,19 @@ package org.jpype;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
+import org.jpype.pkg.JPypePackage;
+import org.jpype.pkg.JPypePackageManager;
 import org.jpype.ref.JPypeReferenceQueue;
 
 /**
@@ -72,6 +77,10 @@ public class JPypeContext
   private TypeManager typeManager;
   private JPypeReferenceQueue referenceQueue;
   private ClassLoader bootLoader;
+  private AtomicInteger shutdownFlag = new AtomicInteger();
+  private AtomicInteger proxyCount = new AtomicInteger();
+  private List<Thread> shutdownHooks = new ArrayList<>();
+  private List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
@@ -100,18 +109,162 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
+    JPypeSignal.installHandlers();
+
+    // Install a shutdown hook to clean up Python resources.
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+    {
+      @Override
+      public void run()
+      {
+        instance.shutdown();
+      }
+    }));
 
     return instance;
   }
 
   /**
-   * Stop all JPype resources.
+   * Shutdown and remove all Python resources.
    *
+   * This hook is only called after the last user thread has died. Thus the only
+   * remaining connections are proxies that were attached to the JVM shutdown
+   * hook, the reference queue, and the typemanager.
+   *
+   * This routine will try to take out the last connections in an orderly
+   * fashion. Inherently this is a very dangerous time as portions of Java have
+   * already been deactivated.
    */
-  public void shutdown()
+  @SuppressWarnings(
+          {
+            "CallToThreadYield", "SleepWhileInLoop"
+          })
+  private void shutdown()
   {
-    this.referenceQueue.stop();
-    this.typeManager.shutdown();
+    try
+    {
+      // Try to yield in case there is a race condition.  The user
+      // may have installed a shutdown hook, but we cannot verify
+      // the order that shutdown hook threads are executed.  Thus we will
+      // try to intentionally lose the race.
+      //
+      // This will only occur if something registered a shutdown hook through
+      // a Java API.  Those registered though the JPype API will be joined
+      // manually.
+      for (int i = 0; i < 5; i++)
+      {
+        try
+        {
+          Thread.sleep(1);
+          Thread.yield();
+        } catch (InterruptedException ex)
+        {
+        }
+      }
+
+      // Execute any used defined shutdown hooks registered with JPype.
+      if (!this.shutdownHooks.isEmpty())
+      {
+        for (Thread thread : this.shutdownHooks)
+        {
+          thread.start();
+        }
+        for (Thread thread : this.shutdownHooks)
+        {
+          try
+          {
+            thread.join();
+          } catch (InterruptedException ex)
+          {
+          }
+        }
+      }
+
+      // Disable all future calls to proxies
+      this.shutdownFlag.incrementAndGet();
+
+      // Past this point any further execution of a Python proxy would
+      // be fatal.
+      Thread t1 = Thread.currentThread();
+      Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
+
+      for (Thread t : threads.keySet())
+      {
+        if (t1 == t)
+          continue;
+//      if (t.getState() == Thread.State.RUNNABLE)
+        t.interrupt();
+      }
+
+      // Inform Python no more calls are permitted
+      onShutdown(this.context);
+      Thread.yield();
+
+      // Wait for any unregistered proxies to finish so that we don't yank
+      // the rug out from under them result in a segfault.
+      while (this.proxyCount.get() > 0)
+      {
+        try
+        {
+          Thread.sleep(10);
+        } catch (InterruptedException ex)
+        {
+        }
+      }
+
+//    // Check to see if who is alive
+//    threads = Thread.getAllStackTraces();
+//    System.out.println("Check for remaining");
+//    for (Thread t : threads.keySet())
+//    {
+//      System.out.println("  " + t.getName() + " " + t.getState());
+//      for (StackTraceElement e : t.getValue())
+//      {
+//        System.out.println("    " + e.getClassName());
+//      }
+//    }
+    } catch (Throwable th)
+    {
+    }
+
+    // Release all Python references
+    try
+    {
+      this.referenceQueue.stop();
+    } catch (Throwable th)
+    {
+    }
+
+    // Release any C++ resources
+    try
+    {
+      this.typeManager.shutdown();
+    } catch (Throwable th)
+    {
+    }
+
+    // Execute post hooks
+    for (Runnable run : this.postHooks)
+    {
+      run.run();
+    }
+  }
+
+  static native void onShutdown(long ctxt);
+
+  public void addShutdownHook(Thread th)
+  {
+    this.shutdownHooks.add(th);
+  }
+
+  public boolean removeShutdownHook(Thread th)
+  {
+    if (this.shutdownHooks.contains(th))
+    {
+      this.shutdownHooks.remove(th);
+      return true;
+    } else
+      return Runtime.getRuntime().removeShutdownHook(th);
   }
 
   /**
@@ -142,6 +295,18 @@ public class JPypeContext
   public JPypeReferenceQueue getReferenceQueue()
   {
     return this.referenceQueue;
+  }
+
+  /**
+   * Add a hook to run after Python interface is shutdown.
+   *
+   * This must never have a Python method attached.
+   *
+   * @param run
+   */
+  public void _addPost(Runnable run)
+  {
+    this.postHooks.add(run);
   }
 
   /**
@@ -277,6 +442,21 @@ public class JPypeContext
     return parts;
   }
 
+  public boolean isShutdown()
+  {
+    return shutdownFlag.get() > 0;
+  }
+
+  public void incrementProxy()
+  {
+    proxyCount.incrementAndGet();
+  }
+
+  public void decrementProxy()
+  {
+    proxyCount.decrementAndGet();
+  }
+
   public static class PyExceptionProxy extends RuntimeException
   {
 
@@ -325,6 +505,52 @@ public class JPypeContext
     if (b instanceof java.nio.DoubleBuffer)
       return ((java.nio.DoubleBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
     return true;
+  }
+
+  public boolean isPackage(String s)
+  {
+    s = JPypeKeywords.safepkg(s);
+    return JPypePackageManager.isPackage(s);
+  }
+
+  public JPypePackage getPackage(String s)
+  {
+    s = JPypeKeywords.safepkg(s);
+    if (!JPypePackageManager.isPackage(s))
+      return null;
+    return new JPypePackage(s, JPypePackageManager.getContentMap(s));
+  }
+
+  /**
+   * Utility to probe functional interfaces.
+   *
+   * @param cls
+   * @return
+   */
+  public String getFunctional(Class cls)
+  {
+    // If we don't find it to be a functional interface, then we won't return
+    // the SAM.
+    if (cls.getDeclaredAnnotation(FunctionalInterface.class) == null)
+      return null;
+    for (Method m : cls.getMethods())
+    {
+      if (Modifier.isAbstract(m.getModifiers()))
+      {
+        // This is a very odd construct.  Java allows for java.lang.Object
+        // methods to declared in FunctionalInterfaces and they don't count
+        // towards the single abstract method. So we have to probe the class
+        // until we find something that fails.
+        try
+        {
+          Object.class.getMethod(m.getName(), m.getParameterTypes());
+        } catch (NoSuchMethodException | SecurityException ex)
+        {
+          return m.getName();
+        }
+      }
+    }
+    return null;
   }
 
 }

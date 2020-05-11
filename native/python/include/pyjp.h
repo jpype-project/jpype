@@ -105,6 +105,17 @@ struct PyJPProxy
 	bool m_Convert;
 } ;
 
+struct JPConversionInfo
+{
+	PyObject *ret;
+	PyObject *exact;
+	PyObject *implicit;
+	PyObject *attributes;
+	PyObject *expl;
+	PyObject *none;
+} ;
+
+
 // JPype types
 extern PyTypeObject *PyJPArray_Type;
 extern PyTypeObject *PyJPArrayPrimitive_Type;
@@ -169,7 +180,6 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
 JPClass*   PyJPClass_getJPClass(PyObject* obj);
 JPProxy*   PyJPProxy_getJPProxy(PyObject* obj);
-JPPyObject PyJPProxy_getCallable(PyObject* obj, const string& name);
 void       PyJPModule_rethrow(const JPStackInfo& info);
 void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
 bool       PyJPValue_isSetJavaSlot(PyObject* self);

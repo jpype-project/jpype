@@ -36,7 +36,7 @@ import _jpype
 from ._jclass import *
 from ._jobject import *
 from ._jarray import *
-from ._jexception import *
+from ._jexception import JException
 from ._jstring import *
 
 __all__ = [
@@ -56,33 +56,33 @@ __all__ = [
 ]
 
 
-class JBoolean(_jpype._JBoolean):
+class JBoolean(_jpype._JBoolean, internal=True):
     pass
 
 
-class JByte(_jpype._JNumberLong):
+class JByte(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JChar(_jpype._JChar):
+class JChar(_jpype._JChar, internal=True):
     pass
 
 
-class JInt(_jpype._JNumberLong):
+class JInt(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JShort(_jpype._JNumberLong):
+class JShort(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JLong(_jpype._JNumberLong):
+class JLong(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JFloat(_jpype._JNumberFloat):
+class JFloat(_jpype._JNumberFloat, internal=True):
     pass
 
 
-class JDouble(_jpype._JNumberFloat):
+class JDouble(_jpype._JNumberFloat, internal=True):
     pass

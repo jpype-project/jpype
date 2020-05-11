@@ -27,8 +27,7 @@ class NumericTestCase(common.JPypeTestCase):
 
     def testDoubleConversion(self):
         f = java.lang.Float.MAX_VALUE * 2
-        jpype = JPackage("jpype")
-        self.assertTrue(jpype.numeric.NumericTest.doubleIsTwiceMaxFloat(f))
+        self.assertTrue(JClass("jpype.numeric.NumericTest").doubleIsTwiceMaxFloat(f))
 
     def testDoubleIsProperlyConverted(self):
         self.assertTrue(java.lang.Double.POSITIVE_INFINITY != 0.0)
@@ -72,7 +71,7 @@ class NumericTestCase(common.JPypeTestCase):
     def testJPNumber_new(self):
         _jpype.fault("PyJPNumber_new")
 
-        class MyNum(_jpype._JNumberLong):
+        class MyNum(_jpype._JNumberLong, internal=True):
             pass
         with self.assertRaisesRegex(SystemError, "fault"):
             JInt(1)

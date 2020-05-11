@@ -53,20 +53,32 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 	}
 
 	return JPClass::convertToPythonObject(frame, val, cast);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
 JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 {
-	JP_TRACE_IN("JPStringType::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| stringConversion->matches(match, this)
-			|| hintsConversion->matches(match, this)
+	JP_TRACE_IN("JPStringType::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| stringConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
 	return match.type = JPMatch::_none;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
+}
+
+void JPStringType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	objectConversion->getInfo(this, info);
+	stringConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	if (m_Context->getConvertStrings())
+		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type); // GCOVR_EXCL_LINE
+	else
+		PyList_Append(info.ret, (PyObject*) getHost());
 }
 
 JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
@@ -80,5 +92,5 @@ JPValue JPStringType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 		return JPValue(this, frame.fromStringUTF8(str));
 	}
 	return JPClass::newInstance(frame, args);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }

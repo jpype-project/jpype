@@ -14,15 +14,11 @@
 #   limitations under the License.
 #
 # *****************************************************************************
-import datetime
-from collections.abc import Sequence
-from collections.abc import Mapping
-
-import sys
 import _jpype
 from . import _jclass
-from . import _jcustomizer
 from . import types as _jtypes
+from . import _jcustomizer
+from collections.abc import Mapping, Sequence, MutableSequence
 
 JOverride = _jclass.JOverride
 
@@ -54,6 +50,12 @@ class _JCollection(object):
         raise TypeError(
             "'%s' does not support item deletion, use remove() method" % type(self).__name__)
 
+    def __contains__(self, i):
+        try:
+            return self.contains(i)
+        except TypeError:
+            return False
+
 
 def _sliceAdjust(slc, size):
     start = slc.start
@@ -79,13 +81,17 @@ class _JList(object):
     that implement the Java List interface.
     """
 
+    def __jclass_init__(self):
+        Sequence.register(self)
+        MutableSequence.register(self)
+
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):
             ndx = _sliceAdjust(ndx, self.size())
             return self.subList(ndx.start, ndx.stop)
         else:
             if ndx < 0:
-                ndx = self.size() + ndx
+                ndx += self.size()
             return self.get(ndx)
 
     def __setitem__(self, ndx, v):
@@ -95,7 +101,7 @@ class _JList(object):
             self.addAll(ndx.start, v)
         else:
             if ndx < 0:
-                ndx = self.size() + ndx
+                ndx += self.size()
             self.set(ndx, v)
 
     def __delitem__(self, ndx):
@@ -103,9 +109,71 @@ class _JList(object):
             ndx = _sliceAdjust(ndx, self.size())
             self[ndx.start:ndx.stop].clear()
         elif hasattr(ndx, '__index__'):
-            return self.remove(_jtypes.JInt(ndx))
+            if ndx < 0:
+                ndx += self.size()
+            return self.remove_(_jtypes.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
+
+    def __reversed__(self):
+        iterator = self.listIterator(self.size())
+        while iterator.hasPrevious():
+            yield iterator.previous()
+
+    def index(self, obj):
+        try:
+            return self.indexOf(obj)
+        except TypeError:
+            raise ValueError("%s is not in list" % repr(obj))
+
+    def count(self, obj):
+        try:
+            jo = _jpype.JObject(obj)
+            c = 0
+            for i in self:
+                if i.equals(jo):
+                    c += 1
+            return c
+        except TypeError:
+            return 0
+
+    def insert(self, idx, obj):
+        if idx < 0:
+            idx += self.size()
+        return self.add(idx, obj)
+
+    def append(self, obj):
+        return self.add(obj)
+
+    def reverse(self):
+        _jpype.JClass("java.util.Collections").reverse(self)
+
+    def extend(self, lst):
+        self.addAll(lst)
+
+    def pop(self, idx=-1):
+        if idx < 0:
+            idx += self.size()
+        return self.remove_(_jtypes.JInt(idx))
+
+    def __iadd__(self, obj):
+        self.add(obj)
+        return self
+
+    def __add__(self, obj):
+        new = self.clone()
+        new.extend(obj)
+        return new
+
+    @JOverride(sticky=True, rename='remove_')
+    def remove(self, obj):
+        try:
+            rc = self.remove_(_jpype.JObject(obj, _jpype.JObject))
+            if rc is True:
+                return
+        except TypeError:
+            pass
+        raise ValueError("item not in list")
 
 
 def isPythonMapping(v):
@@ -209,48 +277,3 @@ class _JEnumeration(object):
         return self
 
     next = __next__
-
-
-# These methods need a home.
-@_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
-def _JInstantConversion(jcls, obj):
-    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
-    sec = int(utc)
-    nsec = int((utc-sec)*1e9)
-    return jcls.ofEpochSecond(sec, nsec)
-
-
-if sys.version_info < (3, 6):
-    import pathlib
-    @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
-    def _JPathConvert(jcls, obj):
-        Paths = _jpype.JClass("java.nio.file.Paths")
-        return Paths.get(str(obj))
-
-    @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
-    def _JFileConvert(jcls, obj):
-        return jcls(str(obj))
-
-
-@_jcustomizer.JConversion("java.nio.file.Path", attribute="__fspath__")
-def _JPathConvert(jcls, obj):
-    Paths = _jpype.JClass("java.nio.file.Paths")
-    return Paths.get(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.io.File", attribute="__fspath__")
-def _JFileConvert(jcls, obj):
-    return jcls(obj.__fspath__())
-
-
-@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence)
-def _JSequenceConvert(jcls, obj):
-    return _jclass.JClass('java.util.Arrays').asList(obj)
-
-
-@_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
-def _JMapConvert(jcls, obj):
-    hm = _jclass.JClass('java.util.HashMap')()
-    for p, v in obj.items():
-        hm[p] = v
-    return hm

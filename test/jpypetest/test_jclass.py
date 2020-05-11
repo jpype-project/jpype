@@ -183,7 +183,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJavaConversionFault(self):
-        _jpype.fault("JPClass::getJavaConversion")
+        _jpype.fault("JPClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(jpype.java.lang.Class._canConvertToJava(None))
 
@@ -202,3 +202,49 @@ class JClassTestCase(common.JPypeTestCase):
         # not throwing an exception
         test = JClass("jpype.types.InnerTest")()
         test.test()
+
+    def testLookupGeneric(self):
+        self.assertEqual(JClass('java.util.ArrayList<>'),
+                         JClass("java.util.ArrayList"))
+
+    def testLookupJNI(self):
+        self.assertEqual(JClass('java/lang/Object'),
+                         JClass("java.lang.Object"))
+
+    def testLookupArray(self):
+        self.assertEqual(JClass('int[]'), JArray(JInt))
+        self.assertEqual(JClass('int[][]'), JArray(JInt, 2))
+        self.assertEqual(JClass('int[][][]'), JArray(JInt, 3))
+        self.assertEqual(JClass('java.lang.Object[][][]'), JArray(JObject, 3))
+
+    def testLookupArrayJNI(self):
+        self.assertEqual(JClass('[I'), JArray(JInt))
+        self.assertEqual(JClass('[[J'), JArray(JLong, 2))
+        self.assertEqual(JClass('[Ljava.lang.Object;'), JArray(JObject))
+        self.assertEqual(JClass('[Ljava/lang/Object;'), JArray(JObject))
+
+    def testClosed(self):
+        with self.assertRaises(TypeError):
+            class Q(JBoolean):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JChar):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JByte):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JShort):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JInt):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JLong):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JFloat):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JDouble):
+                pass

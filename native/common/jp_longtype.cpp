@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_longtype.h"
-#include "pyjp.h"
 
 JPLongType::JPLongType()
 : JPPrimitiveType("long")
@@ -49,27 +49,27 @@ JPConversionLong<JPLongType> longConversion;
 JPConversionLongNumber<JPLongType> longNumberConversion;
 JPConversionLongWiden<JPLongType> longWidenConversion;
 
-JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+class JPConversionJLong : public JPConversionJavaValue
 {
-	JP_TRACE_IN("JPLongType::getJavaConversion");
+public:
 
-	if (match.object == Py_None)
-		return match.type = JPMatch::_none;
-
-	JPValue* value = match.getJavaSlot();
-	if (value != NULL)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
-		JPClass *cls = value->getClass();
+		JPValue* value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
 			return match.type;
 
 		// Consider widening
-		if (cls->isPrimitive())
+		JPClass *cls2 = value->getClass();
+		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls;
+			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'I':
@@ -79,20 +79,51 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 					match.conversion = &longWidenConversion;
 					return match.type = JPMatch::_implicit;
 				default:
-					return match.type = JPMatch::_none;
+					break;
 			}
 		}
 
 		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		return JPMatch::_implicit;
 	}
 
-	if (longConversion.matches(match, this)
-			|| longNumberConversion.matches(match, this))
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_long->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
+		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+} jlongConversion;
+
+JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPLongType::findJavaConversion");
+
+	if (match.object == Py_None)
+		return match.type = JPMatch::_none;
+
+
+	if (jlongConversion.matches(this, match)
+			|| longConversion.matches(this, match)
+			|| longNumberConversion.matches(this, match))
 		return match.type;
 
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPLongType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	jlongConversion.getInfo(this, info);
+	longConversion.getInfo(this, info);
+	longNumberConversion.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) m_Context->_long->getHost());
 }
 
 jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)
@@ -202,7 +233,13 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
-		jlong v = PyLong_AsLongLong(seq[i].get());
+		PyObject *item = seq[i].get();
+		if (!PyIndex_Check(item))
+		{
+			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to long", Py_TYPE(item)->tp_name);
+			JP_RAISE_PYTHON();
+		}
+		jlong v = PyLong_AsLongLong(item);
 		if (v == -1)
 			JP_PY_CHECK()
 			val[index] = (type_t) v;

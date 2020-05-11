@@ -111,7 +111,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 		Py_RETURN_FALSE;
 
 	return PyBool_FromLong(frame.equals(javaSlot0->getValue().l, javaSlot1->getValue().l));
-	JP_PY_CATCH(0);
+	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
@@ -211,12 +211,20 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	JP_PY_CATCH(0);
 }
 
+static PyObject *PyJPObject_repr(PyObject *self)
+{
+	JP_PY_TRY("PyJPObject_repr");
+	return PyUnicode_FromFormat("<java object '%s'>", Py_TYPE(self)->tp_name);
+	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
+}
+
 static PyType_Slot objectSlots[] = {
 	{Py_tp_new,      (void*) &PyJPObject_new},
 	{Py_tp_free,     (void*) &PyJPValue_free},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_str,      (void*) &PyJPValue_str},
+	{Py_tp_repr,     (void*) &PyJPObject_repr},
 	{Py_tp_richcompare, (void*) &PyJPObject_compare},
 	{Py_tp_hash,     (void*) &PyJPObject_hash},
 	{0}
@@ -271,21 +279,21 @@ void PyJPObject_initType(PyObject* module)
 {
 	PyObject *bases;
 	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type);
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = PyTuple_Pack(1, PyJPObject_Type);
 	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases);
 	Py_DECREF(bases);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }

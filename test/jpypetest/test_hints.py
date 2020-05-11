@@ -1,0 +1,391 @@
+import _jpype
+import jpype
+from jpype.types import *
+import common
+import jpype.protocol as proto
+
+
+class HintsTestCase(common.JPypeTestCase):
+
+    def testCache(self):
+        cls = JClass('java.lang.Object')
+        hints = cls._hints
+        hints2 = cls._hints
+        self.assertEqual(hints, hints2)
+
+    def testProtocol(self):
+        protocol = jpype.protocol.SupportsFloat
+        annot = protocol.__float__.__annotations__
+        self.assertEqual(annot['return'], float)
+        protocol = jpype.protocol.SupportsIndex
+        annot = protocol.__index__.__annotations__
+        self.assertEqual(annot['return'], int)
+        self.assertTrue(hasattr(proto, "Sequence"))
+        self.assertTrue(hasattr(proto, "Mapping"))
+        self.assertTrue(hasattr(proto, "Protocol"))
+
+    def testObject(self):
+        cls = JClass('java.lang.Object')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(str in hints.implicit)
+        self.assertTrue(bool in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.implicit)
+        self.assertTrue(proto._JClass in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testNumber(self):
+        cls = JClass('java.lang.Number')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(proto._JNumberLong in hints.implicit)
+        self.assertTrue(proto._JNumberFloat in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testString(self):
+        cls = JClass('java.lang.String')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(str in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testClass(self):
+        cls = JClass('java.lang.Class')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto._JClass in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testCollection(self):
+        cls = JClass('java.util.Collection')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testList(self):
+        cls = JClass('java.util.List')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(len(hints.implicit) == 0)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJBoolean(self):
+        cls = JBoolean
+        hints = cls._hints
+        self.assertTrue(bool in hints.returns)
+        self.assertTrue(bool in hints.exact)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JClass("java.lang.Boolean") in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJChar(self):
+        cls = JChar
+        hints = cls._hints
+        self.assertTrue(str in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JClass("java.lang.Character") in hints.implicit)
+        self.assertTrue(str in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJShort(self):
+        cls = JShort
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JClass("java.lang.Short") in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJInt(self):
+        cls = JInt
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JShort in hints.implicit)
+        self.assertTrue(JClass('java.lang.Integer') in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJLong(self):
+        cls = JLong
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JShort in hints.implicit)
+        self.assertTrue(JInt in hints.implicit)
+        self.assertTrue(JClass('java.lang.Long') in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJFloat(self):
+        cls = JFloat
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JShort in hints.implicit)
+        self.assertTrue(JInt in hints.implicit)
+        self.assertTrue(JLong in hints.implicit)
+        self.assertTrue(JClass('java.lang.Float') in hints.implicit)
+        self.assertTrue(int in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testJDouble(self):
+        cls = JDouble
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JShort in hints.implicit)
+        self.assertTrue(JInt in hints.implicit)
+        self.assertTrue(JLong in hints.implicit)
+        self.assertTrue(JFloat in hints.implicit)
+        self.assertTrue(JClass('java.lang.Double') in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.implicit)
+        self.assertTrue(int in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedByte(self):
+        cls = JClass('java.lang.Byte')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JByte in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(JClass('java.lang.Byte') in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedBoolean(self):
+        cls = JClass('java.lang.Boolean')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(bool in hints.implicit)
+        self.assertTrue(JBoolean in hints.implicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(JClass('java.lang.Boolean') in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedCharacter(self):
+        cls = JClass('java.lang.Character')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JChar in hints.implicit)
+        self.assertTrue(JClass('java.lang.Character') in hints.explicit)
+        self.assertTrue(str in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedShort(self):
+        cls = JClass('java.lang.Short')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JShort in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(JByte in hints.explicit)
+        self.assertTrue(JChar in hints.explicit)
+        self.assertTrue(JClass('java.lang.Short') in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedInteger(self):
+        cls = JClass('java.lang.Integer')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JInt in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(JByte in hints.explicit)
+        self.assertTrue(JChar in hints.explicit)
+        self.assertTrue(JShort in hints.explicit)
+        self.assertTrue(JClass('java.lang.Integer') in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedLong(self):
+        cls = JClass('java.lang.Long')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JLong in hints.implicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(JByte in hints.explicit)
+        self.assertTrue(JChar in hints.explicit)
+        self.assertTrue(JShort in hints.explicit)
+        self.assertTrue(JInt in hints.explicit)
+        self.assertTrue(JClass('java.lang.Long') in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedFloat(self):
+        cls = JClass('java.lang.Float')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JFloat in hints.implicit)
+        self.assertTrue(JByte in hints.explicit)
+        self.assertTrue(JChar in hints.explicit)
+        self.assertTrue(JShort in hints.explicit)
+        self.assertTrue(JInt in hints.explicit)
+        self.assertTrue(JLong in hints.explicit)
+        self.assertTrue(JClass('java.lang.Float') in hints.explicit)
+        self.assertTrue(int in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testBoxedDouble(self):
+        cls = JClass('java.lang.Double')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(JDouble in hints.implicit)
+        self.assertTrue(JByte in hints.explicit)
+        self.assertTrue(JChar in hints.explicit)
+        self.assertTrue(JShort in hints.explicit)
+        self.assertTrue(JInt in hints.explicit)
+        self.assertTrue(JLong in hints.explicit)
+        self.assertTrue(JFloat in hints.explicit)
+        self.assertTrue(JClass('java.lang.Double') in hints.explicit)
+        self.assertTrue(proto.SupportsIndex in hints.explicit)
+        self.assertTrue(proto.SupportsFloat in hints.explicit)
+        self.assertTrue(int in hints.explicit)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testObjectArray(self):
+        cls = JClass('java.lang.Object[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testBooleanArray(self):
+        cls = JClass('boolean[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testCharArray(self):
+        cls = JClass('char[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(str in hints.implicit)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testShortArray(self):
+        cls = JClass('short[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testIntArray(self):
+        cls = JClass('int[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testLongArray(self):
+        cls = JClass('long[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testFloatArray(self):
+        cls = JClass('float[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testDoubleArray(self):
+        cls = JClass('double[]')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.Sequence in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(str in hints.none)
+
+    def testPath(self):
+        cls = JClass('java.nio.file.Path')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.SupportsPath in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testFile(self):
+        cls = JClass('java.io.File')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(proto.SupportsPath in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)
+
+    def testInstant(self):
+        import datetime
+        cls = JClass('java.time.Instant')
+        hints = cls._hints
+        self.assertTrue(cls in hints.returns)
+        self.assertTrue(cls in hints.exact)
+        self.assertTrue(datetime.datetime in hints.implicit)
+        self.assertTrue(len(hints.explicit) == 0)
+        self.assertTrue(len(hints.none) == 0)

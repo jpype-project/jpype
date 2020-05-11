@@ -16,18 +16,32 @@
 # *****************************************************************************
 
 import pytest
+import _jpype
 import jpype
 import logging
-import os
 from os import path
 import sys
 import unittest
+import platform
 
 CLASSPATH = None
+fast = False
 
 
 def version(v):
     return tuple([int(i) for i in v.split('.')])
+
+
+def requirePythonAfter(required):
+    pversion = tuple([int(i) for i in platform.python_version_tuple()])
+
+    def g(func):
+        def f(self):
+            if pversion < required:
+                raise unittest.SkipTest("numpy required")
+            return func(self)
+        return f
+    return g
 
 
 def requireInstrumentation(func):
@@ -99,11 +113,12 @@ class JPypeTestCase(unittest.TestCase):
             if self._jacoco:
                 import warnings
                 args.append(
-                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=jacoco.exec,includes=org.jpype.*")
+                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
 
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
+            _jpype.enableStacktraces(True)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, *args,
                            convertStrings=self._convertStrings)

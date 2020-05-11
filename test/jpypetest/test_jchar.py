@@ -33,7 +33,7 @@ class JCharTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJCharGetJavaConversion(self):
-        _jpype.fault("JPCharType::getJavaConversion")
+        _jpype.fault("JPCharType::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             JChar._canConvertToJava(object())
 

@@ -71,6 +71,7 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	jvalue val;
 	val.l = obj;
 	JPClass *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+	frame.check();
 	JP_TRACE("ClassName", cls == NULL ? "null" : cls->getCanonicalName());
 	return cls;
 	JP_TRACE_OUT;

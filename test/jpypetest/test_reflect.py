@@ -73,15 +73,3 @@ class ReflectCase(common.JPypeTestCase):
         self.assertIsNotNone(obj)
         self.assertIsNotNone(field)
         self.assertEqual('private', field.get(obj))
-
-    def testDeprecated(self):
-        import jpype.reflect
-        cls = jpype.JClass("java.lang.String")
-        # These should be removed
-        jpype.reflect.getConstructors(cls)
-        jpype.reflect.getDeclaredConstructors(cls)
-        jpype.reflect.getDeclaredFields(cls)
-        jpype.reflect.getDeclaredMethods(cls)
-        jpype.reflect.getFields(cls)
-        jpype.reflect.getMethods(cls)
-        jpype.reflect.getModifiers(cls)

@@ -67,7 +67,7 @@ static void PyJPMonitor_dealloc(PyJPMonitor *self)
 	JP_PY_TRY("PyJPMonitor_dealloc");
 	delete self->m_Monitor;
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMonitor_str(PyJPMonitor *self)
@@ -132,7 +132,7 @@ PyTypeObject* PyJPMonitor_Type = NULL;
 void PyJPMonitor_initType(PyObject* module)
 {
 	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
-	JP_PY_CHECK();
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }

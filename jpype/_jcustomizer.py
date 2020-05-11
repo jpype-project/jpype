@@ -16,27 +16,30 @@ import _jpype
 
 __all__ = ['JImplementationFor', 'JConversion']
 
+# Member types that are copied from the prototype
+_jcopymembers = (str, property, staticmethod, classmethod)
 
-def JConversion(cls, exact=None, instanceof=None, attribute=None):
+
+def JConversion(cls, exact=None, instanceof=None, attribute=None, excludes=None):
     """ Decorator to define a method as a converted a Java type.
 
     Whenever a method resolution is called the JPype internal rules
-    are applied, but sometimes this is insufficient.  If only a
+    are applied, but this may be insufficient.  If only a
     single method requires modification then a class customizer can
     be applied.  But if many interfaces require the same conversion
-    than a user conversion may be an option.
+    than a user conversion may be a better option.
 
     To add a user conversion define a method which take the requested
     Java type as the first argument, the target object to be converted
     as the second argument and returns a Java object or Java proxy that
     matches the required type.  If the type is not a Java type then
-    a TypeError will be produce.  This method is only evaluated
+    a TypeError will be raised.  This method is only evaluated
     after the match has been determine prior to calling.
 
     Care should be used when defining a user conversion. If example
     if one has an interface that requires a specific class and you
     want it to take a Python string, then a user conversion can
-    do that.  On the other hand if you define a generic converter
+    do that.  On the other hand, if you define a generic converter
     of any Python object to a Java string, then every interface
     will attempt to call the conversion method whenever a Java string
     is being matched, which can cause many methods to potentially
@@ -49,21 +52,29 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
     Args:
       cls(str, JClass): The class that will be produced by this
         conversion.
-      exact(type): this conversion applies only to objects that have
+      exact(type): This conversion applies only to objects that have
         a type exactly equal to the argument.
-      instanceof(type): this conversion applies to any object that
-        pass isinstance(obj, arg)
-      attribute(str): this conversion applies to any object that has
-        passes hasattr(obj, arg)
+      instanceof(type or protocol): This conversion applies to 
+        any object that passes isinstance(obj, type).
+      attribute(str): This conversion applies to any object that has
+        passes hasattr(obj, arg). (deprecated)
+      excludes(type): Prevents a conversion for a specified type.
+        Can be used to prevent a specific type from being converted.
+        For example, to prevent maps or strings from passing 
+        a check for Sequence.  Exclusions are applied before all 
+        other user specificied conversions.
     """
-    def customizer(func):
-        hints = getClassHints(cls)
-        if exact:
-            hints.addTypeConversion(exact, func, True)
-        if instanceof:
-            hints.addTypeConversion(instanceof, func, False)
-        if attribute:
-            hints.addAttributeConversion(attribute, func)
+    hints = getClassHints(cls)
+    if excludes is not None:
+        hints._excludeConversion(excludes)
+
+    def customizer(func=None):
+        if exact is not None:
+            hints._addTypeConversion(exact, func, True)
+        if instanceof is not None:
+            hints._addTypeConversion(instanceof, func, False)
+        if attribute is not None:
+            hints._addAttributeConversion(attribute, func)
         return func
     return customizer
 
@@ -71,18 +82,18 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None):
 def JImplementationFor(clsname, base=False):
     """ Decorator to define an implementation for a class.
 
-    Applies to a class which will serve as a prototype as for the java class
+    Applies to a class which will serve as a prototype as for the Java class
     wrapper.  If it is registered as a base class, then the class must
     derive from JObject.  Otherwise, the methods are copied from
-    the prototype to java class wrapper.
+    the prototype to the Java class wrapper.
 
     The method ``__jclass_init__(cls)`` will be called with the constructed
-    class as the argument.  This call be used to set methods for all classes
+    class as the argument.  This call is used to set methods for all classes
     that derive from the specified class.  Use ``type.__setattr__()`` to
     alter the class methods.
 
     Using the prototype class as a base class is used mainly to support
-    classes which must be derived from a python type by design.  Use
+    classes which must be derived from a Python type by design.  Use
     of a base class will produce a RuntimeError if the class has already
     been created.
 
@@ -113,10 +124,11 @@ def _applyStickyMethods(cls, sticky):
     for method in sticky:
         attr = getattr(method, '__joverride__')
         rename = attr.get('rename', None)
+        name = method.__name__
         if rename:
-            type.__setattr__(
-                cls, rename, type.__getattribute__(cls, method.__name__))
-        type.__setattr__(cls, method.__name__, method)
+            orig = type.__getattribute__(cls, name)
+            type.__setattr__(cls, rename, orig)
+        type.__setattr__(cls, name, method)
 
 
 def _applyCustomizerImpl(members, proto, sticky, setter):
@@ -131,20 +143,17 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
 
     """
     for p, v in proto.__dict__.items():
-        if callable(v) or isinstance(v, (str, property, staticmethod, classmethod)):
-            rename = "_"+p
-
+        if callable(v) or isinstance(v, _jcopymembers):
             # Apply JOverride annotation
             attr = getattr(v, '__joverride__', None)
             if attr is not None:
                 if attr.get('sticky', False):
                     sticky.append(v)
-                rename = attr.get('rename', rename)
-
-            # Apply rename
-            if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
-                setter(rename, members[p])
-
+                    continue
+                # Apply rename
+                rename = attr.get('rename', "_" + p)
+                if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
+                    setter(rename, members[p])
             setter(p, v)
 
 
@@ -166,11 +175,6 @@ def _applyCustomizerPost(cls, proto):
     _applyCustomizerImpl(cls.__dict__, proto, sticky,
                          lambda p, v: type.__setattr__(cls, p, v))
 
-    # Apply a customizer to all derived classes
-    if '__jclass_init__' in proto.__dict__:
-        method = proto.__dict__['__jclass_init__']
-        _applyAll(cls, method)
-
     # Merge sticky into existing __jclass_init__
     if len(sticky) > 0:
         method = proto.__dict__.get('__jclass_init__', None)
@@ -180,7 +184,11 @@ def _applyCustomizerPost(cls, proto):
                 method(cls)
             _applyStickyMethods(cls, sticky)
         type.__setattr__(cls, '__jclass_init__', init)
-        _applyAll(cls, init)
+
+    # Apply a customizer to all derived classes
+    if '__jclass_init__' in proto.__dict__:
+        method = proto.__dict__['__jclass_init__']
+        _applyAll(cls, method)
 
 
 class JClassHints(_jpype._JClassHints):
@@ -232,7 +240,11 @@ class JClassHints(_jpype._JClassHints):
                                  lambda p, v: members.__setitem__(p, v))
 
         if len(sticky) > 0:
+            method = members.get('__jclass_init__', None)
+
             def init(cls):
+                if method is not None:
+                    method(cls)
                 _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 

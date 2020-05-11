@@ -15,10 +15,10 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_method.h"
-#include "pyjp.h"
 
 JPClass::JPClass(
 		const string& name,
@@ -91,6 +91,8 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
 
+// GCOVR_EXCL_START
+// This is currently only used in tracing
 string JPClass::toString() const
 {
 	// This sanity check will not be hit in normal operation
@@ -99,6 +101,7 @@ string JPClass::toString() const
 	JPJavaFrame frame(m_Context);
 	return frame.toString(m_Class.get());
 }
+// GCOVR_EXCL_STOP
 
 string JPClass::getName() const
 {
@@ -339,16 +342,25 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 
 JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPClass::getJavaConversion");
-	if (nullConversion->matches(match, this)
-			|| objectConversion->matches(match, this)
-			|| proxyConversion->matches(match, this)
-			|| hintsConversion->matches(match, this))
+	JP_TRACE_IN("JPClass::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| proxyConversion->matches(this, match)
+			|| hintsConversion->matches(this, match))
 		return match.type;
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
 }
+
+void JPClass::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	objectConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
 
 //</editor-fold>
 //<editor-fold desc="hierarchy" defaultstate="collapsed">

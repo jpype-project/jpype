@@ -100,10 +100,10 @@ class _JClassHints(object):
     def _addClassBases(self, *args):
         pass
 
-    def addTypeConversion(self, *args):
+    def _addTypeConversion(self, *args):
         pass
 
-    def addAttributeConversion(self, *args):
+    def _addAttributeConversion(self, *args):
         pass
 
     def _excludeConversion(self, *args):

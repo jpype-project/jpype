@@ -1,5 +1,4 @@
 import os as _os
-import glob as _glob
 
 __all__ = ['addClassPath', 'getClassPath']
 
@@ -36,7 +35,7 @@ def addClassPath(path1):
 
 
 def getClassPath(env=True):
-    """ Get the full java class path.
+    """ Get the full Java class path.
 
     Includes user added paths and the environment CLASSPATH.
 

@@ -24,7 +24,7 @@ class Tracer(object):
 
     @staticmethod
     def leaked():
-        return Tracer.ctor-Tracer.dtor
+        return Tracer.ctor - Tracer.dtor
 
     @staticmethod
     def attach(obj):

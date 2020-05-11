@@ -20,6 +20,7 @@
 #include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
+#include "jp_stringtype.h"
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -35,6 +36,7 @@ extern void PyJPProxy_initType(PyObject* module);
 extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
+extern void PyJPPackage_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -175,7 +177,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	}
 
 	return NULL;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
@@ -474,7 +476,7 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 {
 	JPContext* context = JPContext_global;
-	if (context->isShutdown())
+	if (!context->isRunning())
 		Py_RETURN_NONE;
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
 	if (!PyUnicode_Check(a1))
@@ -489,6 +491,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 	Py_RETURN_NONE;
 }
 
+// GCOVR_EXCL_START
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
 	JPContext *context = PyJPModule_getContext();
@@ -510,7 +513,23 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	Py_DECREF(res);
 	return out;
 }
+// GCOVR_EXCL_STOP
 
+PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+{
+	JP_PY_TRY("PyJPModule_isPackage");
+	if (!PyUnicode_Check(pkg))
+	{
+		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
+		return NULL;
+	}
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+}
+
+// GCOVR_EXCL_START
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -551,7 +570,9 @@ PyObject* examine(PyObject *module, PyObject *other)
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(NULL);
 }
+// GCOVR_EXCL_STOP
 
+// GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
 static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 {
@@ -559,6 +580,7 @@ static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 	_PyJPModule_trace = PyLong_AsLong(args);
 	return PyLong_FromLong(old);
 }
+// GCOVR_EXCL_STOP
 
 #ifdef JP_INSTRUMENTATION
 uint32_t _PyJPModule_fault_code = -1;
@@ -581,31 +603,32 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
-	{"isStarted", (PyCFunction) (&PyJPModule_isStarted), METH_NOARGS, ""},
-	{"startup", (PyCFunction) (&PyJPModule_startup), METH_VARARGS, ""},
+	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
+	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) (&PyJPModule_shutdown), METH_NOARGS, ""},
-	{"_getClass", (PyCFunction) (&PyJPModule_getClass), METH_O, ""},
-	{"_hasClass", (PyCFunction) (&PyJPModule_hasClass), METH_O, ""},
-	{"examine", (PyCFunction) (&examine), METH_O, ""},
-	{"_newArrayType", (PyCFunction) (&PyJPModule_newArrayType), METH_VARARGS, ""},
-	{"_collect", (PyCFunction) (&PyJPModule_collect), METH_VARARGS, ""},
-	{"gcStats", (PyCFunction) (&PyJPModule_gcStats), METH_NOARGS, ""},
+	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
+	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
+	{"examine", (PyCFunction) examine, METH_O, ""},
+	{"_newArrayType", (PyCFunction) PyJPModule_newArrayType, METH_VARARGS, ""},
+	{"_collect", (PyCFunction) PyJPModule_collect, METH_VARARGS, ""},
+	{"gcStats", (PyCFunction) PyJPModule_gcStats, METH_NOARGS, ""},
 
 	// Threading
-	{"isThreadAttachedToJVM", (PyCFunction) (&PyJPModule_isThreadAttached), METH_NOARGS, ""},
-	{"attachThreadToJVM", (PyCFunction) (&PyJPModule_attachThread), METH_NOARGS, ""},
-	{"detachThreadFromJVM", (PyCFunction) (&PyJPModule_detachThread), METH_NOARGS, ""},
-	{"attachThreadAsDaemon", (PyCFunction) (&PyJPModule_attachThreadAsDaemon), METH_NOARGS, ""},
+	{"isThreadAttachedToJVM", (PyCFunction) PyJPModule_isThreadAttached, METH_NOARGS, ""},
+	{"attachThreadToJVM", (PyCFunction) PyJPModule_attachThread, METH_NOARGS, ""},
+	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
+	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) (&PyJPModule_convertToDirectByteBuffer), METH_O, ""},
-	{"arrayFromBuffer", (PyCFunction) (&PyJPModule_arrayFromBuffer), METH_VARARGS, ""},
-	{"enableStacktraces", (PyCFunction) (&PyJPModule_enableStacktraces), METH_O, ""},
-	{"trace", (PyCFunction) (&PyJPModule_trace), METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
+	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
+	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
+	{"trace", (PyCFunction) PyJPModule_trace, METH_O, ""},
 #ifdef JP_INSTRUMENTATION
-	{"fault", (PyCFunction) (&PyJPModule_fault), METH_O, ""},
+	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 
 	// sentinel
@@ -651,10 +674,11 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPMonitor_initType(module);
 	PyJPProxy_initType(module);
 	PyJPClassHints_initType(module);
+	PyJPPackage_initType(module);
 
 	_PyJPModule_trace = true;
 	return module;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 #ifdef __cplusplus
@@ -682,7 +706,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 		PyErr_Format(PyExc_RuntimeError, "Unhandled C++ exception occurred");
 		return;
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
