@@ -137,78 +137,78 @@ class ConnectionTests(common.JPypeTestCase):
 
     def testFailedOpen(self):
         YOU_CANNOT_OPEN_THIS = "/foo/bar/bla/23534/mydb.db"
-        with self.assertRaises(dbapi2.OperationalError):
+        with self.assertRaises(dbapi2.Error):
             con = dbapi2.connect(YOU_CANNOT_OPEN_THIS)
 
     def testClose(self):
         self.cx.close()
 
-    def testExceptions(self):
-        # Optional DB-API extension.
-        self.assertEqual(self.cx.Warning, dbapi2.Warning)
-        self.assertEqual(self.cx.Error, dbapi2.Error)
-        self.assertEqual(self.cx.InterfaceError, dbapi2.InterfaceError)
-        self.assertEqual(self.cx.DatabaseError, dbapi2.DatabaseError)
-        self.assertEqual(self.cx.DataError, dbapi2.DataError)
-        self.assertEqual(self.cx.OperationalError, dbapi2.OperationalError)
-        self.assertEqual(self.cx.IntegrityError, dbapi2.IntegrityError)
-        self.assertEqual(self.cx.InternalError, dbapi2.InternalError)
-        self.assertEqual(self.cx.ProgrammingError, dbapi2.ProgrammingError)
-        self.assertEqual(self.cx.NotSupportedError, dbapi2.NotSupportedError)
+#    def testExceptions(self):
+#        # Optional DB-API extension.
+#        self.assertEqual(self.cx.Warning, dbapi2.Warning)
+#        self.assertEqual(self.cx.Error, dbapi2.Error)
+#        self.assertEqual(self.cx.InterfaceError, dbapi2.InterfaceError)
+#        self.assertEqual(self.cx.DatabaseError, dbapi2.DatabaseError)
+#        self.assertEqual(self.cx.DataError, dbapi2.DataError)
+#        self.assertEqual(self.cx.OperationalError, dbapi2.OperationalError)
+#        self.assertEqual(self.cx.IntegrityError, dbapi2.IntegrityError)
+#        self.assertEqual(self.cx.InternalError, dbapi2.InternalError)
+#        self.assertEqual(self.cx.ProgrammingError, dbapi2.ProgrammingError)
+#        self.assertEqual(self.cx.NotSupportedError, dbapi2.NotSupportedError)
 
-    def testInTransaction(self):
-        # Can't use db from setUp because we want to test initial state.
-        cx = dbapi2.connect(getConnection())
-        cu = cx.cursor()
-        self.assertEqual(cx.in_transaction, False)
-        cu.execute(
-            "create table transactiontest(id integer primary key, name text)")
-        self.assertEqual(cx.in_transaction, False)
-        cu.execute("insert into transactiontest(name) values (?)", ("foo",))
-        self.assertEqual(cx.in_transaction, True)
-        cu.execute("select name from transactiontest where name=?", ["foo"])
-        row = cu.fetchone()
-        self.assertEqual(cx.in_transaction, True)
-        cx.commit()
-        self.assertEqual(cx.in_transaction, False)
-        cu.execute("select name from transactiontest where name=?", ["foo"])
-        row = cu.fetchone()
-        self.assertEqual(cx.in_transaction, False)
+#    def testInTransaction(self):
+#        # Can't use db from setUp because we want to test initial state.
+#        cx = dbapi2.connect(getConnection())
+#        cu = cx.cursor()
+#        self.assertEqual(cx.in_transaction, False)
+#        cu.execute(
+#            "create table transactiontest(id integer primary key, name text)")
+#        self.assertEqual(cx.in_transaction, False)
+#        cu.execute("insert into transactiontest(name) values (?)", ("foo",))
+#        self.assertEqual(cx.in_transaction, True)
+#        cu.execute("select name from transactiontest where name=?", ["foo"])
+#        row = cu.fetchone()
+#        self.assertEqual(cx.in_transaction, True)
+#        cx.commit()
+#        self.assertEqual(cx.in_transaction, False)
+#        cu.execute("select name from transactiontest where name=?", ["foo"])
+#        row = cu.fetchone()
+#        self.assertEqual(cx.in_transaction, False)
 
-    def testInTransactionRO(self):
-        with self.assertRaises(AttributeError):
-            self.cx.in_transaction = True
+#    def testInTransactionRO(self):
+#        with self.assertRaises(AttributeError):
+#            self.cx.in_transaction = True
 
-    def testOpenWithPathLikeObject(self):
-        """ Checks that we can successfully connect to a database using an object that
-            is PathLike, i.e. has __fspath__(). """
-        self.addCleanup(unlink, TESTFN)
+#    def testOpenWithPathLikeObject(self):
+#        """ Checks that we can successfully connect to a database using an object that
+#            is PathLike, i.e. has __fspath__(). """
+#        self.addCleanup(unlink, TESTFN)
+#
+#        class Path:
+#            def __fspath__(self):
+#                return TESTFN
+#        path = Path()
+#        with dbapi2.connect(path) as cx:
+#            cx.execute('create table test(id integer)')
 
-        class Path:
-            def __fspath__(self):
-                return TESTFN
-        path = Path()
-        with dbapi2.connect(path) as cx:
-            cx.execute('create table test(id integer)')
+#    def testOpenUri(self):
+#        if dbapi2.dbapi2_version_info < (3, 7, 7):
+#            with self.assertRaises(dbapi2.NotSupportedError):
+#                dbapi2.connect(getConnection(), uri=True)
+#            return
+#        self.addCleanup(unlink, TESTFN)
+#        with dbapi2.connect(TESTFN) as cx:
+#            cx.execute('create table test(id integer)')
+#        with dbapi2.connect('file:' + TESTFN, uri=True) as cx:
+#            cx.execute('insert into test(id) values(0)')
+#        with dbapi2.connect('file:' + TESTFN + '?mode=ro', uri=True) as cx:
+#            with self.assertRaises(dbapi2.OperationalError):
+#                cx.execute('insert into test(id) values(1)')
 
-    def testOpenUri(self):
-        if dbapi2.dbapi2_version_info < (3, 7, 7):
-            with self.assertRaises(dbapi2.NotSupportedError):
-                dbapi2.connect(getConnection(), uri=True)
-            return
-        self.addCleanup(unlink, TESTFN)
-        with dbapi2.connect(TESTFN) as cx:
-            cx.execute('create table test(id integer)')
-        with dbapi2.connect('file:' + TESTFN, uri=True) as cx:
-            cx.execute('insert into test(id) values(0)')
-        with dbapi2.connect('file:' + TESTFN + '?mode=ro', uri=True) as cx:
-            with self.assertRaises(dbapi2.OperationalError):
-                cx.execute('insert into test(id) values(1)')
-
-    def testSameThreadErrorOnOldVersion(self):
-        with self.assertRaises(dbapi2.NotSupportedError) as cm:
-            dbapi2.connect(getConnection(), check_same_thread=False)
-        self.assertEqual(str(cm.exception), 'shared connections not available')
+#    def testSameThreadErrorOnOldVersion(self):
+#        with self.assertRaises(dbapi2.NotSupportedError) as cm:
+#            dbapi2.connect(getConnection(), check_same_thread=False)
+#        self.assertEqual(str(cm.exception), 'shared connections not available')
 
 
 class CursorTests(common.JPypeTestCase):
@@ -488,9 +488,9 @@ class CursorTests(common.JPypeTestCase):
     def testSetoutputsizeNoColumn(self):
         self.cu.setoutputsize(42)
 
-    def testCursorConnection(self):
-        # Optional DB-API extension.
-        self.assertEqual(self.cu.connection, self.cx)
+#    def testCursorConnection(self):
+#        # Optional DB-API extension.
+#        self.assertEqual(self.cu.connection, self.cx)
 
     def testWrongCursorCallable(self):
         with self.assertRaises(TypeError):
@@ -524,22 +524,22 @@ class CursorTests(common.JPypeTestCase):
             ('test',))
         self.assertEqual(self.cu.lastrowid, 2)
 
-    def testLastRowIDInsertOR(self):
-        results = []
-        for statement in ('FAIL', 'ABORT', 'ROLLBACK'):
-            sql = 'INSERT OR {} INTO test(unique_test) VALUES (?)'
-            with self.subTest(statement='INSERT OR {}'.format(statement)):
-                self.cu.execute(sql.format(statement), (statement,))
-                results.append((statement, self.cu.lastrowid))
-                with self.assertRaises(dbapi2.IntegrityError):
-                    self.cu.execute(sql.format(statement), (statement,))
-                results.append((statement, self.cu.lastrowid))
-        expected = [
-            ('FAIL', 2), ('FAIL', 2),
-            ('ABORT', 3), ('ABORT', 3),
-            ('ROLLBACK', 4), ('ROLLBACK', 4),
-        ]
-        self.assertEqual(results, expected)
+#    def testLastRowIDInsertOR(self):
+#        results = []
+#        for statement in ('FAIL', 'ABORT', 'ROLLBACK'):
+#            sql = 'INSERT OR {} INTO test(unique_test) VALUES (?)'
+#            with self.subTest(statement='INSERT OR {}'.format(statement)):
+#                self.cu.execute(sql.format(statement), (statement,))
+#                results.append((statement, self.cu.lastrowid))
+#                with self.assertRaises(dbapi2.IntegrityError):
+#                    self.cu.execute(sql.format(statement), (statement,))
+#                results.append((statement, self.cu.lastrowid))
+#        expected = [
+#            ('FAIL', 2), ('FAIL', 2),
+#            ('ABORT', 3), ('ABORT', 3),
+#            ('ROLLBACK', 4), ('ROLLBACK', 4),
+#        ]
+#        self.assertEqual(results, expected)
 
 
 class ThreadTests(common.JPypeTestCase):
@@ -887,8 +887,8 @@ class ClosedCurTests(common.JPypeTestCase):
         cur = con.cursor()
         cur.close()
 
-        for method_name in ("execute", "executemany", "executescript", "fetchall", "fetchmany", "fetchone"):
-            if method_name in ("execute", "executescript"):
+        for method_name in ("execute", "executemany", "fetchall", "fetchmany", "fetchone"):
+            if method_name in ("execute"):
                 params = ("select 4 union select 5",)
             elif method_name == "executemany":
                 params = ("insert into foo(bar) values (?)", [(3,), (4,)])

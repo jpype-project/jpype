@@ -1,5 +1,6 @@
 from _jpype import JClass
 from . import _jinit
+from . import _jcustomizer
 from . import types as _jtypes
 import typing
 import _jpype
@@ -17,6 +18,22 @@ __all__ = ['BINARY', 'Binary', 'Connection', 'Cursor', 'DATE', 'DATETIME',
            '__name__', '__package__', '__spec__', 'apilevel', 'connect',
            'paramstyle', 'threadsafely']
 
+# Protocols supported by sqlite3
+@typing.runtime_checkable
+class _SupportsNext(typing.Protocol):
+    @typing.abstractmethod
+    def __next__(self): ...
+
+
+@typing.runtime_checkable
+class _SupportsGetItem(typing.Protocol):
+    @typing.abstractmethod
+    def __len__(self): ...
+
+    @typing.abstractmethod
+    def __getitem__(self): ...
+
+
 apilevel = "2.0"
 threadsafety = 1
 paramstyle = 'qmark'
@@ -29,10 +46,44 @@ _SQLTimeoutException = None
 _conversionTable = {}
 
 
-def connect(url, driver=None, **kwargs):
+def connect(url, driver=None, driver_args=None, **kwargs):
+    """ Create a connection to a database.
+
+    Args:
+       url (str): The database connection string for JDBC.
+       driver (str, optional): A JDBC driver to load.
+       driver_args: Arguments to the driver.  This may either be a map,
+          java.util.Properties, or (user,password) strings.
+
+    Raises:
+       Error if the connection cannot be established.
+
+    Returns:
+       A new connection if successful.
+    """
+    Properties = JClass("java.util.Properties")
     if driver:
         JClass('java.lang.Class').forName(driver).newInstance()
-    connection = JClass('java.sql.DriverManager').getConnection(url)
+    DM = JClass('java.sql.DriverManager')
+
+    # User is supplying Java properties
+    if isinstance(driver_args, Properties):
+        connection = DM.getConnection(url, driver_args)
+
+    # User is supplying a mapping that can be converted Properties
+    elif isinstance(driver_args, typing.Mapping):
+        info = Properties()
+        for k, v in driver_args.items():
+            info.setProperty(k, v)
+        connection = DM.getConnection(url, info)
+
+    # User supplied nothing
+    elif driver_args is None:
+        connection = DM.getConnection(url)
+
+    # Otherwise try to pass it in, must be (String, String)
+    else:
+        connection = DM.getConnection(url, *driver_args)
     return Connection(connection)
 
 
@@ -77,16 +128,31 @@ class NotSupportedError(DatabaseError):
 
 
 class Connection:
+    Error = Error
+    Warning = Warning
+    InterfaceError = InterfaceError
+    DatabaseError = DatabaseError
+    InternalError = InternalError
+    OperationalError = OperationalError
+    ProgrammingError = ProgrammingError
+    IntegrityError = IntegrityError
+    DataError = DataError
+    NotSupportedError = NotSupportedError
+
     def __init__(self, jconnection):
         self._jconnection = jconnection
         self._thread = threading.get_ident()
+        self._closed = False
 
     def __del__(self):
-        if not _jpype.isStarted():
-            return
-        if self._jconnection.isClosed():
-            self.close()
-        # FIXME hande the case in which the JVM was terminated before __del__
+        try:
+            if not _jpype.isStarted():
+                return
+            if self._jconnection.isClosed():
+                self._jconnection.close()
+            # FIXME hande the case in which the JVM was terminated before __del__
+        except:
+            pass
 
     def close(self):
         """ Close the connection now (rather than whenever .__del__() is called).
@@ -98,12 +164,16 @@ class Connection:
         changes first will cause an implicit rollback to be performed.  """
         self._validate()
         self._jconnection.close()
+        self._closed = True
 
     def commit(self):
         """Commit any pending transaction to the database.
         """
         self._validate()
-        self._jconnection.commit()
+        try:
+            self._jconnection.commit()
+        except Exception as ex:
+            self._handle(ex)
 
     def rollback(self):
         """Rollback the transaction.
@@ -117,7 +187,13 @@ class Connection:
         implicit rollback to be performed.
         """
         self._validate()
-        pass
+        try:
+            self._jconnection.rollback()
+        except Exception as ex:
+            self._handle(ex)
+
+    def _handle(self, ex):
+        raise ex
 
     def cursor(self):
         """ Return a new Cursor Object using the connection. """
@@ -130,6 +206,20 @@ class Connection:
 
     def __call__(self):
         self._validate()
+
+    # Sqlite3 extensions
+    def execute(self, sql, parameters=None):
+        """ This is a nonstandard shortcut that creates an intermediate cursor
+        object by calling the cursor method, then calls the cursor’s execute
+        method with the parameters given.  """
+        return self.cursor().execute(sql, parameters)
+
+    def executemany(self, sql, parameters):
+        """ This is a nonstandard shortcut that creates an intermediate cursor
+        object by calling the cursor method, then calls the cursor’s
+        executemany method with the parameters given.
+        """
+        return self.cursor().executemany(sql, parameters)
 
 
 class Cursor:
@@ -170,9 +260,15 @@ class Cursor:
             return self._description
         desc = []
         self._fetchColumns()
+        rmd = self._resultMetaData
         for i in range(1, self._columns + 1):
-            desc = (self._resultMetaData.getColumnName(i),
-                    self._resultMetaData.getColumnTypeName(i))
+            desc = (rmd.getColumnName(i),
+                    rmd.getColumnTypeName(i),
+                    None,
+                    None,
+                    rmd.getColumnPrecision(i),
+                    rmd.getScale(i),
+                    rmd.isNullable(i),)
         self._description = desc
         return desc
 
@@ -190,17 +286,10 @@ class Cursor:
 
     def callproc(self, procname, *args):
         """
-        (This method is optional since not all databases provide stored procedures.)
-
-        Call a stored database procedure with the given name. The sequence of
-        parameters must contain one entry for each argument that the procedure
-        expects. The result of the call is returned as modified copy of the
-        input sequence. Input parameters are left untouched, output and
-        input/output parameters replaced with possibly new values.
-
-        The procedure may also provide a result set as output. This must then
-        be made available through the standard .fetch*() methods.  """
-        pass
+        FIXME JDBC supports callable statements, but they are not implemented
+        on cursors.
+        """
+        raise AttributeError("callproc not supported")
 
     def close(self):
         """
@@ -209,6 +298,8 @@ class Cursor:
         The cursor will be unusable from this point forward; an Error (or
         subclass) exception will be raised if any operation is attempted with
         the cursor.  """
+        if self._closed:
+            return
         self._validate()
         self._finish()
         self._closed = True
@@ -221,10 +312,12 @@ class Cursor:
         if self._resultSet is not None:
             self._resultSet.close()
             self._resultSet = None
+        if self._preparedStatement is not None:
+            self._preparedStatement.close()
+            self._preparedStatement = None
         self._resultColumns = None
         self._paramColumns = None
         self._rowcount = -1
-        self._preparedStatement = None
         self._resultMetaData = None
         self._paramMetaData = None
         self._description = None
@@ -238,13 +331,21 @@ class Cursor:
 
     def _setParams(self, params):
         self._fetchParams()
-        if len(self._paramColumns) != len(params):
-            raise Error("incorrect number of parameters")
 
-        if isinstance(params, typing.sequence):
+        # Sqlite accepts a wide range of method to set parameters
+        if isinstance(params, _SupportsGetItem):
+            if len(self._paramColumns) != len(params):
+                raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (len(self._paramColumns), len(params)))
             for i in range(0, len(params)):
                 self._preparedStatement.setObject(i + 1, params[i])
-        elif isinstance(params, typing.mapping):
+        elif isinstance(params, _SupportsNext):
+            try:
+                for i in range(0, len(self._params)):
+                    self._preparedStatement.setObject(i + 1, next(params))
+            except StopIteration:
+                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
+                                       % (len(self._paramColumns), i))
+        elif isinstance(params, typing.Mapping):
             # FIXME we need the column names here
             raise RuntimeError()
 
@@ -278,8 +379,8 @@ class Cursor:
         self._validate()
         if params is None:
             params = ()
-        if not isinstance(params, (typing.Sequence, typing.Mapping)):
-            raise ValueError("parameters are of unsupported type")
+        if not isinstance(params, (typing.Mapping, typing.Iterable, _SupportsNext, _SupportsGetItem)):
+            raise ValueError("parameters are of unsupported type '%s'" % str(type(params)))
         # complete the previous operation
         self._finish()
         try:
@@ -334,12 +435,11 @@ class Cursor:
             self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except TypeError:
             raise Error()
-        self._rowcount = 0
-
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
                 try:
-                    self._execute(params)
+                    self._setParams(params)
+                    self._preparedStatement.addBatch()
                 except _SQLException:
                     break
         elif hasattr(seq_of_parameters, '__next__'):
@@ -347,13 +447,16 @@ class Cursor:
                 try:
                     params = next(seq_of_parameters)
                     self._execute(params)
+                    self._setParams(params)
                 except _SQLException:
                     break
                 except StopIteration:
                     break
-
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
+        counts = self._preparedStatement.executeBatch()
+        self._rowcount = sum(counts)
+        self._finish()
 
     def _execute(self, params):
         self._setParams(params)
@@ -362,11 +465,6 @@ class Cursor:
             self._resultMetaData = self._resultSet.getMetaData()
         else:
             self._rowcount += self._preparedStatement.getUpdateCount()
-
-    def executescript(self, params):
-        # FIXME not in spec
-        self._validate()
-        pass
 
     def _fetchColumns(self):
         self._validate()
@@ -394,7 +492,7 @@ class Cursor:
         """
         self._validate()
         if not self._resultSet:
-            raise Error()
+            return None
         if not self._resultSet.next():
             return None
         self._fetchColumns()
@@ -661,4 +759,5 @@ def _populateTypes():
     _conversionTable["java.lang.Object"] = _StringConverter()
 
 
+_jcustomizer.getClassHints("java.sql.SQLException").registerClassBase(Error)
 _jinit.registerJVMInitializer(_populateTypes)

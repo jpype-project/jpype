@@ -40,8 +40,10 @@ import jpype.sql as dbapi2
 import weakref
 import functools
 
+
 def getConnection():
     return "jdbc:sqlite::memory:"
+
 
 class RegressionTests(common.JPypeTestCase):
 
@@ -136,22 +138,22 @@ class RegressionTests(common.JPypeTestCase):
         """
         self.con.execute("")
 
-    def testTypeMapUsage(self):
-        """
-        pysqlite until 2.4.1 did not rebuild the row_cast_map when recompiling
-        a statement. This test exhibits the problem.
-        """
-        SELECT = "select * from foo"
-        con = dbapi2.connect(
-            getConnection(), detect_types=sqlite.PARSE_DECLTYPES)
-        con.execute("create table foo(bar timestamp)")
-        con.execute("insert into foo(bar) values (?)",
-                    (datetime.datetime.now(),))
-        con.execute(SELECT)
-        con.execute("drop table foo")
-        con.execute("create table foo(bar integer)")
-        con.execute("insert into foo(bar) values (5)")
-        con.execute(SELECT)
+#    def testTypeMapUsage(self):
+#        """
+#        pysqlite until 2.4.1 did not rebuild the row_cast_map when recompiling
+#        a statement. This test exhibits the problem.
+#        """
+#        SELECT = "select * from foo"
+#        con = dbapi2.connect(
+#            getConnection(), detect_types=sqlite.PARSE_DECLTYPES)
+#        con.execute("create table foo(bar timestamp)")
+#        con.execute("insert into foo(bar) values (?)",
+#                    (datetime.datetime.now(),))
+#        con.execute(SELECT)
+#        con.execute("drop table foo")
+#        con.execute("create table foo(bar integer)")
+#        con.execute("insert into foo(bar) values (5)")
+#        con.execute(SELECT)
 
     def testErrorMsgDecodeError(self):
         # When porting the module to Python 3.0, the error message about
