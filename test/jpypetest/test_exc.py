@@ -123,3 +123,35 @@ class ExceptionTestCase(common.JPypeTestCase):
         WE = jpype.JClass("jpype.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
+
+    def testExcCauseChained1(self):
+        import jpype.imports
+        try:
+            from org.jpype.fail import BadInitializer
+        except Exception as ex:
+            ex1 = ex
+        self.assertIsInstance(ex1, ImportError)
+        self.assertIsInstance(ex1.__cause__, JClass(
+            "java.lang.ExceptionInInitializerError"))
+        self.assertIsInstance(ex1.__cause__.__cause__, JClass(
+            "java.lang.ArrayIndexOutOfBoundsException"))
+        self.assertTrue(ex1.__cause__.__traceback__ is not None)
+        self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
+
+    def testExcCauseChained2(self):
+        try:
+            JClass('org.jpype.fail.BadInitializer2')
+        except Exception as ex:
+            ex1 = ex
+        self.assertIsInstance(ex1, JClass(
+            'java.lang.ExceptionInInitializerError'))
+        self.assertIsInstance(ex1.__cause__.__cause__, JClass(
+            "java.lang.ArrayIndexOutOfBoundsException"))
+        self.assertTrue(ex1.__cause__.__traceback__ is not None)
+        self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
+
+    def testExpandStacktrace(self):
+        Th = jpype.JClass('java.lang.Throwable')
+        null = jpype.JObject(None, Th)
+        # The next line should not fail
+        Th._expandStacktrace(null)

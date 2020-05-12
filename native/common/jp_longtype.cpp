@@ -41,7 +41,7 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallLongMethodA(obj.getValue().l, context->m_LongValueID, 0);
+	field(v) = frame.longValue(obj.getValue().l);
 	return JPValue(this, v);
 }
 

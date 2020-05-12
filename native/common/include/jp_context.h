@@ -115,6 +115,7 @@ public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
 	friend class JPClass;
+	friend class JPTypeFactory;
 
 	JPContext();
 	virtual ~JPContext();
@@ -197,15 +198,6 @@ public:
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
 
-	jmethodID m_BooleanValueID;
-	jmethodID m_ByteValueID;
-	jmethodID m_CharValueID;
-	jmethodID m_ShortValueID;
-	jmethodID m_IntValueID;
-	jmethodID m_LongValueID;
-	jmethodID m_FloatValueID;
-	jmethodID m_DoubleValueID;
-
 private:
 
 	void loadEntryPoints(const string& path);
@@ -250,6 +242,7 @@ private:
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
+	jmethodID m_Throwable_GetCauseID;
 	jmethodID m_Context_GetFunctionalID;
 
 	friend class JPProxy;
@@ -261,6 +254,18 @@ private:
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
+public:
+	jmethodID m_Context_GetStackFrameID;
+
+	jmethodID m_BooleanValueID;
+	jmethodID m_ByteValueID;
+	jmethodID m_CharValueID;
+	jmethodID m_ShortValueID;
+	jmethodID m_IntValueID;
+	jmethodID m_LongValueID;
+	jmethodID m_FloatValueID;
+	jmethodID m_DoubleValueID;
+
 private:
 	bool m_Running;
 	bool m_ConvertStrings;

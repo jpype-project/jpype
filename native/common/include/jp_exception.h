@@ -165,6 +165,4 @@ private:
 	JPThrowableRef m_Throwable;
 } ;
 
-void JPException_init(JPJavaFrame &frame);
-
 #endif

@@ -182,7 +182,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 		PyDict_SetItem(self->m_Dict, attr, value);
 		return 0;
 	}
-	if (Py_TYPE(value) == PyJPPackage_Type || Py_IsInstanceSingle(PyJPClass_Type, value))
+	if (Py_TYPE(value) == PyJPPackage_Type || Py_IsInstanceSingle(value, PyJPClass_Type))
 		return 0;
 	PyErr_Format(PyExc_AttributeError, "Cannot set '%U' on Java packages", attr);
 	return -1;

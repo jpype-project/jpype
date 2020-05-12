@@ -30,6 +30,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     or test if an object is a Java exception type, 
     use ``java.lang.Throwable``.
 
+  - Chained Java exception causes are now reflected in the Python stackframes.
+
   - Use of ``JString`` is discouraged.  To create a Java string or
     test if an object is a Java string type, use ``java.lang.String``.
 

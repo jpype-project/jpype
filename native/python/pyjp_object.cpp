@@ -240,11 +240,33 @@ static PyType_Spec objectSpec = {
 };
 
 
+static PyObject* PyJPException_expandStacktrace(PyObject* self)
+{
+	JP_PY_TRY("PyJPModule_expandStackTrace");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPValue *val = PyJPValue_getJavaSlot(self);
+	
+	// These two are loop invariants and must match each time
+	jthrowable th = (jthrowable) val->getValue().l;
+	JPPyObject exc(JPPyRef::_use, self);
+	PyJPException_normalize(frame, exc, th, NULL);
+
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
+static PyMethodDef exceptionMethods[] = {
+	{"_expandStacktrace", (PyCFunction) PyJPException_expandStacktrace, METH_NOARGS, ""},
+	{NULL},
+};
+
 PyTypeObject *PyJPException_Type = NULL;
 static PyType_Slot excSlots[] = {
 	{Py_tp_new,      (void*) &PyJPObject_new},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
+	{Py_tp_methods,  exceptionMethods},
 	{0}
 };
 
@@ -296,4 +318,40 @@ void PyJPObject_initType(PyObject* module)
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+}
+
+/**
+ * Attach stack frames and causes as required for a Python exception.
+ */
+void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing)
+{
+	JP_TRACE_IN("PyJPException_normalize");
+	JPContext *context = frame.getContext();
+	while (th != NULL)
+	{
+		// Attach the frame to first
+		JPPyObject trace = PyTrace_FromJavaException(frame, th, enclosing);
+		PyException_SetTraceback(exc.get(), trace.get());
+
+		// Check for the next in the cause list
+		enclosing = th;
+		th = frame.getCause(th);
+		if (th == NULL)
+			return;
+		jvalue v;
+		v.l = (jobject) th;
+		JPPyObject next = context->_java_lang_Object->convertToPythonObject(frame, v, false);
+
+		// This may already be a Python exception
+		JPValue *val = PyJPValue_getJavaSlot(next.get());
+		if (val == NULL)
+		{
+			PyException_SetCause(exc.get(), next.keep());
+			return;
+		}
+		next.incref();  // Set cause will steal our reference
+		PyException_SetCause(exc.get(), next.get());
+		exc = next;
+	}
+	JP_TRACE_OUT;
 }

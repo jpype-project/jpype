@@ -80,6 +80,7 @@ _java_lang_Class = None
 _java_lang_NoClassDefFoundError = None
 _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
+_java_lang_ExceptionInInitializerError = None
 
 
 def _getJavaClass(javaname):
@@ -88,6 +89,7 @@ def _getJavaClass(javaname):
     global _java_lang_NoClassDefFoundError
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
+    global _java_lang_ExceptionInInitializerError
     if not _java_lang_Class:
         _java_lang_Class = _jpype.JClass("java.lang.Class")
         _java_lang_ClassNotFoundException = _jpype.JClass(
@@ -96,6 +98,8 @@ def _getJavaClass(javaname):
             "java.lang.NoClassDefFoundError")
         _java_lang_UnsupportedClassVersionError = _jpype.JClass(
             "java.lang.UnsupportedClassVersionError")
+        _java_lang_ExceptionInInitializerError = _jpype.JClass(
+            "java.lang.ExceptionInInitializerError")
 
     err = None
     try:
@@ -104,26 +108,36 @@ def _getJavaClass(javaname):
         return _jpype.JClass(cls)
 
     # Not found is acceptable
-    except _java_lang_ClassNotFoundException:
+    except _java_lang_ClassNotFoundException as ex:
         p = javaname.rpartition('.')
         err = "'%s' not found in '%s'" % (p[2], p[0])
+        ex1 = ex
 
     # Missing dependency
     except _java_lang_NoClassDefFoundError as ex:
         missing = str(ex).replace('/', '.')
         err = "Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)
+        ex1 = ex
 
     # Wrong Java version
     except _java_lang_UnsupportedClassVersionError as ex:
         err = "Unable to import '%s' due to incorrect Java version" % (
             javaname)
+        ex1 = ex
+
+    except _java_lang_ExceptionInInitializerError as ex:
+        err = "Unable to import '%s' due to initializer error" % (
+            javaname)
+        ex1 = ex
+        ex1._expandStacktrace()
 
     # Otherwise!?
     except Exception as ex:
         err = "Unable to import '%s' due to unexpected exception, '%s'" % (
             javaname, ex)
-    raise ImportError(err)
+        ex1 = ex
+    raise ImportError(err) from ex1
 
 
 # %% Customizer
