@@ -66,7 +66,6 @@ import jpype.sql
 #
 
 
- 
 class DatabaseAPI20Test(common.JPypeTestCase):
     """ Test a database self.driver for DB API 2.0 compatibility.
         This implementation tests Gadfly, but the TestCase

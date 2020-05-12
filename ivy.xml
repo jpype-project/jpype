@@ -6,6 +6,7 @@
    </configurations>
 
    <dependencies>
+       <dependency org="com.h2database" name="h2" rev="1.4.200" conf="deps->default"/>
        <dependency org="org.xerial" name="sqlite-jdbc" rev="3.27.2.1" conf="deps->default"/>
    </dependencies>
 </ivy-module>

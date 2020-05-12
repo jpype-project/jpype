@@ -8,16 +8,14 @@ import time
 import threading
 
 # This a generic implementation of PEP-249
-__all__ = ['BINARY', 'Binary', 'Connection', 'Cursor', 'DATE', 'DATETIME',
-           'DBAPITypeObject', 'DECIMAL', 'DataError', 'DatabaseError', 'Date',
-           'DateFromTicks', 'Error', 'FLOAT', 'IntegrityError', 'InterfaceError',
-           'InternalError', 'NUMBER', 'NotSupportedError', 'OperationalError',
-           'ProgrammingError', 'ROWID', 'STRING', 'TEXT', 'TIME', 'Time',
-           'TimeFromTicks', 'Timestamp', 'TimestampFromTicks', 'Warning',
-           '__builtins__', '__cached__', '__doc__', '__file__', '__loader__',
-           '__name__', '__package__', '__spec__', 'apilevel', 'connect',
-           'paramstyle', 'threadsafely']
-
+__all__ = ['Binary', 'Connection', 'Cursor', 'DBAPITypeObject', 'DataError',
+           'DatabaseError', 'Date', 'DateFromTicks', 'Error', 'IntegrityError',
+           'InterfaceError', 'InternalError', 'NotSupportedError',
+           'OperationalError', 'ProgrammingError', 'Time', 'TimeFromTicks',
+           'Timestamp', 'TimestampFromTicks', 'Warning', '__builtins__',
+           '__cached__', '__doc__', '__file__', '__loader__', '__name__',
+           '__package__', '__spec__', 'apilevel', 'connect', 'paramstyle',
+           'threadsafety']
 
 apilevel = "2.0"
 threadsafety = 1
@@ -28,7 +26,7 @@ PARSE_DECLTYPES = None
 
 _SQLException = None
 _SQLTimeoutException = None
-_conversionTable = {}
+_registry = {}
 
 
 def connect(url, driver=None, driver_args=None, **kwargs):
@@ -132,29 +130,29 @@ class Connection:
     DataError = DataError
     NotSupportedError = NotSupportedError
 
-    @property
-    def autocommit(self):
-        return self._jconnection.getAutoCommit()
-
-    @autocommit.setter
-    def autocommit(self, enabled):
-        self._jconnection.setAutoCommit(enabled)
-
     def __init__(self, jconnection):
         self._jconnection = jconnection
         # Required by PEP 249
         # https://www.python.org/dev/peps/pep-0249/#commit
         self._jconnection.setAutoCommit(False)
-        self._thread = threading.get_ident()
         self._closed = False
+
+    def _close(self):
+        if self._closed or not _jpype.isStarted():
+            return
+        if not self._jconnection.isClosed():
+            self._jconnection.close()
+        self._closed = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self._close()
 
     def __del__(self):
         try:
-            if not _jpype.isStarted():
-                return
-            if self._jconnection.isClosed():
-                self._jconnection.close()
-            # FIXME hande the case in which the JVM was terminated before __del__
+            self._close()
         except:
             pass
 
@@ -166,11 +164,8 @@ class Connection:
         the connection. The same applies to all cursor objects trying to use
         the connection. Note that closing a connection without committing the
         changes first will cause an implicit rollback to be performed.  """
-        if self._closed:
-            return
         self._validate()
-        self._jconnection.close()
-        self._closed = True
+        self._close()
 
     def commit(self):
         """Commit any pending transaction to the database.
@@ -207,7 +202,7 @@ class Connection:
         return Cursor(self)
 
     def _validate(self):
-        if self._jconnection.isClosed() or threading.get_ident() != self._thread:
+        if self._jconnection.isClosed():
             raise ProgrammingError
 
     def __call__(self):
@@ -227,22 +222,69 @@ class Connection:
         """
         return self.cursor().executemany(sql, parameters)
 
+    @property
+    def autocommit(self):
+        """ bool: Property controlling autocommit behavior.
+
+        By default connects are not autocommit.  Setting autocommit
+        will result in commit and rollback producing a ProgrammingError.
+        """
+        self._validate()
+        return self._jconnection.getAutoCommit()
+
+    @autocommit.setter
+    def autocommit(self, enabled):
+        self._validate()
+        self._jconnection.setAutoCommit(enabled)
+
+    @property
+    def type_info(self):
+        """ list: The list of types that are supported by this driver.
+        """
+        self._validate()
+        out = {}
+        metadata = self._jconnection.getMetaData()
+        with metadata.getTypeInfo() as resultSet:
+            while (resultSet.next()):
+                try:
+                    out[str(resultSet.getString("TYPE_NAME"))] = _registry[resultSet.getInt("DATA_TYPE")]
+                except KeyError as ex:
+                    raise RuntimeError from ex
+        return out
+
 
 class Cursor:
 
     def __init__(self, connection):
         if not isinstance(connection, Connection):
             raise TypeError
-        self._converters = {}
-        self._connection = connection._jconnection
+        self._connection = connection
+        self._jcx = connection._jconnection
         self._resultSet = None
         self._preparedStatement = None
         self._rowcount = -1
-        self._converters = {}
         self._arraysize = 1
         self._description = None
         self._closed = False
         self._thread = threading.get_ident()
+
+    def __del__(self):
+        try:
+            self._close()
+        except:
+            pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        self._close()
+
+    def _close(self):
+        if self._closed or not _jpype.isStarted():
+            return
+        self._finish()
+        self._closed = True
 
     @property
     def description(self):
@@ -259,9 +301,7 @@ class Cursor:
         - scale
         - null_ok
 
-        The first two items (name and type_code) are mandatory, the other five
-        are optional and are set to None if no meaningful values can be
-        provided.  """
+        """
         if self._description is not None:
             return self._description
         desc = []
@@ -304,15 +344,13 @@ class Cursor:
 
         The cursor will be unusable from this point forward; an Error (or
         subclass) exception will be raised if any operation is attempted with
-        the cursor.  """
-        if self._closed:
-            return
+        the cursor. 
+        """
         self._validate()
-        self._finish()
-        self._closed = True
+        self._close()
 
     def _validate(self):
-        if self._closed or self._connection.isClosed() or threading.get_ident() != self._thread:
+        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
             raise ProgrammingError()
 
     def _finish(self):
@@ -333,8 +371,8 @@ class Cursor:
         paramsMetaData = self._preparedStatement.getParameterMetaData()
         self._paramColumns = []
         for i in range(1, paramsMetaData.getParameterCount() + 1):
-            param = paramsMetaData.getParameterClassName(i)
-            self._paramColumns.append(_conversionTable[param])
+            param = paramsMetaData.getParameterType(i)
+            self._paramColumns.append(_registry[param])
 
     def _setParams(self, params):
 
@@ -342,21 +380,22 @@ class Cursor:
         if isinstance(params, typing.Sequence):
             self._fetchParams()
             if len(self._paramColumns) != len(params):
-                raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (len(self._paramColumns), len(params)))
+                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
+                                       % (len(self._paramColumns), len(params)))
             for i in range(0, len(params)):
-                self._preparedStatement.setObject(i + 1, params[i])
+                self._paramColumns[i]._set(self._preparedStatement, i + 1, params[i])
         elif isinstance(params, typing.Mapping):
-            raise ProgrammingError("mapping parameters not supported")
+            raise TypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
             self._fetchParams()
             try:
                 for i in range(0, len(self._paramColumns)):
-                    self._preparedStatement.setObject(i + 1, next(params))
+                    self._paramColumns[i].set(self._preparedStatement, i + 1, next(params))
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramColumns), i))
         else:
-            raise ProgrammingError("incorrect parameters specification type")
+            raise TypeError("'%s' parameters not supported" % (type(params).__name__))
 
     def execute(self, operation, params=None):
         """
@@ -382,8 +421,6 @@ class Cursor:
         The parameters may also be specified as list of tuples to e.g. insert
         multiple rows in a single operation, but this kind of usage is
         deprecated: .executemany() should be used instead.
-
-        Return values are not defined.
         """
         self._validate()
         if params is None:
@@ -393,7 +430,7 @@ class Cursor:
         # complete the previous operation
         self._finish()
         try:
-            self._preparedStatement = self._connection.prepareStatement(operation)
+            self._preparedStatement = self._jcx.prepareStatement(operation)
         except JClass("java.sql.SQLException") as ex:
             raise OperationalError from ex
         except TypeError as ex:
@@ -437,7 +474,7 @@ class Cursor:
         # complete the previous operation
         self._finish()
         try:
-            self._preparedStatement = self._connection.prepareStatement(operation)
+            self._preparedStatement = self._jcx.prepareStatement(operation)
         except TypeError as ex:
             raise ValueError from ex
         try:
@@ -451,12 +488,12 @@ class Cursor:
                     self._preparedStatement.addBatch()
                 except _SQLException:
                     break
-        elif hasattr(seq_of_parameters, '__next__'):
+        elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
                     params = next(seq_of_parameters)
-                    self._execute(params)
                     self._setParams(params)
+                    self._preparedStatement.addBatch()
                 except _SQLException:
                     break
                 except StopIteration:
@@ -467,28 +504,20 @@ class Cursor:
         self._rowcount = sum(counts)
         self._finish()
 
-    def _execute(self, params):
-        self._setParams(params)
-        if self._preparedStatement.execute():
-            self._resultSet = self._preparedStatement.getResultSet()
-            self._resultMetaData = self._resultSet.getMetaData()
-        else:
-            self._rowcount += self._preparedStatement.getUpdateCount()
-
     def _fetchColumns(self):
         self._validate()
         if self._resultColumns is not None:
             return self._resultColumns
         self._resultColumns = []
         for i in range(0, self._resultMetaData.getColumnCount()):
-            result = self._resultMetaData.getColumnClassName(i + 1)
-            self._resultColumns.append(_conversionTable[result])
+            result = self._resultMetaData.getColumnType(i + 1)
+            self._resultColumns.append(_registry[result])
         return self._resultColumns
 
     def _fetchRow(self):
         row = []
-        for index in range(1, len(self._resultColumns)):
-            row.append(self._resultColumns[i].fetch(self._resultSet))
+        for idx in range(0, len(self._resultColumns)):
+            row.append(self._resultColumns[idx]._get(self._resultSet, idx + 1))
         return row
 
     def fetchone(self):
@@ -570,8 +599,9 @@ class Cursor:
         return rows
 
     def nextset(self):
-        """(This method is optional since not all databases support
-        multiple result sets.)
+        """ Get the next result set in this cursor.
+
+        Not all databases support multiple result sets.
 
         This method will make the cursor skip to the next available set, discarding
         any remaining rows from the current set.
@@ -595,13 +625,11 @@ class Cursor:
     @property
     def arraysize(self):
         """
+        Specify the number of rows to fetch with .fetchmany().
+
         This read/write attribute specifies the number of rows to fetch
         at a time with .fetchmany(). It defaults to 1 meaning to fetch a single row
         at a time.
-
-        Implementations must observe this value with respect to the .fetchmany()
-        method, but are free to interact with the database a single row at a time.
-        It may also be used in the implementation of .executemany().
         """
         return self._arraysize
 
@@ -611,6 +639,10 @@ class Cursor:
 
     @property
     def lastrowid(self):
+        """ Get the id of the last row inserted.
+
+        This is not supported on all JDBC drivers.
+        """
         rs = self._preparedStatement.getGeneratedKeys()
         rs.next()
         rowId = rs.getLong(1)
@@ -630,26 +662,25 @@ class Cursor:
 
         This method would be used before the .execute*() method is invoked.
 
-        Implementations are free to have this method do nothing and users are free
-        to not use it.
+        (not implemented)
         """
         pass
 
     def setoutputsize(self, size, column=None):
         """
-        Set a column buffer size for fetches of
-        large columns (e.g. LONGs, BLOBs, etc.). The column is specified as an
-        index into the result sequence. Not specifying the column will set the
-        default size for all large columns in the cursor.
+        Set a column buffer size for fetches of large columns (e.g. LONGs, BLOBs, etc.). 
 
-        This method would be used before the .execute*() method is invoked.
+        The column is specified as an index into the result sequence. Not
+        specifying the column will set the default size for all large columns
+        in the cursor.
 
-        Implementations are free to have this method do nothing and users are free
-        to not use it.
+        (not implemented)
         """
         pass
 
     def __iter__(self):
+        """ Extension to iterate through a cursor one record at a time.
+        """
         self._validate()
         if not self._resultSet:
             raise Error()
@@ -711,61 +742,94 @@ def Binary(data):
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
 
-##################
-# I honestly have no clue what these are supposed to do.
-# They don't even appear in sqlite3 dbapi2 interface??
 
+class _SQLType:
+    def __init__(self, name, code, native, getter=None, setter=None):
+        self._name = name
+        self._code = code
+        self._native = native
+        self._getter = getter
+        self._setter = setter
+        _registry[code] = self
 
-class DBAPITypeObject:
-    def __init__(self, *values):
-        self.values = values
-
-    def __cmp__(self, other):
-        if other in self.values:
-            return 0
-        if other < self.values:
-            return 1
+    def _initialize(self, ps, rs):
+        self._type = _jpype.JClass(self._native)
+        if self._getter is not None:
+            self._rsget = getattr(rs, self._getter)
         else:
-            return -1
+            self._rsget = getattr(rs, "getObject")
+        if self._setter is not None:
+            self._psset = getattr(ps, self._setter)
+        else:
+            self._psset = getattr(ps, "setObject")
+
+    def _get(self, rs, column):
+        return self._rsget(rs, column)
+
+    def _set(self, ps, column, value):
+        if self._type._canConvertToJava(value):
+            return self._psset(ps, column, value)
+        # FIXME user conversions can be added here
+        return ps.setObject(column, value)
+
+    def __str__(self):
+        return self._name
+
+    def __repr__(self):
+        return self._name
 
 
-STRING = DBAPITypeObject('CHAR', 'NCHAR', 'NVARCHAR', 'VARCHAR', 'OTHER')
-
-TEXT = DBAPITypeObject('CLOB', 'LONGVARCHAR',
-                       'LONGNVARCHAR', 'NCLOB', 'SQLXML')
-
-BINARY = DBAPITypeObject('BINARY', 'BLOB', 'LONGVARBINARY', 'VARBINARY')
-
-NUMBER = DBAPITypeObject('BOOLEAN', 'BIGINT', 'BIT', 'INTEGER', 'SMALLINT',
-                         'TINYINT')
-
-FLOAT = DBAPITypeObject('FLOAT', 'REAL', 'DOUBLE')
-
-DECIMAL = DBAPITypeObject('DECIMAL', 'NUMERIC')
-
-DATE = DBAPITypeObject('DATE')
-
-TIME = DBAPITypeObject('TIME')
-
-DATETIME = DBAPITypeObject('TIMESTAMP')
-
-ROWID = DBAPITypeObject('ROWID')
-
-
-class _StringConverter:
-    def get(self, rs, column):
-        pass
-
-    def set(self, st, column, value):
-        pass
+# From https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
+ARRAY = _SQLType('ARRAY', 2003, 'java.sql.Array', 'getArray', 'setArray')
+BIGINT = _SQLType('BIGINT', -5, _jtypes.JLong, 'getLong', 'setLong')
+BINARY = _SQLType('BINARY', -2, 'byte[]', 'getBytes', 'setBytes')
+BIT = _SQLType('BIT', -7, _jtypes.JBoolean, 'getBoolean', 'setBoolean')
+BLOB = _SQLType('BLOB', 2004, 'java.sql.Blob', 'getBlob', 'setBlob')
+BOOLEAN = _SQLType('BOOLEAN', 16, 'java.sql.Clob', 'getClob', 'setClob')
+CHAR = _SQLType('CHAR', 1, 'java.sql.Clob', 'getClob', 'setClob')
+CLOB = _SQLType('CLOB', 2005, 'java.sql.Clob', 'getClob', 'setClob')
+#DATALINK = _SQLType('DATALINK',70)
+DATE = _SQLType('DATE', 91, 'java.sql.Date', 'getDate', 'setDate')
+DECIMAL = _SQLType('DECIMAL', 3, 'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
+#DISTINCT= _SQLType('DISTINCT',2001)
+DOUBLE = _SQLType('DOUBLE', 8, _jtypes.JDouble, 'getDouble', 'setDouble')
+FLOAT = _SQLType('FLOAT', 6, _jtypes.JDouble, 'getDouble', 'setDouble')
+INTEGER = _SQLType('INTEGER', 4, _jtypes.JInt, 'getInt', 'setInt')
+JAVA_OBJECT = _SQLType('JAVA_OBJECT', 2000, 'java.lang.Object')
+LONGNVARCHAR = _SQLType('LONGNVARCHAR', -16, 'java.lang.String', 'getString', 'setString')
+LONGVARBINARY = _SQLType('LONGVARBINARY', -4, 'byte[]', 'getBytes', 'setBytes')
+LONGVARCHAR = _SQLType('LONGVARCHAR', -1, 'java.lang.String', 'getString', 'setString')
+NCHAR = _SQLType('NCHAR', -15, 'java.lang.String', 'getString', 'setString')
+NCLOB = _SQLType('NCLOB', 2011, 'java.sql.NClob', 'getNClob', 'setNClob')
+NULL = _SQLType('NULL', 0, 'java.lang.Object')
+NUMERIC = _SQLType('NUMERIC', 2, 'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
+NVARCHAR = _SQLType('NVARCHAR', -9, 'java.sql.Clob', 'getClob', 'setClob')
+OTHER = _SQLType('OTHER', 1111, 'java.lang.Object')
+REAL = _SQLType('REAL', 7, _jtypes.JFloat, 'getFloat', 'setFloat')
+REF = _SQLType('REF', 2006, 'java.sql.Ref', 'getRef', 'setRef')
+#REF_CURSOR = _SQLType('REF_CURSOR',2012)
+ROWID = _SQLType('ROWID', -8, 'java.sql.RowId', 'getRowId', 'setRowId')
+RESULTSET = _SQLType('RESULTSET', -10, 'java.sql.ResultSet', 'getObject', 'setObject')
+SMALLINT = _SQLType('SMALLINT', 5, _jtypes.JShort, 'getShort', 'setShort')
+SQLXML = _SQLType('SQLXML', 2009, 'java.sql.SQLXML', 'getSQLXML', 'setSQLXML')
+#STRUCT = _SQLType('STRUCT',2002)
+TIME = _SQLType('TIME', 92, 'java.sql.Time', 'getTime', 'setTime')
+TIME_WITH_TIMEZONE = _SQLType('TIME_WITH_TIMEZONE', 2013, 'java.sql.Time', 'getTime', 'setTime')
+TIMESTAMP = _SQLType('TIMESTAMP', 93, 'java.sql.Timestamp', 'getTimestamp', 'setTimestamp')
+TIMESTAMP_WITH_TIMEZONE = _SQLType('TIMESTAMP_WITH_TIMEZONE', 2014, 'java.sql.Timestamp', 'getTimestamp', 'setTimestamp')
+TINYINT = _SQLType('TINYINT', -6, _jtypes.JShort, 'getShort', 'setShort')
+VARBINARY = _SQLType('VARBINARY', -3, 'byte[]', 'getBytes', 'setBytes')
+VARCHAR = _SQLType('VARCHAR', 12, 'java.lang.String', 'getString', 'setString')
 
 
 def _populateTypes():
     global _SQLException, _SQLTimeoutException
     _SQLException = JClass("java.sql.SQLException")
     _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
-    _conversionTable["java.lang.String"] = _StringConverter()
-    _conversionTable["java.lang.Object"] = _StringConverter()
+    ps = JClass("java.sql.PreparedStatement")
+    rs = JClass("java.sql.ResultSet")
+    for p, v in _registry.items():
+        v._initialize(ps, rs)
 
 
 _jcustomizer.getClassHints("java.sql.SQLException").registerClassBase(Error)

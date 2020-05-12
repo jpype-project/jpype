@@ -296,38 +296,6 @@ class CursorTests(common.JPypeTestCase):
         row = self.cu.fetchone()
         self.assertEqual(row[0], "foo")
 
-# This test is horrible because it is not clear if Mapping or Sequence fits
-#    def testExecuteParamSequence(self):
-#        class L(object):
-#            def __len__(self):
-#                return 1
-#
-#            def __getitem__(self, x):
-#                assert x == 0
-#                return "foo"
-#
-#        self.cu.execute("insert into test(name) values ('foo')")
-#        self.cu.execute("select name from test where name=?", L())
-#        row = self.cu.fetchone()
-#        self.assertEqual(row[0], "foo")
-
-#    def testExecuteDictMapping(self):
-#        self.cu.execute("insert into test(name) values ('foo')")
-#        self.cu.execute(
-#            "select name from test where name=:name", {"name": "foo"})
-#        row = self.cu.fetchone()
-#        self.assertEqual(row[0], "foo")
-
-#    def testExecuteDictMapping_Mapping(self):
-#        class D(dict):
-#            def __missing__(self, key):
-#                return "foo"
-#
-#        self.cu.execute("insert into test(name) values ('foo')")
-#        self.cu.execute("select name from test where name=:name", D())
-#        row = self.cu.fetchone()
-#        self.assertEqual(row[0], "foo")
-
     def testExecuteDictMappingTooLittleArgs(self):
         self.cu.execute("insert into test(name) values ('foo')")
         with self.assertRaises(dbapi2.ProgrammingError):
