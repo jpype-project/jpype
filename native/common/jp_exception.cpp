@@ -212,17 +212,25 @@ void JPypeException::convertJavaToPython()
 	JPPyObject trace = PyTrace_FromJavaException(frame, th, NULL);
 
 	// Attach Java causes as well.
-	jthrowable jcause = frame.getCause(th);
-	if (jcause != NULL)
+	try
 	{
-		jvalue a;
-		a.l = (jobject) jcause;
-		JPPyObject prev = frame.getContext()->_java_lang_Object->convertToPythonObject(frame, a, false);
-		PyJPException_normalize(frame, prev, jcause, th);
-		PyException_SetCause(cause.get(), prev.keep());
+		jthrowable jcause = frame.getCause(th);
+		if (jcause != NULL)
+		{
+			jvalue a;
+			a.l = (jobject) jcause;
+			JPPyObject prev = frame.getContext()->_java_lang_Object->convertToPythonObject(frame, a, false);
+			PyJPException_normalize(frame, prev, jcause, th);
+			PyException_SetCause(cause.get(), prev.keep());
+		}
+		PyException_SetTraceback(cause.get(), trace.get());
+		PyException_SetCause(pyvalue.get(), cause.keep());
+	}	catch (JPypeException& ex)
+	{
+		JP_TRACE("FAILURE IN CAUSE");
+		// Any failures in this optional action should be ignored.
+		// worst case we don't print as much diagnostics.
 	}
-	PyException_SetTraceback(cause.get(), trace.get());
-	PyException_SetCause(pyvalue.get(), cause.keep());
 
 	// Transfer to Python
 	PyErr_SetObject(type, pyvalue.get());
@@ -509,7 +517,6 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 		Py_RETURN_NONE;
 	return (PyObject*) last_traceback;
 }
-
 
 JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev)
 {

@@ -98,7 +98,7 @@ def _getJavaClass(javaname):
             "java.lang.NoClassDefFoundError")
         _java_lang_UnsupportedClassVersionError = _jpype.JClass(
             "java.lang.UnsupportedClassVersionError")
-        _java_lang_ExceptionInInitializerError = _jclass.JClass(
+        _java_lang_ExceptionInInitializerError = _jpype.JClass(
             "java.lang.ExceptionInInitializerError")
 
     err = None
@@ -108,9 +108,10 @@ def _getJavaClass(javaname):
         return _jpype.JClass(cls)
 
     # Not found is acceptable
-    except _java_lang_ClassNotFoundException:
+    except _java_lang_ClassNotFoundException as ex:
         p = javaname.rpartition('.')
         err = "'%s' not found in '%s'" % (p[2], p[0])
+        ex1 = ex
 
     # Missing dependency
     except _java_lang_NoClassDefFoundError as ex:
