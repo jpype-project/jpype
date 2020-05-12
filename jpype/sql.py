@@ -18,21 +18,6 @@ __all__ = ['BINARY', 'Binary', 'Connection', 'Cursor', 'DATE', 'DATETIME',
            '__name__', '__package__', '__spec__', 'apilevel', 'connect',
            'paramstyle', 'threadsafely']
 
-# Protocols supported by sqlite3
-@typing.runtime_checkable
-class _SupportsNext(typing.Protocol):
-    @typing.abstractmethod
-    def __next__(self): ...
-
-
-@typing.runtime_checkable
-class _SupportsGetItem(typing.Protocol):
-    @typing.abstractmethod
-    def __len__(self): ...
-
-    @typing.abstractmethod
-    def __getitem__(self): ...
-
 
 apilevel = "2.0"
 threadsafety = 1
@@ -49,11 +34,16 @@ _conversionTable = {}
 def connect(url, driver=None, driver_args=None, **kwargs):
     """ Create a connection to a database.
 
+    Arguments to the driver depend on the database type.
+
     Args:
        url (str): The database connection string for JDBC.
        driver (str, optional): A JDBC driver to load.
        driver_args: Arguments to the driver.  This may either be a map,
-          java.util.Properties, or (user,password) strings.
+          java.util.Properties.  If not supplied, kwargs
+          are used as as the parameters for the JDBC connection.
+       *kwargs: Arguments to the driver if not supplied as 
+          driver_args.
 
     Raises:
        Error if the connection cannot be established.
@@ -81,9 +71,12 @@ def connect(url, driver=None, driver_args=None, **kwargs):
     elif driver_args is None:
         connection = DM.getConnection(url)
 
-    # Otherwise try to pass it in, must be (String, String)
+    # Otherwise use the kwargs
     else:
-        connection = DM.getConnection(url, *driver_args)
+        info = Properties()
+        for k, v in kwargs.items():
+            info.setProperty(k, v)
+        connection = DM.getConnection(url, info)
     return Connection(connection)
 
 
@@ -139,8 +132,19 @@ class Connection:
     DataError = DataError
     NotSupportedError = NotSupportedError
 
+    @property
+    def autocommit(self):
+        return self._jconnection.getAutoCommit()
+
+    @autocommit.setter
+    def autocommit(self, enabled):
+        self._jconnection.setAutoCommit(enabled)
+
     def __init__(self, jconnection):
         self._jconnection = jconnection
+        # Required by PEP 249
+        # https://www.python.org/dev/peps/pep-0249/#commit
+        self._jconnection.setAutoCommit(False)
         self._thread = threading.get_ident()
         self._closed = False
 
@@ -162,6 +166,8 @@ class Connection:
         the connection. The same applies to all cursor objects trying to use
         the connection. Note that closing a connection without committing the
         changes first will cause an implicit rollback to be performed.  """
+        if self._closed:
+            return
         self._validate()
         self._jconnection.close()
         self._closed = True
@@ -262,10 +268,11 @@ class Cursor:
         self._fetchColumns()
         rmd = self._resultMetaData
         for i in range(1, self._columns + 1):
+            size = rmd.getColumnDisplaySize(i)
             desc = (rmd.getColumnName(i),
                     rmd.getColumnTypeName(i),
-                    None,
-                    None,
+                    size,
+                    size,
                     rmd.getColumnPrecision(i),
                     rmd.getScale(i),
                     rmd.isNullable(i),)
@@ -330,24 +337,26 @@ class Cursor:
             self._paramColumns.append(_conversionTable[param])
 
     def _setParams(self, params):
-        self._fetchParams()
 
         # Sqlite accepts a wide range of method to set parameters
-        if isinstance(params, _SupportsGetItem):
+        if isinstance(params, typing.Sequence):
+            self._fetchParams()
             if len(self._paramColumns) != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (len(self._paramColumns), len(params)))
             for i in range(0, len(params)):
                 self._preparedStatement.setObject(i + 1, params[i])
-        elif isinstance(params, _SupportsNext):
+        elif isinstance(params, typing.Mapping):
+            raise ProgrammingError("mapping parameters not supported")
+        elif isinstance(params, typing.Iterable):
+            self._fetchParams()
             try:
-                for i in range(0, len(self._params)):
+                for i in range(0, len(self._paramColumns)):
                     self._preparedStatement.setObject(i + 1, next(params))
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramColumns), i))
-        elif isinstance(params, typing.Mapping):
-            # FIXME we need the column names here
-            raise RuntimeError()
+        else:
+            raise ProgrammingError("incorrect parameters specification type")
 
     def execute(self, operation, params=None):
         """
@@ -379,7 +388,7 @@ class Cursor:
         self._validate()
         if params is None:
             params = ()
-        if not isinstance(params, (typing.Mapping, typing.Iterable, _SupportsNext, _SupportsGetItem)):
+        if not isinstance(params, (typing.Sequence, typing.Iterable, typing.Iterator)):
             raise ValueError("parameters are of unsupported type '%s'" % str(type(params)))
         # complete the previous operation
         self._finish()

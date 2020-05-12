@@ -106,6 +106,10 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
 
+	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPObject_Type))
+	{
+		typenew->tp_new = PyJPException_Type->tp_new;
+	}
 	return (PyObject*) typenew;
 	JP_PY_CATCH(NULL);
 }

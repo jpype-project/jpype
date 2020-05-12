@@ -29,10 +29,6 @@ class JException(_jpype._JException, internal=True):
     ``java.lang.Throwable``.
 
     """
-    def __new__(cls, *args, **kwargs):
-        self = _jpype._JException.__new__(cls, *args)
-        _jpype._JException.__init__(self, *args)
-        return self
 
     def __str__(self):
         return str(self.toString())

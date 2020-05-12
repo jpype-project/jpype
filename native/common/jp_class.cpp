@@ -322,9 +322,12 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	if (isThrowable())
 	{
 		// Exceptions need new and init
-		JPPyTuple tuple = JPPyTuple::newTuple(1);
-		tuple.setItem(0, _JObjectKey);
-		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
+		JPPyTuple tuple0 = JPPyTuple::newTuple(1);
+		tuple0.setItem(0, JPPyString::fromStringUTF8(frame.toString(value.l)).get());
+		JPPyTuple tuple1 = JPPyTuple::newTuple(2);
+		tuple1.setItem(0, _JObjectKey);
+		tuple1.setItem(1, tuple0.get());
+		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
