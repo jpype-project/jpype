@@ -40,7 +40,7 @@ JPBoxedType::~JPBoxedType()
 
 JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPBoxedType::getJavaConversion");
+	JP_TRACE_IN("JPBoxedType::findJavaConversion");
 	JPClass::findJavaConversion(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
@@ -49,10 +49,23 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 		JP_TRACE("Primitive", match.type);
 		match.conversion = boxBooleanConversion;
 		match.closure = this;
+		if (match.type == JPMatch::_exact)
+			return match.type = JPMatch::_implicit;
 		return match.type = JPMatch::_explicit;
 	}
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPBoxedType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	m_PrimitiveType->getConversionInfo(info);
+	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.expl, "extend", "O", info.implicit));
+	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.implicit, "clear", ""));
+	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.implicit, "extend", "O", info.exact));
+	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.exact, "clear", ""));
+	JPClass::getConversionInfo(info);
 }
 
 jobject JPBoxedType::box(JPJavaFrame &frame, jvalue v)

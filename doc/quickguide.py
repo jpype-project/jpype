@@ -3,25 +3,26 @@ import textwrap
 footnotes = []
 footnotecounter = 1
 
+
 def section(Title=None, Desc=None):
     print("%s" % Title)
-    print("-"*len(Title))
+    print("-" * len(Title))
     if Desc:
         print("%s" % Desc)
         print()
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
+    print("+" + ("-" * 27) + "+" + ("-" * 57) + "+" + ("-" * 57) + "+")
     print("| %-25s | %-55s | %-55s |" %
           ("Description", "Java", "Python"))
-    print("+"+("="*27)+"+"+("="*57)+"+"+("="*57)+"+")
+    print("+" + ("=" * 27) + "+" + ("=" * 57) + "+" + ("=" * 57) + "+")
 
 
 def endSection():
     print()
     global footnotes, footnotecounter
-    for i in range(0,len(footnotes)):
-        print("    .. [%d] %s"%(i+footnotecounter, footnotes[i]))
-    footnotecounter+=len(footnotes)
-    footnotes=[]
+    for i in range(0, len(footnotes)):
+        print("    .. [%d] %s" % (i + footnotecounter, footnotes[i]))
+    footnotecounter += len(footnotes)
+    footnotes = []
     print()
     print()
 
@@ -51,11 +52,11 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
     if Notes:
         global footnotes
         if Notes in footnotes:
-            Desc += " [%d]_"%(footnotes.index(Notes)+footnotecounter)
+            Desc += " [%d]_" % (footnotes.index(Notes) + footnotecounter)
         else:
-            Desc += " [%d]_"%(len(footnotes)+footnotecounter)
+            Desc += " [%d]_" % (len(footnotes) + footnotecounter)
             footnotes.append(Notes)
-    DescLines = textwrap.wrap(Desc,25)
+    DescLines = textwrap.wrap(Desc, 25)
     DescLines.insert(0, "")
     JavaLines = Java.split("\n")
     PythonLines = Python.split("\n")
@@ -76,7 +77,7 @@ def entry(Desc=None, Java=None, Python=None, Notes=None):
         else:
             print(" %-55s |" % "")
 
-    print("+"+("-"*27)+"+"+("-"*57)+"+"+("-"*57)+"+")
+    print("+" + ("-" * 27) + "+" + ("-" * 57) + "+" + ("-" * 57) + "+")
 
 ########################################################
 
@@ -178,7 +179,7 @@ entry("Start Java Virtual Machine (JVM) with a classpath", None,
 
 
 entry("Import default Java namespace", None,
-      python("import java.lang"), 
+      python("import java.lang"),
       "All ``java.lang.*`` classes are available.")
 
 entry("Add a set of jars from a directory", None,
@@ -316,14 +317,14 @@ entry("Catch an exception",
 """)
 
 entry("Throw an exception to Java",
-"""
+      """
 .. code-block:: java
 
   throw new java.lang.Exception(
           "Problem");
           
 """,
-"""
+      """
 .. code-block:: python
 
   raise java.lang.Exception(
@@ -569,7 +570,7 @@ entry("Access a private field by name", None,
         "internalField")
     field.setAccessible(True)
     field.get()
-""","""This is prohibited after Java 8""")
+""", """This is prohibited after Java 8""")
 
 entry("Accessing a specific overload", None,
       """

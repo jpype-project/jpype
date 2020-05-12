@@ -73,4 +73,3 @@ class ReflectCase(common.JPypeTestCase):
         self.assertIsNotNone(obj)
         self.assertIsNotNone(field)
         self.assertEqual('private', field.get(obj))
-

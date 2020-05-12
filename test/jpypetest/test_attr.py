@@ -26,7 +26,7 @@ class AttributeTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
 
     def testWithBufferStrategy(self):
-        j = jpype.JPackage("jpype").attr.ClassWithBuffer
+        j = JClass("jpype.attr.ClassWithBuffer")
         self.assertIsNone(j().bufferStrategy)
 
     def testCallOverloadedMethodWithCovariance(self):

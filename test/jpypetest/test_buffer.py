@@ -42,17 +42,17 @@ class BufferTestCase(common.JPypeTestCase):
     def testShortToBytes(self):
         data = [0, 1, 2, 3, 4, 5]
         ja = JArray(JShort)(data)
-        self.assertEqual(len(bytes(ja)), 6*2)
+        self.assertEqual(len(bytes(ja)), 6 * 2)
 
     def testIntToBytes(self):
         data = [0, 1, 2, 3, 4, 5]
         ja = JArray(JInt)(data)
-        self.assertEqual(len(bytes(ja)), 6*4)
+        self.assertEqual(len(bytes(ja)), 6 * 4)
 
     def testLongToBytes(self):
         data = [0, 1, 2, 3, 4, 5]
         ja = JArray(JLong)(data)
-        self.assertEqual(len(bytes(ja)), 6*8)
+        self.assertEqual(len(bytes(ja)), 6 * 8)
 
     def testMemoryViewWrite(self):
         data = [1, 2, 3, 4, 5]
@@ -83,16 +83,16 @@ class BufferTestCase(common.JPypeTestCase):
         na = np.random.randint(0, 1, size=n).astype(np.bool)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
-        na = np.random.randint(-2**7, 2**7-1, size=n, dtype=np.int8)
+        na = np.random.randint(-2**7, 2**7 - 1, size=n, dtype=np.int8)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
-        na = np.random.randint(0, 2**8-1, size=n, dtype=np.uint8)
+        na = np.random.randint(0, 2**8 - 1, size=n, dtype=np.uint8)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
-        na = np.random.randint(-2**15, 2**15-1, size=n, dtype=np.int16)
+        na = np.random.randint(-2**15, 2**15 - 1, size=n, dtype=np.int16)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
-        na = np.random.randint(0, 2**16-1, size=n, dtype=np.uint16)
+        na = np.random.randint(0, 2**16 - 1, size=n, dtype=np.uint16)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
         na = np.random.randint(-2**31, 2**31 - 1, size=n, dtype=np.int32)
@@ -172,19 +172,19 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteToNP1D(self):
-        self.executeIntTest(JByte, [-2**7, 2**7-1], (100,), np.int8, "b")
+        self.executeIntTest(JByte, [-2**7, 2**7 - 1], (100,), np.int8, "b")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortToNP1D(self):
-        self.executeIntTest(JShort, [-2**15, 2**15-1], (100,), np.int16, "h")
+        self.executeIntTest(JShort, [-2**15, 2**15 - 1], (100,), np.int16, "h")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP1D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31-1], (100,), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (100,), np.int32, "i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP1D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63-1], (100,), np.int64, "q")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (100,), np.int64, "q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP1D(self):
@@ -204,19 +204,19 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteToNP2D(self):
-        self.executeIntTest(JByte, [-2**7, 2**7-1], (11, 10), np.int8, "b")
+        self.executeIntTest(JByte, [-2**7, 2**7 - 1], (11, 10), np.int8, "b")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortToNP2D(self):
-        self.executeIntTest(JShort, [-2**15, 2**15-1], (11, 10), np.int16, "h")
+        self.executeIntTest(JShort, [-2**15, 2**15 - 1], (11, 10), np.int16, "h")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP2D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31-1], (11, 10), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (11, 10), np.int32, "i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP2D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63-1], (11, 10), np.int64, "q")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (11, 10), np.int64, "q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP2D(self):
@@ -236,21 +236,21 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteToNP3D(self):
-        self.executeIntTest(JByte, [-2**7, 2**7-1], (11, 10, 9), np.int8, "b")
+        self.executeIntTest(JByte, [-2**7, 2**7 - 1], (11, 10, 9), np.int8, "b")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortToNP3D(self):
-        self.executeIntTest(JShort, [-2**15, 2**15-1],
+        self.executeIntTest(JShort, [-2**15, 2**15 - 1],
                             (11, 10, 9), np.int16, "h")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP3D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31-1],
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1],
                             (11, 10, 9), np.int32, "i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP3D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63-1],
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1],
                             (11, 10, 9), np.int64, "q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")

@@ -479,6 +479,16 @@ class ProxyTestCase(common.JPypeTestCase):
         # These should be the same if unless the reference was broken
         self.assertEqual(i0, i1)
 
+    def testFunctional(self):
+        def SupplierFunc():
+            return 561
+        js = JObject(SupplierFunc, "java.util.function.Supplier")
+        self.assertEqual(js.get(), 561)
+
+    def testFunctionalLambda(self):
+        js = JObject(lambda x: 2 * x, "java.util.function.DoubleUnaryOperator")
+        self.assertEqual(js.applyAsDouble(1), 2.0)
+
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):

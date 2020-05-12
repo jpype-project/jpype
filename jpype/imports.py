@@ -82,6 +82,7 @@ _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
 _java_lang_ExceptionInInitializerError = None
 
+
 def _getJavaClass(javaname):
     """ This produces diagnostics on failing to find a Java class """
     global _java_lang_Class
@@ -99,7 +100,6 @@ def _getJavaClass(javaname):
             "java.lang.UnsupportedClassVersionError")
         _java_lang_ExceptionInInitializerError = _jclass.JClass(
             "java.lang.ExceptionInInitializerError")
-
 
     err = None
     try:
@@ -196,6 +196,7 @@ def unwrap(name):
         return name
     return ".".join([_keywordUnwrap(i) for i in name.split('.')])
 
+
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
 
@@ -224,10 +225,10 @@ class _JImportLoader:
         for customizer in _CUSTOMIZERS:
             if customizer.canCustomize(name):
                 return customizer.getSpec(name)
-  
+
         # Using isPackage eliminates need for registering tlds
         if not hasattr(base, parts[2]):
-            # If the base is a Java package and it wasn't found in the 
+            # If the base is a Java package and it wasn't found in the
             # package using getAttr, then we need to emit an error
             # so we produce a meaningful diagnositic.
             _getJavaClass(name)
@@ -277,4 +278,3 @@ registerDomain('org')
 registerDomain('mil')
 registerDomain('edu')
 registerDomain('net')
-

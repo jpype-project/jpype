@@ -33,6 +33,8 @@ struct PyJPClass
 	JPClass* m_Class;
 } ;
 
+static PyObject* classMagic = PyDict_New();
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -49,7 +51,38 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	if (PyTuple_Size(args) != 3)
 		JP_RAISE(PyExc_TypeError, "Java class meta required 3 arguments");
 
+	JP_BLOCK("PyJPClass_new::verify")
+	{
+		// Watch for final classes
+		PyObject *bases = PyTuple_GetItem(args, 1);
+		Py_ssize_t len = PyTuple_Size(bases);
+		for (Py_ssize_t i = 0; i < len; ++i)
+		{
+			PyObject *item  = PyTuple_GetItem(bases, i);
+			JPClass *cls = PyJPClass_getJPClass(item);
+			if (cls != NULL && cls->isFinal())
+			{
+				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'", ((PyTypeObject*) item)->tp_name);
+			}
+		}
+	}
+
+	int magic = 0;
+	if (kwargs == classMagic || (kwargs != NULL && PyDict_GetItemString(kwargs, "internal") != 0))
+	{
+		magic = 1;
+		kwargs = NULL;
+	}
+	if (magic == 0)
+	{
+		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
+		return 0;
+	}
+
 	PyTypeObject *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
+
+	// GCOVR_EXCL_START
+	// Sanity checks.  Not testable
 	if (typenew == 0)
 		return NULL;
 	if (typenew->tp_finalize != NULL && typenew->tp_finalize != (destructor) PyJPValue_finalize)
@@ -59,7 +92,6 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	// GCOVR_EXCL_START
 	// This sanity check is trigger if the user attempts to build their own
 	// type wrapper with a __del__ method defined.  It is hard to trigger.
 	if (typenew->tp_alloc != (allocfunc) PyJPValue_alloc
@@ -211,7 +243,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	// Call the type init
-	int rc = PyType_Type.tp_init(self, args, kwargs);
+	int rc = PyType_Type.tp_init(self, args, NULL);
 	if (rc == -1)
 		return rc; // GCOVR_EXCL_LINE no clue how to trigger this one
 
@@ -441,16 +473,39 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JP_PY_CATCH(-1);
 }
 
-static PyObject *PyJPClass_hints(PyObject *self, PyObject *closure)
+static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	PyJPClass *cls = (PyJPClass*) self;
-	PyObject *hints = cls->m_Class->getHints();
-	if (hints == NULL)
+	JPPyObject hints(JPPyRef::_use, self->m_Class->getHints());
+	if (hints.get() == NULL)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
-	Py_INCREF(hints);
-	return hints;
+
+	if (PyObject_HasAttrString((PyObject*) self, "returns") == 1)
+		return hints.keep();
+
+	// Copy in info.
+	JPConversionInfo info;
+	JPPyObject ret(JPPyRef::_call, PyList_New(0));
+	JPPyObject implicit(JPPyRef::_call, PyList_New(0));
+	JPPyObject attribs(JPPyRef::_call, PyList_New(0));
+	JPPyObject exact(JPPyRef::_call, PyList_New(0));
+	JPPyObject expl(JPPyRef::_call, PyList_New(0));
+	JPPyObject none(JPPyRef::_call, PyList_New(0));
+	info.ret = ret.get();
+	info.implicit = implicit.get();
+	info.attributes = attribs.get();
+	info.exact = exact.get();
+	info.expl = expl.get();
+	info.none = none.get();
+	self->m_Class->getConversionInfo(info);
+	PyObject_SetAttrString(hints.get(), "returns", ret.get());
+	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
+	PyObject_SetAttrString(hints.get(), "exact", exact.get());
+	PyObject_SetAttrString(hints.get(), "explicit", expl.get());
+	PyObject_SetAttrString(hints.get(), "none", none.get());
+	PyObject_SetAttrString(hints.get(), "attributes", attribs.get());
+	return hints.keep();
 	JP_PY_CATCH(NULL);
 }
 
@@ -513,7 +568,7 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 		return JPPyString::fromStringUTF8("exact").keep();
 
 	// Not sure how this could happen
-	Py_RETURN_NONE; // GCOVR_EXCL_NONE
+	Py_RETURN_NONE; // GCOVR_EXCL_LINE
 	JP_PY_CATCH(NULL);
 }
 
@@ -621,7 +676,7 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 	JP_PY_TRY("PyJPClass_repr");
 	string name = ((PyTypeObject*) self)->tp_name;
 	return PyUnicode_FromFormat("<java class '%s'>", name.c_str());
-	JP_PY_CATCH(0);
+	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
 static PyMethodDef classMethods[] = {
@@ -841,7 +896,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	JPPyObject rc(JPPyRef::_call, PyObject_Call(_JClassPre, args.get(), NULL));
 
 	// Create the type using the meta class magic
-	JPPyObject vself(JPPyRef::_call, PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), NULL));
+	JPPyObject vself(JPPyRef::_call, PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), classMagic));
 	PyJPClass *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot

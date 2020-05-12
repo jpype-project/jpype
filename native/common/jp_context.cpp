@@ -79,7 +79,6 @@ JPContext::JPContext()
 	m_TypeManager = 0;
 	m_ClassLoader = 0;
 	m_ReferenceQueue = 0;
-	m_ProxyFactory = 0;
 
 	m_Object_ToStringID = 0;
 	m_Object_EqualsID = 0;
@@ -120,7 +119,6 @@ JPContext::~JPContext()
 	delete m_TypeFactory;
 	delete m_TypeManager;
 	delete m_ReferenceQueue;
-	delete m_ProxyFactory;
 	delete m_GC;
 }
 
@@ -231,7 +229,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_TypeFactory = new JPTypeFactory(frame);
 		m_TypeManager = new JPTypeManager(frame);
 		m_ReferenceQueue = new JPReferenceQueue(frame);
-		m_ProxyFactory = new JPProxyFactory(frame);
 
 		// Prepare to launch
 		JP_TRACE("Start Context");
@@ -282,6 +279,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"assemble",
 				"([ILjava/lang/Object;)Ljava/lang/Object;");
 
+		m_Context_GetFunctionalID = frame.GetMethodID(cls,
+				"getFunctional",
+				"(Ljava/lang/Class;)Ljava/lang/String;");
+
 		m_Context_CreateExceptionID = frame.GetMethodID(cls, "createException",
 				"(JJ)Ljava/lang/Exception;");
 		m_Context_GetExcClassID = frame.GetMethodID(cls, "getExcClass",
@@ -305,6 +306,22 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		cls = frame.FindClass("java/lang/Comparable");
 		m_CompareToID = frame.GetMethodID(cls, "compareTo",
 				"(Ljava/lang/Object;)I");
+
+		jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
+
+		method[0].name = (char*) "hostInvoke";
+		method[0].signature = (char*) "(JLjava/lang/String;JJ[J[Ljava/lang/Object;)Ljava/lang/Object;";
+		method[0].fnPtr = (void*) &JPProxy::hostInvoke;
+		frame.GetMethodID(proxyClass, "<init>", "()V");
+		frame.RegisterNatives(proxyClass, method, 1);
+
+		m_ProxyClass = JPClassRef(frame, proxyClass);
+		m_Proxy_NewID = frame.GetStaticMethodID(m_ProxyClass.get(),
+				"newProxy",
+				"(Lorg/jpype/JPypeContext;JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
+		m_Proxy_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
+				"newInstance",
+				"()Ljava/lang/Object;");
 
 		m_GC->init(frame);
 

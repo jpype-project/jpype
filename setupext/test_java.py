@@ -9,9 +9,9 @@ import re
 import shlex
 
 
-def getJavaVersion():
+def getJavaVersion(javac):
     # Find Java version
-    version_str = os.popen('javac -version').read()
+    version_str = os.popen('%s -version' % javac).read()
     result = re.match(r'javac ([0-9]+)\.([0-9]+)\..*', version_str)
     if not result:
         return 8
@@ -21,7 +21,13 @@ def getJavaVersion():
 
 
 def compileJava():
-    version = getJavaVersion()
+    javac = "javac"
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
+            javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    except KeyError:
+        pass
+    version = getJavaVersion(javac)
     srcs = glob.glob('test/harness/jpype/**/*.java', recursive=True)
     srcs.extend(glob.glob('test/harness/org/**/*.java', recursive=True))
     exports = ""
@@ -31,7 +37,7 @@ def compileJava():
         srcs.extend(glob.glob('test/harness/java9/**/*.java', recursive=True))
         exports = "--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED"
     cmd = shlex.split(
-        'javac -d test/classes %s -g:lines,vars,source' % (exports))
+        '%s -d test/classes %s -g:lines,vars,source' % (javac, exports))
     os.makedirs("test/classes", exist_ok=True)
     cmd.extend(srcs)
     return cmd

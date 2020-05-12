@@ -40,6 +40,7 @@ public:
 	virtual ~JPBoxedType();
 
 	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
+	virtual void getConversionInfo(JPConversionInfo &info) override;
 
 	JPPrimitiveType* getPrimitive()
 	{

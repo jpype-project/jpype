@@ -28,5 +28,5 @@ _KEYWORDS = set((
 
 def pysafe(s):
     if s in _KEYWORDS:
-        return s+"_"
+        return s + "_"
     return s
