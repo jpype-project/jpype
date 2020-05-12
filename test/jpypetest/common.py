@@ -117,7 +117,6 @@ class JPypeTestCase(unittest.TestCase):
                 warnings.warn("using JaCoCo")
             import pathlib
             jpype.addClassPath(pathlib.Path("lib/*").absolute())
-            print("XXX", jpype.getClassPath())
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
             _jpype.enableStacktraces(True)
