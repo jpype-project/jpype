@@ -112,7 +112,7 @@ class ConnectionTests(common.JPypeTestCase):
     def tearDown(self):
         try:
             self.cx.close()
-        except dbapi2.ProgrammingError:
+        except dbapi2.Error:
             pass
 
     def testCommit(self):
@@ -227,8 +227,11 @@ class CursorTests(common.JPypeTestCase):
         self.cu.execute("insert into test(name) values (?)", ("foo",))
 
     def tearDown(self):
-        self.cu.close()
-        self.cx.close()
+        try:
+            self.cu.close()
+            self.cx.close()
+        except dbapi2.Error:
+            pass
 
     def testExecuteNoArgs(self):
         self.cu.execute("delete from test")
@@ -525,8 +528,11 @@ class ThreadTests(common.JPypeTestCase):
             "create table test(id integer primary key, name text, bin binary, ratio number, ts timestamp)")
 
     def tearDown(self):
-        self.cur.close()
-        self.con.close()
+        try:
+            self.cur.close()
+            self.con.close()
+        except dbapi2.Error:
+            pass
 
 # FIXME figure out JDBC threading rules
 #    def testConCursor(self):

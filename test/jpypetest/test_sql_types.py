@@ -41,8 +41,10 @@ try:
 except ImportError:
     zlib = None
 
+
 def getConnection():
     return "jdbc:sqlite::memory:"
+
 
 class SqliteTypeTests(common.JPypeTestCase):
 
@@ -238,12 +240,12 @@ class DeclTypesTests(common.JPypeTestCase):
         with self.assertRaises(dbapi2.InterfaceError):
             self.cur.execute("insert into test(f) values (?)", (val,))
 
-    def testUnsupportedDict(self):
-        class Bar:
-            pass
-        val = Bar()
-        with self.assertRaises(dbapi2.InterfaceError):
-            self.cur.execute("insert into test(f) values (:val)", {"val": val})
+#    def testUnsupportedDict(self):
+#        class Bar:
+#            pass
+#        val = Bar()
+#        with self.assertRaises(dbapi2.InterfaceError):
+#            self.cur.execute("insert into test(f) values (:val)", {"val": val})
 
     def testBlob(self):
         # default
@@ -279,7 +281,7 @@ class ColNamesTests(common.JPypeTestCase):
 
         dbapi2.converters["FOO"] = lambda x: "[%s]" % x.decode("ascii")
         dbapi2.converters["BAR"] = lambda x: "<%s>" % x.decode("ascii")
-        dbapi2.converters["EXC"] = lambda x: 5/0
+        dbapi2.converters["EXC"] = lambda x: 5 / 0
         dbapi2.converters["B1B1"] = lambda x: "MARKER"
 
     def tearDown(self):
@@ -461,6 +463,8 @@ class DateTimeTests(common.JPypeTestCase):
         self.cur.execute("insert into test(ts) values (?)", (ts,))
         self.cur.execute("select ts from test")
         ts2 = self.cur.fetchone()[0]
+        print(str(ts))
+        print(str(ts2))
         self.assertEqual(ts, ts2)
 
     def testDateTimeSubSecondsFloatingPoint(self):
@@ -468,4 +472,6 @@ class DateTimeTests(common.JPypeTestCase):
         self.cur.execute("insert into test(ts) values (?)", (ts,))
         self.cur.execute("select ts from test")
         ts2 = self.cur.fetchone()[0]
+        print(str(ts))
+        print(str(ts2))
         self.assertEqual(ts, ts2)

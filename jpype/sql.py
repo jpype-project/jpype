@@ -22,14 +22,15 @@ threadsafety = 1
 paramstyle = 'qmark'
 
 # For compatiblity with sqlite (not implemented)
-PARSE_DECLTYPES = None
+PARSE_DECLTYPES = 1
+PARSE_COLNAMES = 2
 
 _SQLException = None
 _SQLTimeoutException = None
 _registry = {}
 
 
-def connect(url, driver=None, driver_args=None, **kwargs):
+def connect(url, driver=None, driver_args=None, detect_types=None, **kwargs):
     """ Create a connection to a database.
 
     Arguments to the driver depend on the database type.
@@ -78,6 +79,30 @@ def connect(url, driver=None, driver_args=None, **kwargs):
     return Connection(connection)
 
 
+adapters = {}
+converters = {}
+
+
+def register_adapter(tp, adapter):
+    """ Adapters are used to convert a Python type to a SQL Type.
+
+    (used on TYPE._set)
+    """
+    if not callable(adaptor):
+        raise TypeError("Adapter '%s' must be callable" % type(adapter))
+    adapters[tp] = adapter
+
+
+def register_converter(name, converter):
+    """ Converts are used to convert a SQL type to a Python Type.
+
+    """
+
+    if not callable(converter):
+        raise TypeError("Converter '%s' must be callable" % type(converter))
+    converters[name] = converter
+
+
 class Warning(Exception):
     """Exception raised for important warnings like data truncations while
     inserting, etc. """
@@ -92,7 +117,7 @@ class Error(Exception):
     pass
 
 
-class InterfaceError(Error):
+class InterfaceError(Error, TypeError):
     """ Exception raised for errors that are related to the database interface
     rather than the database itself. It must be a subclass of Error."""
     pass
@@ -478,6 +503,7 @@ class Cursor:
             self._rowcount = self._preparedStatement.getUpdateCount()
         except _SQLException:
             pass
+        return self
 
     def executemany(self, operation, seq_of_parameters):
         """
@@ -530,9 +556,13 @@ class Cursor:
                     break
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
-        counts = self._preparedStatement.executeBatch()
+        try:
+            counts = self._preparedStatement.executeBatch()
+        except _SQLException as ex:
+            raise ProgrammingError from ex
         self._rowcount = sum(counts)
         self._finish()
+        return self
 
     def _fetchColumns(self):
         self._validate()
@@ -796,6 +826,8 @@ class _SQLType:
         self._getter = getter
         self._setter = setter
         self._return = _return_converters.get('native', _nop)
+        self.adapters = {}
+        self.converters = {}
         if code is not None:
             _registry[code] = self
 
@@ -811,13 +843,23 @@ class _SQLType:
             self._psset = getattr(ps, "setObject")
 
     def _get(self, rs, column):
-        return self._return(self._rsget(rs, column))
+        try:
+            return self._return(self._rsget(rs, column))
+        except _SQLException as ex:
+            raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
 
     def _set(self, ps, column, value):
         if self._type._canConvertToJava(value) in _accepted:
             return self._psset(ps, column, value)
+        elif type(value) in self.adapters:
+            value = self.adapters[type(value)](value)
+        elif type(value) in adapters:
+            raise RuntimeError("ImplementMe")
         # FIXME user conversions can be added here
-        return ps.setObject(column, value)
+        try:
+            return ps.setObject(column, value)
+        except TypeError as ex:
+            raise InterfaceError("Unable to convert '%s' into '%s'" % (type(value).__name__, self._name)) from ex
 
     def __str__(self):
         return self._name
@@ -833,7 +875,7 @@ class _SQLType:
 ARRAY = _SQLType('ARRAY', 2003, 'java.sql.Array', 'getArray', 'setArray')
 BIGINT = _SQLType('BIGINT', -5, _jtypes.JLong, 'getLong', 'setLong')
 BIT = _SQLType('BIT', -7, _jtypes.JBoolean, 'getBoolean', 'setBoolean')
-BLOB = _SQLType('BLOB', 2004, 'java.sql.Blob', 'getBlob', 'setBlob')
+BLOB = _SQLType('BLOB', 2004, 'java.sql.Blob', 'getObject', 'setBlob')
 BOOLEAN = _SQLType('BOOLEAN', 16, 'java.sql.Clob', 'getClob', 'setClob')
 CHAR = _SQLType('CHAR', 1, 'java.sql.Clob', 'getClob', 'setClob')
 CLOB = _SQLType('CLOB', 2005, 'java.sql.Clob', 'getClob', 'setClob')
@@ -882,6 +924,8 @@ FLOAT = _SQLType(['FLOAT', 'REAL', 'DOUBLE'], 6,
 DECIMAL = _SQLType(['DECIMAL', 'NUMERIC'], 3,
                    'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
 DATETIME = TIMESTAMP
+
+VARCHAR.adapters[memoryview] = lambda x: _jpype.JArray(_jtypes.JByte)(x)
 
 
 def _populateTypes():
