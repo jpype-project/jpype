@@ -79,42 +79,72 @@ def connect(url, driver=None, driver_args=None, **kwargs):
 
 
 class Warning(Exception):
+    """Exception raised for important warnings like data truncations while
+    inserting, etc. """
     pass
 
 
 class Error(Exception):
+    """Exception that is the base class of all other error exceptions. You can use
+    this to catch all errors with one single except statement. Warnings are not
+    considered errors and thus should not use this class as base.
+    """
     pass
 
 
 class InterfaceError(Error):
+    """ Exception raised for errors that are related to the database interface
+    rather than the database itself. It must be a subclass of Error."""
     pass
 
 
 class DatabaseError(Error):
+    """ Exception raised for errors that are related to the database. It must be a
+    subclass of Error.  """
     pass
 
 
 class DataError(DatabaseError):
+    """ Exception raised for errors that are due to problems with the processed
+    data like division by zero, numeric value out of range, etc. It must be a
+    subclass of DatabaseError."""
     pass
 
 
 class OperationalError(DatabaseError):
+    """ Exception raised for errors that are related to the database's operation
+    and not necessarily under the control of the programmer, e.g. an unexpected
+    disconnect occurs, the data source name is not found, a transaction could not
+    be processed, a memory allocation error occurred during processing, etc. It
+    must be a subclass of DatabaseError. """
     pass
 
 
 class IntegrityError(DatabaseError):
+    """ Exception raised when the relational integrity of the database is affected,
+    e.g. a foreign key check fails. It must be a subclass of DatabaseError. """
     pass
 
 
 class InternalError(DatabaseError):
+    """ Exception raised when the database encounters an internal error, e.g. the
+    cursor is not valid anymore, the transaction is out of sync, etc. It must be a
+    subclass of DatabaseError. """
     pass
 
 
 class ProgrammingError(DatabaseError):
+    """ Exception raised for programming errors, e.g. table not found or already
+    exists, syntax error in the SQL statement, wrong number of parameters
+    specified, etc. It must be a subclass of DatabaseError. """
     pass
 
 
 class NotSupportedError(DatabaseError):
+    """ Exception raised in case a method or database API was used which is not
+    supported by the database, e.g. requesting a .rollback() on a connection that
+    does not support transaction or has transactions turned off.
+    """
     pass
 
 
@@ -305,17 +335,18 @@ class Cursor:
         if self._description is not None:
             return self._description
         desc = []
-        self._fetchColumns()
         rmd = self._resultMetaData
-        for i in range(1, self._columns + 1):
+        if rmd is None:
+            return None
+        for i in range(1, self._resultMetaData.getColumnCount() + 1):
             size = rmd.getColumnDisplaySize(i)
-            desc = (rmd.getColumnName(i),
-                    rmd.getColumnTypeName(i),
-                    size,
-                    size,
-                    rmd.getColumnPrecision(i),
-                    rmd.getScale(i),
-                    rmd.isNullable(i),)
+            desc.append((str(rmd.getColumnName(i)),
+                         str(rmd.getColumnTypeName(i)),
+                         size,
+                         size,
+                         rmd.getPrecision(i),
+                         rmd.getScale(i),
+                         rmd.isNullable(i),))
         self._description = desc
         return desc
 
@@ -331,12 +362,12 @@ class Cursor:
         """
         return self._rowcount
 
-    def callproc(self, procname, *args):
+#    def callproc(self, procname, *args):
         """
         FIXME JDBC supports callable statements, but they are not implemented
         on cursors.
         """
-        raise AttributeError("callproc not supported")
+#        raise AttributeError("callproc not supported")
 
     def close(self):
         """
@@ -382,14 +413,14 @@ class Cursor:
             if len(self._paramColumns) != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramColumns), len(params)))
-            for i in range(0, len(params)):
+            for i in range(len(params)):
                 self._paramColumns[i]._set(self._preparedStatement, i + 1, params[i])
         elif isinstance(params, typing.Mapping):
             raise TypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
             self._fetchParams()
             try:
-                for i in range(0, len(self._paramColumns)):
+                for i in range(len(self._paramColumns)):
                     self._paramColumns[i].set(self._preparedStatement, i + 1, next(params))
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
@@ -444,8 +475,7 @@ class Cursor:
             if self._preparedStatement.execute():
                 self._resultSet = self._preparedStatement.getResultSet()
                 self._resultMetaData = self._resultSet.getMetaData()
-            else:
-                self._rowcount = self._preparedStatement.getUpdateCount()
+            self._rowcount = self._preparedStatement.getUpdateCount()
         except _SQLException:
             pass
 
@@ -509,14 +539,14 @@ class Cursor:
         if self._resultColumns is not None:
             return self._resultColumns
         self._resultColumns = []
-        for i in range(0, self._resultMetaData.getColumnCount()):
+        for i in range(self._resultMetaData.getColumnCount()):
             result = self._resultMetaData.getColumnType(i + 1)
             self._resultColumns.append(_registry[result])
         return self._resultColumns
 
     def _fetchRow(self):
         row = []
-        for idx in range(0, len(self._resultColumns)):
+        for idx in range(len(self._resultColumns)):
             row.append(self._resultColumns[idx]._get(self._resultSet, idx + 1))
         return row
 
@@ -530,7 +560,7 @@ class Cursor:
         """
         self._validate()
         if not self._resultSet:
-            return None
+            raise Error
         if not self._resultSet.next():
             return None
         self._fetchColumns()
@@ -740,17 +770,34 @@ def Binary(data):
     """
     return _jtypes.JArray(_jtypes.JByte)(data)
 
+
 #  SQL NULL values are represented by the Python None singleton on input and output.
+_accepted = set(["exact", "implicit"])
+
+
+def _nop(x):
+    return x
+
+
+_return_converters = {}
+_return_converters['java.lang.String'] = str
 
 
 class _SQLType:
     def __init__(self, name, code, native, getter=None, setter=None):
-        self._name = name
+        if isinstance(name, str):
+            self._name = name
+            self._values = [name]
+        else:
+            self._name = name[0]
+            self._values = name
         self._code = code
         self._native = native
         self._getter = getter
         self._setter = setter
-        _registry[code] = self
+        self._return = _return_converters.get('native', _nop)
+        if code is not None:
+            _registry[code] = self
 
     def _initialize(self, ps, rs):
         self._type = _jpype.JClass(self._native)
@@ -764,10 +811,10 @@ class _SQLType:
             self._psset = getattr(ps, "setObject")
 
     def _get(self, rs, column):
-        return self._rsget(rs, column)
+        return self._return(self._rsget(rs, column))
 
     def _set(self, ps, column, value):
-        if self._type._canConvertToJava(value):
+        if self._type._canConvertToJava(value) in _accepted:
             return self._psset(ps, column, value)
         # FIXME user conversions can be added here
         return ps.setObject(column, value)
@@ -778,11 +825,13 @@ class _SQLType:
     def __repr__(self):
         return self._name
 
+    def __eq__(self, other):
+        return other in self._values
+
 
 # From https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
 ARRAY = _SQLType('ARRAY', 2003, 'java.sql.Array', 'getArray', 'setArray')
 BIGINT = _SQLType('BIGINT', -5, _jtypes.JLong, 'getLong', 'setLong')
-BINARY = _SQLType('BINARY', -2, 'byte[]', 'getBytes', 'setBytes')
 BIT = _SQLType('BIT', -7, _jtypes.JBoolean, 'getBoolean', 'setBoolean')
 BLOB = _SQLType('BLOB', 2004, 'java.sql.Blob', 'getBlob', 'setBlob')
 BOOLEAN = _SQLType('BOOLEAN', 16, 'java.sql.Clob', 'getClob', 'setClob')
@@ -790,10 +839,8 @@ CHAR = _SQLType('CHAR', 1, 'java.sql.Clob', 'getClob', 'setClob')
 CLOB = _SQLType('CLOB', 2005, 'java.sql.Clob', 'getClob', 'setClob')
 #DATALINK = _SQLType('DATALINK',70)
 DATE = _SQLType('DATE', 91, 'java.sql.Date', 'getDate', 'setDate')
-DECIMAL = _SQLType('DECIMAL', 3, 'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
 #DISTINCT= _SQLType('DISTINCT',2001)
 DOUBLE = _SQLType('DOUBLE', 8, _jtypes.JDouble, 'getDouble', 'setDouble')
-FLOAT = _SQLType('FLOAT', 6, _jtypes.JDouble, 'getDouble', 'setDouble')
 INTEGER = _SQLType('INTEGER', 4, _jtypes.JInt, 'getInt', 'setInt')
 JAVA_OBJECT = _SQLType('JAVA_OBJECT', 2000, 'java.lang.Object')
 LONGNVARCHAR = _SQLType('LONGNVARCHAR', -16, 'java.lang.String', 'getString', 'setString')
@@ -820,6 +867,21 @@ TIMESTAMP_WITH_TIMEZONE = _SQLType('TIMESTAMP_WITH_TIMEZONE', 2014, 'java.sql.Ti
 TINYINT = _SQLType('TINYINT', -6, _jtypes.JShort, 'getShort', 'setShort')
 VARBINARY = _SQLType('VARBINARY', -3, 'byte[]', 'getBytes', 'setBytes')
 VARCHAR = _SQLType('VARCHAR', 12, 'java.lang.String', 'getString', 'setString')
+
+# Aliases required by DBAPI2
+STRING = _SQLType(['STRING', 'CHAR', 'NCHAR', 'NVARCHAR', 'VARCHAR', 'OTHER'], None,
+                  'java.lang.String', 'getString', 'setString')
+TEXT = _SQLType(['TEXT', 'CLOB', 'LONGVARCHAR', 'LONGNVARCHAR', 'NCLOB', 'SQLXML'], None,
+                'java.lang.String', 'getString', 'setString')
+BINARY = _SQLType(['BINARY', 'BLOB', 'LONGVARBINARY', 'VARBINARY'], -2,
+                  'byte[]', 'getBytes', 'setBytes')
+NUMBER = _SQLType(['NUMBER', 'BOOLEAN', 'BIGINT', 'BIT', 'INTEGER', 'SMALLINT', 'TINYINT'], None,
+                  'java.lang.Number', 'getObject', 'setObject')
+FLOAT = _SQLType(['FLOAT', 'REAL', 'DOUBLE'], 6,
+                 _jtypes.JDouble, 'getDouble', 'setDouble')
+DECIMAL = _SQLType(['DECIMAL', 'NUMERIC'], 3,
+                   'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
+DATETIME = TIMESTAMP
 
 
 def _populateTypes():
