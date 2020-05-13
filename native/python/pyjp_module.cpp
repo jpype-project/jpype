@@ -192,7 +192,7 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
+int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
 	if (type == NULL || obj == NULL)
 		return 0; // GCOVR_EXCL_LINE
@@ -660,7 +660,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "0.7.4");
+	PyModule_AddStringConstant(module, "__version__", "0.7.6_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);

@@ -3,9 +3,8 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-
-  
-- **Next Release**
+- **Next version - unreleased**
+- **0.7.6_dev0 - 2020-05-10**
 
   - Java classes annotated with ``@FunctionalInterface`` can be 
     converted from any Python object that implements ``__call__``. 
@@ -30,6 +29,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     or test if an object is a Java exception type, 
     use ``java.lang.Throwable``.
 
+  - Chained Java exception causes are now reflected in the Python stackframes.
+
   - Use of ``JString`` is discouraged.  To create a Java string or
     test if an object is a Java string type, use ``java.lang.String``.
 
@@ -49,6 +50,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
     Java procedures as currently implemented as Java does not have
     a specific provision for this.
 
+- **0.7.5 - 2020-05-10**
+
+  - Updated docs.
+
+  - Fix corrupt conda release.
 
 - **0.7.4 - 4-28-2020**
 

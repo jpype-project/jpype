@@ -73,3 +73,8 @@ docker/*.tar.gz
 docker/wheelhouse
 /.eggs
 /tmp*
+.idea/
+_build/
+jacoco/
+wheelhouse/
+vc*.pdb

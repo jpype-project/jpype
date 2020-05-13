@@ -54,18 +54,9 @@ class JException(_jpype._JException, internal=True):
         sw.close()
         return r
 
-    # For compatiblity with python exceptions
     @property
     def args(self):
-        return self._jargs()
-#    args = property(lambda self: self._jargs(), None)
-#    """ Test doc string on property"""
-
-    def _jargs(self):
-        cause = self.getCause()
-        if cause is None:
-            return (str(self.getMessage()),)
-        return (str(self.getMessage()), cause,)
+        return self._args
 
 
 # Hook up module resources
