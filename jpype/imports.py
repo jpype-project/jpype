@@ -183,7 +183,6 @@ class _JImportLoader:
             # If the base is a Java package and it wasn't found in the
             # package using getAttr, then we need to emit an error
             # so we produce a meaningful diagnositic.
-            return _getJavaClass(name)
             try:
                 # Use forname because it give better diagnostics
                 cls = _java_lang_Class.forName(name)
