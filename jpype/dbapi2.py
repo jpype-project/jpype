@@ -29,13 +29,14 @@ PARSE_COLNAMES = 2
 _SQLException = None
 _SQLTimeoutException = None
 _registry = {}
+_types = []
 
 
 ###############################################################################
 # Types
 
 class JDBCType:
-    def __init__(self, name, code, native, getter=None, setter=None):
+    def __init__(self, name, code, getter=None, setter=None):
         """ (internal) Create a new JDBC type. """
         if isinstance(name, (str, type(None))):
             self._name = name
@@ -44,25 +45,22 @@ class JDBCType:
             self._name = name[0]
             self._values = name
         self._code = code
-        self._native = native
         self._getter = getter
         self._setter = setter
         self._adapters = {}
         self.converter = None
         if code is not None:
             _registry[code] = self
+        _types.append(self)
 
     def _initialize(self, ps, rs):
         """ Called after the JVM starts initialize Java resources """
-        self._type = _jpype.JClass(self._native)
-        if self._getter is not None:
-            self._rsget = getattr(rs, self._getter)
-        else:
-            self._rsget = getattr(rs, "getObject")
-        if self._setter is not None:
-            self._psset = getattr(ps, self._setter)
-        else:
-            self._psset = getattr(ps, "setObject")
+        if self._getter is None:
+            self._getter = "getObject"
+        self._rsget = getattr(rs, "getObject")
+        if self._setter is None:
+            self._setter = "setObject"
+        self._psset = getattr(ps, self._setter)
 
     def fetch(self, rs, column):
         """ A method to retrieve a specific JDBC type.
@@ -94,7 +92,7 @@ class JDBCType:
         adp = self._adapters.get(type(value), None)
         if adp is not None:
             value = adp(value)
-        if self._native._canConvertToJava(value) in _accepted:
+        if self._psset._matches(ps, column, value):
             return self._psset(ps, column, value)
         try:
             return ps.setObject(column, value)
@@ -126,61 +124,61 @@ class JDBCType:
 # DISTINCT= JDBCType('DISTINCT',2001)
 # REF_CURSOR = JDBCType('REF_CURSOR',2012)
 # STRUCT = JDBCType('STRUCT',2002)
-ARRAY = JDBCType('ARRAY', 2003, 'java.sql.Array', 'getArray', 'setArray')
-BIGINT = JDBCType('BIGINT', -5, _jtypes.JLong, 'getLong', 'setLong')
-BIT = JDBCType('BIT', -7, _jtypes.JBoolean, 'getBoolean', 'setBoolean')
-BLOB = JDBCType('BLOB', 2004, 'java.sql.Blob', 'getBlob', 'setBlob')
-BOOLEAN = JDBCType('BOOLEAN', 16, _jtypes.JBoolean, 'getBoolean', 'setBoolean')
-CHAR = JDBCType('CHAR', 1, 'java.lang.String', 'getString', 'setString')
-CLOB = JDBCType('CLOB', 2005, 'java.sql.Clob', 'getClob', 'setClob')
-DATE = JDBCType('DATE', 91, 'java.sql.Date', 'getDate', 'setDate')
-DOUBLE = JDBCType('DOUBLE', 8, _jtypes.JDouble, 'getDouble', 'setDouble')
-INTEGER = JDBCType('INTEGER', 4, _jtypes.JInt, 'getInt', 'setInt')
-OBJECT = JDBCType('OBJECT', 2000, 'java.lang.Object')
-LONGNVARCHAR = JDBCType('LONGNVARCHAR', -16, 'java.lang.String', 'getString', 'setString')
-LONGVARBINARY = JDBCType('LONGVARBINARY', -4, 'byte[]', 'getBytes', 'setBytes')
-LONGVARCHAR = JDBCType('LONGVARCHAR', -1, 'java.lang.String', 'getString', 'setString')
-NCHAR = JDBCType('NCHAR', -15, 'java.lang.String', 'getString', 'setString')
-NCLOB = JDBCType('NCLOB', 2011, 'java.sql.NClob', 'getNClob', 'setNClob')
-NULL = JDBCType('NULL', 0, 'java.lang.Object')
-NUMERIC = JDBCType('NUMERIC', 2, 'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
-NVARCHAR = JDBCType('NVARCHAR', -9, 'java.sql.Clob', 'getClob', 'setClob')
-OTHER = JDBCType('OTHER', 1111, 'java.lang.Object')
-REAL = JDBCType('REAL', 7, _jtypes.JFloat, 'getFloat', 'setFloat')
-REF = JDBCType('REF', 2006, 'java.sql.Ref', 'getRef', 'setRef')
-ROWID = JDBCType('ROWID', -8, 'java.sql.RowId', 'getRowId', 'setRowId')
-RESULTSET = JDBCType('RESULTSET', -10, 'java.sql.ResultSet', 'getObject', 'setObject')
-SMALLINT = JDBCType('SMALLINT', 5, _jtypes.JShort, 'getShort', 'setShort')
-SQLXML = JDBCType('SQLXML', 2009, 'java.sql.SQLXML', 'getSQLXML', 'setSQLXML')
-TIME = JDBCType('TIME', 92, 'java.sql.Time', 'getTime', 'setTime')
-TIME_WITH_TIMEZONE = JDBCType('TIME_WITH_TIMEZONE', 2013, 'java.sql.Time', 'getTime', 'setTime')
-TIMESTAMP = JDBCType('TIMESTAMP', 93, 'java.sql.Timestamp', 'getTimestamp', 'setTimestamp')
-TIMESTAMP_WITH_TIMEZONE = JDBCType('TIMESTAMP_WITH_TIMEZONE', 2014, 'java.sql.Timestamp', 'getTimestamp', 'setTimestamp')
-TINYINT = JDBCType('TINYINT', -6, _jtypes.JShort, 'getShort', 'setShort')
-VARBINARY = JDBCType('VARBINARY', -3, 'byte[]', 'getBytes', 'setBytes')
-VARCHAR = JDBCType('VARCHAR', 12, 'java.lang.String', 'getString', 'setString')
+ARRAY = JDBCType('ARRAY', 2003, 'getArray', 'setArray')
+BIGINT = JDBCType('BIGINT', -5, 'getLong', 'setLong')
+BIT = JDBCType('BIT', -7, 'getBoolean', 'setBoolean')
+BLOB = JDBCType('BLOB', 2004, 'getBlob', 'setBlob')
+BOOLEAN = JDBCType('BOOLEAN', 16, 'getBoolean', 'setBoolean')
+CHAR = JDBCType('CHAR', 1, 'getString', 'setString')
+CLOB = JDBCType('CLOB', 2005, 'getClob', 'setClob')
+DATE = JDBCType('DATE', 91, 'getDate', 'setDate')
+DOUBLE = JDBCType('DOUBLE', 8, 'getDouble', 'setDouble')
+INTEGER = JDBCType('INTEGER', 4, 'getInt', 'setInt')
+OBJECT = JDBCType('OBJECT', 2000)
+LONGNVARCHAR = JDBCType('LONGNVARCHAR', -16, 'getString', 'setString')
+LONGVARBINARY = JDBCType('LONGVARBINARY', -4, 'getBytes', 'setBytes')
+LONGVARCHAR = JDBCType('LONGVARCHAR', -1, 'getString', 'setString')
+NCHAR = JDBCType('NCHAR', -15, 'getString', 'setString')
+NCLOB = JDBCType('NCLOB', 2011, 'getNClob', 'setNClob')
+NULL = JDBCType('NULL', 0)
+NUMERIC = JDBCType('NUMERIC', 2, 'getBigDecimal', 'setBigDecimal')
+NVARCHAR = JDBCType('NVARCHAR', -9, 'getClob', 'setClob')
+OTHER = JDBCType('OTHER', 1111)
+REAL = JDBCType('REAL', 7, 'getFloat', 'setFloat')
+REF = JDBCType('REF', 2006, 'getRef', 'setRef')
+ROWID = JDBCType('ROWID', -8, 'getRowId', 'setRowId')
+RESULTSET = JDBCType('RESULTSET', -10, 'getObject', 'setObject')
+SMALLINT = JDBCType('SMALLINT', 5, 'getShort', 'setShort')
+SQLXML = JDBCType('SQLXML', 2009, 'getSQLXML', 'setSQLXML')
+TIME = JDBCType('TIME', 92, 'getTime', 'setTime')
+TIME_WITH_TIMEZONE = JDBCType('TIME_WITH_TIMEZONE', 2013, 'getTime', 'setTime')
+TIMESTAMP = JDBCType('TIMESTAMP', 93, 'getTimestamp', 'setTimestamp')
+TIMESTAMP_WITH_TIMEZONE = JDBCType('TIMESTAMP_WITH_TIMEZONE', 2014, 'getTimestamp', 'setTimestamp')
+TINYINT = JDBCType('TINYINT', -6, 'getShort', 'setShort')
+VARBINARY = JDBCType('VARBINARY', -3, 'getBytes', 'setBytes')
+VARCHAR = JDBCType('VARCHAR', 12, 'getString', 'setString')
 
 # Aliases required by DBAPI2
 STRING = JDBCType(['STRING', 'CHAR', 'NCHAR', 'NVARCHAR', 'VARCHAR', 'OTHER'], None,
-                  'java.lang.String', 'getString', 'setString')
+                  'getString', 'setString')
 TEXT = JDBCType(['TEXT', 'CLOB', 'LONGVARCHAR', 'LONGNVARCHAR', 'NCLOB', 'SQLXML'], None,
-                'java.lang.String', 'getString', 'setString')
+                'getString', 'setString')
 BINARY = JDBCType(['BINARY', 'BLOB', 'LONGVARBINARY', 'VARBINARY'], -2,
-                  'byte[]', 'getBytes', 'setBytes')
+                  'getBytes', 'setBytes')
 NUMBER = JDBCType(['NUMBER', 'BOOLEAN', 'BIGINT', 'BIT', 'INTEGER', 'SMALLINT', 'TINYINT'], None,
-                  'java.lang.Number', 'getObject', 'setObject')
+                  'getObject', 'setObject')
 FLOAT = JDBCType(['FLOAT', 'REAL', 'DOUBLE'], 6,
-                 _jtypes.JDouble, 'getDouble', 'setDouble')
+                 'getDouble', 'setDouble')
 DECIMAL = JDBCType(['DECIMAL', 'NUMERIC'], 3,
-                   'java.math.BigDecimal', 'getBigDecimal', 'setBigDecimal')
+                 'getBigDecimal', 'setBigDecimal')
 DATETIME = TIMESTAMP
 
 # Special types
-ASCII_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getAsciiStream', 'setAsciiStream')
-BINARY_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getBinaryStream', 'setBinaryStream')
-CHARACTER_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getCharacterStream', 'setCharacterStream')
-NCHARACTER_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getNCharacterStream', 'setNCharacterStream')
-URL = JDBCType(None, None, 'java.net.URL', 'getURL', 'setURL')
+ASCII_STREAM = JDBCType(None, None, 'getAsciiStream', 'setAsciiStream')
+BINARY_STREAM = JDBCType(None, None, 'getBinaryStream', 'setBinaryStream')
+CHARACTER_STREAM = JDBCType(None, None, 'getCharacterStream', 'setCharacterStream')
+NCHARACTER_STREAM = JDBCType(None, None, 'getNCharacterStream', 'setNCharacterStream')
+URL = JDBCType(None, None, 'getURL', 'setURL')
 
 # =======================================================================================================
 # Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter |
@@ -626,7 +624,11 @@ class Connection:
 # Cursor
 
 class Cursor:
-
+    """ Cursors are used to execute queries and retrieve results.
+    
+    Part PreparedStatement, part ResultSet,  Cursors are a mixture of
+    both.
+    """
     def __init__(self, connection):
         if not isinstance(connection, Connection):
             raise TypeError
@@ -650,40 +652,24 @@ class Cursor:
 
     def _fetchParams(self):
         """ Look up the adapters to apply to incoming parameters. """
-        cx = self.connection
-        self._paramSetters = []
+        if self._paramSetters is not None:
+            return
+        cx = self._connection
+        setters = []
         meta = self._preparedStatement.getParameterMetaData()
         count = meta.getParameterCount()
         for i in range(count):
             # Lookup the JDBC Type
             jdbcType = _registry[meta.getParameterType(i + 1)]
-            self._paramSetters.append(cx._setters[param])
-
-    def _fetchColumns(self):
-        """ Get the list of getters and converters that apply to
-        the result set. """
-        self._validate()
-        if self._resultFetcher is not None:
-            return
-        cx = self.connection
-        self._resultFetchers = []
-        self._resultConverter = []
-        meta = self._resultMetaData
-        count = meta.getColumnCount()
-        for i in range(count):
-            # Lookup the JDBC Type
-            jdbcType = _registry[meta.getColumnType(i + 1)]
-            self._resultFetchers.append(cx._getters.get(jdbcType, OBJECT.fetch))
-            self._resultConverter.append(cx._converters.get(jdbcType, _nop))
-        return self._resultColumns
-        # FIXME add support for position and named converters here
+            setters.append(cx._setters[jdbcType])
+        self._paramSetters = setters
 
     def _setParams(self, params):
         if isinstance(params, typing.Sequence):
             self._fetchParams()
-            if len(self._paramColumns) != len(params):
+            if len(self._paramSetters) != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramColumns), len(params)))
+                                       % (len(self._paramSetters), len(params)))
             for i in range(len(params)):
                 # FIXME apply cx adaptors here
                 self._paramSetters[i](self._preparedStatement, i + 1, params[i])
@@ -694,12 +680,37 @@ class Cursor:
             try:
                 for i in range(len(self._paramColumns)):
                     # FIXME apply cx adaptors here
-                    self._paramColumns[i](self._preparedStatement, i + 1, next(params))
+                    self._paramSetters[i](self._preparedStatement, i + 1, next(params))
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramColumns), i))
+                                       % (len(self._paramSetters), i))
         else:
             raise TypeError("'%s' parameters not supported" % (type(params).__name__))
+
+    def _fetchColumns(self):
+        """ Get the list of getters and converters that apply to
+        the result set. """
+        if self._resultFetchers is not None:
+            return
+        cx = self._connection
+        fetchers = []
+        converters = []
+        meta = self._resultMetaData
+        count = meta.getColumnCount()
+        for i in range(count):
+            # Lookup the JDBC Type
+            jdbcType = _registry[meta.getColumnType(i + 1)]
+            fetchers.append(cx._getters.get(jdbcType, OBJECT.fetch))
+            converters.append(cx._converters.get(jdbcType, _nop))
+        self._resultFetchers = fetchers
+        self._resultConverters = converters
+        # FIXME add support for position and named converters here
+
+    def _fetchRow(self):
+        row = []
+        for idx in range(len(self._resultFetchers)):
+            row.append(self._resultConverters(self._resultFetchers[idx](self._resultSet, idx + 1)))
+        return row
 
     def _validate(self):
         """ Called before any method that requires the statement to be open. """
@@ -795,11 +806,12 @@ class Cursor:
         self._finish()
         try:
             self._preparedStatement = self._jcx.prepareStatement(operation)
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except JClass("java.sql.SQLException") as ex:
             raise OperationalError from ex
         except TypeError as ex:
             raise ValueError from ex
-        self._paramMetaData = self._preparedStatement.getParameterMetaData()
+        self._setParams(params)
         if self._preparedStatement.execute():
             self._resultSet = self._preparedStatement.getResultSet()
             self._resultMetaData = self._resultSet.getMetaData()
@@ -899,12 +911,6 @@ class Cursor:
         if self._rowcount < 0:
             self._rowcount = -1
         return self
-
-    def _fetchRow(self):
-        row = []
-        for idx in range(len(self._resultColumns)):
-            row.append(self._resultConverter(self._resultFetcher[idx](self._resultSet, idx + 1)))
-        return row
 
     def fetchone(self):
         """
@@ -1156,7 +1162,7 @@ def _populateTypes():
     _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
     ps = JClass("java.sql.PreparedStatement")
     rs = JClass("java.sql.ResultSet")
-    for p, v in _registry.items():
+    for v in _types:
         v._initialize(ps, rs)
 
 
