@@ -35,7 +35,7 @@ import pytest
 
 import datetime
 import unittest
-import jpype.sql as dbapi2
+import jpype.dbapi2 as dbapi2
 try:
     import zlib
 except ImportError:

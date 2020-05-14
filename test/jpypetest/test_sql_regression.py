@@ -36,7 +36,7 @@ import pytest
 
 import datetime
 import unittest
-import jpype.sql as dbapi2
+import jpype.dbapi2 as dbapi2
 import weakref
 import functools
 
@@ -99,7 +99,7 @@ class RegressionTests(common.JPypeTestCase):
         # cache when closing the database. statements that were still
         # referenced in cursors weren't closed and could provoke "
         # "OperationalError: Unable to close due to unfinalised statements".
-        con = sqlite.connect(getConnection())
+        con = dbapi2.connect(getConnection())
         cursors = []
         # default statement cache size is 100
         for i in range(105):
@@ -138,22 +138,22 @@ class RegressionTests(common.JPypeTestCase):
         """
         self.con.execute("")
 
-#    def testTypeMapUsage(self):
-#        """
-#        pysqlite until 2.4.1 did not rebuild the row_cast_map when recompiling
-#        a statement. This test exhibits the problem.
-#        """
-#        SELECT = "select * from foo"
-#        con = dbapi2.connect(
-#            getConnection(), detect_types=sqlite.PARSE_DECLTYPES)
-#        con.execute("create table foo(bar timestamp)")
-#        con.execute("insert into foo(bar) values (?)",
-#                    (datetime.datetime.now(),))
-#        con.execute(SELECT)
-#        con.execute("drop table foo")
-#        con.execute("create table foo(bar integer)")
-#        con.execute("insert into foo(bar) values (5)")
-#        con.execute(SELECT)
+    def testTypeMapUsage(self):
+        """
+        pysqlite until 2.4.1 did not rebuild the row_cast_map when recompiling
+        a statement. This test exhibits the problem.
+        """
+        SELECT = "select * from foo"
+        con = dbapi2.connect(
+            getConnection(), detect_types=dbapi2.PARSE_DECLTYPES)
+        con.execute("create table foo(bar timestamp)")
+        con.execute("insert into foo(bar) values (?)",
+                    (datetime.datetime.now(),))
+        con.execute(SELECT)
+        con.execute("drop table foo")
+        con.execute("create table foo(bar integer)")
+        con.execute("insert into foo(bar) values (5)")
+        con.execute(SELECT)
 
     def testErrorMsgDecodeError(self):
         # When porting the module to Python 3.0, the error message about

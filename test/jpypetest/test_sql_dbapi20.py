@@ -17,7 +17,7 @@ __author__ = "Stuart Bishop <zen@shangri-la.dropbear.id.au>"
 import common
 import unittest
 import time
-import jpype.sql
+import jpype.dbapi2
 
 # $Log$
 # Revision 1.1.2.1  2006/02/25 03:44:32  adustman
@@ -79,7 +79,7 @@ class DatabaseAPI20Test(common.JPypeTestCase):
 
     # The self.driver module. This should be the module where the 'connect'
     # method is to be found
-    driver = jpype.sql
+    driver = jpype.dbapi2
     connect_args = ("jdbc:sqlite::memory:",)  # List of arguments to pass to connect
     connect_kw_args = {}  # Keyword arguments for connect
     table_prefix = "dbapi20test_"  # If you need to specify a prefix for tables

@@ -33,7 +33,7 @@ import common
 import pytest
 import threading
 import unittest
-import jpype.sql as dbapi2
+import jpype.dbapi2 as dbapi2
 
 
 def getConnection():
