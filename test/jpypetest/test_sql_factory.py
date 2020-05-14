@@ -37,8 +37,10 @@ import unittest
 import jpype.dbapi2 as dbapi2
 from collections.abc import Sequence
 
+
 def getConnection():
     return "jdbc:sqlite::memory:"
+
 
 class MyConnection(dbapi2.Connection):
     def __init__(self, *args, **kwargs):
@@ -56,8 +58,6 @@ class MyCursor(dbapi2.Cursor):
     def __init__(self, *args, **kwargs):
         dbapi2.Cursor.__init__(self, *args, **kwargs)
         self.row_factory = dict_factory
-
-
 
 
 class ConnectionFactoryTests(common.JPypeTestCase):

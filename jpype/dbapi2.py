@@ -37,7 +37,7 @@ _registry = {}
 class JDBCType:
     def __init__(self, name, code, native, getter=None, setter=None):
         """ (internal) Create a new JDBC type. """
-        if isinstance(name, str):
+        if isinstance(name, (str, type(None))):
             self._name = name
             self._values = [name]
         else:
@@ -47,7 +47,6 @@ class JDBCType:
         self._native = native
         self._getter = getter
         self._setter = setter
-        self._return = _return_converters.get('native', _nop)
         self._adapters = {}
         self.converter = None
         if code is not None:
@@ -68,11 +67,11 @@ class JDBCType:
     def fetch(self, rs, column):
         """ A method to retrieve a specific JDBC type.
 
-        To use a fetcher add the fetch method to the JDBC type matching the
-        column type to be pulled.  For example, to set the fetcher for FLOAT to
-        use the OBJECT fetcher, use  ``cx.fetcher[FLOAT] = OBJECT.fetch``.
+        To use a getter add the fetch method to the JDBC type matching the
+        column type to be pulled.  For example, to set the getter for FLOAT to
+        use the OBJECT getter, use  ``cx.getter[FLOAT] = OBJECT.fetch``.
 
-        Not all fetchers are available on all database drivers.  Consult the
+        Not all getters are available on all database drivers.  Consult the
         database driver documentation for details.
         """
         try:
@@ -110,6 +109,9 @@ class JDBCType:
 
     def __eq__(self, other):
         return other in self._values
+
+    def __hash__(self):
+        return hash(self._name)
 
     @property
     def adapters(self):
@@ -180,58 +182,58 @@ CHARACTER_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getCharacterStr
 NCHARACTER_STREAM = JDBCType(None, None, 'java.io.OutputStream', 'getNCharacterStream', 'setNCharacterStream')
 URL = JDBCType(None, None, 'java.net.URL', 'getURL', 'setURL')
 
-# ==================================================================================================
-# Group    JDBC Type              Default Fetcher     Default Setter PyTypes           Special Fetch|
-# -------- ---------------------- ------------------- -------------- ----------------- -------------|
-# DATE     DATE                   getDate             setDate        datetime.datetime              |
-# DATETIME TIMESTAMP              getTimestamp        setTimestamp   datetime.datetime              |
-# TIME     TIME                   getTime             setTime        datetime.datetime              |
-# -------- ---------------------- ------------------- -------------- ----------------- -------------|
-# DECIMAL  DECIMAL                getBigDecimal       setBigDecimal  decimal.Decimal                |
-# DECIMAL  NUMERIC                getBigDecimal       setBigDecimal  decimal.Decimal                |
-# -------- ---------------------- ------------------- -------------- ----------------- -------------|
-# FLOAT    FLOAT                  getDouble           setDouble      float                          |
-# FLOAT    DOUBLE                 getDouble           getDouble      float                          |
-# FLOAT    REAL                   getFloat            setFloat       float                          |
-# -------- ---------------------- ------------------- -------------- ----------------- ------------ |
-# NUMBER   BOOLEAN                getBoolean          setBoolean     bool                           |
-# NUMBER   BIT                    getBoolean          setBoolean     bool                           |
-# NUMBER   TINYINT  (0..255)      getShort            setShort       int                            |
-# NUMBER   SMALLINT (-2^15..2^15) getShort            getShort       int                            |
-# NUMBER   INTEGER  (-2^31..2^31) getInt              getInt         int                            |
-# NUMBER   BIGINT   (-2^63..2^63) getLong             getLong        int                            |
-# -------- ---------------------- ------------------- -------------- ----------------- ------------ |
-# BINARY   BINARY                 getBytes            setBytes       bytes                          |
-# BINARY   BLOB                   getBytes            setBytes       byte              getBlob      |
-# BINARY   LONGVARBINARY          getBytes            setBytes       bytes                          |
-# BINARY   VARBINARY              getBytes            setBytes       bytes                          |
-# -------- ---------------------- ------------------- -------------- ----------------- ------------ |
-# TEXT     CLOB                   getString           setString      str               getClob      |
-# TEXT     LONGNVARCHAR           getString           setString      str                            |
-# TEXT     LONGVARCHAR            getString           setString      str                            |
-# TEXT     NCLOB                  getString           setString      str               getNClob     |
-# TEXT     SQLXML                 getString           setString      str               getSQLXML    |
-# -------- ---------------------- ------------------- -------------- ----------------- ------------ |
-# STRING   NVARCHAR               getString           setString      str                            |
-# STRING   CHAR                   getString           setString      str                            |
-# STRING   NCHAR                  getString           setString      str                            |
-# STRING   VARCHAR                getString           setString      str                            |
-# -------- ---------------------- ------------------- -------------- ----------------- ------------ |
-#          ARRAY                  getObject                                            getArray     |
-#          OBJECT                 getObject                                            getObject    |
-#          NULL                   getObject                                            getObject    |
-#          REF                    getObject                                            getRef       |
-#          ROWID                  getObject                                            getRowId     |
-#          RESULTSET              getObject                                            getObject    |
-#          TIME_WITH_ZONE         getObject                                            getTime      |
-#          TIMESTAMP_WITH_ZONE    getObject                                            getTimeStamp |
-# -------- ---------------------- ------------------- -------------- ----------------- -------------|
-#          ASCII_STREAM           getAsciiStream                                                    |
-#          BINARY_STREAM          getBinaryStream                                                   |
-#          CHARACTER_STREAM       getCharacterStream                                                |
-#          NCHARACTER_STREAM      getNCharacterStream                                               |
-#          URL                    getURL                                                            |
-# ==================================================================================================
+# =======================================================================================================
+# Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter |
+# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
+# DATE     DATE                     getDate             setDate        datetime.datetime                |
+# DATETIME TIMESTAMP                getTimestamp        setTimestamp   datetime.datetime                |
+# TIME     TIME                     getTime             setTime        datetime.datetime                |
+# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
+# DECIMAL  DECIMAL                  getBigDecimal       setBigDecimal  decimal.Decimal                  |
+# DECIMAL  NUMERIC                  getBigDecimal       setBigDecimal  decimal.Decimal                  |
+# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
+# FLOAT    FLOAT                    getDouble           setDouble      float                            |
+# FLOAT    DOUBLE                   getDouble           getDouble      float                            |
+# FLOAT    REAL                     getFloat            setFloat       float                            |
+# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
+# NUMBER   BOOLEAN                  getBoolean          setBoolean     bool                             |
+# NUMBER   BIT                      getBoolean          setBoolean     bool                             |
+# NUMBER   TINYINT  (0..255)        getShort            setShort       int                              |
+# NUMBER   SMALLINT (-2^15..2^15)   getShort            getShort       int                              |
+# NUMBER   INTEGER  (-2^31..2^31)   getInt              getInt         int                              |
+# NUMBER   BIGINT   (-2^63..2^63)   getLong             getLong        int                              |
+# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
+# BINARY   BINARY                   getBytes            setBytes       bytes                            |
+# BINARY   BLOB                     getBytes            setBytes       byte              getBlob        |
+# BINARY   LONGVARBINARY            getBytes            setBytes       bytes                            |
+# BINARY   VARBINARY                getBytes            setBytes       bytes                            |
+# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
+# TEXT     CLOB                     getString           setString      str               getClob        |
+# TEXT     LONGNVARCHAR             getString           setString      str                              |
+# TEXT     LONGVARCHAR              getString           setString      str                              |
+# TEXT     NCLOB                    getString           setString      str               getNClob       |
+# TEXT     SQLXML                   getString           setString      str               getSQLXML      |
+# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
+# STRING   NVARCHAR                 getString           setString      str                              |
+# STRING   CHAR                     getString           setString      str                              |
+# STRING   NCHAR                    getString           setString      str                              |
+# STRING   VARCHAR                  getString           setString      str                              |
+# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
+#          ARRAY                    getObject                                            getArray       |
+#          OBJECT                   getObject                                            getObject      |
+#          NULL                     getObject                                            getObject      |
+#          REF                      getObject                                            getRef         |
+#          ROWID                    getObject                                            getRowId       |
+#          RESULTSET                getObject                                            getObject      |
+#          TIME_WITH_TIMEZONE       getObject                                            getTime        |
+#          TIMESTAMP_WITH_TIMEZONE  getObject                                            getTimeStamp   |
+# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
+#    *     ASCII_STREAM             getAsciiStream                                                      |
+#    *     BINARY_STREAM            getBinaryStream                                                     |
+#    *     CHARACTER_STREAM         getCharacterStream                                                  |
+#    *     NCHARACTER_STREAM        getNCharacterStream                                                 |
+#    *     URL                      getURL                                                              |
+# ======================================================================================================
 
 
 def _fromDate(x):
@@ -246,18 +248,22 @@ def _fromTimestamp(x):
     raise RuntimeError("not supported")
 
 
-_default_fetchers = {ARRAY: OBJECT.fetch, OBJECT: OBJECT.fetch, NULL: OBJECT.fetch,
-                     REF: OBJECT.fetch, ROWID: OBJECT.fetch, RESULTSET: OBJECT.fetch,
-                     TIME_WITH_ZONE: OBJECT.fetch, TIMESTAMP_WITH_ZONE: OBJECT.fetch,
-                     NVARCHAR: STRING.fetch, CHAR: STRING.fetch,
-                     NCHAR: STRING.fetch, VARCHAR: STRING.fetch, BINARY: BINARY.fetch,
-                     BLOB: BINARY.fetch, LONGVARBINARY: BINARY.fetch, VARBINARY: BINARY.fetch,
-                     NUMBER: NUMBER.fetch, BOOLEAN: BOOLEAN.fetch, BIGINT: BIGINT.fetch,
-                     BIT: BIT.fetch, INTEGER: INTEGER.fetch, SMALLINT: SMALLINT.fetch,
-                     TINYINT: TINYINT.fetch, FLOAT: FLOAT.fetch, REAL: REAL.fetch,
-                     DECIMAL: DECIMAL.fetch, NUMERIC: NUMERIC.fetch,
-                     DATE: DATE.fetch, TIMESTAMP: TIMESTAMP.fetch, TIME: TIME.fetch,
-                     }
+def _fromBig(x):
+    raise RuntimeError("not supported")
+
+
+_default_getters = {ARRAY: OBJECT.fetch, OBJECT: OBJECT.fetch, NULL: OBJECT.fetch,
+                    REF: OBJECT.fetch, ROWID: OBJECT.fetch, RESULTSET: OBJECT.fetch,
+                    TIME_WITH_TIMEZONE: OBJECT.fetch, TIMESTAMP_WITH_TIMEZONE: OBJECT.fetch,
+                    NVARCHAR: STRING.fetch, CHAR: STRING.fetch,
+                    NCHAR: STRING.fetch, VARCHAR: STRING.fetch, BINARY: BINARY.fetch,
+                    BLOB: BINARY.fetch, LONGVARBINARY: BINARY.fetch, VARBINARY: BINARY.fetch,
+                    NUMBER: NUMBER.fetch, BOOLEAN: BOOLEAN.fetch, BIGINT: BIGINT.fetch,
+                    BIT: BIT.fetch, INTEGER: INTEGER.fetch, SMALLINT: SMALLINT.fetch,
+                    TINYINT: TINYINT.fetch, FLOAT: FLOAT.fetch, REAL: REAL.fetch,
+                    DECIMAL: DECIMAL.fetch, NUMERIC: NUMERIC.fetch,
+                    DATE: DATE.fetch, TIMESTAMP: TIMESTAMP.fetch, TIME: TIME.fetch,
+                    }
 
 _default_converters = {
     CLOB: str, LONGNVARCHAR: str, LONGVARCHAR: str, NCLOB: str,
@@ -272,7 +278,7 @@ _default_adapters = {}
 
 _default_setters = {ARRAY: OBJECT.set, OBJECT: OBJECT.set, NULL: OBJECT.set,
                     REF: OBJECT.set, ROWID: OBJECT.set, RESULTSET: OBJECT.set,
-                    TIME_WITH_ZONE: OBJECT.set, TIMESTAMP_WITH_ZONE: OBJECT.set,
+                    TIME_WITH_TIMEZONE: OBJECT.set, TIMESTAMP_WITH_TIMEZONE: OBJECT.set,
                     NVARCHAR: STRING.set, CHAR: STRING.set,
                     NCHAR: STRING.set, VARCHAR: STRING.set, BINARY: BINARY.set,
                     BLOB: BINARY.set, LONGVARBINARY: BINARY.set, VARBINARY: BINARY.set,
@@ -359,7 +365,7 @@ class NotSupportedError(DatabaseError):
 # Connection
 
 def connect(url, driver=None, driver_args=None, detect_types=None,
-            adapters=None, converters=None, fetchers=None, setters=None,
+            adapters=None, converters=None, getters=None, setters=None,
             **kwargs):
     """ Create a connection to a database.
 
@@ -377,7 +383,7 @@ def connect(url, driver=None, driver_args=None, detect_types=None,
        converters (map, optional): A map from JDBC types to converter functions
           which convert JDBC types to result types.  Use an empty map to allow
           Java types to be returned.
-       fetchers (map, optional): A map of JDBC types to functions that retrieve
+       getters (map, optional): A map of JDBC types to functions that retrieve
           data from a result set.
        setters (map, optional): A map of JDBC types to functions that set
           parameters on queries.
@@ -416,7 +422,7 @@ def connect(url, driver=None, driver_args=None, detect_types=None,
         for k, v in kwargs.items():
             info.setProperty(k, v)
         connection = DM.getConnection(url, info)
-    return Connection(connection, adapters, converters, fetchers, setters)
+    return Connection(connection, adapters, converters, getters, setters)
 
 
 class Connection:
@@ -431,7 +437,7 @@ class Connection:
     DataError = DataError
     NotSupportedError = NotSupportedError
 
-    def __init__(self, jconnection, adapters, converters, fetchers, setters):
+    def __init__(self, jconnection, adapters, converters, getters, setters):
         self._jconnection = jconnection
         # Required by PEP 249
         # https://www.python.org/dev/peps/pep-0249/#commit
@@ -439,16 +445,50 @@ class Connection:
         self._closed = False
         self._batch = jconnection.getMetaData().supportsBatchUpdates()
         if adapters is None:
-            self.adapters = _default_adapters
+            self._adapters = _default_adapters
         if converters is None:
-            self.converters = _default_converters
-        if fetchers is None:
-            self.fetchers = _default_fetchers
-        if setters is None
-        self.setters = _default_setters
+            self._converters = _default_converters
+        if getters is None:
+            self._getters = _default_getters
+        if setters is None:
+            self._setters = _default_setters
+
+    @property
+    def adapters(self):
+        return self._adapters
+
+    @adapters.setter
+    def adapters(self, v):
+        self._adapters = v
+
+    @property
+    def converters(self):
+        return self._converters
+
+    @converters.setter
+    def adapters(self, v):
+        self._converters = v
+
+    @property
+    def getters(self):
+        return self._getters
+
+    @getters.setter
+    def getters(self, v):
+        self._getters = v
+
+    @property
+    def setters(self):
+        return self._setters
+
+    @setters.setter
+    def setters(self, v):
+        self._adaptors = v
 
     def __setattr__(self, name, value):
-        raise AttributeError("'%s' cannot be set" % name)
+        if not name.startswith("_"):
+            raise AttributeError("'%s' cannot be set" % name)
+        object.__setattr__(self, name, value)
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -617,10 +657,10 @@ class Cursor:
         for i in range(count):
             # Lookup the JDBC Type
             jdbcType = _registry[meta.getParameterType(i + 1)]
-            self._paramSetters.append(cx.setters[param])
+            self._paramSetters.append(cx._setters[param])
 
     def _fetchColumns(self):
-        """ Get the list of fetchers and converters that apply to
+        """ Get the list of getters and converters that apply to
         the result set. """
         self._validate()
         if self._resultFetcher is not None:
@@ -633,8 +673,8 @@ class Cursor:
         for i in range(count):
             # Lookup the JDBC Type
             jdbcType = _registry[meta.getColumnType(i + 1)]
-            self._resultFetchers.append(cx.fetchers.get(jdbcType, OBJECT.fetch))
-            self._resultConverter.append(cx.converters.get(jdbcType, _nop))
+            self._resultFetchers.append(cx._getters.get(jdbcType, OBJECT.fetch))
+            self._resultConverter.append(cx._converters.get(jdbcType, _nop))
         return self._resultColumns
         # FIXME add support for position and named converters here
 
@@ -810,8 +850,8 @@ class Cursor:
             raise Error()
         if self._connection._batch:
             return self._executeBatch(seq_of_parameters)
-        else
-        return self._executeRepeat(seq_of_parameters)
+        else:
+            return self._executeRepeat(seq_of_parameters)
 
     def _executeBatch(self, seq_of_parameters):
         if isinstance(seq_of_parameters, typing.Iterable):
