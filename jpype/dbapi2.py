@@ -22,10 +22,6 @@ apilevel = "2.0"
 threadsafety = 1
 paramstyle = 'qmark'
 
-# For compatiblity with sqlite (not implemented)
-PARSE_DECLTYPES = 1
-PARSE_COLNAMES = 2
-
 _SQLException = None
 _SQLTimeoutException = None
 _registry = {}
@@ -74,12 +70,11 @@ class JDBCType:
         """
         try:
             rc = self._rsget(rs, column)
-            print("Got", rc, rs.getObject(column))
             return rc
         except _SQLException as ex:
             raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
 
-    def set(self, ps, column, value):
+    def set(self, ps, column, value, adapters):
         """ A method used to set a parameter to a query.
 
         To use a setter place the set method in the setter map corresponding.
@@ -91,11 +86,20 @@ class JDBCType:
         database driver documentation for details.
         """
         # Apply the adapter
-        adp = self._adapters.get(type(value), None)
-        if adp is not None:
-            value = adp(value)
+        #  If adapters is set to None then no adapters are applied
+        if adapters is not None:
+            adp = adapters.get(type(value), None)
+            if adp is not None:
+                value = adp(value)
+            else:
+                adp = self._adapters.get(type(value), None)
+                if adp is not None:
+                    value = adp(value)
+        # Set the column with the specialized method
         if self._psset._matches(ps, column, value):
             return self._psset(ps, column, value)
+
+        # Otherwise, try to set with the generic method
         try:
             return ps.setObject(column, value)
         except TypeError as ex:
@@ -368,8 +372,10 @@ class NotSupportedError(DatabaseError):
 ###############################################################################
 # Connection
 
-def connect(url, driver=None, driver_args=None, detect_types=None,
-            adapters=None, converters=None, getters=None, setters=None,
+_default = object()
+
+def connect(url, driver=None, driver_args=None, 
+            adapters=_default, converters=_default, getters=_default, setters=_default,
             **kwargs):
     """ Create a connection to a database.
 
@@ -385,8 +391,8 @@ def connect(url, driver=None, driver_args=None, detect_types=None,
           generally better to add the adapter to JDBC type directly.  Connection
           adapters are only used if a type specific adapter is not found.
        converters (map, optional): A map from JDBC types to converter functions
-          which convert JDBC types to result types.  Use an empty map to allow
-          Java types to be returned.
+          which convert JDBC types to result types.  If converters are None
+          than Java types are returned.
        getters (map, optional): A map of JDBC types to functions that retrieve
           data from a result set.
        setters (map, optional): A map of JDBC types to functions that set
@@ -426,10 +432,40 @@ def connect(url, driver=None, driver_args=None, detect_types=None,
         for k, v in kwargs.items():
             info.setProperty(k, v)
         connection = DM.getConnection(url, info)
+
+    if adapters is _default:
+        self._adapters = map(_default_adapters)
+    if converters is _default:
+        self._converters = map(_default_converters)
+    if converters is None:
+        self._converters = {}
+    if getters is _default or getters is None:
+        self._getters = map(_default_getters)
+    if setters is _default or setters is None:
+        self._setters = map(_default_setters)
     return Connection(connection, adapters, converters, getters, setters)
 
 
 class Connection:
+    """ Connection provides access to a JDBC database.
+
+    Connection has members:
+
+    - native: The underlying JDBC connection for native JDBC access.
+    - adapters: A map of adapters (type,func) to convert from a Python type to
+         a JDBC type.
+    - converters: A map of conversions (JDBC,func) to convert from a JDBC type
+         to Python types.
+    - getters: A map of getters (JDBC, get_func) to get a column from a
+         ResultSet.
+    - setters: A map of setters (JDBC, set_func) to set a parameter in a
+         Statement.
+
+    Connections are managed and can be as part of a Python with statement.
+    Connections close automatically when they are garbage collected, at the 
+    end of a with statement scope, or when manually closed.  Once a connection
+    is closed all operations using the database will raise an Error.
+    """
     Error = Error
     Warning = Warning
     InterfaceError = InterfaceError
@@ -448,15 +484,6 @@ class Connection:
         self._jconnection.setAutoCommit(False)
         self._closed = False
         self._batch = jconnection.getMetaData().supportsBatchUpdates()
-        if adapters is None:
-            self._adapters = _default_adapters
-        if converters is None:
-            self._converters = _default_converters
-        if getters is None:
-            self._getters = _default_getters
-        if setters is None:
-            self._setters = _default_setters
-
     @property
     def adapters(self):
         return self._adapters
@@ -514,7 +541,7 @@ class Connection:
             pass
 
     def close(self):
-        """ Close the connection now (rather than whenever .__del__() is called).
+        """ Close the connection immediately (rather than whenever .__del__() is called).
 
         The connection will be unusable from this point forward; an Error (or
         subclass) exception will be raised if any operation is attempted with
@@ -570,18 +597,18 @@ class Connection:
         self._validate()
 
     # Sqlite3 extensions
-    def execute(self, sql, parameters=None):
+    def execute(self, sql, parameters=None, adapters=None):
         """ This is a nonstandard shortcut that creates an intermediate cursor
         object by calling the cursor method, then calls the cursor’s execute
         method with the parameters given.  """
-        return self.cursor().execute(sql, parameters)
+        return self.cursor().execute(sql, parameters, adapters)
 
-    def executemany(self, sql, parameters):
+    def executemany(self, sql, parameters, adapters=None):
         """ This is a nonstandard shortcut that creates an intermediate cursor
         object by calling the cursor method, then calls the cursor’s
         executemany method with the parameters given.
         """
-        return self.cursor().executemany(sql, parameters)
+        return self.cursor().executemany(sql, parameters, adapters)
 
     @property
     def native(self):
@@ -629,11 +656,18 @@ class Connection:
 ###############################################################################
 # Cursor
 
+
 class Cursor:
     """ Cursors are used to execute queries and retrieve results.
 
     Part PreparedStatement, part ResultSet,  Cursors are a mixture of
-    both.
+    both. There is no ``native`` property for Cursors as JDBC does not
+    have a simular concept.
+
+    Cursors are managed and can be as part of a Python with statement.
+    Cursors close automatically when they are garbage collected, at the 
+    end of a with statement scope, or when manually closed.  Once a cursor
+    is closed all operations using the database will raise an Error.
     """
 
     def __init__(self, connection):
@@ -658,7 +692,7 @@ class Cursor:
         self._closed = True
 
     def _fetchParams(self):
-        """ Look up the adapters to apply to incoming parameters. """
+        """ Look up the setters to apply to incoming parameters. """
         if self._paramSetters is not None:
             return
         cx = self._connection
@@ -671,7 +705,7 @@ class Cursor:
             setters.append(cx._setters[jdbcType])
         self._paramSetters = setters
 
-    def _setParams(self, params):
+    def _setParams(self, params, adapters):
         if isinstance(params, typing.Sequence):
             self._fetchParams()
             if len(self._paramSetters) != len(params):
@@ -679,7 +713,7 @@ class Cursor:
                                        % (len(self._paramSetters), len(params)))
             for i in range(len(params)):
                 # FIXME apply cx adaptors here
-                self._paramSetters[i](self._preparedStatement, i + 1, params[i])
+                self._paramSetters[i](self._preparedStatement, i + 1, params[i], adapters)
         elif isinstance(params, typing.Mapping):
             raise TypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
@@ -687,7 +721,7 @@ class Cursor:
             try:
                 for i in range(len(self._paramColumns)):
                     # FIXME apply cx adaptors here
-                    self._paramSetters[i](self._preparedStatement, i + 1, next(params))
+                    self._paramSetters[i](self._preparedStatement, i + 1, next(params), adapters)
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramSetters), i))
@@ -711,7 +745,6 @@ class Cursor:
             converters.append(cx._converters.get(jdbcType, _nop))
         self._resultFetchers = fetchers
         self._resultConverters = converters
-        # FIXME add support for position and named converters here
 
     def _fetchRow(self):
         row = []
@@ -800,18 +833,37 @@ class Cursor:
         self._validate()
         self._close()
 
-    def execute(self, operation, params=None):
+    def execute(self, operation, parameters=None, adapters=_default):
         """
         Prepare and execute a database operation (query or command).
 
-        Parameters may be provided as sequence or mapping and will be bound to
+        Parameters may be provided as sequence and will be bound to
         variables in the operation. Variables are specified in a qmark
-        notation.
+        notation.  JDBC does not support mapping style parameters.
+
+        After executing a statement, the rowcount will be updated.  If the 
+        statement has no result set then the rowcount will be -1.  A
+        statement can produce multiple result sets.  Use ``.nextset()`` to
+        traverse the sets.
+
+        Parameters:
+           operation (str): A statement to be executed.
+           parameters (list, optional): A list of parameters for the statement.
+              The number of parameters much match the number required by the 
+              statement or an Error will be raised.
+           adapters (map, optional): A map of adapters to apply to this 
+              statement.  If this is set to None, then no adapters will be
+              applied.
+
+        Returns:
+           This cursor.
         """
         self._validate()
         if params is None:
             params = ()
-        if not isinstance(params, (typing.Sequence, typing.Iterable, typing.Iterator)):
+        if adapters is _default:
+            adapters = self._adapters
+        if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
             raise TypeError("parameters are of unsupported type '%s'" % str(type(params)))
         # complete the previous operation
         self._finish()
@@ -822,22 +874,18 @@ class Cursor:
             raise OperationalError from ex
         except TypeError as ex:
             raise ValueError from ex
-        self._setParams(params)
-        if self._preparedStatement.execute():
-            self._resultSet = self._preparedStatement.getResultSet()
-            self._resultMetaData = self._resultSet.getMetaData()
-        self._rowcount = self._preparedStatement.getUpdateCount()
+        self._executeone(parameters, adapters)
         return self
 
-    def _executeone(params):
-        self._setParams(params)
+    def _executeone(params, adapters):
+        self._setParams(params, adapters)
         if self._preparedStatement.execute():
             self._resultSet = self._preparedStatement.getResultSet()
             self._resultMetaData = self._resultSet.getMetaData()
         self._rowcount = self._preparedStatement.getUpdateCount()
         return self._rowcount
 
-    def executemany(self, operation, seq_of_parameters):
+    def executemany(self, operation, seq_of_parameters, adapters=_default):
         """
         Prepare a database operation (query or command) and then execute it
         against all parameter sequences or mappings found in the sequence
@@ -859,33 +907,32 @@ class Cursor:
         self._validate()
         if seq_of_parameters is None:
             seq_of_parameters = ()
+        if adapters is _default:
+            adapters = self._adapters
         # complete the previous operation
         self._finish()
         try:
             self._preparedStatement = self._jcx.prepareStatement(operation)
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except TypeError as ex:
             raise ValueError from ex
         except _SQLException as ex:
             raise ProgrammingError("Failed to prepare '%s'" % operation) from ex
-        try:
-            self._paramMetaData = self._preparedStatement.getParameterMetaData()
-        except TypeError:
-            raise Error()
         if self._connection._batch:
-            return self._executeBatch(seq_of_parameters)
+            return self._executeBatch(seq_of_parameters, adapters)
         else:
-            return self._executeRepeat(seq_of_parameters)
+            return self._executeRepeat(seq_of_parameters, adapters)
 
-    def _executeBatch(self, seq_of_parameters):
+    def _executeBatch(self, seq_of_parameters, adapters):
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
-                self._setParams(params)
+                self._setParams(params, adapters)
                 self._preparedStatement.addBatch()
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
                     params = next(seq_of_parameters)
-                    self._setParams(params)
+                    self._setParams(params, adapters)
                     self._preparedStatement.addBatch()
                 except StopIteration:
                     break
@@ -900,16 +947,16 @@ class Cursor:
             self._rowcount = -1
         return self
 
-    def _executeRepeat(self, seq_of_parameters):
+    def _executeRepeat(self, seq_of_parameters, adapters):
         counts = []
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
-                counts.append(self._executeone(params))
+                counts.append(self._executeone(params, adapters))
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
                     self._setParams(next(seq_of_parameters))
-                    counts.append(self._executeone(params))
+                    counts.append(self._executeone(params, adapters))
                 except StopIteration:
                     break
         else:
@@ -953,12 +1000,12 @@ class Cursor:
         not being available, fewer rows may be returned.
 
         An Error (or subclass) exception is raised if the previous call to
-        .execute*() did not produce any result set or no call was issued yet.
+        ``.execute*()`` did not produce any result set or no call was issued yet.
 
         Note there are performance considerations involved with the size parameter.
         For optimal performance, it is usually best to use the .arraysize
         attribute. If the size parameter is used, then it is best for it to retain
-        the same value from one .fetchmany() call to the next.
+        the same value from one ``.fetchmany()`` call to the next.
         """
         self._validate()
         if not self._resultSet:
@@ -986,7 +1033,7 @@ class Cursor:
         arraysize attribute can affect the performance of this operation.
 
         An Error (or subclass) exception is raised if the previous call to
-        .execute*() did not produce any result set or no call was issued yet.
+        ``.execute*()`` did not produce any result set or no call was issued yet.
         """
         self._validate()
         if not self._resultSet:
@@ -1010,11 +1057,11 @@ class Cursor:
         any remaining rows from the current set.
 
         If there are no more sets, the method returns None. Otherwise, it returns a
-        true value and subsequent calls to the .fetch*() methods will return rows
+        true value and subsequent calls to the ``.fetch*()`` methods will return rows
         from the next result set.
 
         An Error (or subclass) exception is raised if the previous call to
-        .execute*() did not produce any result set or no call was issued yet.
+        ``.execute*()`` did not produce any result set or no call was issued yet.
         """
         self._resultSet.close()
         if self._preparedStatement.getMoreResults():
@@ -1028,10 +1075,10 @@ class Cursor:
     @property
     def arraysize(self):
         """
-        Specify the number of rows to fetch with .fetchmany().
+        Specify the number of rows to fetch with ``.fetchmany()``.
 
         This read/write attribute specifies the number of rows to fetch
-        at a time with .fetchmany(). It defaults to 1 meaning to fetch a single row
+        at a time with ``.fetchmany()``. It defaults to 1 meaning to fetch a single row
         at a time.
         """
         return self._arraysize
