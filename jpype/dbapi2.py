@@ -73,7 +73,9 @@ class JDBCType:
         database driver documentation for details.
         """
         try:
-            return self._rsget(rs, column)
+            rc = self._rsget(rs, column)
+            print("Got", rc, rs.getObject(column))
+            return rc
         except _SQLException as ex:
             raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
 
@@ -170,7 +172,7 @@ NUMBER = JDBCType(['NUMBER', 'BOOLEAN', 'BIGINT', 'BIT', 'INTEGER', 'SMALLINT', 
 FLOAT = JDBCType(['FLOAT', 'REAL', 'DOUBLE'], 6,
                  'getDouble', 'setDouble')
 DECIMAL = JDBCType(['DECIMAL', 'NUMERIC'], 3,
-                 'getBigDecimal', 'setBigDecimal')
+                   'getBigDecimal', 'setBigDecimal')
 DATETIME = TIMESTAMP
 
 # Special types
@@ -235,19 +237,23 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 
 
 def _fromDate(x):
-    raise RuntimeError("not supported")
+    raise RuntimeError("not supported date")
 
 
 def _fromTime(x):
-    raise RuntimeError("not supported")
+    raise RuntimeError("not supported time")
 
 
 def _fromTimestamp(x):
-    raise RuntimeError("not supported")
+    raise RuntimeError("not supported timestamp")
 
 
 def _fromBig(x):
-    raise RuntimeError("not supported")
+    raise RuntimeError("not supported", type(x))
+
+
+def _fromStr(x):
+    return str(x)
 
 
 _default_getters = {ARRAY: OBJECT.fetch, OBJECT: OBJECT.fetch, NULL: OBJECT.fetch,
@@ -625,10 +631,11 @@ class Connection:
 
 class Cursor:
     """ Cursors are used to execute queries and retrieve results.
-    
+
     Part PreparedStatement, part ResultSet,  Cursors are a mixture of
     both.
     """
+
     def __init__(self, connection):
         if not isinstance(connection, Connection):
             raise TypeError
@@ -709,7 +716,11 @@ class Cursor:
     def _fetchRow(self):
         row = []
         for idx in range(len(self._resultFetchers)):
-            row.append(self._resultConverters(self._resultFetchers[idx](self._resultSet, idx + 1)))
+            value = self._resultFetchers[idx](self._resultSet, idx + 1)
+            if value is None:
+                row.append(None)
+            else:
+                row.append(self._resultConverters[idx](value))
         return row
 
     def _validate(self):
