@@ -123,6 +123,11 @@ class ExceptionTestCase(common.JPypeTestCase):
         WE = jpype.JClass("jpype.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
+        try:
+            WE.testThrow()
+        except Exception as ex:
+            ex1 = ex
+        self.assertEqual(ex1.args, ("Got it",))
 
     def testExcCauseChained1(self):
         import jpype.imports

@@ -375,6 +375,7 @@ void JPypeException::toPython()
 		{
 			JPPyErrFrame eframe;
 			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.exceptionClass.get())->tp_name);
+			return;  // Let these go to Python so we can see the error
 		} else if (ex.m_Type == JPError::_java_error)
 			JPTracer::trace("Inner Java:", ex.getMessage());
 		else

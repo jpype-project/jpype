@@ -106,6 +106,10 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
 
+	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+	{
+		typenew->tp_new = PyJPException_Type->tp_new;
+	}
 	return (PyObject*) typenew;
 	JP_PY_CATCH(NULL);
 }
@@ -205,6 +209,9 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				break;
 			case Py_mp_subscript:
 				heap->as_mapping.mp_subscript = (binaryfunc) slot->pfunc;
+				break;
+			case Py_tp_getset:
+				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
 				// GCOVR_EXCL_START
 			default:

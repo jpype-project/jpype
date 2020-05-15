@@ -76,72 +76,23 @@ def _keywordWrap(name):
     return name
 
 
-_java_lang_Class = None
-_java_lang_NoClassDefFoundError = None
-_java_lang_ClassNotFoundException = None
-_java_lang_UnsupportedClassVersionError = None
-_java_lang_ExceptionInInitializerError = None
-
-
-def _getJavaClass(javaname):
-    """ This produces diagnostics on failing to find a Java class """
-    global _java_lang_Class
-    global _java_lang_NoClassDefFoundError
-    global _java_lang_ClassNotFoundException
-    global _java_lang_UnsupportedClassVersionError
-    global _java_lang_ExceptionInInitializerError
-    if not _java_lang_Class:
-        _java_lang_Class = _jpype.JClass("java.lang.Class")
-        _java_lang_ClassNotFoundException = _jpype.JClass(
-            "java.lang.ClassNotFoundException")
-        _java_lang_NoClassDefFoundError = _jpype.JClass(
-            "java.lang.NoClassDefFoundError")
-        _java_lang_UnsupportedClassVersionError = _jpype.JClass(
-            "java.lang.UnsupportedClassVersionError")
-        _java_lang_ExceptionInInitializerError = _jpype.JClass(
-            "java.lang.ExceptionInInitializerError")
-
-    err = None
-    try:
-        # Use forname because it give better diagnostics
-        cls = _java_lang_Class.forName(javaname)
-        return _jpype.JClass(cls)
-
-    # Not found is acceptable
-    except _java_lang_ClassNotFoundException as ex:
-        p = javaname.rpartition('.')
-        err = "'%s' not found in '%s'" % (p[2], p[0])
-        ex1 = ex
-
-    # Missing dependency
-    except _java_lang_NoClassDefFoundError as ex:
-        missing = str(ex).replace('/', '.')
-        err = "Unable to import '%s' due to missing dependency '%s'" % (
-            javaname, missing)
-        ex1 = ex
-
-    # Wrong Java version
-    except _java_lang_UnsupportedClassVersionError as ex:
-        err = "Unable to import '%s' due to incorrect Java version" % (
-            javaname)
-        ex1 = ex
-
-    except _java_lang_ExceptionInInitializerError as ex:
-        err = "Unable to import '%s' due to initializer error" % (
-            javaname)
-        ex1 = ex
-        ex1._expandStacktrace()
-
-    # Otherwise!?
-    except Exception as ex:
-        err = "Unable to import '%s' due to unexpected exception, '%s'" % (
-            javaname, ex)
-        ex1 = ex
-    raise ImportError(err) from ex1
-
-
 # %% Customizer
 _CUSTOMIZERS = []
+
+
+def _JExceptionHandler(pkg, name, ex):
+    javaname = str(pkg) + "." + name
+    exname = type(ex).__name__
+    ex._expandStacktrace()
+    if exname == "java.lang.ExceptionInInitializerError":
+        raise ImportError("Unable to import '%s' due to initializer error" % javaname) from ex
+    if exname == "java.lang.UnsupportedClassVersionError":
+        raise ImportError("Unable to import '%s' due to incorrect Java version" % javaname) from ex
+    if exname == "java.lang.NoClassDefFoundError":
+        missing = str(ex).replace('/', '.')
+        raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
+            javaname, missing)) from ex
+    raise ImportException("Unable to import '%s'" % javaname) from ex
 
 
 def registerImportCustomizer(customizer):
@@ -232,7 +183,13 @@ class _JImportLoader:
             # If the base is a Java package and it wasn't found in the
             # package using getAttr, then we need to emit an error
             # so we produce a meaningful diagnositic.
-            _getJavaClass(name)
+            try:
+                # Use forname because it give better diagnostics
+                cls = _java_lang_Class.forName(name)
+                return _jpype.JClass(cls)
+            # Not found is acceptable
+            except Exception as ex:
+                raise ImportError("Failed to import '%s'" % name) from ex
 
         # Import the java module
         return _ModuleSpec(name, self)
@@ -243,7 +200,11 @@ class _JImportLoader:
         if spec.parent == "":
             return _jpype._JPackage(spec.name)
         parts = spec.name.rsplit('.', 1)
-        return getattr(sys.modules[spec.parent], parts[1])
+        rc = getattr(sys.modules[spec.parent], parts[1])
+
+        # Install the handler
+        rc._handler = _JExceptionHandler
+        return rc
 
     def exec_module(self, fullname):
         pass

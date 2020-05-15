@@ -147,6 +147,7 @@ public:
 	jobject assemble(jobject dims, jobject parts);
 
 	jthrowable getCause(jthrowable th);
+	jstring getMessage(jthrowable th);
 	jint compareTo(jobject obj, jobject obj2);
 
 	jbyte booleanValue(jobject obj);
