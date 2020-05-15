@@ -141,21 +141,41 @@ class JDBCType:
         return self._adapters
 
 
+class _JDBCTypePrimitive(JDBCType):
+    def fetch(self, rs, column):
+        """ A method to retrieve a specific JDBC type.
+
+        To use a getter add the fetch method to the JDBC type matching the
+        column type to be pulled.  For example, to set the getter for FLOAT to
+        use the OBJECT getter, use  ``cx.getter[FLOAT] = OBJECT.fetch``.
+
+        Not all getters are available on all database drivers.  Consult the
+        database driver documentation for details.
+        """
+        try:
+            rc = self._rsget(rs, column)
+            if rc == 0 and rs.wasNull():
+                return None
+            return rc
+        except _SQLException as ex:
+            raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
+
+
 # From https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
 # DATALINK = JDBCType('DATALINK',70)
 # DISTINCT= JDBCType('DISTINCT',2001)
 # REF_CURSOR = JDBCType('REF_CURSOR',2012)
 # STRUCT = JDBCType('STRUCT',2002)
 ARRAY = JDBCType('ARRAY', 2003, 'getArray', 'setArray')
-BIGINT = JDBCType('BIGINT', -5, 'getLong', 'setLong')
+BIGINT = _JDBCTypePrimitive('BIGINT', -5, 'getLong', 'setLong')
 BIT = JDBCType('BIT', -7, 'getBoolean', 'setBoolean')
 BLOB = JDBCType('BLOB', 2004, 'getBlob', 'setBlob')
-BOOLEAN = JDBCType('BOOLEAN', 16, 'getBoolean', 'setBoolean')
+BOOLEAN = _JDBCTypePrimitive('BOOLEAN', 16, 'getBoolean', 'setBoolean')
 CHAR = JDBCType('CHAR', 1, 'getString', 'setString')
 CLOB = JDBCType('CLOB', 2005, 'getClob', 'setClob')
 DATE = JDBCType('DATE', 91, 'getDate', 'setDate')
-DOUBLE = JDBCType('DOUBLE', 8, 'getDouble', 'setDouble')
-INTEGER = JDBCType('INTEGER', 4, 'getInt', 'setInt')
+DOUBLE = _JDBCTypePrimitive('DOUBLE', 8, 'getDouble', 'setDouble')
+INTEGER = _JDBCTypePrimitive('INTEGER', 4, 'getInt', 'setInt')
 OBJECT = JDBCType('OBJECT', 2000)
 LONGNVARCHAR = JDBCType('LONGNVARCHAR', -16, 'getString', 'setString')
 LONGVARBINARY = JDBCType('LONGVARBINARY', -4, 'getBytes', 'setBytes')
@@ -166,17 +186,17 @@ NULL = JDBCType('NULL', 0)
 NUMERIC = JDBCType('NUMERIC', 2, 'getBigDecimal', 'setBigDecimal')
 NVARCHAR = JDBCType('NVARCHAR', -9, 'getClob', 'setClob')
 OTHER = JDBCType('OTHER', 1111)
-REAL = JDBCType('REAL', 7, 'getFloat', 'setFloat')
+REAL = _JDBCTypePrimitive('REAL', 7, 'getFloat', 'setFloat')
 REF = JDBCType('REF', 2006, 'getRef', 'setRef')
 ROWID = JDBCType('ROWID', -8, 'getRowId', 'setRowId')
 RESULTSET = JDBCType('RESULTSET', -10, 'getObject', 'setObject')
-SMALLINT = JDBCType('SMALLINT', 5, 'getShort', 'setShort')
+SMALLINT = _JDBCTypePrimitive('SMALLINT', 5, 'getShort', 'setShort')
 SQLXML = JDBCType('SQLXML', 2009, 'getSQLXML', 'setSQLXML')
 TIME = JDBCType('TIME', 92, 'getTime', 'setTime')
 TIME_WITH_TIMEZONE = JDBCType('TIME_WITH_TIMEZONE', 2013, 'getTime', 'setTime')
 TIMESTAMP = JDBCType('TIMESTAMP', 93, 'getTimestamp', 'setTimestamp')
 TIMESTAMP_WITH_TIMEZONE = JDBCType('TIMESTAMP_WITH_TIMEZONE', 2014, 'getTimestamp', 'setTimestamp')
-TINYINT = JDBCType('TINYINT', -6, 'getShort', 'setShort')
+TINYINT = _JDBCTypePrimitive('TINYINT', -6, 'getShort', 'setShort')
 VARBINARY = JDBCType('VARBINARY', -3, 'getBytes', 'setBytes')
 VARCHAR = JDBCType('VARCHAR', 12, 'getString', 'setString')
 
@@ -189,8 +209,8 @@ BINARY = JDBCType(['BINARY', 'BLOB', 'LONGVARBINARY', 'VARBINARY'], -2,
                   'getBytes', 'setBytes')
 NUMBER = JDBCType(['NUMBER', 'BOOLEAN', 'BIGINT', 'BIT', 'INTEGER', 'SMALLINT', 'TINYINT'], None,
                   'getObject', 'setObject')
-FLOAT = JDBCType(['FLOAT', 'REAL', 'DOUBLE'], 6,
-                 'getDouble', 'setDouble')
+FLOAT = _JDBCTypePrimitive(['FLOAT', 'REAL', 'DOUBLE'], 6,
+                           'getDouble', 'setDouble')
 DECIMAL = JDBCType(['DECIMAL', 'NUMERIC'], 3,
                    'getBigDecimal', 'setBigDecimal')
 DATETIME = TIMESTAMP
