@@ -785,20 +785,20 @@ class Cursor:
         if isinstance(converters, typing.Sequence):
             # Support for direct converter list
             if len(converters) != count:
-                 raise ProgrammingError("Incorrect number of converters")
+                raise ProgrammingError("Incorrect number of converters")
             self._resultConverters = converters
         else:
             # Support for JDBC type and column based converters
             rconverters = []
             for i in range(count):
-                 # Find the converter to apply to the column
-                 cnext = _nop
-                 if cx._keystyle & BY_TYPE:
-                     cnext = converters.get(jdbcTypes[i], cnext)
-                 if cx._keystyle & BY_COLNAME:
-                     cnext = converters.get(meta.getColumnName(i + 1), cnext)
-                 rconverters.append(cnext)
-                 self._resultConverters = rconverters
+                # Find the converter to apply to the column
+                cnext = _nop
+                if cx._keystyle & BY_TYPE:
+                    cnext = converters.get(jdbcTypes[i], cnext)
+                if cx._keystyle & BY_COLNAME:
+                    cnext = converters.get(meta.getColumnName(i + 1), cnext)
+                rconverters.append(cnext)
+                self._resultConverters = rconverters
 
         # Set up all the getters
         if isinstance(getters, typing.Sequence):
@@ -807,9 +807,9 @@ class Cursor:
                 raise ProgrammingError("Incorrect number of getter")
             self._resultGetters = getter
         else:
-            self._resultGetters = [cx._getters.get(t, OBJECT.fetch)) for t in jdbcTypes]
+            self._resultGetters = [cx._getters.get(t, OBJECT.fetch) for t in jdbcTypes]
 
-    def as_columns(converters = _default, getters = _default):
+    def as_columns(self, converters=_default, getters=_default):
         """ (extension) Apply a specific set of getter or converters to fetch
         operations for the current result set.
 
@@ -830,13 +830,14 @@ class Cursor:
                 getters is a dict, then the getters are looked up by type.
         """
         self._validate()
-        self._resultConverters=None
-        self._resultGetters=None
+        self._resultConverters = None
+        self._resultGetters = None
+        self._fetchColumns(converters, getters)
 
     def _fetchRow(self):
-        row=[]
+        row = []
         for idx in range(len(self._resultGetters)):
-            value=self._resultGetters[idx](self._resultSet, idx + 1)
+            value = self._resultGetters[idx](self._resultSet, idx + 1)
             if value is None:
                 row.append(None)
             else:
@@ -851,16 +852,16 @@ class Cursor:
     def _finish(self):
         if self._resultSet is not None:
             self._resultSet.close()
-            self._resultSet=None
+            self._resultSet = None
         if self._preparedStatement is not None:
             self._preparedStatement.close()
-            self._preparedStatement=None
-        self._resultGetters=None
-        self._paramSetters=None
-        self._rowcount=-1
-        self._resultMetaData=None
-        self._paramMetaData=None
-        self._description=None
+            self._preparedStatement = None
+        self._resultGetters = None
+        self._paramSetters = None
+        self._rowcount = -1
+        self._resultMetaData = None
+        self._paramMetaData = None
+        self._description = None
 
     @property
     def resultSet(self):
@@ -889,12 +890,12 @@ class Cursor:
         """
         if self._description is not None:
             return self._description
-        desc=[]
-        rmd=self._resultMetaData
+        desc = []
+        rmd = self._resultMetaData
         if rmd is None:
             return None
         for i in range(1, self._resultMetaData.getColumnCount() + 1):
-            size=rmd.getColumnDisplaySize(i)
+            size = rmd.getColumnDisplaySize(i)
             desc.append((str(rmd.getColumnName(i)),
                          str(rmd.getColumnTypeName(i)),
                          size,
@@ -902,7 +903,7 @@ class Cursor:
                          rmd.getPrecision(i),
                          rmd.getScale(i),
                          rmd.isNullable(i),))
-        self._description=desc
+        self._description = desc
         return desc
 
     @property
@@ -928,7 +929,7 @@ class Cursor:
         self._validate()
         self._close()
 
-    def execute(self, operation, parameters = None, adapters = _default):
+    def execute(self, operation, parameters=None, adapters=_default):
         """
         Prepare and execute a database operation (query or command).
 
@@ -955,16 +956,16 @@ class Cursor:
         """
         self._validate()
         if parameters is None:
-            parameters=()
+            parameters = ()
         if adapters is _default:
-            adapters=self._connection._adapters
+            adapters = self._connection._adapters
         if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
             raise TypeError("parameters are of unsupported type '%s'" % str(type(parameters)))
         # complete the previous operation
         self._finish()
         try:
-            self._preparedStatement=self._jcx.prepareStatement(operation)
-            self._paramMetaData=self._preparedStatement.getParameterMetaData()
+            self._preparedStatement = self._jcx.prepareStatement(operation)
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except JClass("java.sql.SQLException") as ex:
             raise OperationalError(ex.message()) from ex
         except TypeError as ex:
@@ -975,12 +976,12 @@ class Cursor:
     def _executeone(self, params, adapters):
         self._setParams(params, adapters)
         if self._preparedStatement.execute():
-            self._resultSet=self._preparedStatement.getResultSet()
-            self._resultMetaData=self._resultSet.getMetaData()
-        self._rowcount=self._preparedStatement.getUpdateCount()
+            self._resultSet = self._preparedStatement.getResultSet()
+            self._resultMetaData = self._resultSet.getMetaData()
+        self._rowcount = self._preparedStatement.getUpdateCount()
         return self._rowcount
 
-    def executemany(self, operation, seq_of_parameters, adapters = _default):
+    def executemany(self, operation, seq_of_parameters, adapters=_default):
         """
         Prepare a database operation (query or command) and then execute it
         against all parameter sequences or mappings found in the sequence
@@ -1011,14 +1012,14 @@ class Cursor:
         """
         self._validate()
         if seq_of_parameters is None:
-            seq_of_parameters=()
+            seq_of_parameters = ()
         if adapters is _default:
-            adapters=self._connection._adapters
+            adapters = self._connection._adapters
         # complete the previous operation
         self._finish()
         try:
-            self._preparedStatement=self._jcx.prepareStatement(operation)
-            self._paramMetaData=self._preparedStatement.getParameterMetaData()
+            self._preparedStatement = self._jcx.prepareStatement(operation)
+            self._paramMetaData = self._preparedStatement.getParameterMetaData()
         except TypeError as ex:
             raise ValueError from ex
         except _SQLException as ex:
@@ -1036,7 +1037,7 @@ class Cursor:
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
-                    params=next(seq_of_parameters)
+                    params = next(seq_of_parameters)
                     self._setParams(params, adapters)
                     self._preparedStatement.addBatch()
                 except StopIteration:
@@ -1044,35 +1045,35 @@ class Cursor:
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
         try:
-            counts=self._preparedStatement.executeBatch()
+            counts = self._preparedStatement.executeBatch()
         except _SQLException as ex:
             raise ProgrammingError from ex
-        self._rowcount=sum(counts)
+        self._rowcount = sum(counts)
         if self._rowcount < 0:
-            self._rowcount=-1
+            self._rowcount = -1
         return self
 
     def _executeRepeat(self, seq_of_parameters, adapters):
-        counts=[]
+        counts = []
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
                 counts.append(self._executeone(params, adapters))
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
-                    params=next(seq_of_parameters)
+                    params = next(seq_of_parameters)
                     counts.append(self._executeone(params, adapters))
                 except StopIteration:
                     break
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
         try:
-            counts=self._preparedStatement.executeBatch()
+            counts = self._preparedStatement.executeBatch()
         except _SQLException as ex:
             raise ProgrammingError from ex
-        self._rowcount=sum(counts)
+        self._rowcount = sum(counts)
         if self._rowcount < 0:
-            self._rowcount=-1
+            self._rowcount = -1
         return self
 
     def fetchone(self):
@@ -1094,7 +1095,7 @@ class Cursor:
         self._fetchColumns()
         return self._fetchRow()
 
-    def fetchmany(self, size = None):
+    def fetchmany(self, size=None):
         """ Fetch multiple results.
 
         Fetch the next set of rows of a query result, returning a sequence of
@@ -1122,15 +1123,15 @@ class Cursor:
         if not self._resultSet:
             raise Error()
         if size is None:
-            size=self._arraysize
+            size = self._arraysize
         # Set a fetch size
         self._resultSet.setFetchSize(size)
         self._fetchColumns()
-        rows=[]
+        rows = []
         for i in range(size):
             if not self._resultSet.next():
                 break
-            row=self._fetchRow()
+            row = self._fetchRow()
             if row is None:
                 break
             rows.append(row)
@@ -1154,9 +1155,9 @@ class Cursor:
             raise Error()
         # Set a fetch size
         self._fetchColumns()
-        rows=[]
+        rows = []
         while self._resultSet.next():
-            row=self._fetchRow()
+            row = self._fetchRow()
             if row is None:
                 break
             rows.append(row)
@@ -1193,14 +1194,14 @@ class Cursor:
         """
         self._resultSet.close()
         if self._preparedStatement.getMoreResults():
-            self._resultSet=self._prepareStatement.getResultSet()
-            self._resultMetaData=self._resultSet.getMetaData()
+            self._resultSet = self._prepareStatement.getResultSet()
+            self._resultMetaData = self._resultSet.getMetaData()
             return True
         else:
-            self._rowcount=self._preparedStatement.getUpdageCount()
+            self._rowcount = self._preparedStatement.getUpdageCount()
             return None
-        self._resultGetters=None
-        self._resultConverters=None
+        self._resultGetters = None
+        self._resultConverters = None
 
     @property
     def arraysize(self):
@@ -1215,7 +1216,7 @@ class Cursor:
 
     @arraysize.setter
     def arraysize(self, sz):
-        self._arraysize=sz
+        self._arraysize = sz
 
     @property
     def lastrowid(self):
@@ -1223,9 +1224,9 @@ class Cursor:
 
         This is not supported on all JDBC drivers.
         """
-        rs=self._preparedStatement.getGeneratedKeys()
+        rs = self._preparedStatement.getGeneratedKeys()
         rs.next()
-        rowId=rs.getLong(1)
+        rowId = rs.getLong(1)
         rs.close()
         return rowId
 
@@ -1246,7 +1247,7 @@ class Cursor:
         """
         pass
 
-    def setoutputsize(self, size, column = None):
+    def setoutputsize(self, size, column=None):
         """
         Set a column buffer size for fetches of large columns (e.g. LONGs, BLOBs, etc.).
 
@@ -1284,7 +1285,7 @@ def Time(hour, minute, second):
     return JClass('java.sql.Time')(hour, minute, second)
 
 
-def Timestamp(year, month, day, hour, minute, second, nano = 0):
+def Timestamp(year, month, day, hour, minute, second, nano=0):
     """ This function constructs an object holding a time stamp value. """
     return JClass('java.sql.Timestamp')(year, month, day, hour, minute, second, nano)
 
@@ -1326,15 +1327,15 @@ def Binary(data):
 
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
-_accepted=set(["exact", "implicit"])
+_accepted = set(["exact", "implicit"])
 
 
 def _populateTypes():
     global _SQLException, _SQLTimeoutException
-    _SQLException=JClass("java.sql.SQLException")
-    _SQLTimeoutException=JClass("java.sql.SQLTimeoutException")
-    ps=JClass("java.sql.PreparedStatement")
-    rs=JClass("java.sql.ResultSet")
+    _SQLException = JClass("java.sql.SQLException")
+    _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
+    ps = JClass("java.sql.PreparedStatement")
+    rs = JClass("java.sql.ResultSet")
     for v in _types:
         v._initialize(ps, rs)
 
