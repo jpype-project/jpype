@@ -1,4 +1,4 @@
-from _jpype import JClass
+import _jpype
 from . import _jinit
 from . import _jcustomizer
 from . import types as _jtypes
@@ -14,18 +14,22 @@ import decimal
 #  - Default adaptors
 #  - A complete testbench
 #  - Testbench with more than one DB
-#  - Finish export list
 #  - Documentation
 
 # This a generic implementation of PEP-249
-__all__ = ['Binary', 'Connection', 'Cursor', 'DBAPITypeObject', 'DataError',
-           'DatabaseError', 'Date', 'DateFromTicks', 'Error', 'IntegrityError',
-           'InterfaceError', 'InternalError', 'NotSupportedError',
-           'OperationalError', 'ProgrammingError', 'Time', 'TimeFromTicks',
-           'Timestamp', 'TimestampFromTicks', 'Warning', '__builtins__',
-           '__cached__', '__doc__', '__file__', '__loader__', '__name__',
-           '__package__', '__spec__', 'apilevel', 'connect', 'paramstyle',
-           'threadsafety']
+__all__ = ['ARRAY', 'ASCII_STREAM', 'BIGINT', 'BINARY', 'BINARY_STREAM', 'BIT',
+           'BLOB', 'BOOLEAN', 'BY_COLNAME', 'BY_TYPE', 'Binary', 'CHAR',
+           'CHARACTER_STREAM', 'CLOB', 'Connection', 'Cursor', 'DATE', 'DATETIME',
+           'DECIMAL', 'DOUBLE', 'DataError', 'DatabaseError', 'Date',
+           'DateFromTicks', 'Error', 'FLOAT', 'INTEGER', 'IntegrityError',
+           'InterfaceError', 'InternalError', 'JDBCType', 'LONGNVARCHAR',
+           'LONGVARBINARY', 'LONGVARCHAR', 'NCHAR', 'NCHARACTER_STREAM', 'NCLOB',
+           'NULL', 'NUMBER', 'NUMERIC', 'NVARCHAR', 'NotSupportedError', 'OBJECT',
+           'OTHER', 'OperationalError', 'ProgrammingError', 'REAL', 'REF',
+           'RESULTSET', 'ROWID', 'SMALLINT', 'SQLXML', 'STRING', 'TEXT', 'TIME',
+           'TIMESTAMP', 'TIMESTAMP_WITH_TIMEZONE', 'TIME_WITH_TIMEZONE',
+           'TINYINT', 'Time', 'TimeFromTicks', 'Timestamp', 'TimestampFromTicks',
+           'URL', 'VARBINARY', 'VARCHAR', 'Warning', 'connect']
 
 apilevel = "2.0"
 threadsafety = 1
@@ -425,10 +429,10 @@ def connect(url, driver=None, driver_args=None,
     Returns:
        A new connection if successful.
     """
-    Properties = JClass("java.util.Properties")
+    Properties = _jpype.JClass("java.util.Properties")
     if driver:
-        JClass('java.lang.Class').forName(driver).newInstance()
-    DM = JClass('java.sql.DriverManager')
+        _jpype.JClass('java.lang.Class').forName(driver).newInstance()
+    DM = _jpype.JClass('java.sql.DriverManager')
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
@@ -586,7 +590,7 @@ class Connection:
     def __del__(self):
         try:
             self._close()
-        except:
+        except:  # lgtm [py/catch-base-exception]
             pass
 
     def close(self):
@@ -966,7 +970,7 @@ class Cursor:
         try:
             self._preparedStatement = self._jcx.prepareStatement(operation)
             self._paramMetaData = self._preparedStatement.getParameterMetaData()
-        except JClass("java.sql.SQLException") as ex:
+        except _SQLException as ex:
             raise OperationalError(ex.message()) from ex
         except TypeError as ex:
             raise ValueError from ex
@@ -1193,6 +1197,8 @@ class Cursor:
         ``.execute*()`` did not produce any result set or no call was issued yet.
         """
         self._resultSet.close()
+        self._resultGetters = None
+        self._resultConverters = None
         if self._preparedStatement.getMoreResults():
             self._resultSet = self._prepareStatement.getResultSet()
             self._resultMetaData = self._resultSet.getMetaData()
@@ -1200,8 +1206,6 @@ class Cursor:
         else:
             self._rowcount = self._preparedStatement.getUpdageCount()
             return None
-        self._resultGetters = None
-        self._resultConverters = None
 
     @property
     def arraysize(self):
@@ -1262,7 +1266,7 @@ class Cursor:
     def __del__(self):
         try:
             self._close()
-        except:
+        except:  # lgtm [py/catch-base-exception]
             pass
 
     def __enter__(self):
@@ -1277,17 +1281,17 @@ class Cursor:
 
 def Date(year, month, day):
     """ This function constructs an object holding a date value. """
-    return JClass('java.sql.Date')(year, month, day)
+    return _jpype.JClass('java.sql.Date')(year, month, day)
 
 
 def Time(hour, minute, second):
     """ This function constructs an object holding a time value. """
-    return JClass('java.sql.Time')(hour, minute, second)
+    return _jpype.JClass('java.sql.Time')(hour, minute, second)
 
 
 def Timestamp(year, month, day, hour, minute, second, nano=0):
     """ This function constructs an object holding a time stamp value. """
-    return JClass('java.sql.Timestamp')(year, month, day, hour, minute, second, nano)
+    return _jpype.JClass('java.sql.Timestamp')(year, month, day, hour, minute, second, nano)
 
 
 def DateFromTicks(ticks):
@@ -1332,10 +1336,10 @@ _accepted = set(["exact", "implicit"])
 
 def _populateTypes():
     global _SQLException, _SQLTimeoutException
-    _SQLException = JClass("java.sql.SQLException")
-    _SQLTimeoutException = JClass("java.sql.SQLTimeoutException")
-    ps = JClass("java.sql.PreparedStatement")
-    rs = JClass("java.sql.ResultSet")
+    _SQLException = _jpype.JClass("java.sql.SQLException")
+    _SQLTimeoutException = _jpype.JClass("java.sql.SQLTimeoutException")
+    ps = _jpype.JClass("java.sql.PreparedStatement")
+    rs = _jpype.JClass("java.sql.ResultSet")
     for v in _types:
         v._initialize(ps, rs)
 
