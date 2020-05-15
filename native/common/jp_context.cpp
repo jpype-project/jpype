@@ -302,8 +302,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		m_Array_NewInstanceID = frame.GetStaticMethodID(m_Array.get(), "newInstance",
 				"(Ljava/lang/Class;[I)Ljava/lang/Object;");
 
-		cls = frame.FindClass("java/nio/Buffer");
-		m_Buffer_IsReadOnlyID = frame.GetMethodID(cls, "isReadOnly",
 		jclass bufferClass = frame.FindClass("java/nio/Buffer");
 		m_Buffer_IsReadOnlyID = frame.GetMethodID(bufferClass, "isReadOnly",
 				"()Z");
