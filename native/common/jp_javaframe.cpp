@@ -1211,6 +1211,11 @@ jthrowable JPJavaFrame::getCause(jthrowable th)
 	return (jthrowable) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetCauseID, NULL);
 }
 
+jstring JPJavaFrame::getMessage(jthrowable th)
+{
+	return (jstring) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetMessageID, NULL);
+}
+
 jbyte JPJavaFrame::booleanValue(jobject obj)
 {
 	return CallBooleanMethodA(obj, m_Context->m_BooleanValueID, 0);

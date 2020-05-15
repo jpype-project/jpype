@@ -148,6 +148,7 @@ public:
 
 	jobject newArrayInstance(jclass c, jintArray dims);
 	jthrowable getCause(jthrowable th);
+	jstring getMessage(jthrowable th);
 	jint compareTo(jobject obj, jobject obj2);
 
 	jbyte booleanValue(jobject obj);

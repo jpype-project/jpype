@@ -246,6 +246,7 @@ private:
 	jmethodID m_Object_GetClassID;
 	jmethodID m_Array_NewInstanceID;
 	jmethodID m_Throwable_GetCauseID;
+	jmethodID m_Throwable_GetMessageID;
 	jmethodID m_Context_GetFunctionalID;
 
 	friend class JPProxy;

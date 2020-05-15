@@ -199,6 +199,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 		jclass throwableClass = (jclass) frame.FindClass("java/lang/Throwable");
 		m_Throwable_GetCauseID = frame.GetMethodID(throwableClass, "getCause", "()Ljava/lang/Throwable;");
+		m_Throwable_GetMessageID = frame.GetMethodID(throwableClass, "getMessage", "()Ljava/lang/String;");
 
 		// After the JVM is created but before the context is started, we need
 		// to set up all the services that the context will need.
