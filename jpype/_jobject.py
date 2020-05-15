@@ -19,7 +19,7 @@ import _jpype
 __all__ = ['JObject']
 
 
-class JObject(_jpype._JObject):
+class JObject(_jpype._JObject, internal=True):
     """ Base class for all object instances.
 
     It can be used to test if an object is a Java object instance with

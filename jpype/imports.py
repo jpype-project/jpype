@@ -80,6 +80,8 @@ _java_lang_Class = None
 _java_lang_NoClassDefFoundError = None
 _java_lang_ClassNotFoundException = None
 _java_lang_UnsupportedClassVersionError = None
+_java_lang_ExceptionInInitializerError = None
+
 
 def _getJavaClass(javaname):
     """ This produces diagnostics on failing to find a Java class """
@@ -87,6 +89,7 @@ def _getJavaClass(javaname):
     global _java_lang_NoClassDefFoundError
     global _java_lang_ClassNotFoundException
     global _java_lang_UnsupportedClassVersionError
+    global _java_lang_ExceptionInInitializerError
     if not _java_lang_Class:
         _java_lang_Class = _jpype.JClass("java.lang.Class")
         _java_lang_ClassNotFoundException = _jpype.JClass(
@@ -95,6 +98,8 @@ def _getJavaClass(javaname):
             "java.lang.NoClassDefFoundError")
         _java_lang_UnsupportedClassVersionError = _jpype.JClass(
             "java.lang.UnsupportedClassVersionError")
+        _java_lang_ExceptionInInitializerError = _jpype.JClass(
+            "java.lang.ExceptionInInitializerError")
 
     err = None
     try:
@@ -103,26 +108,36 @@ def _getJavaClass(javaname):
         return _jpype.JClass(cls)
 
     # Not found is acceptable
-    except _java_lang_ClassNotFoundException:
+    except _java_lang_ClassNotFoundException as ex:
         p = javaname.rpartition('.')
         err = "'%s' not found in '%s'" % (p[2], p[0])
+        ex1 = ex
 
     # Missing dependency
     except _java_lang_NoClassDefFoundError as ex:
         missing = str(ex).replace('/', '.')
         err = "Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)
+        ex1 = ex
 
     # Wrong Java version
     except _java_lang_UnsupportedClassVersionError as ex:
         err = "Unable to import '%s' due to incorrect Java version" % (
             javaname)
+        ex1 = ex
+
+    except _java_lang_ExceptionInInitializerError as ex:
+        err = "Unable to import '%s' due to initializer error" % (
+            javaname)
+        ex1 = ex
+        ex1._expandStacktrace()
 
     # Otherwise!?
     except Exception as ex:
         err = "Unable to import '%s' due to unexpected exception, '%s'" % (
             javaname, ex)
-    raise ImportError(err)
+        ex1 = ex
+    raise ImportError(err) from ex1
 
 
 # %% Customizer
@@ -182,6 +197,7 @@ def unwrap(name):
         return name
     return ".".join([_keywordUnwrap(i) for i in name.split('.')])
 
+
 class _JImportLoader:
     """ (internal) Finder hook for importlib. """
 
@@ -210,10 +226,10 @@ class _JImportLoader:
         for customizer in _CUSTOMIZERS:
             if customizer.canCustomize(name):
                 return customizer.getSpec(name)
-  
+
         # Using isPackage eliminates need for registering tlds
         if not hasattr(base, parts[2]):
-            # If the base is a Java package and it wasn't found in the 
+            # If the base is a Java package and it wasn't found in the
             # package using getAttr, then we need to emit an error
             # so we produce a meaningful diagnositic.
             _getJavaClass(name)
@@ -263,4 +279,3 @@ registerDomain('org')
 registerDomain('mil')
 registerDomain('edu')
 registerDomain('net')
-

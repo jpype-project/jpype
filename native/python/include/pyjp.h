@@ -74,7 +74,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name);
  * @param obj
  * @return 1 if object derives from type.
  */
-int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj);
+int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type);
 int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj);
 
 struct PyJPArray
@@ -104,6 +104,17 @@ struct PyJPProxy
 	PyObject* m_Target;
 	bool m_Convert;
 } ;
+
+struct JPConversionInfo
+{
+	PyObject *ret;
+	PyObject *exact;
+	PyObject *implicit;
+	PyObject *attributes;
+	PyObject *expl;
+	PyObject *none;
+} ;
+
 
 // JPype types
 extern PyTypeObject *PyJPArray_Type;
@@ -169,10 +180,11 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
 
 JPClass*   PyJPClass_getJPClass(PyObject* obj);
 JPProxy*   PyJPProxy_getJPProxy(PyObject* obj);
-JPPyObject PyJPProxy_getCallable(PyObject* obj, const string& name);
 void       PyJPModule_rethrow(const JPStackInfo& info);
 void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
 bool       PyJPValue_isSetJavaSlot(PyObject* self);
+JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev);
+void       PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing);
 
 #define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
 /**

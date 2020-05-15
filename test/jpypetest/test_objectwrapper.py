@@ -16,7 +16,7 @@
 # *****************************************************************************
 import jpype
 from jpype.types import *
-from jpype import java, JPackage
+from jpype import java
 import common
 #import os
 #import sys
@@ -25,7 +25,7 @@ import common
 class ObjectWrapperTestCase(common.JPypeTestCase):
     def testCallOverloads(self):
         # build the harness
-        h = JPackage("jpype.objectwrapper").Test1()
+        h = JClass("jpype.objectwrapper.Test1")()
 
         o = java.lang.Integer(1)
         self.assertEqual(h.Method1(JObject(o, java.lang.Number)), 1)
@@ -45,7 +45,7 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
                          jpype.JClass("java.lang.Boolean"))
 
     def testPassingClassTypeSucceeds(self):
-        h = JPackage("jpype.objectwrapper").Test1()
+        h = JClass("jpype.objectwrapper.Test1")()
         # Select a convenient java.lang.Class object
         class_obj = h.getClass()
 

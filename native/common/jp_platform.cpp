@@ -36,14 +36,23 @@ private:
 	{
 		LPVOID lpMsgBuf;
 
-		FormatMessage(
+		DWORD rc = ::FormatMessage(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
-				FORMAT_MESSAGE_FROM_SYSTEM,
+				FORMAT_MESSAGE_FROM_SYSTEM |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL,
 				msgCode,
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 				(LPTSTR) & lpMsgBuf,
 				0, NULL );
+
+		// Fail to get format
+		if (rc == 0)
+		{
+			std::stringstream ss;
+			ss << "error code " << msgCode;
+			return ss.str();
+		}
 
 		std::string res((LPTSTR) lpMsgBuf);
 

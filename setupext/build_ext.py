@@ -51,19 +51,19 @@ class Makefile(object):
             elif v == '-o':
                 i0 = i
         pre = set(x[:i1])
-        post = x[i0+2:]
+        post = x[i0 + 2:]
 
         self.compile_command = command
         self.compile_pre = pre
         self.compile_post = post
         self.includes = includes
-        self.sources.append(x[i1+1])
+        self.sources.append(x[i1 + 1])
 
     def captureLink(self, x):
         self.link_command = x[0]
         x = x[1:]
         i = x.index("-o")
-        self.library = x[i+1]
+        self.library = x[i + 1]
         del x[i]
         del x[i]
         self.objects = [i for i in x if i.endswith(".o")]
@@ -244,7 +244,7 @@ class BuildExtCommand(build_ext):
         for ext in self.extensions:
             if ext.language == "java":
                 fullname = self.get_ext_fullname("JAVA")
-                filename = ext.name+".jar"
+                filename = ext.name + ".jar"
             else:
                 fullname = self.get_ext_fullname(ext.name)
                 filename = self.get_ext_filename(fullname)
@@ -286,7 +286,7 @@ class BuildExtCommand(build_ext):
         # build the jar
         try:
             dirname = os.path.dirname(self.get_ext_fullpath("JAVA"))
-            jar = os.path.join(dirname, ext.name+".jar")
+            jar = os.path.join(dirname, ext.name + ".jar")
             build_dir = os.path.join(self.build_temp, ext.name, "classes")
             os.makedirs(build_dir, exist_ok=True)
             os.makedirs(dirname, exist_ok=True)

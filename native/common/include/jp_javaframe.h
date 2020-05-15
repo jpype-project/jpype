@@ -147,6 +147,17 @@ public:
 	jobject assemble(jobject dims, jobject parts);
 
 	jobject newArrayInstance(jclass c, jintArray dims);
+	jthrowable getCause(jthrowable th);
+	jint compareTo(jobject obj, jobject obj2);
+
+	jbyte booleanValue(jobject obj);
+	jbyte byteValue(jobject obj);
+	jchar charValue(jobject obj);
+	jshort shortValue(jobject obj);
+	jint intValue(jobject obj);
+	jlong longValue(jobject obj);
+	jfloat floatValue(jobject obj);
+	jdouble doubleValue(jobject obj);
 
 	/**
 	 * Convert a UTF8 encoded string into Java.
@@ -158,6 +169,7 @@ public:
 	jstring fromStringUTF8(const string& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
 	jobject toCharArray(jstring jstr);
+	string getFunctional(jclass c);
 
 	JPClass *findClass(jclass obj);
 	JPClass *findClassByName(const string& name);
@@ -350,8 +362,6 @@ public:
 	const char* GetStringUTFChars(jstring a0, jboolean* a1);
 	void ReleaseStringUTFChars(jstring a0, const char* a1);
 	jsize GetStringUTFLength(jstring a0);
-
-	jint compareTo(jobject obj, jobject obj2);
 
 	jboolean isPackage(const string& str);
 	jobject getPackage(const string& str);

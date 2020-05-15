@@ -13,20 +13,20 @@ static void PyJPBuffer_dealloc(PyJPBuffer *self)
 	JP_PY_TRY("PyJPBuffer_dealloc");
 	delete self->m_Buffer;
 	Py_TYPE(self)->tp_free(self);
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOV_EXCL_LINE
 }
 
 static PyObject *PyJPBuffer_repr(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPBuffer_repr");
 	return PyUnicode_FromFormat("<java buffer '%s'>", Py_TYPE(self)->tp_name);
-	JP_PY_CATCH(0);
+	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
 static void PyJPBuffer_releaseBuffer(PyJPBuffer *self, Py_buffer *view)
 {
 	JP_PY_TRY("PyJPBufferPrimitive_releaseBuffer");
-	JP_PY_CATCH();
+	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
 int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
@@ -78,13 +78,15 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 		return 0;
 	} catch (JPypeException &ex)
 	{
+		// GCOVR_EXCL_START
 		PyJPBuffer_releaseBuffer(self, view);
 
 		// We are only allowed to raise BufferError
 		PyErr_SetString(PyExc_BufferError, "Java buffer view failed");
 		return -1;
+		// GCOVR_EXCL_STOP
 	}
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1); // GCOVR_EXCL_LINE
 }
 
 static PyType_Slot bufferSlots[] = {

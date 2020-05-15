@@ -336,7 +336,7 @@ def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
         f.seek(60)
         s = f.read(4)
         header_offset = struct.unpack("<L", s)[0]
-        f.seek(header_offset+4)
+        f.seek(header_offset + 4)
         s = f.read(2)
         machine = struct.unpack("<H", s)[0]
 

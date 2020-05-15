@@ -124,9 +124,9 @@ void JPJavaFrame::DeleteGlobalRef(jobject obj)
 jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
 {
 	JP_TRACE_JAVA("New weak", obj);
-	obj = m_Env->NewWeakGlobalRef(obj);
-	JP_TRACE_JAVA("Weak", obj);
-	return obj;
+	jweak obj2 = m_Env->NewWeakGlobalRef(obj);
+	JP_TRACE_JAVA("Weak", obj2);
+	return obj2;
 }
 
 void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)
@@ -1175,6 +1175,15 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	JP_TRACE_OUT;
 }
 
+string JPJavaFrame::getFunctional(jclass c)
+{
+	jvalue v;
+	v.l = (jobject) c;
+	return toStringUTF8((jstring) CallObjectMethodA(
+			m_Context->m_JavaContext.get(),
+			m_Context->m_Context_GetFunctionalID, &v));
+}
+
 JPClass *JPJavaFrame::findClass(jclass obj)
 {
 	return m_Context->getTypeManager()->findClass(obj);
@@ -1195,6 +1204,51 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 	jvalue v;
 	v.l = obj2;
 	return CallIntMethodA(obj, m_Context->m_CompareToID, &v);
+}
+
+jthrowable JPJavaFrame::getCause(jthrowable th)
+{
+	return (jthrowable) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetCauseID, NULL);
+}
+
+jbyte JPJavaFrame::booleanValue(jobject obj)
+{
+	return CallBooleanMethodA(obj, m_Context->m_BooleanValueID, 0);
+}
+
+jbyte JPJavaFrame::byteValue(jobject obj)
+{
+	return CallByteMethodA(obj, m_Context->m_ByteValueID, 0);
+}
+
+jchar JPJavaFrame::charValue(jobject obj)
+{
+	return CallCharMethodA(obj, m_Context->m_CharValueID, 0);
+}
+
+jshort JPJavaFrame::shortValue(jobject obj)
+{
+	return CallShortMethodA(obj, m_Context->m_ShortValueID, 0);
+}
+
+jint JPJavaFrame::intValue(jobject obj)
+{
+	return CallIntMethodA(obj, m_Context->m_IntValueID, 0);
+}
+
+jlong JPJavaFrame::longValue(jobject obj)
+{
+	return CallLongMethodA(obj, m_Context->m_LongValueID, 0);
+}
+
+jfloat JPJavaFrame::floatValue(jobject obj)
+{
+	return CallFloatMethodA(obj, m_Context->m_FloatValueID, 0);
+}
+
+jdouble JPJavaFrame::doubleValue(jobject obj)
+{
+	return CallDoubleMethodA(obj, m_Context->m_DoubleValueID, 0);
 }
 
 jboolean JPJavaFrame::isPackage(const string& str)

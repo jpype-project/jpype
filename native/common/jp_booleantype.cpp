@@ -15,9 +15,9 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_booleantype.h"
-#include "pyjp.h"
 
 JPBooleanType::JPBooleanType()
 : JPPrimitiveType("boolean")
@@ -38,7 +38,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->m_BooleanValueID, 0) ? true : false;
+	field(v) = frame.booleanValue(obj.getValue().l) != 0;
 	return JPValue(this, v);
 }
 
@@ -46,7 +46,64 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPMatch &match, JPClass *cls)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	{
+		if (!PyBool_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_exact;
+	}
+
+	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	{
+		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
+	}
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		jvalue res;
+		jlong v = PyObject_IsTrue(match.object);
+		if (v == -1)
+			JP_PY_CHECK();
+		res.z = v != 0;
+		return res;
+	}
+} asBooleanExact;
+
+class JPConversionAsBooleanJBool : public JPConversionJavaValue
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	{
+
+		JPValue *value = match.getJavaSlot();
+		if (value == NULL)
+			return match.type = JPMatch::_none;
+		match.type = JPMatch::_none;
+		// Implied conversion from boxed to primitive (JLS 5.1.8)
+		if (javaValueConversion->matches(cls, match)
+				|| unboxConversion->matches(cls, match))
+			return match.type;
+
+		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
+		return JPMatch::_implicit; // search no further.
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info)
+	{
+		JPContext *context = cls->getContext();
+		PyList_Append(info.exact, (PyObject*) context->_boolean->getHost());
+		unboxConversion->getInfo(cls, info);
+	}
+
+} asBooleanJBool;
+
+class JPConversionAsBooleanLong : public JPConversionAsBoolean
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -55,53 +112,61 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		jvalue res;
-		jlong v = PyLong_AsLongLong(match.object);
-		if (v == -1)
-			JP_PY_CHECK();
-		res.z = v != 0;
-		return res;
+		PyObject *typing = PyImport_AddModule("jpype.protocol");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+		PyList_Append(info.expl, proto.get());
 	}
-} asBooleanConversion;
+
+} asBooleanLong;
+
+class JPConversionAsBooleanNumber : public JPConversionAsBoolean
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	{
+		if (!PyNumber_Check(match.object))
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_explicit;
+	}
+
+	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	{
+		PyObject *typing = PyImport_AddModule("jpype.protocol");
+		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		PyList_Append(info.expl, proto.get());
+	}
+
+} asBooleanNumber;
 
 JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 {
-	JP_TRACE_IN("JPBooleanType::getJavaConversion", this);
+	JP_TRACE_IN("JPBooleanType::findJavaConversion", this);
 
 	if (match.object ==  Py_None)
 		return match.type = JPMatch::_none;
 
-	if (PyBool_Check(match.object))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_exact;
-	}
-
-	JPValue *value = match.getJavaSlot();
-	if (value != NULL)
-	{
-		// Implied conversion from boxed to primitive (JLS 5.1.8)
-		if (javaValueConversion->matches(match, this)
-				|| unboxConversion->matches(match, this))
-			return match.type;
-
-		// Unboxing must be to the from the exact boxed type (JLS 5.1.8)
-		return match.type = JPMatch::_none;
-	}
-
-	if (asBooleanConversion.matches(match, this))
+	if (asBooleanExact.matches(this, match)
+			|| asBooleanJBool.matches(this, match)
+			|| asBooleanLong.matches(this, match)
+			|| asBooleanNumber.matches(this, match)
+			)
 		return match.type;
-
-	if (PyNumber_Check(match.object))
-	{
-		match.conversion = &asBooleanConversion;
-		return match.type = JPMatch::_explicit;
-	}
-
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
+}
+
+void JPBooleanType::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame(m_Context);
+	asBooleanExact.getInfo(this, info);
+	asBooleanJBool.getInfo(this, info);
+	asBooleanLong.getInfo(this, info);
+	asBooleanNumber.getInfo(this, info);
+	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 
 jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)

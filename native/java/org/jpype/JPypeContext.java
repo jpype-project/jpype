@@ -68,6 +68,7 @@ import org.jpype.ref.JPypeReferenceQueue;
  */
 public class JPypeContext
 {
+  public final String VERSION = "0.7.6_dev0";
 
   private static JPypeContext instance = null;
   // This is the C++ portion of the context.
@@ -108,6 +109,7 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
+    JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
@@ -549,6 +551,52 @@ public class JPypeContext
       }
     }
     return null;
+  }
+
+  /**
+   * Utility function for extracting the unique portion of a stack trace.
+   *
+   * This is a bit different that the Java method which works from the back. We
+   * will be using fake stacktraces from Python at some point so finding the
+   * first common is a better approach.
+   *
+   * @param th is the throwable.
+   * @param enclosing is the throwsble that holds this or null if top level.
+   * @return the unique frames as an object array with 4 objects per frame.
+   */
+  public Object[] getStackTrace(Throwable th, Throwable enclosing)
+  {
+    StackTraceElement[] trace = th.getStackTrace();
+    if (trace == null || enclosing == null)
+      return toFrames(trace);
+    StackTraceElement[] te = enclosing.getStackTrace();
+    if (te == null)
+      return toFrames(trace);
+    for (int i = 0; i < trace.length; ++i)
+    {
+      if (trace[i].equals(te[0]))
+      {
+        return toFrames(Arrays.copyOfRange(trace, 0, i));
+      }
+    }
+    return toFrames(trace);
+  }
+
+  private Object[] toFrames(StackTraceElement[] stackTrace)
+  {
+    if (stackTrace == null)
+      return null;
+    Object[] out = new Object[4 * stackTrace.length];
+    int i = 0;
+    for (StackTraceElement fr : stackTrace)
+    {
+      out[i++] = fr.getClassName();
+      out[i++] = fr.getMethodName();
+      out[i++] = fr.getFileName();
+      out[i++] = fr.getLineNumber();
+    }
+    return out;
+
   }
 
 }

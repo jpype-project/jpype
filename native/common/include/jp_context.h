@@ -115,6 +115,7 @@ public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
 	friend class JPClass;
+	friend class JPTypeFactory;
 
 	JPContext();
 	virtual ~JPContext();
@@ -148,11 +149,6 @@ public:
 	void ReleaseGlobalRef(jobject obj);
 
 	// JPype services
-
-	JPProxyFactory* getProxyFactory()
-	{
-		return m_ProxyFactory;
-	}
 
 	JPTypeManager* getTypeManager()
 	{
@@ -202,15 +198,6 @@ public:
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
 
-	jmethodID m_BooleanValueID;
-	jmethodID m_ByteValueID;
-	jmethodID m_CharValueID;
-	jmethodID m_ShortValueID;
-	jmethodID m_IntValueID;
-	jmethodID m_LongValueID;
-	jmethodID m_FloatValueID;
-	jmethodID m_DoubleValueID;
-
 private:
 
 	void loadEntryPoints(const string& path);
@@ -233,7 +220,6 @@ private:
 	JPTypeManager *m_TypeManager;
 	JPClassLoader *m_ClassLoader;
 	JPReferenceQueue *m_ReferenceQueue;
-	JPProxyFactory *m_ProxyFactory;
 
 public:
 	JPClassRef m_RuntimeException;
@@ -259,10 +245,30 @@ private:
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
 	jmethodID m_Array_NewInstanceID;
+	jmethodID m_Throwable_GetCauseID;
+	jmethodID m_Context_GetFunctionalID;
+
+	friend class JPProxy;
+	JPClassRef m_ProxyClass;
+	jmethodID m_Proxy_NewID;
+	jmethodID m_Proxy_NewInstanceID;
+
 	jmethodID m_Context_IsPackageID;
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
+public:
+	jmethodID m_Context_GetStackFrameID;
+
+	jmethodID m_BooleanValueID;
+	jmethodID m_ByteValueID;
+	jmethodID m_CharValueID;
+	jmethodID m_ShortValueID;
+	jmethodID m_IntValueID;
+	jmethodID m_LongValueID;
+	jmethodID m_FloatValueID;
+	jmethodID m_DoubleValueID;
+
 private:
 	bool m_Running;
 	bool m_ConvertStrings;

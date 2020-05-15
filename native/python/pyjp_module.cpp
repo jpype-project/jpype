@@ -177,7 +177,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	}
 
 	return NULL;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
@@ -192,7 +192,7 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
+int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
 	if (type == NULL || obj == NULL)
 		return 0; // GCOVR_EXCL_LINE
@@ -480,6 +480,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 	Py_RETURN_NONE;
 }
 
+// GCOVR_EXCL_START
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
 	JPContext *context = PyJPModule_getContext();
@@ -501,6 +502,7 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	Py_DECREF(res);
 	return out;
 }
+// GCOVR_EXCL_STOP
 
 PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 {
@@ -513,9 +515,10 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame(context);
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
+// GCOVR_EXCL_START
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -556,7 +559,9 @@ PyObject* examine(PyObject *module, PyObject *other)
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(NULL);
 }
+// GCOVR_EXCL_STOP
 
+// GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
 static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 {
@@ -564,6 +569,7 @@ static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 	_PyJPModule_trace = PyLong_AsLong(args);
 	return PyLong_FromLong(old);
 }
+// GCOVR_EXCL_STOP
 
 #ifdef JP_INSTRUMENTATION
 uint32_t _PyJPModule_fault_code = -1;
@@ -643,7 +649,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "0.7.4");
+	PyModule_AddStringConstant(module, "__version__", "0.7.6_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
@@ -661,7 +667,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	_PyJPModule_trace = true;
 	return module;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 #ifdef __cplusplus
@@ -689,7 +695,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 		PyErr_Format(PyExc_RuntimeError, "Unhandled C++ exception occurred");
 		return;
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)

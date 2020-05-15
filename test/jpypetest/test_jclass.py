@@ -183,7 +183,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJavaConversionFault(self):
-        _jpype.fault("JPClass::getJavaConversion")
+        _jpype.fault("JPClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(jpype.java.lang.Class._canConvertToJava(None))
 
@@ -223,3 +223,28 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertEqual(JClass('[Ljava.lang.Object;'), JArray(JObject))
         self.assertEqual(JClass('[Ljava/lang/Object;'), JArray(JObject))
 
+    def testClosed(self):
+        with self.assertRaises(TypeError):
+            class Q(JBoolean):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JChar):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JByte):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JShort):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JInt):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JLong):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JFloat):
+                pass
+        with self.assertRaises(TypeError):
+            class Q(JDouble):
+                pass

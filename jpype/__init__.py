@@ -35,7 +35,7 @@ from ._jcustomizer import *
 from . import _jmethod      # lgtm [py/import-own-module]
 from . import _jcollection  # lgtm [py/import-own-module]
 from . import _jio          # lgtm [py/import-own-module]
-
+from . import protocol      # lgtm [py/import-own-module]
 
 __all__ = ['java', 'javax']
 __all__.extend(_core.__all__)
@@ -47,8 +47,8 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version_info__ = (0, 7, 4)
-__version__ = ".".join(str(i) for i in __version_info__)
+__version__ = "0.7.6_dev0"
+__version_info__ = __version__.split('.')
 
 
 # FIXME these should be deprecated. The old JPackage system is only for
