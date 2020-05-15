@@ -278,7 +278,7 @@ class CursorTests(common.JPypeTestCase):
         self.assertEqual(row[0], "Hu\x00go")
 
     def testExecuteNonIterable(self):
-        with self.assertRaisesRegex(ValueError, 'parameters are of unsupported type') as cm:
+        with self.assertRaisesRegex(TypeError, 'parameters are of unsupported type') as cm:
             self.cu.execute("insert into test(id) values (?)", 42)
 
     def testExecuteWrongNoOfArgs1(self):

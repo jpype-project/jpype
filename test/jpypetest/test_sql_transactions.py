@@ -33,27 +33,29 @@ import common
 import pytest
 import os
 import unittest
-import jpype.sql as dbapi2
+import jpype.dbapi2 as dbapi2
 
 
 def get_db_path():
     return "sqlite_testdb"
 
-def getConnection():
-    return "jdbc:sqlite::memory:"
+
+db_path = "jdbc:sqlite::memory:"
 
 
-class TransactionTests(unittest.TestCase):
+class TransactionTests(common.JPypeTestCase):
+
     def setUp(self):
+        common.JPypeTestCase.setUp(self)
         try:
             os.remove(get_db_path())
         except OSError:
             pass
 
-        self.con1 = sqlite.connect(get_db_path(), timeout=0.1)
+        self.con1 = dbapi2.connect(db_path, timeout=0.1)
         self.cur1 = self.con1.cursor()
 
-        self.con2 = sqlite.connect(get_db_path(), timeout=0.1)
+        self.con2 = dbapi2.connect(db_path, timeout=0.1)
         self.cur2 = self.con2.cursor()
 
     def tearDown(self):
@@ -150,7 +152,7 @@ class TransactionTests(unittest.TestCase):
         Checks if cursors on the connection are set into a "reset" state
         when a rollback is done on the connection.
         """
-        con = dbapi2.connect(getConnection())
+        con = dbapi2.connect(db_path)
         cur = con.cursor()
         cur.execute("create table test(x)")
         cur.execute("insert into test(x) values (5)")
@@ -161,9 +163,10 @@ class TransactionTests(unittest.TestCase):
             cur.fetchall()
 
 
-class SpecialCommandTests(unittest.TestCase):
+class SpecialCommandTests(common.JPypeTestCase):
     def setUp(self):
-        self.con = dbapi2.connect(getConnection())
+        common.JPypeTestCase.setUp(self)
+        self.con = dbapi2.connect(db_path)
         self.cur = self.con.cursor()
 
     def testDropTable(self):
@@ -181,35 +184,42 @@ class SpecialCommandTests(unittest.TestCase):
         self.con.close()
 
 
-class TransactionalDDL(unittest.TestCase):
+class TransactionalDDL(common.JPypeTestCase):
     def setUp(self):
-        self.con = dbapi2.connect(getConnection())
+        common.JPypeTestCase.setUp(self)
+        self.con = dbapi2.connect(db_path)
+        # A single commit is required before starting transactions in JDBC
+        self.con.cursor().execute("commit")
 
     def testDdlDoesNotAutostartTransaction(self):
         # For backwards compatibility reasons, DDL statements should not
         # implicitly start a transaction.
-        self.con.execute("create table test(i)")
-        self.con.rollback()
-        result = self.con.execute("select * from test").fetchall()
-        self.assertEqual(result, [])
+        with self.con.cursor() as cur:
+            cur.execute("create table test(i)")
+            with self.assertRaises(dbapi2.OperationalError):
+                self.con.rollback()
+            result = cur.execute("select * from test").fetchall()
+            self.assertEqual(result, [])
 
     def testImmediateTransactionalDDL(self):
         # You can achieve transactional DDL by issuing a BEGIN
         # statement manually.
-        self.con.execute("begin immediate")
-        self.con.execute("create table test(i)")
-        self.con.rollback()
-        with self.assertRaises(dbapi2.OperationalError):
-            self.con.execute("select * from test")
+        with self.con.cursor() as cur:
+            cur.execute("begin immediate")
+            cur.execute("create table test(i)")
+            self.con.rollback()
+            with self.assertRaises(dbapi2.OperationalError):
+                cur.execute("select * from test")
 
     def testTransactionalDDL(self):
         # You can achieve transactional DDL by issuing a BEGIN
         # statement manually.
-        self.con.execute("begin")
-        self.con.execute("create table test(i)")
-        self.con.rollback()
-        with self.assertRaises(dbapi2.OperationalError):
-            self.con.execute("select * from test")
+        with self.con.cursor() as cur:
+            cur.execute("begin")
+            cur.execute("create table test(i)")
+            self.con.rollback()
+            with self.assertRaises(dbapi2.OperationalError):
+                cur.execute("select * from test")
 
     def tearDown(self):
         self.con.close()
