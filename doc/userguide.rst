@@ -2433,7 +2433,7 @@ AWT/Swing
 *********
 
 Java GUI elements can be used from Python.  To use Swing
-elements the event loop in java must be started from a user thread. 
+elements the event loop in Java must be started from a user thread. 
 This will prevent the JVM from shutting down until the user thread
 is completed.
 
@@ -2707,7 +2707,7 @@ can impose performance bottlenecks.
 
 JNI is the standard native interface for most, if not all, JVMs, so there is
 no getting around it. Down the road, it is possible that interfacing with CNI
-(GCC's java native interface) may be used. Right now, the best way to reduce
+(GCC's Java native interface) may be used. Right now, the best way to reduce
 the JNI cost is to move time critical code over to Java.
 
 Follow the regular Python philosophy : **Write it all in Python, then write
