@@ -389,3 +389,31 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(datetime.datetime in hints.implicit)
         self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(len(hints.none) == 0)
+
+    def testDate(self):
+        d = JObject("java.sql.Date")(120, 0, 5)
+        d2 = d._py()
+        d3 = JObject(d2, Date)
+        self.assertEqual(d == d2)
+        self.assertEqual(d == d3)
+
+    def testTimestamp(self):
+        d = JObject("java.sql.Timestamp")(120, 0, 5, 9, 22, 51, 123456000)
+        d2 = d._py()
+        d3 = JObject(d2, Timestamp)
+        self.assertEqual(d == d2)
+        self.assertEqual(d == d3)
+
+    def testTime(self):
+        d = JObject("java.sql.Time")(11, 53, 1)
+        d2 = d._py()
+        d3 = JObject(d2, Time)
+        self.assertEqual(d == d2)
+        self.assertEqual(d == d3)
+
+    def testBigDecimal(self):
+        d = JObject("java.math.BigDecimal")('1000234600000000000000')
+        d2 = d._py()
+        d3 = JObject(d2, BigDecimal)
+        self.assertEqual(d == d2)
+        self.assertEqual(d == d3)
