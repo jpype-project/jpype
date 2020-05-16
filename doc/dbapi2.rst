@@ -1,0 +1,368 @@
+##################
+JPype DBAPI2 Guide
+##################
+
+`Introduction`
+==============
+
+One common use of JPype is to provide access to databases used JDBC.  The JDBC
+API is well established, very capable, and supports most databases.
+JPype can be used to access JDBC both directly or through the use of the Python
+DBAPI2 as layed (see PEP-0249_).  Unfortunately, the Python API leaves a lot of
+behaviors undefined.  
+
+The ``jpype.dbapi2`` module provides our implementation of this Python API.
+Normally the Python API has to deal with two different type systems, Python
+and SQL.  When using JDBC, we have the added complexity that Java types are
+used to communicate with the driver.  
+
+
+`Module Interface`
+==================
+
+`Constructors`
+--------------
+
+Access to the database is made available through connection
+objects. The module provides the following constructor for connections:
+
+.. _connect:
+
+.. autofunction:: jpype.dbapi2.connect
+
+Globals
+-------
+
+``jpype.dbapi`` defines several globals that define the module behavior.
+These values are constants.
+
+.. _apilevel:
+
+`apilevel`_
+    The apilevel for the module is "``2.0``".  
+
+
+.. _threadsafety:
+
+`threadsafety`_
+    The threadsafety level is 2 meaning "Threads may share the module and
+    connections".  But the actual threading level depends on the driver
+    implementation that JDBC is connected to.  Connections for many databases
+    are synchronized so they can be shared, but threads must execute statement
+    in series.  Connections in the module are implemented in Python and 
+    have per object resources that cannot be shared.  Attempting to use a
+    connection with a thread other than the thread that created it will
+    raise an ``Error``.
+
+    Sharing in the above context means that two threads may use a resource
+    without wrapping it using a mutex semaphore to implement resource locking.
+    Note that you cannot always make external resources thread safe by managing
+    access using a mutex: the resource may rely on global variables or other
+    external sources that are beyond your control.
+
+
+.. _paramstyle:
+
+`paramstyle`_
+    The parameter style for ``jpype.dbapi2`` module is ``qmark``
+
+    ============ ==============================================================
+    paramstyle   Meaning
+    ============ ==============================================================
+    ``qmark``    Question mark style, e.g. ``...WHERE name=?``
+    ============ ==============================================================
+
+
+Exceptions
+----------
+
+The dbapi2 module exposes error information using the following
+exceptions:
+
+.. autoclass:: jpype.dbapi2.Warning
+.. autoclass:: jpype.dbapi2.Error
+.. autoclass:: jpype.dbapi2.InterfaceError
+.. autoclass:: jpype.dbapi2.DatabaseError
+.. autoclass:: jpype.dbapi2.DataError
+.. autoclass:: jpype.dbapi2.OperationalError
+.. autoclass:: jpype.dbapi2.IntegrityError
+.. autoclass:: jpype.dbapi2.InternalError
+.. autoclass:: jpype.dbapi2.ProgrammingError
+.. autoclass:: jpype.dbapi2.NotSupportedError
+
+Python exceptions are more fine grain than JDBC exceptions.  Whereever possible
+we have redirected the Java exception to the nearest Python exception.  However,
+there are cases in which the Java exception may appear.  Those exceptions
+inherit from ``jpype.dbapi2.Error``.  This is the exception inheritance layout::
+
+    Exception
+    |__Warning
+    |__Error
+       |__InterfaceError
+       |__java.sql.SQLError
+       |  |__java.sql.BatchUpdateException
+       |  |__java.sql.RowSetWarning
+       |  |__java.sql.SerialException
+       |  |__java.sql.SQLClientInfoException
+       |  |__java.sql.SQLNonTransientException
+       |  |__java.sql.SQLRecoverableException
+       |  |__java.sql.SQLTransientException
+       |  |__java.sql.SQLWarning
+       |  |__java.sql.SyncFactoryException
+       |  |__java.sql.SyncProviderException
+       |
+       |__DatabaseError
+          |__DataError
+          |__OperationalError
+          |__IntegrityError
+          |__InternalError
+          |__ProgrammingError
+          |__NotSupportedError
+
+
+
+Type Access
+===========
+
+JPype dbapi2 provides four different maps which serve to convert data
+between Python and SQL types.  When setting parameters and fetching 
+results, Java types are used.  The connection provides to maps for converting
+the types of parameters.  An adapter is used to translate from a Python
+type into a Java type when setting a parameter.  Once a result is produced,
+a converter can be used to translate the Java type back into a Python type.
+Further, Java provides multiple types to pass a parameter or fetch a
+result.  This functionality has been mapped to setters for setting parameters
+and getters for fetching results.
+
+adapters
+--------
+
+Whenever a Python type is passed to a statement, it must first be converted
+to the appropriate Java type.  This can be accomplished in a few ways.  The
+user can manually convert to the correct type by constructing a Java object or
+applying the JPype casting operator.  Some Java types have built in implicit
+conversions from the corresponding type.  For all other conversions, an adapter.
+An adaptor is defined as a type to convert from and a conversion function which 
+takes a single argument that returns a Java object.
+
+The adaptor maps can be supplied in three ways.  Each JDBC type holds a
+dictionary called ``adapters``.  For example, to add ``memoryview`` to the JDBC
+STRING type, one would call ``dbapi2.STRING.adapters[memoryview] =
+JArray(JByte)`` which would create a Java byte array from any memory view that
+is passed into a STRING parameter.  Adapters can also be set on a per connection
+basis.  The adapter map can be supplied when constructing the connection,
+or added to the map later through the ``adapters`` property.  
+Last, sometimes an adapter needs to be supplied only to a specific execute
+command.  In this case, the keyword argument to the excute methods can be used.
+Adapters can also be disabled on an individual statement by providing 
+``None`` to the adapters keyword argument.
+
+setters
+-------
+
+The corresponding peice to adapters are setters.  A setter transfers the 
+Java type into a SQL parameter.  There are multiple types can an individual
+parameter may accept.  The type of setter is determined by the JDBC type.
+Each individual JDBC type can have its own setter.  Not every database
+supports the same setter.  For example, a database may support the BLOB type,
+but not be able to accept ``java.sql.Blob`` as a parameter type.  If
+this is the case, the setter for BLOB would need to point to a setter
+type which is supported by the driver.  For example, ``setters[dbapi2.BLOB] =
+dbapi2.STRING.set`` would indicate that BLOB should be set using the same
+method used to store strings.
+
+Setters can supplied as a map to the connection or by accessing the ``setters``
+property on a Connection.
+
+
+converters
+----------
+
+When a result is fetched the database, it is returned as Jave type.  This 
+Java type then has a converter applied.  Converters are stored in a map
+with a key and a converter function that takes one argument and returns the
+desired type.  The key field is selected using the ``converter_type`` argument.
+Options include by JDBC type or by column name.  Use the ``description``
+method to get the types and names.
+
+Like adapters, converters can be supplied in multiple ways.  The converter
+map can be passed in to the connection function, or set on the Connection 
+using the converters ``property``.  Last, after an statement has been
+executed, the method ``as_columns`` can be used to adjust the converters
+for an individual query.  When using ``as_columns`` a list can be supplied
+to chose the converter individually by column.
+
+getters
+-------
+
+JDBA provides more than one way to access data returned from a result.
+In the native JDBC, each executed statement returns a result set which 
+acts as a cursor for the statement.  It is possible to access each 
+column using a different get method.    
+
+By default the getters are selected by a map from JDBC type to the
+corresponding setter function.  For example, to use a STRING getter on a blob
+one would call ``getters[dbapi2.BLOB] = dbapi2.STRING.get``.  Getters
+can also be set on an individual fetch by calling ``as_columns`` after
+an execute method has been called.
+
+
+.. _Connection:
+
+`Connection Objects`_
+=====================
+
+A Connection object cna be created using the using `connect_` function.
+Once a connection is established the resulting Connection contains
+the following.
+
+.. autoclass:: jpype.dbapi2.Connection
+
+.. _Cursor:
+
+`Cursor Objects`_
+=================
+
+These objects represent a database cursor, which is used to manage the
+context of a fetch operation. Cursors created from the same connection
+are not isolated, *i.e.*, any changes done to the database by a cursor
+are immediately visible by the other cursors.  Cursors created from
+different connections may or may not be isolated, depending on how the
+transaction support is implemented (see also the connection's
+`.rollback`_\ () and `.commit`_\ () methods).
+
+.. autoclass:: jpype.dbapi2.Cursor
+
+Cursors can act as an iterator.  So to get the contents of table one
+could use code like::
+
+.. code-block:: python
+
+   with connection.cursor() as cur:
+       cur.execute("select * from table")
+       for row in cur:
+          print(row)
+
+`Constructors`
+==============
+
+Many databases need to have the input in a particular format for
+binding to an operation's input parameters.  For example, if an input
+is destined for a ``DATE`` column, then it must be bound to the
+database in a particular string format.  Similar problems exist for
+"Row ID" columns or large binary items (e.g. blobs or ``RAW``
+columns).  This presents problems for Python since the parameters to
+the `.execute*()`_ method are untyped.  When the database module sees
+a Python string object, it doesn't know if it should be bound as a
+simple ``CHAR`` column, as a raw ``BINARY`` item, or as a ``DATE``.
+
+This is less of a problem in JPype dbapi2 than in a typically 
+dbapi driver as we have strong typing backing the connection,
+but we are still required to supply methods to construct individual
+SQL types.  These functions are:
+
+.. autofunction::  jpype.dbapi2.Date
+.. autofunction::  jpype.dbapi2.Time
+.. autofunction::  jpype.dbapi2.Timestamp
+.. autofunction::  jpype.dbapi2.DateFromTicks
+.. autofunction::  jpype.dbapi2.TimeFromTicks
+.. autofunction::  jpype.dbapi2.TimeStampFromTicks
+.. autofunction::  jpype.dbapi2.Binary
+
+For the most part these constructors are largely redundant as 
+adapters can provide the same functionality and Java types
+can directly use to communicate type information.
+
+.. `JDBC Types`
+
+`JDBC Types`_
+=============
+
+In the Python DBAPI2, the SQL type system is normally reduced to a subset
+of the SQL types by mapping multiple types together for example ``STRING``
+covers the types ``STRING``, ``CHAR``, ``NCHAR``, ``NVARCHAR``, ``VARCHAR``, 
+and ``OTHER``.  JPype dbapi2 supports both the recommended Python types and
+the fine grain JDBC types.  Each type is represented by an object 
+of type JBDCType.
+
+.. autoclass:: jpype.dbapi2.JDBCType
+
+The following types are defined with the correspond Python grouping, the
+default setter, getter, and Python type.  For types that support more than
+one type of getter, the special getter can be applied as the converter for
+the type.  For example, the defaulf configuration has ``getter[BLOB] = BINARY.get``,
+to get the Blob type use ``getter[BLOB] = BLOB.get`` or specify it when
+calling ``as_columns``.
+
+
+======== ======================== =================== ============== ================= ===============
+Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter 
+======== ======================== =================== ============== ================= ===============
+DATE     DATE                     getDate             setDate        datetime.datetime                
+DATETIME TIMESTAMP                getTimestamp        setTimestamp   datetime.datetime                
+TIME     TIME                     getTime             setTime        datetime.datetime                
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+DECIMAL  DECIMAL                  getBigDecimal       setBigDecimal  decimal.Decimal                  
+DECIMAL  NUMERIC                  getBigDecimal       setBigDecimal  decimal.Decimal                  
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+FLOAT    FLOAT                    getDouble           setDouble      float                            
+FLOAT    DOUBLE                   getDouble           getDouble      float                            
+FLOAT    REAL                     getFloat            setFloat       float                            
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+NUMBER   BOOLEAN                  getBoolean          setBoolean     bool                             
+NUMBER   BIT                      getBoolean          setBoolean     bool                             
+NUMBER   TINYINT  (0..255)        getShort            setShort       int                              
+NUMBER   SMALLINT (-2^15..2^15)   getShort            getShort       int                              
+NUMBER   INTEGER  (-2^31..2^31)   getInt              getInt         int                              
+NUMBER   BIGINT   (-2^63..2^63)   getLong             getLong        int                              
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+BINARY   BINARY                   getBytes            setBytes       bytes                            
+BINARY   BLOB                     getBytes            setBytes       bytes             getBlob        
+BINARY   LONGVARBINARY            getBytes            setBytes       bytes                            
+BINARY   VARBINARY                getBytes            setBytes       bytes                            
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+TEXT     CLOB                     getString           setString      str               getClob        
+TEXT     LONGNVARCHAR             getString           setString      str                              
+TEXT     LONGVARCHAR              getString           setString      str                              
+TEXT     NCLOB                    getString           setString      str               getNClob       
+TEXT     SQLXML                   getString           setString      str               getSQLXML      
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+STRING   NVARCHAR                 getString           setString      str                              
+STRING   CHAR                     getString           setString      str                              
+STRING   NCHAR                    getString           setString      str                              
+STRING   VARCHAR                  getString           setString      str                              
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+         ARRAY                    getObject                                            getArray       
+         OBJECT                   getObject                                            getObject      
+         NULL                     getObject                                            getObject      
+         REF                      getObject                                            getRef         
+         ROWID                    getObject                                            getRowId       
+         RESULTSET                getObject                                            getObject      
+         TIME_WITH_TIMEZONE       getObject                                            getTime        
+         TIMESTAMP_WITH_TIMEZONE  getObject                                            getTimeStamp   
+-------- ------------------------ ------------------- -------------- ----------------- ---------------
+   *     ASCII_STREAM             getAsciiStream                                                      
+   *     BINARY_STREAM            getBinaryStream                                                     
+   *     CHARACTER_STREAM         getCharacterStream                                                  
+   *     ASCII_STREAM             getAsciiStream                                                      
+   *     BINARY_STREAM            getBinaryStream                                                     
+   *     CHARACTER_STREAM         getCharacterStream                                                  
+   *     NCHARACTER_STREAM        getNCharacterStream                                                 
+   *     URL                      getURL                                                              
+======== ======================== =================== ============== ================= ===============
+
+Some of these types never correpond to a SQL type but are used only to specify
+getters and setters for a particular parameter or column.
+
+Conclusion
+==========
+
+This wraps up the JPype dbapi2 module.  Because JDBC supports many different
+dataase drivers, not every behavior is defined on every driver.  Consult the
+driver specific information to determine what is available.  
+
+The dbapi does not fully cover all of the behaviors of the JDBC driver.  To
+access functions that are not defined in DBAPI2, the JDBC native objects can 
+be accessed on both the connection and the cursor objects.
+
+.. _PEP-0249: https://www.python.org/dev/peps/pep-0249/
