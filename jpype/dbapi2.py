@@ -18,7 +18,7 @@ import decimal
 
 # This a generic implementation of PEP-249
 __all__ = ['ARRAY', 'ASCII_STREAM', 'BIGINT', 'BINARY', 'BINARY_STREAM', 'BIT',
-           'BLOB', 'BOOLEAN', 'BY_COLNAME', 'BY_TYPE', 'Binary', 'CHAR',
+           'BLOB', 'BOOLEAN', 'BY_COLNAME', 'BY_JDBCTYPE', 'Binary', 'CHAR',
            'CHARACTER_STREAM', 'CLOB', 'Connection', 'Cursor', 'DATE', 'DATETIME',
            'DECIMAL', 'DOUBLE', 'DataError', 'DatabaseError', 'Date',
            'DateFromTicks', 'Error', 'FLOAT', 'INTEGER', 'IntegrityError',
@@ -393,13 +393,20 @@ class NotSupportedError(DatabaseError):
 
 _default = object()
 
-BY_TYPE = 1  # Use the JDBC name
-BY_COLNAME = 2  # Use the name reported by resultSetMeta.getColumnName()
+
+def BY_JDBCTYPE(types, meta, col):
+    """ Option to converterkeys to find converters by the JDBC type of the column """
+    return types[col]
+
+
+def BY_COLNAME(types, meta, col):
+    """ Option to converterkeys to find converters by the column name """
+    return meta.getColumnName(col + 1)
 
 
 def connect(url, driver=None, driver_args=None,
             adapters=_default, converters=_default, getters=_default, setters=_default,
-            converter_key=BY_TYPE, **kwargs):
+            converterkeys=BY_JDBCTYPE, **kwargs):
     """ Create a connection to a database.
 
     Arguments to the driver depend on the database type.
@@ -420,9 +427,10 @@ def connect(url, driver=None, driver_args=None,
           data from a result set.
        setters (dict, optional): A mapping of JDBC types to functions that set
           parameters on queries.
-       converter_key (flag): The type used to search for converters.  By
-          default this is be BY_TYPE and will use the JDBC type as the key
-          in lookup converters.
+       converterkeys (list): The list used to search for converters.  By
+          default this is be BY_JDBCTYPE and will use the JDBC type as the key
+          in lookup converters.  Key functions are called in order.  The first
+          converter with a matching key is used.
        *kwargs: Arguments to the driver if not supplied as
           driver_args.
 
@@ -436,6 +444,19 @@ def connect(url, driver=None, driver_args=None,
     if driver:
         _jpype.JClass('java.lang.Class').forName(driver).newInstance()
     DM = _jpype.JClass('java.sql.DriverManager')
+
+    if not isinstance(converterkeys, (typing.Sequence, type(None))):
+        converterkeys = (converterkeys,)
+    if adapters is _default:
+        adapters = dict(_default_adapters)
+    if converters is _default:
+        converters = dict(_default_converters)
+    if converters is None:
+        converters = {}
+    if getters is _default or getters is None:
+        getters = dict(_default_getters)
+    if setters is _default or setters is None:
+        setters = dict(_default_setters)
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
@@ -459,17 +480,7 @@ def connect(url, driver=None, driver_args=None,
             info.setProperty(k, v)
         connection = DM.getConnection(url, info)
 
-    if adapters is _default:
-        adapters = dict(_default_adapters)
-    if converters is _default:
-        converters = dict(_default_converters)
-    if converters is None:
-        converters = {}
-    if getters is _default or getters is None:
-        getters = dict(_default_getters)
-    if setters is _default or setters is None:
-        setters = dict(_default_setters)
-    return Connection(connection, adapters, converters, getters, setters, converter_key)
+    return Connection(connection, adapters, converters, getters, setters, converterkeys)
 
 
 class Connection:
@@ -502,7 +513,6 @@ class Connection:
         self._converters = converters
         self._getters = getters
         self._setters = setters
-        self._thread = threading.get_ident()
         self._keystyle = keystyle
 
     @property
@@ -738,6 +748,7 @@ class Cursor:
         self._closed = False
         self._paramSetters = None
         self._resultGetters = None
+        self._thread = threading.get_ident()
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -810,10 +821,11 @@ class Cursor:
             for i in range(count):
                 # Find the converter to apply to the column
                 cnext = _nop
-                if cx._keystyle & BY_TYPE:
-                    cnext = converters.get(jdbcTypes[i], cnext)
-                if cx._keystyle & BY_COLNAME:
-                    cnext = converters.get(meta.getColumnName(i + 1), cnext)
+                if cx._keystyle is not None:
+                    for lookup in cx._keystyle:
+                        cnext = converters.get(lookup(jdbcTypes, meta, i), cnext)
+                        if cnext is not _nop:
+                            break
                 rconverters.append(cnext)
                 self._resultConverters = rconverters
 
@@ -863,7 +875,7 @@ class Cursor:
 
     def _validate(self):
         """ Called before any method that requires the statement to be open. """
-        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._connection._thread:
+        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
             raise ProgrammingError()
 
     def _finish(self):
