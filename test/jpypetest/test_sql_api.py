@@ -50,7 +50,7 @@ class ModuleTests(common.JPypeTestCase):
                          "apilevel is %s, should be 2.0" % dbapi2.apilevel)
 
     def testThreadSafety(self):
-        self.assertEqual(dbapi2.threadsafety, 1,
+        self.assertEqual(dbapi2.threadsafety, 2,
                          "threadsafety is %d, should be 1" % dbapi2.threadsafety)
 
     def testParamStyle(self):

@@ -32,7 +32,7 @@ __all__ = ['ARRAY', 'ASCII_STREAM', 'BIGINT', 'BINARY', 'BINARY_STREAM', 'BIT',
            'URL', 'VARBINARY', 'VARCHAR', 'Warning', 'connect']
 
 apilevel = "2.0"
-threadsafety = 1
+threadsafety = 2
 paramstyle = 'qmark'
 
 _SQLException = None
@@ -74,12 +74,12 @@ class JDBCType:
             self._setter = "setObject"
         self._psset = getattr(ps, self._setter)
 
-    def fetch(self, rs, column):
+    def get(self, rs, column):
         """ A method to retrieve a specific JDBC type.
 
         To use a getter add the fetch method to the JDBC type matching the
         column type to be pulled.  For example, to set the getter for FLOAT to
-        use the OBJECT getter, use  ``cx.getter[FLOAT] = OBJECT.fetch``.
+        use the OBJECT getter, use  ``cx.getter[FLOAT] = OBJECT.get``.
 
         Not all getters are available on all database drivers.  Consult the
         database driver documentation for details.
@@ -143,15 +143,6 @@ class JDBCType:
 
 class _JDBCTypePrimitive(JDBCType):
     def fetch(self, rs, column):
-        """ A method to retrieve a specific JDBC type.
-
-        To use a getter add the fetch method to the JDBC type matching the
-        column type to be pulled.  For example, to set the getter for FLOAT to
-        use the OBJECT getter, use  ``cx.getter[FLOAT] = OBJECT.fetch``.
-
-        Not all getters are available on all database drivers.  Consult the
-        database driver documentation for details.
-        """
         try:
             rc = self._rsget(rs, column)
             if rc == 0 and rs.wasNull():
@@ -277,22 +268,28 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 
 # The converters are defined in a customizer
 
+TRANSACTION_NONE = 0
+TRANSACTION_READ_COMMITTED = 2
+TRANSACTION_READ_UNCOMMITTED = 1
+TRANSACTION_REPEATABLE_READ = 4
+TRANSACTION_SERIALIZABLE = 8
+
 
 def _asPython(x):
     return x._py()
 
 
-_default_getters = {ARRAY: OBJECT.fetch, OBJECT: OBJECT.fetch, NULL: OBJECT.fetch,
-                    REF: OBJECT.fetch, ROWID: OBJECT.fetch, RESULTSET: OBJECT.fetch,
-                    TIME_WITH_TIMEZONE: OBJECT.fetch, TIMESTAMP_WITH_TIMEZONE: OBJECT.fetch,
-                    NVARCHAR: STRING.fetch, CHAR: STRING.fetch,
-                    NCHAR: STRING.fetch, VARCHAR: STRING.fetch, BINARY: BINARY.fetch,
-                    BLOB: BINARY.fetch, LONGVARBINARY: BINARY.fetch, VARBINARY: BINARY.fetch,
-                    NUMBER: NUMBER.fetch, BOOLEAN: BOOLEAN.fetch, BIGINT: BIGINT.fetch,
-                    BIT: BIT.fetch, INTEGER: INTEGER.fetch, SMALLINT: SMALLINT.fetch,
-                    TINYINT: TINYINT.fetch, FLOAT: FLOAT.fetch, REAL: REAL.fetch,
-                    DECIMAL: DECIMAL.fetch, NUMERIC: NUMERIC.fetch,
-                    DATE: DATE.fetch, TIMESTAMP: TIMESTAMP.fetch, TIME: TIME.fetch,
+_default_getters = {ARRAY: OBJECT.get, OBJECT: OBJECT.get, NULL: OBJECT.get,
+                    REF: OBJECT.get, ROWID: OBJECT.get, RESULTSET: OBJECT.get,
+                    TIME_WITH_TIMEZONE: OBJECT.get, TIMESTAMP_WITH_TIMEZONE: OBJECT.get,
+                    NVARCHAR: STRING.get, CHAR: STRING.get,
+                    NCHAR: STRING.get, VARCHAR: STRING.get, BINARY: BINARY.get,
+                    BLOB: BINARY.get, LONGVARBINARY: BINARY.get, VARBINARY: BINARY.get,
+                    NUMBER: NUMBER.get, BOOLEAN: BOOLEAN.get, BIGINT: BIGINT.get,
+                    BIT: BIT.get, INTEGER: INTEGER.get, SMALLINT: SMALLINT.get,
+                    TINYINT: TINYINT.get, FLOAT: FLOAT.get, REAL: REAL.get,
+                    DECIMAL: DECIMAL.get, NUMERIC: NUMERIC.get,
+                    DATE: DATE.get, TIMESTAMP: TIMESTAMP.get, TIME: TIME.get,
                     }
 
 # This table converts most returns into Python types.
@@ -653,7 +650,7 @@ class Connection:
         return Cursor(self)
 
     def _validate(self):
-        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
+        if self._closed or self._jcx.isClosed():
             raise ProgrammingError
 
     def __call__(self):
@@ -683,6 +680,16 @@ class Connection:
     def autocommit(self, enabled):
         self._validate()
         self._jcx.setAutoCommit(enabled)
+
+    @property
+    def isolation_level(self):
+        self._validate()
+        return self._jcx.getTransactionIsolation()
+
+    @isolation_level.setter
+    def isolation_level(self, value):
+        self._validate()
+        setTransactionIsolation(value)
 
     @property
     def type_info(self):
@@ -817,7 +824,7 @@ class Cursor:
                 raise ProgrammingError("Incorrect number of getter")
             self._resultGetters = getter
         else:
-            self._resultGetters = [cx._getters.get(t, OBJECT.fetch) for t in jdbcTypes]
+            self._resultGetters = [cx._getters.get(t, OBJECT.get) for t in jdbcTypes]
 
     def as_columns(self, converters=_default, getters=_default):
         """ (extension) Apply a specific set of getter or converters to fetch
