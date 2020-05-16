@@ -391,29 +391,33 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(len(hints.none) == 0)
 
     def testDate(self):
-        d = JClass("java.sql.Date")(120, 0, 5)
+        cls = JClass("java.sql.Date")
+        d = cls(120, 0, 5)
         d2 = d._py()
-        d3 = JObject(d2, Date)
+        d3 = JObject(d2, cls)
         self.assertEqual(d == d2)
         self.assertEqual(d == d3)
 
     def testTimestamp(self):
-        d = JClass("java.sql.Timestamp")(120, 0, 5, 9, 22, 51, 123456000)
+        cls = JClass("java.sql.Timestamp")
+        d = cls(120, 0, 5, 9, 22, 51, 123456000)
         d2 = d._py()
-        d3 = JObject(d2, Timestamp)
+        d3 = JObject(d2, cls)
         self.assertEqual(d == d2)
         self.assertEqual(d == d3)
 
     def testTime(self):
-        d = JClass("java.sql.Time")(11, 53, 1)
+        cls = JClass("java.sql.Time")
+        d = cls(11, 53, 1)
         d2 = d._py()
-        d3 = JObject(d2, Time)
+        d3 = JObject(d2, cls)
         self.assertEqual(d == d2)
         self.assertEqual(d == d3)
 
     def testBigDecimal(self):
-        d = JClass("java.math.BigDecimal")('1000234600000000000000')
+        cls = JClass("java.math.BigDecimal")
+        d = cls('1000234600000000000000')
         d2 = d._py()
-        d3 = JObject(d2, BigDecimal)
+        d3 = JObject(d2, cls)
         self.assertEqual(d == d2)
         self.assertEqual(d == d3)
