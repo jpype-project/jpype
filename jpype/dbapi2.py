@@ -275,25 +275,11 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 #    *     URL                      getURL                                                              |
 # ======================================================================================================
 
-
-def _fromDate(x):
-    raise RuntimeError("not supported date")
+# The converters are defined in a customizer
 
 
-def _fromTime(x):
-    raise RuntimeError("not supported time")
-
-
-def _fromTimestamp(x):
-    raise RuntimeError("not supported timestamp")
-
-
-def _fromBig(x):
-    raise RuntimeError("not supported", type(x))
-
-
-def _fromStr(x):
-    return str(x)
+def _asPython(x):
+    return x._py()
 
 
 _default_getters = {ARRAY: OBJECT.fetch, OBJECT: OBJECT.fetch, NULL: OBJECT.fetch,
@@ -315,8 +301,8 @@ _default_converters = {
     SQLXML: str, NVARCHAR: str, CHAR: str, NCHAR: str,
     VARCHAR: str, FLOAT: float, DOUBLE: float, REAL: float,
     BOOLEAN: int, BIT: int, TINYINT: int, SMALLINT: int,
-    INTEGER: int, BIGINT: int, DATE: _fromDate, TIMESTAMP: _fromTime,
-    TIME: _fromTimestamp, DECIMAL: _fromBig, NUMERIC: _fromBig,
+    INTEGER: int, BIGINT: int, DATE: _asPython, TIMESTAMP: _asPython,
+    TIME: _asPython, DECIMAL: _asPython, NUMERIC: _asPython,
 }
 
 _default_adapters = {}
