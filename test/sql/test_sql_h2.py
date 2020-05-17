@@ -7,6 +7,12 @@ import jpype.dbapi2 as dbapi2
 import common
 import time
 
+try:
+    import zlib
+except ImportError:
+    zlib = None
+
+
 db_name = "jdbc:h2:mem:testdb"
 
 
@@ -164,6 +170,21 @@ class SQLConnectTestCase(common.JPypeTestCase):
         self.assertEqual(cx._keystyle, (dbapi2.BY_COLNAME, dbapi2.BY_JDBCTYPE))
 
 
+class SQLTablesTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def testDefaultGetters(self):
+        types = [i for i in dbapi2._types if i._name != None]
+        for i in types:
+            self.assertIsNotNone(dbapi2._default_getters.get(i, None))
+
+    def testDefaultSetters(self):
+        types = [i for i in dbapi2._types if i._name != None]
+        for i in types:
+            self.assertIsNotNone(dbapi2._default_setters.get(i, None))
+
+
 class SQLConnectionTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -261,14 +282,14 @@ class SQLCursorTestCase(common.JPypeTestCase):
             #    "cursor.rowcount should be -1 after executing no-result " "statements",
             # )
             cur.execute("insert into booze values ('Victoria Bitter')")
-            self.assertTrue(
-                cur.rowcount in (-1, 1),
+            self.assertEqual(
+                cur.rowcount, 1,
                 "cursor.rowcount should == number or rows inserted, or "
                 "set to -1 after executing an insert statement",
             )
             cur.execute("select name from booze")
-            self.assertTrue(
-                cur.rowcount in (-1, 1),
+            self.assertEqual(
+                cur.rowcount, -1,
                 "cursor.rowcount should == number of rows returned, or "
                 "set to -1 after executing a select statement",
             )
@@ -360,8 +381,8 @@ class SQLCursorTestCase(common.JPypeTestCase):
             largs = [("Cooper's",), ("Boag's",)]
             margs = [{"beer": "Cooper's"}, {"beer": "Boag's"}]
             cur.executemany("insert into booze values (?)", largs)
-            self.assertTrue(
-                cur.rowcount in (-1, 2),
+            self.assertEqual(
+                cur.rowcount, 2,
                 "insert using cursor.executemany set cursor.rowcount to "
                 "incorrect value %r" % cur.rowcount,
             )
@@ -392,7 +413,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 None,
                 "cursor.fetchone should return None if a query retrieves " "no rows",
             )
-            self.assertTrue(cur.rowcount in (-1, 0))
+            self.assertEqual(cur.rowcount, -1)
 
             # cursor.fetchone should raise an Error if called after
             # executing a query that cannot return rows
@@ -412,7 +433,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 None,
                 "cursor.fetchone should return None if no more rows available",
             )
-            self.assertTrue(cur.rowcount in (-1, 1))
+            self.assertEqual(cur.rowcount, -1)
 
     samples = [
         "Carlton Cold",
@@ -468,7 +489,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 "cursor.fetchmany should return an empty sequence after "
                 "results are exhausted",
             )
-            self.assertTrue(cur.rowcount in (-1, 6))
+            self.assertEqual(cur.rowcount, -1)
 
             # Same as above, using cursor.arraysize
             cur.arraysize = 4
@@ -481,7 +502,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
             self.assertEqual(len(r), 2)
             r = cur.fetchmany()  # Should be an empty sequence
             self.assertEqual(len(r), 0)
-            self.assertTrue(cur.rowcount in (-1, 6))
+            self.assertEqual(cur.rowcount, -1)
 
             cur.arraysize = 6
             cur.execute("select name from booze")
@@ -507,7 +528,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 "cursor.fetchmany should return an empty sequence if "
                 "called after the whole result set has been fetched",
             )
-            self.assertTrue(cur.rowcount in (-1, 6))
+            self.assertEqual(cur.rowcount, -1)
 
             cur.execute("create table barflys (name varchar(20))")
             cur.execute("select name from barflys")
@@ -536,7 +557,7 @@ class SQLCursorTestCase(common.JPypeTestCase):
 
             cur.execute("select name from booze")
             rows = cur.fetchall()
-            self.assertTrue(cur.rowcount in (-1, len(self.samples)))
+            self.assertEqual(cur.rowcount, -1)
             self.assertEqual(
                 len(rows),
                 len(self.samples),
@@ -555,12 +576,12 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 "cursor.fetchall should return an empty list if called "
                 "after the whole result set has been fetched",
             )
-            self.assertTrue(cur.rowcount in (-1, len(self.samples)))
+            self.assertEqual(cur.rowcount, -1)
 
             cur.execute("create table barflys (name varchar(20))")
             cur.execute("select name from barflys")
             rows = cur.fetchall()
-            #self.assertTrue(cur.rowcount in (-1, 0))
+            self.assertEqual(cur.rowcount, -1)
             self.assertEqual(
                 len(rows),
                 0,
@@ -575,11 +596,12 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 cur.execute(sql)
 
             cur.execute("select name from booze")
+            self.assertEqual(cur.rowcount, -1)
             rows1 = cur.fetchone()
             rows23 = cur.fetchmany(2)
             rows4 = cur.fetchone()
             rows56 = cur.fetchall()
-            self.assertTrue(cur.rowcount in (-1, 6))
+            self.assertEqual(cur.rowcount, -1)
             self.assertEqual(
                 len(rows23), 2, "fetchmany returned incorrect number of rows"
             )
@@ -596,6 +618,74 @@ class SQLCursorTestCase(common.JPypeTestCase):
                 self.assertEqual(
                     rows[i], self.samples[i], "incorrect data retrieved or inserted"
                 )
+
+    def test_nextset(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table booze (name varchar(20))")
+            booze = ["Wiskey", ]
+            cu.execute("insert into booze(name) values (?)", booze)
+            self.assertEqual(cu.rowcount, 1)
+            cu.execute("select * from booze; select * from booze")
+            self.assertEqual(cu.fetchone(), booze)
+            nxt = cu.nextset()
+            self.assertTrue(nxt in (True, None))
+            # H2 does not support multiple result sets
+            if nxt:
+                self.assertEqual(cu.fetchone(), booze)
+
+
+@common.unittest.skipUnless(zlib, "requires zlib")
+class ConverterTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.testdata = b"abcdefg" * 10
+        self.params = memoryview(zlib.compress(self.testdata))
+
+    def tearDown(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
+            try:
+                cur.execute("drop table test")
+            except dbapi2.Error:
+                pass
+
+    @staticmethod
+    def convert(s):
+        return zlib.decompress(s)
+
+    def testConvertByPosition(self):
+        with dbapi2.connect(db_name) as cx:
+            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
+            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
+            result = cur.use(converters=[ConverterTestCase.convert]).fetchone()[0]
+            self.assertIsInstance(result, bytes)
+            self.assertEqual(result, self.testdata)
+
+    def testConvertByType(self):
+        with dbapi2.connect(db_name) as cx:
+            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
+            cx.converters[dbapi2.VARBINARY] = ConverterTestCase.convert
+            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
+            result = cur.fetchone()[0]
+            self.assertIsInstance(result, bytes)
+            self.assertEqual(result, self.testdata)
+
+    def testConvertByName(self):
+        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx:
+            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
+            cx.converters['x [bin]'] = ConverterTestCase.convert
+            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
+            result = cur.fetchone()[0]
+            self.assertIsInstance(result, bytes)
+            self.assertEqual(result, self.testdata)
+
+    def testConvertByNameUse(self):
+        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx:
+            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
+            converters = {'x [bin]': ConverterTestCase.convert}
+            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
+            result = cur.use(converters=converters).fetchone()[0]
+            self.assertIsInstance(result, bytes)
+            self.assertEqual(result, self.testdata)
 
 
 #    def test_callproc(self):

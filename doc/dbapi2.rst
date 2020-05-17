@@ -196,8 +196,8 @@ argument.  Options include by JDBC type or by column name.  Use the
 Like adapters, converters can be supplied in multiple ways.  The converter map
 can be passed in to the `connect`_ function, or set on the
 Connection using the `converters <connection.converters_>`_ property.  Last,
-after an statement has been executed, the method `withcolumns
-<cursor.withcolumns_>`_ can be used to adjust the converters for an individual
+after an statement has been executed, the method `use
+<cursor.use_>`_ can be used to adjust the converters for an individual
 query.
 
 .. _getters:
@@ -213,7 +213,7 @@ column using a different get method.
 By default the getters are selected by a map from JDBC type to the
 corresponding setter function.  For example, to use a STRING getter on a blob
 one would call ``getters[dbapi2.BLOB] = dbapi2.STRING.get``.  Getters
-can also be set on an individual fetch by calling `withcolumns <cursor.withcolumns_>`_ after
+can also be set on an individual fetch by calling `use <cursor.use_>`_ after
 an execute method has been called.
 
 
@@ -305,7 +305,7 @@ default setter, getter, and Python type.  For types that support more than
 one type of getter, the special getter can be applied as the converter for
 the type.  For example, the defaulf configuration has ``getter[BLOB] = BINARY.get``,
 to get the Blob type use ``getter[BLOB] = BLOB.get`` or specify it when
-calling `withcolumns <cursor.withcolumns_>`_.
+calling `use <cursor.use_>`_.
 
 
 ======== ======================== =================== ============== ================= ===============
@@ -385,6 +385,6 @@ be accessed on both the connection and the cursor objects.
 .. _connection.adapters: #jpype.dbapi2.JDBCType.adapters
 .. _connection.setters: #jpype.dbapi2.JDBCType.setters
 .. _connection.converters: #jpype.dbapi2.JDBCType.converters
-.. _cursor.withcolumns: #jpype.dbapi2.Cursor.withcolumns
+.. _cursor.use: #jpype.dbapi2.Cursor.use
 .. _cursor.description: #jpype.dbapi2.Cursor.description
 .. _jdbctype.adapters: #jpype.dbapi2.Connection.adapters

@@ -65,16 +65,17 @@ class JDBCType:
             _registry[code] = self
         _types.append(self)
 
-    def _initialize(self, ps, rs):
+    def _initialize(self, cs, ps, rs):
         """ Called after the JVM starts initialize Java resources """
         if self._getter is None:
             self._getter = "getObject"
-        self._rsget = getattr(rs, "getObject")
+        self._rsget = getattr(rs, self._getter)
+        self._csget = getattr(cs, self._getter, None)
         if self._setter is None:
             self._setter = "setObject"
         self._psset = getattr(ps, self._setter)
 
-    def get(self, rs, column):
+    def get(self, rs, column, st):
         """ A method to retrieve a specific JDBC type.
 
         To use a getter add the fetch method to the JDBC type matching the
@@ -85,8 +86,9 @@ class JDBCType:
         database driver documentation for details.
         """
         try:
-            rc = self._rsget(rs, column)
-            return rc
+            if st:
+                return self._csget(rs, column)
+            return self._rsget(rs, column)
         except _SQLException as ex:
             raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
 
@@ -125,6 +127,8 @@ class JDBCType:
         return self._name
 
     def __repr__(self):
+        if self._name is None:
+            return ""
         return self._name
 
     def __eq__(self, other):
@@ -290,6 +294,9 @@ _default_getters = {ARRAY: OBJECT.get, OBJECT: OBJECT.get, NULL: OBJECT.get,
                     TINYINT: TINYINT.get, FLOAT: FLOAT.get, REAL: REAL.get,
                     DECIMAL: DECIMAL.get, NUMERIC: NUMERIC.get,
                     DATE: DATE.get, TIMESTAMP: TIMESTAMP.get, TIME: TIME.get,
+                    CLOB: STRING.get, NCLOB: STRING.get, STRING: STRING.get,
+                    TEXT: STRING.get, SQLXML: STRING.get, LONGVARCHAR: STRING.get,
+                    LONGNVARCHAR: STRING.get, DOUBLE: DOUBLE.get, OTHER: OBJECT.get
                     }
 
 # This table converts most returns into Python types.
@@ -315,6 +322,9 @@ _default_setters = {ARRAY: OBJECT.set, OBJECT: OBJECT.set, NULL: OBJECT.set,
                     TINYINT: TINYINT.set, FLOAT: FLOAT.set, REAL: REAL.set,
                     DECIMAL: DECIMAL.set, NUMERIC: NUMERIC.set,
                     DATE: DATE.set, TIMESTAMP: TIMESTAMP.set, TIME: TIME.set,
+                    CLOB: STRING.set, NCLOB: STRING.set, STRING: STRING.set,
+                    TEXT: STRING.set, SQLXML: STRING.set, LONGVARCHAR: STRING.set,
+                    LONGNVARCHAR: STRING.set, DOUBLE: DOUBLE.set, OTHER: OBJECT.set
                     }
 
 
@@ -741,7 +751,7 @@ class Cursor:
         self._connection = connection
         self._jcx = connection._jcx
         self._resultSet = None
-        self._preparedStatement = None
+        self._statement = None
         self._rowcount = -1
         self._arraysize = 1
         self._description = None
@@ -749,6 +759,10 @@ class Cursor:
         self._paramSetters = None
         self._resultGetters = None
         self._thread = threading.get_ident()
+        self._getters = self._connection._getters
+        self._setters = self._connection._setters
+        self._adapters = self._connection._adapters
+        self._converters = self._connection._converters
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -762,7 +776,7 @@ class Cursor:
             return
         cx = self._connection
         setters = []
-        meta = self._preparedStatement.getParameterMetaData()
+        meta = self._statement.getParameterMetaData()
         count = meta.getParameterCount()
         for i in range(count):
             # Lookup the JDBC Type
@@ -770,41 +784,42 @@ class Cursor:
             setters.append(cx._setters[jdbcType])
         self._paramSetters = setters
 
-    def _setParams(self, params, adapters):
+    def _setParams(self, params):
         if isinstance(params, typing.Sequence):
             self._fetchParams()
             if len(self._paramSetters) != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramSetters), len(params)))
             for i in range(len(params)):
-                self._paramSetters[i](self._preparedStatement, i + 1, params[i], adapters)
+                self._paramSetters[i](self._statement, i + 1, params[i], self._adapters)
         elif isinstance(params, typing.Mapping):
             raise TypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
             self._fetchParams()
             try:
                 for i in range(len(self._paramColumns)):
-                    self._paramSetters[i](self._preparedStatement, i + 1, next(params), adapters)
+                    self._paramSetters[i](self._statement, i + 1, next(params), self._adapters)
             except StopIteration:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramSetters), i))
         else:
             raise TypeError("'%s' parameters not supported" % (type(params).__name__))
 
-    def _fetchColumns(self, converters=_default, getters=_default):
+    def _fetchColumns(self):
         """ Get the list of getters and converters that apply to
         the result set. """
         if self._resultGetters is not None:
             return
+        getters = self._getters
+        converters = self._converters
+
+        # Restore the defaults
+        self._getters = self._connection._getters
+        self._converters = self._connection._converters
+
         cx = self._connection
-        meta = self._resultMetaData
+        meta = self._resultSet.getMetaData()
         count = meta.getColumnCount()
-        if converters is None:
-            converters = {}
-        if converters is _default:
-            converters = cx._converters
-        if getters is _default:
-            getters = cx._getters
 
         # We need the type information for the columns
         jdbcTypes = [_registry[meta.getColumnType(i + 1)] for i in range(count)]
@@ -826,6 +841,8 @@ class Cursor:
                         cnext = converters.get(lookup(jdbcTypes, meta, i), cnext)
                         if cnext is not _nop:
                             break
+                if cnext is None:
+                    cnext = _nop
                 rconverters.append(cnext)
                 self._resultConverters = rconverters
 
@@ -836,38 +853,64 @@ class Cursor:
                 raise ProgrammingError("Incorrect number of getter")
             self._resultGetters = getter
         else:
-            self._resultGetters = [cx._getters.get(t, OBJECT.get) for t in jdbcTypes]
+            self._resultGetters = [getters.get(t, OBJECT.get) for t in jdbcTypes]
 
-    def withcolumns(self, converters=_default, getters=_default):
+    def use(self, converters=_default, getters=_default, adapters=_default, setters=_default):
         """ (extension) Apply a specific set of getter or converters to fetch
         operations for the current result set.
 
-        This can be called after ``.execute*()`` to apply specific rules to
-        the ``.fetch*()`` methods.  This also affect the use of a cursor
-        as an iterator.
+        This is called before an ``.execute*()`` or ``.callproc()`` method.
+        The next statement executed will have these properties instead of the
+        connection defaults.  The defaults will be restored once the statement
+        is complete.  If called after ``.execute*()`` or ``nextset``, it will
+        apply to the next result set.
 
         Args:
-            converters (dict or list, optional):  Converters to apply to this
-                transaction.  If converters is a list, then the converters are
+            converters (dict or list, optional):  Converters to apply to the
+                next statement.  If converters is a list, then the converters are
                 applied directly in order of column.  The number of converters must
                 match the number of colums.  If converters is a dict, then the
-                converts are looked up by JDBC type or by column name.
+                converts are looked up according to converterkeys.
             getters (dict or list, optional): Getters to use for this
-                the current transaction.  If getters is a list, then the
+                the next statement.  If getters is a list, then the
                 getters are applied directly in order of the column.  The
                 number of getters must match the number of columns.  If the
                 getters is a dict, then the getters are looked up by type.
+            adapters (dict, optional): Adapters to apply to the next statement.
+                If this argument is None, then no adaptors will be applied.
+                This argument should only be used before an execute or 
+                call proc statement.
+            setter (dict, optional): Setters to use for the next statement.
+                This argument should only be used before an execute or 
+                call proc statement.
+
+        Returns:
+            This cursor.
+
         """
         self._validate()
+        # Clear the caches
         self._resultConverters = None
         self._resultGetters = None
-        self._fetchColumns(converters, getters)
+        self._paramSetters = None
+        if getters is _default:
+            self._getters = self._connection._getters
+        if setters is _default:
+            self._setters = self._connection._setters
+        if adapters is _default:
+            self._adapters = self._connection._adapters
+        else:
+            self._adapters = adapters
+        if converters is _default:
+            self._converters = self._connection._converters
+        else:
+            self._converters = converters
         return self
 
     def _fetchRow(self):
         row = []
         for idx in range(len(self._resultGetters)):
-            value = self._resultGetters[idx](self._resultSet, idx + 1)
+            value = self._resultGetters[idx](self._resultSet, idx + 1, False)
             if value is None:
                 row.append(None)
             else:
@@ -883,14 +926,12 @@ class Cursor:
         if self._resultSet is not None:
             self._resultSet.close()
             self._resultSet = None
-        if self._preparedStatement is not None:
-            self._preparedStatement.close()
-            self._preparedStatement = None
+        if self._statement is not None:
+            self._statement.close()
+            self._statement = None
         self._resultGetters = None
         self._paramSetters = None
         self._rowcount = -1
-        self._resultMetaData = None
-        self._paramMetaData = None
         self._description = None
 
     @property
@@ -902,11 +943,42 @@ class Cursor:
         return self._resultSet
 
     @property
-    def description(self):
-        """
-        Description is read-only attribute is a sequence of 7-item sequences.
+    def parameters(self):
+        """ (extension) Parameters is read-only attribute is a sequence of
+        6-item sequences.
 
-        Each of these sequences contains information describing one result column:
+        Each of these sequences contains information describing one result
+        column:
+
+        - type_name
+        - jdbc_type
+        - parameter_mode (1=in, 2=in/out, 4=out)
+        - precision
+        - scale
+        - null_ok
+
+        This can only be used after execute or callproc.
+        """
+        desc = []
+        if not self._statement:
+            raise Error("No resultSet")
+        meta = self._statement.getParameterMetaData()
+        for i in range(1, meta.getParameterCount() + 1):
+            desc.append((str(meta.getParameterTypeName(i)),
+                         _registry[meta.getParameterType(i)],
+                         meta.getParameterMode(i),
+                         meta.getPrecision(i),
+                         meta.getScale(i),
+                         meta.isNullable(i),))
+        return desc
+
+    @property
+    def description(self):
+        """ Description is read-only attribute is a sequence of 7-item
+        sequences.
+
+        Each of these sequences contains information describing one result
+        column:
 
         - name
         - type_code
@@ -921,36 +993,38 @@ class Cursor:
         if self._description is not None:
             return self._description
         desc = []
-        rmd = self._resultMetaData
-        if rmd is None:
+        if not self._resultSet:
             return None
-        for i in range(1, self._resultMetaData.getColumnCount() + 1):
-            size = rmd.getColumnDisplaySize(i)
-            desc.append((str(rmd.getColumnName(i)),
-                         str(rmd.getColumnTypeName(i)),
+        meta = self._resultSet.getMetaData()
+        if meta is None:
+            return None
+        for i in range(1, meta.getColumnCount() + 1):
+            size = meta.getColumnDisplaySize(i)
+            desc.append((str(meta.getColumnName(i)),
+                         str(meta.getColumnTypeName(i)),
                          size,
                          size,
-                         rmd.getPrecision(i),
-                         rmd.getScale(i),
-                         rmd.isNullable(i),))
+                         meta.getPrecision(i),
+                         meta.getScale(i),
+                         meta.isNullable(i),))
         self._description = desc
         return desc
 
     @property
     def rowcount(self):
         """ This read-only attribute specifies the number of rows that the last
-        .execute*() produced (for DQL statements like SELECT) or affected (for
-        DML statements like UPDATE or INSERT).
+        .execute*() affected (for DML statements like UPDATE or INSERT).
 
         The attribute is -1 in case no .execute*() has been performed on the
         cursor or the rowcount of the last operation is cannot be determined by
-        the interface.
+        the interface.  JDBC does not support getting the number of rows
+        returned from SELECT, so for most drivers rowcount will be -1 after a
+        SELECT statement.
         """
         return self._rowcount
 
     def close(self):
-        """
-        Close the cursor now (rather than whenever __del__ is called).
+        """ Close the cursor now (rather than whenever __del__ is called).
 
         The cursor will be unusable from this point forward; an Error (or
         subclass) exception will be raised if any operation is attempted with
@@ -959,59 +1033,140 @@ class Cursor:
         self._validate()
         self._close()
 
-    def execute(self, operation, parameters=None, adapters=_default):
+    def callproc(self, procname, parameters=()):
+        """ Call a stored procedure.
+
+        (Not all JDBC drivers support this method)
+
+        Call a stored database procedure with the given name. The sequence of
+        parameters must contain one entry for each argument that the procedure
+        expects. The result of the call is returned as modified copy of the
+        input sequence. Input parameters are left untouched, output and
+        input/output parameters replaced with possibly new values.
+
+        Converters are applied to out parameters.  Converters may not be a list
+        for this method.
+
+        The procedure may also provide a result set as output. This must then
+        be made available through the standard .fetch*() methods. 
+        """
+        try:
+            self._validate()
+            self._finish()
+            query = "{CALL %s(%s)}" % (procname, ",".join("?" * len(parameters)))
+            try:
+                self._statement = self._jcx.prepareCall(query)
+            except _SQLException as ex:
+                raise OperationalError(ex.message()) from ex
+
+            # This is a special one as we need to deal with in and out arguments
+            out = list(parameters)
+            cx = self._connection
+            meta = self._statement.getParameterMetaData()
+            count = meta.getParameterCount()
+            retrieve = [None] * count
+            for i in range(count):
+                # Lookup the JDBC Type
+                sqlType = meta.getParameterType(i + 1)
+                jdbcType = _registry[sqlType]
+                mode = meta.getParameterMode(i + 1)
+                if mode == 1:
+                    setter = cx._setters[jdbcType]
+                    setter(self._statement, i + 1, parameters[i], self._adapters)
+                if mode == 2:
+                    setter = cx._setters[jdbcType]
+                    setter(self._statement, i + 1, parameters[i], self._adapters)
+                    self.registerOutParameter(i, sqlType)
+                    retrieve[i] = jdbcType
+                if mode == 4:
+                    self.registerOutParameter(i + 1, sqlType)
+                    retrieve[i] = jdbcType
+
+            self._resultSet = self._statement.executeQuery()
+            for i, t in enumerate(retrieve):
+                if t is None:
+                    continue
+
+                # Find the converter to apply to the column
+                cnext = _nop
+                if cx._keystyle is not None:
+                    for lookup in cx._keystyle:
+                        cnext = converters.get(lookup(jdbcTypes, meta, i), cnext)
+                        if cnext is not _nop:
+                            break
+                if cnext is None:
+                    cnext = _nop
+                    continue
+                get = getters.get(t, OBJECT.get)
+                out[i] = get(self._statement, i + 1, True)
+
+            return out
+
+        # Restore the defaults
+        except Exception as ex:
+            self._converters = self._connection._converters
+            self._getters = self._connection._getters
+            raise ex
+        finally:
+            self._adapters = self._connection._adapters
+            self._setters = self._connection._setters
+
+    def execute(self, operation, parameters=None):
         """
         Prepare and execute a database operation (query or command).
 
-        Parameters may be provided as sequence and will be bound to
-        variables in the operation. Variables are specified in a qmark
-        notation.  JDBC does not support mapping style parameters.
+        Parameters may be provided as sequence and will be bound to variables
+        in the operation. Variables are specified in a qmark notation.  JDBC
+        does not support mapping style parameters.
 
         After executing a statement, the rowcount will be updated.  If the
-        statement has no result set then the rowcount will be -1.  A
-        statement can produce multiple result sets.  Use ``.nextset()`` to
-        traverse the sets.
+        statement has no result set then the rowcount will be -1.  A statement
+        can produce multiple result sets.  Use ``.nextset()`` to traverse the
+        sets.
 
         Parameters:
            operation (str): A statement to be executed.
            parameters (list, optional): A list of parameters for the statement.
               The number of parameters much match the number required by the
               statement or an Error will be raised.
-           adapters (dict, optional): A mapping of adapters to apply to this
-              statement.  If this is set to None, then no adapters will be
-              applied.
 
         Returns:
            This cursor.
         """
-        self._validate()
-        if parameters is None:
-            parameters = ()
-        if adapters is _default:
-            adapters = self._connection._adapters
-        if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
-            raise TypeError("parameters are of unsupported type '%s'" % str(type(parameters)))
-        # complete the previous operation
-        self._finish()
         try:
-            self._preparedStatement = self._jcx.prepareStatement(operation)
-            self._paramMetaData = self._preparedStatement.getParameterMetaData()
-        except _SQLException as ex:
-            raise OperationalError(ex.message()) from ex
-        except TypeError as ex:
-            raise ValueError from ex
-        self._executeone(parameters, adapters)
-        return self
+            self._validate()
+            self._finish()
+            if parameters is None:
+                parameters = ()
+            if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
+                raise TypeError("parameters are of unsupported type '%s'" % str(type(parameters)))
+            # complete the previous operation
+            try:
+                self._statement = self._jcx.prepareStatement(operation)
+            except _SQLException as ex:
+                raise OperationalError(ex.message()) from ex
+            except TypeError as ex:
+                raise ValueError from ex
+            self._executeone(parameters)
+            return self
 
-    def _executeone(self, params, adapters):
-        self._setParams(params, adapters)
-        if self._preparedStatement.execute():
-            self._resultSet = self._preparedStatement.getResultSet()
-            self._resultMetaData = self._resultSet.getMetaData()
-        self._rowcount = self._preparedStatement.getUpdateCount()
+        # Restore the defaults
+        except Exception as ex:
+            self._converters = self._connection._converters
+            self._getters = self._connection._getters
+            raise ex
+        finally:
+            self._adapters = self._connection._adapters
+            self._setters = self._connection._setters
+
+    def _executeone(self, params):
+        self._setParams(params)
+        if self._statement.execute():
+            self._resultSet = self._statement.getResultSet()
+        self._rowcount = self._statement.getUpdateCount()
         return self._rowcount
 
-    def executemany(self, operation, seq_of_parameters, adapters=_default):
+    def executemany(self, operation, seq_of_parameters):
         """
         Prepare a database operation (query or command) and then execute it
         against all parameter sequences or mappings found in the sequence
@@ -1021,61 +1176,66 @@ class Cursor:
         .execute() method or by using array operations to have the database
         process the sequence as a whole in one call.
 
-        Use of this method for an operation which produces one or more result sets
-        constitutes undefined behavior, and the implementation is permitted (but
-        not required) to raise an exception when it detects that a result set has
-        been created by an invocation of the operation.
+        Use of this method for an operation which produces one or more result
+        sets constitutes undefined behavior, and the implementation is
+        permitted (but not required) to raise an exception when it detects that
+        a result set has been created by an invocation of the operation.
 
-        The same comments as for .execute() also apply accordingly to this method.
+        The same comments as for .execute() also apply accordingly to this
+        method.
 
         Args:
            operation (str): A statement to be executed.
            seq_of_parameters (list, optional): A list of lists of parameters
                for the statement.  The number of parameters much match the number
                required by the statement or an Error will be raised.
-           adapters (dict, optional): A mapping of adapters to apply to this
-               statement.  If this is set to None, then no adapters will be
-               applied.
 
         Returns:
            This cursor.
         """
-        self._validate()
-        if seq_of_parameters is None:
-            seq_of_parameters = ()
-        if adapters is _default:
-            adapters = self._connection._adapters
-        # complete the previous operation
-        self._finish()
         try:
-            self._preparedStatement = self._jcx.prepareStatement(operation)
-            self._paramMetaData = self._preparedStatement.getParameterMetaData()
-        except TypeError as ex:
-            raise ValueError from ex
-        except _SQLException as ex:
-            raise ProgrammingError("Failed to prepare '%s'" % operation) from ex
-        if self._connection._batch:
-            return self._executeBatch(seq_of_parameters, adapters)
-        else:
-            return self._executeRepeat(seq_of_parameters, adapters)
+            self._validate()
+            if seq_of_parameters is None:
+                seq_of_parameters = ()
+            # complete the previous operation
+            self._finish()
+            try:
+                self._statement = self._jcx.prepareStatement(operation)
+            except TypeError as ex:
+                raise ValueError from ex
+            except _SQLException as ex:
+                raise ProgrammingError("Failed to prepare '%s'" % operation) from ex
+            if self._connection._batch:
+                return self._executeBatch(seq_of_parameters)
+            else:
+                return self._executeRepeat(seq_of_parameters)
 
-    def _executeBatch(self, seq_of_parameters, adapters):
+        # Restore the defaults
+        except Exception as ex:
+            self._converters = self._connection._converters
+            self._getters = self._connection._getters
+            raise ex
+        finally:
+            self._adapters = self._connection._adapters
+            self._setters = self._connection._setters
+
+    def _executeBatch(self, seq_of_parameters):
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
-                self._setParams(params, adapters)
-                self._preparedStatement.addBatch()
+                self._setParams(params)
+                self._statement.addBatch()
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
                     params = next(seq_of_parameters)
-                    self._setParams(params, adapters)
-                    self._preparedStatement.addBatch()
+                    self._setParams(params)
+                    self._statement.addBatch()
                 except StopIteration:
                     break
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
         try:
-            counts = self._preparedStatement.executeBatch()
+            counts = self._statement.executeBatch()
         except _SQLException as ex:
             raise ProgrammingError from ex
         self._rowcount = sum(counts)
@@ -1083,7 +1243,7 @@ class Cursor:
             self._rowcount = -1
         return self
 
-    def _executeRepeat(self, seq_of_parameters, adapters):
+    def _executeRepeat(self, seq_of_parameters):
         counts = []
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
@@ -1092,13 +1252,13 @@ class Cursor:
             while True:
                 try:
                     params = next(seq_of_parameters)
-                    counts.append(self._executeone(params, adapters))
+                    counts.append(self._executeone(params))
                 except StopIteration:
                     break
         else:
             raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
         try:
-            counts = self._preparedStatement.executeBatch()
+            counts = self._statement.executeBatch()
         except _SQLException as ex:
             raise ProgrammingError from ex
         self._rowcount = sum(counts)
@@ -1114,7 +1274,7 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         .execute*() did not produce any result set or no call was issued yet.
 
-        The retrieval of the columns can be altered using ``withcolumns`` prior
+        The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1146,7 +1306,7 @@ class Cursor:
         attribute. If the size parameter is used, then it is best for it to retain
         the same value from one ``.fetchmany()`` call to the next.
 
-        The retrieval of the columns can be altered using ``withcolumns`` prior
+        The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1177,7 +1337,7 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         ``.execute*()`` did not produce any result set or no call was issued yet.
 
-        The retrieval of the columns can be altered using ``withcolumns`` prior
+        The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1196,7 +1356,7 @@ class Cursor:
     def __iter__(self):
         """ (extension) Iterate through a cursor one record at a time.
 
-        The retrieval of the columns can be altered using ``withcolumns`` prior
+        The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1225,12 +1385,11 @@ class Cursor:
         self._resultSet.close()
         self._resultGetters = None
         self._resultConverters = None
-        if self._preparedStatement.getMoreResults():
+        if self._statement.getMoreResults():
             self._resultSet = self._prepareStatement.getResultSet()
-            self._resultMetaData = self._resultSet.getMetaData()
             return True
         else:
-            self._rowcount = self._preparedStatement.getUpdageCount()
+            self._rowcount = self._statement.getUpdateCount()
             return None
 
     @property
@@ -1254,7 +1413,7 @@ class Cursor:
 
         This is not supported on all JDBC drivers.
         """
-        rs = self._preparedStatement.getGeneratedKeys()
+        rs = self._statement.getGeneratedKeys()
         rs.next()
         rowId = rs.getLong(1)
         rs.close()
@@ -1364,10 +1523,11 @@ def _populateTypes():
     global _SQLException, _SQLTimeoutException
     _SQLException = _jpype.JClass("java.sql.SQLException")
     _SQLTimeoutException = _jpype.JClass("java.sql.SQLTimeoutException")
+    cs = _jpype.JClass("java.sql.CallableStatement")
     ps = _jpype.JClass("java.sql.PreparedStatement")
     rs = _jpype.JClass("java.sql.ResultSet")
     for v in _types:
-        v._initialize(ps, rs)
+        v._initialize(cs, ps, rs)
 
     # Adaptors can be installed after the JVM is started
     # JByteArray = _jpype.JArray(_jtypes.JByte)
