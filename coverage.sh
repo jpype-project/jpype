@@ -3,7 +3,7 @@
 # Script for testing coverage locally
 PYTHON=python
 PIP="python -m pip"
-mvn -q -f project/coverage package
+./resolve.sh
 $PYTHON setup.py test_java
 $PIP install gcovr pytest-cov jedi
 $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace

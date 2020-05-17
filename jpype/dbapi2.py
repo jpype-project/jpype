@@ -6,7 +6,6 @@ import typing
 import _jpype
 import time
 import threading
-import decimal
 
 # TODO
 #  - Callable procedures
@@ -122,9 +121,6 @@ class JDBCType:
             return ps.setObject(column, value)
         except TypeError as ex:
             raise InterfaceError("Unable to convert '%s' into '%s'" % (type(value).__name__, self._name)) from ex
-
-    def __str__(self):
-        return self._name
 
     def __repr__(self):
         if self._name is None:
@@ -398,6 +394,10 @@ class NotSupportedError(DatabaseError):
     pass
 
 
+class _UnsupportedTypeError(InterfaceError, TypeError):
+    pass
+
+
 ###############################################################################
 # Connection
 
@@ -593,6 +593,8 @@ class Connection:
         self._setters = v
 
     def __setattr__(self, name, value):
+        if isinstance(vars(type(self)).get(name, None), property):
+            return object.__setattr__(self, name, value)
         if not name.startswith("_"):
             raise AttributeError("'%s' cannot be set" % name)
         object.__setattr__(self, name, value)
@@ -613,7 +615,7 @@ class Connection:
     def __del__(self):
         try:
             self._close()
-        except:  # lgtm [py/catch-base-exception]
+        except Exception:
             pass
 
     def close(self):
@@ -702,17 +704,17 @@ class Connection:
         self._jcx.setAutoCommit(enabled)
 
     @property
-    def isolation_level(self):
+    def isolation(self):
         self._validate()
         return self._jcx.getTransactionIsolation()
 
-    @isolation_level.setter
-    def isolation_level(self, value):
+    @isolation.setter
+    def isolation(self, value):
         self._validate()
         setTransactionIsolation(value)
 
     @property
-    def type_info(self):
+    def typeinfo(self):
         """ list: The list of types that are supported by this driver.
 
         This is useful to find out the capabilities of the driver.
@@ -763,6 +765,7 @@ class Cursor:
         self._setters = self._connection._setters
         self._adapters = self._connection._adapters
         self._converters = self._connection._converters
+        self._last = None
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -793,7 +796,7 @@ class Cursor:
             for i in range(len(params)):
                 self._paramSetters[i](self._statement, i + 1, params[i], self._adapters)
         elif isinstance(params, typing.Mapping):
-            raise TypeError("mapping parameters not supported")
+            raise _UnsupportedTypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
             self._fetchParams()
             try:
@@ -803,7 +806,7 @@ class Cursor:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
                                        % (len(self._paramSetters), i))
         else:
-            raise TypeError("'%s' parameters not supported" % (type(params).__name__))
+            raise _UnsupportedTypeError("'%s' parameters not supported" % (type(params).__name__))
 
     def _fetchColumns(self):
         """ Get the list of getters and converters that apply to
@@ -855,7 +858,7 @@ class Cursor:
         else:
             self._resultGetters = [getters.get(t, OBJECT.get) for t in jdbcTypes]
 
-    def use(self, converters=_default, getters=_default, adapters=_default, setters=_default):
+    def use(self, *, converters=_default, getters=_default, adapters=_default, setters=_default):
         """ (extension) Apply a specific set of getter or converters to fetch
         operations for the current result set.
 
@@ -920,7 +923,14 @@ class Cursor:
     def _validate(self):
         """ Called before any method that requires the statement to be open. """
         if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
-            raise ProgrammingError()
+            raise ProgrammingError("Cursor is closed")
+
+    def _check_executed(self):
+        """ Called before any method that requires the resultSet to be open. """
+        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
+            raise ProgrammingError("Cursor is closed")
+        if self._resultSet is None:
+            raise ProgrammingError("execute() first")
 
     def _finish(self):
         if self._resultSet is not None:
@@ -933,6 +943,7 @@ class Cursor:
         self._paramSetters = None
         self._rowcount = -1
         self._description = None
+        self._last = None
 
     @property
     def resultSet(self):
@@ -961,7 +972,7 @@ class Cursor:
         """
         desc = []
         if not self._statement:
-            raise Error("No resultSet")
+            raise ProgrammingError("No statement")
         meta = self._statement.getParameterMetaData()
         for i in range(1, meta.getParameterCount() + 1):
             desc.append((str(meta.getParameterTypeName(i)),
@@ -1053,11 +1064,17 @@ class Cursor:
         try:
             self._validate()
             self._finish()
+            if not isinstance(procname, str):
+                raise _UnsupportedTypeError("procname must be str, not '%s'" % type(procname).__name__)
+            if not isinstance(parameters, typing.Sequence):
+                raise _UnsupportedTypeError("parameters must be sequence, not '%s'" % type(procname).__name__)
             query = "{CALL %s(%s)}" % (procname, ",".join("?" * len(parameters)))
             try:
                 self._statement = self._jcx.prepareCall(query)
             except _SQLException as ex:
-                raise OperationalError(ex.message()) from ex
+                raise ProgrammingError(ex.message()) from ex
+            except TypeError as ex:
+                raise _UnsupportedTypeError(str(ex))
 
             # This is a special one as we need to deal with in and out arguments
             out = list(parameters)
@@ -1111,7 +1128,7 @@ class Cursor:
             self._adapters = self._connection._adapters
             self._setters = self._connection._setters
 
-    def execute(self, operation, parameters=None):
+    def execute(self, operation, parameters=None, *, keys=False):
         """
         Prepare and execute a database operation (query or command).
 
@@ -1129,6 +1146,8 @@ class Cursor:
            parameters (list, optional): A list of parameters for the statement.
               The number of parameters much match the number required by the
               statement or an Error will be raised.
+           keys (bool, optional): Specify if the keys should be available to 
+              retrieve. (Default False) 
 
         Returns:
            This cursor.
@@ -1139,14 +1158,17 @@ class Cursor:
             if parameters is None:
                 parameters = ()
             if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
-                raise TypeError("parameters are of unsupported type '%s'" % str(type(parameters)))
+                raise _UnsupportedTypeError("parameters are of unsupported type '%s'" % type(parameters).__name__)
             # complete the previous operation
             try:
-                self._statement = self._jcx.prepareStatement(operation)
-            except _SQLException as ex:
-                raise OperationalError(ex.message()) from ex
+                if keys:
+                    self._statement = self._jcx.prepareStatement(operation, 1)
+                else:
+                    self._statement = self._jcx.prepareStatement(operation)
             except TypeError as ex:
-                raise ValueError from ex
+                raise _UnsupportedTypeError(str(ex))
+            except _SQLException as ex:
+                raise ProgrammingError(ex.message()) from ex
             self._executeone(parameters)
             return self
 
@@ -1166,7 +1188,7 @@ class Cursor:
         self._rowcount = self._statement.getUpdateCount()
         return self._rowcount
 
-    def executemany(self, operation, seq_of_parameters):
+    def executemany(self, operation, seq_of_parameters, *, keys=False):
         """
         Prepare a database operation (query or command) and then execute it
         against all parameter sequences or mappings found in the sequence
@@ -1189,6 +1211,9 @@ class Cursor:
            seq_of_parameters (list, optional): A list of lists of parameters
                for the statement.  The number of parameters much match the number
                required by the statement or an Error will be raised.
+           keys (bool, optional): Specify if the keys should be available to 
+              retrieve. (Default False) For drivers that do not support
+              batch updates only that last key will be returned.
 
         Returns:
            This cursor.
@@ -1200,14 +1225,17 @@ class Cursor:
             # complete the previous operation
             self._finish()
             try:
-                self._statement = self._jcx.prepareStatement(operation)
+                if keys:
+                    self._statement = self._jcx.prepareStatement(operation, 1)
+                else:
+                    self._statement = self._jcx.prepareStatement(operation)
             except TypeError as ex:
-                raise ValueError from ex
+                raise _UnsupportedTypeError(str(ex))
             except _SQLException as ex:
                 raise ProgrammingError("Failed to prepare '%s'" % operation) from ex
             if self._connection._batch:
                 return self._executeBatch(seq_of_parameters)
-            else:
+            else:  # pragma: no cover
                 return self._executeRepeat(seq_of_parameters)
 
         # Restore the defaults
@@ -1224,30 +1252,22 @@ class Cursor:
             for params in seq_of_parameters:
                 self._setParams(params)
                 self._statement.addBatch()
-        elif isinstance(seq_of_parameters, typing.Iterator):
-            while True:
-                try:
-                    params = next(seq_of_parameters)
-                    self._setParams(params)
-                    self._statement.addBatch()
-                except StopIteration:
-                    break
         else:
-            raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
+            raise _UnsupportedTypeError("'%s' is not supported" % type(seq_of_parameters).__name__)
         try:
             counts = self._statement.executeBatch()
-        except _SQLException as ex:
-            raise ProgrammingError from ex
+        except _SQLException as ex:  # pragma: no cover
+            raise ProgrammingError(ex.message()) from ex
         self._rowcount = sum(counts)
-        if self._rowcount < 0:
+        if self._rowcount < 0:  # pragma: no cover
             self._rowcount = -1
         return self
 
-    def _executeRepeat(self, seq_of_parameters):
+    def _executeRepeat(self, seq_of_parameters):  # pragma: no cover
         counts = []
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
-                counts.append(self._executeone(params, adapters))
+                counts.append(self._executeone(params))
         elif isinstance(seq_of_parameters, typing.Iterator):
             while True:
                 try:
@@ -1256,7 +1276,7 @@ class Cursor:
                 except StopIteration:
                     break
         else:
-            raise TypeError("'%s' is not supported" % str(type(seq_of_parameters)))
+            raise _UnsupportedTypeError("'%s' is not supported" % str(type(seq_of_parameters)))
         try:
             counts = self._statement.executeBatch()
         except _SQLException as ex:
@@ -1277,9 +1297,7 @@ class Cursor:
         The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
-        self._validate()
-        if not self._resultSet:
-            raise Error
+        self._check_executed()
         if not self._resultSet.next():
             return None
         self._fetchColumns()
@@ -1309,9 +1327,7 @@ class Cursor:
         The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
-        self._validate()
-        if not self._resultSet:
-            raise Error()
+        self._check_executed()
         if size is None:
             size = self._arraysize
         # Set a fetch size
@@ -1322,8 +1338,6 @@ class Cursor:
             if not self._resultSet.next():
                 break
             row = self._fetchRow()
-            if row is None:
-                break
             rows.append(row)
         # Restore the default fetch size
         self._resultSet.setFetchSize(0)
@@ -1340,16 +1354,12 @@ class Cursor:
         The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
-        self._validate()
-        if not self._resultSet:
-            raise Error()
+        self._check_executed()
         # Set a fetch size
         self._fetchColumns()
         rows = []
         while self._resultSet.next():
             row = self._fetchRow()
-            if row is None:
-                break
             rows.append(row)
         return rows
 
@@ -1359,11 +1369,9 @@ class Cursor:
         The retrieval of the columns can be altered using ``use`` prior
         to calling a fetch.
         """
-        self._validate()
-        if not self._resultSet:
-            raise Error()
+        self._check_executed()
         # Set a fetch size
-        self._fetchColumns(_default)
+        self._fetchColumns()
         while self._resultSet.next():
             yield self._fetchRow()
 
@@ -1385,7 +1393,7 @@ class Cursor:
         self._resultSet.close()
         self._resultGetters = None
         self._resultConverters = None
-        if self._statement.getMoreResults():
+        if self._statement.getMoreResults():  # pragma: no cover
             self._resultSet = self._prepareStatement.getResultSet()
             return True
         else:
@@ -1411,13 +1419,26 @@ class Cursor:
     def lastrowid(self):
         """ Get the id of the last row inserted.
 
-        This is not supported on all JDBC drivers.
+        This is not supported on all JDBC drivers. The ``.execute*()`` must have
+        been executed with keys set to True.
+
+        Returns:
+           None if there is no rowid, the rowid if only one row was inserted,
+           or a list of row ids if multiple rows were inserted.
         """
-        rs = self._statement.getGeneratedKeys()
-        rs.next()
-        rowId = rs.getLong(1)
-        rs.close()
-        return rowId
+        with self._statement.getGeneratedKeys() as rs:
+            if rs.isClosed():
+                return self._last
+            last = []
+            while rs.next():
+                last.append(rs.getLong(1))
+            if len(last) == 0:
+                return None
+            if len(last) == 1:
+                self._last = last[0]
+                return last[0]
+            self._last = last
+            return last
 
     def setinputsizes(self, sizes):
         """ This can be used before a call to .execute*() to
@@ -1451,7 +1472,7 @@ class Cursor:
     def __del__(self):
         try:
             self._close()
-        except:  # lgtm [py/catch-base-exception]
+        except Exception:  # pragma: no cover
             pass
 
     def __enter__(self):
