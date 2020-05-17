@@ -838,7 +838,7 @@ class Cursor:
         else:
             self._resultGetters = [cx._getters.get(t, OBJECT.get) for t in jdbcTypes]
 
-    def with_columns(self, converters=_default, getters=_default):
+    def withcolumns(self, converters=_default, getters=_default):
         """ (extension) Apply a specific set of getter or converters to fetch
         operations for the current result set.
 
@@ -862,6 +862,7 @@ class Cursor:
         self._resultConverters = None
         self._resultGetters = None
         self._fetchColumns(converters, getters)
+        return self
 
     def _fetchRow(self):
         row = []
@@ -1113,7 +1114,7 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         .execute*() did not produce any result set or no call was issued yet.
 
-        The retrieval of the columns can be altered using ``with_columns`` prior
+        The retrieval of the columns can be altered using ``withcolumns`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1145,7 +1146,7 @@ class Cursor:
         attribute. If the size parameter is used, then it is best for it to retain
         the same value from one ``.fetchmany()`` call to the next.
 
-        The retrieval of the columns can be altered using ``with_columns`` prior
+        The retrieval of the columns can be altered using ``withcolumns`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1176,7 +1177,7 @@ class Cursor:
         An Error (or subclass) exception is raised if the previous call to
         ``.execute*()`` did not produce any result set or no call was issued yet.
 
-        The retrieval of the columns can be altered using ``with_columns`` prior
+        The retrieval of the columns can be altered using ``withcolumns`` prior
         to calling a fetch.
         """
         self._validate()
@@ -1195,7 +1196,7 @@ class Cursor:
     def __iter__(self):
         """ (extension) Iterate through a cursor one record at a time.
 
-        The retrieval of the columns can be altered using ``with_columns`` prior
+        The retrieval of the columns can be altered using ``withcolumns`` prior
         to calling a fetch.
         """
         self._validate()
