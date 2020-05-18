@@ -6,6 +6,9 @@ from jpype import java
 import jpype.dbapi2 as dbapi2
 import common
 import time
+import datetime
+
+java = jpype.java
 
 try:
     import zlib
@@ -19,27 +22,7 @@ db_name = "jdbc:h2:mem:testdb"
 #first = "jdbc:derby:memory:myDb;create=True"
 
 
-class myiter:
-    def __init__(self, ls):
-        self.ls = ls
-        self.i = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.i == len(self.ls):
-            raise StopIteration
-        rc = [self.ls[self.i]]
-        self.i += 1
-        return rc
-
-
-def mygen(ls):
-    for i in ls:
-        yield [i]
-
-
+@common.unittest.skip
 class SQLConnectTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -104,7 +87,7 @@ class SQLConnectTestCase(common.JPypeTestCase):
         self.assertEqual(cx._keystyle, (dbapi2.BY_COLNAME, dbapi2.BY_JDBCTYPE))
 
 
-class SQLConnectionTestCase(common.JPypeTestCase):
+class ConnectionTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
@@ -143,6 +126,7 @@ class SQLConnectionTestCase(common.JPypeTestCase):
             m = {'foo': 1}
             cx.getters = m
             self.assertEqual(cx._getters, m)
+            self.assertEqual(cx.getters, m)
             with self.assertRaises(TypeError):
                 cx.getters = object()
 
@@ -151,6 +135,7 @@ class SQLConnectionTestCase(common.JPypeTestCase):
             m = {'foo': 1}
             cx.setters = m
             self.assertEqual(cx._setters, m)
+            self.assertEqual(cx.setters, m)
             with self.assertRaises(TypeError):
                 cx.setters = object()
 
@@ -167,8 +152,30 @@ class SQLConnectionTestCase(common.JPypeTestCase):
             with self.assertRaises(dbapi2.NotSupportedError):
                 cx.rollback()
 
+    def test_typeinfo(self):
+        with dbapi2.connect(db_name) as cx:
+            ti = cx.typeinfo
+            self.assertIsInstance(ti, dict)
+            for p, v in ti.items():
+                self.assertIsInstance(p, str)
+                self.assertIsInstance(v, dbapi2.JDBCType)
+        with self.assertRaises(dbapi2.ProgrammingError):
+            ti = cx.typeinfo
 
-class SQLCursorTestCase(common.JPypeTestCase):
+    def test_isolation(self):
+        with dbapi2.connect(db_name) as cx:
+            i = cx.isolation
+            cx.isolation = i
+        with self.assertRaises(dbapi2.ProgrammingError):
+            i = cx.isolation
+
+    def test_connection(self):
+        with dbapi2.connect(db_name) as cx:
+            c = cx.connection
+            self.assertIsInstance(c, java.sql.Connection)
+
+
+class CursorTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
@@ -372,6 +379,9 @@ class SQLCursorTestCase(common.JPypeTestCase):
 
     def test_executemanyGenerator(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            def mygen(ls):
+                for i in ls:
+                    yield [i]
             cu.execute("create table booze (name varchar(20))")
             cu.executemany("insert into booze values (?)", mygen(self.samples))
             cu.execute("select * from booze")
@@ -381,6 +391,20 @@ class SQLCursorTestCase(common.JPypeTestCase):
 
     def test_executemanyIterator(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            class myiter:
+                def __init__(self, ls):
+                    self.ls = ls
+                    self.i = 0
+
+                def __iter__(self):
+                    return self
+
+                def __next__(self):
+                    if self.i == len(self.ls):
+                        raise StopIteration
+                    rc = [self.ls[self.i]]
+                    self.i += 1
+                    return rc
             cu.execute("create table booze (name varchar(20))")
             cu.executemany("insert into booze values (?)", myiter(self.samples))
             cu.execute("select * from booze")
@@ -685,17 +709,98 @@ class SQLCursorTestCase(common.JPypeTestCase):
 
     def testNoAdapter(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table booze(name varchar(255))")
+            cu.execute("create table booze(name varchar(50))")
             with self.assertRaises(dbapi2.InterfaceError):
                 cu.execute("insert into booze(name) values(?)", [object()])
 
     def testBadParameters(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table booze(name varchar(255))")
+            cu.execute("create table booze(name varchar(50))")
             with self.assertRaises(dbapi2.InterfaceError):
                 cu.execute("insert into booze(name) values(?)", object())
 
+    def test_callproc(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            r = cu.callproc("lower", ("FOO",))
+            self.assertEqual(len(r), 1)
+            self.assertEqual(r[0], "FOO")
+            r = cu.fetchall()
+            self.assertEqual(len(r), 1)
+            self.assertEqual(len(r[0]), 1)
+            self.assertEqual(r[0][0], "foo")
 
+    def test_callprocBad(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            with self.assertRaises(dbapi2.ProgrammingError):
+                r = cu.callproc("not_there", ("FOO",))
+            with self.assertRaises(dbapi2.InterfaceError):
+                r = cu.callproc(object(), ("FOO",))
+            with self.assertRaises(dbapi2.InterfaceError):
+                r = cu.callproc("lower", (object(),))
+            with self.assertRaises(dbapi2.InterfaceError):
+                r = cu.callproc("lower", object())
+
+    def test_close(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.close()
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.close()
+
+    def test_parameters(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            with self.assertRaises(dbapi2.ProgrammingError):
+                p = cu.parameters
+            cu.execute("create table booze(name varchar(50))")
+            cu.execute("insert into booze(name) values(?)", ('Hahn Super Dry',))
+            p = cu.parameters
+            self.assertEqual(p, [('VARCHAR', dbapi2.VARCHAR, 1, 14, 0, 2)])
+
+    def test_resultSet(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table booze(name varchar(50))")
+            cu.execute("insert into booze(name) values(?)", ('Hahn Super Dry',))
+            cu.execute("select * from booze")
+            rs = cu.resultSet
+            self.assertIsInstance(rs, java.sql.ResultSet)
+
+    def test_fetchClosed(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table booze(name varchar(50))")
+            cu.execute("insert into booze(name) values(?)", ('Hahn Super Dry',))
+            cu.execute("select * from booze")
+            cu.close()
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.fetchone()
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.fetchmany()
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.fetchall()
+            self.assertEqual(cu.resultSet, None)
+
+    def test_executeBadParameters(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            def mygen(ls):
+                for i in ls:
+                    yield i
+            cu.execute("create table booze(name varchar(50), price number)")
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.executemany("insert into booze(name,price) values(?,?)", [('Hahn Super Dry', 2), ('Coors',)])
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into booze(name,price) values(?,?)", {'name': 'Budweiser', 'price': 10})
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.executemany("insert into booze(name,price) values(?,?)", mygen([['Budweiser']]))
+            cu.execute("insert into booze(name,price) values(?,?)", mygen(['Pabst Blue Robot', 20000]))
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.execute("insert into booze(name,price) values(?,?)", mygen(['Budweiser']))
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into booze(name,price) values(?,?)", 'Budweiser')
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.execute("insert into booze(name,price) values(?,?)", mygen(['Budweiser', 2, 'no']))
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into booze(name,price) values(?,?)", object())
+
+
+@common.unittest.skip
 class AdapterTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -760,55 +865,245 @@ class ConverterTestCase(common.JPypeTestCase):
         return zlib.decompress(s)
 
     def testConvertByPosition(self):
-        with dbapi2.connect(db_name) as cx:
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(data varbinary)")
+            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
-            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
-            result = cur.use(converters=[ConverterTestCase.convert]).fetchone()[0]
+            cu.execute("select data from test")
+            result = cu.use(converters=[ConverterTestCase.convert]).fetchone()[0]
             self.assertIsInstance(result, bytes)
             self.assertEqual(result, self.testdata)
 
     def testConvertByType(self):
-        with dbapi2.connect(db_name) as cx:
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(data varbinary)")
+            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cx.converters[dbapi2.VARBINARY] = ConverterTestCase.convert
-            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
-            result = cur.fetchone()[0]
+            cu.execute("select data from test")
+            result = cu.fetchone()[0]
             self.assertIsInstance(result, bytes)
             self.assertEqual(result, self.testdata)
 
     def testConvertByName(self):
-        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx:
+        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
+            cu.execute("create table test(data varbinary)")
+            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
-            cx.converters['x [bin]'] = ConverterTestCase.convert
-            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
-            result = cur.fetchone()[0]
+            cx.converters['DATA'] = ConverterTestCase.convert
+            cu.execute("select data from test")
+            result = cu.fetchone()[0]
             self.assertIsInstance(result, bytes)
             self.assertEqual(result, self.testdata)
 
     def testConvertByNameUse(self):
-        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx:
+        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
+            cu.execute("create table test(data varbinary)")
+            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
-            converters = {'x [bin]': ConverterTestCase.convert}
-            cur = cx.cursor().execute('select ? as "x [bin]"', (self.params,))
-            result = cur.use(converters=converters).fetchone()[0]
+            converters = {'DATA': ConverterTestCase.convert}
+            cu.execute("select data from test")
+            result = cu.use(converters=converters).fetchone()[0]
             self.assertIsInstance(result, bytes)
             self.assertEqual(result, self.testdata)
 
-    def test_callproc(self):
+    def testConvertersBad(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            r = cu.callproc("lower", ("FOO",))
-            self.assertEqual(len(r), 1)
-            self.assertEqual(r[0], "FOO")
-            r = cu.fetchall()
-            self.assertEqual(len(r), 1)
-            self.assertEqual(len(r[0]), 1)
-            self.assertEqual(r[0][0], "foo")
-
-    def test_callprocBad(self):
-        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
             with self.assertRaises(dbapi2.ProgrammingError):
-                r = cu.callproc("not_there", ("FOO",))
+                cu.use(converters=[]).fetchone()
+            cu.execute("select name from test")
             with self.assertRaises(dbapi2.InterfaceError):
-                r = cu.callproc(object(), ("FOO",))
+                cu.use(converters=[int]).fetchone()
+            cu.execute("select name from test")
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.use(converters=[str, str]).fetchone()
+
+    def testConvertersNone(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            f = cu.use(converters=None).fetchone()
+            self.assertIsInstance(f[0], java.lang.String)
+            cu.execute("select name from test")
+            f = cu.use(converters={dbapi2.VARCHAR: None}).fetchone()
+            self.assertIsInstance(f[0], java.lang.String)
+
+
+class GettersTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.testdata = b"abcdefg" * 10
+        self.params = memoryview(zlib.compress(self.testdata))
+
+    def tearDown(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
+            try:
+                cur.execute("drop table test")
+            except dbapi2.Error:
+                pass
+
+    def testGettersBad(self):
+        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.use(getters=[]).fetchone()
+            cu.execute("select name from test")
             with self.assertRaises(dbapi2.InterfaceError):
-                r = cu.callproc("lower", (object(),))
+                cu.use(getters=[dbapi2.BINARY.get]).fetchone()
+            cu.execute("select name from test")
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.use(getters=[dbapi2.STRING.get, dbapi2.STRING.get]).fetchone()
+
+
+class TransactionsTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def tearDown(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
+            try:
+                cur.execute("drop table test")
+            except dbapi2.Error:
+                pass
+
+    def testTransactionRollbackCreate(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cx.commit()  # needed before starting transactions
+            cu.execute("begin")
+            cu.execute("create table test(name VARCHAR(10))")
+            cx.rollback()
+            # with self.assertRaises(dbapi2.ProgrammingError):
+            cu.execute("select * from test")
+
+    def testTransactionRollbackInsert(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cx.commit()  # needed before starting transactions
+            cu.execute("create table test(name VARCHAR(10))")
+            cx.commit()
+            cu.execute("begin")
+            cu.execute("insert into test(name) values('alice')")
+            cx.rollback()
+            # Alice should go away
+            result = cu.execute("select * from test").fetchall()
+            self.assertEqual(result, [])
+
+    def testTransactionRollbackClose(self):
+        with dbapi2.connect(db_name) as cx2:
+            with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+                cx.commit()  # needed before starting transactions
+                cu.execute("create table test(name VARCHAR(10))")
+                cu.execute("insert into test(name) values('alice')")
+                cx.commit()
+                cu.execute("begin")
+                cu.execute("insert into test(name) values('bob')")
+                result = cu.execute("select * from test").fetchall()
+                self.assertEqual(result, [['alice'], ['bob']])
+                # Bob should go away
+            with cx2.cursor() as cu:
+                result = cu.execute("select * from test").fetchall()
+                self.assertEqual(result, [['alice']])
+
+
+class TypeTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def tearDown(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
+            try:
+                cur.execute("drop table test")
+            except dbapi2.Error:
+                pass
+
+    def testTime(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name TIME)")
+            cu.execute("select * from test")
+            cu.execute("insert into test(name) values('12:05:10')")
+            f = cu.execute('select * from test').fetchone()
+            self.assertIsInstance(f[0], datetime.time)
+            cu.execute("delete from test")
+            cu.execute("insert into test(name) values(?)", f)
+            f2 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f2, f)
+            cu.execute("delete from test")
+
+            # Test with Java
+            t1 = jpype.java.sql.Time(1, 2, 3)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.time(1, 2, 3))
+            f4 = cu.use(converters=None).execute('select * from test').fetchone()
+            self.assertEqual(f4[0], t1)
+            self.assertIsInstance(f4[0], jpype.java.sql.Time)
+            cu.execute("delete from test")
+
+            # Test with dbapi2.Time
+            t1 = dbapi2.Time(6, 21, 32)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.time(6, 21, 32))
+
+    def testDate(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name DATE)")
+            cu.execute("select * from test")
+            cu.execute("insert into test(name) values('2012-02-05')")
+            f = cu.execute('select * from test').fetchone()
+            self.assertIsInstance(f[0], datetime.date)
+            cu.execute("delete from test")
+            cu.execute("insert into test(name) values(?)", f)
+            f2 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f2, f)
+            cu.execute("delete from test")
+
+            # Test with Java
+            t1 = java.sql.Date(1972 - 1900, 4 - 1, 1)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.date(1972, 4, 1))
+            f4 = cu.use(converters=None).execute('select * from test').fetchone()
+            self.assertEqual(f4[0], t1)
+            self.assertIsInstance(f4[0], java.sql.Date)
+            cu.execute("delete from test")
+
+            # Test with dbapi2.Date
+            t1 = dbapi2.Date(2020, 5, 21)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.date(2020, 5, 21))
+
+    def testTimestamp(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name TIMESTAMP)")
+            cu.execute("select * from test")
+            cu.execute("insert into test(name) values('2012-02-05 12:02:45.123')")
+            f = cu.execute('select * from test').fetchone()
+            self.assertIsInstance(f[0], datetime.date)
+            cu.execute("delete from test")
+            cu.execute("insert into test(name) values(?)", f)
+            f2 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f2, f)
+            cu.execute("delete from test")
+
+            # Test with Java
+            t1 = java.sql.Timestamp(1972 - 1900, 4 - 1, 1, 12, 2, 45, 123456000)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.datetime(1972, 4, 1, 12, 2, 45, 123456))
+            f4 = cu.use(converters=None).execute('select * from test').fetchone()
+            self.assertEqual(f4[0], t1)
+            self.assertIsInstance(f4[0], java.sql.Timestamp)
+            cu.execute("delete from test")
+
+            # Test with dbapi2.Date
+            t1 = dbapi2.Timestamp(2020, 5, 21, 3, 4, 5, 123122000)
+            cu.execute("insert into test(name) values(?)", [t1])
+            f3 = cu.execute('select * from test').fetchone()
+            self.assertEqual(f3[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123122))
