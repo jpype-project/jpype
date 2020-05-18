@@ -107,11 +107,6 @@ class SQLTablesTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
-    def testDefaultGetters(self):
-        types = [i for i in dbapi2._types if i._name != None]
-        for i in types:
-            self.assertIsNotNone(dbapi2._default_getters.get(i, None))
-
     def testStr(self):
         for i in dbapi2._types:
             self.assertIsInstance(str(i), str)
