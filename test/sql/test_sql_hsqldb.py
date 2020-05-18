@@ -1011,6 +1011,9 @@ class TransactionsTestCase(common.JPypeTestCase):
 
 
 class TypeTestCase(common.JPypeTestCase):
+    """ This test is db dependent, but needed to check all
+    code paths. """
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 

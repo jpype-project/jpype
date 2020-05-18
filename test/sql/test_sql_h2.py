@@ -20,9 +20,6 @@ except ImportError:
 
 
 db_name = "jdbc:h2:mem:testdb"
-#db_name = "jdbc:hsqldb:mem:myDb"
-#db_name = "jdbc:derby:memory:myDb"
-#first = "jdbc:derby:memory:myDb;create=True"
 
 
 @common.unittest.skip
@@ -749,7 +746,7 @@ class CursorTestCase(common.JPypeTestCase):
             cu.execute("create table booze(name varchar(50))")
             cu.execute("insert into booze(name) values(?)", ('Hahn Super Dry',))
             p = cu.parameters
-            self.assertEqual(p, [('VARCHAR', dbapi2.VARCHAR, 1, 14, 0, 2)])
+            self.assertEqual(p[0][0:2], ('VARCHAR', dbapi2.VARCHAR))
 
     def test_resultSet(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
@@ -778,7 +775,7 @@ class CursorTestCase(common.JPypeTestCase):
             def mygen(ls):
                 for i in ls:
                     yield i
-            cu.execute("create table booze(name varchar(50), price number)")
+            cu.execute("create table booze(name varchar(50), price integer)")
             with self.assertRaises(dbapi2.ProgrammingError):
                 cu.executemany("insert into booze(name,price) values(?,?)", [('Hahn Super Dry', 2), ('Coors',)])
             with self.assertRaises(dbapi2.InterfaceError):
@@ -862,7 +859,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByPosition(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cu.execute("select data from test")
@@ -872,7 +869,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByType(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cx.converters[dbapi2.VARBINARY] = ConverterTestCase.convert
@@ -883,7 +880,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByName(self):
         with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cx.converters['DATA'] = ConverterTestCase.convert
@@ -894,7 +891,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByNameUse(self):
         with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             converters = {'DATA': ConverterTestCase.convert}
@@ -1007,6 +1004,9 @@ class TransactionsTestCase(common.JPypeTestCase):
 
 
 class TypeTestCase(common.JPypeTestCase):
+    """ This test is db dependent, but needed to check all
+    code paths. """
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
@@ -1240,10 +1240,9 @@ class TypeTestCase(common.JPypeTestCase):
         self._testBinary('VARBINARY', ('VARBINARY', dbapi2.VARBINARY),
                          ('NAME', 'VARBINARY'), JArray(JByte))
 
-    def _testChars(self, tp, param, desc, jtype):
+    def _testChars(self, tp, param, desc, jtype, v="hello"):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
-            v = "hello"
             cu.execute("insert into test(name) values(?)", [v])
             self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
@@ -1260,7 +1259,7 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testChar(self):
         self._testChars('CHAR', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'CHAR'), java.lang.String)
+                        ('NAME', 'CHAR'), java.lang.String, 'a')
 
     def testVarChar(self):
         self._testChars('VARCHAR', ('VARCHAR', dbapi2.VARCHAR),
@@ -1320,40 +1319,40 @@ class ThreadingTestCase(common.JPypeTestCase):
 
     def test_execute(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             self._testThread(cu, cu.execute, ("insert into test(name) values ('a')",), dbapi2.ProgrammingError)
 
     def test_executemany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             self._testThread(cu, cu.executemany, ("insert into test(name) values ('?')", [[1]]), dbapi2.ProgrammingError)
 
     def test_fetchone(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchone, (), dbapi2.ProgrammingError)
 
     def test_fetchmany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchmany, (), dbapi2.ProgrammingError)
 
     def test_fetchall(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchall, (), dbapi2.ProgrammingError)
 
     def test_close(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.close, (), dbapi2.ProgrammingError)
 
     def test_callproc(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.callproc, ("lower", ["FOO"]), dbapi2.ProgrammingError)

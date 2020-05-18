@@ -113,14 +113,15 @@ class JDBCType:
                 if adp is not None:
                     value = adp(value)
         # Set the column with the specialized method
-        if self._psset._matches(ps, column, value):
-            return self._psset(ps, column, value)
-
-        # Otherwise, try to set with the generic method
         try:
+            if self._psset._matches(ps, column, value):
+                return self._psset(ps, column, value)
+            # Otherwise, try to set with the generic method
             return ps.setObject(column, value)
         except TypeError as ex:
             raise InterfaceError("Unable to convert '%s' into '%s'" % (type(value).__name__, self._name)) from ex
+        except OverflowError as ex:
+            raise InterfaceError("Unable to convert '%s' into '%s' calling '%s'" % (type(value).__name__, self._name, self._setter)) from ex
 
     def __repr__(self):
         if self._name is None:
@@ -142,9 +143,12 @@ class JDBCType:
 
 
 class _JDBCTypePrimitive(JDBCType):
-    def fetch(self, rs, column):
+    def get(self, rs, column, st):
         try:
-            rc = self._rsget(rs, column)
+            if st:
+                rc = self._csget(rs, column)
+            else:
+                rc = self._rsget(rs, column)
             if rc == 0 and rs.wasNull():
                 return None
             return rc
@@ -213,59 +217,6 @@ CHARACTER_STREAM = JDBCType(None, None, 'getCharacterStream', 'setCharacterStrea
 NCHARACTER_STREAM = JDBCType(None, None, 'getNCharacterStream', 'setNCharacterStream')
 URL = JDBCType(None, None, 'getURL', 'setURL')
 
-# =======================================================================================================
-# Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter |
-# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
-# DATE     DATE                     getDate             setDate        datetime.datetime                |
-# DATETIME TIMESTAMP                getTimestamp        setTimestamp   datetime.datetime                |
-# TIME     TIME                     getTime             setTime        datetime.datetime                |
-# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
-# DECIMAL  DECIMAL                  getBigDecimal       setBigDecimal  decimal.Decimal                  |
-# DECIMAL  NUMERIC                  getBigDecimal       setBigDecimal  decimal.Decimal                  |
-# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
-# FLOAT    FLOAT                    getDouble           setDouble      float                            |
-# FLOAT    DOUBLE                   getDouble           getDouble      float                            |
-# FLOAT    REAL                     getFloat            setFloat       float                            |
-# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
-# NUMBER   BOOLEAN                  getBoolean          setBoolean     bool                             |
-# NUMBER   BIT                      getBoolean          setBoolean     bool                             |
-# NUMBER   TINYINT  (0..255)        getShort            setShort       int                              |
-# NUMBER   SMALLINT (-2^15..2^15)   getShort            getShort       int                              |
-# NUMBER   INTEGER  (-2^31..2^31)   getInt              getInt         int                              |
-# NUMBER   BIGINT   (-2^63..2^63)   getLong             getLong        int                              |
-# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
-# BINARY   BINARY                   getBytes            setBytes       bytes                            |
-# BINARY   BLOB                     getBytes            setBytes       byte              getBlob        |
-# BINARY   LONGVARBINARY            getBytes            setBytes       bytes                            |
-# BINARY   VARBINARY                getBytes            setBytes       bytes                            |
-# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
-# TEXT     CLOB                     getString           setString      str               getClob        |
-# TEXT     LONGNVARCHAR             getString           setString      str                              |
-# TEXT     LONGVARCHAR              getString           setString      str                              |
-# TEXT     NCLOB                    getString           setString      str               getNClob       |
-# TEXT     SQLXML                   getString           setString      str               getSQLXML      |
-# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
-# STRING   NVARCHAR                 getString           setString      str                              |
-# STRING   CHAR                     getString           setString      str                              |
-# STRING   NCHAR                    getString           setString      str                              |
-# STRING   VARCHAR                  getString           setString      str                              |
-# -------- ------------------------ ------------------- -------------- ----------------- ------------   |
-#          ARRAY                    getObject                                            getArray       |
-#          OBJECT                   getObject                                            getObject      |
-#          NULL                     getObject                                            getObject      |
-#          REF                      getObject                                            getRef         |
-#          ROWID                    getObject                                            getRowId       |
-#          RESULTSET                getObject                                            getObject      |
-#          TIME_WITH_TIMEZONE       getObject                                            getTime        |
-#          TIMESTAMP_WITH_TIMEZONE  getObject                                            getTimeStamp   |
-# -------- ------------------------ ------------------- -------------- ----------------- ---------------|
-#    *     ASCII_STREAM             getAsciiStream                                                      |
-#    *     BINARY_STREAM            getBinaryStream                                                     |
-#    *     CHARACTER_STREAM         getCharacterStream                                                  |
-#    *     NCHARACTER_STREAM        getNCharacterStream                                                 |
-#    *     URL                      getURL                                                              |
-# ======================================================================================================
-
 # The converters are defined in a customizer
 
 TRANSACTION_NONE = 0
@@ -303,6 +254,7 @@ _default_converters = {
     BOOLEAN: int, BIT: int, TINYINT: int, SMALLINT: int,
     INTEGER: int, BIGINT: int, DATE: _asPython, TIMESTAMP: _asPython,
     TIME: _asPython, DECIMAL: _asPython, NUMERIC: _asPython,
+    BINARY: bytes, VARBINARY: bytes, BLOB: bytes,
 }
 
 _default_adapters = {}
@@ -615,7 +567,7 @@ class Connection:
     def __del__(self):
         try:
             self._close()
-        except Exception:
+        except Exception:  # pragma: no cover
             pass
 
     def close(self):
@@ -640,8 +592,8 @@ class Connection:
             raise NotSupportedError("Autocommit is enabled")
         try:
             self._jcx.commit()
-        except Exception as ex:
-            self._handle(ex)
+        except Exception as ex:  # pragma: no cover
+            raise OperationalError(ex.message()) from ex
 
     def rollback(self):
         """Rollback the transaction.
@@ -660,11 +612,8 @@ class Connection:
             raise NotSupportedError("Autocommit is enabled", self.autocommit)
         try:
             self._jcx.rollback()
-        except Exception as ex:
+        except Exception as ex:  # pragma: no cover
             raise OperationalError(ex.message()) from ex
-
-    def _handle(self, ex):
-        raise ex
 
     def cursor(self):
         """ Return a new Cursor Object using the connection. """
@@ -674,9 +623,6 @@ class Connection:
     def _validate(self):
         if self._closed or self._jcx.isClosed():
             raise ProgrammingError
-
-    def __call__(self):
-        self._validate()
 
     @property
     def connection(self):
@@ -704,16 +650,6 @@ class Connection:
         self._jcx.setAutoCommit(enabled)
 
     @property
-    def isolation(self):
-        self._validate()
-        return self._jcx.getTransactionIsolation()
-
-    @isolation.setter
-    def isolation(self, value):
-        self._validate()
-        setTransactionIsolation(value)
-
-    @property
     def typeinfo(self):
         """ list: The list of types that are supported by this driver.
 
@@ -725,9 +661,10 @@ class Connection:
         with metadata.getTypeInfo() as resultSet:
             while (resultSet.next()):
                 try:
-                    out[str(resultSet.getString("TYPE_NAME"))] = _registry[resultSet.getInt("DATA_TYPE")]
-                except KeyError as ex:
-                    raise RuntimeError from ex
+                    key = str(resultSet.getString("TYPE_NAME"))
+                    out[key] = _registry[resultSet.getInt("DATA_TYPE")]
+                except KeyError as ex:  # pragma: no cover
+                    raise DatabaseError("Unknown data type '%s'" % key) from ex
         return out
 
 
@@ -788,6 +725,8 @@ class Cursor:
         self._paramSetters = setters
 
     def _setParams(self, params):
+        if isinstance(params, str):
+            raise _UnsupportedTypeError("parameters must be a sequence of values")
         if isinstance(params, typing.Sequence):
             self._fetchParams()
             if len(self._paramSetters) != len(params):
@@ -800,13 +739,16 @@ class Cursor:
         elif isinstance(params, typing.Iterable):
             self._fetchParams()
             try:
-                for i in range(len(self._paramColumns)):
-                    self._paramSetters[i](self._statement, i + 1, next(params), self._adapters)
-            except StopIteration:
+                for i, v in enumerate(params):
+                    self._paramSetters[i](self._statement, i + 1, v, self._adapters)
+            except IndexError:
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramSetters), i))
+                                       % (len(self._paramSetters), i + 1))
+            if len(self._paramSetters) != i + 1:
+                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
+                                       % (len(self._paramSetters), i + 1))
         else:
-            raise _UnsupportedTypeError("'%s' parameters not supported" % (type(params).__name__))
+            raise _UnsupportedTypeError("'%s' parameters not supported" % (type(params).__name__))  # pragma: no cover
 
     def _fetchColumns(self):
         """ Get the list of getters and converters that apply to
@@ -831,7 +773,7 @@ class Cursor:
         if isinstance(converters, typing.Sequence):
             # Support for direct converter list
             if len(converters) != count:
-                raise ProgrammingError("Incorrect number of converters")
+                raise ProgrammingError("incorrect number of converters")
             self._resultConverters = converters
         else:
             # Support for JDBC type and column based converters
@@ -852,9 +794,9 @@ class Cursor:
         # Set up all the getters
         if isinstance(getters, typing.Sequence):
             # Support for direct getter list
-            if len(converters) != count:
-                raise ProgrammingError("Incorrect number of getter")
-            self._resultGetters = getter
+            if len(getters) != count:
+                raise ProgrammingError("incorrect number of getters")
+            self._resultGetters = getters
         else:
             self._resultGetters = [getters.get(t, OBJECT.get) for t in jdbcTypes]
 
@@ -898,27 +840,36 @@ class Cursor:
         self._paramSetters = None
         if getters is _default:
             self._getters = self._connection._getters
+        else:
+            self._getters = getters
         if setters is _default:
             self._setters = self._connection._setters
+        else:
+            self._setters = setters
         if adapters is _default:
             self._adapters = self._connection._adapters
         else:
             self._adapters = adapters
         if converters is _default:
             self._converters = self._connection._converters
+        elif converters is None:
+            self._converters = {}
         else:
             self._converters = converters
         return self
 
     def _fetchRow(self):
-        row = []
-        for idx in range(len(self._resultGetters)):
-            value = self._resultGetters[idx](self._resultSet, idx + 1, False)
-            if value is None:
-                row.append(None)
-            else:
-                row.append(self._resultConverters[idx](value))
-        return row
+        try:
+            row = []
+            for idx in range(len(self._resultGetters)):
+                value = self._resultGetters[idx](self._resultSet, idx + 1, False)
+                if value is None:
+                    row.append(None)
+                else:
+                    row.append(self._resultConverters[idx](value))
+            return row
+        except TypeError as ex:
+            raise _UnsupportedTypeError(str(ex)) from ex
 
     def _validate(self):
         """ Called before any method that requires the statement to be open. """
@@ -1007,8 +958,6 @@ class Cursor:
         if not self._resultSet:
             return None
         meta = self._resultSet.getMetaData()
-        if meta is None:
-            return None
         for i in range(1, meta.getColumnCount() + 1):
             size = meta.getColumnDisplaySize(i)
             desc.append((str(meta.getColumnName(i)),
@@ -1073,8 +1022,6 @@ class Cursor:
                 self._statement = self._jcx.prepareCall(query)
             except _SQLException as ex:
                 raise ProgrammingError(ex.message()) from ex
-            except TypeError as ex:
-                raise _UnsupportedTypeError(str(ex))
 
             # This is a special one as we need to deal with in and out arguments
             out = list(parameters)
@@ -1487,7 +1434,7 @@ class Cursor:
 
 def Date(year, month, day):
     """ This function constructs an object holding a date value. """
-    return _jpype.JClass('java.sql.Date')(year, month, day)
+    return _jpype.JClass('java.sql.Date')(year - 1900, month - 1, day)
 
 
 def Time(hour, minute, second):
@@ -1497,7 +1444,7 @@ def Time(hour, minute, second):
 
 def Timestamp(year, month, day, hour, minute, second, nano=0):
     """ This function constructs an object holding a time stamp value. """
-    return _jpype.JClass('java.sql.Timestamp')(year, month, day, hour, minute, second, nano)
+    return _jpype.JClass('java.sql.Timestamp')(year - 1900, month - 1, day, hour, minute, second, nano)
 
 
 def DateFromTicks(ticks):
