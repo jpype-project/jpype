@@ -1104,11 +1104,10 @@ class TypeTestCase(common.JPypeTestCase):
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123122))
 
-    def _testInt(self, tp, param, desc, jtype, null=True):
+    def _testInt(self, tp, desc, jtype, null=True):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
             cu.execute("insert into test(name) values(?)", [123])
-            self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 123)
             self.assertIsInstance(f[0], int)
@@ -1123,35 +1122,24 @@ class TypeTestCase(common.JPypeTestCase):
                 self.assertEqual(f[0], None)
 
     def testTinyInt(self):
-        self._testInt('TINYINT',
-                      ('SMALLINT', dbapi2.SMALLINT),
-                      ('NAME', 'TINYINT'), jpype.JShort)
+        self._testInt('TINYINT', ('NAME', 'TINYINT'), jpype.JShort)
 
     def testBigInt(self):
-        self._testInt('BIGINT',
-                      ('BIGINT', dbapi2.BIGINT),
-                      ('NAME', 'BIGINT'), jpype.JLong)
+        self._testInt('BIGINT', ('NAME', 'BIGINT'), jpype.JLong)
 
     def testIdentity(self):
-        self._testInt('IDENTITY',
-                      ('BIGINT', dbapi2.BIGINT),
-                      ('NAME', 'BIGINT'), jpype.JLong, False)
+        self._testInt('IDENTITY', ('NAME', 'BIGINT'), jpype.JLong, False)
 
     def testInteger(self):
-        self._testInt('INTEGER',
-                      ('INTEGER', dbapi2.INTEGER),
-                      ('NAME', 'INTEGER'), jpype.JInt)
+        self._testInt('INTEGER', ('NAME', 'INTEGER'), jpype.JInt)
 
     def testSmallInt(self):
-        self._testInt('SMALLINT',
-                      ('SMALLINT', dbapi2.SMALLINT),
-                      ('NAME', 'SMALLINT'), jpype.JShort)
+        self._testInt('SMALLINT', ('NAME', 'SMALLINT'), jpype.JShort)
 
-    def _testFloat(self, tp, param, desc, jtype):
+    def _testFloat(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
             cu.execute("insert into test(name) values(?)", [1.25])
-            self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 1.25)
             self.assertIsInstance(f[0], float)
@@ -1165,25 +1153,18 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testFloat(self):
-        self._testFloat('FLOAT',
-                        ('DOUBLE', dbapi2.DOUBLE),
-                        ('NAME', 'DOUBLE'), jpype.JDouble)
+        self._testFloat('FLOAT', ('NAME', 'DOUBLE'), jpype.JDouble)
 
     def testDouble(self):
-        self._testFloat('DOUBLE',
-                        ('DOUBLE', dbapi2.DOUBLE),
-                        ('NAME', 'DOUBLE'), jpype.JDouble)
+        self._testFloat('DOUBLE', ('NAME', 'DOUBLE'), jpype.JDouble)
 
     def testReal(self):
-        self._testFloat('REAL',
-                        ('REAL', dbapi2.REAL),
-                        ('NAME', 'REAL'), jpype.JFloat)
+        self._testFloat('REAL', ('NAME', 'REAL'), jpype.JFloat)
 
-    def _testNumeric(self, tp, param, desc, jtype):
+    def _testNumeric(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s(5,2))" % tp)
             cu.execute("insert into test(name) values(?)", [1.25])
-            self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 1.25)
             self.assertIsInstance(f[0], decimal.Decimal)
@@ -1197,21 +1178,16 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testNumeric(self):
-        self._testNumeric('NUMERIC',
-                          ('DOUBLE', dbapi2.DOUBLE),
-                          ('NAME', 'DECIMAL'), java.math.BigDecimal)
+        self._testNumeric('NUMERIC', ('NAME', 'DECIMAL'), java.math.BigDecimal)
 
     def testDecimal(self):
-        self._testNumeric('DECIMAL',
-                          ('DOUBLE', dbapi2.DOUBLE),
-                          ('NAME', 'DECIMAL'), java.math.BigDecimal)
+        self._testNumeric('DECIMAL', ('NAME', 'DECIMAL'), java.math.BigDecimal)
 
-    def _testBinary(self, tp, param, desc, jtype):
+    def _testBinary(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
             v = bytes([1, 2, 3])
             cu.execute("insert into test(name) values(?)", [v])
-            self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], v)
             self.assertIsInstance(f[0], bytes)
@@ -1225,26 +1201,21 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testBinary(self):
-        self._testBinary('BINARY(10)', ('VARBINARY', dbapi2.VARBINARY),
-                         ('NAME', 'VARBINARY'), JArray(JByte))
+        self._testBinary('BINARY(3)', ('NAME', 'VARBINARY'), JArray(JByte))
 
     def testBlob(self):
-        self._testBinary('BLOB', ('VARBINARY', dbapi2.VARBINARY),
-                         ('NAME', 'BLOB'), JArray(JByte))
+        self._testBinary('BLOB', ('NAME', 'BLOB'), JArray(JByte))
 
     def testLongVarBinary(self):
-        self._testBinary('LONGVARBINARY', ('VARBINARY', dbapi2.VARBINARY),
-                         ('NAME', 'VARBINARY'), JArray(JByte))
+        self._testBinary('LONGVARBINARY', ('NAME', 'VARBINARY'), JArray(JByte))
 
     def testVarBinary(self):
-        self._testBinary('VARBINARY', ('VARBINARY', dbapi2.VARBINARY),
-                         ('NAME', 'VARBINARY'), JArray(JByte))
+        self._testBinary('VARBINARY(10)', ('NAME', 'VARBINARY'), JArray(JByte))
 
-    def _testChars(self, tp, param, desc, jtype, v="hello"):
+    def _testChars(self, tp, desc, jtype, v="hello"):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
             cu.execute("insert into test(name) values(?)", [v])
-            self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], v)
             self.assertIsInstance(f[0], str)
@@ -1258,26 +1229,21 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testChar(self):
-        self._testChars('CHAR', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'CHAR'), java.lang.String, 'a')
+        self._testChars('CHAR', ('NAME', 'CHAR'), java.lang.String, 'a')
 
     def testVarChar(self):
-        self._testChars('VARCHAR', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'VARCHAR'), java.lang.String)
+        self._testChars('VARCHAR', ('NAME', 'VARCHAR'), java.lang.String)
 
     def testLongVarChar(self):
-        self._testChars('LONGVARCHAR', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'VARCHAR'), java.lang.String)
+        self._testChars('LONGVARCHAR', ('NAME', 'VARCHAR'), java.lang.String)
 
     def testClob(self):
-        self._testChars('CLOB', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'CLOB'), java.lang.String)
+        self._testChars('CLOB', ('NAME', 'CLOB'), java.lang.String)
 
     def testBoolean(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name BOOLEAN)")
             cu.execute("insert into test(name) values(?)", [True])
-            self.assertEqual(cu.parameters[0][0:2], ('BOOLEAN', dbapi2.BOOLEAN))
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], True)
             self.assertIsInstance(f[0], int)

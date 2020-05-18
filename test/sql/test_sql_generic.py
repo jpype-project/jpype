@@ -112,11 +112,6 @@ class SQLTablesTestCase(common.JPypeTestCase):
         for i in types:
             self.assertIsNotNone(dbapi2._default_getters.get(i, None))
 
-    def testDefaultSetters(self):
-        types = [i for i in dbapi2._types if i._name != None]
-        for i in types:
-            self.assertIsNotNone(dbapi2._default_setters.get(i, None))
-
     def testStr(self):
         for i in dbapi2._types:
             self.assertIsInstance(str(i), str)

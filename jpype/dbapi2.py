@@ -6,6 +6,7 @@ import typing
 import _jpype
 import time
 import threading
+import datetime
 
 # TODO
 #  - Callable procedures
@@ -59,7 +60,6 @@ class JDBCType:
         self._code = code
         self._getter = getter
         self._setter = setter
-        self._adapters = {}
         if code is not None:
             _registry[code] = self
         _types.append(self)
@@ -91,7 +91,7 @@ class JDBCType:
         except _SQLException as ex:
             raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
 
-    def set(self, ps, column, value, adapters):
+    def set(self, ps, column, value):
         """ A method used to set a parameter to a query.
 
         To use a setter place the set method in the setter dict corresponding.
@@ -102,16 +102,6 @@ class JDBCType:
         Not all setters are available on all database drivers.  Consult the
         database driver documentation for details.
         """
-        # Apply the adapter
-        #  If adapters is set to None then no adapters are applied
-        if adapters is not None:
-            adp = adapters.get(type(value), None)
-            if adp is not None:
-                value = adp(value)
-            else:
-                adp = self._adapters.get(type(value), None)
-                if adp is not None:
-                    value = adp(value)
         # Set the column with the specialized method
         try:
             if self._psset._matches(ps, column, value):
@@ -133,13 +123,6 @@ class JDBCType:
 
     def __hash__(self):
         return hash(self._name)
-
-    @property
-    def adapters(self):
-        """ Adapters are used to take a Python type and convert to the required
-        Java native type corresponding JDBC type.
-        """
-        return self._adapters
 
 
 class _JDBCTypePrimitive(JDBCType):
@@ -259,21 +242,7 @@ _default_converters = {
 
 _default_adapters = {}
 
-_default_setters = {ARRAY: OBJECT.set, OBJECT: OBJECT.set, NULL: OBJECT.set,
-                    REF: OBJECT.set, ROWID: OBJECT.set, RESULTSET: OBJECT.set,
-                    TIME_WITH_TIMEZONE: OBJECT.set, TIMESTAMP_WITH_TIMEZONE: OBJECT.set,
-                    NVARCHAR: STRING.set, CHAR: STRING.set,
-                    NCHAR: STRING.set, VARCHAR: STRING.set, BINARY: BINARY.set,
-                    BLOB: BINARY.set, LONGVARBINARY: BINARY.set, VARBINARY: BINARY.set,
-                    NUMBER: NUMBER.set, BOOLEAN: BOOLEAN.set, BIGINT: BIGINT.set,
-                    BIT: BIT.set, INTEGER: INTEGER.set, SMALLINT: SMALLINT.set,
-                    TINYINT: TINYINT.set, FLOAT: FLOAT.set, REAL: REAL.set,
-                    DECIMAL: DECIMAL.set, NUMERIC: NUMERIC.set,
-                    DATE: DATE.set, TIMESTAMP: TIMESTAMP.set, TIME: TIME.set,
-                    CLOB: STRING.set, NCLOB: STRING.set, STRING: STRING.set,
-                    TEXT: STRING.set, SQLXML: STRING.set, LONGVARCHAR: STRING.set,
-                    LONGNVARCHAR: STRING.set, DOUBLE: DOUBLE.set, OTHER: OBJECT.set
-                    }
+_default_setters = {}
 
 
 ###############################################################################
@@ -387,7 +356,7 @@ def connect(url, driver=None, driver_args=None,
           than Java types are returned.
        getters (dict, optional): A mapping of JDBC types to functions that retrieve
           data from a result set.
-       setters (dict, optional): A mapping of JDBC types to functions that set
+       setters (dict, optional): A mapping of types to functions that set
           parameters on queries.
        converterkeys (list): The list used to search for converters.  By
           default this is be BY_JDBCTYPE and will use the JDBC type as the key
@@ -533,7 +502,7 @@ class Connection:
     def setters(self):
         """ Setter are used to set parameters to ``.execute*()`` methods.
 
-        Each JDBC type must have a setter to set a parameter.  Adapters are
+        Each paramter type must have a setter to set a parameter.  Adapters are
         applied before the setter.  Setters can be defined for each connection.
         """
         return self._setters
@@ -695,7 +664,6 @@ class Cursor:
         self._arraysize = 1
         self._description = None
         self._closed = False
-        self._paramSetters = None
         self._resultGetters = None
         self._thread = threading.get_ident()
         self._getters = self._connection._getters
@@ -710,43 +678,40 @@ class Cursor:
         self._finish()
         self._closed = True
 
-    def _fetchParams(self):
-        """ Look up the setters to apply to incoming parameters. """
-        if self._paramSetters is not None:
-            return
+    def _setParams(self, params):
         cx = self._connection
-        setters = []
         meta = self._statement.getParameterMetaData()
         count = meta.getParameterCount()
-        for i in range(count):
-            # Lookup the JDBC Type
-            jdbcType = _registry[meta.getParameterType(i + 1)]
-            setters.append(cx._setters[jdbcType])
-        self._paramSetters = setters
-
-    def _setParams(self, params):
         if isinstance(params, str):
             raise _UnsupportedTypeError("parameters must be a sequence of values")
         if isinstance(params, typing.Sequence):
-            self._fetchParams()
-            if len(self._paramSetters) != len(params):
+            if count != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramSetters), len(params)))
+                                       % (count, len(params)))
             for i in range(len(params)):
-                self._paramSetters[i](self._statement, i + 1, params[i], self._adapters)
+                p = params[i]
+                a = self._adapters.get(type(p), None)
+                if a is not None:
+                    p = a(p)
+                s = self._setters.get(type(p), None)
+                if s is None:
+                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+                s(self._statement, i + 1, p)
         elif isinstance(params, typing.Mapping):
             raise _UnsupportedTypeError("mapping parameters not supported")
         elif isinstance(params, typing.Iterable):
-            self._fetchParams()
-            try:
-                for i, v in enumerate(params):
-                    self._paramSetters[i](self._statement, i + 1, v, self._adapters)
-            except IndexError:
-                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramSetters), i + 1))
-            if len(self._paramSetters) != i + 1:
-                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (len(self._paramSetters), i + 1))
+            for i, p in enumerate(params):
+                if i >= count:
+                    raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (count, i + 1))
+                a = self._adapters.get(type(p), None)
+                if a is not None:
+                    p = a(p)
+                s = self._setters.get(type(p), None)
+                if s is None:
+                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+                s(self._statement, i + 1, p)
+            if count != i + 1:
+                raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (count, i + 1))
         else:
             raise _UnsupportedTypeError("'%s' parameters not supported" % (type(params).__name__))  # pragma: no cover
 
@@ -822,7 +787,7 @@ class Cursor:
                 number of getters must match the number of columns.  If the
                 getters is a dict, then the getters are looked up by type.
             adapters (dict, optional): Adapters to apply to the next statement.
-                If this argument is None, then no adaptors will be applied.
+                If this argument is None, then no adapters will be applied.
                 This argument should only be used before an execute or 
                 call proc statement.
             setter (dict, optional): Setters to use for the next statement.
@@ -837,7 +802,6 @@ class Cursor:
         # Clear the caches
         self._resultConverters = None
         self._resultGetters = None
-        self._paramSetters = None
         if getters is _default:
             self._getters = self._connection._getters
         else:
@@ -891,7 +855,6 @@ class Cursor:
             self._statement.close()
             self._statement = None
         self._resultGetters = None
-        self._paramSetters = None
         self._rowcount = -1
         self._description = None
         self._last = None
@@ -1031,15 +994,19 @@ class Cursor:
             retrieve = [None] * count
             for i in range(count):
                 # Lookup the JDBC Type
-                sqlType = meta.getParameterType(i + 1)
-                jdbcType = _registry[sqlType]
+                p = parameters[i]
+                a = self._adapters.get(type(p), None)
+                if a is not None:
+                    p = a(p)
+                setter = self._setters.get(type(p), None)
+                if setter is None:
+                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+
                 mode = meta.getParameterMode(i + 1)
                 if mode == 1:
-                    setter = cx._setters[jdbcType]
-                    setter(self._statement, i + 1, parameters[i], self._adapters)
+                    setter(self._statement, i + 1, p)
                 if mode == 2:
-                    setter = cx._setters[jdbcType]
-                    setter(self._statement, i + 1, parameters[i], self._adapters)
+                    setter(self._statement, i + 1, p)
                     self.registerOutParameter(i, sqlType)
                     retrieve[i] = jdbcType
                 if mode == 4:
@@ -1497,6 +1464,33 @@ def _populateTypes():
     for v in _types:
         v._initialize(cs, ps, rs)
 
+    java = _jpype._JPackage("java")
+
+    _default_setters[java.lang.String] = STRING.set
+    _default_setters[java.sql.Date] = DATE.set
+    _default_setters[java.sql.Time] = TIME.set
+    _default_setters[java.sql.Timestamp] = TIMESTAMP.set
+    _default_setters[_jpype.JArray(_jtypes.JByte)] = TIMESTAMP.set
+    _default_setters[java.math.BigDecimal] = DECIMAL.set
+    _default_setters[_jtypes.JFloat] = REAL.set
+    _default_setters[_jtypes.JDouble] = DOUBLE.set
+    _default_setters[_jtypes.JBoolean] = BOOLEAN.set
+    _default_setters[_jtypes.JShort] = INTEGER.set
+    _default_setters[_jtypes.JInt] = INTEGER.set
+    _default_setters[_jtypes.JLong] = BIGINT.set
+    _default_setters[bool] = BOOLEAN.set
+    _default_setters[int] = BIGINT.set
+    _default_setters[float] = DOUBLE.set
+    _default_setters[str] = STRING.set
+    _default_setters[memoryview] = BINARY.set
+    _default_setters[bytes] = BINARY.set
+    _default_setters[bytearray] = BINARY.set
+    _default_setters[type(None)] = OBJECT.set
+    _default_setters[java.sql.Clob] = CLOB.set
+    _default_setters[java.sql.Blob] = BLOB.set
+    _default_setters[datetime.datetime] = TIMESTAMP.set
+    _default_setters[datetime.date] = DATE.set
+    _default_setters[datetime.time] = TIME.set
     # Adaptors can be installed after the JVM is started
     # JByteArray = _jpype.JArray(_jtypes.JByte)
     # VARCHAR.adapters[memoryview] = JByteArray
