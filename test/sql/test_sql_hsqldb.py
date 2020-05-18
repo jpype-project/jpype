@@ -19,8 +19,7 @@ except ImportError:
     zlib = None
 
 
-db_name = "jdbc:h2:mem:testdb"
-#db_name = "jdbc:hsqldb:mem:myDb"
+db_name = "jdbc:hsqldb:mem:myDb"
 #db_name = "jdbc:derby:memory:myDb"
 #first = "jdbc:derby:memory:myDb;create=True"
 
@@ -417,7 +416,8 @@ class CursorTestCase(common.JPypeTestCase):
                 cu.executemany("insert into booze values (?)", object())
             with self.assertRaises(dbapi2.InterfaceError):
                 cu.executemany(object(), [])
-            cu.executemany("insert into booze values (?)", None)
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.executemany("insert into booze values (?)", None)
             with self.assertRaises(dbapi2.ProgrammingError):
                 cu.executemany("inert into booze values (?)", [['?']])
 
@@ -644,6 +644,7 @@ class CursorTestCase(common.JPypeTestCase):
                     rows[i], self.samples[i], "incorrect data retrieved or inserted"
                 )
 
+    @common.unittest.skip
     def test_nextset(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze (name varchar(20))")
@@ -658,6 +659,7 @@ class CursorTestCase(common.JPypeTestCase):
             if nxt:
                 self.assertEqual(cu.fetchone(), booze)
 
+    @common.unittest.skip
     def test_lastrowid(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze(id identity auto_increment not null, name varchar(255), PRIMARY KEY (id))")
@@ -677,6 +679,7 @@ class CursorTestCase(common.JPypeTestCase):
             self.assertEqual(f[0][0], id0)
             self.assertEqual(f[1][0], id2)
 
+    @common.unittest.skip
     def test_lastrowidMany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze(id identity auto_increment not null, name varchar(255), PRIMARY KEY (id))")
@@ -749,7 +752,7 @@ class CursorTestCase(common.JPypeTestCase):
             cu.execute("create table booze(name varchar(50))")
             cu.execute("insert into booze(name) values(?)", ('Hahn Super Dry',))
             p = cu.parameters
-            self.assertEqual(p, [('VARCHAR', dbapi2.VARCHAR, 1, 14, 0, 2)])
+            self.assertEqual(p[0][0:2], ('VARCHAR', dbapi2.VARCHAR))
 
     def test_resultSet(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
@@ -778,7 +781,7 @@ class CursorTestCase(common.JPypeTestCase):
             def mygen(ls):
                 for i in ls:
                     yield i
-            cu.execute("create table booze(name varchar(50), price number)")
+            cu.execute("create table booze(name varchar(50), price integer)")
             with self.assertRaises(dbapi2.ProgrammingError):
                 cu.executemany("insert into booze(name,price) values(?,?)", [('Hahn Super Dry', 2), ('Coors',)])
             with self.assertRaises(dbapi2.InterfaceError):
@@ -862,7 +865,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByPosition(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cu.execute("select data from test")
@@ -872,7 +875,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByType(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cx.converters[dbapi2.VARBINARY] = ConverterTestCase.convert
@@ -883,7 +886,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByName(self):
         with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             cx.converters['DATA'] = ConverterTestCase.convert
@@ -894,7 +897,7 @@ class ConverterTestCase(common.JPypeTestCase):
 
     def testConvertByNameUse(self):
         with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary)")
+            cu.execute("create table test(data varbinary(20))")
             cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
             cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
             converters = {'DATA': ConverterTestCase.convert}
@@ -957,6 +960,7 @@ class GettersTestCase(common.JPypeTestCase):
                 cu.use(getters=[dbapi2.STRING.get, dbapi2.STRING.get]).fetchone()
 
 
+@common.unittest.skip
 class TransactionsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -1124,7 +1128,7 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testTinyInt(self):
         self._testInt('TINYINT',
-                      ('SMALLINT', dbapi2.SMALLINT),
+                      ('TINYINT', dbapi2.TINYINT),
                       ('NAME', 'TINYINT'), jpype.JShort)
 
     def testBigInt(self):
@@ -1134,8 +1138,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testIdentity(self):
         self._testInt('IDENTITY',
-                      ('BIGINT', dbapi2.BIGINT),
-                      ('NAME', 'BIGINT'), jpype.JLong, False)
+                      ('INTEGER', dbapi2.INTEGER),
+                      ('NAME', 'INTEGER'), jpype.JInt, False)
 
     def testInteger(self):
         self._testInt('INTEGER',
@@ -1176,8 +1180,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testReal(self):
         self._testFloat('REAL',
-                        ('REAL', dbapi2.REAL),
-                        ('NAME', 'REAL'), jpype.JFloat)
+                        ('DOUBLE', dbapi2.DOUBLE),
+                        ('NAME', 'DOUBLE'), jpype.JDouble)
 
     def _testNumeric(self, tp, param, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
@@ -1198,12 +1202,12 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testNumeric(self):
         self._testNumeric('NUMERIC',
-                          ('DOUBLE', dbapi2.DOUBLE),
-                          ('NAME', 'DECIMAL'), java.math.BigDecimal)
+                          ('NUMERIC', dbapi2.NUMERIC),
+                          ('NAME', 'NUMERIC'), java.math.BigDecimal)
 
     def testDecimal(self):
         self._testNumeric('DECIMAL',
-                          ('DOUBLE', dbapi2.DOUBLE),
+                          ('DECIMAL', dbapi2.DECIMAL),
                           ('NAME', 'DECIMAL'), java.math.BigDecimal)
 
     def _testBinary(self, tp, param, desc, jtype):
@@ -1225,11 +1229,11 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testBinary(self):
-        self._testBinary('BINARY(10)', ('VARBINARY', dbapi2.VARBINARY),
-                         ('NAME', 'VARBINARY'), JArray(JByte))
+        self._testBinary('BINARY(3)', ('BINARY', dbapi2.BINARY),
+                         ('NAME', 'BINARY'), JArray(JByte))
 
     def testBlob(self):
-        self._testBinary('BLOB', ('VARBINARY', dbapi2.VARBINARY),
+        self._testBinary('BLOB', ('BLOB', dbapi2.BLOB),
                          ('NAME', 'BLOB'), JArray(JByte))
 
     def testLongVarBinary(self):
@@ -1237,13 +1241,12 @@ class TypeTestCase(common.JPypeTestCase):
                          ('NAME', 'VARBINARY'), JArray(JByte))
 
     def testVarBinary(self):
-        self._testBinary('VARBINARY', ('VARBINARY', dbapi2.VARBINARY),
+        self._testBinary('VARBINARY(10)', ('VARBINARY', dbapi2.VARBINARY),
                          ('NAME', 'VARBINARY'), JArray(JByte))
 
-    def _testChars(self, tp, param, desc, jtype):
+    def _testChars(self, tp, param, desc, jtype, v="hello"):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name %s)" % tp)
-            v = "hello"
             cu.execute("insert into test(name) values(?)", [v])
             self.assertEqual(cu.parameters[0][0:2], param)
             f = cu.execute("select * from test").fetchone()
@@ -1259,11 +1262,11 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], None)
 
     def testChar(self):
-        self._testChars('CHAR', ('VARCHAR', dbapi2.VARCHAR),
-                        ('NAME', 'CHAR'), java.lang.String)
+        self._testChars('CHAR', ('CHARACTER', dbapi2.CHAR),
+                        ('NAME', 'CHARACTER'), java.lang.String, 'a')
 
     def testVarChar(self):
-        self._testChars('VARCHAR', ('VARCHAR', dbapi2.VARCHAR),
+        self._testChars('VARCHAR(10)', ('VARCHAR', dbapi2.VARCHAR),
                         ('NAME', 'VARCHAR'), java.lang.String)
 
     def testLongVarChar(self):
@@ -1271,7 +1274,7 @@ class TypeTestCase(common.JPypeTestCase):
                         ('NAME', 'VARCHAR'), java.lang.String)
 
     def testClob(self):
-        self._testChars('CLOB', ('VARCHAR', dbapi2.VARCHAR),
+        self._testChars('CLOB', ('CLOB', dbapi2.CLOB),
                         ('NAME', 'CLOB'), java.lang.String)
 
     def testBoolean(self):
@@ -1320,40 +1323,40 @@ class ThreadingTestCase(common.JPypeTestCase):
 
     def test_execute(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             self._testThread(cu, cu.execute, ("insert into test(name) values ('a')",), dbapi2.ProgrammingError)
 
     def test_executemany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             self._testThread(cu, cu.executemany, ("insert into test(name) values ('?')", [[1]]), dbapi2.ProgrammingError)
 
     def test_fetchone(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchone, (), dbapi2.ProgrammingError)
 
     def test_fetchmany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchmany, (), dbapi2.ProgrammingError)
 
     def test_fetchall(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.fetchall, (), dbapi2.ProgrammingError)
 
     def test_close(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.close, (), dbapi2.ProgrammingError)
 
     def test_callproc(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name VARCHAR)")
+            cu.execute("create table test(name VARCHAR(10))")
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.callproc, ("lower", ["FOO"]), dbapi2.ProgrammingError)
