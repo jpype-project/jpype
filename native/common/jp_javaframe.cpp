@@ -1150,6 +1150,17 @@ jobject JPJavaFrame::assemble(jobject dims, jobject parts)
 			m_Context->m_Context_assembleID, v));
 }
 
+jobject JPJavaFrame::newArrayInstance(jclass c, jintArray dims)
+{
+	jvalue v[2];
+	v[0].l = (jobject) c;
+	v[1].l = (jobject) dims;
+	JAVA_RETURN(jobject, "JPJavaFrame::newArrayInstance",
+			CallStaticObjectMethodA(
+			m_Context->m_Array.get(),
+			m_Context->m_Array_NewInstanceID, v));
+}
+
 jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 {
 	JP_TRACE_IN("JPJavaFrame::callMethod");

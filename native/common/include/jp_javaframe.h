@@ -146,6 +146,7 @@ public:
 	jobject collectRectangular(jarray obj);
 	jobject assemble(jobject dims, jobject parts);
 
+	jobject newArrayInstance(jclass c, jintArray dims);
 	jthrowable getCause(jthrowable th);
 	jstring getMessage(jthrowable th);
 	jint compareTo(jobject obj, jobject obj2);
