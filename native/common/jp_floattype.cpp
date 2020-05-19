@@ -42,7 +42,7 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = (type_t) frame.CallFloatMethodA(obj.getValue().l, context->m_FloatValueID, 0);
+	field(v) = (type_t) frame.floatValue(obj.getValue().l);
 	return JPValue(this, v);
 }
 
