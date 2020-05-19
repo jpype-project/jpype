@@ -65,6 +65,9 @@ class JDBCType:
         if name is not None:
             _registry[self._name.upper()] = self
         _types.append(self)
+        if _jpype.isStarted():
+            java = _jpype._JPackage("java")
+            self._initialize(java.sql.CallableStatement, java.sql.PreparedStatement, java.sql.ResultSet)
 
     def _initialize(self, cs, ps, rs):
         """ Called after the JVM starts initialize Java resources """
@@ -263,7 +266,12 @@ def GETTERS_BY_TYPE(cx, meta, idx):
 
     On some databases it is better to use the typename.
     """
-    return _default_map[_registry[meta.getColumnType(idx + 1)]]
+    tp = _registry[meta.getColumnType(idx + 1)]
+    if tp is OTHER:
+        # Other may be found by name
+        name = str(meta.getColumnTypeName(idx + 1)).upper()
+        return _registry.get(name, tp)
+    return _default_map[tp]
 
 
 def GETTERS_BY_NAME(cx, meta, idx):
@@ -273,10 +281,11 @@ def GETTERS_BY_NAME(cx, meta, idx):
     found in the registery.  New types can be created using JDBCType
     for database specific types such as ``JSON``.
     """
-    tp = _registry.get(meta.getColumnTypeName(idx + 1).upper(), None)
+    name = str(meta.getColumnTypeName(idx + 1)).upper()
+    tp = _registry.get(name, None)
     if tp is None:
         tp = _registry[meta.getColumnType(idx + 1)]
-    return _default_map[tp]
+    return _default_map.get(tp, tp)
 
 
 ###############################################################################
@@ -470,7 +479,7 @@ class Connection:
         if v is None:
             v = {}
         if not isinstance(v, typing.Mapping):
-            raise TypeError("Mapping is required")
+            raise _UnsupportedTypeError("Mapping is required")
         self._adapters = v
 
     @property
@@ -485,7 +494,7 @@ class Connection:
         if v is None:
             v = {}
         if not isinstance(v, typing.Mapping):
-            raise TypeError("Mapping is required")
+            raise _UnsupportedTypeError("Mapping is required")
         self._converters = v
 
     @property
@@ -770,7 +779,7 @@ class Cursor:
                     row.append(value)
                 elif byPosition:
                     # find the column converter by type
-                    converter = lconverters[idx]
+                    converter = converters[idx]
                     row.append(converter(value))
                 else:
                     # find the column converter by type

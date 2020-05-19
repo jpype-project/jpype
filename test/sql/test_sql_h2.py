@@ -22,8 +22,7 @@ except ImportError:
 db_name = "jdbc:h2:mem:testdb"
 
 
-@common.unittest.skip
-class SQLConnectTestCase(common.JPypeTestCase):
+class ConnectTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
@@ -44,47 +43,23 @@ class SQLConnectTestCase(common.JPypeTestCase):
         with self.assertRaises(dbapi2.ProgrammingError):
             cx.close()
 
-    def testGetters(self):
-        m = {}
-        cx = dbapi2.connect(db_name, getters=m)
-        self.assertEqual(cx.getters, m)
-        cx = dbapi2.connect(db_name)
-        self.assertEqual(cx.getters, dbapi2._default_getters)
-        # Passing None gives default
-        cx = dbapi2.connect(db_name, getters=None)
-        self.assertEqual(cx.getters, dbapi2._default_getters)
-
-    def testSetters(self):
-        m = {}
-        cx = dbapi2.connect(db_name, setters=m)
-        self.assertEqual(cx.setters, m)
-        cx = dbapi2.connect(db_name)
-        self.assertEqual(cx.setters, dbapi2._default_setters)
-        # Passing None gives default
-        cx = dbapi2.connect(db_name, setters=None)
-        self.assertEqual(cx.setters, dbapi2._default_setters)
-
     def testAdapters(self):
+        cx = dbapi2.connect(db_name)
+        self.assertEqual(cx.adapters, dbapi2._default_adapters)
+        cx = dbapi2.connect(db_name, adapters=None)
+        self.assertEqual(cx.adapters, {})
         m = {}
         cx = dbapi2.connect(db_name, adapters=m)
         self.assertEqual(cx.adapters, m)
-        cx = dbapi2.connect(db_name)
-        self.assertEqual(cx.adapters, dbapi2._default_adapters)
 
     def testConverters(self):
-        m = {}
         cx = dbapi2.connect(db_name)
         self.assertEqual(cx.converters, dbapi2._default_converters)
+        cx = dbapi2.connect(db_name, converters=None)
+        self.assertEqual(cx.converters, {})
+        m = {}
         cx = dbapi2.connect(db_name, converters=m)
         self.assertEqual(cx.converters, m)
-
-    def testConverterKey(self):
-        cx = dbapi2.connect(db_name, converterkeys=dbapi2.BY_JDBCTYPE)
-        self.assertEqual(cx._keystyle, (dbapi2.BY_JDBCTYPE,))
-        cx = dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME)
-        self.assertEqual(cx._keystyle, (dbapi2.BY_COLNAME,))
-        cx = dbapi2.connect(db_name, converterkeys=(dbapi2.BY_COLNAME, dbapi2.BY_JDBCTYPE))
-        self.assertEqual(cx._keystyle, (dbapi2.BY_COLNAME, dbapi2.BY_JDBCTYPE))
 
 
 class ConnectionTestCase(common.JPypeTestCase):
@@ -149,6 +124,46 @@ class ConnectionTestCase(common.JPypeTestCase):
             c = cx.connection
             self.assertIsInstance(c, java.sql.Connection)
 
+    def test_getters(self):
+        with dbapi2.connect(db_name) as cx:
+            cx.getters = dbapi2.GETTERS_BY_NAME
+            self.assertEqual(cx._getters, dbapi2.GETTERS_BY_NAME)
+            self.assertEqual(cx.getters, dbapi2.GETTERS_BY_NAME)
+            cx.getters = dbapi2.GETTERS_BY_TYPE
+            self.assertEqual(cx._getters, dbapi2.GETTERS_BY_TYPE)
+            self.assertEqual(cx.getters, dbapi2.GETTERS_BY_TYPE)
+
+    def test_setters(self):
+        with dbapi2.connect(db_name) as cx:
+            cx.setters = dbapi2.SETTERS_BY_META
+            self.assertEqual(cx._setters, dbapi2.SETTERS_BY_META)
+            self.assertEqual(cx.setters, dbapi2.SETTERS_BY_META)
+            cx.setters = dbapi2.SETTERS_BY_TYPE
+            self.assertEqual(cx._setters, dbapi2.SETTERS_BY_TYPE)
+            self.assertEqual(cx.setters, dbapi2.SETTERS_BY_TYPE)
+
+    def test_adapters(self):
+        with dbapi2.connect(db_name) as cx:
+            self.assertEqual(cx.adapters, dbapi2._default_adapters)
+            cx.adapters = None
+            self.assertEqual(cx.adapters, {})
+            m = {}
+            cx.adapters = m
+            self.assertEqual(cx.adapters, m)
+            with self.assertRaises(dbapi2.InterfaceError):
+                cx.adapters = object()
+
+    def test_converters(self):
+        with dbapi2.connect(db_name) as cx:
+            self.assertEqual(cx.converters, dbapi2._default_converters)
+            cx.converters = None
+            self.assertEqual(cx.converters, {})
+            m = {}
+            cx.converters = m
+            self.assertEqual(cx.converters, m)
+            with self.assertRaises(dbapi2.InterfaceError):
+                cx.converters = object()
+
 
 class CursorTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -165,7 +180,6 @@ class CursorTestCase(common.JPypeTestCase):
             except dbapi2.Error:
                 pass
 
-    @common.unittest.skip
     def testCursorIsolation(self):
         with dbapi2.connect(db_name) as cx:
             # Make sure cursors created from the same connection have
@@ -816,31 +830,6 @@ class ConverterTestCase(common.JPypeTestCase):
     def convert(s):
         return zlib.decompress(s)
 
-    @common.unittest.skip
-    def testConvertByType(self):
-        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary(20))")
-            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
-            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
-            cx.converters[dbapi2.VARBINARY] = ConverterTestCase.convert
-            cu.execute("select data from test")
-            result = cu.fetchone()[0]
-            self.assertIsInstance(result, bytes)
-            self.assertEqual(result, self.testdata)
-
-    @common.unittest.skip
-    def testConvertByNameUse(self):
-        with dbapi2.connect(db_name, converterkeys=dbapi2.BY_COLNAME) as cx, cx.cursor() as cu:
-            cu.execute("create table test(data varbinary(20))")
-            cu.execute("insert into test(data) values(?)", (dbapi2.Binary(self.params),))
-            cx.adapters[memoryview] = jpype.JArray(jpype.JByte)
-            converters = {'DATA': ConverterTestCase.convert}
-            cu.execute("select data from test")
-            result = cu.fetchone(converters=converters)[0]
-            self.assertIsInstance(result, bytes)
-            self.assertEqual(result, self.testdata)
-
-    @common.unittest.skip
     def testConvertersBad(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name varchar(20))")
@@ -863,6 +852,49 @@ class ConverterTestCase(common.JPypeTestCase):
             f = cu.fetchone(converters=None)
             self.assertIsInstance(f[0], java.lang.String)
             cu.execute("select name from test")
+
+    def testConvertersPositional(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            f = cu.fetchone(converters=[str])
+            self.assertIsInstance(f[0], str)
+            cu.execute("select name from test")
+
+    def test_fetchoneTypesPositional(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            f = cu.fetchone(types=[dbapi2.STRING])
+            self.assertIsInstance(f[0], str)
+
+    def test_fetchmanyTypesPositional(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            f = cu.fetchmany(types=[dbapi2.STRING])
+            self.assertIsInstance(f[0][0], str)
+
+    def test_fetchallTypesPositional(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            f = cu.fetchall(types=[dbapi2.STRING])
+            self.assertIsInstance(f[0][0], str)
+
+    def testTypesPositionalBAD(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['alice'], ['bob'], ['charlie']])
+            cu.execute("select name from test")
+            with self.assertRaises(dbapi2.ProgrammingError):
+                f = cu.fetchone(types=[dbapi2.STRING, dbapi2.STRING])
+            with self.assertRaises(dbapi2.ProgrammingError):
+                f = cu.fetchone(types=[])
 
 
 class GettersTestCase(common.JPypeTestCase):
@@ -944,20 +976,20 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testTime(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name TIME)")
+            cu.execute("create table test(NAME TIME)")
             cu.execute("select * from test")
-            cu.execute("insert into test(name) values('12:05:10')")
+            cu.execute("insert into test(NAME) values('12:05:10')")
             f = cu.execute('select * from test').fetchone()
             self.assertIsInstance(f[0], datetime.time)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", f)
+            cu.execute("insert into test(NAME) values(?)", f)
             f2 = cu.execute('select * from test').fetchone()
             self.assertEqual(f2, f)
             cu.execute("delete from test")
 
             # Test with Java
             t1 = jpype.java.sql.Time(1, 2, 3)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.time(1, 2, 3))
             f4 = cu.execute('select * from test').fetchone(converters=None)
@@ -967,26 +999,26 @@ class TypeTestCase(common.JPypeTestCase):
 
             # Test with dbapi2.Time
             t1 = dbapi2.Time(6, 21, 32)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.time(6, 21, 32))
 
     def testDate(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name DATE)")
+            cu.execute("create table test(NAME DATE)")
             cu.execute("select * from test")
-            cu.execute("insert into test(name) values('2012-02-05')")
+            cu.execute("insert into test(NAME) values('2012-02-05')")
             f = cu.execute('select * from test').fetchone()
             self.assertIsInstance(f[0], datetime.date)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", f)
+            cu.execute("insert into test(NAME) values(?)", f)
             f2 = cu.execute('select * from test').fetchone()
             self.assertEqual(f2, f)
             cu.execute("delete from test")
 
             # Test with Java
             t1 = java.sql.Date(1972 - 1900, 4 - 1, 1)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.date(1972, 4, 1))
             f4 = cu.execute('select * from test').fetchone(converters=None)
@@ -996,26 +1028,26 @@ class TypeTestCase(common.JPypeTestCase):
 
             # Test with dbapi2.Date
             t1 = dbapi2.Date(2020, 5, 21)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.date(2020, 5, 21))
 
     def testTimestamp(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name TIMESTAMP)")
+            cu.execute("create table test(NAME TIMESTAMP)")
             cu.execute("select * from test")
-            cu.execute("insert into test(name) values('2012-02-05 12:02:45.123')")
+            cu.execute("insert into test(NAME) values('2012-02-05 12:02:45.123')")
             f = cu.execute('select * from test').fetchone()
             self.assertIsInstance(f[0], datetime.date)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", f)
+            cu.execute("insert into test(NAME) values(?)", f)
             f2 = cu.execute('select * from test').fetchone()
             self.assertEqual(f2, f)
             cu.execute("delete from test")
 
             # Test with Java
             t1 = java.sql.Timestamp(1972 - 1900, 4 - 1, 1, 12, 2, 45, 123456000)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.datetime(1972, 4, 1, 12, 2, 45, 123456))
             f4 = cu.execute('select * from test').fetchone(converters=None)
@@ -1025,14 +1057,14 @@ class TypeTestCase(common.JPypeTestCase):
 
             # Test with dbapi2.Date
             t1 = dbapi2.Timestamp(2020, 5, 21, 3, 4, 5, 123122000)
-            cu.execute("insert into test(name) values(?)", [t1])
+            cu.execute("insert into test(NAME) values(?)", [t1])
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123122))
 
     def _testInt(self, tp, desc, jtype, null=True):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name %s)" % tp)
-            cu.execute("insert into test(name) values(?)", [123])
+            cu.execute("create table test(NAME %s)" % tp)
+            cu.execute("insert into test(NAME) values(?)", [123])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 123)
             self.assertIsInstance(f[0], int)
@@ -1042,7 +1074,7 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertIsInstance(f[0], jtype)
             cu.execute("delete from test")
             if null:
-                cu.execute("insert into test(name) values(?)", [None])
+                cu.execute("insert into test(NAME) values(?)", [None])
                 f = cu.execute("select * from test").fetchone(converters=None)
                 self.assertEqual(f[0], None)
 
@@ -1063,8 +1095,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def _testFloat(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name %s)" % tp)
-            cu.execute("insert into test(name) values(?)", [1.25])
+            cu.execute("create table test(NAME %s)" % tp)
+            cu.execute("insert into test(NAME) values(?)", [1.25])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 1.25)
             self.assertIsInstance(f[0], float)
@@ -1073,7 +1105,7 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], 1.25)
             self.assertIsInstance(f[0], jtype)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", [None])
+            cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
 
@@ -1088,8 +1120,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def _testNumeric(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name %s(5,2))" % tp)
-            cu.execute("insert into test(name) values(?)", [1.25])
+            cu.execute("create table test(NAME %s(5,2))" % tp)
+            cu.execute("insert into test(NAME) values(?)", [1.25])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], 1.25)
             self.assertIsInstance(f[0], decimal.Decimal)
@@ -1098,7 +1130,7 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], decimal.Decimal(1.25))
             self.assertIsInstance(f[0], jtype)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", [None])
+            cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
 
@@ -1110,9 +1142,9 @@ class TypeTestCase(common.JPypeTestCase):
 
     def _testBinary(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name %s)" % tp)
+            cu.execute("create table test(NAME %s)" % tp)
             v = bytes([1, 2, 3])
-            cu.execute("insert into test(name) values(?)", [v])
+            cu.execute("insert into test(NAME) values(?)", [v])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], v)
             self.assertIsInstance(f[0], bytes)
@@ -1121,7 +1153,7 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(bytes(f[0]), v)
             self.assertIsInstance(f[0], jtype)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", [None])
+            cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
 
@@ -1139,8 +1171,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def _testChars(self, tp, desc, jtype, v="hello"):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name %s)" % tp)
-            cu.execute("insert into test(name) values(?)", [v])
+            cu.execute("create table test(NAME %s)" % tp)
+            cu.execute("insert into test(NAME) values(?)", [v])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], v)
             self.assertIsInstance(f[0], str)
@@ -1149,7 +1181,7 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], v)
             self.assertIsInstance(f[0], jtype)
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", [None])
+            cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
 
@@ -1167,8 +1199,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def testBoolean(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table test(name BOOLEAN)")
-            cu.execute("insert into test(name) values(?)", [True])
+            cu.execute("create table test(NAME BOOLEAN)")
+            cu.execute("insert into test(NAME) values(?)", [True])
             f = cu.execute("select * from test").fetchone()
             self.assertEqual(f[0], True)
             self.assertIsInstance(f[0], int)
@@ -1177,9 +1209,45 @@ class TypeTestCase(common.JPypeTestCase):
             self.assertEqual(f[0], True)
             self.assertIsInstance(f[0], type(True))
             cu.execute("delete from test")
-            cu.execute("insert into test(name) values(?)", [None])
+            cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
+
+
+class OtherTestCase(common.JPypeTestCase):
+    """ This test is db dependent, but needed to check all
+    code paths. """
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def tearDown(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
+            try:
+                cur.execute("drop table test")
+            except dbapi2.Error:
+                pass
+
+    def testJSON(self):
+        got = []
+
+        class MyType(dbapi2.JDBCType):
+            def get(self, rs, column, st):
+                got.append(column)
+                return dbapi2.JDBCType.get(self, rs, column, st)
+        # Register a new type
+        JSON = MyType("JSON", None)
+        with dbapi2.connect(db_name, getters=dbapi2.GETTERS_BY_TYPE) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name JSON)")
+            cu.execute("insert into test(name) values('{age: 31}')")
+            f = cu.execute("select * from test").fetchone()
+            self.assertEqual(got, [1])
+        with dbapi2.connect(db_name, getters=dbapi2.GETTERS_BY_NAME) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name JSON)")
+            cu.execute("insert into test(name) values('{age: 31}')")
+            f = cu.execute("select * from test").fetchone()
+            self.assertEqual(got, [1, 1])
+        del dbapi2._registry[JSON]
 
 
 class ThreadingTestCase(common.JPypeTestCase):
