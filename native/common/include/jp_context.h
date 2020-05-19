@@ -226,6 +226,8 @@ public:
 	JPClassRef m_NoSuchMethodError;
 
 private:
+	JPClassRef m_Array;
+
 	// Java Functions
 	jmethodID m_Object_ToStringID;
 	jmethodID m_Object_EqualsID;
@@ -242,10 +244,10 @@ private:
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
 	jmethodID m_Object_GetClassID;
+	jmethodID m_Array_NewInstanceID;
 	jmethodID m_Throwable_GetCauseID;
 	jmethodID m_Throwable_GetMessageID;
 	jmethodID m_Context_GetFunctionalID;
-
 	friend class JPProxy;
 	JPClassRef m_ProxyClass;
 	jmethodID m_Proxy_NewID;
