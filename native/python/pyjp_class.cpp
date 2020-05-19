@@ -595,6 +595,94 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+// Return true if the slice is all indices
+
+static bool PySlice_CheckFull(PyObject *item)
+{
+	if (!PySlice_Check(item))
+		return false;
+
+	Py_ssize_t start, stop, step;
+	int rc = PySlice_Unpack(item, &start, &stop, &step);
+	bool out = (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
+	return out;
+}
+
+static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
+{
+	JP_PY_TRY("PyJPClass_array");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+
+	if (PyIndex_Check(item))
+	{
+		long sz = PyLong_AsLong(item);
+		JPClass *cls = self->m_Class->newArrayType(frame, 1);
+		jvalue v;
+		v.l = (jobject) cls->newArrayInstance(frame, sz);
+		return cls->convertToPythonObject(frame, v, true).keep();
+	}
+
+	if (PySlice_CheckFull(item))
+	{
+		JPClass *cls = self->m_Class->newArrayType(frame, 1);
+		return PyJPClass_create(frame, cls).keep();
+	}
+
+	if (PyTuple_Check(item))
+	{
+		Py_ssize_t dims = PyTuple_Size(item);
+		Py_ssize_t i = 0;
+		Py_ssize_t defined = 0;
+		Py_ssize_t undefined = 0;
+
+		std::vector<int> sz;
+		for (; i < dims; ++i)
+		{
+			PyObject* t = PyTuple_GetItem(item, i);
+			if (PyIndex_Check(t) && PyLong_AsLong(t) > 0)
+			{
+				defined++;
+				sz.push_back(PyLong_AsLong(t));
+			} else
+				break;
+		}
+		for (; i < dims; ++i)
+			if (PySlice_CheckFull(PyTuple_GetItem(item, i)))
+				undefined++;
+			else
+				break;
+		if (defined + undefined != dims)
+			JP_RAISE(PyExc_TypeError, "Invalid array definition");
+
+		// Get the type
+		JPClass *cls;
+		if (undefined > 0)
+			cls = self->m_Class->newArrayType(frame, undefined);
+		else
+			cls = self->m_Class;
+
+		// If no dimensions were defined then just return the type
+		if (defined == 0 )
+			return PyJPClass_create(frame, cls).keep();
+
+		// Otherwise create an array
+		jintArray u = frame.NewIntArray(defined);
+		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, u,
+				&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+		for (size_t j = 0; j < sz.size(); ++j)
+			accessor.get()[j] = sz[j];
+		accessor.commit();
+
+		jvalue v;
+		v.l = frame.newArrayInstance(cls->getJavaClass(), u);
+		return context->_java_lang_Object->convertToPythonObject(frame, v, false).keep();
+	}
+
+	PyErr_Format(PyExc_TypeError, "Bad array specification");
+	JP_PY_CATCH(NULL);
+}
+
 static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_cast");
@@ -667,6 +755,12 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
+static PyObject *PyJPClass_castEq(PyJPClass *self, PyObject *other)
+{
+	PyErr_Format(PyExc_TypeError, "Invalid operation");
+	return NULL;
+}
+
 // Added for auditing
 
 static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
@@ -703,13 +797,14 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 }
 
 static PyMethodDef classMethods[] = {
-	{"__instancecheck__", (PyCFunction) & PyJPClass_instancecheck, METH_O, ""},
-	{"__subclasscheck__", (PyCFunction) & PyJPClass_subclasscheck, METH_O, ""},
-	{"mro",               (PyCFunction) & PyJPClass_mro, METH_NOARGS, ""},
-	{"_canConvertToJava", (PyCFunction) (&PyJPClass_canConvertToJava), METH_O, ""},
-	{"_convertToJava",    (PyCFunction) (&PyJPClass_convertToJava), METH_O, ""},
-	{"_cast",             (PyCFunction) (&PyJPClass_cast), METH_O, ""},
-	{"_canCast",          (PyCFunction) (&PyJPClass_canCast), METH_O, ""},
+	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
+	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
+	{"mro",               (PyCFunction) PyJPClass_mro, METH_NOARGS, ""},
+	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
+	{"_convertToJava",    (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
+	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
+	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
+	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
 	{NULL},
 };
 
@@ -728,7 +823,10 @@ static PyType_Slot classSlots[] = {
 	{ Py_tp_getattro, (void*) PyJPClass_getattro},
 	{ Py_tp_setattro, (void*) PyJPClass_setattro},
 	{ Py_tp_methods,  (void*) classMethods},
-	{ Py_tp_getset,   (void*) &classGetSets},
+	{ Py_tp_getset,   (void*) classGetSets},
+	{ Py_mp_subscript, (void*) PyJPClass_array},
+	{ Py_nb_matrix_multiply, (void*) PyJPClass_cast},
+	{ Py_nb_inplace_matrix_multiply, (void*) PyJPClass_castEq},
 	{0}
 };
 

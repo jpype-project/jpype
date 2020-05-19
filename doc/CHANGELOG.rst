@@ -6,6 +6,27 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 - **Next version - unreleased**
 - **0.7.6_dev0 - 2020-05-10**
 
+  - Introduced Python operator for Java casting.  In Java to cast
+    to a type you would use ``(Type) obj``, but Python does not support
+    anything similar.  Therefore, we are enlisting the rarely used 
+    ``matmul`` operator as to allow an easy way to cast an object
+    to a Java type.  When a cast to a Java type is required, use
+    ``Type@obj`` or ``(Type)@obj``.  
+
+  - Introduced array notation to create Java arrays.  In earlier versions,
+    JArray factory was required to make a new array type.  But this is
+    tedious to read.  In Java the notation would be ``Type[]`` to declare
+    a type or ``new Type[sz]`` to make a new array.  Python does not 
+    directly support this notation, but it does allow for unspecifed 
+    array sizes using a slice.  All Java class types support
+    ``Type[sz]`` to create an array of a fixed size and ``Type[:]`` to 
+    create an array type which can be intiated later.   This call be applied
+    to multiple dimensions to create fixed sized arrays ``Type[s1][s2][s3]``
+    to declare multidimension array types ``Type[:][:][:]`` or to 
+    create a new multi dimensional array with unspecified dimensions
+    ``Type[sz][:][:]``.  Applying a slice with limits to a class is
+    unsupported.
+
   - Java classes annotated with ``@FunctionalInterface`` can be 
     converted from any Python object that implements ``__call__``. 
     This allows functions, lambdas, and class constructors to be used
