@@ -133,7 +133,7 @@ type into a Java type when setting a parameter.  Once a result is produced,
 a `converter <converters_>`_ can be used to translate the Java type back into a Python type.
 
 There are two lookup functions that select the behavior to decide how a column or
-parameter should be treated.  These are `getters`_ and `setters_`.
+parameter should be treated.  These are `getters`_ and `setters`_.
 
 .. _adapters:
 
@@ -169,6 +169,8 @@ function which processes the database metadata into a type.
 Setters can supplied as a map to `connect`_ or by accessing
 the `setter <connection.setters_>`_ property on a Connection.
 
+.. autofunction:: jpype.dbapi2.SETTERS_BY_META
+.. autofunction:: jpype.dbapi2.SETTERS_BY_TYPE
 
 .. _converters:
 
@@ -197,8 +199,8 @@ column using a different get method.  The default map will attempt
 to fetch according to the most general type.  The getter is a configurable
 function that uses the metadata to find the most appropriate type.
 
-.. autofunction:: jpype.dbapi2.GETTER_BY_TYPE
-.. autofunction:: jpype.dbapi2.GETTER_BY_NAME
+.. autofunction:: jpype.dbapi2.GETTERS_BY_TYPE
+.. autofunction:: jpype.dbapi2.GETTERS_BY_NAME
 
 .. _Connection:
 

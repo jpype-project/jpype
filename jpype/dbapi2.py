@@ -18,18 +18,20 @@ import datetime
 
 # This a generic implementation of PEP-249
 __all__ = ['ARRAY', 'ASCII_STREAM', 'BIGINT', 'BINARY', 'BINARY_STREAM', 'BIT',
-           'BLOB', 'BOOLEAN', 'BY_COLNAME', 'BY_JDBCTYPE', 'Binary', 'CHAR',
-           'CHARACTER_STREAM', 'CLOB', 'Connection', 'Cursor', 'DATE', 'DATETIME',
-           'DECIMAL', 'DOUBLE', 'DataError', 'DatabaseError', 'Date',
-           'DateFromTicks', 'Error', 'FLOAT', 'INTEGER', 'IntegrityError',
-           'InterfaceError', 'InternalError', 'JDBCType', 'LONGNVARCHAR',
-           'LONGVARBINARY', 'LONGVARCHAR', 'NCHAR', 'NCHARACTER_STREAM', 'NCLOB',
-           'NULL', 'NUMBER', 'NUMERIC', 'NVARCHAR', 'NotSupportedError', 'OBJECT',
-           'OTHER', 'OperationalError', 'ProgrammingError', 'REAL', 'REF',
-           'RESULTSET', 'ROWID', 'SMALLINT', 'SQLXML', 'STRING', 'TEXT', 'TIME',
-           'TIMESTAMP', 'TIMESTAMP_WITH_TIMEZONE', 'TIME_WITH_TIMEZONE',
-           'TINYINT', 'Time', 'TimeFromTicks', 'Timestamp', 'TimestampFromTicks',
-           'URL', 'VARBINARY', 'VARCHAR', 'Warning', 'connect']
+           'BLOB', 'BOOLEAN', 'Binary', 'CHAR', 'CHARACTER_STREAM', 'CLOB',
+           'Connection', 'Cursor', 'DATE', 'DATETIME', 'DECIMAL', 'DOUBLE',
+           'DataError', 'DatabaseError', 'Date', 'DateFromTicks', 'Error',
+           'FLOAT', 'GETTERS_BY_NAME', 'GETTERS_BY_TYPE', 'INTEGER',
+           'IntegrityError', 'InterfaceError', 'InternalError', 'JDBCType',
+           'LONGNVARCHAR', 'LONGVARBINARY', 'LONGVARCHAR', 'NCHAR',
+           'NCHARACTER_STREAM', 'NCLOB', 'NULL', 'NUMBER', 'NUMERIC', 'NVARCHAR',
+           'NotSupportedError', 'OBJECT', 'OTHER', 'OperationalError',
+           'ProgrammingError', 'REAL', 'REF', 'RESULTSET', 'ROWID',
+           'SETTERS_BY_META', 'SETTERS_BY_TYPE', 'SMALLINT', 'SQLXML', 'STRING',
+           'TEXT', 'TIME', 'TIMESTAMP', 'TIMESTAMP_WITH_TIMEZONE',
+           'TIME_WITH_TIMEZONE', 'TINYINT', 'Time', 'TimeFromTicks', 'Timestamp',
+           'TimestampFromTicks', 'URL', 'VARBINARY', 'VARCHAR', 'Warning',
+           'apilevel', 'connect', 'paramstyle', 'threadsafety']
 
 apilevel = "2.0"
 threadsafety = 2
@@ -207,12 +209,6 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 
 # The converters are defined in a customizer
 
-TRANSACTION_NONE = 0
-TRANSACTION_READ_COMMITTED = 2
-TRANSACTION_READ_UNCOMMITTED = 1
-TRANSACTION_REPEATABLE_READ = 4
-TRANSACTION_SERIALIZABLE = 8
-
 
 def _asPython(x):
     return x._py()
@@ -278,7 +274,7 @@ def GETTERS_BY_TYPE(cx, meta, idx):
     New types can be created with JDBCType for database specific types.
     """
     tp = _registry[meta.getColumnType(idx + 1)]
-    if tp is OTHER:
+    if tp == OTHER:
         # Other may be found by name
         name = str(meta.getColumnTypeName(idx + 1)).upper()
         return _registry.get(name, tp)
