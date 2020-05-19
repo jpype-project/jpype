@@ -1021,6 +1021,7 @@ class Cursor:
         Returns:
            This cursor.
         """
+        self._last = None
         self._parameterTypes = types
         self._validate()
         self._finish()
@@ -1078,6 +1079,7 @@ class Cursor:
         Returns:
            This cursor.
         """
+        self._last = None
         self._parameterTypes = types
         self._validate()
         if seq_of_parameters is None:
@@ -1261,6 +1263,8 @@ class Cursor:
            None if there is no rowid, the rowid if only one row was inserted,
            or a list of row ids if multiple rows were inserted.
         """
+        if self._last is not None:
+            return self._last
         with self._statement.getGeneratedKeys() as rs:
             if rs.isClosed():
                 return self._last
