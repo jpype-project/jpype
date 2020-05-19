@@ -49,7 +49,7 @@ def _nop(x):
 
 
 class JDBCType:
-    def __init__(self, name, code, getter=None, setter=None):
+    def __init__(self, name, code=None, getter=None, setter=None):
         """ (internal) Create a new JDBC type. """
         if isinstance(name, (str, type(None))):
             self._name = name
@@ -245,9 +245,12 @@ _default_adapters = {}
 
 # Setters take (connection, meta, col, type) -> JDBCTYPE
 def SETTERS_BY_META(cx, meta, col, ptype):
-    """ Option to setters to use the metadata of the parameters.
+    """ Option for setters to use the metadata of the parameters.
 
-    On some databases this is useless as they do not track parameter types.
+    On some databases this option is useless as they do not track parameter
+    types.  This method can be cached for faster performance when lots of
+    parameters.  Usually types can only be determined accurately on inserts
+    into defined columns.
     """
     return _default_map[_registry[meta.getParameterType(i + 1)]]
 
@@ -256,15 +259,23 @@ SETTERS_BY_META._cachable = True
 
 
 def SETTERS_BY_TYPE(cx, meta, col, ptype):
-    """ Option to setters to use the type of the object """
+    """ Option for setters to use the type of the object passed.
+
+    This option looks at the type of the parameter being passed
+    from Python after adapters have been applied to determine the
+    best setter.
+    """
     return _default_setters.get(ptype, None)
 
 
 # Getters take (connection, meta, col) -> JDBCTYPE
 def GETTERS_BY_TYPE(cx, meta, idx):
-    """ Option to getters to determine column type by the JDBC type.
+    """ Option for getters to determine column type by the JDBC type.
 
-    On some databases it is better to use the typename.
+    This option is the default option that uses the type code supplied in
+    the meta data.  On some databases it is better to use the name.
+    If the type code is OTHER, it will attempt to find a type by name.
+    New types can be created with JDBCType for database specific types.
     """
     tp = _registry[meta.getColumnType(idx + 1)]
     if tp is OTHER:
@@ -277,9 +288,11 @@ def GETTERS_BY_TYPE(cx, meta, idx):
 def GETTERS_BY_NAME(cx, meta, idx):
     """ Option to getters to determine column type by the column name.
 
-    Falls back to the meta information if the typename can not be
-    found in the registery.  New types can be created using JDBCType
-    for database specific types such as ``JSON``.
+    This option uses the column name to select the type.  It looks up
+    the column type name, converts it to uppercase, and then searches
+    for a matchine type.  It falls back to the type code meta information if
+    the typename can not be found in the registery.  New types can be created
+    using JDBCType for database specific types such as ``JSON``.
     """
     name = str(meta.getColumnTypeName(idx + 1)).upper()
     tp = _registry.get(name, None)
@@ -920,8 +933,9 @@ class Cursor:
         input sequence. Input parameters are left untouched, output and
         input/output parameters replaced with possibly new values.
 
-        Converters are applied to out parameters.  Converters may not be a list
-        for this method.
+        For type output and input/output arguments, it is best to use
+        types keyword argument to select the appropriate getters for the 
+        returned arguments.  Converters are applied to output parameters.
 
         The procedure may also provide a result set as output. This must then
         be made available through the standard .fetch*() methods. 

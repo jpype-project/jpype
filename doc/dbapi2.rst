@@ -125,15 +125,15 @@ inherit from `:py:class:jpype.dbapi2.Error`.  This is the exception inheritance 
 Type Access
 ===========
 
-JPype dbapi2 provides four different maps which serve to convert data
+JPype dbapi2 provides two different maps which serve to convert data
 between Python and SQL types.  When setting parameters and fetching 
 results, Java types are used.  The connection provides to maps for converting
 the types of parameters.  An `adapter <adapters_>`_ is used to translate from a Python
 type into a Java type when setting a parameter.  Once a result is produced,
 a `converter <converters_>`_ can be used to translate the Java type back into a Python type.
-Further, Java provides multiple types to pass a parameter or fetch a
-result.  This functionality has been mapped to `setters`_ for setting parameters
-and `getters`_ for fetching results.
+
+There are two lookup functions that select the behavior to decide how a column or
+parameter should be treated.  These are `getters`_ and `setters_`.
 
 .. _adapters:
 
@@ -145,21 +145,12 @@ to the appropriate Java type.  This can be accomplished in a few ways.  The
 user can manually convert to the correct type by constructing a Java object or
 applying the JPype casting operator.  Some Java types have built in implicit
 conversions from the corresponding type.  For all other conversions, an adapter.
-An adaptor is defined as a type to convert from and a conversion function which 
+An adapter is defined as a type to convert from and a conversion function which 
 takes a single argument that returns a Java object.
 
-The adaptor maps can be supplied in three ways.  Each JDBC type holds a
-dictionary called `adapters <jdbctype.adapters_>`_.  For example, to add
-``memoryview`` to the JDBC STRING type, one would call
-``dbapi2.STRING.adapters[memoryview] = JArray(JByte)`` which would create a
-Java byte array from any memory view that is passed into a STRING parameter.
-Adapters can also be set on a per connection basis.  The adapter map can be
+The adapter maps are stored in the connection.  The adapter map can be
 supplied when calling `connect`_ , or added to the map later
-through the `adapters <connection.adapters_>`_ property.  Last, sometimes an
-adapter needs to be supplied only to a specific execute command.  In this case,
-the keyword argument to the excute methods can be used.  Adapters can also be
-disabled on an individual statement by providing ``None`` to the adapters
-keyword argument.
+through the `adapters <connection.adapters_>`_ property. 
 
 
 .. _setters:
@@ -170,12 +161,10 @@ setters_
 A setter transfers the Java type into a SQL parameter.  There are multiple
 types can an individual parameter may accept.  The type of setter is determined
 by the JDBC type.  Each individual JDBC type can have its own setter.  Not
-every database supports the same setter.  For example, a database may support
-the BLOB type, but not be able to accept ``java.sql.Blob`` as a parameter type.
-If this is the case, the setter for BLOB would need to point to a setter type
-which is supported by the driver.  For example, ``setters[dbapi2.BLOB] =
-dbapi2.STRING.set`` would indicate that BLOB should be set using the same
-method used to store strings.
+every database supports the same setter.  There is a default setter may that
+would work for most purposes.  Setters can also be set individually using 
+the ``types`` argument to the ``.execute*()`` methods.  The setter is a 
+function which processes the database metadata into a type.
 
 Setters can supplied as a map to `connect`_ or by accessing
 the `setter <connection.setters_>`_ property on a Connection.
@@ -187,18 +176,14 @@ converters_
 -----------
 
 When a result is fetched the database, it is returned as Jave type.  This Java
-type then has a converter applied.  Converters are stored in a map with a key
-and a converter function that takes one argument and returns the desired type.
-The key field is selected using the `converter_key <connect_>`_
-argument.  Options include by JDBC type or by column name.  Use the
-`description <cursor.description_>`_ method to get the types and names.
+type then has a converter applied.  Converters are stored in a map holding the 
+type as key and a converter function that takes one argument and returns the desired type.
+The default converter map will convert all types to Python.  This can be 
+disabled by setting the converters to ``None``.
 
-Like adapters, converters can be supplied in multiple ways.  The converter map
-can be passed in to the `connect`_ function, or set on the
-Connection using the `converters <connection.converters_>`_ property.  Last,
-after an statement has been executed, the method `use
-<cursor.use_>`_ can be used to adjust the converters for an individual
-query.
+The converter map can be passed in to the `connect`_ function, or set on the
+Connection using the `converters <connection.converters_>`_ property.  It
+can be supplied as a list or a map to the ``.fetch*()`` methods.
 
 .. _getters:
 
@@ -208,14 +193,12 @@ getters_
 JDBA provides more than one way to access data returned from a result.
 In the native JDBC, each executed statement returns a result set which 
 acts as a cursor for the statement.  It is possible to access each 
-column using a different get method.    
+column using a different get method.  The default map will attempt
+to fetch according to the most general type.  The getter is a configurable
+function that uses the metadata to find the most appropriate type.
 
-By default the getters are selected by a map from JDBC type to the
-corresponding setter function.  For example, to use a STRING getter on a blob
-one would call ``getters[dbapi2.BLOB] = dbapi2.STRING.get``.  Getters
-can also be set on an individual fetch by calling `use <cursor.use_>`_ after
-an execute method has been called.
-
+.. autofunction:: jpype.dbapi2.GETTER_BY_TYPE
+.. autofunction:: jpype.dbapi2.GETTER_BY_NAME
 
 .. _Connection:
 
@@ -366,6 +349,32 @@ STRING   VARCHAR                  getString           setString      str
 
 Some of these types never correpond to a SQL type but are used only to specify
 getters and setters for a particular parameter or column.
+
+Other
+-----
+
+The default getter will attempt to look for the column type by name if the type is OTHER.
+This allows for user defined types to be added if supported by the database.
+
+User defined types
+------------------
+
+A user can declare a new type using ``JDBCType``.  The arguments are the name of 
+new type which must match a SQL typename.  Use ``typeinfo`` on the connection to 
+get the list of available types.
+
+It may necessary to define a custom getter function which defining a new type
+so that the custom return type accurately reflects the column type.
+
+.. code-block:: python
+
+   class JSONType(dbapi2.JDBCType):
+      def get(self, *args):
+          rc = JDBCType.get(self, *args)
+          # Custom return converter here
+          return rc
+   JSON = JSONType("JSON")
+  
 
 Conclusion
 ==========
