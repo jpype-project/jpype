@@ -78,3 +78,4 @@ _build/
 jacoco/
 wheelhouse/
 vc*.pdb
+*.zip

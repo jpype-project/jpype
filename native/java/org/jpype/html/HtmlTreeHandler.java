@@ -1,8 +1,6 @@
 package org.jpype.html;
 
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
@@ -91,7 +89,6 @@ public class HtmlTreeHandler implements HtmlHandler
   {
     if (current == root)
       return;
-    System.out.println(current + " " + current.getNodeType());
     current.appendChild(root.createTextNode(text));
   }
 

@@ -75,7 +75,6 @@ public class HtmlWriter implements Closeable
   public void writeElement(Element e) throws IOException
   {
     String name = e.getTagName();
-    System.out.println("ELEM " + e.getTagName());
     writer.write("<");
     writer.write(name);
     NamedNodeMap attributes = e.getAttributes();

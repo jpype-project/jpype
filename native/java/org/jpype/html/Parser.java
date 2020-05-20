@@ -47,7 +47,6 @@ public class Parser<T>
         if (rc < 0)
           break;
         int p = incoming.position();
-        System.out.println(p + " " + rc);
         incoming.rewind();
         while (incoming.position() < rc)
         {
@@ -110,10 +109,6 @@ public class Parser<T>
       return;
     Entity entity = add(token, value);
 
-//    System.out.print("(" + token + "," + value + ")" + " " + state + " --");
-//    for (Entity e : this.stack)
-//      System.out.print(" " + e.toString());
-//    System.out.println();
     // Take the next lookahead
     Rule rule1 = this.lookahead;
     this.lookahead = null;
@@ -121,7 +116,6 @@ public class Parser<T>
     {
       if (rule1.apply(this, entity))
       {
-//        System.out.println("Rule " + rule1.getClass().getName());
         return;
       }
     }
@@ -135,7 +129,6 @@ public class Parser<T>
       {
         if (rule.apply(this, stack.getLast()))
         {
-//          System.out.println("Rule " + rule.getClass().getName());
           done = false;
           break;
         }
