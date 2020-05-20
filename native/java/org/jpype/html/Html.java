@@ -8,12 +8,16 @@ public class Html
 {
 
   public final static HashSet<String> VOID_ELEMENTS = new HashSet<>();
+  public final static HashSet<String> OPTIONAL_ELEMENTS = new HashSet<>();
 
   static
   {
     VOID_ELEMENTS.addAll(Arrays.asList(
             "area", "base", "br", "col", "command", "embed", "hr", "img",
             "input", "keygen", "link", "meta", "param", "source", "track", "wbr"));
+    OPTIONAL_ELEMENTS.addAll(Arrays.asList("html", "head", "body", "p", "dt",
+            "dd", "li", "option", "thead", "th", "tbody", "tr", "td", "tfoot", "colgroup"));
+
   }
 
   private static class HtmlParser extends Parser<Document>

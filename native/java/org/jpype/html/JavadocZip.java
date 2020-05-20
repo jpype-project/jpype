@@ -3,17 +3,13 @@ package org.jpype.html;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class JavadocZip
 {
@@ -40,16 +36,20 @@ public class JavadocZip
   {
     try
     {
-      String[] parts = cls.getName().split("\\.");
-      if (parts.length == 1)
-        return null;
-      parts[parts.length - 1] += ".html";
-      Path path = fs.getPath("api", parts);
-      return Files.newInputStream(root.resolve(path));
+      return Files.newInputStream(getPath(cls));
     } catch (IOException ex)
     {
       return null;
     }
+  }
+
+  public Path getPath(Class cls)
+  {
+    String[] parts = cls.getName().split("\\.");
+    if (parts.length == 1)
+      return null;
+    parts[parts.length - 1] += ".html";
+    return root.resolve(fs.getPath("api", parts));
   }
 
   public static void main(String[] args) throws IOException

@@ -66,6 +66,8 @@ public class Parser<T>
           {
             if (last != match)
               flushTokens(outgoing);
+            if (!outgoing.hasRemaining())
+              flushTokens(outgoing);
             outgoing.put(b);
           } else
           {

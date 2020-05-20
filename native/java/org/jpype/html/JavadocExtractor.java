@@ -18,18 +18,27 @@ import org.w3c.dom.NodeList;
 public class JavadocExtractor
 {
 
-  static Javadoc extract(Path path)
+  public static Javadoc extract(Path path)
   {
     Document doc;
     try (InputStream is = Files.newInputStream(path))
     {
       Parser<Document> parser = Html.newParser();
-      doc = parser.parse(is);
+      return extractDocument(parser.parse(is));
     } catch (Exception ex)
     {
       return null;
     }
+  }
 
+  public static Javadoc extractStream(InputStream is)
+  {
+    Parser<Document> parser = Html.newParser();
+    return extractDocument(parser.parse(is));
+  }
+
+  public static Javadoc extractDocument(Document doc)
+  {
     try
     {
       Javadoc documentation = new Javadoc();

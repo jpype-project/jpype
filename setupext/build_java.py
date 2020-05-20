@@ -18,14 +18,14 @@ def compileJava(self, coverage):
             javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
     except KeyError:
         pass
-    target_version = "1.7"
+    target_version = "1.8"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]
     src2 = [i for i in srcs if not "JPypeClassLoader" in i]
-    cmd1 = shlex.split('%s -d build/lib -g:none -source %s -target %s' %
+    cmd1 = shlex.split('%s -d build/lib -g:lines -source %s -target %s' %
                        (javac, target_version, target_version))
     cmd1.extend(src1)
-    debug = "-g:none"
+    debug = "-g:lines"
     if coverage:
         debug = "-g:lines,vars,source"
     cmd2 = shlex.split('%s -d build/classes %s -source %s -target %s -cp build/lib' %
