@@ -185,7 +185,7 @@ class _JImportLoader:
             # so we produce a meaningful diagnositic.
             try:
                 # Use forname because it give better diagnostics
-                cls = _java_lang_Class.forName(name)
+                cls = _jpype.JClass("java.lang.Class").forName(name)
                 return _jpype.JClass(cls)
             # Not found is acceptable
             except Exception as ex:
