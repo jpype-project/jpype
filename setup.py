@@ -14,7 +14,7 @@ else:
 
 setup(
     name='JPype1',
-    version='0.7.4',
+    version='0.7.6_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
@@ -56,5 +56,4 @@ setup(
     zip_safe=False,
     ext_modules=[jpypeLib],
     distclass=setupext.dist.Distribution,
-    use_scm_version=True,
 )

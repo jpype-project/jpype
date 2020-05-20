@@ -146,6 +146,20 @@ public:
 	jobject collectRectangular(jarray obj);
 	jobject assemble(jobject dims, jobject parts);
 
+	jobject newArrayInstance(jclass c, jintArray dims);
+	jthrowable getCause(jthrowable th);
+	jstring getMessage(jthrowable th);
+	jint compareTo(jobject obj, jobject obj2);
+
+	jbyte booleanValue(jobject obj);
+	jbyte byteValue(jobject obj);
+	jchar charValue(jobject obj);
+	jshort shortValue(jobject obj);
+	jint intValue(jobject obj);
+	jlong longValue(jobject obj);
+	jfloat floatValue(jobject obj);
+	jdouble doubleValue(jobject obj);
+
 	/**
 	 * Convert a UTF8 encoded string into Java.
 	 *
@@ -349,8 +363,6 @@ public:
 	const char* GetStringUTFChars(jstring a0, jboolean* a1);
 	void ReleaseStringUTFChars(jstring a0, const char* a1);
 	jsize GetStringUTFLength(jstring a0);
-
-	jint compareTo(jobject obj, jobject obj2);
 
 	jboolean isPackage(const string& str);
 	jobject getPackage(const string& str);

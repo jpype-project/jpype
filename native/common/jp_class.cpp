@@ -84,6 +84,22 @@ JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 	return m_Constructors->invokeConstructor(frame, args);
 }
 
+JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
+{
+	if (d < 0 || d > 255)
+		JP_RAISE(PyExc_ValueError, "Invalid array dimensions");
+	stringstream ss;
+	for (long i = 0; i < d; ++i)
+		ss << "[";
+	if (isPrimitive())
+		ss << ((JPPrimitiveType*) this)->getTypeCode();
+	else if (isArray())
+		ss << getName();
+	else
+		ss << "L" << getName() << ";";
+	return frame.findClassByName(ss.str());
+}
+
 jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);
@@ -93,6 +109,7 @@ jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
 
 // GCOVR_EXCL_START
 // This is currently only used in tracing
+
 string JPClass::toString() const
 {
 	// This sanity check will not be hit in normal operation
@@ -321,10 +338,29 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 
 	if (isThrowable())
 	{
+		JPPyTuple tuple1 = JPPyTuple::newTuple(2);
+		tuple1.setItem(0, _JObjectKey);
+		if (value.l == NULL)
+		{
+			JPPyTuple tuple0 = JPPyTuple::newTuple(0);
+			tuple1.setItem(1, tuple0.get());
+		} else
+		{
+			JPPyTuple tuple0 = JPPyTuple::newTuple(1);
+			jstring m = frame.getMessage((jthrowable) value.l);
+			if (m != NULL)
+			{
+				tuple0.setItem(0, JPPyString::fromStringUTF8(
+						frame.toStringUTF8(m)).get());
+			} else
+			{
+				tuple0.setItem(0, JPPyString::fromStringUTF8(
+						frame.toString(value.l)).get());
+			}
+			tuple1.setItem(1, tuple0.get());
+		}
 		// Exceptions need new and init
-		JPPyTuple tuple = JPPyTuple::newTuple(1);
-		tuple.setItem(0, _JObjectKey);
-		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple.get(), NULL));
+		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
