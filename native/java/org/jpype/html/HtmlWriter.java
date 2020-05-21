@@ -1,6 +1,7 @@
 package org.jpype.html;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,9 +29,26 @@ public class HtmlWriter implements Closeable
     this.writer = new BufferedWriter(new OutputStreamWriter(os));
   }
 
+  public static String asString(Node node) throws IOException
+  {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
+    {
+      HtmlWriter hw = new HtmlWriter(baos);
+      hw.write(node);
+      hw.close();
+      return baos.toString();
+    }
+  }
+
+
   public void write(Node n) throws IOException
   {
 
+    if (n == null)
+    {
+      writer.write("NULL");
+      return;
+    }
     switch (n.getNodeType())
     {
       case Node.PROCESSING_INSTRUCTION_NODE:

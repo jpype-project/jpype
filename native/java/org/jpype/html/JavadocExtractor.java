@@ -46,38 +46,38 @@ public class JavadocExtractor
       Node description = (Node) xPath.compile("//div[@class='description']").evaluate(doc, XPathConstants.NODE);
       if (description != null)
       {
-        documentation.description = getString(description);
+        documentation.description = description;
       }
 
       Node ctors = (Node) xPath.compile("//li/a[@name='constructor.detail']").evaluate(doc, XPathConstants.NODE);
       if (ctors != null)
       {
         documentation.ctors = new ArrayList<>();
-        NodeList set = (NodeList) xPath.compile("./ul").evaluate(ctors.getParentNode(), XPathConstants.NODESET);
+        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(ctors.getParentNode(), XPathConstants.NODESET);
         for (int i = 0; i < set.getLength(); ++i)
         {
-          documentation.ctors.add(getString(set.item(i)));
+          documentation.ctors.add(set.item(i));
         }
       }
 
       Node methods = (Node) xPath.compile("//li/a[@name='method.detail']").evaluate(doc, XPathConstants.NODE);
       if (methods != null)
       {
-        NodeList set = (NodeList) xPath.compile("./ul").evaluate(methods.getParentNode(), XPathConstants.NODESET);
+        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(methods.getParentNode(), XPathConstants.NODESET);
         documentation.methods = convertNodes(set);
       }
 
       Node inner = (Node) xPath.compile("//li/a[@name='nested_class_summary']").evaluate(doc, XPathConstants.NODE);
       if (inner != null)
       {
-        NodeList set = (NodeList) xPath.compile("./ul").evaluate(inner.getParentNode(), XPathConstants.NODESET);
+        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(inner.getParentNode(), XPathConstants.NODESET);
         documentation.inner = convertNodes(set);
       }
 
       Node fields = (Node) xPath.compile("//li/a[@name='field.detail']").evaluate(doc, XPathConstants.NODE);
       if (fields != null)
       {
-        NodeList set = (NodeList) xPath.compile("./ul").evaluate(methods.getParentNode(), XPathConstants.NODESET);
+        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(methods.getParentNode(), XPathConstants.NODESET);
         documentation.fields = convertNodes(set);
       }
 
@@ -88,23 +88,12 @@ public class JavadocExtractor
     }
   }
 
-  private static String getString(Node node) throws IOException
+  private static List<Node> convertNodes(NodeList nl) throws IOException
   {
-    try (ByteArrayOutputStream baos = new ByteArrayOutputStream())
-    {
-      HtmlWriter hw = new HtmlWriter(baos);
-      hw.write(node);
-      hw.close();
-      return baos.toString();
-    }
-  }
-
-  private static List<String> convertNodes(NodeList nl) throws IOException
-  {
-    List<String> out = new ArrayList<>();
+    List<Node> out = new ArrayList<>();
     for (int i = 0; i < nl.getLength(); ++i)
     {
-      out.add(getString(nl.item(i)));
+      out.add(nl.item(i));
     }
     return out;
   }
