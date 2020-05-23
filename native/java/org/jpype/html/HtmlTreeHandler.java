@@ -1,11 +1,10 @@
 package org.jpype.html;
 
 import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -18,9 +17,8 @@ public class HtmlTreeHandler implements HtmlHandler
 
   final Document root;
   LinkedList<Element> elementStack = new LinkedList<>();
+  AttrParser attrParser;
   Node current;
-  Pattern attribPattern1 = Pattern.compile("^\\s*([A-z:_][A-z0-9:_.-]*)\\s*=\\s*\"([^<\"]*)\"\\s*");
-  Pattern attribPattern2 = Pattern.compile("^\\s*([A-z:_][A-z0-9:_.-]*)\\s*");
 
   public HtmlTreeHandler()
   {
@@ -29,45 +27,48 @@ public class HtmlTreeHandler implements HtmlHandler
       DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
       root = db.newDocument();
       current = root;
+      attrParser = new AttrParser(root);
     } catch (ParserConfigurationException ex)
     {
       throw new RuntimeException(ex);
     }
   }
 
+  private String lastNodeName()
+  {
+    if (this.elementStack.isEmpty())
+      return "";
+    return this.elementStack.getLast().getNodeName();
+  }
+
   @Override
   public void startElement(String name, String attr)
   {
     name = name.toLowerCase();
-    Element elem = root.createElement(name);
+    String attr0 = attr;
+
+    // Html has irregular end rules.
+    if (Html.OPTIONAL_ELEMENTS.contains(name))
+    {
+      String close = lastNodeName() + ":" + name;
+      if (Html.OPTIONAL_CLOSE.contains(close))
+      {
+        this.endElement(lastNodeName());
+      }
+    }
+
+    Element elem;
+    try
+    {
+      elem = root.createElement(name);
+    } catch (Exception ex)
+    {
+      throw new RuntimeException("Fail to create node '" + name + "'", ex);
+    }
     if (attr != null)
     {
-      while (!attr.isEmpty())
-      {
-        Matcher m = attribPattern1.matcher(attr);
-        if (!m.find())
-        {
-          break;
-        }
-        attr = m.replaceFirst("");
-        elem.setAttribute(m.group(1), m.group(2));
-      }
-      // Handle boolean attributes
-      while (!attr.isEmpty())
-      {
-        Matcher m = attribPattern2.matcher(attr);
-        if (!m.find())
-        {
-          break;
-        }
-        attr = m.replaceFirst("");
-        elem.setAttribute(m.group(1), m.group(1));
-      }
-
-      if (!attr.isEmpty())
-      {
-        throw new RuntimeException("Bad attr " + attr);
-      }
+      for (Attr a : attrParser.parse(attr))
+        elem.setAttributeNode(a);
     }
     current.appendChild(elem);
     if (Html.VOID_ELEMENTS.contains(name))

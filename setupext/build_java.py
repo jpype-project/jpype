@@ -9,6 +9,7 @@ from distutils.dir_util import copy_tree
 import glob
 import re
 import shlex
+import shutil
 
 
 def compileJava(self, coverage):
@@ -37,6 +38,8 @@ def compileJava(self, coverage):
     subprocess.check_call(cmd1)
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)
     subprocess.check_call(cmd2)
+    other = glob.glob('native/java/**/*.txt', recursive=True)
+    shutil.copytree('native/java/', 'build/classes', ignore=shutil.ignore_patterns('*.java'), dirs_exist_ok=True)
     cmd3 = shlex.split(
         'jar cvf build/lib/org.jpype.jar -C build/classes/ .')
     self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)

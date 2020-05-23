@@ -1,6 +1,5 @@
-package org.jpype.html;
+package org.jpype.javadoc;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -11,7 +10,10 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+import org.jpype.html.Html;
+import org.jpype.html.Parser;
 import org.w3c.dom.Document;
+import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -77,7 +79,7 @@ public class JavadocExtractor
       Node fields = (Node) xPath.compile("//li/a[@name='field.detail']").evaluate(doc, XPathConstants.NODE);
       if (fields != null)
       {
-        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(methods.getParentNode(), XPathConstants.NODESET);
+        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(fields.getParentNode(), XPathConstants.NODESET);
         documentation.fields = convertNodes(set);
       }
 
@@ -93,8 +95,23 @@ public class JavadocExtractor
     List<Node> out = new ArrayList<>();
     for (int i = 0; i < nl.getLength(); ++i)
     {
-      out.add(nl.item(i));
+      out.add(toFragment(nl.item(i)));
     }
+    return out;
+  }
+
+  public static Node toFragment(Node node)
+  {
+    Document doc = node.getOwnerDocument();
+    DocumentFragment out = doc.createDocumentFragment();
+    while (node.hasChildNodes())
+    {
+      out.appendChild(node.getFirstChild());
+    }
+    if (out.getFirstChild() != null && out.getFirstChild().getNodeType() == Node.TEXT_NODE)
+      out.removeChild(out.getFirstChild());
+    if (out.getLastChild() != null && out.getLastChild().getNodeType() == Node.TEXT_NODE)
+      out.removeChild(out.getLastChild());
     return out;
   }
 }

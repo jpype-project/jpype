@@ -16,30 +16,26 @@ import java.util.ListIterator;
 public class Parser<T>
 {
 
-  Grammar grammar;
-  State state = null;
-  Token last = null;
-  Rule lookahead = null;
-  LinkedList<Entity> stack = new LinkedList<>();
+  final Grammar grammar;
+  public State state = null;
+  public Token last = null;
+  public Rule lookahead = null;
+  public LinkedList<Entity> stack = new LinkedList<>();
 
-  public Parser()
+  Parser(Grammar grammar)
   {
-  }
-
-  void setGrammar(Grammar g)
-  {
-    this.grammar = g;
-    this.state = g.initialState();
+    this.grammar = grammar;
   }
 
   public T parse(InputStream is)
   {
-    grammar.start();
+    ByteBuffer incoming = ByteBuffer.allocate(1024);
+    ByteBuffer outgoing = ByteBuffer.allocate(1024);
+    ReadableByteChannel channel = Channels.newChannel(is);
+    stack.clear();
+    grammar.start(this);
     try
     {
-      ByteBuffer incoming = ByteBuffer.allocate(1024);
-      ByteBuffer outgoing = ByteBuffer.allocate(1024);
-      ReadableByteChannel channel = Channels.newChannel(is);
       while (true)
       {
         incoming.position(0);
@@ -48,41 +44,59 @@ public class Parser<T>
           break;
         int p = incoming.position();
         incoming.rewind();
-        while (incoming.position() < rc)
-        {
-          byte b = incoming.get();
-          Token match = null;
-          for (Token t : state.getTokens())
-          {
-            if (t.matches(b))
-            {
-              match = t;
-              break;
-            }
-          }
-          if (match == null)
-            this.error("Unable to parse " + (char) b);
-          if (match.runs())
-          {
-            if (last != match)
-              flushTokens(outgoing);
-            if (!outgoing.hasRemaining())
-              flushTokens(outgoing);
-            outgoing.put(b);
-          } else
-          {
-            if (outgoing.position() > 0)
-              flushTokens(outgoing);
-            processToken(match, null);
-          }
-          last = match;
-        }
+        process(incoming, outgoing, rc);
       }
+      flushTokens(outgoing);
     } catch (IOException ex)
     {
       throw new RuntimeException(ex);
     }
-    return (T) grammar.end();
+    return (T) grammar.end(this);
+  }
+
+  public T parse(String str)
+  {
+    byte[] b = str.getBytes();
+    ByteBuffer incoming = ByteBuffer.wrap(b);
+    ByteBuffer outgoing = ByteBuffer.allocate(1024);
+    stack.clear();
+    grammar.start(this);
+    process(incoming, outgoing, b.length);
+    flushTokens(outgoing);
+    return (T) grammar.end(this);
+  }
+
+  private void process(ByteBuffer incoming, ByteBuffer outgoing, int rc)
+  {
+    while (incoming.position() < rc)
+    {
+      byte b = incoming.get();
+      Token match = null;
+      for (Token t : state.getTokens())
+      {
+        if (t.matches(b))
+        {
+          match = t;
+          break;
+        }
+      }
+      if (match == null)
+        this.error("Unable to parse " + (char) b);
+      if (match.runs())
+      {
+        if (last != match)
+          flushTokens(outgoing);
+        if (!outgoing.hasRemaining())
+          flushTokens(outgoing);
+        outgoing.put(b);
+      } else
+      {
+        if (outgoing.position() > 0)
+          flushTokens(outgoing);
+        processToken(match, null);
+      }
+      last = match;
+    }
   }
 
   /**
@@ -184,11 +198,21 @@ public class Parser<T>
   public interface Grammar
   {
 
-    public State initialState();
+    /**
+     * Should set the initial state.
+     *
+     * @param p
+     */
+    public void start(Parser p);
 
-    public void start();
-
-    public Object end();
+    /**
+     * Should check the state of the stack, fail if bad, or return the final
+     * object if good.
+     *
+     * @param p
+     * @return
+     */
+    public Object end(Parser p);
   }
 
   /**
@@ -198,7 +222,7 @@ public class Parser<T>
   {
 
     public Token token;
-    public Object content;
+    public Object value;
 
     private Entity(Token token)
     {
@@ -208,15 +232,15 @@ public class Parser<T>
     private Entity(Token token, String value)
     {
       this.token = token;
-      this.content = value;
+      this.value = value;
     }
 
     @Override
     public String toString()
     {
-      if (content == null)
+      if (value == null)
         return token.toString();
-      return content.toString();
+      return value.toString();
     }
   }
 

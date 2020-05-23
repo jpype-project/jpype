@@ -1,4 +1,4 @@
-package org.jpype.html;
+package org.jpype.javadoc;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,10 +52,4 @@ public class JavadocZip
     return root.resolve(fs.getPath("api", parts));
   }
 
-  public static void main(String[] args) throws IOException
-  {
-    JavadocZip zip = new JavadocZip(Paths.get("jdk-8u251-docs-all.zip"));
-    System.out.println(zip.getInputStream(java.math.BigInteger.class));
-
-  }
 }

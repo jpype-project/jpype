@@ -1,3 +1,4 @@
+import _jpype
 import jpype
 import sys
 from jpype.types import *
@@ -8,40 +9,57 @@ from java.nio.file import Paths, Files
 
 html = JClass("org.jpype.html.Html")
 hw = JClass("org.jpype.html.HtmlWriter")
-jdz = JClass("org.jpype.html.JavadocZip")(Paths.get("project/jpype_java/jdk-8u251-docs-all.zip"))
-jde = JClass("org.jpype.html.JavadocExtractor")
-#jip = jdz.getPath(JClass("java.lang.Double"))
-#lines = Files.readAllLines(jip)
-# for l in lines:
-#    print(l)
-# for k,v in html.ENTITIES.items():
-#    print(k, html.decode("&"+str(k)+";").charAt(0))
-#print(html.decode("public static&trade;double&nbsp;sum(double&nbsp;a,double&nbsp;b)"))
-# sys.exit(0)
+jdz = JClass("org.jpype.javadoc.JavadocZip")(Paths.get("project/jpype_java/jdk-8u251-docs-all.zip"))
+jde = JClass("org.jpype.javadoc.JavadocExtractor")
+jdf = JClass("org.jpype.javadoc.JavadocFormatter")()
+jdr = JClass("org.jpype.javadoc.JavadocRenderer")()
 
-jis = jdz.getInputStream(JClass("java.lang.Double"))
-jd = jde.extractStream(jis)
-print("=========================================================")
-print("Description:")
-print(jd.description)
-print("=========================================================")
-print("Ctors:")
-for c in jd.ctors:
-    print(c)
-print("---------------------------------------------------------")
+current = None
 
-print("=========================================================")
 
-print("Fields:")
-for c in jd.fields:
-    print(c)
-    print("---------------------------------------------------------")
+def renderClass(cls):
+    global current
+    jis = jdz.getInputStream(cls)
+    if jis is None:
+        return
 
-print("=========================================================")
+    print("=========================================================")
+    print("CLASS", cls)
+    jd = jde.extractStream(jis)
+    if jd.methods is not None:
+        for c in jd.methods:
+            current = c
+            jdf.transformMember(c)
+            print(jdr.renderMember(c))
+            print("---------------------------------------------------------")
 
-print("Methods:")
-for c in jd.methods:
-    print(hw.asString(jd.processNode(c)))
-    print("---------------------------------------------------------")
+    if jd.fields is not None:
+        for c in jd.fields:
+            current = c
+            jdf.transformMember(c)
+            print(jdr.renderMember(c))
+            print("---------------------------------------------------------")
+    print("=========================================================")
 
-print("=========================================================")
+
+def renderPackage(pkg):
+    print(type(pkg))
+    print(dir(pkg))
+    for i in dir(pkg):
+        p = getattr(pkg, i)
+        if isinstance(p, _jpype._JPackage):
+            renderPackage(p)
+            continue
+        if isinstance(p, jpype.JClass):
+            renderClass(p)
+
+
+jlang = jpype.JPackage("java")
+try:
+    renderPackage(jlang)
+except Exception as ex:
+    print("Error in")
+    print(hw.asString(current))
+    raise ex
+
+# print("=========================================================")

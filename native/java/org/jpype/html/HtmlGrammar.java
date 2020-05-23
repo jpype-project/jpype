@@ -6,40 +6,33 @@ import org.jpype.html.Parser.Rule;
 
 public class HtmlGrammar implements Parser.Grammar
 {
+  final static HtmlGrammar INSTANCE = new HtmlGrammar();
 
-  final HtmlHandler handler;
-
-  public HtmlGrammar(HtmlHandler handler)
+  private HtmlGrammar()
   {
-    this.handler = handler;
   }
 
   @Override
-  public Parser.State initialState()
+  public void start(Parser p)
   {
-    return State.FREE;
+    p.state = State.FREE;
+    ((HtmlParser) p).handler.startDocument();
   }
 
   @Override
-  public void start()
+  public Object end(Parser p)
   {
-    handler.startDocument();
-  }
-
-  @Override
-  public Object end()
-  {
-    handler.endDocument();
-    return handler.getResult();
+    ((HtmlParser) p).handler.endDocument();
+    return ((HtmlParser) p).handler.getResult();
   }
 
   // BeginElement does < </ and <! via lookhead
   static StringBuilder promote(Entity e)
   {
-    if (e.content != null && e.content instanceof StringBuilder)
-      return (StringBuilder) e.content;
+    if (e.value != null && e.value instanceof StringBuilder)
+      return (StringBuilder) e.value;
     StringBuilder sb = new StringBuilder(e.toString());
-    e.content = sb;
+    e.value = sb;
     e.token = Token.TEXT;
     return (StringBuilder) sb;
   }
@@ -51,7 +44,7 @@ public class HtmlGrammar implements Parser.Grammar
 
   static HtmlHandler getHandler(Parser p)
   {
-    return getGrammar(p).handler;
+    return ((HtmlParser) p).handler;
   }
 
   /**
@@ -68,7 +61,7 @@ public class HtmlGrammar implements Parser.Grammar
     {
       s.append(e.toString());
     }
-    handler.text(s.toString());
+    ((HtmlParser) parser).handler.text(s.toString());
     parser.stack.clear();
     parser.stack.add(last);
   }
@@ -137,6 +130,7 @@ public class HtmlGrammar implements Parser.Grammar
         value = (byte) s.charAt(0);
     }
 
+    @Override
     final public boolean matches(byte b)
     {
       if (value == 0)
@@ -150,6 +144,7 @@ public class HtmlGrammar implements Parser.Grammar
       return this == Token.TEXT;
     }
 
+    @Override
     public String toString()
     {
       if (text != null)
@@ -297,16 +292,16 @@ public class HtmlGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       LinkedList<Entity> stack = parser.stack;
-      Entity e2 = stack.removeLast();
+      stack.removeLast();
       Entity e1 = stack.removeLast();
-      Entity e0 = stack.removeLast();
-      String content = e1.content.toString();
+      stack.removeLast();
+      String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
-      int i = content.indexOf(' ');
-      if (i == -1)
+      String[] parts = content.split("\\s+", 2);
+      if (parts.length == 1)
         getHandler(parser).startElement(content, null);
       else
-        getHandler(parser).startElement(content.substring(0, i), content.substring(i).trim());
+        getHandler(parser).startElement(parts[0], parts[1]);
       parser.state = State.FREE;
     }
 
@@ -328,7 +323,7 @@ public class HtmlGrammar implements Parser.Grammar
       stack.removeLast(); // /
       Entity e1 = stack.removeLast();
       stack.removeLast(); // <
-      String content = e1.content.toString();
+      String content = e1.value.toString();
       stack.clear();
       int i = content.indexOf(" ");
 
@@ -362,7 +357,7 @@ public class HtmlGrammar implements Parser.Grammar
       Entity e2 = stack.removeLast();
       Entity e1 = stack.removeLast();
       Entity e0 = stack.removeLast();
-      String content = e1.content.toString();
+      String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).endElement(content);
       parser.state = State.FREE;
@@ -384,7 +379,7 @@ public class HtmlGrammar implements Parser.Grammar
       Entity e2 = stack.removeLast();
       Entity e1 = stack.removeLast();
       Entity e0 = stack.removeLast();
-      String content = e1.content.toString();
+      String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).directive(content);
       parser.state = State.FREE;
@@ -462,7 +457,7 @@ public class HtmlGrammar implements Parser.Grammar
         sb.append(e.toString());
       }
       stack.clear();
-      getGrammar(parser).handler.cdata(sb.toString());
+      ((HtmlParser) parser).handler.cdata(sb.toString());
       parser.state = State.FREE;
     }
   }
@@ -541,7 +536,7 @@ public class HtmlGrammar implements Parser.Grammar
         sb.append(e.toString());
       }
       stack.clear();
-      getGrammar(parser).handler.comment(sb.toString());
+      ((HtmlParser) parser).handler.comment(sb.toString());
       parser.state = State.FREE;
     }
   }

@@ -8,7 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import org.jpype.JPypeContext;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 
 public class Html
@@ -16,6 +19,7 @@ public class Html
 
   public final static HashSet<String> VOID_ELEMENTS = new HashSet<>();
   public final static HashSet<String> OPTIONAL_ELEMENTS = new HashSet<>();
+  public final static HashSet<String> OPTIONAL_CLOSE = new HashSet<>();
 
   static
   {
@@ -24,19 +28,16 @@ public class Html
             "input", "keygen", "link", "meta", "param", "source", "track", "wbr"));
     OPTIONAL_ELEMENTS.addAll(Arrays.asList("html", "head", "body", "p", "dt",
             "dd", "li", "option", "thead", "th", "tbody", "tr", "td", "tfoot", "colgroup"));
-
-  }
-
-  private static class HtmlParser extends Parser<Document>
-  {
-
-    HtmlHandler handler = new HtmlTreeHandler();
-    HtmlGrammar grammar = new HtmlGrammar(handler);
-    public HtmlParser()
-    {
-      super();
-      setGrammar(grammar);
-    }
+    OPTIONAL_CLOSE.addAll(Arrays.asList("li:li", "dt:dd",
+            "p:address", "p:article", "p:aside", "p:blockquote", "p:details",
+            "p:div", "p:dl", "p:fieldset", "p:figcaption", "p:figure",
+            "p:footer", "p:form", "p:h1", "p:h2", "p:h3", "p:h4", "p:h5", "p:h6",
+            "p:header", "p:hgroup", "p:hr", "p:main", "p:menu",
+            "p:nav", "p:ol", "p:p", "p:pre", "p:section", "p:table", "p:ul",
+            "dd:dt", "dd:dd", "dt:dt", "dt:dd", "rt:rt", "rt:rp", "rp:rt", "rp:rp",
+            "optgroup:optgroup", "option:option", "option:optiongroup", "thread:tbody",
+            "thread:tfoot", "tbody:tfoot", "tbody:tbody", "tr:tr", "td:td", "td:th",
+            "th:td"));
   }
 
   public static Parser<Document> newParser()
@@ -44,12 +45,20 @@ public class Html
     return new HtmlParser();
   }
 
-  //<editor-fold desc="decode" defaultstate="collapsed">
+  public static List<Attr> parseAttributes(Document doc, String str)
+  {
+    AttrParser p = new AttrParser(doc);
+    p.parse(str);
+    return p.attrs;
+  }
+
+//<editor-fold desc="decode" defaultstate="collapsed">
   public static Map<String, Integer> ENTITIES = new HashMap<>();
 
   static
   {
-    try (InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("org/jpype/html/entities.txt"))
+    try (InputStream is = JPypeContext.getInstance().getClass().getClassLoader()
+            .getResourceAsStream("org/jpype/html/entities.txt"))
     {
       BufferedReader rd = new BufferedReader(new InputStreamReader(is));
       while (true)
@@ -89,7 +98,7 @@ public class Html
       }
       int i3 = i;
       int c = 0;
-      if (b[i1] == '#')
+      if (b[i2] == '#')
       {
         i2++;
         c = Integer.parseInt(new String(b, i2, i3 - i2, StandardCharsets.UTF_8));
@@ -131,5 +140,4 @@ public class Html
     return new String(b2, StandardCharsets.UTF_8);
   }
 //</editor-fold>
-
 }

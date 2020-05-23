@@ -40,7 +40,6 @@ public class HtmlWriter implements Closeable
     }
   }
 
-
   public void write(Node n) throws IOException
   {
 
@@ -57,6 +56,9 @@ public class HtmlWriter implements Closeable
       case Node.ELEMENT_NODE:
         writeElement((Element) n);
         break;
+      case Node.DOCUMENT_FRAGMENT_NODE:
+        writeChildren(n);
+        break;
       case Node.TEXT_NODE:
         writeText((Text) n);
         break;
@@ -71,14 +73,13 @@ public class HtmlWriter implements Closeable
     }
   }
 
-  public void writeDocument(Document doc) throws IOException
+  public void writeChildren(Node doc) throws IOException
   {
     NodeList children = doc.getChildNodes();
     for (int i = 0; i < children.getLength(); ++i)
     {
       write(children.item(i));
     }
-    this.close();
   }
 
   public void writeDirective(ProcessingInstruction d) throws IOException
@@ -122,10 +123,7 @@ public class HtmlWriter implements Closeable
     } else
     {
       writer.write(">");
-      for (int i = 0; i < children.getLength(); ++i)
-      {
-        write(children.item(i));
-      }
+      writeChildren(e);
       writer.write("</");
       writer.write(name);
       writer.write(">");
