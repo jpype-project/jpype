@@ -33,6 +33,7 @@ import java.util.jar.JarInputStream;
  */
 public class JPypeClassLoader extends ClassLoader
 {
+
   static private JPypeClassLoader instance;
   private TreeMap<String, byte[]> map = new TreeMap<>();
 
@@ -77,7 +78,7 @@ public class JPypeClassLoader extends ClassLoader
    */
   public void importJar(byte[] bytes)
   {
-    try ( JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
+    try (JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
     {
       while (true)
       {
@@ -98,11 +99,7 @@ public class JPypeClassLoader extends ClassLoader
 
         // Store all classes we find
         String name = nextEntry.getName();
-        System.out.println("Found " + name);
-        //if (name.endsWith(".class"))
-        //{
-          importClass(name, data);
-        //}
+        importClass(name, data);
       }
     } catch (IOException ex)
     {
@@ -121,8 +118,8 @@ public class JPypeClassLoader extends ClassLoader
   @Override
   public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
-    name = name.replace('.', '/') + ".class";
-    byte[] data = map.get(name);
+    String mname = name.replace('.', '/') + ".class";
+    byte[] data = map.get(mname);
     if (data == null)
     {
       // Call the default implementation, throws ClassNotFoundException
@@ -147,7 +144,7 @@ public class JPypeClassLoader extends ClassLoader
     if (this.map.containsKey(s))
     {
       return new ByteArrayInputStream(this.map.get(s));
-      return super.getResourceAsStream(s);
     }
+    return super.getResourceAsStream(s);
   }
 }
