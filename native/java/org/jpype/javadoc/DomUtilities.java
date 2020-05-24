@@ -8,6 +8,8 @@ package org.jpype.javadoc;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
 
 public class DomUtilities
 {
@@ -214,6 +216,29 @@ public class DomUtilities
     while (source.hasChildNodes())
     {
       dest.appendChild(source.getFirstChild());
+    }
+  }
+
+  /**
+   * Traverse a node and replaces all extra whitespace with one space.
+   *
+   * This should be applied to any element where white space is not relevant.
+   *
+   * @param node
+   */
+  public static void removeWhitespace(Node node)
+  {
+    // merge text nodes
+    NodeList children = node.getChildNodes();
+    for (int i = 0; i < children.getLength(); ++i)
+    {
+      Node child = children.item(i);
+      if (child.getNodeType() != Node.TEXT_NODE)
+        continue;
+      Text t = (Text) child;
+      String c = t.getNodeValue();
+      c = c.replaceAll("\\s+", " ");
+      t.setNodeValue(c);
     }
   }
 

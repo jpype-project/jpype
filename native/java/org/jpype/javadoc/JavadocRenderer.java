@@ -46,8 +46,8 @@ public class JavadocRenderer
     }
     if (name.equals("signature"))
     {
-      assembly.append(node.getTextContent());
-      assembly.append("\n\n");
+      assembly.append(node.getTextContent())
+              .append("\n\n");
       return;
     }
     if (name.equals("description"))
@@ -58,6 +58,7 @@ public class JavadocRenderer
     if (name.equals("details"))
     {
       DomUtilities.traverseChildren(node, this::renderDetails, Node.ELEMENT_NODE);
+      assembly.append("\n");
       return;
     }
   }
@@ -69,27 +70,30 @@ public class JavadocRenderer
     {
       assembly.append('\n')
               .append(indentation(this.indentLevel))
-              .append("Args:")
-              .append('\n');
+              .append("Parameters:\n");
       DomUtilities.traverseChildren(node, this::renderParameter, Node.ELEMENT_NODE);
     } else if (name.equals("returns"))
     {
       assembly.append('\n')
               .append(indentation(this.indentLevel))
-              .append("Returns:")
-              .append('\n');
-      indentLevel += 4;
-      renderText(node, false, true);
-      indentLevel -= 4;
+              .append("Returns:\n");
+      indentLevel += 2;
+      renderText(node, true, true);
+      indentLevel -= 2;
     } else if (name.equals("throws"))
     {
       assembly.append('\n')
               .append(indentation(this.indentLevel))
-              .append("Raises:")
-              .append('\n');
-      indentLevel += 4;
+              .append("Raises:\n");
+      indentLevel += 2;
       DomUtilities.traverseChildren(node, this::renderThrow, Node.ELEMENT_NODE);
-      indentLevel -= 4;
+      indentLevel -= 2;
+    } else if (name.equals("see") || name.equals("overrides")
+            || name.equals("since") || name.equals("jls")
+            || name.equals("specified") || name.equals("version")
+            || name.equals("typeparams"))
+    {
+      // Skip these for now.
     } else
     {
       System.err.println("Need renderer for section " + name);
@@ -102,7 +106,9 @@ public class JavadocRenderer
     assembly.append(indentation(this.indentLevel))
             .append("  ")
             .append(elem.getAttribute("name"))
-            .append(": ");
+            .append(" (")
+            .append(elem.getAttribute("type"))
+            .append("): ");
     indentLevel += 4;
     renderText(node, false, true);
     indentLevel -= 4;
@@ -115,9 +121,9 @@ public class JavadocRenderer
             .append("  ")
             .append(elem.getAttribute("name"))
             .append(": ");
-    indentLevel += 4;
+    indentLevel += 2;
     renderText(node, false, true);
-    indentLevel -= 4;
+    indentLevel -= 2;
   }
 
   /**
@@ -212,8 +218,8 @@ public class JavadocRenderer
   {
     assembly.append("\n");
     renderText(node, true, true);
-    assembly.append(new String(new byte[node.getTextContent().length()]).replace('\0', '-'));
-    assembly.append("\n\n");
+    assembly.append(new String(new byte[node.getTextContent().length()]).replace('\0', '-'))
+            .append("\n\n");
   }
 
   void renderBlockQuote(Node node
@@ -269,8 +275,8 @@ public class JavadocRenderer
         continue;
       if (child.getNodeName().equals("li"))
       {
-        assembly.append(new String(new byte[indentLevel - 2]).replace('\u0000', ' '));
-        assembly.append("- ");
+        assembly.append(new String(new byte[indentLevel - 2]).replace('\u0000', ' '))
+                .append("- ");
         renderText(child, false, true);
       } else
         throw new RuntimeException("Bad node " + child.getNodeName() + " in UL");
@@ -284,8 +290,7 @@ public class JavadocRenderer
    *
    * @param node
    */
-  void renderDefinitions(Node node
-  )
+  void renderDefinitions(Node node)
   {
     Node child = node.getFirstChild();
     for (; child != null; child = child.getNextSibling())
@@ -299,6 +304,7 @@ public class JavadocRenderer
         renderText(child, true, true);
       } else if (name.equals("dd"))
       {
+        assembly.append(indentation(indentLevel));
         indentLevel += 4;
         assembly.append("  ");
         renderText(child, false, true);
@@ -312,16 +318,13 @@ public class JavadocRenderer
   void renderCodeBlock(Node node
   )
   {
-    assembly.append("\n");
-    assembly.append(".. code-block: java\n");
+    assembly.append("\n.. code-block: java\n");
     String text = node.getTextContent();
     String indent = indentation(indentLevel + 4);
     text.replaceAll("\n", "\n" + indent);
     if (text.charAt(0) != '\n')
       assembly.append("\n");
-    assembly.append(indent);
-    assembly.append(text);
-    assembly.append("\n");
+    assembly.append(indent).append(text).append("\n");
   }
 
 //<editor-fold desc="text-utilities" defaultstate="collapsed">

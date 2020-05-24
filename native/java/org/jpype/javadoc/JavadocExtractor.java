@@ -113,11 +113,11 @@ public class JavadocExtractor
       }
 
       Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail']")
-              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+              .evaluate(doc, XPathConstants.NODE));
       if (ctorRoot != null)
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(ctorRoot, XPathConstants.NODESET));
+                .evaluate(ctorRoot.getParentNode(), XPathConstants.NODESET));
         documentation.ctorsNode = set;
         StringBuilder sb = new StringBuilder();
         for (Node ctor : set)
@@ -131,11 +131,11 @@ public class JavadocExtractor
       }
 
       Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail']")
-              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+              .evaluate(doc, XPathConstants.NODE));
       if (methodRoot != null)
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(methodRoot, XPathConstants.NODESET));
+                .evaluate(methodRoot.getParentNode(), XPathConstants.NODESET));
         documentation.methodNodes = set;
         for (Node method : set)
         {
@@ -162,11 +162,11 @@ public class JavadocExtractor
 //        documentation.innerNode = convertNodes(set);
 //      }
       Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail']")
-              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+              .evaluate(doc, XPathConstants.NODE));
       if (fieldRoot != null)
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(fieldRoot, XPathConstants.NODESET));
+                .evaluate(fieldRoot.getParentNode(), XPathConstants.NODESET));
         documentation.fieldNodes = set;
         for (Node field : set)
         {

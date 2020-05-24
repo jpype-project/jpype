@@ -1,5 +1,12 @@
 package org.jpype.javadoc;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jpype.html.Html;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -18,12 +25,14 @@ import org.w3c.dom.Text;
 public class JavadocTransformer
 {
 
+  final static Pattern ARGS_PATTERN = Pattern.compile(".*\\((.*)\\).*");
+
   public Node transformDescription(Node node)
   {
     try
     {
       DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
-      DomUtilities.traverseChildren(node, this::descriptionTop, Node.ELEMENT_NODE, new DescData());
+      DomUtilities.traverseChildren(node, this::handleDescription, Node.ELEMENT_NODE, new DetailData());
       DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
       return node;
     } catch (Exception ex)
@@ -44,8 +53,8 @@ public class JavadocTransformer
   {
     try
     {
-      DomUtilities.traverseChildren(node, this::membersTop, Node.ELEMENT_NODE);
       DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
+      DomUtilities.traverseChildren(node, this::handleMembers, Node.ELEMENT_NODE, new DetailData());
       DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
       return node;
     } catch (Exception ex)
@@ -56,13 +65,13 @@ public class JavadocTransformer
   }
 
 //<editor-fold desc="members" defaultstate="description">
-  void descriptionTop(Node node, DescData d)
+  void handleDescription(Node node, DetailData data)
   {
     Element e = (Element) node;
     String name = e.getTagName();
     Document doc = e.getOwnerDocument();
     Node parent = node.getParentNode();
-    if (name.equals("dl") && !d.hr)
+    if (name.equals("dl") && !data.hr)
     {
       parent.removeChild(node);
     } else if (name.equals("br"))
@@ -70,11 +79,11 @@ public class JavadocTransformer
       parent.removeChild(node);
     } else if (name.equals("hr"))
     {
-      d.hr = true;
+      data.hr = true;
       parent.removeChild(node);
     } else if (name.equals("pre"))
     {
-      removeWhitespace(node);
+      DomUtilities.removeWhitespace(node);
       doc.renameNode(node, null, "signature");
     } else if (name.equals("div"))
     {
@@ -83,21 +92,17 @@ public class JavadocTransformer
     } else if (name.equals("dl"))
     {
       doc.renameNode(node, null, "details");
+      DomUtilities.traverseChildren(node, this::handleDetails,
+              Node.ELEMENT_NODE, data);
     } else
     {
       throw new RuntimeException("Unknown item at top level " + name);
     }
   }
 
-  static class DescData
-  {
-
-    boolean hr = false;
-  }
-
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-  void membersTop(Node node)
+  void handleMembers(Node node, DetailData data)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -108,8 +113,22 @@ public class JavadocTransformer
       doc.renameNode(node, null, "title");
     } else if (name.equals("pre"))
     {
-      removeWhitespace(node);
       doc.renameNode(node, null, "signature");
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      // We need to get the types from here for the parameters
+      DomUtilities.removeWhitespace(node);
+      String content = node.getTextContent();
+      Matcher m = ARGS_PATTERN.matcher(content);
+      if (m.matches())
+      {
+        LinkedList<String> types = new LinkedList<>();
+        for (String s : m.group(1).split(", "))
+        {
+          String[] parts = s.split("\u00a0", 2);
+          types.add(parts[0]);
+        }
+        data.types = types;
+      }
     } else if (name.equals("div"))
     {
       doc.renameNode(node, null, "description");
@@ -117,17 +136,36 @@ public class JavadocTransformer
     } else if (name.equals("dl"))
     {
       doc.renameNode(node, null, "details");
-      DomUtilities.traverseChildren(node, this::memberDetails,
-              Node.ELEMENT_NODE, new DetailData());
+      DomUtilities.traverseChildren(node, this::handleDetails,
+              Node.ELEMENT_NODE, data);
     } else
     {
       throw new RuntimeException("Unknown item at top level " + name);
     }
   }
 
-  void memberDetails(Node node, DetailData data)
+  public final static Map<String, String> DETAIL_SECTIONS;
+
+  static
   {
-    System.out.println("DETAILS " + node.getNodeName());
+    DETAIL_SECTIONS = new HashMap<>();
+    Map<String, String> ds = DETAIL_SECTIONS;
+    ds.put("Since:", "since");
+    ds.put("Parameters:", "parameters");
+    ds.put("Returns:", "returns");
+    ds.put("Overrides:", "overrides");
+    ds.put("See Also:", "see");
+    ds.put("API Note:", "api_note");
+    ds.put("Version:", "version");
+    ds.put("Type Parameters:", "typeparams");
+    ds.put("Specified by:", "specified");
+    ds.put("Throws:", "throws");
+    ds.put("Implementation Requirements:", "requirements");
+    ds.put("Implementation Note:", "impl_note");
+  }
+
+  void handleDetails(Node node, DetailData data)
+  {
     Element e = (Element) node;
     String name = e.getTagName();
     Document doc = e.getOwnerDocument();
@@ -135,30 +173,12 @@ public class JavadocTransformer
     if (name.equals("dt"))
     {
       String key = node.getTextContent().trim();
-      if (key.equals("Since:"))
+      if (DETAIL_SECTIONS.containsKey(key))
       {
-        doc.renameNode(node, null, "since");
-      } else if (key.equals("Parameters:"))
-      {
-        doc.renameNode(node, null, "parameters");
-      } else if (key.equals("Returns:"))
-      {
-        doc.renameNode(node, null, "returns");
-      } else if (key.equals("Overrides:"))
-      {
-        doc.renameNode(node, null, "overrides");
-      } else if (key.equals("See Also:"))
-      {
-        doc.renameNode(node, null, "see");
+        doc.renameNode(node, null, DETAIL_SECTIONS.get(key));
       } else if (key.startsWith("See "))
       {
         doc.renameNode(node, null, "jls");
-      } else if (key.equals("Specified by:"))
-      {
-        doc.renameNode(node, null, "specified");
-      } else if (key.equals("Throws:"))
-      {
-        doc.renameNode(node, null, "throws");
       } else
       {
         throw new RuntimeException("Bad detail key '" + key + "'");
@@ -169,40 +189,43 @@ public class JavadocTransformer
     }
     if (name.equals("dd"))
     {
-      System.out.println("TRANSFORM " + data.key);
-      if (data.key.equals("since") || data.key.equals("returns") || data.key.equals("jls")
-              || data.key.equals("see") || data.key.equals("overrides"))
-      {
-        DomUtilities.transferContents(data.section, node);
-        parent.removeChild(node);
-        return;
-      }
       if (data.key.equals("parameters"))
       {
         Node first = node.getFirstChild(); // First is <code>varname</code>
         Node second = first.getNextSibling(); // Second is " - desc"
         Element elem = doc.createElement("parameter");
         elem.setAttribute("name", first.getTextContent());
+        elem.setAttribute("type", data.types.removeFirst());
         String value = second.getNodeValue();
         second.setNodeValue(value.substring(3)); // Remove " - "
         node.removeChild(first);
         DomUtilities.transferContents(elem, node);
         data.section.appendChild(elem);
         parent.removeChild(node);
-      }
-      if (data.key.equals("throws"))
+      } else if (data.key.equals("throws"))
       {
         Node first = node.getFirstChild(); // First is <code><a>exc</a></code>
         Node second = first.getNextSibling(); // Second is " - desc"
         Element elem = doc.createElement("exception");
         DomUtilities.traverseDFS(first, this::pass1, Node.ELEMENT_NODE);
         elem.setAttribute("name", first.getTextContent());
-        String value = second.getNodeValue();
-        second.setNodeValue(value.substring(3)); // Remove " - "
+        if (second != null)
+        {
+          String value = second.getNodeValue();
+          second.setNodeValue(value.substring(3)); // Remove " - "
+        }
         node.removeChild(first);
         DomUtilities.transferContents(elem, node);
         data.section.appendChild(elem);
         parent.removeChild(node);
+      } else
+      {
+        // Normalize the node and transfer it to the section
+        DomUtilities.transferContents(data.section, node);
+        DomUtilities.traverseDFS(data.section, this::pass1, Node.ELEMENT_NODE);
+        DomUtilities.removeWhitespace(data.section);
+        parent.removeChild(node);
+        return;
       }
     }
   }
@@ -210,8 +233,10 @@ public class JavadocTransformer
   static class DetailData
   {
 
+    boolean hr = false;
     String key;
     Node section;
+    private LinkedList<String> types;
   }
 
 //</editor-fold>
@@ -238,14 +263,19 @@ public class JavadocTransformer
     "em", "*%s*",
     "strong", "**%s**",
     "b", "**%s**",
-    "sup", ":sup:`%s`",
-    "sub", ":sub:`%s`",
+    "sup", " :sup:`%s` ",
+    "sub", " :sub:`%s` ",
     "small", ":sub:`%s`",
     "span", "%s",
     "nop", "%s",
     "font", "%s",
     "var", "*%s*",
   };
+
+  final static HashSet<String> COMPACT_WS = new HashSet(Arrays.asList(new String[]
+  {
+    "dd", "p", "description", "li", "dt", "parameter", "exception"
+  }));
 
   /**
    * Get a bunch of simple substitutions.
@@ -341,35 +371,10 @@ public class JavadocTransformer
     }
 
     // These elements need to be stripped of whitespace.
-    if (name.equals("dd") || name.equals("p")
-            || name.equals("description") || name.equals("li")
-            || name.equals("dt"))
+    if (COMPACT_WS.contains(name))
     {
       DomUtilities.combineText(node);
-      removeWhitespace(node);
-    }
-  }
-
-  /**
-   * Traverse a node and replaces all extra whitespace with one space.
-   *
-   * This should be applied to any element where white space is not relevant.
-   *
-   * @param node
-   */
-  static void removeWhitespace(Node node)
-  {
-    // merge text nodes
-    NodeList children = node.getChildNodes();
-    for (int i = 0; i < children.getLength(); ++i)
-    {
-      Node child = children.item(i);
-      if (child.getNodeType() != Node.TEXT_NODE)
-        continue;
-      Text t = (Text) child;
-      String c = t.getNodeValue();
-      c = c.replaceAll("\\s+", " ");
-      t.setNodeValue(c);
+      DomUtilities.removeWhitespace(node);
     }
   }
 
