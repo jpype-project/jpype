@@ -1,8 +1,8 @@
 package org.jpype.javadoc;
 
-import java.util.Arrays;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -11,7 +11,6 @@ import org.jpype.html.Html;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
 /**
@@ -27,13 +26,14 @@ public class JavadocTransformer
 
   final static Pattern ARGS_PATTERN = Pattern.compile(".*\\((.*)\\).*");
 
-  public Node transformDescription(Node node)
+  public Node transformDescription(Class cls, Node node)
   {
     try
     {
+      Workspace ws = new Workspace(cls);
       DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
-      DomUtilities.traverseChildren(node, this::handleDescription, Node.ELEMENT_NODE, new DetailData());
-      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      DomUtilities.traverseChildren(node, this::handleDescription, Node.ELEMENT_NODE, ws);
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE, ws);
       return node;
     } catch (Exception ex)
     {
@@ -49,13 +49,14 @@ public class JavadocTransformer
    *
    * @param node
    */
-  public Node transformMember(Node node)
+  public Node transformMember(Class cls, Node node)
   {
     try
     {
+      Workspace ws = new Workspace(cls);
       DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
-      DomUtilities.traverseChildren(node, this::handleMembers, Node.ELEMENT_NODE, new DetailData());
-      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      DomUtilities.traverseChildren(node, this::handleMembers, Node.ELEMENT_NODE, ws);
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE, ws);
       return node;
     } catch (Exception ex)
     {
@@ -65,7 +66,7 @@ public class JavadocTransformer
   }
 
 //<editor-fold desc="members" defaultstate="description">
-  void handleDescription(Node node, DetailData data)
+  void handleDescription(Node node, Workspace data)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -102,7 +103,7 @@ public class JavadocTransformer
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-  void handleMembers(Node node, DetailData data)
+  void handleMembers(Node node, Workspace ws)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -114,7 +115,7 @@ public class JavadocTransformer
     } else if (name.equals("pre"))
     {
       doc.renameNode(node, null, "signature");
-      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE, ws);
       // We need to get the types from here for the parameters
       DomUtilities.removeWhitespace(node);
       String content = node.getTextContent();
@@ -127,7 +128,7 @@ public class JavadocTransformer
           String[] parts = s.split("\u00a0", 2);
           types.add(parts[0]);
         }
-        data.types = types;
+        ws.types = types;
       }
     } else if (name.equals("div"))
     {
@@ -137,7 +138,7 @@ public class JavadocTransformer
     {
       doc.renameNode(node, null, "details");
       DomUtilities.traverseChildren(node, this::handleDetails,
-              Node.ELEMENT_NODE, data);
+              Node.ELEMENT_NODE, ws);
     } else
     {
       throw new RuntimeException("Unknown item at top level " + name);
@@ -164,7 +165,7 @@ public class JavadocTransformer
     ds.put("Implementation Note:", "impl_note");
   }
 
-  void handleDetails(Node node, DetailData data)
+  void handleDetails(Node node, Workspace ws)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -183,31 +184,31 @@ public class JavadocTransformer
       {
         throw new RuntimeException("Bad detail key '" + key + "'");
       }
-      data.key = node.getNodeName();
-      data.section = node;
-      DomUtilities.clearChildren(data.section);
+      ws.key = node.getNodeName();
+      ws.section = node;
+      DomUtilities.clearChildren(ws.section);
     }
     if (name.equals("dd"))
     {
-      if (data.key.equals("parameters"))
+      if (ws.key.equals("parameters"))
       {
         Node first = node.getFirstChild(); // First is <code>varname</code>
         Node second = first.getNextSibling(); // Second is " - desc"
         Element elem = doc.createElement("parameter");
         elem.setAttribute("name", first.getTextContent());
-        elem.setAttribute("type", data.types.removeFirst());
+        elem.setAttribute("type", ws.types.removeFirst());
         String value = second.getNodeValue();
         second.setNodeValue(value.substring(3)); // Remove " - "
         node.removeChild(first);
         DomUtilities.transferContents(elem, node);
-        data.section.appendChild(elem);
+        ws.section.appendChild(elem);
         parent.removeChild(node);
-      } else if (data.key.equals("throws"))
+      } else if (ws.key.equals("throws"))
       {
         Node first = node.getFirstChild(); // First is <code><a>exc</a></code>
         Node second = first.getNextSibling(); // Second is " - desc"
         Element elem = doc.createElement("exception");
-        DomUtilities.traverseDFS(first, this::pass1, Node.ELEMENT_NODE);
+        DomUtilities.traverseDFS(first, this::pass1, Node.ELEMENT_NODE, ws);
         elem.setAttribute("name", first.getTextContent());
         if (second != null)
         {
@@ -216,27 +217,33 @@ public class JavadocTransformer
         }
         node.removeChild(first);
         DomUtilities.transferContents(elem, node);
-        data.section.appendChild(elem);
+        ws.section.appendChild(elem);
         parent.removeChild(node);
       } else
       {
         // Normalize the node and transfer it to the section
-        DomUtilities.transferContents(data.section, node);
-        DomUtilities.traverseDFS(data.section, this::pass1, Node.ELEMENT_NODE);
-        DomUtilities.removeWhitespace(data.section);
+        DomUtilities.transferContents(ws.section, node);
+        DomUtilities.traverseDFS(ws.section, this::pass1, Node.ELEMENT_NODE, ws);
+        DomUtilities.removeWhitespace(ws.section);
         parent.removeChild(node);
         return;
       }
     }
   }
 
-  static class DetailData
+  static class Workspace
   {
 
+    private final Class cls;
     boolean hr = false;
     String key;
     Node section;
     private LinkedList<String> types;
+
+    Workspace(Class cls)
+    {
+      this.cls = cls;
+    }
   }
 
 //</editor-fold>
@@ -272,17 +279,12 @@ public class JavadocTransformer
     "var", "*%s*",
   };
 
-  final static HashSet<String> COMPACT_WS = new HashSet(Arrays.asList(new String[]
-  {
-    "dd", "p", "description", "li", "dt", "parameter", "exception"
-  }));
-
   /**
    * Get a bunch of simple substitutions.
    *
    * @param node
    */
-  void pass1(Node node)
+  void pass1(Node node, Workspace ws)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -322,7 +324,7 @@ public class JavadocTransformer
     if (name.equals("code") && parent.getNodeName().equals("a"))
     {
       Element eparent = (Element) parent;
-      String href = this.toReference(eparent.getAttribute("href"));
+      String href = this.toReference(ws, eparent.getAttribute("href"));
       DomUtilities.clearChildren(parent);
       parent.appendChild(doc.createTextNode(href));
       return;
@@ -331,7 +333,7 @@ public class JavadocTransformer
     // <code><a> is also used.
     if (name.equals("a") && parent.getNodeName().equals("code"))
     {
-      String href = this.toReference(e.getAttribute("href"));
+      String href = this.toReference(ws, e.getAttribute("href"));
       DomUtilities.clearChildren(parent);
       doc.renameNode(parent, null, "nop");
       parent.appendChild(doc.createTextNode(href));
@@ -349,13 +351,11 @@ public class JavadocTransformer
         parent.replaceChild(doc.createTextNode(content), node);
         return;
       }
-      if (!href.startsWith(".."))
-      {
+      href = this.toReference(ws, href);
+      if (href == null)
         parent.replaceChild(doc.createTextNode(node.getTextContent()), node);
-        return;
-      }
-      href = this.toReference(href);
-      parent.replaceChild(doc.createTextNode(href), node);
+      else
+        parent.replaceChild(doc.createTextNode(href), node);
       return;
     }
 
@@ -370,34 +370,53 @@ public class JavadocTransformer
       }
     }
 
-    // These elements need to be stripped of whitespace.
-    if (COMPACT_WS.contains(name))
-    {
-      DomUtilities.combineText(node);
-      DomUtilities.removeWhitespace(node);
-    }
   }
 
   /**
    * Convert a reference into method or class.
    *
+   * @param ws
    * @param href
    * @return
    */
-  public String toReference(String href)
+  public String toReference(Workspace ws, String href)
   {
-    href = href.replaceAll("\\.\\.\\/", "");
-    href = href.replace('/', '.');
-    if (href.contains("#"))
+    Path p = Paths.get(ws.cls.getName().replace('.', '/'));
+    if (href.startsWith("#"))
     {
       // technically it may be a field, but we can't tell currently.
-      href = href.replaceAll("-.*", "");
-      href = href.replace(".html#", ".");
-      return String.format(":meth:`~%s`", href.trim());
+      String q = p.resolve(href.substring(1).trim())
+              .normalize()
+              .toString()
+              .replace('/', '.')
+              .replaceAll("\\(.*\\)", "")
+              .replaceAll("-.*", "");
+//      System.out.println("PATH1 " + q);
+      return String.format(":meth:`~%s`", q);
+    } else if (href.contains("#"))
+    {
+      // technically it may be a field, but we can't tell currently.
+      String q = p.getParent()
+              .resolve(href.trim())
+              .normalize()
+              .toString()
+              .replace('/', '.')
+              .replaceAll("\\(.*\\)", "")
+              .replaceAll("-.*", "")
+              .replaceAll(".html#", ".");
+//      System.out.println("PATH2 " + q);
+      return String.format(":meth:`~%s`", q);
     } else
     {
-      href = href.replaceAll("\\.html$", "");
-      return String.format(":class:`~%s`", href.trim());
+      String q = p.getParent()
+              .resolve(href.trim())
+              .normalize()
+              .toString()
+              .replace('/', '.')
+              .replaceAll("-.*", "")
+              .replaceAll(".html", "");
+//      System.out.println("PATH3 " + q);
+      return String.format(":class:`~%s`", q);
     }
   }
 //</editor-fold>

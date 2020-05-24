@@ -2,8 +2,8 @@ package org.jpype.javadoc;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import javax.xml.xpath.XPath;
@@ -34,22 +34,13 @@ public class JavadocExtractor
   {
     try
     {
-      String name = cls.getName().replace('.', '/') + ".html";
-      ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-      // Search the regular class path.
-      try (InputStream is = cl.getResourceAsStream(name))
+      try (InputStream is = getDocumentationAsStream(cls))
       {
         if (is != null)
-          return extractStream(is);
-      }
-
-      // Search for api documents
-      name = "docs/api/" + name;
-      try (InputStream is = cl.getResourceAsStream(name))
-      {
-        if (is != null)
-          return extractStream(is);
+        {
+          Parser<Document> parser = Html.newParser();
+          return extractDocument(cls, parser.parse(is));
+        }
       }
     } catch (IOException ex)
     {
@@ -59,43 +50,50 @@ public class JavadocExtractor
     return null;
   }
 
-  /**
-   * Extract the documentation from a Path.
-   *
-   * @param path
-   * @return
-   */
-  public static Javadoc extractPath(Path path)
+  public static InputStream getDocumentationAsStream(Class cls)
   {
-    try (InputStream is = Files.newInputStream(path))
-    {
-      Parser<Document> parser = Html.newParser();
-      return extractDocument(parser.parse(is));
-    } catch (Exception ex)
-    {
-      return null;
-    }
-  }
+    InputStream is = null;
+    String name = cls.getName().replace('.', '/') + ".html";
+    ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-  /**
-   * Extract the documentation from a stream.
-   *
-   * @param is
-   * @return
-   */
-  public static Javadoc extractStream(InputStream is)
-  {
-    Parser<Document> parser = Html.newParser();
-    return extractDocument(parser.parse(is));
+    // Search the regular class path.
+    is = cl.getResourceAsStream(name);
+    if (is != null)
+      return is;
+
+    // Search for api documents
+    String name1 = "docs/api/" + name;
+    System.out.println("Try " + name1);
+    is = cl.getResourceAsStream(name1);
+    if (is != null)
+      return is;
+
+    // If we are dealing with Java 9+, the doc tree is different
+    try
+    {
+      Method meth = Class.class.getMethod("getModule");
+      String module = meth.invoke(cls).toString().substring(7);
+      String name2 = "docs/api/" + module + "/" + name;
+      System.out.println("Try " + name2);
+      is = cl.getResourceAsStream(name2);
+      if (is != null)
+        return is;
+    } catch (NoSuchMethodException | SecurityException | IllegalAccessException
+            | IllegalArgumentException | InvocationTargetException ex)
+    {
+      // do nothing if we are not JDK 9+
+    }
+    return null;
   }
 
   /**
    * Extract the documentation from the dom.
    *
-   * @param doc
+   * @param cls is the class being processed.
+   * @param doc is the DOM holding the javadoc.
    * @return
    */
-  public static Javadoc extractDocument(Document doc)
+  public static Javadoc extractDocument(Class cls, Document doc)
   {
     JavadocRenderer renderer = new JavadocRenderer();
     try
@@ -107,12 +105,12 @@ public class JavadocExtractor
       {
         documentation.descriptionNode = description;
         if (transform)
-          transformer.transformDescription(description);
+          transformer.transformDescription(cls, description);
         if (render)
           documentation.description = renderer.render(description);
       }
 
-      Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail']")
+      Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail' or @id='constructor.detail']")
               .evaluate(doc, XPathConstants.NODE));
       if (ctorRoot != null)
       {
@@ -123,14 +121,14 @@ public class JavadocExtractor
         for (Node ctor : set)
         {
           if (transform)
-            transformer.transformMember(ctor);
+            transformer.transformMember(cls, ctor);
           if (render)
             sb.append(renderer.render(ctor));
         }
         documentation.ctors = sb.toString();
       }
 
-      Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail']")
+      Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail' or  @id='method.detail']")
               .evaluate(doc, XPathConstants.NODE));
       if (methodRoot != null)
       {
@@ -140,7 +138,7 @@ public class JavadocExtractor
         for (Node method : set)
         {
           if (transform)
-            transformer.transformMember(method);
+            transformer.transformMember(cls, method);
           if (render)
           {
             String str = renderer.render(method);
@@ -161,7 +159,7 @@ public class JavadocExtractor
 //        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(inner.getParentNode(), XPathConstants.NODESET);
 //        documentation.innerNode = convertNodes(set);
 //      }
-      Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail']")
+      Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail' or @id='field.detail']")
               .evaluate(doc, XPathConstants.NODE));
       if (fieldRoot != null)
       {
@@ -171,7 +169,7 @@ public class JavadocExtractor
         for (Node field : set)
         {
           if (transform)
-            transformer.transformMember(field);
+            transformer.transformMember(cls, field);
           if (render)
           {
             String str = renderer.render(field);

@@ -137,6 +137,8 @@ public class JavadocRenderer
   void renderText(Node node, boolean startIndent, boolean trailingNL
   )
   {
+    DomUtilities.combineText(node);
+    DomUtilities.removeWhitespace(node);
     Node child = node.getFirstChild();
     for (; child != null; child = child.getNextSibling())
     {

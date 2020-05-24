@@ -3,7 +3,7 @@ import jpype
 import sys
 from jpype.types import *
 import jpype.imports
-jpype.startJVM(classpath=['project/jpype_java/dist/*', 'project/jpype_java/jdk-8u251-docs-all.zip'])
+jpype.startJVM(classpath=['project/jpype_java/dist/*', 'project/jpype_java/jdk-11.0.7_doc-all.zip'])
 
 import org
 from java.nio.file import Paths, Files
