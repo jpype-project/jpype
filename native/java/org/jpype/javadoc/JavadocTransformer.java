@@ -18,15 +18,18 @@ import org.w3c.dom.Text;
 public class JavadocTransformer
 {
 
-  boolean hr = false;
-
   public Node transformDescription(Node node)
   {
-    hr = false;
-    DomUtilities.traverseChildren(node, this::descriptionTop, Node.ELEMENT_NODE);
-    DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
-    DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
-    return node;
+    try
+    {
+      DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
+      DomUtilities.traverseChildren(node, this::descriptionTop, Node.ELEMENT_NODE, new DescData());
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      return node;
+    } catch (Exception ex)
+    {
+      throw new JavadocException(node, ex);
+    }
   }
 
   /**
@@ -39,20 +42,27 @@ public class JavadocTransformer
    */
   public Node transformMember(Node node)
   {
-    DomUtilities.traverseChildren(node, this::membersTop, Node.ELEMENT_NODE);
-    DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
-    DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
-    return node;
+    try
+    {
+      DomUtilities.traverseChildren(node, this::membersTop, Node.ELEMENT_NODE);
+      DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
+      DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+      return node;
+    } catch (Exception ex)
+    {
+      throw new JavadocException(node, ex);
+    }
+
   }
 
 //<editor-fold desc="members" defaultstate="description">
-  public void descriptionTop(Node node)
+  void descriptionTop(Node node, DescData d)
   {
     Element e = (Element) node;
     String name = e.getTagName();
     Document doc = e.getOwnerDocument();
     Node parent = node.getParentNode();
-    if (name.equals("dl") && !hr)
+    if (name.equals("dl") && !d.hr)
     {
       parent.removeChild(node);
     } else if (name.equals("br"))
@@ -60,7 +70,7 @@ public class JavadocTransformer
       parent.removeChild(node);
     } else if (name.equals("hr"))
     {
-      hr = true;
+      d.hr = true;
       parent.removeChild(node);
     } else if (name.equals("pre"))
     {
@@ -78,10 +88,16 @@ public class JavadocTransformer
       throw new RuntimeException("Unknown item at top level " + name);
     }
   }
+
+  static class DescData
+  {
+
+    boolean hr = false;
+  }
+
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-
-  public void membersTop(Node node)
+  void membersTop(Node node)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -101,10 +117,101 @@ public class JavadocTransformer
     } else if (name.equals("dl"))
     {
       doc.renameNode(node, null, "details");
+      DomUtilities.traverseChildren(node, this::memberDetails,
+              Node.ELEMENT_NODE, new DetailData());
     } else
     {
       throw new RuntimeException("Unknown item at top level " + name);
     }
+  }
+
+  void memberDetails(Node node, DetailData data)
+  {
+    System.out.println("DETAILS " + node.getNodeName());
+    Element e = (Element) node;
+    String name = e.getTagName();
+    Document doc = e.getOwnerDocument();
+    Node parent = e.getParentNode();
+    if (name.equals("dt"))
+    {
+      String key = node.getTextContent().trim();
+      if (key.equals("Since:"))
+      {
+        doc.renameNode(node, null, "since");
+      } else if (key.equals("Parameters:"))
+      {
+        doc.renameNode(node, null, "parameters");
+      } else if (key.equals("Returns:"))
+      {
+        doc.renameNode(node, null, "returns");
+      } else if (key.equals("Overrides:"))
+      {
+        doc.renameNode(node, null, "overrides");
+      } else if (key.equals("See Also:"))
+      {
+        doc.renameNode(node, null, "see");
+      } else if (key.startsWith("See "))
+      {
+        doc.renameNode(node, null, "jls");
+      } else if (key.equals("Specified by:"))
+      {
+        doc.renameNode(node, null, "specified");
+      } else if (key.equals("Throws:"))
+      {
+        doc.renameNode(node, null, "throws");
+      } else
+      {
+        throw new RuntimeException("Bad detail key '" + key + "'");
+      }
+      data.key = node.getNodeName();
+      data.section = node;
+      DomUtilities.clearChildren(data.section);
+    }
+    if (name.equals("dd"))
+    {
+      System.out.println("TRANSFORM " + data.key);
+      if (data.key.equals("since") || data.key.equals("returns") || data.key.equals("jls")
+              || data.key.equals("see") || data.key.equals("overrides"))
+      {
+        DomUtilities.transferContents(data.section, node);
+        parent.removeChild(node);
+        return;
+      }
+      if (data.key.equals("parameters"))
+      {
+        Node first = node.getFirstChild(); // First is <code>varname</code>
+        Node second = first.getNextSibling(); // Second is " - desc"
+        Element elem = doc.createElement("parameter");
+        elem.setAttribute("name", first.getTextContent());
+        String value = second.getNodeValue();
+        second.setNodeValue(value.substring(3)); // Remove " - "
+        node.removeChild(first);
+        DomUtilities.transferContents(elem, node);
+        data.section.appendChild(elem);
+        parent.removeChild(node);
+      }
+      if (data.key.equals("throws"))
+      {
+        Node first = node.getFirstChild(); // First is <code><a>exc</a></code>
+        Node second = first.getNextSibling(); // Second is " - desc"
+        Element elem = doc.createElement("exception");
+        DomUtilities.traverseDFS(first, this::pass1, Node.ELEMENT_NODE);
+        elem.setAttribute("name", first.getTextContent());
+        String value = second.getNodeValue();
+        second.setNodeValue(value.substring(3)); // Remove " - "
+        node.removeChild(first);
+        DomUtilities.transferContents(elem, node);
+        data.section.appendChild(elem);
+        parent.removeChild(node);
+      }
+    }
+  }
+
+  static class DetailData
+  {
+
+    String key;
+    Node section;
   }
 
 //</editor-fold>
@@ -114,7 +221,7 @@ public class JavadocTransformer
    *
    * @param node
    */
-  public void fixEntities(Node node)
+  void fixEntities(Node node)
   {
     Text n = (Text) node;
     String s = Html.decode(n.getTextContent());
@@ -145,7 +252,7 @@ public class JavadocTransformer
    *
    * @param node
    */
-  public void pass1(Node node)
+  void pass1(Node node)
   {
     Element e = (Element) node;
     String name = e.getTagName();
@@ -250,7 +357,7 @@ public class JavadocTransformer
    *
    * @param node
    */
-  public static void removeWhitespace(Node node)
+  static void removeWhitespace(Node node)
   {
     // merge text nodes
     NodeList children = node.getChildNodes();
@@ -281,7 +388,7 @@ public class JavadocTransformer
       // technically it may be a field, but we can't tell currently.
       href = href.replaceAll("-.*", "");
       href = href.replace(".html#", ".");
-      return String.format(":method:`~%s`", href.trim());
+      return String.format(":meth:`~%s`", href.trim());
     } else
     {
       href = href.replaceAll("\\.html$", "");

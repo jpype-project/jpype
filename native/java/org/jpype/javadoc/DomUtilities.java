@@ -5,6 +5,7 @@ package org.jpype.javadoc;
  *
  * DOM leaves a lot of basic stuff incomplete.
  */
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.w3c.dom.Node;
 
@@ -59,6 +60,61 @@ public class DomUtilities
       Node next = child.getNextSibling();
       if (child.getNodeType() == type)
         operator.accept(child);
+
+      // Proceed.
+      child = next;
+    }
+  }
+
+  /**
+   * Traverse all children in depth first order applying an operation.
+   *
+   * This is hardened against some level of DOM changes.
+   *
+   * @param node
+   * @param operator
+   * @param type
+   */
+  public static <T> void traverseDFS(Node node,
+          BiConsumer<Node, T> operator, short type, T data)
+  {
+    Node child = node.getFirstChild();
+    while (child != null)
+    {
+      // Get a referent to what we are processing next in case the tree changes.
+      Node next = child.getNextSibling();
+
+      // Apply transforms to children first
+      if (child.getNodeType() == Node.ELEMENT_NODE)
+        traverseDFS(child, operator, type, data);
+
+      // Then process the outer element
+      if (child.getNodeType() == type)
+        operator.accept(child, data);
+
+      // Proceed
+      child = next;
+    }
+  }
+
+  /**
+   * Traverse the children of a node applying an operation.
+   *
+   * This is hardened against some level of DOM changes.
+   *
+   * @param node
+   * @param operator
+   * @param type
+   */
+  public static <T> void traverseChildren(Node node, BiConsumer<Node, T> operator, short type, T data)
+  {
+    Node child = node.getFirstChild();
+    while (child != null)
+    {
+      // Get the next node to process in case this one is changed or removed.
+      Node next = child.getNextSibling();
+      if (child.getNodeType() == type)
+        operator.accept(child, data);
 
       // Proceed.
       child = next;
@@ -151,6 +207,14 @@ public class DomUtilities
       parent.insertBefore(node.getFirstChild(), node);
     }
     parent.removeChild(node);
+  }
+
+  static void transferContents(Node dest, Node source)
+  {
+    while (source.hasChildNodes())
+    {
+      dest.appendChild(source.getFirstChild());
+    }
   }
 
 }

@@ -20,9 +20,53 @@ import org.w3c.dom.NodeList;
 public class JavadocExtractor
 {
 
-  public static Javadoc extract(Path path)
+  static final JavadocTransformer transformer = new JavadocTransformer();
+  static public boolean transform = true;
+  static public boolean render = true;
+
+  /**
+   * Search the classpath for documentation.
+   *
+   * @param cls
+   * @return
+   */
+  public static Javadoc getDocumentation(Class cls)
   {
-    Document doc;
+    try
+    {
+      String name = cls.getName().replace('.', '/') + ".html";
+      ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+      // Search the regular class path.
+      try (InputStream is = cl.getResourceAsStream(name))
+      {
+        if (is != null)
+          return extractStream(is);
+      }
+
+      // Search for api documents
+      name = "docs/api/" + name;
+      try (InputStream is = cl.getResourceAsStream(name))
+      {
+        if (is != null)
+          return extractStream(is);
+      }
+    } catch (IOException ex)
+    {
+      System.out.println("Failed to extract javadoc");
+      throw new RuntimeException(ex);
+    }
+    return null;
+  }
+
+  /**
+   * Extract the documentation from a Path.
+   *
+   * @param path
+   * @return
+   */
+  public static Javadoc extractPath(Path path)
+  {
     try (InputStream is = Files.newInputStream(path))
     {
       Parser<Document> parser = Html.newParser();
@@ -33,60 +77,115 @@ public class JavadocExtractor
     }
   }
 
+  /**
+   * Extract the documentation from a stream.
+   *
+   * @param is
+   * @return
+   */
   public static Javadoc extractStream(InputStream is)
   {
     Parser<Document> parser = Html.newParser();
     return extractDocument(parser.parse(is));
   }
 
+  /**
+   * Extract the documentation from the dom.
+   *
+   * @param doc
+   * @return
+   */
   public static Javadoc extractDocument(Document doc)
   {
+    JavadocRenderer renderer = new JavadocRenderer();
     try
     {
       Javadoc documentation = new Javadoc();
       XPath xPath = XPathFactory.newInstance().newXPath();
-      Node description = (Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE);
+      Node description = toFragment((Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE));
       if (description != null)
       {
-        documentation.description = description;
+        documentation.descriptionNode = description;
+        if (transform)
+          transformer.transformDescription(description);
+        if (render)
+          documentation.description = renderer.render(description);
       }
 
-      Node ctors = (Node) xPath.compile("//li/a[@name='constructor.detail']").evaluate(doc, XPathConstants.NODE);
-      if (ctors != null)
+      Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail']")
+              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+      if (ctorRoot != null)
       {
-        documentation.ctors = new ArrayList<>();
-        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(ctors.getParentNode(), XPathConstants.NODESET);
-        for (int i = 0; i < set.getLength(); ++i)
+        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
+                .evaluate(ctorRoot, XPathConstants.NODESET));
+        documentation.ctorsNode = set;
+        StringBuilder sb = new StringBuilder();
+        for (Node ctor : set)
         {
-          documentation.ctors.add(set.item(i));
+          if (transform)
+            transformer.transformMember(ctor);
+          if (render)
+            sb.append(renderer.render(ctor));
+        }
+        documentation.ctors = sb.toString();
+      }
+
+      Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail']")
+              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+      if (methodRoot != null)
+      {
+        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
+                .evaluate(methodRoot, XPathConstants.NODESET));
+        documentation.methodNodes = set;
+        for (Node method : set)
+        {
+          if (transform)
+            transformer.transformMember(method);
+          if (render)
+          {
+            String str = renderer.render(method);
+            String name = renderer.memberName;
+            if (documentation.methods.containsKey(name))
+            {
+              String old = documentation.methods.get(name);
+              str = old + str;
+            }
+            documentation.methods.put(name, str);
+          }
         }
       }
 
-      Node methods = (Node) xPath.compile("//li/a[@name='method.detail']").evaluate(doc, XPathConstants.NODE);
-      if (methods != null)
+//      Node inner = (Node) xPath.compile("//li/a[@name='nested_class_summary']").evaluate(doc, XPathConstants.NODE);
+//      if (inner != nullList)
+//      {
+//        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(inner.getParentNode(), XPathConstants.NODESET);
+//        documentation.innerNode = convertNodes(set);
+//      }
+      Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail']")
+              .evaluate(doc, XPathConstants.NODE)).getParentNode();
+      if (fieldRoot != null)
       {
-        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(methods.getParentNode(), XPathConstants.NODESET);
-        documentation.methods = convertNodes(set);
-      }
-
-      Node inner = (Node) xPath.compile("//li/a[@name='nested_class_summary']").evaluate(doc, XPathConstants.NODE);
-      if (inner != null)
-      {
-        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(inner.getParentNode(), XPathConstants.NODESET);
-        documentation.inner = convertNodes(set);
-      }
-
-      Node fields = (Node) xPath.compile("//li/a[@name='field.detail']").evaluate(doc, XPathConstants.NODE);
-      if (fields != null)
-      {
-        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(fields.getParentNode(), XPathConstants.NODESET);
-        documentation.fields = convertNodes(set);
+        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
+                .evaluate(fieldRoot, XPathConstants.NODESET));
+        documentation.fieldNodes = set;
+        for (Node field : set)
+        {
+          if (transform)
+            transformer.transformMember(field);
+          if (render)
+          {
+            String str = renderer.render(field);
+            String name = renderer.memberName;
+            documentation.fields.put(name, str);
+          }
+        }
       }
 
       return documentation;
     } catch (IOException | XPathExpressionException ex)
     {
-      return null;
+      throw new RuntimeException(ex);
+//      return null;
     }
   }
 
@@ -100,6 +199,12 @@ public class JavadocExtractor
     return out;
   }
 
+  /**
+   * Convert a portion of the document into a fragment.
+   *
+   * @param node
+   * @return
+   */
   public static Node toFragment(Node node)
   {
     Document doc = node.getOwnerDocument();

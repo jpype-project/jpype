@@ -145,6 +145,8 @@ public class HtmlTreeHandler implements HtmlHandler
   public void text(String text)
   {
 //    System.out.println("  TEXT " + text);
+    if (text.length() == 0)
+      return;
     if (text.contains("<"))
       throw new RuntimeException("bad text `" + text + "` at " + getPath());
     if (current == root)
