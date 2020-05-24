@@ -121,6 +121,7 @@ public class Parser<T>
    */
   protected void processToken(Token token, String value)
   {
+//    System.out.println("    TOKEN " + token + " STATE " + state + " " + value);
     if (token == null)
       return;
     Entity entity = add(token, value);
@@ -130,6 +131,7 @@ public class Parser<T>
     this.lookahead = null;
     if (rule1 != null)
     {
+//      System.out.println("      FORWARD " + rule1);
       if (rule1.apply(this, entity))
       {
         return;
@@ -143,6 +145,7 @@ public class Parser<T>
       done = true;
       for (Rule rule : state.getRules())
       {
+//        System.out.println("      RULE " + rule);
         if (rule.apply(this, stack.getLast()))
         {
           done = false;
@@ -266,15 +269,20 @@ public class Parser<T>
       if (n < pattern.length)
         return false;
       ListIterator<Entity> iter = stack.listIterator(stack.size());
+//      System.out.print("        MATCH ");
       for (int i = 0; i < pattern.length; ++i)
       {
         if (!iter.hasPrevious())
           return false;
         Entity next = iter.previous();
+//        System.out.print(next.token + " ");
         if (next.token != pattern[pattern.length - i - 1])
+        {
+//          System.out.println();
           return false;
+        }
       }
-
+//      System.out.println(" -> y");
       execute(parser);
       return true;
     }

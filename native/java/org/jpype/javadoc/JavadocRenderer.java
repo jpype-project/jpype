@@ -20,7 +20,7 @@ public class JavadocRenderer
   {
     indentLevel = 0;
     assembly = new StringBuilder();
-    DomUtilities.traverseChildren(node, this::renderMember, Node.ELEMENT_NODE);
+    DomUtilities.traverseChildren(node, this::renderSections, Node.ELEMENT_NODE);
     return assembly.toString();
   }
 
@@ -60,6 +60,7 @@ public class JavadocRenderer
    * Render a paragraph or paragraph like element.
    *
    * @param node
+   *
    * @param startIndent
    * @param finish
    */
@@ -80,63 +81,80 @@ public class JavadocRenderer
       }
       if (child.getNodeType() != Node.ELEMENT_NODE)
         continue;
-      Element e = (Element) child;
-      String name = e.getTagName();
+      Element element = (Element) child;
+      String name = element.getTagName();
       if (name.equals("p"))
       {
         assembly.append("\n");
-        renderText(e, true, true);
-        continue;
-      }
-      if (name.equals("center"))
+        renderText(element, true, true);
+      } else if (name.equals("div"))
       {
-        renderText(e, true, true);
-        continue;
-      }
-      if (name.equals("br"))
+        renderText(element, true, true);
+      } else if (name.equals("center"))
+      {
+        renderText(element, true, true);
+      } else if (name.equals("br"))
       {
         assembly.append("\n\n");
-        continue;
-      }
-      if (name.equals("ul"))
+      } else if (name.equals("ul"))
       {
-        renderUnordered(e);
-        continue;
-      }
-      if (name.equals("ol"))
+        renderUnordered(element);
+      } else if (name.equals("ol"))
       {
-        renderOrdered(e);
-        continue;
-      }
-      if (name.equals("table"))
+        renderOrdered(element);
+      } else if (name.equals("img"))
       {
         // punt
-        continue;
-      }
-      if (name.equals("table"))
+      } else if (name.equals("table"))
       {
         // punt
-        continue;
-      }
-      if (name.equals("dl"))
+      } else if (name.equals("hr"))
       {
-        renderDefinitions(e);
-        continue;
-      }
-      if (name.equals("codeblock"))
+        // punt
+      } else if (name.equals("dl"))
       {
-        renderCodeBlock(e);
-        continue;
-      }
-      if (name.equals("blockquote"))
+        renderDefinitions(element);
+      } else if (name.equals("codeblock"))
       {
-        indentLevel += 4;
-        renderText(e, true, true);
-        indentLevel -= 4;
-        continue;
+        renderCodeBlock(element);
+      } else if (name.equals("blockquote"))
+      {
+        renderBlockQuote(element);
+      } else if (name.equals("h1"))
+      {
+        renderHeader(element);
+      } else if (name.equals("h2"))
+      {
+        renderHeader(element);
+      } else if (name.equals("h3"))
+      {
+        renderHeader(element);
+      } else if (name.equals("h4"))
+      {
+        renderHeader(element);
+      } else if (name.equals("h5"))
+      {
+        renderHeader(element);
+      } else
+      {
+        throw new RuntimeException("Need render for " + name);
       }
-      throw new RuntimeException("Need render for " + name);
     }
+  }
+
+  public void renderHeader(Node node)
+  {
+    assembly.append("\n");
+    renderText(node, true, true);
+    assembly.append(new String(new byte[node.getTextContent().length()]).replace('\0', '-'));
+    assembly.append("\n\n");
+  }
+
+  public void renderBlockQuote(Node node)
+  {
+    indentLevel += 4;
+    renderText(node, true, true);
+    indentLevel -= 4;
   }
 
   /**
@@ -212,7 +230,8 @@ public class JavadocRenderer
       } else if (name.equals("dd"))
       {
         indentLevel += 4;
-        renderText(child, true, true);
+        assembly.append("  ");
+        renderText(child, false, true);
         indentLevel -= 4;
       } else
         throw new RuntimeException("Bad node " + name + " in DL");
@@ -243,6 +262,7 @@ public class JavadocRenderer
       return new String();
     return SPACING.substring(0, level);
   }
+
   public static void formatWidth(StringBuilder sb, String s, int width, int indent, boolean flag)
   {
     String sindent = indentation(indent);

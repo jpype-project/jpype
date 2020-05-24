@@ -15,11 +15,19 @@ import org.w3c.dom.Text;
  *
  * @author nelson85
  */
-
-public class JavadocFormatter
+public class JavadocTransformer
 {
 
-  public String memberName;
+  boolean hr = false;
+
+  public Node transformDescription(Node node)
+  {
+    hr = false;
+    DomUtilities.traverseChildren(node, this::descriptionTop, Node.ELEMENT_NODE);
+    DomUtilities.traverseDFS(node, this::fixEntities, Node.TEXT_NODE);
+    DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE);
+    return node;
+  }
 
   /**
    * Convert a Javadoc member description into markup for ReStructure Text
@@ -37,7 +45,42 @@ public class JavadocFormatter
     return node;
   }
 
+//<editor-fold desc="members" defaultstate="description">
+  public void descriptionTop(Node node)
+  {
+    Element e = (Element) node;
+    String name = e.getTagName();
+    Document doc = e.getOwnerDocument();
+    Node parent = node.getParentNode();
+    if (name.equals("dl") && !hr)
+    {
+      parent.removeChild(node);
+    } else if (name.equals("br"))
+    {
+      parent.removeChild(node);
+    } else if (name.equals("hr"))
+    {
+      hr = true;
+      parent.removeChild(node);
+    } else if (name.equals("pre"))
+    {
+      removeWhitespace(node);
+      doc.renameNode(node, null, "signature");
+    } else if (name.equals("div"))
+    {
+      doc.renameNode(node, null, "description");
+      DomUtilities.clearAttributes(node);
+    } else if (name.equals("dl"))
+    {
+      doc.renameNode(node, null, "details");
+    } else
+    {
+      throw new RuntimeException("Unknown item at top level " + name);
+    }
+  }
+//</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
+
   public void membersTop(Node node)
   {
     Element e = (Element) node;
@@ -47,18 +90,15 @@ public class JavadocFormatter
     if (name.equals("h4"))
     {
       doc.renameNode(node, null, "title");
-    }
-    else if (name.equals("pre"))
+    } else if (name.equals("pre"))
     {
       removeWhitespace(node);
       doc.renameNode(node, null, "signature");
-    }
-    else if (name.equals("div"))
+    } else if (name.equals("div"))
     {
       doc.renameNode(node, null, "description");
       DomUtilities.clearAttributes(node);
-    }
-    else if (name.equals("dl"))
+    } else if (name.equals("dl"))
     {
       doc.renameNode(node, null, "details");
     } else
@@ -67,6 +107,8 @@ public class JavadocFormatter
     }
   }
 
+//</editor-fold>
+//<editor-fold desc="contents" defaultstate="collapsed">
   /**
    * Convert any html entities found the text.
    *
@@ -87,12 +129,14 @@ public class JavadocFormatter
     "tt", "``%s``",
     "i", "*%s*",
     "em", "*%s*",
+    "strong", "**%s**",
     "b", "**%s**",
     "sup", ":sup:`%s`",
     "sub", ":sub:`%s`",
     "small", ":sub:`%s`",
     "span", "%s",
     "nop", "%s",
+    "font", "%s",
     "var", "*%s*",
   };
 
@@ -111,8 +155,9 @@ public class JavadocFormatter
       return;
 
     // Pre is something used to mark code.
-    if (name.equals("pre") && DomUtilities.containsNL(node))
+    if (name.equals("pre"))
     {
+      doc.renameNode(parent, null, "code");
       name = "code";
     }
 
@@ -243,4 +288,5 @@ public class JavadocFormatter
       return String.format(":class:`~%s`", href.trim());
     }
   }
+//</editor-fold>
 }

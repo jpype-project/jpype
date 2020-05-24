@@ -45,7 +45,7 @@ public class JavadocExtractor
     {
       Javadoc documentation = new Javadoc();
       XPath xPath = XPathFactory.newInstance().newXPath();
-      Node description = (Node) xPath.compile("//div[@class='description']").evaluate(doc, XPathConstants.NODE);
+      Node description = (Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE);
       if (description != null)
       {
         documentation.description = description;

@@ -37,7 +37,7 @@ public class Html
             "dd:dt", "dd:dd", "dt:dt", "dt:dd", "rt:rt", "rt:rp", "rp:rt", "rp:rp",
             "optgroup:optgroup", "option:option", "option:optiongroup", "thread:tbody",
             "thread:tfoot", "tbody:tfoot", "tbody:tbody", "tr:tr", "td:td", "td:th",
-            "th:td"));
+            "th:td", "p:li"));
   }
 
   public static Parser<Document> newParser()

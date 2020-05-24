@@ -7,6 +7,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 /**
@@ -44,19 +45,22 @@ public class HtmlTreeHandler implements HtmlHandler
   @Override
   public void startElement(String name, String attr)
   {
-    name = name.toLowerCase();
+    name = name.toLowerCase().trim();
     String attr0 = attr;
 
     // Html has irregular end rules.
-    if (Html.OPTIONAL_ELEMENTS.contains(name))
+    while (Html.OPTIONAL_ELEMENTS.contains(name))
     {
       String close = lastNodeName() + ":" + name;
       if (Html.OPTIONAL_CLOSE.contains(close))
       {
+//        System.out.print("AUTO ");
         this.endElement(lastNodeName());
-      }
+      } else
+        break;
     }
 
+//    System.out.println(this.elementStack.size() + " " + name + " : " + attr);
     Element elem;
     try
     {
@@ -77,22 +81,50 @@ public class HtmlTreeHandler implements HtmlHandler
     elementStack.add(elem);
   }
 
+  public String getPath()
+  {
+    StringBuilder path = new StringBuilder();
+    for (Element s : this.elementStack)
+    {
+      path.append("/");
+      path.append(s.getNodeName());
+      NamedNodeMap attrs = s.getAttributes();
+      if (attrs.getLength() > 0)
+      {
+        path.append('[');
+        for (int i = 0; i < attrs.getLength(); ++i)
+        {
+          Attr item = (Attr) attrs.item(i);
+          path.append(item.getName());
+          path.append('=');
+          path.append(item.getValue());
+          path.append(' ');
+        }
+        path.append(']');
+      }
+    }
+    return path.toString();
+  }
+
   @Override
   public void endElement(String name)
   {
-    name = name.toLowerCase();
+    name = name.toLowerCase().trim();
     if (elementStack.isEmpty())
       throw new RuntimeException("Empty stack");
     Element last = elementStack.getLast();
     // Handle auto class tags
     while (!last.getNodeName().equals(name) && Html.OPTIONAL_ELEMENTS.contains(last.getNodeName()))
     {
+//      System.out.print("AUTO2 ");
       endElement(last.getNodeName());
       last = elementStack.getLast();
     }
+//    System.out.println(this.elementStack.size() - 1 + " ~" + name);
     if (!last.getNodeName().equals(name))
     {
-      throw new RuntimeException("mismatch element " + name + " " + last.getNodeName());
+      throw new RuntimeException("mismatch element " + name
+              + " " + last.getNodeName() + " at " + getPath());
     }
     elementStack.removeLast();
     if (elementStack.isEmpty())
@@ -112,6 +144,9 @@ public class HtmlTreeHandler implements HtmlHandler
   @Override
   public void text(String text)
   {
+//    System.out.println("  TEXT " + text);
+    if (text.contains("<"))
+      throw new RuntimeException("bad text `" + text + "` at " + getPath());
     if (current == root)
       return;
     current.appendChild(root.createTextNode(text));

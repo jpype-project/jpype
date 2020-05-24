@@ -21,7 +21,7 @@ public class Main
     // html = JClass("org.jpype.html.Html")
     //hw = JClass("org.jpype.html.HtmlWriter")
     JavadocZip jdz = new JavadocZip(Paths.get("jdk-8u251-docs-all.zip"));
-    JavadocFormatter jdf = new JavadocFormatter();
+    JavadocTransformer jdf = new JavadocTransformer();
     JavadocRenderer jdr = new JavadocRenderer();
     Class p = java.awt.Button.class;
     InputStream jis = jdz.getInputStream(p);

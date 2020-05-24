@@ -11,7 +11,7 @@ html = JClass("org.jpype.html.Html")
 hw = JClass("org.jpype.html.HtmlWriter")
 jdz = JClass("org.jpype.javadoc.JavadocZip")(Paths.get("project/jpype_java/jdk-8u251-docs-all.zip"))
 jde = JClass("org.jpype.javadoc.JavadocExtractor")
-jdf = JClass("org.jpype.javadoc.JavadocFormatter")()
+jdf = JClass("org.jpype.javadoc.JavadocTransformer")()
 jdr = JClass("org.jpype.javadoc.JavadocRenderer")()
 
 current = None
@@ -25,20 +25,30 @@ def renderClass(cls):
 
     print("=========================================================")
     print("CLASS", cls)
+
     jd = jde.extractStream(jis)
+
+    c = jd.description
+    current = c
+    jdf.transformDescription(c)
+    print(jdr.renderMember(c))
+    print("---------------------------------------------------------")
+
     if jd.methods is not None:
         for c in jd.methods:
             current = c
             jdf.transformMember(c)
             print(jdr.renderMember(c))
-            print("---------------------------------------------------------")
+            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+
+    print("---------------------------------------------------------")
 
     if jd.fields is not None:
         for c in jd.fields:
             current = c
             jdf.transformMember(c)
             print(jdr.renderMember(c))
-            print("---------------------------------------------------------")
+            print("- - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
     print("=========================================================")
 
 
@@ -46,7 +56,11 @@ def renderPackage(pkg):
     print(type(pkg))
     print(dir(pkg))
     for i in dir(pkg):
-        p = getattr(pkg, i)
+        print("Test", i)
+        try:
+            p = getattr(pkg, i)
+        except:
+            continue
         if isinstance(p, _jpype._JPackage):
             renderPackage(p)
             continue

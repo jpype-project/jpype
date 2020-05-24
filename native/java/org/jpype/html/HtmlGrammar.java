@@ -6,6 +6,7 @@ import org.jpype.html.Parser.Rule;
 
 public class HtmlGrammar implements Parser.Grammar
 {
+
   final static HtmlGrammar INSTANCE = new HtmlGrammar();
 
   private HtmlGrammar()
@@ -156,6 +157,7 @@ public class HtmlGrammar implements Parser.Grammar
 //<editor-fold desc="rules">
 
   final static Rule escaped = new Escaped();
+  final static Rule slash = new Cleanup();
   final static Rule mergeText = new MergeText();
   final static Rule beginElement = new BeginElement();
   final static Rule startElement = new StartElement();
@@ -183,7 +185,7 @@ public class HtmlGrammar implements Parser.Grammar
   final static Rule[] freeRules = rules(
           beginElement, escaped, mergeText);
   final static Rule[] elementRules = rules(
-          quote, startElement, endElement, completeElement, escaped, mergeText);
+          mergeText, quote, startElement, endElement, completeElement, escaped, slash);
   final static Rule[] directiveRules = rules(quote,
           new EndDirective(), mergeText);
   final static Rule[] cdataRules = rules(
@@ -203,6 +205,48 @@ public class HtmlGrammar implements Parser.Grammar
 
 //</editor-fold>
 //<editor-fold desc="inner" defaultstate="collapsed">
+  private static class Cleanup implements Rule
+  {
+
+    @Override
+    public boolean apply(Parser<?> parser, Entity entity)
+    {
+      if (entity.token == Token.SLASH)
+      {
+        parser.lookahead = this::next;
+        return false;
+      }
+
+      if (entity.token == Token.GT && parser.stack.size() > 4)
+      {
+        // This it to help debug a rare problem
+        for (Entity e : parser.stack)
+        {
+          System.out.print(e.token);
+          System.out.print("(");
+          System.out.print(e.value);
+          System.out.print(") ");
+        }
+        System.out.println();
+        throw new RuntimeException("Need cleanup");
+      }
+      return false;
+    }
+
+    private boolean next(Parser<?> parser, Entity entity)
+    {
+      if (entity.token != Token.GT)
+      {
+        parser.stack.removeLast();
+        parser.stack.removeLast();
+        // parser.stack.getLast().token = Token.TEXT;
+        entity.value = "/" + entity.value;
+        parser.stack.add(entity);
+      }
+      return false;
+    }
+  }
+
   private static class Escaped extends Parser.MatchRule
   {
 
