@@ -152,10 +152,6 @@ public class JavadocRenderer
   /**
    * Render a paragraph or paragraph like element.
    *
-   * @param node
-   *
-   * @param startIndent
-   * @param finish
    */
   void renderText(Node node, boolean startIndent, boolean trailingNL)
   {

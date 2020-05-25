@@ -1,13 +1,7 @@
-import _jpype
 import jpype
-import _jpype
 from jpype.types import *
 from jpype import java
 import common
-try:
-    import numpy as np
-except ImportError:
-    pass
 
 
 class HtmlTestCase(common.JPypeTestCase):

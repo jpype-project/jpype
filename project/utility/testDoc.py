@@ -1,12 +1,10 @@
 import _jpype
 import jpype
-import sys
 from jpype.types import *
 import jpype.imports
 jpype.startJVM(classpath=['gson-2.8.5.jar', 'gson-2.8.5-javadoc.jar', 'project/jpype_java/dist/*', 'project/jpype_java/jdk-11.0.7_doc-all.zip'])
 
 import org
-from java.nio.file import Paths, Files
 
 html = JClass("org.jpype.html.Html")
 hw = JClass("org.jpype.html.HtmlWriter")
@@ -51,7 +49,7 @@ def renderPackage(pkg):
         print("Test", i)
         try:
             p = getattr(pkg, i)
-        except:
+        except Exception:
             continue
         if isinstance(p, _jpype._JPackage):
             renderPackage(p)

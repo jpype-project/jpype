@@ -82,7 +82,7 @@ public class Parser<T>
       }
       if (match == null)
         this.error("Unable to parse " + (char) b);
-      if (match.runs())
+      else if (match.runs())
       {
         if (last != match)
           flushTokens(outgoing);

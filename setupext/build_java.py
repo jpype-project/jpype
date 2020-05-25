@@ -33,13 +33,14 @@ def compileJava(self, coverage):
                        (javac, debug, target_version, target_version))
     cmd2.extend(src2)
     os.makedirs("build/lib", exist_ok=True)
-    os.makedirs("build/classes", exist_ok=True)
+    try:
+        shutil.copytree('native/java/', 'build/classes', ignore=shutil.ignore_patterns('*.java'))
+    except Exception:
+        pass
     self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
     subprocess.check_call(cmd1)
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)
     subprocess.check_call(cmd2)
-    other = glob.glob('native/java/**/*.txt', recursive=True)
-    shutil.copytree('native/java/', 'build/classes', ignore=shutil.ignore_patterns('*.java'), dirs_exist_ok=True)
     cmd3 = shlex.split(
         'jar cvf build/lib/org.jpype.jar -C build/classes/ .')
     self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)

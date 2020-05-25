@@ -58,9 +58,10 @@ public class Html
   static
   {
     try (InputStream is = JPypeContext.getInstance().getClass().getClassLoader()
-            .getResourceAsStream("org/jpype/html/entities.txt"))
+            .getResourceAsStream("org/jpype/html/entities.txt");
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader rd = new BufferedReader(isr))
     {
-      BufferedReader rd = new BufferedReader(new InputStreamReader(is));
       while (true)
       {
         String line = rd.readLine();
@@ -91,6 +92,8 @@ public class Html
 
       int i1 = i;
       int i2 = i + 1;
+      if (i2 == b.length)
+        break;
       if (b[i2] == '#')
       {
         // Try to be robust when there is no ;
@@ -127,6 +130,9 @@ public class Html
           throw new RuntimeException("Bad entity " + e);
         c = c2;
       }
+
+      if (i1 + 3 < b.length)
+        break;
 
       // Substitute
       if (c < 128)
