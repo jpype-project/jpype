@@ -30,16 +30,17 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
 
+	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPPyObjectVector args(pyargs);
+	JPValue jv = cls->newInstance(frame, args);
+
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
-	// Create an instance (this may fail)
-	JPJavaFrame frame(context);
-	JPPyObjectVector args(pyargs);
-
 	JP_FAULT_RETURN("PyJPObject_init.null", self);
-	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
+	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
 	JP_PY_CATCH(NULL);
 }
@@ -244,16 +245,17 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	if (args.size() == 2 && args[0] == _JObjectKey)
 		return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
 
+	// Create an instance (this may fail)
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPValue jv = cls->newInstance(frame, args);
+
 	// Exception must be constructed with the BaseException_new
 	PyObject *self = ((PyTypeObject*) PyExc_BaseException)->tp_new(type, pyargs, kwargs);
 	JP_PY_CHECK();
 
-	// Create an instance (this may fail)
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-
 	JP_FAULT_RETURN("PyJPException_init.null", self);
-	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
+	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
 	JP_PY_CATCH(NULL);
 }

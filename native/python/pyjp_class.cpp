@@ -210,6 +210,42 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_mp_subscript:
 				heap->as_mapping.mp_subscript = (binaryfunc) slot->pfunc;
 				break;
+			case Py_nb_index:
+				heap->as_number.nb_index = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_absolute:
+				heap->as_number.nb_absolute = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_and:
+				heap->as_number.nb_and = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_or:
+				heap->as_number.nb_or = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_xor:
+				heap->as_number.nb_xor = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_add:
+				heap->as_number.nb_add = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_subtract:
+				heap->as_number.nb_subtract = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_multiply:
+				heap->as_number.nb_multiply = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_rshift:
+				heap->as_number.nb_rshift = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_lshift:
+				heap->as_number.nb_lshift = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_negative:
+				heap->as_number.nb_negative = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_bool:
+				heap->as_number.nb_bool = (inquiry) slot->pfunc;
+				break;
 			case Py_tp_getset:
 				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
