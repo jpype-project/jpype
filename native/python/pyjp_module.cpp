@@ -37,6 +37,7 @@ extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
+extern void PyJPChar2_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -664,6 +665,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPProxy_initType(module);
 	PyJPClassHints_initType(module);
 	PyJPPackage_initType(module);
+	PyJPChar2_initType(module);
 
 	_PyJPModule_trace = true;
 	return module;

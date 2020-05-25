@@ -28,6 +28,19 @@ JPCharType::~JPCharType()
 {
 }
 
+JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	// This is only callable from one location so error checking is minimal
+	if (args.size() != 1 || !PyIndex_Check(args[0]))
+		JP_RAISE(PyExc_TypeError, "bad args");
+	jvalue jv;
+
+	// This is a cast so we must not fail
+	int overflow;
+	jv.c = PyLong_AsLongAndOverflow(args[0], &overflow);
+	return JPValue(this, jv);
+}
+
 JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	if (!cast)

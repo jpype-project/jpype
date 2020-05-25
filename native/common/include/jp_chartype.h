@@ -28,6 +28,8 @@ public:
 	typedef jchar type_t;
 	typedef jcharArray array_t;
 
+	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
+
 	inline jchar& field(jvalue& v)
 	{
 		return v.c;
