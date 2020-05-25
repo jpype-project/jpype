@@ -190,7 +190,7 @@ public class JPypeContext
 
       for (Thread t : threads.keySet())
       {
-        if (t1 == t)
+        if (t1 == t || t.isDaemon())
           continue;
 //      if (t.getState() == Thread.State.RUNNABLE)
         t.interrupt();
