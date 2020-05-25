@@ -1,6 +1,7 @@
 package org.jpype.html;
 
 import java.util.LinkedList;
+import java.util.ListIterator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -20,6 +21,7 @@ public class HtmlTreeHandler implements HtmlHandler
   LinkedList<Element> elementStack = new LinkedList<>();
   AttrParser attrParser;
   Node current;
+  int errors = 0;
 
   public HtmlTreeHandler()
   {
@@ -123,8 +125,34 @@ public class HtmlTreeHandler implements HtmlHandler
 //    System.out.println(this.elementStack.size() - 1 + " ~" + name);
     if (!last.getNodeName().equals(name))
     {
-      throw new RuntimeException("mismatch element " + name
-              + " " + last.getNodeName() + " at " + getPath());
+      errors++;
+
+      // Try to deal with unclosed tags gracefully.
+      ListIterator<Element> iter = this.elementStack.listIterator(this.elementStack.size() - 1);
+      int i = 0;
+      while (iter.hasNext())
+      {
+        Element prev = iter.previous();
+        if (prev.getNodeName().equals(name))
+          break;
+        i++;
+      }
+      if (iter.hasPrevious())
+      {
+        for (int j = 0; j < i; j++)
+        {
+          System.err.println("Ignoring missing close tag " + last.getNodeName() + ", got " + name + " at " + getPath());
+          this.endElement(last.getNodeName());
+        }
+      } else if (errors > 3)
+        throw new RuntimeException("mismatch element " + name
+                + " " + last.getNodeName() + " at " + getPath());
+      else
+      {
+        System.err.println("Ignoring mismatched element " + name
+                + " " + last.getNodeName() + " at " + getPath());
+        return;
+      }
     }
     elementStack.removeLast();
     if (elementStack.isEmpty())

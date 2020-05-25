@@ -91,17 +91,34 @@ public class Html
 
       int i1 = i;
       int i2 = i + 1;
-      for (i = i + 1; i < b.length; ++i)
+      if (b[i2] == '#')
       {
-        if (b[i] == ';')
-          break;
+        // Try to be robust when there is no ;
+        for (i = i2 + 1; i < b.length; ++i)
+        {
+          if (!Character.isDigit(b[i]))
+            break;
+        }
+      } else
+      {
+        for (i = i2; i < b.length; ++i)
+        {
+          if (b[i] == ';')
+            break;
+        }
       }
       int i3 = i;
       int c = 0;
       if (b[i2] == '#')
       {
         i2++;
-        c = Integer.parseInt(new String(b, i2, i3 - i2, StandardCharsets.UTF_8));
+        try
+        {
+          c = Integer.parseInt(new String(b, i2, i3 - i2, StandardCharsets.UTF_8));
+        } catch (NumberFormatException ex)
+        {
+
+        }
       } else
       {
         String e = new String(b, i2, i3 - i2, StandardCharsets.UTF_8);
@@ -125,8 +142,10 @@ public class Html
         b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f));
         b[i1++] = (byte) (0x80 + (c & 0x3f));
       }
-      dead += i3 - i1 + 1;
-      for (; i1 <= i3; ++i1)
+      if (b[i3] == ';')
+        i3++;
+      dead += i3 - i1;
+      for (; i1 < i3; ++i1)
         b[i1] = 0;
       i = i3;
     }

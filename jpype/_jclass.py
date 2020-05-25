@@ -96,12 +96,6 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
         return _jpype._getClass(jc)
 
 
-class _JClassProto(object):
-    @property
-    def __doc__(self):
-        return _jclassDoc(self)
-
-
 class JInterface(_jpype._JObject, internal=True):
     """A meta class for all Java Interfaces.
 
@@ -120,7 +114,7 @@ class JInterface(_jpype._JObject, internal=True):
     pass
 
 
-def _JClassPre(name, bases, members):
+def _jclassPre(name, bases, members):
     # Correct keyword conflicts with Python
     m = list(members.items())
     for k, v in m:
@@ -135,7 +129,7 @@ def _JClassPre(name, bases, members):
     return (name, tuple(bases), members)
 
 
-def _JClassPost(res, *args):
+def _jclassPost(res, *args):
     # Post customizers
     hints = _jcustomizer.getClassHints(res.__name__)
     res._hints = hints
@@ -161,24 +155,35 @@ def _jclassDoc(cls):
     Returns:
       The doc string for the class.
     """
+    out = []
+    if not hasattr(cls, "__javadoc__"):
+        jde = JClass("org.jpype.javadoc.JavadocExtractor")()
+        jd = jde.getDocumentation(cls)
+        if jd is not None:
+            setattr(cls, "__javadoc__", jd)
+            if jd.description is not None:
+                out.append(str(jd.description))
+            if jd.ctors is not None:
+                out.append(str(jd.ctors))
+            return "".join(out)
+            setattr(cls, "__javadoc__", None)
     from textwrap import TextWrapper
     jclass = cls.class_
-    out = []
     out.append("Java class '%s'" % (jclass.getName()))
     out.append("")
 
     sup = jclass.getSuperclass()
     if sup:
-        out.append("  Extends:")
-        out.append("    %s" % sup.getName())
+        out.append("    Extends:")
+        out.append("        %s" % sup.getName())
         out.append("")
 
     intfs = jclass.getInterfaces()
     if intfs:
-        out.append("  Interfaces:")
+        out.append("    Interfaces:")
         words = ", ".join([str(i.getCanonicalName()) for i in intfs])
-        wrapper = TextWrapper(initial_indent='        ',
-                              subsequent_indent='        ')
+        wrapper = TextWrapper(initial_indent=' ' * 8,
+                              subsequent_indent=' ' * 8)
         out.extend(wrapper.wrap(words))
         out.append("")
 
@@ -236,6 +241,5 @@ def _jclassDoc(cls):
 _jpype.JClass = JClass
 _jpype.JInterface = JInterface
 _jpype._jclassDoc = _jclassDoc
-_jpype._JClassPre = _JClassPre
-_jpype._JClassPost = _JClassPost
-_jcustomizer._applyCustomizerPost(_jpype._JClass, _JClassProto)
+_jpype._jclassPre = _jclassPre
+_jpype._jclassPost = _jclassPost

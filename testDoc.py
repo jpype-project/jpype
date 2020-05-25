@@ -3,7 +3,7 @@ import jpype
 import sys
 from jpype.types import *
 import jpype.imports
-jpype.startJVM(classpath=['project/jpype_java/dist/*', 'project/jpype_java/jdk-11.0.7_doc-all.zip'])
+jpype.startJVM(classpath=['gson-2.8.5.jar', 'gson-2.8.5-javadoc.jar', 'project/jpype_java/dist/*', 'project/jpype_java/jdk-11.0.7_doc-all.zip'])
 
 import org
 from java.nio.file import Paths, Files
@@ -60,12 +60,12 @@ def renderPackage(pkg):
             renderClass(p)
 
 
-jlang = jpype.JPackage("java")
 try:
-    renderPackage(jlang)
+    renderPackage(jpype.JPackage('com.google.gson'))
 except org.jpype.javadoc.JavadocException as ex:
     print("Javadoc Error: ", ex.message())
     print(hw.asString(ex.node))
+    raise ex
 except Exception as ex:
     print("Error in")
     print(hw.asString(current))

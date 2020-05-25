@@ -151,6 +151,7 @@ public class JavadocTransformer
   {
     DETAIL_SECTIONS = new HashMap<>();
     Map<String, String> ds = DETAIL_SECTIONS;
+    ds.put("Author:", "author");
     ds.put("Since:", "since");
     ds.put("Parameters:", "parameters");
     ds.put("Returns:", "returns");
@@ -182,7 +183,7 @@ public class JavadocTransformer
         doc.renameNode(node, null, "jls");
       } else
       {
-        throw new RuntimeException("Bad detail key '" + key + "'");
+        System.err.println("Bad detail key '" + key + "'");
       }
       ws.key = node.getNodeName();
       ws.section = node;
@@ -265,6 +266,7 @@ public class JavadocTransformer
   {
     "cite", "\"%s\"",
     "code", ":code:`%s`",
+    "pre", ":code:`%s`",
     "tt", "``%s``",
     "i", "*%s*",
     "em", "*%s*",
@@ -296,8 +298,15 @@ public class JavadocTransformer
     // Pre is something used to mark code.
     if (name.equals("pre"))
     {
-      doc.renameNode(parent, null, "code");
-      name = "code";
+      if (DomUtilities.containsNL(e))
+      {
+        doc.renameNode(node, null, "codeblock");
+        name = "codeblock";
+      } else
+      {
+        doc.renameNode(node, null, "code");
+        name = "code";
+      }
     }
 
     //  <pre><code> is a common javadoc idiom.
@@ -375,49 +384,63 @@ public class JavadocTransformer
   /**
    * Convert a reference into method or class.
    *
+   * This currently only deals with local links. External links are elsewhere.
+   *
    * @param ws
    * @param href
    * @return
    */
   public String toReference(Workspace ws, String href)
   {
-    Path p = Paths.get(ws.cls.getName().replace('.', '/'));
-    if (href.startsWith("#"))
+    try
     {
-      // technically it may be a field, but we can't tell currently.
-      String q = p.resolve(href.substring(1).trim())
-              .normalize()
-              .toString()
-              .replace('/', '.')
-              .replaceAll("\\(.*\\)", "")
-              .replaceAll("-.*", "");
-//      System.out.println("PATH1 " + q);
-      return String.format(":meth:`~%s`", q);
-    } else if (href.contains("#"))
+      Path p = Paths.get(ws.cls.getName().replace('.', '/'));
+      if (href.startsWith("#"))
+      {
+        // technically it may be a field, but we can't tell currently.
+        Path q = p.resolve(href.substring(1).trim())
+                .normalize();
+        if (q.startsWith(".."))
+          q = q.subpath(2, q.getNameCount());
+        String r = q.toString()
+                .replace('/', '.')
+                .replaceAll("\\(.*\\)", "")
+                .replaceAll("-.*", "");
+        return String.format(":meth:`~%s`", r);
+      } else if (href.contains("#"))
+      {
+        // technically it may be a field, but we can't tell currently.
+        Path q = p.getParent()
+                .resolve(href.trim())
+                .normalize();
+        if (q.startsWith(".."))
+          q = q.subpath(2, q.getNameCount());
+        String r = q.toString()
+                .replace('/', '.')
+                .replaceAll("\\(.*\\)", "")
+                .replaceAll("-.*", "")
+                .replaceAll(".html#", ".");
+        return String.format(":meth:`~%s`", r);
+      } else
+      {
+        Path q = p.getParent()
+                .resolve(href.trim())
+                .normalize();
+        if (q.startsWith(".."))
+          q = q.subpath(2, q.getNameCount());
+        String r = q.toString()
+                .replace('/', '.')
+                .replaceAll("-.*", "")
+                .replaceAll(".html", "");
+        return String.format(":class:`~%s`", r);
+      }
+    } catch (Exception ex)
     {
-      // technically it may be a field, but we can't tell currently.
-      String q = p.getParent()
-              .resolve(href.trim())
-              .normalize()
-              .toString()
-              .replace('/', '.')
-              .replaceAll("\\(.*\\)", "")
-              .replaceAll("-.*", "")
-              .replaceAll(".html#", ".");
-//      System.out.println("PATH2 " + q);
-      return String.format(":meth:`~%s`", q);
-    } else
-    {
-      String q = p.getParent()
-              .resolve(href.trim())
-              .normalize()
-              .toString()
-              .replace('/', '.')
-              .replaceAll("-.*", "")
-              .replaceAll(".html", "");
-//      System.out.println("PATH3 " + q);
-      return String.format(":class:`~%s`", q);
+      // There is a lot of ways this can go wrong.  If all else fails
+      // return null so that we can just remove the hyperlink.
+      return null;
     }
   }
+
 //</editor-fold>
 }

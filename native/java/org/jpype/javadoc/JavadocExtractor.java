@@ -42,10 +42,10 @@ public class JavadocExtractor
           return extractDocument(cls, parser.parse(is));
         }
       }
-    } catch (IOException ex)
+    } catch (Exception ex)
     {
-      System.out.println("Failed to extract javadoc");
-      throw new RuntimeException(ex);
+      System.err.println("Failed to extract javadoc for " + cls);
+//      throw new RuntimeException(ex);
     }
     return null;
   }
@@ -63,7 +63,6 @@ public class JavadocExtractor
 
     // Search for api documents
     String name1 = "docs/api/" + name;
-    System.out.println("Try " + name1);
     is = cl.getResourceAsStream(name1);
     if (is != null)
       return is;
@@ -74,7 +73,6 @@ public class JavadocExtractor
       Method meth = Class.class.getMethod("getModule");
       String module = meth.invoke(cls).toString().substring(7);
       String name2 = "docs/api/" + module + "/" + name;
-      System.out.println("Try " + name2);
       is = cl.getResourceAsStream(name2);
       if (is != null)
         return is;
