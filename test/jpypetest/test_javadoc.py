@@ -16,3 +16,15 @@ class HtmlTestCase(common.JPypeTestCase):
             self.assertIsInstance(u, JString)
             self.assertEqual(len(u), 1)
             self.assertEqual(ord(u[0][0]), v)
+
+    def testClass(self):
+        JC = jpype.JClass("jpype.doc.Test")
+        jd = JC.__doc__
+        self.assertIsInstance(jd, str)
+        self.assertRegex(jd, "random stuff")
+
+    def testMethod(self):
+        JC = jpype.JClass("jpype.doc.Test")
+        jd = JC.methodOne.__doc__
+        self.assertIsInstance(jd, str)
+        self.assertRegex(jd, "something special")

@@ -30,9 +30,10 @@ def _jmethodGetDoc(method, cls, overloads):
     Returns:
       The doc string for the method dispatch.
     """
-    if not hasattr(cls, "__javadoc__"):
-        cls.__doc__
-    jd = getattr(cls, "__javadoc__")
+    jcls = _jpype.JClass(cls)
+    if not hasattr(jcls, "__javadoc__"):
+        jcls.__doc__
+    jd = getattr(jcls, "__javadoc__")
     if jd is not None:
         md = jd.methods[method.__name__]
         if md is not None:
