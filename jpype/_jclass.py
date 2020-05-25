@@ -166,7 +166,7 @@ def _jclassDoc(cls):
             if jd.ctors is not None:
                 out.append(str(jd.ctors))
             return "".join(out)
-            setattr(cls, "__javadoc__", None)
+        setattr(cls, "__javadoc__", None)
     from textwrap import TextWrapper
     jclass = cls.class_
     out.append("Java class '%s'" % (jclass.getName()))

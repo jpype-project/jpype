@@ -131,9 +131,6 @@ public class Html
         c = c2;
       }
 
-      if (i1 + 3 < b.length)
-        break;
-
       // Substitute
       if (c < 128)
       {
@@ -141,14 +138,17 @@ public class Html
       } else if (c < 0x0800)
       {
         b[i1++] = (byte) (0xc0 + ((c >> 6) & 0x1f));
-        b[i1++] = (byte) (0x80 + (c & 0x3f));
+        if (i1 < b.length)
+          b[i1++] = (byte) (0x80 + (c & 0x3f));
       } else
       {
         b[i1++] = (byte) (0xe0 + ((c >> 12) & 0x0f));
-        b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f));
-        b[i1++] = (byte) (0x80 + (c & 0x3f));
+        if (i1 < b.length)
+          b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f));
+        if (i1 < b.length)
+          b[i1++] = (byte) (0x80 + (c & 0x3f));
       }
-      if (b[i3] == ';')
+      if (i3 < b.length && b[i3] == ';')
         i3++;
       dead += i3 - i1;
       for (; i1 < i3; ++i1)
