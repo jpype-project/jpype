@@ -803,7 +803,6 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
-extern PyObject *_JClassDoc;
 static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
