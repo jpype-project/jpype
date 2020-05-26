@@ -6,6 +6,14 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 - **Next version - unreleased**
 - **0.7.6_dev0 - 2020-05-10**
 
+  - ``JChar`` is supported as a return type, thus rather than returning a
+    string where a ``JChar`` is expected.  For compatiblity ``JChar`` is
+    derived from ``str`` and implements implicit conversion to an ``int`` when
+    used in numeric operations. Therefore, it passes the return, argument, and
+    field contracts.  But that means it is no longer considered a numerical
+    type to Python and thus ``isinstance(c, int)`` is False.  This is
+    consistent with the Java type conversion rules.
+
   - Introduced Python operator for Java casting.  In Java to cast
     to a type you would use ``(Type) obj``, but Python does not support
     anything similar.  Therefore, we are enlisting the rarely used 

@@ -45,10 +45,6 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_PY_CATCH(NULL);
 }
 
-static const char* op_names[] = {
-	"<", "<=", "==", "!=", ">", ">="
-};
-
 static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 {
 	JP_PY_TRY("PyJPObject_compare");
@@ -63,8 +59,9 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (op != Py_EQ)
 	{
-		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java `%s`", op_names[op], Py_TYPE(self)->tp_name);
-		return NULL;
+		PyObject *out = Py_NotImplemented;
+		Py_INCREF(out);
+		return out;
 	}
 
 	JPContext *context = PyJPModule_getContext();
@@ -146,10 +143,18 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 
 		// This should never happen.
 		if (cls2 == NULL)
-			JP_RAISE(PyExc_TypeError, "Type is not comparable");
+		{
+			PyObject *out = Py_NotImplemented;
+			Py_INCREF(out);
+			return out;
+		}
 		JPMatch match(&frame, other);
 		if (!cls2->findJavaConversion(match))
-			JP_RAISE(PyExc_TypeError, "Type is not comparable");
+		{
+			PyObject *out = Py_NotImplemented;
+			Py_INCREF(out);
+			return out;
+		}
 		obj1 = match.convert().l;
 	} else if (!null1 && javaSlot1 != NULL)
 		obj1 = javaSlot1->getValue().l;
@@ -171,21 +176,22 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) != 0);
 		case Py_LT:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) < 0);
 		case Py_LE:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) <= 0);
 		case Py_GT:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) > 0);
 		case Py_GE:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) >= 0);
 	}
+	PyErr_Format(PyExc_ValueError, "can't compare null");
 	JP_PY_CATCH(NULL);
 }
 

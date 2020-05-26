@@ -90,7 +90,18 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 	}
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);
-	JPPyObject obj = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
+	JPPyObject obj;
+	JPContext *context = frame.getContext();
+	if (this->getPrimitive() == context->_char)
+	{
+		jchar value2 = 0;
+		// Not null get the char value
+		if (value.l != 0)
+			value2 = context->_char->getValueFromObject(JPValue(this, value)).getValue().c;
+		// Create a char string object
+		obj = JPPyObject(JPPyRef::_call, PyJPChar_Create((PyTypeObject*) wrapper.get(), value2));
+	} else
+		obj = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
 	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
 	return obj;
 }

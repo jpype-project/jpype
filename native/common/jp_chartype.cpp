@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -43,14 +43,15 @@ JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 
 JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	if (!cast)
-	{
-		return JPPyString::fromCharUTF16(val.c);
-	}
-	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	if (!cast)
+	//	{
+	JPPyObject out = JPPyObject(JPPyRef::_call, PyJPChar_Create((PyTypeObject*) _JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
+	//	}
+	//	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	//	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	return out;
 }
 
 JPValue JPCharType::getValueFromObject(const JPValue& obj)

@@ -852,10 +852,10 @@ JChar
   correct answer is `b`.  As such characters should not be treated as just
   another unsigned short.  Python has no concept of a textual only type.
   Thus when returning a character type, we instead return a string length 1.
-  The actually ``JChar`` class is derived from a Python ``int`` and by
-  inheritance has all of the numerical operations associated with it.
-  There are of course lots of useful mathematical operations that can be performed
-  on textual primitives, but doing so risks breaking the encoding
+  ``JChar`` supports the Java numerical operations, but just as in Java it will
+  automatically promote to a Python ``int`` when used in a numerical operation.
+  There are of course lots of useful mathematical operations that can be
+  performed on textual primitives, but doing so risks breaking the encoding
   and can result in uninterpretable data.
 
 .. _JByte:

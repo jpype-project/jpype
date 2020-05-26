@@ -86,3 +86,6 @@ class JFloat(_jpype._JNumberFloat, internal=True):
 
 class JDouble(_jpype._JNumberFloat, internal=True):
     pass
+
+
+_jpype.JChar = JChar

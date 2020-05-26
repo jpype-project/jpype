@@ -169,8 +169,9 @@ class BoxedTestCase(common.JPypeTestCase):
         java.lang.Double(JDouble(0))
 
     def testBooleanBad(self):
-        with self.assertRaises(TypeError):
-            java.lang.Boolean(tuple())
+        # with self.assertRaises(TypeError):
+        # This test was wrong.   'bool(tuple()) == False'
+        self.assertFalse(java.lang.Boolean(tuple()))
 
     def testByteBad(self):
         with self.assertRaises(TypeError):

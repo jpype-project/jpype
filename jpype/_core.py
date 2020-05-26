@@ -156,7 +156,6 @@ def startJVM(*args, **kwargs):
     global _JVM_started
     if _JVM_started:
         raise OSError('JVM cannot be restarted')
-    _JVM_started = True
 
     args = list(args)
 
@@ -206,6 +205,7 @@ def startJVM(*args, **kwargs):
     try:
         _jpype.startup(jvmpath, tuple(args),
                        ignoreUnrecognized, convertStrings)
+        _JVM_started = True
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:

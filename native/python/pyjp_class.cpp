@@ -246,6 +246,18 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_nb_bool:
 				heap->as_number.nb_bool = (inquiry) slot->pfunc;
 				break;
+			case Py_nb_invert:
+				heap->as_number.nb_invert = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_positive:
+				heap->as_number.nb_positive = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_floor_divide:
+				heap->as_number.nb_floor_divide = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_divmod:
+				heap->as_number.nb_divmod = (binaryfunc) slot->pfunc;
+				break;
 			case Py_tp_getset:
 				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
@@ -911,7 +923,7 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberBool_Type);
 		} else if (cls == context->_java_lang_Character)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberChar_Type);
+			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPChar_Type);
 		} else if (cls == context->_java_lang_Boolean
 				|| cls == context->_java_lang_Byte
 				|| cls == context->_java_lang_Short
