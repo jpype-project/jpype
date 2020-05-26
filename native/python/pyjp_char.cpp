@@ -599,6 +599,9 @@ static PyType_Slot charSlots[] = {
 	{Py_tp_str,       (void*) PyJPChar_str},
 	{Py_tp_repr,      (void*) PyJPChar_repr},
 	{Py_nb_index,     (void*) PyJPChar_index},
+#if PY_VERSION_HEX<0x03080000
+	{Py_nb_int,     (void*) PyJPChar_index},
+#endif
 	{Py_nb_float,     (void*) PyJPChar_float},
 	{Py_nb_absolute,  (void*) PyJPChar_abs},
 	{Py_nb_and,       (void*) PyJPChar_and},
