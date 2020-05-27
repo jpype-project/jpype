@@ -195,7 +195,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	{
 		// This is the only frame that we can use until the system
 		// is initialized.  Any other frame creation will result in an error.
-		JPJavaFrame frame(this, env);
+		JPJavaFrame frame = JPJavaFrame::external(this, env);
 
 		jclass throwableClass = (jclass) frame.FindClass("java/lang/Throwable");
 		m_Throwable_GetCauseID = frame.GetMethodID(throwableClass, "getCause", "()Ljava/lang/Throwable;");

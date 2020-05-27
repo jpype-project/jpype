@@ -321,7 +321,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	if (PyObject_CheckBuffer(src))
 	{
@@ -353,7 +353,7 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
@@ -374,7 +374,7 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -408,7 +408,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -513,7 +513,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 		return NULL;
 	}
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
@@ -701,7 +701,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	Py_buffer& view = buffer.getView();
 
 	// Okay two possibilities here.  We have a valid dtype specified,

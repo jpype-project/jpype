@@ -115,7 +115,7 @@ string JPClass::toString() const
 	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(m_Class.get());
 }
 // GCOVR_EXCL_STOP
@@ -125,7 +125,7 @@ string JPClass::getName() const
 	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(frame.CallObjectMethodA(
 			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
 }
@@ -391,7 +391,7 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 
 void JPClass::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());

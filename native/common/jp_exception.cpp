@@ -146,7 +146,7 @@ void JPypeException::convertJavaToPython()
 	// GCOVR_EXCL_STOP
 
 	// Okay we can get to a frame to talk to the object
-	JPJavaFrame frame(m_Context, m_Context->getEnv());
+	JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 	jthrowable th = m_Throwable.get();
 	jvalue v;
 	v.l = th;
@@ -240,7 +240,7 @@ void JPypeException::convertJavaToPython()
 void JPypeException::convertPythonToJava(JPContext* context)
 {
 	JP_TRACE_IN("JPypeException::convertPythonToJava");
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jthrowable th;
 	JPPyErrFrame eframe;
 	if (eframe.good && isJavaThrowable(eframe.exceptionClass.get()))
@@ -406,7 +406,7 @@ void JPypeException::toJava(JPContext *context)
 	try
 	{
 		string mesg = getMessage();
-		JPJavaFrame frame(context, context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::external(context, context->getEnv());
 		if (m_Type == JPError::_python_error)
 		{
 			JP_TRACE("Python exception");

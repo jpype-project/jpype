@@ -40,7 +40,7 @@ JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = (type_t) frame.floatValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -122,7 +122,7 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 
 void JPFloatType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJFloatConversion.getInfo(this, info);
 	asFloatLongConversion.getInfo(this, info);
 	asFloatConversion.getInfo(this, info);
@@ -266,7 +266,7 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 
 void JPFloatType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetFloatArrayElements(
 			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "f";
@@ -277,7 +277,7 @@ void JPFloatType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

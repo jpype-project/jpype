@@ -43,7 +43,7 @@ JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 JPValue JPCharType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.charValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -124,7 +124,7 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 
 void JPCharType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
 	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
@@ -233,7 +233,7 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 
 void JPCharType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetCharArrayElements(
 			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "H";
@@ -244,7 +244,7 @@ void JPCharType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

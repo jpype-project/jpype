@@ -26,7 +26,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
@@ -55,7 +55,7 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 		jobjectArray args)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
@@ -156,7 +156,7 @@ JPProxy::JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf)
 {
 	JP_TRACE_IN("JPProxy::JPProxy");
 	JP_TRACE("Context", m_Context);
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 
 	// Convert the interfaces to a Class[]
 	jobjectArray ar = frame.NewObjectArray((int) intf.size(),
@@ -202,7 +202,7 @@ jvalue JPProxy::getProxy()
 {
 	JP_TRACE_IN("JPProxy::getProxy");
 	JPContext* context = getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::inner(context);
 
 	jobject instance = NULL;
 	if (m_Ref != NULL)

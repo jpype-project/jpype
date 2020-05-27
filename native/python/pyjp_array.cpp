@@ -48,7 +48,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPArray_init");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	// Cases here.
 	//  -  We got here with a JPValue
@@ -94,7 +94,6 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	if (PyIndex_Check(v))
 	{
-		//		JPJavaFrame frame(context);
 		JP_TRACE("Index");
 		long long length = PyLong_AsLongLong(v);
 		if (length < 0 || length > 2147483647)
@@ -144,7 +143,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPArray_getArrayItem");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
@@ -197,21 +196,11 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	JP_PY_CATCH(NULL);
 }
 
-//static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
-//{
-//	JP_PY_TRY("PyJPArray_assignItem");
-//	JPContext *context = PyJPModule_getContext();
-//	JPJavaFrame frame(context);
-//	self->m_Array->setItem((jsize) item, value);
-//	return 0;
-//	JP_PY_CATCH(-1);
-//}
-
 static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *value)
 {
 	JP_PY_TRY("PyJPArray_assignSubscript");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	// Verified with numpy that item deletion on immutable should
 	// be ValueError
 	if ( value == NULL)
@@ -274,7 +263,7 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 		return;
 	}
 	//	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;
 	delete self->m_View;
@@ -286,7 +275,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArray_getBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
@@ -368,7 +357,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 	try

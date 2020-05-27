@@ -59,7 +59,7 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 
 void JPBoxedType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	m_PrimitiveType->getConversionInfo(info);
 	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.expl, "extend", "O", info.implicit));
 	JPPyObject(JPPyRef::_call, PyObject_CallMethod(info.implicit, "clear", ""));

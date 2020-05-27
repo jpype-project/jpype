@@ -71,7 +71,7 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 
 void JPStringType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);

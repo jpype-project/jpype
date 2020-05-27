@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve MÃƒÂ©nard
+   Copyright 2004-2008 Steve Menard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -24,73 +24,44 @@
 
 #if defined(JP_TRACING_ENABLE) || defined(JP_INSTRUMENTATION)
 
-static int jpype_frame_check(int i)
+static void jpype_frame_check(int popped)
 {
-	static thread_local int depth = 0;
-	if (i > 0)
-	{
-		depth += i;
-		return depth;
-	}
-	if (i < 0)
-	{
-		depth += i;
-		return depth;
-	}
-
-	// GCOVR_EXCL_START
-	if (depth <= 0)
-	{
-		// Enable C++ traces so we can see
-		_jp_cpp_exceptions = true;
+	if (popped)
 		JP_RAISE(PyExc_SystemError, "Local reference outside of frame");
-	}
-	// GCOVR_EXCL_END
-	return depth;
 }
-#define JP_FRAME_CHECK(X) jpype_frame_check(X)
+#define JP_FRAME_CHECK() jpype_frame_check(m_Popped)
 #else
-#define JP_FRAME_CHECK(X) if (true)
+#define JP_FRAME_CHECK() if (true)
 #endif
 
-JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int i)
-: m_Context(context), m_Env(p_env), popped(false)
+JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int size, bool outer)
+: m_Context(context), m_Env(p_env), m_Popped(false), m_Outer(outer)
 {
+	if (p_env == NULL)
+		m_Env = context->getEnv();
 
 	// Create a memory management frame to live in
-	m_Env->PushLocalFrame(i);
+	m_Env->PushLocalFrame(size);
 	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
-	JP_FRAME_CHECK(1);
-}
-
-JPJavaFrame::JPJavaFrame(JPContext* context, int i)
-: m_Context(context), popped(false)
-{
-	m_Env = context->getEnv();
-
-	// Create a memory management frame to live in
-	m_Env->PushLocalFrame(i);
-	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
-	JP_FRAME_CHECK(1);
 }
 
 JPJavaFrame::JPJavaFrame(const JPJavaFrame& frame)
-: m_Context(frame.m_Context), m_Env(frame.m_Env), popped(false)
+: m_Context(frame.m_Context), m_Env(frame.m_Env), m_Popped(false), m_Outer(false)
 {
 	// Create a memory management frame to live in
 	m_Env->PushLocalFrame(LOCAL_FRAME_DEFAULT);
 	JP_TRACE_JAVA("JavaFrame (copy)", (jobject) - 1);
-	JP_FRAME_CHECK(1);
 }
 
 jobject JPJavaFrame::keep(jobject obj)
 {
-	popped = true;
+	if (m_Outer)
+		JP_RAISE(PyExc_SystemError, "Keep on outer frame");
+	JP_FRAME_CHECK();
+	m_Popped = true;
 	JP_TRACE_JAVA("Keep", obj);
 	JP_TRACE_JAVA("~JavaFrame (keep)", (jobject) - 2);
-	JP_FRAME_CHECK(-1);
 	obj = m_Env->PopLocalFrame(obj);
-	JP_FRAME_CHECK(0);  // Special case we can't hold a reference after a keep
 	JP_TRACE_JAVA("Return", obj);
 	return obj;
 }
@@ -98,11 +69,11 @@ jobject JPJavaFrame::keep(jobject obj)
 JPJavaFrame::~JPJavaFrame()
 {
 	// Check if we have already closed the frame.
-	if (!popped)
+	if (!m_Popped)
 	{
 		JP_TRACE_JAVA("~JavaFrame", (jobject) - 2);
 		m_Env->PopLocalFrame(NULL);
-		JP_FRAME_CHECK(-1);
+		JP_FRAME_CHECK();
 	}
 
 	// It is not safe to detach as we would loss all local references including
@@ -123,6 +94,7 @@ void JPJavaFrame::DeleteGlobalRef(jobject obj)
 
 jweak JPJavaFrame::NewWeakGlobalRef(jobject obj)
 {
+	JP_FRAME_CHECK();
 	JP_TRACE_JAVA("New weak", obj);
 	jweak obj2 = m_Env->NewWeakGlobalRef(obj);
 	JP_TRACE_JAVA("Weak", obj2);
@@ -137,6 +109,7 @@ void JPJavaFrame::DeleteWeakGlobalRef(jweak obj)
 
 jobject JPJavaFrame::NewLocalRef(jobject obj)
 {
+	JP_FRAME_CHECK();
 	JP_TRACE_JAVA("New local", obj);
 	obj = m_Env->NewLocalRef(obj);
 	JP_TRACE_JAVA("Local", obj);
@@ -181,6 +154,7 @@ jint JPJavaFrame::Throw(jthrowable th)
 
 jthrowable JPJavaFrame::ExceptionOccurred()
 {
+	JP_FRAME_CHECK();
 	jthrowable obj;
 
 	obj = m_Env->ExceptionOccurred();
@@ -218,6 +192,7 @@ jthrowable JPJavaFrame::ExceptionOccurred()
   check(); \
   return ret;
 #define JAVA_RETURN_OBJ(X,Y,Z) \
+  JP_FRAME_CHECK(); \
   X ret = Z; \
   JP_TRACE_JAVA(Y, ret); \
   check(); \
@@ -230,7 +205,7 @@ jthrowable JPJavaFrame::ExceptionOccurred()
 
 void JPJavaFrame::check()
 {
-	JP_FRAME_CHECK(0);
+	JP_FRAME_CHECK();
 	if (m_Env && m_Env->ExceptionCheck() == JNI_TRUE)
 	{
 		jthrowable th = m_Env->ExceptionOccurred();
@@ -244,6 +219,8 @@ void JPJavaFrame::check()
 jobject JPJavaFrame::NewObjectA(jclass a0, jmethodID a1, jvalue* a2)
 {
 	jobject res;
+	JP_FRAME_CHECK();
+
 	// Allocate the object
 	JAVA_CHECK("JPJavaFrame::JPJavaFrame::NewObjectA",
 			res = m_Env->AllocObject(a0));

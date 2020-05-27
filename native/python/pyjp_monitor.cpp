@@ -35,7 +35,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	JP_PY_TRY("PyJPMonitor_init");
 	self->m_Monitor = NULL;
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	PyObject* value;
 
@@ -74,7 +74,7 @@ static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
 	JP_PY_TRY("PyJPMonitor_str");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	stringstream ss;
 	ss << "<java monitor>";
 	return JPPyString::fromStringUTF8(ss.str()).keep();
@@ -85,7 +85,7 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_enter");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -95,7 +95,7 @@ static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_exit");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);

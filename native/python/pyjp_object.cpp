@@ -35,7 +35,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_PY_CHECK();
 
 	// Create an instance (this may fail)
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPPyObjectVector args(pyargs);
 
 	JP_FAULT_RETURN("PyJPObject_init.null", self);
@@ -67,7 +67,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
 	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
 
@@ -110,7 +110,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 {
 	JP_PY_TRY("PyJPComparable_compare");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
 	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
 
@@ -192,7 +192,7 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 {
 	JP_PY_TRY("PyJPObject_hash");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
 	if (javaSlot == NULL)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
@@ -250,7 +250,7 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 
 	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JP_FAULT_RETURN("PyJPException_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
@@ -274,7 +274,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 {
 	JP_PY_TRY("PyJPModule_expandStackTrace");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *val = PyJPValue_getJavaSlot(self);
 
 	// These two are loop invariants and must match each time

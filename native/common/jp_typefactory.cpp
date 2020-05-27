@@ -89,7 +89,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 		jint sz)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_destroy");
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
@@ -110,7 +110,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 		jint modifiers)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineMethodDispatch");
 	JPClass* cls = (JPClass*) clsPtr;
 	JPMethodList overloadList;
@@ -131,7 +131,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 		jint modifiers)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineArrayClass");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
@@ -154,7 +154,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 {
 	// All resources are created here are owned by Java and deleted by Java shutdown routine
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
 	string className = frame.toStringUTF8(name);
 	JP_TRACE(className);
@@ -298,7 +298,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 {
 	// These resources are created by the boxed types
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_definePrimitive");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
@@ -359,7 +359,7 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 		jlongArray fieldPtrs)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_assignMembers");
 	JPClass* cls = (JPClass*) clsPtr;
 	JPMethodDispatchList methodList;
@@ -384,7 +384,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 		jint modifiers)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineField");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE("class", cls);
@@ -407,7 +407,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 		jlongArray overloadList, jint modifiers)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineMethod");
 	jmethodID mid = frame.FromReflectedMethod(method);
 	JPMethodList cover;
@@ -432,7 +432,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
 		)
 {
 	JPContext* context = (JPContext*) contextPtr;
-	JPJavaFrame frame(context, env);
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_populateMethod");
 	JPClassList cargs;
 	convert(frame, argumentTypes, cargs);

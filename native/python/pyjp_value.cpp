@@ -142,7 +142,7 @@ void PyJPValue_finalize(void* obj)
 	JPContext *context = JPContext_global;
 	if (context == NULL || !context->isRunning())
 		return;
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
@@ -161,7 +161,7 @@ PyObject* PyJPValue_str(PyObject* self)
 {
 	JP_PY_TRY("PyJPValue_str", self);
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == NULL)
 		JP_RAISE(PyExc_TypeError, "Not a Java value");

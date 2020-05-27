@@ -41,7 +41,7 @@ JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool
 JPValue JPIntType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.intValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -119,7 +119,7 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 
 void JPIntType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jintConversion.getInfo(this, info);
 	intConversion.getInfo(this, info);
 	intNumberConversion.getInfo(this, info);
@@ -269,7 +269,7 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 
 void JPIntType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_IsCopy = false;
 	view.m_Memory = (void*) frame.GetIntArrayElements(
 			(jintArray) view.m_Array->getJava(), &view.m_IsCopy);
@@ -281,7 +281,7 @@ void JPIntType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
 				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

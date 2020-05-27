@@ -545,7 +545,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.implicit, (PyObject*) PyJPClass_Type);
 	}
 
@@ -591,7 +591,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 	}
 
@@ -617,7 +617,7 @@ JPMatch::Type JPConversionJavaValue::matches(JPClass *cls, JPMatch &match)
 
 void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	JPJavaFrame frame(cls->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 	PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 }
 
@@ -800,7 +800,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.implicit, PyJPClass_create(frame, cls->getContext()->_java_lang_Object).get());
 	}
 
@@ -881,7 +881,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		JPPrimitiveType *pcls = (JPPrimitiveType*) cls;
 		JPContext *context = cls->getContext();
 		PyList_Append(info.implicit,

@@ -118,7 +118,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JPContext* context = JPContext_global;
 	if (context->isRunning())
 	{
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::outer(context);
 		jobject pkg = getPackage(frame, self);
 		if (pkg == NULL)
 			return NULL;
@@ -259,7 +259,7 @@ static PyObject *PyJPPackage_dir(PyJPPackage *self)
 {
 	JP_PY_TRY("PyJPPackage_dir");
 	JPContext* context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jobject pkg = getPackage(frame, self);
 	if (pkg == NULL)
 		return NULL;

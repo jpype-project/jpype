@@ -41,7 +41,7 @@ public:
 		JPFunctional *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
 		JPContext *context = PyJPModule_getContext();
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::inner(context);
 		PyJPProxy *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;

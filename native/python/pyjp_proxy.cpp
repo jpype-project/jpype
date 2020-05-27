@@ -30,7 +30,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 {
 	JP_PY_TRY("PyJPProxy_new");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -97,7 +97,7 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
-	JPJavaFrame frame(self->m_Proxy->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(self->m_Proxy->getContext());
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 }

@@ -79,7 +79,7 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 {
 	JP_PY_TRY("PyJPMethod_call");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JP_TRACE(self->m_Method->getName());
 	PyObject *out = NULL;
 	if (self->m_Instance == NULL)
@@ -99,7 +99,7 @@ static PyObject *PyJPMethod_str(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_str");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	stringstream sout;
 	sout << self->m_Method->getClass()->getCanonicalName() << "." << self->m_Method->getName();
 	return JPPyString::fromStringUTF8(sout.str()).keep();
@@ -160,7 +160,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Doc)
 	{
 		Py_INCREF(self->m_Doc);
@@ -214,7 +214,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getAnnotations");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Annotations)
 	{
 		Py_INCREF(self->m_Annotations);

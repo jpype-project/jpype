@@ -409,7 +409,7 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	// GCOVR_EXCL_STOP
 
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	// Check for class inheritance first
 	JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
@@ -451,7 +451,7 @@ static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_class");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(self);
 	if (javaSlot == NULL)
 		JP_RAISE(PyExc_AttributeError, "Java slot is null");
@@ -463,7 +463,7 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_setClass", self);
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(type);
 	if (javaSlot == NULL || javaSlot->getClass() != context->_java_lang_Class)
 		JP_RAISE(PyExc_TypeError, "Java class instance is required");
@@ -535,14 +535,14 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 	if ((PyObject*) self == _JInterface)
 	{
 		JPContext *context = PyJPModule_getContext();
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::outer(context);
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		return PyBool_FromLong(testClass != NULL && testClass->isInterface());
 	}
 	if ((PyObject*) self == _JException)
 	{
 		JPContext *context = PyJPModule_getContext();
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::outer(context);
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		if (testClass)
 			return PyBool_FromLong(testClass->isThrowable());
@@ -556,7 +556,7 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_canConvertToJava");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass *cls = self->m_Class;
 
@@ -596,7 +596,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPClass_array");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	if (PyIndex_Check(item))
 	{
@@ -671,7 +671,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_cast");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPClass *type =  self->m_Class;
 	JPValue *val = PyJPValue_getJavaSlot(other);
 
@@ -726,9 +726,9 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		PyJPArray *array = (PyJPArray*) other;
 		if (array->m_Array->isSlice())
 		{
-			JPJavaFrame frame(context);
+			JPJavaFrame frame = JPJavaFrame::outer(context);
 			jvalue v;
-			v.l = frame.keep(array->m_Array->clone(frame, other));
+			v.l = array->m_Array->clone(frame, other);
 			return type->convertToPythonObject(frame, v, true).keep();
 		}
 	}
@@ -751,7 +751,7 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_convertToJava");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass *cls = self->m_Class;
 
@@ -850,7 +850,7 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 		JPClass *cls = javaSlot->getClass();
 		if (cls != cls->getContext()->_java_lang_Class)
 			return NULL;
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		return frame.findClass((jclass) javaSlot->getJavaObject());
 	}	catch (...) // GCOVR_EXCL_LINE
 	{
