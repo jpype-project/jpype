@@ -377,7 +377,7 @@ class _UnsupportedTypeError(InterfaceError, TypeError):
 _default = object()
 
 
-def connect(url, driver=None, driver_args=None,
+def connect(dsn, *, driver=None, driver_args=None,
             adapters=_default, converters=_default,
             getters=GETTERS_BY_TYPE, setters=SETTERS_BY_TYPE, **kwargs):
     """ Create a connection to a database.
@@ -385,7 +385,7 @@ def connect(url, driver=None, driver_args=None,
     Arguments to the driver depend on the database type.
 
     Args:
-       url (str): The database connection string for JDBC.
+       dsn (str): The database connection string for JDBC.
        driver (str, optional): A JDBC driver to load.
        driver_args: Arguments to the driver.  This may either be a dict,
           java.util.Properties.  If not supplied, kwargs are used as as the
@@ -406,18 +406,18 @@ def connect(url, driver=None, driver_args=None,
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
-        connection = DM.getConnection(url, driver_args)
+        connection = DM.getConnection(dsn, driver_args)
 
     # User is supplying a mapping that can be converted Properties
     elif isinstance(driver_args, typing.Mapping):
         info = Properties()
         for k, v in driver_args.items():
             info.setProperty(k, v)
-        connection = DM.getConnection(url, info)
+        connection = DM.getConnection(dsn, info)
 
     # User supplied nothing
     elif driver_args is None:
-        connection = DM.getConnection(url)
+        connection = DM.getConnection(dsn)
 
     # Otherwise use the kwargs
     else:
