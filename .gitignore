@@ -74,3 +74,8 @@ docker/wheelhouse
 /.eggs
 /tmp*
 a.out
+.idea/
+_build/
+jacoco/
+wheelhouse/
+vc*.pdb

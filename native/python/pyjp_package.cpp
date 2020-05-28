@@ -25,6 +25,7 @@ struct PyJPPackage
 	PyObject_HEAD
 	PyObject *m_Dict;
 	JPPackage *m_Package;
+	PyObject *m_Handler;
 } ;
 
 PyTypeObject *PyJPPackage_Type = NULL;
@@ -41,6 +42,7 @@ static PyJPPackage *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject
 
 	self->m_Dict = PyDict_New();
 	self->m_Package = new JPPackage(v);
+	self->m_Handler = NULL;
 	return self;
 	JP_PY_CATCH(NULL);
 }
@@ -48,12 +50,14 @@ static PyJPPackage *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject
 static int PyJPPackage_traverse(PyJPPackage *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Dict);
+	Py_VISIT(self->m_Handler);
 	return 0;
 }
 
 static int PyJPPackage_clear(PyJPPackage *self)
 {
 	Py_CLEAR(self->m_Dict);
+	Py_CLEAR(self->m_Handler);
 	return 0;
 }
 
@@ -120,7 +124,30 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			return NULL;
 
 		JPPyObject out;
-		jobject obj = frame.getPackageObject(pkg, attrName);
+		jobject obj;
+		try
+		{
+			obj = frame.getPackageObject(pkg, attrName);
+		}		catch (JPypeException& ex)
+		{
+			// If something fails, we need to go to a handler
+			if (self->m_Handler != NULL)
+			{
+				ex.toPython();
+				JPPyErrFrame err;
+				err.normalize();
+				err.clear();
+				JPPyTuple tuple0 = JPPyTuple::newTuple(3);
+				tuple0.setItem(0, (PyObject*) self);
+				tuple0.setItem(1, attr);
+				tuple0.setItem(2, err.exceptionValue.get());
+				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
+				if (rc == 0)
+					return 0;
+				Py_DECREF(rc);
+			}
+			throw;
+		}
 		if (obj == NULL)
 		{
 			PyErr_Format(PyExc_AttributeError, "Java package '%s' has no attribute '%U'",
@@ -182,8 +209,11 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 		PyDict_SetItem(self->m_Dict, attr, value);
 		return 0;
 	}
-	if (Py_TYPE(value) == PyJPPackage_Type || Py_IsInstanceSingle(PyJPClass_Type, value))
+	if (Py_TYPE(value) == PyJPPackage_Type || Py_IsInstanceSingle(value, PyJPClass_Type))
 		return 0;
+	if (attrName.compare(0, 1, "_") == 0)
+		return PyObject_GenericSetAttr((PyObject*) self, attr, value);
+
 	PyErr_Format(PyExc_AttributeError, "Cannot set '%U' on Java packages", attr);
 	return -1;
 	JP_PY_CATCH(-1);
@@ -192,6 +222,13 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 static PyObject *PyJPPackage_str(PyJPPackage *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPPackage_str");
+	return PyUnicode_FromFormat("%s", self->m_Package->m_Name.c_str());
+	JP_PY_CATCH(NULL);
+}
+
+static PyObject *PyJPPackage_repr(PyJPPackage *self, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPPackage_repr");
 	return PyUnicode_FromFormat("<java package '%s'>", self->m_Package->m_Name.c_str());
 	JP_PY_CATCH(NULL);
 }
@@ -240,6 +277,22 @@ static PyObject *PyJPPackage_dir(PyJPPackage *self)
 	JP_PY_CATCH(NULL);
 }
 
+static PyObject *PyJPPackage_handler(PyJPPackage *self)
+{
+	if (self->m_Handler == NULL)
+		Py_RETURN_NONE;
+	Py_INCREF(self->m_Handler);
+	return self->m_Handler;
+}
+
+static int PyJPPackage_setHandler(PyJPPackage *self , PyObject *handler, void *)
+{
+	Py_INCREF(handler);
+	Py_CLEAR(self->m_Handler);
+	self->m_Handler = handler;
+	return 0;
+}
+
 static PyMemberDef packageMembers[] = {
 	{"__dictoffset__",  T_PYSSIZET, offsetof(PyJPPackage, m_Dict), READONLY},
 	{NULL},
@@ -255,6 +308,7 @@ static PyGetSetDef packageGetSets[] = {
 	{"__name__", (getter) PyJPPackage_name, NULL, ""},
 	{"__package__", (getter) PyJPPackage_package, NULL, ""},
 	{"__path__", (getter) PyJPPackage_path, NULL, ""},
+	{"_handler", (getter) PyJPPackage_handler, (setter) PyJPPackage_setHandler, ""},
 	{0}
 };
 
@@ -266,6 +320,7 @@ static PyType_Slot packageSlots[] = {
 	{Py_tp_getattro, (void*) PyJPPackage_getattro},
 	{Py_tp_setattro, (void*) PyJPPackage_setattro},
 	{Py_tp_str,      (void*) PyJPPackage_str},
+	{Py_tp_repr,     (void*) PyJPPackage_repr},
 	{Py_tp_call,     (void*) PyJPPackage_call},
 	{Py_tp_members,  (void*) packageMembers},
 	{Py_tp_methods,  (void*) packageMethods},

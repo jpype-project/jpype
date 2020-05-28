@@ -2429,6 +2429,43 @@ it remains in the Java map, it will maintain the same identify.  But once
 it is removed, it is free to switch identities every time it is garbage
 collected.
 
+AWT/Swing
+*********
+
+Java GUI elements can be used from Python.  To use Swing
+elements the event loop in Java must be started from a user thread. 
+This will prevent the JVM from shutting down until the user thread
+is completed.
+
+Here is a simple example which creates a hello world frame and
+launches it from within Python.
+
+.. code-block:: python
+
+    import jpype
+    import jpype.imports
+
+    jpype.startJVM()
+    import java
+    import javax
+    from javax.swing import *
+
+    def createAndShowGUI():
+	frame = JFrame("HelloWorldSwing")
+	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+	label = JLabel("Hello World")
+	frame.getContentPane().add(label)
+	frame.pack()
+	frame.setVisible(True)
+
+    # Start an event loop thread to handling gui events
+    @jpype.JImplements(java.lang.Runnable)
+    class Launch:
+	@jpype.JOverride
+	def run(self):
+	    createAndShowGUI()
+    javax.swing.SwingUtilities.invokeLater(Launch())
+
 
 
 Concurrent Processing
@@ -2469,17 +2506,17 @@ faults.  Rather that crashing randomly, JPype automatically attachs any
 thread that invokes a Java method.  These threads are attached automatically as
 daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
-``jpype.attachThreadToJVM()`` from within the thread context.  Once this is
+``java.lang.Thread.attach()`` from within the thread context.  Once this is
 done the JVM will not shut down until that thread is completed.
 
-There is a function called ``jpype.isThreadAttachedToJVM()`` which will check
+There is a function called ``java.lang.Thread.isAttached()`` which will check
 if a thread is attached.  As threads automatically attach to Java, the only
 way that a thread would not be attached is if it has never called a Java method.
 
 The downside of automatic attachment is that each attachment allocates a
 small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
-to completing the thread with ``jpype.detachThreadFromJVM()``.  When 
+to completing the thread with ``java.lang.Thread.detach()``.  When 
 implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
@@ -2670,7 +2707,7 @@ can impose performance bottlenecks.
 
 JNI is the standard native interface for most, if not all, JVMs, so there is
 no getting around it. Down the road, it is possible that interfacing with CNI
-(GCC's java native interface) may be used. Right now, the best way to reduce
+(GCC's Java native interface) may be used. Right now, the best way to reduce
 the JNI cost is to move time critical code over to Java.
 
 Follow the regular Python philosophy : **Write it all in Python, then write
@@ -3153,4 +3190,3 @@ resulting in unusual behavior with certain windows calls. The path
 separator for Cygwin does not match that of the Java DLL, thus specification
 of class paths must account for this.  Threading between the Cygwin libraries
 and the JVM was often unstable.
-

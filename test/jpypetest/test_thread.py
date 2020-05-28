@@ -18,12 +18,14 @@ import jpype
 import sys
 import time
 import common
+import pytest
 
 
 class ThreadTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
+    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def testAttach(self):
         # Make sure we are attached to start the test
         jpype.attachThreadToJVM()
@@ -44,3 +46,23 @@ class ThreadTestCase(common.JPypeTestCase):
         # Call a Java method which will cause it to attach automatically
         s = jpype.JString("foo")
         self.assertTrue(jpype.isThreadAttachedToJVM())
+
+    def testAttachNew(self):
+        import java
+        # Detach the thread
+        java.lang.Thread.detach()
+        self.assertFalse(java.lang.Thread.isAttached())
+
+        # Attach as a main thread
+        java.lang.Thread.attach()
+        self.assertTrue(java.lang.Thread.isAttached())
+        self.assertFalse(java.lang.Thread.currentThread().isDaemon())
+
+        # Detach the thread
+        java.lang.Thread.detach()
+        self.assertFalse(java.lang.Thread.isAttached())
+
+        # Attach as a daemon thread
+        java.lang.Thread.attachAsDaemon()
+        self.assertTrue(java.lang.Thread.isAttached())
+        self.assertTrue(java.lang.Thread.currentThread().isDaemon())

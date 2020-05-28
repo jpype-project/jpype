@@ -192,7 +192,7 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-int Py_IsInstanceSingle(PyTypeObject* type, PyObject* obj)
+int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
 	if (type == NULL || obj == NULL)
 		return 0; // GCOVR_EXCL_LINE
@@ -360,23 +360,12 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 		return NULL;
 	if (!PyIndex_Check(dims))
 		JP_RAISE(PyExc_TypeError, "dims must be an integer");
-	Py_ssize_t d = PyNumber_AsSsize_t(dims, PyExc_IndexError);
-	if (d > 255)
-		JP_RAISE(PyExc_ValueError, "dims too large");
+	long d = PyLong_AsLong(dims);
 	JPClass* cls = PyJPClass_getJPClass(type);
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Java class required");
 
-	stringstream ss;
-	for (int i = 0; i < d; ++i)
-		ss << "[";
-	if (cls->isPrimitive())
-		ss << ((JPPrimitiveType*) cls)->getTypeCode();
-	else if (cls->isArray())
-		ss << cls->getName();
-	else
-		ss << "L" << cls->getName() << ";";
-	JPClass* arraycls = frame.findClassByName(ss.str());
+	JPClass* arraycls = cls->newArrayType(frame, d);
 	return PyJPClass_create(frame, arraycls).keep();
 	JP_PY_CATCH(NULL);
 }
@@ -660,7 +649,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "0.7.4");
+	PyModule_AddStringConstant(module, "__version__", "0.7.6_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
