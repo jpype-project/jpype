@@ -12,8 +12,8 @@ class _JThread(object):
     Python.
     """
 
-    @classmethod
-    def isAttached(self):
+    @staticmethod
+    def isAttached():
         """ Checks if a thread is attached to the JVM.
 
         Python automatically attaches as daemon threads when a Java method is
@@ -28,8 +28,8 @@ class _JThread(object):
         """
         return _jpype.isThreadAttachedToJVM()
 
-    @classmethod
-    def attach(self):
+    @staticmethod
+    def attach():
         """ Attaches the current thread to the JVM as a user thread.
 
         User threads that are attached to the JVM will prevent the JVM from
@@ -41,8 +41,8 @@ class _JThread(object):
         """
         return _jpype.attachThreadToJVM()
 
-    @classmethod
-    def attachAsDaemon(self):
+    @staticmethod
+    def attachAsDaemon():
         """ Attaches the current thread to the JVM as a daemon.
 
         Daemon threads act as background tasks and do not prevent the JVM from
@@ -55,8 +55,8 @@ class _JThread(object):
         """
         return _jpype.attachThreadAsDaemon()
 
-    @classmethod
-    def detach(self):
+    @staticmethod
+    def detach():
         """ Detaches a thread from the JVM.
 
         This function detaches the thread and frees the associated resource in
