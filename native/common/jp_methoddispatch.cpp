@@ -39,7 +39,8 @@ const string& JPMethodDispatch::getName() const
 	return m_Name;
 }
 
-void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg, bool callInstance)
+bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg,
+		bool callInstance, bool raise)
 {
 	JP_TRACE_IN("JPMethodDispatch::findOverload");
 	JP_TRACE("Checking overload", m_Name);
@@ -57,7 +58,7 @@ void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		if (match.type == JPMatch::_exact)
 		{
 			bestMatch = match;
-			return;
+			return true;
 		}
 		if (match.type < JPMatch::_implicit)
 			continue;
@@ -98,6 +99,8 @@ void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	// If we have an ambiguous overload report an error.
 	if (!ambiguous.empty())
 	{
+		if (!raise)
+			return false;
 		ambiguous.push_back(bestMatch.overload);
 
 		// We have two possible overloads so we declare an error
@@ -125,6 +128,8 @@ void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	// If we can't find a matching overload throw an error.
 	if (!bestMatch.overload)
 	{
+		if (!raise)
+			return false;
 		std::stringstream ss;
 		if (JPModifier::isConstructor(m_Modifiers))
 			ss << "No matching overloads found for constructor " << m_Class->getCanonicalName() << "(";
@@ -150,7 +155,7 @@ void JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	}
 
 	JP_TRACE("Best match", bestMatch.overload->toString());
-	return;
+	return true;
 	JP_TRACE_OUT;
 }
 
@@ -158,7 +163,7 @@ JPPyObject JPMethodDispatch::invoke(JPJavaFrame& frame, JPPyObjectVector& args, 
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
 	JPMethodMatch match(frame, args);
-	findOverload(frame, match, args, instance);
+	findOverload(frame, match, args, instance, true);
 	return match.overload->invoke(frame, match, args, instance);
 	JP_TRACE_OUT;
 }
@@ -167,8 +172,16 @@ JPValue JPMethodDispatch::invokeConstructor(JPJavaFrame& frame, JPPyObjectVector
 {
 	JP_TRACE_IN("JPMethodDispatch::invokeConstructor");
 	JPMethodMatch match(frame, args);
-	findOverload(frame, match, args, false);
+	findOverload(frame, match, args, false, true);
 	return match.overload->invokeConstructor(frame, match, args);
+	JP_TRACE_OUT;
+}
+
+bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
+{
+	JP_TRACE_IN("JPMethodDispatch::invoke");
+	JPMethodMatch match(frame, args);
+	return findOverload(frame, match, args, instance, false);
 	JP_TRACE_OUT;
 }
 
