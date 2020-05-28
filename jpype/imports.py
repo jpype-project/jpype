@@ -158,12 +158,25 @@ class _JImportLoader:
             base = name.partition('.')[0]
             if not base in _JDOMAINS:
                 return None
-            raise ImportError("Attempt to create java modules without jvm")
+            raise ImportError("Attempt to create Java package '%s' without jvm" % name)
+
+        # Check for aliases
+        if name in _JDOMAINS:
+            jname = _JDOMAINS[name]
+            if not _jpype.isPackage(jname):
+                raise ImportError("Java package '%s' not found, requested by alias '%s'" % (jname, name))
+            ms = _ModuleSpec(name, self)
+            ms._jname = jname
+            return ms
 
         # Check if it is a TLD
         parts = name.rpartition('.')
+
+        # Use the parent module to simplify name mangling
         if not parts[1] and _jpype.isPackage(parts[2]):
-            return _ModuleSpec(name, self)
+            ms = _ModuleSpec(name, self)
+            ms._jname = jname
+            return ms
 
         if not parts[1] and not _jpype.isPackage(parts[0]):
             return None
@@ -198,7 +211,7 @@ class _JImportLoader:
 
     def create_module(self, spec):
         if spec.parent == "":
-            return _jpype._JPackage(spec.name)
+            return _jpype._JPackage(spec._jname)
         parts = spec.name.rsplit('.', 1)
         rc = getattr(sys.modules[spec.parent], parts[1])
 
