@@ -165,6 +165,7 @@ JPValue   *PyJPValue_getJavaSlot(PyObject* obj);
 PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
 int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
+void       PyJPClass_hook(JPJavaFrame &frame, JPClass* cls);
 
 #ifdef __cplusplus
 }

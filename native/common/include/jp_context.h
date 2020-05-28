@@ -257,6 +257,7 @@ private:
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
+	jmethodID m_Context_NewWrapperID;
 public:
 	jmethodID m_Context_GetStackFrameID;
 

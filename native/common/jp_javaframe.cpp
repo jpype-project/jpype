@@ -891,7 +891,7 @@ jclass JPJavaFrame::FindClass(const string& a0)
 jobjectArray JPJavaFrame::NewObjectArray(jsize a0, jclass elementClass, jobject initialElement)
 {
 	JAVA_RETURN(jobjectArray, "JPJavaFrame::NewObjectArray",
-		m_Env->NewObjectArray(a0, elementClass, initialElement));
+			m_Env->NewObjectArray(a0, elementClass, initialElement));
 }
 
 void JPJavaFrame::SetObjectArrayElement(jobjectArray a0, jsize a1, jobject a2)
@@ -921,7 +921,7 @@ void JPJavaFrame::CallNonvirtualVoidMethodA(jobject a0, jclass a1, jmethodID a2,
 jboolean JPJavaFrame::IsInstanceOf(jobject a0, jclass a1)
 {
 	JAVA_RETURN(jboolean, "JPJavaFrame::IsInstanceOf",
-		m_Env->IsInstanceOf(a0, a1));
+			m_Env->IsInstanceOf(a0, a1));
 }
 
 jboolean JPJavaFrame::IsAssignableFrom(jclass a0, jclass a1)
@@ -1238,7 +1238,7 @@ jboolean JPJavaFrame::isPackage(const string& str)
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jboolean, "JPJavaFrame::isPackage",
-		CallBooleanMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_IsPackageID, &v));
+			CallBooleanMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_IsPackageID, &v));
 }
 
 jobject JPJavaFrame::getPackage(const string& str)
@@ -1246,7 +1246,7 @@ jobject JPJavaFrame::getPackage(const string& str)
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jobject, "JPJavaFrame::getPackage",
-		CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_GetPackageID, &v));
+			CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_GetPackageID, &v));
 }
 
 jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
@@ -1254,12 +1254,21 @@ jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jobject, "JPJavaFrame::getPackageObject",
-		CallObjectMethodA(pkg, m_Context->m_Package_GetObjectID, &v));
+			CallObjectMethodA(pkg, m_Context->m_Package_GetObjectID, &v));
 }
 
 jarray JPJavaFrame::getPackageContents(jobject pkg)
 {
 	jvalue v;
 	JAVA_RETURN(jarray, "JPJavaFrame::getPackageContents",
-		(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
+			(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
+}
+
+void JPJavaFrame::newWrapper(JPClass* cls)
+{
+	JPPyCallRelease call;
+	jvalue jv;
+	jv.j = (jlong) cls;
+	CallVoidMethodA(m_Context->getJavaContext(),
+			m_Context->m_Context_NewWrapperID, &jv);
 }

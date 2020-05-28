@@ -83,6 +83,18 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 #define JP_JAVA_CATCH(...)  } catch(...) { JPTypeFactory_rethrow(frame); } return __VA_ARGS__
 #endif
 
+JNIEXPORT void JNICALL JPTypeFactory_newWrapper(
+		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
+{
+	JPContext* context = (JPContext*) contextPtr;
+	JPJavaFrame frame = JPJavaFrame::external(context, env);
+	JP_JAVA_TRY("JPTypeFactory_newWrapper");
+	JPClass* cls = (JPClass*) jcls;
+	JPPyCallAcquire callback;
+	PyJPClass_hook(frame, cls);
+	JP_JAVA_CATCH();
+}
+
 JNIEXPORT void JNICALL JPTypeFactory_destroy(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlongArray resources,
@@ -451,7 +463,7 @@ JPTypeFactory::JPTypeFactory(JPJavaFrame& frame)
 	JPContext* context = frame.getContext();
 	jclass cls = context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeFactoryNative");
 
-	JNINativeMethod method[9];
+	JNINativeMethod method[10];
 
 	method[0].name = (char*) "destroy";
 	method[0].signature = (char*) "(J[JI)V";
@@ -489,7 +501,11 @@ JPTypeFactory::JPTypeFactory(JPJavaFrame& frame)
 	method[8].signature = (char*) "(JJJ[J)V";
 	method[8].fnPtr = (void*) &JPTypeFactory_populateMethod;
 
+	method[9].name = (char*) "newWrapper";
+	method[9].signature = (char*) "(JJ)V";
+	method[9].fnPtr = (void*) &JPTypeFactory_newWrapper;
+
 	frame.GetMethodID(cls, "<init>", "()V");
-	frame.RegisterNatives(cls, method, 9);
+	frame.RegisterNatives(cls, method, 10);
 	JP_TRACE_OUT;
 }

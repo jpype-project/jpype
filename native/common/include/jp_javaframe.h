@@ -397,6 +397,8 @@ public:
 	jobject getPackageObject(jobject pkg, const string& str);
 	jarray getPackageContents(jobject pkg);
 
+	void newWrapper(JPClass* cls);
+
 } ;
 
 #endif // _JP_JAVA_FRAME_H_

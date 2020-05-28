@@ -298,6 +298,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"(Ljava/lang/String;)Ljava/lang/Object;");
 		m_Package_GetContentsID = frame.GetMethodID(packageClass, "getContents",
 				"()[Ljava/lang/String;");
+		m_Context_NewWrapperID = frame.GetMethodID(contextClass, "newWrapper",
+				"(J)V");
 
 		m_Array = JPClassRef(frame, frame.FindClass("java/lang/reflect/Array"));
 		m_Array_NewInstanceID = frame.GetStaticMethodID(m_Array.get(), "newInstance",
