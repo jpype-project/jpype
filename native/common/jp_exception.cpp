@@ -528,7 +528,15 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	args[1].l = prev;
 	if (context->m_Context_GetStackFrameID == NULL)
 		return JPPyObject();
-	jobjectArray obj = (jobjectArray) frame.getEnv()->CallObjectMethodA(context->getJavaContext(), context->m_Context_GetStackFrameID, args);
+
+	JNIEnv* env = frame.getEnv();
+	jobjectArray obj = (jobjectArray) env->CallObjectMethodA(context->getJavaContext(),
+			context->m_Context_GetStackFrameID, args);
+
+	// Eat any exceptions that were generated
+	if (env->ExceptionCheck() == JNI_TRUE)
+		env->ExceptionClear();
+
 	if (obj == NULL)
 		return JPPyObject();
 	jsize sz = frame.GetArrayLength(obj);
@@ -550,6 +558,9 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 
 		last_traceback = tb_create(last_traceback, dict,  filename.c_str(),
 				method.c_str(), lineNum);
+		frame.DeleteLocalRef(jclassname);
+		frame.DeleteLocalRef(jmethodname);
+		frame.DeleteLocalRef(jfilename);
 	}
 	if (last_traceback == NULL)
 		return JPPyObject();

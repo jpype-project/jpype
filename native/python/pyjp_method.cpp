@@ -95,6 +95,24 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
+static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPMethod_matches");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JP_TRACE(self->m_Method->getName());
+	if (self->m_Instance == NULL)
+	{
+		JPPyObjectVector vargs(args);
+		return PyBool_FromLong(self->m_Method->matches(frame, vargs, false));
+	} else
+	{
+		JPPyObjectVector vargs(self->m_Instance, args);
+		return PyBool_FromLong(self->m_Method->matches(frame, vargs, true));
+	}
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+}
+
 static PyObject *PyJPMethod_str(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_str");
@@ -323,6 +341,8 @@ static PyMethodDef methodMethods[] = {
 	{"_isBeanAccessor", (PyCFunction) (&PyJPMethod_isBeanAccessor), METH_NOARGS, ""},
 	{"_isBeanMutator", (PyCFunction) (&PyJPMethod_isBeanMutator), METH_NOARGS, ""},
 	{"matchReport", (PyCFunction) (&PyJPMethod_matchReport), METH_VARARGS, ""},
+	// This is  currently private but may be promoted
+	{"_matches", (PyCFunction) (&PyJPMethod_matches), METH_VARARGS, ""},
 	{NULL},
 };
 
