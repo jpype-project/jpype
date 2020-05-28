@@ -38,7 +38,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->m_BooleanValueID, 0) ? true : false;
+	field(v) = frame.booleanValue(obj.getValue().l) != 0;
 	return JPValue(this, v);
 }
 

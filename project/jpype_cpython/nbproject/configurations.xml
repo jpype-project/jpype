@@ -119,6 +119,7 @@
         <itemPath>../../native/python/pyjp_monitor.cpp</itemPath>
         <itemPath>../../native/python/pyjp_number.cpp</itemPath>
         <itemPath>../../native/python/pyjp_object.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_package.cpp</itemPath>
         <itemPath>../../native/python/pyjp_proxy.cpp</itemPath>
         <itemPath>../../native/python/pyjp_value.cpp</itemPath>
       </logicalFolder>
@@ -595,6 +596,11 @@
             flavor2="0">
       </item>
       <item path="../../native/python/pyjp_object.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_package.cpp"
             ex="false"
             tool="1"
             flavor2="0">
