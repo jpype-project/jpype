@@ -73,6 +73,7 @@ docker/*.tar.gz
 docker/wheelhouse
 /.eggs
 /tmp*
+a.out
 .idea/
 _build/
 jacoco/

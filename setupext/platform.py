@@ -60,13 +60,18 @@ elif sys.platform.startswith('linux'):
     platform_specific['extra_compile_args'] = ['-g0', '-std=c++11']
     jni_md_platform = 'linux'
 
+elif sys.platform.startswith('aix7'):
+    platform_specific['libraries'] = ['dl']
+    platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
+    jni_md_platform = 'aix7'
+
 elif sys.platform.startswith('freebsd'):
     jni_md_platform = 'freebsd'
 
 else:
     jni_md_platform = None
-    warnings.warn("Your platform is not being handled explicitly."
-                  " It may work or not!", UserWarning)
+    warnings.warn("Your platform %s is not being handled explicitly."
+                  " It may work or not!" % sys.platform, UserWarning)
 
 if found_jni:
     platform_specific['include_dirs'] += \
