@@ -30,23 +30,20 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
 
+	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPPyObjectVector args(pyargs);
+	JPValue jv = cls->newInstance(frame, args);
+
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
-	// Create an instance (this may fail)
-	JPJavaFrame frame(context);
-	JPPyObjectVector args(pyargs);
-
 	JP_FAULT_RETURN("PyJPObject_init.null", self);
-	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
+	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
 	JP_PY_CATCH(NULL);
 }
-
-static const char* op_names[] = {
-	"<", "<=", "==", "!=", ">", ">="
-};
 
 static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 {
@@ -62,8 +59,9 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (op != Py_EQ)
 	{
-		PyErr_Format(PyExc_TypeError, "'%s' not supported with Java `%s`", op_names[op], Py_TYPE(self)->tp_name);
-		return NULL;
+		PyObject *out = Py_NotImplemented;
+		Py_INCREF(out);
+		return out;
 	}
 
 	JPContext *context = PyJPModule_getContext();
@@ -146,9 +144,11 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 
 		// This should never happen.
 		if (cls2 == NULL)
-			JP_RAISE(PyExc_TypeError, "Type is not comparable");
-		if (!cls2->findJavaConversion(match))
-			JP_RAISE(PyExc_TypeError, "Type is not comparable");
+		{
+			PyObject *out = Py_NotImplemented;
+			Py_INCREF(out);
+			return out;
+		}
 		obj1 = match.convert().l;
 	} else if (!null1 && javaSlot1 != NULL)
 		obj1 = javaSlot1->getValue().l;
@@ -170,21 +170,22 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) != 0);
 		case Py_LT:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) < 0);
 		case Py_LE:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) <= 0);
 		case Py_GT:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) > 0);
 		case Py_GE:
 			if (null0 || null1)
-				JP_RAISE(PyExc_ValueError, "can't compare null");
+				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) >= 0);
 	}
+	PyErr_Format(PyExc_ValueError, "can't compare null");
 	JP_PY_CATCH(NULL);
 }
 
@@ -244,16 +245,17 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	if (args.size() == 2 && args[0] == _JObjectKey)
 		return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
 
+	// Create an instance (this may fail)
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	JPValue jv = cls->newInstance(frame, args);
+
 	// Exception must be constructed with the BaseException_new
 	PyObject *self = ((PyTypeObject*) PyExc_BaseException)->tp_new(type, pyargs, kwargs);
 	JP_PY_CHECK();
 
-	// Create an instance (this may fail)
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-
 	JP_FAULT_RETURN("PyJPException_init.null", self);
-	PyJPValue_assignJavaSlot(frame, self, cls->newInstance(frame, args));
+	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
 	JP_PY_CATCH(NULL);
 }

@@ -37,6 +37,7 @@ extern void PyJPObject_initType(PyObject* module);
 extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
+extern void PyJPChar_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -60,6 +61,7 @@ public:
 
 
 PyObject* _JArray = NULL;
+PyObject* _JChar = NULL;
 PyObject* _JObject = NULL;
 PyObject* _JInterface = NULL;
 PyObject* _JException = NULL;
@@ -93,6 +95,9 @@ static void PyJPModule_loadResources(PyObject* module)
 		_JArray = PyObject_GetAttrString(module, "JArray");
 		JP_PY_CHECK();
 		Py_INCREF(_JArray);
+		_JChar = PyObject_GetAttrString(module, "JChar");
+		JP_PY_CHECK();
+		Py_INCREF(_JChar);
 		_JException = PyObject_GetAttrString(module, "JException");
 		JP_PY_CHECK();
 		Py_INCREF(_JException);
@@ -664,6 +669,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPProxy_initType(module);
 	PyJPClassHints_initType(module);
 	PyJPPackage_initType(module);
+	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
 	return module;
