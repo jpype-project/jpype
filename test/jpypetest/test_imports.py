@@ -19,6 +19,7 @@ import sys
 import logging
 import time
 import common
+import subrun
 
 
 def haveJImports():
@@ -84,4 +85,29 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaises(ImportError):
             from java.lang import NotThere
 
-# FIXME add test for static member variable imports and other edge cases.
+    def testAlias1(self):
+        jpype.imports.registerDomain("jpypex", alias="jpype")
+        from jpypex.common import Fixture
+        self.assertEqual(Fixture, jpype.JClass("jpype.common.Fixture"))
+
+    def testAlias2(self):
+        jpype.imports.registerDomain("commonx", alias="jpype.common")
+        from commonx import Fixture as Fixture2
+        self.assertEqual(Fixture2, jpype.JClass("jpype.common.Fixture"))
+
+    def testAliasBad(self):
+        jpype.imports.registerDomain("brokenx", alias="jpype.broken")
+        with self.assertRaises(ImportError):
+            from brokenx import Fixture as Fixture2
+
+
+@subrun.TestCase
+class ImportsBeforeCase(common.unittest.TestCase):
+    def setUp(self):
+        self.jvmpath = jpype.getDefaultJVMPath()
+
+    def testPre(self):
+        with self.assertRaises(ImportError):
+            import java
+        with self.assertRaises(ImportError):
+            import java.lang

@@ -138,7 +138,8 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 		// the first super class that implements Comparable.  Further,
 		// because of type erasure we can't actually get.
 		JPClass *cls2 = javaSlot0->getClass();
-		while (cls2 != NULL && !JPModifier::isComparable(cls2->getModifiers()))
+		JPMatch match(&frame, other);
+		while (cls2 != NULL && !cls2->findJavaConversion(match) && !JPModifier::isComparable(cls2->getModifiers()))
 			cls2 = cls2->getSuperClass();
 
 		// This should never happen.

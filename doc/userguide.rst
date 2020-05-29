@@ -2506,17 +2506,17 @@ faults.  Rather that crashing randomly, JPype automatically attachs any
 thread that invokes a Java method.  These threads are attached automatically as
 daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
-``jpype.attachThreadToJVM()`` from within the thread context.  Once this is
+``java.lang.Thread.attach()`` from within the thread context.  Once this is
 done the JVM will not shut down until that thread is completed.
 
-There is a function called ``jpype.isThreadAttachedToJVM()`` which will check
+There is a function called ``java.lang.Thread.isAttached()`` which will check
 if a thread is attached.  As threads automatically attach to Java, the only
 way that a thread would not be attached is if it has never called a Java method.
 
 The downside of automatic attachment is that each attachment allocates a
 small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
-to completing the thread with ``jpype.detachThreadFromJVM()``.  When 
+to completing the thread with ``java.lang.Thread.detach()``.  When 
 implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is

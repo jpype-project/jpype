@@ -598,6 +598,22 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 	return PyJPClass_subclasscheck(self, Py_TYPE(test));
 }
 
+static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
+{
+	JP_PY_TRY("PyJPClass_canCast");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+
+	JPClass *cls = self->m_Class;
+
+	// Test the conversion
+	JPMatch match(&frame, other);
+	cls->findJavaConversion(match);
+
+	// Report to user
+	return PyBool_FromLong(match.type == JPMatch::_exact || match.type == JPMatch::_implicit);
+	JP_PY_CATCH(NULL);
+}
 // Added for auditing
 
 static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
@@ -835,6 +851,7 @@ static PyMethodDef classMethods[] = {
 	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
 	{"_convertToJava",    (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
 	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
+	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
 	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
 	{NULL},
 };

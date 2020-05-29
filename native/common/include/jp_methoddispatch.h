@@ -68,6 +68,7 @@ public:
 
 	JPPyObject invoke(JPJavaFrame& frame, JPPyObjectVector& vargs, bool instance);
 	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
+	bool matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance);
 
 	string matchReport(JPPyObjectVector& sequence);
 
@@ -82,7 +83,7 @@ private:
 	 * @param searchInstance is true if the first argument is to be skipped
 	 * when matching with a non-static.
 	 */
-	void findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance);
+	bool findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance, bool raise);
 	void dumpOverloads();
 
 	JPClass*      m_Class;
