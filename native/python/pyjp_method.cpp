@@ -99,7 +99,7 @@ static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *
 {
 	JP_PY_TRY("PyJPMethod_matches");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JP_TRACE(self->m_Method->getName());
 	if (self->m_Instance == NULL)
 	{

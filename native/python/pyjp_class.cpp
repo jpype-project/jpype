@@ -554,7 +554,7 @@ static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_canCast");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass *cls = self->m_Class;
 
