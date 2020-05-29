@@ -55,9 +55,9 @@ class JChar2TestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0:3] = bytes([1, 2, 3])
         # Not sure why this one changed.
-#        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
-#        with self.assertRaisesRegex(SystemError, "fault"):
-#            jpype.JObject(ja[::2], jpype.JObject)
+        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
 
         def f():
