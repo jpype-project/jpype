@@ -374,7 +374,10 @@ public class JavadocTransformer
       if (name.equals(PASS1[i]))
       {
         String s2 = e.getTextContent();
-        e.getParentNode().replaceChild(doc.createTextNode(String.format(PASS1[i + 1], s2.trim())), e);
+        if (s2 == null)
+          e.getParentNode().removeChild(e);
+        else
+          e.getParentNode().replaceChild(doc.createTextNode(String.format(PASS1[i + 1], s2.trim())), e);
         return;
       }
     }
@@ -404,6 +407,7 @@ public class JavadocTransformer
           q = q.subpath(2, q.getNameCount());
         String r = q.toString()
                 .replace('/', '.')
+                .replace('\\', '.')
                 .replaceAll("\\(.*\\)", "")
                 .replaceAll("-.*", "");
         return String.format(":meth:`~%s`", r);
@@ -417,6 +421,7 @@ public class JavadocTransformer
           q = q.subpath(2, q.getNameCount());
         String r = q.toString()
                 .replace('/', '.')
+                .replace('\\', '.')
                 .replaceAll("\\(.*\\)", "")
                 .replaceAll("-.*", "")
                 .replaceAll(".html#", ".");
@@ -430,6 +435,7 @@ public class JavadocTransformer
           q = q.subpath(2, q.getNameCount());
         String r = q.toString()
                 .replace('/', '.')
+                .replace('\\', '.')
                 .replaceAll("-.*", "")
                 .replaceAll(".html", "");
         return String.format(":class:`~%s`", r);

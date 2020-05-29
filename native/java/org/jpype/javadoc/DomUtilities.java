@@ -237,8 +237,11 @@ public class DomUtilities
         continue;
       Text t = (Text) child;
       String c = t.getNodeValue();
-      c = c.replaceAll("\\s+", " ");
-      t.setNodeValue(c);
+      if (c != null)
+      {
+        c = c.replaceAll("\\s+", " ");
+        t.setNodeValue(c);
+      }
     }
   }
 

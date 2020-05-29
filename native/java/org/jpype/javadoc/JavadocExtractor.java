@@ -23,6 +23,7 @@ public class JavadocExtractor
   static final JavadocTransformer transformer = new JavadocTransformer();
   static public boolean transform = true;
   static public boolean render = true;
+  static public boolean failures = false;
 
   /**
    * Search the classpath for documentation.
@@ -45,7 +46,8 @@ public class JavadocExtractor
     } catch (Exception ex)
     {
       System.err.println("Failed to extract javadoc for " + cls);
-//      throw new RuntimeException(ex);
+      if (failures)
+        throw new RuntimeException(ex);
     }
     return null;
   }

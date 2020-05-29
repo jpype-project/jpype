@@ -162,7 +162,10 @@ public class JavadocRenderer
     {
       if (child.getNodeType() == Node.TEXT_NODE)
       {
-        String value = child.getNodeValue().trim();
+        String value = child.getNodeValue();
+        if (value == null)
+          continue;
+        value = value.trim();
         if (value.isEmpty())
           continue;
         formatWidth(assembly, value, WIDTH, indentLevel, startIndent);
