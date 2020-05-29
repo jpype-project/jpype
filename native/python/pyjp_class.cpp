@@ -224,6 +224,54 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_mp_subscript:
 				heap->as_mapping.mp_subscript = (binaryfunc) slot->pfunc;
 				break;
+			case Py_nb_index:
+				heap->as_number.nb_index = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_absolute:
+				heap->as_number.nb_absolute = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_and:
+				heap->as_number.nb_and = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_or:
+				heap->as_number.nb_or = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_xor:
+				heap->as_number.nb_xor = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_add:
+				heap->as_number.nb_add = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_subtract:
+				heap->as_number.nb_subtract = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_multiply:
+				heap->as_number.nb_multiply = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_rshift:
+				heap->as_number.nb_rshift = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_lshift:
+				heap->as_number.nb_lshift = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_negative:
+				heap->as_number.nb_negative = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_bool:
+				heap->as_number.nb_bool = (inquiry) slot->pfunc;
+				break;
+			case Py_nb_invert:
+				heap->as_number.nb_invert = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_positive:
+				heap->as_number.nb_positive = (unaryfunc) slot->pfunc;
+				break;
+			case Py_nb_floor_divide:
+				heap->as_number.nb_floor_divide = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_divmod:
+				heap->as_number.nb_divmod = (binaryfunc) slot->pfunc;
+				break;
 			case Py_tp_getset:
 				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
@@ -573,6 +621,22 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 	return PyJPClass_subclasscheck(self, Py_TYPE(test));
 }
 
+static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
+{
+	JP_PY_TRY("PyJPClass_canCast");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+
+	JPClass *cls = self->m_Class;
+
+	// Test the conversion
+	JPMatch match(&frame, other);
+	cls->findJavaConversion(match);
+
+	// Report to user
+	return PyBool_FromLong(match.type == JPMatch::_exact || match.type == JPMatch::_implicit);
+	JP_PY_CATCH(NULL);
+}
 // Added for auditing
 
 static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
@@ -844,6 +908,7 @@ static PyMethodDef classMethods[] = {
 	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
 	{"_convertToJava",    (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
 	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
+	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
 	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
 	{NULL},
 };
@@ -936,7 +1001,7 @@ static JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberBool_Type);
 		} else if (cls == context->_java_lang_Character)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberChar_Type);
+			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPChar_Type);
 		} else if (cls == context->_java_lang_Boolean
 				|| cls == context->_java_lang_Byte
 				|| cls == context->_java_lang_Short

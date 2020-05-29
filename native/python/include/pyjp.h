@@ -128,12 +128,14 @@ extern PyTypeObject *PyJPProxy_Type;
 extern PyTypeObject *PyJPException_Type;
 extern PyTypeObject *PyJPNumberLong_Type;
 extern PyTypeObject *PyJPNumberFloat_Type;
-extern PyTypeObject *PyJPNumberChar_Type;
 extern PyTypeObject *PyJPNumberBool_Type;
+extern PyTypeObject *PyJPChar_Type;
+
 
 // JPype resources
 extern PyObject *PyJPModule;
 extern PyObject *_JArray;
+extern PyObject *_JChar;
 extern PyObject *_JObject;
 extern PyObject *_JInterface;
 extern PyObject *_JException;
@@ -166,6 +168,7 @@ JPValue   *PyJPValue_getJavaSlot(PyObject* obj);
 PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
 int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
+PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
 
 #ifdef __cplusplus
 }

@@ -145,7 +145,15 @@ class JMethodTestCase(common.JPypeTestCase):
             "foo").substring.matchReport(), str)
 
     def testMethodHelp(self):
-        help(jpype.JString("a").substring)
+        import io
+        import contextlib
+        f = io.StringIO()
+        with contextlib.redirect_stdout(f):
+            help(jpype.JString("a").substring)
+        s = f.getvalue()
+        self.assertTrue("Java method dispatch" in s)
+        self.assertTrue("substring(int)" in s)
+        self.assertTrue("substring(int, int)" in s)
 
     @common.requireInstrumentation
     def testJMethod_get(self):

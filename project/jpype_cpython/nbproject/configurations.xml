@@ -111,6 +111,7 @@
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_buffer.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_char.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
@@ -564,6 +565,8 @@
             ex="false"
             tool="1"
             flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_char.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
       </item>

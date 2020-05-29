@@ -147,11 +147,13 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 void JPContext::loadEntryPoints(const string& path)
 {
+	JP_TRACE_IN("JPContext::loadEntryPoints");
 	JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
 	// Load symbols from the shared library
 	platform->loadLibrary((char*) path.c_str());
 	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
+	JP_TRACE_OUT;
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
@@ -159,30 +161,52 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
+	JP_TRACE("Convert strings", convertStrings);
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
-	loadEntryPoints(vmPath);
+	try
+	{
+		JP_TRACE("Load entry points");
+		loadEntryPoints(vmPath);
+	} catch (JPypeException& ex)
+	{
+		ex.getMessage();
+		throw;
+	}
 
 	// Pack the arguments
+	JP_TRACE("Pack arguments");
 	JavaVMInitArgs jniArgs;
 	jniArgs.options = NULL;
 
 	// prepare this ...
 	jniArgs.version = USE_JNI_VERSION;
 	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
+        JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
 	jniArgs.nOptions = (jint) args.size();
+        JP_TRACE("NumOptions", jniArgs.nOptions);
 	jniArgs.options = (JavaVMOption*) malloc(sizeof (JavaVMOption) * jniArgs.nOptions);
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
+                JP_TRACE("Option", args[i]);
 		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
 
 	// Launch the JVM
-	JNIEnv* env;
-	CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+	JNIEnv* env = NULL;
+	JP_TRACE("Create JVM");
+        try
+        {
+	        CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+        }
+        catch (...)
+        {
+                JP_TRACE("Exception in CreateJVM?");
+        }
+        JP_TRACE("JVM created");
 	free(jniArgs.options);
 
 	if (m_JavaVM == NULL)

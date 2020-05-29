@@ -104,6 +104,15 @@ public class Fixture {
 	public double  callDouble(double i)   { return i; }
 	public String  callString(String i)   { return i; }
 
+	public java.lang.Boolean callBoxedBoolean(java.lang.Boolean i) { return i; }
+	public java.lang.Byte    callBoxedByte(java.lang.Byte i)       { return i; }
+	public java.lang.Character callBoxedChar(java.lang.Character i)  { return i; }
+	public java.lang.Short   callBoxedShort(java.lang.Short i)     { return i; }
+	public java.lang.Integer callBoxedInt(java.lang.Integer i)     { return i; }
+	public java.lang.Long    callBoxedLong(java.lang.Long i)       { return i; }
+	public java.lang.Float   callBoxedFloat(java.lang.Float i)     { return i; }
+	public java.lang.Double  callBoxedDouble(java.lang.Double i)   { return i; }
+
 	public static boolean callStaticBoolean(boolean i) { return i; }
 	public static byte    callStaticByte(byte i)       { return i; }
 	public static char    callStaticChar(char i)       { return i; }

@@ -65,11 +65,13 @@ public:
 
 	virtual void loadLibrary(const char* path) override
 	{
+		JP_TRACE_IN("Win32PlatformAdapter::loadLibrary");
 		jvmLibrary = LoadLibrary(path);
 		if (jvmLibrary == NULL)
 		{
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
 		}
+		JP_TRACE_OUT;
 	}
 
 	virtual void unloadLibrary() override
@@ -112,39 +114,59 @@ public:
 
 	virtual void loadLibrary(const char* path) override
 	{
+		JP_TRACE_IN("LinuxPlatformAdapter::loadLibrary");
 #if defined(_HPUX) && !defined(_IA64)
+		JP_TRACE("shl_load", path);
 		jvmLibrary = shl_load(path, BIND_DEFERRED | BIND_VERBOSE, 0L);
 #else
+		JP_TRACE("dlopen", path);
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
-
-		if (jvmLibrary == NULL) // GCOVR_EXCL_LINE
+                // GCOVR_EXCL_START
+		if (jvmLibrary == NULL)
 		{
-			JP_RAISE_OS_ERROR_UNIX( errno, path); // GCOVR_EXCL_LINE
+			JP_TRACE("null library");
+                        JP_TRACE("errno", errno);
+                        if (errno == ENOEXEC)
+                        {
+                            JP_TRACE("dignostics", dlerror());
+                        }
+			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
+                // GCOVR_EXCL_STOP
+		JP_TRACE_OUT;
 	}
 
 	virtual void unloadLibrary() override
 	{
+		JP_TRACE_IN("LinuxPlatformAdapter::unloadLibrary");
 		int r = dlclose(jvmLibrary);
-		if (r != 0) // error // GCOVR_EXCL_LINE
+                // GCOVR_EXCL_START
+		if (r != 0) // error
 		{
-			cerr << dlerror() << endl;  // GCOVR_EXCL_LINE
+			cerr << dlerror() << endl;
 		}
+                // GCOVR_EXCL_STOP
+		JP_TRACE_OUT;
 	}
 
 	virtual void* getSymbol(const char* name) override
 	{
+		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
+                JP_TRACE("Load", name);
 		void* res = dlsym(jvmLibrary, name);
-		if (res == NULL) // GCOVR_EXCL_LINE
+                JP_TRACE("Res", res);
+		// GCOVR_EXCL_START
+		if (res == NULL)
 		{
-			// GCOVR_EXCL_START
+                        JP_TRACE("errno", errno);
 			std::stringstream msg;
 			msg << "Unable to load symbol [" << name << "], error = " << dlerror();
 			JP_RAISE(PyExc_RuntimeError,  msg.str().c_str());
-			// GCOVR_EXCL_STOP
 		}
+		// GCOVR_EXCL_STOP
 		return res;
+		JP_TRACE_OUT;
 	}
 } ;
 

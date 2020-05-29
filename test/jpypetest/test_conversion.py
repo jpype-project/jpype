@@ -107,9 +107,10 @@ class ConversionTestCase(common.JPypeTestCase):
         self.assertEqual(JChar._canConvertToJava(bytes([1])), "implicit")
         self.assertEqual(JChar._canConvertToJava(bytes([1, 1])), "none")
 
-    def testCharOverflow(self):
-        with self.assertRaises(OverflowError):
-            JChar(1000000)
+     # This test is wrong 'char q = (char) 1000000;' works in Java
+#    def testCharOverflow(self):
+#        with self.assertRaises(OverflowError):
+#            JChar(1000000)
 
     def testCharBytes(self):
         # setArrayRange directly calls Char conversion so it is a good way
