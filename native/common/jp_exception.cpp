@@ -407,13 +407,6 @@ void JPypeException::toJava(JPContext *context)
 	{
 		string mesg = getMessage();
 		JPJavaFrame frame = JPJavaFrame::external(context, context->getEnv());
-		if (m_Type == JPError::_python_error)
-		{
-			JP_TRACE("Python exception");
-			convertPythonToJava(context);
-			return;
-		}
-
 		if (m_Type == JPError::_java_error)
 		{
 			JP_TRACE("Java exception");
@@ -432,6 +425,25 @@ void JPypeException::toJava(JPContext *context)
 			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg.c_str());
 			return;
 		}
+
+		if (m_Type == JPError::_python_error)
+		{
+			JPPyCallAcquire callback;
+			JP_TRACE("Python exception");
+			convertPythonToJava(context);
+			return;
+		}
+
+		if (m_Type == JPError::_python_exc)
+		{
+			JPPyCallAcquire callback;
+			// All others are Python errors
+			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
+			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
+			convertPythonToJava(context);
+			return;
+		}
+
 		// All others are issued as RuntimeExceptions
 		JP_TRACE("String exception");
 		frame.ThrowNew(context->m_RuntimeException.get(), mesg.c_str());

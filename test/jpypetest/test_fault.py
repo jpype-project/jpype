@@ -381,7 +381,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             JObject(f(), "java.util.function.DoubleUnaryOperator")
         jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             jo.applyAsDouble(2)
 
     def testJPProxy_void(self):
@@ -421,7 +421,7 @@ class FaultTestCase(common.JPypeTestCase):
         q = "ABC"
         self.assertIsInstance(jo.get(), java.lang.String)
         q = object()
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             jo.get()
 
     @common.requireInstrumentation

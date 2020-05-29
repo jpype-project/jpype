@@ -89,8 +89,8 @@ JNIEXPORT void JNICALL JPTypeFactory_newWrapper(
 	JPContext* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_newWrapper");
-	JPClass* cls = (JPClass*) jcls;
 	JPPyCallAcquire callback;
+	JPClass* cls = (JPClass*) jcls;
 	PyJPClass_hook(frame, cls);
 	JP_JAVA_CATCH();
 }
