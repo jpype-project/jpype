@@ -54,7 +54,7 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
                 u = MySupplier()
                 fixture.callSupplier(u)
             except RuntimeError as ex:
-                print(ex)
+                pass
         f()
 
         # Force a direct byffer and then trash it

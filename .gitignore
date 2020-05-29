@@ -66,6 +66,7 @@ target/
 /project/coverage/*.jar
 *.swp
 *.stackdump
+*.zip
 tmp
 doc/html
 native/jars
@@ -73,6 +74,7 @@ docker/*.tar.gz
 docker/wheelhouse
 /.eggs
 /tmp*
+a.out
 .idea/
 _build/
 jacoco/

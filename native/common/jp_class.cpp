@@ -80,7 +80,15 @@ void JPClass::assignMembers(JPMethodDispatch* ctor,
 JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	if (m_Constructors == NULL)
-		JP_RAISE(PyExc_TypeError, "Cannot create Interface instances");
+	{
+		if (this->isInterface())
+		{
+			JP_RAISE(PyExc_TypeError, "Cannot create Java interface instances");
+		} else
+		{
+			JP_RAISE(PyExc_TypeError, "Java class has no constructors");
+		}
+	}
 	return m_Constructors->invokeConstructor(frame, args);
 }
 

@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -28,16 +28,30 @@ JPCharType::~JPCharType()
 {
 }
 
+JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	// This is only callable from one location so error checking is minimal
+	if (args.size() != 1 || !PyIndex_Check(args[0]))
+		JP_RAISE(PyExc_TypeError, "bad args");
+	jvalue jv;
+
+	// This is a cast so we must not fail
+	int overflow;
+	jv.c = PyLong_AsLongAndOverflow(args[0], &overflow);
+	return JPValue(this, jv);
+}
+
 JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	if (!cast)
-	{
-		return JPPyString::fromCharUTF16(val.c);
-	}
-	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	if (!cast)
+	//	{
+	JPPyObject out = JPPyObject(JPPyRef::_call, PyJPChar_Create((PyTypeObject*) _JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
+	//	}
+	//	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
+	//	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	return out;
 }
 
 JPValue JPCharType::getValueFromObject(const JPValue& obj)
