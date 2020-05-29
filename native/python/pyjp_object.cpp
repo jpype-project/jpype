@@ -149,13 +149,6 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			Py_INCREF(out);
 			return out;
 		}
-		JPMatch match(&frame, other);
-		if (!cls2->findJavaConversion(match))
-		{
-			PyObject *out = Py_NotImplemented;
-			Py_INCREF(out);
-			return out;
-		}
 		obj1 = match.convert().l;
 	} else if (!null1 && javaSlot1 != NULL)
 		obj1 = javaSlot1->getValue().l;
