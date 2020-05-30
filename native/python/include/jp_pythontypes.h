@@ -252,8 +252,8 @@ class JPPySequence
 	JPPyObject obj_;
 
 	JPPySequence(PyObject* obj)
-	: obj_(JPPyRef::_use, obj)
 	{
+		obj_ = JPPyObject(JPPyRef::_use, obj);
 	}
 
 public:

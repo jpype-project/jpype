@@ -322,8 +322,8 @@ JPPyObject JPPySequence::operator[](jlong i)
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
-: seq(JPPyRef::_use, sequence)
 {
+	seq = JPPyObject(JPPyRef::_use, sequence);
 	size_t n = PySequence_Size(seq.get());
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
@@ -333,8 +333,9 @@ JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
-: instance(JPPyRef::_use, inst), seq(JPPyRef::_use, sequence)
 {
+	instance = JPPyObject(JPPyRef::_use, inst);
+	seq = JPPyObject(JPPyRef::_use, sequence);
 	size_t n = 0;
 	if (sequence != NULL)
 		n = PySequence_Size(seq.get());

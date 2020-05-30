@@ -532,7 +532,7 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	JPPyObject hints(JPPyRef::_use, self->m_Class->getHints());
+	JPPyObject hints = JPPyObject(JPPyRef::_use, self->m_Class->getHints());
 	if (hints.get() == NULL)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
 
