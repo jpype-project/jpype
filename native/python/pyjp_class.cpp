@@ -532,7 +532,7 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	JPPyObject hints = JPPyObject(JPPyRef::_use, self->m_Class->getHints());
+	JPPyObject hints = JPPyObject::use(self->m_Class->getHints());
 	if (hints.get() == NULL)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
 
@@ -937,10 +937,10 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 	{
 		if (cls == context->_java_lang_Boolean)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberBool_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPNumberBool_Type);
 		} else if (cls == context->_java_lang_Character)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPChar_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPChar_Type);
 		} else if (cls == context->_java_lang_Boolean
 				|| cls == context->_java_lang_Byte
 				|| cls == context->_java_lang_Short
@@ -948,32 +948,32 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 				|| cls == context->_java_lang_Long
 				)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberLong_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPNumberLong_Type);
 		} else if ( cls == context->_java_lang_Float
 				|| cls == context->_java_lang_Double
 				)
 		{
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPNumberFloat_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPNumberFloat_Type);
 		}
 	} else if (JPModifier::isBuffer(cls->getModifiers()))
 	{
-		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPBuffer_Type);
+		baseType = JPPyObject::use((PyObject*) PyJPBuffer_Type);
 	} else if (cls == context->_java_lang_Throwable)
 	{
-		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPException_Type);
+		baseType = JPPyObject::use((PyObject*) PyJPException_Type);
 	} else if (cls->isArray())
 	{
 		JPArrayClass* acls = (JPArrayClass*) cls;
 		if (acls->getComponentType()->isPrimitive())
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArrayPrimitive_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPArrayPrimitive_Type);
 		else
-			baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPArray_Type);
+			baseType = JPPyObject::use((PyObject*) PyJPArray_Type);
 	} else if (cls->getCanonicalName() == "java.lang.Comparable")
 	{
-		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPComparable_Type);
+		baseType = JPPyObject::use((PyObject*) PyJPComparable_Type);
 	} else if (super == NULL)
 	{
-		baseType = JPPyObject(JPPyRef::_use, (PyObject*) PyJPObject_Type);
+		baseType = JPPyObject::use((PyObject*) PyJPObject_Type);
 	}
 
 	const JPClassList& baseItf = cls->getInterfaces();
@@ -1019,7 +1019,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 		frame.newWrapper(cls);
 		host = (PyObject*) cls->getHost();
 	}
-	return JPPyObject(JPPyRef::_use, host);
+	return JPPyObject::use(host);
 	JP_TRACE_OUT;
 }
 

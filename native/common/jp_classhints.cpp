@@ -130,7 +130,7 @@ public:
 
 	JPPythonConversion(PyObject *method)
 	{
-		method_ = JPPyObject(JPPyRef::_use, method);
+		method_ = JPPyObject::use(method);
 	}
 
 	virtual ~JPPythonConversion()  // GCOVR_EXCL_LINE
@@ -224,7 +224,7 @@ public:
 
 	JPNoneConversion(PyObject *type)
 	{
-		type_ = JPPyObject(JPPyRef::_use, type);
+		type_ = JPPyObject::use(type);
 	}
 
 	virtual ~JPNoneConversion()
@@ -264,7 +264,7 @@ public:
 	JPTypeConversion(PyObject *type, PyObject *method, bool exact)
 	: JPPythonConversion(method), exact_(exact)
 	{
-		type_ = JPPyObject(JPPyRef::_use, type);
+		type_ = JPPyObject::use(type);
 	}
 
 	virtual ~JPTypeConversion()

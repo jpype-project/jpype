@@ -141,7 +141,7 @@ const char* JPPyObject::getTypeName(PyObject* obj)
 
 JPPyObject JPPyObject::getNone()
 {
-	return JPPyObject(JPPyRef::_use, Py_None);
+	return JPPyObject::use(Py_None);
 }
 
 /****************************************************************************
@@ -323,7 +323,7 @@ JPPyObject JPPySequence::operator[](jlong i)
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 {
-	seq = JPPyObject(JPPyRef::_use, sequence);
+	seq = JPPyObject::use(sequence);
 	size_t n = PySequence_Size(seq.get());
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
@@ -334,8 +334,8 @@ JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 
 JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 {
-	instance = JPPyObject(JPPyRef::_use, inst);
-	seq = JPPyObject(JPPyRef::_use, sequence);
+	instance = JPPyObject::use(inst);
+	seq = JPPyObject::use(sequence);
 	size_t n = 0;
 	if (sequence != NULL)
 		n = PySequence_Size(seq.get());

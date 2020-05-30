@@ -282,7 +282,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 
 	// These two are loop invariants and must match each time
 	jthrowable th = (jthrowable) val->getValue().l;
-	JPPyObject exc = JPPyObject(JPPyRef::_use, self);
+	JPPyObject exc = JPPyObject::use(self);
 	PyJPException_normalize(frame, exc, th, NULL);
 
 	Py_RETURN_NONE;

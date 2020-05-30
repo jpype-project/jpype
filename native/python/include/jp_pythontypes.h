@@ -111,6 +111,11 @@ class JPPyObject
 {
 public:
 
+	static JPPyObject use(PyObject* obj)
+	{
+		return JPPyObject(JPPyRef::_use, obj);
+	}
+
 	JPPyObject() : pyobj(NULL)
 	{
 	}
@@ -253,7 +258,7 @@ class JPPySequence
 
 	JPPySequence(PyObject* obj)
 	{
-		obj_ = JPPyObject(JPPyRef::_use, obj);
+		obj_ = JPPyObject::use(obj);
 	}
 
 public:

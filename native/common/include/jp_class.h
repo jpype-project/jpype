@@ -34,7 +34,7 @@ public:
 
 	void setHost(PyObject* host)
 	{
-		m_Host = JPPyObject(JPPyRef::_use, host);
+		m_Host = JPPyObject::use(host);
 	}
 
 	PyTypeObject* getHost()
@@ -44,7 +44,7 @@ public:
 
 	void setHints(PyObject* host)
 	{
-		m_Hints = JPPyObject(JPPyRef::_use, host);
+		m_Hints = JPPyObject::use(host);
 	}
 
 	PyObject* getHints()
