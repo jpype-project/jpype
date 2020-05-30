@@ -311,19 +311,6 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
  * Container types
  ***************************************************************************/
 
-JPPyTuple JPPyTuple::newTuple(jlong sz)
-{
-	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
-}
-
-void JPPyTuple::setItem(jlong ndx, PyObject* val)
-{
-	ASSERT_NOT_NULL(val);
-	Py_INCREF(val);
-	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
-	JP_PY_CHECK();
-}
-
 jlong JPPySequence::size()
 {
 	if (pyobj == NULL)
@@ -483,8 +470,7 @@ void JPPyErrFrame::normalize()
 	// we have forced it to realize the exception.
 	if (!PyExceptionInstance_Check(exceptionValue.get()))
 	{
-		JPPyTuple args = JPPyTuple::newTuple(1);
-		args.setItem(0, exceptionValue.get());
+		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, exceptionValue.get()));
 		exceptionValue = JPPyObject(JPPyRef::_call, PyObject_Call(exceptionClass.get(), args.get(), NULL));
 		PyException_SetTraceback(exceptionValue.get(), exceptionTrace.get());
 		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);

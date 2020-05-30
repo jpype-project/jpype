@@ -346,27 +346,25 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 
 	if (isThrowable())
 	{
-		JPPyTuple tuple1 = JPPyTuple::newTuple(2);
-		tuple1.setItem(0, _JObjectKey);
+		JPPyObject tuple0;
 		if (value.l == NULL)
 		{
-			JPPyTuple tuple0 = JPPyTuple::newTuple(0);
-			tuple1.setItem(1, tuple0.get());
+			tuple0 = JPPyObject(JPPyRef::_call, PyTuple_New(0));
 		} else
 		{
-			JPPyTuple tuple0 = JPPyTuple::newTuple(1);
 			jstring m = frame.getMessage((jthrowable) value.l);
 			if (m != NULL)
 			{
-				tuple0.setItem(0, JPPyString::fromStringUTF8(
-						frame.toStringUTF8(m)).get());
+				tuple0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1,
+						JPPyString::fromStringUTF8(frame.toStringUTF8(m)).get()));
 			} else
 			{
-				tuple0.setItem(0, JPPyString::fromStringUTF8(
-						frame.toString(value.l)).get());
+				tuple0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1,
+						JPPyString::fromStringUTF8(frame.toString(value.l)).get()));
 			}
-			tuple1.setItem(1, tuple0.get());
 		}
+		JPPyObject tuple1 = JPPyObject(JPPyRef::_call, PyTuple_Pack(2,
+				_JObjectKey, tuple0.get()));
 		// Exceptions need new and init
 		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else

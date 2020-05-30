@@ -22,13 +22,13 @@
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
 
-JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
+JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
-	JPPyTuple pyargs(JPPyTuple::newTuple(argLen));
+	JPPyObject pyargs = JPPyObject(JPPyRef::_call, PyTuple_New(argLen));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
@@ -40,7 +40,7 @@ JPPyTuple getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		if (type == NULL)
 			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
-		pyargs.setItem(i, type->convertToPythonObject(frame, val, false).get());
+		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
 	}
 	return pyargs;
 	JP_TRACE_OUT;
@@ -93,7 +93,7 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyTuple pyargs(getArgs(context, parameterTypePtrs, args));
+			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args);
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue(JPPyRef::_call, PyObject_Call(callable.get(), pyargs.get(), NULL));

@@ -137,10 +137,8 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 				JPPyErrFrame err;
 				err.normalize();
 				err.clear();
-				JPPyTuple tuple0 = JPPyTuple::newTuple(3);
-				tuple0.setItem(0, (PyObject*) self);
-				tuple0.setItem(1, attr);
-				tuple0.setItem(2, err.exceptionValue.get());
+				JPPyObject tuple0 = JPPyObject(JPPyRef::_call,
+						PyTuple_Pack(3, self, attr, err.exceptionValue.get()));
 				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
 				if (rc == 0)
 					return 0;
@@ -157,10 +155,9 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			out = PyJPClass_create(frame, frame.findClass((jclass) obj));
 		else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass()))
 		{
-			JPPyTuple args = JPPyTuple::newTuple(1);
 			JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
 					self->m_Package->m_Name.c_str(), attr));
-			args.setItem(0, u.get());
+			JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, u.get()));
 			out = JPPyObject(JPPyRef::_call,
 					PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
 		} else
@@ -180,10 +177,9 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 		// Prior to starting the JVM we always return a package to be
 		// consistent with old behavior.  This is somewhat unsafe as
 		// we cannot check if it is a valid package.
-		JPPyTuple args = JPPyTuple::newTuple(1);
 		JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
 				self->m_Package->m_Name.c_str(), attr));
-		args.setItem(0, u.get());
+		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, u.get()));
 
 		// Note that we will not cache packages prior to starting so that
 		// we don't end up with a package which is actually a class here.

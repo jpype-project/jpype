@@ -184,8 +184,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	if (cv != (Py_UCS4) - 1)
 	{
 		JPPyObject v(JPPyRef::_call, PyLong_FromLong(cv));
-		JPPyTuple args0 = JPPyTuple::newTuple(1);
-		args0.setItem(0, v.get());
+		JPPyObject args0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, v.get()));
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else if (PyIndex_Check(in))
@@ -195,8 +194,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	} else if (PyFloat_Check(in))
 	{
 		JPPyObject v(JPPyRef::_call, PyNumber_Long(in));
-		JPPyTuple args0 = JPPyTuple::newTuple(1);
-		args0.setItem(0, v.get());
+		JPPyObject args0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, v.get()));
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else

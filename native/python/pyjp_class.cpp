@@ -1030,30 +1030,30 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	if (host != NULL)
 		return;
 
-	JPPyTuple args = JPPyTuple::newTuple(3);
-	PyTuple_SetItem(args.get(), 0, JPPyString::fromStringUTF8(cls->getCanonicalName()).keep());
-	PyTuple_SetItem(args.get(), 1, PyJPClass_getBases(frame, cls).keep());
 
-	PyObject *members = PyDict_New();
-	PyTuple_SetItem(args.get(), 2, members);
+	JPPyObject members = JPPyObject(JPPyRef::_call, PyDict_New());
+	JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(3,
+			JPPyString::fromStringUTF8(cls->getCanonicalName()).get(),
+			PyJPClass_getBases(frame, cls).get(),
+			members.get()));
 
 	// Catch creation loop,  the process of creating our parent
 	host = (PyObject*) cls->getHost();
 	if (host != NULL)
 		return;
 
-	const JPFieldList& instFields = cls->getFields();
+	const JPFieldList & instFields = cls->getFields();
 	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
 	{
 		JPPyObject fieldName(JPPyString::fromStringUTF8((*iter)->getName()));
-		PyDict_SetItem(members, fieldName.keep(), PyJPField_create(*iter).keep());
+		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(*iter).get());
 	}
 	const JPMethodDispatchList& m_Methods = cls->getMethods();
 	for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
 	{
 		JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
-		PyDict_SetItem(members, methodName.keep(),
-				PyJPMethod_create(*iter, NULL).keep());
+		PyDict_SetItem(members.get(), methodName.get(),
+				PyJPMethod_create(*iter, NULL).get());
 	}
 
 	if (cls->isInterface())
@@ -1062,8 +1062,8 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
 		{
 			JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
-			PyDict_SetItem(members, methodName.keep(),
-					PyJPMethod_create(*iter, NULL).keep());
+			PyDict_SetItem(members.get(), methodName.get(),
+					PyJPMethod_create(*iter, NULL).get());
 		}
 	}
 
@@ -1088,7 +1088,6 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
-	args = JPPyTuple::newTuple(1);
-	args.setItem(0, (PyObject*) self);
+	args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, self));
 	JPPyObject rc2(JPPyRef::_call, PyObject_Call(_JClassPost, args.get(), NULL));
 }

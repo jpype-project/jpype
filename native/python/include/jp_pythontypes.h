@@ -243,41 +243,6 @@ public:
  * Container types
  ***************************************************************************/
 
-/** Wrapper for a Python tuple object. */
-class JPPyTuple : public JPPyObject
-{
-public:
-
-	JPPyTuple(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
-	{
-	}
-
-	JPPyTuple(const JPPyTuple &self) : JPPyObject(self)
-	{
-	}
-
-	JPPyTuple& operator = (const JPPyTuple &self)
-	{
-		JPPyObject::operator=(self);
-		return *this;
-	}
-
-	/** Create a new tuple holding a fixed number of items.
-	 *
-	 * Every item must be set before the tuple is used or we are heading
-	 * for a segfault.  Tuples are not mutable so items can only be set
-	 * during creation.
-	 */
-	static JPPyTuple newTuple(jlong sz);
-
-	/** Set an item in the tuple.
-	 *
-	 * This does not steal a reference to the object.
-	 */
-	void setItem(jlong ndx, PyObject* val);
-
-} ;
-
 /** Wrapper for a Python sequence.
  *
  * In most cases, we will not use this directly, but rather convert to

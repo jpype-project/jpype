@@ -115,8 +115,7 @@ static PyType_Spec bufferSpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
-	JPPyTuple tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, (PyObject*) PyJPObject_Type);
+	JPPyObject tuple = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, PyJPObject_Type));
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 	JP_PY_CHECK();

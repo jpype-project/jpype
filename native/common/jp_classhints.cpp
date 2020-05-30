@@ -140,10 +140,9 @@ public:
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JP_TRACE_IN("JPPythonConversion::convert");
-		JPPyTuple args(JPPyTuple::newTuple(2));
 		JPClass *cls = ((JPClass*) match.closure);
-		args.setItem(0, (PyObject*) cls->getHost());
-		args.setItem(1, (PyObject*) match.object);
+		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(2,
+				cls->getHost(), match.object));
 		JPPyObject ret = JPPyObject(JPPyRef::_call,
 				PyObject_Call(method_.get(), args.get(), NULL));
 		JPValue *value = PyJPValue_getJavaSlot(ret.get());
