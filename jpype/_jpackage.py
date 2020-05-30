@@ -19,7 +19,15 @@ import _jpype
 __all__ = ['JPackage']
 
 
-class JPackage(_jpype._JPackage):
+class _JPackageMeta(type):
+    def __instancecheck__(self, other):
+        return isinstance(other, _jpype._JPackage)
+
+    def __subclasscheck__(self, other):
+        return issubclass(other, _jpype._JPackage)
+
+
+class JPackage(_jpype._JPackage, metaclass=_JPackageMeta):
     """ Gateway for automatic importation of Java classes.
 
     This class allows structured access to Java packages and classes.
