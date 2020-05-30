@@ -32,7 +32,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "Callable"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
 		PyList_Append(info.implicit, proto.get());
 	}
 

@@ -116,6 +116,21 @@ public:
 		return JPPyObject(JPPyRef::_use, obj);
 	}
 
+	static JPPyObject call(PyObject* obj)
+	{
+		return JPPyObject( JPPyRef::_call, obj);
+	}
+
+	static JPPyObject accept(PyObject* obj)
+	{
+		return JPPyObject( JPPyRef::_accept, obj);
+	}
+
+	static JPPyObject claim(PyObject* obj)
+	{
+		return JPPyObject( JPPyRef::_claim, obj);
+	}
+
 	JPPyObject() : pyobj(NULL)
 	{
 	}

@@ -31,7 +31,7 @@ JPFloatType::~JPFloatType()
 JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	PyTypeObject * wrapper = getHost();
-	JPPyObject obj = JPPyObject(JPPyRef::_call, wrapper->tp_alloc(wrapper, 0));
+	JPPyObject obj = JPPyObject::call(wrapper->tp_alloc(wrapper, 0));
 	((PyFloatObject*) obj.get())->ob_fval = value.f;
 	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
 	return obj;

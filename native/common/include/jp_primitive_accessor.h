@@ -200,13 +200,13 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		JPPyObject obj = JPPyObject(JPPyRef::_call, PyNumber_Long(match.object));
+		JPPyObject obj = JPPyObject::call(PyNumber_Long(match.object));
 		match.object = obj.get();
 		return JPConversionLong<base_t>::convert(match);
 	}

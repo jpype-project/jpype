@@ -183,8 +183,8 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	Py_UCS4 cv = ord(in);
 	if (cv != (Py_UCS4) - 1)
 	{
-		JPPyObject v(JPPyRef::_call, PyLong_FromLong(cv));
-		JPPyObject args0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, v.get()));
+		JPPyObject v = JPPyObject::call(PyLong_FromLong(cv));
+		JPPyObject args0 = JPPyObject::call(PyTuple_Pack(1, v.get()));
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else if (PyIndex_Check(in))
@@ -193,8 +193,8 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 		jv = cls->newInstance(frame, args);
 	} else if (PyFloat_Check(in))
 	{
-		JPPyObject v(JPPyRef::_call, PyNumber_Long(in));
-		JPPyObject args0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, v.get()));
+		JPPyObject v = JPPyObject::call(PyNumber_Long(in));
+		JPPyObject args0 = JPPyObject::call(PyTuple_Pack(1, v.get()));
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else
@@ -276,7 +276,7 @@ static PyObject *PyJPChar_abs(PyJPChar *self)
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyLong_Type.tp_as_number->nb_absolute(v.get());
 	JP_PY_CATCH(NULL);
 }
@@ -300,7 +300,7 @@ static  PyObject *PyJPChar_and(PyJPChar *self, PyObject *other)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_And(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -313,7 +313,7 @@ static  PyObject *PyJPChar_or(PyJPChar *self, PyObject *other)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Or(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -326,7 +326,7 @@ static  PyObject *PyJPChar_xor(PyJPChar *self, PyObject *other)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Xor(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -342,7 +342,7 @@ static  PyObject *PyJPChar_add(PyJPChar *self, PyObject *other)
 		return PyUnicode_Type.tp_as_number->nb_add((PyObject*) self, other);
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Add(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -356,7 +356,7 @@ static  PyObject *PyJPChar_subtract(PyJPChar *self, PyObject *other)
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Subtract(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -370,7 +370,7 @@ static  PyObject *PyJPChar_mult(PyJPChar *self, PyObject *other)
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Multiply(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -384,7 +384,7 @@ static  PyObject *PyJPChar_rshift(PyJPChar *self, PyObject *other)
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Rshift(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -398,7 +398,7 @@ static  PyObject *PyJPChar_lshift(PyJPChar *self, PyObject *other)
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Lshift(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -413,14 +413,14 @@ static  PyObject *PyJPChar_floordiv(PyObject *self, PyObject *other)
 		javaSlot = PyJPValue_getJavaSlot(other);
 		if (assertNotNull(javaSlot))
 			return 0;
-		JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) other)));
+		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) other)));
 		return PyNumber_FloorDivide(self, v.get());
 	}
 	if (assertNotNull(javaSlot))
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) self)));
 	return PyNumber_FloorDivide(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -435,14 +435,14 @@ static  PyObject *PyJPChar_divmod(PyObject *self, PyObject *other)
 		javaSlot = PyJPValue_getJavaSlot(other);
 		if (assertNotNull(javaSlot))
 			return 0;
-		JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) other)));
+		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) other)));
 		return PyNumber_Divmod(self, v.get());
 	}
 	if (assertNotNull(javaSlot))
 		return 0;
 
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) self)));
 	return PyNumber_Divmod(v.get(), other);
 	JP_PY_CATCH(NULL);
 }
@@ -455,7 +455,7 @@ static PyObject *PyJPChar_neg(PyJPChar *self)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Negative(v.get());
 	JP_PY_CATCH(0);
 }
@@ -468,7 +468,7 @@ static PyObject *PyJPChar_pos(PyJPChar *self)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Positive(v.get());
 	JP_PY_CATCH(0);
 }
@@ -481,7 +481,7 @@ static PyObject *PyJPChar_inv(PyJPChar *self)
 	if (assertNotNull(javaSlot))
 		return 0;
 	// Promote to int as per Java rules
-	JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar(self)));
+	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Invert(v.get());
 	JP_PY_CATCH(0);
 }
@@ -516,7 +516,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (PyFloat_Check(other))
 	{
-		JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) self)));
+		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) self)));
 		if (op < 2)
 			op += 4;
 		else if (op > 3)
@@ -525,7 +525,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (PyNumber_Check(other))
 	{
-		JPPyObject v = JPPyObject(JPPyRef::_call, PyLong_FromLong(fromJPChar((PyJPChar*) self)));
+		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) self)));
 		return PyLong_Type.tp_richcompare(v.get(), other, op);
 	}
 	if (javaSlot1 != NULL)

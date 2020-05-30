@@ -349,31 +349,31 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		JPPyObject tuple0;
 		if (value.l == NULL)
 		{
-			tuple0 = JPPyObject(JPPyRef::_call, PyTuple_New(0));
+			tuple0 = JPPyObject::call(PyTuple_New(0));
 		} else
 		{
 			jstring m = frame.getMessage((jthrowable) value.l);
 			if (m != NULL)
 			{
-				tuple0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1,
+				tuple0 = JPPyObject::call(PyTuple_Pack(1,
 						JPPyString::fromStringUTF8(frame.toStringUTF8(m)).get()));
 			} else
 			{
-				tuple0 = JPPyObject(JPPyRef::_call, PyTuple_Pack(1,
+				tuple0 = JPPyObject::call(PyTuple_Pack(1,
 						JPPyString::fromStringUTF8(frame.toString(value.l)).get()));
 			}
 		}
-		JPPyObject tuple1 = JPPyObject(JPPyRef::_call, PyTuple_Pack(2,
+		JPPyObject tuple1 = JPPyObject::call(PyTuple_Pack(2,
 				_JObjectKey, tuple0.get()));
 		// Exceptions need new and init
-		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple1.get(), NULL));
+		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
 		// Simple objects don't have a new or init function
 		PyObject *obj2 = type->tp_alloc(type, 0);
 		JP_PY_CHECK();
-		obj = JPPyObject(JPPyRef::_claim, obj2);
+		obj = JPPyObject::claim(obj2);
 	}
 
 	// Fill in the Java slot

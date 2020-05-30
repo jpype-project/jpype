@@ -164,14 +164,14 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #if defined(PYPY_VERSION)
 	wchar_t buf[1];
 	buf[0] = c;
-	return JPPyObject(JPPyRef::_call, PyUnicode_FromWideChar(buf, 1));
+	return JPPyObject::call(PyUnicode_FromWideChar(buf, 1));
 #else
 	if (c < 128)
 	{
 		char c1 = (char) c;
-		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(&c1, 1));
+		return JPPyObject::call(PyUnicode_FromStringAndSize(&c1, 1));
 	}
-	JPPyObject buf(JPPyRef::_call, PyUnicode_New(1, 65535));
+	JPPyObject buf = JPPyObject::call(PyUnicode_New(1, 65535));
 	Py_UCS4 c2 = c;
 	PyUnicode_WriteChar(buf.get(), 0, c2);
 	JP_PY_CHECK();
@@ -274,8 +274,8 @@ JPPyObject JPPyString::fromStringUTF8(const string& str)
 	size_t len = str.size();
 
 	// Python 3 is always unicode
-	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
-	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
+	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 }
 
 string JPPyString::asStringUTF8(PyObject* pyobj)
@@ -287,7 +287,7 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
-		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
+		JPPyObject val = JPPyObject::call(PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
 		PyBytes_AsStringAndSize(val.get(), &buffer, &size);
 		JP_PY_CHECK();
 		if (buffer != NULL)
@@ -318,7 +318,7 @@ jlong JPPySequence::size()
 
 JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject(JPPyRef::_call, PySequence_GetItem(obj_.get(), i)); // new reference
+	return JPPyObject::call(PySequence_GetItem(obj_.get(), i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
@@ -328,7 +328,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i] = JPPyObject(JPPyRef::_call, PySequence_GetItem(seq.get(), i));
+		contents[i] = JPPyObject::call(PySequence_GetItem(seq.get(), i));
 	}
 }
 
@@ -342,7 +342,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 	contents.resize(n + 1);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i + 1] = JPPyObject(JPPyRef::_call, PySequence_GetItem(seq.get(), i));
+		contents[i + 1] = JPPyObject::call(PySequence_GetItem(seq.get(), i));
 	}
 	contents[0] = instance;
 }
@@ -358,9 +358,9 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 	PyErr_Fetch(&v1, &v2, &v3);
 	if (v1 == NULL && v2 == NULL && v3 == NULL)
 		return false;
-	exceptionClass = JPPyObject(JPPyRef::_accept, v1);
-	exceptionValue = JPPyObject(JPPyRef::_accept, v2);
-	exceptionTrace = JPPyObject(JPPyRef::_accept, v3);
+	exceptionClass = JPPyObject::accept(v1);
+	exceptionValue = JPPyObject::accept(v2);
+	exceptionTrace = JPPyObject::accept(v3);
 	return true;
 }
 
@@ -471,8 +471,8 @@ void JPPyErrFrame::normalize()
 	// we have forced it to realize the exception.
 	if (!PyExceptionInstance_Check(exceptionValue.get()))
 	{
-		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, exceptionValue.get()));
-		exceptionValue = JPPyObject(JPPyRef::_call, PyObject_Call(exceptionClass.get(), args.get(), NULL));
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, exceptionValue.get()));
+		exceptionValue = JPPyObject::call(PyObject_Call(exceptionClass.get(), args.get(), NULL));
 		PyException_SetTraceback(exceptionValue.get(), exceptionTrace.get());
 		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
 		JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);

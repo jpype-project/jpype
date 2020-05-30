@@ -30,7 +30,7 @@ JPBooleanType::~JPBooleanType()
 
 JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyBool_FromLong(val.z));
+	return JPPyObject::call(PyBool_FromLong(val.z));
 }
 
 JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
@@ -115,7 +115,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
 		PyList_Append(info.expl, proto.get());
 	}
 
@@ -136,7 +136,7 @@ public:
 	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}
 

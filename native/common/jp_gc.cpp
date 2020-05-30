@@ -85,14 +85,14 @@ JPGarbageCollection::JPGarbageCollection(JPContext *context)
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
 	// Get the Python garbage collector
-	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 	python_gc = gc.keep();
 
 	// Find the callbacks
-	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(python_gc, "callbacks"));
+	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(python_gc, "callbacks"));
 
 	// Hook up our callback
-	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(PyJPModule, "_collect"));
+	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "_collect"));
 	PyList_Append(callbacks.get(), collect.get());
 	JP_PY_CHECK();
 

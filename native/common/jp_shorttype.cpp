@@ -30,8 +30,8 @@ JPShortType::~JPShortType()
 
 JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
+	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 }

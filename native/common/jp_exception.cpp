@@ -207,8 +207,8 @@ void JPypeException::convertJavaToPython()
 	Py_INCREF(type);
 
 	// Add cause to the exception
-	JPPyObject args(JPPyRef::_call, Py_BuildValue("(s)", "Java Exception"));
-	JPPyObject cause(JPPyRef::_call, PyObject_Call(PyExc_Exception, args.get(), NULL));
+	JPPyObject args = JPPyObject::call(Py_BuildValue("(s)", "Java Exception"));
+	JPPyObject cause = JPPyObject::call(PyObject_Call(PyExc_Exception, args.get(), NULL));
 	JPPyObject trace = PyTrace_FromJavaException(frame, th, NULL);
 
 	// Attach Java causes as well.
@@ -355,9 +355,9 @@ void JPypeException::toPython()
 		{
 			JPPyErrFrame eframe;
 			eframe.normalize();
-			JPPyObject args(JPPyRef::_call, Py_BuildValue("(s)", "C++ Exception"));
-			JPPyObject trace(JPPyRef::_call, PyTrace_FromJPStackTrace(m_Trace));
-			JPPyObject cause(JPPyRef::_accept, PyObject_Call(PyExc_Exception, args.get(), NULL));
+			JPPyObject args = JPPyObject::call(Py_BuildValue("(s)", "C++ Exception"));
+			JPPyObject trace = JPPyObject::call(PyTrace_FromJPStackTrace(m_Trace));
+			JPPyObject cause = JPPyObject::accept(PyObject_Call(PyExc_Exception, args.get(), NULL));
 			if (!cause.isNull())
 			{
 				PyException_SetTraceback(cause.get(), trace.get());
@@ -576,5 +576,5 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	}
 	if (last_traceback == NULL)
 		return JPPyObject();
-	return JPPyObject(JPPyRef::_call, (PyObject*) last_traceback);
+	return JPPyObject::call((PyObject*) last_traceback);
 }

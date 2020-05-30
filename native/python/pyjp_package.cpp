@@ -137,8 +137,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 				JPPyErrFrame err;
 				err.normalize();
 				err.clear();
-				JPPyObject tuple0 = JPPyObject(JPPyRef::_call,
-						PyTuple_Pack(3, self, attr, err.exceptionValue.get()));
+				JPPyObject tuple0 = JPPyObject::call(PyTuple_Pack(3, self, attr, err.exceptionValue.get()));
 				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
 				if (rc == 0)
 					return 0;
@@ -155,11 +154,10 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			out = PyJPClass_create(frame, frame.findClass((jclass) obj));
 		else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass()))
 		{
-			JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+			JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
 					self->m_Package->m_Name.c_str(), attr));
-			JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, u.get()));
-			out = JPPyObject(JPPyRef::_call,
-					PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
+			JPPyObject args = JPPyObject::call(PyTuple_Pack(1, u.get()));
+			out = JPPyObject::call(PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
 		} else
 		{
 			// We should be able to handle Python classes, datafiles, etc,
@@ -177,9 +175,9 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 		// Prior to starting the JVM we always return a package to be
 		// consistent with old behavior.  This is somewhat unsafe as
 		// we cannot check if it is a valid package.
-		JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+		JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
 				self->m_Package->m_Name.c_str(), attr));
-		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, u.get()));
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, u.get()));
 
 		// Note that we will not cache packages prior to starting so that
 		// we don't end up with a package which is actually a class here.
@@ -262,7 +260,7 @@ static PyObject *PyJPPackage_dir(PyJPPackage *self)
 
 	jarray o = frame.getPackageContents(pkg);
 	Py_ssize_t len = frame.GetArrayLength(o);
-	JPPyObject out(JPPyRef::_call, PyList_New(len));
+	JPPyObject out = JPPyObject::call(PyList_New(len));
 	for (Py_ssize_t i = 0;  i < len; ++i)
 	{
 		string str = frame.toStringUTF8((jstring)

@@ -176,7 +176,7 @@ PyObject* PyJPValue_str(PyObject* self)
 	if (cls == context->_java_lang_String)
 	{
 		PyObject *cache;
-		JPPyObject dict(JPPyRef::_accept, PyObject_GenericGetDict(self, NULL));
+		JPPyObject dict = JPPyObject::accept(PyObject_GenericGetDict(self, NULL));
 		if (!dict.isNull())
 		{
 			cache = PyDict_GetItemString(dict.get(), "_jstr");
@@ -215,7 +215,7 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	PyObject* pyattr = PyBaseObject_Type.tp_getattro(obj, name);
 	if (pyattr == NULL)
 		return NULL;
-	JPPyObject attr(JPPyRef::_accept, pyattr);
+	JPPyObject attr = JPPyObject::accept(pyattr);
 
 	// Private members go regardless
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
@@ -249,7 +249,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
 		return PyObject_GenericSetAttr(self, name, value);
-	JPPyObject f = JPPyObject(JPPyRef::_accept, Py_GetAttrDescriptor(Py_TYPE(self), name));
+	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor(Py_TYPE(self), name));
 	if (f.isNull())
 	{
 		const char *name_str = PyUnicode_AsUTF8(name);

@@ -115,7 +115,7 @@ static PyType_Spec bufferSpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
-	JPPyObject tuple = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, PyJPObject_Type));
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 	JP_PY_CHECK();
@@ -125,7 +125,7 @@ void PyJPBuffer_initType(PyObject * module)
 
 JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)
 {
-	JPPyObject obj(JPPyRef::_call, type->tp_alloc(type, 0));
+	JPPyObject obj = JPPyObject::call(type->tp_alloc(type, 0));
 	((PyJPBuffer*) obj.get())->m_Buffer = new JPBuffer(value);
 	PyJPValue_assignJavaSlot(frame, obj.get(), value);
 	return obj;

@@ -45,12 +45,12 @@ JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 {
 	//	if (!cast)
 	//	{
-	JPPyObject out = JPPyObject(JPPyRef::_call, PyJPChar_Create((PyTypeObject*) _JChar, val.c));
+	JPPyObject out = JPPyObject::call(PyJPChar_Create((PyTypeObject*) _JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 	//	}
-	//	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
-	//	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
+	//	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
 	//	return out;
 }
 

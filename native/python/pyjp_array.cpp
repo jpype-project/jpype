@@ -177,7 +177,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 			step = 1;
 		}
 
-		JPPyObject tuple = JPPyObject(JPPyRef::_call, PyTuple_New(0));
+		JPPyObject tuple = JPPyObject::call(PyTuple_New(0));
 
 		JPPyObject newArray = JPPyObject(JPPyRef::_claim,
 				Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
@@ -478,14 +478,14 @@ static PyType_Spec arrayPrimSpec = {
 
 void PyJPArray_initType(PyObject * module)
 {
-	JPPyObject tuple = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, PyJPObject_Type));
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	JP_PY_CHECK();
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
 
-	tuple = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, PyJPArray_Type));
+	tuple = JPPyObject::call(PyTuple_Pack(1, PyJPArray_Type));
 	PyJPArrayPrimitive_Type = (PyTypeObject*)
 			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get());
 	PyJPArrayPrimitive_Type->tp_as_buffer = &arrayPrimBuffer;
@@ -501,5 +501,5 @@ JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, const JPValu
 	JP_PY_CHECK();
 	((PyJPArray*) obj)->m_Array = new JPArray(value);
 	PyJPValue_assignJavaSlot(frame, obj, value);
-	return JPPyObject(JPPyRef::_claim, obj);
+	return JPPyObject::claim(obj);
 }

@@ -382,7 +382,7 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
 	if (pyattr == NULL)
 		return NULL;
-	JPPyObject attr(JPPyRef::_claim, pyattr);
+	JPPyObject attr = JPPyObject::claim(pyattr);
 
 	// Private members go regardless
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
@@ -418,7 +418,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
 		return PyType_Type.tp_setattro(self, attr_name, v);
 
-	JPPyObject f = JPPyObject(JPPyRef::_accept, Py_GetAttrDescriptor((PyTypeObject*) self, attr_name));
+	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor((PyTypeObject*) self, attr_name));
 	if (f.isNull())
 	{
 		const char *name_str = PyUnicode_AsUTF8(attr_name);
@@ -541,12 +541,12 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 
 	// Copy in info.
 	JPConversionInfo info;
-	JPPyObject ret(JPPyRef::_call, PyList_New(0));
-	JPPyObject implicit(JPPyRef::_call, PyList_New(0));
-	JPPyObject attribs(JPPyRef::_call, PyList_New(0));
-	JPPyObject exact(JPPyRef::_call, PyList_New(0));
-	JPPyObject expl(JPPyRef::_call, PyList_New(0));
-	JPPyObject none(JPPyRef::_call, PyList_New(0));
+	JPPyObject ret = JPPyObject::call(PyList_New(0));
+	JPPyObject implicit = JPPyObject::call(PyList_New(0));
+	JPPyObject attribs = JPPyObject::call(PyList_New(0));
+	JPPyObject exact = JPPyObject::call(PyList_New(0));
+	JPPyObject expl = JPPyObject::call(PyList_New(0));
+	JPPyObject none = JPPyObject::call(PyList_New(0));
 	info.ret = ret.get();
 	info.implicit = implicit.get();
 	info.attributes = attribs.get();
@@ -980,7 +980,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 	size_t count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != NULL ? 1 : 0);
 
 	// Pack into a tuple
-	JPPyObject result = JPPyObject(JPPyRef::_call, PyList_New(count));
+	JPPyObject result = JPPyObject::call(PyList_New(count));
 	unsigned int i = 0;
 	for (; i < baseItf.size(); i++)
 	{
@@ -1031,8 +1031,8 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		return;
 
 
-	JPPyObject members = JPPyObject(JPPyRef::_call, PyDict_New());
-	JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(3,
+	JPPyObject members = JPPyObject::call(PyDict_New());
+	JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
 			JPPyString::fromStringUTF8(cls->getCanonicalName()).get(),
 			PyJPClass_getBases(frame, cls).get(),
 			members.get()));
@@ -1069,11 +1069,11 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Call the customizer to make any required changes to the tables.
 	JP_TRACE("call pre");
-	JPPyObject rc(JPPyRef::_call, PyObject_Call(_JClassPre, args.get(), NULL));
+	JPPyObject rc = JPPyObject::call(PyObject_Call(_JClassPre, args.get(), NULL));
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
-	JPPyObject vself(JPPyRef::_call, PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), classMagic));
+	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), classMagic));
 	PyJPClass *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
@@ -1088,6 +1088,6 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
-	args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, self));
-	JPPyObject rc2(JPPyRef::_call, PyObject_Call(_JClassPost, args.get(), NULL));
+	args = JPPyObject::call(PyTuple_Pack(1, self));
+	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), NULL));
 }

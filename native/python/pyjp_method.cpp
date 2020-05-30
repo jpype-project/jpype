@@ -188,7 +188,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
 	const JPMethodList& overloads = self->m_Method->getMethodOverloads();
-	JPPyObject ov = JPPyObject(JPPyRef::_call, PyTuple_New(overloads.size()));
+	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
 	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
@@ -206,7 +206,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
-		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(3,
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
 				self, obj.get(), ov.get()));
 		JP_TRACE("Call Python");
 		self->m_Doc = PyObject_Call(_JMethodDoc, args.get(), NULL);
@@ -240,7 +240,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
 	const JPMethodList& overloads = self->m_Method->getMethodOverloads();
-	JPPyObject ov = JPPyObject(JPPyRef::_call, PyTuple_New(overloads.size()));
+	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
 	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
@@ -258,7 +258,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
-		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(3,
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
 				self, obj.get(), ov.get()));
 		JP_TRACE("Call Python");
 		self->m_Annotations = PyObject_Call(_JMethodAnnotations, args.get(), NULL);
@@ -283,7 +283,7 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 	PyJPModule_getContext();
 	if (self->m_CodeRep == NULL)
 	{
-		JPPyObject args = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, self));
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, self));
 		JP_TRACE("Call Python");
 		self->m_CodeRep = PyObject_Call(_JMethodCode, args.get(), NULL);
 	}
@@ -386,7 +386,7 @@ void PyJPMethod_initType(PyObject* module)
 	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
-	JPPyObject tuple = JPPyObject(JPPyRef::_call, PyTuple_Pack(1, &PyFunction_Type));
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, &PyFunction_Type));
 	unsigned long flags = PyFunction_Type.tp_flags;
 	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
@@ -408,6 +408,6 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 	self->m_Annotations = NULL;
 	self->m_CodeRep = NULL;
 	Py_XINCREF(self->m_Instance);
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	return JPPyObject::claim((PyObject*) self);
 	JP_TRACE_OUT; /// GCOVR_EXCL_LINE
 }

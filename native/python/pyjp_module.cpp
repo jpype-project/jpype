@@ -830,13 +830,13 @@ void PyJPModuleFault_throw(uint32_t code)
 void PyJPModule_installGC(PyObject* module)
 {
 	// Get the Python garbage collector
-	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 
 	// Find the callbacks
-	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(gc.get(), "callbacks"));
+	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(gc.get(), "callbacks"));
 
 	// Hook up our callback
-	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(module, "_collect"));
+	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(module, "_collect"));
 	PyList_Append(callbacks.get(), collect.get());
 	JP_PY_CHECK();
 }
