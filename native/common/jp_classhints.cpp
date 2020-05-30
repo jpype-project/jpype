@@ -447,7 +447,7 @@ public:
 			return match.type = JPMatch::_none;
 		JPArrayClass *acls = (JPArrayClass*) cls;
 		JPClass *componentType = acls->getComponentType();
-		JPPySequence seq(JPPyRef::_use, match.object);
+		JPPySequence seq = JPPySequence::use(match.object);
 		jlong length = seq.size();
 		match.type = JPMatch::_implicit;
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
@@ -484,7 +484,7 @@ public:
 		jvalue res;
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
 		JP_TRACE("sequence");
-		JPPySequence seq(JPPyRef::_use, match.object);
+		JPPySequence seq = JPPySequence::use(match.object);
 		jsize length = (jsize) seq.size();
 
 		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);

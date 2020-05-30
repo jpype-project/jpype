@@ -226,7 +226,7 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 	}
 
 	// Use sequence API
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{

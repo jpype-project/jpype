@@ -242,27 +242,39 @@ public:
 /****************************************************************************
  * Container types
  ***************************************************************************/
-
 /** Wrapper for a Python sequence.
  *
  * In most cases, we will not use this directly, but rather convert to
  * a JPPyObjectVector for easy access.
  */
-class JPPySequence : public JPPyObject
+class JPPySequence
 {
-public:
+	JPPyObject obj_;
 
-	JPPySequence(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	JPPySequence(PyObject* obj)
+	: obj_(JPPyRef::_use, obj)
 	{
 	}
 
-	JPPySequence(const JPPyObject &self) : JPPyObject(self)
+public:
+
+	JPPySequence(const JPPySequence& seq)
+	: obj_(seq.obj_)
 	{
+	}
+
+	static JPPySequence use(PyObject* obj)
+	{
+		return JPPySequence(obj);
 	}
 
 	JPPyObject operator[](jlong i);
 
 	jlong size();
+
+private:
+	JPPySequence& operator= (const JPPySequence& ) ;
+
 } ;
 
 /** For purposes of efficiency, we should only convert a sequence once per
@@ -304,7 +316,7 @@ private:
 
 private:
 	JPPyObject instance;
-	JPPySequence seq;
+	JPPyObject seq;
 	vector<JPPyObject> contents;
 } ;
 

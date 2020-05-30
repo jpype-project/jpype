@@ -228,7 +228,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	JP_TRACE("vmpath", cVmPath);
 
 	StringVector args;
-	JPPySequence seq(JPPyRef::_use, vmOpt);
+	JPPySequence seq = JPPySequence::use(vmOpt);
 
 	for (int i = 0; i < seq.size(); i++)
 	{

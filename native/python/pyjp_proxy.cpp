@@ -46,7 +46,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
 
 	JPClassList interfaces;
-	JPPySequence intf(JPPyRef::_use, pyintf);
+	JPPySequence intf = JPPySequence::use(pyintf);
 	jlong len = intf.size();
 	if (len < 1)
 		JP_RAISE(PyExc_TypeError, "at least one interface is required");

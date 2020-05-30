@@ -248,7 +248,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 
 	// Verify before we start the conversion, as we wont be able
 	// to abort once we start
-	JPPySequence seq(JPPyRef::_use, vals);
+	JPPySequence seq = JPPySequence::use(vals);
 	JP_TRACE("Verify argument types");
 	for (int i = 0; i < length; i++)
 	{

@@ -214,7 +214,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{

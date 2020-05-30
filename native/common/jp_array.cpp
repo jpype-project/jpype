@@ -81,7 +81,7 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
-	JPPySequence seq(JPPyRef::_use, val);
+	JPPySequence seq = JPPySequence::use(val);
 	long plength = (long) seq.size();
 
 	JP_TRACE("Verify lengths", length, plength);

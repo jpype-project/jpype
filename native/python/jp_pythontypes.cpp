@@ -313,35 +313,35 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 
 jlong JPPySequence::size()
 {
-	if (pyobj == NULL)
-		return 0;
-	return PySequence_Size(pyobj);
+	return PySequence_Size(obj_.get());
 }
 
 JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, i)); // new reference
+	return JPPyObject(JPPyRef::_call, PySequence_GetItem(obj_.get(), i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 : seq(JPPyRef::_use, sequence)
 {
-	size_t n = seq.size();
+	size_t n = PySequence_Size(seq.get());
 	contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i] = seq[i];
+		contents[i] = JPPyObject(JPPyRef::_call, PySequence_GetItem(seq.get(), i));
 	}
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 : instance(JPPyRef::_use, inst), seq(JPPyRef::_use, sequence)
 {
-	size_t n = seq.size();
+	size_t n = 0;
+	if (sequence != NULL)
+		n = PySequence_Size(seq.get());
 	contents.resize(n + 1);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i + 1] = seq[i];
+		contents[i + 1] = JPPyObject(JPPyRef::_call, PySequence_GetItem(seq.get(), i));
 	}
 	contents[0] = instance;
 }
