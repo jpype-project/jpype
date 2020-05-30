@@ -100,6 +100,12 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaises(ImportError):
             from brokenx import Fixture as Fixture2
 
+    def testIsPackage(self):
+        import java.lang
+        self.assertIsInstance(java, jpype.JPackage)
+        self.assertIsInstance(java.lang, jpype.JPackage)
+        self.assertFalse(isinstance(java.lang.Class, jpype.JPackage))
+
 
 @subrun.TestCase
 class ImportsBeforeCase(common.unittest.TestCase):
