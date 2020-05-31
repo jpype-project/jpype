@@ -13,10 +13,20 @@
 #include <unistd.h>
 #include <sys/resource.h>
 #include <mach/mach.h>
-#else
+#elif __linux__
+#define USE_PROC_INFO
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+static int statm_fd;
+static int page_size;
+#elif __GLIBC__
 // Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
 #include <malloc.h>
+#else
+#define USE_NONE
 #endif
 #define DELTA_LIMIT 20*1024*1024l
 
@@ -33,6 +43,20 @@ size_t getWorkingSize()
 	mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
 	if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t) & info, &count) == KERN_SUCCESS)
 		current = (size_t) info.resident_size;
+
+#elif defined(USE_PROC_INFO)
+	char bytes[16];
+	lseek(statm_fd, SEEK_SET, 0);
+	read(statm_fd, bytes, 16);
+	long long sz = 0;
+	for (int i = 0; i < 16; i++)
+	{
+		if (bytes[i] == ' ')
+			return sz * 1024;
+		sz *= 10;
+		sz += bytes[i] - '0';
+	}
+	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
 	struct mallinfo mi;
@@ -63,6 +87,11 @@ void JPGarbageCollection::triggered()
 
 JPGarbageCollection::JPGarbageCollection(JPContext *context)
 {
+#if defined(USE_PROC_INFO)
+	statm_fd = open("/proc/self/statm", O_RDONLY);
+	page_size = getpagesize();
+#endif
+
 	m_Context = context;
 	running = false;
 	in_python_gc = false;
