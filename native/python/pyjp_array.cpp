@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_arrayclass.h"
 
 #ifdef __cplusplus
@@ -179,8 +180,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 		JPPyObject tuple = JPPyObject::call(PyTuple_New(0));
 
-		JPPyObject newArray = JPPyObject(JPPyRef::_claim,
-				Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
+		JPPyObject newArray = JPPyObject::claim(Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
 
 		// Copy over the JPValue
 		PyJPValue_assignJavaSlot(frame, newArray.get(),

@@ -16,6 +16,8 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
+#include "jp_buffer.h"
 #include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 

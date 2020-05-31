@@ -50,6 +50,16 @@ JPClass::~JPClass()
 {
 }
 
+void JPClass::setHost(PyObject* host)
+{
+	m_Host = JPPyObject::use(host);
+}
+
+void JPClass::setHints(PyObject* host)
+{
+	m_Hints = JPPyObject::use(host);
+}
+
 jclass JPClass::getJavaClass() const
 {
 	jclass cls = m_Class.get();
@@ -90,6 +100,14 @@ JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 		}
 	}
 	return m_Constructors->invokeConstructor(frame, args);
+}
+
+JPContext* JPClass::getContext() const
+{
+	// This sanity check is for during shutdown.
+	if (m_Context == 0)
+		JP_RAISE(PyExc_RuntimeError, "Null context"); // GCOVR_EXCL_LINE
+	return m_Context;
 }
 
 JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)

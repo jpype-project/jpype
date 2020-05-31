@@ -21,38 +21,72 @@ static void assertValid(PyObject *obj)
 	// GCOVR_EXCL_STOP
 }
 
-JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
-: pyobj(NULL)
+/**
+ * This policy is used if we need to hold a reference to an existing
+ * object for some duration.  The object may be null.
+ *
+ * Increment reference count if not null, and decrement when done.
+ */
+JPPyObject JPPyObject::use(PyObject* obj)
 {
-	// See if we are to check the result.
-	if ((usage & 1) == 1)
-		JP_PY_CHECK();
-
-	if ((usage & 2) == 2)
+	JP_TRACE_PY("pyref use(inc)", obj);
+	if (obj != NULL)
 	{
-		if ((usage & 4) == 4)
-		{
-			ASSERT_NOT_NULL(obj);
-			assertValid(obj);
-		} else if (obj == NULL)
-			PyErr_Clear();
-
-		// Claim it by stealing a references
-		pyobj = obj;
-		JP_TRACE_PY("pyref new(claim)", pyobj);
-	} else
-	{
-		pyobj = obj;
-		if (pyobj == NULL)
-		{
-			JP_TRACE_PY("pyref new(null)", pyobj);
-			return;
-		}
-
 		assertValid(obj);
-		incref();
-		JP_TRACE_PY("pyref new(inc)", pyobj);
+		Py_INCREF(obj);
 	}
+	return JPPyObject(obj, 0);
+}
+
+/**
+ * This policy is used when we are given a new reference that we must
+ * destroy.  This will steal a reference.
+ *
+ * claim reference, and decremented when done. Clears errors if NULL.
+ */
+JPPyObject JPPyObject::accept(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(accept)", obj);
+	if (obj == NULL)
+		PyErr_Clear();
+
+	return JPPyObject(obj, 1);
+}
+
+/**
+ * This policy is used when we are given a new reference that we must
+ * destroy.  This will steal a reference.
+ *
+ * Assert not null, claim reference, and decremented when done.
+ * Will throw an exception in the object is null.
+ */
+JPPyObject JPPyObject::claim(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(claim)", obj);
+	ASSERT_NOT_NULL(obj);
+	assertValid(obj);
+	return JPPyObject(obj, 2);
+}
+
+/**
+ * This policy is used when we are capturing an object returned from a python
+ * call that we are responsible for.  This will steal a reference.
+ *
+ * Check for errors, assert not null, then claim.
+ * Will throw an exception an error occurs.
+ */
+JPPyObject JPPyObject::call(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(call)", obj);
+	JP_PY_CHECK();
+	ASSERT_NOT_NULL(obj);
+	assertValid(obj);
+	return JPPyObject(obj, 3);
+}
+
+JPPyObject::JPPyObject(PyObject* obj, int i)
+: pyobj(obj)
+{
 }
 
 JPPyObject::JPPyObject(const JPPyObject &self)

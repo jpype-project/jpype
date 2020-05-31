@@ -41,6 +41,10 @@ class JPStackInfo;
 #define JP_PY_CATCH_NONE(...)  } catch(...) {} return __VA_ARGS__
 #endif
 
+// Macro to all after executing a Python command that can result in
+// a failure to convert it to an exception.
+#define JP_PY_CHECK() { if (JPPyErr::occurred()) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
+
 #ifdef __cplusplus
 extern "C"
 {

@@ -34,67 +34,6 @@ struct _object;
 typedef _object PyObject;
 #endif
 
-/** Python has a lot of difference cases for how it returns an object.
- * - It can give a new object or set an error.
- * - It can return NULL indicating there is no object.
- * - It can give a borrowed object or NULL if it doesn't exist.
- * - Or we can just have an existing object we want to use.
- *
- * With all these different methods, we need to have a policy that
- * state how we want this object reference to be treated.  Each
- * policy will produce different actions on the creation of
- * a reference wrapper.
- */
-namespace JPPyRef
-{
-
-enum Type
-{
-	/**
-	 * This policy is used if we need to hold a reference to an existing
-	 * object for some duration.  The object may be null.
-	 *
-	 * Increment reference count if not null, and decrement when done.
-	 */
-	_use = 0,
-
-	/**
-	 * This policy is used when we are given a borrowed reference and we
-	 * need to check for errors.
-	 *
-	 * Check for errors, increment reference count, and decrement when done.
-	 * Will throw an exception an error occurs.
-	 */
-	_borrowed = 1,
-
-	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
-	 *
-	 * claim reference, and decremented when done. Clears errors if NULL.
-	 */
-	_accept = 2,
-
-	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
-	 *
-	 * Assert not null, claim reference, and decremented when done.
-	 * Will throw an exception in the object is null.
-	 */
-	_claim = 6,
-
-	/**
-	 * This policy is used when we are capturing an object returned from a python
-	 * call that we are responsible for.  This will steal a reference.
-	 *
-	 * Check for errors, assert not null, then claim.
-	 * Will throw an exception an error occurs.
-	 */
-	_call = 7
-} ;
-}
-
 /** Reference to a Python object.
  *
  * This creates a reference on creation and deletes it on destruction.
@@ -106,41 +45,66 @@ enum Type
  * object like a container, or a wrapper which will control the lifespan
  * of the object.
  *
+ * Python has a lot of difference cases for how it returns an object.
+ * - It can give a new object or set an error.
+ * - It can return NULL indicating there is no object.
+ * - It can give a borrowed object or NULL if it doesn't exist.
+ * - Or we can just have an existing object we want to use.
+ *
+ * With all these different methods, we need to have a policy that
+ * state how we want this object reference to be treated.  Each
+ * policy will produce different actions on the creation of
+ * a reference wrapper.
+ *
  */
 class JPPyObject
 {
+	/** Create a new reference to a Python object.
+	 *
+	 * @param obj is the python object.
+	 */
+	JPPyObject(PyObject* obj, int i);
+
 public:
 
-	static JPPyObject use(PyObject* obj)
-	{
-		return JPPyObject(JPPyRef::_use, obj);
-	}
+	/**
+	 * This policy is used if we need to hold a reference to an existing
+	 * object for some duration.  The object may be null.
+	 *
+	 * Increment reference count if not null, and decrement when done.
+	 */
+	static JPPyObject use(PyObject* obj);
 
-	static JPPyObject call(PyObject* obj)
-	{
-		return JPPyObject( JPPyRef::_call, obj);
-	}
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * claim reference, and decremented when done. Clears errors if NULL.
+	 */
+	static JPPyObject accept(PyObject* obj);
 
-	static JPPyObject accept(PyObject* obj)
-	{
-		return JPPyObject( JPPyRef::_accept, obj);
-	}
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * Assert not null, claim reference, and decremented when done.
+	 * Will throw an exception in the object is null.
+	 */
+	static JPPyObject claim(PyObject* obj);
 
-	static JPPyObject claim(PyObject* obj)
-	{
-		return JPPyObject( JPPyRef::_claim, obj);
-	}
+	/**
+	 * This policy is used when we are capturing an object returned from a python
+	 * call that we are responsible for.  This will steal a reference.
+	 *
+	 * Check for errors, assert not null, then claim.
+	 * Will throw an exception an error occurs.
+	 */
+	static JPPyObject call(PyObject* obj);
 
 	JPPyObject() : pyobj(NULL)
 	{
 	}
 
-	/** Create a new reference to a Python object.
-	 *
-	 * @param usage control how this object is to be handled, see JPPyRef.
-	 * @param obj is the python object.
-	 */
-	JPPyObject(JPPyRef::Type usage, PyObject* obj);
 
 	JPPyObject(const JPPyObject &self);
 
@@ -262,6 +226,7 @@ public:
 /****************************************************************************
  * Container types
  ***************************************************************************/
+
 /** Wrapper for a Python sequence.
  *
  * In most cases, we will not use this directly, but rather convert to
