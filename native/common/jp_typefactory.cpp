@@ -39,6 +39,7 @@
 #include "jp_floattype.h"
 #include "jp_doubletype.h"
 #include "jp_functional.h"
+#include "jp_proxy.h"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {

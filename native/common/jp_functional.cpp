@@ -1,6 +1,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_functional.h"
+#include "jp_proxy.h"
 
 JPFunctional::JPFunctional(JPJavaFrame& frame, jclass clss,
 		const string& name,

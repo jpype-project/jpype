@@ -116,5 +116,4 @@ private:
 	jint                     m_Modifiers;
 } ;
 
-
 #endif // _JPMETHODOVERLOAD_H_

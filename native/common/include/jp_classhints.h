@@ -123,4 +123,3 @@ extern JPConversion *unboxConversion;
 extern JPConversion *proxyConversion;
 
 #endif /* JP_CLASSHINTS_H */
-

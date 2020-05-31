@@ -43,7 +43,7 @@ class JPStackInfo;
 
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
-#define JP_PY_CHECK() { if (JPPyErr::occurred()) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
+#define JP_PY_CHECK() { if (PyErr_Occurred() != 0) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
 
 #ifdef __cplusplus
 extern "C"
@@ -87,13 +87,6 @@ struct PyJPArray
 	JPArray *m_Array;
 	JPArrayView *m_View;
 } ;
-
-struct PyJPBuffer
-{
-	PyObject_HEAD
-	JPBuffer *m_Buffer;
-} ;
-
 
 struct PyJPClassHints
 {

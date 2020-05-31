@@ -19,6 +19,7 @@
 #include "jp_classhints.h"
 #include "jp_arrayclass.h"
 #include "jp_stringtype.h"
+#include "jp_proxy.h"
 #include "pyjp.h"
 
 JPMatch::JPMatch()

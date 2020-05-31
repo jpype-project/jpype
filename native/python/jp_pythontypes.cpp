@@ -161,33 +161,11 @@ bool JPPyObject::isNone(PyObject* pyobj)
 	return pyobj == Py_None;
 }
 
-bool JPPyObject::isSequenceOfItems(PyObject* obj)
-{
-	return PySequence_Check(obj) && !JPPyString::check(obj);
-}
-
-const char* JPPyObject::getTypeName(PyObject* obj)
-{
-	if (obj == NULL)
-		return "null";
-	return Py_TYPE(obj)->tp_name;
-}
-
 JPPyObject JPPyObject::getNone()
 {
 	return JPPyObject::use(Py_None);
 }
 
-/****************************************************************************
- * Number types
- ***************************************************************************/
-
-jlong JPPyLong::asLong(PyObject* obj)
-{
-	jlong res = PyLong_AsLongLong(obj);
-	JP_PY_CHECK();
-	return res;
-}
 
 /****************************************************************************
  * String
@@ -379,11 +357,6 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 		contents[i + 1] = JPPyObject::call(PySequence_GetItem(seq.get(), i));
 	}
 	contents[0] = instance;
-}
-
-bool JPPyErr::occurred()
-{
-	return PyErr_Occurred() != 0;
 }
 
 bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)

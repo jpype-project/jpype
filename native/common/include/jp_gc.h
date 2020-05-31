@@ -55,4 +55,3 @@ private:
 } ;
 
 #endif /* JP_GC_H */
-

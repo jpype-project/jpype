@@ -8,6 +8,12 @@ extern "C"
 {
 #endif
 
+struct PyJPBuffer
+{
+	PyObject_HEAD
+	JPBuffer *m_Buffer;
+} ;
+
 static void PyJPBuffer_dealloc(PyJPBuffer *self)
 {
 	JP_PY_TRY("PyJPBuffer_dealloc");
@@ -16,7 +22,7 @@ static void PyJPBuffer_dealloc(PyJPBuffer *self)
 	JP_PY_CATCH(); // GCOV_EXCL_LINE
 }
 
-static PyObject *PyJPBuffer_repr(PyJPArray *self)
+static PyObject *PyJPBuffer_repr(PyJPBuffer *self)
 {
 	JP_PY_TRY("PyJPBuffer_repr");
 	return PyUnicode_FromFormat("<java buffer '%s'>", Py_TYPE(self)->tp_name);

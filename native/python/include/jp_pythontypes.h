@@ -105,7 +105,6 @@ public:
 	{
 	}
 
-
 	JPPyObject(const JPPyObject &self);
 
 	~JPPyObject();
@@ -139,10 +138,6 @@ public:
 		return pyobj;
 	}
 
-	JPPyObject getAttrString(const char* k);
-
-	static const char* getTypeName(PyObject* obj);
-
 	/** Determine if this python reference is null.
 	 *
 	 * @returns true if null.
@@ -152,16 +147,15 @@ public:
 		return pyobj == NULL;
 	}
 
-	/** Determine if this python reference refers to
-	 * None.
+	/**
+	 * Determine if this python reference refers to None.
 	 *
 	 * @returns true if reference to None, false otherwise.
 	 */
 	static bool isNone(PyObject* o);
 
-	static bool isSequenceOfItems(PyObject* obj);
-
-	/** Get a reference to Python None.
+	/**
+	 * Get a reference to Python None.
 	 */
 	static JPPyObject getNone();
 
@@ -171,17 +165,6 @@ public:
 protected:
 	PyObject* pyobj;
 } ;
-
-/****************************************************************************
- * Number types
- ***************************************************************************/
-
-/** Wrapper for a Python long object.
- */
-namespace JPPyLong
-{
-jlong asLong(PyObject* obj);
-}
 
 /****************************************************************************
  * String
@@ -305,22 +288,6 @@ private:
 	vector<JPPyObject> contents;
 } ;
 
-/** Wrapper for a Python dict.
- *
- * Currently this is not used in this project.  It is being retained
- * so that we can support kwargs at some point in the future.
- */
-class JPPyDict : public JPPyObject
-{
-public:
-
-	JPPyDict(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
-
-} ;
-
-
 /****************************************************************************
  * Error handling
  ***************************************************************************/
@@ -334,12 +301,6 @@ public:
  */
 namespace JPPyErr
 {
-/** Check if there is a pending Python exception.
- *
- * @return true if pending, false otherwise.
- */
-bool occurred();
-
 bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 }

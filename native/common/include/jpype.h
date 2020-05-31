@@ -209,11 +209,4 @@ typedef _object PyObject;
 #include "jp_primitivetype.h"
 #include "jp_typemanager.h"
 
-// Accessors
-//#include "jp_array.h"
-//#include "jp_buffer.h"
-
-// Services
-#include "jp_proxy.h"
-
 #endif // _JPYPE_H_
