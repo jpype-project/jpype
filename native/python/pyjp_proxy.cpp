@@ -43,7 +43,10 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
 	// Pack interfaces
 	if (!PySequence_Check(pyintf))
-		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
+	{
+		PyErr_SetString(PyExc_TypeError, "third argument must be a list of interface");
+		return NULL;
+	}
 
 	JPClassList interfaces;
 	JPPySequence intf = JPPySequence::use(pyintf);
@@ -55,7 +58,10 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	{
 		JPClass *cls = PyJPClass_getJPClass(intf[i].get());
 		if (cls == NULL)
-			JP_RAISE(PyExc_TypeError, "interfaces must be object class instances");
+		{
+			PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
+			return NULL;
+		}
 		interfaces.push_back(cls);
 	}
 
@@ -168,8 +174,8 @@ PyType_Spec PyJPProxySpec = {
 
 void PyJPProxy_initType(PyObject* module)
 {
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, &PyBaseObject_Type));
-	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, tuple.get());
+	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, &PyBaseObject_Type));
+	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, bases.get());
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);
 	JP_PY_CHECK();
@@ -181,4 +187,3 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	return NULL;
 }
-

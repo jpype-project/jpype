@@ -87,9 +87,9 @@ static PyObject *PyJPNumberLong_int(PyObject *self)
 	JP_PY_TRY("PyJPNumberLong_int");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	if (isNull(self))
-		JP_RAISE(PyExc_TypeError, "cast of null pointer would return non-int");
-	return PyLong_Type.tp_as_number->nb_int(self);
+	if (!isNull(self))
+		return PyLong_Type.tp_as_number->nb_int(self);
+	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-int");
 	JP_PY_CATCH(NULL);
 }
 
@@ -98,9 +98,9 @@ static PyObject *PyJPNumberLong_float(PyObject *self)
 	JP_PY_TRY("PyJPNumberLong_float");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	if (isNull(self))
-		JP_RAISE(PyExc_TypeError, "cast of null pointer would return non-float");
-	return PyLong_Type.tp_as_number->nb_float(self);
+	if (!isNull(self))
+		return PyLong_Type.tp_as_number->nb_float(self);
+	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-float");
 	JP_PY_CATCH(NULL);
 }
 
@@ -109,9 +109,9 @@ static PyObject *PyJPNumberFloat_int(PyObject *self)
 	JP_PY_TRY("PyJPNumberFloat_int");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	if (isNull(self))
-		JP_RAISE(PyExc_TypeError, "cast of null pointer would return non-int");
-	return PyFloat_Type.tp_as_number->nb_int(self);
+	if (!isNull(self))
+		return PyFloat_Type.tp_as_number->nb_int(self);
+	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-int");
 	JP_PY_CATCH(NULL);
 }
 
@@ -120,9 +120,9 @@ static PyObject *PyJPNumberFloat_float(PyObject *self)
 	JP_PY_TRY("PyJPNumberFloat_float");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	if (isNull(self))
-		JP_RAISE(PyExc_TypeError, "cast of null pointer would return non-float");
-	return PyFloat_Type.tp_as_number->nb_float(self);
+	if (!isNull(self))
+		return PyFloat_Type.tp_as_number->nb_float(self);
+	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-float");
 	JP_PY_CATCH(NULL);
 }
 
@@ -188,13 +188,12 @@ static PyObject *PyJPNumberLong_compare(PyObject *self, PyObject *other, int op)
 		PyErr_Format(PyExc_TypeError, "'%s' not supported with null pointer", op_names[op]);
 		JP_RAISE_PYTHON();
 	}
-	if (!PyNumber_Check(other))// || Py_TYPE(other) == (PyTypeObject*) _JChar )
+	if (!PyNumber_Check(other))
 	{
 		PyObject *out = Py_NotImplemented;
 		Py_INCREF(out);
 		return out;
 	}
-	//	printf("INT COMPARE %s\n", Py_TYPE(other)->tp_name);
 	return PyLong_Type.tp_richcompare(self, other, op);
 	JP_PY_CATCH(NULL);
 }
@@ -267,7 +266,7 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 	JPPyObject self;
 	if (PyTuple_Size(args) != 1)
 	{
-		PyErr_Format(PyExc_TypeError, "Requires one argument");
+		PyErr_SetString(PyExc_TypeError, "Requires one argument");
 		return NULL;
 	}
 	int i = PyObject_IsTrue(PyTuple_GetItem(args, 0));
@@ -276,7 +275,10 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 	Py_DECREF(args2);
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Class type incorrect");
+	{
+		PyErr_SetString(PyExc_TypeError, "Class type incorrect");
+		return NULL;
+	}
 	JPMatch match(&frame, self.get());
 	cls->findJavaConversion(match);
 	jvalue val = match.convert();
@@ -340,8 +342,6 @@ PyType_Spec numberFloatSpec = {
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	numberFloatSlots
 };
-
-
 
 static PyType_Slot numberBooleanSlots[] = {
 	{Py_tp_new,      (void*) PyJPBoolean_new},

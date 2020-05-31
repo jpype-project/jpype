@@ -96,7 +96,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JP_PY_TRY("PyJPPackage_getattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_Format(PyExc_TypeError, "str required for getattr");
+		PyErr_SetString(PyExc_TypeError, "str required for getattr");
 		return NULL;
 	}
 
@@ -164,7 +164,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			// but that will take time to implement.  In principle, things
 			// that are not packages or classes should appear as Buffers or
 			// some other resource type.
-			PyErr_Format(PyExc_AttributeError, "Unknown type object in package");
+			PyErr_SetString(PyExc_AttributeError, "Unknown type object in package");
 			return NULL;
 		}
 		// Cache the item for now
@@ -193,7 +193,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 	JP_PY_TRY("PyJPPackage_setattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_Format(PyExc_TypeError, "str required for setattr");
+		PyErr_SetString(PyExc_TypeError, "str required for setattr");
 		return -1;
 	}
 

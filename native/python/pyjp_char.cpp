@@ -67,7 +67,7 @@ static int assertNotNull(JPValue *javaSlot)
 {
 	if (!isNull(javaSlot))
 		return 0;
-	PyErr_Format(PyExc_TypeError, "cast of null pointer");
+	PyErr_SetString(PyExc_TypeError, "cast of null pointer");
 	return 1;
 }
 
@@ -166,7 +166,10 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
+		return 0;
+	}
 
 	JPContext *context = PyJPModule_getContext();
 
@@ -174,7 +177,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (PyTuple_Size(pyargs) != 1)
 	{
-		PyErr_Format(PyExc_TypeError, "Java chars require one argument");
+		PyErr_SetString(PyExc_TypeError, "Java chars require one argument");
 		return 0;
 	}
 
@@ -200,7 +203,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	} else
 	{
 		// This is not strictly true as we can cast a float to a char
-		PyErr_Format(PyExc_TypeError, "Java require index or str with length 1");
+		PyErr_SetString(PyExc_TypeError, "Java require index or str with length 1");
 		return 0;
 	}
 
@@ -219,7 +222,7 @@ static PyObject *PyJPChar_str(PyJPChar *self)
 	if (javaSlot == NULL)
 	{
 		// A slot is required
-		PyErr_Format(PyExc_TypeError, "Bad object");
+		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
 	}
 	if (isNull(javaSlot))
@@ -236,7 +239,7 @@ static PyObject *PyJPChar_repr(PyJPChar *self)
 	if (javaSlot == NULL)
 	{
 		// A slot is required
-		PyErr_Format(PyExc_TypeError, "Bad object");
+		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
 	}
 	if (isNull(javaSlot))
@@ -640,4 +643,3 @@ void PyJPChar_initType(PyObject* module)
 	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }
-

@@ -215,13 +215,12 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	if (!PyArg_ParseTuple(pyargs, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
 			&ignoreUnrecognized, &convertStrings))
-	{
 		return NULL;
-	}
 
 	if (!(JPPyString::check(vmPath)))
 	{
-		JP_RAISE(PyExc_TypeError, "Java JVM path must be a string");
+		PyErr_SetString(PyExc_TypeError, "Java JVM path must be a string");
+		return NULL;
 	}
 
 	string cVmPath = JPPyString::asStringUTF8(vmPath);
@@ -242,7 +241,8 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 			args.push_back(v);
 		} else
 		{
-			JP_RAISE(PyExc_TypeError, "VM Arguments must be strings");
+			PyErr_SetString(PyExc_TypeError, "VM Arguments must be strings");
+			return NULL;
 		}
 	}
 
@@ -258,7 +258,6 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	PyJPModule_loadResources(module);
 	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
-
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -344,7 +343,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		JPClass *type = frame.findClassForObject(v.l);
 		return type->convertToPythonObject(frame, v, false).keep();
 	}
-	JP_RAISE(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
+	PyErr_SetString(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(NULL);
 }
 
@@ -364,11 +363,17 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
 		return NULL;
 	if (!PyIndex_Check(dims))
-		JP_RAISE(PyExc_TypeError, "dims must be an integer");
+	{
+		PyErr_SetString(PyExc_TypeError, "dims must be an integer");
+		return NULL;
+	}
 	long d = PyLong_AsLong(dims);
 	JPClass* cls = PyJPClass_getJPClass(type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class required");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class required");
+		return NULL;
+	}
 
 	JPClass* arraycls = cls->newArrayType(frame, d);
 	return PyJPClass_create(frame, arraycls).keep();
@@ -387,20 +392,25 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 		// String From Python
 		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find Java class");
+			return NULL;
+		}
 	} else
 	{
 		// From an existing java.lang.Class object
 		JPValue *value = PyJPValue_getJavaSlot(obj);
 		if (value == 0 || value->getClass() != context->_java_lang_Class)
 		{
-			std::stringstream ss;
-			ss << "JClass requires str or java.lang.Class instance, not `" << Py_TYPE(obj)->tp_name << "`";
-			JP_RAISE(PyExc_TypeError, ss.str().c_str());
+			PyErr_Format(PyExc_TypeError, "JClass requires str or java.lang.Class instance, not '%s'", Py_TYPE(obj)->tp_name);
+			return NULL;
 		}
 		cls = frame.findClass((jclass) value->getValue().l);
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find class");
+			return NULL;
+		}
 	}
 
 	return PyJPClass_create(frame, cls).keep();
@@ -421,10 +431,14 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 		// String From Python
 		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find Java class");
+			return NULL;
+		}
 	} else
 	{
-		JP_RAISE(PyExc_TypeError, "str is required");
+		PyErr_Format(PyExc_TypeError, "str is required, not '%s'", Py_TYPE(obj)->tp_name);
+		return NULL;
 	}
 
 	PyObject *host = (PyObject*) cls->getHost();
@@ -474,7 +488,10 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 		Py_RETURN_NONE;
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
 	if (!PyUnicode_Check(a1))
-		JP_RAISE(PyExc_TypeError, "Bad callback argument");
+	{
+		PyErr_SetString(PyExc_TypeError, "Bad callback argument");
+		return NULL;
+	}
 	if (PyUnicode_ReadChar(a1, 2) == 'a')
 	{
 		context->m_GC->onStart();

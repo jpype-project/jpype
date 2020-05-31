@@ -263,7 +263,6 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 		self->m_View = NULL;
 		return;
 	}
-	//	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;

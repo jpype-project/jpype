@@ -40,22 +40,32 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	PyObject* value;
 
 	if (!PyArg_ParseTuple(args, "O", &value))
-	{
 		return -1;
-	}
 
 	JPValue *v1 = PyJPValue_getJavaSlot(value);
 	if (v1 == NULL)
-		JP_RAISE(PyExc_TypeError, "Java object is required.");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java object is required.");
+		return -1;
+	}
 
 	if (v1->getClass() == context->_java_lang_String)
-		JP_RAISE(PyExc_TypeError, "Java strings cannot be used to synchronize.");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java strings cannot be used to synchronize.");
+		return -1;
+	}
 
 	if ((v1->getClass())->isPrimitive())
-		JP_RAISE(PyExc_TypeError, "Java primitives cannot be used to synchronize.");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java primitives cannot be used to synchronize.");
+		return -1;
+	}
 
 	if (v1->getValue().l == NULL)
-		JP_RAISE(PyExc_TypeError, "Java null cannot be used to synchronize.");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java null cannot be used to synchronize.");
+		return -1;
+	}
 
 	self->m_Monitor = new JPMonitor(context, v1->getValue().l);
 	return 0;
@@ -73,11 +83,7 @@ static void PyJPMonitor_dealloc(PyJPMonitor *self)
 static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
 	JP_PY_TRY("PyJPMonitor_str");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
-	stringstream ss;
-	ss << "<java monitor>";
-	return JPPyString::fromStringUTF8(ss.str()).keep();
+	return PyUnicode_FromFormat("<java monitor>");
 	JP_PY_CATCH(NULL);
 }
 

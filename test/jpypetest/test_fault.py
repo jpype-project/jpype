@@ -284,9 +284,6 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPMonitor_str")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(jm)
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            str(jm)
 
     @common.requireInstrumentation
     def testJPMonitor_enter(self):

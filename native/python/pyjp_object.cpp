@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 nelson85.
+ * Copyright 2020 Karl Einar Nelson
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
+		return NULL;
+	}
 
 	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
@@ -36,7 +39,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JPPyObjectVector args(pyargs);
 	JPValue jv = cls->newInstance(frame, args);
 
-        // If it succeeded then allocate memory
+	// If it succeeded then allocate memory
 	PyObject *self = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -186,7 +189,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 				break;
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) >= 0);
 	}
-	PyErr_Format(PyExc_ValueError, "can't compare null");
+	PyErr_SetString(PyExc_ValueError, "can't compare null");
 	JP_PY_CATCH(NULL);
 }
 
@@ -239,7 +242,10 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class type is incorrect");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
+		return NULL;
+	}
 
 	// Special constructor path for Exceptions
 	JPPyObjectVector args(pyargs);
@@ -347,22 +353,19 @@ static PyType_Spec comparableSpec = {
 
 void PyJPObject_initType(PyObject* module)
 {
-	PyObject *bases;
 	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	bases = PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type);
-	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases);
-	Py_DECREF(bases);
+	JPPyObject bases = JPPyObject::call(PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type));
+	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	bases = PyTuple_Pack(1, PyJPObject_Type);
-	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases);
-	Py_DECREF(bases);
+	bases = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
+	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE

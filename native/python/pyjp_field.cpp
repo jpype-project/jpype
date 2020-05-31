@@ -58,20 +58,25 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Field->isFinal())
-		JP_RAISE(PyExc_AttributeError, "Field is final");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Field is final");
+		return -1;
+	}
 	if (self->m_Field->isStatic())
 	{
 		self->m_Field->setStaticField(pyvalue);
 		return 0;
 	}
 	if (obj == Py_None || PyJPClass_Check(obj))
-		JP_RAISE(PyExc_AttributeError, "Field is not static");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Field is not static");
+		return -1;
+	}
 	JPValue *jval = PyJPValue_getJavaSlot(obj);
 	if (jval == NULL)
 	{
-		stringstream ss;
-		ss << "Field requires instance value, not " << Py_TYPE(obj)->tp_name;
-		JP_RAISE(PyExc_AttributeError,  ss.str().c_str());
+		PyErr_Format(PyExc_AttributeError, "Field requires instance value, not '%s'", Py_TYPE(obj)->tp_name);
+		return -1;
 	}
 	self->m_Field->setField(jval->getValue().l, pyvalue);
 	return 0;
@@ -83,11 +88,10 @@ static PyObject *PyJPField_repr(PyJPField *self)
 	JP_PY_TRY("PyJPField_repr");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	stringstream ss;
-	ss << "<java field `";
-	ss << self->m_Field->getName() << "' of '" <<
-			self->m_Field->getClass()->getCanonicalName() << "'>";
-	return JPPyString::fromStringUTF8(ss.str()).keep();
+	return PyUnicode_FromFormat("<java field '%s' of '%s'>",
+			self->m_Field->getName().c_str(),
+			self->m_Field->getClass()->getCanonicalName().c_str()
+			);
 	JP_PY_CATCH(NULL);
 }
 

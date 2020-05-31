@@ -63,7 +63,8 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 			JPClass *cls = PyJPClass_getJPClass(item);
 			if (cls != NULL && cls->isFinal())
 			{
-				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'", ((PyTypeObject*) item)->tp_name);
+				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'",
+						((PyTypeObject*) item)->tp_name);
 			}
 		}
 	}
@@ -270,7 +271,6 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 		}
 	}
 	PyType_Ready(type);
-	//heap->ht_cached_keys = _PyDict_NewKeysForClass();
 	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
 	return (PyObject*) type;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
@@ -291,11 +291,17 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	//	 Check that all types are Java types
 	if (!PyTuple_Check(bases))
-		JP_RAISE(PyExc_TypeError, "Bases must be a tuple");
+	{
+		PyErr_SetString(PyExc_TypeError, "Bases must be a tuple");
+		return -1;
+	}
 	for (int i = 0; i < PyTuple_Size(bases); ++i)
 	{
 		if (!PyJPClass_Check(PyTuple_GetItem(bases, i)))
-			JP_RAISE(PyExc_TypeError, "All bases must be Java types");
+		{
+			PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
+			return -1;
+		}
 	}
 
 	// Call the type init
@@ -503,7 +509,10 @@ static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(self);
 	if (javaSlot == NULL)
-		JP_RAISE(PyExc_AttributeError, "Java slot is null");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Java slot is null");
+		return NULL;
+	}
 	return javaSlot->getClass()->convertToPythonObject(frame, javaSlot->getValue(), false).keep();
 	JP_PY_CATCH(NULL);
 }
@@ -515,9 +524,15 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* javaSlot = PyJPValue_getJavaSlot(type);
 	if (javaSlot == NULL || javaSlot->getClass() != context->_java_lang_Class)
-		JP_RAISE(PyExc_TypeError, "Java class instance is required");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class instance is required");
+		return -1;
+	}
 	if (PyJPValue_isSetJavaSlot(self))
-		JP_RAISE(PyExc_AttributeError, "Java class can't be set");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Java class can't be set");
+		return -1;
+	}
 	PyJPValue_assignJavaSlot(frame, self, *javaSlot);
 
 	JPClass* cls = frame.findClass((jclass) javaSlot->getJavaObject());
@@ -572,7 +587,10 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 	PyJPClass *cls = (PyJPClass*) self;
 	PyObject *hints = cls->m_Class->getHints();
 	if (hints != NULL)
-		JP_RAISE(PyExc_AttributeError, "_hints can't be set");
+	{
+		PyErr_SetString(PyExc_AttributeError, "_hints can't be set");
+		return -1;
+	}
 	cls->m_Class->setHints(value);
 	return 0;
 	JP_PY_CATCH(-1);
@@ -702,7 +720,10 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 			else
 				break;
 		if (defined + undefined != dims)
-			JP_RAISE(PyExc_TypeError, "Invalid array definition");
+		{
+			PyErr_SetString(PyExc_TypeError, "Invalid array definition");
+			return NULL;
+		}
 
 		// Get the type
 		JPClass *cls;

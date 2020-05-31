@@ -164,11 +164,17 @@ PyObject* PyJPValue_str(PyObject* self)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == NULL)
-		JP_RAISE(PyExc_TypeError, "Not a Java value");
+	{
+		PyErr_SetString(PyExc_TypeError, "Not a Java value");
+		return NULL;
+	}
 
 	JPClass* cls = value->getClass();
 	if (cls->isPrimitive())
-		JP_RAISE(PyExc_TypeError, "toString requires a Java object");
+	{
+		PyErr_SetString(PyExc_TypeError, "toString requires a Java object");
+		return NULL;
+	}
 
 	if (value->getValue().l == NULL)
 		return JPPyString::fromStringUTF8("null").keep();
@@ -229,8 +235,7 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	if (!PyObject_IsInstance(attr.get(), (PyObject*) & PyProperty_Type))
 		return attr.keep();
 
-	const char *name_str = PyUnicode_AsUTF8(name);
-	PyErr_Format(PyExc_AttributeError, "Field '%s' is static", name_str);
+	PyErr_Format(PyExc_AttributeError, "Field '%U' is static", name);
 	return NULL;
 	JP_PY_CATCH(NULL);
 }
@@ -252,8 +257,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor(Py_TYPE(self), name));
 	if (f.isNull())
 	{
-		const char *name_str = PyUnicode_AsUTF8(name);
-		PyErr_Format(PyExc_AttributeError, "Field '%s' is not found", name_str);
+		PyErr_Format(PyExc_AttributeError, "Field '%U' is not found", name);
 		return -1;
 	}
 	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
@@ -261,9 +265,8 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 		return desc(f.get(), self, value);
 
 	// Not a descriptor
-	const char *name_str = PyUnicode_AsUTF8(name);
 	PyErr_Format(PyExc_AttributeError,
-			"Field '%s' is not settable on Java '%s' object", name_str, Py_TYPE(self)->tp_name);
+			"Field '%U' is not settable on Java '%s' object", name, Py_TYPE(self)->tp_name);
 	return -1;
 	JP_PY_CATCH(-1);
 }
