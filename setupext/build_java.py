@@ -18,6 +18,12 @@ def compileJava(self, coverage):
             javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
     except KeyError:
         pass
+    jar = "jar"
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')):
+            jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
+    except KeyError:
+        pass
     target_version = "1.7"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]
@@ -38,7 +44,7 @@ def compileJava(self, coverage):
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)
     subprocess.check_call(cmd2)
     cmd3 = shlex.split(
-        'jar cvf build/lib/org.jpype.jar -C build/classes/ .')
+        '"%s" cvf build/lib/org.jpype.jar -C build/classes/ .' % jar)
     self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
     subprocess.check_call(cmd3)
 
