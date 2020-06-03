@@ -176,14 +176,6 @@ class _JList(object):
         raise ValueError("item not in list")
 
 
-def isPythonMapping(v):
-    if isinstance(v, Mapping):
-        if not hasattr(v.__class__, '__metaclass__') or \
-           v.__class__.__metaclass__ is _jclass._JavaClass:
-            return True
-    return False
-
-
 @_jcustomizer.JImplementationFor('java.util.Map')
 class _JMap(object):
     """ Customizer for ``java.util.Map``

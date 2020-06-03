@@ -195,7 +195,7 @@ void JPGarbageCollection::onEnd()
 			python_triggered++;
 		}
 	}
-	// GCOVR_EXCL_END
+	// GCOVR_EXCL_STOP
 }
 
 void JPGarbageCollection::getStats(JPGCStats& stats)

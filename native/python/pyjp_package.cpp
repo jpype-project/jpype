@@ -38,13 +38,13 @@ static PyJPPackage *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject
 
 	char *v;
 	if (!PyArg_ParseTuple(args, "s", &v))
-		return NULL;
+		return NULL; // GCOVR_EXCL_LINE
 
 	self->m_Dict = PyDict_New();
 	self->m_Package = new JPPackage(v);
 	self->m_Handler = NULL;
 	return self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static int PyJPPackage_traverse(PyJPPackage *self, visitproc visit, void *arg)
@@ -96,7 +96,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JP_PY_TRY("PyJPPackage_getattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_SetString(PyExc_TypeError, "str required for getattr");
+		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
 		return NULL;
 	}
 
@@ -185,7 +185,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	}
 
 	return NULL;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
 }
 
 static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *value)
@@ -193,7 +193,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 	JP_PY_TRY("PyJPPackage_setattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_SetString(PyExc_TypeError, "str required for setattr");
+		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
 		return -1;
 	}
 
@@ -210,7 +210,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 
 	PyErr_Format(PyExc_AttributeError, "Cannot set '%U' on Java packages", attr);
 	return -1;
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPPackage_str(PyJPPackage *self, PyObject *args, PyObject *kwargs)

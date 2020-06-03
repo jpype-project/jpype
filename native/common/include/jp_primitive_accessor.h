@@ -217,17 +217,15 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
-	// GCOV_EXCL_START
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override // GCOVR_EXCL_Line
 	{
 		return JPMatch::_none; // Not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override // GCOVR_EXCL_Line
 	{
 		// Not used
 	}
-	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{

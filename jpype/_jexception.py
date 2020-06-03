@@ -30,9 +30,6 @@ class JException(_jpype._JException, internal=True):
 
     """
 
-    def __str__(self):
-        return str(self.toString())
-
     # Included for compatibility with JPype 0.6.3
     def message(self):
         return str(self.getMessage())

@@ -55,7 +55,7 @@ public:
 		v.l = frame.keep(v.l);
 		Py_DECREF(self);
 		return v;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 } functional_conversion;
 
@@ -68,7 +68,7 @@ JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 	if (functional_conversion.matches(this, match))
 		return match.type;
 	return match.type = JPMatch::_none;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 void JPFunctional::getConversionInfo(JPConversionInfo &info)
@@ -76,5 +76,5 @@ void JPFunctional::getConversionInfo(JPConversionInfo &info)
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
 	JPClass::getConversionInfo(info);
 	functional_conversion.getInfo(this, info);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

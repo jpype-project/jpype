@@ -105,6 +105,7 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertIsInstance(java, jpype.JPackage)
         self.assertIsInstance(java.lang, jpype.JPackage)
         self.assertFalse(isinstance(java.lang.Class, jpype.JPackage))
+        self.assertTrue(issubclass(type(java.lang), jpype.JPackage))
 
 
 @subrun.TestCase
