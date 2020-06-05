@@ -7,10 +7,7 @@ from setuptools import Extension
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
-if sys.version_info < (3, 8):
-    install_require = ['typing_extensions']
-else:
-    install_require = []
+install_require = ['typing_extensions;python_version<3.8']
 
 setup(
     name='JPype1',
