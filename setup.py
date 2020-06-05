@@ -7,7 +7,7 @@ from setuptools import Extension
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
-install_require = ['typing_extensions;python_version<3.8']
+install_requires = ['typing_extensions ; python_version< "3.8"']
 
 setup(
     name='JPype1',
@@ -40,7 +40,7 @@ setup(
     package_dir={
         'jpype': 'jpype',
     },
-    install_require=install_require,
+    install_requires=install_requires,
     tests_require=['pytest'],
     cmdclass={
         'build_java': setupext.build_java.BuildJavaCommand,
