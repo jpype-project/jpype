@@ -392,7 +392,6 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
   @Override
   public void newWrapper(long context, long cls)
   {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
   }
 
   public interface Resource
