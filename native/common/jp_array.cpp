@@ -16,6 +16,8 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
+#include "jp_buffer.h"
 #include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 
@@ -27,7 +29,7 @@ JPArray::JPArray(const JPValue &value)
 : m_Object(value.getClass()->getContext(), (jarray) value.getValue().l)
 {
 	m_Class = (JPArrayClass*) value.getClass();
-	JPJavaFrame frame(m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JP_TRACE_IN("JPArray::JPArray");
 	ASSERT_NOT_NULL(m_Class);
 	JP_TRACE(m_Class->toString());
@@ -79,9 +81,9 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 	if (!PySequence_Check(val))
 		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
 
-	JPJavaFrame frame(m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
-	JPPySequence seq(JPPyRef::_use, val);
+	JPPySequence seq = JPPySequence::use(val);
 	long plength = (long) seq.size();
 
 	JP_TRACE("Verify lengths", length, plength);
@@ -102,7 +104,7 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 void JPArray::setItem(jsize ndx, PyObject* val)
 {
-	JPJavaFrame frame(m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -116,7 +118,7 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 
 JPPyObject JPArray::getItem(jsize ndx)
 {
-	JPJavaFrame frame(m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -141,7 +143,7 @@ jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 
 JPArrayView::JPArrayView(JPArray* array)
 {
-	JPJavaFrame frame(array->m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(array->m_Class->getContext());
 	m_Array = array;
 	m_RefCount = 0;
 	m_Buffer.obj = NULL;
@@ -163,7 +165,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 {
 	JP_TRACE_IN("JPArrayView::JPArrayView");
 	// All of the work has already been done by org.jpype.Utilities
-	JPJavaFrame frame(array->m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(array->m_Class->getContext());
 	m_Array = array;
 
 	jint len = frame.GetArrayLength((jarray) collection);

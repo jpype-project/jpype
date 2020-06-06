@@ -14,7 +14,7 @@ import java.util.HashMap;
 public class JavadocRenderer
 {
 
-  static final int WIDTH = 80;
+  static final int WIDTH = 120;
   public StringBuilder assembly;
   public int indentLevel = 0;
   String memberName;

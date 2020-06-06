@@ -32,20 +32,14 @@ public:
 			jint modifiers);
 	virtual ~JPClass();
 
-	void setHost(PyObject* host)
-	{
-		m_Host = JPPyObject(JPPyRef::_use, host);
-	}
+	void setHost(PyObject* host);
 
 	PyTypeObject* getHost()
 	{
 		return (PyTypeObject*) m_Host.get();
 	}
 
-	void setHints(PyObject* host)
-	{
-		m_Hints = JPPyObject(JPPyRef::_use, host);
-	}
+	void setHints(PyObject* host);
 
 	PyObject* getHints()
 	{
@@ -208,13 +202,7 @@ public:
 		return m_Interfaces;
 	}
 
-	JPContext* getContext() const
-	{
-		// This sanity check is for during shutdown.
-		if (m_Context == 0)
-			JP_RAISE(PyExc_RuntimeError, "Null context"); // GCOVR_EXCL_LINE
-		return m_Context;
-	}
+	JPContext* getContext() const;
 
 protected:
 	JPContext*           m_Context;

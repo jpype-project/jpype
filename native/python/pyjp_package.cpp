@@ -38,13 +38,13 @@ static PyJPPackage *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject
 
 	char *v;
 	if (!PyArg_ParseTuple(args, "s", &v))
-		return NULL;
+		return NULL; // GCOVR_EXCL_LINE
 
 	self->m_Dict = PyDict_New();
 	self->m_Package = new JPPackage(v);
 	self->m_Handler = NULL;
 	return self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static int PyJPPackage_traverse(PyJPPackage *self, visitproc visit, void *arg)
@@ -96,7 +96,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JP_PY_TRY("PyJPPackage_getattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_Format(PyExc_TypeError, "str required for getattr");
+		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
 		return NULL;
 	}
 
@@ -118,7 +118,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JPContext* context = JPContext_global;
 	if (context->isRunning())
 	{
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::outer(context);
 		jobject pkg = getPackage(frame, self);
 		if (pkg == NULL)
 			return NULL;
@@ -137,10 +137,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 				JPPyErrFrame err;
 				err.normalize();
 				err.clear();
-				JPPyTuple tuple0 = JPPyTuple::newTuple(3);
-				tuple0.setItem(0, (PyObject*) self);
-				tuple0.setItem(1, attr);
-				tuple0.setItem(2, err.exceptionValue.get());
+				JPPyObject tuple0 = JPPyObject::call(PyTuple_Pack(3, self, attr, err.m_ExceptionValue.get()));
 				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
 				if (rc == 0)
 					return 0;
@@ -157,19 +154,17 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			out = PyJPClass_create(frame, frame.findClass((jclass) obj));
 		else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass()))
 		{
-			JPPyTuple args = JPPyTuple::newTuple(1);
-			JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+			JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
 					self->m_Package->m_Name.c_str(), attr));
-			args.setItem(0, u.get());
-			out = JPPyObject(JPPyRef::_call,
-					PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
+			JPPyObject args = JPPyObject::call(PyTuple_Pack(1, u.get()));
+			out = JPPyObject::call(PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), NULL));
 		} else
 		{
 			// We should be able to handle Python classes, datafiles, etc,
 			// but that will take time to implement.  In principle, things
 			// that are not packages or classes should appear as Buffers or
 			// some other resource type.
-			PyErr_Format(PyExc_AttributeError, "Unknown type object in package");
+			PyErr_SetString(PyExc_AttributeError, "Unknown type object in package");
 			return NULL;
 		}
 		// Cache the item for now
@@ -180,10 +175,9 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 		// Prior to starting the JVM we always return a package to be
 		// consistent with old behavior.  This is somewhat unsafe as
 		// we cannot check if it is a valid package.
-		JPPyTuple args = JPPyTuple::newTuple(1);
-		JPPyObject u(JPPyRef::_call, PyUnicode_FromFormat("%s.%U",
+		JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
 				self->m_Package->m_Name.c_str(), attr));
-		args.setItem(0, u.get());
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, u.get()));
 
 		// Note that we will not cache packages prior to starting so that
 		// we don't end up with a package which is actually a class here.
@@ -191,7 +185,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	}
 
 	return NULL;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
 }
 
 static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *value)
@@ -199,7 +193,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 	JP_PY_TRY("PyJPPackage_setattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_Format(PyExc_TypeError, "str required for setattr");
+		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
 		return -1;
 	}
 
@@ -216,7 +210,7 @@ static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *val
 
 	PyErr_Format(PyExc_AttributeError, "Cannot set '%U' on Java packages", attr);
 	return -1;
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPPackage_str(PyJPPackage *self, PyObject *args, PyObject *kwargs)
@@ -259,14 +253,14 @@ static PyObject *PyJPPackage_dir(PyJPPackage *self)
 {
 	JP_PY_TRY("PyJPPackage_dir");
 	JPContext* context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jobject pkg = getPackage(frame, self);
 	if (pkg == NULL)
 		return NULL;
 
 	jarray o = frame.getPackageContents(pkg);
 	Py_ssize_t len = frame.GetArrayLength(o);
-	JPPyObject out(JPPyRef::_call, PyList_New(len));
+	JPPyObject out = JPPyObject::call(PyList_New(len));
 	for (Py_ssize_t i = 0;  i < len; ++i)
 	{
 		string str = frame.toStringUTF8((jstring)

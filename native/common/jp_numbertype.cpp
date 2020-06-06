@@ -16,7 +16,6 @@ JPNumberType::~JPNumberType()
 {
 }
 
-
 JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
@@ -34,7 +33,7 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 
 void JPNumberType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	javaNumberAnyConversion->getInfo(this, info);
 	boxLongConversion->getInfo(this, info);
 	boxDoubleConversion->getInfo(this, info);

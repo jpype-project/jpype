@@ -49,7 +49,7 @@ JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 
 void JPClassType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	nullConversion->getInfo(this, info);
 	objectConversion->getInfo(this, info);
 	classConversion->getInfo(this, info);

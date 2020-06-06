@@ -67,9 +67,6 @@ extern int _method_not_found;
 #define JP_STACKINFO() JPStackInfo(__FUNCTION_NAME__, __FILE__, __LINE__)
 
 
-// Macro to all after executing a Python command that can result in
-// a failure to convert it to an exception.
-#define JP_PY_CHECK() { if (JPPyErr::occurred()) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
 
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but

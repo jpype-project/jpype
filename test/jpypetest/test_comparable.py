@@ -46,3 +46,19 @@ class ComparableTestCase(common.JPypeTestCase):
             print(i1 > i3)
         with self.assertRaises(ValueError):
             print(i1 >= i3)
+        with self.assertRaises(ValueError):
+            print(i3 < i1)
+        with self.assertRaises(ValueError):
+            print(i3 <= i1)
+        with self.assertRaises(ValueError):
+            print(i3 > i1)
+        with self.assertRaises(ValueError):
+            print(i3 >= i1)
+        with self.assertRaises(ValueError):
+            print(i3 < i3)
+        with self.assertRaises(ValueError):
+            print(i3 <= i3)
+        with self.assertRaises(ValueError):
+            print(i3 > i3)
+        with self.assertRaises(ValueError):
+            print(i3 >= i3)

@@ -123,10 +123,12 @@ static void PyJPModule_loadResources(PyObject* module)
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
 
-	}	catch (JPypeException&)
+	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		Py_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
 		JP_RAISE_PYTHON();
+		// GCOVR_EXCL_STOP
 	}
 }
 
@@ -135,6 +137,8 @@ extern "C"
 {
 #endif
 
+// GCOVR_EXCL_START
+// This is used exclusively during startup
 void Py_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
@@ -155,6 +159,7 @@ void Py_SetStringWithCause(PyObject *exception,
 	PyException_SetCause(val2, val1);
 	PyErr_Restore(exc2, val2, tb2);
 }
+// GCOVR_EXCL_STOP
 
 PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 {
@@ -219,20 +224,19 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	if (!PyArg_ParseTuple(pyargs, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
 			&ignoreUnrecognized, &convertStrings))
-	{
 		return NULL;
-	}
 
 	if (!(JPPyString::check(vmPath)))
 	{
-		JP_RAISE(PyExc_TypeError, "Java JVM path must be a string");
+		PyErr_SetString(PyExc_TypeError, "Java JVM path must be a string");
+		return NULL;
 	}
 
 	string cVmPath = JPPyString::asStringUTF8(vmPath);
 	JP_TRACE("vmpath", cVmPath);
 
 	StringVector args;
-	JPPySequence seq(JPPyRef::_use, vmOpt);
+	JPPySequence seq = JPPySequence::use(vmOpt);
 
 	for (int i = 0; i < seq.size(); i++)
 	{
@@ -246,7 +250,8 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 			args.push_back(v);
 		} else
 		{
-			JP_RAISE(PyExc_TypeError, "VM Arguments must be strings");
+			PyErr_SetString(PyExc_TypeError, "VM Arguments must be strings");
+			return NULL;
 		}
 	}
 
@@ -262,7 +267,6 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	PyJPModule_loadResources(module);
 	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
-
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
@@ -330,7 +334,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	if (PyObject_CheckBuffer(src))
 	{
@@ -348,7 +352,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		JPClass *type = frame.findClassForObject(v.l);
 		return type->convertToPythonObject(frame, v, false).keep();
 	}
-	JP_RAISE(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
+	PyErr_SetString(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(NULL);
 }
 
@@ -362,17 +366,23 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
 		return NULL;
 	if (!PyIndex_Check(dims))
-		JP_RAISE(PyExc_TypeError, "dims must be an integer");
+	{
+		PyErr_SetString(PyExc_TypeError, "dims must be an integer");
+		return NULL;
+	}
 	long d = PyLong_AsLong(dims);
 	JPClass* cls = PyJPClass_getJPClass(type);
 	if (cls == NULL)
-		JP_RAISE(PyExc_TypeError, "Java class required");
+	{
+		PyErr_SetString(PyExc_TypeError, "Java class required");
+		return NULL;
+	}
 
 	JPClass* arraycls = cls->newArrayType(frame, d);
 	return PyJPClass_create(frame, arraycls).keep();
@@ -383,7 +393,7 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -391,20 +401,25 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 		// String From Python
 		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find Java class");
+			return NULL;
+		}
 	} else
 	{
 		// From an existing java.lang.Class object
 		JPValue *value = PyJPValue_getJavaSlot(obj);
 		if (value == 0 || value->getClass() != context->_java_lang_Class)
 		{
-			std::stringstream ss;
-			ss << "JClass requires str or java.lang.Class instance, not `" << Py_TYPE(obj)->tp_name << "`";
-			JP_RAISE(PyExc_TypeError, ss.str().c_str());
+			PyErr_Format(PyExc_TypeError, "JClass requires str or java.lang.Class instance, not '%s'", Py_TYPE(obj)->tp_name);
+			return NULL;
 		}
 		cls = frame.findClass((jclass) value->getValue().l);
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find class");
+			return NULL;
+		}
 	}
 
 	return PyJPClass_create(frame, cls).keep();
@@ -417,7 +432,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -425,10 +440,14 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 		// String From Python
 		cls = frame.findClassByName(JPPyString::asStringUTF8(obj));
 		if (cls == NULL)
-			JP_RAISE(PyExc_ValueError, "Unable to find Java class");
+		{
+			PyErr_SetString(PyExc_ValueError, "Unable to find Java class");
+			return NULL;
+		}
 	} else
 	{
-		JP_RAISE(PyExc_TypeError, "str is required");
+		PyErr_Format(PyExc_TypeError, "str is required, not '%s'", Py_TYPE(obj)->tp_name);
+		return NULL;
 	}
 
 	PyObject *host = (PyObject*) cls->getHost();
@@ -478,7 +497,10 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 		Py_RETURN_NONE;
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
 	if (!PyUnicode_Check(a1))
-		JP_RAISE(PyExc_TypeError, "Bad callback argument");
+	{
+		PyErr_SetString(PyExc_TypeError, "Bad callback argument");
+		return NULL;
+	}
 	if (PyUnicode_ReadChar(a1, 2) == 'a')
 	{
 		context->m_GC->onStart();
@@ -523,7 +545,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 		return NULL;
 	}
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
@@ -714,7 +736,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	Py_buffer& view = buffer.getView();
 
 	// Okay two possibilities here.  We have a valid dtype specified,
@@ -837,13 +859,13 @@ void PyJPModuleFault_throw(uint32_t code)
 void PyJPModule_installGC(PyObject* module)
 {
 	// Get the Python garbage collector
-	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 
 	// Find the callbacks
-	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(gc.get(), "callbacks"));
+	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(gc.get(), "callbacks"));
 
 	// Hook up our callback
-	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(module, "_collect"));
+	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(module, "_collect"));
 	PyList_Append(callbacks.get(), collect.get());
 	JP_PY_CHECK();
 }

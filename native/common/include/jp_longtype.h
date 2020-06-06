@@ -69,6 +69,7 @@ public:
 
 	// GCOVR_EXCL_START
 	// Required but not exercised currently
+
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);

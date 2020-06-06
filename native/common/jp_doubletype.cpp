@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_doubletype.h"
 
@@ -31,7 +32,7 @@ JPDoubleType::~JPDoubleType()
 JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	PyTypeObject * wrapper = getHost();
-	JPPyObject obj = JPPyObject(JPPyRef::_call, wrapper->tp_alloc(wrapper, 0));
+	JPPyObject obj = JPPyObject::call(wrapper->tp_alloc(wrapper, 0));
 	((PyFloatObject*) obj.get())->ob_fval = value.d;
 	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
 	return obj;
@@ -40,7 +41,7 @@ JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue value,
 JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.doubleValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -139,7 +140,7 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 
 void JPDoubleType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJDoubleConversion.getInfo(this, info);
 	asDoubleExactConversion.getInfo(this, info);
 	asDoubleLongConversion.getInfo(this, info);
@@ -250,7 +251,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 	}
 
 	// Use sequence API
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
@@ -284,7 +285,7 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 
 void JPDoubleType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "d";
@@ -295,7 +296,7 @@ void JPDoubleType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseDoubleArrayElements((jdoubleArray) view.m_Array->getJava(),
 				(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

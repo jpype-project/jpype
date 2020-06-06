@@ -389,6 +389,11 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
 //</editor-fold>
 //<editor-fold desc="inner" defaultstate="collapsed">
 
+  @Override
+  public void newWrapper(long context, long cls)
+  {
+  }
+
   public interface Resource
   {
     String getName();

@@ -51,9 +51,7 @@ void PyJPClassHints_dealloc(PyJPClassHints *self)
 PyObject *PyJPClassHints_str(PyJPClassHints *self)
 {
 	JP_PY_TRY("PyJPClassHints_str", self);
-	stringstream sout;
-	sout << "<java class hints>";
-	return JPPyString::fromStringUTF8(sout.str()).keep();
+	return PyUnicode_FromFormat("<java class hints>");
 	JP_PY_CATCH(NULL);
 }
 
@@ -67,7 +65,10 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 	JP_TRACE(attribute);
 	JP_TRACE(Py_TYPE(method)->tp_name);
 	if (!PyCallable_Check(method))
-		JP_RAISE(PyExc_TypeError, "callable method is required");
+	{
+		PyErr_SetString(PyExc_TypeError, "callable method is required");
+		return NULL;
+	}
 	self->m_Hints->addAttributeConversion(string(attribute), method);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
@@ -82,9 +83,15 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
 		return NULL;
 	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
-		JP_RAISE(PyExc_TypeError, "type or protocol is required");
+	{
+		PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+		return NULL;
+	}
 	if (!PyCallable_Check(method))
-		JP_RAISE(PyExc_TypeError, "callable method is required");
+	{
+		PyErr_SetString(PyExc_TypeError, "callable method is required");
+		return NULL;
+	}
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
@@ -103,7 +110,10 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args,
 		{
 			PyObject *t = PyTuple_GetItem(types, i);
 			if (!PyType_Check(t) && !PyObject_HasAttrString((PyObject*) Py_TYPE(t), "__instancecheck__"))
-				JP_RAISE(PyExc_TypeError, "type or protocol is required");
+			{
+				PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+				return NULL;
+			}
 		}
 		for (Py_ssize_t i = 0; i < sz; ++i)
 		{
@@ -112,7 +122,10 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args,
 	} else
 	{
 		if (!PyType_Check(types) && !PyObject_HasAttrString((PyObject*) Py_TYPE(types), "__instancecheck__"))
-			JP_RAISE(PyExc_TypeError, "type or protocol is required");
+		{
+			PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+			return NULL;
+		}
 		self->m_Hints->excludeConversion(types);
 	}
 	Py_RETURN_NONE;

@@ -60,6 +60,10 @@ class JavaCoverageTestCase(common.JPypeTestCase):
                 return self.id
 
             @JOverride
+            def newWrapper(self, context, cls):
+                pass
+
+            @JOverride
             def defineArrayClass(self, context, cls, name, superClass, componentPtr, modifiers):
                 return self.define(name)
 

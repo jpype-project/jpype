@@ -31,13 +31,13 @@ void JPMonitor::enter()
 	// This can hold off for a while so we need to release resource
 	// so that we don't dead lock.
 	JPPyCallRelease call;
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	frame.MonitorEnter(m_Value.get());
 }
 
 void JPMonitor::exit()
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	frame.MonitorExit(m_Value.get());
 }
 

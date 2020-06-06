@@ -45,7 +45,6 @@ public:
 
 } ;
 
-
 class JPConversionJavaValue : public JPConversion
 {
 public:
@@ -123,4 +122,3 @@ extern JPConversion *unboxConversion;
 extern JPConversion *proxyConversion;
 
 #endif /* JP_CLASSHINTS_H */
-

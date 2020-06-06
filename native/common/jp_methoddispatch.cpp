@@ -114,7 +114,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		{
 			if (i != start)
 				ss << ",";
-			ss << JPPyObject::getTypeName(arg[i]);
+			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << " between:" << std::endl;
 		for (vector<JPMethod*>::iterator it = ambiguous.begin(); it != ambiguous.end(); ++it)
@@ -140,7 +140,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		{
 			if (i != start)
 				ss << ",";
-			ss << JPPyObject::getTypeName(arg[i]);
+			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << ", options are:" << std::endl;
 		for (JPMethodList::iterator it = m_Overloads.begin();
