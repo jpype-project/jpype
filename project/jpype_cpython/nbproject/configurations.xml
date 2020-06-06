@@ -133,7 +133,6 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>Makefile.linux</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
