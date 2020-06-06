@@ -893,7 +893,7 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Doc)
 	{
 		Py_INCREF(self->m_Doc);
@@ -903,8 +903,7 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 	// Pack the arguments
 	{
 		JP_TRACE("Pack arguments");
-		JPPyTuple args(JPPyTuple::newTuple(1));
-		args.setItem(0, (PyObject*) self);
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, self));
 		JP_TRACE("Call Python");
 		self->m_Doc = PyObject_Call(_JClassDoc, args.get(), NULL);
 		Py_XINCREF(self->m_Doc);
