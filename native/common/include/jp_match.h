@@ -72,4 +72,3 @@ public:
 } ;
 
 #endif /* JP_MATCH_H */
-

@@ -21,76 +21,110 @@ static void assertValid(PyObject *obj)
 	// GCOVR_EXCL_STOP
 }
 
-JPPyObject::JPPyObject(JPPyRef::Type usage, PyObject* obj)
-: pyobj(NULL)
+/**
+ * This policy is used if we need to hold a reference to an existing
+ * object for some duration.  The object may be null.
+ *
+ * Increment reference count if not null, and decrement when done.
+ */
+JPPyObject JPPyObject::use(PyObject* obj)
 {
-	// See if we are to check the result.
-	if ((usage & 1) == 1)
-		JP_PY_CHECK();
-
-	if ((usage & 2) == 2)
+	JP_TRACE_PY("pyref use(inc)", obj);
+	if (obj != NULL)
 	{
-		if ((usage & 4) == 4)
-		{
-			ASSERT_NOT_NULL(obj);
-			assertValid(obj);
-		} else if (obj == NULL)
-			PyErr_Clear();
-
-		// Claim it by stealing a references
-		pyobj = obj;
-		JP_TRACE_PY("pyref new(claim)", pyobj);
-	} else
-	{
-		pyobj = obj;
-		if (pyobj == NULL)
-		{
-			JP_TRACE_PY("pyref new(null)", pyobj);
-			return;
-		}
-
 		assertValid(obj);
-		incref();
-		JP_TRACE_PY("pyref new(inc)", pyobj);
+		Py_INCREF(obj);
 	}
+	return JPPyObject(obj, 0);
+}
+
+/**
+ * This policy is used when we are given a new reference that we must
+ * destroy.  This will steal a reference.
+ *
+ * claim reference, and decremented when done. Clears errors if NULL.
+ */
+JPPyObject JPPyObject::accept(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(accept)", obj);
+	if (obj == NULL)
+		PyErr_Clear();
+
+	return JPPyObject(obj, 1);
+}
+
+/**
+ * This policy is used when we are given a new reference that we must
+ * destroy.  This will steal a reference.
+ *
+ * Assert not null, claim reference, and decremented when done.
+ * Will throw an exception if the object is null.
+ */
+JPPyObject JPPyObject::claim(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(claim)", obj);
+	ASSERT_NOT_NULL(obj);
+	assertValid(obj);
+	return JPPyObject(obj, 2);
+}
+
+/**
+ * This policy is used when we are capturing an object returned from a python
+ * call that we are responsible for.  This will steal a reference.
+ *
+ * Check for errors, assert not null, then claim.
+ * Will throw an exception an error occurs.
+ */
+JPPyObject JPPyObject::call(PyObject* obj)
+{
+	JP_TRACE_PY("pyref new(call)", obj);
+	JP_PY_CHECK();
+	ASSERT_NOT_NULL(obj);
+	assertValid(obj);
+	return JPPyObject(obj, 3);
+}
+
+JPPyObject::JPPyObject(PyObject* obj, int i)
+: m_PyObject(obj)
+{
 }
 
 JPPyObject::JPPyObject(const JPPyObject &self)
-: pyobj(self.pyobj)
+: m_PyObject(self.m_PyObject)
 {
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
 		incref();
-		JP_TRACE_PY("pyref copy ctor(inc)", pyobj);
+		JP_TRACE_PY("pyref copy ctor(inc)", m_PyObject);
 	}
 }
 
 JPPyObject::~JPPyObject()
 {
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
-		JP_TRACE_PY("pyref dtor(dec)", pyobj);
+		JP_TRACE_PY("pyref dtor(dec)", m_PyObject);
 		decref();
 	} else
 	{
-		JP_TRACE_PY("pyref dtor(null)", pyobj);
+		JP_TRACE_PY("pyref dtor(null)", m_PyObject);
 	}
 }
 
 JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 {
-	if (pyobj == self.pyobj)
+	if (m_PyObject == self.m_PyObject)
 		return *this;
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
-		JP_TRACE_PY("pyref op=(dec)", pyobj);
+		JP_TRACE_PY("pyref op=(dec)", m_PyObject);
 		decref();
 	}
-	pyobj = self.pyobj;
-	if (pyobj != NULL)
+	m_PyObject = self.m_PyObject;
+	if (m_PyObject != NULL)
 	{
 		incref();
-		JP_TRACE_PY("pyref op=(inc)", pyobj);
+		JP_TRACE_PY("pyref op=(inc)", m_PyObject);
 	}
 	return *this;
 }
@@ -99,60 +133,32 @@ PyObject* JPPyObject::keep()
 {
 	// This can only happen if we have a fatal error in our reference
 	// management system.  It should never be triggered by the user.
-	if (pyobj == NULL)
+	if (m_PyObject == NULL)
 	{
-		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference");
+		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference"); // GCOVR_EXCL_LINE
 	}
-	JP_TRACE_PY("pyref keep ", pyobj);
-	PyObject *out = pyobj;
-	pyobj = NULL;
+	JP_TRACE_PY("pyref keep ", m_PyObject);
+	PyObject *out = m_PyObject;
+	m_PyObject = NULL;
 	return out;
 }
 
 void JPPyObject::incref()
 {
-	assertValid(pyobj);
-	Py_INCREF(pyobj);
+	assertValid(m_PyObject);
+	Py_INCREF(m_PyObject);
 }
 
 void JPPyObject::decref()
 {
-	assertValid(pyobj);
-	Py_DECREF(pyobj);
-	pyobj = 0;
-}
-
-bool JPPyObject::isNone(PyObject* pyobj)
-{
-	return pyobj == Py_None;
-}
-
-bool JPPyObject::isSequenceOfItems(PyObject* obj)
-{
-	return PySequence_Check(obj) && !JPPyString::check(obj);
-}
-
-const char* JPPyObject::getTypeName(PyObject* obj)
-{
-	if (obj == NULL)
-		return "null";
-	return Py_TYPE(obj)->tp_name;
+	assertValid(m_PyObject);
+	Py_DECREF(m_PyObject);
+	m_PyObject = 0;
 }
 
 JPPyObject JPPyObject::getNone()
 {
-	return JPPyObject(JPPyRef::_use, Py_None);
-}
-
-/****************************************************************************
- * Number types
- ***************************************************************************/
-
-jlong JPPyLong::asLong(PyObject* obj)
-{
-	jlong res = PyLong_AsLongLong(obj);
-	JP_PY_CHECK();
-	return res;
+	return JPPyObject::use(Py_None);
 }
 
 /****************************************************************************
@@ -164,14 +170,14 @@ JPPyObject JPPyString::fromCharUTF16(jchar c)
 #if defined(PYPY_VERSION)
 	wchar_t buf[1];
 	buf[0] = c;
-	return JPPyObject(JPPyRef::_call, PyUnicode_FromWideChar(buf, 1));
+	return JPPyObject::call(PyUnicode_FromWideChar(buf, 1));
 #else
 	if (c < 128)
 	{
 		char c1 = (char) c;
-		return JPPyObject(JPPyRef::_call, PyUnicode_FromStringAndSize(&c1, 1));
+		return JPPyObject::call(PyUnicode_FromStringAndSize(&c1, 1));
 	}
-	JPPyObject buf(JPPyRef::_call, PyUnicode_New(1, 65535));
+	JPPyObject buf = JPPyObject::call(PyUnicode_New(1, 65535));
 	Py_UCS4 c2 = c;
 	PyUnicode_WriteChar(buf.get(), 0, c2);
 	JP_PY_CHECK();
@@ -190,7 +196,7 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
 	return false;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 jchar JPPyString::asCharUTF16(PyObject* pyobj)
@@ -274,8 +280,8 @@ JPPyObject JPPyString::fromStringUTF8(const string& str)
 	size_t len = str.size();
 
 	// Python 3 is always unicode
-	JPPyObject bytes(JPPyRef::_call, PyBytes_FromStringAndSize(str.c_str(), len));
-	return JPPyObject(JPPyRef::_call, PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
+	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 }
 
 string JPPyString::asStringUTF8(PyObject* pyobj)
@@ -287,7 +293,7 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	{
 		Py_ssize_t size = 0;
 		char *buffer = NULL;
-		JPPyObject val(JPPyRef::_call, PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
+		JPPyObject val = JPPyObject::call(PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
 		PyBytes_AsStringAndSize(val.get(), &buffer, &size);
 		JP_PY_CHECK();
 		if (buffer != NULL)
@@ -302,66 +308,51 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
+	// GCOVR_EXCL_START
 	JP_RAISE(PyExc_RuntimeError, "Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
+	// GCOVR_EXCL_STOP
 }
 
 /****************************************************************************
  * Container types
  ***************************************************************************/
 
-JPPyTuple JPPyTuple::newTuple(jlong sz)
-{
-	return JPPyTuple(JPPyRef::_call, PyTuple_New((Py_ssize_t) sz));
-}
-
-void JPPyTuple::setItem(jlong ndx, PyObject* val)
-{
-	ASSERT_NOT_NULL(val);
-	Py_INCREF(val);
-	PyTuple_SetItem(pyobj, (Py_ssize_t) ndx, val); // steals reference
-	JP_PY_CHECK();
-}
-
 jlong JPPySequence::size()
 {
-	if (pyobj == NULL)
-		return 0;
-	return PySequence_Size(pyobj);
+	return PySequence_Size(m_Sequence.get());
 }
 
 JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject(JPPyRef::_call, PySequence_GetItem(pyobj, i)); // new reference
+	return JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
-: seq(JPPyRef::_use, sequence)
 {
-	size_t n = seq.size();
-	contents.resize(n);
+	m_Sequence = JPPyObject::use(sequence);
+	size_t n = PySequence_Size(m_Sequence.get());
+	m_Contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i] = seq[i];
+		m_Contents[i] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
-: instance(JPPyRef::_use, inst), seq(JPPyRef::_use, sequence)
 {
-	size_t n = seq.size();
-	contents.resize(n + 1);
+	m_Instance = JPPyObject::use(inst);
+	m_Sequence = JPPyObject::use(sequence);
+	size_t n = 0;
+	if (sequence != NULL)
+		n = PySequence_Size(m_Sequence.get());
+	m_Contents.resize(n + 1);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i + 1] = seq[i];
+		m_Contents[i + 1] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
-	contents[0] = instance;
-}
-
-bool JPPyErr::occurred()
-{
-	return PyErr_Occurred() != 0;
+	m_Contents[0] = m_Instance;
 }
 
 bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)
@@ -370,9 +361,9 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 	PyErr_Fetch(&v1, &v2, &v3);
 	if (v1 == NULL && v2 == NULL && v3 == NULL)
 		return false;
-	exceptionClass = JPPyObject(JPPyRef::_accept, v1);
-	exceptionValue = JPPyObject(JPPyRef::_accept, v2);
-	exceptionTrace = JPPyObject(JPPyRef::_accept, v3);
+	exceptionClass = JPPyObject::accept(v1);
+	exceptionValue = JPPyObject::accept(v2);
+	exceptionTrace = JPPyObject::accept(v3);
 	return true;
 }
 
@@ -385,12 +376,12 @@ JPPyCallAcquire::JPPyCallAcquire()
 {
 	PyGILState_STATE* save = new PyGILState_STATE;
 	*save = PyGILState_Ensure();
-	state1 = (void*) save;
+	m_State = (void*) save;
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	PyGILState_STATE* save = (PyGILState_STATE*) state1;
+	PyGILState_STATE* save = (PyGILState_STATE*) m_State;
 	PyGILState_Release(*save);
 	delete save;
 }
@@ -400,13 +391,13 @@ JPPyCallAcquire::~JPPyCallAcquire()
 JPPyCallRelease::JPPyCallRelease()
 {
 	// Release the lock and set the thread state to NULL
-	state1 = (void*) PyEval_SaveThread();
+	m_State1 = (void*) PyEval_SaveThread();
 }
 
 JPPyCallRelease::~JPPyCallRelease()
 {
 	// Reaquire the lock
-	PyThreadState *save = (PyThreadState *) state1;
+	PyThreadState *save = (PyThreadState *) m_State1;
 	PyEval_RestoreThread(save);
 }
 
@@ -457,7 +448,7 @@ char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
 
 JPPyErrFrame::JPPyErrFrame()
 {
-	good = JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+	good = JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 }
 
 JPPyErrFrame::~JPPyErrFrame()
@@ -465,8 +456,8 @@ JPPyErrFrame::~JPPyErrFrame()
 	try
 	{
 		if (good)
-			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
-	}	catch (...)
+			JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
+	}	catch (...)  // GCOVR_EXCL_LINE
 	{
 		// No throw is allowed in dtor.
 	}
@@ -481,13 +472,12 @@ void JPPyErrFrame::normalize()
 {
 	// Python uses lazy evaluation on exceptions thus we can't modify it until
 	// we have forced it to realize the exception.
-	if (!PyExceptionInstance_Check(exceptionValue.get()))
+	if (!PyExceptionInstance_Check(m_ExceptionValue.get()))
 	{
-		JPPyTuple args = JPPyTuple::newTuple(1);
-		args.setItem(0, exceptionValue.get());
-		exceptionValue = JPPyObject(JPPyRef::_call, PyObject_Call(exceptionClass.get(), args.get(), NULL));
-		PyException_SetTraceback(exceptionValue.get(), exceptionTrace.get());
-		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
-		JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, m_ExceptionValue.get()));
+		m_ExceptionValue = JPPyObject::call(PyObject_Call(m_ExceptionClass.get(), args.get(), NULL));
+		PyException_SetTraceback(m_ExceptionValue.get(), m_ExceptionTrace.get());
+		JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
+		JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 	}
 }

@@ -30,7 +30,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 {
 	JP_PY_TRY("PyJPProxy_new");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -43,10 +43,13 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
 	// Pack interfaces
 	if (!PySequence_Check(pyintf))
-		JP_RAISE(PyExc_TypeError, "third argument must be a list of interface");
+	{
+		PyErr_SetString(PyExc_TypeError, "third argument must be a list of interface");
+		return NULL;
+	}
 
 	JPClassList interfaces;
-	JPPySequence intf(JPPyRef::_use, pyintf);
+	JPPySequence intf = JPPySequence::use(pyintf);
 	jlong len = intf.size();
 	if (len < 1)
 		JP_RAISE(PyExc_TypeError, "at least one interface is required");
@@ -55,7 +58,10 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	{
 		JPClass *cls = PyJPClass_getJPClass(intf[i].get());
 		if (cls == NULL)
-			JP_RAISE(PyExc_TypeError, "interfaces must be object class instances");
+		{
+			PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
+			return NULL;
+		}
 		interfaces.push_back(cls);
 	}
 
@@ -97,7 +103,7 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
-	JPJavaFrame frame(self->m_Proxy->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(self->m_Proxy->getContext());
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 }
@@ -168,9 +174,8 @@ PyType_Spec PyJPProxySpec = {
 
 void PyJPProxy_initType(PyObject* module)
 {
-	JPPyTuple tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, (PyObject*) & PyBaseObject_Type);
-	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, tuple.get());
+	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, &PyBaseObject_Type));
+	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, bases.get());
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);
 	JP_PY_CHECK();
@@ -182,4 +187,3 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 		return ((PyJPProxy*) obj)->m_Proxy;
 	return NULL;
 }
-

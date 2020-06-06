@@ -39,7 +39,7 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPField_get");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Field->isStatic())
 		return self->m_Field->getStaticField().keep();
 	if (obj == NULL)
@@ -56,22 +56,27 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
 	JP_PY_TRY("PyJPField_set");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Field->isFinal())
-		JP_RAISE(PyExc_AttributeError, "Field is final");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Field is final");
+		return -1;
+	}
 	if (self->m_Field->isStatic())
 	{
 		self->m_Field->setStaticField(pyvalue);
 		return 0;
 	}
 	if (obj == Py_None || PyJPClass_Check(obj))
-		JP_RAISE(PyExc_AttributeError, "Field is not static");
+	{
+		PyErr_SetString(PyExc_AttributeError, "Field is not static");
+		return -1;
+	}
 	JPValue *jval = PyJPValue_getJavaSlot(obj);
 	if (jval == NULL)
 	{
-		stringstream ss;
-		ss << "Field requires instance value, not " << Py_TYPE(obj)->tp_name;
-		JP_RAISE(PyExc_AttributeError,  ss.str().c_str());
+		PyErr_Format(PyExc_AttributeError, "Field requires instance value, not '%s'", Py_TYPE(obj)->tp_name);
+		return -1;
 	}
 	self->m_Field->setField(jval->getValue().l, pyvalue);
 	return 0;
@@ -82,12 +87,11 @@ static PyObject *PyJPField_repr(PyJPField *self)
 {
 	JP_PY_TRY("PyJPField_repr");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
-	stringstream ss;
-	ss << "<java field `";
-	ss << self->m_Field->getName() << "' of '" <<
-			self->m_Field->getClass()->getCanonicalName() << "'>";
-	return JPPyString::fromStringUTF8(ss.str()).keep();
+	JPJavaFrame frame = JPJavaFrame::outer(context);
+	return PyUnicode_FromFormat("<java field '%s' of '%s'>",
+			self->m_Field->getName().c_str(),
+			self->m_Field->getClass()->getCanonicalName().c_str()
+			);
 	JP_PY_CATCH(NULL);
 }
 
@@ -131,6 +135,6 @@ JPPyObject PyJPField_create(JPField* m)
 	PyJPField* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
 	JP_PY_CHECK();
 	self->m_Field = m;
-	return JPPyObject(JPPyRef::_claim, (PyObject*) self);
+	return JPPyObject::claim((PyObject*) self);
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }

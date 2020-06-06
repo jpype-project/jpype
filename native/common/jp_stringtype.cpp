@@ -48,7 +48,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 		if (context->getConvertStrings())
 		{
 			string str = frame.toStringUTF8((jstring) (val.l));
-			return JPPyObject(JPPyRef::_call, PyUnicode_FromString(str.c_str()));
+			return JPPyObject::call(PyUnicode_FromString(str.c_str()));
 		}
 	}
 
@@ -71,7 +71,7 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 
 void JPStringType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);

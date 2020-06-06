@@ -70,6 +70,7 @@ public:
 
 	// GCOVR_EXCL_START
 	// This is required, but is not currently used.
+
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);

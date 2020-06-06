@@ -3,10 +3,11 @@
 import _jpype
 import unittest
 import subrun
+import common
 
 
 @subrun.TestCase(individual=True)
-class TestModule(unittest.TestCase):
+class ModuleStartTestCase(unittest.TestCase):
 
     def testNoJObject(self):
         with self.assertRaises(RuntimeError):
@@ -35,19 +36,13 @@ class TestModule(unittest.TestCase):
     def testNoJClassPre(self):
         with self.assertRaises(RuntimeError):
             import jpype
-            del _jpype._JClassPre
+            del _jpype._jclassPre
             jpype.startJVM()
 
     def testNoJClassPost(self):
         with self.assertRaises(RuntimeError):
             import jpype
-            del _jpype._JClassPost
-            jpype.startJVM()
-
-    def testNoMethodDoc(self):
-        with self.assertRaises(RuntimeError):
-            import jpype
-            del _jpype.getMethodDoc
+            del _jpype._jclassPost
             jpype.startJVM()
 
     def testNoMethodAnnotations(self):
@@ -66,3 +61,25 @@ class TestModule(unittest.TestCase):
         import jpype
         jpype.startJVM(convertStrings=False)
         jpype.shutdownJVM()
+
+
+class ModuleTestCase(common.JPypeTestCase):
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def testIsPackage(self):
+        self.assertTrue(_jpype.isPackage("java"))
+        self.assertFalse(_jpype.isPackage("jva"))
+        with self.assertRaises(TypeError):
+            _jpype.isPackage(object())
+
+    def testGetClass(self):
+        self.assertIsInstance(_jpype._getClass("java.lang.String"), _jpype._JClass)
+        with self.assertRaises(TypeError):
+            _jpype._getClass(object())
+
+    def testHasClass(self):
+        self.assertTrue(_jpype._hasClass("java.lang.String"))
+        with self.assertRaises(TypeError):
+            _jpype._hasClass(object())

@@ -9,6 +9,7 @@ from distutils.dir_util import copy_tree
 import glob
 import re
 import shlex
+import shutil
 
 
 def compileJava(self, coverage):
@@ -24,21 +25,24 @@ def compileJava(self, coverage):
             jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
     except KeyError:
         pass
-    target_version = "1.7"
+    target_version = "1.8"
     srcs = glob.glob('native/java/**/*.java', recursive=True)
     src1 = [i for i in srcs if "JPypeClassLoader" in i]
     src2 = [i for i in srcs if not "JPypeClassLoader" in i]
-    cmd1 = shlex.split('%s -d build/lib -g:none -source %s -target %s' %
+    cmd1 = shlex.split('%s -d build/lib -g:lines -source %s -target %s' %
                        (javac, target_version, target_version))
     cmd1.extend(src1)
-    debug = "-g:none"
+    debug = "-g:lines"
     if coverage:
         debug = "-g:lines,vars,source"
     cmd2 = shlex.split('%s -d build/classes %s -source %s -target %s -cp build/lib' %
                        (javac, debug, target_version, target_version))
     cmd2.extend(src2)
     os.makedirs("build/lib", exist_ok=True)
-    os.makedirs("build/classes", exist_ok=True)
+    try:
+        shutil.copytree('native/java/', 'build/classes', ignore=shutil.ignore_patterns('*.java'))
+    except Exception:
+        pass
     self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
     subprocess.check_call(cmd1)
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)

@@ -114,14 +114,14 @@ JPGarbageCollection::JPGarbageCollection(JPContext *context)
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
 	// Get the Python garbage collector
-	JPPyObject gc(JPPyRef::_call, PyImport_ImportModule("gc"));
+	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 	python_gc = gc.keep();
 
 	// Find the callbacks
-	JPPyObject callbacks(JPPyRef::_call, PyObject_GetAttrString(python_gc, "callbacks"));
+	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(python_gc, "callbacks"));
 
 	// Hook up our callback
-	JPPyObject collect(JPPyRef::_call, PyObject_GetAttrString(PyJPModule, "_collect"));
+	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "_collect"));
 	PyList_Append(callbacks.get(), collect.get());
 	JP_PY_CHECK();
 
@@ -219,20 +219,22 @@ void JPGarbageCollection::onEnd()
 			// Move up the low water
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
-			JPJavaFrame frame(m_Context);
+			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
 			python_triggered++;
 		}
 	}
-	// GCOVR_EXCL_END
+	// GCOVR_EXCL_STOP
 }
 
 void JPGarbageCollection::getStats(JPGCStats& stats)
 {
+	// GCOVR_EXCL_START
 	stats.current_rss = getWorkingSize();
 	stats.min_rss = low_water;
 	stats.max_rss = high_water;
 	stats.java_rss = last_java;
 	stats.python_rss = last_python;
 	stats.python_triggered = python_triggered;
+	// GCOVR_EXCL_STOP
 }

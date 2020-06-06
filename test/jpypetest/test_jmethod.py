@@ -82,6 +82,11 @@ class JMethodTestCase(common.JPypeTestCase):
     def testMethodDoc(self):
         self.assertIsInstance(self.cls.substring.__doc__, str)
         self.assertIsInstance(self.obj.substring.__doc__, str)
+        d = self.cls.substring.__doc__
+        self.cls.substring.__doc__ = None
+        self.assertIsNone(self.cls.substring.__doc__)
+        self.assertIsNone(self.obj.substring.__doc__)
+        self.cls.substring.__doc__ = d
 
     def testMethodInspectDoc(self):
         self.assertIsInstance(inspect.getdoc(self.cls.substring), str)
@@ -90,7 +95,13 @@ class JMethodTestCase(common.JPypeTestCase):
 
     def testMethodAnnotations(self):
         self.assertIsInstance(self.cls.substring.__annotations__, dict)
-        self.assertIsNotNone(self.obj.substring.__annotations__, dict)
+        self.assertIsNotNone(self.obj.substring.__annotations__)
+        a = self.cls.substring.__annotations__
+        d = {}
+        self.cls.substring.__annotations__ = d
+        self.assertEqual(self.cls.substring.__annotations__, d)
+        self.cls.substring.__annotations__ = a
+        self.assertIsNotNone(self.cls.substring.__annotations__)
 
         # This one will need to change in Python 3.8
         self.assertEqual(self.cls.substring.__annotations__[

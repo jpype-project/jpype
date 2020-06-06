@@ -45,7 +45,6 @@
           <itemPath>../../native/common/include/jp_stringtype.h</itemPath>
           <itemPath>../../native/common/include/jp_tracer.h</itemPath>
           <itemPath>../../native/common/include/jp_typemanager.h</itemPath>
-          <itemPath>../../native/common/include/jp_typename.h</itemPath>
           <itemPath>../../native/common/include/jp_value.h</itemPath>
           <itemPath>../../native/common/include/jp_voidtype.h</itemPath>
           <itemPath>../../native/common/include/jpype.h</itemPath>
@@ -134,7 +133,6 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>Makefile.linux</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -363,11 +361,6 @@
             flavor2="0">
       </item>
       <item path="../../native/common/include/jp_typemanager.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
-      <item path="../../native/common/include/jp_typename.h"
             ex="false"
             tool="3"
             flavor2="0">

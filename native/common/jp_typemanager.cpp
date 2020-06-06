@@ -40,7 +40,7 @@ JPTypeManager::~JPTypeManager()
 JPClass* JPTypeManager::findClass(jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
@@ -50,7 +50,7 @@ JPClass* JPTypeManager::findClass(jclass obj)
 JPClass* JPTypeManager::findClassByName(const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
 	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
@@ -67,7 +67,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 JPClass* JPTypeManager::findClassForObject(jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClassForObject");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val;
 	val.l = obj;
 	JPClass *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
@@ -80,7 +80,7 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 void JPTypeManager::populateMethod(void* method, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::populateMethod");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val[2];
 	val[0].j = (jlong) method;
 	val[1].l = obj;
@@ -92,7 +92,7 @@ void JPTypeManager::populateMethod(void* method, jobject obj)
 void JPTypeManager::populateMembers(JPClass* cls)
 {
 	JP_TRACE_IN("JPTypeManager::populateMembers");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val[1];
 	val[0].l = (jobject) cls->getJavaClass();
 	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);

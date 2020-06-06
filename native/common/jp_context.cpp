@@ -183,30 +183,29 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	// prepare this ...
 	jniArgs.version = USE_JNI_VERSION;
 	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
-        JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
+	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
 	jniArgs.nOptions = (jint) args.size();
-        JP_TRACE("NumOptions", jniArgs.nOptions);
+	JP_TRACE("NumOptions", jniArgs.nOptions);
 	jniArgs.options = (JavaVMOption*) malloc(sizeof (JavaVMOption) * jniArgs.nOptions);
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
-                JP_TRACE("Option", args[i]);
+		JP_TRACE("Option", args[i]);
 		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
 
 	// Launch the JVM
 	JNIEnv* env = NULL;
 	JP_TRACE("Create JVM");
-        try
-        {
-	        CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
-        }
-        catch (...)
-        {
-                JP_TRACE("Exception in CreateJVM?");
-        }
-        JP_TRACE("JVM created");
+	try
+	{
+		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+	} catch (...)
+	{
+		JP_TRACE("Exception in CreateJVM?");
+	}
+	JP_TRACE("JVM created");
 	free(jniArgs.options);
 
 	if (m_JavaVM == NULL)
@@ -219,7 +218,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	{
 		// This is the only frame that we can use until the system
 		// is initialized.  Any other frame creation will result in an error.
-		JPJavaFrame frame(this, env);
+		JPJavaFrame frame = JPJavaFrame::external(this, env);
 
 		jclass throwableClass = (jclass) frame.FindClass("java/lang/Throwable");
 		m_Throwable_GetCauseID = frame.GetMethodID(throwableClass, "getCause", "()Ljava/lang/Throwable;");
@@ -322,6 +321,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"(Ljava/lang/String;)Ljava/lang/Object;");
 		m_Package_GetContentsID = frame.GetMethodID(packageClass, "getContents",
 				"()[Ljava/lang/String;");
+		m_Context_NewWrapperID = frame.GetMethodID(contextClass, "newWrapper",
+				"(J)V");
 
 		m_Array = JPClassRef(frame, frame.FindClass("java/lang/reflect/Array"));
 		m_Array_NewInstanceID = frame.GetStaticMethodID(m_Array.get(), "newInstance",

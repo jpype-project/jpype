@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_arrayclass.h"
 
 #ifdef __cplusplus
@@ -48,7 +49,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPArray_init");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	// Cases here.
 	//  -  We got here with a JPValue
@@ -94,7 +95,6 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	if (PyIndex_Check(v))
 	{
-		//		JPJavaFrame frame(context);
 		JP_TRACE("Index");
 		long long length = PyLong_AsLongLong(v);
 		if (length < 0 || length > 2147483647)
@@ -144,7 +144,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPArray_getArrayItem");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
@@ -178,9 +178,9 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 			step = 1;
 		}
 
-		JPPyTuple tuple(JPPyTuple::newTuple(0));
-		JPPyObject newArray = JPPyObject(JPPyRef::_claim,
-				Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
+		JPPyObject tuple = JPPyObject::call(PyTuple_New(0));
+
+		JPPyObject newArray = JPPyObject::claim(Py_TYPE(self)->tp_new(Py_TYPE(self), tuple.get(), NULL));
 
 		// Copy over the JPValue
 		PyJPValue_assignJavaSlot(frame, newArray.get(),
@@ -197,21 +197,11 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	JP_PY_CATCH(NULL);
 }
 
-//static int PyJPArray_assignItem(PyJPArray *self, Py_ssize_t item, PyObject *value)
-//{
-//	JP_PY_TRY("PyJPArray_assignItem");
-//	JPContext *context = PyJPModule_getContext();
-//	JPJavaFrame frame(context);
-//	self->m_Array->setItem((jsize) item, value);
-//	return 0;
-//	JP_PY_CATCH(-1);
-//}
-
 static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *value)
 {
 	JP_PY_TRY("PyJPArray_assignSubscript");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	// Verified with numpy that item deletion on immutable should
 	// be ValueError
 	if ( value == NULL)
@@ -273,8 +263,7 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 		self->m_View = NULL;
 		return;
 	}
-	//	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_View == NULL || !self->m_View->unreference())
 		return;
 	delete self->m_View;
@@ -286,7 +275,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArray_getBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
@@ -368,7 +357,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Array == NULL)
 		JP_RAISE(PyExc_ValueError, "Null array");
 	try
@@ -488,17 +477,14 @@ static PyType_Spec arrayPrimSpec = {
 
 void PyJPArray_initType(PyObject * module)
 {
-
-	JPPyTuple tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, (PyObject*) PyJPObject_Type);
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	JP_PY_CHECK();
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
 
-	tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, (PyObject*) PyJPArray_Type);
+	tuple = JPPyObject::call(PyTuple_Pack(1, PyJPArray_Type));
 	PyJPArrayPrimitive_Type = (PyTypeObject*)
 			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get());
 	PyJPArrayPrimitive_Type->tp_as_buffer = &arrayPrimBuffer;
@@ -514,5 +500,5 @@ JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, const JPValu
 	JP_PY_CHECK();
 	((PyJPArray*) obj)->m_Array = new JPArray(value);
 	PyJPValue_assignJavaSlot(frame, obj, value);
-	return JPPyObject(JPPyRef::_claim, obj);
+	return JPPyObject::claim(obj);
 }

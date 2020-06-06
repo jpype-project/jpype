@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_longtype.h"
 
@@ -30,8 +31,8 @@ JPLongType::~JPLongType()
 
 JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLongLong(field(val)));
-	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	JPPyObject tmp = JPPyObject::call(PyLong_FromLongLong(field(val)));
+	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 }
@@ -39,7 +40,7 @@ JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 JPValue JPLongType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.longValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -119,7 +120,7 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 
 void JPLongType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jlongConversion.getInfo(this, info);
 	longConversion.getInfo(this, info);
 	longNumberConversion.getInfo(this, info);
@@ -229,7 +230,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 	}
 
 	// Use sequence API
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
@@ -269,7 +270,7 @@ void JPLongType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 
 void JPLongType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetLongArrayElements(
 			(jlongArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "q";
@@ -280,7 +281,7 @@ void JPLongType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
 				(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

@@ -160,3 +160,7 @@ class ExceptionTestCase(common.JPypeTestCase):
         null = jpype.JObject(None, Th)
         # The next line should not fail
         Th._expandStacktrace(null)
+
+    def testException(self):
+        Th = jpype.JClass('java.lang.Throwable')('abc')
+        self.assertEqual(str(Th), 'abc')

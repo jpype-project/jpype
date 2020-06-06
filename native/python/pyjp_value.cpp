@@ -142,7 +142,7 @@ void PyJPValue_finalize(void* obj)
 	JPContext *context = JPContext_global;
 	if (context == NULL || !context->isRunning())
 		return;
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
@@ -161,14 +161,20 @@ PyObject* PyJPValue_str(PyObject* self)
 {
 	JP_PY_TRY("PyJPValue_str", self);
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == NULL)
-		JP_RAISE(PyExc_TypeError, "Not a Java value");
+	{
+		PyErr_SetString(PyExc_TypeError, "Not a Java value");
+		return NULL;
+	}
 
 	JPClass* cls = value->getClass();
 	if (cls->isPrimitive())
-		JP_RAISE(PyExc_TypeError, "toString requires a Java object");
+	{
+		PyErr_SetString(PyExc_TypeError, "toString requires a Java object");
+		return NULL;
+	}
 
 	if (value->getValue().l == NULL)
 		return JPPyString::fromStringUTF8("null").keep();
@@ -176,7 +182,7 @@ PyObject* PyJPValue_str(PyObject* self)
 	if (cls == context->_java_lang_String)
 	{
 		PyObject *cache;
-		JPPyObject dict(JPPyRef::_accept, PyObject_GenericGetDict(self, NULL));
+		JPPyObject dict = JPPyObject::accept(PyObject_GenericGetDict(self, NULL));
 		if (!dict.isNull())
 		{
 			cache = PyDict_GetItemString(dict.get(), "_jstr");
@@ -215,7 +221,7 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	PyObject* pyattr = PyBaseObject_Type.tp_getattro(obj, name);
 	if (pyattr == NULL)
 		return NULL;
-	JPPyObject attr(JPPyRef::_accept, pyattr);
+	JPPyObject attr = JPPyObject::accept(pyattr);
 
 	// Private members go regardless
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
@@ -229,8 +235,7 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 	if (!PyObject_IsInstance(attr.get(), (PyObject*) & PyProperty_Type))
 		return attr.keep();
 
-	const char *name_str = PyUnicode_AsUTF8(name);
-	PyErr_Format(PyExc_AttributeError, "Field '%s' is static", name_str);
+	PyErr_Format(PyExc_AttributeError, "Field '%U' is static", name);
 	return NULL;
 	JP_PY_CATCH(NULL);
 }
@@ -249,11 +254,10 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
 		return PyObject_GenericSetAttr(self, name, value);
-	JPPyObject f = JPPyObject(JPPyRef::_accept, Py_GetAttrDescriptor(Py_TYPE(self), name));
+	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor(Py_TYPE(self), name));
 	if (f.isNull())
 	{
-		const char *name_str = PyUnicode_AsUTF8(name);
-		PyErr_Format(PyExc_AttributeError, "Field '%s' is not found", name_str);
+		PyErr_Format(PyExc_AttributeError, "Field '%U' is not found", name);
 		return -1;
 	}
 	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
@@ -261,9 +265,8 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 		return desc(f.get(), self, value);
 
 	// Not a descriptor
-	const char *name_str = PyUnicode_AsUTF8(name);
 	PyErr_Format(PyExc_AttributeError,
-			"Field '%s' is not settable on Java '%s' object", name_str, Py_TYPE(self)->tp_name);
+			"Field '%U' is not settable on Java '%s' object", name, Py_TYPE(self)->tp_name);
 	return -1;
 	JP_PY_CATCH(-1);
 }

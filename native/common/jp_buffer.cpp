@@ -1,5 +1,6 @@
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_buffer.h"
 #include "jp_primitive_accessor.h"
 #include "jp_buffertype.h"
 
@@ -7,7 +8,7 @@ JPBuffer::JPBuffer(const JPValue &value)
 : m_Object(value.getClass()->getContext(), value.getValue().l)
 {
 	m_Class = (JPBufferType*) value.getClass();
-	JPJavaFrame frame(m_Class->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JP_TRACE_IN("JPBuffer::JPBuffer");
 	m_Address = frame.GetDirectBufferAddress(m_Object.get());
 	m_Capacity = (Py_ssize_t) frame.GetDirectBufferCapacity(m_Object.get());

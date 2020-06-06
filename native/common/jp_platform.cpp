@@ -105,6 +105,7 @@ public:
 
 // The code in this modules is mostly excluded from coverage as it is only
 // possible to execute during a fatal error.
+
 class LinuxPlatformAdapter : public JPPlatformAdapter
 {
 private:
@@ -122,18 +123,18 @@ public:
 		JP_TRACE("dlopen", path);
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
-                // GCOVR_EXCL_START
+		// GCOVR_EXCL_START
 		if (jvmLibrary == NULL)
 		{
 			JP_TRACE("null library");
-                        JP_TRACE("errno", errno);
-                        if (errno == ENOEXEC)
-                        {
-                            JP_TRACE("dignostics", dlerror());
-                        }
+			JP_TRACE("errno", errno);
+			if (errno == ENOEXEC)
+			{
+				JP_TRACE("dignostics", dlerror());
+			}
 			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
-                // GCOVR_EXCL_STOP
+		// GCOVR_EXCL_STOP
 		JP_TRACE_OUT;
 	}
 
@@ -141,25 +142,25 @@ public:
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::unloadLibrary");
 		int r = dlclose(jvmLibrary);
-                // GCOVR_EXCL_START
+		// GCOVR_EXCL_START
 		if (r != 0) // error
 		{
 			cerr << dlerror() << endl;
 		}
-                // GCOVR_EXCL_STOP
+		// GCOVR_EXCL_STOP
 		JP_TRACE_OUT;
 	}
 
 	virtual void* getSymbol(const char* name) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
-                JP_TRACE("Load", name);
+		JP_TRACE("Load", name);
 		void* res = dlsym(jvmLibrary, name);
-                JP_TRACE("Res", res);
+		JP_TRACE("Res", res);
 		// GCOVR_EXCL_START
 		if (res == NULL)
 		{
-                        JP_TRACE("errno", errno);
+			JP_TRACE("errno", errno);
 			std::stringstream msg;
 			msg << "Unable to load symbol [" << name << "], error = " << dlerror();
 			JP_RAISE(PyExc_RuntimeError,  msg.str().c_str());

@@ -2664,6 +2664,37 @@ about JPype.  Topics include code completion, performance, debugging Java
 within JPype, debugging JNI and other JPype failures, how caller sensitive
 methods are dealt with, and finally limitations of JPype.
 
+Javadoc
+=======
+
+JPype can display javadoc in ReStructured Text as part of the Python
+documentation.  To access the javadoc, the javadoc package must be located on
+the classpath.  This includes the JDK package documentation.  
+
+For example to get the documentation for ``java.lang.Class``, we start the JVM
+with the JDK documentation zip file on the classpath.
+
+.. code-block: java
+
+     import jpype
+     jpype.startJVM(classpath='jdk-11.0.7_doc-all.zip')
+
+We can then access the java docs for the String with ``help(java.lang.String)``
+or for the methods with ``help(java.lang.String.trim)``.  To use the javadoc
+supplied by a third party include the both the jar and javadoc in the
+classpath.
+
+.. code-block: java
+
+     import jpype
+     jpype.startJVM(classpath=['gson-2.8.5.jar', 'gson-2.8.5-javadoc.jar'])
+
+The parser will ignore any javadoc which cannot be extracted.  It has some
+robustness against tags that are not properly closed or closed twice.  Javadoc
+with custom page layouts will likely not be extracted.
+
+If javadoc for a class cannot be located or extracted properly, default
+documentation will be generated using Java reflection.
 
 Autopep8
 ========

@@ -248,3 +248,21 @@ class JClassTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             class Q(JDouble):
                 pass
+
+    def testAsArray(self):
+        jo = JClass('java.lang.Object')
+        self.assertEqual(jo[:], JArray(jo))
+        self.assertEqual(jo[:][:], JArray(jo, 2))
+        self.assertIsInstance(jo[5], JArray(jo))
+        self.assertEqual(len(jo[5]), 5)
+        self.assertIsInstance(jo[5, :], JArray(jo, 2))
+        self.assertEqual(len(jo[5, :]), 5)
+        with self.assertRaises(TypeError):
+            self.assertEqual(jo[:, 5], JArray(jo, 2))
+        with self.assertRaises(TypeError):
+            jo['foo']
+
+    def testCastEqual(self):
+        jo = JClass('java.lang.Object')
+        with self.assertRaises(TypeError):
+            jo @= 5

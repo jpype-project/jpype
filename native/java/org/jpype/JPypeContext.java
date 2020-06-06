@@ -68,6 +68,7 @@ import org.jpype.ref.JPypeReferenceQueue;
  */
 public class JPypeContext
 {
+
   public final String VERSION = "0.7.6_dev0";
 
   private static JPypeContext instance = null;
@@ -597,6 +598,15 @@ public class JPypeContext
     }
     return out;
 
+  }
+
+  public void newWrapper(long l)
+  {
+    // We can only go through this point single file.
+    synchronized (this.typeFactory)
+    {
+      this.typeFactory.newWrapper(context, l);
+    }
   }
 
 }

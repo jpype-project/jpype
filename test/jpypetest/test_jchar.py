@@ -118,6 +118,9 @@ class JCharTestCase(common.JPypeTestCase):
         self.assertEqual(type(repr(self.nc)), str)
         self.assertEqual(repr(self.nc), "'B'")
 
+    def testAbs(self):
+        self.assertEqual(abs(self.nc), self.nc)
+
     def testOrd(self):
         self.assertEqual(ord(self.nc), 66)
 
@@ -127,7 +130,7 @@ class JCharTestCase(common.JPypeTestCase):
     def testFloat(self):
         self.assertEqual(float(self.nc), 66.0)
 
-    def testSub(self):
+    def testLen(self):
         self.assertEqual(len(self.nc), 1)
 
     def testHash(self):
@@ -231,7 +234,7 @@ class JCharBoxedTestCase(common.JPypeTestCase):
     def testFloat(self):
         self.assertEqual(float(self.nc), 66.0)
 
-    def testSub(self):
+    def testLen(self):
         self.assertEqual(len(self.nc), 1)
 
     def testHash(self):
@@ -288,6 +291,13 @@ class JCharBoxedTestCase(common.JPypeTestCase):
 
     def testPos(self):
         self.assertEqual(+self.nc, +66)
+
+    def testNeg(self):
+        self.assertEqual(-self.nc, -66)
+
+    def testBool(self):
+        self.assertTrue(bool(self.nc))
+        self.assertFalse(bool(JChar(0)))
 
     def testPass(self):
         fixture = jpype.JClass('jpype.common.Fixture')()
@@ -347,7 +357,7 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             float(self.nc)
 
-    def testSub(self):
+    def testLen(self):
         with self.assertRaises(TypeError):
             len(self.nc)
 
