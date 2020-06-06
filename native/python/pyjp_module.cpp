@@ -67,6 +67,7 @@ PyObject* _JInterface = NULL;
 PyObject* _JException = NULL;
 PyObject* _JClassPre = NULL;
 PyObject* _JClassPost = NULL;
+PyObject* _JClassDoc = NULL;
 PyObject* _JMethodDoc = NULL;
 PyObject* _JMethodAnnotations = NULL;
 PyObject* _JMethodCode = NULL;
@@ -101,14 +102,17 @@ static void PyJPModule_loadResources(PyObject* module)
 		_JException = PyObject_GetAttrString(module, "JException");
 		JP_PY_CHECK();
 		Py_INCREF(_JException);
-		_JClassPre = PyObject_GetAttrString(module, "_JClassPre");
+		_JClassPre = PyObject_GetAttrString(module, "_jclassPre");
 		JP_PY_CHECK();
 		Py_INCREF(_JClassPre);
-		_JClassPost = PyObject_GetAttrString(module, "_JClassPost");
+		_JClassPost = PyObject_GetAttrString(module, "_jclassPost");
 		JP_PY_CHECK();
 		Py_INCREF(_JClassPost);
-		_JMethodDoc = PyObject_GetAttrString(module, "getMethodDoc");
 		JP_PY_CHECK();
+		_JClassDoc = PyObject_GetAttrString(module, "_jclassDoc");
+		JP_PY_CHECK();
+		Py_INCREF(_JClassDoc);
+		_JMethodDoc = PyObject_GetAttrString(module, "getMethodDoc");
 		Py_INCREF(_JMethodDoc);
 		_JMethodAnnotations = PyObject_GetAttrString(module, "getMethodAnnotations");
 		JP_PY_CHECK();
@@ -486,6 +490,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 }
 
 // GCOVR_EXCL_START
+
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
 	JPContext *context = PyJPModule_getContext();
@@ -524,6 +529,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 }
 
 // GCOVR_EXCL_START
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -568,6 +574,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 
 // GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
+
 static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 {
 	bool old = _PyJPModule_trace;

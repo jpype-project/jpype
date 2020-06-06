@@ -30,7 +30,8 @@
 struct PyJPClass
 {
 	PyHeapTypeObject ht_type;
-	JPClass* m_Class;
+	JPClass *m_Class;
+	PyObject *m_Doc;
 } ;
 
 static PyObject* classMagic = PyDict_New();
@@ -43,6 +44,18 @@ extern "C"
 int PyJPClass_Check(PyObject* obj)
 {
 	return Py_IsInstanceSingle(obj, PyJPClass_Type);
+}
+
+static int PyJPClass_traverse(PyJPClass *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->m_Doc);
+	return 0;
+}
+
+static int PyJPClass_clear(PyJPClass *self)
+{
+	Py_CLEAR(self->m_Doc);
+	return 0;
 }
 
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -110,6 +123,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	{
 		typenew->tp_new = PyJPException_Type->tp_new;
 	}
+	((PyJPClass*) typenew)->m_Doc = NULL;
 	return (PyObject*) typenew;
 	JP_PY_CATCH(NULL);
 }
@@ -304,6 +318,15 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	return rc;
 	JP_PY_CATCH(-1);
+}
+
+static void PyJPClass_dealloc(PyJPClass *self)
+{
+	JP_PY_TRY("PyJPClass_dealloc");
+	PyObject_GC_UnTrack(self);
+	PyJPClass_clear(self);
+	Py_TYPE(self)->tp_free(self);
+	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 
 PyObject* PyJPClass_mro(PyTypeObject *self)
@@ -844,6 +867,40 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
+static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
+{
+	JP_PY_TRY("PyJPMethod_getDoc");
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame(context);
+	if (self->m_Doc)
+	{
+		Py_INCREF(self->m_Doc);
+		return self->m_Doc;
+	}
+
+	// Pack the arguments
+	{
+		JP_TRACE("Pack arguments");
+		JPPyTuple args(JPPyTuple::newTuple(1));
+		args.setItem(0, (PyObject*) self);
+		JP_TRACE("Call Python");
+		self->m_Doc = PyObject_Call(_JClassDoc, args.get(), NULL);
+		Py_XINCREF(self->m_Doc);
+		return self->m_Doc;
+	}
+	JP_PY_CATCH(NULL);
+}
+
+int PyJPClass_setDoc(PyJPClass *self, PyObject *obj, void *ctxt)
+{
+	JP_PY_TRY("PyJPClass_setDoc");
+	Py_CLEAR(self->m_Doc);
+	self->m_Doc = obj;
+	Py_XINCREF(self->m_Doc);
+	return 0;
+	JP_PY_CATCH(-1);
+}
+
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
@@ -859,6 +916,7 @@ static PyMethodDef classMethods[] = {
 static PyGetSetDef classGetSets[] = {
 	{"class_", (getter) PyJPClass_class, (setter) PyJPClass_setClass, ""},
 	{"_hints", (getter) PyJPClass_hints, (setter) PyJPClass_setHints, ""},
+	{"__doc__", (getter) PyJPClass_getDoc, (setter) PyJPClass_setDoc, NULL, NULL},
 	{0}
 };
 
@@ -867,6 +925,9 @@ static PyType_Slot classSlots[] = {
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
 	{ Py_tp_new,      (void*) PyJPClass_new},
 	{ Py_tp_init,     (void*) PyJPClass_init},
+	{ Py_tp_dealloc,  (void*) PyJPClass_dealloc},
+	{ Py_tp_traverse, (void*) PyJPClass_traverse},
+	{ Py_tp_clear,    (void*) PyJPClass_clear},
 	{ Py_tp_repr,     (void*) PyJPClass_repr},
 	{ Py_tp_getattro, (void*) PyJPClass_getattro},
 	{ Py_tp_setattro, (void*) PyJPClass_setattro},

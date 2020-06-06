@@ -30,6 +30,14 @@ def _jmethodGetDoc(method, cls, overloads):
     Returns:
       The doc string for the method dispatch.
     """
+    jcls = _jpype.JClass(cls)
+    if not hasattr(jcls, "__javadoc__"):
+        jcls.__doc__
+    jd = getattr(jcls, "__javadoc__")
+    if jd is not None:
+        md = jd.methods[method.__name__]
+        if md is not None:
+            return str(md)
     from textwrap import TextWrapper
     out = []
     out.append("Java method dispatch '%s' for '%s'" %

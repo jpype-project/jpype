@@ -70,3 +70,4 @@ class TestJavaCommand(distutils.cmd.Command):
         cmdStr = compileJava()
         self.announce("  %s" % " ".join(cmdStr), level=distutils.log.INFO)
         subprocess.check_call(cmdStr)
+        subprocess.check_call(shlex.split("javadoc test/harness/jpype/doc/Test.java -d test/classes/"))

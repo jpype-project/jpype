@@ -35,19 +35,13 @@ class TestModule(unittest.TestCase):
     def testNoJClassPre(self):
         with self.assertRaises(RuntimeError):
             import jpype
-            del _jpype._JClassPre
+            del _jpype._jclassPre
             jpype.startJVM()
 
     def testNoJClassPost(self):
         with self.assertRaises(RuntimeError):
             import jpype
-            del _jpype._JClassPost
-            jpype.startJVM()
-
-    def testNoMethodDoc(self):
-        with self.assertRaises(RuntimeError):
-            import jpype
-            del _jpype.getMethodDoc
+            del _jpype._jclassPost
             jpype.startJVM()
 
     def testNoMethodAnnotations(self):

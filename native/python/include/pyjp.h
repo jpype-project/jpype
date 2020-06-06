@@ -141,6 +141,7 @@ extern PyObject *_JInterface;
 extern PyObject *_JException;
 extern PyObject *_JClassPre;
 extern PyObject *_JClassPost;
+extern PyObject *_JClassDoc;
 extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
