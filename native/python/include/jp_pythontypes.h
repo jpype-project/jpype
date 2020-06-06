@@ -62,6 +62,7 @@ class JPPyObject
 	/** Create a new reference to a Python object.
 	 *
 	 * @param obj is the python object.
+	 * @param i is a dummy to make sure this ctor was not called accidentally.
 	 */
 	JPPyObject(PyObject* obj, int i);
 
@@ -101,7 +102,7 @@ public:
 	 */
 	static JPPyObject call(PyObject* obj);
 
-	JPPyObject() : pyobj(NULL)
+	JPPyObject() : m_PyObject(NULL)
 	{
 	}
 
@@ -125,8 +126,8 @@ public:
 	/** Used in special case of exception handling. */
 	PyObject* keepNull()
 	{
-		PyObject *out = pyobj;
-		pyobj = NULL;
+		PyObject *out = m_PyObject;
+		m_PyObject = NULL;
 		return out;
 	}
 
@@ -135,7 +136,7 @@ public:
 	 */
 	PyObject* get()
 	{
-		return pyobj;
+		return m_PyObject;
 	}
 
 	/** Determine if this python reference is null.
@@ -144,7 +145,7 @@ public:
 	 */
 	bool isNull() const
 	{
-		return pyobj == NULL;
+		return m_PyObject == NULL;
 	}
 
 	/**
@@ -156,7 +157,7 @@ public:
 	void decref();
 
 protected:
-	PyObject* pyobj;
+	PyObject* m_PyObject;
 } ;
 
 /****************************************************************************
@@ -210,20 +211,24 @@ public:
  */
 class JPPySequence
 {
-	JPPyObject obj_;
+	JPPyObject m_Sequence;
 
 	JPPySequence(PyObject* obj)
 	{
-		obj_ = JPPyObject::use(obj);
+		m_Sequence = JPPyObject::use(obj);
 	}
 
 public:
 
+	/** Needed for named constructor.
+	 */
 	JPPySequence(const JPPySequence& seq)
-	: obj_(seq.obj_)
+	: m_Sequence(seq.m_Sequence)
 	{
 	}
 
+	/** Use an existing Python sequence in C++.
+	 */
 	static JPPySequence use(PyObject* obj)
 	{
 		return JPPySequence(obj);
@@ -258,17 +263,17 @@ public:
 
 	size_t size() const
 	{
-		return contents.size();
+		return m_Contents.size();
 	}
 
 	PyObject* operator[](ssize_t i)
 	{
-		return contents[i].get();
+		return m_Contents[i].get();
 	}
 
 	JPPyObject& getInstance()
 	{
-		return instance;
+		return m_Instance;
 	}
 
 private:
@@ -276,9 +281,9 @@ private:
 	JPPyObjectVector(const JPPyObjectVector& );
 
 private:
-	JPPyObject instance;
-	JPPyObject seq;
-	vector<JPPyObject> contents;
+	JPPyObject m_Instance;
+	JPPyObject m_Sequence;
+	vector<JPPyObject> m_Contents;
 } ;
 
 /****************************************************************************
@@ -302,9 +307,9 @@ void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject&
 class JPPyErrFrame
 {
 public:
-	JPPyObject exceptionClass;
-	JPPyObject exceptionValue;
-	JPPyObject exceptionTrace;
+	JPPyObject m_ExceptionClass;
+	JPPyObject m_ExceptionValue;
+	JPPyObject m_ExceptionTrace;
 	bool good;
 
 	JPPyErrFrame();
@@ -324,7 +329,7 @@ public:
 	/* Release the lock. */
 	~JPPyCallAcquire();
 private:
-	void* state1;
+	void* m_State;
 } ;
 
 /** Used when leaving python to an external potentially
@@ -338,8 +343,8 @@ public:
 	/** Reacquire the lock. */
 	~JPPyCallRelease();
 private:
-	void* state1;
-	void* state2;
+	void* m_State1;
+	void* m_State2;
 } ;
 
 class JPPyBuffer

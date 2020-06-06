@@ -58,7 +58,7 @@ JPPyObject JPPyObject::accept(PyObject* obj)
  * destroy.  This will steal a reference.
  *
  * Assert not null, claim reference, and decremented when done.
- * Will throw an exception in the object is null.
+ * Will throw an exception if the object is null.
  */
 JPPyObject JPPyObject::claim(PyObject* obj)
 {
@@ -85,46 +85,46 @@ JPPyObject JPPyObject::call(PyObject* obj)
 }
 
 JPPyObject::JPPyObject(PyObject* obj, int i)
-: pyobj(obj)
+: m_PyObject(obj)
 {
 }
 
 JPPyObject::JPPyObject(const JPPyObject &self)
-: pyobj(self.pyobj)
+: m_PyObject(self.m_PyObject)
 {
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
 		incref();
-		JP_TRACE_PY("pyref copy ctor(inc)", pyobj);
+		JP_TRACE_PY("pyref copy ctor(inc)", m_PyObject);
 	}
 }
 
 JPPyObject::~JPPyObject()
 {
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
-		JP_TRACE_PY("pyref dtor(dec)", pyobj);
+		JP_TRACE_PY("pyref dtor(dec)", m_PyObject);
 		decref();
 	} else
 	{
-		JP_TRACE_PY("pyref dtor(null)", pyobj);
+		JP_TRACE_PY("pyref dtor(null)", m_PyObject);
 	}
 }
 
 JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 {
-	if (pyobj == self.pyobj)
+	if (m_PyObject == self.m_PyObject)
 		return *this;
-	if (pyobj != NULL)
+	if (m_PyObject != NULL)
 	{
-		JP_TRACE_PY("pyref op=(dec)", pyobj);
+		JP_TRACE_PY("pyref op=(dec)", m_PyObject);
 		decref();
 	}
-	pyobj = self.pyobj;
-	if (pyobj != NULL)
+	m_PyObject = self.m_PyObject;
+	if (m_PyObject != NULL)
 	{
 		incref();
-		JP_TRACE_PY("pyref op=(inc)", pyobj);
+		JP_TRACE_PY("pyref op=(inc)", m_PyObject);
 	}
 	return *this;
 }
@@ -133,27 +133,27 @@ PyObject* JPPyObject::keep()
 {
 	// This can only happen if we have a fatal error in our reference
 	// management system.  It should never be triggered by the user.
-	if (pyobj == NULL)
+	if (m_PyObject == NULL)
 	{
 		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference"); // GCOVR_EXCL_LINE
 	}
-	JP_TRACE_PY("pyref keep ", pyobj);
-	PyObject *out = pyobj;
-	pyobj = NULL;
+	JP_TRACE_PY("pyref keep ", m_PyObject);
+	PyObject *out = m_PyObject;
+	m_PyObject = NULL;
 	return out;
 }
 
 void JPPyObject::incref()
 {
-	assertValid(pyobj);
-	Py_INCREF(pyobj);
+	assertValid(m_PyObject);
+	Py_INCREF(m_PyObject);
 }
 
 void JPPyObject::decref()
 {
-	assertValid(pyobj);
-	Py_DECREF(pyobj);
-	pyobj = 0;
+	assertValid(m_PyObject);
+	Py_DECREF(m_PyObject);
+	m_PyObject = 0;
 }
 
 JPPyObject JPPyObject::getNone()
@@ -321,38 +321,38 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 
 jlong JPPySequence::size()
 {
-	return PySequence_Size(obj_.get());
+	return PySequence_Size(m_Sequence.get());
 }
 
 JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject::call(PySequence_GetItem(obj_.get(), i)); // new reference
+	return JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 {
-	seq = JPPyObject::use(sequence);
-	size_t n = PySequence_Size(seq.get());
-	contents.resize(n);
+	m_Sequence = JPPyObject::use(sequence);
+	size_t n = PySequence_Size(m_Sequence.get());
+	m_Contents.resize(n);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i] = JPPyObject::call(PySequence_GetItem(seq.get(), i));
+		m_Contents[i] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 {
-	instance = JPPyObject::use(inst);
-	seq = JPPyObject::use(sequence);
+	m_Instance = JPPyObject::use(inst);
+	m_Sequence = JPPyObject::use(sequence);
 	size_t n = 0;
 	if (sequence != NULL)
-		n = PySequence_Size(seq.get());
-	contents.resize(n + 1);
+		n = PySequence_Size(m_Sequence.get());
+	m_Contents.resize(n + 1);
 	for (size_t i = 0; i < n; ++i)
 	{
-		contents[i + 1] = JPPyObject::call(PySequence_GetItem(seq.get(), i));
+		m_Contents[i + 1] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
-	contents[0] = instance;
+	m_Contents[0] = m_Instance;
 }
 
 bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace)
@@ -376,12 +376,12 @@ JPPyCallAcquire::JPPyCallAcquire()
 {
 	PyGILState_STATE* save = new PyGILState_STATE;
 	*save = PyGILState_Ensure();
-	state1 = (void*) save;
+	m_State = (void*) save;
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	PyGILState_STATE* save = (PyGILState_STATE*) state1;
+	PyGILState_STATE* save = (PyGILState_STATE*) m_State;
 	PyGILState_Release(*save);
 	delete save;
 }
@@ -391,13 +391,13 @@ JPPyCallAcquire::~JPPyCallAcquire()
 JPPyCallRelease::JPPyCallRelease()
 {
 	// Release the lock and set the thread state to NULL
-	state1 = (void*) PyEval_SaveThread();
+	m_State1 = (void*) PyEval_SaveThread();
 }
 
 JPPyCallRelease::~JPPyCallRelease()
 {
 	// Reaquire the lock
-	PyThreadState *save = (PyThreadState *) state1;
+	PyThreadState *save = (PyThreadState *) m_State1;
 	PyEval_RestoreThread(save);
 }
 
@@ -448,7 +448,7 @@ char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
 
 JPPyErrFrame::JPPyErrFrame()
 {
-	good = JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+	good = JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 }
 
 JPPyErrFrame::~JPPyErrFrame()
@@ -456,7 +456,7 @@ JPPyErrFrame::~JPPyErrFrame()
 	try
 	{
 		if (good)
-			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
+			JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 	}	catch (...)  // GCOVR_EXCL_LINE
 	{
 		// No throw is allowed in dtor.
@@ -472,12 +472,12 @@ void JPPyErrFrame::normalize()
 {
 	// Python uses lazy evaluation on exceptions thus we can't modify it until
 	// we have forced it to realize the exception.
-	if (!PyExceptionInstance_Check(exceptionValue.get()))
+	if (!PyExceptionInstance_Check(m_ExceptionValue.get()))
 	{
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, exceptionValue.get()));
-		exceptionValue = JPPyObject::call(PyObject_Call(exceptionClass.get(), args.get(), NULL));
-		PyException_SetTraceback(exceptionValue.get(), exceptionTrace.get());
-		JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
-		JPPyErr::fetch(exceptionClass, exceptionValue, exceptionTrace);
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, m_ExceptionValue.get()));
+		m_ExceptionValue = JPPyObject::call(PyObject_Call(m_ExceptionClass.get(), args.get(), NULL));
+		PyException_SetTraceback(m_ExceptionValue.get(), m_ExceptionTrace.get());
+		JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
+		JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 	}
 }

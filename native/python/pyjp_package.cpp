@@ -137,7 +137,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 				JPPyErrFrame err;
 				err.normalize();
 				err.clear();
-				JPPyObject tuple0 = JPPyObject::call(PyTuple_Pack(3, self, attr, err.exceptionValue.get()));
+				JPPyObject tuple0 = JPPyObject::call(PyTuple_Pack(3, self, attr, err.m_ExceptionValue.get()));
 				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
 				if (rc == 0)
 					return 0;
