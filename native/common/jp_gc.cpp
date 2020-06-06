@@ -200,10 +200,12 @@ void JPGarbageCollection::onEnd()
 
 void JPGarbageCollection::getStats(JPGCStats& stats)
 {
+	// GCOVR_EXCL_START
 	stats.current_rss = getWorkingSize();
 	stats.min_rss = low_water;
 	stats.max_rss = high_water;
 	stats.java_rss = last_java;
 	stats.python_rss = last_python;
 	stats.python_triggered = python_triggered;
+	// GCOVR_EXCL_STOP
 }

@@ -16,7 +16,6 @@ JPNumberType::~JPNumberType()
 {
 }
 
-
 JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object

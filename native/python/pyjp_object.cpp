@@ -190,7 +190,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) >= 0);
 	}
 	PyErr_SetString(PyExc_ValueError, "can't compare null");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
 }
 
 static Py_hash_t PyJPObject_hash(PyObject *obj)
@@ -264,7 +264,7 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	JP_FAULT_RETURN("PyJPException_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
 }
 
 static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
@@ -276,7 +276,7 @@ static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs
 
 	// Exception must be constructed with the BaseException_new
 	return ((PyTypeObject*) PyExc_BaseException)->tp_init(self, pyargs, kwargs);
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
 static PyObject* PyJPException_expandStacktrace(PyObject* self)
@@ -292,7 +292,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 	PyJPException_normalize(frame, exc, th, NULL);
 
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPException_args(PyBaseExceptionObject *self)
@@ -404,5 +404,5 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 		PyException_SetCause(exc.get(), next.get());
 		exc = next;
 	}
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

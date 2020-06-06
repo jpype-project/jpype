@@ -75,7 +75,6 @@ public:
 		return l;
 	}
 
-
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return field(v);

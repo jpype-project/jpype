@@ -148,13 +148,6 @@ public:
 	}
 
 	/**
-	 * Determine if this python reference refers to None.
-	 *
-	 * @returns true if reference to None, false otherwise.
-	 */
-	static bool isNone(PyObject* o);
-
-	/**
 	 * Get a reference to Python None.
 	 */
 	static JPPyObject getNone();

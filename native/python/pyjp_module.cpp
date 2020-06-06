@@ -119,10 +119,12 @@ static void PyJPModule_loadResources(PyObject* module)
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
 
-	}	catch (JPypeException&)
+	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		Py_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
 		JP_RAISE_PYTHON();
+		// GCOVR_EXCL_STOP
 	}
 }
 
@@ -131,6 +133,8 @@ extern "C"
 {
 #endif
 
+// GCOVR_EXCL_START
+// This is used exclusively during startup
 void Py_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
@@ -151,6 +155,7 @@ void Py_SetStringWithCause(PyObject *exception,
 	PyException_SetCause(val2, val1);
 	PyErr_Restore(exc2, val2, tb2);
 }
+// GCOVR_EXCL_STOP
 
 PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 {
@@ -503,6 +508,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 }
 
 // GCOVR_EXCL_START
+
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
 	JPContext *context = PyJPModule_getContext();
@@ -541,6 +547,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 }
 
 // GCOVR_EXCL_START
+
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -585,6 +592,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 
 // GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
+
 static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 {
 	bool old = _PyJPModule_trace;

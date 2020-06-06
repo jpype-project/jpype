@@ -45,7 +45,6 @@ public:
 
 } ;
 
-
 class JPConversionJavaValue : public JPConversion
 {
 public:

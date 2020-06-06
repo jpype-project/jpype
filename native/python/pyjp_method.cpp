@@ -71,7 +71,18 @@ static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 		JP_TRACE_PY("method get (inc)", (PyObject*) self);
 		return (PyObject*) self;
 	}
-	return PyJPMethod_create(self->m_Method, obj).keep();
+	PyJPMethod *out = (PyJPMethod*) PyJPMethod_create(self->m_Method, obj).keep();
+	if (self->m_Doc != NULL)
+	{
+		out->m_Doc = self->m_Doc;
+		Py_INCREF(out->m_Doc);
+	}
+	if (self->m_Annotations != NULL)
+	{
+		out->m_Annotations = self->m_Annotations;
+		Py_INCREF(out->m_Annotations);
+	}
+	return (PyObject*) out;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
@@ -143,7 +154,7 @@ static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *ctxt)
 		Py_RETURN_NONE;
 	Py_INCREF(self->m_Instance);
 	return self->m_Instance;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getNone(PyJPMethod *self, void *ctxt)
@@ -156,7 +167,7 @@ static PyObject *PyJPMethod_getName(PyJPMethod *self, void *ctxt)
 	JP_PY_TRY("PyJPMethod_getName");
 	PyJPModule_getContext();
 	return JPPyString::fromStringUTF8(self->m_Method->getName()).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
@@ -166,7 +177,7 @@ static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
 	return PyUnicode_FromFormat("%s.%s",
 			self->m_Method->getClass()->getCanonicalName().c_str(),
 			self->m_Method->getName().c_str());
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
@@ -208,7 +219,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		Py_XINCREF(self->m_Doc);
 		return self->m_Doc;
 	}
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
@@ -218,7 +229,7 @@ int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
 	self->m_Doc = obj;
 	Py_XINCREF(self->m_Doc);
 	return 0;
-	JP_PY_CATCH(-1);
+	JP_PY_CATCH(-1); // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
@@ -261,7 +272,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 
 	Py_XINCREF(self->m_Annotations);
 	return self->m_Annotations;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
 int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject* obj, void *ctx)

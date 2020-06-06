@@ -183,30 +183,29 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	// prepare this ...
 	jniArgs.version = USE_JNI_VERSION;
 	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
-        JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
+	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
 	jniArgs.nOptions = (jint) args.size();
-        JP_TRACE("NumOptions", jniArgs.nOptions);
+	JP_TRACE("NumOptions", jniArgs.nOptions);
 	jniArgs.options = (JavaVMOption*) malloc(sizeof (JavaVMOption) * jniArgs.nOptions);
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
-                JP_TRACE("Option", args[i]);
+		JP_TRACE("Option", args[i]);
 		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
 
 	// Launch the JVM
 	JNIEnv* env = NULL;
 	JP_TRACE("Create JVM");
-        try
-        {
-	        CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
-        }
-        catch (...)
-        {
-                JP_TRACE("Exception in CreateJVM?");
-        }
-        JP_TRACE("JVM created");
+	try
+	{
+		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
+	} catch (...)
+	{
+		JP_TRACE("Exception in CreateJVM?");
+	}
+	JP_TRACE("JVM created");
 	free(jniArgs.options);
 
 	if (m_JavaVM == NULL)

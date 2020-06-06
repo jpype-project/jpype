@@ -135,7 +135,7 @@ PyObject* JPPyObject::keep()
 	// management system.  It should never be triggered by the user.
 	if (pyobj == NULL)
 	{
-		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference");
+		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference"); // GCOVR_EXCL_LINE
 	}
 	JP_TRACE_PY("pyref keep ", pyobj);
 	PyObject *out = pyobj;
@@ -156,16 +156,10 @@ void JPPyObject::decref()
 	pyobj = 0;
 }
 
-bool JPPyObject::isNone(PyObject* pyobj)
-{
-	return pyobj == Py_None;
-}
-
 JPPyObject JPPyObject::getNone()
 {
 	return JPPyObject::use(Py_None);
 }
-
 
 /****************************************************************************
  * String
@@ -202,7 +196,7 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
 	return false;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 jchar JPPyString::asCharUTF16(PyObject* pyobj)
@@ -314,9 +308,11 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		JP_PY_CHECK();
 		return string(buffer, size);
 	}
+	// GCOVR_EXCL_START
 	JP_RAISE(PyExc_RuntimeError, "Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
+	// GCOVR_EXCL_STOP
 }
 
 /****************************************************************************
@@ -461,7 +457,7 @@ JPPyErrFrame::~JPPyErrFrame()
 	{
 		if (good)
 			JPPyErr::restore(exceptionClass, exceptionValue, exceptionTrace);
-	}	catch (...)
+	}	catch (...)  // GCOVR_EXCL_LINE
 	{
 		// No throw is allowed in dtor.
 	}
