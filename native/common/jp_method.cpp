@@ -161,7 +161,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	{
 		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
-		JP_TRACE("Compare", i, j, type->getCanonicalName(), Py_TYPE(args[j].get())->tp_name);
+		JP_TRACE("Compare", i, j, type->getCanonicalName(), Py_TYPE(arg[j].get())->tp_name);
 		JPMatch::Type ematch = type->findJavaConversion(methodMatch.argument[j]);
 		JP_TRACE("Result", ematch);
 		if (ematch < methodMatch.type)
