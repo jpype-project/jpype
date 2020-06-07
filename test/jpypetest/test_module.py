@@ -1,9 +1,11 @@
 # Tests for module functionality including failures that cannot
 # be triggered in normal operations
 import _jpype
+import jpype
 import unittest
 import subrun
 import common
+import unittest.mock as mock
 
 
 @subrun.TestCase(individual=True)
@@ -83,3 +85,26 @@ class ModuleTestCase(common.JPypeTestCase):
         self.assertTrue(_jpype._hasClass("java.lang.String"))
         with self.assertRaises(TypeError):
             _jpype._hasClass(object())
+
+
+class JInitTestCase(common.JPypeTestCase):
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def testJInit(self):
+        with mock.patch("_jpype.isStarted") as started:
+            started.return_value = False
+            self.assertEqual(len(jpype._jinit.JInitializers), 0)
+            A = []
+
+            def func():
+                A.append(1)
+            jpype.registerJVMInitializer(func)
+            self.assertEqual(len(A), 0)
+            self.assertEqual(jpype._jinit.JInitializers[0], func)
+            started.return_value = True
+            jpype.registerJVMInitializer(func)
+            self.assertEqual(len(A), 1)
+            jpype._jinit.runJVMInitializers()
+            self.assertEqual(len(A), 2)

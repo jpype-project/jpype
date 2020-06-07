@@ -254,6 +254,12 @@ class CollectionMapCase(common.JPypeTestCase):
         self.assertTrue("fred" in hm)
         self.assertFalse("sally" in hm)
 
+    def testMapNoConversion(self):
+        hm = JClass("java.util.HashMap")()
+        self.assertFalse(object() in hm)
+        with self.assertRaises(KeyError):
+            hm[object()]
+
 
 class CollectionEnumerationCase(common.JPypeTestCase):
 

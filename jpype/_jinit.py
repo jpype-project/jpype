@@ -33,3 +33,4 @@ def registerJVMInitializer(func):
 def runJVMInitializers():
     for func in JInitializers:
         func()
+    JInitializers.clear()

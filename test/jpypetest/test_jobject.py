@@ -287,3 +287,8 @@ class JClassTestCase(common.JPypeTestCase):
         self.assertIsInstance(repr(jvn), str)
         self.assertEqual(repr(jv), "<java object 'java.lang.Object'>")
         self.assertEqual(repr(jvn), "<java object 'java.lang.Object'>")
+
+    def testDeprecated(self):
+        # this one should issue a warning
+        jo = JClass("java.lang.Object")
+        self.assertIsInstance(JObject(None, object), jo)

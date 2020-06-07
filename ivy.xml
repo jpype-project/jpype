@@ -1,0 +1,17 @@
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra" xmlns:m="http://ant.apache.org/ivy/maven">
+    <info organisation="org.jpype" module="jpype"/>
+
+   <configurations defaultconf="deps">
+       <conf name="deps" description="binary jars"/>
+   </configurations>
+   
+   <!-- https://www.baeldung.com/java-in-memory-databases -->
+   <dependencies>
+       <dependency org="org.jacoco" name="org.jacoco.cli" rev="0.8.5" conf="deps->default">
+           <artifact name="org.jacoco.cli" type="jar" m:classifier="nodeps"/>
+       </dependency>
+       <dependency org="org.jacoco" name="org.jacoco.agent" rev="0.8.5" conf="deps->default">
+           <artifact name="org.jacoco.agent" type="jar" m:classifier="runtime"/>
+       </dependency>
+   </dependencies>
+</ivy-module>

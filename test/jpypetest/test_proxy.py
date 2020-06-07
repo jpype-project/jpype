@@ -76,6 +76,12 @@ class ProxyTestCase(common.JPypeTestCase):
         proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
         proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
 
+    def testNotImplemented(self):
+        itf1 = self.package.TestInterface1
+        proxy = JObject(JProxy(itf1, dict={}), itf1)
+        with self.assertRaises(JClass("java.lang.NoSuchMethodError")):
+            proxy.testMethod1()
+
     def testProxyRoundTrip(self):
 
         @JImplements(java.lang.Runnable)
