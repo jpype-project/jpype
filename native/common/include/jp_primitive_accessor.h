@@ -171,13 +171,13 @@ public:
 		{
 			jlong val = (jlong) PyLong_AsUnsignedLongLongMask(match.object);
 			if (val == -1)
-				JP_PY_CHECK();
+				JP_PY_CHECK();  // GCOVR_EXCL_LINE
 			base_t::field(res) = (typename base_t::type_t) val;
 		} else
 		{
 			jlong val = (jlong) PyLong_AsLongLong(match.object);
 			if (val == -1)
-				JP_PY_CHECK();
+				JP_PY_CHECK();  // GCOVR_EXCL_LINE
 			base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);
 		}
 		return res;
@@ -200,13 +200,13 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}
 
 	virtual jvalue convert(JPMatch &match) override
 	{
-		JPPyObject obj = JPPyObject(JPPyRef::_call, PyNumber_Long(match.object));
+		JPPyObject obj = JPPyObject::call(PyNumber_Long(match.object));
 		match.object = obj.get();
 		return JPConversionLong<base_t>::convert(match);
 	}
@@ -217,17 +217,15 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 
-	// GCOV_EXCL_START
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override // GCOVR_EXCL_LINE
 	{
 		return JPMatch::_none; // Not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override // GCOVR_EXCL_LINE
 	{
 		// Not used
 	}
-	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{
@@ -257,7 +255,7 @@ public:
 		jvalue res;
 		double val = PyFloat_AsDouble(match.object);
 		if (val == -1.0)
-			JP_PY_CHECK();
+			JP_PY_CHECK();  // GCOVR_EXCL_LINE
 		base_t::field(res) = (typename base_t::type_t) val;
 		return res;
 	}
@@ -286,7 +284,7 @@ public:
 		jvalue res;
 		jdouble v = PyLong_AsDouble(match.object);
 		if (v == -1.0)
-			JP_PY_CHECK();
+			JP_PY_CHECK();  // GCOVR_EXCL_LINE
 		base_t::field(res) = (typename base_t::type_t) v;
 		return res;
 	}
@@ -298,6 +296,7 @@ class JPConversionFloatWiden : public JPConversion
 public:
 
 	// GCOVR_EXCL_START
+
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none;  // not used

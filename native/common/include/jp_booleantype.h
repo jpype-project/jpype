@@ -70,6 +70,7 @@ public:
 	// GCOVR_EXCL_START
 	// These methods are required by primitive but are not used for a non
 	// number type
+
 	virtual jlong getAsLong(jvalue v) override
 	{
 		return field(v);

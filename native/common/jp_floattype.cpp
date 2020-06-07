@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
 
@@ -31,7 +32,7 @@ JPFloatType::~JPFloatType()
 JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	PyTypeObject * wrapper = getHost();
-	JPPyObject obj = JPPyObject(JPPyRef::_call, wrapper->tp_alloc(wrapper, 0));
+	JPPyObject obj = JPPyObject::call(wrapper->tp_alloc(wrapper, 0));
 	((PyFloatObject*) obj.get())->ob_fval = value.f;
 	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(this, value));
 	return obj;
@@ -40,7 +41,7 @@ JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = (type_t) frame.floatValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -122,7 +123,7 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 
 void JPFloatType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJFloatConversion.getInfo(this, info);
 	asFloatLongConversion.getInfo(this, info);
 	asFloatConversion.getInfo(this, info);
@@ -232,7 +233,7 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 	}
 
 	// Use sequence API
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
@@ -266,7 +267,7 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 
 void JPFloatType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetFloatArrayElements(
 			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "f";
@@ -277,7 +278,7 @@ void JPFloatType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

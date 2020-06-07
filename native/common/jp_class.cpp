@@ -50,6 +50,16 @@ JPClass::~JPClass()
 {
 }
 
+void JPClass::setHost(PyObject* host)
+{
+	m_Host = JPPyObject::use(host);
+}
+
+void JPClass::setHints(PyObject* host)
+{
+	m_Hints = JPPyObject::use(host);
+}
+
 jclass JPClass::getJavaClass() const
 {
 	jclass cls = m_Class.get();
@@ -80,8 +90,24 @@ void JPClass::assignMembers(JPMethodDispatch* ctor,
 JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	if (m_Constructors == NULL)
-		JP_RAISE(PyExc_TypeError, "Cannot create Interface instances");
+	{
+		if (this->isInterface())
+		{
+			JP_RAISE(PyExc_TypeError, "Cannot create Java interface instances");
+		} else
+		{
+			JP_RAISE(PyExc_TypeError, "Java class has no constructors");
+		}
+	}
 	return m_Constructors->invokeConstructor(frame, args);
+}
+
+JPContext* JPClass::getContext() const
+{
+	// This sanity check is for during shutdown.
+	if (m_Context == 0)
+		JP_RAISE(PyExc_RuntimeError, "Null context"); // GCOVR_EXCL_LINE
+	return m_Context;
 }
 
 JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
@@ -115,7 +141,7 @@ string JPClass::toString() const
 	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(m_Class.get());
 }
 // GCOVR_EXCL_STOP
@@ -125,7 +151,7 @@ string JPClass::getName() const
 	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(frame.CallObjectMethodA(
 			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
 }
@@ -240,7 +266,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 
 	// Verify before we start the conversion, as we wont be able
 	// to abort once we start
-	JPPySequence seq(JPPyRef::_use, vals);
+	JPPySequence seq = JPPySequence::use(vals);
 	JP_TRACE("Verify argument types");
 	for (int i = 0; i < length; i++)
 	{
@@ -338,36 +364,34 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 
 	if (isThrowable())
 	{
-		JPPyTuple tuple1 = JPPyTuple::newTuple(2);
-		tuple1.setItem(0, _JObjectKey);
+		JPPyObject tuple0;
 		if (value.l == NULL)
 		{
-			JPPyTuple tuple0 = JPPyTuple::newTuple(0);
-			tuple1.setItem(1, tuple0.get());
+			tuple0 = JPPyObject::call(PyTuple_New(0));
 		} else
 		{
-			JPPyTuple tuple0 = JPPyTuple::newTuple(1);
 			jstring m = frame.getMessage((jthrowable) value.l);
 			if (m != NULL)
 			{
-				tuple0.setItem(0, JPPyString::fromStringUTF8(
-						frame.toStringUTF8(m)).get());
+				tuple0 = JPPyObject::call(PyTuple_Pack(1,
+						JPPyString::fromStringUTF8(frame.toStringUTF8(m)).get()));
 			} else
 			{
-				tuple0.setItem(0, JPPyString::fromStringUTF8(
-						frame.toString(value.l)).get());
+				tuple0 = JPPyObject::call(PyTuple_Pack(1,
+						JPPyString::fromStringUTF8(frame.toString(value.l)).get()));
 			}
-			tuple1.setItem(1, tuple0.get());
 		}
+		JPPyObject tuple1 = JPPyObject::call(PyTuple_Pack(2,
+				_JObjectKey, tuple0.get()));
 		// Exceptions need new and init
-		obj = JPPyObject(JPPyRef::_call, PyObject_Call(wrapper.get(), tuple1.get(), NULL));
+		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
 		// Simple objects don't have a new or init function
 		PyObject *obj2 = type->tp_alloc(type, 0);
 		JP_PY_CHECK();
-		obj = JPPyObject(JPPyRef::_claim, obj2);
+		obj = JPPyObject::claim(obj2);
 	}
 
 	// Fill in the Java slot
@@ -391,7 +415,7 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 
 void JPClass::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());

@@ -32,8 +32,8 @@ public:
 	virtual~ JPArrayClass();
 
 	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
-	virtual JPMatch::Type findJavaConversion(JPMatch &match);
-	virtual void getConversionInfo(JPConversionInfo &info);
+	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
+	virtual void getConversionInfo(JPConversionInfo &info) override;
 
 	JPValue newInstance(JPJavaFrame& frame, int length);
 
@@ -63,6 +63,5 @@ public:
 private:
 	JPClass* m_ComponentType;
 } ;
-
 
 #endif // _JPARRAYCLASS_H_

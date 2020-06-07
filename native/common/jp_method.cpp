@@ -161,7 +161,6 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	{
 		size_t j = i + methodMatch.offset;
 		JPClass *type = m_ParameterTypes[i];
-		JP_TRACE("Compare", i, j, type->getCanonicalName(), JPPyObject::getTypeName(arg[j]));
 		JPMatch::Type ematch = type->findJavaConversion(methodMatch.argument[j]);
 		JP_TRACE("Result", ematch);
 		if (ematch < methodMatch.type)
@@ -257,7 +256,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	JP_TRACE_IN("JPMethod::invokeCallerSensitive");
 	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame(context, (int) (8 + alen));
+	JPJavaFrame frame = JPJavaFrame::outer(context, (int) (8 + alen));
 	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
@@ -340,7 +339,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 {
 	ensureTypeCache();
 	JPContext *context = m_Class->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";

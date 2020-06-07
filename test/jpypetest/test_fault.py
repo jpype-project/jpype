@@ -284,9 +284,6 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPMonitor_str")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(jm)
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            str(jm)
 
     @common.requireInstrumentation
     def testJPMonitor_enter(self):
@@ -381,7 +378,7 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaises(SystemError):
             JObject(f(), "java.util.function.DoubleUnaryOperator")
         jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             jo.applyAsDouble(2)
 
     def testJPProxy_void(self):
@@ -421,7 +418,7 @@ class FaultTestCase(common.JPypeTestCase):
         q = "ABC"
         self.assertIsInstance(jo.get(), java.lang.String)
         q = object()
-        with self.assertRaises(jpype.JException):
+        with self.assertRaises(TypeError):
             jo.get()
 
     @common.requireInstrumentation

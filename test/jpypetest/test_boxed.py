@@ -169,8 +169,27 @@ class BoxedTestCase(common.JPypeTestCase):
         java.lang.Double(JDouble(0))
 
     def testBooleanBad(self):
+        # java.lang.Boolean(X) works like bool(X)
+        # Explicit is a cast
+        self.assertFalse(java.lang.Boolean(tuple()))
+        self.assertFalse(java.lang.Boolean(list()))
+        self.assertFalse(java.lang.Boolean(dict()))
+        self.assertFalse(java.lang.Boolean(set()))
+        self.assertTrue(java.lang.Boolean(tuple(['a'])))
+        self.assertTrue(java.lang.Boolean(['a']))
+        self.assertTrue(java.lang.Boolean({'a': 1}))
+        self.assertTrue(java.lang.Boolean(set(['a', 'b'])))
+
+        # Implicit does not automatically cast
+        fixture = JClass('jpype.common.Fixture')()
         with self.assertRaises(TypeError):
-            java.lang.Boolean(tuple())
+            fixture.callBoxedBoolean(tuple())
+        with self.assertRaises(TypeError):
+            fixture.callBoxedBoolean(list())
+        with self.assertRaises(TypeError):
+            fixture.callBoxedBoolean(dict())
+        with self.assertRaises(TypeError):
+            fixture.callBoxedBoolean(set())
 
     def testByteBad(self):
         with self.assertRaises(TypeError):

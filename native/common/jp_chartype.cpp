@@ -1,5 +1,5 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
+   Copyright 2004-2008 Steve MÃ©nard
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
 
@@ -28,22 +29,36 @@ JPCharType::~JPCharType()
 {
 }
 
+JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
+{
+	// This is only callable from one location so error checking is minimal
+	if (args.size() != 1 || !PyIndex_Check(args[0]))
+		JP_RAISE(PyExc_TypeError, "bad args");
+	jvalue jv;
+
+	// This is a cast so we must not fail
+	int overflow;
+	jv.c = PyLong_AsLongAndOverflow(args[0], &overflow);
+	return JPValue(this, jv);
+}
+
 JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	if (!cast)
-	{
-		return JPPyString::fromCharUTF16(val.c);
-	}
-	JPPyObject tmp = JPPyObject(JPPyRef::_call, PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject(JPPyRef::_call, convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	if (!cast)
+	//	{
+	JPPyObject out = JPPyObject::call(PyJPChar_Create((PyTypeObject*) _JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
+	//	}
+	//	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
+	//	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
+	//	return out;
 }
 
 JPValue JPCharType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.charValue(obj.getValue().l);
 	return JPValue(this, v);
@@ -124,7 +139,7 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 
 void JPCharType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
 	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
@@ -200,7 +215,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
@@ -233,7 +248,7 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 
 void JPCharType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetCharArrayElements(
 			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "H";
@@ -244,7 +259,7 @@ void JPCharType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

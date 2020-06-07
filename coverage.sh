@@ -16,4 +16,5 @@ java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage
 	--classfiles build/classes/ \
 	--html build/coverage/java \
 	--sourcefiles native/java
+mkdir build/coverage/cpp
 gcovr -r . --html-details -o build/coverage/cpp/jpype.html --exclude-unreachable-branches --exclude-throw-branches

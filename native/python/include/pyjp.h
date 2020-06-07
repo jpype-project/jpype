@@ -41,6 +41,10 @@ class JPStackInfo;
 #define JP_PY_CATCH_NONE(...)  } catch(...) {} return __VA_ARGS__
 #endif
 
+// Macro to all after executing a Python command that can result in
+// a failure to convert it to an exception.
+#define JP_PY_CHECK() { if (PyErr_Occurred() != 0) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -84,13 +88,6 @@ struct PyJPArray
 	JPArrayView *m_View;
 } ;
 
-struct PyJPBuffer
-{
-	PyObject_HEAD
-	JPBuffer *m_Buffer;
-} ;
-
-
 struct PyJPClassHints
 {
 	PyObject_HEAD
@@ -128,17 +125,20 @@ extern PyTypeObject *PyJPProxy_Type;
 extern PyTypeObject *PyJPException_Type;
 extern PyTypeObject *PyJPNumberLong_Type;
 extern PyTypeObject *PyJPNumberFloat_Type;
-extern PyTypeObject *PyJPNumberChar_Type;
 extern PyTypeObject *PyJPNumberBool_Type;
+extern PyTypeObject *PyJPChar_Type;
+
 
 // JPype resources
 extern PyObject *PyJPModule;
 extern PyObject *_JArray;
+extern PyObject *_JChar;
 extern PyObject *_JObject;
 extern PyObject *_JInterface;
 extern PyObject *_JException;
 extern PyObject *_JClassPre;
 extern PyObject *_JClassPost;
+extern PyObject *_JClassDoc;
 extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
@@ -165,6 +165,8 @@ JPValue   *PyJPValue_getJavaSlot(PyObject* obj);
 PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
 int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
+void       PyJPClass_hook(JPJavaFrame &frame, JPClass* cls);
+PyObject  *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
 
 #ifdef __cplusplus
 }
@@ -187,6 +189,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 void       PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing);
 
 #define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
+
 /**
  * Use this when getting the context where the context must be running.
  *

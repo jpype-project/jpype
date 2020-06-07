@@ -37,7 +37,7 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 	try
 	{
 		JPContext *context = (JPContext*) contextPtr;
-		JPJavaFrame frame((JPContext*) context, env);
+		JPJavaFrame frame = JPJavaFrame::external((JPContext*) context, env);
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
 		{
@@ -108,7 +108,7 @@ void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 {
 	JP_TRACE_IN("JPReferenceQueue::registerRef");
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 
 	// create the ref ...
 	jvalue args[3];

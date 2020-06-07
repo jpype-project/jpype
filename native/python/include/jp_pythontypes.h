@@ -34,67 +34,6 @@ struct _object;
 typedef _object PyObject;
 #endif
 
-/** Python has a lot of difference cases for how it returns an object.
- * - It can give a new object or set an error.
- * - It can return NULL indicating there is no object.
- * - It can give a borrowed object or NULL if it doesn't exist.
- * - Or we can just have an existing object we want to use.
- *
- * With all these different methods, we need to have a policy that
- * state how we want this object reference to be treated.  Each
- * policy will produce different actions on the creation of
- * a reference wrapper.
- */
-namespace JPPyRef
-{
-
-enum Type
-{
-	/**
-	 * This policy is used if we need to hold a reference to an existing
-	 * object for some duration.  The object may be null.
-	 *
-	 * Increment reference count if not null, and decrement when done.
-	 */
-	_use = 0,
-
-	/**
-	 * This policy is used when we are given a borrowed reference and we
-	 * need to check for errors.
-	 *
-	 * Check for errors, increment reference count, and decrement when done.
-	 * Will throw an exception an error occurs.
-	 */
-	_borrowed = 1,
-
-	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
-	 *
-	 * claim reference, and decremented when done. Clears errors if NULL.
-	 */
-	_accept = 2,
-
-	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
-	 *
-	 * Assert not null, claim reference, and decremented when done.
-	 * Will throw an exception in the object is null.
-	 */
-	_claim = 6,
-
-	/**
-	 * This policy is used when we are capturing an object returned from a python
-	 * call that we are responsible for.  This will steal a reference.
-	 *
-	 * Check for errors, assert not null, then claim.
-	 * Will throw an exception an error occurs.
-	 */
-	_call = 7
-} ;
-}
-
 /** Reference to a Python object.
  *
  * This creates a reference on creation and deletes it on destruction.
@@ -106,21 +45,66 @@ enum Type
  * object like a container, or a wrapper which will control the lifespan
  * of the object.
  *
+ * Python has a lot of difference cases for how it returns an object.
+ * - It can give a new object or set an error.
+ * - It can return NULL indicating there is no object.
+ * - It can give a borrowed object or NULL if it doesn't exist.
+ * - Or we can just have an existing object we want to use.
+ *
+ * With all these different methods, we need to have a policy that
+ * state how we want this object reference to be treated.  Each
+ * policy will produce different actions on the creation of
+ * a reference wrapper.
+ *
  */
 class JPPyObject
 {
-public:
-
-	JPPyObject() : pyobj(NULL)
-	{
-	}
-
 	/** Create a new reference to a Python object.
 	 *
-	 * @param usage control how this object is to be handled, see JPPyRef.
 	 * @param obj is the python object.
+	 * @param i is a dummy to make sure this ctor was not called accidentally.
 	 */
-	JPPyObject(JPPyRef::Type usage, PyObject* obj);
+	JPPyObject(PyObject* obj, int i);
+
+public:
+
+	/**
+	 * This policy is used if we need to hold a reference to an existing
+	 * object for some duration.  The object may be null.
+	 *
+	 * Increment reference count if not null, and decrement when done.
+	 */
+	static JPPyObject use(PyObject* obj);
+
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * claim reference, and decremented when done. Clears errors if NULL.
+	 */
+	static JPPyObject accept(PyObject* obj);
+
+	/**
+	 * This policy is used when we are given a new reference that we must
+	 * destroy.  This will steal a reference.
+	 *
+	 * Assert not null, claim reference, and decremented when done.
+	 * Will throw an exception in the object is null.
+	 */
+	static JPPyObject claim(PyObject* obj);
+
+	/**
+	 * This policy is used when we are capturing an object returned from a python
+	 * call that we are responsible for.  This will steal a reference.
+	 *
+	 * Check for errors, assert not null, then claim.
+	 * Will throw an exception an error occurs.
+	 */
+	static JPPyObject call(PyObject* obj);
+
+	JPPyObject() : m_PyObject(NULL)
+	{
+	}
 
 	JPPyObject(const JPPyObject &self);
 
@@ -142,8 +126,8 @@ public:
 	/** Used in special case of exception handling. */
 	PyObject* keepNull()
 	{
-		PyObject *out = pyobj;
-		pyobj = NULL;
+		PyObject *out = m_PyObject;
+		m_PyObject = NULL;
 		return out;
 	}
 
@@ -152,12 +136,8 @@ public:
 	 */
 	PyObject* get()
 	{
-		return pyobj;
+		return m_PyObject;
 	}
-
-	JPPyObject getAttrString(const char* k);
-
-	static const char* getTypeName(PyObject* obj);
 
 	/** Determine if this python reference is null.
 	 *
@@ -165,19 +145,11 @@ public:
 	 */
 	bool isNull() const
 	{
-		return pyobj == NULL;
+		return m_PyObject == NULL;
 	}
 
-	/** Determine if this python reference refers to
-	 * None.
-	 *
-	 * @returns true if reference to None, false otherwise.
-	 */
-	static bool isNone(PyObject* o);
-
-	static bool isSequenceOfItems(PyObject* obj);
-
-	/** Get a reference to Python None.
+	/**
+	 * Get a reference to Python None.
 	 */
 	static JPPyObject getNone();
 
@@ -185,19 +157,8 @@ public:
 	void decref();
 
 protected:
-	PyObject* pyobj;
+	PyObject* m_PyObject;
 } ;
-
-/****************************************************************************
- * Number types
- ***************************************************************************/
-
-/** Wrapper for a Python long object.
- */
-namespace JPPyLong
-{
-jlong asLong(PyObject* obj);
-}
 
 /****************************************************************************
  * String
@@ -243,61 +204,43 @@ public:
  * Container types
  ***************************************************************************/
 
-/** Wrapper for a Python tuple object. */
-class JPPyTuple : public JPPyObject
-{
-public:
-
-	JPPyTuple(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
-	{
-	}
-
-	JPPyTuple(const JPPyTuple &self) : JPPyObject(self)
-	{
-	}
-
-	JPPyTuple& operator = (const JPPyTuple &self)
-	{
-		JPPyObject::operator=(self);
-		return *this;
-	}
-
-	/** Create a new tuple holding a fixed number of items.
-	 *
-	 * Every item must be set before the tuple is used or we are heading
-	 * for a segfault.  Tuples are not mutable so items can only be set
-	 * during creation.
-	 */
-	static JPPyTuple newTuple(jlong sz);
-
-	/** Set an item in the tuple.
-	 *
-	 * This does not steal a reference to the object.
-	 */
-	void setItem(jlong ndx, PyObject* val);
-
-} ;
-
 /** Wrapper for a Python sequence.
  *
  * In most cases, we will not use this directly, but rather convert to
  * a JPPyObjectVector for easy access.
  */
-class JPPySequence : public JPPyObject
+class JPPySequence
 {
+	JPPyObject m_Sequence;
+
+	JPPySequence(PyObject* obj)
+	{
+		m_Sequence = JPPyObject::use(obj);
+	}
+
 public:
 
-	JPPySequence(JPPyRef::Type usage, PyObject* obj) : JPPyObject(usage, obj)
+	/** Needed for named constructor.
+	 */
+	JPPySequence(const JPPySequence& seq)
+	: m_Sequence(seq.m_Sequence)
 	{
 	}
 
-	JPPySequence(const JPPyObject &self) : JPPyObject(self)
+	/** Use an existing Python sequence in C++.
+	 */
+	static JPPySequence use(PyObject* obj)
 	{
+		return JPPySequence(obj);
 	}
 
 	JPPyObject operator[](jlong i);
 
 	jlong size();
+
+private:
+	JPPySequence& operator= (const JPPySequence& ) ;
+
 } ;
 
 /** For purposes of efficiency, we should only convert a sequence once per
@@ -320,17 +263,17 @@ public:
 
 	size_t size() const
 	{
-		return contents.size();
+		return m_Contents.size();
 	}
 
 	PyObject* operator[](ssize_t i)
 	{
-		return contents[i].get();
+		return m_Contents[i].get();
 	}
 
 	JPPyObject& getInstance()
 	{
-		return instance;
+		return m_Instance;
 	}
 
 private:
@@ -338,26 +281,10 @@ private:
 	JPPyObjectVector(const JPPyObjectVector& );
 
 private:
-	JPPyObject instance;
-	JPPySequence seq;
-	vector<JPPyObject> contents;
+	JPPyObject m_Instance;
+	JPPyObject m_Sequence;
+	vector<JPPyObject> m_Contents;
 } ;
-
-/** Wrapper for a Python dict.
- *
- * Currently this is not used in this project.  It is being retained
- * so that we can support kwargs at some point in the future.
- */
-class JPPyDict : public JPPyObject
-{
-public:
-
-	JPPyDict(const JPPyObject &self) : JPPyObject(self)
-	{
-	}
-
-} ;
-
 
 /****************************************************************************
  * Error handling
@@ -372,12 +299,6 @@ public:
  */
 namespace JPPyErr
 {
-/** Check if there is a pending Python exception.
- *
- * @return true if pending, false otherwise.
- */
-bool occurred();
-
 bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 }
@@ -386,9 +307,9 @@ void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject&
 class JPPyErrFrame
 {
 public:
-	JPPyObject exceptionClass;
-	JPPyObject exceptionValue;
-	JPPyObject exceptionTrace;
+	JPPyObject m_ExceptionClass;
+	JPPyObject m_ExceptionValue;
+	JPPyObject m_ExceptionTrace;
 	bool good;
 
 	JPPyErrFrame();
@@ -408,7 +329,7 @@ public:
 	/* Release the lock. */
 	~JPPyCallAcquire();
 private:
-	void* state1;
+	void* m_State;
 } ;
 
 /** Used when leaving python to an external potentially
@@ -422,8 +343,8 @@ public:
 	/** Reacquire the lock. */
 	~JPPyCallRelease();
 private:
-	void* state1;
-	void* state2;
+	void* m_State1;
+	void* m_State2;
 } ;
 
 class JPPyBuffer

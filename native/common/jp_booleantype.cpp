@@ -16,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_booleantype.h"
 
@@ -30,13 +31,13 @@ JPBooleanType::~JPBooleanType()
 
 JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	return JPPyObject(JPPyRef::_call, PyBool_FromLong(val.z));
+	return JPPyObject::call(PyBool_FromLong(val.z));
 }
 
 JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 {
 	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	field(v) = frame.booleanValue(obj.getValue().l) != 0;
 	return JPValue(this, v);
@@ -115,7 +116,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
 		PyList_Append(info.expl, proto.get());
 	}
 
@@ -136,7 +137,7 @@ public:
 	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}
 
@@ -161,7 +162,7 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 
 void JPBooleanType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asBooleanExact.getInfo(this, info);
 	asBooleanJBool.getInfo(this, info);
 	asBooleanLong.getInfo(this, info);
@@ -272,7 +273,7 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
 	}
 
 	// Use sequence API
-	JPPySequence seq(JPPyRef::_use, sequence);
+	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
 	for (Py_ssize_t i = 0; i < length; ++i, index += step)
 	{
@@ -306,7 +307,7 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 
 void JPBooleanType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetBooleanArrayElements(
 			(jbooleanArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "?";
@@ -317,7 +318,7 @@ void JPBooleanType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
 				(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

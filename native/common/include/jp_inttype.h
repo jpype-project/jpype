@@ -68,9 +68,9 @@ public:
 		return 'I';
 	}
 
-	virtual jlong getAsLong(jvalue v) override
+	virtual jlong getAsLong(jvalue v) override  // GCOVR_EXCL_LINE
 	{
-		return field(v);
+		return field(v);  // GCOVR_EXCL_LINE
 	}
 
 	virtual jdouble getAsDouble(jvalue v) override

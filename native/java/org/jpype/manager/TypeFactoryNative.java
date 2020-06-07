@@ -29,6 +29,8 @@ public class TypeFactoryNative implements TypeFactory
 {
   public long context;
 
+  public native void newWrapper(long context, long cls);
+
   @Override
   public native long defineArrayClass(
           long context,

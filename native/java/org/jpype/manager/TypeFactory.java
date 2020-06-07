@@ -33,6 +33,15 @@ import java.lang.reflect.Field;
 public interface TypeFactory
 {
 //<editor-fold desc="class" defaultstate="collapsed">
+
+  /**
+   * Create a new wrapper type for Python.
+   *
+   * @param context
+   * @param cls is the pointer to the JClass.
+   */
+  void newWrapper(long context, long cls);
+
   /**
    * Create a JPArray class.
    *

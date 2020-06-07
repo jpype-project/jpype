@@ -45,7 +45,6 @@
           <itemPath>../../native/common/include/jp_stringtype.h</itemPath>
           <itemPath>../../native/common/include/jp_tracer.h</itemPath>
           <itemPath>../../native/common/include/jp_typemanager.h</itemPath>
-          <itemPath>../../native/common/include/jp_typename.h</itemPath>
           <itemPath>../../native/common/include/jp_value.h</itemPath>
           <itemPath>../../native/common/include/jp_voidtype.h</itemPath>
           <itemPath>../../native/common/include/jpype.h</itemPath>
@@ -111,6 +110,7 @@
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
         <itemPath>../../native/python/pyjp_array.cpp</itemPath>
         <itemPath>../../native/python/pyjp_buffer.cpp</itemPath>
+        <itemPath>../../native/python/pyjp_char.cpp</itemPath>
         <itemPath>../../native/python/pyjp_class.cpp</itemPath>
         <itemPath>../../native/python/pyjp_classhints.cpp</itemPath>
         <itemPath>../../native/python/pyjp_field.cpp</itemPath>
@@ -133,7 +133,6 @@
                    displayName="Important Files"
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
-      <itemPath>Makefile.linux</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -366,11 +365,6 @@
             tool="3"
             flavor2="0">
       </item>
-      <item path="../../native/common/include/jp_typename.h"
-            ex="false"
-            tool="3"
-            flavor2="0">
-      </item>
       <item path="../../native/common/include/jp_value.h"
             ex="false"
             tool="3"
@@ -565,6 +559,8 @@
             ex="false"
             tool="1"
             flavor2="0">
+      </item>
+      <item path="../../native/python/pyjp_char.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="../../native/python/pyjp_class.cpp" ex="false" tool="1" flavor2="0">
       </item>

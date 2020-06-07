@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 2)
 	{
-		printf("Usage:  %s %JAVA_HOME%/bin/server/jvm.dll [JVM_ARGS]", argv[0]);
+		printf("Usage:  %s %%JAVA_HOME%%/bin/server/jvm.dll [JVM_ARGS]", argv[0]);
 		exit(-1);
 	}
 

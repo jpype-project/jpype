@@ -1,6 +1,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_functional.h"
+#include "jp_proxy.h"
 
 JPFunctional::JPFunctional(JPJavaFrame& frame, jclass clss,
 		const string& name,
@@ -32,7 +33,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "Callable"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
 		PyList_Append(info.implicit, proto.get());
 	}
 
@@ -41,7 +42,7 @@ public:
 		JPFunctional *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
 		JPContext *context = PyJPModule_getContext();
-		JPJavaFrame frame(context);
+		JPJavaFrame frame = JPJavaFrame::inner(context);
 		PyJPProxy *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;
@@ -54,7 +55,7 @@ public:
 		v.l = frame.keep(v.l);
 		Py_DECREF(self);
 		return v;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 } functional_conversion;
 
@@ -67,7 +68,7 @@ JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 	if (functional_conversion.matches(this, match))
 		return match.type;
 	return match.type = JPMatch::_none;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 void JPFunctional::getConversionInfo(JPConversionInfo &info)
@@ -75,5 +76,5 @@ void JPFunctional::getConversionInfo(JPConversionInfo &info)
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
 	JPClass::getConversionInfo(info);
 	functional_conversion.getInfo(this, info);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

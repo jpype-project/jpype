@@ -43,7 +43,7 @@ public:
 		m_Ref = 0;
 		if (context == 0)
 			return;
-		JPJavaFrame frame(m_Context);
+		JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
 
@@ -257,6 +257,7 @@ private:
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
+	jmethodID m_Context_NewWrapperID;
 public:
 	jmethodID m_Context_GetStackFrameID;
 
@@ -284,7 +285,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 	m_Context = other.m_Context;
 	if (m_Context != NULL)
 	{
-		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
 	} else
 	{
@@ -310,7 +311,7 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 	// different frame for unreferencing and referencing
 	if (m_Context != 0 && m_Ref != 0)
 	{
-		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		if (m_Ref != 0)
 			frame.DeleteGlobalRef((jobject) m_Ref);
 	}
@@ -318,7 +319,7 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 	m_Ref = other.m_Ref;
 	if (m_Context != 0 && m_Ref != 0)
 	{
-		JPJavaFrame frame(m_Context, m_Context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
 	}
 	return *this;

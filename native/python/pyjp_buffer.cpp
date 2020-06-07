@@ -8,6 +8,12 @@ extern "C"
 {
 #endif
 
+struct PyJPBuffer
+{
+	PyObject_HEAD
+	JPBuffer *m_Buffer;
+} ;
+
 static void PyJPBuffer_dealloc(PyJPBuffer *self)
 {
 	JP_PY_TRY("PyJPBuffer_dealloc");
@@ -16,7 +22,7 @@ static void PyJPBuffer_dealloc(PyJPBuffer *self)
 	JP_PY_CATCH(); // GCOV_EXCL_LINE
 }
 
-static PyObject *PyJPBuffer_repr(PyJPArray *self)
+static PyObject *PyJPBuffer_repr(PyJPBuffer *self)
 {
 	JP_PY_TRY("PyJPBuffer_repr");
 	return PyUnicode_FromFormat("<java buffer '%s'>", Py_TYPE(self)->tp_name);
@@ -33,7 +39,7 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPBufferPrimitive_getBuffer");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame(context);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Buffer == NULL)
 		JP_RAISE(PyExc_ValueError, "Null buffer"); // GCOVR_EXCL_LINE
 	try
@@ -115,8 +121,7 @@ static PyType_Spec bufferSpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
-	JPPyTuple tuple = JPPyTuple::newTuple(1);
-	tuple.setItem(0, (PyObject*) PyJPObject_Type);
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 	JP_PY_CHECK();
@@ -126,7 +131,7 @@ void PyJPBuffer_initType(PyObject * module)
 
 JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)
 {
-	JPPyObject obj(JPPyRef::_call, type->tp_alloc(type, 0));
+	JPPyObject obj = JPPyObject::call(type->tp_alloc(type, 0));
 	((PyJPBuffer*) obj.get())->m_Buffer = new JPBuffer(value);
 	PyJPValue_assignJavaSlot(frame, obj.get(), value);
 	return obj;

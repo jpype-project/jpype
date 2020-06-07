@@ -19,6 +19,7 @@ package org.jpype.classloader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -32,6 +33,7 @@ import java.util.jar.JarInputStream;
  */
 public class JPypeClassLoader extends ClassLoader
 {
+
   static private JPypeClassLoader instance;
   private TreeMap<String, byte[]> map = new TreeMap<>();
 
@@ -64,9 +66,6 @@ public class JPypeClassLoader extends ClassLoader
    */
   public void importClass(String name, byte[] code)
   {
-    if (name.endsWith(".class"))
-      name = name.substring(0, name.length() - 6);
-    name = name.replaceAll("/", ".");
     map.put(name, code);
   }
 
@@ -79,7 +78,7 @@ public class JPypeClassLoader extends ClassLoader
    */
   public void importJar(byte[] bytes)
   {
-    try ( JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
+    try (JarInputStream is = new JarInputStream(new ByteArrayInputStream(bytes)))
     {
       while (true)
       {
@@ -100,10 +99,7 @@ public class JPypeClassLoader extends ClassLoader
 
         // Store all classes we find
         String name = nextEntry.getName();
-        if (name.endsWith(".class"))
-        {
-          importClass(name, data);
-        }
+        importClass(name, data);
       }
     } catch (IOException ex)
     {
@@ -122,7 +118,8 @@ public class JPypeClassLoader extends ClassLoader
   @Override
   public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
-    byte[] data = map.get(name);
+    String mname = name.replace('.', '/') + ".class";
+    byte[] data = map.get(mname);
     if (data == null)
     {
       // Call the default implementation, throws ClassNotFoundException
@@ -133,5 +130,21 @@ public class JPypeClassLoader extends ClassLoader
     if (cls == null)
       throw new ClassFormatError("Class load was null");
     return cls;
+  }
+
+  /**
+   * Overload for thunk resources.
+   *
+   * @param s
+   * @return
+   */
+  @Override
+  public InputStream getResourceAsStream(String s)
+  {
+    if (this.map.containsKey(s))
+    {
+      return new ByteArrayInputStream(this.map.get(s));
+    }
+    return super.getResourceAsStream(s);
   }
 }

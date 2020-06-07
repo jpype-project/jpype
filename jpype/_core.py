@@ -156,7 +156,6 @@ def startJVM(*args, **kwargs):
     global _JVM_started
     if _JVM_started:
         raise OSError('JVM cannot be restarted')
-    _JVM_started = True
 
     args = list(args)
 
@@ -206,6 +205,7 @@ def startJVM(*args, **kwargs):
     try:
         _jpype.startup(jvmpath, tuple(args),
                        ignoreUnrecognized, convertStrings)
+        _JVM_started = True
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
@@ -326,6 +326,7 @@ def _JTerminate():
 atexit.register(_JTerminate)
 
 
+@deprecated("java.lang.Thread.isAttached")
 def isThreadAttachedToJVM():
     """ Checks if a thread is attached to the JVM.
 
@@ -341,11 +342,12 @@ def isThreadAttachedToJVM():
     return _jpype.isThreadAttachedToJVM()
 
 
+@deprecated("java.lang.Thread.attach")
 def attachThreadToJVM():
     """ Attaches a thread to the JVM.
 
     The function manually connects a thread to the JVM to allow access to
-    Java objects and methods. JPype automaticatlly attaches when a Java
+    Java objects and methods. JPype automatically attaches when a Java
     resource is used, so a call to this is usually not needed.
 
     Raises:
@@ -354,6 +356,7 @@ def attachThreadToJVM():
     _jpype.attachThreadToJVM()
 
 
+@deprecated("java.lang.Thread.detach")
 def detachThreadFromJVM():
     """ Detaches a thread from the JVM.
 

@@ -19,6 +19,7 @@
 #include "jp_classhints.h"
 #include "jp_arrayclass.h"
 #include "jp_stringtype.h"
+#include "jp_proxy.h"
 #include "pyjp.h"
 
 JPMatch::JPMatch()
@@ -109,7 +110,7 @@ JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 void JPIndexConversion::getInfo(JPClass *cls, JPConversionInfo &info)
 {
 	PyObject *typing = PyImport_AddModule("jpype.protocol");
-	JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+	JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
 	PyList_Append(info.implicit, proto.get());
 }
 
@@ -117,7 +118,7 @@ void JPNumberConversion::getInfo(JPClass *cls, JPConversionInfo &info)
 {
 	JPIndexConversion::getInfo(cls, info);
 	PyObject *typing = PyImport_AddModule("jpype.protocol");
-	JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+	JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 	PyList_Append(info.implicit, proto.get());
 }
 
@@ -129,8 +130,8 @@ class JPPythonConversion : public JPConversion
 public:
 
 	JPPythonConversion(PyObject *method)
-	: method_(JPPyRef::_use, method)
 	{
+		method_ = JPPyObject::use(method);
 	}
 
 	virtual ~JPPythonConversion()  // GCOVR_EXCL_LINE
@@ -140,12 +141,10 @@ public:
 	virtual jvalue convert(JPMatch &match) override
 	{
 		JP_TRACE_IN("JPPythonConversion::convert");
-		JPPyTuple args(JPPyTuple::newTuple(2));
 		JPClass *cls = ((JPClass*) match.closure);
-		args.setItem(0, (PyObject*) cls->getHost());
-		args.setItem(1, (PyObject*) match.object);
-		JPPyObject ret = JPPyObject(JPPyRef::_call,
-				PyObject_Call(method_.get(), args.get(), NULL));
+		JPPyObject args = JPPyObject::call(PyTuple_Pack(2,
+				cls->getHost(), match.object));
+		JPPyObject ret = JPPyObject::call(PyObject_Call(method_.get(), args.get(), NULL));
 		JPValue *value = PyJPValue_getJavaSlot(ret.get());
 		if (value != NULL)
 		{
@@ -188,7 +187,7 @@ public:
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JP_TRACE_IN("JPAttributeConversion::matches");
-		JPPyObject attr(JPPyRef::_accept, PyObject_GetAttrString(match.object, attribute_.c_str()));
+		JPPyObject attr = JPPyObject::accept(PyObject_GetAttrString(match.object, attribute_.c_str()));
 		if (attr.isNull())
 			return JPMatch::_none;
 		match.conversion = this;
@@ -224,8 +223,8 @@ class JPNoneConversion : public JPConversion
 public:
 
 	JPNoneConversion(PyObject *type)
-	: type_(JPPyRef::_use, type)
 	{
+		type_ = JPPyObject::use(type);
 	}
 
 	virtual ~JPNoneConversion()
@@ -263,8 +262,9 @@ class JPTypeConversion : public JPPythonConversion
 public:
 
 	JPTypeConversion(PyObject *type, PyObject *method, bool exact)
-	: JPPythonConversion(method), type_(JPPyRef::_use, type), exact_(exact)
+	: JPPythonConversion(method), exact_(exact)
 	{
+		type_ = JPPyObject::use(type);
 	}
 
 	virtual ~JPTypeConversion()
@@ -327,13 +327,13 @@ public:
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
 		// GCOVR_EXCL_START
 		if (pyhints == NULL)
-                {
-                        // Force creation of the class that will create the hints
+		{
+			// Force creation of the class that will create the hints
 			PyJPClass_create(*match.frame, cls);
-		        pyhints = (PyJPClassHints*) cls->getHints();
-                        if (pyhints == NULL)
-                                return match.type = JPMatch::_none;
-                }
+			pyhints = (PyJPClassHints*) cls->getHints();
+			if (pyhints == NULL)
+				return match.type = JPMatch::_none;
+		}
 		// GCOVR_EXCL_STOP
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
@@ -448,7 +448,7 @@ public:
 			return match.type = JPMatch::_none;
 		JPArrayClass *acls = (JPArrayClass*) cls;
 		JPClass *componentType = acls->getComponentType();
-		JPPySequence seq(JPPyRef::_use, match.object);
+		JPPySequence seq = JPPySequence::use(match.object);
 		jlong length = seq.size();
 		match.type = JPMatch::_implicit;
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
@@ -471,7 +471,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "Sequence"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Sequence"));
 		PyList_Append(info.implicit, proto.get());
 		JPArrayClass* acls = (JPArrayClass*) cls;
 		if (acls->getComponentType() == cls->getContext()->_char)
@@ -485,7 +485,7 @@ public:
 		jvalue res;
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
 		JP_TRACE("sequence");
-		JPPySequence seq(JPPyRef::_use, match.object);
+		JPPySequence seq = JPPySequence::use(match.object);
 		jsize length = (jsize) seq.size();
 
 		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);
@@ -545,7 +545,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.implicit, (PyObject*) PyJPClass_Type);
 	}
 
@@ -591,7 +591,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 	}
 
@@ -617,7 +617,7 @@ JPMatch::Type JPConversionJavaValue::matches(JPClass *cls, JPMatch &match)
 
 void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	JPJavaFrame frame(cls->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 	PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 }
 
@@ -717,7 +717,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsIndex"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
 		PyList_Append(info.implicit, proto.get());
 	}
 
@@ -762,7 +762,7 @@ public:
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
-		JPPyObject proto(JPPyRef::_call, PyObject_GetAttrString(typing, "SupportsFloat"));
+		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.implicit, proto.get());
 	}
 
@@ -800,7 +800,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		PyList_Append(info.implicit, PyJPClass_create(frame, cls->getContext()->_java_lang_Object).get());
 	}
 
@@ -881,7 +881,7 @@ public:
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		JPPrimitiveType *pcls = (JPPrimitiveType*) cls;
 		JPContext *context = cls->getContext();
 		PyList_Append(info.implicit,

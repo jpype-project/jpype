@@ -50,11 +50,15 @@ class JPJavaFrame
 {
 	JPContext* m_Context;
 	JNIEnv* m_Env;
-	bool popped;
+	bool m_Popped;
+	bool m_Outer;
+
+private:
+	JPJavaFrame(JPContext* context, JNIEnv* env, int size, bool outer);
 
 public:
 
-	/** Create a new JavaFrame.
+	/** Create a new JavaFrame when called from Python.
 	 *
 	 * This method will automatically attach the thread
 	 * if it is not already attached.
@@ -65,15 +69,39 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	JPJavaFrame(JPContext* context, int size = LOCAL_FRAME_DEFAULT);
+	static JPJavaFrame outer(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
+	{
+		return JPJavaFrame(context, NULL, size, true);
+	}
 
-	/** Create a new JavaFrame with a specified env.
+	/** Create a new JavaFrame when called internal when
+	 * there is an existing frame.
 	 *
 	 * @param size determines how many objects can be
 	 * created in this scope without additional overhead.
 	 *
+	 * @throws JPypeException if the jpype cannot
+	 * acquire an env handle to work with jvm.
 	 */
-	JPJavaFrame(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT);
+	static JPJavaFrame inner(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
+	{
+		return JPJavaFrame(context, NULL, size, false);
+	}
+
+	/** Create a new JavaFrame when called from Java.
+	 *
+	 * The thread was attached by definition.
+	 *
+	 * @param size determines how many objects can be
+	 * created in this scope without additional overhead.
+	 *
+	 * @throws JPypeException if the jpype cannot
+	 * acquire an env handle to work with jvm.
+	 */
+	static JPJavaFrame external(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)
+	{
+		return JPJavaFrame(context, env, size, false);
+	}
 
 	JPJavaFrame(const JPJavaFrame& frame);
 
@@ -368,6 +396,8 @@ public:
 	jobject getPackage(const string& str);
 	jobject getPackageObject(jobject pkg, const string& str);
 	jarray getPackageContents(jobject pkg);
+
+	void newWrapper(JPClass* cls);
 
 } ;
 

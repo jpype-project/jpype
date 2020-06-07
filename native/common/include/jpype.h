@@ -156,8 +156,9 @@ class JPTypeFactory;
 class JPTypeManager;
 class JPClassLoader;
 class JPReferenceQueue;
-class JPProxyFactory;
 class JPContext;
+class JPBuffer;
+class JPPyObject;
 
 extern "C" struct JPConversionInfo;
 
@@ -191,8 +192,8 @@ typedef _object PyObject;
 #include "jp_javaframe.h"
 #include "jp_context.h"
 #include "jp_exception.h"
-#include "jp_pythontypes.h"
 #include "jp_tracer.h"
+#include "jp_pythontypes.h"
 #include "jp_typemanager.h"
 #include "jp_encoding.h"
 #include "jp_modifier.h"
@@ -207,12 +208,5 @@ typedef _object PyObject;
 // Primitives classes
 #include "jp_primitivetype.h"
 #include "jp_typemanager.h"
-
-// Accessors
-#include "jp_array.h"
-#include "jp_buffer.h"
-
-// Services
-#include "jp_proxy.h"
 
 #endif // _JPYPE_H_

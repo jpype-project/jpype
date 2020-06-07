@@ -53,7 +53,7 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 
 void JPObjectType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	nullConversion->getInfo(this, info);
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);

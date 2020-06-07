@@ -176,14 +176,6 @@ class _JList(object):
         raise ValueError("item not in list")
 
 
-def isPythonMapping(v):
-    if isinstance(v, Mapping):
-        if not hasattr(v.__class__, '__metaclass__') or \
-           v.__class__.__metaclass__ is _jclass._JavaClass:
-            return True
-    return False
-
-
 @_jcustomizer.JImplementationFor('java.util.Map')
 class _JMap(object):
     """ Customizer for ``java.util.Map``
@@ -205,11 +197,13 @@ class _JMap(object):
         return self.remove(i)
 
     def __getitem__(self, ndx):
-        item = self.get(ndx)
-        if item is None:
-            if not self.containsKey(ndx):
-                raise KeyError('%s' % ndx)
-        return item
+        try:
+            item = self.get(ndx)
+            if item is not None or self.containsKey(ndx):
+                return item
+        except TypeError:
+            pass
+        raise KeyError('%s' % ndx)
 
     def __setitem__(self, ndx, v):
         self.put(ndx, v)
@@ -221,7 +215,10 @@ class _JMap(object):
         return list(self.keySet())
 
     def __contains__(self, item):
-        return self.containsKey(item)
+        try:
+            return self.containsKey(item)
+        except TypeError:
+            return False
 
 
 @_jcustomizer.JImplementationFor('java.util.Set')

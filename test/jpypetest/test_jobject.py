@@ -262,11 +262,28 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testCompare(self):
         jo = JClass("java.lang.Object")()
-        with self.assertRaisesRegex(TypeError, 'not supported'):
+        with self.assertRaises(TypeError):
             jo < 0
-        with self.assertRaisesRegex(TypeError, 'not supported'):
+        with self.assertRaises(TypeError):
             jo <= 0
-        with self.assertRaisesRegex(TypeError, 'not supported'):
+        with self.assertRaises(TypeError):
             jo > 0
-        with self.assertRaisesRegex(TypeError, 'not supported'):
+        with self.assertRaises(TypeError):
             jo >= 0
+
+    def testCompareNull(self):
+        jo = JClass("java.lang.Object")
+        jv = JObject(None, jo)
+        self.assertEqual(jv, None)
+        self.assertEqual(None, jv)
+        self.assertNotEqual(JInt(1), jv)
+        self.assertNotEqual(jv, JInt(1))
+
+    def testRepr(self):
+        jo = JClass("java.lang.Object")
+        jv = jo()
+        jvn = JObject(None, jo)
+        self.assertIsInstance(repr(jv), str)
+        self.assertIsInstance(repr(jvn), str)
+        self.assertEqual(repr(jv), "<java object 'java.lang.Object'>")
+        self.assertEqual(repr(jvn), "<java object 'java.lang.Object'>")

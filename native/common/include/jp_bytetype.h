@@ -38,7 +38,7 @@ public:
 		return v.b;
 	}
 
-	virtual JPClass* getBoxedClass(JPContext *context) const
+	virtual JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Byte;
 	}
@@ -74,7 +74,6 @@ public:
 		}
 		return l;
 	}
-
 
 	virtual jlong getAsLong(jvalue v) override
 	{

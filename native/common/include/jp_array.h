@@ -92,5 +92,4 @@ private:
 	bool          m_Slice;
 } ;
 
-
 #endif // _JPARRAY_H_

@@ -852,10 +852,10 @@ JChar
   correct answer is `b`.  As such characters should not be treated as just
   another unsigned short.  Python has no concept of a textual only type.
   Thus when returning a character type, we instead return a string length 1.
-  The actually ``JChar`` class is derived from a Python ``int`` and by
-  inheritance has all of the numerical operations associated with it.
-  There are of course lots of useful mathematical operations that can be performed
-  on textual primitives, but doing so risks breaking the encoding
+  ``JChar`` supports the Java numerical operations, but just as in Java it will
+  automatically promote to a Python ``int`` when used in a numerical operation.
+  There are of course lots of useful mathematical operations that can be
+  performed on textual primitives, but doing so risks breaking the encoding
   and can result in uninterpretable data.
 
 .. _JByte:
@@ -2506,17 +2506,17 @@ faults.  Rather that crashing randomly, JPype automatically attachs any
 thread that invokes a Java method.  These threads are attached automatically as
 daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
-``jpype.attachThreadToJVM()`` from within the thread context.  Once this is
+``java.lang.Thread.attach()`` from within the thread context.  Once this is
 done the JVM will not shut down until that thread is completed.
 
-There is a function called ``jpype.isThreadAttachedToJVM()`` which will check
+There is a function called ``java.lang.Thread.isAttached()`` which will check
 if a thread is attached.  As threads automatically attach to Java, the only
 way that a thread would not be attached is if it has never called a Java method.
 
 The downside of automatic attachment is that each attachment allocates a
 small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
-to completing the thread with ``jpype.detachThreadFromJVM()``.  When 
+to completing the thread with ``java.lang.Thread.detach()``.  When 
 implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
@@ -2664,6 +2664,37 @@ about JPype.  Topics include code completion, performance, debugging Java
 within JPype, debugging JNI and other JPype failures, how caller sensitive
 methods are dealt with, and finally limitations of JPype.
 
+Javadoc
+=======
+
+JPype can display javadoc in ReStructured Text as part of the Python
+documentation.  To access the javadoc, the javadoc package must be located on
+the classpath.  This includes the JDK package documentation.  
+
+For example to get the documentation for ``java.lang.Class``, we start the JVM
+with the JDK documentation zip file on the classpath.
+
+.. code-block: java
+
+     import jpype
+     jpype.startJVM(classpath='jdk-11.0.7_doc-all.zip')
+
+We can then access the java docs for the String with ``help(java.lang.String)``
+or for the methods with ``help(java.lang.String.trim)``.  To use the javadoc
+supplied by a third party include the both the jar and javadoc in the
+classpath.
+
+.. code-block: java
+
+     import jpype
+     jpype.startJVM(classpath=['gson-2.8.5.jar', 'gson-2.8.5-javadoc.jar'])
+
+The parser will ignore any javadoc which cannot be extracted.  It has some
+robustness against tags that are not properly closed or closed twice.  Javadoc
+with custom page layouts will likely not be extracted.
+
+If javadoc for a class cannot be located or extracted properly, default
+documentation will be generated using Java reflection.
 
 Autopep8
 ========
