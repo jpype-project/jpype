@@ -557,3 +557,7 @@ class ArrayTestCase(common.JPypeTestCase):
         ja = JArray(JInt, 2)([[1], []])
         with self.assertRaisesRegex(BufferError, "not rectangular"):
             memoryview(ja)
+
+    def testLengthProperty(self):
+        ja = JArray(JInt)([1, 2, 3])
+        self.assertEqual(ja.length, len(ja))
