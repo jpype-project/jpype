@@ -26,7 +26,7 @@ from . import _pykeywords
 from ._jvmfinder import *
 
 __all__ = [
-    'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
+    'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized',
     'JVMNotFoundException', 'JVMNotSupportedException'
@@ -293,11 +293,6 @@ def startJVM(*args, **kwargs):
 
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
         list(_pykeywords._KEYWORDS))
-
-
-def attachToJVM(jvm):
-    _jpype.attach(jvm)
-    _initialize()
 
 
 def shutdownJVM():
