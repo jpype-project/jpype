@@ -113,9 +113,10 @@ class JPypeTestCase(unittest.TestCase):
             if self._jacoco:
                 import warnings
                 args.append(
-                    "-javaagent:project/coverage/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+                    "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
-
+            import pathlib
+            jpype.addClassPath(pathlib.Path("lib/*").absolute())
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
             _jpype.enableStacktraces(True)
