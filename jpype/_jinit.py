@@ -16,13 +16,17 @@
 # *****************************************************************************
 import _jpype
 
-__all__ = ['registerJVMInitializer']
+__all__ = ['onJVMStart']
 
 JInitializers = []
 
 
+def onJVMStart(func):
+    """Register a function to be called after JVM is started"""
+    registerJVMInitializer(func)
+
+
 def registerJVMInitializer(func):
-    """Register a function to be called after jvm is started"""
     if not _jpype.isStarted():
         JInitializers.append(func)
     else:

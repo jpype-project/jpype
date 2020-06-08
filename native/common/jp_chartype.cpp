@@ -33,7 +33,7 @@ JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	// This is only callable from one location so error checking is minimal
 	if (args.size() != 1 || !PyIndex_Check(args[0]))
-		JP_RAISE(PyExc_TypeError, "bad args");
+		JP_RAISE(PyExc_TypeError, "bad args");  // GCOVR_EXCL_LINE
 	jvalue jv;
 
 	// This is a cast so we must not fail
@@ -76,7 +76,7 @@ public:
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override

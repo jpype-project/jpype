@@ -52,7 +52,7 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 			return -1;
 		}
 
-		if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE && buffer->isReadOnly())
+		if (buffer->isReadOnly() && (flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE)
 		{
 			PyErr_SetString(PyExc_BufferError, "Java buffer is not writable");
 			return -1;

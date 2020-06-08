@@ -100,11 +100,11 @@ class JInitTestCase(common.JPypeTestCase):
 
             def func():
                 A.append(1)
-            jpype.registerJVMInitializer(func)
+            jpype.onJVMStart(func)
             self.assertEqual(len(A), 0)
             self.assertEqual(jpype._jinit.JInitializers[0], func)
             started.return_value = True
-            jpype.registerJVMInitializer(func)
+            jpype.onJVMStart(func)
             self.assertEqual(len(A), 1)
             jpype._jinit.runJVMInitializers()
             self.assertEqual(len(A), 2)

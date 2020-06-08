@@ -71,7 +71,6 @@ JPypeException::JPypeException(const JPypeException& ex)
 	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
 }
-// GCOVR_EXCL_STOP
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
 {
@@ -83,6 +82,7 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 	m_Message = ex.m_Message;
 	return *this;
 }
+// GCOVR_EXCL_STOP
 
 JPypeException::~JPypeException()
 {

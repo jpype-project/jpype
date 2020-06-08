@@ -182,7 +182,7 @@ bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool 
 	JP_TRACE_IN("JPMethodDispatch::invoke");
 	JPMethodMatch match(frame, args);
 	return findOverload(frame, match, args, instance, false);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 string JPMethodDispatch::matchReport(JPPyObjectVector& args)
