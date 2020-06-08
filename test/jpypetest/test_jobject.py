@@ -292,3 +292,18 @@ class JClassTestCase(common.JPypeTestCase):
         # this one should issue a warning
         jo = JClass("java.lang.Object")
         self.assertIsInstance(JObject(None, object), jo)
+
+    def testGetSetBad(self):
+        JS = JClass("java.lang.String")
+        js = JS()
+        with self.assertRaises(TypeError):
+            JS.__getattribute__(js, object())
+        with self.assertRaises(TypeError):
+            setattr(js, object(), 1)
+
+    def testGetSetBad(self):
+        jo = JClass("java.lang.Object")()
+        self.assertTrue(jo != JInt(0))
+        self.assertFalse(jo == JInt(0))
+        self.assertTrue(JInt(0) != jo)
+        self.assertFalse(JInt(0) == jo)

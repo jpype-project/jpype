@@ -64,9 +64,6 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_len")
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)
-        _jpype.fault("PyJPArray_len")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja.length
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)

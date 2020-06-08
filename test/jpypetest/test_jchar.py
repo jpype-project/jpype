@@ -12,6 +12,15 @@ class JChar2TestCase(common.JPypeTestCase):
         self.assertEqual(ord(str(jpype.JChar(65))), 65)
         self.assertEqual(ord(str(jpype.JChar(512))), 512)
 
+    def testCharFromStr(self):
+        self.assertEqual(ord(jpype.JChar(chr(65))), 65)
+        self.assertEqual(ord(jpype.JChar(chr(128))), 128)
+        self.assertEqual(ord(jpype.JChar(chr(255))), 255)
+        self.assertEqual(ord(jpype.JChar(chr(10255))), 10255)
+
+    def testCharCastFloat(self):
+        self.assertEqual(ord(jpype.JChar(65.0)), 65)
+
     @common.requireInstrumentation
     def testJPChar_new(self):
         _jpype.fault("PyJPChar_new")
@@ -431,6 +440,17 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
     def testPos(self):
         with self.assertRaises(TypeError):
             +self.nc
+
+    def testNeg(self):
+        with self.assertRaises(TypeError):
+            -self.nc
+
+    def testBool(self):
+        self.assertFalse(bool(self.nc))
+
+    def testEq(self):
+        self.assertTrue(self.nc == self.nc)
+        self.assertFalse(self.nc != self.nc)
 
     def testPass(self):
         fixture = jpype.JClass('jpype.common.Fixture')()

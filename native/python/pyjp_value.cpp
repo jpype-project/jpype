@@ -76,7 +76,7 @@ bool PyJPValue_hasJavaSlot(PyTypeObject* type)
 	if (type == NULL
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
-		return false;
+		return false;  // GCOVR_EXCL_LINE
 	return true;
 }
 
@@ -243,13 +243,6 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 {
 	JP_PY_TRY("PyJPObject_setattro");
-	if (!PyUnicode_Check(name))
-	{
-		PyErr_Format(PyExc_TypeError,
-				"attribute name must be string, not '%.200s'",
-				Py_TYPE(name)->tp_name);
-		return -1;
-	}
 
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
@@ -311,7 +304,7 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 {
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
-		return false;
+		return false;  // GCOVR_EXCL_LINE
 	JPValue* slot = (JPValue*) (((char*) self) + offset);
 	return slot->getClass() != NULL;
 }

@@ -166,10 +166,10 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 
 	JPContext *context = PyJPModule_getContext();
 
@@ -220,11 +220,11 @@ static PyObject *PyJPChar_str(PyJPChar *self)
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (javaSlot == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_FromOrdinal(fromJPChar(self));
@@ -237,11 +237,11 @@ static PyObject *PyJPChar_repr(PyJPChar *self)
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (javaSlot == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_Type.tp_repr((PyObject*) self);

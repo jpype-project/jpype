@@ -52,3 +52,8 @@ class JPackageTestCase(common.JPypeTestCase):
     def testSetAttr(self):
         with self.assertRaises(TypeError):
             self.jl.__setattr__(object(), 1)
+
+    def testInvalid(self):
+        JL = JPackage("java.lng")
+        with self.assertRaisesRegex(AttributeError, "Java package 'java.lng' is not valid"):
+            getattr(JL, "foo")

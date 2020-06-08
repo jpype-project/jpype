@@ -74,6 +74,11 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
+static void badType(PyObject* t)
+{
+	PyErr_Format(PyExc_TypeError, "type or protocol is required, not '%s'", Py_TYPE(t)->tp_name);
+}
+
 PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
 {
 	JP_PY_TRY("PyJPClassHints_addTypeConversion", self);
@@ -82,9 +87,9 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	unsigned char exact;
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
 		return NULL;
-	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) Py_TYPE(type), "__instancecheck__"))
+	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) type, "__instancecheck__"))
 	{
-		PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+		badType(type);
 		return NULL;
 	}
 	if (!PyCallable_Check(method))
@@ -97,21 +102,18 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
-PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
+PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* types, PyObject* kwargs)
 {
 	JP_PY_TRY("PyJPClassHints_excludeConversion", self);
-	PyObject *types;
-	if (!PyArg_ParseTuple(args, "O", &types))
-		return NULL;
 	if (PyTuple_Check(types))
 	{
 		Py_ssize_t sz = PyTuple_Size(types);
 		for (Py_ssize_t i = 0; i < sz; ++i)
 		{
 			PyObject *t = PyTuple_GetItem(types, i);
-			if (!PyType_Check(t) && !PyObject_HasAttrString((PyObject*) Py_TYPE(t), "__instancecheck__"))
+			if (!PyType_Check(t) && !PyObject_HasAttrString(t, "__instancecheck__"))
 			{
-				PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+				badType(t);
 				return NULL;
 			}
 		}
@@ -121,9 +123,9 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args,
 		}
 	} else
 	{
-		if (!PyType_Check(types) && !PyObject_HasAttrString((PyObject*) Py_TYPE(types), "__instancecheck__"))
+		if (!PyType_Check(types) && !PyObject_HasAttrString( types, "__instancecheck__"))
 		{
-			PyErr_SetString(PyExc_TypeError, "type or protocol is required");
+			badType(types);
 			return NULL;
 		}
 		self->m_Hints->excludeConversion(types);
@@ -135,7 +137,7 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* args,
 static PyMethodDef classMethods[] = {
 	{"_addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
 	{"_addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
-	{"_excludeConversion", (PyCFunction) & PyJPClassHints_excludeConversion, METH_VARARGS, ""},
+	{"_excludeConversion", (PyCFunction) & PyJPClassHints_excludeConversion, METH_O, ""},
 	{NULL},
 };
 
