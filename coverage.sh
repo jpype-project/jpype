@@ -12,7 +12,7 @@ $PYTHON -m pytest -rsx -v test/jpypetest \
 	--cov-report=html:build/coverage/python \
 	--cov=jpype \
 	--classpath="build/classes" --jacoco --checkjni
-java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec \
+java -jar lib/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec \
 	--classfiles build/classes/ \
 	--html build/coverage/java \
 	--sourcefiles native/java
