@@ -53,9 +53,8 @@ class JObject(_jpype._JObject, internal=True):
 
     """
     def __new__(cls, *args, **kwargs):
-        # Create a null pointer object
         if len(args) == 0:
-            args = [None]
+            return _jpype._java_lang_Object()
         return _JObjectFactory(*args, **kwargs)
 
 
