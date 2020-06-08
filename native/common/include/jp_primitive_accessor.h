@@ -197,7 +197,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
@@ -216,16 +216,17 @@ template <typename base_t>
 class JPConversionLongWiden : public JPConversion
 {
 public:
-
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override // GCOVR_EXCL_LINE
+	// GCOVR_EXCL_START
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none; // Not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override // GCOVR_EXCL_LINE
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
 	{
 		// Not used
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{
