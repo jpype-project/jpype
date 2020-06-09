@@ -8,11 +8,18 @@
 #define USE_PROCESS_INFO
 #include <Windows.h>
 #include <psapi.h>
+
 #elif __APPLE__
 #define USE_TASK_INFO
 #include <unistd.h>
 #include <sys/resource.h>
 #include <mach/mach.h>
+
+#elif __GLIBC__
+// Linux doesn't have an available rss tally so use mallinfo
+#define USE_MALLINFO
+#include <malloc.h>
+
 #elif __linux__
 #define USE_PROC_INFO
 #include <stdlib.h>
@@ -21,10 +28,7 @@
 #include <fcntl.h>
 static int statm_fd;
 static int page_size;
-#elif __GLIBC__
-// Linux doesn't have an available rss tally so use mallinfo
-#define USE_MALLINFO
-#include <malloc.h>
+
 #else
 #define USE_NONE
 #endif
@@ -52,7 +56,7 @@ size_t getWorkingSize()
 	for (int i = 0; i < 16; i++)
 	{
 		if (bytes[i] == ' ')
-			return sz * 1024;
+			return sz * page_size;
 		sz *= 10;
 		sz += bytes[i] - '0';
 	}
@@ -87,11 +91,6 @@ void JPGarbageCollection::triggered()
 
 JPGarbageCollection::JPGarbageCollection(JPContext *context)
 {
-#if defined(USE_PROC_INFO)
-	statm_fd = open("/proc/self/statm", O_RDONLY);
-	page_size = getpagesize();
-#endif
-
 	m_Context = context;
 	running = false;
 	in_python_gc = false;
@@ -113,6 +112,10 @@ JPGarbageCollection::JPGarbageCollection(JPContext *context)
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
+#if defined(USE_PROC_INFO)
+	statm_fd = open("/proc/self/statm", O_RDONLY);
+	page_size = getpagesize();
+#endif
 	// Get the Python garbage collector
 	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 	python_gc = gc.keep();
@@ -137,7 +140,11 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 void JPGarbageCollection::shutdown()
 {
 	running = false;
+#if defined(USE_PROC_INFO)
+	close(statm_fd);
+#endif
 }
+
 
 void JPGarbageCollection::onStart()
 {
