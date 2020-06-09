@@ -49,11 +49,18 @@ size_t getWorkingSize()
 		current = (size_t) info.resident_size;
 
 #elif defined(USE_PROC_INFO)
-	char bytes[16];
+	char bytes[32];
 	lseek(statm_fd, SEEK_SET, 0);
-	read(statm_fd, bytes, 16);
+	int len = read(statm_fd, bytes, 32);
 	long long sz = 0;
-	for (int i = 0; i < 16; i++)
+        int i = 0;
+        for (; i < len; i++)
+	{
+		if (bytes[i] == ' ')
+			break;
+	}
+        i++;
+	for (; i < len; i++)
 	{
 		if (bytes[i] == ' ')
 			return sz * page_size;
