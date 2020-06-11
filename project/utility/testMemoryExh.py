@@ -23,7 +23,7 @@ import time
 #
 # gc.callbacks.append(callHook)
 
-trials = 100000
+trials = 200000
 tally = np.zeros((trials,), dtype=np.int8)
 
 
