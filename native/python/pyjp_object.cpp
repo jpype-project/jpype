@@ -317,6 +317,7 @@ PyTypeObject *PyJPException_Type = NULL;
 static PyType_Slot excSlots[] = {
 	{Py_tp_new,      (void*) &PyJPException_new},
 	{Py_tp_init,     (void*) &PyJPException_init},
+	{Py_tp_str,      (void*) &PyJPValue_str},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_methods,  exceptionMethods},
