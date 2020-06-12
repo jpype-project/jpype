@@ -29,8 +29,12 @@ __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized',
-    'JVMNotFoundException', 'JVMNotSupportedException'
+    'JVMNotFoundException', 'JVMNotSupportedException', 'JVMNotRunning'
 ]
+
+
+class JVMNotRunning(RuntimeError):
+    pass
 
 
 def versionTest():
@@ -420,3 +424,6 @@ class _JRuntime(object):
 
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+
+
+_jpype.JVMNotRunning = JVMNotRunning

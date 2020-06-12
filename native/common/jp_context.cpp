@@ -15,6 +15,7 @@
 
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_typemanager.h"
 #include "jp_boxedtype.h"
 #include "jp_stringtype.h"
@@ -136,12 +137,21 @@ bool JPContext::isRunning()
  */
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
+	if (_JVMNotRunning == NULL)
+	{
+		_JVMNotRunning = PyObject_GetAttrString(PyJPModule, "JVMNotRunning");
+		JP_PY_CHECK();
+		Py_INCREF(_JVMNotRunning);
+	}
+
 	if (context == NULL)
-		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Context is null", info);
+	{
+		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Context is null", info);
+	}
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Virtual Machine is not running", info);
+		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Virtual Machine is not running", info);
 	}
 }
 

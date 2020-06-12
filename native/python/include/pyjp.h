@@ -143,6 +143,7 @@ extern PyObject *_JMethodDoc;
 extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
 extern PyObject *_JObjectKey;
+extern PyObject *_JVMNotRunning;
 
 extern JPContext* JPContext_global;
 
