@@ -3,7 +3,7 @@
 # Script for testing coverage locally
 PYTHON=python
 PIP="python -m pip"
-mvn -q -f project/coverage package
+./resolve.sh
 $PYTHON setup.py test_java
 $PIP install gcovr pytest-cov jedi
 $PYTHON setup.py --enable-coverage --enable-build-jar build_ext --inplace
@@ -12,7 +12,7 @@ $PYTHON -m pytest -rsx -v test/jpypetest \
 	--cov-report=html:build/coverage/python \
 	--cov=jpype \
 	--classpath="build/classes" --jacoco --checkjni
-java -jar project/coverage/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec \
+java -jar lib/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec \
 	--classfiles build/classes/ \
 	--html build/coverage/java \
 	--sourcefiles native/java

@@ -332,7 +332,7 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 	packArgs(frame, match, v, arg);
 	JPPyCallRelease call;
 	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 string JPMethod::matchReport(JPPyObjectVector& args)
@@ -360,6 +360,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 
 	JPMethodMatch methodMatch(frame, args);
 	matches(frame, methodMatch, !isStatic(), args);
+	// GCOVR_EXCL_START
 	switch (methodMatch.type)
 	{
 		case JPMatch::_none:
@@ -378,9 +379,8 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			res << "UNKNOWN";
 			break;
 	}
-
+	// GCOVR_EXCL_STOP
 	res << endl;
-
 	return res.str();
 }
 

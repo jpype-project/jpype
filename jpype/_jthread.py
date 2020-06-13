@@ -1,6 +1,4 @@
 import _jpype
-import jpype
-import jpype.imports
 from . import _jcustomizer
 
 

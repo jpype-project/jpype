@@ -64,9 +64,6 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_len")
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)
-        _jpype.fault("PyJPArray_len")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            ja.length
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)
@@ -557,3 +554,7 @@ class ArrayTestCase(common.JPypeTestCase):
         ja = JArray(JInt, 2)([[1], []])
         with self.assertRaisesRegex(BufferError, "not rectangular"):
             memoryview(ja)
+
+    def testLengthProperty(self):
+        ja = JArray(JInt)([1, 2, 3])
+        self.assertEqual(ja.length, len(ja))

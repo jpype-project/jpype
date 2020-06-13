@@ -71,14 +71,13 @@ public class JPypePackage
       try
       {
         // Make sure it is public
-        if (!isPublic(p))
-          return null;
-
-        // Load the class and return a class type object
-        return Class.forName(pkg + "." + JPypeKeywords.unwrap(name));
+        if (isPublic(p))
+        {
+          // Load the class and return a class type object
+          return Class.forName(pkg + "." + JPypeKeywords.unwrap(name));
+        }
       } catch (ClassNotFoundException ex)
       {
-        return null;
       }
     }
     return null;

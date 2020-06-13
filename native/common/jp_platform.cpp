@@ -135,7 +135,7 @@ public:
 			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
 		// GCOVR_EXCL_STOP
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
 	virtual void unloadLibrary() override
@@ -148,7 +148,7 @@ public:
 			cerr << dlerror() << endl;
 		}
 		// GCOVR_EXCL_STOP
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
 	virtual void* getSymbol(const char* name) override
@@ -167,7 +167,7 @@ public:
 		}
 		// GCOVR_EXCL_STOP
 		return res;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 } ;
 

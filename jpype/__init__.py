@@ -15,6 +15,7 @@
 #
 # *****************************************************************************
 import _jpype
+from ._jinit import *
 from ._jpackage import *
 from ._jproxy import *
 from ._core import *
@@ -39,6 +40,7 @@ from . import protocol      # lgtm [py/import-own-module]
 from . import _jthread      # lgtm [py/import-own-module]
 
 __all__ = ['java', 'javax']
+__all__.extend(_jinit.__all__)
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)

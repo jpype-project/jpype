@@ -233,6 +233,10 @@ class JClassHints(_jpype._JClassHints):
         for b in self.bases:
             bases.insert(0, b)
 
+        module = name.rsplit('.', 1)
+        if len(module) == 2:
+            members['__module__'] = module[0]
+
         # Apply implementations
         sticky = []
         for proto in self.implementations:

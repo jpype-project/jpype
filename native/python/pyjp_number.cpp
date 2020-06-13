@@ -407,14 +407,6 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
 		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
 	}
-	if (value.getClass() == context->_java_lang_Character)
-	{
-		jlong l = 0;
-		if (value.getValue().l != 0)
-			l = frame.CallCharMethodA(value.getJavaObject(), context->m_CharValueID, 0);
-		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
-	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
 	{
 		jlong l = 0;
@@ -431,5 +423,5 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));
 		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
 	}
-	JP_RAISE(PyExc_TypeError, "unable to convert");
+	JP_RAISE(PyExc_TypeError, "unable to convert");  //GCOVR_EXCL_LINE
 }

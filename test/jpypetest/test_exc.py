@@ -163,4 +163,4 @@ class ExceptionTestCase(common.JPypeTestCase):
 
     def testException(self):
         Th = jpype.JClass('java.lang.Throwable')('abc')
-        self.assertEqual(str(Th), 'abc')
+        self.assertEqual(str(Th), 'java.lang.Throwable: abc')

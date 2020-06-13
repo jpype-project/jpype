@@ -242,10 +242,10 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
 		return NULL;
-	}
+	}  // GCOVR_EXCL_STOP
 
 	// Special constructor path for Exceptions
 	JPPyObjectVector args(pyargs);
@@ -298,7 +298,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 PyObject *PyJPException_args(PyBaseExceptionObject *self)
 {
 	if (self->args == NULL)
-		Py_RETURN_NONE;
+		Py_RETURN_NONE;  // GCOVR_EXCL_LINE
 	Py_INCREF(self->args);
 	return self->args;
 }
@@ -317,6 +317,7 @@ PyTypeObject *PyJPException_Type = NULL;
 static PyType_Slot excSlots[] = {
 	{Py_tp_new,      (void*) &PyJPException_new},
 	{Py_tp_init,     (void*) &PyJPException_init},
+	{Py_tp_str,      (void*) &PyJPValue_str},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_methods,  exceptionMethods},

@@ -266,3 +266,8 @@ class JClassTestCase(common.JPypeTestCase):
         jo = JClass('java.lang.Object')
         with self.assertRaises(TypeError):
             jo @= 5
+
+    def testCanCast(self):
+        String = JClass("java.lang.String")
+        self.assertFalse(String._canCast(1))
+        self.assertTrue(String._canCast("foo"))

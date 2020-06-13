@@ -97,15 +97,6 @@ class _JArrayProto(object):
     def __str__(self):
         return str(list(self))
 
-    @property
-    def length(self):
-        """ Get the length of a Java array
-
-        This method is provided for compatiblity with Java syntax.
-        Generally, the Python style ``len(array)`` should be preferred.
-        """
-        return self.__len__()
-
     def __iter__(self):
         return _JavaArrayIter(self)
 

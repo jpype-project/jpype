@@ -389,3 +389,21 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(datetime.datetime in hints.implicit)
         self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(len(hints.none) == 0)
+
+    def testAddTypeBad(self):
+        cls = JClass('java.lang.Object')
+        with self.assertRaises(TypeError):
+            cls._hints._addTypeConversion()
+        with self.assertRaisesRegex(TypeError, "callable method is required"):
+            cls._hints._addTypeConversion(object, object(), True)
+        with self.assertRaisesRegex(TypeError, "type or protocol is required"):
+            def foo():
+                pass
+            cls._hints._addTypeConversion(object(), foo, True)
+
+    def testExcludeBad(self):
+        cls = JClass('java.lang.Object')
+        with self.assertRaisesRegex(TypeError, "type or protocol is required, not 'object'"):
+            cls._hints._excludeConversion(object())
+        with self.assertRaisesRegex(TypeError, "type or protocol is required, not 'object'"):
+            cls._hints._excludeConversion((object(),))

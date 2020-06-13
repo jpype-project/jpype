@@ -152,7 +152,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	{
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
-			return NULL;
+			return NULL;  // GCOVR_EXCL_LINE
 		return self->m_Array->getItem((jsize) i).keep();
 	}
 
@@ -222,7 +222,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	{
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
-			return -1;
+			return -1;  // GCOVR_EXCL_LINE
 		self->m_Array->setItem((jsize) i, value);
 		return 0;
 	}
@@ -435,6 +435,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
+	{ Py_tp_getset,   (void*) &arrayGetSets},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 	{0}
 };

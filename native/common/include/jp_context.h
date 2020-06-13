@@ -279,6 +279,8 @@ public:
 
 extern void JPRef_failed();
 
+// GCOVR_EXCL_START
+// Not currently used
 template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {
@@ -292,6 +294,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 		JPRef_failed();
 	}
 }
+// GCOVR_EXCL_STOP
 
 template<class jref>
 JPRef<jref>::~JPRef()
@@ -310,11 +313,12 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 	// m_Context may or may not be set up here, so we need to use a
 	// different frame for unreferencing and referencing
 	if (m_Context != 0 && m_Ref != 0)
-	{
+	{  // GCOVR_EXCL_START
+		// This code is not currently used.
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		if (m_Ref != 0)
 			frame.DeleteGlobalRef((jobject) m_Ref);
-	}
+	}  // GCOVR_EXCL_STOP
 	m_Context = other.m_Context;
 	m_Ref = other.m_Ref;
 	if (m_Context != 0 && m_Ref != 0)

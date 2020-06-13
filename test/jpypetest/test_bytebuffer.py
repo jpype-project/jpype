@@ -23,3 +23,9 @@ class ByteBufferCase(common.JPypeTestCase):
         a = bytes([0, 0, 0, 0])
         with self.assertRaises(ValueError):
             bb = jpype.nio.convertToDirectBuffer(a)
+
+    def testRepr(self):
+        a = bytearray([0, 0, 0, 0])
+        bb = jpype.nio.convertToDirectBuffer(a)
+        self.assertIsInstance(repr(bb), str)
+        self.assertEqual(repr(bb), "<java buffer 'java.nio.DirectByteBuffer'>")

@@ -72,6 +72,7 @@ PyObject* _JMethodDoc = NULL;
 PyObject* _JMethodAnnotations = NULL;
 PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
+PyObject* _JVMNotRunning = NULL;
 
 static void PyJPModule_loadResources(PyObject* module)
 {
