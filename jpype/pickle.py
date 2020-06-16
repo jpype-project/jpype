@@ -37,7 +37,7 @@ Example:
 
 .. code-block:: python
 
-  myobj = jpype.JClass('java.util.ArrayList')
+  myobj = jpype.JClass('java.util.ArrayList')()
   myobj.add("test")
 
   from jpype.pickle import JPickler, JUnpickler
@@ -45,7 +45,7 @@ Example:
     JPickler(fd).dump(myobj)
 
   with open("test.pic", "rb") as fd:
-    newobj = JUnpickler.load(fd)
+    newobj = JUnpickler(fd).load()
 
 
 Proxies and other JPype specific module resources cannot be pickled currently.
