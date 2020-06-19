@@ -1,11 +1,9 @@
 /* ****************************************************************************
-  Copyright 2019, Karl Einar Nelson
-
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+       http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +11,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 
- *****************************************************************************/
+  See NOTICE file for details.
+**************************************************************************** */
 package org.jpype.manager;
 
 import java.lang.reflect.Executable;
@@ -37,6 +36,7 @@ import java.util.List;
  */
 public class MethodResolution
 {
+
   long ptr = 0;
   boolean covered = false;
   Executable executable;
@@ -176,7 +176,6 @@ public class MethodResolution
 //    if (Modifier.isStatic(method1.getModifiers())
 //            != Modifier.isStatic(method2.getModifiers()))
 //      return false;
-
     if (!Modifier.isStatic(method1.getModifiers()))
       param1.add(0, method1.getDeclaringClass());
     if (!Modifier.isStatic(method2.getModifiers()))
