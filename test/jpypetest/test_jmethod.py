@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,6 +11,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import sys
@@ -40,13 +41,13 @@ def copy_func(f):
 class JMethodTestCase(common.JPypeTestCase):
     """ Test for methods of JMethod (_jpype._JMethod)
 
-    This should test how well the object matchs a Python3 function.  
+    This should test how well the object matchs a Python3 function.
      * __self__: should appear on a bound, None otherwise.
      * __name__: should be set
      * __qualname__: should be set
      * __doc__: should be set
      * __annotations__: should give return type
-     * __defaults__, __kwdefaults__, __code__, __globals__, __closure__: should 
+     * __defaults__, __kwdefaults__, __code__, __globals__, __closure__: should
         be enough to "clone" the method.
 
     It should also be callable as a method, class method.
