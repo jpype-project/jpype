@@ -215,7 +215,7 @@ def startJVM(*args, **kwargs):
         source = str(ex)
         if "UnsupportedClassVersion" in source:
             import re
-            match = re.search("([0-9]+)\.[0-9]+", source)
+            match = re.search(r"([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1)) - 44
                 raise RuntimeError("%s is older than required Java version %d" % (

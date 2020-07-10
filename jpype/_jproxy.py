@@ -66,9 +66,7 @@ def _createJProxyDeferred(cls, *intf):
         if actualIntf is None:
             actualIntf = _prepareInterfaces(cls, intf)
             tp.__jpype_interfaces__ = actualIntf
-        self = _jpype._JProxy.__new__(tp, None, actualIntf)
-        tp.__init__(self, *args, **kwargs)
-        return self
+        return _jpype._JProxy.__new__(tp, None, actualIntf)
 
     members = {'__new__': new}
     # Return the augmented class
