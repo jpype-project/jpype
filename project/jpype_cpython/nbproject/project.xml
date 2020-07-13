@@ -12,8 +12,8 @@
             <sourceRootList>
                 <sourceRootElem>../../native/common</sourceRootElem>
                 <sourceRootElem>../../native/python</sourceRootElem>
-                <sourceRootElem>../../native/common</sourceRootElem>
-                <sourceRootElem>../../native/python</sourceRootElem>
+                <sourceRootElem>../../jpype</sourceRootElem>
+                <sourceRootElem>../../test/jpypetest</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>
