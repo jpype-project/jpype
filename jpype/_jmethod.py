@@ -38,7 +38,7 @@ def _jmethodGetDoc(method, cls, overloads):
         jcls.__doc__
     jd = getattr(jcls, "__javadoc__")
     if jd is not None:
-        md = jd.methods[method.__name__]
+        md = jd.methods.get(method.__name__)
         if md is not None:
             return str(md)
     from textwrap import TextWrapper
