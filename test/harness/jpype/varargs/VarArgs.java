@@ -1,50 +1,66 @@
+/* ****************************************************************************
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  See NOTICE file for details.
+**************************************************************************** */
 package jpype.varargs;
 
 class VarArgs
 {
-	public Object[] rest;
 
-	public static Object[] call(Object ... args)
-	{
-		return args;
-	}
+  public Object[] rest;
 
-	public static String[] callString(String ... args)
-	{
-		return args;
-	}
+  public static Object[] call(Object... args)
+  {
+    return args;
+  }
 
-	public static int callString0(String str, String ... args)
-	{
-		return args.length;
-	}
+  public static String[] callString(String... args)
+  {
+    return args;
+  }
 
-	public int callString1(String str, String ... args)
-	{
-		return args.length;
-	}
+  public static int callString0(String str, String... args)
+  {
+    return args.length;
+  }
 
-	public static Integer callOverload(Integer i)
-	{
-		return i;
-	}
-	 
-	public static String[] callOverload(String str, String ... rest)
-	{
-		return rest;
-	}
+  public int callString1(String str, String... args)
+  {
+    return args.length;
+  }
 
-	public VarArgs()
-	{
-	}
+  public static Integer callOverload(Integer i)
+  {
+    return i;
+  }
 
-	public VarArgs(String s, Object ... rest)
-	{
-		this.rest=rest;
-	}
+  public static String[] callOverload(String str, String... rest)
+  {
+    return rest;
+  }
 
-	public String[] method(String s, String ... rest)
-	{
-		return rest;
-	}
+  public VarArgs()
+  {
+  }
+
+  public VarArgs(String s, Object... rest)
+  {
+    this.rest = rest;
+  }
+
+  public String[] method(String s, String... rest)
+  {
+    return rest;
+  }
 }

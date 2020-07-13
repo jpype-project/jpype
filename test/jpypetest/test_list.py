@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2019 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,13 +12,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#   See NOTICE file for details.
+#
 # *****************************************************************************
 import jpype
 import common
 
 
 class JListTestCase(common.JPypeTestCase):
-    """ Test for methods of java.lang.Map 
+    """ Test for methods of java.lang.Map
 
     def __getitem__(self, ndx):
         if isinstance(ndx, slice):

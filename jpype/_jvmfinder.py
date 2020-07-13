@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2013 Thomas Calmant
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,7 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#   See NOTICE file for details.
+#
 # *****************************************************************************
+#   Copyright 2013 Thomas Calmant
 
 import os
 import sys

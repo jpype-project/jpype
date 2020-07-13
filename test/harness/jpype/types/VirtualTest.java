@@ -1,14 +1,32 @@
+/* ****************************************************************************
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  See NOTICE file for details.
+**************************************************************************** */
 package jpype.types;
 
 public class VirtualTest
 {
+
   public interface ObjectSupplier
   {
+
     Object get();
   }
 
   public static class ClassObjectSupplier implements ObjectSupplier
   {
+
     public Object get()
     {
       return "implements";
@@ -17,6 +35,7 @@ public class VirtualTest
 
   public static class ClassObjectSupplier2 extends ClassObjectSupplier
   {
+
     public Object get()
     {
       return "extends";
@@ -60,15 +79,16 @@ public class VirtualTest
 //  {
 //    return () -> "lambda";
 //  }
-
 //<editor-fold desc="int" defaultstate="collapsed">
   public interface IntegerSupplier
   {
+
     int get();
   }
 
   public static class ClassIntegerSupplier implements IntegerSupplier
   {
+
     public int get()
     {
       return 1;
@@ -77,6 +97,7 @@ public class VirtualTest
 
   public static class ClassIntegerSupplier2 extends ClassIntegerSupplier
   {
+
     public int get()
     {
       return 2;
@@ -116,13 +137,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="short" defaultstate="collapsed">
+
   public interface ShortSupplier
   {
+
     short get();
   }
 
   public static class ClassShortSupplier implements ShortSupplier
   {
+
     public short get()
     {
       return 1;
@@ -131,6 +155,7 @@ public class VirtualTest
 
   public static class ClassShortSupplier2 extends ClassShortSupplier
   {
+
     public short get()
     {
       return 2;
@@ -170,13 +195,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="long" defaultstate="collapsed">
+
   public interface LongSupplier
   {
+
     long get();
   }
 
   public static class ClassLongSupplier implements LongSupplier
   {
+
     public long get()
     {
       return 1;
@@ -185,6 +213,7 @@ public class VirtualTest
 
   public static class ClassLongSupplier2 extends ClassLongSupplier
   {
+
     public long get()
     {
       return 2;
@@ -224,13 +253,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="float" defaultstate="collapsed">
+
   public interface FloatSupplier
   {
+
     float get();
   }
 
   public static class ClassFloatSupplier implements FloatSupplier
   {
+
     public float get()
     {
       return 1;
@@ -239,6 +271,7 @@ public class VirtualTest
 
   public static class ClassFloatSupplier2 extends ClassFloatSupplier
   {
+
     public float get()
     {
       return 2;
@@ -278,13 +311,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="double" defaultstate="collapsed">
+
   public interface DoubleSupplier
   {
+
     double get();
   }
 
   public static class ClassDoubleSupplier implements DoubleSupplier
   {
+
     public double get()
     {
       return 1;
@@ -293,6 +329,7 @@ public class VirtualTest
 
   public static class ClassDoubleSupplier2 extends ClassDoubleSupplier
   {
+
     public double get()
     {
       return 2;
@@ -332,13 +369,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="byte" defaultstate="collapsed">
+
   public interface ByteSupplier
   {
+
     byte get();
   }
 
   public static class ClassByteSupplier implements ByteSupplier
   {
+
     public byte get()
     {
       return 1;
@@ -347,6 +387,7 @@ public class VirtualTest
 
   public static class ClassByteSupplier2 extends ClassByteSupplier
   {
+
     public byte get()
     {
       return 2;
@@ -386,13 +427,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="char" defaultstate="collapsed">
+
   public interface CharSupplier
   {
+
     char get();
   }
 
   public static class ClassCharSupplier implements CharSupplier
   {
+
     public char get()
     {
       return '1';
@@ -401,6 +445,7 @@ public class VirtualTest
 
   public static class ClassCharSupplier2 extends ClassCharSupplier
   {
+
     public char get()
     {
       return '2';
@@ -440,13 +485,16 @@ public class VirtualTest
   }
 //</editor-fold>
 //<editor-fold desc="boolean" defaultstate="collapsed">
+
   public interface BooleanSupplier
   {
+
     boolean get();
   }
 
   public static class ClassBooleanSupplier implements BooleanSupplier
   {
+
     public boolean get()
     {
       return true;
@@ -455,6 +503,7 @@ public class VirtualTest
 
   public static class ClassBooleanSupplier2 extends ClassBooleanSupplier
   {
+
     public boolean get()
     {
       return false;
@@ -495,13 +544,16 @@ public class VirtualTest
 //</editor-fold>
 //<editor-fold desc="void" defaultstate="collapsed">
 // Yes, we have to do this one as well. All paths need exercise.
+
   public interface VoidSupplier
   {
+
     void get();
   }
 
   public static class ClassVoidSupplier implements VoidSupplier
   {
+
     public void get()
     {
       return;
@@ -510,6 +562,7 @@ public class VirtualTest
 
   public static class ClassVoidSupplier2 extends ClassVoidSupplier
   {
+
     public void get()
     {
       return;

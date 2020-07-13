@@ -33,6 +33,7 @@ access to the entirety of CPython and Java libraries.
 :Version: |PypiVersion|_ |Conda|_
 
 The work on this project began on `Sourceforge <http://sourceforge.net/projects/jpype/>`__.
+LLNL-CODE- 812311
 
 
 .. |alerts| image:: https://img.shields.io/lgtm/alerts/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18
@@ -62,4 +63,4 @@ The work on this project began on `Sourceforge <http://sourceforge.net/projects/
 .. _Apache 2 License: https://github.com/jpype-project/jpype/blob/master/LICENSE
 .. _Python Docs: http://jpype.readthedocs.org/en/latest/
 
-
+SPDX-License-Identifier: Apache-2.0
