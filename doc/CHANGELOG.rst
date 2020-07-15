@@ -4,7 +4,8 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 - **Next version - unreleased**
-- **0.7.6_dev0 - 2020-05-10**
+- **1.0.1_dev0 - 2020-07-14**
+- **1.0.0 - 2020-07-12**
 
   - ``JChar`` is supported as a return type, thus rather than returning a
     string where a ``JChar`` is expected.  For compatiblity ``JChar`` is
