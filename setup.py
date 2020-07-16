@@ -28,7 +28,7 @@ install_requires = ['typing_extensions ; python_version< "3.8"']
 
 setup(
     name='JPype1',
-    version='1.0.1_dev0',
+    version='1.0.1',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
