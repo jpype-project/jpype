@@ -324,7 +324,7 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		return string(buffer, size);
 	}
 	// GCOVR_EXCL_START
-	JP_RAISE(PyExc_RuntimeError, "Failed to convert to string.");
+	JP_RAISE(PyExc_TypeError, "Failed to convert to string.");
 	return string();
 	JP_TRACE_OUT;
 	// GCOVR_EXCL_STOP

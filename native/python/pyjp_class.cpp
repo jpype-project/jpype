@@ -921,6 +921,19 @@ int PyJPClass_setDoc(PyJPClass *self, PyObject *obj, void *ctxt)
 	JP_PY_CATCH(-1);
 }
 
+PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPClass_customize");
+	PyObject *name = NULL;
+	PyObject *value = NULL;
+	if (!PyArg_ParseTuple(args, "OO", &name, &value))
+		return NULL;
+	if (PyType_Type.tp_setattro((PyObject*) self, name, value) == -1)
+		return NULL;
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
@@ -930,6 +943,7 @@ static PyMethodDef classMethods[] = {
 	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
 	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
 	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
+	{"_customize",        (PyCFunction) PyJPClass_customize, METH_VARARGS, ""},
 	{NULL},
 };
 

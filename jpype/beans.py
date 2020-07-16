@@ -96,4 +96,4 @@ class _BeansCustomizer(object):
                 continue
 
             # Add the property
-            type.__setattr__(self, attr_name, property(getter, setter))
+            self._customize(attr_name, property(getter, setter))
