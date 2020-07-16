@@ -44,7 +44,7 @@ class Tracer(object):
 
     @staticmethod
     def attach(obj):
-        object.__setattr__(obj, "_trace", Tracer())
+        obj.__setattr__("_trace", Tracer())
 
 
 # This test finds reference counting leak by attaching an
