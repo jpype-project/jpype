@@ -5,6 +5,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 - **Next version - unreleased**
 - **1.0.1_dev0 - 2020-07-14**
+
+  - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
+    use of ``__setattr__`` for object and type, preventing it from being used
+    to alter derived classes.  Also the checking for errors was delegated from
+    the ``__setattr__`` method so exception types on some sanity checks 
+    needed to be updated accordingly.
+
 - **1.0.0 - 2020-07-12**
 
   - ``JChar`` is supported as a return type, thus rather than returning a
