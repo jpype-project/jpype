@@ -408,6 +408,18 @@ of the use of Python many be hard to realize.  In addition, the documentation
 is a bit underwhelming thus it is difficult to see how capable it is from the
 limited examples.
 
+`PyJnius <https://github.com/kivy/pyjnius>`_
+--------------------------------------------
+
+PyJnius is another Python to Java only bridge.  Syntax is somewhat similar to
+JPype in that classes can be loaded in and then have mostly Java native syntax.
+Like JPype, it provides an ability to customize Java classes so that they
+appear more like native classes.  PyJnius seems to be focused on Android.  It
+is written using Cython .pxi files for speed.  It does not include a method to
+represent primitive arrays, thus Python list must be converted whenever an
+array needs to be passed as an argument or a return.  This seems pretty
+prohibitive for scientific code.  PyJnius appears is still in active development.
+
 `Javabridge <https://github.com/CellProfiler/python-javabridge/>`_
 ------------------------------------------------------------------
 
