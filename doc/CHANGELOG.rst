@@ -3,7 +3,8 @@ Changelog
 
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
-- **1.0.1 - 2020-07-16**
+- **- **Next version - unreleased**
+- **1.0.2_dev0 - 2020-07-16** - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
     use of ``__setattr__`` for object and type, preventing it from being used
