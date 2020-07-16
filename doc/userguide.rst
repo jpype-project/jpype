@@ -418,7 +418,7 @@ appear more like native classes.  PyJnius seems to be focused on Android.  It
 is written using Cython .pxi files for speed.  It does not include a method to
 represent primitive arrays, thus Python list must be converted whenever an
 array needs to be passed as an argument or a return.  This seems pretty
-prohibitive for scientific code.  PyJnius to still be in active development.
+prohibitive for scientific code.  PyJnius appears is still in active development.
 
 `Javabridge <https://github.com/CellProfiler/python-javabridge/>`_
 ------------------------------------------------------------------
