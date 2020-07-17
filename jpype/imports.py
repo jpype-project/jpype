@@ -91,7 +91,7 @@ def _JExceptionHandler(pkg, name, ex):
         missing = str(ex).replace('/', '.')
         raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)) from ex
-    raise ImportException("Unable to import '%s'" % javaname) from ex
+    raise ImportError("Unable to import '%s'" % javaname) from ex
 
 
 def registerImportCustomizer(customizer):
