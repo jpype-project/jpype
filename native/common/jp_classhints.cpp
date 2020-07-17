@@ -56,17 +56,21 @@ jvalue JPMatch::convert()
 	return conversion->convert(*this);
 }
 
-JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args)
-: argument(args.size())
+JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool callInstance)
+: m_Arguments(args.size())
 {
-	type = JPMatch::_none;
-	isVarIndirect = false;
-	overload = 0;
-	offset = 0;
-	skip = 0;
+	m_Type = JPMatch::_none;
+	m_IsVarIndirect = false;
+	m_Overload = 0;
+	m_Offset = 0;
+	m_Skip = 0;
+	m_Cache = callInstance ? 0 : 1000;
 	for (size_t i = 0; i < args.size(); ++i)
 	{
-		argument[i] = JPMatch(&frame, args[i]);
+		PyObject *arg = args[i];
+		m_Arguments[i] = JPMatch(&frame, arg);
+		m_Cache *= 0x10523C01;
+		m_Cache += (long) (Py_TYPE(arg));
 	}
 }
 

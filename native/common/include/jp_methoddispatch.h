@@ -89,6 +89,7 @@ private:
 	string        m_Name;
 	JPMethodList  m_Overloads;
 	jlong         m_Modifiers;
+	JPMethodCache m_LastCache;
 } ;
 
 #endif // _JPMETHODDISPATCH_H_

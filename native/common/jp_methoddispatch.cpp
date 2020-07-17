@@ -27,6 +27,7 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 	m_Class = clazz;
 	m_Overloads = overloads;
 	m_Modifiers = modifiers;
+	m_LastCache.m_Cache = -1;
 }
 
 JPMethodDispatch::~JPMethodDispatch()
@@ -45,38 +46,54 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
-	JPMethodMatch match(frame, arg);
+	JPMethodMatch match = bestMatch;
+
+	// Check cache to see if we already resolved this
+	if (m_LastCache.m_Cache == match.m_Cache)
+	{
+		bestMatch.m_Overload = m_LastCache.m_Overload;
+		bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
+		if (bestMatch.m_Type > JPMatch::_explicit)
+			return true;
+	}
+
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
 
+		// This would be hidden as we have a match with a more specific overload
+		// already and it can't be exact.
+		if (bestMatch.m_Type == JPMatch::_implicit && bestMatch.m_Overload->checkMoreSpecificThan(current))
+			continue;
+
 		JP_TRACE("Trying to match", current->toString());
 		current->matches(frame, match, callInstance, arg);
 
-		JP_TRACE("  match ended", match.type);
-		if (match.type == JPMatch::_exact)
+		JP_TRACE("  match ended", match.m_Type);
+		if (match.m_Type == JPMatch::_exact)
 		{
 			bestMatch = match;
+			m_LastCache = match;
 			return true;
 		}
-		if (match.type < JPMatch::_implicit)
+		if (match.m_Type < JPMatch::_implicit)
 			continue;
 
 		// If this is the first match then make it the best.
-		if (bestMatch.overload == 0)
+		if (bestMatch.m_Overload == 0)
 		{
 			bestMatch = match;
 			continue;
 		}
 
 		// If the best does not hide the other, than we have ambiguity.
-		if (!(bestMatch.overload->checkMoreSpecificThan(current)))
+		if (!(bestMatch.m_Overload->checkMoreSpecificThan(current)))
 		{
 			// See if we can match based on instance
 			if (callInstance == !current->isStatic())
 			{
 				// if current matches instance and best does not switch
-				if (callInstance == bestMatch.overload->isStatic())
+				if (callInstance == bestMatch.m_Overload->isStatic())
 				{
 					bestMatch = match;
 					continue;
@@ -84,7 +101,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			} else
 			{
 				// if best matches instance and current does not, no ambiguity
-				if (callInstance == !bestMatch.overload->isStatic())
+				if (callInstance == !bestMatch.m_Overload->isStatic())
 				{
 					continue;
 				}
@@ -100,7 +117,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	{
 		if (!raise)
 			return false;
-		ambiguous.push_back(bestMatch.overload);
+		ambiguous.push_back(bestMatch.m_Overload);
 
 		// We have two possible overloads so we declare an error
 		std::stringstream ss;
@@ -125,7 +142,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	}
 
 	// If we can't find a matching overload throw an error.
-	if (!bestMatch.overload)
+	if (!bestMatch.m_Overload)
 	{
 		if (!raise)
 			return false;
@@ -153,7 +170,13 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		JP_RAISE(PyExc_TypeError, ss.str());
 	}
 
-	JP_TRACE("Best match", bestMatch.overload->toString());
+	// Set up a cache to bypass repeated calls.
+	if (bestMatch.m_Type == JPMatch::_implicit)
+	{
+		m_LastCache = bestMatch;
+	}
+
+	JP_TRACE("Best match", bestMatch.m_Overload->toString());
 	return true;
 	JP_TRACE_OUT;
 }
@@ -161,25 +184,25 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 JPPyObject JPMethodDispatch::invoke(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
-	JPMethodMatch match(frame, args);
+	JPMethodMatch match(frame, args, instance);
 	findOverload(frame, match, args, instance, true);
-	return match.overload->invoke(frame, match, args, instance);
+	return match.m_Overload->invoke(frame, match, args, instance);
 	JP_TRACE_OUT;
 }
 
 JPValue JPMethodDispatch::invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	JP_TRACE_IN("JPMethodDispatch::invokeConstructor");
-	JPMethodMatch match(frame, args);
+	JPMethodMatch match(frame, args, false);
 	findOverload(frame, match, args, false, true);
-	return match.overload->invokeConstructor(frame, match, args);
+	return match.m_Overload->invokeConstructor(frame, match, args);
 	JP_TRACE_OUT;
 }
 
 bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
-	JPMethodMatch match(frame, args);
+	JPMethodMatch match(frame, args, instance);
 	return findOverload(frame, match, args, instance, false);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

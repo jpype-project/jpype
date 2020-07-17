@@ -85,11 +85,11 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	ensureTypeCache();
 
 	JP_TRACE_IN("JPMethod::matches");
-	methodMatch.overload = this;
-	methodMatch.offset = 0;
-	methodMatch.skip = 0;
-	methodMatch.isVarIndirect = false;
-	methodMatch.type = JPMatch::_exact;
+	methodMatch.m_Overload = this;
+	methodMatch.m_Offset = 0;
+	methodMatch.m_Skip = 0;
+	methodMatch.m_IsVarIndirect = false;
+	methodMatch.m_Type = JPMatch::_exact;
 
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
@@ -100,29 +100,30 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 	{
 		JP_TRACE("Skip this");
 		len--;
-		methodMatch.offset = 1;
+		methodMatch.m_Offset = 1;
 	}
 
 	if (callInstance || isInstance())
 	{
 		JP_TRACE("Take this");
-		methodMatch.skip = 1;
+		methodMatch.m_Skip = 1;
 	}
 
 	if (!JPModifier::isVarArgs(m_Modifiers))
 	{
+		// Bypass if length does not match
 		if (len != tlen)
 		{
 			JP_TRACE("Argument length mismatch", len, tlen);
-			return methodMatch.type = JPMatch::_none;
+			return methodMatch.m_Type = JPMatch::_none;
 		}
 	} else
 	{
 		JP_TRACE("Match vargs");
-		methodMatch.type = JPMatch::_none;
+		methodMatch.m_Type = JPMatch::_none;
 		if (len < tlen - 1)
 		{
-			return methodMatch.type;
+			return methodMatch.m_Type;
 		}
 
 		JPClass* type = m_ParameterTypes[tlen - 1];
@@ -130,49 +131,49 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		if (len == tlen)
 		{
 			// Try direct
-			size_t last = tlen - 1 - methodMatch.offset;
-			methodMatch.type = type->findJavaConversion(methodMatch.argument[last]);
-			JP_TRACE("Direct vargs", methodMatch.type);
+			size_t last = tlen - 1 - methodMatch.m_Offset;
+			methodMatch.m_Type = type->findJavaConversion(methodMatch.m_Arguments[last]);
+			JP_TRACE("Direct vargs", methodMatch.m_Type);
 		}
 
-		if (methodMatch.type < JPMatch::_implicit && len >= tlen)
+		if (methodMatch.m_Type < JPMatch::_implicit && len >= tlen)
 		{
 			// Must match the array type
-			methodMatch.type = matchVars(frame, methodMatch, arg, tlen - 1 + methodMatch.offset, type);
-			methodMatch.isVarIndirect = true;
-			JP_TRACE("Indirect vargs", methodMatch.type);
+			methodMatch.m_Type = matchVars(frame, methodMatch, arg, tlen - 1 + methodMatch.m_Offset, type);
+			methodMatch.m_IsVarIndirect = true;
+			JP_TRACE("Indirect vargs", methodMatch.m_Type);
 		} else if (len < tlen)
 		{
-			methodMatch.isVarIndirect = true;
-			methodMatch.type = JPMatch::_exact;
+			methodMatch.m_IsVarIndirect = true;
+			methodMatch.m_Type = JPMatch::_exact;
 			JP_TRACE("Empty vargs");
 		}
 		len = tlen - 1;
 
-		if (methodMatch.type < JPMatch::_implicit)
+		if (methodMatch.m_Type < JPMatch::_implicit)
 		{
-			return methodMatch.type;
+			return methodMatch.m_Type;
 		}
 	}
 
 	JP_TRACE("Match args");
 	for (size_t i = 0; i < len; i++)
 	{
-		size_t j = i + methodMatch.offset;
+		size_t j = i + methodMatch.m_Offset;
 		JPClass *type = m_ParameterTypes[i];
-		JPMatch::Type ematch = type->findJavaConversion(methodMatch.argument[j]);
+		JPMatch::Type ematch = type->findJavaConversion(methodMatch.m_Arguments[j]);
 		JP_TRACE("Result", ematch);
-		if (ematch < methodMatch.type)
+		if (ematch < methodMatch.m_Type)
 		{
-			methodMatch.type = ematch;
+			methodMatch.m_Type = ematch;
 		}
-		if (methodMatch.type < JPMatch::_implicit)
+		if (methodMatch.m_Type < JPMatch::_implicit)
 		{
-			return methodMatch.type;
+			return methodMatch.m_Type;
 		}
 	}
 
-	return methodMatch.type;
+	return methodMatch.m_Type;
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
@@ -182,22 +183,22 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE_IN("JPMethod::packArgs");
 	size_t len = arg.size();
 	size_t tlen = m_ParameterTypes.size();
-	JP_TRACE("skip", match.skip == 1);
-	JP_TRACE("offset", match.offset == 1);
+	JP_TRACE("skip", match.m_Skip == 1);
+	JP_TRACE("offset", match.m_Offset == 1);
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
-	if (match.isVarIndirect)
+	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
 		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
-		v[tlen - 1 - match.skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
+		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
 	}
 
-	JP_TRACE("Pack fixed total=", len - match.offset);
-	for (size_t i = match.skip; i < len; i++)
+	JP_TRACE("Pack fixed total=", len - match.m_Offset);
+	for (size_t i = match.m_Skip; i < len; i++)
 	{
-		v[i - match.skip] = match.argument[i].convert();
+		v[i - match.m_Skip] = match.m_Arguments[i].convert();
 	}
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
@@ -230,7 +231,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = match.argument[0].convert();
+			jvalue  v = match.m_Arguments[0].convert();
 			c = v.l;
 		} else
 		{
@@ -280,11 +281,11 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), NULL);
 	for (jsize i = 0; i < (jsize) len; ++i)
 	{
-		JPClass *cls = m_ParameterTypes[i + match.skip - match.offset];
+		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];
 		if (cls->isPrimitive())
 		{
 			JPPrimitiveType* type = (JPPrimitiveType*) cls;
-			PyObject *u = arg[i + match.skip];
+			PyObject *u = arg[i + match.m_Skip];
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
 			boxed->findJavaConversion(conv);
@@ -357,10 +358,10 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 
 	res << ") ==> ";
 
-	JPMethodMatch methodMatch(frame, args);
+	JPMethodMatch methodMatch(frame, args, false);
 	matches(frame, methodMatch, !isStatic(), args);
 	// GCOVR_EXCL_START
-	switch (methodMatch.type)
+	switch (methodMatch.m_Type)
 	{
 		case JPMatch::_none:
 			res << "NONE";
