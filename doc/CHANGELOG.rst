@@ -6,6 +6,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2_dev0 - 2020-07-16**
 
+  - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
+    in a later patch release and should not have been used.
+
 - **1.0.1 - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
