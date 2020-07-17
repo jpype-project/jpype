@@ -49,7 +49,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	JPMethodMatch match = bestMatch;
 
 	// Check cache to see if we already resolved this
-	if (m_LastCache.m_Cache == match.m_Cache)
+	if (m_LastCache.m_Cache == match.m_Cache && !m_LastCache.m_Overload->isVarArgs())
 	{
 		bestMatch.m_Overload = m_LastCache.m_Overload;
 		bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
@@ -60,11 +60,6 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
-
-		// This would be hidden as we have a match with a more specific overload
-		// already and it can't be exact.
-		if (bestMatch.m_Type == JPMatch::_implicit && bestMatch.m_Overload->checkMoreSpecificThan(current))
-			continue;
 
 		JP_TRACE("Trying to match", current->toString());
 		current->matches(frame, match, callInstance, arg);
