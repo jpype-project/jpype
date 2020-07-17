@@ -68,7 +68,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		if (match.m_Type == JPMatch::_exact)
 		{
 			bestMatch = match;
-			m_LastCache = (JPMethodCache&) match;
+			m_LastCache = (JPMethodCache&) match; // lgtm [cpp/slicing]
 			return true;
 		}
 		if (match.m_Type < JPMatch::_implicit)
@@ -168,7 +168,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	// Set up a cache to bypass repeated calls.
 	if (bestMatch.m_Type == JPMatch::_implicit)
 	{
-		m_LastCache = (JPMethodCache&) bestMatch;
+		m_LastCache = (JPMethodCache&) bestMatch; // lgtm [cpp/slicing]
 	}
 
 	JP_TRACE("Best match", bestMatch.m_Overload->toString());
