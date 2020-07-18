@@ -100,8 +100,8 @@ extern int PyJPModuleFault_check(uint32_t code);
 #define JP_FAULT_RETURN(X, Y)  if (PyJPModuleFault_check(compile_hash(X))) return Y
 #define JP_BLOCK(X)  if (PyJPModuleFault_check(compile_hash(X))==0)
 #else
-#define JP_FAULT_RETURN(X, Y)  if (false)
-#define JP_BLOCK(X)  if (true)
+#define JP_FAULT_RETURN(X, Y)  if (false) while (false)
+#define JP_BLOCK(X)  if (false) while (false)
 #endif
 
 /** Definition of commonly used template types */

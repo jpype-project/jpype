@@ -171,7 +171,7 @@ class JPConversionLong : public JPIndexConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object) && !PyIndex_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -204,7 +204,7 @@ class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;

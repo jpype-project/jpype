@@ -36,7 +36,7 @@ public:
 		return v.z;
 	}
 
-	virtual JPClass* getBoxedClass(JPContext *context) const
+	virtual JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Boolean;
 	}

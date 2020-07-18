@@ -23,7 +23,7 @@ public:
 	JPVoidType();
 	virtual ~JPVoidType();
 
-	virtual JPClass* getBoxedClass(JPContext *context) const
+	virtual JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Void;
 	}
@@ -59,7 +59,7 @@ public:
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
 	virtual PyObject *newMultiArray(JPJavaFrame &frame,
-			JPPyBuffer& view, int subs, int base, jobject dims);
+			JPPyBuffer& view, int subs, int base, jobject dims) override;
 } ;
 
 #endif // _JP_VOID_TYPE_H_

@@ -34,7 +34,7 @@ public:
 	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
 	virtual void getConversionInfo(JPConversionInfo &info) override;
 
-	JPValue newInstance(JPJavaFrame& frame, int length);
+	JPValue newArrayInstance(JPJavaFrame& frame, int length);
 
 	/**
 	 * Create a new java array containing a set of items take from

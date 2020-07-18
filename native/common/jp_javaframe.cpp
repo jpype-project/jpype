@@ -30,7 +30,7 @@ static void jpype_frame_check(int popped)
 }
 #define JP_FRAME_CHECK() jpype_frame_check(m_Popped)
 #else
-#define JP_FRAME_CHECK() if (true)
+#define JP_FRAME_CHECK() if (false) while (false)
 #endif
 
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int size, bool outer)

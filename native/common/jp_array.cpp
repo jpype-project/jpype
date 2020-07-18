@@ -133,7 +133,7 @@ JPPyObject JPArray::getItem(jsize ndx)
 
 jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 {
-	JPValue value = m_Class->newInstance(frame, m_Length);
+	JPValue value = m_Class->newArrayInstance(frame, m_Length);
 	JPClass* compType = m_Class->getComponentType();
 	jarray out = (jarray) value.getValue().l;
 	compType->setArrayRange(frame, out, 0, m_Length, 1, obj);

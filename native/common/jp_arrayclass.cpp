@@ -89,7 +89,7 @@ jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& r
 	JP_TRACE_OUT;
 }
 
-JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
+JPValue JPArrayClass::newArrayInstance(JPJavaFrame& frame, int length)
 {
 	jvalue v;
 	v.l = m_ComponentType->newArrayInstance(frame, length);

@@ -90,7 +90,7 @@ public:
 		return JPMatch::_implicit; // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_float->getHost());

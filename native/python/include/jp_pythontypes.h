@@ -359,7 +359,6 @@ public:
 	~JPPyCallRelease();
 private:
 	void* m_State1;
-	void* m_State2;
 } ;
 
 class JPPyBuffer

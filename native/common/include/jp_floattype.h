@@ -37,7 +37,7 @@ public:
 		return v.f;
 	}
 
-	virtual JPClass* getBoxedClass(JPContext *context) const
+	virtual JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Float;
 	}
