@@ -14,6 +14,7 @@ class JPypeRecipe(CppCompiledComponentsPythonRecipe):
     patches = []
 
     call_hostpython_via_targetpython = False
+    ignore_setup_py = False
 
     # def postbuild_arch(self, arch):
     #      super().postbuild_arch(arch)

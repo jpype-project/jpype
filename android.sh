@@ -1,5 +1,5 @@
 #!/bin/sh
-export PY4A_jpype_DIR=`pwd`
+export P4A_jpype_DIR=`pwd`
 p4a clean-recipe-build jpype --local-recipes native/buildozer/
 time p4a apk --requirements=jpype \
     --ndk-dir=$HOME/.buildozer/android/platform/android-ndk-r19c \
