@@ -53,7 +53,7 @@ class JPConversionJShort : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
 		if (value == NULL)
