@@ -3,7 +3,9 @@ Makefile*
 *~
 /test/classes/
 /test/jars/
-*/build*/
+build/
+.buildozer
+bin
 native/*.jar
 
 # Byte-compiled / optimized / DLL files
