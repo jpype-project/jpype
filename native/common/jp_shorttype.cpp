@@ -123,7 +123,7 @@ void JPShortType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_short->getHost());
 }
 
-jarray JPShortType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPShortType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewShortArray(sz);
 }

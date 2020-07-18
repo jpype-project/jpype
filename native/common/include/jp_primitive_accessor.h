@@ -98,11 +98,11 @@ template <class type_t> PyObject *convertMultiArray(
 	}
 
 	// Reserve space for array.
-	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayInstance(frame, subs);
+	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
 	std::vector<Py_ssize_t> indices(view.ndim);
 	int u = view.ndim - 1;
 	int k = 0;
-	jarray a0 = cls->newArrayInstance(frame, base);
+	jarray a0 = cls->newArrayOf(frame, base);
 	frame.SetObjectArrayElement(contents, k++, a0);
 	jboolean isCopy;
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
@@ -141,7 +141,7 @@ template <class type_t> PyObject *convertMultiArray(
 			if (j == u)
 				break;
 
-			a0 = cls->newArrayInstance(frame, base);
+			a0 = cls->newArrayOf(frame, base);
 			frame.SetObjectArrayElement(contents, k++, a0);
 			mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
 			JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);

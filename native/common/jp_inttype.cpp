@@ -126,7 +126,7 @@ void JPIntType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
-jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPIntType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewIntArray(sz);
 }

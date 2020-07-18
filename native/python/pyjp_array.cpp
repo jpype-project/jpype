@@ -85,7 +85,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		jlong length =  PySequence_Size(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
-		JPValue newArray = arrayClass->newArrayInstance(frame, (int) length);
+		JPValue newArray = arrayClass->newArray(frame, (int) length);
 		((PyJPArray*) self)->m_Array = new JPArray(newArray);
 		((PyJPArray*) self)->m_Array->setRange(0, (jsize) length, 1, v);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
@@ -98,7 +98,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		long long length = PyLong_AsLongLong(v);
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
-		JPValue newArray = arrayClass->newArrayInstance(frame, (int) length);
+		JPValue newArray = arrayClass->newArray(frame, (int) length);
 		((PyJPArray*) self)->m_Array = new JPArray(newArray);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;

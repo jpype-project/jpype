@@ -811,7 +811,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;
-	jintArray jdims = (jintArray) context->_int->newArrayInstance(frame, view.ndim);
+	jintArray jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
 	if (view.shape != NULL)
 	{
 		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,

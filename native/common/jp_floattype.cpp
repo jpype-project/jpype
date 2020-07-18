@@ -129,7 +129,7 @@ void JPFloatType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_float->getHost());
 }
 
-jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPFloatType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewFloatArray(sz);
 }

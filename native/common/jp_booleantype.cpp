@@ -169,7 +169,7 @@ void JPBooleanType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 
-jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPBooleanType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewBooleanArray(sz);
 }

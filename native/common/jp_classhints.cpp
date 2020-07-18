@@ -487,7 +487,7 @@ public:
 		JPPySequence seq = JPPySequence::use(match.object);
 		jsize length = (jsize) seq.size();
 
-		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);
+		jarray array = acls->getComponentType()->newArrayOf(frame, (jsize) length);
 		for (jsize i = 0; i < length; i++)
 		{
 			JPPyObject item = seq[i];

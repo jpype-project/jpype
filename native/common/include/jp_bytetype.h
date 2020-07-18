@@ -55,7 +55,7 @@ public:
 	virtual JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
-	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
+	virtual jarray      newArrayOf(JPJavaFrame& frame, jsize size) override;
 	virtual void        setArrayRange(JPJavaFrame& frame, jarray, jsize start, jsize length, jsize step, PyObject*) override;
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
