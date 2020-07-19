@@ -174,7 +174,7 @@ class _JImportLoader:
         # Use the parent module to simplify name mangling
         if not parts[1] and _jpype.isPackage(parts[2]):
             ms = _ModuleSpec(name, self)
-            ms._jname = jname
+            ms._jname = name
             return ms
 
         if not parts[1] and not _jpype.isPackage(parts[0]):
