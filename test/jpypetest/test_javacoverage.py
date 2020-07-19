@@ -42,13 +42,6 @@ class JavaCoverageTestCase(common.JPypeTestCase):
             JArray(JObject)([None, None])), None)
         self.assertEqual(self.inst.getExcValue(None), 0)
 
-    def testRefQueue(self):
-        refqueue = self.inst.getReferenceQueue()
-        self.assertIsInstance(refqueue.getQueueSize(), int)
-        self.assertTrue(refqueue.isRunning())
-        cls = JClass('org.jpype.ref.JPypeReferenceQueue')
-        cls()
-
     def testReference(self):
         JPypeReference = JClass('org.jpype.ref.JPypeReference')
         u = JPypeReference(None, None, 0, 0)
@@ -62,9 +55,8 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         self.assertEqual(cls.get(cls.decode(1171)), 1171)
 
     def testTypeFactory(self):
-        bl = self.inst.getBootLoader()
-        TypeFactory = JClass("org.jpype.manager.TypeFactory", bl, True)
-        TypeManager = JClass("org.jpype.manager.TypeManager", bl, True)
+        TypeFactory = JClass("org.jpype.manager.TypeFactory")
+        TypeManager = JClass("org.jpype.manager.TypeManager")
         @JImplements(TypeFactory)
         class TF(object):
             def __init__(self):

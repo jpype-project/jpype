@@ -210,7 +210,7 @@ def startJVM(*args, **kwargs):
     try:
         _jpype.startup(jvmpath, tuple(args),
                        ignoreUnrecognized, convertStrings)
-        _JVM_started = True
+        initializeResources()
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
@@ -222,6 +222,10 @@ def startJVM(*args, **kwargs):
                     jvmpath, version)) from ex
         raise
 
+
+def initializeResources():
+    global _JVM_started
+    _JVM_started = True
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
     _jpype._java_lang_Throwable = _jpype.JClass("java.lang.Throwable")

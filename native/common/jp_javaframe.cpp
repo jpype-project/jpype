@@ -15,6 +15,7 @@
  *****************************************************************************/
 #include <Python.h>
 #include "jpype.h"
+#include "jp_reference_queue.h"
 
 /*****************************************************************************/
 // Local frames represent the JNIEnv for memory handling all java
@@ -573,6 +574,12 @@ jboolean JPJavaFrame::CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jme
 {
 	JAVA_RETURN(jboolean, "JPJavaFrame::CallNonvirtualBooleanMethodA",
 			m_Env->CallNonvirtualBooleanMethodA(obj, claz, mid, val));
+}
+
+jclass JPJavaFrame::GetObjectClass(jobject obj)
+{
+	JAVA_RETURN_OBJ(jclass, "JPJavaFrame::GetObjectClass",
+			m_Env->GetObjectClass(obj));
 }
 
 jobject JPJavaFrame::GetStaticObjectField(jclass clazz, jfieldID fid)
@@ -1270,4 +1277,14 @@ void JPJavaFrame::newWrapper(JPClass* cls)
 	jv.j = (jlong) cls;
 	CallVoidMethodA(m_Context->getJavaContext(),
 			m_Context->m_Context_NewWrapperID, &jv);
+}
+
+void JPJavaFrame::registerRef(jobject obj, PyObject* hostRef)
+{
+	JPReferenceQueue::registerRef(*this, obj, hostRef);
+}
+
+void JPJavaFrame::registerRef(jobject obj, void* ref, JCleanupHook cleanup)
+{
+	JPReferenceQueue::registerRef(*this, obj, ref, cleanup);
 }

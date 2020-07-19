@@ -151,14 +151,13 @@ class JPMethodDispatch;
 class JPField;
 
 // Services
-class JPTypeFactory;
 class JPTypeManager;
 class JPClassLoader;
-class JPReferenceQueue;
 class JPContext;
 class JPBuffer;
 class JPPyObject;
 
+extern "C" typedef void (*JCleanupHook)(void*) ;
 extern "C" struct JPConversionInfo;
 
 typedef vector<JPClass*> JPClassList;

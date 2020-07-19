@@ -344,7 +344,7 @@ public:
 	/* Release the lock. */
 	~JPPyCallAcquire();
 private:
-	void* m_State;
+	long m_State;
 } ;
 
 /** Used when leaving python to an external potentially

@@ -57,6 +57,11 @@ public:
 		}
 	}
 
+	jsize size()
+	{
+		return _frame.GetArrayLength(_array);
+	}
+
 	ptr_t get()
 	{
 		return _elem;

@@ -255,16 +255,21 @@ void JPypeException::convertPythonToJava(JPContext* context)
 		}
 	}
 
+        if (context->m_Context_CreateExceptionID == NULL)
+        {
+            frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
+            return;
+        }
+
+
 	// Otherwise
 	jvalue v[2];
 	v[0].j = (jlong) eframe.m_ExceptionClass.get();
 	v[1].j = (jlong) eframe.m_ExceptionValue.get();
 	th = (jthrowable) frame.CallObjectMethodA(context->getJavaContext(),
 			context->m_Context_CreateExceptionID, v);
-	context->getReferenceQueue()->registerRef((jobject) th,
-			eframe.m_ExceptionClass.get());
-	context->getReferenceQueue()->registerRef((jobject) th,
-			eframe.m_ExceptionValue.get());
+	frame.registerRef((jobject) th, eframe.m_ExceptionClass.get());
+	frame.registerRef((jobject) th, eframe.m_ExceptionValue.get());
 	eframe.clear();
 	frame.Throw(th);
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE

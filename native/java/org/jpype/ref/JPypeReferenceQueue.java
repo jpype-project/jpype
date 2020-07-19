@@ -32,24 +32,31 @@ import java.lang.ref.ReferenceQueue;
 final public class JPypeReferenceQueue extends ReferenceQueue
 {
 
-  public long context = 0;
+  private final static JPypeReferenceQueue INSTANCE = new JPypeReferenceQueue();
   private JPypeReferenceSet hostReferences;
   private boolean isStopped = false;
   private Thread queueThread;
   private Object queueStopMutex = new Object();
-  PhantomReference sentinel = null;
+  private PhantomReference sentinel = null;
 
-  // This is required for register natives
-  public JPypeReferenceQueue()
+  public static JPypeReferenceQueue getInstance()
   {
+    return INSTANCE;
   }
 
-  public JPypeReferenceQueue(long context)
+  private JPypeReferenceQueue()
   {
     super();
-    this.context = context;
-    this.hostReferences = new JPypeReferenceSet(context);
+    this.hostReferences = new JPypeReferenceSet();
     addSentinel();
+    JPypeReferenceNative.removeHostReference(0, 0);
+    try
+    {
+      JPypeReferenceNative.init(this, getClass().getDeclaredMethod("registerRef", Object.class, Long.TYPE, Long.TYPE));
+    } catch (NoSuchMethodException | SecurityException ex)
+    {
+      throw new RuntimeException(ex);
+    }
   }
 
   /**
@@ -69,7 +76,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
       return;
     if (isStopped)
     {
-      removeHostReference(context, host, cleanup);
+      JPypeReferenceNative.removeHostReference(host, cleanup);
     } else
     {
       JPypeReference ref = new JPypeReference(this, javaObject, host, cleanup);
@@ -139,16 +146,6 @@ final public class JPypeReferenceQueue extends ReferenceQueue
 
 //<editor-fold desc="internal" defaultstate="collapsed">
   /**
-   * Native hook to delete a native resource.
-   *
-   * @param host is the address of memory in C.
-   * @param cleanup is the address the function to cleanup the memory.
-   */
-  static native void removeHostReference(long context, long host, long cleanup);
-
-  static native void wake(long context);
-
-  /**
    * Thread to monitor the queue and delete resources.
    */
   private class Worker implements Runnable
@@ -167,7 +164,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
           if (ref == sentinel)
           {
             addSentinel();
-            wake(context);
+            JPypeReferenceNative.wake();
             continue;
           }
           if (ref != null)
@@ -175,11 +172,10 @@ final public class JPypeReferenceQueue extends ReferenceQueue
             long hostRef = ref.hostReference;
             long cleanup = ref.cleanup;
             hostReferences.remove(ref);
-            removeHostReference(context, hostRef, cleanup);
+            JPypeReferenceNative.removeHostReference(hostRef, cleanup);
           }
         } catch (InterruptedException ex)
         {
-
           // don't know why ... don't really care ...
         }
       }
