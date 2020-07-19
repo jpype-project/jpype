@@ -21,6 +21,7 @@ import setupext
 import os
 import sys
 import sysconfig
+import distutils.log
 
 # This handles all of the work to make our platform specific extension options.
 
@@ -41,19 +42,21 @@ def Platform(include_dirs=[], sources=[]):
         # check if jni.h can be found
         for d in platform_specific['include_dirs']:
             if os.path.exists(os.path.join(str(d), 'jni.h')):
-                print("Found native jni.h at %s" % d)
+                distutils.log.info("Found native jni.h at %s" % d)
                 found_jni = True
                 break
 
             if not found_jni:
-                warnings.warn('Falling back to provided JNI headers, since your provided'
-                              ' JAVA_HOME "%s" does not provide jni.h' % java_home)
+                distutils.log.warn('Falling back to provided JNI headers, since your provided'
+                                   ' JAVA_HOME "%s" does not provide jni.h' % java_home)
 
     if not found_jni:
         platform_specific['include_dirs'] += [fallback_jni]
 
     platform_specific['extra_link_args'] = []
+    distutils.log.info("Configure platform to", sys.platform)
     if sys.platform == 'win32':
+        distutils.log.info("Add windows settings")
         platform_specific['libraries'] = ['Advapi32']
         platform_specific['define_macros'] = [('WIN32', 1)]
         if sys.version > '3':
@@ -65,32 +68,37 @@ def Platform(include_dirs=[], sources=[]):
         jni_md_platform = 'win32'
 
     elif sys.platform == 'darwin':
+        distutils.log.info("Add darwin settings")
         platform_specific['libraries'] = ['dl']
         platform_specific['define_macros'] = [('MACOSX', 1)]
         platform_specific['extra_compile_args'] = ['-g0', '-std=c++11']
         jni_md_platform = 'darwin'
 
     elif sys.platform.startswith('linux'):
+        distutils.log.info("Add linux settings")
         platform_specific['libraries'] = ['dl']
         platform_specific['extra_compile_args'] = ['-g0', '-std=c++11']
         jni_md_platform = 'linux'
 
     elif sys.platform.startswith('aix7'):
+        distutils.log.info("Add aix settings")
         platform_specific['libraries'] = ['dl']
         platform_specific['extra_compile_args'] = ['-g3', '-std=c++11']
         jni_md_platform = 'aix7'
 
     elif sys.platform.startswith('freebsd'):
+        distutils.log.info("Add freebsd settings")
         jni_md_platform = 'freebsd'
 
     else:
         jni_md_platform = None
-        warnings.warn("Your platform %s is not being handled explicitly."
-                      " It may work or not!" % sys.platform, UserWarning)
+        distutils.log.warn("Your platform %s is not being handled explicitly."
+                           " It may work or not!" % sys.platform, UserWarning)
 
     platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
+        distutils.log.info("Add JNI directory %s" % os.path.join(java_home, 'include', jni_md_platform))
         platform_specific['include_dirs'] += \
             [os.path.join(java_home, 'include', jni_md_platform)]
     return platform_specific
