@@ -40,7 +40,7 @@ def Platform(include_dirs=[], sources=[]):
 
         # check if jni.h can be found
         for d in platform_specific['include_dirs']:
-            if os.path.exists(os.path.join(d, 'jni.h')):
+            if os.path.exists(os.path.join(str(d), 'jni.h')):
                 print("Found native jni.h at %s" % d)
                 found_jni = True
                 break

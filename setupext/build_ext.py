@@ -27,6 +27,7 @@ from distutils.dir_util import copy_tree
 import glob
 import re
 import shlex
+import shutil
 import sysconfig
 
 
@@ -302,7 +303,7 @@ class BuildExtCommand(build_ext):
                 jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
         except KeyError:
             pass
-        # Try to use the cach if we are not requested build
+        # Try to use the cache if we are not requested build
         if not java:
             src = os.path.join('native', 'jars')
             dest = os.path.join('build', 'lib')
@@ -337,6 +338,16 @@ class BuildExtCommand(build_ext):
             os.makedirs("build/classes", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
+            try:
+                for file in glob.iglob("native/java/**/*.*", recursive=True):
+                    if file.endswith(".java") or os.path.isdir(file):
+                        continue
+                    p = os.path.join(build_dir, os.path.relpath(file, "native/java"))
+                    print("Copy file", file, p)
+                    shutil.copyfile(file, p)
+            except Exception as ex:
+                print("FAIL", ex)
+                pass
             cmd3 = shlex.split(
                 '%s cvf %s -C %s .' % (jar, jarFile, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
