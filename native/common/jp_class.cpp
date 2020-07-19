@@ -125,7 +125,7 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 	return frame.findClassByName(ss.str());
 }
 
-jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);
 }

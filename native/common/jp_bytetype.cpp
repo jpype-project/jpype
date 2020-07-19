@@ -101,7 +101,7 @@ void JPByteType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
-jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPByteType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewByteArray(sz);
 }

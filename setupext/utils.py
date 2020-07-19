@@ -18,6 +18,7 @@
 # *****************************************************************************
 import os
 import codecs
+import glob
 
 
 def read_utf8(path, *parts):
@@ -25,10 +26,9 @@ def read_utf8(path, *parts):
     return codecs.open(filename, encoding='utf-8').read()
 
 
-def find_sources():
+def find_sources(roots=[]):
     cpp_files = []
-    for dirpath, dirnames, filenames in os.walk(os.path.join('native')):
-        for filename in filenames:
-            if filename.endswith('.cpp') or filename.endswith('.c'):
-                cpp_files.append(os.path.join(dirpath, filename))
+    for root in roots:
+        for filename in glob.iglob(str(root)):
+            cpp_files.append(filename)
     return cpp_files

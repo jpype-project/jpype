@@ -95,7 +95,7 @@ class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
-	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -112,7 +112,7 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
@@ -144,7 +144,7 @@ void JPCharType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
 }
 
-jarray JPCharType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPCharType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewCharArray(sz);
 }

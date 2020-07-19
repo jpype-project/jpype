@@ -47,9 +47,10 @@ public:
 
 private:
 	JPContext* m_Context;
+	JPClassRef m_ClassClass;
 	JPObjectRef m_SystemClassLoader;
 	JPObjectRef m_BootLoader;
-	jmethodID m_FindClass;
+	jmethodID m_ForNameID;
 } ;
 
 #endif // _JPCLASSLOADER_H_

@@ -126,8 +126,8 @@ class Makefile(object):
 all: $(LIB)
 
 rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-build/src/jp_thunk.cpp: $(call rwildcard,native/java,*.java)
-	python setup.py build_thunk
+#build/src/jp_thunk.cpp: $(call rwildcard,native/java,*.java)
+#	python setup.py build_thunk
 
 DEPDIR = build/deps
 $(DEPDIR): ; @mkdir -p $@
@@ -152,7 +152,7 @@ $(BUILD)/%.o: %.cpp
 
 
 $(LIB): $(OBJS)
-	$(LINK) $(LINKFLAGS) $(OBJS) -ldl -o $@
+	$(LINK) $(OBJS) $(LINKFLAGS) -o $@
 
 
 -include $(DEPFILES)
@@ -180,8 +180,10 @@ class BuildExtCommand(build_ext):
         'mingw32': [],
     }
 
-    user_options = build_ext.user_options + \
-        [('makefile', None, 'Build a makefile for extensions')]
+    user_options = build_ext.user_options + [
+        ('makefile', None, 'Build a makefile for extensions'),
+        ('jar', None, 'Build the jar only'),
+    ]
 
     def finalize_options(self):
         build_ext.finalize_options(self)
@@ -189,6 +191,7 @@ class BuildExtCommand(build_ext):
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         self.makefile = False
+        self.jar = False
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
         replacement = {
@@ -225,10 +228,6 @@ class BuildExtCommand(build_ext):
                 e.extra_link_args.extend(self.lopt[c])
 
     def build_extensions(self):
-        # We need to create the thunk code
-        self.run_command("build_java")
-        self.run_command("build_thunk")
-
         if self.makefile:
             self.compiler = Makefile(self.compiler)
             self.force = True
@@ -249,6 +248,8 @@ class BuildExtCommand(build_ext):
     def build_extension(self, ext):
         if ext.language == "java":
             return self.build_java_ext(ext)
+        if self.jar:
+            return
         print("Call build ext")
         return build_ext.build_extension(self, ext)
 
@@ -285,6 +286,18 @@ class BuildExtCommand(build_ext):
         """Run command."""
         java = self.distribution.enable_build_jar
 
+        javac = "javac"
+        try:
+            if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
+                javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+        except KeyError:
+            pass
+        jar = "jar"
+        try:
+            if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')):
+                jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
+        except KeyError:
+            pass
         # Try to use the cach if we are not requested build
         if not java:
             src = os.path.join('native', 'jars')
@@ -293,6 +306,10 @@ class BuildExtCommand(build_ext):
                 distutils.log.info("Using Jar cache")
                 copy_tree(src, dest)
                 return
+
+        classpath = "."
+        if ext.libraries:
+            classpath = os.path.pathsep.join(ext.libraries)
 
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
@@ -303,12 +320,12 @@ class BuildExtCommand(build_ext):
         # build the jar
         try:
             dirname = os.path.dirname(self.get_ext_fullpath("JAVA"))
-            jar = os.path.join(dirname, ext.name + ".jar")
+            jarFile = os.path.join(dirname, ext.name + ".jar")
             build_dir = os.path.join(self.build_temp, ext.name, "classes")
             os.makedirs(build_dir, exist_ok=True)
             os.makedirs(dirname, exist_ok=True)
-            cmd1 = shlex.split('javac -d %s -g:none -source %s -target %s' %
-                               (build_dir, target_version, target_version))
+            cmd1 = shlex.split('%s -cp %s -d %s -g:none -source %s -target %s' %
+                               (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
             debug = "-g:none"
             if coverage:
@@ -317,7 +334,7 @@ class BuildExtCommand(build_ext):
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
             cmd3 = shlex.split(
-                'jar cvf %s -C %s .' % (jar, build_dir))
+                '%s cvf %s -C %s .' % (jar, jarFile, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
 
