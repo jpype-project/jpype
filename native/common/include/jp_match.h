@@ -61,29 +61,34 @@ public:
 	void *closure;
 } ;
 
-class JPMethodMatch
+class JPMethodCache
+{
+public:
+	long m_Cache;
+	JPMethod* m_Overload;
+} ;
+
+class JPMethodMatch : public JPMethodCache
 {
 public:
 
-	JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args);
+	JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool callInstance);
 
 	JPMatch& operator[](size_t i)
 	{
-		return argument[i];
+		return m_Arguments[i];
 	}
 
 	const JPMatch& operator[](size_t i) const
 	{
-		return argument[i];
+		return m_Arguments[i];
 	}
 
-public:
-	JPMatch::Type type;
-	bool isVarIndirect;
-	JPMethod* overload;
-	char offset;
-	char skip;
-	std::vector<JPMatch> argument;
+	std::vector<JPMatch> m_Arguments;
+	JPMatch::Type m_Type;
+	bool m_IsVarIndirect;
+	char m_Offset;
+	char m_Skip;
 } ;
 
 #endif /* JP_MATCH_H */
