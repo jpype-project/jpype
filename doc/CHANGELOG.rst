@@ -12,6 +12,9 @@ Latest Changes:
     Sequence API.  When a Python buffer is encountered only the
     first element is checked for conversion as Python buffers are homogeneous. 
 
+  - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
+    in a later patch release and should not have been used.
+
 - **1.0.1 - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
