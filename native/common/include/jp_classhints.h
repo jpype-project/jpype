@@ -105,6 +105,7 @@ private:
 extern JPConversion *hintsConversion;
 extern JPConversion *charArrayConversion;
 extern JPConversion *byteArrayConversion;
+extern JPConversion *bufferConversion;
 extern JPConversion *sequenceConversion;
 extern JPConversion *nullConversion;
 extern JPConversion *classConversion;

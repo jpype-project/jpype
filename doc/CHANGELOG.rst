@@ -6,6 +6,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2_dev0 - 2020-07-16**
 
+  - Improved speed on transfer of lists, tuples, buffers to arrays of Java
+    primitives by a factor of 4 to 100 depending on the data type.  The
+    conversion uses optimized path for memory buffers, rather than the 
+    Sequence API.  When a Python buffer is encountered only the
+    first element is checked for conversion as Python buffers are homogeneous. 
+
 - **1.0.1 - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
