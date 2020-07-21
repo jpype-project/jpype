@@ -6,9 +6,16 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2_dev0 - 2020-07-16**
 
+
   - Added cache to the method dispatch to bypass resolution of overloads.
     This reduces the cost of method resolution significantly especially if
     the same overload is hit repeatedly such as during loop operations.
+
+  - Improved speed on transfer of lists, tuples, buffers to arrays of Java
+    primitives by a factor of 4 to 100 depending on the data type.  The
+    conversion uses optimized path for memory buffers, rather than the 
+    Sequence API.  When a Python buffer is encountered only the
+    first element is checked for conversion as Python buffers are homogeneous. 
 
   - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
     in a later patch release and should not have been used.
