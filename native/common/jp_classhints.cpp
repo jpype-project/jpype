@@ -64,13 +64,20 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 	m_Overload = 0;
 	m_Offset = 0;
 	m_Skip = 0;
-	m_Cache = callInstance ? 0 : 1000;
+	m_Hash = callInstance ? 0 : 1000;
 	for (size_t i = 0; i < args.size(); ++i)
 	{
 		PyObject *arg = args[i];
 		m_Arguments[i] = JPMatch(&frame, arg);
-		m_Cache *= 0x10523C01;
-		m_Cache += (long) (Py_TYPE(arg));
+
+		// This is an LCG used to compute a hash code for the incoming
+		// arguments using (A*X+A_i) mod2^64 where A_i is the address of each
+		// type the argument list.  The hash will be checked to avoid needing
+		// to resolve the method if the same overload is called twice. There
+		// is only a speed cost if there is a collision, so we don't need to
+		// prove this is a perfect hash function.
+		m_Hash *= 0x10523C01;
+		m_Hash += (long) (Py_TYPE(arg));
 	}
 }
 

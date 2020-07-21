@@ -6,6 +6,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2_dev0 - 2020-07-16**
 
+  - Added cache to the method dispatch to bypass resolution of overloads.
+    This reduces the cost of method resolution significantly especially if
+    the same overload is hit repeatedly such as during loop operations.
+
 - **1.0.1 - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the

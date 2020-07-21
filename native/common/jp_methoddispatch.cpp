@@ -27,7 +27,7 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 	m_Class = clazz;
 	m_Overloads = overloads;
 	m_Modifiers = modifiers;
-	m_LastCache.m_Cache = -1;
+	m_LastCache.m_Hash = -1;
 }
 
 JPMethodDispatch::~JPMethodDispatch()
@@ -46,17 +46,29 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	JP_TRACE("Checking overload", m_Name);
 	JP_TRACE("Got overloads to check", m_Overloads.size());
 	JPMethodList ambiguous;
-	JPMethodMatch match = bestMatch;
 
-	// Check cache to see if we already resolved this
-	if (m_LastCache.m_Cache == match.m_Cache && !m_LastCache.m_Overload->isVarArgs())
+	// Check cache to see if we already resolved this overload.
+	//   First we need to see if the hash matches for the last set of arguments.
+	//   Then make sure we don't hit the rare case that the hash was -1 by chance.
+	//   Then make sure it isn't variadic list match, as the hash of an opaque list
+	//   element can't be resolved without going through the resolution process.
+	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != 0
+			&& !m_LastCache.m_Overload->isVarArgs())
 	{
 		bestMatch.m_Overload = m_LastCache.m_Overload;
 		bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
+
+		// Anything better than explicit constitutes a hit on the cache
 		if (bestMatch.m_Type > JPMatch::_explicit)
 			return true;
 	}
 
+	// We need two copies of the match.  One to hold the best match we have
+	// found, and one to hold the test of the next overload.
+	JPMethodMatch match = bestMatch;
+
+	// Check each overload in order (the TypeManager orders them by priority
+	// according to Java overload rules).
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
@@ -67,6 +79,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		JP_TRACE("  match ended", match.m_Type);
 		if (match.m_Type == JPMatch::_exact)
 		{
+			// We can bypass the process here as there is no better match than exact.
 			bestMatch = match;
 			m_LastCache = (JPMethodCache&) match; // lgtm [cpp/slicing]
 			return true;
@@ -103,6 +116,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			}
 
 			JP_TRACE("Adding to ambiguous list");
+			// Keep trace of ambiguous overloads for the error report.
 			ambiguous.push_back(*it);
 		}
 	}
