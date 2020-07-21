@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,6 +11,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import sys
@@ -26,11 +27,15 @@ from . import _pykeywords
 from ._jvmfinder import *
 
 __all__ = [
-    'isJVMStarted', 'startJVM', 'attachToJVM', 'shutdownJVM',
+    'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized',
-    'JVMNotFoundException', 'JVMNotSupportedException'
+    'JVMNotFoundException', 'JVMNotSupportedException', 'JVMNotRunning'
 ]
+
+
+class JVMNotRunning(RuntimeError):
+    pass
 
 
 def versionTest():
@@ -210,7 +215,7 @@ def startJVM(*args, **kwargs):
         source = str(ex)
         if "UnsupportedClassVersion" in source:
             import re
-            match = re.search("([0-9]+)\.[0-9]+", source)
+            match = re.search(r"([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1)) - 44
                 raise RuntimeError("%s is older than required Java version %d" % (
@@ -293,11 +298,6 @@ def startJVM(*args, **kwargs):
 
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
         list(_pykeywords._KEYWORDS))
-
-
-def attachToJVM(jvm):
-    _jpype.attach(jvm)
-    _initialize()
 
 
 def shutdownJVM():
@@ -425,3 +425,6 @@ class _JRuntime(object):
 
     def removeShutdownHook(self, thread):
         return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+
+
+_jpype.JVMNotRunning = JVMNotRunning

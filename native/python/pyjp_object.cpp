@@ -1,18 +1,18 @@
-/*
- * Copyright 2020 Karl Einar Nelson
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/*****************************************************************************
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   See NOTICE file for details.
+ *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
 #include <structmember.h>
@@ -242,10 +242,10 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
 		return NULL;
-	}
+	}  // GCOVR_EXCL_STOP
 
 	// Special constructor path for Exceptions
 	JPPyObjectVector args(pyargs);
@@ -298,7 +298,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 PyObject *PyJPException_args(PyBaseExceptionObject *self)
 {
 	if (self->args == NULL)
-		Py_RETURN_NONE;
+		Py_RETURN_NONE;  // GCOVR_EXCL_LINE
 	Py_INCREF(self->args);
 	return self->args;
 }
@@ -317,6 +317,7 @@ PyTypeObject *PyJPException_Type = NULL;
 static PyType_Slot excSlots[] = {
 	{Py_tp_new,      (void*) &PyJPException_new},
 	{Py_tp_init,     (void*) &PyJPException_init},
+	{Py_tp_str,      (void*) &PyJPValue_str},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_methods,  exceptionMethods},

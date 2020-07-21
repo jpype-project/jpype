@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2019 Karl Einar Nelson
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,8 +11,10 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_typemanager.h"
 #include "jp_boxedtype.h"
 #include "jp_stringtype.h"
@@ -136,12 +136,21 @@ bool JPContext::isRunning()
  */
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
+	if (_JVMNotRunning == NULL)
+	{
+		_JVMNotRunning = PyObject_GetAttrString(PyJPModule, "JVMNotRunning");
+		JP_PY_CHECK();
+		Py_INCREF(_JVMNotRunning);
+	}
+
 	if (context == NULL)
-		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Context is null", info);
+	{
+		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Context is null", info);
+	}
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_python_exc, PyExc_RuntimeError, "Java Virtual Machine is not running", info);
+		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Virtual Machine is not running", info);
 	}
 }
 

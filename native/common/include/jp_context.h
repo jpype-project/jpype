@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2019 Karl Einar Nelson
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #ifndef JP_CONTEXT_H
 #define JP_CONTEXT_H
@@ -279,6 +278,8 @@ public:
 
 extern void JPRef_failed();
 
+// GCOVR_EXCL_START
+// Not currently used
 template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {
@@ -292,6 +293,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 		JPRef_failed();
 	}
 }
+// GCOVR_EXCL_STOP
 
 template<class jref>
 JPRef<jref>::~JPRef()
@@ -310,11 +312,12 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 	// m_Context may or may not be set up here, so we need to use a
 	// different frame for unreferencing and referencing
 	if (m_Context != 0 && m_Ref != 0)
-	{
+	{  // GCOVR_EXCL_START
+		// This code is not currently used.
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		if (m_Ref != 0)
 			frame.DeleteGlobalRef((jobject) m_Ref);
-	}
+	}  // GCOVR_EXCL_STOP
 	m_Context = other.m_Context;
 	m_Ref = other.m_Ref;
 	if (m_Context != 0 && m_Ref != 0)

@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,8 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#   See NOTICE file for details.
+#
 # *****************************************************************************
 import _jpype
+from ._jinit import *
 from ._jpackage import *
 from ._jproxy import *
 from ._core import *
@@ -39,6 +41,7 @@ from . import protocol      # lgtm [py/import-own-module]
 from . import _jthread      # lgtm [py/import-own-module]
 
 __all__ = ['java', 'javax']
+__all__.extend(_jinit.__all__)
 __all__.extend(_core.__all__)
 __all__.extend(_classpath.__all__)
 __all__.extend(types.__all__)
@@ -48,7 +51,7 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version__ = "0.7.6_dev0"
+__version__ = "1.0.2_dev0"
 __version_info__ = __version__.split('.')
 
 

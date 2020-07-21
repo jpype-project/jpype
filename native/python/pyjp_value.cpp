@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
@@ -76,7 +75,7 @@ bool PyJPValue_hasJavaSlot(PyTypeObject* type)
 	if (type == NULL
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
-		return false;
+		return false;  // GCOVR_EXCL_LINE
 	return true;
 }
 
@@ -243,13 +242,6 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 {
 	JP_PY_TRY("PyJPObject_setattro");
-	if (!PyUnicode_Check(name))
-	{
-		PyErr_Format(PyExc_TypeError,
-				"attribute name must be string, not '%.200s'",
-				Py_TYPE(name)->tp_name);
-		return -1;
-	}
 
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
@@ -311,7 +303,7 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 {
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
-		return false;
+		return false;  // GCOVR_EXCL_LINE
 	JPValue* slot = (JPValue*) (((char*) self) + offset);
 	return slot->getClass() != NULL;
 }

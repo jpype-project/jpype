@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2019 Karl Einar Nelson
-
-   Licensed under the Apache License, Version 2.0 (the "License
+   Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
@@ -49,10 +48,12 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 	} catch (JPypeException& ex)
 	{
 		ex.toJava(frame.getContext());
-	} catch (...)
+	} catch (...)  // GCOVR_EXCL_LINE
 	{
+		// GCOVR_EXCL_START
 		frame.ThrowNew(frame.getContext()->m_RuntimeException.get(),
 				"unknown error occurred");
+		// GCOVR_EXCL_STOP
 	}
 }
 
@@ -93,7 +94,7 @@ JNIEXPORT void JNICALL JPTypeFactory_newWrapper(
 	JPPyCallAcquire callback;
 	JPClass* cls = (JPClass*) jcls;
 	PyJPClass_hook(frame, cls);
-	JP_JAVA_CATCH();
+	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_destroy(
@@ -112,7 +113,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 		delete (JPResource*) values[i];
 	}
 	return;
-	JP_JAVA_CATCH();
+	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
@@ -132,7 +133,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 	JP_TRACE(cname);
 	JPMethodDispatch* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
 	return (jlong) dispatch;
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
@@ -154,7 +155,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 			(JPClass*) componentClass,
 			modifiers);
 	return (jlong) result;
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
@@ -299,7 +300,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 	ss << "Special class not defined for " << className;
 	JP_RAISE(PyExc_RuntimeError, ss.str());
 	return (jlong) result;
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
@@ -361,7 +362,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 		return (jlong) (context->_double);
 	}
 	return 0;
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
@@ -385,7 +386,7 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 			methodList,
 			fieldList);
 	return;
-	JP_JAVA_CATCH();
+	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
@@ -410,7 +411,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 			field, fid,
 			(JPClass*) fieldType,
 			modifiers));
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
@@ -451,7 +452,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
 	convert(frame, argumentTypes, cargs);
 	JPMethod *methodPtr = (JPMethod*) method;
 	methodPtr->setParameters((JPClass*) returnType, cargs);
-	JP_JAVA_CATCH(0);
+	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
 JPTypeFactory::~JPTypeFactory()
@@ -508,5 +509,5 @@ JPTypeFactory::JPTypeFactory(JPJavaFrame& frame)
 
 	frame.GetMethodID(cls, "<init>", "()V");
 	frame.RegisterNatives(cls, method, 10);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

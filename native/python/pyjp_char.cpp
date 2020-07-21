@@ -1,18 +1,18 @@
-/*
- * Copyright 2020 nelson85.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+/*****************************************************************************
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   See NOTICE file for details.
+ *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
 #include <structmember.h>
@@ -166,10 +166,10 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 
 	JPContext *context = PyJPModule_getContext();
 
@@ -220,11 +220,11 @@ static PyObject *PyJPChar_str(PyJPChar *self)
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (javaSlot == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_FromOrdinal(fromJPChar(self));
@@ -237,11 +237,11 @@ static PyObject *PyJPChar_repr(PyJPChar *self)
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (javaSlot == NULL)
-	{
+	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
 		return 0;
-	}
+	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_Type.tp_repr((PyObject*) self);

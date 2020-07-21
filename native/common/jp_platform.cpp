@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "jp_platform.h"
@@ -135,7 +134,7 @@ public:
 			JP_RAISE_OS_ERROR_UNIX( errno, path);
 		}
 		// GCOVR_EXCL_STOP
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
 	virtual void unloadLibrary() override
@@ -148,7 +147,7 @@ public:
 			cerr << dlerror() << endl;
 		}
 		// GCOVR_EXCL_STOP
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
 	virtual void* getSymbol(const char* name) override
@@ -167,7 +166,7 @@ public:
 		}
 		// GCOVR_EXCL_STOP
 		return res;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 } ;
 

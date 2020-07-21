@@ -1,9 +1,28 @@
+# *****************************************************************************
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   See NOTICE file for details.
+#
+# *****************************************************************************
 # Tests for module functionality including failures that cannot
 # be triggered in normal operations
 import _jpype
+import jpype
 import unittest
 import subrun
 import common
+import unittest.mock as mock
 
 
 @subrun.TestCase(individual=True)
@@ -83,3 +102,26 @@ class ModuleTestCase(common.JPypeTestCase):
         self.assertTrue(_jpype._hasClass("java.lang.String"))
         with self.assertRaises(TypeError):
             _jpype._hasClass(object())
+
+
+class JInitTestCase(common.JPypeTestCase):
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def testJInit(self):
+        with mock.patch("_jpype.isStarted") as started:
+            started.return_value = False
+            self.assertEqual(len(jpype._jinit.JInitializers), 0)
+            A = []
+
+            def func():
+                A.append(1)
+            jpype.onJVMStart(func)
+            self.assertEqual(len(A), 0)
+            self.assertEqual(jpype._jinit.JInitializers[0], func)
+            started.return_value = True
+            jpype.onJVMStart(func)
+            self.assertEqual(len(A), 1)
+            jpype._jinit.runJVMInitializers()
+            self.assertEqual(len(A), 2)

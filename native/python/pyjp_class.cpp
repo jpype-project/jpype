@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include <algorithm>
 #include <Python.h>
@@ -691,11 +690,14 @@ static bool PySlice_CheckFull(PyObject *item)
 {
 	if (!PySlice_Check(item))
 		return false;
-
 	Py_ssize_t start, stop, step;
+#if PY_VERSION_HEX<0x03060100
+	int rc = PySlice_GetIndices(item, 0x7fffffff, &start, &stop, &step);
+	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == 0x7fffffff);
+#else
 	int rc = PySlice_Unpack(item, &start, &stop, &step);
-	bool out = (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
-	return out;
+	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
+#endif
 }
 
 static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
@@ -922,6 +924,19 @@ int PyJPClass_setDoc(PyJPClass *self, PyObject *obj, void *ctxt)
 	JP_PY_CATCH(-1);
 }
 
+PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPClass_customize");
+	PyObject *name = NULL;
+	PyObject *value = NULL;
+	if (!PyArg_ParseTuple(args, "OO", &name, &value))
+		return NULL;
+	if (PyType_Type.tp_setattro((PyObject*) self, name, value) == -1)
+		return NULL;
+	Py_RETURN_NONE;
+	JP_PY_CATCH(NULL);
+}
+
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
@@ -931,6 +946,7 @@ static PyMethodDef classMethods[] = {
 	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
 	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
 	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
+	{"_customize",        (PyCFunction) PyJPClass_customize, METH_VARARGS, ""},
 	{NULL},
 };
 

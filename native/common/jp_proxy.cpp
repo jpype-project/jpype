@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
@@ -66,12 +65,15 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 		JP_TRACE("hostObj", (void*) hostObj);
 		try
 		{
+			// GCOVR_EXCL_START
+			// Sanity check, should never be hit
 			if (hostObj == 0)
 			{
 				env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 						"host reference is null");
 				return NULL;
 			}
+			// GCOVR_EXCL_STOP
 
 			string cname = frame.toStringUTF8(name);
 			JP_TRACE("Get callable for", cname);
@@ -141,14 +143,14 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 		{
 			JP_TRACE("JPypeException raised");
 			ex.toJava(context);
-		} catch (...)
+		} catch (...)  // GCOVR_EXCL_LINE
 		{
 			JP_TRACE("Other Exception raised");
 			env->functions->ThrowNew(env, context->m_RuntimeException.get(),
 					"unknown error occurred");
 		}
 		return NULL;
-		JP_TRACE_OUT;
+		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 }
 
@@ -188,7 +190,7 @@ JPProxy::~JPProxy()
 		{
 			m_Context->getEnv()->DeleteWeakGlobalRef(m_Ref);
 		}
-	} catch (JPypeException &ex)
+	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
 	{
 		// Cannot throw
 	}
@@ -255,7 +257,7 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 		return JPPyObject::use(target->m_Target);
 	JP_TRACE("Target", target);
 	return JPPyObject::use((PyObject*) target);
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 JPProxyDirect::JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& intf)

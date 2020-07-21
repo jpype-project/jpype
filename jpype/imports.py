@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
 # *****************************************************************************
-#   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
 #
-#          http://www.apache.org/licenses/LICENSE-2.0
+#       http://www.apache.org/licenses/LICENSE-2.0
 #
 #   Unless required by applicable law or agreed to in writing, software
 #   distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#   See NOTICE file for details.
+#
 # *****************************************************************************
-
 """
 JPype Imports Module
 --------------------
@@ -92,7 +91,7 @@ def _JExceptionHandler(pkg, name, ex):
         missing = str(ex).replace('/', '.')
         raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)) from ex
-    raise ImportException("Unable to import '%s'" % javaname) from ex
+    raise ImportError("Unable to import '%s'" % javaname) from ex
 
 
 def registerImportCustomizer(customizer):
@@ -175,7 +174,7 @@ class _JImportLoader:
         # Use the parent module to simplify name mangling
         if not parts[1] and _jpype.isPackage(parts[2]):
             ms = _ModuleSpec(name, self)
-            ms._jname = jname
+            ms._jname = name
             return ms
 
         if not parts[1] and not _jpype.isPackage(parts[0]):

@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,6 +11,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import _jpype
@@ -53,9 +54,8 @@ class JObject(_jpype._JObject, internal=True):
 
     """
     def __new__(cls, *args, **kwargs):
-        # Create a null pointer object
         if len(args) == 0:
-            args = [None]
+            return _jpype._java_lang_Object()
         return _JObjectFactory(*args, **kwargs)
 
 

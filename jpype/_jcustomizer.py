@@ -1,15 +1,18 @@
+# *****************************************************************************
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
 #
-#   http://www.apache.org/licenses/LICENSE-2.0
+#       http://www.apache.org/licenses/LICENSE-2.0
 #
 #   Unless required by applicable law or agreed to in writing, software
 #   distributed under the License is distributed on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import _jpype
@@ -89,7 +92,7 @@ def JImplementationFor(clsname, base=False):
 
     The method ``__jclass_init__(cls)`` will be called with the constructed
     class as the argument.  This call is used to set methods for all classes
-    that derive from the specified class.  Use ``type.__setattr__()`` to
+    that derive from the specified class.  Use ``jclass._customize()`` to
     alter the class methods.
 
     Using the prototype class as a base class is used mainly to support
@@ -127,8 +130,8 @@ def _applyStickyMethods(cls, sticky):
         name = method.__name__
         if rename:
             orig = type.__getattribute__(cls, name)
-            type.__setattr__(cls, rename, orig)
-        type.__setattr__(cls, name, method)
+            cls._customize(rename, orig)
+        cls._customize(name, method)
 
 
 def _applyCustomizerImpl(members, proto, sticky, setter):
@@ -173,7 +176,7 @@ def _applyCustomizerPost(cls, proto):
     """ (internal) Customize a class after it has been created """
     sticky = []
     _applyCustomizerImpl(cls.__dict__, proto, sticky,
-                         lambda p, v: type.__setattr__(cls, p, v))
+                         lambda p, v: cls._customize(p, v))
 
     # Merge sticky into existing __jclass_init__
     if len(sticky) > 0:
@@ -183,7 +186,7 @@ def _applyCustomizerPost(cls, proto):
             if method:
                 method(cls)
             _applyStickyMethods(cls, sticky)
-        type.__setattr__(cls, '__jclass_init__', init)
+        cls._customize('__jclass_init__', init)
 
     # Apply a customizer to all derived classes
     if '__jclass_init__' in proto.__dict__:
@@ -232,6 +235,10 @@ class JClassHints(_jpype._JClassHints):
         # Apply base classes
         for b in self.bases:
             bases.insert(0, b)
+
+        module = name.rsplit('.', 1)
+        if len(module) == 2:
+            members['__module__'] = module[0]
 
         # Apply implementations
         sticky = []

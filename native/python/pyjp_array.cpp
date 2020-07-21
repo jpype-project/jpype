@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
@@ -152,7 +151,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	{
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
-			return NULL;
+			return NULL;  // GCOVR_EXCL_LINE
 		return self->m_Array->getItem((jsize) i).keep();
 	}
 
@@ -222,7 +221,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	{
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
-			return -1;
+			return -1;  // GCOVR_EXCL_LINE
 		self->m_Array->setItem((jsize) i, value);
 		return 0;
 	}
@@ -435,6 +434,7 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
+	{ Py_tp_getset,   (void*) &arrayGetSets},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 	{0}
 };

@@ -1,3 +1,18 @@
+/*****************************************************************************
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   See NOTICE file for details.
+ *****************************************************************************/
 #include <Python.h>
 #include "jpype.h"
 #include "pyjp.h"
@@ -8,15 +23,29 @@
 #define USE_PROCESS_INFO
 #include <Windows.h>
 #include <psapi.h>
+
 #elif __APPLE__
 #define USE_TASK_INFO
 #include <unistd.h>
 #include <sys/resource.h>
 #include <mach/mach.h>
-#else
+
+#elif __GLIBC__
 // Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
 #include <malloc.h>
+
+#elif __linux__
+#define USE_PROC_INFO
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+static int statm_fd;
+static int page_size;
+
+#else
+#define USE_NONE
 #endif
 #define DELTA_LIMIT 20*1024*1024l
 
@@ -33,6 +62,27 @@ size_t getWorkingSize()
 	mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
 	if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t) & info, &count) == KERN_SUCCESS)
 		current = (size_t) info.resident_size;
+
+#elif defined(USE_PROC_INFO)
+	char bytes[32];
+	lseek(statm_fd, SEEK_SET, 0);
+	int len = read(statm_fd, bytes, 32);
+	long long sz = 0;
+        int i = 0;
+        for (; i < len; i++)
+	{
+		if (bytes[i] == ' ')
+			break;
+	}
+        i++;
+	for (; i < len; i++)
+	{
+		if (bytes[i] == ' ')
+			return sz * page_size;
+		sz *= 10;
+		sz += bytes[i] - '0';
+	}
+	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
 	struct mallinfo mi;
@@ -84,6 +134,10 @@ JPGarbageCollection::JPGarbageCollection(JPContext *context)
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
+#if defined(USE_PROC_INFO)
+	statm_fd = open("/proc/self/statm", O_RDONLY);
+	page_size = getpagesize();
+#endif
 	// Get the Python garbage collector
 	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
 	python_gc = gc.keep();
@@ -108,7 +162,11 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 void JPGarbageCollection::shutdown()
 {
 	running = false;
+#if defined(USE_PROC_INFO)
+	close(statm_fd);
+#endif
 }
+
 
 void JPGarbageCollection::onStart()
 {

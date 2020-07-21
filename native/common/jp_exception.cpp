@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004-2008 Steve MÃ©nard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include <Python.h>
 #include <frameobject.h>
@@ -71,7 +70,6 @@ JPypeException::JPypeException(const JPypeException& ex)
 	m_Error = ex.m_Error;
 	m_Message = ex.m_Message;
 }
-// GCOVR_EXCL_STOP
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
 {
@@ -83,6 +81,7 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 	m_Message = ex.m_Message;
 	return *this;
 }
+// GCOVR_EXCL_STOP
 
 JPypeException::~JPypeException()
 {

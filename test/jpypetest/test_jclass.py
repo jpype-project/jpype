@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2017 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,6 +11,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import _jpype
@@ -266,3 +267,8 @@ class JClassTestCase(common.JPypeTestCase):
         jo = JClass('java.lang.Object')
         with self.assertRaises(TypeError):
             jo @= 5
+
+    def testCanCast(self):
+        String = JClass("java.lang.String")
+        self.assertFalse(String._canCast(1))
+        self.assertTrue(String._canCast("foo"))

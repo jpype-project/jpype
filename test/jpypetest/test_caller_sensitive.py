@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2019 Karl Einar Nelson
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -13,6 +12,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
+#   See NOTICE file for details.
+#
 # *****************************************************************************
 import jpype
 import common
@@ -21,13 +22,13 @@ import common
 class JCallerSensitiveCase(common.JPypeTestCase):
     """ Test for caller sensitive methods.
 
-    Java uses a special pattern to deal with the security manager.  It 
-    uses the stack to find the callers class and then decides if the 
+    Java uses a special pattern to deal with the security manager.  It
+    uses the stack to find the callers class and then decides if the
     call is permitted.  But when we call from JNI there is no class.
     Thus, we need a special caller pattern which proxies to Java and
-    then calls the method.  
+    then calls the method.
 
-    This alternative method has to be tested against all of the 
+    This alternative method has to be tested against all of the
     different patterns (static, member), returning (void, primitive, object),
     called with (nothing, object, primitive, many, varargs)
 

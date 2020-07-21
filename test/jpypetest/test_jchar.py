@@ -1,3 +1,20 @@
+# *****************************************************************************
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   See NOTICE file for details.
+#
+# *****************************************************************************
 import _jpype
 import jpype
 import common
@@ -11,6 +28,15 @@ class JChar2TestCase(common.JPypeTestCase):
     def testCharRange(self):
         self.assertEqual(ord(str(jpype.JChar(65))), 65)
         self.assertEqual(ord(str(jpype.JChar(512))), 512)
+
+    def testCharFromStr(self):
+        self.assertEqual(ord(jpype.JChar(chr(65))), 65)
+        self.assertEqual(ord(jpype.JChar(chr(128))), 128)
+        self.assertEqual(ord(jpype.JChar(chr(255))), 255)
+        self.assertEqual(ord(jpype.JChar(chr(10255))), 10255)
+
+    def testCharCastFloat(self):
+        self.assertEqual(ord(jpype.JChar(65.0)), 65)
 
     @common.requireInstrumentation
     def testJPChar_new(self):
@@ -431,6 +457,17 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
     def testPos(self):
         with self.assertRaises(TypeError):
             +self.nc
+
+    def testNeg(self):
+        with self.assertRaises(TypeError):
+            -self.nc
+
+    def testBool(self):
+        self.assertFalse(bool(self.nc))
+
+    def testEq(self):
+        self.assertTrue(self.nc == self.nc)
+        self.assertFalse(self.nc != self.nc)
 
     def testPass(self):
         fixture = jpype.JClass('jpype.common.Fixture')()

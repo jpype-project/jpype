@@ -1,5 +1,4 @@
 # *****************************************************************************
-#   Copyright 2004-2008 Steve Menard
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,6 +11,8 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+#
+#   See NOTICE file for details.
 #
 # *****************************************************************************
 import contextlib
@@ -75,6 +76,12 @@ class ProxyTestCase(common.JPypeTestCase):
         proxy = JProxy([itf1, itf2], dict=d)
         proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
         proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
+
+    def testNotImplemented(self):
+        itf1 = self.package.TestInterface1
+        proxy = JObject(JProxy(itf1, dict={}), itf1)
+        with self.assertRaises(JClass("java.lang.NoSuchMethodError")):
+            proxy.testMethod1()
 
     def testProxyRoundTrip(self):
 

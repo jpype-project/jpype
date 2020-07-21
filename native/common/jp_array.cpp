@@ -1,11 +1,9 @@
 /*****************************************************************************
-   Copyright 2004 Steve Ménard
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-	   http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,6 +11,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
+   See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
@@ -36,7 +35,7 @@ JPArray::JPArray(const JPValue &value)
 
 	// We will use this during range checks, so cache it
 	if (m_Object.get() == NULL)
-		m_Length = 0;
+		m_Length = 0;  // GCOVR_EXCL_LINE
 	else
 		m_Length = frame.GetArrayLength(m_Object.get());
 
@@ -59,7 +58,7 @@ JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
 	else
 		m_Length =  (stop - start + 1 + step) / step;
 	if (m_Length < 0)
-		m_Length = 0;
+		m_Length = 0;  // GCOVR_EXCL_LINE
 	m_Slice = true;
 	JP_TRACE_OUT;
 }
@@ -229,7 +228,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	m_Buffer.shape = m_Shape;
 	m_Buffer.strides = m_Strides;
 	m_Buffer.readonly = 1;
-	JP_TRACE_OUT;
+	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
 JPArrayView::~JPArrayView()

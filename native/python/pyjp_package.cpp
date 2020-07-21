@@ -1,3 +1,18 @@
+/*****************************************************************************
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   See NOTICE file for details.
+ *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_stringtype.h"
@@ -96,7 +111,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 	JP_PY_TRY("PyJPPackage_getattro");
 	if (!PyUnicode_Check(attr))
 	{
-		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
+		PyErr_Format(PyExc_TypeError, "attribute name must be string, not '%s'", Py_TYPE(attr)->tp_name);
 		return NULL;
 	}
 
@@ -141,9 +156,9 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 				PyObject *rc = PyObject_Call(self->m_Handler, tuple0.get(), NULL);
 				if (rc == 0)
 					return 0;
-				Py_DECREF(rc);
+				Py_DECREF(rc); // GCOVR_EXCL_LINE
 			}
-			throw;
+			throw; // GCOVR_EXCL_LINE
 		}
 		if (obj == NULL)
 		{
@@ -164,7 +179,7 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 			// but that will take time to implement.  In principle, things
 			// that are not packages or classes should appear as Buffers or
 			// some other resource type.
-			PyErr_SetString(PyExc_AttributeError, "Unknown type object in package");
+			PyErr_Format(PyExc_AttributeError, "'%U' is unknown object type in Java package", attr);
 			return NULL;
 		}
 		// Cache the item for now
@@ -191,12 +206,6 @@ static PyObject *PyJPPackage_getattro(PyJPPackage *self, PyObject *attr)
 static int PyJPPackage_setattro(PyJPPackage *self, PyObject *attr, PyObject *value)
 {
 	JP_PY_TRY("PyJPPackage_setattro");
-	if (!PyUnicode_Check(attr))
-	{
-		PyErr_Format(PyExc_TypeError, "attribute name must be string, not 'object'", Py_TYPE(attr)->tp_name);
-		return -1;
-	}
-
 	string attrName = JPPyString::asStringUTF8(attr).c_str();
 	if (attrName.compare(0, 2, "__") == 0)
 	{

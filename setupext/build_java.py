@@ -1,4 +1,21 @@
 # -*- coding: utf-8 -*-
+# *****************************************************************************
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   See NOTICE file for details.
+#
+# *****************************************************************************
 import os
 import sys
 import subprocess
@@ -17,6 +34,12 @@ def compileJava(self, coverage):
     try:
         if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
             javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+    except KeyError:
+        pass
+    jar = "jar"
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')):
+            jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
     except KeyError:
         pass
     target_version = "1.8"
@@ -41,8 +64,14 @@ def compileJava(self, coverage):
     subprocess.check_call(cmd1)
     self.announce("  %s" % " ".join(cmd2), level=distutils.log.INFO)
     subprocess.check_call(cmd2)
+    jar = "jar"
+    try:
+        if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')):
+            jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
+    except KeyError:
+        pass
     cmd3 = shlex.split(
-        'jar cvf build/lib/org.jpype.jar -C build/classes/ .')
+        '"%s" cvf build/lib/org.jpype.jar -C build/classes/ .' % jar)
     self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
     subprocess.check_call(cmd3)
 

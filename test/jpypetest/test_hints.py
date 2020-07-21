@@ -1,3 +1,20 @@
+# *****************************************************************************
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   See NOTICE file for details.
+#
+# *****************************************************************************
 import _jpype
 import jpype
 from jpype.types import *
@@ -421,3 +438,21 @@ class HintsTestCase(common.JPypeTestCase):
         d3 = JObject(d2, cls)
         self.assertEqual(d, d2)
         self.assertEqual(d, d3)
+
+    def testAddTypeBad(self):
+        cls = JClass('java.lang.Object')
+        with self.assertRaises(TypeError):
+            cls._hints._addTypeConversion()
+        with self.assertRaisesRegex(TypeError, "callable method is required"):
+            cls._hints._addTypeConversion(object, object(), True)
+        with self.assertRaisesRegex(TypeError, "type or protocol is required"):
+            def foo():
+                pass
+            cls._hints._addTypeConversion(object(), foo, True)
+
+    def testExcludeBad(self):
+        cls = JClass('java.lang.Object')
+        with self.assertRaisesRegex(TypeError, "type or protocol is required, not 'object'"):
+            cls._hints._excludeConversion(object())
+        with self.assertRaisesRegex(TypeError, "type or protocol is required, not 'object'"):
+            cls._hints._excludeConversion((object(),))

@@ -34,7 +34,7 @@ Full process:
       If successful, download the artifacts for publication.
 - [ ] Advance the release pointer 
       ``git checkout release``
-      ``git pull releases/<version>``
+      ``git merge releases/<version>``
 - [ ] Publish the release
   - Add draft release on github
   - Attach the artifacts to the release.
@@ -42,7 +42,7 @@ Full process:
   - Use a PR to pull release back to master
   - ``git checkout master``
   - ``git checkout -b cycle``
-  - ``git pull master``
+  - ``git merge release``
   - ``bumpversion patch``
   - Use PR to insert the cycle in master
 

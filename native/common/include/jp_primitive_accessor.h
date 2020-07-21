@@ -1,3 +1,18 @@
+/*****************************************************************************
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   See NOTICE file for details.
+ *****************************************************************************/
 #ifndef JP_PRIMITIVE_ACCESSOR_H
 #define JP_PRIMITIVE_ACCESSOR_H
 #include <Python.h>
@@ -197,7 +212,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
@@ -216,16 +231,17 @@ template <typename base_t>
 class JPConversionLongWiden : public JPConversion
 {
 public:
-
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override // GCOVR_EXCL_LINE
+	// GCOVR_EXCL_START
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none; // Not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override // GCOVR_EXCL_LINE
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
 	{
 		// Not used
 	}
+	// GCOVR_EXCL_STOP
 
 	virtual jvalue convert(JPMatch &match) override
 	{
