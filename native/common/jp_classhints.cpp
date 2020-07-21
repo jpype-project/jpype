@@ -436,6 +436,62 @@ public:
 	}
 } _byteArrayConversion;
 
+class JPConversionBuffer : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionBuffer::matches");
+		JPArrayClass *acls = (JPArrayClass*) cls;
+		JPClass *componentType = acls->getComponentType();
+		if ( !componentType->isPrimitive())
+			return match.type = JPMatch::_none;
+		// If is isn't a buffer we can skip
+		JPPyBuffer	buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
+
+		// If it is a buffer we only need to test the first item in the list
+		JPPySequence seq = JPPySequence::use(match.object);
+		jlong length = seq.size();
+		match.type = JPMatch::_implicit;
+		if (length > 0)
+		{
+			JPPyObject item = seq[0];
+			JPMatch imatch(match.frame, item.get());
+			componentType->findJavaConversion(imatch);
+			if (imatch.type < match.type)
+				match.type = imatch.type;
+		}
+		match.closure = cls;
+		match.conversion = bufferConversion;
+		return match.type;
+		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		// This will be covered by Sequence
+	}
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		JPJavaFrame frame(*match.frame);
+		jvalue res;
+		JPArrayClass *acls = (JPArrayClass *) match.closure;
+		jsize length = (jsize) PySequence_Length(match.object);
+		JPClass *ccls = acls->getComponentType();
+		jarray array = ccls->newArrayInstance(frame, (jsize) length);
+		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
+		res.l = frame.keep(array);
+		return res;
+	}
+}  _bufferConversion;
+
 class JPConversionSequence : public JPConversion
 {
 public:
@@ -483,16 +539,10 @@ public:
 		JPJavaFrame frame(*match.frame);
 		jvalue res;
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
-		JP_TRACE("sequence");
-		JPPySequence seq = JPPySequence::use(match.object);
-		jsize length = (jsize) seq.size();
-
-		jarray array = acls->getComponentType()->newArrayInstance(frame, (jsize) length);
-		for (jsize i = 0; i < length; i++)
-		{
-			JPPyObject item = seq[i];
-			acls->getComponentType()->setArrayItem(frame, array, i, item.get());
-		}
+		jsize length = (jsize) PySequence_Length(match.object);
+		JPClass *ccls = acls->getComponentType();
+		jarray array = ccls->newArrayInstance(frame, (jsize) length);
+		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
 		res.l = frame.keep(array);
 		return res;
 	}
@@ -934,6 +984,7 @@ public:
 JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
+JPConversion *bufferConversion = &_bufferConversion;
 JPConversion *sequenceConversion = &_sequenceConversion;
 JPConversion *nullConversion = &_nullConversion;
 JPConversion *classConversion = &_classConversion;
