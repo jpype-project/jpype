@@ -10,6 +10,9 @@ Latest Changes:
     This reduces the cost of method resolution significantly especially if
     the same overload is hit repeatedly such as during loop operations.
 
+  - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
+    in a later patch release and should not have been used.
+
 - **1.0.1 - 2020-07-16**
 
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
