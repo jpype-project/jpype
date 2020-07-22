@@ -349,7 +349,7 @@ class BuildExtCommand(build_ext):
                 print("FAIL", ex)
                 pass
             cmd3 = shlex.split(
-                '%s cvf "%s" -C %s .' % (jar, jarFile, build_dir))
+                '%s cvf "%s" -C "%s" .' % (jar, jarFile, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
 
