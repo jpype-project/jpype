@@ -91,7 +91,7 @@ def _JExceptionHandler(pkg, name, ex):
         missing = str(ex).replace('/', '.')
         raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)) from ex
-    raise ImportException("Unable to import '%s'" % javaname) from ex
+    raise ImportError("Unable to import '%s'" % javaname) from ex
 
 
 def registerImportCustomizer(customizer):
@@ -174,7 +174,7 @@ class _JImportLoader:
         # Use the parent module to simplify name mangling
         if not parts[1] and _jpype.isPackage(parts[2]):
             ms = _ModuleSpec(name, self)
-            ms._jname = jname
+            ms._jname = name
             return ms
 
         if not parts[1] and not _jpype.isPackage(parts[0]):

@@ -94,7 +94,11 @@ class Makefile(object):
         rc = self.actual.compile(*args, **kwargs)
         return rc
 
+    def _need_link(self, *args):
+        return True
+
     def link_shared_object(self, *args, **kwargs):
+        self.actual._need_link = self._need_link
         self.actual.spawn = self.captureLink
         rc = self.actual.link_shared_object(*args, **kwargs)
         self.write()

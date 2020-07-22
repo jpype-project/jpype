@@ -39,6 +39,7 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_IN("JPArrayClass::findJavaConversion");
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
 			|| charArrayConversion->matches(this, match)
 			|| byteArrayConversion->matches(this, match)
 			|| sequenceConversion->matches(this, match)
