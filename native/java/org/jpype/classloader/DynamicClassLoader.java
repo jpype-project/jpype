@@ -63,7 +63,7 @@ public class DynamicClassLoader extends ClassLoader
       }
     });
 
-    loaders.add(new URLClassLoader(urls.toArray(URL[]::new)));
+    loaders.add(new URLClassLoader(urls.toArray(new URL[urls.size()])));
   }
 
   public void addFile(Path path) throws FileNotFoundException
