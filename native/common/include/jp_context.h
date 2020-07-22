@@ -121,7 +121,8 @@ public:
 
 	// JVM control functions
 	bool isRunning();
-	void startJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
+	void startJVM(const string& vmPath, const StringVector& args,
+			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();
@@ -280,6 +281,7 @@ extern void JPRef_failed();
 
 // GCOVR_EXCL_START
 // Not currently used
+
 template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {

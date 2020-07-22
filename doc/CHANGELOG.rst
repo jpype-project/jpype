@@ -4,6 +4,12 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+  - ^C behavior is switchable with interrupt flag to startJVM.
+    If True, process will halt on ^C.  If False, the process
+    will transfer control to Python rather than halting.  If
+    not specified JPype will assume false if Python is  started as an
+    interactive shell.
+
 - **1.0.2_dev0 - 2020-07-16**
 
 
@@ -19,6 +25,7 @@ Latest Changes:
 
   - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
     in a later patch release and should not have been used.
+
 
 - **1.0.1 - 2020-07-16**
 

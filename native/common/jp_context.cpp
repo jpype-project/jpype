@@ -166,7 +166,7 @@ void JPContext::loadEntryPoints(const string& path)
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
-		bool ignoreUnrecognized, bool convertStrings)
+		bool ignoreUnrecognized, bool convertStrings, bool interrupt)
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
@@ -270,7 +270,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 				"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
 		jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-				"(JLjava/lang/ClassLoader;)Lorg/jpype/JPypeContext;");
+				"(JLjava/lang/ClassLoader;Zjava )Lorg/jpype/JPypeContext;");
 
 		JNINativeMethod method[1];
 		method[0].name = (char*) "onShutdown";
@@ -280,9 +280,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		frame.RegisterNatives(contextClass, method, 1);
 
 		// Launch
-		jvalue val[2];
+		jvalue val[3];
 		val[0].j = (jlong) this;
 		val[1].l = m_ClassLoader->getBootLoader();
+		val[2].z = interrupt;
 		m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
 		// Post launch

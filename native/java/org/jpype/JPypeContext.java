@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype;
@@ -94,7 +94,7 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  public static JPypeContext createContext(long context, ClassLoader bootLoader)
+  public static JPypeContext createContext(long context, ClassLoader bootLoader, boolean interrupt)
   {
     instance = new JPypeContext();
 
@@ -109,7 +109,8 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
-    JPypeSignal.installHandlers();
+    if (!interrupt)
+      JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()

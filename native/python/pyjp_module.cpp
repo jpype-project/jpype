@@ -221,9 +221,10 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	PyObject* vmPath;
 	char ignoreUnrecognized = true;
 	char convertStrings = false;
+	char interrupt = false;
 
-	if (!PyArg_ParseTuple(pyargs, "OO!bb", &vmPath, &PyTuple_Type, &vmOpt,
-			&ignoreUnrecognized, &convertStrings))
+	if (!PyArg_ParseTuple(pyargs, "OO!bbb", &vmPath, &PyTuple_Type, &vmOpt,
+			&ignoreUnrecognized, &convertStrings, &interrupt))
 		return NULL;
 
 	if (!(JPPyString::check(vmPath)))
@@ -266,7 +267,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	PyJPModule_installGC(module);
 
 	PyJPModule_loadResources(module);
-	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
+	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0, interrupt != 0);
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
