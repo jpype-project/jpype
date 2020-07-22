@@ -325,7 +325,7 @@ class BuildExtCommand(build_ext):
             build_dir = os.path.join(self.build_temp, ext.name, "classes")
             os.makedirs(build_dir, exist_ok=True)
             os.makedirs(dirname, exist_ok=True)
-            cmd1 = shlex.split('%s -cp %s -d %s -g:none -source %s -target %s' %
+            cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
             debug = "-g:none"
@@ -345,7 +345,7 @@ class BuildExtCommand(build_ext):
                 print("FAIL", ex)
                 pass
             cmd3 = shlex.split(
-                '%s cvf %s -C %s .' % (jar, jarFile, build_dir))
+                '%s cvf "%s" -C %s .' % (jar, jarFile, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
 
