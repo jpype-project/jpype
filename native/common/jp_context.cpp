@@ -165,6 +165,11 @@ void JPContext::loadEntryPoints(const string& path)
 	JP_TRACE_OUT;
 }
 
+static void interruptPy()
+{
+	PyErr_SetInterrupt();
+}
+
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		bool ignoreUnrecognized, bool convertStrings)
 {
@@ -344,6 +349,14 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		jclass comparableClass = frame.FindClass("java/lang/Comparable");
 		m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 				"(Ljava/lang/Object;)I");
+
+		jclass signalClass = getClassLoader()->findClass(frame, "org.jpype.JPypeSignal");
+
+		method[0].name = (char*) "interruptPy";
+		method[0].signature = (char*) "()V";
+		method[0].fnPtr = (void*) interruptPy;
+		frame.GetMethodID(signalClass, "<init>", "()V");
+		frame.RegisterNatives(signalClass, method, 1);
 
 		jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
 
