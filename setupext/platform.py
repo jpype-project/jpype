@@ -88,7 +88,8 @@ def Platform(include_dirs=[], sources=[]):
         warnings.warn("Your platform %s is not being handled explicitly."
                       " It may work or not!" % sys.platform, UserWarning)
 
-    platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
+    if sysconfig.get_config_var('BLDLIBRARY') is not None:
+        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
         platform_specific['include_dirs'] += \

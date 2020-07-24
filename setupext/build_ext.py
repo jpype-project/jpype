@@ -190,9 +190,6 @@ class BuildExtCommand(build_ext):
         ('jar', None, 'Build the jar only'),
     ]
 
-    def finalize_options(self):
-        build_ext.finalize_options(self)
-
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
         self.makefile = False
@@ -216,7 +213,7 @@ class BuildExtCommand(build_ext):
                 if v.find(r) != -1:
                     v = v.replace(r, t)
                     cfg_vars[k] = v
-        build_ext.initialize_options(self)
+        super().initialize_options()
 
     def _set_cflags(self):
         # set compiler flags
@@ -248,7 +245,7 @@ class BuildExtCommand(build_ext):
 
         # has to be last call
         print("Call build extensions")
-        build_ext.build_extensions(self)
+        super().build_extensions()
 
     def build_extension(self, ext):
         if ext.language == "java":
@@ -256,11 +253,7 @@ class BuildExtCommand(build_ext):
         if self.jar:
             return
         print("Call build ext")
-        return build_ext.build_extension(self, ext)
-
-    def get_outputs(self):
-        output = build_ext.get_outputs(self)
-        return output
+        return super().build_extension(ext)
 
     def copy_extensions_to_source(self):
         build_py = self.get_finalized_command('build_py')
