@@ -141,7 +141,7 @@ void JPCharType::getConversionInfo(JPConversionInfo &info)
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
+	PyList_Append(info.ret, (PyObject*) m_Context->_char->getHost());
 }
 
 jarray JPCharType::newArrayInstance(JPJavaFrame& frame, jsize sz)
