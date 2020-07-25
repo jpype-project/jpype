@@ -6,6 +6,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2_dev0 - 2020-07-16**
 
+  - ^C propogates to a KeyboardInterrupt properly.
 
   - Added cache to the method dispatch to bypass resolution of overloads.
     This reduces the cost of method resolution significantly especially if

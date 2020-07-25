@@ -116,7 +116,7 @@ public class JPypeContext
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
     JPypeReferenceQueue.getInstance().start();
-//    JPypeSignal.installHandlers();
+    JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
