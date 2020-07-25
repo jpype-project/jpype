@@ -64,13 +64,20 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 	m_Overload = 0;
 	m_Offset = 0;
 	m_Skip = 0;
-	m_Cache = callInstance ? 0 : 1000;
+	m_Hash = callInstance ? 0 : 1000;
 	for (size_t i = 0; i < args.size(); ++i)
 	{
 		PyObject *arg = args[i];
 		m_Arguments[i] = JPMatch(&frame, arg);
-		m_Cache *= 0x10523C01;
-		m_Cache += (long) (Py_TYPE(arg));
+
+		// This is an LCG used to compute a hash code for the incoming
+		// arguments using (A*X+A_i) mod2^64 where A_i is the address of each
+		// type the argument list.  The hash will be checked to avoid needing
+		// to resolve the method if the same overload is called twice. There
+		// is only a speed cost if there is a collision, so we don't need to
+		// prove this is a perfect hash function.
+		m_Hash *= 0x10523C01;
+		m_Hash += (long) (Py_TYPE(arg));
 	}
 }
 
@@ -440,6 +447,62 @@ public:
 	}
 } _byteArrayConversion;
 
+class JPConversionBuffer : public JPConversion
+{
+public:
+
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionBuffer::matches");
+		JPArrayClass *acls = (JPArrayClass*) cls;
+		JPClass *componentType = acls->getComponentType();
+		if ( !componentType->isPrimitive())
+			return match.type = JPMatch::_none;
+		// If is isn't a buffer we can skip
+		JPPyBuffer	buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
+
+		// If it is a buffer we only need to test the first item in the list
+		JPPySequence seq = JPPySequence::use(match.object);
+		jlong length = seq.size();
+		match.type = JPMatch::_implicit;
+		if (length > 0)
+		{
+			JPPyObject item = seq[0];
+			JPMatch imatch(match.frame, item.get());
+			componentType->findJavaConversion(imatch);
+			if (imatch.type < match.type)
+				match.type = imatch.type;
+		}
+		match.closure = cls;
+		match.conversion = bufferConversion;
+		return match.type;
+		JP_TRACE_OUT;
+	}
+
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		// This will be covered by Sequence
+	}
+
+	virtual jvalue convert(JPMatch &match) override
+	{
+		JPJavaFrame frame(*match.frame);
+		jvalue res;
+		JPArrayClass *acls = (JPArrayClass *) match.closure;
+		jsize length = (jsize) PySequence_Length(match.object);
+		JPClass *ccls = acls->getComponentType();
+		jarray array = ccls->newArrayOf(frame, (jsize) length);
+		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
+		res.l = frame.keep(array);
+		return res;
+	}
+}  _bufferConversion;
+
 class JPConversionSequence : public JPConversion
 {
 public:
@@ -487,16 +550,10 @@ public:
 		JPJavaFrame frame(*match.frame);
 		jvalue res;
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
-		JP_TRACE("sequence");
-		JPPySequence seq = JPPySequence::use(match.object);
-		jsize length = (jsize) seq.size();
-
-		jarray array = acls->getComponentType()->newArrayOf(frame, (jsize) length);
-		for (jsize i = 0; i < length; i++)
-		{
-			JPPyObject item = seq[i];
-			acls->getComponentType()->setArrayItem(frame, array, i, item.get());
-		}
+		jsize length = (jsize) PySequence_Length(match.object);
+		JPClass *ccls = acls->getComponentType();
+		jarray array = ccls->newArrayOf(frame, (jsize) length);
+		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
 		res.l = frame.keep(array);
 		return res;
 	}
@@ -938,6 +995,7 @@ public:
 JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
+JPConversion *bufferConversion = &_bufferConversion;
 JPConversion *sequenceConversion = &_sequenceConversion;
 JPConversion *nullConversion = &_nullConversion;
 JPConversion *classConversion = &_classConversion;

@@ -64,7 +64,7 @@ public:
 class JPMethodCache
 {
 public:
-	long m_Cache;
+	long m_Hash;
 	JPMethod* m_Overload;
 } ;
 

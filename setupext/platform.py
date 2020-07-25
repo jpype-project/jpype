@@ -95,7 +95,8 @@ def Platform(include_dirs=[], sources=[]):
         distutils.log.warn("Your platform %s is not being handled explicitly."
                            " It may work or not!" % sys.platform, UserWarning)
 
-    platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
+    if sysconfig.get_config_var('BLDLIBRARY') is not None:
+        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
         distutils.log.info("Add JNI directory %s" % os.path.join(java_home, 'include', jni_md_platform))

@@ -69,7 +69,6 @@ setup(
     install_requires=['typing_extensions ; python_version< "3.8"'],
     tests_require=['pytest'],
     cmdclass={
-        'build_java': setupext.build_java.BuildJavaCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
