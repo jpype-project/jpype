@@ -186,12 +186,14 @@ class BuildExtCommand(build_ext):
     }
 
     user_options = build_ext.user_options + [
+        ('android', None, 'configure for android'),
         ('makefile', None, 'Build a makefile for extensions'),
         ('jar', None, 'Build the jar only'),
     ]
 
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
+        self.android = False
         self.makefile = False
         self.jar = False
         import distutils.sysconfig

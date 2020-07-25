@@ -55,6 +55,9 @@ def Platform(include_dirs=[], sources=[]):
 
     platform_specific['extra_link_args'] = []
     distutils.log.info("Configure platform to", sys.platform)
+    print("PLATFORM", sys.platform)
+
+    static = True
     if sys.platform == 'win32':
         distutils.log.info("Add windows settings")
         platform_specific['libraries'] = ['Advapi32']
@@ -90,12 +93,21 @@ def Platform(include_dirs=[], sources=[]):
         distutils.log.info("Add freebsd settings")
         jni_md_platform = 'freebsd'
 
+    elif sys.platform.startswith('android'):
+        distutils.log.info("Add android settings")
+        platform_specific['libraries'] = ['dl', 'c++_shared']
+        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-fexceptions', '-frtti']
+
+        print("PLATFORM_SPECIFIC:", platform_specific)
+        jni_md_platform = 'linux'
+        static = False
+
     else:
         jni_md_platform = None
-        distutils.log.warn("Your platform %s is not being handled explicitly."
-                           " It may work or not!" % sys.platform, UserWarning)
+        distutils.log.warn("Your platform '%s' is not being handled explicitly."
+                           " It may work or not!" %(sys.platform))
 
-    if sysconfig.get_config_var('BLDLIBRARY') is not None:
+    if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
         platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:

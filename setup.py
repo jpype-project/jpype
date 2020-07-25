@@ -24,6 +24,9 @@ from setuptools import setup
 from setuptools import Extension
 import glob
 
+if '--android' in sys.argv:
+    sys.platform='android'
+
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
                   Path('native', 'python', 'include'),
@@ -40,7 +43,7 @@ jpypeJar = Extension(name="org.jpype",
 
 setup(
     name='JPype1',
-    version='1.0.2_dev0',
+    version='1.0.2.dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
