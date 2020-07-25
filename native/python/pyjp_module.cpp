@@ -137,6 +137,18 @@ extern "C"
 {
 #endif
 
+#ifdef ANDROID
+extern JNIEnv *SDL_ANDROID_GetJNIEnv();
+
+static PyObject* checkEntry(PyObject *module, PyObject *args, PyObject *kwargs)
+{
+	PyObject *out = PyDict_New();
+	void * p = SDL_ANDROID_GetJNIEnv();
+	PyDict_SetItemString(out, "env", PyLong_FromLongLong((long long) p));
+	return p;
+}
+#endif
+
 // GCOVR_EXCL_START
 // This is used exclusively during startup
 
@@ -654,6 +666,9 @@ static PyMethodDef moduleMethods[] = {
 	{"trace", (PyCFunction) PyJPModule_trace, METH_O, ""},
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
+#endif
+#ifdef ANDROID
+	{"checkEntry", (PyCFunction) checkEntry, METH_O, ""},
 #endif
 
 	// sentinel
