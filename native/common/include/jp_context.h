@@ -267,7 +267,7 @@ public:
 private:
 	bool m_Running;
 	bool m_ConvertStrings;
-        bool m_Embedded;
+	bool m_Embedded;
 public:
 	JPGarbageCollection *m_GC;
 } ;
