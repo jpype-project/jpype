@@ -202,7 +202,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			(JPClass*) superClass, interfaces, modifiers));
 	if (className == "java.lang.Throwable")
 		return (jlong) (context->_java_lang_Throwable
-			= new JPObjectType(frame, cls, className,
+			= new JPClassType(frame, cls, className,
 			(JPClass*) superClass, interfaces, modifiers));
 
 	if (className == "java.lang.Number")
