@@ -95,7 +95,7 @@ def Platform(include_dirs=[], sources=[]):
 
     elif sys.platform.startswith('android'):
         distutils.log.info("Add android settings")
-        platform_specific['libraries'] = ['dl', 'c++_shared']
+        platform_specific['libraries'] = ['dl', 'c++_shared', 'SDL2']
         platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-fexceptions', '-frtti']
 
         print("PLATFORM_SPECIFIC:", platform_specific)
