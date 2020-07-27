@@ -71,16 +71,17 @@ public class JPypeContext
 
   public final String VERSION = "1.0.2_dev0";
 
-  private static JPypeContext INSTANCE = null;
+  private static JPypeContext INSTANCE =  new JPypeContext();
   // This is the C++ portion of the context.
-  private long context;
-  private TypeFactory typeFactory;
-  private TypeManager typeManager;
-  private DynamicClassLoader classLoader;
-  private final AtomicInteger shutdownFlag = new AtomicInteger();
-  private final AtomicInteger proxyCount = new AtomicInteger();
-  private final List<Thread> shutdownHooks = new ArrayList<>();
-  private final List<Runnable> postHooks = new ArrayList<>();
+  public long context;
+  public TypeFactory typeFactory;
+  public DynamicClassLoader classLoader;
+  public final AtomicInteger shutdownFlag = new AtomicInteger();
+  public final AtomicInteger proxyCount = new AtomicInteger();
+  public final List<Thread> shutdownHooks = new ArrayList<>();
+  public final List<Runnable> postHooks = new ArrayList<>();
+  public String nativeLib;
+  public static String stage = "None";
 
   static public JPypeContext getInstance()
   {
@@ -96,27 +97,34 @@ public class JPypeContext
    */
   static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib)
   {
+    stage = "boot";
     if (nativeLib != null)
+    {
       System.load(nativeLib);
-    INSTANCE = new JPypeContext(context, bootLoader);
+      INSTANCE.nativeLib = nativeLib;
+    }
+    INSTANCE.context = context;
+    INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
+    stage = "factory";
+    INSTANCE.typeFactory = new TypeFactoryNative();
+    stage = "initialize";
     INSTANCE.initialize();
     return INSTANCE;
   }
-
-  private JPypeContext(long context, ClassLoader bootLoader)
+  
+  private JPypeContext()
   {
-    this.context = context;
-    this.classLoader = (DynamicClassLoader) bootLoader;
-    this.typeFactory = new TypeFactoryNative();
-    this.typeManager = new TypeManager(context, this.typeFactory);
   }
 
   void initialize()
   {
     // Okay everything is setup so lets give it a go.
-    this.typeManager.init();
+    stage = "refqueue";
     JPypeReferenceQueue.getInstance().start();
-//    JPypeSignal.installHandlers();
+    stage = "signal";
+    JPypeSignal.installHandlers();
+    stage = "manager";
+    TypeManager.getInstance().init(context, INSTANCE.typeFactory);
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
@@ -246,7 +254,7 @@ public class JPypeContext
     // Release any C++ resources
     try
     {
-      this.typeManager.shutdown();
+      TypeManager.getInstance().shutdown();
     } catch (Throwable th)
     {
     }
@@ -298,7 +306,7 @@ public class JPypeContext
 
   public TypeManager getTypeManager()
   {
-    return this.typeManager;
+    return TypeManager.getInstance();
   }
 
   /**

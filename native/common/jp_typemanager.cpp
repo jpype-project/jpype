@@ -21,7 +21,11 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	JP_TRACE_IN("JPTypeManager::init");
 	m_Context = frame.getContext();
 
+#ifdef ANDROID
+	jclass cls = frame.FindClass("org/jpype/manager/TypeManager");
+#else
 	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
+#endif
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");

@@ -140,45 +140,45 @@ extern "C"
 #ifdef ANDROID
 extern JNIEnv *Android_JNI_GetEnv();
 
-static PyObject* checkEntry(PyObject *module)
-{
-	JP_PY_TRY("PyJPModule_startup");
-	PyObject *out = PyDict_New();
-	JNIEnv * env = Android_JNI_GetEnv();
-	JavaVM *m_JavaVM = NULL;
-	env->GetJavaVM(&m_JavaVM);
-	PyDict_SetItemString(out, "env", PyLong_FromLongLong((long long) env));
-	PyDict_SetItemString(out, "jvm", PyLong_FromLongLong((long long) m_JavaVM));
-
-	JPContext *context = JPContext_global;
-        context->attachJVM(env);
-	JPJavaFrame frame = JPJavaFrame::external(context, env);
-	PyDict_SetItemString(out, "frame", PyLong_FromLongLong((long long) &frame));
-
-	PyObject *import = PyImport_AddModule("importlib.util");
-	JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import, "find_spec", "s", "_jpype"));
-	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
-
-	jclass contextClass = env->FindClass("org/jpype/JPypeContext");
-	PyDict_SetItemString(out, "contextClass", PyLong_FromLongLong((long long) contextClass));
-	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-			"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
-	PyDict_SetItemString(out, "startMethod", PyLong_FromLongLong((long long) startMethod));
-
-	JPClassLoader *m_ClassLoader = new JPClassLoader(frame);
-
-	jvalue val[3];
-	val[0].j = (jlong) context;
-	val[1].l = m_ClassLoader->getBootLoader();
-	val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
-	PyDict_SetItemString(out, "origin", origin.keep());
-
-	JPObjectRef m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
-	PyDict_SetItemString(out, "context", PyLong_FromLongLong((long long) context));
-	PyDict_SetItemString(out, "jcontext", PyLong_FromLongLong((long long) m_JavaContext.get()));
-	return out;
-	JP_PY_CATCH(NULL);
-}
+//static PyObject* checkEntry(PyObject *module)
+//{
+//	JP_PY_TRY("PyJPModule_startup");
+//	PyObject *out = PyDict_New();
+//	JNIEnv * env = Android_JNI_GetEnv();
+//	JavaVM *m_JavaVM = NULL;
+//	env->GetJavaVM(&m_JavaVM);
+//	PyDict_SetItemString(out, "env", PyLong_FromLongLong((long long) env));
+//	PyDict_SetItemString(out, "jvm", PyLong_FromLongLong((long long) m_JavaVM));
+//
+//	JPContext *context = JPContext_global;
+//        context->attachJVM(env);
+//	JPJavaFrame frame = JPJavaFrame::external(context, env);
+//	PyDict_SetItemString(out, "frame", PyLong_FromLongLong((long long) &frame));
+//
+//	PyObject *import = PyImport_AddModule("importlib.util");
+//	JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import, "find_spec", "s", "_jpype"));
+//	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
+//
+//	jclass contextClass = env->FindClass("org/jpype/JPypeContext");
+//	PyDict_SetItemString(out, "contextClass", PyLong_FromLongLong((long long) contextClass));
+//	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
+//			"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
+//	PyDict_SetItemString(out, "startMethod", PyLong_FromLongLong((long long) startMethod));
+//
+//	JPClassLoader *m_ClassLoader = new JPClassLoader(frame);
+//
+//	jvalue val[3];
+//	val[0].j = (jlong) context;
+//	val[1].l = m_ClassLoader->getBootLoader();
+//	val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
+//	PyDict_SetItemString(out, "origin", origin.keep());
+//
+//	JPObjectRef m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
+//	PyDict_SetItemString(out, "context", PyLong_FromLongLong((long long) context));
+//	PyDict_SetItemString(out, "jcontext", PyLong_FromLongLong((long long) m_JavaContext.get()));
+//	return out;
+//	JP_PY_CATCH(NULL);
+//}
 #endif
 
 // GCOVR_EXCL_START
@@ -258,6 +258,7 @@ int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 	return Py_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
+#ifndef ANDROID
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
@@ -309,7 +310,6 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	// install the gc hook
 	PyJPModule_installGC(module);
-
 	PyJPModule_loadResources(module);
 	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0);
 
@@ -324,6 +324,7 @@ static PyObject* PyJPModule_shutdown(PyObject* obj)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
+#endif
 
 static PyObject* PyJPModule_isStarted(PyObject* obj)
 {
@@ -673,9 +674,11 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
+#ifndef ANDROID
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+#endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
 	{"examine", (PyCFunction) examine, METH_O, ""},
@@ -699,9 +702,6 @@ static PyMethodDef moduleMethods[] = {
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
-#ifdef ANDROID
-	{"checkEntry", (PyCFunction) checkEntry, METH_NOARGS, ""},
-#endif
 
 	// sentinel
 	{NULL}
@@ -721,7 +721,7 @@ JPContext* JPContext_global = NULL;
 PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
-	JPContext_global = new JPContext();
+	JPContext_global = new JPContext();        
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
@@ -750,6 +750,17 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
+        
+#ifdef ANDROID
+        // After all the internals are created we can connect the API with the internal module
+        JNIEnv * env = Android_JNI_GetEnv();
+        JPContext_global->attachJVM(env);
+        PyObject *jpype = PyImport_AddModule("jpype");
+	PyObject *core = PyImport_AddModule("jpype._core");
+	//JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(jpype, "initialize", ""));
+        //PyJPModule_installGC(module);
+	//PyJPModule_loadResources(module);
+#endif
 	return module;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
