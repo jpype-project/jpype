@@ -273,11 +273,7 @@ void JPContext::initializeResources(JNIEnv* env)
 
 	// Prepare to launch
 	JP_TRACE("Start Context");
-#ifdef ANDROID
-	jclass contextClass = frame.FindClass("org/jpype/JPypeContext");
-#else
 	jclass contextClass = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
-#endif
 	m_Context_GetStackFrameID = frame.GetMethodID(contextClass, "getStackTrace",
 			"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
@@ -338,11 +334,7 @@ void JPContext::initializeResources(JNIEnv* env)
 	m_Context_IsPackageID = frame.GetMethodID(contextClass, "isPackage", "(Ljava/lang/String;)Z");
 	m_Context_GetPackageID = frame.GetMethodID(contextClass, "getPackage", "(Ljava/lang/String;)Lorg/jpype/pkg/JPypePackage;");
 
-#ifdef ANDROID
-	jclass packageClass = frame.FindClass("org/jpype/pkg/JPypePackage");
-#else
 	jclass packageClass = m_ClassLoader->findClass(frame, "org.jpype.pkg.JPypePackage");
-#endif
 	m_Package_GetObjectID = frame.GetMethodID(packageClass, "getObject",
 			"(Ljava/lang/String;)Ljava/lang/Object;");
 	m_Package_GetContentsID = frame.GetMethodID(packageClass, "getContents",
@@ -362,11 +354,7 @@ void JPContext::initializeResources(JNIEnv* env)
 	m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 			"(Ljava/lang/Object;)I");
 
-#ifdef ANDROID
-	jclass proxyClass = frame.FindClass("org/jpype/proxy/JPypeProxy");
-#else
 	jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
-#endif
 	m_ProxyClass = JPClassRef(frame, proxyClass);
 	m_Proxy_NewID = frame.GetStaticMethodID(m_ProxyClass.get(),
 			"newProxy",

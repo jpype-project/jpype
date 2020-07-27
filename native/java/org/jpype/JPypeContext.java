@@ -81,7 +81,6 @@ public class JPypeContext
   public final List<Thread> shutdownHooks = new ArrayList<>();
   public final List<Runnable> postHooks = new ArrayList<>();
   public String nativeLib;
-  public static String stage = "None";
 
   static public JPypeContext getInstance()
   {
@@ -97,7 +96,6 @@ public class JPypeContext
    */
   static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib)
   {
-    stage = "boot";
     if (nativeLib != null)
     {
       System.load(nativeLib);
@@ -105,9 +103,7 @@ public class JPypeContext
     }
     INSTANCE.context = context;
     INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
-    stage = "factory";
     INSTANCE.typeFactory = new TypeFactoryNative();
-    stage = "initialize";
     INSTANCE.initialize();
     return INSTANCE;
   }
@@ -119,11 +115,8 @@ public class JPypeContext
   void initialize()
   {
     // Okay everything is setup so lets give it a go.
-    stage = "refqueue";
     JPypeReferenceQueue.getInstance().start();
-    stage = "signal";
     JPypeSignal.installHandlers();
-    stage = "manager";
     TypeManager.getInstance().init(context, INSTANCE.typeFactory);
 
     // Install a shutdown hook to clean up Python resources.

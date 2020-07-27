@@ -671,10 +671,24 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 }
 #endif
 
+#ifdef ANDROID
+static PyObject *PyJPModule_bootstrap(PyObject *module)
+{
+        // After all the internals are created we can connect the API with the internal module
+        JNIEnv * env = Android_JNI_GetEnv();
+        JPContext_global->attachJVM(env);
+        PyJPModule_installGC(module);
+    	PyJPModule_loadResources(module);
+        Py_RETURN_NONE;
+}
+#endif
+
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
-#ifndef ANDROID
+#ifdef ANDROID
+	{"bootstrap", (PyCFunction) PyJPModule_bootstrap, METH_NOARGS, ""},
+#else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
@@ -751,16 +765,6 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	_PyJPModule_trace = true;
         
-#ifdef ANDROID
-        // After all the internals are created we can connect the API with the internal module
-        JNIEnv * env = Android_JNI_GetEnv();
-        JPContext_global->attachJVM(env);
-        PyObject *jpype = PyImport_AddModule("jpype");
-	PyObject *core = PyImport_AddModule("jpype._core");
-	//JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(jpype, "initialize", ""));
-        //PyJPModule_installGC(module);
-	//PyJPModule_loadResources(module);
-#endif
 	return module;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
