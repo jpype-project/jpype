@@ -228,7 +228,7 @@ void JPContext::attachJVM(JNIEnv* env)
 {
 	env->GetJavaVM(&m_JavaVM);
 	m_Embedded = true;
-	initializeResources(env);
+//	initializeResources(env);
 }
 
 void JPContext::initializeResources(JNIEnv* env)

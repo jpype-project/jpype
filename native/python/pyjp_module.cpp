@@ -151,6 +151,7 @@ static PyObject* checkEntry(PyObject *module)
 	PyDict_SetItemString(out, "jvm", PyLong_FromLongLong((long long) m_JavaVM));
 
 	JPContext *context = JPContext_global;
+        context->attachJVM(env);
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	PyDict_SetItemString(out, "frame", PyLong_FromLongLong((long long) &frame));
 
@@ -160,21 +161,21 @@ static PyObject* checkEntry(PyObject *module)
 
 	jclass contextClass = env->FindClass("org/jpype/JPypeContext");
 	PyDict_SetItemString(out, "contextClass", PyLong_FromLongLong((long long) contextClass));
-	//jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-	//		"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
-	//PyDict_SetItemString(out, "contextClass", PyLong_FromLongLong((long long) contextClass));
-	//PyDict_SetItemString(out, "startMethod", PyLong_FromLongLong((long long) startMethod));
+	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
+			"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
+	PyDict_SetItemString(out, "startMethod", PyLong_FromLongLong((long long) startMethod));
 
-	//JPClassLoader *m_ClassLoader = new JPClassLoader(frame);
-	//jvalue val[3];
-	//val[0].j = (jlong) context;
-	//val[1].l = m_ClassLoader->getBootLoader();
-	//val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
+	JPClassLoader *m_ClassLoader = new JPClassLoader(frame);
+
+	jvalue val[3];
+	val[0].j = (jlong) context;
+	val[1].l = m_ClassLoader->getBootLoader();
+	val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
 	PyDict_SetItemString(out, "origin", origin.keep());
 
-	//JPObjectRef m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
+	JPObjectRef m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 	PyDict_SetItemString(out, "context", PyLong_FromLongLong((long long) context));
-	//PyDict_SetItemString(out, "jcontext", PyLong_FromLongLong((long long) m_JavaContext.get()));
+	PyDict_SetItemString(out, "jcontext", PyLong_FromLongLong((long long) m_JavaContext.get()));
 	return out;
 	JP_PY_CATCH(NULL);
 }
