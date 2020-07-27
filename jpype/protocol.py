@@ -68,7 +68,6 @@ def _JFileConvert(jcls, obj):
 
 
 @_jcustomizer.JConversion("java.util.Iterable", instanceof=Sequence, excludes=str)
-@_jcustomizer.JConversion("java.util.List", instanceof=Sequence, excludes=str)
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence, excludes=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
