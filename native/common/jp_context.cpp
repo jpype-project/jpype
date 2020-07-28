@@ -99,14 +99,6 @@ JPContext::JPContext()
 	m_Context_OrderID = NULL;
 	m_Object_GetClassID = NULL;
 	m_Throwable_GetCauseID = NULL;
-	m_BooleanValueID = NULL;
-	m_ByteValueID = NULL;
-	m_CharValueID = NULL;
-	m_ShortValueID = NULL;
-	m_IntValueID = NULL;
-	m_LongValueID = NULL;
-	m_FloatValueID = NULL;
-	m_DoubleValueID = NULL;
 	m_Context_GetStackFrameID = NULL;
 	m_Embedded = false;
 
@@ -379,19 +371,13 @@ void JPContext::onShutdown()
 	m_Running = false;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
-(JNIEnv *env, jobject obj, jlong contextPtr)
-{
-	((JPContext*) contextPtr)->onShutdown();
-}
-
 void JPContext::shutdownJVM()
 {
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
-//	if (m_Embedded)
-//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
+	//	if (m_Embedded)
+	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
 	// Wait for all non-demon threads to terminate
 	JP_TRACE("Destroy JVM");
@@ -475,4 +461,16 @@ JNIEnv* JPContext::getEnv()
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 	}
 	return env;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
+(JNIEnv *env, jobject obj, jlong contextPtr)
+{
+	((JPContext*) contextPtr)->onShutdown();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_interruptPy
+(JNIEnv *env, jclass cls)
+{
+	PyErr_SetInterrupt();
 }

@@ -1199,46 +1199,6 @@ jstring JPJavaFrame::getMessage(jthrowable th)
 	return (jstring) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetMessageID, NULL);
 }
 
-jbyte JPJavaFrame::booleanValue(jobject obj)
-{
-	return CallBooleanMethodA(obj, m_Context->m_BooleanValueID, 0);
-}
-
-jbyte JPJavaFrame::byteValue(jobject obj)
-{
-	return CallByteMethodA(obj, m_Context->m_ByteValueID, 0);
-}
-
-jchar JPJavaFrame::charValue(jobject obj)
-{
-	return CallCharMethodA(obj, m_Context->m_CharValueID, 0);
-}
-
-jshort JPJavaFrame::shortValue(jobject obj)
-{
-	return CallShortMethodA(obj, m_Context->m_ShortValueID, 0);
-}
-
-jint JPJavaFrame::intValue(jobject obj)
-{
-	return CallIntMethodA(obj, m_Context->m_IntValueID, 0);
-}
-
-jlong JPJavaFrame::longValue(jobject obj)
-{
-	return CallLongMethodA(obj, m_Context->m_LongValueID, 0);
-}
-
-jfloat JPJavaFrame::floatValue(jobject obj)
-{
-	return CallFloatMethodA(obj, m_Context->m_FloatValueID, 0);
-}
-
-jdouble JPJavaFrame::doubleValue(jobject obj)
-{
-	return CallDoubleMethodA(obj, m_Context->m_DoubleValueID, 0);
-}
-
 jboolean JPJavaFrame::isPackage(const string& str)
 {
 	jvalue v;

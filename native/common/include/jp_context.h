@@ -176,15 +176,15 @@ public:
 	JPPrimitiveType* _float;
 	JPPrimitiveType* _double;
 
-	JPClass* _java_lang_Void;
-	JPClass* _java_lang_Boolean;
-	JPClass* _java_lang_Byte;
-	JPClass* _java_lang_Character;
-	JPClass* _java_lang_Short;
-	JPClass* _java_lang_Integer;
-	JPClass* _java_lang_Long;
-	JPClass* _java_lang_Float;
-	JPClass* _java_lang_Double;
+	JPBoxedType* _java_lang_Void;
+	JPBoxedType* _java_lang_Boolean;
+	JPBoxedType* _java_lang_Byte;
+	JPBoxedType* _java_lang_Character;
+	JPBoxedType* _java_lang_Short;
+	JPBoxedType* _java_lang_Integer;
+	JPBoxedType* _java_lang_Long;
+	JPBoxedType* _java_lang_Float;
+	JPBoxedType* _java_lang_Double;
 
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
@@ -252,22 +252,12 @@ private:
 	jmethodID m_Context_NewWrapperID;
 public:
 	jmethodID m_Context_GetStackFrameID;
-
-	jmethodID m_BooleanValueID;
-	jmethodID m_ByteValueID;
-	jmethodID m_CharValueID;
-	jmethodID m_ShortValueID;
-	jmethodID m_IntValueID;
-	jmethodID m_LongValueID;
-	jmethodID m_FloatValueID;
-	jmethodID m_DoubleValueID;
-
 	void onShutdown();
 
 private:
 	bool m_Running;
 	bool m_ConvertStrings;
-        bool m_Embedded;
+	bool m_Embedded;
 public:
 	JPGarbageCollection *m_GC;
 } ;
