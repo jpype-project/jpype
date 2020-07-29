@@ -1082,13 +1082,21 @@ string JPJavaFrame::toString(jobject o)
 string JPJavaFrame::toStringUTF8(jstring str)
 {
 	JPStringAccessor contents(*this, str);
+#ifdef ANDROID
+	return string(contents.cstr, contents.length);
+#else
 	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+#endif
 }
 
 jstring JPJavaFrame::fromStringUTF8(const string& str)
 {
+#ifdef ANDROID
+	return (jstring) NewStringUTF(str.c_str());
+#else
 	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
 	return (jstring) NewStringUTF(mstr.c_str());
+#endif
 }
 
 jobject JPJavaFrame::toCharArray(jstring jstr)
