@@ -26,7 +26,6 @@ JPBoxedType::JPBoxedType(JPJavaFrame& frame, jclass clss,
 : JPClass(frame, clss, name, super, interfaces, modifiers),
 m_PrimitiveType(primitiveType)
 {
-	printf("Create %s\n", name.c_str());
 	if (name != "java.lang.Void")
 	{
 		string s = string("(") + primitiveType->getTypeCode() + ")V";
