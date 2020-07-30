@@ -331,6 +331,7 @@ static PyObject* PyJPModule_isStarted(PyObject* obj)
 	return PyBool_FromLong(JPContext_global->isRunning());
 }
 
+#ifndef ANDROID
 static PyObject* PyJPModule_attachThread(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_attachThread");
@@ -355,6 +356,7 @@ static PyObject* PyJPModule_detachThread(PyObject* obj)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
+#endif
 
 static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
 {
@@ -702,9 +704,11 @@ static PyMethodDef moduleMethods[] = {
 
 	// Threading
 	{"isThreadAttachedToJVM", (PyCFunction) PyJPModule_isThreadAttached, METH_NOARGS, ""},
+#ifndef ANDROID
 	{"attachThreadToJVM", (PyCFunction) PyJPModule_attachThread, METH_NOARGS, ""},
 	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
 	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
+#endif
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 

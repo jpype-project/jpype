@@ -44,6 +44,9 @@ functions have been removed...
 - ``jpype.beans`` has been removed as adding addition properties for semantic
   sugar increase the memory profile unnecessarily.
 
+- attach and detaching of threads is not allowed and those entry points have been
+  removed.
+
 
 Removed JPype Services
 ----------------------
