@@ -37,7 +37,7 @@ functions have been removed...
 - ``jpype.shutdownJVM`` is removed as DVM cannot to stopped during operation.
 
 - ``jpype.addClassPath`` is removed as DVM does not support class path based
- jar loading.  Dex files can be loaded dynamically using the Android API.
+  jar loading.  Dex files can be loaded dynamically using the Android API.
 
 - ``jpype.getDefaultJVMPath`` is removed as there is no JVM on Android. 
 
