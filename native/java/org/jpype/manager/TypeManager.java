@@ -39,13 +39,6 @@ import org.jpype.proxy.JPypeProxy;
  */
 public class TypeManager
 {
-  
-  private static TypeManager INSTANCE = new TypeManager();
-
-  public static TypeManager getInstance()
-  {
-    return INSTANCE;
-  }
 
   public long context = 0;
   public boolean isStarted = false;
@@ -63,12 +56,15 @@ public class TypeManager
   {
   }
 
-//<editor-fold desc="interface">
-  public synchronized void init(long context, TypeFactory typeFactory)
+  public TypeManager(long context, TypeFactory typeFactory)
   {
     this.context = context;
     this.typeFactory = typeFactory;
+  }
 
+//<editor-fold desc="interface">
+  public synchronized void init()
+  {
     try
     {
       if (isStarted)

@@ -73,14 +73,14 @@ public class JPypeContext
 
   private static JPypeContext INSTANCE =  new JPypeContext();
   // This is the C++ portion of the context.
-  public long context;
-  public TypeFactory typeFactory;
-  public DynamicClassLoader classLoader;
-  public final AtomicInteger shutdownFlag = new AtomicInteger();
-  public final AtomicInteger proxyCount = new AtomicInteger();
-  public final List<Thread> shutdownHooks = new ArrayList<>();
-  public final List<Runnable> postHooks = new ArrayList<>();
-  public String nativeLib;
+  private long context;
+  private TypeFactory typeFactory;
+  private TypeManager typeManager;
+  private DynamicClassLoader classLoader;
+  private final AtomicInteger shutdownFlag = new AtomicInteger();
+  private final AtomicInteger proxyCount = new AtomicInteger();
+  private final List<Thread> shutdownHooks = new ArrayList<>();
+  private final List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
@@ -99,15 +99,15 @@ public class JPypeContext
     if (nativeLib != null)
     {
       System.load(nativeLib);
-      INSTANCE.nativeLib = nativeLib;
     }
     INSTANCE.context = context;
     INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
     INSTANCE.typeFactory = new TypeFactoryNative();
+    INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
     INSTANCE.initialize();
     return INSTANCE;
   }
-  
+
   private JPypeContext()
   {
   }
@@ -115,9 +115,9 @@ public class JPypeContext
   void initialize()
   {
     // Okay everything is setup so lets give it a go.
+    this.typeManager.init();
     JPypeReferenceQueue.getInstance().start();
     JPypeSignal.installHandlers();
-    TypeManager.getInstance().init(context, INSTANCE.typeFactory);
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
@@ -247,7 +247,7 @@ public class JPypeContext
     // Release any C++ resources
     try
     {
-      TypeManager.getInstance().shutdown();
+      this.typeManager.shutdown();
     } catch (Throwable th)
     {
     }
@@ -299,7 +299,7 @@ public class JPypeContext
 
   public TypeManager getTypeManager()
   {
-    return TypeManager.getInstance();
+    return this.typeManager;
   }
 
   /**
