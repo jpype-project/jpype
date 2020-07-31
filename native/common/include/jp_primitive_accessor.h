@@ -237,6 +237,7 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 	// GCOVR_EXCL_START
+
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none; // Not used

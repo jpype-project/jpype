@@ -259,6 +259,7 @@ int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 }
 
 #ifndef ANDROID
+
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
@@ -332,6 +333,7 @@ static PyObject* PyJPModule_isStarted(PyObject* obj)
 }
 
 #ifndef ANDROID
+
 static PyObject* PyJPModule_attachThread(PyObject* obj)
 {
 	JP_PY_TRY("PyJPModule_attachThread");
@@ -674,14 +676,15 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 #endif
 
 #ifdef ANDROID
+
 static PyObject *PyJPModule_bootstrap(PyObject *module)
 {
-        // After all the internals are created we can connect the API with the internal module
-        JNIEnv * env = Android_JNI_GetEnv();
-        JPContext_global->attachJVM(env);
-        PyJPModule_installGC(module);
-    	PyJPModule_loadResources(module);
-        Py_RETURN_NONE;
+	// After all the internals are created we can connect the API with the internal module
+	JNIEnv * env = Android_JNI_GetEnv();
+	JPContext_global->attachJVM(env);
+	PyJPModule_installGC(module);
+	PyJPModule_loadResources(module);
+	Py_RETURN_NONE;
 }
 #endif
 
@@ -739,7 +742,7 @@ JPContext* JPContext_global = NULL;
 PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
-	JPContext_global = new JPContext();        
+	JPContext_global = new JPContext();
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
@@ -768,7 +771,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
-        
+
 	return module;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }

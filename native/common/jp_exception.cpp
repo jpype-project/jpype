@@ -255,11 +255,11 @@ void JPypeException::convertPythonToJava(JPContext* context)
 		}
 	}
 
-        if (context->m_Context_CreateExceptionID == NULL)
-        {
-            frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
-            return;
-        }
+	if (context->m_Context_CreateExceptionID == NULL)
+	{
+		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
+		return;
+	}
 
 
 	// Otherwise

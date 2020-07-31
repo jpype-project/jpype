@@ -88,7 +88,6 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 extern "C"
 {
 
-
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
 		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
 {

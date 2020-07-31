@@ -112,11 +112,11 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 jclass JPClassLoader::findClass(JPJavaFrame& frame, const string& name)
 {
 #ifdef ANDROID
-    string cname = name;
-    for (int i=0; i<cname.size(); ++i)
-        if (cname[i]=='.')
-            cname[i]='/';
-    return frame.FindClass(cname);
+	string cname = name;
+	for (int i = 0; i < cname.size(); ++i)
+		if (cname[i] == '.')
+			cname[i] = '/';
+	return frame.FindClass(cname);
 #else
 	jvalue v[3];
 	v[0].l = frame.NewStringUTF(name.c_str());

@@ -266,6 +266,7 @@ extern void JPRef_failed();
 
 // GCOVR_EXCL_START
 // Not currently used
+
 template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {

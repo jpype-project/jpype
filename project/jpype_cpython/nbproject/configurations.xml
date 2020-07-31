@@ -57,55 +57,10 @@
         </logicalFolder>
       </logicalFolder>
     </logicalFolder>
-    <logicalFolder name="ResourceFiles"
-                   displayName="Resource Files"
-                   projectFiles="true">
-    </logicalFolder>
-    <logicalFolder name="SourceFiles"
-                   displayName="Source Files"
-                   projectFiles="true">
-      <logicalFolder name="common" displayName="common" projectFiles="true">
-        <itemPath>../../native/common/jp_array.cpp</itemPath>
-        <itemPath>../../native/common/jp_arrayclass.cpp</itemPath>
-        <itemPath>../../native/common/jp_booleantype.cpp</itemPath>
-        <itemPath>../../native/common/jp_boxedtype.cpp</itemPath>
-        <itemPath>../../native/common/jp_buffer.cpp</itemPath>
-        <itemPath>../../native/common/jp_buffertype.cpp</itemPath>
-        <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
-        <itemPath>../../native/common/jp_chartype.cpp</itemPath>
-        <itemPath>../../native/common/jp_class.cpp</itemPath>
-        <itemPath>../../native/common/jp_classhints.cpp</itemPath>
-        <itemPath>../../native/common/jp_classloader.cpp</itemPath>
-        <itemPath>../../native/common/jp_classtype.cpp</itemPath>
-        <itemPath>../../native/common/jp_context.cpp</itemPath>
-        <itemPath>../../native/common/jp_convert.cpp</itemPath>
-        <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
-        <itemPath>../../native/common/jp_encoding.cpp</itemPath>
-        <itemPath>../../native/common/jp_exception.cpp</itemPath>
-        <itemPath>../../native/common/jp_field.cpp</itemPath>
-        <itemPath>../../native/common/jp_floattype.cpp</itemPath>
-        <itemPath>../../native/common/jp_functional.cpp</itemPath>
-        <itemPath>../../native/common/jp_gc.cpp</itemPath>
-        <itemPath>../../native/common/jp_inttype.cpp</itemPath>
-        <itemPath>../../native/common/jp_javaframe.cpp</itemPath>
-        <itemPath>../../native/common/jp_longtype.cpp</itemPath>
-        <itemPath>../../native/common/jp_method.cpp</itemPath>
-        <itemPath>../../native/common/jp_methoddispatch.cpp</itemPath>
-        <itemPath>../../native/common/jp_monitor.cpp</itemPath>
-        <itemPath>../../native/common/jp_numbertype.cpp</itemPath>
-        <itemPath>../../native/common/jp_objecttype.cpp</itemPath>
-        <itemPath>../../native/common/jp_platform.cpp</itemPath>
-        <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
-        <itemPath>../../native/common/jp_proxy.cpp</itemPath>
-        <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
-        <itemPath>../../native/common/jp_shorttype.cpp</itemPath>
-        <itemPath>../../native/common/jp_stringtype.cpp</itemPath>
-        <itemPath>../../native/common/jp_tracer.cpp</itemPath>
-        <itemPath>../../native/common/jp_typefactory.cpp</itemPath>
-        <itemPath>../../native/common/jp_typemanager.cpp</itemPath>
-        <itemPath>../../native/common/jp_value.cpp</itemPath>
-        <itemPath>../../native/common/jp_voidtype.cpp</itemPath>
-      </logicalFolder>
+    <logicalFolder name="f1"
+                   displayName="Python Files"
+                   projectFiles="true"
+                   kind="ROOT">
       <logicalFolder name="jpype" displayName="jpype" projectFiles="true">
         <itemPath>../../jpype/__init__.py</itemPath>
         <itemPath>../../jpype/_classpath.py</itemPath>
@@ -215,6 +170,56 @@
         <itemPath>../../test/jpypetest/test_varargs.py</itemPath>
         <itemPath>../../test/jpypetest/test_virtual.py</itemPath>
         <itemPath>../../test/jpypetest/test_zzz.py</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <logicalFolder name="common" displayName="common" projectFiles="true">
+        <itemPath>../../native/common/jp_array.cpp</itemPath>
+        <itemPath>../../native/common/jp_arrayclass.cpp</itemPath>
+        <itemPath>../../native/common/jp_booleantype.cpp</itemPath>
+        <itemPath>../../native/common/jp_boxedtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_buffer.cpp</itemPath>
+        <itemPath>../../native/common/jp_buffertype.cpp</itemPath>
+        <itemPath>../../native/common/jp_bytetype.cpp</itemPath>
+        <itemPath>../../native/common/jp_chartype.cpp</itemPath>
+        <itemPath>../../native/common/jp_class.cpp</itemPath>
+        <itemPath>../../native/common/jp_classhints.cpp</itemPath>
+        <itemPath>../../native/common/jp_classloader.cpp</itemPath>
+        <itemPath>../../native/common/jp_classtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_context.cpp</itemPath>
+        <itemPath>../../native/common/jp_convert.cpp</itemPath>
+        <itemPath>../../native/common/jp_doubletype.cpp</itemPath>
+        <itemPath>../../native/common/jp_encoding.cpp</itemPath>
+        <itemPath>../../native/common/jp_exception.cpp</itemPath>
+        <itemPath>../../native/common/jp_field.cpp</itemPath>
+        <itemPath>../../native/common/jp_floattype.cpp</itemPath>
+        <itemPath>../../native/common/jp_functional.cpp</itemPath>
+        <itemPath>../../native/common/jp_gc.cpp</itemPath>
+        <itemPath>../../native/common/jp_inttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_javaframe.cpp</itemPath>
+        <itemPath>../../native/common/jp_longtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_method.cpp</itemPath>
+        <itemPath>../../native/common/jp_methoddispatch.cpp</itemPath>
+        <itemPath>../../native/common/jp_monitor.cpp</itemPath>
+        <itemPath>../../native/common/jp_numbertype.cpp</itemPath>
+        <itemPath>../../native/common/jp_objecttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_platform.cpp</itemPath>
+        <itemPath>../../native/common/jp_primitivetype.cpp</itemPath>
+        <itemPath>../../native/common/jp_proxy.cpp</itemPath>
+        <itemPath>../../native/common/jp_reference_queue.cpp</itemPath>
+        <itemPath>../../native/common/jp_shorttype.cpp</itemPath>
+        <itemPath>../../native/common/jp_stringtype.cpp</itemPath>
+        <itemPath>../../native/common/jp_tracer.cpp</itemPath>
+        <itemPath>../../native/common/jp_typefactory.cpp</itemPath>
+        <itemPath>../../native/common/jp_typemanager.cpp</itemPath>
+        <itemPath>../../native/common/jp_value.cpp</itemPath>
+        <itemPath>../../native/common/jp_voidtype.cpp</itemPath>
       </logicalFolder>
       <logicalFolder name="python" displayName="python" projectFiles="true">
         <itemPath>../../native/python/jp_pythontypes.cpp</itemPath>
