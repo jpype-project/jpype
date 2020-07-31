@@ -137,49 +137,6 @@ extern "C"
 {
 #endif
 
-#ifdef ANDROID
-extern JNIEnv *Android_JNI_GetEnv();
-
-//static PyObject* checkEntry(PyObject *module)
-//{
-//	JP_PY_TRY("PyJPModule_startup");
-//	PyObject *out = PyDict_New();
-//	JNIEnv * env = Android_JNI_GetEnv();
-//	JavaVM *m_JavaVM = NULL;
-//	env->GetJavaVM(&m_JavaVM);
-//	PyDict_SetItemString(out, "env", PyLong_FromLongLong((long long) env));
-//	PyDict_SetItemString(out, "jvm", PyLong_FromLongLong((long long) m_JavaVM));
-//
-//	JPContext *context = JPContext_global;
-//        context->attachJVM(env);
-//	JPJavaFrame frame = JPJavaFrame::external(context, env);
-//	PyDict_SetItemString(out, "frame", PyLong_FromLongLong((long long) &frame));
-//
-//	PyObject *import = PyImport_AddModule("importlib.util");
-//	JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import, "find_spec", "s", "_jpype"));
-//	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
-//
-//	jclass contextClass = env->FindClass("org/jpype/JPypeContext");
-//	PyDict_SetItemString(out, "contextClass", PyLong_FromLongLong((long long) contextClass));
-//	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-//			"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
-//	PyDict_SetItemString(out, "startMethod", PyLong_FromLongLong((long long) startMethod));
-//
-//	JPClassLoader *m_ClassLoader = new JPClassLoader(frame);
-//
-//	jvalue val[3];
-//	val[0].j = (jlong) context;
-//	val[1].l = m_ClassLoader->getBootLoader();
-//	val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
-//	PyDict_SetItemString(out, "origin", origin.keep());
-//
-//	JPObjectRef m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
-//	PyDict_SetItemString(out, "context", PyLong_FromLongLong((long long) context));
-//	PyDict_SetItemString(out, "jcontext", PyLong_FromLongLong((long long) m_JavaContext.get()));
-//	return out;
-//	JP_PY_CATCH(NULL);
-//}
-#endif
 
 // GCOVR_EXCL_START
 // This is used exclusively during startup
@@ -259,6 +216,7 @@ int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 }
 
 #ifndef ANDROID
+extern JNIEnv *Android_JNI_GetEnv();
 
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
