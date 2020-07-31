@@ -6,8 +6,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.2 - 2020-07-27**
 
-  - java.util.Iterable will take a Python sequence as an implicit conversion.
-
   - The wrapper for Throwable was getting the wrapper for Object rather than
     the expected wrapper resulting in odd conversions from Python classes.
 
