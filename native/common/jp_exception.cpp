@@ -485,7 +485,10 @@ PyTracebackObject *tb_create(
 	PyFrameObject *frame = (PyFrameObject*) PyFrame_Type.tp_alloc(&PyFrame_Type, 0);
 	frame->f_back = NULL;
 	if (last_traceback != NULL)
+	{
 		frame->f_back = last_traceback->tb_frame;
+		Py_INCREF(frame->f_back);
+	}
 	frame->f_builtins = dict;
 	Py_INCREF(frame->f_builtins);
 	frame->f_code = (PyCodeObject*) code;

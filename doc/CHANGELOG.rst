@@ -4,6 +4,9 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+
+  - Fixed reference count problem in stackframes used for exceptions.
+
 - **1.0.2_dev0 - 2020-07-16**
 
   - ^C propogates to a KeyboardInterrupt properly.
