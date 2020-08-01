@@ -65,26 +65,22 @@ static void dtor(PyObject *self)
 	if (jo == NULL)
 		return;
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	printf("Dtor %p\n", jo);
 	frame.DeleteGlobalRef(jo);
 }
 
 static jobject getPackage(JPJavaFrame &frame, PyObject *self)
 {
-	printf("Get package\n");
 	PyObject *dict = PyModule_GetDict(self); // borrowed
-	PyObject *capsule = PyDict_GetItemString(dict, "_jpackage"); // barrowed
+	PyObject *capsule = PyDict_GetItemString(dict, "_jpackage"); // borrowed
 	jobject jo;
 	if (capsule != NULL)
 	{
 		jo = (jobject) PyCapsule_GetPointer(capsule, NULL);
-		printf("jo %p\n", jo);
 		return jo;
 	}
 
 	const char *name = PyModule_GetName(self);
 	// Attempt to load the object.
-	printf("Load %s\n", name);
 	jo =	frame.getPackage(name);
 
 	// Found it, use it.
@@ -284,7 +280,6 @@ static PyObject *PyJPPackage_dir(PyObject *self)
 static PyObject *PyJPPackage_cast(PyObject *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPPackage_cast");
-	printf("cast\n");
 	PyObject *dict = PyModule_GetDict(self);
 	PyObject* matmul = PyDict_GetItemString(dict, "__matmul__");
 	if (matmul == NULL)
