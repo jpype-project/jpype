@@ -22,6 +22,9 @@ import setupext
 from setuptools import setup
 from setuptools import Extension
 
+if sys.version_info[0] < 3:
+    raise RuntimeError("JPype requires Python 3.5 or later")
+
 jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
 install_requires = ['typing_extensions ; python_version< "3.8"']
