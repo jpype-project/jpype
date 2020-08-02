@@ -15,6 +15,9 @@
 **************************************************************************** */
 package jpype.common;
 
+import java.io.File;
+import java.nio.file.Path;
+
 public class Fixture
 {
   // Tests for access
@@ -362,6 +365,16 @@ public class Fixture
   }
 
   public String callString(String i)
+  {
+    return i;
+  }
+
+  public Path callPath(Path i)
+  {
+    return i;
+  }
+
+  public File callFile(File i)
   {
     return i;
   }

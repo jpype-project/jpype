@@ -54,14 +54,13 @@ public:
 			JPMethodDispatchList& methods,
 			JPFieldList& fields);
 
-	string toString() const;
-
 	string getCanonicalName() const
 	{
 		return m_CanonicalName;
 	}
 
-	string getName() const;
+	string getName(JPJavaFrame& frame) const;
+	jstring getPackageName(JPJavaFrame &frame) const;
 
 	bool isAbstract() const
 	{

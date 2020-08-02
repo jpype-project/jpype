@@ -16,7 +16,10 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_stringtype.h"
+#include "jp_primitive_accessor.h"
 #include <structmember.h>
+#include <marshal.h>
+#include "jp_primitive_accessor.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -25,13 +28,11 @@ extern "C"
 PyTypeObject *PyJPPackage_Type = NULL;
 static PyObject *PyJPPackage_Dict = NULL;
 
-static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+/**
+ * Returns a new reference.
+ */
+static PyObject *PyJPPackage_create(PyObject *name)
 {
-	JP_PY_TRY("PyJPPackage_new");
-	PyObject *name = NULL;
-	if (!PyArg_Parse(args, "(U)", &name))
-		return 0;
-
 	// Check the cache
 	PyObject *obj = PyDict_GetItem(PyJPPackage_Dict, name);
 	if (obj != NULL)
@@ -41,8 +42,9 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 	}
 
 	// Otherwise create a new object
-	PyObject *self = PyModule_Type.tp_new(PyJPPackage_Type, args, NULL);
-	int rc = PyModule_Type.tp_init(self, args, NULL);
+	JPPyObject args = JPPyObject::call(PyTuple_Pack(1, name));
+	PyObject *self = PyModule_Type.tp_new(PyJPPackage_Type, args.get(), NULL);
+	int rc = PyModule_Type.tp_init(self, args.get(), NULL);
 	if (rc != 0)
 	{
 		// If we fail clean up the mess.
@@ -53,6 +55,15 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 	// Place in cache
 	PyDict_SetItem(PyJPPackage_Dict, name, self);
 	return self;
+}
+
+static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPPackage_new");
+	PyObject *name = NULL;
+	if (!PyArg_Parse(args, "(U)", &name))
+		return 0;
+	return PyJPPackage_create(name);
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
@@ -70,6 +81,7 @@ static void dtor(PyObject *self)
 
 static jobject getPackage(JPJavaFrame &frame, PyObject *self)
 {
+	JP_TRACE_IN("getPackage");
 	PyObject *dict = PyModule_GetDict(self); // borrowed
 	PyObject *capsule = PyDict_GetItemString(dict, "_jpackage"); // borrowed
 	jobject jo;
@@ -80,22 +92,33 @@ static jobject getPackage(JPJavaFrame &frame, PyObject *self)
 	}
 
 	const char *name = PyModule_GetName(self);
+
 	// Attempt to load the object.
-	jo =	frame.getPackage(name);
+	jo = frame.getPackage(name);
 
 	// Found it, use it.
-	if (jo != NULL)
+	if (jo == NULL)
 	{
-		jo = frame.NewGlobalRef(jo);
-		capsule = PyCapsule_New(jo, NULL, dtor);
-		PyDict_SetItemString(dict, "_jpackage", capsule); // no steal
-		//		Py_DECREF(capsule);
-		return jo;
+		PyErr_Format(PyExc_AttributeError, "Java package '%s' is not valid", name);
+		return NULL;
 	}
+	jo = frame.NewGlobalRef(jo);
+	capsule = PyCapsule_New(jo, NULL, dtor);
+	PyDict_SetItemString(dict, "_jpackage", capsule); // no steal
 
-	// Otherwise, this is a bad package.
-	PyErr_Format(PyExc_AttributeError, "Java package '%s' is not valid", name);
-	return NULL;
+	// Check for an implementation
+	jbyteArray bytes = frame.getPackageImplementation(jo);
+	if (bytes == NULL)
+		return jo;
+	JPPrimitiveArrayAccessor<jbyteArray, jbyte*> accessor(frame, bytes,
+			&JPJavaFrame::GetByteArrayElements, &JPJavaFrame::ReleaseByteArrayElements);
+	JPPyObject code = JPPyObject::call(
+			PyMarshal_ReadObjectFromString((char*) accessor.get() + 16, accessor.size() - 16));
+
+	JPPyObject ret = JPPyObject::call(PyEval_EvalCode(code.get(), dict, NULL));
+
+	return jo;
+	JP_TRACE_OUT;
 }
 
 /**
@@ -197,6 +220,19 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	PyDict_SetItem(dict, attr, out.get()); // no steal
 	return out.keep();
 	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+}
+
+static int PyJPPackage_setattro(PyObject *self, PyObject *attr, PyObject *value)
+{
+	JP_PY_TRY("PyJPPackage_setattro");
+	JPContext* context = JPContext_global;
+	if (context->isRunning())
+	{
+		JPJavaFrame frame = JPJavaFrame::outer(context);
+		getPackage(frame, self);
+	}
+	return PyModule_Type.tp_setattro(self, attr, value);
+	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
 /**
@@ -313,6 +349,7 @@ static PyType_Slot packageSlots[] = {
 	{Py_tp_traverse, (void*) PyJPPackage_traverse},
 	{Py_tp_clear,    (void*) PyJPPackage_clear},
 	{Py_tp_getattro, (void*) PyJPPackage_getattro},
+	{Py_tp_setattro, (void*) PyJPPackage_setattro},
 	{Py_tp_str,      (void*) PyJPPackage_str},
 	{Py_tp_repr,     (void*) PyJPPackage_repr},
 	{Py_tp_call,     (void*) PyJPPackage_call},
@@ -348,4 +385,20 @@ void PyJPPackage_initType(PyObject* module)
 	// Set up a dictionary so we can reuse packages
 	PyJPPackage_Dict = PyDict_New();
 	PyModule_AddObject(module, "_packages", PyJPPackage_Dict);
+}
+
+PyObject *PyJPPackage_getPackageFor(JPJavaFrame &frame, JPClass* cls)
+{
+	// Get the package name from the class
+	jstring jstr = cls->getPackageName(frame);
+	if (jstr == NULL)
+		return NULL;
+
+	// Make sure the package exists
+	JPPyObject pstr = JPPyString::fromStringUTF8(frame.toStringUTF8(jstr));
+	JPPyObject pkg = JPPyObject::call(PyJPPackage_create(pstr.get()));
+
+	// Force it to be instantiation, this will load any __init__ modules.
+	getPackage(frame, pkg.get());
+	return pkg.get(); // reference is borrowed from the cache
 }

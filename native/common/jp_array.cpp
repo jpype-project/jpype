@@ -31,7 +31,7 @@ JPArray::JPArray(const JPValue &value)
 	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JP_TRACE_IN("JPArray::JPArray");
 	ASSERT_NOT_NULL(m_Class);
-	JP_TRACE(m_Class->toString());
+	JP_TRACE(m_Class->getCanonicalName());
 
 	// We will use this during range checks, so cache it
 	if (m_Object.get() == NULL)

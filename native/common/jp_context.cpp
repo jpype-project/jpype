@@ -88,6 +88,7 @@ JPContext::JPContext()
 	m_Object_HashCodeID = NULL;
 	m_CallMethodID = NULL;
 	m_Class_GetNameID = NULL;
+	m_Class_GetPackageNameID = NULL;
 	m_Context_collectRectangularID = NULL;
 	m_Context_assembleID = NULL;
 	m_String_ToCharArrayID = NULL;
@@ -261,6 +262,7 @@ void JPContext::initializeResources(JNIEnv* env)
 
 	jclass classClass = frame.FindClass("java/lang/Class");
 	m_Class_GetNameID = frame.GetMethodID(classClass, "getName", "()Ljava/lang/String;");
+	m_Class_GetPackageNameID = frame.GetMethodID(classClass, "getPackageName", "()Ljava/lang/String;");
 
 	// Bootloader needs to go first so we can load classes
 	m_ClassLoader = new JPClassLoader(frame);
@@ -337,6 +339,8 @@ void JPContext::initializeResources(JNIEnv* env)
 			"(Ljava/lang/String;)Ljava/lang/Object;");
 	m_Package_GetContentsID = frame.GetMethodID(packageClass, "getContents",
 			"()[Ljava/lang/String;");
+	m_Package_GetImplementationID = frame.GetMethodID(packageClass, "getImplementation",
+			"()[B");
 	m_Context_NewWrapperID = frame.GetMethodID(contextClass, "newWrapper",
 			"(J)V");
 

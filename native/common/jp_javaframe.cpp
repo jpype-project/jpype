@@ -1270,6 +1270,13 @@ jarray JPJavaFrame::getPackageContents(jobject pkg)
 			(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
 }
 
+jbyteArray JPJavaFrame::getPackageImplementation(jobject pkg)
+{
+	jvalue v;
+	JAVA_RETURN(jbyteArray, "JPJavaFrame::getPackageImplementation",
+			(jbyteArray) CallObjectMethodA(pkg, m_Context->m_Package_GetImplementationID, &v));
+}
+
 void JPJavaFrame::newWrapper(JPClass* cls)
 {
 	JPPyCallRelease call;

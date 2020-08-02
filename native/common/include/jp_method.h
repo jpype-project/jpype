@@ -99,7 +99,7 @@ public:
 
 private:
 	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
-	void ensureTypeCache();
+	void ensureTypeCache(JPJavaFrame &frame);
 
 	JPMethod(const JPMethod& o);
 	JPMethod& operator=(const JPMethod&) ;

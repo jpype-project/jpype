@@ -1103,6 +1103,12 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
  * transfers control to JClassFactory.  This is required because all of
  * the post load stuff needs to be in Python.
  *
+ * This takes a bit of a long path.  To make sure loads are synchronized
+ * the travel through the Java layer.
+ *
+ * PyJPClass_create -> JavaFrame.newWrapper -> JPypeContext.newWrapper
+ *   -> JPTypeFactory.newWrapper -> PyJPClass_hook
+ *
  * @param cls
  * @return
  */
@@ -1128,6 +1134,8 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	if (host != NULL)
 		return;
 
+	// Force load the package so that we have a home
+	PyObject *pkg = PyJPPackage_getPackageFor(frame, cls);
 
 	JPPyObject members = JPPyObject::call(PyDict_New());
 	JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
@@ -1187,5 +1195,9 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
 	args = JPPyObject::call(PyTuple_Pack(1, self));
-	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), NULL));
+	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), NULL)); // not used
+
+	// Place the resulting object in the package cache
+	if (pkg != NULL)
+		PyObject_SetAttrString(pkg, cls->getName(frame).c_str(), (PyObject*) self); // no steal
 }

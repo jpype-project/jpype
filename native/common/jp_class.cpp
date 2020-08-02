@@ -119,9 +119,9 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 	if (isPrimitive())
 		ss << ((JPPrimitiveType*) this)->getTypeCode();
 	else if (isArray())
-		ss << getName();
+		ss << getName(frame);
 	else
-		ss << "L" << getName() << ";";
+		ss << "L" << getName(frame) << ";";
 	return frame.findClassByName(ss.str());
 }
 
@@ -132,27 +132,19 @@ jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
 
-// GCOVR_EXCL_START
-// This is currently only used in tracing
-
-string JPClass::toString() const
+string JPClass::getName(JPJavaFrame &frame) const
 {
 	// This sanity check will not be hit in normal operation
 	if (m_Context == 0)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
-	return frame.toString(m_Class.get());
-}
-// GCOVR_EXCL_STOP
-
-string JPClass::getName() const
-{
-	// This sanity check will not be hit in normal operation
-	if (m_Context == 0)
-		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(frame.CallObjectMethodA(
 			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
+}
+
+jstring JPClass::getPackageName(JPJavaFrame &frame) const
+{
+	jvalue v;
+	return (jstring) frame.CallObjectMethodA((jobject) m_Class.get(), m_Context->m_Class_GetPackageNameID, &v);
 }
 
 //</editor-fold>

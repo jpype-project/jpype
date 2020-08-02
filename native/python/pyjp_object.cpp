@@ -375,7 +375,7 @@ void PyJPObject_initType(PyObject* module)
 /**
  * Attach stack frames and causes as required for a Python exception.
  */
-void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing)
+void PyJPException_normalize(JPJavaFrame &frame, JPPyObject exc, jthrowable th, jthrowable enclosing)
 {
 	JP_TRACE_IN("PyJPException_normalize");
 	JPContext *context = frame.getContext();

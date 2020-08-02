@@ -226,6 +226,7 @@ private:
 	jmethodID m_Object_HashCodeID;
 	jmethodID m_CallMethodID;
 	jmethodID m_Class_GetNameID;
+	jmethodID m_Class_GetPackageNameID;
 	jmethodID m_Context_collectRectangularID;
 	jmethodID m_Context_assembleID;
 	jmethodID m_String_ToCharArrayID;
@@ -249,6 +250,7 @@ private:
 	jmethodID m_Context_GetPackageID;
 	jmethodID m_Package_GetObjectID;
 	jmethodID m_Package_GetContentsID;
+	jmethodID m_Package_GetImplementationID;
 	jmethodID m_Context_NewWrapperID;
 public:
 	jmethodID m_Context_GetStackFrameID;

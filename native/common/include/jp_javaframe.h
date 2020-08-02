@@ -396,6 +396,7 @@ public:
 	jobject getPackage(const string& str);
 	jobject getPackageObject(jobject pkg, const string& str);
 	jarray getPackageContents(jobject pkg);
+	jbyteArray getPackageImplementation(jobject pkg);
 
 	void newWrapper(JPClass* cls);
 	void registerRef(jobject obj, PyObject* hostRef);

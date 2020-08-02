@@ -82,7 +82,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, bool callInstance,
 		JPPyObjectVector& arg)
 {
-	ensureTypeCache();
+	ensureTypeCache(frame);
 
 	JP_TRACE_IN("JPMethod::matches");
 	methodMatch.m_Overload = this;
@@ -337,9 +337,9 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 
 string JPMethod::matchReport(JPPyObjectVector& args)
 {
-	ensureTypeCache();
 	JPContext *context = m_Class->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+	ensureTypeCache(frame);
 	stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
@@ -396,10 +396,19 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 	return false;
 }
 
-void JPMethod::ensureTypeCache()
+void JPMethod::ensureTypeCache(JPJavaFrame &frame)
 {
 	if (m_ReturnType != (JPClass*) (-1))
 		return;
 
+	// Populate the members with C++ types
 	m_Class->getContext()->getTypeManager()->populateMethod(this, m_Method.get());
+
+	// Ensure the wrappers are available so any converters can be loaded.
+	for (JPClassList::iterator iter = m_ParameterTypes.begin();
+			iter != m_ParameterTypes.end();
+			++iter)
+	{
+		PyJPClass_create(frame, *iter);
+	}
 }
