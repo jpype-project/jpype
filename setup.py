@@ -21,7 +21,7 @@ import sys
 import setupext
 from pathlib import Path
 from setuptools import setup
-from setuptools import Extension
+from setupext.extension import Extension
 import glob
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
@@ -34,6 +34,8 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
 ))
 jpypeJar = Extension(name="org.jpype",
                      sources=glob.glob(str(Path("native", "java", "**", "*.java")), recursive=True),
+                     extra=glob.glob(str(Path("native", "java", "**", "*.txt")), recursive=True),
+                     py=glob.glob(str(Path("native", "java", "**", "*.py")), recursive=True),
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )

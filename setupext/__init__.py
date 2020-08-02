@@ -22,3 +22,4 @@ from . import build_ext
 from . import test_java
 from . import sdist
 from . import pytester
+from . import extension
