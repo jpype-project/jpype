@@ -4,6 +4,11 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+  - Java packages now operate as normal Python modules.  Removed restrictions
+    regarding setattr.  All package instances for the same package name are
+    shared so that functionality added to one instance is shared wiht all
+    instances.
+
 - **1.0.2_dev0 - 2020-07-16**
 
   - ^C propogates to a KeyboardInterrupt properly.
