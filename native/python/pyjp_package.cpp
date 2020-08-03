@@ -54,6 +54,12 @@ static PyObject *PyJPPackage_create(PyObject *name)
 
 	// Place in cache
 	PyDict_SetItem(PyJPPackage_Dict, name, self);
+	PyObject *dict = PyModule_GetDict(self);
+	PyDict_SetItemString(dict, "__builtins__", PyEval_GetBuiltins ());
+	PyDict_SetItemString(dict, "__name__", name);
+	PyDict_SetItemString(dict, "__package__", name);
+	JPPyObject path = JPPyObject::call(PyList_New(0));
+	PyDict_SetItemString(dict, "__path__", path.get());
 	return self;
 }
 
@@ -107,7 +113,7 @@ static jobject getPackage(JPJavaFrame &frame, PyObject *self)
 	PyDict_SetItemString(dict, "_jpackage", capsule); // no steal
 
 	// Check for an implementation
-	jbyteArray bytes = frame.getPackageImplementation(jo);
+	jbyteArray bytes = frame.getPackageImplementation(jo, "__init__");
 	if (bytes == NULL)
 		return jo;
 	JPPrimitiveArrayAccessor<jbyteArray, jbyte*> accessor(frame, bytes,
@@ -176,7 +182,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	try
 	{
 		obj = frame.getPackageObject(pkg, attrName);
-	}		catch (JPypeException& ex)
+	} catch (JPypeException& ex)
 	{
 		JPPyObject h = JPPyObject::accept(PyObject_GetAttrString(self, "_handler"));
 		// If something fails, we need to go to a handler
@@ -194,8 +200,25 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 		}
 		throw; // GCOVR_EXCL_LINE
 	}
+
 	if (obj == NULL)
 	{
+		jbyteArray bytes = frame.getPackageImplementation(pkg, attrName.c_str());
+		printf("not found %p\n", bytes);
+		if (bytes != NULL)
+		{
+			JPPyObject pkg2 = JPPyObject::call(PyModule_NewObject(attr));
+			PyObject *dict2 = PyModule_GetDict(pkg2.get()); // borrowed
+			PyDict_SetItemString(dict2, "__builtins__", PyEval_GetBuiltins ());
+			JPPrimitiveArrayAccessor<jbyteArray, jbyte*> accessor(frame, bytes,
+					&JPJavaFrame::GetByteArrayElements, &JPJavaFrame::ReleaseByteArrayElements);
+			JPPyObject code = JPPyObject::call(
+					PyMarshal_ReadObjectFromString((char*) accessor.get() + 16, accessor.size() - 16));
+
+			JPPyObject ret = JPPyObject::call(PyEval_EvalCode(code.get(), dict2, NULL));
+			PyDict_SetItem(dict, attr, pkg2.get()); // no steal
+			return pkg2.keep();
+		}
 		PyErr_Format(PyExc_AttributeError, "Java package '%s' has no attribute '%U'",
 				PyModule_GetName(self), attr);
 		return NULL;
@@ -271,35 +294,62 @@ static PyObject *PyJPPackage_call(PyObject *self, PyObject *args, PyObject *kwar
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPPackage_package(PyObject *self)
-{
-	return PyUnicode_FromFormat("java");
-}
-
-static PyObject *PyJPPackage_path(PyObject *self)
-{
-	return PyList_New(0);
-}
-
 static PyObject *PyJPPackage_dir(PyObject *self)
 {
 	JP_PY_TRY("PyJPPackage_dir");
+
+	// Get the context
 	JPContext* context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	// Find the package
 	jobject pkg = getPackage(frame, self);
 	if (pkg == NULL)
 		return NULL;
 
+	PyObject *dict = PyModule_GetDict(self);
+	JPPyObject out = JPPyObject::call(PySet_New(dict));
+
+	// If not then add the contexts
 	jarray o = frame.getPackageContents(pkg);
 	Py_ssize_t len = frame.GetArrayLength(o);
-	JPPyObject out = JPPyObject::call(PyList_New(len));
 	for (Py_ssize_t i = 0;  i < len; ++i)
 	{
 		string str = frame.toStringUTF8((jstring)
 				frame.GetObjectArrayElement((jobjectArray) o, (jsize) i));
-		PyList_SetItem(out.get(), i, PyUnicode_FromFormat("%s", str.c_str()));
+		JPPyObject item = JPPyObject::call(PyUnicode_FromFormat("%s", str.c_str()));
+		PySet_Add(out.get(), item.get());
 	}
-	return out.keep();
+	return PySequence_List(out.get());
+	JP_PY_CATCH(NULL);
+}
+
+static PyObject *PyJPPackage_all(PyObject *self)
+{
+	JP_PY_TRY("PyJPPackage_all");
+
+	// Get the context
+	JPContext* context = PyJPModule_getContext();
+	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	// Find the package
+	jobject pkg = getPackage(frame, self);
+	if (pkg == NULL)
+		return NULL;
+
+	JPPyObject out = JPPyObject::call(PySet_New(NULL));
+
+	// If not then add the contexts
+	jarray o = frame.getPackageContents(pkg);
+	Py_ssize_t len = frame.GetArrayLength(o);
+	for (Py_ssize_t i = 0;  i < len; ++i)
+	{
+		string str = frame.toStringUTF8((jstring)
+				frame.GetObjectArrayElement((jobjectArray) o, (jsize) i));
+		JPPyObject item = JPPyObject::call(PyUnicode_FromFormat("%s", str.c_str()));
+		PySet_Add(out.get(), item.get());
+	}
+	return PySequence_List(out.get());
 	JP_PY_CATCH(NULL);
 }
 
@@ -337,10 +387,7 @@ static PyMethodDef packageMethods[] = {
 };
 
 static PyGetSetDef packageGetSets[] = {
-	{"__all__", (getter) PyJPPackage_dir, NULL, ""},
-	{"__name__", (getter) PyJPPackage_str, NULL, ""},
-	{"__package__", (getter) PyJPPackage_package, NULL, ""},
-	{"__path__", (getter) PyJPPackage_path, NULL, ""},
+	{"__all__", (getter) PyJPPackage_all, NULL, ""},
 	{0}
 };
 

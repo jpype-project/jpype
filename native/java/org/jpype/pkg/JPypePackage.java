@@ -18,6 +18,7 @@ package org.jpype.pkg;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -54,10 +55,27 @@ public class JPypePackage
     return pkg;
   }
 
-  public byte[] getImplementation()
+  public byte[] getImplementation(String name)
   {
-    System.out.println("Get implementation " + pkg);
-    return null;
+    String rpkg = String.format("/%s/%s.pyc", pkg.replace('.', '/'), name);
+    URL url = this.getClass().getResource(rpkg);
+    if (url == null)
+      return null;
+    try (InputStream is = url.openStream())
+    {
+      int bytes = is.available();
+      ByteBuffer bb = ByteBuffer.allocate(bytes);
+      while (bytes > 0)
+      {
+        int got = is.read(bb.array(), bb.position(), bytes);
+        bb.position(got);
+        bytes -= got;
+      }
+      return bb.array();
+    } catch (IOException ex)
+    {
+      throw new RuntimeException(ex);
+    }
   }
 
   /**

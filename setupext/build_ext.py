@@ -357,6 +357,7 @@ class BuildExtCommand(build_ext):
                 '%s cvf "%s" -C "%s" .' % (jar, jarFile, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
+            distutils.file_util.copy_file(jarFile, '.')
 
         except subprocess.CalledProcessError as exc:
             distutils.log.error(exc.output)

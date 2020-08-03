@@ -1270,9 +1270,10 @@ jarray JPJavaFrame::getPackageContents(jobject pkg)
 			(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
 }
 
-jbyteArray JPJavaFrame::getPackageImplementation(jobject pkg)
+jbyteArray JPJavaFrame::getPackageImplementation(jobject pkg, const string& name)
 {
 	jvalue v;
+	v.l = fromStringUTF8(name);
 	JAVA_RETURN(jbyteArray, "JPJavaFrame::getPackageImplementation",
 			(jbyteArray) CallObjectMethodA(pkg, m_Context->m_Package_GetImplementationID, &v));
 }

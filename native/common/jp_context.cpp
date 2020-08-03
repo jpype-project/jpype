@@ -340,7 +340,7 @@ void JPContext::initializeResources(JNIEnv* env)
 	m_Package_GetContentsID = frame.GetMethodID(packageClass, "getContents",
 			"()[Ljava/lang/String;");
 	m_Package_GetImplementationID = frame.GetMethodID(packageClass, "getImplementation",
-			"()[B");
+			"(Ljava/lang/String;)[B");
 	m_Context_NewWrapperID = frame.GetMethodID(contextClass, "newWrapper",
 			"(J)V");
 
