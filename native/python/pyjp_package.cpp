@@ -203,8 +203,8 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 
 	if (obj == NULL)
 	{
+		// If there is no object found then try for an included package
 		jbyteArray bytes = frame.getPackageImplementation(pkg, attrName.c_str());
-		printf("not found %p\n", bytes);
 		if (bytes != NULL)
 		{
 			JPPyObject pkg2 = JPPyObject::call(PyModule_NewObject(attr));
@@ -214,11 +214,12 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 					&JPJavaFrame::GetByteArrayElements, &JPJavaFrame::ReleaseByteArrayElements);
 			JPPyObject code = JPPyObject::call(
 					PyMarshal_ReadObjectFromString((char*) accessor.get() + 16, accessor.size() - 16));
-
 			JPPyObject ret = JPPyObject::call(PyEval_EvalCode(code.get(), dict2, NULL));
 			PyDict_SetItem(dict, attr, pkg2.get()); // no steal
 			return pkg2.keep();
 		}
+
+		// Not found.
 		PyErr_Format(PyExc_AttributeError, "Java package '%s' has no attribute '%U'",
 				PyModule_GetName(self), attr);
 		return NULL;
