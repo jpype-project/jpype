@@ -4,6 +4,10 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+
+  - Errors report `*static*` when the matching with a static method
+    so that it is clear when a member method was called statically.
+
 - **1.0.2_dev0 - 2020-07-16**
 
   - ^C propogates to a KeyboardInterrupt properly.
