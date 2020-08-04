@@ -110,7 +110,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 	jlong* values = accessor.get();
 	for (int i = 0; i < sz; ++i)
 	{
-		delete (JPResource*) values[i];
+		context->m_Resources.push_back((JPResource*) values[i]);
 	}
 	return;
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE

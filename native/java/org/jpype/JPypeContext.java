@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype;
@@ -78,7 +78,7 @@ public class JPypeContext
   private JPypeReferenceQueue referenceQueue;
   private ClassLoader bootLoader;
   private AtomicInteger shutdownFlag = new AtomicInteger();
-  private AtomicInteger proxyCount = new AtomicInteger();
+  //private AtomicInteger proxyCount = new AtomicInteger();
   private List<Thread> shutdownHooks = new ArrayList<>();
   private List<Runnable> postHooks = new ArrayList<>();
 
@@ -202,15 +202,15 @@ public class JPypeContext
 
       // Wait for any unregistered proxies to finish so that we don't yank
       // the rug out from under them result in a segfault.
-      while (this.proxyCount.get() > 0)
-      {
-        try
-        {
-          Thread.sleep(10);
-        } catch (InterruptedException ex)
-        {
-        }
-      }
+//      while (this.proxyCount.get() > 0)
+//      {
+//        try
+//        {
+//          Thread.sleep(10);
+//        } catch (InterruptedException ex)
+//        {
+//        }
+//      }
 
 //    // Check to see if who is alive
 //    threads = Thread.getAllStackTraces();
@@ -447,15 +447,15 @@ public class JPypeContext
     return shutdownFlag.get() > 0;
   }
 
-  public void incrementProxy()
-  {
-    proxyCount.incrementAndGet();
-  }
-
-  public void decrementProxy()
-  {
-    proxyCount.decrementAndGet();
-  }
+//  public void incrementProxy()
+//  {
+//    proxyCount.incrementAndGet();
+//  }
+//
+//  public void decrementProxy()
+//  {
+//    proxyCount.decrementAndGet();
+//  }
 
   public static class PyExceptionProxy extends RuntimeException
   {

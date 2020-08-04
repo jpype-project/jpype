@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.proxy;
@@ -69,7 +69,7 @@ public class JPypeProxy implements InvocationHandler
   {
     try
     {
-      context.incrementProxy();
+//      context.incrementProxy();
       if (context.isShutdown())
         throw new RuntimeException("Proxy called during shutdown");
 
@@ -92,7 +92,7 @@ public class JPypeProxy implements InvocationHandler
       return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
     } finally
     {
-      context.decrementProxy();
+//      context.decrementProxy();
     }
   }
 
