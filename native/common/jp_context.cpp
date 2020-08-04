@@ -409,7 +409,7 @@ void JPContext::shutdownJVM()
 	{
 		delete *iter;
 	}
-
+	m_Resources.clear();
 
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
