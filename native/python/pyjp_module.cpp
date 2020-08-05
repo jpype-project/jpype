@@ -72,6 +72,7 @@ PyObject* _JMethodAnnotations = NULL;
 PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
 PyObject* _JVMNotRunning = NULL;
+PyObject *PyJClass_Generics = NULL;
 
 static void PyJPModule_loadResources(PyObject* module)
 {
@@ -139,6 +140,7 @@ extern "C"
 
 // GCOVR_EXCL_START
 // This is used exclusively during startup
+
 void Py_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
@@ -699,6 +701,9 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPClassHints_initType(module);
 	PyJPPackage_initType(module);
 	PyJPChar_initType(module);
+
+	PyJClass_Generics = PyDict_New();
+	PyModule_AddObject(module, "_generics", PyJClass_Generics);
 
 	_PyJPModule_trace = true;
 	return module;

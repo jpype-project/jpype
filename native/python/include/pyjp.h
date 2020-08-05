@@ -130,6 +130,7 @@ extern PyTypeObject *PyJPChar_Type;
 
 
 // JPype resources
+extern PyObject *PyJClass_Generics;
 extern PyObject *PyJPModule;
 extern PyObject *_JArray;
 extern PyObject *_JChar;
