@@ -65,51 +65,59 @@ public class TypeManager
 //<editor-fold desc="interface">
   public synchronized void init()
   {
-    if (isStarted)
-      throw new RuntimeException("Cannot be restarted");
-    isStarted = true;
-    isShutdown = false;
-
     try
     {
-      this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
-              .asSubclass(Annotation.class);
-    } catch (ClassNotFoundException ex)
+      if (isStarted)
+        throw new RuntimeException("Cannot be restarted");
+      isStarted = true;
+      isShutdown = false;
+
+      try
+      {
+        this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
+                .asSubclass(Annotation.class);
+      } catch (ClassNotFoundException ex)
+      {
+        // It is okay if we don't find this
+      }
+
+      // Create the required minimum classes
+      this.java_lang_Object = createClass(Object.class, true);
+
+      // Note that order is very important when creating these initial wrapper
+      // types. If something inherits from another type then the super class
+      // will be created without the special flag and the type system won't
+      // be able to handle the duplicate type properly.
+      Class[] cls =
+      {
+        Class.class, Number.class, CharSequence.class, Throwable.class,
+        Void.class, Boolean.class, Byte.class, Character.class,
+        Short.class, Integer.class, Long.class, Float.class, Double.class,
+        String.class, JPypeProxy.class,
+        Method.class, Field.class
+      };
+      for (Class c : cls)
+      {
+        createClass(c, true);
+      }
+
+      // Create the primitive types
+      // Link boxed and primitive types so that the wrappers can find them.
+      createPrimitive("void", Void.TYPE, Void.class);
+      createPrimitive("boolean", Boolean.TYPE, Boolean.class);
+      createPrimitive("byte", Byte.TYPE, Byte.class);
+      createPrimitive("char", Character.TYPE, Character.class);
+      createPrimitive("short", Short.TYPE, Short.class);
+      createPrimitive("int", Integer.TYPE, Integer.class);
+      createPrimitive("long", Long.TYPE, Long.class);
+      createPrimitive("float", Float.TYPE, Float.class);
+      createPrimitive("double", Double.TYPE, Double.class);
+    } catch (Throwable ex)
     {
-      // It is okay if we don't find this
+      // We can't get debugging information at this point in the process.
+      ex.printStackTrace();
+      throw ex;
     }
-
-    // Create the required minimum classes
-    this.java_lang_Object = createClass(Object.class, true);
-
-    // Note that order is very important when creating these initial wrapper
-    // types. If something inherits from another type then the super class
-    // will be created without the special flag and the type system won't
-    // be able to handle the duplicate type properly.
-    Class[] cls =
-    {
-      Class.class, Number.class, CharSequence.class, Throwable.class,
-      Void.class, Boolean.class, Byte.class, Character.class,
-      Short.class, Integer.class, Long.class, Float.class, Double.class,
-      String.class, JPypeProxy.class,
-      Method.class, Field.class
-    };
-    for (Class c : cls)
-    {
-      createClass(c, true);
-    }
-
-    // Create the primitive types
-    // Link boxed and primitive types so that the wrappers can find them.
-    createPrimitive("void", Void.TYPE, Void.class);
-    createPrimitive("boolean", Boolean.TYPE, Boolean.class);
-    createPrimitive("byte", Byte.TYPE, Byte.class);
-    createPrimitive("char", Character.TYPE, Character.class);
-    createPrimitive("short", Short.TYPE, Short.class);
-    createPrimitive("int", Integer.TYPE, Integer.class);
-    createPrimitive("long", Long.TYPE, Long.class);
-    createPrimitive("float", Float.TYPE, Float.class);
-    createPrimitive("double", Double.TYPE, Double.class);
   }
 
   /**
@@ -294,13 +302,14 @@ public class TypeManager
    *
    * @param object is the object to interrogate.
    * @return the C++ portion or null if the object is null.
+   * @throws java.lang.InterruptedException
    */
   public long findClassForObject(Object object) throws InterruptedException
   {
     Thread th = Thread.currentThread();
     if (th.isInterrupted())
     {
-      th.sleep(1);
+      Thread.sleep(1);
     }
     if (object == null)
       return 0;
@@ -327,15 +336,22 @@ public class TypeManager
     // Destroy all the resources held in C++
     for (ClassDescriptor entry : this.classMap.values())
     {
-      if (entry.constructorDispatch != 0)
-        destroyer.add(entry.constructorDispatch);
+      destroyer.add(entry.constructorDispatch);
       destroyer.add(entry.constructors);
       destroyer.add(entry.methodDispatch);
       destroyer.add(entry.methods);
       destroyer.add(entry.fields);
-      if (entry.anonymous != 0)
-        destroyer.add(entry.anonymous);
+      destroyer.add(entry.anonymous);
       destroyer.add(entry.classPtr);
+
+      // The same wrapper can appear more than once so blank as we go.
+      entry.constructorDispatch = 0;
+      entry.constructors = null;
+      entry.methodDispatch = null;
+      entry.methods = null;
+      entry.fields = null;
+      entry.anonymous = 0;
+      entry.classPtr = 0;
     }
     destroyer.flush();
 
@@ -377,24 +393,38 @@ public class TypeManager
     if (cls.isArray())
       return this.createArrayClass(cls);
 
+    return createOrdinaryClass(cls, special, true);
+  }
+
+  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
+  {
     // Object classes are more work as we need the super information as well.
     // Make sure all base classes are loaded
     Class<?> superClass = cls.getSuperclass();
     Class<?>[] interfaces = cls.getInterfaces();
     ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
-    long[] interfacesPtr = new long[interfaces.length];
+    long[] interfacesPtr = null;
     long superClassPtr = 0;
+    superClassPtr = 0;
     if (superClass != null)
     {
       parents[0] = this.getClass(superClass);
       superClassPtr = parents[0].classPtr;
     }
 
-    // Make sure all interfaces are loaded.
-    for (int i = 0; i < interfaces.length; ++i)
+    if (bases)
     {
-      parents[i + 1] = this.getClass(interfaces[i]);
-      interfacesPtr[i] = parents[i + 1].classPtr;
+      interfacesPtr = new long[interfaces.length];
+
+      // Make sure all interfaces are loaded.
+      for (int i = 0; i < interfaces.length; ++i)
+      {
+        parents[i + 1] = this.getClass(interfaces[i]);
+        interfacesPtr[i] = parents[i + 1].classPtr;
+      }
+    } else
+    {
+      interfacesPtr = new long[0];
     }
 
     // Set up the modifiers
@@ -422,7 +452,7 @@ public class TypeManager
             interfacesPtr,
             modifiers);
 
-    //
+    // Cache the wrapper.
     ClassDescriptor out = new ClassDescriptor(cls, classPtr);
     this.classMap.put(cls, out);
 
@@ -920,6 +950,8 @@ public class TypeManager
 
     void add(long v)
     {
+      if (v == 0)
+        return;
       queue[index++] = v;
       if (index == BLOCK_SIZE)
         flush();

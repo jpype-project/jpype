@@ -126,7 +126,7 @@ void JPLongType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_long->getHost());
 }
 
-jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPLongType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewLongArray(sz);
 }
