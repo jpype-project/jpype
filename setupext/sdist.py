@@ -18,7 +18,8 @@
 # *****************************************************************************
 import os
 import distutils
-from distutils.dir_util import copy_tree, remove_tree
+from distutils.dir_util import copy_tree, remove_tree, mkpath
+from distutils.file_util import copy_file
 from setuptools.command.sdist import sdist
 
 # Customization of the sdist
@@ -32,16 +33,27 @@ class BuildSourceDistribution(sdist):
     """
 
     def run(self):
-        # We need to build a jar cache for the source distribution
-        self.run_command("build_java")
-        self.run_command("test_java")
         dest = os.path.join('native', 'jars')
-        src = os.path.join('build', 'lib')
-        if not os.path.exists(src):
+
+        # We need to build a jar cache for the source distribution
+        cmd = self.distribution.get_command_obj('build_ext')
+
+        # Call with jar only option
+        cmd.jar = True
+        self.run_command('build_ext')
+
+        # Find out the location of the jar file
+        dirname = os.path.dirname(cmd.get_ext_fullpath("JAVA"))
+        jarFile = os.path.join(dirname, "org.jpype.jar")
+
+        # Also build the test harness files
+        self.run_command("test_java")
+        if not os.path.exists(jarFile):
             distutils.log.error("Jar source file is missing from build")
             raise distutils.errors.DistutilsPlatformError(
                 "Error copying jar file")
-        copy_tree(src, dest)
+        mkpath(dest)
+        copy_file(jarFile, dest)
 
         # Collect the sources
         sdist.run(self)

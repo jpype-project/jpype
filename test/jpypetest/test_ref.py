@@ -26,10 +26,8 @@ import common
 class ReferenceQueueTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.classLoader = jpype.JClass(
-            'org.jpype.JPypeContext').getInstance().getBootLoader()
         self.refqueue = jpype.JClass(
-            'org.jpype.JPypeContext').getInstance().getReferenceQueue()
+            'org.jpype.ref.JPypeReferenceQueue').getInstance()
 
     def testAccess(self):
         # Make sure we can get the instance

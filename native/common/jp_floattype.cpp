@@ -90,7 +90,7 @@ public:
 		return JPMatch::_implicit; // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
@@ -129,7 +129,7 @@ void JPFloatType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_float->getHost());
 }
 
-jarray JPFloatType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPFloatType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewFloatArray(sz);
 }
