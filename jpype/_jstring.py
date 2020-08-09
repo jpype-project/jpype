@@ -45,6 +45,9 @@ class _JStringProto(object):
         return self.length()
 
     def __getitem__(self, i):
+        if isinstance(i, slice):
+            return str(self)[i]
+
         if i < 0:
             i += len(self)
             if i < 0:

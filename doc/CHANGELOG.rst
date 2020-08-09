@@ -12,6 +12,8 @@ Latest Changes:
   - Errors report `*static*` when the matching with a static method
     so that it is clear when a member method was called statically.
 
+  - java.lang.String slices function like Python string slice.
+
 - **1.0.2 - 2020-07-27**
 
   - The wrapper for Throwable was getting the wrapper for Object rather than
