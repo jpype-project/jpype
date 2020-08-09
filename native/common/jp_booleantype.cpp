@@ -46,7 +46,7 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -103,7 +103,7 @@ class JPConversionAsBooleanLong : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -125,7 +125,7 @@ class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -169,7 +169,7 @@ void JPBooleanType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 
-jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPBooleanType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewBooleanArray(sz);
 }

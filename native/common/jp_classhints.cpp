@@ -206,7 +206,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.attributes, JPPyString::fromStringUTF8(attribute_).get());
 	}
@@ -332,7 +332,7 @@ class JPHintsConversion : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		PyJPClassHints *pyhints = (PyJPClassHints*) cls->getHints();
 		// GCOVR_EXCL_START
@@ -359,7 +359,7 @@ public:
 		hints->getInfo(cls, info);
 	}
 
-	virtual jvalue convert(JPMatch &match)
+	virtual jvalue convert(JPMatch &match) override
 	{
 		return jvalue();
 	}
@@ -496,7 +496,7 @@ public:
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
 		jsize length = (jsize) PySequence_Length(match.object);
 		JPClass *ccls = acls->getComponentType();
-		jarray array = ccls->newArrayInstance(frame, (jsize) length);
+		jarray array = ccls->newArrayOf(frame, (jsize) length);
 		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
 		res.l = frame.keep(array);
 		return res;
@@ -552,7 +552,7 @@ public:
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
 		jsize length = (jsize) PySequence_Length(match.object);
 		JPClass *ccls = acls->getComponentType();
-		jarray array = ccls->newArrayInstance(frame, (jsize) length);
+		jarray array = ccls->newArrayOf(frame, (jsize) length);
 		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
 		res.l = frame.keep(array);
 		return res;
@@ -781,7 +781,7 @@ public:
 		PyList_Append(info.implicit, proto.get());
 	}
 
-	jvalue convert(JPMatch &match)  override
+	jvalue convert(JPMatch &match) override
 	{
 		PyTypeObject* type = Py_TYPE(match.object);
 		JPJavaFrame *frame = match.frame;

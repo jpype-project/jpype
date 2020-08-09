@@ -125,7 +125,7 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 	return frame.findClassByName(ss.str());
 }
 
-jarray JPClass::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewObjectArray(sz, getJavaClass(), NULL);
 }
@@ -414,10 +414,12 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 
 void JPClass::getConversionInfo(JPConversionInfo &info)
 {
+	JP_TRACE_IN("JPClass::getConversionInfo");
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+	JP_TRACE_OUT;
 }
 
 
