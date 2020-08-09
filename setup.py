@@ -18,11 +18,16 @@
 #
 # *****************************************************************************
 import sys
-import setupext
 from pathlib import Path
 from setuptools import setup
 from setuptools import Extension
 import glob
+
+
+if sys.version_info[0] < 3 and sys.version_info[1] < 5:
+    raise RuntimeError("JPype requires Python 3.5 or later")
+import setupext
+
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
@@ -37,6 +42,7 @@ jpypeJar = Extension(name="org.jpype",
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
+
 
 setup(
     name='JPype1',
