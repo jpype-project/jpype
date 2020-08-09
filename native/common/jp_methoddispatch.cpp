@@ -159,7 +159,12 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		if (JPModifier::isConstructor(m_Modifiers))
 			ss << "No matching overloads found for constructor " << m_Class->getCanonicalName() << "(";
 		else
-			ss << "No matching overloads found for " << m_Class->getCanonicalName() << "." << getName() << "(";
+		{
+			ss << "No matching overloads found for ";
+			if (!callInstance)
+				ss << "*static* ";
+			ss << m_Class->getCanonicalName() << "." << getName() << "(";
+		}
 		size_t start = callInstance ? 1 : 0;
 		for (size_t i = start; i < arg.size(); ++i)
 		{

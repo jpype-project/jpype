@@ -18,20 +18,35 @@
 #
 # *****************************************************************************
 import sys
-import setupext
+from pathlib import Path
 from setuptools import setup
 from setuptools import Extension
+import glob
 
-if sys.version_info[0] < 3:
+
+if sys.version_info[0] < 3 and sys.version_info[1] < 5:
     raise RuntimeError("JPype requires Python 3.5 or later")
+import setupext
 
-jpypeLib = Extension(name='_jpype', **setupext.platform.platform_specific)
 
-install_requires = ['typing_extensions ; python_version< "3.8"']
+jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
+    include_dirs=[Path('native', 'common', 'include'),
+                  Path('native', 'python', 'include'),
+                  Path('native', 'embedded', 'include')],
+    sources=[Path('native', 'common', '*.cpp'),
+             Path('native', 'python', '*.cpp'),
+             Path('native', 'embedded', '*.cpp')],
+))
+jpypeJar = Extension(name="org.jpype",
+                     sources=glob.glob(str(Path("native", "java", "**", "*.java")), recursive=True),
+                     language="java",
+                     libraries=["lib/asm-8.0.1.jar"]
+                     )
+
 
 setup(
     name='JPype1',
-    version='1.0.2_dev0',
+    version='1.0.3_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
@@ -55,22 +70,17 @@ setup(
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
     ],
-    packages=[
-        'jpype'],
-    package_dir={
-        'jpype': 'jpype',
-    },
-    install_requires=install_requires,
+    packages=['jpype'],
+    package_dir={'jpype': 'jpype', },
+    install_requires=['typing_extensions ; python_version< "3.8"'],
     tests_require=['pytest'],
     cmdclass={
-        'build_java': setupext.build_java.BuildJavaCommand,
-        'build_thunk': setupext.build_thunk.BuildThunkCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
     },
     zip_safe=False,
-    ext_modules=[jpypeLib],
+    ext_modules=[jpypeJar, jpypeLib, ],
     distclass=setupext.dist.Distribution,
 )

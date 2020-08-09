@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype;
@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jpype.classloader.DynamicClassLoader;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -68,23 +69,22 @@ import org.jpype.ref.JPypeReferenceQueue;
 public class JPypeContext
 {
 
-  public final String VERSION = "1.0.2_dev0";
+  public final String VERSION = "1.0.3_dev0";
 
-  private static JPypeContext instance = null;
+  private static JPypeContext INSTANCE = null;
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
   private TypeManager typeManager;
-  private JPypeReferenceQueue referenceQueue;
-  private ClassLoader bootLoader;
-  private AtomicInteger shutdownFlag = new AtomicInteger();
-  private AtomicInteger proxyCount = new AtomicInteger();
-  private List<Thread> shutdownHooks = new ArrayList<>();
-  private List<Runnable> postHooks = new ArrayList<>();
+  private DynamicClassLoader classLoader;
+  private final AtomicInteger shutdownFlag = new AtomicInteger();
+  private final AtomicInteger proxyCount = new AtomicInteger();
+  private final List<Thread> shutdownHooks = new ArrayList<>();
+  private final List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
-    return instance;
+    return INSTANCE;
   }
 
   /**
@@ -94,21 +94,28 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  public static JPypeContext createContext(long context, ClassLoader bootLoader)
+  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib)
   {
-    instance = new JPypeContext();
+    if (nativeLib != null)
+      System.load(nativeLib);
+    INSTANCE = new JPypeContext(context, bootLoader);
+    INSTANCE.initialize();
+    return INSTANCE;
+  }
 
-    instance.context = context;
-    instance.bootLoader = bootLoader;
-    instance.typeFactory = new TypeFactoryNative();
-    instance.typeManager = new TypeManager(context, instance.typeFactory);
-    instance.typeManager.typeFactory = instance.typeFactory;
+  private JPypeContext(long context, ClassLoader bootLoader)
+  {
+    this.context = context;
+    this.classLoader = (DynamicClassLoader) bootLoader;
+    this.typeFactory = new TypeFactoryNative();
+    this.typeManager = new TypeManager(context, this.typeFactory);
+  }
 
-    instance.referenceQueue = new JPypeReferenceQueue(context);
-
+  void initialize()
+  {
     // Okay everything is setup so lets give it a go.
-    instance.typeManager.init();
-    instance.referenceQueue.start();
+    this.typeManager.init();
+    JPypeReferenceQueue.getInstance().start();
     JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
@@ -117,11 +124,10 @@ public class JPypeContext
       @Override
       public void run()
       {
-        instance.shutdown();
+        INSTANCE.shutdown();
       }
     }));
 
-    return instance;
   }
 
   /**
@@ -192,7 +198,6 @@ public class JPypeContext
       {
         if (t1 == t || t.isDaemon())
           continue;
-//      if (t.getState() == Thread.State.RUNNABLE)
         t.interrupt();
       }
 
@@ -212,17 +217,20 @@ public class JPypeContext
         }
       }
 
-//    // Check to see if who is alive
-//    threads = Thread.getAllStackTraces();
-//    System.out.println("Check for remaining");
-//    for (Thread t : threads.keySet())
-//    {
-//      System.out.println("  " + t.getName() + " " + t.getState());
-//      for (StackTraceElement e : t.getValue())
+//      // Check to see if who is alive
+//      threads = Thread.getAllStackTraces();
+//      System.out.println("Check for remaining");
+//      for (Thread t : threads.keySet())
 //      {
-//        System.out.println("    " + e.getClassName());
+//        // Daemon threads don't count for shutdown so skip them.
+//        if (t.isDaemon())
+//          continue;
+//        System.out.println("  " + t.getName() + " " + t.getState() + " " + t.isDaemon());
+//        for (StackTraceElement e : t.getStackTrace())
+//        {
+//          System.out.println("    " + e.getClassName());
+//        }
 //      }
-//    }
     } catch (Throwable th)
     {
     }
@@ -230,7 +238,7 @@ public class JPypeContext
     // Release all Python references
     try
     {
-      this.referenceQueue.stop();
+      JPypeReferenceQueue.getInstance().stop();
     } catch (Throwable th)
     {
     }
@@ -248,6 +256,7 @@ public class JPypeContext
     {
       run.run();
     }
+
   }
 
   static native void onShutdown(long ctxt);
@@ -277,9 +286,9 @@ public class JPypeContext
     return context;
   }
 
-  public ClassLoader getBootLoader()
+  public ClassLoader getClassLoader()
   {
-    return this.bootLoader;
+    return this.classLoader;
   }
 
   public TypeFactory getTypeFactory()
@@ -290,11 +299,6 @@ public class JPypeContext
   public TypeManager getTypeManager()
   {
     return this.typeManager;
-  }
-
-  public JPypeReferenceQueue getReferenceQueue()
-  {
-    return this.referenceQueue;
   }
 
   /**
@@ -455,18 +459,6 @@ public class JPypeContext
   public void decrementProxy()
   {
     proxyCount.decrementAndGet();
-  }
-
-  public static class PyExceptionProxy extends RuntimeException
-  {
-
-    long cls, value;
-
-    public PyExceptionProxy(long l0, long l1)
-    {
-      cls = l0;
-      value = l1;
-    }
   }
 
   public long getExcClass(Throwable th)

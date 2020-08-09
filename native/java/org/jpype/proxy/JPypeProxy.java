@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
+import org.jpype.ref.JPypeReferenceQueue;
 
 /**
  *
@@ -27,7 +28,7 @@ import org.jpype.manager.TypeManager;
  */
 public class JPypeProxy implements InvocationHandler
 {
-
+  private final static JPypeReferenceQueue referenceQueue = JPypeReferenceQueue.getInstance();
   JPypeContext context;
   public long instance;
   public long cleanup;
@@ -59,7 +60,7 @@ public class JPypeProxy implements InvocationHandler
   public Object newInstance()
   {
     Object out = Proxy.newProxyInstance(cl, interfaces, this);
-    context.getReferenceQueue().registerRef(out, instance, cleanup);
+    referenceQueue.registerRef(out, instance, cleanup);
     return out;
   }
 

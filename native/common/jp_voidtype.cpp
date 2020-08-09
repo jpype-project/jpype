@@ -104,7 +104,7 @@ void JPVoidType::setArrayItem(JPJavaFrame& frame, jarray, jsize, PyObject*)
 	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
 }
 
-jarray JPVoidType::newArrayInstance(JPJavaFrame& frame, jsize)
+jarray JPVoidType::newArrayOf(JPJavaFrame& frame, jsize)
 {
 	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
 }

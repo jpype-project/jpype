@@ -106,7 +106,7 @@ public:
 
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
@@ -147,7 +147,7 @@ void JPDoubleType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
-jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPDoubleType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewDoubleArray(sz);
 }
