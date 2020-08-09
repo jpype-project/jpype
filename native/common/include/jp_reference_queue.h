@@ -17,25 +17,10 @@
 #define JP_REFERENCE_QUEUE_H__
 #include <jpype.h>
 
-extern "C"
+namespace JPReferenceQueue
 {
-typedef void (*JCleanupHook)(void*) ;
-}
-
-class JPReferenceQueue
-{
-	friend class JPContext;
-public:
-	explicit JPReferenceQueue(JPJavaFrame& frame);
-	~JPReferenceQueue();
-	void registerRef( jobject obj, PyObject*  targetRef);
-	void registerRef(jobject obj, void* host, JCleanupHook func);
-
-private:
-	JPContext* m_Context;
-	JPObjectRef m_ReferenceQueue;
-	jmethodID m_ReferenceQueueRegisterMethod;
-
+void registerRef(JPJavaFrame &frame, jobject obj, PyObject*  targetRef);
+void registerRef(JPJavaFrame &frame, jobject obj, void* host, JCleanupHook func);
 } ; // end of namespace JPReferenceQueue
 
 #endif

@@ -711,7 +711,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 		long sz = PyLong_AsLong(item);
 		JPClass *cls = self->m_Class->newArrayType(frame, 1);
 		jvalue v;
-		v.l = (jobject) cls->newArrayInstance(frame, sz);
+		v.l = (jobject) cls->newArrayOf(frame, sz);
 		return cls->convertToPythonObject(frame, v, true).keep();
 	}
 

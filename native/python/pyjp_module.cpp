@@ -16,10 +16,10 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_arrayclass.h"
-#include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
 #include "jp_stringtype.h"
+#include "jp_classloader.h"
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -73,7 +73,7 @@ PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
 PyObject* _JVMNotRunning = NULL;
 
-static void PyJPModule_loadResources(PyObject* module)
+void PyJPModule_loadResources(PyObject* module)
 {
 	// Note that if any resource is missing the user will get
 	// the message:
@@ -139,6 +139,7 @@ extern "C"
 
 // GCOVR_EXCL_START
 // This is used exclusively during startup
+
 void Py_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
@@ -347,7 +348,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
 
 		// Bind lifespan of the view to the java object.
-		context->getReferenceQueue()->registerRef(v.l, vw.view, &releaseView);
+		frame.registerRef(v.l, vw.view, &releaseView);
 		vw.view = 0;
 		JPClass *type = frame.findClassForObject(v.l);
 		return type->convertToPythonObject(frame, v, false).keep();
@@ -536,7 +537,7 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 }
 // GCOVR_EXCL_STOP
 
-PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 {
 	JP_PY_TRY("PyJPModule_isPackage");
 	if (!PyUnicode_Check(pkg))
@@ -549,6 +550,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
+
 
 // GCOVR_EXCL_START
 
@@ -683,7 +685,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "1.0.2_dev0");
+	PyModule_AddStringConstant(module, "__version__", "1.0.3_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
@@ -811,7 +813,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;
-	jintArray jdims = (jintArray) context->_int->newArrayInstance(frame, view.ndim);
+	jintArray jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
 	if (view.shape != NULL)
 	{
 		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,

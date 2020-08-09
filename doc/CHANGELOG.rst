@@ -5,9 +5,21 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 
+- **1.0.3_dev0 - unreleased**
+
+  - Fixed reference count problem in stackframes used for exceptions.
+
+  - Errors report `*static*` when the matching with a static method
+    so that it is clear when a member method was called statically.
+
   - java.lang.String slices function like Python string slice.
 
-- **1.0.2_dev0 - 2020-07-16**
+- **1.0.2 - 2020-07-27**
+
+  - The wrapper for Throwable was getting the wrapper for Object rather than
+    the expected wrapper resulting in odd conversions from Python classes.
+
+  - Typos within the import system resulting in "jname" not found corrected.
 
   - ^C propogates to a KeyboardInterrupt properly.
 
@@ -23,6 +35,24 @@ Latest Changes:
 
   - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
     in a later patch release and should not have been used.
+
+  - **shutdown** The behavior log entry for changes on shutdown were lost in
+    the 1.0 release.  JPype now calls the JVM shutdown routine which tries to
+    gracefully exit when shutdown is called.  This results in several changes
+    in behavior.  Non daemon threads can now hold open the JVM until they have
+    completed.  Proxy calls will hold the shutdown until the call is completed
+    but will receive an interrupt message. Files now close properly and will
+    flush if the threads properly handle the exception.  Resource clean up
+    hooks and finalizers are executed.  AtExit hooks in the JVM are called as
+    spawned threads.  Automatic attachment of threads by use of the JVM from
+    Python are done as daemon but can be reattached as user threads on demand.
+    Buggy code that fails to properly handle thread clean up will likely hang
+    on shutdown.  Additional documentation is located in the user guide.
+
+  - A bug was reported with numpy.linalg.inv resulting in crashes.  This was
+    traced to an interaction with threading between the JVM and some compilations
+    of numpy.  The workaround appears to be calling numpy.linalg.inv prior to 
+    starting the JVM.
 
 - **1.0.1 - 2020-07-16**
 

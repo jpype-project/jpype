@@ -48,10 +48,12 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 
 void JPNumberType::getConversionInfo(JPConversionInfo &info)
 {
+	JP_TRACE_IN("JPNumberType::getConversionInfo");
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	javaNumberAnyConversion->getInfo(this, info);
 	boxLongConversion->getInfo(this, info);
 	boxDoubleConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+	JP_TRACE_OUT;
 }
