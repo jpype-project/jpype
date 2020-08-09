@@ -8,7 +8,10 @@ Latest Changes:
 - **1.0.3_dev0 - unreleased**
 
   - Fixed reference count problem in stackframes used for exceptions.
- 
+
+  - Errors report `*static*` when the matching with a static method
+    so that it is clear when a member method was called statically.
+
 - **1.0.2 - 2020-07-27**
 
   - The wrapper for Throwable was getting the wrapper for Object rather than
