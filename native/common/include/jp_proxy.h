@@ -41,13 +41,6 @@ public:
 
 	virtual JPPyObject getCallable(const string& cname) = 0;
 	static void releaseProxyPython(void* host);
-	static JNIEXPORT jobject JNICALL hostInvoke(
-			JNIEnv *env, jclass clazz,
-			jlong contextPtr, jstring name,
-			jlong hostObj,
-			jlong returnTypePtr,
-			jlongArray parameterTypePtrs,
-			jobjectArray args);
 
 protected:
 	JPContext*    m_Context;

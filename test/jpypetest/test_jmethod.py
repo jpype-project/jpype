@@ -73,7 +73,6 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertEqual(self.cls.substring.__name__, "substring")
         self.assertEqual(self.obj.substring.__name__, "substring")
 
-    @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodQualName(self):
         self.assertEqual(self.cls.substring.__qualname__,
                          "java.lang.String.substring")
@@ -111,7 +110,6 @@ class JMethodTestCase(common.JPypeTestCase):
                          "return"], self.cls)
         self.assertEqual(self.cls.getBytes.__annotations__, {})
 
-    @common.unittest.skipIf(sys.version_info[0] < 3, "skip on Python2")
     def testMethodInspectSignature(self):
         self.assertIsInstance(inspect.signature(
             self.cls.substring), inspect.Signature)

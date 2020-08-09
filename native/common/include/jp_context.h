@@ -114,7 +114,6 @@ public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
 	friend class JPClass;
-	friend class JPTypeFactory;
 
 	JPContext();
 	virtual ~JPContext();
@@ -122,6 +121,8 @@ public:
 	// JVM control functions
 	bool isRunning();
 	void startJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
+	void attachJVM(JNIEnv* env);
+	void initializeResources(JNIEnv* env);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();
@@ -159,11 +160,6 @@ public:
 		return m_ClassLoader;
 	}
 
-	JPReferenceQueue* getReferenceQueue()
-	{
-		return m_ReferenceQueue;
-	}
-
 	bool getConvertStrings() const
 	{
 		return m_ConvertStrings;
@@ -196,6 +192,7 @@ public:
 	JPClass* _java_lang_reflect_Method;
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
+	JPClass* _java_nio_ByteBuffer;
 
 private:
 
@@ -203,8 +200,6 @@ private:
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
-
-	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jobject obj, jlong contextPtr);
 
 private:
 	JPContext(const JPContext& orig);
@@ -215,10 +210,8 @@ private:
 	JPObjectRef m_JavaContext;
 
 	// Services
-	JPTypeFactory *m_TypeFactory;
 	JPTypeManager *m_TypeManager;
 	JPClassLoader *m_ClassLoader;
-	JPReferenceQueue *m_ReferenceQueue;
 
 public:
 	JPClassRef m_RuntimeException;
@@ -269,9 +262,12 @@ public:
 	jmethodID m_FloatValueID;
 	jmethodID m_DoubleValueID;
 
+	void onShutdown();
+
 private:
 	bool m_Running;
 	bool m_ConvertStrings;
+	bool m_Embedded;
 public:
 	JPGarbageCollection *m_GC;
 } ;

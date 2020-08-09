@@ -46,7 +46,7 @@ JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
 	JP_TRACE_OUT;
 }
 
-JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
+extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		JNIEnv *env, jclass clazz,
 		jlong contextPtr, jstring name,
 		jlong hostObj,
@@ -80,7 +80,6 @@ JNIEXPORT jobject JNICALL JPProxy::hostInvoke(
 
 			// Get the callable object
 			JPPyObject callable(((JPProxy*) hostObj)->getCallable(cname));
-			PyErr_Clear();
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)

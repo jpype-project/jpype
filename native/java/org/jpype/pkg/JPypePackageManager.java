@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.jpype.JPypeContext;
 import org.jpype.JPypeKeywords;
 
 /**
@@ -53,7 +54,7 @@ public class JPypePackageManager
 {
 
   final static List<FileSystem> bases = new ArrayList();
-  final static ClassLoader cl = ClassLoader.getSystemClassLoader();
+//  final static ClassLoader cl = ClassLoader.getSystemClassLoader();
   final static List<ModuleDirectory> modules = getModules();
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();
@@ -150,6 +151,7 @@ public class JPypePackageManager
   {
     env.put("create", "true");
 
+    ClassLoader cl = ClassLoader.getSystemClassLoader();
     URI uri = null;
     try
     {
@@ -348,6 +350,7 @@ public class JPypePackageManager
    */
   private static boolean isJarPackage(String name)
   {
+    ClassLoader cl = JPypeContext.getInstance().getClassLoader();
     try
     {
       Enumeration<URL> resources = cl.getResources(name);
@@ -372,6 +375,7 @@ public class JPypePackageManager
    */
   private static void getJarContents(Map<String, URI> out, String packageName)
   {
+    ClassLoader cl = JPypeContext.getInstance().getClassLoader();
     try
     {
       String path = packageName.replace('.', '/');
