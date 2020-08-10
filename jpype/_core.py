@@ -312,6 +312,9 @@ def initializeResources():
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
         list(_pykeywords._KEYWORDS))
 
+    _classpath._ourClassLoader = _jpype._getClassLoader()
+    _classpath.File = _jpype.JClass("java.io.File")
+
     # Everything successed so started is now true.
     _JVM_started = True
 
@@ -327,6 +330,7 @@ def shutdownJVM():
     if threading.current_thread() is not threading.main_thread():
         raise RuntimeError("Shutdown must be called from main thread")
     _jpype.shutdown()
+    _classpath._ourClassLoader = None
 
 
 # In order to shutdown cleanly we need the reference queue stopped

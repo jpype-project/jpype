@@ -23,7 +23,7 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 
 	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
-	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
+	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;Ljava/lang/ClassLoader;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
 	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
 	m_PopulateMembers = frame.GetMethodID(cls, "populateMembers", "(Ljava/lang/Class;)V");
@@ -50,9 +50,10 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
-	jvalue val;
-	val.l = (jobject) frame.fromStringUTF8(name);
-	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	jvalue val[2];
+	val[0].l = (jobject) frame.fromStringUTF8(name);
+	val[1].l = (jobject) m_Context->getClassLoader()->getBootLoader();
+	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, val));
 	if (out == NULL)
 	{
 		stringstream err;

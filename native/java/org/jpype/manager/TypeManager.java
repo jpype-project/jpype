@@ -170,15 +170,15 @@ public class TypeManager
    * @param name is the class name.
    * @return the C++ portion.
    */
-  public long findClassByName(String name)
+  public long findClassByName(String name, ClassLoader loader)
   {
-    Class<?> cls = lookupByName(name);
+    Class<?> cls = lookupByName(name, loader);
     if (cls == null)
       return 0;
     return this.findClass(cls);
   }
 
-  public Class<?> lookupByName(String name)
+  public Class<?> lookupByName(String name, ClassLoader loader)
   {
     // Handle arrays
     if (name.endsWith("[]"))
@@ -189,7 +189,7 @@ public class TypeManager
         dims++;
         name = name.substring(0, name.length() - 2);
       }
-      Class<?> cls = lookupByName(name);
+      Class<?> cls = lookupByName(name, loader);
       if (cls == null)
         return null;
       return Array.newInstance(cls, new int[dims]).getClass();
@@ -198,7 +198,7 @@ public class TypeManager
     try
     {
       // Attempt direct lookup
-      return Class.forName(name);
+      return Class.forName(name, true, loader);
     } catch (ClassNotFoundException ex)
     {
     }
@@ -208,7 +208,7 @@ public class TypeManager
     {
       try
       {
-        return Class.forName(name.replaceAll("/", "."));
+        return Class.forName(name.replaceAll("/", "."), true, loader);
       } catch (ClassNotFoundException ex)
       {
       }
@@ -245,13 +245,13 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-        Class<?> cls = Class.forName(sb.toString());
+        Class<?> cls = Class.forName(sb.toString(), true, loader);
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");
           sb.append(parts[j]);
         }
-        return Class.forName(sb.toString());
+        return Class.forName(sb.toString(), true, loader);
       } catch (ClassNotFoundException ex)
       {
       }

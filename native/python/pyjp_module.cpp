@@ -464,6 +464,22 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_CATCH(NULL);
 }
 
+PyObject *PyJPModule_getClassLoader(PyObject *obj)
+{
+	JP_PY_TRY("PyJPModule_getClassLoader");
+	if (!JPContext_global->isRunning())
+		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
+	JPContext *context = PyJPModule_getContext();
+	JPJavaFrame frame = JPJavaFrame::outer(context);
+	jvalue val;
+	val.l = context->getClassLoader()->getBootLoader();
+	JPClass* type = frame.findClassForObject(val.l);
+	JPPyObject o = type->convertToPythonObject(frame, val, false);
+
+	return o.keep();
+	JP_PY_CATCH(NULL);
+}
+
 static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPModule_arrayFromBuffer");
@@ -659,6 +675,7 @@ static PyMethodDef moduleMethods[] = {
 #endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
+	{"_getClassLoader", (PyCFunction) PyJPModule_getClassLoader, METH_NOARGS, ""},
 	{"examine", (PyCFunction) examine, METH_O, ""},
 	{"_newArrayType", (PyCFunction) PyJPModule_newArrayType, METH_VARARGS, ""},
 	{"_collect", (PyCFunction) PyJPModule_collect, METH_VARARGS, ""},

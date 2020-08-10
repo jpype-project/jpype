@@ -22,6 +22,8 @@ __all__ = ['addClassPath', 'getClassPath']
 _CLASSPATHS = []
 _SEP = _os.path.pathsep
 
+_ourClassLoader = None
+File = None
 
 def addClassPath(path1):
     """ Add a path to the Java class path
@@ -49,6 +51,8 @@ def addClassPath(path1):
         path1 = path2.joinpath(path1)
 
     _CLASSPATHS.append(path1)
+    if _ourClassLoader:
+        _ourClassLoader.addFile(File(str(path1)).toPath())
 
 
 def getClassPath(env=True):
