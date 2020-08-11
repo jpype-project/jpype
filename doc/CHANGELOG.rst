@@ -14,6 +14,11 @@ Latest Changes:
 
   - java.lang.String slices function like Python string slice.
 
+  - Java packages now operate as normal Python modules.  Removed restrictions
+    regarding setattr.  All package instances for the same package name are
+    shared so that functionality added to one instance is shared wiht all
+    instances.
+
 - **1.0.2 - 2020-07-27**
 
   - The wrapper for Throwable was getting the wrapper for Object rather than
