@@ -79,7 +79,7 @@ jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& r
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
 	jsize length = (jsize) (end - start);
 
-	jarray array = m_ComponentType->newArrayInstance(frame, length);
+	jarray array = m_ComponentType->newArrayOf(frame, length);
 	jvalue res;
 	for (jsize i = start; i < end; i++)
 	{
@@ -90,9 +90,9 @@ jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& r
 	JP_TRACE_OUT;
 }
 
-JPValue JPArrayClass::newInstance(JPJavaFrame& frame, int length)
+JPValue JPArrayClass::newArray(JPJavaFrame& frame, int length)
 {
 	jvalue v;
-	v.l = m_ComponentType->newArrayInstance(frame, length);
+	v.l = m_ComponentType->newArrayOf(frame, length);
 	return JPValue(this, v);
 }

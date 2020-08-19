@@ -84,7 +84,6 @@ public:
 private:
 	JPClass* m_Class;
 	jvalue  m_Value;
-	jmethodID m_GetInvocationHandlerID;
 } ;
 
 #endif // _JPVALUE_H_

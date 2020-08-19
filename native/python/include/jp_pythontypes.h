@@ -344,7 +344,7 @@ public:
 	/* Release the lock. */
 	~JPPyCallAcquire();
 private:
-	void* m_State;
+	long m_State;
 } ;
 
 /** Used when leaving python to an external potentially
@@ -359,7 +359,6 @@ public:
 	~JPPyCallRelease();
 private:
 	void* m_State1;
-	void* m_State2;
 } ;
 
 class JPPyBuffer

@@ -50,6 +50,8 @@ extern "C"
 {
 #endif
 
+PyMODINIT_FUNC PyInit__jpype();
+
 /**
  * Set the current exception as the cause of a new exception.
  *
@@ -210,5 +212,6 @@ inline JPContext* PyJPModule_getContext()
 	_ASSERT_JVM_RUNNING(context); // GCOVR_EXCL_LINE
 	return context;
 }
+void PyJPModule_loadResources(PyObject* module);
 
 #endif /* PYJP_H */

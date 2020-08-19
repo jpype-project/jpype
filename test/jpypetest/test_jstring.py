@@ -168,3 +168,12 @@ class JStringTestCase(common.JPypeTestCase):
     def testNullHash(self):
         jsn = JObject(None, JString)
         self.assertEqual(hash(jsn), hash(None))
+
+    def testSlice(self):
+        s = 'abcdefghijklmnop'
+        s2 = JString(s)
+        self.assertEqual(s[:], s2[:])
+        self.assertEqual(s[1:5], s2[1:5])
+        self.assertEqual(s[:5], s2[:5])
+        self.assertEqual(s[3:], s2[3:])
+        self.assertEqual(s[::-1], s2[::-1])

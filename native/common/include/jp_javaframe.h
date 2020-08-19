@@ -366,6 +366,7 @@ public:
 	void ReleaseDoubleArrayElements(jdoubleArray, jdouble* v, jint mode);
 
 	// Object
+	jclass GetObjectClass(jobject obj);
 	jobject GetStaticObjectField(jclass clazz, jfieldID fid);
 	jobject GetObjectField(jobject clazz, jfieldID fid);
 	void SetStaticObjectField(jclass clazz, jfieldID fid, jobject val);
@@ -397,6 +398,8 @@ public:
 	jarray getPackageContents(jobject pkg);
 
 	void newWrapper(JPClass* cls);
+	void registerRef(jobject obj, PyObject* hostRef);
+	void registerRef(jobject obj, void* ref, JCleanupHook cleanup);
 
 } ;
 

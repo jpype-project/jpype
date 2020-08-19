@@ -27,12 +27,10 @@ public class JPypeReferenceSet
   static final int SIZE = 256;
   ArrayList<Pool> pools = new ArrayList<>();
   Pool current;
-  long context;
   private int items;
 
-  JPypeReferenceSet(long context)
+  JPypeReferenceSet()
   {
-    this.context = context;
   }
 
   int size()
@@ -113,7 +111,7 @@ public class JPypeReferenceSet
         if (cleanup == 0)
           continue;
         ref.cleanup = 0;
-        JPypeReferenceQueue.removeHostReference(context, hostRef, cleanup);
+        JPypeReferenceNative.removeHostReference(hostRef, cleanup);
       }
       pool.tail = 0;
     }

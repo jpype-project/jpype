@@ -85,7 +85,11 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 #define JP_JAVA_CATCH(...)  } catch(...) { JPTypeFactory_rethrow(frame); } return __VA_ARGS__
 #endif
 
-JNIEXPORT void JNICALL JPTypeFactory_newWrapper(
+extern "C"
+{
+
+
+JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
 		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
 {
 	JPContext* context = (JPContext*) contextPtr;
@@ -97,7 +101,7 @@ JNIEXPORT void JNICALL JPTypeFactory_newWrapper(
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT void JNICALL JPTypeFactory_destroy(
+JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlongArray resources,
 		jint sz)
@@ -116,7 +120,7 @@ JNIEXPORT void JNICALL JPTypeFactory_destroy(
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDispatch(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong clsPtr,
 		jstring name,
@@ -136,7 +140,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethodDispatch(
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClass(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jclass cls,
 		jstring name,
@@ -158,7 +162,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineArrayClass(
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectClass(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jclass cls,
 		jstring name,
@@ -202,7 +206,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 			(JPClass*) superClass, interfaces, modifiers));
 	if (className == "java.lang.Throwable")
 		return (jlong) (context->_java_lang_Throwable
-			= new JPObjectType(frame, cls, className,
+			= new JPClassType(frame, cls, className,
 			(JPClass*) superClass, interfaces, modifiers));
 
 	if (className == "java.lang.Number")
@@ -303,7 +307,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineObjectClass(
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jstring name,
 		jclass cls,
@@ -365,7 +369,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_definePrimitive(
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
+JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
+		JNIEnv *env, jobject self,
 		jlong contextPtr,
 		jlong clsPtr,
 		jlong ctorMethod,
@@ -389,7 +394,7 @@ JNIEXPORT void JNICALL JPTypeFactory_assignMembers(JNIEnv *env, jobject self,
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong cls,
 		jstring name,
@@ -414,7 +419,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineField(
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
+JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong cls, jstring name,
 		jobject method,
@@ -438,7 +443,7 @@ JNIEXPORT jlong JNICALL JPTypeFactory_defineMethod(
 	JP_JAVA_CATCH(0);
 }
 
-JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
+JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong method,
 		jlong returnType,
@@ -452,62 +457,8 @@ JNIEXPORT jlong JNICALL JPTypeFactory_populateMethod(
 	convert(frame, argumentTypes, cargs);
 	JPMethod *methodPtr = (JPMethod*) method;
 	methodPtr->setParameters((JPClass*) returnType, cargs);
-	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
+	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
-JPTypeFactory::~JPTypeFactory()
-{
-}
+} // extern "C"
 
-JPTypeFactory::JPTypeFactory(JPJavaFrame& frame)
-{
-	JP_TRACE_IN("JPTypeFactory::init");
-	JPContext* context = frame.getContext();
-	jclass cls = context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeFactoryNative");
-
-	JNINativeMethod method[10];
-
-	method[0].name = (char*) "destroy";
-	method[0].signature = (char*) "(J[JI)V";
-	method[0].fnPtr = (void*) &JPTypeFactory_destroy;
-
-	method[1].name = (char*) "defineMethodDispatch";
-	method[1].signature = (char*) "(JJLjava/lang/String;[JI)J";
-	method[1].fnPtr = (void*) &JPTypeFactory_defineMethodDispatch;
-
-	method[2].name = (char*) "defineArrayClass";
-	method[2].signature = (char*) "(JLjava/lang/Class;Ljava/lang/String;JJI)J";
-	method[2].fnPtr = (void*) &JPTypeFactory_defineArrayClass;
-
-	method[3].name = (char*) "defineObjectClass";
-	method[3].signature = (char*) "(JLjava/lang/Class;Ljava/lang/String;J[JI)J";
-	method[3].fnPtr = (void*) &JPTypeFactory_defineObjectClass;
-
-	method[4].name = (char*) "definePrimitive";
-	method[4].signature = (char*) "(JLjava/lang/String;Ljava/lang/Class;JI)J";
-	method[4].fnPtr = (void*) &JPTypeFactory_definePrimitive;
-
-	method[5].name = (char*) "assignMembers";
-	method[5].signature = (char*) "(JJJ[J[J)V";
-	method[5].fnPtr = (void*) &JPTypeFactory_assignMembers;
-
-	method[6].name = (char*) "defineField";
-	method[6].signature = (char*) "(JJLjava/lang/String;Ljava/lang/reflect/Field;JI)J";
-	method[6].fnPtr = (void*) &JPTypeFactory_defineField;
-
-	method[7].name = (char*) "defineMethod";
-	method[7].signature = (char*) "(JJLjava/lang/String;Ljava/lang/reflect/Executable;[JI)J";
-	method[7].fnPtr = (void*) &JPTypeFactory_defineMethod;
-
-	method[8].name = (char*) "populateMethod";
-	method[8].signature = (char*) "(JJJ[J)V";
-	method[8].fnPtr = (void*) &JPTypeFactory_populateMethod;
-
-	method[9].name = (char*) "newWrapper";
-	method[9].signature = (char*) "(JJ)V";
-	method[9].fnPtr = (void*) &JPTypeFactory_newWrapper;
-
-	frame.GetMethodID(cls, "<init>", "()V");
-	frame.RegisterNatives(cls, method, 10);
-	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
-}

@@ -82,10 +82,7 @@ class _JDispatch(object):
     """
 
     def __init__(self, dispatch):
-        cl = _jpype.JClass(
-            'org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._encoder = _jpype.JClass(
-            cl.loadClass('org.jpype.pickle.Encoder'))()
+        self._encoder = _jpype.JClass('org.jpype.pickle.Encoder')()
         self._builder = JUnserializer()
         self._dispatch = dispatch
 
@@ -152,10 +149,7 @@ class JUnpickler(pickle.Unpickler):
     """
 
     def __init__(self, file, *args, **kwargs):
-        cl = _jpype.JClass(
-            'org.jpype.classloader.JPypeClassLoader').getInstance()
-        self._decoder = _jpype.JClass(
-            cl.loadClass('org.jpype.pickle.Decoder'))()
+        self._decoder = _jpype.JClass('org.jpype.pickle.Decoder')()
         pickle.Unpickler.__init__(self, file, *args, **kwargs)
 
     def find_class(self, module, cls):
