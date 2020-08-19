@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.0.3_dev0 - unreleased**
 
+  - Fixed crash when manually creating wrappers for anonymous classes.
+
   - Fixed reference count problem in stackframes used for exceptions.
 
   - Errors report `*static*` when the matching with a static method
