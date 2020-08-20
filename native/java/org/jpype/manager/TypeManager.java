@@ -445,6 +445,8 @@ public class TypeManager
 
     // FIXME watch out for anonyous and lambda here.
     String name = cls.getCanonicalName();
+    if (name == null)
+      name = cls.getName();
 
     // Create the JPClass
     long classPtr = typeFactory.defineObjectClass(context, cls, name,
