@@ -393,6 +393,14 @@ void JPContext::shutdownJVM()
 		m_JavaVM->DestroyJavaVM();
 	}
 
+	JP_TRACE("Delete resources");
+	for (std::list<JPResource*>::iterator iter = m_Resources.begin();
+			iter != m_Resources.end(); ++iter)
+	{
+		delete *iter;
+	}
+	m_Resources.clear();
+
 	// unload the jvm library
 	JP_TRACE("Unload JVM");
 	m_JavaVM = NULL;
