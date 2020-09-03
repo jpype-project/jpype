@@ -113,7 +113,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
 	jlong* values = accessor.get();
 	for (int i = 0; i < sz; ++i)
 	{
-		delete (JPResource*) values[i];
+		context->m_Resources.push_back((JPResource*) values[i]);
 	}
 	return;
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
@@ -205,7 +205,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 			(JPClass*) superClass, interfaces, modifiers));
 	if (className == "java.lang.Throwable")
 		return (jlong) (context->_java_lang_Throwable
-			= new JPObjectType(frame, cls, className,
+			= new JPClassType(frame, cls, className,
 			(JPClass*) superClass, interfaces, modifiers));
 
 	if (className == "java.lang.Number")

@@ -71,7 +71,7 @@ public class JPypeProxy implements InvocationHandler
   {
     try
     {
-      context.incrementProxy();
+//      context.incrementProxy();
       if (context.isShutdown())
         throw new RuntimeException("Proxy called during shutdown");
 
@@ -94,7 +94,7 @@ public class JPypeProxy implements InvocationHandler
       return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
     } finally
     {
-      context.decrementProxy();
+//      context.decrementProxy();
     }
   }
 

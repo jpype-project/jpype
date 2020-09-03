@@ -69,7 +69,7 @@ import org.jpype.ref.JPypeReferenceQueue;
 public class JPypeContext
 {
 
-  public final String VERSION = "1.0.2_dev0";
+  public final String VERSION = "1.0.3_dev0";
 
   private static JPypeContext INSTANCE =  new JPypeContext();
   // This is the C++ portion of the context.
@@ -78,7 +78,6 @@ public class JPypeContext
   private TypeManager typeManager;
   private DynamicClassLoader classLoader;
   private final AtomicInteger shutdownFlag = new AtomicInteger();
-  private final AtomicInteger proxyCount = new AtomicInteger();
   private final List<Thread> shutdownHooks = new ArrayList<>();
   private final List<Runnable> postHooks = new ArrayList<>();
 
@@ -208,15 +207,15 @@ public class JPypeContext
 
       // Wait for any unregistered proxies to finish so that we don't yank
       // the rug out from under them result in a segfault.
-      while (this.proxyCount.get() > 0)
-      {
-        try
-        {
-          Thread.sleep(10);
-        } catch (InterruptedException ex)
-        {
-        }
-      }
+//      while (this.proxyCount.get() > 0)
+//      {
+//        try
+//        {
+//          Thread.sleep(10);
+//        } catch (InterruptedException ex)
+//        {
+//        }
+//      }
 
 //      // Check to see if who is alive
 //      threads = Thread.getAllStackTraces();
@@ -452,15 +451,15 @@ public class JPypeContext
     return shutdownFlag.get() > 0;
   }
 
-  public void incrementProxy()
-  {
-    proxyCount.incrementAndGet();
-  }
-
-  public void decrementProxy()
-  {
-    proxyCount.decrementAndGet();
-  }
+//  public void incrementProxy()
+//  {
+//    proxyCount.incrementAndGet();
+//  }
+//
+//  public void decrementProxy()
+//  {
+//    proxyCount.decrementAndGet();
+//  }
 
   public long getExcClass(Throwable th)
   {

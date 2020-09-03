@@ -24,9 +24,9 @@ Full process:
       ``git checkout -b releases/{version}``
 - [ ] Merge the current master with the release
       ``git pull origin master``
-- [ ] Edit doc/CHANGELOG.rst
 - [ ] Start a release
       ``bumpversion release``
+- [ ] Edit doc/CHANGELOG.rst
 - [ ] Send the release to be evaluated
       ``git push``
 - [ ] Verify CI on azure

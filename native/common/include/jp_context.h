@@ -16,6 +16,7 @@
 #ifndef JP_CONTEXT_H
 #define JP_CONTEXT_H
 #include <jpype.h>
+#include <list>
 
 /** JPClass is a bit heavy when we just need to hold a
  * class reference.  It causes issues during bootstrap. Thus we
@@ -260,6 +261,9 @@ private:
 	bool m_Embedded;
 public:
 	JPGarbageCollection *m_GC;
+
+	// This will gather C++ resources to clean up after shutdown.
+	std::list<JPResource*> m_Resources;
 } ;
 
 extern void JPRef_failed();
