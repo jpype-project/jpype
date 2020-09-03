@@ -30,7 +30,10 @@ import setupext
 
 
 if '--android' in sys.argv:
-    sys.platform = 'android'
+    platform = 'android'
+    sys.argv.remove('--android')
+else:
+    platform = sys.platform
 
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
@@ -39,7 +42,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
                   Path('native', 'embedded', 'include')],
     sources=[Path('native', 'common', '*.cpp'),
              Path('native', 'python', '*.cpp'),
-             Path('native', 'embedded', '*.cpp')],
+             Path('native', 'embedded', '*.cpp')], platform=platform,
 ))
 jpypeJar = Extension(name="org.jpype",
                      sources=glob.glob(str(Path("native", "java", "**", "*.java")), recursive=True),
