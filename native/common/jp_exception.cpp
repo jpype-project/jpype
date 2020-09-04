@@ -255,11 +255,11 @@ void JPypeException::convertPythonToJava(JPContext* context)
 		}
 	}
 
-        if (context->m_Context_CreateExceptionID == NULL)
-        {
-            frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
-            return;
-        }
+	if (context->m_Context_CreateExceptionID == NULL)
+	{
+		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
+		return;
+	}
 
 
 	// Otherwise
@@ -573,7 +573,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		if (jmethodname != NULL)
 			method = frame.toStringUTF8(jclassname) + "." + frame.toStringUTF8(jmethodname);
 		jint lineNum =
-				frame.intValue(frame.GetObjectArrayElement(obj, i + 3));
+				frame.CallIntMethodA(frame.GetObjectArrayElement(obj, i + 3), context->_java_lang_Integer->m_IntValueID, 0);
 
 		last_traceback = tb_create(last_traceback, dict,  filename.c_str(),
 				method.c_str(), lineNum);

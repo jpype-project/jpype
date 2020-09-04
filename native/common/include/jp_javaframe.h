@@ -178,15 +178,6 @@ public:
 	jstring getMessage(jthrowable th);
 	jint compareTo(jobject obj, jobject obj2);
 
-	jbyte booleanValue(jobject obj);
-	jbyte byteValue(jobject obj);
-	jchar charValue(jobject obj);
-	jshort shortValue(jobject obj);
-	jint intValue(jobject obj);
-	jlong longValue(jobject obj);
-	jfloat floatValue(jobject obj);
-	jdouble doubleValue(jobject obj);
-
 	/**
 	 * Convert a UTF8 encoded string into Java.
 	 *

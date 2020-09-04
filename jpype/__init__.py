@@ -63,3 +63,7 @@ javax = JPackage("javax", strict=True)
 
 JMethod = _jpype._JMethod
 JField = _jpype._JField
+
+if hasattr(_jpype, 'bootstrap'):
+   _jpype.bootstrap()
+   _core.initializeResources()

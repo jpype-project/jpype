@@ -210,6 +210,8 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	// Call method
 	{
 		JPPyCallRelease call;
+		if (obj == NULL)
+			JP_RAISE(PyExc_ValueError, "method called on null object");
 		if (clazz == NULL)
 			v.l = frame.CallObjectMethodA(obj, mth, val);
 		else

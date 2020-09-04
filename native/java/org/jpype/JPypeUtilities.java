@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 
 public class JPypeUtilities
 {
+
   public static Path getJarPath(Class c)
   {
     try

@@ -40,7 +40,7 @@ public:
 	 * @returns the class loaded
 	 * @throws RuntimeException if the class is not found.
 	 */
-	jclass findClass(JPJavaFrame& frame, string name);
+	jclass findClass(JPJavaFrame& frame, const string& name);
 
 	// Classloader for Proxy
 	jobject getBootLoader();

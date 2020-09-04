@@ -88,7 +88,6 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 extern "C"
 {
 
-
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
 		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
 {
@@ -224,7 +223,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Boolean")
 	{
 		context->_boolean = new JPBooleanType();
-		context->m_BooleanValueID = frame.GetMethodID(cls, "booleanValue", "()Z");
 		return (jlong) (context->_java_lang_Boolean
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_boolean));
@@ -232,7 +230,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Byte")
 	{
 		context->_byte = new JPByteType();
-		context->m_ByteValueID = frame.GetMethodID(cls, "byteValue", "()B");
 		return (jlong) (context->_java_lang_Byte
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_byte));
@@ -240,7 +237,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Character")
 	{
 		context->_char = new JPCharType();
-		context->m_CharValueID = frame.GetMethodID(cls, "charValue", "()C");
 		return (jlong) (context->_java_lang_Character
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_char));
@@ -248,7 +244,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Short")
 	{
 		context->_short = new JPShortType();
-		context->m_ShortValueID = frame.GetMethodID(cls, "shortValue", "()S");
 		return (jlong) (context->_java_lang_Short
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_short));
@@ -256,7 +251,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Integer")
 	{
 		context->_int = new JPIntType();
-		context->m_IntValueID = frame.GetMethodID(cls, "intValue", "()I");
 		return (jlong) (context->_java_lang_Integer
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_int));
@@ -264,8 +258,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Long")
 	{
 		context->_long = new JPLongType();
-
-		context->m_LongValueID = frame.GetMethodID(cls, "longValue", "()J");
 		return (jlong) (context->_java_lang_Long
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_long));
@@ -273,7 +265,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Float")
 	{
 		context->_float = new JPFloatType();
-		context->m_FloatValueID = frame.GetMethodID(cls, "floatValue", "()F");
 		return (jlong) (context->_java_lang_Float
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_float));
@@ -281,7 +272,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "java.lang.Double")
 	{
 		context->_double = new JPDoubleType();
-		context->m_DoubleValueID = frame.GetMethodID(cls, "doubleValue", "()D");
 		return (jlong) (context->_java_lang_Double
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_double));

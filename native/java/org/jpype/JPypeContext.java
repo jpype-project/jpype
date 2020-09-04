@@ -71,7 +71,7 @@ public class JPypeContext
 
   public final String VERSION = "1.0.3_dev0";
 
-  private static JPypeContext INSTANCE = null;
+  private static JPypeContext INSTANCE =  new JPypeContext();
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
@@ -96,18 +96,19 @@ public class JPypeContext
   static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib)
   {
     if (nativeLib != null)
+    {
       System.load(nativeLib);
-    INSTANCE = new JPypeContext(context, bootLoader);
+    }
+    INSTANCE.context = context;
+    INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
+    INSTANCE.typeFactory = new TypeFactoryNative();
+    INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
     INSTANCE.initialize();
     return INSTANCE;
   }
 
-  private JPypeContext(long context, ClassLoader bootLoader)
+  private JPypeContext()
   {
-    this.context = context;
-    this.classLoader = (DynamicClassLoader) bootLoader;
-    this.typeFactory = new TypeFactoryNative();
-    this.typeManager = new TypeManager(context, this.typeFactory);
   }
 
   void initialize()

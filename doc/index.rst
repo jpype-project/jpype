@@ -24,6 +24,7 @@ Parts of the documentation
    quickguide
    api
    imports
+   android
    CHANGELOG
    develguide
 

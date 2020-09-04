@@ -387,6 +387,7 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 }
 
 int m_count = 0;
+
 JPPyCallAcquire::JPPyCallAcquire()
 {
 	m_State = (long) PyGILState_Ensure();

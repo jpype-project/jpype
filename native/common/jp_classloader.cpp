@@ -109,11 +109,19 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-jclass JPClassLoader::findClass(JPJavaFrame& frame, string name)
+jclass JPClassLoader::findClass(JPJavaFrame& frame, const string& name)
 {
+#ifdef ANDROID
+	string cname = name;
+	for (int i = 0; i < cname.size(); ++i)
+		if (cname[i] == '.')
+			cname[i] = '/';
+	return frame.FindClass(cname);
+#else
 	jvalue v[3];
 	v[0].l = frame.NewStringUTF(name.c_str());
 	v[1].z = true;
 	v[2].l = m_BootLoader.get();
 	return (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
+#endif
 }

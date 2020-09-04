@@ -28,6 +28,7 @@ import org.jpype.ref.JPypeReferenceQueue;
  */
 public class JPypeProxy implements InvocationHandler
 {
+
   private final static JPypeReferenceQueue referenceQueue = JPypeReferenceQueue.getInstance();
   JPypeContext context;
   public long instance;

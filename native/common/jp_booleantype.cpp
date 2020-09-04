@@ -18,6 +18,7 @@
 #include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_booleantype.h"
+#include "jp_boxedtype.h"
 
 JPBooleanType::JPBooleanType()
 : JPPrimitiveType("boolean")
@@ -38,7 +39,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.booleanValue(obj.getValue().l) != 0;
+	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, 0) != 0;
 	return JPValue(this, v);
 }
 
