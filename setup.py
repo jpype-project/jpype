@@ -18,11 +18,23 @@
 #
 # *****************************************************************************
 import sys
-import setupext
 from pathlib import Path
 from setuptools import setup
 from setupext.extension import Extension
 import glob
+
+if sys.version_info[0] < 3 and sys.version_info[1] < 5:
+    raise RuntimeError("JPype requires Python 3.5 or later")
+
+import setupext
+
+
+if '--android' in sys.argv:
+    platform = 'android'
+    sys.argv.remove('--android')
+else:
+    platform = sys.platform
+
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
@@ -30,7 +42,7 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
                   Path('native', 'embedded', 'include')],
     sources=[Path('native', 'common', '*.cpp'),
              Path('native', 'python', '*.cpp'),
-             Path('native', 'embedded', '*.cpp')],
+             Path('native', 'embedded', '*.cpp')], platform=platform,
 ))
 jpypeJar = Extension(name="org.jpype",
                      sources=glob.glob(str(Path("native", "java", "**", "*.java")), recursive=True),
@@ -40,9 +52,10 @@ jpypeJar = Extension(name="org.jpype",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
 
+
 setup(
     name='JPype1',
-    version='1.0.2_dev0',
+    version='1.0.3_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',

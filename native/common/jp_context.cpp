@@ -100,14 +100,6 @@ JPContext::JPContext()
 	m_Context_OrderID = NULL;
 	m_Object_GetClassID = NULL;
 	m_Throwable_GetCauseID = NULL;
-	m_BooleanValueID = NULL;
-	m_ByteValueID = NULL;
-	m_CharValueID = NULL;
-	m_ShortValueID = NULL;
-	m_IntValueID = NULL;
-	m_LongValueID = NULL;
-	m_FloatValueID = NULL;
-	m_DoubleValueID = NULL;
 	m_Context_GetStackFrameID = NULL;
 	m_Embedded = false;
 
@@ -228,7 +220,9 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 void JPContext::attachJVM(JNIEnv* env)
 {
 	env->GetJavaVM(&m_JavaVM);
+#ifndef ANDROID
 	m_Embedded = true;
+#endif
 	initializeResources(env);
 }
 
@@ -357,7 +351,6 @@ void JPContext::initializeResources(JNIEnv* env)
 			"(Ljava/lang/Object;)I");
 
 	jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
-
 	m_ProxyClass = JPClassRef(frame, proxyClass);
 	m_Proxy_NewID = frame.GetStaticMethodID(m_ProxyClass.get(),
 			"newProxy",
@@ -396,6 +389,14 @@ void JPContext::shutdownJVM()
 		JPPyCallRelease call;
 		m_JavaVM->DestroyJavaVM();
 	}
+
+	JP_TRACE("Delete resources");
+	for (std::list<JPResource*>::iterator iter = m_Resources.begin();
+			iter != m_Resources.end(); ++iter)
+	{
+		delete *iter;
+	}
+	m_Resources.clear();
 
 	// unload the jvm library
 	JP_TRACE("Unload JVM");

@@ -57,7 +57,7 @@ public class JPypeSignal
       method.invoke(null, intr, handler);
     } catch (InvocationTargetException | IllegalArgumentException | IllegalAccessException | InstantiationException | ClassNotFoundException | NoSuchMethodException | SecurityException ex)
     {
-      throw new RuntimeException(ex);
+      // If we don't get the signal handler run without it.  (ANDROID)
     }
   }
 

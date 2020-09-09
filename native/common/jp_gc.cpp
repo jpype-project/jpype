@@ -68,13 +68,13 @@ size_t getWorkingSize()
 	lseek(statm_fd, SEEK_SET, 0);
 	int len = read(statm_fd, bytes, 32);
 	long long sz = 0;
-        int i = 0;
-        for (; i < len; i++)
+	int i = 0;
+	for (; i < len; i++)
 	{
 		if (bytes[i] == ' ')
 			break;
 	}
-        i++;
+	i++;
 	for (; i < len; i++)
 	{
 		if (bytes[i] == ' ')
@@ -166,7 +166,6 @@ void JPGarbageCollection::shutdown()
 	close(statm_fd);
 #endif
 }
-
 
 void JPGarbageCollection::onStart()
 {

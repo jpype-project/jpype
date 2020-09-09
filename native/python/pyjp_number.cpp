@@ -403,7 +403,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 	{
 		jlong l = 0;
 		if (value.getValue().l != 0)
-			l = frame.CallBooleanMethodA(value.getJavaObject(), context->m_BooleanValueID, 0);
+			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, 0);
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
 		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
 	}
@@ -411,7 +411,10 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 	{
 		jlong l = 0;
 		if (value.getValue().l != 0)
-			l = frame.CallLongMethodA(value.getJavaObject(), context->m_LongValueID, 0);
+		{
+			JPBoxedType* jb = (JPBoxedType*) value.getClass();
+			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, 0);
+		}
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
 		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
 	}
@@ -419,7 +422,10 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 	{
 		jdouble l = 0;
 		if (value.getValue().l != 0)
-			l = frame.CallDoubleMethodA(value.getJavaObject(), context->m_DoubleValueID, 0);
+		{
+			JPBoxedType* jb = (JPBoxedType*) value.getClass();
+			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, 0);
+		}
 		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));
 		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
 	}

@@ -51,7 +51,14 @@ public:
 
 protected:
 	JPPrimitiveType* m_PrimitiveType;
+public:
 	jmethodID        m_CtorID;
+	jmethodID        m_DoubleValueID;
+	jmethodID        m_FloatValueID;
+	jmethodID        m_IntValueID;
+	jmethodID        m_LongValueID;
+	jmethodID        m_BooleanValueID;
+	jmethodID        m_CharValueID;
 } ;
 
 #endif // _JPBOXEDCLASS_H_

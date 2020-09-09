@@ -18,6 +18,7 @@
 #include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
+#include "jp_boxedtype.h"
 
 JPFloatType::JPFloatType()
 : JPPrimitiveType("float")
@@ -42,7 +43,9 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = (type_t) frame.floatValue(obj.getValue().l);
+	jobject jo = obj.getValue().l;
+	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, 0);
 	return JPValue(this, v);
 }
 

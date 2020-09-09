@@ -18,6 +18,7 @@
 #include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
+#include "jp_boxedtype.h"
 
 JPCharType::JPCharType()
 : JPPrimitiveType("char")
@@ -59,7 +60,7 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.charValue(obj.getValue().l);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, 0);
 	return JPValue(this, v);
 }
 

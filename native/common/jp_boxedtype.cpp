@@ -31,6 +31,32 @@ m_PrimitiveType(primitiveType)
 		string s = string("(") + primitiveType->getTypeCode() + ")V";
 		m_CtorID = frame.GetMethodID(clss, "<init>", s.c_str());
 	}
+
+	m_DoubleValueID = NULL;
+	m_FloatValueID = NULL;
+	m_LongValueID = NULL;
+	m_IntValueID = NULL;
+	m_BooleanValueID = NULL;
+	m_CharValueID = NULL;
+
+	if (name != "java.lang.Void" && name != "java.lang.Boolean" && name != "java.lang.Character" )
+	{
+		m_DoubleValueID = frame.GetMethodID(clss, "doubleValue", "()D");
+		m_FloatValueID = frame.GetMethodID(clss, "floatValue", "()F");
+		m_IntValueID = frame.GetMethodID(clss, "intValue", "()I");
+		m_LongValueID = frame.GetMethodID(clss, "longValue", "()J");
+	}
+
+	if (name == "java.lang.Boolean")
+	{
+		m_BooleanValueID = frame.GetMethodID(clss, "booleanValue", "()Z");
+	}
+
+	if (name == "java.lang.Character")
+	{
+		m_CharValueID = frame.GetMethodID(clss, "charValue", "()C");
+	}
+
 }
 
 JPBoxedType::~JPBoxedType()
@@ -58,6 +84,7 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 
 void JPBoxedType::getConversionInfo(JPConversionInfo &info)
 {
+	JP_TRACE_IN("JPBoxedType::getConversionInfo");
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	m_PrimitiveType->getConversionInfo(info);
 	JPPyObject::call(PyObject_CallMethod(info.expl, "extend", "O", info.implicit));
@@ -65,6 +92,7 @@ void JPBoxedType::getConversionInfo(JPConversionInfo &info)
 	JPPyObject::call(PyObject_CallMethod(info.implicit, "extend", "O", info.exact));
 	JPPyObject::call(PyObject_CallMethod(info.exact, "clear", ""));
 	JPClass::getConversionInfo(info);
+	JP_TRACE_OUT;
 }
 
 jobject JPBoxedType::box(JPJavaFrame &frame, jvalue v)

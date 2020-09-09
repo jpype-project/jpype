@@ -66,9 +66,9 @@ def _JPathConvert(jcls, obj):
 def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
 
-
-@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
-                          excludes=str)
+# To be added in 1.1.x
+#@_jcustomizer.JConversion("java.util.Iterable", instanceof=Sequence, excludes=str)
+@_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence, excludes=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
 
