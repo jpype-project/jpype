@@ -15,6 +15,7 @@
  *****************************************************************************/
 #include <Python.h>
 #include "jpype.h"
+#include "jp_reference_queue.h"
 
 /*****************************************************************************/
 // Local frames represent the JNIEnv for memory handling all java
@@ -30,7 +31,7 @@ static void jpype_frame_check(int popped)
 }
 #define JP_FRAME_CHECK() jpype_frame_check(m_Popped)
 #else
-#define JP_FRAME_CHECK() if (true)
+#define JP_FRAME_CHECK() if (false) while (false)
 #endif
 
 JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int size, bool outer)
@@ -575,6 +576,12 @@ jboolean JPJavaFrame::CallNonvirtualBooleanMethodA(jobject obj, jclass claz, jme
 			m_Env->CallNonvirtualBooleanMethodA(obj, claz, mid, val));
 }
 
+jclass JPJavaFrame::GetObjectClass(jobject obj)
+{
+	JAVA_RETURN_OBJ(jclass, "JPJavaFrame::GetObjectClass",
+			m_Env->GetObjectClass(obj));
+}
+
 jobject JPJavaFrame::GetStaticObjectField(jclass clazz, jfieldID fid)
 {
 	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::GetStaticObjectField",
@@ -1075,13 +1082,21 @@ string JPJavaFrame::toString(jobject o)
 string JPJavaFrame::toStringUTF8(jstring str)
 {
 	JPStringAccessor contents(*this, str);
+#ifdef ANDROID
+	return string(contents.cstr, contents.length);
+#else
 	return transcribe(contents.cstr, contents.length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+#endif
 }
 
 jstring JPJavaFrame::fromStringUTF8(const string& str)
 {
+#ifdef ANDROID
+	return (jstring) NewStringUTF(str.c_str());
+#else
 	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
 	return (jstring) NewStringUTF(mstr.c_str());
+#endif
 }
 
 jobject JPJavaFrame::toCharArray(jstring jstr)
@@ -1192,46 +1207,6 @@ jstring JPJavaFrame::getMessage(jthrowable th)
 	return (jstring) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetMessageID, NULL);
 }
 
-jbyte JPJavaFrame::booleanValue(jobject obj)
-{
-	return CallBooleanMethodA(obj, m_Context->m_BooleanValueID, 0);
-}
-
-jbyte JPJavaFrame::byteValue(jobject obj)
-{
-	return CallByteMethodA(obj, m_Context->m_ByteValueID, 0);
-}
-
-jchar JPJavaFrame::charValue(jobject obj)
-{
-	return CallCharMethodA(obj, m_Context->m_CharValueID, 0);
-}
-
-jshort JPJavaFrame::shortValue(jobject obj)
-{
-	return CallShortMethodA(obj, m_Context->m_ShortValueID, 0);
-}
-
-jint JPJavaFrame::intValue(jobject obj)
-{
-	return CallIntMethodA(obj, m_Context->m_IntValueID, 0);
-}
-
-jlong JPJavaFrame::longValue(jobject obj)
-{
-	return CallLongMethodA(obj, m_Context->m_LongValueID, 0);
-}
-
-jfloat JPJavaFrame::floatValue(jobject obj)
-{
-	return CallFloatMethodA(obj, m_Context->m_FloatValueID, 0);
-}
-
-jdouble JPJavaFrame::doubleValue(jobject obj)
-{
-	return CallDoubleMethodA(obj, m_Context->m_DoubleValueID, 0);
-}
-
 jboolean JPJavaFrame::isPackage(const string& str)
 {
 	jvalue v;
@@ -1270,4 +1245,14 @@ void JPJavaFrame::newWrapper(JPClass* cls)
 	jv.j = (jlong) cls;
 	CallVoidMethodA(m_Context->getJavaContext(),
 			m_Context->m_Context_NewWrapperID, &jv);
+}
+
+void JPJavaFrame::registerRef(jobject obj, PyObject* hostRef)
+{
+	JPReferenceQueue::registerRef(*this, obj, hostRef);
+}
+
+void JPJavaFrame::registerRef(jobject obj, void* ref, JCleanupHook cleanup)
+{
+	JPReferenceQueue::registerRef(*this, obj, ref, cleanup);
 }

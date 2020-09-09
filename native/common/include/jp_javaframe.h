@@ -178,15 +178,6 @@ public:
 	jstring getMessage(jthrowable th);
 	jint compareTo(jobject obj, jobject obj2);
 
-	jbyte booleanValue(jobject obj);
-	jbyte byteValue(jobject obj);
-	jchar charValue(jobject obj);
-	jshort shortValue(jobject obj);
-	jint intValue(jobject obj);
-	jlong longValue(jobject obj);
-	jfloat floatValue(jobject obj);
-	jdouble doubleValue(jobject obj);
-
 	/**
 	 * Convert a UTF8 encoded string into Java.
 	 *
@@ -366,6 +357,7 @@ public:
 	void ReleaseDoubleArrayElements(jdoubleArray, jdouble* v, jint mode);
 
 	// Object
+	jclass GetObjectClass(jobject obj);
 	jobject GetStaticObjectField(jclass clazz, jfieldID fid);
 	jobject GetObjectField(jobject clazz, jfieldID fid);
 	void SetStaticObjectField(jclass clazz, jfieldID fid, jobject val);
@@ -397,6 +389,8 @@ public:
 	jarray getPackageContents(jobject pkg);
 
 	void newWrapper(JPClass* cls);
+	void registerRef(jobject obj, PyObject* hostRef);
+	void registerRef(jobject obj, void* ref, JCleanupHook cleanup);
 
 } ;
 

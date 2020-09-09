@@ -176,7 +176,7 @@ public:
 	virtual void        setField(JPJavaFrame& frame, jobject obj, jfieldID fid, PyObject* val);
 
 	JPClass*            newArrayType(JPJavaFrame &frame, long d);
-	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size);
+	virtual jarray      newArrayOf(JPJavaFrame& frame, jsize size);
 	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
 			jsize start, jsize length, jsize step, PyObject* vals);
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);

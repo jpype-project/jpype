@@ -115,7 +115,7 @@ class HintsTestCase(common.JPypeTestCase):
     def testJChar(self):
         cls = JChar
         hints = cls._hints
-        self.assertTrue(str in hints.returns)
+        self.assertTrue(cls in hints.returns)
         self.assertTrue(cls in hints.exact)
         self.assertTrue(JClass("java.lang.Character") in hints.implicit)
         self.assertTrue(str in hints.implicit)

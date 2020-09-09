@@ -57,14 +57,13 @@ JPPyObject JPPyObject::use(PyObject* obj)
  * This policy is used when we are given a new reference that we must
  * destroy.  This will steal a reference.
  *
- * claim reference, and decremented when done. Clears errors if NULL.
+ * claim reference, and decremented when done.
  */
 JPPyObject JPPyObject::accept(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(accept)", obj);
 	if (obj == NULL)
 		PyErr_Clear();
-
 	return JPPyObject(obj, 1);
 }
 
@@ -387,18 +386,16 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
+int m_count = 0;
+
 JPPyCallAcquire::JPPyCallAcquire()
 {
-	PyGILState_STATE* save = new PyGILState_STATE;
-	*save = PyGILState_Ensure();
-	m_State = (void*) save;
+	m_State = (long) PyGILState_Ensure();
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	PyGILState_STATE* save = (PyGILState_STATE*) m_State;
-	PyGILState_Release(*save);
-	delete save;
+	PyGILState_Release((PyGILState_STATE) m_State);
 }
 
 // This is used when leaving python from to perform some

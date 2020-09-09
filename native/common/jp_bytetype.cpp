@@ -41,7 +41,9 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.byteValue(obj.getValue().l);
+	jobject jo = obj.getValue().l;
+	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -101,7 +103,7 @@ void JPByteType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
-jarray JPByteType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPByteType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewByteArray(sz);
 }

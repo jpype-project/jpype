@@ -18,6 +18,7 @@
 #include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_booleantype.h"
+#include "jp_boxedtype.h"
 
 JPBooleanType::JPBooleanType()
 : JPPrimitiveType("boolean")
@@ -38,7 +39,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.booleanValue(obj.getValue().l) != 0;
+	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, 0) != 0;
 	return JPValue(this, v);
 }
 
@@ -46,7 +47,7 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -103,7 +104,7 @@ class JPConversionAsBooleanLong : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -125,7 +126,7 @@ class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -169,7 +170,7 @@ void JPBooleanType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 
-jarray JPBooleanType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPBooleanType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewBooleanArray(sz);
 }

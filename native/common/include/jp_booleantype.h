@@ -36,7 +36,7 @@ public:
 		return v.z;
 	}
 
-	virtual JPClass* getBoxedClass(JPContext *context) const
+	virtual JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Boolean;
 	}
@@ -54,7 +54,7 @@ public:
 	virtual JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
 	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
-	virtual jarray      newArrayInstance(JPJavaFrame& frame, jsize size) override;
+	virtual jarray      newArrayOf(JPJavaFrame& frame, jsize size) override;
 	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
 			jsize start, jsize length, jsize step,
 			PyObject *sequence) override;

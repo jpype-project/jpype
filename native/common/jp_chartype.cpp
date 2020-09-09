@@ -18,6 +18,7 @@
 #include "jp_array.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
+#include "jp_boxedtype.h"
 
 JPCharType::JPCharType()
 : JPPrimitiveType("char")
@@ -59,7 +60,7 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.charValue(obj.getValue().l);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -95,7 +96,7 @@ class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
-	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -112,7 +113,7 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
@@ -141,10 +142,10 @@ void JPCharType::getConversionInfo(JPConversionInfo &info)
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) & PyUnicode_Type);
+	PyList_Append(info.ret, (PyObject*) m_Context->_char->getHost());
 }
 
-jarray JPCharType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPCharType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewCharArray(sz);
 }

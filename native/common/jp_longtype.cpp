@@ -41,7 +41,9 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.longValue(obj.getValue().l);
+	jobject jo = obj.getValue().l;
+	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	field(v) = (type_t) frame.CallLongMethodA(jo, jb->m_LongValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -126,7 +128,7 @@ void JPLongType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_long->getHost());
 }
 
-jarray JPLongType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPLongType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewLongArray(sz);
 }

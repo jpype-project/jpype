@@ -42,7 +42,9 @@ JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.doubleValue(obj.getValue().l);
+	jobject jo = obj.getValue().l;
+	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	field(v) = (type_t) frame.CallDoubleMethodA(jo, jb->m_DoubleValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -106,7 +108,7 @@ public:
 
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
@@ -147,7 +149,7 @@ void JPDoubleType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
-jarray JPDoubleType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPDoubleType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewDoubleArray(sz);
 }

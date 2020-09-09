@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype;
@@ -49,6 +49,7 @@ public class JPypeSignal
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
         {
           main.interrupt();
+          interruptPy();
           return null;
         }
       });
@@ -56,7 +57,9 @@ public class JPypeSignal
       method.invoke(null, intr, handler);
     } catch (InvocationTargetException | IllegalArgumentException | IllegalAccessException | InstantiationException | ClassNotFoundException | NoSuchMethodException | SecurityException ex)
     {
-      throw new RuntimeException(ex);
+      // If we don't get the signal handler run without it.  (ANDROID)
     }
   }
+
+  native static void interruptPy();
 }

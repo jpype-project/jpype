@@ -153,11 +153,13 @@ public class Html
       } else if (c < 0x0800)
       {
         b[i1++] = (byte) (0xc0 + ((c >> 6) & 0x1f));
-        b[i1++] = (byte) (0x80 + (c & 0x3f));
+        if (i1 < b.length) // lgtm [java/constant-comparison]
+          b[i1++] = (byte) (0x80 + (c & 0x3f)); // lgtm [java/index-out-of-bounds]
       } else
       {
         b[i1++] = (byte) (0xe0 + ((c >> 12) & 0x0f));
-        b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f));
+        if (i1 < b.length) // lgtm [java/constant-comparison]
+          b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f)); // lgtm [java/index-out-of-bounds]
         if (i1 < b.length)
           b[i1++] = (byte) (0x80 + (c & 0x3f));
       }

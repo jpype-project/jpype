@@ -19,12 +19,6 @@
 /**
  * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.
  */
-class JPTypeFactory
-{
-public:
-	explicit JPTypeFactory(JPJavaFrame& frame);
-	~JPTypeFactory();
-} ;
 
 class JPTypeManager
 {

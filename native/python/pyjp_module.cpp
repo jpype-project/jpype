@@ -16,10 +16,10 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_arrayclass.h"
-#include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
 #include "jp_stringtype.h"
+#include "jp_classloader.h"
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -73,7 +73,7 @@ PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
 PyObject* _JVMNotRunning = NULL;
 
-static void PyJPModule_loadResources(PyObject* module)
+void PyJPModule_loadResources(PyObject* module)
 {
 	// Note that if any resource is missing the user will get
 	// the message:
@@ -137,8 +137,10 @@ extern "C"
 {
 #endif
 
+
 // GCOVR_EXCL_START
 // This is used exclusively during startup
+
 void Py_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
@@ -213,6 +215,9 @@ int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 	return Py_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
+#ifndef ANDROID
+extern JNIEnv *Android_JNI_GetEnv();
+
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
@@ -265,7 +270,6 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 
 	// install the gc hook
 	PyJPModule_installGC(module);
-
 	PyJPModule_loadResources(module);
 	JPContext_global->startJVM(cVmPath, args, ignoreUnrecognized != 0, convertStrings != 0, interrupt != 0);
 
@@ -280,11 +284,14 @@ static PyObject* PyJPModule_shutdown(PyObject* obj)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
+#endif
 
 static PyObject* PyJPModule_isStarted(PyObject* obj)
 {
 	return PyBool_FromLong(JPContext_global->isRunning());
 }
+
+#ifndef ANDROID
 
 static PyObject* PyJPModule_attachThread(PyObject* obj)
 {
@@ -310,6 +317,7 @@ static PyObject* PyJPModule_detachThread(PyObject* obj)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
+#endif
 
 static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
 {
@@ -348,7 +356,7 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
 
 		// Bind lifespan of the view to the java object.
-		context->getReferenceQueue()->registerRef(v.l, vw.view, &releaseView);
+		frame.registerRef(v.l, vw.view, &releaseView);
 		vw.view = 0;
 		JPClass *type = frame.findClassForObject(v.l);
 		return type->convertToPythonObject(frame, v, false).keep();
@@ -537,7 +545,7 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 }
 // GCOVR_EXCL_STOP
 
-PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 {
 	JP_PY_TRY("PyJPModule_isPackage");
 	if (!PyUnicode_Check(pkg))
@@ -550,6 +558,7 @@ PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
+
 
 // GCOVR_EXCL_START
 
@@ -625,12 +634,29 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 }
 #endif
 
+#ifdef ANDROID
+
+static PyObject *PyJPModule_bootstrap(PyObject *module)
+{
+	// After all the internals are created we can connect the API with the internal module
+	JNIEnv * env = Android_JNI_GetEnv();
+	JPContext_global->attachJVM(env);
+	PyJPModule_installGC(module);
+	PyJPModule_loadResources(module);
+	Py_RETURN_NONE;
+}
+#endif
+
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
+#ifdef ANDROID
+	{"bootstrap", (PyCFunction) PyJPModule_bootstrap, METH_NOARGS, ""},
+#else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+#endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
 	{"examine", (PyCFunction) examine, METH_O, ""},
@@ -640,9 +666,11 @@ static PyMethodDef moduleMethods[] = {
 
 	// Threading
 	{"isThreadAttachedToJVM", (PyCFunction) PyJPModule_isThreadAttached, METH_NOARGS, ""},
+#ifndef ANDROID
 	{"attachThreadToJVM", (PyCFunction) PyJPModule_attachThread, METH_NOARGS, ""},
 	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
 	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
+#endif
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
@@ -684,7 +712,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "1.0.2_dev0");
+	PyModule_AddStringConstant(module, "__version__", "1.0.3_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
@@ -702,6 +730,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
+
 	return module;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
@@ -812,7 +841,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;
-	jintArray jdims = (jintArray) context->_int->newArrayInstance(frame, view.ndim);
+	jintArray jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
 	if (view.shape != NULL)
 	{
 		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,

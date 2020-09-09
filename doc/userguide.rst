@@ -7,7 +7,7 @@ JPype User Guide
 
 JPype Introduction
 ******************
-JPype is a Python module to provide full access to Java from within Python. 
+JPype is a Python module to provide full access to Java from within Python.
 Unlike Jython, JPype does not achive this by re-implementing Python, but
 instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
@@ -176,7 +176,7 @@ example and watch what happens.
    plt.plot(d)
    plt.show()
 
-A graph appears on the screen.  Meaning that NumPy has not issue dealing with 
+A graph appears on the screen.  Meaning that NumPy has not issue dealing with
 Java arrays.  It looks like ever 4th element in the array is zero.
 It must be the PR the new guy put in.  And off you go back to the wonderful
 world of Java back to the safety of curly braces and semicolons.
@@ -369,7 +369,7 @@ for our project test bench, I evaluated a number of alternatives
 Python bridge codes.  I selected JPype primarily because it presented
 the most integrated API and documentation which would be suitable for getting
 physicists up to speed quickly.  Thus your criteria may yield a different
-selection.  Its underlying technology was underwhelming and thus I have had
+selection.  JPype's underlying technology was underwhelming so I have had
 the pleasure of many hours reworking stuff under the hood.
 
 For more details on what you can't do with JPype, please see Limitations_.
@@ -438,6 +438,30 @@ not support any reverse capabilities.  It is currently unclear if this project
 is still active as the most recent release is dated 2014.  The integration
 level with Python is fairly low currently though what they do provide is a
 similar API to JPype.
+
+`JCC <https://lucene.apache.org/pylucene/jcc/>`_
+------------------------------------------------
+JCC is a C++ code generator that produces a C++ object interface wrapping a Java
+library via Java's Native Interface (JNI). JCC also generates C++ wrappers that
+conform to Python's C type system making the instances of Java classes directly
+available to a Python interpreter.  This may be handy if your goal is not
+to make use of all of Java but rather have a specific library exposed to Python.
+
+`VOC <https://beeware.org/project/projects/bridges/voc/>_`
+----------------------------------------------------------
+A transpiler that converts Python bytecode into Java bytecode part of the
+BeeWare project.  This may be useful if getting a smallish piece of
+Python code hooked into Java.  It currently list itself as early development.
+This is more in the reverse direction as its goals are making Python code
+available in Java rather providing interaction between the two.
+
+`p2j <https://github.com/chrishumphreys/p2j>`_
+----------------------------------------------
+
+This lists itself as "A (restricted) python to java source translator".
+Appears to try to convert Python code into Java.  Has not been actively
+maintained since 2013.  Like VOC this is primilarly for code translation rather
+that bridging.
 
 
 About this guide
@@ -629,9 +653,9 @@ The following Python words will trigger name mangling of a Java name:
 
 
 =========== =========== ============= =========== ==========
-``False``   ``None``    ``True``      ``and``     ``as``     
-``async``   ``await``   ``def``       ``del``     ``elif``  
-``except``  ``exec``    ``from``      ``global``  ``in``    
+``False``   ``None``    ``True``      ``and``     ``as``
+``async``   ``await``   ``def``       ``del``     ``elif``
+``except``  ``exec``    ``from``      ``global``  ``in``
 ``is``      ``lambda``  ``nonlocal``  ``not``     ``or``
 ``pass``    ``print``   ``raise``     ``with``    ``yield``
 =========== =========== ============= =========== ==========
@@ -1308,12 +1332,12 @@ Hash
 Contains
   Java strings implement the concept of ``in`` when using the Java method
   ``contains``.  The Java implementation is sufficiently similar that it will
-  work fairly well on strings.  
+  work fairly well on strings.
   For example, ``"I" in java.lang.String("team")`` would be equal to False.
 
   Testing other types using the ``in`` operator
   will likely raise a ``TypeError`` if Java is unable to convert the other item
-  into something that can be compared with a string.  
+  into something that can be compared with a string.
 
 Concatenation
   Java strings can be appended to create a new string which contains the
@@ -1330,7 +1354,7 @@ For each
   characters, use the Python construct ``for c in str:``.
 
 Unfortunately, Java strings do not yet implement the complete list of
-requirements to act as Python sequences for the purposes of 
+requirements to act as Python sequences for the purposes of
 ``collections.abc.Sequence``.
 
 .. _JString:
@@ -1359,7 +1383,7 @@ Exception Classes
 Both Python and Java treat exception classes differently from other objects.
 Only these types may be caught as part of a try block.  Therefore, the
 exceptions have a special wrapper.  Most of the mechanics of exceptions happen
-under the surface.  The one difference between Python and Java is the behavior 
+under the surface.  The one difference between Python and Java is the behavior
 when the argument is queried.  Java arguments can either be the string value, the exception
 itself, or the internal construction key depending on how the exception came
 into existence.  Therefore, the arguments to a Java exception should never be
@@ -1472,7 +1496,7 @@ mechanic for importing classes.  The first argument can be a string or
 a Java class instance.  There are two keyword arguments ``loader`` and
 ``initialize``.  The loader can point to an alternative ClassLoader which
 is handy when loading custom classes through mechanisms such as over the
-web.  A False ``initialize`` argument loads a class without 
+web.  A False ``initialize`` argument loads a class without
 loading dependencies nor populating static fields.  This option is likely
 not useful for ordinary users.  It was provided when calling forName was problematic
 due to `caller sensitive`_ issues.
@@ -1496,7 +1520,7 @@ types. These levels are:
 
 See the previous section on `Java Conversions`_ for details.
 
-There are special conversion rules for ``java.lang.Object`` and ``java.lang.Number``.  
+There are special conversion rules for ``java.lang.Object`` and ``java.lang.Number``.
 (`Object Class`_ and `Number Class`_)
 
 ============== ========== ========= =========== ========= ========== ========== =========== ========= ========== =========== ========= ================== =================
@@ -2027,7 +2051,7 @@ Map
 
 A Java classes that implement ``java.util.Map`` inherit the Python
 collections.abc.Mapping interface.  As such they can be iterated, support
-the indexing operator for value lookups, item deletion, length, and 
+the indexing operator for value lookups, item deletion, length, and
 support contains.
 
 Here is a summary of their capabilities:
@@ -2132,7 +2156,7 @@ bulk transfer.  To do so JPype supports a ``memoryview`` on rectangular arrays.
 Whenever a memoryview is called on a multidimensional array of primitives,
 JPype verifies that it is rectangular and creates a buffer.  If it is jagged,
 a ``BufferError`` is raised.  When a Java array is used as an argument to
-initialize a NumPy array, it creates a ``memoryview`` so that all of the memory 
+initialize a NumPy array, it creates a ``memoryview`` so that all of the memory
 can be transferred in bulk.
 
 
@@ -2253,9 +2277,9 @@ interface.  Any missing method will result in JPype raising an exception.
 High-level proxies have one other important behavior.  When a proxy created
 using the high-level API returns from Java it unpacks back to the original
 Python object complete with all of its attributes.  This occurs whether the
-proxy is the ``self`` argument for a method or 
+proxy is the ``self`` argument for a method or
 proxy is returned from a Java container such as a list.  This is accomplished
-because the actually proxy is a temporary Java object with no substance, 
+because the actually proxy is a temporary Java object with no substance,
 thus rather than returning a useless object, JPype unpacks the proxy
 to its original Python object.
 
@@ -2445,7 +2469,7 @@ AWT/Swing
 *********
 
 Java GUI elements can be used from Python.  To use Swing
-elements the event loop in Java must be started from a user thread. 
+elements the event loop in Java must be started from a user thread.
 This will prevent the JVM from shutting down until the user thread
 is completed.
 
@@ -2935,7 +2959,7 @@ been recorded.
 Getting additional diagnostics
 ==============================
 
-For the most part JPype does what its told, but that does not mean that 
+For the most part JPype does what its told, but that does not mean that
 there are no bugs.  With some many different interactions between Python and Java
 there is always some untested edge-cases.
 
@@ -3018,7 +3042,7 @@ the other hand, if a fault was triggered by some external source, Java
 constructs a JVM fault report and then transfers control back to the usual
 segmentation fault handler.  Java will often corrupt the stack frame.  Any
 debugger attempting to unpack the corrupted core file will instead get random
-function addresses.  
+function addresses.
 
 The alternative is for the user to start JPype with an interactive debugger and
 execute to the fault point.  But this option also presents challenges.  The
@@ -3043,7 +3067,7 @@ safer and more restricted access.  To perform this task, the JVM seaches the
 call stack to obtain the calling methods module.
 
 This presents a difficulty for method invoked from JNI.  A method called from
-JNI lacks any call stack to unravel.  Rather than relegating the call 
+JNI lacks any call stack to unravel.  Rather than relegating the call
 to a safer level of access, the security model would outright deny access to
 certain JPype calls.  This resulted in a number of strange
 behaviors over the years that were forced to be worked around.  This issue was

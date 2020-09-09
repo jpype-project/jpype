@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.proxy;
@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
+import org.jpype.ref.JPypeReferenceQueue;
 
 /**
  *
@@ -28,6 +29,7 @@ import org.jpype.manager.TypeManager;
 public class JPypeProxy implements InvocationHandler
 {
 
+  private final static JPypeReferenceQueue referenceQueue = JPypeReferenceQueue.getInstance();
   JPypeContext context;
   public long instance;
   public long cleanup;
@@ -59,7 +61,7 @@ public class JPypeProxy implements InvocationHandler
   public Object newInstance()
   {
     Object out = Proxy.newProxyInstance(cl, interfaces, this);
-    context.getReferenceQueue().registerRef(out, instance, cleanup);
+    referenceQueue.registerRef(out, instance, cleanup);
     return out;
   }
 
@@ -69,7 +71,7 @@ public class JPypeProxy implements InvocationHandler
   {
     try
     {
-      context.incrementProxy();
+//      context.incrementProxy();
       if (context.isShutdown())
         throw new RuntimeException("Proxy called during shutdown");
 
@@ -92,7 +94,7 @@ public class JPypeProxy implements InvocationHandler
       return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
     } finally
     {
-      context.decrementProxy();
+//      context.decrementProxy();
     }
   }
 

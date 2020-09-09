@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef _JPPRIMITIVETYPE_H_
 #define _JPPRIMITIVETYPE_H_
+#include "jp_boxedtype.h"
 
 class JPPrimitiveType : public JPClass
 {

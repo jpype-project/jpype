@@ -16,6 +16,7 @@
 #ifndef JP_CONTEXT_H
 #define JP_CONTEXT_H
 #include <jpype.h>
+#include <list>
 
 /** JPClass is a bit heavy when we just need to hold a
  * class reference.  It causes issues during bootstrap. Thus we
@@ -114,7 +115,6 @@ public:
 	friend class JPJavaFrame;
 	friend class JPypeException;
 	friend class JPClass;
-	friend class JPTypeFactory;
 
 	JPContext();
 	virtual ~JPContext();
@@ -123,6 +123,8 @@ public:
 	bool isRunning();
 	void startJVM(const string& vmPath, const StringVector& args,
 			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
+	void attachJVM(JNIEnv* env);
+	void initializeResources(JNIEnv* env, bool interrupt);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();
@@ -160,11 +162,6 @@ public:
 		return m_ClassLoader;
 	}
 
-	JPReferenceQueue* getReferenceQueue()
-	{
-		return m_ReferenceQueue;
-	}
-
 	bool getConvertStrings() const
 	{
 		return m_ConvertStrings;
@@ -181,15 +178,15 @@ public:
 	JPPrimitiveType* _float;
 	JPPrimitiveType* _double;
 
-	JPClass* _java_lang_Void;
-	JPClass* _java_lang_Boolean;
-	JPClass* _java_lang_Byte;
-	JPClass* _java_lang_Character;
-	JPClass* _java_lang_Short;
-	JPClass* _java_lang_Integer;
-	JPClass* _java_lang_Long;
-	JPClass* _java_lang_Float;
-	JPClass* _java_lang_Double;
+	JPBoxedType* _java_lang_Void;
+	JPBoxedType* _java_lang_Boolean;
+	JPBoxedType* _java_lang_Byte;
+	JPBoxedType* _java_lang_Character;
+	JPBoxedType* _java_lang_Short;
+	JPBoxedType* _java_lang_Integer;
+	JPBoxedType* _java_lang_Long;
+	JPBoxedType* _java_lang_Float;
+	JPBoxedType* _java_lang_Double;
 
 	JPClass* _java_lang_Object;
 	JPClass* _java_lang_Class;
@@ -197,6 +194,7 @@ public:
 	JPClass* _java_lang_reflect_Method;
 	JPClass* _java_lang_Throwable;
 	JPStringType* _java_lang_String;
+	JPClass* _java_nio_ByteBuffer;
 
 private:
 
@@ -204,8 +202,6 @@ private:
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
-
-	static JNIEXPORT void JNICALL onShutdown(JNIEnv *env, jobject obj, jlong contextPtr);
 
 private:
 	JPContext(const JPContext& orig);
@@ -216,10 +212,8 @@ private:
 	JPObjectRef m_JavaContext;
 
 	// Services
-	JPTypeFactory *m_TypeFactory;
 	JPTypeManager *m_TypeManager;
 	JPClassLoader *m_ClassLoader;
-	JPReferenceQueue *m_ReferenceQueue;
 
 public:
 	JPClassRef m_RuntimeException;
@@ -260,21 +254,17 @@ private:
 	jmethodID m_Context_NewWrapperID;
 public:
 	jmethodID m_Context_GetStackFrameID;
-
-	jmethodID m_BooleanValueID;
-	jmethodID m_ByteValueID;
-	jmethodID m_CharValueID;
-	jmethodID m_ShortValueID;
-	jmethodID m_IntValueID;
-	jmethodID m_LongValueID;
-	jmethodID m_FloatValueID;
-	jmethodID m_DoubleValueID;
+	void onShutdown();
 
 private:
 	bool m_Running;
 	bool m_ConvertStrings;
+	bool m_Embedded;
 public:
 	JPGarbageCollection *m_GC;
+
+	// This will gather C++ resources to clean up after shutdown.
+	std::list<JPResource*> m_Resources;
 } ;
 
 extern void JPRef_failed();

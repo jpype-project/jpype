@@ -57,6 +57,11 @@ public:
 		}
 	}
 
+	jsize size()
+	{
+		return _frame.GetArrayLength(_array);
+	}
+
 	ptr_t get()
 	{
 		return _elem;
@@ -98,11 +103,11 @@ template <class type_t> PyObject *convertMultiArray(
 	}
 
 	// Reserve space for array.
-	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayInstance(frame, subs);
+	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
 	std::vector<Py_ssize_t> indices(view.ndim);
 	int u = view.ndim - 1;
 	int k = 0;
-	jarray a0 = cls->newArrayInstance(frame, base);
+	jarray a0 = cls->newArrayOf(frame, base);
 	frame.SetObjectArrayElement(contents, k++, a0);
 	jboolean isCopy;
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
@@ -141,7 +146,7 @@ template <class type_t> PyObject *convertMultiArray(
 			if (j == u)
 				break;
 
-			a0 = cls->newArrayInstance(frame, base);
+			a0 = cls->newArrayOf(frame, base);
 			frame.SetObjectArrayElement(contents, k++, a0);
 			mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
 			JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
@@ -171,7 +176,7 @@ class JPConversionLong : public JPIndexConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object) && !PyIndex_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -204,7 +209,7 @@ class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -232,6 +237,7 @@ class JPConversionLongWiden : public JPConversion
 {
 public:
 	// GCOVR_EXCL_START
+
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none; // Not used

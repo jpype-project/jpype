@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.jpype.classloader.DynamicClassLoader;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -68,23 +69,21 @@ import org.jpype.ref.JPypeReferenceQueue;
 public class JPypeContext
 {
 
-  public final String VERSION = "1.0.2_dev0";
+  public final String VERSION = "1.0.3_dev0";
 
-  private static JPypeContext instance = null;
+  private static JPypeContext INSTANCE =  new JPypeContext();
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
   private TypeManager typeManager;
-  private JPypeReferenceQueue referenceQueue;
-  private ClassLoader bootLoader;
-  private AtomicInteger shutdownFlag = new AtomicInteger();
-  private AtomicInteger proxyCount = new AtomicInteger();
-  private List<Thread> shutdownHooks = new ArrayList<>();
-  private List<Runnable> postHooks = new ArrayList<>();
+  private DynamicClassLoader classLoader;
+  private final AtomicInteger shutdownFlag = new AtomicInteger();
+  private final List<Thread> shutdownHooks = new ArrayList<>();
+  private final List<Runnable> postHooks = new ArrayList<>();
 
   static public JPypeContext getInstance()
   {
-    return instance;
+    return INSTANCE;
   }
 
   /**
@@ -94,21 +93,32 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  public static JPypeContext createContext(long context, ClassLoader bootLoader, boolean interrupt)
+  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
   {
-    instance = new JPypeContext();
+    if (nativeLib != null)
+    {
+      System.load(nativeLib);
+    }
+    INSTANCE.context = context;
+    INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
+    INSTANCE.typeFactory = new TypeFactoryNative();
+    INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
+    INSTANCE.initialize(interrupt);
+    return INSTANCE;
+  }
 
-    instance.context = context;
-    instance.bootLoader = bootLoader;
-    instance.typeFactory = new TypeFactoryNative();
-    instance.typeManager = new TypeManager(context, instance.typeFactory);
-    instance.typeManager.typeFactory = instance.typeFactory;
+  private JPypeContext()
+  {
+  }
 
-    instance.referenceQueue = new JPypeReferenceQueue(context);
-
+  void initialize(boolean interrupt)
+  {
     // Okay everything is setup so lets give it a go.
     instance.typeManager.init();
     instance.referenceQueue.start();
+
+    this.typeManager.init();
+    JPypeReferenceQueue.getInstance().start();
     if (!interrupt)
       JPypeSignal.installHandlers();
 
@@ -118,11 +128,10 @@ public class JPypeContext
       @Override
       public void run()
       {
-        instance.shutdown();
+        INSTANCE.shutdown();
       }
     }));
 
-    return instance;
   }
 
   /**
@@ -193,7 +202,6 @@ public class JPypeContext
       {
         if (t1 == t || t.isDaemon())
           continue;
-//      if (t.getState() == Thread.State.RUNNABLE)
         t.interrupt();
       }
 
@@ -203,27 +211,30 @@ public class JPypeContext
 
       // Wait for any unregistered proxies to finish so that we don't yank
       // the rug out from under them result in a segfault.
-      while (this.proxyCount.get() > 0)
-      {
-        try
-        {
-          Thread.sleep(10);
-        } catch (InterruptedException ex)
-        {
-        }
-      }
-
-//    // Check to see if who is alive
-//    threads = Thread.getAllStackTraces();
-//    System.out.println("Check for remaining");
-//    for (Thread t : threads.keySet())
-//    {
-//      System.out.println("  " + t.getName() + " " + t.getState());
-//      for (StackTraceElement e : t.getValue())
+//      while (this.proxyCount.get() > 0)
 //      {
-//        System.out.println("    " + e.getClassName());
+//        try
+//        {
+//          Thread.sleep(10);
+//        } catch (InterruptedException ex)
+//        {
+//        }
 //      }
-//    }
+
+//      // Check to see if who is alive
+//      threads = Thread.getAllStackTraces();
+//      System.out.println("Check for remaining");
+//      for (Thread t : threads.keySet())
+//      {
+//        // Daemon threads don't count for shutdown so skip them.
+//        if (t.isDaemon())
+//          continue;
+//        System.out.println("  " + t.getName() + " " + t.getState() + " " + t.isDaemon());
+//        for (StackTraceElement e : t.getStackTrace())
+//        {
+//          System.out.println("    " + e.getClassName());
+//        }
+//      }
     } catch (Throwable th)
     {
     }
@@ -231,7 +242,7 @@ public class JPypeContext
     // Release all Python references
     try
     {
-      this.referenceQueue.stop();
+      JPypeReferenceQueue.getInstance().stop();
     } catch (Throwable th)
     {
     }
@@ -249,6 +260,7 @@ public class JPypeContext
     {
       run.run();
     }
+
   }
 
   static native void onShutdown(long ctxt);
@@ -278,9 +290,9 @@ public class JPypeContext
     return context;
   }
 
-  public ClassLoader getBootLoader()
+  public ClassLoader getClassLoader()
   {
-    return this.bootLoader;
+    return this.classLoader;
   }
 
   public TypeFactory getTypeFactory()
@@ -291,11 +303,6 @@ public class JPypeContext
   public TypeManager getTypeManager()
   {
     return this.typeManager;
-  }
-
-  public JPypeReferenceQueue getReferenceQueue()
-  {
-    return this.referenceQueue;
   }
 
   /**
@@ -448,27 +455,15 @@ public class JPypeContext
     return shutdownFlag.get() > 0;
   }
 
-  public void incrementProxy()
-  {
-    proxyCount.incrementAndGet();
-  }
-
-  public void decrementProxy()
-  {
-    proxyCount.decrementAndGet();
-  }
-
-  public static class PyExceptionProxy extends RuntimeException
-  {
-
-    long cls, value;
-
-    public PyExceptionProxy(long l0, long l1)
-    {
-      cls = l0;
-      value = l1;
-    }
-  }
+//  public void incrementProxy()
+//  {
+//    proxyCount.incrementAndGet();
+//  }
+//
+//  public void decrementProxy()
+//  {
+//    proxyCount.decrementAndGet();
+//  }
 
   public long getExcClass(Throwable th)
   {

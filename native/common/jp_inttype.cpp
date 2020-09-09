@@ -43,7 +43,9 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.intValue(obj.getValue().l);
+	jobject jo = obj.getValue().l;
+	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
 	return JPValue(this, v);
 }
 
@@ -55,7 +57,7 @@ class JPConversionJInt : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -89,7 +91,7 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
@@ -126,7 +128,7 @@ void JPIntType::getConversionInfo(JPConversionInfo &info)
 	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
 }
 
-jarray JPIntType::newArrayInstance(JPJavaFrame& frame, jsize sz)
+jarray JPIntType::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
 	return frame.NewIntArray(sz);
 }

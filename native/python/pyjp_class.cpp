@@ -3,7 +3,7 @@
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-		http://www.apache.org/licenses/LICENSE-2.0
+				http://www.apache.org/licenses/LICENSE-2.0
 
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
@@ -71,7 +71,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		Py_ssize_t len = PyTuple_Size(bases);
 		for (Py_ssize_t i = 0; i < len; ++i)
 		{
-			PyObject *item  = PyTuple_GetItem(bases, i);
+			PyObject *item = PyTuple_GetItem(bases, i);
 			JPClass *cls = PyJPClass_getJPClass(item);
 			if (cls != NULL && cls->isFinal())
 			{
@@ -348,7 +348,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	{
 		PyObject *l = ((PyTypeObject*) * iter)->tp_bases;
 		sz = PySequence_Size(l);
-		for (Py_ssize_t i = 0;  i < sz; ++i)
+		for (Py_ssize_t i = 0; i < sz; ++i)
 		{
 			PyObject *obj = PyTuple_GetItem(l, i);
 			bool found = (std::find(bases.begin(), bases.end(), obj) != bases.end());
@@ -694,6 +694,9 @@ static bool PySlice_CheckFull(PyObject *item)
 #if PY_VERSION_HEX<0x03060100
 	int rc = PySlice_GetIndices(item, 0x7fffffff, &start, &stop, &step);
 	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == 0x7fffffff);
+#elif defined(ANDROID)
+	int rc = PySlice_Unpack(item, &start, &stop, &step);
+	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop >= 0x7fffffff);
 #else
 	int rc = PySlice_Unpack(item, &start, &stop, &step);
 	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
@@ -711,14 +714,19 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 		long sz = PyLong_AsLong(item);
 		JPClass *cls = self->m_Class->newArrayType(frame, 1);
 		jvalue v;
-		v.l = (jobject) cls->newArrayInstance(frame, sz);
+		v.l = (jobject) cls->newArrayOf(frame, sz);
 		return cls->convertToPythonObject(frame, v, true).keep();
 	}
 
-	if (PySlice_CheckFull(item))
+	if (PySlice_Check(item))
 	{
-		JPClass *cls = self->m_Class->newArrayType(frame, 1);
-		return PyJPClass_create(frame, cls).keep();
+		if (PySlice_CheckFull(item))
+		{
+			JPClass *cls = self->m_Class->newArrayType(frame, 1);
+			return PyJPClass_create(frame, cls).keep();
+		}
+		PyErr_Format(PyExc_TypeError, "Bad array specification on slice");
+		return NULL;
 	}
 
 	if (PyTuple_Check(item))
@@ -758,7 +766,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 			cls = self->m_Class;
 
 		// If no dimensions were defined then just return the type
-		if (defined == 0 )
+		if (defined == 0)
 			return PyJPClass_create(frame, cls).keep();
 
 		// Otherwise create an array
@@ -783,11 +791,11 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JP_PY_TRY("PyJPClass_cast");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	JPClass *type =  self->m_Class;
+	JPClass *type = self->m_Class;
 	JPValue *val = PyJPValue_getJavaSlot(other);
 
 	// Cast on non-Java
-	if ( val == NULL || val->getClass()->isPrimitive())
+	if (val == NULL || val->getClass()->isPrimitive())
 	{
 		JPMatch match(&frame, other);
 		type->findJavaConversion(match);
@@ -940,13 +948,13 @@ PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
-	{"mro",               (PyCFunction) PyJPClass_mro, METH_NOARGS, ""},
+	{"mro", (PyCFunction) PyJPClass_mro, METH_NOARGS, ""},
 	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
-	{"_convertToJava",    (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
-	{"_cast",             (PyCFunction) PyJPClass_cast, METH_O, ""},
-	{"_canCast",          (PyCFunction) PyJPClass_canCast, METH_O, ""},
-	{"__getitem__",       (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
-	{"_customize",        (PyCFunction) PyJPClass_customize, METH_VARARGS, ""},
+	{"_convertToJava", (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
+	{"_cast", (PyCFunction) PyJPClass_cast, METH_O, ""},
+	{"_canCast", (PyCFunction) PyJPClass_canCast, METH_O, ""},
+	{"__getitem__", (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
+	{"_customize", (PyCFunction) PyJPClass_customize, METH_VARARGS, ""},
 	{NULL},
 };
 
@@ -958,18 +966,18 @@ static PyGetSetDef classGetSets[] = {
 };
 
 static PyType_Slot classSlots[] = {
-	{ Py_tp_alloc,    (void*) PyJPValue_alloc},
+	{ Py_tp_alloc, (void*) PyJPValue_alloc},
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
-	{ Py_tp_new,      (void*) PyJPClass_new},
-	{ Py_tp_init,     (void*) PyJPClass_init},
-	{ Py_tp_dealloc,  (void*) PyJPClass_dealloc},
+	{ Py_tp_new, (void*) PyJPClass_new},
+	{ Py_tp_init, (void*) PyJPClass_init},
+	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_traverse, (void*) PyJPClass_traverse},
-	{ Py_tp_clear,    (void*) PyJPClass_clear},
-	{ Py_tp_repr,     (void*) PyJPClass_repr},
+	{ Py_tp_clear, (void*) PyJPClass_clear},
+	{ Py_tp_repr, (void*) PyJPClass_repr},
 	{ Py_tp_getattro, (void*) PyJPClass_getattro},
 	{ Py_tp_setattro, (void*) PyJPClass_setattro},
-	{ Py_tp_methods,  (void*) classMethods},
-	{ Py_tp_getset,   (void*) classGetSets},
+	{ Py_tp_methods, (void*) classMethods},
+	{ Py_tp_getset, (void*) classGetSets},
 	{ Py_mp_subscript, (void*) PyJPClass_array},
 	{ Py_nb_matrix_multiply, (void*) PyJPClass_cast},
 	{ Py_nb_inplace_matrix_multiply, (void*) PyJPClass_castEq},
@@ -981,7 +989,7 @@ static PyType_Spec classSpec = {
 	"_jpype._JClass",
 	sizeof (PyJPClass),
 	0,
-	Py_TPFLAGS_DEFAULT  | Py_TPFLAGS_BASETYPE,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	classSlots
 };
 
@@ -1015,7 +1023,7 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 			return NULL;
 		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 		return frame.findClass((jclass) javaSlot->getJavaObject());
-	}	catch (...) // GCOVR_EXCL_LINE
+	} catch (...) // GCOVR_EXCL_LINE
 	{
 		return NULL; // GCOVR_EXCL_LINE
 	}
@@ -1047,7 +1055,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 				)
 		{
 			baseType = JPPyObject::use((PyObject*) PyJPNumberLong_Type);
-		} else if ( cls == context->_java_lang_Float
+		} else if (cls == context->_java_lang_Float
 				|| cls == context->_java_lang_Double
 				)
 		{

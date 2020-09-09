@@ -13,11 +13,16 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <jni.h>
 #include <Python.h>
 #include "jpype.h"
 #include "jp_classloader.h"
 #include "jp_reference_queue.h"
 #include "jp_gc.h"
+#include "pyjp.h"
+
+static jobject s_ReferenceQueue = NULL;
+static jmethodID s_ReferenceQueueRegisterMethod = NULL;
 
 extern "C"
 {
@@ -27,15 +32,25 @@ static void releasePython(void* host)
 	Py_XDECREF((PyObject*) host);
 }
 
+/*
+ * Class:     org_jpype_ref_JPypeReferenceQueue
+ * Method:    init
+ * Signature: (Ljava/lang/Object;Ljava/lang/reflect/Method;)V
+ */
+JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_init
+(JNIEnv *env, jclass clazz, jobject refqueue, jobject registerID)
+{
+	s_ReferenceQueue = env->NewGlobalRef(refqueue);
+	s_ReferenceQueueRegisterMethod = env->FromReflectedMethod(registerID);
 }
 
-JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
-		JNIEnv *env, jclass clazz, jlong contextPtr, jlong host, jlong cleanup)
+JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReference
+(JNIEnv *env, jclass, jlong host, jlong cleanup)
 {
+	JPContext* context = JPContext_global;
 	// Exceptions are not allowed here
 	try
 	{
-		JPContext *context = (JPContext*) contextPtr;
 		JPJavaFrame frame = JPJavaFrame::external((JPContext*) context, env);
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
@@ -50,64 +65,31 @@ JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_removeHostReference(
 
 /** Triggered whenever the sentinel is deleted
  */
-JNIEXPORT void JNICALL Java_jpype_ref_JPypeReferenceQueue_wake(
-		JNIEnv *env, jclass clazz, jlong contextPtr)
+JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_wake
+(JNIEnv *env, jclass clazz)
 {
 	// Exceptions are not allowed here
 	try
 	{
-		JPContext* context = (JPContext*) contextPtr;
+		JPContext* context = JPContext_global;
 		context->m_GC->triggered();
 	} catch (...) // GCOVR_EXCL_LINE
 	{
 	}
 }
 
-JPReferenceQueue::JPReferenceQueue(JPJavaFrame& frame)
-{
-	JP_TRACE_IN("JPReferenceQueue::init");
-	m_Context = frame.getContext();
-
-	// build the ReferenceQueue class ...
-	jclass cls = m_Context->getClassLoader()
-			->findClass(frame, "org.jpype.ref.JPypeReferenceQueue");
-
-	//Required due to bug in jvm
-	//See: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6493522
-	frame.GetMethodID(cls, "<init>", "()V");
-
-	JNINativeMethod method2[2];
-	method2[0].name = (char*) "removeHostReference";
-	method2[0].signature = (char*) "(JJJ)V";
-	method2[0].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_removeHostReference;
-
-	method2[1].name = (char*) "wake";
-	method2[1].signature = (char*) "(J)V";
-	method2[1].fnPtr = (void*) &Java_jpype_ref_JPypeReferenceQueue_wake;
-
-	frame.RegisterNatives(cls, method2, 2);
-
-	// Get all required methods
-	m_ReferenceQueueRegisterMethod = frame.GetMethodID(cls, "registerRef", "(Ljava/lang/Object;JJ)V");
-
-	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-JPReferenceQueue::~JPReferenceQueue() // GCOVR_EXCL_LINE
-{
-}
-
-void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
+void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, PyObject* hostRef)
 {
 	// MATCH TO DECREF IN releasePython
 	Py_INCREF(hostRef);
-	registerRef(obj, hostRef, &releasePython);
+	registerRef(frame, obj, hostRef, &releasePython);
 }
 
-void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
+void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, void* host, JCleanupHook func)
 {
 	JP_TRACE_IN("JPReferenceQueue::registerRef");
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 
 	// create the ref ...
 	jvalue args[3];
@@ -115,7 +97,9 @@ void JPReferenceQueue::registerRef(jobject obj, void* host, JCleanupHook func)
 	args[1].j = (jlong) host;
 	args[2].j = (jlong) func;
 
+	if (s_ReferenceQueue == NULL)
+		JP_RAISE(PyExc_SystemError, "Memory queue not installed");
 	JP_TRACE("Register reference");
-	frame.CallVoidMethodA(m_ReferenceQueue.get(), m_ReferenceQueueRegisterMethod, args);
+	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
