@@ -145,6 +145,10 @@ class JVMFinder(object):
         java_names = ('jre', 'jdk', 'java')
 
         for parent in parents:
+            # Fast exit if folder does not exist
+            if not os.path.exists(parent):
+                continue
+
             for childname in sorted(os.listdir(parent)):
                 # Compute the real path
                 path = os.path.realpath(os.path.join(parent, childname))
