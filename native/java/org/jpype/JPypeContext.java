@@ -114,9 +114,6 @@ public class JPypeContext
   void initialize(boolean interrupt)
   {
     // Okay everything is setup so lets give it a go.
-    instance.typeManager.init();
-    instance.referenceQueue.start();
-
     this.typeManager.init();
     JPypeReferenceQueue.getInstance().start();
     if (!interrupt)

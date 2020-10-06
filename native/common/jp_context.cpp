@@ -212,7 +212,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
-	initializeResources(env);
+	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
 }
 
@@ -222,7 +222,7 @@ void JPContext::attachJVM(JNIEnv* env)
 #ifndef ANDROID
 	m_Embedded = true;
 #endif
-	initializeResources(env);
+	initializeResources(env, false);
 }
 
 void JPContext::initializeResources(JNIEnv* env, bool interrupt)
