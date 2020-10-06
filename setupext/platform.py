@@ -110,8 +110,10 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
                            " It may work or not!", platform)
 
-    if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
-        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
+## This code is used to include python library in the build when starting Python from 
+## within Java.  It will be used in the future, but is not currently required.
+#    if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
+#        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
         distutils.log.info("Add JNI directory %s" % os.path.join(java_home, 'include', jni_md_platform))
