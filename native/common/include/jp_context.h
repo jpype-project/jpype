@@ -121,9 +121,10 @@ public:
 
 	// JVM control functions
 	bool isRunning();
-	void startJVM(const string& vmPath, const StringVector& args, bool ignoreUnrecognized, bool convertStrings);
+	void startJVM(const string& vmPath, const StringVector& args,
+			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
 	void attachJVM(JNIEnv* env);
-	void initializeResources(JNIEnv* env);
+	void initializeResources(JNIEnv* env, bool interrupt);
 	void shutdownJVM();
 	void attachCurrentThread();
 	void attachCurrentThreadAsDaemon();

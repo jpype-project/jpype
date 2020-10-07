@@ -93,7 +93,7 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib)
+  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
   {
     if (nativeLib != null)
     {
@@ -103,7 +103,7 @@ public class JPypeContext
     INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
     INSTANCE.typeFactory = new TypeFactoryNative();
     INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
-    INSTANCE.initialize();
+    INSTANCE.initialize(interrupt);
     return INSTANCE;
   }
 
@@ -111,12 +111,13 @@ public class JPypeContext
   {
   }
 
-  void initialize()
+  void initialize(boolean interrupt)
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
     JPypeReferenceQueue.getInstance().start();
-    JPypeSignal.installHandlers();
+    if (!interrupt)
+      JPypeSignal.installHandlers();
 
     // Install a shutdown hook to clean up Python resources.
     Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()

@@ -155,7 +155,7 @@ void JPContext::loadEntryPoints(const string& path)
 }
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
-		bool ignoreUnrecognized, bool convertStrings)
+		bool ignoreUnrecognized, bool convertStrings, bool interrupt)
 {
 	JP_TRACE_IN("JPContext::startJVM");
 
@@ -212,7 +212,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
-	initializeResources(env);
+	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
 }
 
@@ -222,10 +222,10 @@ void JPContext::attachJVM(JNIEnv* env)
 #ifndef ANDROID
 	m_Embedded = true;
 #endif
-	initializeResources(env);
+	initializeResources(env, false);
 }
 
-void JPContext::initializeResources(JNIEnv* env)
+void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 {
 	JPJavaFrame frame = JPJavaFrame::external(this, env);
 	// This is the only frame that we can use until the system
@@ -270,7 +270,7 @@ void JPContext::initializeResources(JNIEnv* env)
 			"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
 	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-			"(JLjava/lang/ClassLoader;Ljava/lang/String;)Lorg/jpype/JPypeContext;");
+			"(JLjava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
 
 	// Find the native library
 	JPPyObject import = JPPyObject::call(PyImport_AddModule("importlib.util"));
@@ -278,10 +278,11 @@ void JPContext::initializeResources(JNIEnv* env)
 	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
 
 	// Launch
-	jvalue val[3];
+	jvalue val[4];
 	val[0].j = (jlong) this;
 	val[1].l = m_ClassLoader->getBootLoader();
 	val[2].l = 0;
+	val[3].z = interrupt;
 
 	if (!m_Embedded)
 	{

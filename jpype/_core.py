@@ -116,6 +116,10 @@ def _handleClassPath(clsList):
 _JVM_started = False
 
 
+def interactive():
+    return bool(getattr(sys, 'ps1', sys.flags.interactive))
+
+
 def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
@@ -143,12 +147,11 @@ def startJVM(*args, **kwargs):
         will globally change the behavior of all calls using
         strings, and a value of True is NOT recommended for newly
         developed code.
-
-        The default value for this option during 0.7 series is
-        True.  The option will be False starting in 0.8. A
-        warning will be issued if this option is not specified
-        during the transition period.
-
+      interrupt (bool): Option to install ^C signal handlers.
+        If True then ^C will stop the process, else ^C will
+        transfer control to Python rather than halting.  If
+        not specified will be False if Python is started as
+        an interactive shell.
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
@@ -202,6 +205,7 @@ def startJVM(*args, **kwargs):
 
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
     convertStrings = kwargs.pop('convertStrings', False)
+    interrupt = kwargs.pop('interrupt', not interactive())
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
@@ -209,7 +213,7 @@ def startJVM(*args, **kwargs):
 
     try:
         _jpype.startup(jvmpath, tuple(args),
-                       ignoreUnrecognized, convertStrings)
+                       ignoreUnrecognized, convertStrings, interrupt)
         initializeResources()
     except RuntimeError as ex:
         source = str(ex)

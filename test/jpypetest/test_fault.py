@@ -1088,16 +1088,16 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype.convertToDirectBuffer(bytes([1, 2, 3]))
 
     def testStartupBadArg(self):
-        with self.assertRaisesRegex(TypeError, "4 arguments"):
+        with self.assertRaisesRegex(TypeError, "takes exactly"):
             _jpype.startup()
         with self.assertRaisesRegex(TypeError, "must be tuple"):
-            _jpype.startup(object(), object(), True, True)
+            _jpype.startup(object(), object(), True, True, True)
         with self.assertRaisesRegex(TypeError, "must be strings"):
-            _jpype.startup("", (object(),), True, True)
+            _jpype.startup("", (object(),), True, True, True)
         with self.assertRaisesRegex(TypeError, "must be a string"):
-            _jpype.startup(object(), tuple(), True, True)
+            _jpype.startup(object(), tuple(), True, True, True)
         with self.assertRaisesRegex(OSError, "started"):
-            _jpype.startup("", tuple(), True, True)
+            _jpype.startup("", tuple(), True, True, True)
 
     def testGetClass(self):
         with self.assertRaisesRegex(TypeError, "not found"):
