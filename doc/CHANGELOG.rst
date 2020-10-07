@@ -6,8 +6,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.0.3_dev0 - unreleased**
 
-  - ^C behavior is switchable with interrupt flag to startJVM.
-    If True, process will halt on ^C.  If False, the process
+  - Ctrl+C behavior is switchable with interrupt flag to startJVM.
+    If True, process will halt on Ctrl-C.  If False, the process
     will transfer control to Python rather than halting.  If
     not specified JPype will assume false if Python is  started as an
     interactive shell.
