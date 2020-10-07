@@ -803,7 +803,7 @@ class Cursor(object):
         if self._closed or self._jcx.isClosed():
             raise ProgrammingError("Cursor is closed")
         if threading.get_ident() != self._thread:
-            raise Error("Threading error")
+            raise ProgrammingError("Threading error")
 
     def _check_executed(self):
         """ Called before any method that requires the resultSet to be open. """
