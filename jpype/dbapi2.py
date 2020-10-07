@@ -50,7 +50,7 @@ def _nop(x):
 # Types
 
 
-class JDBCType:
+class JDBCType(object):
     def __init__(self, name, code=None, getter=None, setter=None):
         """ (internal) Create a new JDBC type. """
         if isinstance(name, (str, type(None))):
@@ -248,7 +248,7 @@ def SETTERS_BY_META(cx, meta, col, ptype):
     parameters.  Usually types can only be determined accurately on inserts
     into defined columns.
     """
-    return _default_map[_registry[meta.getParameterType(i + 1)]]
+    return _default_map[_registry[meta.getParameterType(col + 1)]]
 
 
 SETTERS_BY_META._cachable = True
@@ -429,7 +429,7 @@ def connect(dsn, *, driver=None, driver_args=None,
     return Connection(connection, adapters, converters, setters, getters)
 
 
-class Connection:
+class Connection(object):
     """ Connection provides access to a JDBC database.
 
     Connections are managed and can be as part of a Python with statement.
@@ -660,7 +660,7 @@ class Connection:
 # Cursor
 
 
-class Cursor:
+class Cursor(object):
     """ Cursors are used to execute queries and retrieve results.
 
     Part PreparedStatement, part ResultSet,  Cursors are a mixture of
@@ -800,8 +800,10 @@ class Cursor:
 
     def _validate(self):
         """ Called before any method that requires the statement to be open. """
-        if self._closed or self._jcx.isClosed() or threading.get_ident() != self._thread:
+        if self._closed or self._jcx.isClosed():
             raise ProgrammingError("Cursor is closed")
+        if threading.get_ident() != self._thread:
+            raise Error("Threading error")
 
     def _check_executed(self):
         """ Called before any method that requires the resultSet to be open. """
