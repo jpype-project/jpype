@@ -23,6 +23,7 @@ Parts of the documentation
    userguide
    quickguide
    api
+   dbapi2
    imports
    android
    CHANGELOG

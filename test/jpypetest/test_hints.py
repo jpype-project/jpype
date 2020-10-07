@@ -407,6 +407,38 @@ class HintsTestCase(common.JPypeTestCase):
         self.assertTrue(len(hints.explicit) == 0)
         self.assertTrue(len(hints.none) == 0)
 
+    def testDate(self):
+        cls = JClass("java.sql.Date")
+        d = cls(120, 0, 5)
+        d2 = d._py()
+        d3 = JObject(d2, cls)
+        self.assertEqual(d, d2)
+        self.assertEqual(d, d3)
+
+    def testTimestamp(self):
+        cls = JClass("java.sql.Timestamp")
+        d = cls(120, 0, 5, 9, 22, 51, 123456000)
+        d2 = d._py()
+        d3 = JObject(d2, cls)
+        self.assertEqual(d, d2)
+        self.assertEqual(d, d3)
+
+    def testTime(self):
+        cls = JClass("java.sql.Time")
+        d = cls(11, 53, 1)
+        d2 = d._py()
+        d3 = JObject(d2, cls)
+        self.assertEqual(d, d2)
+        self.assertEqual(d, d3)
+
+    def testBigDecimal(self):
+        cls = JClass("java.math.BigDecimal")
+        d = cls('1000234600000000000000')
+        d2 = d._py()
+        d3 = JObject(d2, cls)
+        self.assertEqual(d, d2)
+        self.assertEqual(d, d3)
+
     def testAddTypeBad(self):
         cls = JClass('java.lang.Object')
         with self.assertRaises(TypeError):

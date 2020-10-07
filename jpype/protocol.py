@@ -17,6 +17,7 @@
 # *****************************************************************************
 import _jpype
 import datetime
+import decimal
 import sys
 import _jpype
 from . import _jclass
@@ -99,3 +100,48 @@ if sys.version_info < (3, 6):  # pragma: no cover
     @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
     def _JFileConvert(jcls, obj):
         return jcls(str(obj))
+
+# Types needed for SQL
+@_jcustomizer.JImplementationFor('java.sql.Date')
+class _JSQLDate:
+    def _py(self):
+        return datetime.date(self.getYear() + 1900, self.getMonth() + 1, self.getDate())
+
+
+@_jcustomizer.JImplementationFor('java.sql.Time')
+class _JSQLTime:
+    def _py(self):
+        return datetime.time(self.getHours(), self.getMinutes(), self.getSeconds())
+
+
+@_jcustomizer.JImplementationFor('java.sql.Timestamp')
+class _JDate:
+    def _py(self):
+        return datetime.datetime(self.getYear() + 1900, self.getMonth() + 1, self.getDate(),
+                                 self.getHours(), self.getMinutes(), self.getSeconds(), self.getNanos() // 1000)
+
+
+@_jcustomizer.JImplementationFor('java.math.BigDecimal')
+class _JBigDecimal:
+    def _py(self):
+        return decimal.Decimal(str(self))
+
+
+@_jcustomizer.JConversion("java.sql.Time", instanceof=datetime.time)
+def _toTime(jcls, x):
+    return jcls(x.hour, x.minute, x.second)
+
+
+@_jcustomizer.JConversion("java.sql.Date", instanceof=datetime.date)
+def _toDate(jcls, x):
+    return jcls(x.year - 1900, x.month - 1, x.day)
+
+
+@_jcustomizer.JConversion("java.sql.Timestamp", instanceof=datetime.datetime)
+def _toTimestamp(jcls, x):
+    return jcls(x.year - 1900, x.month - 1, x.day, x.hour, x.minute, x.second, x.microsecond * 1000)
+
+
+@_jcustomizer.JConversion("java.math.BigDecimal", instanceof=decimal.Decimal)
+def _toBigDecimal(jcls, x):
+    return jcls(str(x))
