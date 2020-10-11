@@ -392,6 +392,8 @@ public:
 	void registerRef(jobject obj, PyObject* hostRef);
 	void registerRef(jobject obj, void* ref, JCleanupHook cleanup);
 
+	void clearInterrupt(bool throws);
+
 } ;
 
 #endif // _JP_JAVA_FRAME_H_

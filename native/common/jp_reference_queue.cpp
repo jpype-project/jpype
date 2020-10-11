@@ -82,6 +82,12 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_wake
 
 void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, PyObject* hostRef)
 {
+	// There are certain calls such as exception handling in which the 
+	// Python object is null.  In those cases, we don't need to bind the Java
+	// object lifespan and can just ignore it.
+	if (hostRef == 0)
+		return;
+
 	// MATCH TO DECREF IN releasePython
 	Py_INCREF(hostRef);
 	registerRef(frame, obj, hostRef, &releasePython);

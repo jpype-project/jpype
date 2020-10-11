@@ -265,7 +265,8 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	// Prepare to launch
 	JP_TRACE("Start Context");
-	jclass contextClass = m_ClassLoader->findClass(frame, "org.jpype.JPypeContext");
+	m_ContextClass = JPClassRef(frame, (jclass) m_ClassLoader->findClass(frame, "org.jpype.JPypeContext"));
+	jclass contextClass = m_ContextClass.get();
 	m_Context_GetStackFrameID = frame.GetMethodID(contextClass, "getStackTrace",
 			"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
@@ -326,6 +327,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Context_OrderID = frame.GetMethodID(contextClass, "order", "(Ljava/nio/Buffer;)Z");
 	m_Context_IsPackageID = frame.GetMethodID(contextClass, "isPackage", "(Ljava/lang/String;)Z");
 	m_Context_GetPackageID = frame.GetMethodID(contextClass, "getPackage", "(Ljava/lang/String;)Lorg/jpype/pkg/JPypePackage;");
+	m_Context_ClearInterruptID = frame.GetStaticMethodID(contextClass, "clearInterrupt", "(Z)V");
 
 	jclass packageClass = m_ClassLoader->findClass(frame, "org.jpype.pkg.JPypePackage");
 	m_Package_GetObjectID = frame.GetMethodID(packageClass, "getObject",
@@ -478,8 +480,51 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
 	((JPContext*) contextPtr)->onShutdown();
 }
 
+/**********************************************************************
+ * Interrupts are complex.   Both Java and Python want to handle the 
+ * interrupt, but only one can be in control.  Java starts later and 
+ * installs its handler over Python as a chain.  If Java handles it then
+ * the JVM will terminate which leaves Python with a bunch of bad
+ * references which tends to lead to segfaults.  So we need to disable
+ * the Java one by routing it back to Python.  But if we do so then 
+ * Java wont respect Ctrl+C.  So we need to handle the interrupt, convert
+ * it to a wait interrupt so that Java can break at the next I/O and 
+ * then trip Python signal handler so the Python gets the interrupt.
+ *
+ * But this leads to a few race conditions.
+ *
+ * If the control is in Java then it will get the interrupt next time 
+ * it hits Python code when the returned object is checked resulting
+ * InterruptedException.  Now we have two exceptions on the stack,
+ * the one from Java and the one from Python.  We check to see if 
+ * Python has a pending interrupt and eat the Java one.
+ *
+ * If the control is in Java and it hits an I/O call.  This generates
+ * InterruptedException which again transfers control to Python where
+ * the Exception is resolved.
+ *
+ * If the control is in Python when the interrupt occurs, then
+ * we have a bogus Java interrupt sitting on the main thread that the next
+ * Java call will trip over.  So we need to call clearInterrupt(false).
+ * This checks clears the interrupt in C++ and in Java.
+ *
+ */
+
+static int interrupt = 0;
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_interruptPy
 (JNIEnv *env, jclass cls)
 {
+	interrupt = 1;
 	PyErr_SetInterrupt();
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_acknowledgePy
+(JNIEnv *env, jclass cls)
+{
+	interrupt = 0;
+}
+
+int hasInterrupt()
+{
+	return interrupt!=0;
 }

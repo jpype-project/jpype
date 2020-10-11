@@ -71,7 +71,7 @@ public class JPypeContext
 
   public final String VERSION = "1.0.3_dev0";
 
-  private static JPypeContext INSTANCE =  new JPypeContext();
+  private static JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
@@ -217,7 +217,6 @@ public class JPypeContext
 //        {
 //        }
 //      }
-
 //      // Check to see if who is alive
 //      threads = Thread.getAllStackTraces();
 //      System.out.println("Check for remaining");
@@ -461,6 +460,43 @@ public class JPypeContext
 //  {
 //    proxyCount.decrementAndGet();
 //  }
+  /**
+   * Clear the current interrupt.
+   *
+   * @param x is true if an exception should be thrown.
+   * @throws InterruptedException
+   */
+  public static void clearInterrupt(boolean x) throws InterruptedException
+  {
+    try
+    {
+      Thread th = Thread.currentThread();
+
+      // Only relevant if this is the main thread for signal handling
+      if (th != JPypeSignal.main)
+        return;
+
+      // Unconditionally clear the interrupt flag if we are called from 
+      // C++.  This happens when a field get() or method call() is 
+      // invoked.
+      if (!x)
+        JPypeSignal.acknowledgePy();
+
+      // Check if this thread is interrupted
+      if (th.isInterrupted())
+      {
+        // Clear the flag in C++
+        JPypeSignal.acknowledgePy();
+        
+        // Clear the flag in Java
+        Thread.sleep(1);
+      }
+    } catch (InterruptedException ex)
+    {
+      if (x)
+        throw ex;
+    }
+  }
 
   public long getExcClass(Throwable th)
   {
