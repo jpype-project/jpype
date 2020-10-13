@@ -32,6 +32,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+import org.jpype.JPypeContext;
+import org.jpype.JPypeSignal;
 import org.jpype.proxy.JPypeProxy;
 
 /**
@@ -306,11 +308,7 @@ public class TypeManager
    */
   public long findClassForObject(Object object) throws InterruptedException
   {
-    Thread th = Thread.currentThread();
-    if (th.isInterrupted())
-    {
-      Thread.sleep(1);
-    }
+    JPypeContext.clearInterrupt(true);
     if (object == null)
       return 0;
 

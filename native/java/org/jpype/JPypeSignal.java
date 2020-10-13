@@ -62,4 +62,5 @@ public class JPypeSignal
   }
 
   native static void interruptPy();
+  native static void acknowledgePy();
 }

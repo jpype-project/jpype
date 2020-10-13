@@ -1256,3 +1256,12 @@ void JPJavaFrame::registerRef(jobject obj, void* ref, JCleanupHook cleanup)
 {
 	JPReferenceQueue::registerRef(*this, obj, ref, cleanup);
 }
+
+void JPJavaFrame::clearInterrupt(bool throws)
+{
+	JPPyCallRelease call;
+	jvalue jv;
+	jv.z = throws;
+	CallVoidMethodA(m_Context->m_ContextClass.get(),
+			m_Context->m_Context_ClearInterruptID, &jv);
+}

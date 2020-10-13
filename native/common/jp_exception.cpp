@@ -288,6 +288,12 @@ void JPypeException::toPython()
 	JP_TRACE_IN("JPypeException::toPython");
 	try
 	{
+		// Check the signals before processing the exception
+		// It may be a signal when interrupted Java in which case
+		// the signal takes precedence.
+		if (PyErr_CheckSignals()!=0)
+			return;
+
 		mesg = getMessage();
 		JP_TRACE(m_Error.l);
 		JP_TRACE(mesg.c_str());

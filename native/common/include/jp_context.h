@@ -77,6 +77,8 @@ class JPGarbageCollection;
 
 void assertJVMRunning(JPContext* context, const JPStackInfo& info);
 
+int hasInterrupt();
+
 /**
  * A Context encapsulates the Java virtual machine, the Java classes required
  * to function, and the JPype services created for that machine.
@@ -216,6 +218,7 @@ private:
 	JPClassLoader *m_ClassLoader;
 
 public:
+	JPClassRef m_ContextClass;
 	JPClassRef m_RuntimeException;
 	JPClassRef m_NoSuchMethodError;
 
@@ -234,6 +237,7 @@ private:
 	jmethodID m_Context_CreateExceptionID;
 	jmethodID m_Context_GetExcClassID;
 	jmethodID m_Context_GetExcValueID;
+	jmethodID m_Context_ClearInterruptID;
 	jmethodID m_CompareToID;
 	jmethodID m_Buffer_IsReadOnlyID;
 	jmethodID m_Context_OrderID;
