@@ -91,3 +91,4 @@ setup(
     ext_modules=[jpypeJar, jpypeLib, ],
     distclass=setupext.dist.Distribution,
 )
+
