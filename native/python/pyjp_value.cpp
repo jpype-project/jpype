@@ -195,7 +195,6 @@ PyObject* PyJPValue_str(PyObject* self)
 			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
 			PyDict_SetItemString(dict.get(), "_jstr", cache);
-			Py_INCREF(cache);
 			return cache;
 		}
 	}

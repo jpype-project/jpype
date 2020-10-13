@@ -117,11 +117,6 @@ class LeakChecker():
         return True
 
 
-def runLeakChecker(func, counts):
-    lc = LeakChecker()
-    return lc.memTest(func, 5000)
-
-
 @subrun.TestCase(individual=True)
 class LeakTestCase(unittest.TestCase):
 
@@ -135,17 +130,30 @@ class LeakTestCase(unittest.TestCase):
                        # "-Xcheck:jni",
                        "-Xmx256M", "-Xms16M", classpath_arg)
 
+    def assertNotLeaky(self, function, counts=5000):
+        lc = LeakChecker()
+        assert not lc.memTest(function, counts), 'Potential leak found'
+
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):
         def stringFunc():
             jpype.java.lang.String('aaaaaaaaaaaaaaaaa')
-        runLeakChecker(stringFunc, 5000)
+        self.assertNotLeaky(stringFunc)
+
+    @unittest.skipUnless(haveResource(), "resource not available")
+    def testStringLeak__str__(self):
+        def stringFunc():
+            # Casting to a string includes a cache stage, we want to make sure
+            # that the cache is tidying up properly.
+            s = jpype.types.JString('aaaaaaaaaaaaaaaaa')
+            str(s)
+        self.assertNotLeaky(stringFunc)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testClassLeak(self):
         def classFunc():
             cls = jpype.JClass('java.lang.String')
-        runLeakChecker(classFunc, 5000)
+        self.assertNotLeaky(classFunc)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testCtorLeak(self):
@@ -153,7 +161,8 @@ class LeakTestCase(unittest.TestCase):
 
         def func():
             cls("test")
-        runLeakChecker(func, 5000)
+
+        self.assertNotLeaky(func)
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testInvokeLeak(self):
@@ -161,4 +170,5 @@ class LeakTestCase(unittest.TestCase):
 
         def func():
             jstr.getBytes()
-        runLeakChecker(func, 5000)
+
+        self.assertNotLeaky(func)
