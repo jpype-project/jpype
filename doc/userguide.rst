@@ -2458,7 +2458,7 @@ the Java half, it is recreated again when the proxy is next used.
 
 This does have some consequences for the use of proxies.  Proxies must never
 be used as synchronization objects.  Whenever
-they are garbage collected, they loss their identity.  In addition, their
+they are garbage collected, they lose their identity.  In addition, their
 hashCode and system id both are reissued whenever they are refreshed.
 Therefore, using a proxy as a Java map key can be problematic.  So long as
 it remains in the Java map, it will maintain the same identify.  But once
