@@ -40,17 +40,17 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.StringA = jpype.JArray(self.String)
 
     def testConflict(self):
-        m = jpype.java.util.LinkedHashMap({"a":1,"b":2,"c":3})
+        m = jpype.java.util.LinkedHashMap({"a": 1, "b": 2, "c": 3})
         test = self.VarArgs()
-        self.assertEqual(test.conflict2([1,2,3]),1)
-        self.assertEqual(test.conflict2(m,m),2)
-        self.assertEqual(test.conflict3(['h','e']),1)
-        self.assertEqual(test.conflict3('h'),2)
-        self.assertEqual(test.conflict3('hello'),2)
-        self.assertEqual(test.conflict1(1),1)
-        self.assertEqual(test.conflict1([1,2,3]),1)
-        self.assertEqual(test.conflict1({"a":1,"b":2,"c":3}),2)
-        self.assertEqual(test.conflict1(m),2)
+        self.assertEqual(test.conflict2([1, 2, 3]), 1)
+        self.assertEqual(test.conflict2(m, m), 2)
+        self.assertEqual(test.conflict3(['h', 'e']), 1)
+        self.assertEqual(test.conflict3('h'), 2)
+        self.assertEqual(test.conflict3('hello'), 2)
+        self.assertEqual(test.conflict1(1), 1)
+        self.assertEqual(test.conflict1([1, 2, 3]), 1)
+        self.assertEqual(test.conflict1({"a": 1, "b": 2, "c": 3}), 2)
+        self.assertEqual(test.conflict1(m), 2)
 
     def testVarArgsCtor(self):
         va0 = self.VarArgs('1')
