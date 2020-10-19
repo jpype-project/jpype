@@ -119,7 +119,7 @@ public class MethodResolution
   }
   static HashMap<Class, Class[]> CONVERSION = new HashMap<>();
 
-
+  
   {
     CONVERSION.put(Byte.TYPE,
             of(Byte.TYPE, Byte.class, Short.TYPE, Short.class,
@@ -172,15 +172,99 @@ public class MethodResolution
     List<Class<?>> param1 = new ArrayList<>(Arrays.asList(method1.getParameterTypes()));
     List<Class<?>> param2 = new ArrayList<>(Arrays.asList(method2.getParameterTypes()));
 
-    // This line prevents ambiguity resolution both static and method forms.
-//    if (Modifier.isStatic(method1.getModifiers())
-//            != Modifier.isStatic(method2.getModifiers()))
-//      return false;
     if (!Modifier.isStatic(method1.getModifiers()))
       param1.add(0, method1.getDeclaringClass());
     if (!Modifier.isStatic(method2.getModifiers()))
       param2.add(0, method2.getDeclaringClass());
 
+    // Special handling is needed for varargs as it may chop or expand.
+    // we have 4 cases for a varargs methods
+    //    foo(Arg0, Arg1...) as
+    //       foo(Arg0)
+    //       foo(Arg0, Arg1)
+    //       foo(Arg0, Arg1[])
+    //       foo(Arg0, Arg1, Arg1+)
+    if (method1.isVarArgs() && method2.isVarArgs())
+    {
+      // Punt on this as there are too many different cases
+      return isMoreSpecificThan(param1, param2);
+    }
+
+    if (method1.isVarArgs())
+    {
+      int n1 = param1.size();
+      int n2 = param2.size();
+      
+      // Last element is an array
+      Class<?> cls = param1.get(n1 - 1);
+      Class<?> cls2 = cls.getComponentType();
+      
+      // Less arguments, chop the list 
+      if (n1 - 1 == n2)
+        return isMoreSpecificThan(param1.subList(0, n2), param2);
+      
+      // Same arguments
+      if (n1 == n2)
+      {
+        List<Class<?>> q = new ArrayList<>(param1);
+        q.set(n1 - 1, cls2);
+        
+        // Check both ways
+        return isMoreSpecificThan(param1, param2) || isMoreSpecificThan(q, param2);
+      }
+      
+      // More arguments
+      if (n1 < n2)
+      {
+        // Grow the list
+        List<Class<?>> q = new ArrayList<>(param1);
+        q.set(n1 - 1, cls2);
+        for (int i = n1; i < n2; ++i)
+          q.add(cls2);
+        return isMoreSpecificThan(q, param2);
+      }
+    }
+
+    if (method2.isVarArgs())
+    {
+      int n1 = param1.size();
+      int n2 = param2.size();
+      
+      // Last element is an array
+      Class<?> cls = param2.get(n2 - 1);
+      Class<?> cls2 = cls.getComponentType();
+      
+      // Less arguments, chop the list
+      if (n2 - 1 == n1)
+        return isMoreSpecificThan(param1, param2.subList(0, n2));
+      
+      // Same arguments
+      if (n1 == n2)
+      {
+        List<Class<?>> q = new ArrayList<>(param2);
+        q.set(n2 - 1, cls2);
+        
+        // Compare both ways
+        return isMoreSpecificThan(param1, param2) || isMoreSpecificThan(param1, q);
+      }
+      
+      // More arguments
+      if (n2 < n1)
+      {
+        // Grow the list
+        List<Class<?>> q = new ArrayList<>(param2);
+        q.set(n2 - 1, cls2);
+        for (int i = n2; i < n1; ++i)
+          q.add(cls2);
+        return isMoreSpecificThan(param1, q);
+      }
+    }
+
+    return isMoreSpecificThan(param1, param2);
+  }
+
+  public static boolean isMoreSpecificThan(List<Class<?>> param1, List<Class<?>> param2)
+  {
     // FIXME need to consider resolving mixing of static and non-static
     // Methods here.
     if (param1.size() != param2.size())
