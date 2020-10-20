@@ -4,7 +4,8 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.0.3_dev0 - unreleased**
+- **1.1.1_dev0 - 2020-10-20**
+- **1.1.0 - 2020-10-13**
   
   - Correct bug resulting in reporting ambiguous overloads when resolving
     methods with variadic arguments.
@@ -14,6 +15,13 @@ Latest Changes:
     will transfer control to Python rather than halting.  If
     not specified JPype will assume false if Python is  started as an
     interactive shell.
+
+  - Fixed crash with Ctrl+C when multiple exceptions were generated.
+
+  - Removed extraneous exception when calling Ctrl+C before Java code is 
+    executed for methods and fields.
+
+  - Fixed memory leak with string cache.
 
   - Fixed crash when manually creating wrappers for anonymous classes.
 

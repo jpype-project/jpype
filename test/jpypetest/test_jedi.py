@@ -37,6 +37,8 @@ class JediTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
         self.cls = jpype.JClass('java.lang.String')
         self.obj = self.cls('foo')
 

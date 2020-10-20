@@ -25,6 +25,8 @@ db_name = "jdbc:sqlite::memory:"
 class ConnectTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def testConnect(self):
         cx = dbapi2.connect(db_name)
@@ -65,6 +67,8 @@ class ConnectTestCase(common.JPypeTestCase):
 class ConnectionTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def test_commit(self):
         with dbapi2.connect(db_name) as cx:
@@ -168,6 +172,8 @@ class ConnectionTestCase(common.JPypeTestCase):
 class CursorTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def tearDown(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
@@ -790,6 +796,8 @@ class CursorTestCase(common.JPypeTestCase):
 class AdapterTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
         self.testdata = b"abcdefg" * 10
         self.params = memoryview(zlib.compress(self.testdata))
 
@@ -814,6 +822,8 @@ class AdapterTestCase(common.JPypeTestCase):
 class ConverterTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
         self.testdata = b"abcdefg" * 10
         self.params = memoryview(zlib.compress(self.testdata))
 
@@ -898,6 +908,8 @@ class ConverterTestCase(common.JPypeTestCase):
 class GettersTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
         self.testdata = b"abcdefg" * 10
         self.params = memoryview(zlib.compress(self.testdata))
 
@@ -913,6 +925,8 @@ class GettersTestCase(common.JPypeTestCase):
 class TransactionsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def tearDown(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
@@ -965,6 +979,8 @@ class TypeTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def tearDown(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
@@ -1222,6 +1238,8 @@ class OtherTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def tearDown(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cur:
@@ -1250,6 +1268,8 @@ class OtherTestCase(common.JPypeTestCase):
 class ThreadingTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
+        if common.fast:
+            raise common.unittest.SkipTest("fast")
 
     def tearDown(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cur:

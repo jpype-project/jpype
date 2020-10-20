@@ -32,7 +32,7 @@ public class Test
    *    hey.method(1, SecretMap());
    * }</pre></blockquote>
    * <p>
-   * <table style="width:100%">
+   * <table style="width:100%" summary="Test table">
    * <tr><th>North</th><th>East</th><th>Steps</th></tr>
    * <tr><td>Y</td><td>N</td><td>10</td></tr>
    * <tr><td>N</td><td>Y</td><td>20</td></tr>
