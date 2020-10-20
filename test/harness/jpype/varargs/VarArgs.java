@@ -15,6 +15,8 @@
 **************************************************************************** */
 package jpype.varargs;
 
+import java.util.Map;
+
 class VarArgs
 {
 
@@ -62,5 +64,36 @@ class VarArgs
   public String[] method(String s, String... rest)
   {
     return rest;
+  }
+
+  public int conflict1(Object... j)
+  {
+  	return 1;
+  }
+
+  public int conflict1(Map j)
+  {
+  	return 2;
+  }
+
+  public int conflict2(Object... j)
+  {
+  	return 1;
+  }
+
+  public int conflict2(Map j, Map k)
+  {
+  	return 2;
+  }
+
+
+  public int conflict3(char... j)
+  {
+  	return 1;
+  }
+
+  public int conflict3(String j)
+  {
+  	return 2;
   }
 }
