@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.1.2_dev0 - 2020-10-21**
 - **1.1.1 - 2020-10-21**
 
   - Fixed packaging problem on linux.  
