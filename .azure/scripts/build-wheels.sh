@@ -13,7 +13,7 @@ for PYBIN in "${pys[@]}"; do
     echo "Compile $PYBIN"
     ls -l /io/dist
     "${PYBIN}/pip" install -r /io/dev-requirements.txt
-    "${PYBIN}/pip" wheel /io/dist/$package_name-*.tar.gz -w wheelhouse/
+    "${PYBIN}/pip" wheel /io/dist/$package_name-*.tar.gz -w wheelhouse/ -v
 done
 echo "=============="
 
