@@ -301,7 +301,7 @@ class BuildExtCommand(build_ext):
         # Try to use the cache if we are not requested build
         if not java:
             src = os.path.join('native', 'jars')
-            dest = os.path.join('build', 'lib')
+            dest = os.path.dirname(self.get_ext_fullpath("JAVA"))
             if os.path.exists(src):
                 distutils.log.info("Using Jar cache")
                 copy_tree(src, dest)
