@@ -25,6 +25,11 @@ from . import _jinit
 from . import _pykeywords
 
 from ._jvmfinder import *
+
+# This import is required to bootstrap importlib, _jpype uses importlib.util
+# but on some systems it may not load properly from C.  To make sure it gets
+# loaded properly we are going to force the issue even through we don't
+# use it in this module.  (Do not remove)
 from importlib import util as _util
 
 __all__ = [
