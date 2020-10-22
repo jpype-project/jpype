@@ -25,6 +25,7 @@ from . import _jinit
 from . import _pykeywords
 
 from ._jvmfinder import *
+from importlib import util as _util
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
