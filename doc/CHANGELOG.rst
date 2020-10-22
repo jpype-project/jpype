@@ -5,6 +5,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.1.2_dev0 - 2020-10-21**
+
+  - Add importlib.util to address instability in Python importlib boot process.
+    Certain versions of Python such as 3.9 appear to not properly load this
+    module resulting in unexpected errors during startJVM.
+
 - **1.1.1 - 2020-10-21**
 
   - Fixed packaging problem on linux.  
