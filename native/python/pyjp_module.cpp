@@ -712,7 +712,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "1.1.2");
+	PyModule_AddStringConstant(module, "__version__", "1.1.3_dev0");
 
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
