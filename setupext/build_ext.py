@@ -173,18 +173,6 @@ class BuildExtCommand(build_ext):
     2. try to disable warning -Wstrict-prototypes is valid for C/ObjC but not for C++
     """
 
-    # extra compile args
-    copt = {'msvc': [],
-            'unix': ['-ggdb', ],
-            'mingw32': [],
-            }
-    # extra link args
-    lopt = {
-        'msvc': [],
-        'unix': [],
-        'mingw32': [],
-    }
-
     user_options = build_ext.user_options + [
         ('android', None, 'configure for android'),
         ('makefile', None, 'Build a makefile for extensions'),
@@ -203,40 +191,41 @@ class BuildExtCommand(build_ext):
             '-Wimplicit-function-declaration': '',
         }
         tracing = self.distribution.enable_tracing
-        if tracing:
-            replacement['-O3'] = '-O0'
+
+        # Arguments to remove so we set debugging and optimization level
+        remove_args = ['-O0', '-O1', '-O2', '-O3', '-g']
 
         for k, v in cfg_vars.items():
             if not isinstance(v, str):
                 continue
             if not k == "OPT" and not "FLAGS" in k:
                 continue
-            for r, t in replacement.items():
-                if v.find(r) != -1:
-                    v = v.replace(r, t)
-                    cfg_vars[k] = v
+
+            args = v.split()
+            for r in remove_args:
+                args = list(filter((r).__ne__, args))
+
+            cfg_vars[k] = " ".join(args)
         super().initialize_options()
 
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
+        jpypeLib = self.extensions[1]
         if c == 'unix' and self.distribution.enable_coverage:
-            self.extensions[0].extra_compile_args.extend(
-                ['-O0', '--coverage', '-ftest-coverage'])
-            self.extensions[0].extra_link_args.extend(['--coverage'])
-        if c in self.copt:
-            for e in self.extensions:
-                e.extra_compile_args.extend(self.copt[c])
-        if c in self.lopt:
-            for e in self.extensions:
-                e.extra_link_args.extend(self.lopt[c])
+            jpypeLib.extra_compile_args.extend(
+                ['-ggdb', '--coverage', '-ftest-coverage'])
+            jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
+            jpypeLib.extra_link_args.extend(['--coverage'])
+        if c == 'unix' and self.distribution.enable_tracing:
+            jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
 
     def build_extensions(self):
         if self.makefile:
             self.compiler = Makefile(self.compiler)
             self.force = True
 
-        jpypeLib = self.extensions[0]
+        jpypeLib = self.extensions[1]
         tracing = self.distribution.enable_tracing
         self._set_cflags()
         if tracing:
