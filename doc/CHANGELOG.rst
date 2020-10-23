@@ -5,7 +5,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.1.2 - 2020-10-23**
-- **1.1.2_dev0 - 2020-10-21**
+
+  - Linux binaries are now stripped for size.
 
   - Add importlib.util to address instability in Python importlib boot process.
     Certain versions of Python such as 3.9 appear to not properly load this
