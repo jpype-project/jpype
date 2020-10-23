@@ -211,7 +211,7 @@ class BuildExtCommand(build_ext):
     def _set_cflags(self):
         # set compiler flags
         c = self.compiler.compiler_type
-        jpypeLib = self.extensions[1]
+        jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
         if c == 'unix' and self.distribution.enable_coverage:
             jpypeLib.extra_compile_args.extend(
                 ['-ggdb', '--coverage', '-ftest-coverage'])
@@ -225,7 +225,7 @@ class BuildExtCommand(build_ext):
             self.compiler = Makefile(self.compiler)
             self.force = True
 
-        jpypeLib = self.extensions[1]
+        jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
         tracing = self.distribution.enable_tracing
         self._set_cflags()
         if tracing:
