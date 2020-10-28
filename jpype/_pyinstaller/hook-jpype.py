@@ -1,8 +1,6 @@
 import os
 from pathlib import Path
 
-from PyInstaller.utils.hooks import relpath_to_config_or_make
-
 import jpype
 
 
