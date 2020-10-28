@@ -143,6 +143,8 @@ public class MethodResolution
             of(Float.TYPE, Float.class, Double.TYPE, Double.class));
     CONVERSION.put(Double.TYPE,
             of(Double.TYPE, Double.class));
+    CONVERSION.put(Boolean.TYPE,
+            of(Boolean.TYPE, Boolean.class));
   }
 
   static boolean isAssignableTo(Class c1, Class c2)
