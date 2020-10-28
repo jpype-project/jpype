@@ -10,4 +10,4 @@ fspath = getattr(os, 'fspath', str)
 
 jar_path = Path(jpype.__file__).parent.parent.joinpath('org.jpype.jar')
 
-datas = [[fspath(jar_path), relpath_to_config_or_make(fspath(jar_path))]]
+datas = [[fspath(jar_path), '.']]

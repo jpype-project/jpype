@@ -93,7 +93,7 @@ setup(
     entry_points={
         'pyinstaller40': [
             'hook-dirs = jpype._pyinstaller.entry_points:get_hook_dirs',
-            # 'tests = jpype._pyinstaller:get_PyInstaller_tests',
+            'tests = jpype._pyinstaller.entry_points:get_PyInstaller_tests',
         ],
     },
 )
