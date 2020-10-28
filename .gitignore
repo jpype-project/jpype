@@ -3,10 +3,12 @@ Makefile*
 *~
 /test/classes/
 /test/jars/
+/test/jpypetest/test.pic
 build/
 .buildozer
 bin
 native/*.jar
+org.jpype.jar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
