@@ -51,6 +51,10 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(test.conflict1([1, 2, 3]), 1)
         self.assertEqual(test.conflict1({"a": 1, "b": 2, "c": 3}), 2)
         self.assertEqual(test.conflict1(m), 2)
+        self.assertEqual(test.conflict4(None, [1.0, 2.0, 3.0]), 1)
+        self.assertEqual(test.conflict4(None, 1.0), 2)
+        self.assertEqual(test.conflict5([1.0, 2.0, 3.0]), 1)
+        self.assertEqual(test.conflict5(1.0), 2)
 
     def testVarArgsCtor(self):
         va0 = self.VarArgs('1')

@@ -96,4 +96,31 @@ class VarArgs
   {
   	return 2;
   }
+
+  // Conflict 4 - overloaded multi-param signature, vararg of identical type
+
+  public int conflict4(Object o, double... j)
+  {
+  	return 1;
+  }
+
+  public int conflict4(Object o, double j)
+  {
+  	return 2;
+  }
+
+  // Conflict 5 - overloaded single-param signature, vararg of identical type
+  // NB: pre-patch, conflict4 deterministically generated an ambiguous match error.
+  //     However, conflict5 would arbitrarily pick between these two signatures when
+  //     called with a single variable, resulting in unpredictable failures.
+
+  public int conflict5(double... j)
+  {
+  	return 1;
+  }
+
+  public int conflict5(double j)
+  {
+  	return 2;
+  }
 }
