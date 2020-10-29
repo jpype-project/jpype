@@ -3257,3 +3257,12 @@ resulting in unusual behavior with certain windows calls. The path
 separator for Cygwin does not match that of the Java DLL, thus specification
 of class paths must account for this.  Threading between the Cygwin libraries
 and the JVM was often unstable.
+
+.. _freezing:
+
+Freezing
+========
+
+JPype supports freezing and deployment with
+`PyInstaller <https://pyinstaller.readthedocs.io/>`_.  The hook is included
+with JPype installations and no extra configuration should be needed.
