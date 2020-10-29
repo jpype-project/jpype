@@ -212,7 +212,12 @@ public class MethodResolution
         q.set(n1 - 1, cls2);
         
         // Check both ways
-        return isMoreSpecificThan(param1, param2) || isMoreSpecificThan(q, param2);
+        boolean isMoreSpecific = isMoreSpecificThan(param1, param2) || isMoreSpecificThan(q, param2);
+
+	// If the varargs array is of the single-variable's type (or they are primitive-equivalent),
+	// the single-variable signature should win specificity
+	Class<?> svCls = param2.get(n2-1);
+        return isMoreSpecific && !(isAssignableTo(cls2, svCls) && isAssignableTo(svCls, cls2));
       }
       
       // More arguments

@@ -3,7 +3,7 @@ Makefile*
 *~
 /test/classes/
 /test/jars/
-/test/jpypetest/test.pic
+**/test.pic
 build/
 .buildozer
 bin
