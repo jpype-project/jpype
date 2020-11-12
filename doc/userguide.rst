@@ -3182,6 +3182,23 @@ this block as a fixture at the start of the test suite.
 This code enables fault handling and then returns the default handlers which
 will point back to those set by Java.
 
+Another issue was reported with interactions between JIT and faulthandlers.
+The Java Just-In-Time (JIT) compiler determines when a portion of code needs to
+be ported into machine code to improve performance.  When it does so it
+triggers either a SEGSEGV or SEGBUS depending on the machine architecture which
+breaks out any threads which are currently executing the existing code.
+Because the JIT compiler self triggers, this will cause a failure to appear in
+a call which worked earlier in the execution without an issue.
+
+If the Python fault handler interrupts this process, it will produce a "Fatal
+Python Error:" followed by either SIGSEGV or SEGBUS.  This error message then
+fails to hit the needed Java handler resulting in a crash.  This message will
+disappear if the JIT compiler is diabled with the option "-Xint".  Some modules
+such as Abseil Python Common Libraries (absl) automatically and unconditionally
+install faulthandlers as part of their normal operation.  To prevent an issue
+simply insert a call to disable the faulthandler after the module has enabled
+it.
+
 
 Unsupported Python versions
 ---------------------------
