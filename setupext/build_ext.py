@@ -313,7 +313,7 @@ class BuildExtCommand(build_ext):
             build_dir = os.path.join(self.build_temp, ext.name, "classes")
             os.makedirs(build_dir, exist_ok=True)
             os.makedirs(dirname, exist_ok=True)
-            cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s' %
+            cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
             debug = "-g:none"
