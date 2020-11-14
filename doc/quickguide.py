@@ -692,8 +692,10 @@ entry("Implement an interface",
 entry("Extending classes", None, None,
       """Support for use of Python function as Java 8 lambda is WIP.""")
 
-entry("Lambdas", None, None,
-      """Support for use of Python function as Java 8 lambda is WIP.""")
+entry("Lambdas",
+        java('DoubleUnaryOperator u = (p->p*2);'),
+        python('u=DoubleUnaryOperator@(lambda x: x*2)'),
+        'Any Java functional interface can take a lambda or callable.')
 endSection()
 
 print(

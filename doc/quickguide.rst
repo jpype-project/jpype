@@ -704,11 +704,15 @@ with an interface for each methods that are to be accessed from Python.
 |                           |                                                         | None                                                    |
 | Extending classes [23]_   |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
-|                           |                                                         | None                                                    |
-| Lambdas [23]_             |                                                         |                                                         |
+|                           |                                                         |                                                         |
+| Lambdas [24]_             | .. code-block:: java                                    | .. code-block:: python                                  |
+|                           |                                                         |                                                         |
+|                           |     DoubleUnaryOperator u = (p->p*2);                   |     u=DoubleUnaryOperator@(lambda x: x*2)               |
+|                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
     .. [23] Support for use of Python function as Java 8 lambda is WIP.
+    .. [24] Any Java functional interface can take a lambda or callable.
 
 
 
