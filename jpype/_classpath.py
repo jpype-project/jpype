@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import os as _os
+import _jpype
 
 __all__ = ['addClassPath', 'getClassPath']
 
@@ -48,6 +49,20 @@ def addClassPath(path1):
         path2 = Path(inspect.stack(1)[1].filename).parent.resolve()
         path1 = path2.joinpath(path1)
 
+    # If the JVM is already started then we will have to load the paths
+    # immediately into the DynamicClassLoader
+    if _jpype.isStarted():
+        Paths = _jpype.JClass('java.nio.file.Paths')
+        JContext = _jpype.JClass('org.jpype.JPypeContext')
+        classLoader = JContext.getInstance().getClassLoader()
+        if path1.name == "*":
+            paths = list(path1.parent.glob("*.jar"))
+            if len(paths) == 0:
+                return
+            for path in paths:
+                classLoader.addFile(Paths.get(str(path)))
+        else:
+            classLoader.addFile(Paths.get(str(path1)))
     _CLASSPATHS.append(path1)
 
 
