@@ -89,8 +89,9 @@ are exposed as Python modules allowing Java to be treated as part of Python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Start Java Virtual        |                                                         | .. code-block:: python                                  |
-| Machine (JVM) with a      |                                                         |     # Launch the JVM                                    |
-| classpath                 |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
+| Machine (JVM) with a      |                                                         |                                                         |
+| classpath                 |                                                         |     # Launch the JVM                                    |
+|                           |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
