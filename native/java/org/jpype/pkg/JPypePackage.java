@@ -24,7 +24,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
+import org.jpype.JPypeContext;
 import org.jpype.JPypeKeywords;
+import org.jpype.classloader.DynamicClassLoader;
 
 /**
  * Representation of a JPackage in Java.
@@ -40,12 +42,16 @@ public class JPypePackage
   // Name of the package
   final String pkg;
   // A mapping from Python names into Paths into the module/jar file system.
-  final Map<String, URI> contents;
+  Map<String, URI> contents;
+  int code;
+  private final DynamicClassLoader classLoader;
 
-  public JPypePackage(String pkg, Map<String, URI> contents)
+  public JPypePackage(String pkg)
   {
     this.pkg = pkg;
-    this.contents = contents;
+    this.contents = JPypePackageManager.getContentMap(pkg);
+    this.classLoader = ((DynamicClassLoader)(JPypeContext.getInstance().getClassLoader()));
+    this.code = classLoader.getCode();
   }
 
   /**
@@ -69,6 +75,7 @@ public class JPypePackage
    */
   public Object getObject(String name)
   {
+    checkCache();
     URI uri = contents.get(name);
     if (uri == null)
       return null;
@@ -89,7 +96,7 @@ public class JPypePackage
         if (isPublic(p))
         {
           // Load the class and return a class type object
-          return Class.forName(pkg + "." + JPypeKeywords.unwrap(name));
+          return Class.forName(pkg + "." + JPypeKeywords.unwrap(name), true, classLoader);
         }
       } catch (ClassNotFoundException ex)
       {
@@ -107,6 +114,7 @@ public class JPypePackage
    */
   public String[] getContents()
   {
+    checkCache();
     ArrayList<String> out = new ArrayList<>();
     for (String key : contents.keySet())
     {
@@ -219,6 +227,15 @@ public class JPypePackage
     {
       return false; // If anything goes wrong then it won't be considered a public class.
     }
+  }
+  
+  void checkCache()
+  {
+    int current = classLoader.getCode();
+    if (this.code == current)
+      return;
+    this.code = current;
+    this.contents = JPypePackageManager.getContentMap(pkg);
   }
 
 }
