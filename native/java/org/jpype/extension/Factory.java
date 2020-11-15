@@ -13,7 +13,7 @@
  *
  * See NOTICE file for details.
  **************************************************************************** */
-package org.jpype;
+package org.jpype.extension;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -26,8 +26,12 @@ import java.util.List;
  *
  * @author nelson85
  */
-public class JPypeExtension
+public class Factory
 {
+  public static ClassDecl newClass(String name, Class[] bases)
+  {
+    return new ClassDecl(name, bases);
+  }
 
   public static Class createClass(Class[] bases, String[] overrides)
   {

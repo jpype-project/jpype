@@ -24,17 +24,17 @@ __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected', 'JPriva
 
 
 class _JFieldDecl(object):
-    def __init__(self, cls, name, value, scope):
+    def __init__(self, cls, name, value, modifiers):
         self.cls = cls
         self.name = name
         self.value = value
-        self.scope = scope
+        self.modifiers = modifiers
 
     def __repr__(self):
         return "Field(%s,%s)" % (self.cls.__name__, self.name)
 
 
-def _JMemberDecl(nonlocals, target, strict, scope, **kwargs):
+def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
     """Generic annotation to pass to the code generator.
     """
     if not "__jspec__" in nonlocals:
@@ -42,9 +42,11 @@ def _JMemberDecl(nonlocals, target, strict, scope, **kwargs):
     jspec = nonlocals["__jspec__"]
 
     if isinstance(target, type):
+        if not isinstance(target, _jpype.JClass):
+            raise TypeError("Fields must be Java classes")
         out = []
         for p, v in kwargs.items():
-            var = _JFieldDecl(target, p, v, scope)
+            var = _JFieldDecl(target, p, v, modifiers)
             jspec.append(var)
             out.append(var)
         return out
@@ -65,13 +67,21 @@ def _JMemberDecl(nonlocals, target, strict, scope, **kwargs):
             for i in range(1, len(args)):
                 if not args[i] in spec.annotations:
                     raise TypeError("Methods types must have specifications")
+                if not isinstance(spec.annotations[args[i]], _jpype.JClass):
+                    raise TypeError("Method arguments must be Java classes")
+
+            if target.__name__ != "__init__":
+                if "return" not in spec.annotations:
+                    raise TypeError("Return specification required")
+                if not isinstance(spec.annotations["return"], (_jpype.JClass, type(None))):
+                    raise TypeError("Return type must be Java type")
 
         # Place in the Java spec list
         for p, v in kwargs.items():
             object.__setattr__(target, p, v)
-        if scope is not None:
+        if modifiers is not None:
             jspec.append(target)
-            object.__setattr__(target, '__jscope__', scope)
+            object.__setattr__(target, '__jmodifiers__', modifiers)
         return target
 
     raise TypeError("Unknown Java specification '%s'" % type(target))
@@ -79,17 +89,17 @@ def _JMemberDecl(nonlocals, target, strict, scope, **kwargs):
 
 def JPublic(target, **kwargs):
     nonlocals = inspect.stack()[1][0].f_locals
-    return _JMemberDecl(nonlocals, target, True, JPublic, **kwargs)
+    return _JMemberDecl(nonlocals, target, True, 1, **kwargs)
 
 
 def JProtected(target, **kwargs):
     nonlocals = inspect.stack()[1][0].f_locals
-    return _JMemberDecl(nonlocals, target, True, JProtected, **kwargs)
+    return _JMemberDecl(nonlocals, target, True, 4, **kwargs)
 
 
 def JPrivate(target, **kwargs):
     nonlocals = inspect.stack()[1][0].f_locals
-    return _JMemberDecl(nonlocals, target, True, JPrivate, **kwargs)
+    return _JMemberDecl(nonlocals, target, True, 2, **kwargs)
 
 
 def JOverride(*target, sticky=False, rename=None, **kwargs):
@@ -316,8 +326,25 @@ def _jclassDoc(cls):
     return "\n".join(out)
 
 
-def _JExtension(*args):
-    print(*args)
+def _JExtension(name, bases, members):
+    if "__jspec__" not in members:
+        raise TypeError("Java classes cannot be extended in Python")
+    jspec = members['__jspec__']
+    Factory = _jpype.JClass('org.jpype.extension.Factory')
+    cls = Factory.newClass(name, bases)
+    for i in jspec:
+        if isinstance(i, _JFieldDecl):
+            cls.addField(i.cls, i.name, i.value, i.modifiers)
+        if isinstance(i, type(_JExtension)):
+            mspec = inspect.getfullargspec(i)
+            if i.__name__ == '__init__':
+                args = [mspec.annotations[j] for j in mspec.args[1:]]
+                cls.addCtor(args, None, i.__jmodifiers__)
+            else:
+                args = [mspec.annotations[j] for j in mspec.args[1:]]
+                ret = mspec.annotations["return"]
+                cls.addMethod(i.__name__, ret, args, None, i.__jmodifiers__)
+
     raise TypeError("Not implemented")
 
 

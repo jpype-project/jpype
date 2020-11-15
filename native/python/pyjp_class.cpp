@@ -88,8 +88,8 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	}
 	if (magic == 0)
 	{
-		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-		return 0;
+		// Redirect to the class builder
+		return PyObject_Call(_JExtension, args, kwargs);
 	}
 
 	PyTypeObject *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
