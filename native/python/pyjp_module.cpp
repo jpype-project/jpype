@@ -121,7 +121,7 @@ void PyJPModule_loadResources(PyObject* module)
 		_JMethodCode = PyObject_GetAttrString(module, "getMethodCode");
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
-		_JExtension = PyObject_GetAttrString(module, "JExtension");
+		_JExtension = PyObject_GetAttrString(module, "_JExtension");
 		JP_PY_CHECK();
 		Py_INCREF(_JExtension);
 		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
@@ -136,8 +136,7 @@ void PyJPModule_loadResources(PyObject* module)
 }
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 

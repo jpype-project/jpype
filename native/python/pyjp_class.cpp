@@ -32,13 +32,12 @@ struct PyJPClass
 	PyHeapTypeObject ht_type;
 	JPClass *m_Class;
 	PyObject *m_Doc;
-} ;
+};
 
 static PyObject* classMagic = PyDict_New();
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 int PyJPClass_Check(PyObject* obj)

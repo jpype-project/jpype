@@ -57,10 +57,7 @@
         </logicalFolder>
       </logicalFolder>
     </logicalFolder>
-    <logicalFolder name="f1"
-                   displayName="Python Files"
-                   projectFiles="true"
-                   kind="ROOT">
+    <logicalFolder name="f1" displayName="Python Files" projectFiles="true">
       <logicalFolder name="jpype" displayName="jpype" projectFiles="true">
         <itemPath>../../jpype/__init__.py</itemPath>
         <itemPath>../../jpype/_classpath.py</itemPath>

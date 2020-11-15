@@ -18,11 +18,81 @@
 import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
+import inspect
 
-__all__ = ['JClass', 'JInterface', 'JOverride']
+__all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected', 'JPrivate']
 
 
-def JOverride(*args, **kwargs):
+class _JFieldDecl(object):
+    def __init__(self, cls, name, value, scope):
+        self.cls = cls
+        self.name = name
+        self.value = value
+        self.scope = scope
+
+    def __repr__(self):
+        return "Field(%s,%s)" % (self.cls.__name__, self.name)
+
+
+def _JMemberDecl(nonlocals, target, strict, scope, **kwargs):
+    """Generic annotation to pass to the code generator.
+    """
+    if not "__jspec__" in nonlocals:
+        nonlocals["__jspec__"] = []
+    jspec = nonlocals["__jspec__"]
+
+    if isinstance(target, type):
+        out = []
+        for p, v in kwargs.items():
+            var = _JFieldDecl(target, p, v, scope)
+            jspec.append(var)
+            out.append(var)
+        return out
+
+    if isinstance(target, type(_JMemberDecl)):
+        spec = inspect.getfullargspec(target)
+        args = spec.args
+
+        # Verify the requirements for arguments are met
+        # Must have a this argument first
+        if strict:
+            if len(args) < 1:
+                raise TypeError("Methods require this argument")
+            if args[0] != "this":
+                raise TypeError("Methods first argument must be this")
+
+            # All other arguments must be annotated as JClass types
+            for i in range(1, len(args)):
+                if not args[i] in spec.annotations:
+                    raise TypeError("Methods types must have specifications")
+
+        # Place in the Java spec list
+        for p, v in kwargs.items():
+            object.__setattr__(target, p, v)
+        if scope is not None:
+            jspec.append(target)
+            object.__setattr__(target, '__jscope__', scope)
+        return target
+
+    raise TypeError("Unknown Java specification '%s'" % type(target))
+
+
+def JPublic(target, **kwargs):
+    nonlocals = inspect.stack()[1][0].f_locals
+    return _JMemberDecl(nonlocals, target, True, JPublic, **kwargs)
+
+
+def JProtected(target, **kwargs):
+    nonlocals = inspect.stack()[1][0].f_locals
+    return _JMemberDecl(nonlocals, target, True, JProtected, **kwargs)
+
+
+def JPrivate(target, **kwargs):
+    nonlocals = inspect.stack()[1][0].f_locals
+    return _JMemberDecl(nonlocals, target, True, JPrivate, **kwargs)
+
+
+def JOverride(*target, sticky=False, rename=None, **kwargs):
     """Annotation to denote a method as overriding a Java method.
 
     This annotation applies to customizers, proxies, and extensions
@@ -34,16 +104,22 @@ def JOverride(*args, **kwargs):
       sticky=bool: Applies a customizer method to all derived classes.
 
     """
-    # Check if called bare
-    if len(args) == 1 and callable(args[0]):
-        object.__setattr__(args[0], "__joverride__", {})
-        return args[0]
-     # Otherwise apply arguments as needed
+    nonlocals = inspect.stack()[1][0].f_locals
+    if len(target) == 0:
+        overrides = {}
+        if kwargs:
+            overrides.update(kwargs)
+        if sticky:
+            overrides["sticky"] = True
+        if rename is not None:
+            overrides["rename"] = rename
 
-    def modifier(method):
-        object.__setattr__(method, "__joverride__", kwargs)
-        return method
-    return modifier
+        def deferred(method):
+            return _JMemberDecl(nonlocals, method, False, None, __joverride__=overrides)
+        return deferred
+    if len(target) == 1:
+        return _JMemberDecl(nonlocals, *target, False, None, __joverride__={})
+    raise TypeError("JOverride can only have one argument")
 
 
 class JClassMeta(type):
@@ -240,9 +316,15 @@ def _jclassDoc(cls):
     return "\n".join(out)
 
 
+def _JExtension(*args):
+    print(*args)
+    raise TypeError("Not implemented")
+
+
 # Install module hooks
 _jpype.JClass = JClass
 _jpype.JInterface = JInterface
 _jpype._jclassDoc = _jclassDoc
 _jpype._jclassPre = _jclassPre
 _jpype._jclassPost = _jclassPost
+_jpype._JExtension = _JExtension
