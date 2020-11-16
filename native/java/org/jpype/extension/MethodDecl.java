@@ -15,6 +15,10 @@
  **************************************************************************** */
 package org.jpype.extension;
 
+import java.lang.reflect.Method;
+import org.jpype.JPypeContext;
+import org.jpype.manager.TypeManager;
+
 /**
  *
  * @author nelson85
@@ -22,18 +26,65 @@ package org.jpype.extension;
 public class MethodDecl
 {
 
-  final String name;
-  final Class ret;
-  final Class[] args;
-  final Class[] exceptions;
-  final int modifiers;
-  
-  public MethodDecl(String name, Class ret, Class[] args, Class[] exceptions, int modifiers)
+  public final String name;
+  public final Class ret;
+  public final Class[] parameters;
+  public final Class[] exceptions;
+  public final int modifiers;
+  public Method method;
+  public long retId;
+  public long[] parametersId;
+  public String parametersName;
+  public long functionId;
+
+  public MethodDecl(String name, Class ret, Class[] parameters, Class[] exceptions, int modifiers)
   {
     this.name = name;
     this.ret = ret;
-    this.args = args;
+    this.parameters = parameters;
     this.exceptions = exceptions;
     this.modifiers = modifiers;
   }
+
+  boolean matches(Method m)
+  {
+    if (!m.getName().equals(name))
+      return false;
+    Class<?>[] param2 = m.getParameterTypes();
+    if (param2.length != parameters.length)
+      return false;
+    for (int i = 0; i < param2.length; ++i)
+    {
+      if (param2[i] != parameters[i])
+        return false;
+    }
+
+    // FIXME match Exceptions (this can throw less than the full list or
+    // be covariant.   So long as everything specified is a child of something
+    // in the original specification we are okay.
+    // FIXME need to use 
+    if (ret.isPrimitive())
+      return ret == m.getReturnType();
+    return m.getReturnType().isAssignableFrom(ret);
+  }
+
+  void bind(Method m)
+  {
+    this.method = m;
+  }
+  
+  void resolve()
+  {
+    TypeManager typemanager = JPypeContext.getInstance().getTypeManager();
+    retId = typemanager.findClass(ret);
+    this.parametersId = new long[this.parameters.length];
+    for (int i=0;i<this.parameters.length; ++i)
+      this.parametersId[i]=typemanager.findClass(parameters[i]);
+  }
+
+  String descriptor()
+  {
+    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+  }
+  
 }

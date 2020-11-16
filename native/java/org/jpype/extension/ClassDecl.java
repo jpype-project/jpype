@@ -16,6 +16,7 @@
 package org.jpype.extension;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -29,6 +30,9 @@ public class ClassDecl
   ArrayList<MethodDecl> methods = new ArrayList<>();
   ArrayList<FieldDecl> fields = new ArrayList<>();
   Class[] bases;
+  Class base;
+  List<Class> interfaces;
+  String internalName;
 
   public ClassDecl(String name, Class[] bases)
   {
@@ -55,5 +59,15 @@ public class ClassDecl
     MethodDecl method = new MethodDecl("<init>", ret, arguments, exceptions, modifiers);
     this.ctors.add(method);
     return method;
+  }
+
+  void setBase(Class base)
+  {
+    this.base = base;
+  }
+
+  void setInterfaces(List<Class> interfaces)
+  {
+    this.interfaces = interfaces;
   }
 }
