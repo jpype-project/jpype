@@ -335,7 +335,7 @@ def _JExtension(name, bases, members):
     for i in jspec:
         if isinstance(i, _JFieldDecl):
             cls.addField(i.cls, i.name, i.value, i.modifiers)
-        if isinstance(i, type(_JExtension)):
+        elif isinstance(i, type(_JExtension)):
             mspec = inspect.getfullargspec(i)
             if i.__name__ == '__init__':
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
@@ -344,6 +344,9 @@ def _JExtension(name, bases, members):
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]
                 cls.addMethod(i.__name__, ret, args, None, i.__jmodifiers__)
+        else:
+            raise TypeError("Unknown member %s" % type(i))
+    Factory.loadClass(cls)
 
     raise TypeError("Not implemented")
 

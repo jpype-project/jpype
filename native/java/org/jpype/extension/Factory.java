@@ -15,12 +15,16 @@
  **************************************************************************** */
 package org.jpype.extension;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jpype.JPypeContext;
 import org.jpype.asm.ClassWriter;
 import org.jpype.asm.MethodVisitor;
@@ -39,7 +43,7 @@ public class Factory
     return new ClassDecl(name, bases);
   }
 
-  public static Class createClass(ClassDecl decl)
+  public static Class loadClass(ClassDecl decl)
   {
     Class base = null;
     List<Class> interfaces = new ArrayList<>();
@@ -95,15 +99,26 @@ public class Factory
       }
     }
 
+    byte[] out = buildClass(decl);
+    try
+    {
+      OutputStream fs = Files.newOutputStream(Paths.get("test.class"));
+      fs.write(out);
+      fs.close();
+    } catch (IOException ex)
+    {
+      Logger.getLogger(Factory.class.getName()).log(Level.SEVERE, null, ex);
+    }
+
     return null;
   }
 
-  byte[] buildClass(ClassDecl cdecl)
+  static byte[] buildClass(ClassDecl cdecl)
   {
     // Create the class
     ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
     cdecl.internalName = "dynamic/" + cdecl.name;
-    cw.visit(Opcodes.V1_7, 0, cdecl.internalName,
+    cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
             null,
             Type.getInternalName(cdecl.base),
             cdecl.interfaces.stream().map(p -> Type.getInternalName(p))
@@ -120,7 +135,7 @@ public class Factory
     cw.visitEnd();
     return cw.toByteArray();
   }
-  
+
 //<editor-fold desc="hooks" defaultstate="collapsed">
   /**
    * Hook to create a new instance of the object.
@@ -137,7 +152,7 @@ public class Factory
 
 //</editor_fold>
 //<editor-fold desc="code generators" defaultstate="collapsed">
-  private void handleReturn(MethodVisitor mv, Class ret)
+  private static void handleReturn(MethodVisitor mv, Class ret)
   {
     if (!ret.isPrimitive())
     {
@@ -249,7 +264,7 @@ public class Factory
     throw new RuntimeException();
   }
 
-  private void implementFields(ClassWriter cw, ClassDecl decl)
+  private static void implementFields(ClassWriter cw, ClassDecl decl)
   {
     int i = 0;
     for (MethodDecl mdecl : decl.methods)
@@ -257,7 +272,7 @@ public class Factory
       mdecl.resolve();
       mdecl.parametersName = mdecl.name + "$" + i;
       i++;
-      cw.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, mdecl.parametersName, "[L", null, null);
+      cw.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, mdecl.parametersName, "[J", null, null);
     }
 
     // Implement fields
@@ -283,13 +298,13 @@ public class Factory
           mv.visitInsn(Opcodes.LASTORE);
           mv.visitInsn(Opcodes.DUP); // two copies of array on stack
         }
-        mv.visitFieldInsn(Opcodes.PUTSTATIC, decl.internalName, mdecl.parametersName, "[L");
+        mv.visitFieldInsn(Opcodes.PUTSTATIC, decl.internalName, mdecl.parametersName, "[J");
       }
       mv.visitEnd();
     }
   }
 
-  private void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl)
+  private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl)
   {
     MethodVisitor mv = cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
     // FIXME the exception information needs to go here.
@@ -305,12 +320,19 @@ public class Factory
     mv.visitLdcInsn(mdecl.functionId);
     mv.visitIntInsn(Opcodes.ALOAD, 0);
     mv.visitLdcInsn(mdecl.retId);
-    mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName, 
-            mdecl.parametersName, "[L");
+    System.out.println(cdecl.internalName + " " + mdecl.parametersName + " " + Type.getDescriptor(long[].class));
+    mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
+            mdecl.parametersName, "[J");
 
     // Pack the parameter array
-    mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length);
-    mv.visitInsn(Opcodes.ANEWARRAY);
+    if (mdecl.parameters.length == 0)
+    {
+      mv.visitInsn(Opcodes.ACONST_NULL);
+    } else
+    {
+      mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length);
+      mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+    }
     int k = 1;
     for (int j = 0; j < mdecl.parameters.length; ++j)
     {

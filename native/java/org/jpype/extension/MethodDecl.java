@@ -17,6 +17,7 @@ package org.jpype.extension;
 
 import java.lang.reflect.Method;
 import org.jpype.JPypeContext;
+import org.jpype.asm.Type;
 import org.jpype.manager.TypeManager;
 
 /**
@@ -40,6 +41,8 @@ public class MethodDecl
   public MethodDecl(String name, Class ret, Class[] parameters, Class[] exceptions, int modifiers)
   {
     this.name = name;
+    if (ret == null)
+      ret = Void.TYPE;
     this.ret = ret;
     this.parameters = parameters;
     this.exceptions = exceptions;
@@ -72,19 +75,25 @@ public class MethodDecl
   {
     this.method = m;
   }
-  
+
   void resolve()
   {
     TypeManager typemanager = JPypeContext.getInstance().getTypeManager();
     retId = typemanager.findClass(ret);
     this.parametersId = new long[this.parameters.length];
-    for (int i=0;i<this.parameters.length; ++i)
-      this.parametersId[i]=typemanager.findClass(parameters[i]);
+    for (int i = 0; i < this.parameters.length; ++i)
+      this.parametersId[i] = typemanager.findClass(parameters[i]);
   }
 
   String descriptor()
   {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    StringBuilder sb = new StringBuilder();
+    sb.append('(');
+    for (Class i : this.parameters)
+      sb.append(Type.getDescriptor(i));
+    sb.append(')');
+    sb.append(Type.getDescriptor(ret));
+    return sb.toString();
   }
-  
+
 }

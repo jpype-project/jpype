@@ -56,8 +56,8 @@ public class ClassDecl
   
     public MethodDecl addMethod(String name, Class ret, Class[] arguments, Class[] exceptions, int modifiers)
   {
-    MethodDecl method = new MethodDecl("<init>", ret, arguments, exceptions, modifiers);
-    this.ctors.add(method);
+    MethodDecl method = new MethodDecl(name, ret, arguments, exceptions, modifiers);
+    this.methods.add(method);
     return method;
   }
 
