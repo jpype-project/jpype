@@ -20,7 +20,8 @@ from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
 
-__all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected', 'JPrivate']
+__all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
+        'JPrivate', 'JThrows']
 
 
 class _JFieldDecl(object):
@@ -44,8 +45,13 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
     if isinstance(target, type):
         if not isinstance(target, _jpype.JClass):
             raise TypeError("Fields must be Java classes")
+        prim = issubclass(target, (_jpype._JBoolean, _jpype._JNumberLong, _jpype._JChar, _jpype._JNumberFloat))
         out = []
         for p, v in kwargs.items():
+            if not prim and v is not None:
+                raise ValueError("Initial value must be None")
+            if prim:
+                v = _jpype.JObject(v, target)  # box it
             var = _JFieldDecl(target, p, v, modifiers)
             jspec.append(var)
             out.append(var)
@@ -100,6 +106,17 @@ def JProtected(target, **kwargs):
 def JPrivate(target, **kwargs):
     nonlocals = inspect.stack()[1][0].f_locals
     return _JMemberDecl(nonlocals, target, True, 2, **kwargs)
+
+
+def JThrows(*args):
+    for arg in args:
+        if not isinstance(arg, _jpype.JException):
+            raise TypeError("JThrows requires Java exception arguments")
+
+    def deferred(target):
+        object.__setattr__(target, '__jthrows__', args)
+        return target
+    return deferred
 
 
 def JOverride(*target, sticky=False, rename=None, **kwargs):
@@ -336,14 +353,15 @@ def _JExtension(name, bases, members):
         if isinstance(i, _JFieldDecl):
             cls.addField(i.cls, i.name, i.value, i.modifiers)
         elif isinstance(i, type(_JExtension)):
+            exceptions = getattr(i, '__jthrows__', None)
             mspec = inspect.getfullargspec(i)
             if i.__name__ == '__init__':
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
-                cls.addCtor(args, None, i.__jmodifiers__)
+                cls.addCtor(args, exceptions, i.__jmodifiers__)
             else:
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]
-                cls.addMethod(i.__name__, ret, args, None, i.__jmodifiers__)
+                cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
         else:
             raise TypeError("Unknown member %s" % type(i))
     Factory.loadClass(cls)

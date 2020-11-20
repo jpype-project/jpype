@@ -306,8 +306,19 @@ public class Factory
 
   private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl)
   {
+    // Copy over exceptions
+    String[] exceptions = null;
+    if (mdecl.exceptions != null)
+    {
+      exceptions = new String[mdecl.exceptions.length];
+      for (int i = 0; i < mdecl.exceptions.length; ++i)
+      {
+        exceptions[i] = Type.getInternalName(mdecl.exceptions[i]);
+      }
+    }
+    
+    // Start a new method
     MethodVisitor mv = cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
-    // FIXME the exception information needs to go here.
 
     // Start the implementation
     mv.visitCode();
@@ -320,11 +331,10 @@ public class Factory
     mv.visitLdcInsn(mdecl.functionId);
     mv.visitIntInsn(Opcodes.ALOAD, 0);
     mv.visitLdcInsn(mdecl.retId);
-    System.out.println(cdecl.internalName + " " + mdecl.parametersName + " " + Type.getDescriptor(long[].class));
     mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
             mdecl.parametersName, "[J");
 
-    // Pack the parameter array
+    // Create the parameter array
     if (mdecl.parameters.length == 0)
     {
       mv.visitInsn(Opcodes.ACONST_NULL);
@@ -333,6 +343,8 @@ public class Factory
       mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length);
       mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
     }
+    
+    // Marshal the parameters
     int k = 1;
     for (int j = 0; j < mdecl.parameters.length; ++j)
     {
@@ -390,6 +402,8 @@ public class Factory
 
     // Process the return
     handleReturn(mv, mdecl.ret);
+    
+    // Close the method
     mv.visitEnd();
   }
   //</editor-fold>
