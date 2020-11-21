@@ -32,12 +32,26 @@ import org.jpype.asm.Opcodes;
 import org.jpype.asm.Type;
 
 /**
+ * This is used to create an extension class.
+ *
+ * The process starts by having Python class marked up with declarations. When
+ * then metaclass JClassBase sees the class it transfers the important annotated
+ * methods to the ClassDecl. It then calls the factory to instantiate the new
+ * class.
  *
  * @author nelson85
  */
 public class Factory
 {
 
+  /**
+   * Start a new class declaration.
+   *
+   * @param name is the name of the nee class.
+   * @param bases is a list of the bases for this class containing no more than
+   * one base class.
+   * @return a new class declaration.
+   */
   public static ClassDecl newClass(String name, Class[] bases)
   {
     return new ClassDecl(name, bases);
@@ -142,13 +156,12 @@ public class Factory
    *
    * This is called by the ctor of object to invoke __init__(self)
    */
-  static native long _create(long context, long self);
 
-  //
-  static native Object _call(long context, long functionID, Object self,
+  static native Object _init(long context, long functionID, Object self,
           long returnType, long[] argsTypes, Object[] args);
 
-  static native long _getDict(long context, long self);
+  static native Object _call(long context, long functionID, Object self,
+          long returnType, long[] argsTypes, Object[] args);
 
 //</editor_fold>
 //<editor-fold desc="code generators" defaultstate="collapsed">
@@ -316,7 +329,7 @@ public class Factory
         exceptions[i] = Type.getInternalName(mdecl.exceptions[i]);
       }
     }
-    
+
     // Start a new method
     MethodVisitor mv = cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
 
@@ -343,7 +356,7 @@ public class Factory
       mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length);
       mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
     }
-    
+
     // Marshal the parameters
     int k = 1;
     for (int j = 0; j < mdecl.parameters.length; ++j)
@@ -402,7 +415,7 @@ public class Factory
 
     // Process the return
     handleReturn(mv, mdecl.ret);
-    
+
     // Close the method
     mv.visitEnd();
   }

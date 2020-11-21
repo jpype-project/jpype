@@ -19,12 +19,18 @@ import org.jpype.JPypeContext;
 import org.jpype.classloader.DynamicClassLoader;
 
 /**
- *
+ * Internal class for loading extension classes.
+ * 
  * @author nelson85
  */
-public class ExtensionClassLoader extends ClassLoader
+class ExtensionClassLoader extends ClassLoader
 {
   ClassLoader instance = new ExtensionClassLoader(JPypeContext.getInstance().getClassLoader());
+
+  private ExtensionClassLoader(ClassLoader classLoader)
+  {
+    super(classLoader);
+  }
   
   Class loadClass(String name, byte[] b)
   {
