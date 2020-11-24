@@ -156,12 +156,8 @@ public class Factory
    *
    * This is called by the ctor of object to invoke __init__(self)
    */
-
-  static native Object _init(long context, long functionID, Object self,
-          long returnType, long[] argsTypes, Object[] args);
-
-  static native Object _call(long context, long functionID, Object self,
-          long returnType, long[] argsTypes, Object[] args);
+  static native Object _call(long context, long functionID,
+          long returnType, long[] argsTypes, Object[] args, long flags);
 
 //</editor_fold>
 //<editor-fold desc="code generators" defaultstate="collapsed">
@@ -301,16 +297,26 @@ public class Factory
       mv.visitCode();
       for (MethodDecl mdecl : decl.methods)
       {
-        mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parametersId.length);
+        // Reserve space for parameters plus this
+        mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parametersId.length + 1);
         mv.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_LONG);
+  
+        // Push 0 for this slot.
         mv.visitInsn(Opcodes.DUP); // two copies of array on stack
+        mv.visitInsn(Opcodes.ICONST_0);
+        mv.visitInsn(Opcodes.ICONST_0);
+        mv.visitInsn(Opcodes.LASTORE); 
+  
+        // Push the rest of the paramters
         for (int j = 0; j < mdecl.parametersId.length; ++j)
         {
-          mv.visitIntInsn(Opcodes.BIPUSH, j);
+          mv.visitInsn(Opcodes.DUP); // two copies of array on stack
+          mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
           mv.visitLdcInsn(mdecl.parametersId[j]);
           mv.visitInsn(Opcodes.LASTORE);
-          mv.visitInsn(Opcodes.DUP); // two copies of array on stack
         }
+
+        // Store in the parameter list
         mv.visitFieldInsn(Opcodes.PUTSTATIC, decl.internalName, mdecl.parametersName, "[J");
       }
       mv.visitEnd();
@@ -320,7 +326,7 @@ public class Factory
   private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl)
   {
     // Copy over exceptions
-    String[] exceptions = null;
+    String[] exceptions;
     if (mdecl.exceptions != null)
     {
       exceptions = new String[mdecl.exceptions.length];
@@ -342,20 +348,17 @@ public class Factory
     long context = JPypeContext.getInstance().getContext();
     mv.visitLdcInsn(context);
     mv.visitLdcInsn(mdecl.functionId);
-    mv.visitIntInsn(Opcodes.ALOAD, 0);
     mv.visitLdcInsn(mdecl.retId);
     mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
             mdecl.parametersName, "[J");
 
     // Create the parameter array
-    if (mdecl.parameters.length == 0)
-    {
-      mv.visitInsn(Opcodes.ACONST_NULL);
-    } else
-    {
-      mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length);
-      mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-    }
+    mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length + 1);
+    mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+    mv.visitInsn(Opcodes.DUP); // two copies of thearray
+    mv.visitInsn(Opcodes.ICONST_0);
+    mv.visitIntInsn(Opcodes.ALOAD, 0);
+    mv.visitInsn(Opcodes.AASTORE);
 
     // Marshal the parameters
     int k = 1;
@@ -363,55 +366,53 @@ public class Factory
     {
       Class param = mdecl.parameters[j];
       mv.visitInsn(Opcodes.DUP); // two copies of thearray
-      mv.visitIntInsn(Opcodes.BIPUSH, j);
-      if (param.isPrimitive())
-      {
-        if (param == Boolean.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.ILOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-        } else if (param == Byte.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.ILOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-        } else if (param == Character.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.ILOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-        } else if (param == Short.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.ILOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-        } else if (param == Integer.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.ILOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-        } else if (param == Long.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.LLOAD, k++);
-          k++;  // bad design by Java.
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(L)Ljava/lang/Long;", false);
-        } else if (param == Float.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.FLOAD, k++);
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(L)Ljava/lang/Float;", false);
-        } else if (param == Double.TYPE)
-        {
-          mv.visitIntInsn(Opcodes.DLOAD, k++);
-          k++; // bad design by Java.
-          mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(L)Ljava/lang/Double;", false);
-        }
-      } else
+      mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
+      if (!param.isPrimitive())
       {
         mv.visitIntInsn(Opcodes.ALOAD, k++);
+      } else if (param == Boolean.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.ILOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+      } else if (param == Byte.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.ILOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
+      } else if (param == Character.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.ILOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+      } else if (param == Short.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.ILOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
+      } else if (param == Integer.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.ILOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+      } else if (param == Long.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.LLOAD, k++);
+        k++;  // bad design by Java.
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(L)Ljava/lang/Long;", false);
+      } else if (param == Float.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.FLOAD, k++);
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(L)Ljava/lang/Float;", false);
+      } else if (param == Double.TYPE)
+      {
+        mv.visitIntInsn(Opcodes.DLOAD, k++);
+        k++; // bad design by Java.
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(L)Ljava/lang/Double;", false);
       }
       mv.visitInsn(Opcodes.AASTORE);
     }
+    mv.visitInsn(Opcodes.ICONST_0);
 
     // Call the hook in native
     mv.visitMethodInsn(Opcodes.INVOKESTATIC, "org/jpype/extension/Factory",
             "_call",
-            "(JJLjava/lang/Object;J[J[Ljava/lang/Object;)Ljava/lang/Object;", false);
+            "(JJJ[J[Ljava/lang/Object;J)Ljava/lang/Object;", false);
 
     // Process the return
     handleReturn(mv, mdecl.ret);
