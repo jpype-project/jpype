@@ -17,6 +17,7 @@ package org.jpype.pkg;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
@@ -75,32 +76,25 @@ public class JPypePackage
    */
   public Object getObject(String name)
   {
-    checkCache();
-    URI uri = contents.get(name);
-    if (uri == null)
-      return null;
-    Path p = JPypePackageManager.getPath(uri);
-
-    // Directories are packages.  We will just pass them as strings.
-    if (Files.isDirectory(p))
-      return p.toString().replace("/", ".");
-
-    // Class files need to be probed to make sure they are public.  This
-    // pattern may have problems with non-exported classes in modules.  But
-    // thus far we have not seen any cases of that.
-    if (p.toString().endsWith(".class"))
+    // We can't use the url contents as the contents may be incomplete due
+    // to bugs in the JVM classloaders.  Instead we will have to probe.
+    String basename = pkg + "." + JPypeKeywords.unwrap(name);
+    ClassLoader cl = JPypeContext.getInstance().getClassLoader();
+    try
     {
-      try
+      // Check if it a package
+      if (JPypePackageManager.isPackage(basename))
       {
-        // Make sure it is public
-        if (isPublic(p))
-        {
-          // Load the class and return a class type object
-          return Class.forName(pkg + "." + JPypeKeywords.unwrap(name), true, classLoader);
-        }
-      } catch (ClassNotFoundException ex)
-      {
+        return basename;
       }
+      
+      // Else probe for a class.
+      Class<?> cls = Class.forName(basename, false, JPypeContext.getInstance().getClassLoader());
+      if (Modifier.isPublic(cls.getModifiers()))
+        return Class.forName(basename, true, cl);
+    } catch (ClassNotFoundException ex)
+    {
+      // Continue
     }
     return null;
   }

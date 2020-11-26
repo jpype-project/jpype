@@ -77,7 +77,7 @@ setup(
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
     ],
-    packages=['jpype'],
+    packages=['jpype', 'jpype._pyinstaller'],
     package_dir={'jpype': 'jpype', },
     install_requires=['typing_extensions ; python_version< "3.8"'],
     tests_require=['pytest'],
@@ -90,5 +90,10 @@ setup(
     zip_safe=False,
     ext_modules=[jpypeJar, jpypeLib, ],
     distclass=setupext.dist.Distribution,
+    entry_points={
+        'pyinstaller40': [
+            'hook-dirs = jpype._pyinstaller.entry_points:get_hook_dirs',
+            'tests = jpype._pyinstaller.entry_points:get_PyInstaller_tests',
+        ],
+    },
 )
-
