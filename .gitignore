@@ -84,3 +84,4 @@ _build/
 jacoco/
 wheelhouse/
 vc*.pdb
+*.class
