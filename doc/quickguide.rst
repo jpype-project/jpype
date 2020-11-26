@@ -89,8 +89,9 @@ are exposed as Python modules allowing Java to be treated as part of Python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Start Java Virtual        |                                                         | .. code-block:: python                                  |
-| Machine (JVM) with a      |                                                         |     # Launch the JVM                                    |
-| classpath                 |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
+| Machine (JVM) with a      |                                                         |                                                         |
+| classpath                 |                                                         |     # Launch the JVM                                    |
+|                           |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -247,7 +248,7 @@ module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Casting to a specific     | .. code-block:: java                                    | .. code-block:: python                                  |
+| Casting to a specific     | .. code-block:: java                                    | .. code-block::                                         |
 | type [11]_                |                                                         |                                                         |
 |                           |     BaseClass b = (BaseClass)myObject;                  |     b = (BaseClass) @ myObject                          |
 |                           |                                                         |                                                         |
@@ -705,7 +706,7 @@ with an interface for each methods that are to be accessed from Python.
 | Extending classes [23]_   |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Lambdas [24]_             | .. code-block:: java                                    | .. code-block:: python                                  |
+| Lambdas [24]_             | .. code-block:: java                                    | .. code-block::                                         |
 |                           |                                                         |                                                         |
 |                           |     DoubleUnaryOperator u = (p->p*2);                   |     u=DoubleUnaryOperator@(lambda x: x*2)               |
 |                           |                                                         |                                                         |
