@@ -108,6 +108,13 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertFalse(isinstance(java.lang.Class, jpype.JPackage))
         self.assertTrue(issubclass(type(java.lang), jpype.JPackage))
 
+    def testMRJar(self):
+        import org.jpype.mrjar as mrjar
+        u = dir(mrjar)
+        self.assertTrue("A" in u)
+        self.assertTrue("B" in u)
+        self.assertTrue("sub" in u)
+
 
 @subrun.TestCase
 class ImportsBeforeCase(common.unittest.TestCase):
