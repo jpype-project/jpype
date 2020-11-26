@@ -43,9 +43,9 @@ def _import(filename):
 
 
 def _execute(inQueue, outQueue):
-    while (True):
+    while True:
         datum = inQueue.get()
-        if datum == None:
+        if datum is None:
             break
         ex = None
         ret = None
@@ -69,8 +69,7 @@ class Client(object):
         ctx = mp.get_context("spawn")
         self.inQueue = ctx.Queue()
         self.outQueue = ctx.Queue()
-        self.process = ctx.Process(target=_execute, args=[
-                                   self.inQueue, self.outQueue], daemon=True)
+        self.process = ctx.Process(target=_execute, args=(self.inQueue, self.outQueue), daemon=True)
         self.process.start()
         self.timeout = 20
 
@@ -80,8 +79,9 @@ class Client(object):
         try:
             (ret, ex) = self.outQueue.get(True, self.timeout)
         except queue.Empty:
-            raise AssertionError("function failed")
-        if ex != None:
+            raise AssertionError("function {func} FAILED with args: {args} and kwargs: {kwargs}"
+                                 .format(func=function, args=args, kwargs=kwargs))
+        if ex is not None:
             raise ex
         return ret
 
