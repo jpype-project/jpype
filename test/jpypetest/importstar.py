@@ -21,6 +21,8 @@ except NameError:
 jpype.addClassPath("../jar/late/late2.jar")
 
 # Second import
+if True:
+    from org.jpype import *
 
 # This time it should work
 t = late2.Test()
