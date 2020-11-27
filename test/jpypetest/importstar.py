@@ -20,5 +20,7 @@ except NameError:
 # Path is relative to this module
 jpype.addClassPath("../jar/late/late2.jar")
 
+# Second import
+
 # This time it should work
 t = late2.Test()
