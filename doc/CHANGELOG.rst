@@ -5,6 +5,12 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.1.3_dev0 - 2020-10-23**
+
+  - Test build for Python 3.9
+
+  - Fixe bug when importing from multi-release jars.  The directory was
+    being truncated to only those classes in the overlay.
+
 - **1.1.2 - 2020-10-23**
 
   - Linux binaries are now stripped for size.

@@ -54,7 +54,6 @@ public class JPypePackageManager
 {
 
   final static List<FileSystem> bases = new ArrayList();
-//  final static ClassLoader cl = ClassLoader.getSystemClassLoader();
   final static List<ModuleDirectory> modules = getModules();
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();
@@ -69,7 +68,8 @@ public class JPypePackageManager
    */
   public static boolean isPackage(String name)
   {
-    name = name.replace(".", "/");
+    if (name.indexOf('.') != -1)
+      name = name.replace(".", "/");
     if (isModulePackage(name) || isBasePackage(name) || isJarPackage(name))
       return true;
     return false;
@@ -383,6 +383,26 @@ public class JPypePackageManager
       while (resources.hasMoreElements())
       {
         URI resource = resources.nextElement().toURI();
+
+        // Handle MRJAR format
+        //   MRJAR may not report every directory but instead just the overlay.
+        //   So we need to find the original and interogate it first before
+        //   checking the version specific part.  Worst case we collect the
+        //   contents twice.
+        String schemePart = resource.getSchemeSpecificPart();
+        int index = schemePart.indexOf("!");
+        if (index != -1)
+        {
+          if (schemePart.substring(index + 1).startsWith("/META-INF/versions/"))
+          {
+            int index2 = schemePart.indexOf('/', index + 20);
+            schemePart = schemePart.substring(0, index + 1) + schemePart.substring(index2);
+            URI resource2 = new URI(resource.getScheme() + ":" + schemePart);
+            Path path3 = getPath(resource2);
+            collectContents(out, path3);
+          }
+        }
+        
         Path path2 = getPath(resource);
         collectContents(out, path2);
       }

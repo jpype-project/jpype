@@ -1,3 +1,4 @@
+
 Java QuickStart Guide
 =====================
 
@@ -21,11 +22,12 @@ defined in Java.  We will also assume the reader knows enough Java and Python
 to be dangerous.  
 
 
+
 .. code-block:: java
 
     package org.pkg;
 
-    publc class BassClass
+    publc class BaseClass
     {
        public callMember(int i)
        {}
@@ -88,8 +90,8 @@ are exposed as Python modules allowing Java to be treated as part of Python.
 |                           |                                                         |                                                         |
 | Start Java Virtual        |                                                         | .. code-block:: python                                  |
 | Machine (JVM) with a      |                                                         |                                                         |
-|                           |                                                         |     # Launch the JVM                                    |
-| classpath                 |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
+| classpath                 |                                                         |     # Launch the JVM                                    |
+|                           |                                                         |     jpype.startJVM(classpath = ['jars/*'])              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -179,7 +181,7 @@ module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Constructing a cless with |                                                         | .. code-block:: python                                  |
+| Constructing a class with |                                                         | .. code-block:: python                                  |
 | full class name           |                                                         |                                                         |
 |                           |                                                         |     import org.pkg                                      |
 |                           |                                                         |     myObject = org.pkg.MyClass(args)                    |
@@ -246,9 +248,9 @@ module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Casting to a specific     | .. code-block:: java                                    | .. code-block:: python                                  |
-| type                      |                                                         |                                                         |
-|                           |     BaseClass b = (BaseClass)myObject;                  |     b = JObject(myObject, BaseClass)                    |
+| Casting to a specific     | .. code-block:: java                                    | .. code-block::                                         |
+| type [11]_                |                                                         |                                                         |
+|                           |     BaseClass b = (BaseClass)myObject;                  |     b = (BaseClass) @ myObject                          |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
@@ -259,6 +261,7 @@ module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
     .. [8] ``JClass`` loads any class by name including inner classes.
     .. [9] This produces an error for final fields.
     .. [10] Underscore is added during wrapping.
+    .. [11] Matmul(@) is used as the casting operator.
 
 
 Exceptions
@@ -323,20 +326,38 @@ otherwise be in conflict.  Each of the Java types are exposed in JPype
 +===========================+=========================================================+=========================================================+
 |                           |                                                         |                                                         |
 | Casting to hit an         | .. code-block:: java                                    | .. code-block:: python                                  |
-| overload [11]_            |                                                         |                                                         |
+| overload [12]_            |                                                         |                                                         |
 |                           |     myObject.call((int)v);                              |     myObject.call(JInt(v))                              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Create a primitive array  | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     int[] array = new int[5]                            |     array = JArray(JInt)(5)                             |
+|                           |     int[] array = new int[5]                            |     array = JInt[5]                                     |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Create a rectangular      | .. code-block:: java                                    | .. code-block:: python                                  |
+| primitive array           |                                                         |                                                         |
+|                           |     int[][] array = new int[5][10]                      |     array = JInt[5, 10]                                 |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Create an array of arrays | .. code-block:: java                                    | .. code-block:: python                                  |
+|                           |                                                         |                                                         |
+|                           |     int[][] array = new int[5][]                        |     array = JInt[5, :]                                  |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Create an initialized     | .. code-block:: java                                    | .. code-block:: python                                  |
-| primitive array [12]_     |                                                         |                                                         |
-|                           |     int[] array = new int[]{1,2,3}                      |     array = JArray(JInt)([1,2,3])                       |
+| primitive array [13]_     |                                                         |                                                         |
+|                           |     int[] array = new int[]{1,2,3}                      |     array = JInt[:]([1,2,3])                            |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Create an initialized     | .. code-block:: java                                    | .. code-block:: python                                  |
+| boxed array [13]_         |                                                         |                                                         |
+|                           |     Integer[] array = new Integer[]{1,2,3}              |     array = java.lang.Integer[:]([1,2,3])               |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -349,15 +370,15 @@ otherwise be in conflict.  Each of the Java types are exposed in JPype
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Boxing a primitive [13]_  | .. code-block:: java                                    | .. code-block:: python                                  |
+| Boxing a primitive [14]_  | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     Integer boxed = 1;                                  |     boxed = JObject(JInt(1))                            |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [11] ``JInt`` acts as a casting operator
-    .. [12] list, sequences, or np.array can be used to initialize.
-    .. [13] ``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.
+    .. [12] ``JInt`` acts as a casting operator
+    .. [13] list, sequences, or np.array can be used to initialize.
+    .. [14] ``JInt`` specifies the prmitive type. ``JObject`` boxes the primitive.
 
 
 Strings
@@ -375,13 +396,13 @@ all JString objects should be converted to Python.
 +===========================+=========================================================+=========================================================+
 |                           |                                                         |                                                         |
 | Create a Java string      | .. code-block:: java                                    | .. code-block:: python                                  |
-| [14]_                     |                                                         |                                                         |
+| [15]_                     |                                                         |                                                         |
 |                           |     String javaStr = new String("foo");                 |     myStr = JString("foo")                              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Create a Java string from | .. code-block:: java                                    | .. code-block:: python                                  |
-| bytes [15]_               |                                                         |                                                         |
+| bytes [16]_               |                                                         |                                                         |
 |                           |     byte[] b;                                           |     b= b'foo'                                           |
 |                           |     String javaStr = new String(b, "UTF-8");            |     myStr = JString(b, "UTF-8")                         |
 |                           |                                                         |                                                         |
@@ -394,7 +415,7 @@ all JString objects should be converted to Python.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Comparing Python and Java |                                                         | .. code-block:: python                                  |
-| strings [16]_             |                                                         |                                                         |
+| strings [17]_             |                                                         |                                                         |
 |                           |                                                         |     str(javaStr) == pyString                            |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
@@ -405,15 +426,15 @@ all JString objects should be converted to Python.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Checking if java string   |                                                         | .. code-block:: python                                  |
+| Checking if Java string   |                                                         | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |                                                         |     if (isinstance(obj, JString): ...                   |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [14] ``JString`` constructs a ``java.lang.String``
-    .. [15] All ``java.lang.String`` constuctors work.
-    .. [16] ``str()`` converts the object for comparison
+    .. [15] ``JString`` constructs a ``java.lang.String``
+    .. [16] All ``java.lang.String`` constuctors work.
+    .. [17] ``str()`` converts the object for comparison
 
 
 Arrays
@@ -429,13 +450,19 @@ fixed in size.
 |                           |                                                         |                                                         |
 | Create a single dimension | .. code-block:: java                                    | .. code-block:: python                                  |
 | array                     |                                                         |                                                         |
-|                           |     MyClass[] array = new MyClass[5];                   |     array = JArray(MyClass)(5)                          |
+|                           |     MyClass[] array = new MyClass[5];                   |     array = MyClass[5]                                  |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Create a multi  dimension | .. code-block:: java                                    | .. code-block:: python                                  |
-| array                     |                                                         |                                                         |
+| Create a multi dimension  | .. code-block:: java                                    | .. code-block:: python                                  |
+| array (old)               |                                                         |                                                         |
 |                           |     MyClass[][] array2 = new MyClass[5][];              |     array2 = JArray(MyClass, 2)(5)                      |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Create a multi dimension  | .. code-block:: java                                    | .. code-block:: python                                  |
+| array (new)               |                                                         |                                                         |
+|                           |     MyClass[][] array2 = new MyClass[5][];              |     array2 = MyClass[5,:]                               |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -448,6 +475,24 @@ fixed in size.
 | Size of an array          | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     array.length                                        |     len(array)                                          |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Get last element          | .. code-block:: java                                    | .. code-block:: python                                  |
+|                           |                                                         |                                                         |
+|                           |     MyClass a = array[array.length];                    |     a = array[-1]                                       |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Slice an array [18]_      |                                                         | .. code-block:: python                                  |
+|                           |                                                         |                                                         |
+|                           |                                                         |     a = array[2:5]                                      |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Clone an array            | .. code-block:: java                                    | .. code-block:: python                                  |
+|                           |                                                         |                                                         |
+|                           |     MyClass[] a = array.clone();                        |     a = array.clone()                                   |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -470,6 +515,7 @@ fixed in size.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
+    .. [18] A Slice is a view and changes will be reflected on original.  Slices passed to Java will clone.
 
 
 Collections
@@ -507,7 +553,7 @@ possible to operate in a similar fashion to Python objects.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set list item [17]_       | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set list item [19]_       | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     myList.set(0, 1)                                    |     myList[0]=Jint(1)                                   |
 |                           |                                                         |                                                         |
@@ -528,7 +574,7 @@ possible to operate in a similar fashion to Python objects.
 |                           |                                                         |                                                         |
 | Construct a map           | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     Map<String,Integer> myMap=new HashMap<>();          |     myMap=HashMap()                                     |
+|                           |     Map<String,Integer> myMap = new HashMap<>();        |     myMap = HashMap()                                   |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -544,9 +590,9 @@ possible to operate in a similar fashion to Python objects.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Set map item [17]_        | .. code-block:: java                                    | .. code-block:: python                                  |
+| Set map item [19]_        | .. code-block:: java                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
-|                           |     myMap.set("foo", 1)                                 |     myMap["foo"]=Jint(1)                                |
+|                           |     myMap.set("foo", 1)                                 |     myMap["foo"] = Jint(1)                              |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
@@ -558,7 +604,7 @@ possible to operate in a similar fashion to Python objects.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [17] Casting is required to box primitives to the correct type.
+    .. [19] Casting is required to box primitives to the correct type.
 
 
 Reflection
@@ -580,7 +626,7 @@ private methods and fields.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Access a private field by |                                                         | .. code-block:: python                                  |
-| name [18]_                |                                                         |                                                         |
+| name [20]_                |                                                         |                                                         |
 |                           |                                                         |     cls = myObject.class_                               |
 |                           |                                                         |     field = cls.getDeclaredField(                       |
 |                           |                                                         |         "internalField")                                |
@@ -590,7 +636,7 @@ private methods and fields.
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
 | Accessing a specific      |                                                         | .. code-block:: python                                  |
-| overload [19]_            |                                                         |                                                         |
+| overload [21]_            |                                                         |                                                         |
 |                           |                                                         |     cls = MyClass.class_                                |
 |                           |                                                         |     cls.getDeclaredMethod("call", JInt)                 |
 |                           |                                                         |     cls.invoke(myObject, JInt(1))                       |
@@ -599,7 +645,7 @@ private methods and fields.
 |                           |                                                         |                                                         |
 | Convert a                 |                                                         | .. code-block:: python                                  |
 | ``java.lang.Class`` into  |                                                         |                                                         |
-| Python wrapper [20]_      |                                                         |     # Something returned a java.lang.Class              |
+| Python wrapper [22]_      |                                                         |     # Something returned a java.lang.Class              |
 |                           |                                                         |     MyClassJava = getClassMethod()                      |
 |                           |                                                         |                                                         |
 |                           |                                                         |     # Convert to it to Python                           |
@@ -626,9 +672,9 @@ private methods and fields.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [18] This is prohibited after Java 8
-    .. [19] types must be exactly specified.
-    .. [20] Rarely required unless the class was supplied external such as generics.
+    .. [20] This is prohibited after Java 8
+    .. [21] types must be exactly specified.
+    .. [22] Rarely required unless the class was supplied external such as generics.
 
 
 Implements and Extension
@@ -657,13 +703,17 @@ with an interface for each methods that are to be accessed from Python.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         | None                                                    |
-| Extending classes [21]_   |                                                         |                                                         |
+| Extending classes [23]_   |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
-|                           |                                                         | None                                                    |
-| Lambdas [21]_             |                                                         |                                                         |
+|                           |                                                         |                                                         |
+| Lambdas [24]_             | .. code-block:: java                                    | .. code-block::                                         |
+|                           |                                                         |                                                         |
+|                           |     DoubleUnaryOperator u = (p->p*2);                   |     u=DoubleUnaryOperator@(lambda x: x*2)               |
+|                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [21] Support for use of Python function as Java 8 lambda is WIP.
+    .. [23] Support for use of Python function as Java 8 lambda is WIP.
+    .. [24] Any Java functional interface can take a lambda or callable.
 
 
 

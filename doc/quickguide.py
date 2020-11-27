@@ -43,6 +43,14 @@ def python(s):
 """ % s
 
 
+def generic(s):
+    return """
+.. code-block::
+
+    %s
+""" % s
+
+
 def entry(Desc=None, Java=None, Python=None, Notes=None):
     global footnotes, footnotecounter
     if not Java:
@@ -112,7 +120,7 @@ print("""
 
     package org.pkg;
 
-    publc class BassClass
+    publc class BaseClass
     {
        public callMember(int i)
        {}
@@ -173,6 +181,7 @@ entry("Start Java Virtual Machine (JVM)", None,
 entry("Start Java Virtual Machine (JVM) with a classpath", None,
       """
 .. code-block:: python
+
     # Launch the JVM
     jpype.startJVM(classpath = ['jars/*'])
 """)
@@ -242,7 +251,7 @@ entry("Construct an object",
       java("MyClass myObject = new MyClass(1);"),
       python("myObject = MyClass(1)"))
 
-entry("Constructing a cless with full class name", None, """
+entry("Constructing a class with full class name", None, """
 .. code-block:: python
 
     import org.pkg 
@@ -287,7 +296,8 @@ entry("Checking if Java object wrapper", None,
 # Casting
 entry("Casting to a specific type",
       java("BaseClass b = (BaseClass)myObject;"),
-      python("b = JObject(myObject, BaseClass)"))
+      generic("b = (BaseClass) @ myObject"),
+      "Matmul(@) is used as the casting operator.")
 endSection()
 
 #####################################################################################
@@ -369,12 +379,27 @@ entry("Casting to hit an overload",
 
 entry("Create a primitive array",
       java("int[] array = new int[5]"),
-      python("array = JArray(JInt)(5)"))
+      python("array = JInt[5]"))
+
+entry("Create a rectangular primitive array",
+      java("int[][] array = new int[5][10]"),
+      python("array = JInt[5, 10]"))
+
+entry("Create an array of arrays",
+      java("int[][] array = new int[5][]"),
+      python("array = JInt[5, :]"))
+
 
 entry("Create an initialized primitive array",
       java("int[] array = new int[]{1,2,3}"),
-      python("array = JArray(JInt)([1,2,3])"),
+      python("array = JInt[:]([1,2,3])"),
       "list, sequences, or np.array can be used to initialize.")
+
+entry("Create an initialized boxed array",
+      java("Integer[] array = new Integer[]{1,2,3}"),
+      python("array = java.lang.Integer[:]([1,2,3])"),
+      "list, sequences, or np.array can be used to initialize.")
+
 entry("Put a specific primitive type on a list",
       """
 .. code-block:: java
@@ -430,7 +455,7 @@ entry("Comparing Python and Java strings", None, python(
     "str(javaStr) == pyString"), "``str()`` converts the object for comparison")
 entry("Comparing Java strings", java(
     'javaStr.equals("foo")'), python('javaStr == "foo"'))
-entry("Checking if java string", None, python(
+entry("Checking if Java string", None, python(
     "if (isinstance(obj, JString): ..."))
 endSection()
 
@@ -443,16 +468,37 @@ fixed in size.
 """)
 entry("Create a single dimension array",
       java("MyClass[] array = new MyClass[5];"),
-      python("array = JArray(MyClass)(5)"))
-entry("Create a multi  dimension array",
+      python("array = MyClass[5]"))
+
+entry("Create a multi dimension array (old)",
       java("MyClass[][] array2 = new MyClass[5][];"),
       python("array2 = JArray(MyClass, 2)(5)"))
+
+entry("Create a multi dimension array (new)",
+      java("MyClass[][] array2 = new MyClass[5][];"),
+      python("array2 = MyClass[5,:]"))
+
 entry("Access an element",
       java("array[0] = new MyClass()"),
       python("array[0] = MyClass()"))
+
 entry("Size of an array",
       java("array.length"),
       python("len(array)"))
+
+entry("Get last element",
+      java("MyClass a = array[array.length];"),
+      python("a = array[-1]"))
+
+entry("Slice an array",
+      None,
+      python("a = array[2:5]"),
+      "A Slice is a view and changes will be reflected on original.  Slices passed to Java will clone.")
+
+entry("Clone an array",
+      java("MyClass[] a = array.clone();"),
+      python("a = array.clone()"))
+
 entry("Convert to Python list", None,
       python("pylist = list(array)"))
 
@@ -517,8 +563,8 @@ entry("Import map type",
       python("from java.util import HashMap"))
 
 entry("Construct a map",
-      java("Map<String,Integer> myMap=new HashMap<>();"),
-      python("myMap=HashMap()"))
+      java("Map<String,Integer> myMap = new HashMap<>();"),
+      python("myMap = HashMap()"))
 
 entry("Get length of map",
       java("int sz = myMap.size();"),
@@ -530,7 +576,7 @@ entry("Get map item",
 
 entry("Set map item",
       java('myMap.set("foo", 1)'),
-      python('myMap["foo"]=Jint(1)'),
+      python('myMap["foo"] = Jint(1)'),
       "Casting is required to box primitives to the correct type.")
 
 entry("Iterate map entries",
@@ -655,8 +701,10 @@ entry("Implement an interface",
 entry("Extending classes", None, None,
       """Support for use of Python function as Java 8 lambda is WIP.""")
 
-entry("Lambdas", None, None,
-      """Support for use of Python function as Java 8 lambda is WIP.""")
+entry("Lambdas",
+        java('DoubleUnaryOperator u = (p->p*2);'),
+        generic('u=DoubleUnaryOperator@(lambda x: x*2)'),
+        'Any Java functional interface can take a lambda or callable.')
 endSection()
 
 print(

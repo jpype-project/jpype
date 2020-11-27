@@ -105,6 +105,10 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         jni_md_platform = 'linux'
         static = False
 
+    elif platform == 'zos':
+        distutils.log.info("Add zos settings")
+        jni_md_platform = 'zos'
+
     else:
         jni_md_platform = None
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
