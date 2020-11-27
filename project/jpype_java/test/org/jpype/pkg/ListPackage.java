@@ -24,7 +24,7 @@ public class ListPackage
 
   public static void main(String[] args)
   {
-    JPypePackage pkg = new JPypePackage("java.lang", JPypePackageManager.getContentMap("java/lang"));
+    JPypePackage pkg = new JPypePackage("java.lang");
     System.out.println(pkg.contents.size());
     for (String s : pkg.getContents())
     {

@@ -37,7 +37,7 @@ public class JPypePackageNGTest
   public void testGetPackage()
   {
     assertTrue(JPypePackageManager.isPackage("java.lang"));
-    JPypePackage pkg = new JPypePackage("java.lang", JPypePackageManager.getContentMap("java.lang"));
+    JPypePackage pkg = new JPypePackage("java.lang");
     for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
       Path p = JPypePackageManager.getPath(e.getValue());
@@ -49,7 +49,7 @@ public class JPypePackageNGTest
   public void testBase()
   {
     assertTrue(JPypePackageManager.isPackage("java"));
-    JPypePackage pkg = new JPypePackage("java", JPypePackageManager.getContentMap("java"));
+    JPypePackage pkg = new JPypePackage("java");
     for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
       System.out.println(e.getKey());
@@ -60,7 +60,7 @@ public class JPypePackageNGTest
   public void testOrg()
   {
     assertTrue(JPypePackageManager.isPackage("org"));
-    JPypePackage pkg = new JPypePackage("org", JPypePackageManager.getContentMap("org"));
+    JPypePackage pkg = new JPypePackage("org");
     for (Map.Entry<String, URI> e : pkg.contents.entrySet())
     {
       System.out.println(e.getKey());
@@ -74,7 +74,7 @@ public class JPypePackageNGTest
   public void testGetObject()
   {
     System.out.println("getObject");
-    JPypePackage instance = new JPypePackage("java.lang", JPypePackageManager.getContentMap("java.lang"));
+    JPypePackage instance = new JPypePackage("java.lang");
     Object expResult = Object.class;
     Object result = instance.getObject("Object");
     assertEquals(result, expResult);
@@ -87,7 +87,7 @@ public class JPypePackageNGTest
   public void testGetContents()
   {
     System.out.println("getContents");
-    JPypePackage instance = new JPypePackage("java.lang", JPypePackageManager.getContentMap("java.lang"));
+    JPypePackage instance = new JPypePackage("java.lang");
     String[] expResult = new String[]
     {
       "Enum", "ClassValue", "String"

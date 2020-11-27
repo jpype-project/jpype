@@ -312,6 +312,9 @@ def initializeResources():
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
         list(_pykeywords._KEYWORDS))
 
+    _jpype.JPypeContext = _jpype.JClass('org.jpype.JPypeContext').getInstance()
+    _jpype.JPypeClassLoader = _jpype.JPypeContext.getClassLoader()
+
     # Everything successed so started is now true.
     _JVM_started = True
 

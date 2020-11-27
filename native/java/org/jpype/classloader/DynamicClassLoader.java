@@ -15,17 +15,25 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
 public class DynamicClassLoader extends ClassLoader
 {
 
-  List<ClassLoader> loaders = new LinkedList<>();
+  List<URLClassLoader> loaders = new LinkedList<>();
 
   public DynamicClassLoader(ClassLoader parent)
   {
     super(parent);
+  }
+  
+  public int getCode()
+  {
+    return loaders.hashCode();
   }
 
   /**
@@ -103,7 +111,7 @@ public class DynamicClassLoader extends ClassLoader
     try
     {
       URLConnection connection = url.openConnection();
-      try (InputStream is = connection.getInputStream())
+      try ( InputStream is = connection.getInputStream())
       {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int bytes;
@@ -126,14 +134,29 @@ public class DynamicClassLoader extends ClassLoader
   @Override
   public URL getResource(String name)
   {
+    URL url = this.getParent().getResource(name);
+    if (url != null)
+      return url;
     for (ClassLoader cl : this.loaders)
     {
-      URL url = cl.getResource(name);
-      if (url == null)
-        continue;
-      return url;
+      url = cl.getResource(name);
+      if (url != null)
+        return url;
     }
     return null;
   }
 
+  @Override
+  public Enumeration<URL> getResources(String name) throws IOException
+  {
+    ArrayList<URL> out = new ArrayList<>();
+    Enumeration<URL> urls = getParent().getResources(name);
+    out.addAll(Collections.list(urls));
+    for (URLClassLoader cl : this.loaders)
+    {
+      urls = cl.findResources(name);
+      out.addAll(Collections.list(urls));
+    }
+    return Collections.enumeration(out);
+  }
 }

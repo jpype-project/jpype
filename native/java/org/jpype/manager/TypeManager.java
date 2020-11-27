@@ -33,7 +33,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import org.jpype.JPypeContext;
-import org.jpype.JPypeSignal;
 import org.jpype.proxy.JPypeProxy;
 
 /**
@@ -180,6 +179,8 @@ public class TypeManager
 
   public Class<?> lookupByName(String name)
   {
+    ClassLoader classLoader = JPypeContext.getInstance().getClassLoader();
+    
     // Handle arrays
     if (name.endsWith("[]"))
     {
@@ -198,7 +199,7 @@ public class TypeManager
     try
     {
       // Attempt direct lookup
-      return Class.forName(name);
+      return Class.forName(name, true, classLoader);
     } catch (ClassNotFoundException ex)
     {
     }
@@ -208,7 +209,7 @@ public class TypeManager
     {
       try
       {
-        return Class.forName(name.replaceAll("/", "."));
+        return Class.forName(name.replaceAll("/", "."), true, classLoader);
       } catch (ClassNotFoundException ex)
       {
       }

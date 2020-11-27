@@ -115,6 +115,23 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue("B" in u)
         self.assertTrue("sub" in u)
 
+    def testAddClassPath(self):
+        import pathlib
+        import org.jpype as ojp
+        self.assertFalse("late" in dir(ojp))
+        with self.assertRaises(ImportError):
+            import org.jpype.late as late
+
+        jpype.addClassPath(pathlib.Path("test/jar/late/late.jar").absolute())
+        import org.jpype.late as late
+        self.assertTrue("Test" in dir(late))
+        t = late.Test()
+        self.assertTrue(t.field == 5)
+        self.assertTrue(t.method() == "Yes")
+
+    def testStar(self):
+        import importstar
+
 
 @subrun.TestCase
 class ImportsBeforeCase(common.unittest.TestCase):

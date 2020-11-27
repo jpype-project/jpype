@@ -547,7 +547,7 @@ public class JPypeContext
     s = JPypeKeywords.safepkg(s);
     if (!JPypePackageManager.isPackage(s))
       return null;
-    return new JPypePackage(s, JPypePackageManager.getContentMap(s));
+    return new JPypePackage(s);
   }
 
   /**
