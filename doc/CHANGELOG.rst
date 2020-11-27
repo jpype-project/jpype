@@ -8,8 +8,11 @@ Latest Changes:
 
   - Test build for Python 3.9
 
-  - Fixe bug when importing from multi-release jars.  The directory was
+  - Fixed bug when importing from multi-release jars.  The directory was
     being truncated to only those classes in the overlay.
+
+  - addClassPath can add jar files after the JVM is started.  The default
+    loader for JPype class is ``org.jpype.classloader.DynamicClassLoader``.
 
 - **1.1.2 - 2020-10-23**
 

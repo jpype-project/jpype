@@ -197,7 +197,7 @@ class _JImportLoader:
             # so we produce a meaningful diagnositic.
             try:
                 # Use forname because it give better diagnostics
-                _jpype.JClass("java.lang.Class").forName(name)
+                _jpype._java_lang_Class.forName(name, True, _jpype.JPypeClassLoader)
                 raise ImportError("Class `%s` was found but was not expected" % name)
             # Not found is acceptable
             except Exception as ex:
