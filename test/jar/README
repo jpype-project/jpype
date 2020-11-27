@@ -1,0 +1,3 @@
+This directory contains special jars that were formulated to test different aspects
+of the import system.  They were constructed using resource in the jpype/project
+directory.

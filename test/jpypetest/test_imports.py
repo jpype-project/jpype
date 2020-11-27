@@ -129,6 +129,9 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue(t.field == 5)
         self.assertTrue(t.method() == "Yes")
 
+    def testStar(self):
+        import importstar
+
 
 @subrun.TestCase
 class ImportsBeforeCase(common.unittest.TestCase):
