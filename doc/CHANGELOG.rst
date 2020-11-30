@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.2.1_dev0 - 2020-11-29**
 - **1.2.0 - 2020-11-29**
 
   - Added builds for Python 3.9.  Python 3.9 on Windows is currently failing
