@@ -20,7 +20,7 @@ Latest Changes:
   - Bug causing ambiguity between primitives and variadic arguments in method
     resolution was corrected.
 
-  - Boolean was inadvertantly left out of method resolution.  ``boolean``
+  - Boolean was inadvertently left out of method resolution.  ``boolean``
     now properly matched with boxed types.
 
   - Support for PyInstaller was added.
