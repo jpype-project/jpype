@@ -51,7 +51,7 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version__ = "1.1.3_dev0"
+__version__ = "1.2.1_dev0"
 __version_info__ = __version__.split('.')
 
 

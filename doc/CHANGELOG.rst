@@ -4,15 +4,27 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.1.3_dev0 - 2020-10-23**
+- **1.2.1_dev0 - 2020-11-29**
+- **1.2.0 - 2020-11-29**
 
-  - Test build for Python 3.9
+  - Added builds for Python 3.9.  Python 3.9 on Windows is currently failing
+    due to issue in Python.
 
   - Fixed bug when importing from multi-release jars.  The directory was
     being truncated to only those classes in the overlay.
 
   - addClassPath can add jar files after the JVM is started.  The default
     loader for JPype class is ``org.jpype.classloader.DynamicClassLoader``.
+
+  - Build support of z/OS added.
+
+  - Bug causing ambiguity between primitives and variadic arguments in method
+    resolution was corrected.
+
+  - Boolean was inadvertently left out of method resolution.  ``boolean``
+    now properly matched with boxed types.
+
+  - Support for PyInstaller was added.
 
 - **1.1.2 - 2020-10-23**
 
