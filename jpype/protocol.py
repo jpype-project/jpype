@@ -37,7 +37,7 @@ _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):  # pragma: no cover
     from typing_extensions import Protocol, runtime_checkable
-    from typing import Sequence, Mapping, Collection, Set  # lgtm [py/unused-import]
+    from typing import Sequence, Mapping, Set  # lgtm [py/unused-import]
     from typing import SupportsFloat, Callable  # lgtm [py/unused-import]
 
     @runtime_checkable
