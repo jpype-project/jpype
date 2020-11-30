@@ -37,7 +37,7 @@ _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):  # pragma: no cover
     from typing_extensions import Protocol, runtime_checkable
-    from typing import Sequence, Mapping  # lgtm [py/unused-import]
+    from typing import Sequence, Mapping, Collection, Set  # lgtm [py/unused-import]
     from typing import SupportsFloat, Callable  # lgtm [py/unused-import]
 
     @runtime_checkable
@@ -52,6 +52,8 @@ else:
     from typing import Sequence, Mapping, Callable  # lgtm [py/unused-import]
 
 # Types we need
+
+
 @runtime_checkable
 class SupportsPath(Protocol):
     def __fspath__(self) -> str: ...
@@ -68,10 +70,21 @@ def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
 
 # To be added in 1.1.x
-#@_jcustomizer.JConversion("java.util.Iterable", instanceof=Sequence, excludes=str)
+
+
+@_jcustomizer.JConversion("java.lang.Iterable", instanceof=Sequence, excludes=str)
 @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence, excludes=str)
 def _JSequenceConvert(jcls, obj):
     return _jclass.JClass('java.util.Arrays').asList(obj)
+
+
+@_jcustomizer.JConversion("java.lang.Iterable", instanceof=Set)
+@_jcustomizer.JConversion("java.util.Collection", instanceof=Set)
+def _JSetConvert(jcls, obj):
+    # set does not satisfy PySequence_Check and collection is too broad as it
+    # would let dict be converted, so we are going to have to convert twice
+    # for now
+    return _jclass.JClass('java.util.Arrays').asList(list(obj))
 
 
 @_jcustomizer.JConversion("java.util.Map", instanceof=Mapping)
@@ -82,6 +95,8 @@ def _JMapConvert(jcls, obj):
     return hm
 
 # Converters start here
+
+
 @_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
 def _JInstantConversion(jcls, obj):
     utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
@@ -92,6 +107,7 @@ def _JInstantConversion(jcls, obj):
 
 if sys.version_info < (3, 6):  # pragma: no cover
     import pathlib
+
     @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
     def _JPathConvert(jcls, obj):
         Paths = _jpype.JClass("java.nio.file.Paths")
@@ -102,6 +118,8 @@ if sys.version_info < (3, 6):  # pragma: no cover
         return jcls(str(obj))
 
 # Types needed for SQL
+
+
 @_jcustomizer.JImplementationFor('java.sql.Date')
 class _JSQLDate:
     def _py(self):
