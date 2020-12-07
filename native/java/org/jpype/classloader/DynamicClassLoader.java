@@ -1,6 +1,7 @@
 package org.jpype.classloader;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,24 +14,32 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DynamicClassLoader extends ClassLoader
 {
 
   List<URLClassLoader> loaders = new LinkedList<>();
+  HashMap<String, ArrayList<URL>> map = new HashMap<>();
 
   public DynamicClassLoader(ClassLoader parent)
   {
     super(parent);
   }
-  
+
   public int getCode()
   {
     return loaders.hashCode();
@@ -85,6 +94,9 @@ public class DynamicClassLoader extends ClassLoader
         path.toUri().toURL()
       };
       loaders.add(new URLClassLoader(urls));
+
+      // Scan the file for directory entries
+      this.scanJar(path);
     } catch (MalformedURLException ex)
     {
       // This should never happen
@@ -143,6 +155,11 @@ public class DynamicClassLoader extends ClassLoader
       if (url != null)
         return url;
     }
+    // Both with and without / should generate the same result
+    if (name.endsWith("/"))
+      name = name.substring(0, name.length() - 1);
+    if (map.containsKey(name))
+      return map.get(name).get(0);
     return null;
   }
 
@@ -157,6 +174,81 @@ public class DynamicClassLoader extends ClassLoader
       urls = cl.findResources(name);
       out.addAll(Collections.list(urls));
     }
+    // Both with and without / should generate the same result
+    if (name.endsWith("/"))
+      name = name.substring(0, name.length() - 1);
+    if (map.containsKey(name))
+      out.addAll(map.get(name));
     return Collections.enumeration(out);
   }
+
+  public void addResource(String name, URL url)
+  {
+    if (!this.map.containsKey(name))
+      this.map.put(name, new ArrayList<>());
+    this.map.get(name).add(url);
+  }
+
+  /**
+   * Recreate missing directory entries for Jars that lack indexing.
+   *
+   * Some jar files are missing the directory entries that prevents use from
+   * properly importing their contents. This procedure scans a jar file when
+   * loaded to build missing directories.
+   *
+   * @param p1
+   */
+  public void scanJar(Path p1)
+  {
+    if (!Files.exists(p1))
+      return;
+    if (Files.isDirectory(p1))
+      return;
+    try ( JarFile jf = new JarFile(p1.toFile()))
+    {
+      Enumeration<JarEntry> entries = jf.entries();
+      Path abs = p1.toAbsolutePath();
+      Set urls = new java.util.HashSet();
+      while (entries.hasMoreElements())
+      {
+        JarEntry next = entries.nextElement();
+        String name = next.getName();
+        
+        // Skip over META-INF
+        if (name.startsWith("META-INF/"))
+          continue;
+      
+        if (next.isDirectory())
+        {
+          // If we find a directory entry then the jar has directories already
+          return;
+        }
+
+        // Split on each separator in the name
+        int i = 0;
+        while (true)
+        {
+          i = name.indexOf("/", i);
+          if (i == -1)
+            break;
+          String name2 = name.substring(0, i);
+          
+          i++;
+
+          // Already have an entry no problem
+          if (urls.contains(name2))
+            continue;
+
+          // Add a new entry for the missing directory
+          String jar = "jar:file:" + abs + "!/" + name2 + "/";
+          urls.add(name2);
+          this.addResource(name2, new URL(jar));
+        }
+      }
+    } catch (IOException ex)
+    {
+      // Anything goes wrong skip it
+    }
+  }
+
 }

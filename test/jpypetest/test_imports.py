@@ -132,6 +132,10 @@ class ImportsTestCase(common.JPypeTestCase):
     def testStar(self):
         import importstar
 
+    def testMissing(self):
+        import org
+        self.assertTrue("missing" in dir(org.jpype))
+
 
 @subrun.TestCase
 class ImportsBeforeCase(common.unittest.TestCase):
