@@ -78,6 +78,11 @@ public:
 		return JPModifier::isThrowable(m_Modifiers);
 	}
 
+	bool isGeneric() const
+	{
+		return JPModifier::isGeneric(m_Modifiers);
+	}
+
 	bool isInterface() const
 	{
 		return JPModifier::isInterface(m_Modifiers);

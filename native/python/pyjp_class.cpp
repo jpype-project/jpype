@@ -703,11 +703,71 @@ static bool PySlice_CheckFull(PyObject *item)
 #endif
 }
 
+static PyObject *handleGeneric(JPJavaFrame &frame, PyJPClass *self, PyObject *item)
+{
+	if (!self->m_Class->isGeneric())
+	{
+		PyErr_Format(PyExc_TypeError, "Type is not generic");
+		return 0;
+	}
+
+	Py_ssize_t dims = PyTuple_Size(item);
+	Py_ssize_t i = 0;
+
+	stringstream name;
+	for (; i < dims; ++i)
+	{
+		PyObject* t = PyTuple_GetItem(item, i);
+		if (!PyJPClass_Check(t))
+			break;
+
+		if (i > 0)
+			name << ',';
+		name << ((PyTypeObject*) item)->tp_name;
+	}
+
+	if (i != dims)
+	{
+		PyErr_Format(PyExc_TypeError, "Generic parameters must be Java");
+		return 0;
+	}
+
+	// Return a generic type wrapper.
+	JPPyObject key = JPPyObject::call(PyUnicode_FromFormat("%s<%s>",
+			((PyTypeObject*) self)->tp_name,
+			name.str().c_str()));
+	PyObject *cache = PyDict_GetItem(PyJClass_Generics, key.get());
+	if (cache != NULL)
+	{
+		Py_INCREF(cache);
+		return cache;
+	}
+
+	// Allocate a new type
+	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, self));
+	JPPyObject members = JPPyObject::call(PyDict_New());
+	JPPyObject args = JPPyObject::call(PyTuple_Pack(3, key.get(), bases.get(), members.get()));
+	JPPyObject generic = JPPyObject::call(PyObject_Call((PyObject*) PyJPClass_Type, args.get(), classMagic));
+	PyObject_SetAttrString(generic.get(), "_generics", item);
+	PyDict_SetItem(PyJClass_Generics, key.get(), generic.get());
+	PyJPClass *cls2 = (PyJPClass*) generic.get();
+	cls2->m_Class = self->m_Class;
+	PyJPValue_assignJavaSlot(frame, (PyObject*) cls2, JPValue(frame.getContext()->_java_lang_Class,
+			(jobject) self->m_Class->getJavaClass()));
+	return generic.keep();
+}
+
 static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPClass_array");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	if (PyType_Check(item))
+	{
+		JPPyObject types = JPPyObject::call(PyTuple_Pack(1, item));
+		return handleGeneric(frame, self, types.get());
+	}
 
 	if (PyIndex_Check(item))
 	{
@@ -735,6 +795,25 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 		Py_ssize_t i = 0;
 		Py_ssize_t defined = 0;
 		Py_ssize_t undefined = 0;
+
+		//Check if it is a generic specification
+		{
+			bool generic = true;
+			for (; i < dims; ++i)
+			{
+				PyObject* t = PyTuple_GetItem(item, i);
+				if (!PyType_Check(t))
+				{
+					generic = false;
+					break;
+				}
+			}
+
+			if (generic)
+			{
+				return handleGeneric(frame, self, item);
+			}
+		}
 
 		std::vector<int> sz;
 		for (; i < dims; ++i)
@@ -786,7 +865,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
+static PyObject * PyJPClass_cast(PyJPClass *self, PyObject * other)
 {
 	JP_PY_TRY("PyJPClass_cast");
 	JPContext *context = PyJPModule_getContext();
@@ -858,7 +937,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPClass_castEq(PyJPClass *self, PyObject *other)
+static PyObject * PyJPClass_castEq(PyJPClass *self, PyObject * other)
 {
 	PyErr_Format(PyExc_TypeError, "Invalid operation");
 	return NULL;
@@ -866,7 +945,7 @@ static PyObject *PyJPClass_castEq(PyJPClass *self, PyObject *other)
 
 // Added for auditing
 
-static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
+static PyObject * PyJPClass_convertToJava(PyJPClass *self, PyObject * other)
 {
 	JP_PY_TRY("PyJPClass_convertToJava");
 	JPContext *context = PyJPModule_getContext();
@@ -891,7 +970,7 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject *PyJPClass_repr(PyJPClass *self)
+static PyObject * PyJPClass_repr(PyJPClass * self)
 {
 	JP_PY_TRY("PyJPClass_repr");
 	string name = ((PyTypeObject*) self)->tp_name;
@@ -899,7 +978,7 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
 }
 
-static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
+static PyObject * PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
@@ -932,7 +1011,7 @@ int PyJPClass_setDoc(PyJPClass *self, PyObject *obj, void *ctxt)
 	JP_PY_CATCH(-1);
 }
 
-PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
+PyObject * PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject * kwargs)
 {
 	JP_PY_TRY("PyJPClass_customize");
 	PyObject *name = NULL;

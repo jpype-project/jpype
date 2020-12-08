@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.manager;
@@ -441,6 +441,8 @@ public class TypeManager
     if (this.functionalAnnotation != null
             && cls.getAnnotation(this.functionalAnnotation) != null)
       modifiers |= ModifierCode.FUNCTIONAL.value | ModifierCode.SPECIAL.value;
+    if (cls.getTypeParameters().length > 0)
+      modifiers |= ModifierCode.GENERIC.value;
 
     // FIXME watch out for anonyous and lambda here.
     String name = cls.getCanonicalName();
