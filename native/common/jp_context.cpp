@@ -185,7 +185,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	jniArgs.nOptions = (jint) args.size();
 	JP_TRACE("NumOptions", jniArgs.nOptions);
-	jniArgs.options = (JavaVMOption*) malloc(sizeof (JavaVMOption) * jniArgs.nOptions);
+	jniArgs.options = new JavaVMOption[jniArgs.nOptions];
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
@@ -204,7 +204,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_TRACE("Exception in CreateJVM?");
 	}
 	JP_TRACE("JVM created");
-	free(jniArgs.options);
+	delete [] jniArgs.options;
 
 	if (m_JavaVM == NULL)
 	{

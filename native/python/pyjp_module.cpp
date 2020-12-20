@@ -705,7 +705,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
 	// but is safe to call afterwards.
-	PyEval_InitThreads();
+	//PyEval_InitThreads();
 
 	// Initialize the module (depends on python version)
 	PyObject* module = PyModule_Create(&moduledef);

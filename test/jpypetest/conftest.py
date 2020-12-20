@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import pytest
+import _jpype
 import jpype
 import common
 
