@@ -219,11 +219,6 @@ class CoverageCase(common.JPypeTestCase):
     def testModuleHasClass(self):
         self.assertTrue(_jpype._hasClass("java.lang.Object"))
 
-    def testModuleExamine(self):
-        # this is an internal testing routine for Java slots
-        _jpype.examine(jpype.JString)
-        _jpype.examine(jpype.JString("foo"))
-
     def testJClassBadClass(self):
         with self.assertRaises(Exception):
             jpype.JClass("not.a.class")
