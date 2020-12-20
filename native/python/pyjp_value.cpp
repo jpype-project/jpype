@@ -245,7 +245,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
 		return PyObject_GenericSetAttr(self, name, value);
-	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor(Py_TYPE(self), name));
+	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor(Py_TYPE(self), name));
 	if (f.isNull())
 	{
 		PyErr_Format(PyExc_AttributeError, "Field '%U' is not found", name);
