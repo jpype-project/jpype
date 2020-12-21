@@ -34,7 +34,7 @@ struct PyJPClass
 	PyObject *m_Doc;
 } ;
 
-static PyObject* classMagic = PyDict_New();
+PyObject* PyJPClassMagic = NULL;
 
 #ifdef __cplusplus
 extern "C"
@@ -43,7 +43,7 @@ extern "C"
 
 int PyJPClass_Check(PyObject* obj)
 {
-	return Py_IsInstanceSingle(obj, PyJPClass_Type);
+	return PyJP_IsInstanceSingle(obj, PyJPClass_Type);
 }
 
 static int PyJPClass_traverse(PyJPClass *self, visitproc visit, void *arg)
@@ -82,7 +82,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	}
 
 	int magic = 0;
-	if (kwargs == classMagic || (kwargs != NULL && PyDict_GetItemString(kwargs, "internal") != 0))
+	if (kwargs == PyJPClassMagic || (kwargs != NULL && PyDict_GetItemString(kwargs, "internal") != 0))
 	{
 		magic = 1;
 		kwargs = NULL;
@@ -447,7 +447,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
 		return PyType_Type.tp_setattro(self, attr_name, v);
 
-	JPPyObject f = JPPyObject::accept(Py_GetAttrDescriptor((PyTypeObject*) self, attr_name));
+	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor((PyTypeObject*) self, attr_name));
 	if (f.isNull())
 	{
 		const char *name_str = PyUnicode_AsUTF8(attr_name);
@@ -480,8 +480,8 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if (!JPContext_global->isRunning())
 	{
 		if ((PyObject*) type == _JObject)
-			return PyBool_FromLong(Py_IsSubClassSingle(PyJPObject_Type, test));
-		return PyBool_FromLong(Py_IsSubClassSingle(type, test));
+			return PyBool_FromLong(PyJP_IsSubClassSingle(PyJPObject_Type, test));
+		return PyBool_FromLong(PyJP_IsSubClassSingle(type, test));
 	}
 	// GCOVR_EXCL_STOP
 
@@ -1179,7 +1179,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
-	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), classMagic));
+	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
 	PyJPClass *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot

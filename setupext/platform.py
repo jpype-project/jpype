@@ -63,14 +63,14 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
     static = True
     if platform == 'win32':
         distutils.log.info("Add windows settings")
-        platform_specific['libraries'] = ['Advapi32']
+   #     platform_specific['libraries'] = ['Advapi32']
         platform_specific['define_macros'] = [('WIN32', 1)]
         if sys.version > '3':
             platform_specific['extra_compile_args'] = [
                 '/Zi', '/EHsc', '/std:c++14']
         else:
             platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
-        platform_specific['extra_link_args'] = ['/DEBUG']
+   #     platform_specific['extra_link_args'] = ['/DEBUG']
         jni_md_platform = 'win32'
 
     elif platform == 'darwin':

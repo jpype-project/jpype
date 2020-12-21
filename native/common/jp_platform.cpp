@@ -175,10 +175,12 @@ public:
 
 namespace
 {
-PLATFORM_ADAPTER adapter;
+PLATFORM_ADAPTER* adapter;
 }
 
 JPPlatformAdapter* JPPlatformAdapter::getAdapter()
 {
-	return &adapter;
+	if (adapter == NULL)
+		adapter = new PLATFORM_ADAPTER();
+	return adapter;
 }

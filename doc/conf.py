@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+from unittest import mock
 import sys
 import os
 
@@ -54,18 +55,19 @@ copyright = u'2014-18, Steve Menard, Luis Nell and others'
 # built documents.
 #
 # The short X.Y version.
-from unittest import mock
 
 
-def TypeMock_init(self, *args, **kwargs):
-    object.__init__(self)
+class ObjectMock(object):
+    def __init__(self, *args, **kwargs):
+        self._kwargs = kwargs
+        self._to = mock.Mock
+        object.__init__(self)
 
-
-def TypeMock_getattr(self, key):
-    kwargs = self._kwargs
-    m = self._to(**kwargs)
-    object.__setattr__(self, key, m)
-    return m
+    def __getattr__(self, key):
+        kwargs = self._kwargs
+        m = self._to(**kwargs)
+        object.__setattr__(self, key, m)
+        return m
 
 
 class TypeMock(type):
@@ -73,8 +75,8 @@ class TypeMock(type):
         if not bases:
             bases = tuple([])
 
-        members['__init__'] = TypeMock_init
-        members['__getattr__'] = TypeMock_getattr
+        members['__init__'] = ObjectMock.__init__
+        members['__getattr__'] = ObjectMock.__getattr__
         members['_kwargs'] = kwargs
         members['_to'] = to
         members['__slots__'] = []
@@ -116,6 +118,19 @@ class _JPackage:
         pass
 
 
+# Monkey patch (this is needed to catch errors for missing TypeMock)
+m = mock.Mock.__getattr__
+
+
+def patch(self, key):
+    if key == "__name__":
+        return "FIXME TypeMock is missing"
+    return m(self, key)
+
+
+mock.Mock.__getattr__ = patch
+
+
 mockModule = mock.MagicMock()
 mockModule.isStarted = mock.Mock(return_value=False)
 mockModule._JArray = TypeMock("_JArray")
@@ -123,16 +138,17 @@ mockModule._JClass = _JClass
 mockModule._JField = TypeMock("_JField")
 mockModule._JMethod = TypeMock("_JMethod")
 mockModule._JObject = TypeMock("_JObject")
+mockModule._JProxy = TypeMock("_JProxy")
+mockModule._JException = TypeMock("_JException")
 mockModule._JPackage = _JPackage
-# TypeMock("_JPackage")
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
 sys.modules['_jpype'] = mockModule
+import jpype
+import jpype.imports
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
 # it here solved the problem.
-import jpype
-import jpype.imports
 version = jpype.__version__
 # The full version, including alpha/beta/rc tags.
 release = jpype.__version__

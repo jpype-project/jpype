@@ -126,7 +126,7 @@ void PyJPModule_loadResources(PyObject* module)
 	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
-		Py_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
+		PyJP_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
 		JP_RAISE_PYTHON();
 		// GCOVR_EXCL_STOP
 	}
@@ -141,7 +141,7 @@ extern "C"
 // GCOVR_EXCL_START
 // This is used exclusively during startup
 
-void Py_SetStringWithCause(PyObject *exception,
+void PyJP_SetStringWithCause(PyObject *exception,
 		const char *str)
 {
 	// See _PyErr_TrySetFromCause
@@ -163,7 +163,7 @@ void Py_SetStringWithCause(PyObject *exception,
 }
 // GCOVR_EXCL_STOP
 
-PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
+PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 {
 	JP_PY_TRY("Py_GetAttrDescriptor");
 	if (type->tp_mro == NULL)
@@ -196,7 +196,7 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
 
-int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
+int PyJP_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 {
 	if (type == NULL || obj == NULL)
 		return 0;  // GCOVR_EXCL_LINE
@@ -208,11 +208,11 @@ int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
+int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
 	if (type == NULL || obj == NULL)
 		return 0; // GCOVR_EXCL_LINE
-	return Py_IsSubClassSingle(type, Py_TYPE(obj));
+	return PyJP_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
 #ifndef ANDROID
@@ -560,8 +560,9 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 }
 
 
+#if 0
 // GCOVR_EXCL_START
-
+// This code was used in testing the Java slot memory layout.  It serves no purpose outside of debugging that issue.
 PyObject* examine(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("examine");
@@ -597,12 +598,12 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
 	printf("======\n");
-	fflush(stdout);
 
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(NULL);
 }
 // GCOVR_EXCL_STOP
+#endif
 
 // GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
@@ -659,7 +660,6 @@ static PyMethodDef moduleMethods[] = {
 #endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
-	{"examine", (PyCFunction) examine, METH_O, ""},
 	{"_newArrayType", (PyCFunction) PyJPModule_newArrayType, METH_VARARGS, ""},
 	{"_collect", (PyCFunction) PyJPModule_collect, METH_VARARGS, ""},
 	{"gcStats", (PyCFunction) PyJPModule_gcStats, METH_NOARGS, ""},
@@ -702,10 +702,14 @@ PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
 	JPContext_global = new JPContext();
+
+#if PY_VERSION_HEX<0x03070000
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
-	// but is safe to call afterwards.
+	// but is safe to call afterwards.  Starting 3.9 this issues a 
+	// deprecation warning.
 	PyEval_InitThreads();
+#endif
 
 	// Initialize the module (depends on python version)
 	PyObject* module = PyModule_Create(&moduledef);
@@ -714,6 +718,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPModule = module;
 	PyModule_AddStringConstant(module, "__version__", "1.2.1_dev0");
 
+	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);

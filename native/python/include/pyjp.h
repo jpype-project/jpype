@@ -58,7 +58,7 @@ PyMODINIT_FUNC PyInit__jpype();
  * @param exception
  * @param str
  */
-void Py_SetStringWithCause(PyObject *exception, const char *str);
+void PyJP_SetStringWithCause(PyObject *exception, const char *str);
 
 /**
  * Get a new reference to a method or property in the type dictionary without
@@ -68,7 +68,7 @@ void Py_SetStringWithCause(PyObject *exception, const char *str);
  * @param attr_name
  * @return
  */
-PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name);
+PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name);
 
 /**
  * Fast check to see if a type derives from another.
@@ -80,8 +80,8 @@ PyObject* Py_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name);
  * @param obj
  * @return 1 if object derives from type.
  */
-int Py_IsInstanceSingle(PyObject* obj, PyTypeObject* type);
-int Py_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj);
+int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type);
+int PyJP_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj);
 
 struct PyJPArray
 {
@@ -146,6 +146,7 @@ extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
 extern PyObject *_JObjectKey;
 extern PyObject *_JVMNotRunning;
+extern PyObject* PyJPClassMagic;
 
 extern JPContext* JPContext_global;
 
