@@ -12,8 +12,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import jpype
-import jpype.imports
 from unittest import mock
 import sys
 import os
@@ -146,6 +144,8 @@ mockModule._JPackage = _JPackage
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
 sys.modules['_jpype'] = mockModule
+import jpype
+import jpype.imports
 
 # For some reason jpype.imports does not work if called in sphinx. Importing
 # it here solved the problem.
