@@ -702,10 +702,14 @@ PyMODINIT_FUNC PyInit__jpype()
 {
 	JP_PY_TRY("PyInit__jpype");
 	JPContext_global = new JPContext();
+
+#if PY_VERSION_HEX<0x03070000
 	// This is required for python versions prior to 3.7.
 	// It is called by the python initialization starting from 3.7,
-	// but is safe to call afterwards.
-	//PyEval_InitThreads();
+	// but is safe to call afterwards.  Starting 3.9 this issues a 
+	// deprecation warning.
+	PyEval_InitThreads();
+#endif
 
 	// Initialize the module (depends on python version)
 	PyObject* module = PyModule_Create(&moduledef);
