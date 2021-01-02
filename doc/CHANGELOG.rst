@@ -5,7 +5,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.2.1 - 2021-01-02**
-- **1.2.1_dev0 - 2020-11-29**
+
+  - Missing stub files added.
+
+  - Python 3.9 issues are resolved on Windows.
 
   - JPype scans jar files and rebuilding missing directories to allow imports
     from stripped and obfuscated jar files.
