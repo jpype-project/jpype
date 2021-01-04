@@ -53,7 +53,7 @@ jpypeJar = Extension(name="org.jpype",
 
 setup(
     name='JPype1',
-    version='1.2.1',
+    version='1.2.2_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
