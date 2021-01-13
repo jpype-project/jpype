@@ -8,7 +8,7 @@ computing, and much more.  By enabling the use of Python for rapid prototyping
 and Java for strong typed production code, JPype provides a powerful
 environment for engineering and code development.
 
-Unlike Jython, JPype does not achive this by re-implementing Python, but
+Unlike Jython, JPype does not achieve this by re-implementing Python, but
 instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
 providing the access to the entirety of CPython and Java libraries.
