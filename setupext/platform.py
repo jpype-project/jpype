@@ -110,7 +110,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         jni_md_platform = 'zos'
 
     else:
-        jni_md_platform = None
+        jni_md_platform = ''
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
                            " It may work or not!", platform)
 
