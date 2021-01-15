@@ -109,7 +109,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         distutils.log.info("Add zos settings")
         jni_md_platform = 'zos'
 
-    elif platform == 'solaris':
+    elif platform == 'sunos5':
         distutils.log.info("Add solaris settings")
         jni_md_platform = 'solaris'
         
