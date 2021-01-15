@@ -109,6 +109,10 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         distutils.log.info("Add zos settings")
         jni_md_platform = 'zos'
 
+    elif platform == 'solaris':
+        distutils.log.info("Add solaris settings")
+        jni_md_platform = 'solaris'
+        
     else:
         jni_md_platform = ''
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
