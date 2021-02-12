@@ -277,10 +277,16 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject* PyJPModule_shutdown(PyObject* obj)
+static PyObject* PyJPModule_shutdown(PyObject* obj, PyObject* pyargs, PyObject* kwargs)
 {
 	JP_PY_TRY("PyJPModule_shutdown");
-	JPContext_global->shutdownJVM();
+	char destroyJVM = true;
+	char freeJVM = true;
+
+	if (!PyArg_ParseTuple(pyargs, "bb", &destroyJVM, &freeJVM))
+		return NULL;
+
+	JPContext_global->shutdownJVM(destroyJVM, freeJVM);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -560,7 +566,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 }
 
 
-#if 0
+#if 1
 // GCOVR_EXCL_START
 // This code was used in testing the Java slot memory layout.  It serves no purpose outside of debugging that issue.
 PyObject* examine(PyObject *module, PyObject *other)
@@ -574,12 +580,14 @@ PyObject* examine(PyObject *module, PyObject *other)
 		type = Py_TYPE(other);
 
 	printf("======\n");
+	int offset = 0;
 	if (!PyType_Check(other))
 	{
+		offset = PyJPValue_getJavaSlotOffset(other);
 		printf("  Object:\n");
 		printf("    size: %d\n", (int) Py_SIZE(other));
 		printf("    dictoffset: %d\n", (int) ((long long) _PyObject_GetDictPtr(other)-(long long) other));
-		printf("    javaoffset: %d\n", (int) PyJPValue_getJavaSlotOffset(other));
+		printf("    javaoffset: %d\n", offset);
 	}
 	printf("  Type: %p\n", type);
 	printf("    name: %s\n", type->tp_name);
@@ -597,6 +605,8 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    alloc: %p\n", type->tp_alloc);
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
+	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
+	printf("    size?: %ld\n",v);
 	printf("======\n");
 
 	return PyBool_FromLong(ret);
@@ -656,7 +666,7 @@ static PyMethodDef moduleMethods[] = {
 #else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_VARARGS, ""},
 #endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
@@ -682,6 +692,7 @@ static PyMethodDef moduleMethods[] = {
 #ifdef JP_INSTRUMENTATION
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
+	{"examine", (PyCFunction) examine, METH_O, ""},
 
 	// sentinel
 	{NULL}
