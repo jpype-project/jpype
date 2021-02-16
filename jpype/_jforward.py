@@ -1,11 +1,13 @@
 # This is the prototype for forward declarations
+import typing
+
 import jpype
 import _jpype
 
 # Convert a forward symbol from string to an actual symbol
 
 
-def _lookup(symbol):
+def _lookup(symbol: typing.Optional[str]):
     if symbol is None:
         return None
     if _jpype.isPackage(symbol):
@@ -35,7 +37,7 @@ def _resolve(forward, value=None):
 
     # Find the value using Java reflection
     if value is None:
-        value = _lookup(object.__getattribute__(forward, "_symbol"))
+        value = _lookup(forward._symbol)
 
     # If it was a null symbol then just skip it as unresolvable
     if value is None:
@@ -67,6 +69,8 @@ def _resolve(forward, value=None):
     elif isinstance(value, (_jpype._JBoolean, _jpype._JNumberLong, _jpype._JChar, _jpype._JNumberLong, _jpype._JNumberFloat)):
         raise TypeError("Forward declarations of primitives are not supported")
     elif isinstance(value, object):
+        # Bypass the JForward setattr, which always raises a JVM must be started
+        # exception.
         object.__setattr__(forward, '__class__', _JResolvedObject)
     else:
         raise TypeError("Forward type not supported")
@@ -90,59 +94,53 @@ def _resolveAll():
 
 # This will be used for morphed types, everything must have a base tree
 #  We need to make sure these are fast lookup so we don't change method resoluton cost
-class _JForwardProto(object):
-    pass
+class _JForwardProto:
+    __slots__ = ('_instance', '_symbol')
 
 # resolved symbol
 
 
 class _JResolved(_JForwardProto):
-    def __getattribute__(self, name):
-        instance = object.__getattribute__(self, '_instance')
-        return type(instance).__getattribute__(instance, name)
+    def __getattr__(self, name):
+        return getattr(self._instance, name)
 
     def __setattr__(self, name, value):
-        instance = object.__getattribute__(self, '_instance')
-        return type(instance).__setattr__(instance, name)
+        return setattr(self._instance, name)
 
     def __str__(self):
-        instance = object.__getattribute__(self, '_instance')
-        return str(instance)
+        return str(self._instance)
 
     def __repr__(self):
-        instance = object.__getattribute__(self, '_instance')
-        return repr(instance)
+        return repr(self._instance)
 
-    def __eq__(self, v):
-        instance = object.__getattribute__(self, '_instance')
-        return instance == v
+    def __eq__(self, other):
+        # We swap the order of the __eq__ here to allow other to influence the
+        # result further (e.g. it may be a _JResolved also)
+        return other == self._instance
 
-    def __ne__(self, v):
-        instance = object.__getattribute__(self, '_instance')
-        return instance != v
+    def __ne__(self, other):
+        # We swap the order of the __ne__ here to allow other to influence the
+        # result further (e.g. it may be a _JResolved also)
+        return other != self._instance
 
 
 # We need to specialize the forward based on the resolved object
 class _JResolvedType(_JResolved):
+
     def __call__(self, *args):
-        instance = object.__getattribute__(self, '_instance')
-        return instance(*args)
+        return self._instance(*args)
 
     def __matmul__(self, value):
-        instance = object.__getattribute__(self, '_instance')
-        return instance @ value
+        return self._instance @ value
 
     def __getitem__(self, value):
-        instance = object.__getattribute__(self, '_instance')
-        return instance[value]
+        return self._instance[value]
 
-    def __instancecheck__(self, v):
-        instance = object.__getattribute__(self, '_instance')
-        return isinstance(v, instance)
+    def __instancecheck__(self, other):
+        return isinstance(other, self._instance)
 
-    def __subclasscheck__(self, v):
-        instance = object.__getattribute__(self, '_instance')
-        return issubclass(v, instance)
+    def __subclasscheck__(self, other):
+        return issubclass(self._instance, other)
 
 
 class _JResolvedObject(_JResolved):
@@ -158,8 +156,10 @@ def _jvmrequired(*args):
 
 # Public view of a forward declaration
 class JForward(_JForwardProto):
+    # Note that we can have arbitrary attributes on this class,
+    # hence we don't specify __slots__ here.
 
-    def __new__(cls, symbol):
+    def __new__(cls, symbol: typing.Optional[str]):
         if jpype.isJVMStarted():
             return _lookup(symbol)
         return _JForwardProto.__new__(cls)
@@ -168,25 +168,23 @@ class JForward(_JForwardProto):
         object.__setattr__(self, '_symbol', symbol)
         _jforward.append(self)
 
-    def __getattribute__(self, name):
-        forward = object.__getattribute__(self, '_symbol')
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError as ex:
-            if name.startswith("_"):
-                raise ex
-            if forward is None:
-                value = JForward(name)
-            elif name.startswith('['):
-                value = JForward(forward + name)
-            else:
-                value = JForward(forward + "." + name)
-            object.__setattr__(self, name, value)
-            return value
+    def __getattr__(self, name):
+        forward = self._symbol
+
+        if forward is None:
+            # Handle this JForward being the root.
+            value = JForward(name)
+        elif name.startswith('['):
+            value = JForward(forward + name)
+        else:
+            value = JForward(forward + "." + name)
+        # Cache the result for later, giving us faster lookup next time.
+        object.__setattr__(self, name, value)
+        return value
 
     def __getitem__(self, value):
         if isinstance(value, slice):
-            return self.__getattribute__("[]")
+            return self.__getattr__("[]")
         if isinstance(value, tuple):
             depth = 0
             for item in value:
@@ -194,7 +192,7 @@ class JForward(_JForwardProto):
                     depth += 1
                 else:
                     raise RuntimeError("Cannot create array without a JVM")
-            return self.__getattribute__("[]" * depth)
+            return self.__getattr__("[]" * depth)
         raise RuntimeError("Cannot create array without a JVM")
 
     __setattr__ = _jvmrequired
@@ -204,66 +202,81 @@ class JForward(_JForwardProto):
     __subclasscheck__ = _jvmrequired
 
 
+
 ########################################################
 
-root = JForward(None)
-java = root.java
-Object = java.lang.Object
-String = java.lang.String
-Array = java.lang.String[:]
-Array2 = java.lang.String[:, :]
 
-try:
-    String()
-    print("fail")
-except RuntimeError:
-    pass
+def main():
+    root = JForward(None)
+    java = root.java
+    Object = java.lang.Object
+    String = java.lang.String
+    Array = java.lang.String[:]
+    Array2 = java.lang.String[:, :]
+    Integer = java.lang.Integer
 
-try:
-    String @ object()
-    print("fail")
-except RuntimeError:
-    pass
+    try:
+        String()
+        print("fail")
+    except RuntimeError:
+        pass
 
-try:
-    String @ object()
-    print("fail")
-except RuntimeError:
-    pass
+    try:
+        String @ object()
+        print("fail")
+    except RuntimeError:
+        pass
 
-
-# String = java.lang.String2  # this does not fail here, but will when the JVM is started
-C = java.lang.String.CASE_INSENSITIVE_ORDER
-
-
-def pre(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
-    return p
+    try:
+        String @ object()
+        print("fail")
+    except RuntimeError:
+        pass
 
 
-#
-jpype.startJVM()
+    # String = java.lang.String2  # this does not fail here, but will when the JVM is started
+    C = java.lang.String.CASE_INSENSITIVE_ORDER
 
 
-def post(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
-    return p
+    def pre(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
+        return p
+
+    #
+    jpype.startJVM()
 
 
-# Create instance
-print(type(String("foo")) == type(jpype.java.lang.String("foo")))
-print(String == jpype.java.lang.String)  # works
-print(not (String != jpype.java.lang.String))  # works
-print(isinstance(String("foo"), String))  # works
-print(not isinstance(1, String))  # works
-print(issubclass(String, Object))  # fail
+    def post(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
+        return p
 
-# Late use of static fields
-print(C == jpype.java.lang.String.CASE_INSENSITIVE_ORDER)  # works
-print(jpype.java.lang.String.CASE_INSENSITIVE_ORDER == C)  # fails
 
-# Annotations and defaults
-print(pre(1) == post(1))  # works
-print(pre.__annotations__['return'] == post.__annotations__['return'])  # works
-print(pre.__annotations__['v'] == post.__annotations__['v'])  # works
+    # Create instance
+    print(type(String("foo")) == type(jpype.java.lang.String("foo")))
+    print(String == jpype.java.lang.String)  # works
+    print(String is java.lang.String)  # works
+    print(not (String != jpype.java.lang.String))  # works
+    print(isinstance(String("foo"), String))  # works
+    print(isinstance(String("foo"), jpype.java.lang.String))
+    print(isinstance(jpype.java.lang.String("foo"), String))
+    print(not isinstance(1, String))  # works
+    print(issubclass(String, Object))  # works
 
-print(type(Array(10)) == jpype.java.lang.String[:])  # works
-print(type(Array2(10)) == jpype.java.lang.String[:, :])  # works
+    print(Integer(2) > java.lang.Integer(1))  # works
+    print(java.lang.Integer(2) > Integer(1))  # works
+    print(not (Integer(2) < java.lang.Integer(1)))  # works
+
+    # Late use of static fields
+    print(C == jpype.java.lang.String.CASE_INSENSITIVE_ORDER)  # works
+    print(jpype.java.lang.String.CASE_INSENSITIVE_ORDER == C)  # fails
+
+    # Annotations and defaults
+    print(pre(1) == post(1))  # works
+    print(post(1) == post(1))  # works
+    print(pre.__annotations__['return'] == post.__annotations__['return'])  # works
+    print(pre.__annotations__['v'] == post.__annotations__['v'])  # works
+
+    print(type(Array(10)) == jpype.java.lang.String[:])  # works
+    print(type(Array2(10)) == jpype.java.lang.String[:, :])  # works
+
+
+if __name__ == "__main__":
+    main()
