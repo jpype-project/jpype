@@ -1,5 +1,6 @@
 # This is the prototype for forward declarations
 import typing
+import weakref
 
 import jpype
 import _jpype
@@ -24,10 +25,6 @@ def _lookup(symbol: typing.Optional[str]):
     for j in range(i + 1, len(parts)):
         obj = getattr(obj, parts[j])
     return obj
-
-
-# List of forwards to be resolved
-_jforward = []
 
 
 def _resolve(forward, value=None):
@@ -84,9 +81,9 @@ def _resolve(forward, value=None):
 # Hook up the resolver for all forward declarations
 @jpype.onJVMStart
 def _resolveAll():
-    for forward in _jforward:
+    for forward in JForward._INSTANCES.values():
         _resolve(forward)
-    _jforward.clear()
+    JForward._INSTANCES.clear()
 
 
 ###########################################################################
@@ -150,25 +147,42 @@ class _JResolvedObject(_JResolved):
 def _jvmrequired(*args):
     raise RuntimeError("JVM must be started")
 
+
 # This is an unresolved symbol
 #  Must have every possible slot type.
 
 
 # Public view of a forward declaration
 class JForward(_JForwardProto):
-    # Note that we can have arbitrary attributes on this class,
-    # hence we don't specify __slots__ here.
+    _SPECIAL_MODULE_NAMES = {'__spec__', '__name__', '__loader__', '__package__', '__path__'}
+    # Keep track of all instances of JForward so that we can always return the
+    # same instance for a given symbol, and so that we can resolve these when the
+    # JVM starts up.
+    _INSTANCES = weakref.WeakValueDictionary()
 
     def __new__(cls, symbol: typing.Optional[str]):
-        if jpype.isJVMStarted():
-            return _lookup(symbol)
+        if symbol in cls._INSTANCES:
+            return cls._INSTANCES[symbol]
         return _JForwardProto.__new__(cls)
 
     def __init__(self, symbol):
+        if symbol in self._INSTANCES and self._INSTANCES[symbol] is self:
+            # This __init__ has already been called.
+            return
+
         object.__setattr__(self, '_symbol', symbol)
-        _jforward.append(self)
+        # A dictionary of JForward attributes that have been accessed on this instance.
+        object.__setattr__(self, '_forward_attrs', weakref.WeakValueDictionary())
+        self._INSTANCES[symbol] = self
 
     def __getattr__(self, name):
+        if name in self._SPECIAL_MODULE_NAMES:
+            # Without raising when first trying to get special module names,
+            # importlib won't set module related attributes.
+            raise AttributeError(f'Attribute {name} not set')
+        if name in self._forward_attrs:
+            return self._forward_attrs[name]
+
         forward = self._symbol
 
         if forward is None:
@@ -179,7 +193,7 @@ class JForward(_JForwardProto):
         else:
             value = JForward(forward + "." + name)
         # Cache the result for later, giving us faster lookup next time.
-        object.__setattr__(self, name, value)
+        self._forward_attrs[forward] = value
         return value
 
     def __getitem__(self, value):
@@ -195,12 +209,64 @@ class JForward(_JForwardProto):
             return self.__getattr__("[]" * depth)
         raise RuntimeError("Cannot create array without a JVM")
 
-    __setattr__ = _jvmrequired
+    def __setattr__(self, key, value):
+        if key in self._SPECIAL_MODULE_NAMES:
+            object.__setattr__(self, key, value)
+        elif isinstance(value, JForward):
+            # Comes from the import machinery, which puts imported submodules
+            # onto a package when imported.
+            self._forward_attrs[value._symbol] = value
+        else:
+            raise AttributeError("JVM Must be running")
+
     __call__ = _jvmrequired
     __matmul__ = _jvmrequired
     __instancecheck__ = _jvmrequired
     __subclasscheck__ = _jvmrequired
 
+
+
+import sys
+from types import ModuleType
+
+
+import importlib.abc
+import importlib.machinery
+
+
+class JRootFinder(importlib.abc.MetaPathFinder):
+    def __init__(self, module_root_name: str):
+        self._root_name = module_root_name
+        self._loader = JRootLoader(module_root_name)
+
+    def find_spec(self, fullname, path, target=None):
+        if fullname.startswith(f'{self._root_name}.') or fullname == self._root_name:
+            spec = importlib.machinery.ModuleSpec(fullname, self._loader, is_package=True)
+            return spec
+
+
+class JRootLoader(importlib.abc.Loader):
+    def __init__(self, root_name):
+        self._root_name = root_name
+
+    def create_module(self, spec):
+        mod = self._load_module(spec.name)
+        return mod
+
+    def exec_module(self, mod):
+        # Must be implemented as part of importlib's machinery.
+        # We don't need to do anything to execute the module.
+        pass
+
+    def _load_module(self, fullname):
+        java_name = fullname[len(self._root_name)+1:]
+        if not java_name:
+            return JForward(None)
+        else:
+            return JForward(java_name)
+
+
+sys.meta_path.append(JRootFinder('jpype.jroot'))
 
 
 ########################################################

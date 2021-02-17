@@ -69,4 +69,4 @@ if hasattr(_jpype, 'bootstrap'):
    _jpype.bootstrap()
    _core.initializeResources()
 
-root = _JForward(None)
+jroot = _JForward(None)
