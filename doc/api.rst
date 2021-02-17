@@ -10,6 +10,7 @@ These functions control and start the JVM.
 .. autofunction:: jpype.shutdownJVM
 .. autofunction:: jpype.getDefaultJVMPath
 .. autofunction:: jpype.getClassPath
+.. autodecorator:: jpype.onJVMStart
 
 Class importing
 ~~~~~~~~~~~~~~~
