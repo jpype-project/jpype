@@ -2,8 +2,10 @@
 import typing
 import weakref
 
-import jpype
+from . import _jinit       # lgtm [py/import-own-module]
 import _jpype
+
+__all__ = ['JForward']
 
 # Convert a forward symbol from string to an actual symbol
 
@@ -18,7 +20,7 @@ def _lookup(symbol: typing.Optional[str]):
         p = ".".join(parts[:i + 1])
         if _jpype.isPackage(p):
             continue
-        obj = jpype.JClass(p)
+        obj = _jpype.JClass(p)
         if i + 1 == len(parts):
             return obj
         break
@@ -79,7 +81,7 @@ def _resolve(forward, value=None):
 
 
 # Hook up the resolver for all forward declarations
-@jpype.onJVMStart
+@_jinit.onJVMStart
 def _resolveAll():
     for forward in JForward._INSTANCES.values():
         _resolve(forward)
@@ -154,32 +156,26 @@ def _jvmrequired(*args):
 
 # Public view of a forward declaration
 class JForward(_JForwardProto):
-    _SPECIAL_MODULE_NAMES = {'__spec__', '__name__', '__loader__', '__package__', '__path__'}
     # Keep track of all instances of JForward so that we can always return the
     # same instance for a given symbol, and so that we can resolve these when the
     # JVM starts up.
     _INSTANCES = weakref.WeakValueDictionary()
 
     def __new__(cls, symbol: typing.Optional[str]):
+        if not _jpype.isStarted():
+            return _lookup(symbol)
         if symbol in cls._INSTANCES:
             return cls._INSTANCES[symbol]
-        return _JForwardProto.__new__(cls)
-
-    def __init__(self, symbol):
-        if symbol in self._INSTANCES and self._INSTANCES[symbol] is self:
-            # This __init__ has already been called.
-            return
-
+        self = _JForwardProto.__new__(cls)
         object.__setattr__(self, '_symbol', symbol)
         # A dictionary of JForward attributes that have been accessed on this instance.
         object.__setattr__(self, '_forward_attrs', weakref.WeakValueDictionary())
         self._INSTANCES[symbol] = self
+        return self
 
     def __getattr__(self, name):
-        if name in self._SPECIAL_MODULE_NAMES:
-            # Without raising when first trying to get special module names,
-            # importlib won't set module related attributes.
-            raise AttributeError(f'Attribute {name} not set')
+        if name.startswith('__'):
+            return object.__getattr__(self, name)
         if name in self._forward_attrs:
             return self._forward_attrs[name]
 
@@ -210,7 +206,7 @@ class JForward(_JForwardProto):
         raise RuntimeError("Cannot create array without a JVM")
 
     def __setattr__(self, key, value):
-        if key in self._SPECIAL_MODULE_NAMES:
+        if key.startswith('__'):
             object.__setattr__(self, key, value)
         elif isinstance(value, JForward):
             # Comes from the import machinery, which puts imported submodules
@@ -223,7 +219,6 @@ class JForward(_JForwardProto):
     __matmul__ = _jvmrequired
     __instancecheck__ = _jvmrequired
     __subclasscheck__ = _jvmrequired
-
 
 
 import sys
@@ -259,7 +254,7 @@ class JRootLoader(importlib.abc.Loader):
         pass
 
     def _load_module(self, fullname):
-        java_name = fullname[len(self._root_name)+1:]
+        java_name = fullname[len(self._root_name) + 1:]
         if not java_name:
             return JForward(None)
         else:
@@ -267,82 +262,3 @@ class JRootLoader(importlib.abc.Loader):
 
 
 sys.meta_path.append(JRootFinder('jpype.jroot'))
-
-
-########################################################
-
-
-def main():
-    root = JForward(None)
-    java = root.java
-    Object = java.lang.Object
-    String = java.lang.String
-    Array = java.lang.String[:]
-    Array2 = java.lang.String[:, :]
-    Integer = java.lang.Integer
-
-    try:
-        String()
-        print("fail")
-    except RuntimeError:
-        pass
-
-    try:
-        String @ object()
-        print("fail")
-    except RuntimeError:
-        pass
-
-    try:
-        String @ object()
-        print("fail")
-    except RuntimeError:
-        pass
-
-
-    # String = java.lang.String2  # this does not fail here, but will when the JVM is started
-    C = java.lang.String.CASE_INSENSITIVE_ORDER
-
-
-    def pre(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
-        return p
-
-    #
-    jpype.startJVM()
-
-
-    def post(v: java.lang.String, p=java.lang.String.CASE_INSENSITIVE_ORDER) -> java.lang.String:
-        return p
-
-
-    # Create instance
-    print(type(String("foo")) == type(jpype.java.lang.String("foo")))
-    print(String == jpype.java.lang.String)  # works
-    print(String is java.lang.String)  # works
-    print(not (String != jpype.java.lang.String))  # works
-    print(isinstance(String("foo"), String))  # works
-    print(isinstance(String("foo"), jpype.java.lang.String))
-    print(isinstance(jpype.java.lang.String("foo"), String))
-    print(not isinstance(1, String))  # works
-    print(issubclass(String, Object))  # works
-
-    print(Integer(2) > java.lang.Integer(1))  # works
-    print(java.lang.Integer(2) > Integer(1))  # works
-    print(not (Integer(2) < java.lang.Integer(1)))  # works
-
-    # Late use of static fields
-    print(C == jpype.java.lang.String.CASE_INSENSITIVE_ORDER)  # works
-    print(jpype.java.lang.String.CASE_INSENSITIVE_ORDER == C)  # fails
-
-    # Annotations and defaults
-    print(pre(1) == post(1))  # works
-    print(post(1) == post(1))  # works
-    print(pre.__annotations__['return'] == post.__annotations__['return'])  # works
-    print(pre.__annotations__['v'] == post.__annotations__['v'])  # works
-
-    print(type(Array(10)) == jpype.java.lang.String[:])  # works
-    print(type(Array2(10)) == jpype.java.lang.String[:, :])  # works
-
-
-if __name__ == "__main__":
-    main()
