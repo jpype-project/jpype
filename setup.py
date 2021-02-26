@@ -40,12 +40,12 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
                   Path('native', 'python', 'include'),
                   Path('native', 'embedded', 'include')],
-    sources=[Path('native', 'common', '*.cpp'),
-             Path('native', 'python', '*.cpp'),
-             Path('native', 'embedded', '*.cpp')], platform=platform,
+    sources=sorted(map(str, list(Path('native', 'common').glob('*.cpp'))+
+             list(Path('native', 'python').glob('*.cpp'))+
+             list(Path('native', 'embedded').glob('*.cpp')))), platform=platform,
 ))
 jpypeJar = Extension(name="org.jpype",
-                     sources=glob.glob(str(Path("native", "java", "**", "*.java")), recursive=True),
+                     sources=sorted(map(str, Path("native", "java").glob("**/*.java"))),
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
