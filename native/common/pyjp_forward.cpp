@@ -17,6 +17,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "structmember.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,17 +28,21 @@ struct PyJPForward
 	PyObject_HEAD
 	PyObject *m_Instance;
 	PyObject *m_Symbol;
-	void* m_Padding;
+	PyObject *m_Dict;
+	PyObject *m_WeakRef;
 };
 
-static int PyJPForward_init(PyJPForward *self, PyObject *args)
+static PyObject *PyJPForward_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
-	JP_PY_TRY("PyJPMonitor_init");
+	JP_PY_TRY("PyJPForward_new");
+	PyJPForward *self = (PyJPForward*) type->tp_alloc(type, 0);
+	JP_PY_CHECK();
 	self->m_Instance = NULL;
 	self->m_Symbol = NULL;
-	self->m_Padding = NULL;
-	return 0;
-	JP_PY_CATCH(-1);
+	self->m_Dict = NULL;
+	self->m_WeakRef = NULL;
+	return (PyObject*) self;
+	JP_PY_CATCH(NULL);
 }
 
 static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
@@ -56,11 +61,10 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue());
 
 	// We do not need the symbol any longer
-	if (self->m_Symbol != NULL)
-	{
-		Py_DECREF(self->m_Symbol);
-		self->m_Symbol = NULL;
-	}
+	Py_CLEAR(self->m_Symbol);
+	
+	// FIXME we need to deal with the dict and weakref if they are present
+	// here.
 
 	// Both of these cases are too large to fit in the footprint of the 
 	// forward object so we need to convert the to resolved.
@@ -72,7 +76,10 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		self->m_Instance = value;
 
 		// Polymorph to a resolved type
+		Py_DECREF(Py_TYPE(self));
 		Py_TYPE(self) = PyJPResolved_Type;
+		Py_INCREF(Py_TYPE(self));
+		
 		// Copy the Java slot over
 		JPValue *jvalue = PyJPValue_getJavaSlot(value);
 		PyJPValue_assignJavaSlot(frame, (PyObject*) self, *jvalue);
@@ -88,7 +95,9 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		JPValue *jvalue = PyJPValue_getJavaSlot(value);
 		
 		// Polymorph the type
+		Py_DECREF(Py_TYPE(self));
 		Py_TYPE(self) = Py_TYPE(value);
+		Py_INCREF(Py_TYPE(self));
 		
 		// Copy the value 
 		aself->m_Array = new JPArray(*jvalue);
@@ -126,14 +135,18 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 	
 	if (PyObject_IsInstance(value, (PyObject*) PyJPObject_Type))
 	{
-		if (Py_TYPE(value)->tp_basicsize>Py_TYPE(self)->tp_basicsize)
+		// Currently we only work on simple objects
+		if (Py_TYPE(value)->tp_basicsize!=PyJPObject_Type->tp_basicsize)
 		{
 			PyErr_SetString(PyExc_TypeError, "Forward size is mismatched");
 			return 0;
 		}
 		
 		// Polymorph the type
+		Py_DECREF(Py_TYPE(self));
 		Py_TYPE(self) = Py_TYPE(value);
+		Py_INCREF(Py_TYPE(self));
+		
 		JPValue *jvalue = PyJPValue_getJavaSlot(value);
 		PyJPValue_assignJavaSlot(frame, (PyObject*) self, *jvalue);
 		
@@ -149,6 +162,7 @@ static int PyJPForward_traverse(PyJPForward *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Instance);
 	Py_VISIT(self->m_Symbol);
+	Py_VISIT(self->m_Dict);
 	return 0;
 }
 
@@ -156,29 +170,16 @@ static int PyJPForward_clear(PyJPForward *self)
 {
 	Py_CLEAR(self->m_Instance);
 	Py_CLEAR(self->m_Symbol);
+	Py_CLEAR(self->m_Dict);
 	return 0;
 }
 
-static PyObject *PyJPForward_symbol(PyJPForward *self, PyObject *closure)
-{
-	if (self->m_Symbol==NULL)
-		Py_RETURN_NONE;
-	Py_INCREF(self->m_Symbol);
-	return self->m_Symbol;
-}
-
-static int PyJPForward_setSymbol(PyJPForward *self, PyObject *symbol)
-{
-	PyObject *old = self->m_Symbol;
-	self->m_Symbol = symbol;
-	Py_XINCREF(self->m_Symbol);
-	Py_XDECREF(old);
-	return 0;
-}
-
-static PyGetSetDef forwardGetSets[] = {
-	{"_symbol", (getter) PyJPForward_symbol, (setter) PyJPForward_setSymbol, ""},
-	{0}
+static PyMemberDef forwardMembers[] = {
+    {"__weakrefoffset__", T_PYSSIZET, offsetof(PyJPForward, m_WeakRef), READONLY},
+    {"__dictoffset__", T_PYSSIZET, offsetof(PyJPForward, m_Dict), READONLY},
+	{"_symbol", T_OBJECT, offsetof(PyJPForward, m_Symbol), 0},
+	{"_instance", T_OBJECT, offsetof(PyJPForward, m_Symbol), READONLY},
+	{0} 
 };
 
 static PyMethodDef forwardMethods[] = {
@@ -187,11 +188,11 @@ static PyMethodDef forwardMethods[] = {
 };
 
 static PyType_Slot forwardSlots[] = {
-	{ Py_tp_init, (void*) PyJPForward_init},
+	{ Py_tp_new, (void*) PyJPForward_new},
 	{ Py_tp_methods, (void*) &forwardMethods},
 	{ Py_tp_traverse, (void*) PyJPForward_traverse},
 	{ Py_tp_clear, (void*) PyJPForward_clear},
-	{ Py_tp_getset, (void*) forwardGetSets},
+	{ Py_tp_members, (void*) forwardMembers},
 	{0}
 };
 
@@ -199,7 +200,7 @@ PyType_Spec PyJPForwardSpec = {
 	"_jpype._JForward",
 	sizeof (PyJPForward),
 	0,
-	Py_TPFLAGS_DEFAULT,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	forwardSlots
 };
 

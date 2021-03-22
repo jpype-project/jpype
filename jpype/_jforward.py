@@ -1,7 +1,10 @@
 # This is the prototype for forward declarations
 import typing
 import weakref
-
+import sys
+from types import ModuleType
+import importlib.abc
+import importlib.machinery
 from . import _jinit       # lgtm [py/import-own-module]
 import _jpype
 
@@ -219,14 +222,6 @@ class JForward(_JForwardProto):
     __matmul__ = _jvmrequired
     __instancecheck__ = _jvmrequired
     __subclasscheck__ = _jvmrequired
-
-
-import sys
-from types import ModuleType
-
-
-import importlib.abc
-import importlib.machinery
 
 
 class JRootFinder(importlib.abc.MetaPathFinder):

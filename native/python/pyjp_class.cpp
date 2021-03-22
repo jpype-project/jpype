@@ -276,6 +276,21 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_tp_getset:
 				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
+			case Py_tp_traverse:
+				type->tp_traverse = (traverseproc) slot->pfunc;
+				break;
+			case Py_tp_clear:
+				type->tp_clear = (inquiry) slot->pfunc;
+				break;
+			case Py_tp_call:
+				type->tp_call = (ternaryfunc) slot->pfunc;
+				break;
+			case Py_nb_matrix_multiply:
+				heap->as_number.nb_matrix_multiply = (binaryfunc) slot->pfunc;
+				break;
+			case Py_nb_inplace_matrix_multiply:
+				heap->as_number.nb_inplace_matrix_multiply = (binaryfunc) slot->pfunc;
+				break;
 				// GCOVR_EXCL_START
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
