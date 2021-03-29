@@ -1,6 +1,6 @@
 
 # TODO: consider unpinning these?
-Pygments==2.3.1
+Pygments==2.7.4
 docutils==0.14
 commonmark==0.8.1
 recommonmark==0.5.0
