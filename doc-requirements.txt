@@ -1,9 +1,0 @@
-Pygments==2.3.1 
-setuptools==41.0.1 
-docutils==0.14 
-mock==1.0.1 
-commonmark==0.8.1 
-recommonmark==0.5.0 
-sphinx
-sphinx-rtd-theme
-readthedocs-sphinx-ext
