@@ -577,7 +577,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual(ja.length, len(ja))
 
     def testShortcut(self):
-        # Test for odd bug introduced in 1.2.1
+        # Test for odd bug introduced in 1.0.0
         # This is unlikely to be reintroduced, but we can check anyway.
         # The class of when created using the shortcut should always match the type created using the old method
 
