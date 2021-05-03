@@ -5,6 +5,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.2.2_dev0 - 2021-01-03**
+  
+  - Fixed a bug with arrays created using the short cut.  The wrong type
+    was being returned.
+
 - **1.2.1 - 2021-01-02**
 
   - Missing stub files added.

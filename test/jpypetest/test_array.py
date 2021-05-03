@@ -575,3 +575,25 @@ class ArrayTestCase(common.JPypeTestCase):
     def testLengthProperty(self):
         ja = JArray(JInt)([1, 2, 3])
         self.assertEqual(ja.length, len(ja))
+
+    def testShortcut(self):
+        # Test for odd bug introduced in 1.0.0
+        # This is unlikely to be reintroduced, but we can check anyway.
+        # The class of when created using the shortcut should always match the type created using the old method
+
+        # Check primitives
+        self.assertEqual(JBoolean[5].getClass(), JArray(JBoolean)(5).getClass())
+        self.assertEqual(JChar[5].getClass(), JArray(JChar)(5).getClass())
+        self.assertEqual(JByte[5].getClass(), JArray(JByte)(5).getClass())
+        self.assertEqual(JShort[5].getClass(), JArray(JShort)(5).getClass())
+        self.assertEqual(JInt[5].getClass(), JArray(JInt)(5).getClass())
+        self.assertEqual(JFloat[5].getClass(), JArray(JFloat)(5).getClass())
+        self.assertEqual(JDouble[5].getClass(), JArray(JDouble)(5).getClass())
+
+        # Check Objects
+        self.assertEqual(JString[5].getClass(), JArray(JString)(5).getClass())
+        self.assertEqual(JObject[5].getClass(), JArray(JObject)(5).getClass())
+
+        # Test multidimensional
+        self.assertEqual(JDouble[5, 5].getClass(), JArray(JDouble, 2)(5).getClass())
+        self.assertEqual(JObject[5, 5].getClass(), JArray(JObject, 2)(5).getClass())
