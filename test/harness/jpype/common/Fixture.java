@@ -500,4 +500,10 @@ public class Fixture
   {
     return c;
   }
+
+  public Iterable callIterable(Iterable c)
+  {
+    return c;
+  }
+
 }
