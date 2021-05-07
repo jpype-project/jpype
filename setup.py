@@ -82,6 +82,16 @@ setup(
     package_data={'jpype': ['*.pyi']},
     install_requires=['typing_extensions ; python_version< "3.8"'],
     tests_require=['pytest'],
+    extras_require={
+        'tests': [
+            'pytest',
+        ],
+        'docs': [
+            'readthedocs-sphinx-ext',
+            'sphinx',
+            'sphinx-rtd-theme',
+        ],
+    },
     cmdclass={
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
