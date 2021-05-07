@@ -180,7 +180,7 @@ public class TypeManager
   public Class<?> lookupByName(String name)
   {
     ClassLoader classLoader = JPypeContext.getInstance().getClassLoader();
-    
+
     // Handle arrays
     if (name.endsWith("[]"))
     {
@@ -397,6 +397,12 @@ public class TypeManager
 
   private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
   {
+    // Verify the class will be loadable prior to creating the class.
+    // If we fail to do this then the class may end up crashing later when the
+    // members get populated which could leave us in a bad state.
+    cls.getMethods();
+    cls.getFields();
+
     // Object classes are more work as we need the super information as well.
     // Make sure all base classes are loaded
     Class<?> superClass = cls.getSuperclass();

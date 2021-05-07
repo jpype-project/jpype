@@ -943,7 +943,7 @@ must be enabled with a compiler switch to activate. To active the logger, touch
 one of the cpp files in the native directory to mark the build as dirty, then
 compile the ``jpype`` module with: ::
 
-     python setup.py --enable-tracing devel
+     python setup.py --enable-tracing develop
 
 Once built run a short test program that demonstrates the problem and capture the
 output of the terminal to a file. This should allow the developer to isolate

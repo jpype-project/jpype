@@ -278,10 +278,16 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	JP_PY_CATCH(NULL);
 }
 
-static PyObject* PyJPModule_shutdown(PyObject* obj)
+static PyObject* PyJPModule_shutdown(PyObject* obj, PyObject* pyargs, PyObject* kwargs)
 {
 	JP_PY_TRY("PyJPModule_shutdown");
-	JPContext_global->shutdownJVM();
+	char destroyJVM = true;
+	char freeJVM = true;
+
+	if (!PyArg_ParseTuple(pyargs, "bb", &destroyJVM, &freeJVM))
+		return NULL;
+
+	JPContext_global->shutdownJVM(destroyJVM, freeJVM);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(NULL);
 }
@@ -661,7 +667,7 @@ static PyMethodDef moduleMethods[] = {
 #else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
-	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_NOARGS, ""},
+	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_VARARGS, ""},
 #endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
 	{"_hasClass", (PyCFunction) PyJPModule_hasClass, METH_O, ""},
