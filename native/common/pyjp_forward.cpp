@@ -47,10 +47,10 @@ static PyObject *PyJPForward_new(PyTypeObject *type, PyObject *pyargs, PyObject 
 
 static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 {
-		JPContext *context = PyJPModule_getContext();
+	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 
-	JP_PY_TRY("PyJPMonitor_init");
+	JP_PY_TRY("PyJPForward_resolve");
 	if (self->m_Instance != NULL)
 	{
 		PyErr_SetString(PyExc_ValueError, "instance has already been resolved");
@@ -107,12 +107,6 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		// Return the resolved object
 		Py_INCREF(self);
 		return (PyObject*) self;
-	}
-
-	if (PyObject_IsInstance(value, (PyObject*) PyJPNumberBool_Type))
-	{
-		PyErr_SetString(PyExc_TypeError, "Forward declarations of boolean not supported");
-		return 0;
 	}
 
 	if (PyObject_IsInstance(value, (PyObject*) PyJPNumberBool_Type))
