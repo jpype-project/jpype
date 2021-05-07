@@ -712,10 +712,9 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	if (PyIndex_Check(item))
 	{
 		long sz = PyLong_AsLong(item);
-		JPClass *cls = self->m_Class->newArrayType(frame, 1);
-		jvalue v;
-		v.l = (jobject) cls->newArrayOf(frame, sz);
-		return cls->convertToPythonObject(frame, v, true).keep();
+		JPArrayClass *cls = (JPArrayClass*) self->m_Class->newArrayType(frame, 1);
+		JPValue v = cls->newArray(frame, sz);
+		return cls->convertToPythonObject(frame, v.getValue(), true).keep();
 	}
 
 	if (PySlice_Check(item))

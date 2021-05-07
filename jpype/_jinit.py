@@ -23,7 +23,7 @@ JInitializers = []
 
 
 def onJVMStart(func):
-    """Register a function to be called after JVM is started
+    """Decorator to register a function to be called after JVM is started.
 
     This can be used to load module resources that depend on the JVM such as loading
     classes.  If the JVM is not started, the user supplied function is held in a list until
@@ -38,6 +38,7 @@ def onJVMStart(func):
        func (callable): a function to call when the JVM is started.
     """
     registerJVMInitializer(func)
+    return func
 
 
 def registerJVMInitializer(func):

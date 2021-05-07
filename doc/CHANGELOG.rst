@@ -8,6 +8,9 @@ Latest Changes:
 
   - Fixed issue with classes with unsatified dependencies leading to a crash
     on windows.
+  
+  - Fixed a bug with arrays created using the short cut.  The wrong type
+    was being returned.
 
 - **1.2.1 - 2021-01-02**
 
