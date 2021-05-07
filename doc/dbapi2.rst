@@ -349,7 +349,7 @@ STRING   VARCHAR                  getString           setString      str
    *     URL                      getURL                                                              
 ======== ======================== =================== ============== ================= ===============
 
-Some of these types never correpond to a SQL type but are used only to specify
+Some of these types never correspond to a SQL type but are used only to specify
 getters and setters for a particular parameter or column.
 
 Other

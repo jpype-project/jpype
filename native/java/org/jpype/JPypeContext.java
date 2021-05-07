@@ -84,6 +84,7 @@ public class JPypeContext
   private final AtomicInteger shutdownFlag = new AtomicInteger();
   private final List<Thread> shutdownHooks = new ArrayList<>();
   private final List<Runnable> postHooks = new ArrayList<>();
+  public static boolean freeResources = true;
 
   static public JPypeContext getInstance()
   {
@@ -241,20 +242,23 @@ public class JPypeContext
     {
     }
 
-    // Release all Python references
-    try
+    if (freeResources)
     {
-      JPypeReferenceQueue.getInstance().stop();
-    } catch (Throwable th)
-    {
-    }
+       // Release all Python references
+       try
+       {
+         JPypeReferenceQueue.getInstance().stop();
+       } catch (Throwable th)
+       {
+       }
 
-    // Release any C++ resources
-    try
-    {
-      this.typeManager.shutdown();
-    } catch (Throwable th)
-    {
+       // Release any C++ resources
+       try
+       {
+         this.typeManager.shutdown();
+       } catch (Throwable th)
+       {
+       }
     }
 
     // Execute post hooks

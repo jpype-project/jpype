@@ -272,3 +272,9 @@ class JClassTestCase(common.JPypeTestCase):
         String = JClass("java.lang.String")
         self.assertFalse(String._canCast(1))
         self.assertTrue(String._canCast("foo"))
+
+    def testUnsatisfied(self):
+        # This is testing what happens if a class fails to load properly due to
+        # failures.  A partial loaded class can lead to crashes.
+        with self.assertRaises(JClass("java.lang.NoClassDefFoundError")):
+            JClass("org.jpype.unsatisfied.TestClass")

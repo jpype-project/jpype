@@ -374,7 +374,7 @@ void JPContext::onShutdown()
 	m_Running = false;
 }
 
-void JPContext::shutdownJVM()
+void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 {
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
@@ -383,10 +383,19 @@ void JPContext::shutdownJVM()
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
 	// Wait for all non-demon threads to terminate
-	JP_TRACE("Destroy JVM");
+	if (destroyJVM)
 	{
+		JP_TRACE("Destroy JVM");
 		JPPyCallRelease call;
 		m_JavaVM->DestroyJavaVM();
+	}
+
+	// unload the jvm library
+	if (freeJVM)
+	{
+		JP_TRACE("Unload JVM");
+		m_JavaVM = NULL;
+		JPPlatformAdapter::getAdapter()->unloadLibrary();
 	}
 
 	JP_TRACE("Delete resources");
@@ -397,10 +406,6 @@ void JPContext::shutdownJVM()
 	}
 	m_Resources.clear();
 
-	// unload the jvm library
-	JP_TRACE("Unload JVM");
-	m_JavaVM = NULL;
-	JPPlatformAdapter::getAdapter()->unloadLibrary();
 	JP_TRACE_OUT;
 }
 
