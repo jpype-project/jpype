@@ -38,7 +38,3 @@ not be freed."""
 free_resources = True
 """ If this is False, the resources will be allowed to leak after the shutdown call.
 """
-
-free_jvm = True
-""" If this is False, the shared library will not be unloaded which leaks memory.
-"""

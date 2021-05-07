@@ -96,10 +96,11 @@ def deprecated(*args):
 
 
 def isJVMStarted():
-    """ This method is horribly named.  It should be named isJVMRunning as
-    isJVMStarted would seem to imply that the JVM was started at some 
-    point without regard to whether it has been shutdown.
-    """
+    """ True if the JVM is currently running."""
+    # TODO This method is horribly named.  It should be named isJVMRunning as
+    # isJVMStarted would seem to imply that the JVM was started at some
+    # point without regard to whether it has been shutdown.
+    #
     return _jpype.isStarted()
 
 
@@ -336,7 +337,7 @@ def shutdownJVM():
         raise RuntimeError("Shutdown must be called from main thread")
     if _jpype.isStarted():
         _jpype.JPypeContext.freeResources = jpype.config.free_resources
-    _jpype.shutdown(jpype.config.destroy_jvm, jpype.config.free_jvm)
+    _jpype.shutdown(jpype.config.destroy_jvm, False)
 
 
 # In order to shutdown cleanly we need the reference queue stopped
