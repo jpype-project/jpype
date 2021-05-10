@@ -209,11 +209,9 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				PyMemberDef *members = (PyMemberDef*) slot->pfunc;
 				for (const PyMemberDef *memb = members; memb->name != NULL; memb++)
 				{
-					printf("Copy %s\n", memb->name);
-					if (strcmp(memb->name, "__weaklistoffset__") == 0)
+					if (strcmp(memb->name, "__weakrefoffset__") == 0)
 					{
 						type->tp_weaklistoffset = memb->offset;
-						printf("test\n");
 					}
 					if (strcmp(memb->name, "__dictoffset__") == 0)
 					{

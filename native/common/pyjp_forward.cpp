@@ -58,22 +58,22 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 	}
 	
 	PyTypeObject *prior = Py_TYPE(self);
-	PyTypeObject *revised = Py_TYPE(value); 
+	PyTypeObject *requested = Py_TYPE(value); 
 
 	// Clear any existing Java slot (for safety, may not be necessary)
 	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue());
 
 	// We do not need the symbol any longer
 	Py_CLEAR(self->m_Symbol);
-	
-	// FIXME we need to deal with the dict and weakref if they are present
-	// here.
+
+    // As we are changing the layout of memory.  We need to be prepared to 
+    // move the internal object structure dict and weaklist.	
 	Py_ssize_t priorDictOffset = prior->tp_dictoffset;
-	Py_ssize_t revisedDictOffset = revised->tp_dictoffset;
+	Py_ssize_t requestedDictOffset = requested->tp_dictoffset;
 	Py_ssize_t priorWeakOffset = prior->tp_weaklistoffset;
-	Py_ssize_t revisedWeakOffset = revised->tp_weaklistoffset;
-	printf("prior %ld %ld\n", priorDictOffset, priorWeakOffset);
-	printf("revised %ld %ld\n", revisedDictOffset, revisedWeakOffset);
+	Py_ssize_t requestedWeakOffset = requested->tp_weaklistoffset;
+	PyObject* dict =  *(PyObject **) ((char *)self + priorDictOffset);
+	PyObject* weak =  *(PyObject **) ((char *)self + priorWeakOffset);
 		
 	// Both of these cases are too large to fit in the footprint of the 
 	// forward object so we need to convert the to resolved.
@@ -92,7 +92,9 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		// Copy the Java slot over
 		JPValue *jvalue = PyJPValue_getJavaSlot(value);
 		PyJPValue_assignJavaSlot(frame, (PyObject*) self, *jvalue);
-
+		
+		// No need to move dict and weak as JResolved is same as JForward
+		
 		// Return the resolved object
 		Py_INCREF(self);
 		return (PyObject*) self;
@@ -112,6 +114,10 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		aself->m_Array = new JPArray(*jvalue);
 		aself->m_View = NULL;
 		PyJPValue_assignJavaSlot(frame, (PyObject*) self, *jvalue);
+		
+		// Move the dict and weak to their proper locations
+		*(PyObject **) ((char *)self + requestedDictOffset) = dict;
+		*(PyObject **) ((char *)self + requestedWeakOffset) = weak; 
 		
 		// Return the resolved object
 		Py_INCREF(self);
@@ -139,7 +145,7 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 	if (PyObject_IsInstance(value, (PyObject*) PyJPObject_Type))
 	{
 		// Currently we only work on simple objects
-		if (Py_TYPE(value)->tp_basicsize!=PyJPObject_Type->tp_basicsize)
+		if (prior->tp_basicsize<requested->tp_basicsize)
 		{
 			PyErr_SetString(PyExc_TypeError, "Forward size is mismatched");
 			return 0;
@@ -152,6 +158,10 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		
 		JPValue *jvalue = PyJPValue_getJavaSlot(value);
 		PyJPValue_assignJavaSlot(frame, (PyObject*) self, *jvalue);
+
+		// Move the dict and weak to their proper locations
+		*(PyObject **) ((char *)self + requestedDictOffset) = dict;
+		*(PyObject **) ((char *)self + requestedWeakOffset) = weak; 
 		
 		// Return the resolved object
 		Py_INCREF(self);
