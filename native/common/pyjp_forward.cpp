@@ -49,7 +49,7 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 {
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-
+	
 	JP_PY_TRY("PyJPForward_resolve");
 	if (self->m_Instance != NULL)
 	{
@@ -57,6 +57,9 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 		return NULL;
 	}
 	
+	PyTypeObject *prior = Py_TYPE(self);
+	PyTypeObject *revised = Py_TYPE(value); 
+
 	// Clear any existing Java slot (for safety, may not be necessary)
 	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue());
 
@@ -65,7 +68,13 @@ static PyObject* PyJPForward_resolve(PyJPForward *self, PyObject* value)
 	
 	// FIXME we need to deal with the dict and weakref if they are present
 	// here.
-
+	Py_ssize_t priorDictOffset = prior->tp_dictoffset;
+	Py_ssize_t revisedDictOffset = revised->tp_dictoffset;
+	Py_ssize_t priorWeakOffset = prior->tp_weaklistoffset;
+	Py_ssize_t revisedWeakOffset = revised->tp_weaklistoffset;
+	printf("prior %ld %ld\n", priorDictOffset, priorWeakOffset);
+	printf("revised %ld %ld\n", revisedDictOffset, revisedWeakOffset);
+		
 	// Both of these cases are too large to fit in the footprint of the 
 	// forward object so we need to convert the to resolved.
 	if (PyObject_IsInstance(value, (PyObject*) PyJPPackage_Type) 
