@@ -27,9 +27,9 @@ to be dangerous.
 
     package org.pkg;
 
-    publc class BaseClass
+    public class BaseClass
     {
-       public callMember(int i)
+       public void callMember(int i)
        {}
     }
 
@@ -49,11 +49,11 @@ to be dangerous.
        // Python name conflict
        public void pass() {}
 
-       public void throwsException throws java.lang.Exception {}
+       public void throwsException() throws java.lang.Exception {}
 
        // Overloaded methods
-       public call(int i) {}
-       public call(double d) {}
+       public void call(int i) {}
+       public void call(double d) {}
     }
 
 Starting JPype
