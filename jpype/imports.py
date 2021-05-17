@@ -197,7 +197,11 @@ class _JImportLoader:
             # so we produce a meaningful diagnositic.
             try:
                 # Use forname because it give better diagnostics
-                _jpype._java_lang_Class.forName(name, True, _jpype.JPypeClassLoader)
+                cls = _jpype._java_lang_Class.forName(name, True, _jpype.JPypeClassLoader)
+
+                # This code only is hit if an error was not thrown
+                if cls.getModifiers() & 1 == 0:
+                    raise ImportError("Class `%s` is not public" % name)
                 raise ImportError("Class `%s` was found but was not expected" % name)
             # Not found is acceptable
             except Exception as ex:
