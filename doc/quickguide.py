@@ -122,7 +122,7 @@ print("""
 
     publc class BaseClass
     {
-       public callMember(int i)
+       public void callMember(int i)
        {}
     }
 
@@ -142,11 +142,11 @@ print("""
        // Python name conflict
        public void pass() {}
 
-       public void throwsException throws java.lang.Exception {}
+       public void throwsException() throws java.lang.Exception {}
 
        // Overloaded methods
-       public call(int i) {}
-       public call(double d) {}
+       public void call(int i) {}
+       public void call(double d) {}
     }
 """)
 
