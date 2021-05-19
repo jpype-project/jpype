@@ -5,7 +5,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.3.0 - 2021-05-19**
-- **1.3.0_dev0 - 2021-05-19**
 
   - Add additional diagnositics for importing of non-public class.
 
