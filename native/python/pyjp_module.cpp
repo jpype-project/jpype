@@ -727,7 +727,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "1.2.2");
+	PyModule_AddStringConstant(module, "__version__", "1.3.0_dev0");
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
