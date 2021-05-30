@@ -528,7 +528,6 @@ PyTracebackObject *tb_create(
 	frame->f_trace = NULL;
 	frame->f_valuestack = NULL;
 	frame->f_localsplus[0] = NULL;
-	frame->f_stackdepth = 0;
 
 	// Allow GC on the frame
 	PyObject_GC_Track(frame);
