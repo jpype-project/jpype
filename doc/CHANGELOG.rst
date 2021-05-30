@@ -6,6 +6,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.2.2_dev0 - 2021-01-03**
 
+  - Fixes for memory issues found when upgrading to Python 3.10 beta.
+
   - Add additional diagnositics for importing of non-public class.
 
   - Fixed issue with classes with unsatified dependencies leading to a crash

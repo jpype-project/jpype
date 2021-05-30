@@ -490,43 +490,69 @@ PyTracebackObject *tb_create(
 		const char* funcname,
 		int linenum)
 {
-	// Create a code for this frame.
+	// Create a code for this frame. (ref count is 1)
 	PyCodeObject *code = PyCode_NewEmpty(filename, funcname, linenum);
+
+	// If we don't get the code object there is no point
+	if (code == NULL)
+		return NULL;
+
 	// Create a frame for the traceback.
-	PyFrameObject *frame = (PyFrameObject*) PyFrame_Type.tp_alloc(&PyFrame_Type, 0);
-	frame->f_back = NULL;
+	PyFrameObject *frame = (PyFrameObject*) PyObject_GC_New(PyFrameObject, &PyFrame_Type);
+
+	// We could fail to get a frame
+	if (frame == NULL)
+		return NULL;
+
+	// This code must match the pattern in cpython/Objects/frameobject.c:frame_dealloc()
+	// Every required field should be 0 or properly set and referenced.
+	
+	// f_back
 	if (last_traceback != NULL)
 	{
 		frame->f_back = last_traceback->tb_frame;
 		Py_INCREF(frame->f_back);
 	}
+	else
+		frame->f_back = NULL;
+	// f_builtins
 	frame->f_builtins = dict;
 	Py_INCREF(frame->f_builtins);
-	frame->f_code = (PyCodeObject*) code;
-	frame->f_executing = 0;
-	frame->f_gen = NULL;
+	// f_globals
 	frame->f_globals = dict;
 	Py_INCREF(frame->f_globals);
-	frame->f_iblock = 0;
-	frame->f_lasti = 0;
-	frame->f_lineno = 0;
+	// f_locals
 	frame->f_locals = NULL;
-	frame->f_localsplus[0] = 0;
-	frame->f_stacktop = NULL;
+	// f_code (steal the reference)
+	frame->f_code = (PyCodeObject*) code;
 	frame->f_trace = NULL;
-	frame->f_valuestack = 0;
-#if PY_VERSION_HEX>=0x03070000
-	frame->f_trace_lines = 0;
-	frame->f_trace_opcodes = 0;
-#endif
+	frame->f_valuestack = NULL;
+	frame->f_localsplus[0] = NULL;
+	frame->f_stackdepth = 0;
+
+	// Allow GC on the frame
+	PyObject_GC_Track(frame);
 
 	// Create a traceback
-	PyTracebackObject *traceback = (PyTracebackObject*)
-			PyTraceBack_Type.tp_alloc(&PyTraceBack_Type, 0);
-	traceback->tb_frame = frame;
+	PyTracebackObject *traceback = (PyTracebackObject*) 
+		        PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
+
+	// We could fail in process
+	if (traceback == NULL)
+	{
+		Py_DECREF(frame);
+		return NULL;
+	}
+
+	// Set the fields
+	traceback->tb_frame = frame; // Steal the reference from frame
 	traceback->tb_lasti = frame->f_lasti;
 	traceback->tb_lineno = linenum;
+	Py_XINCREF(last_traceback);
 	traceback->tb_next = last_traceback;
+
+	// Allow GC on the object
+	PyObject_GC_Track(traceback);
 	return traceback;
 }
 

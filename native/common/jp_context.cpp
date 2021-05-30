@@ -273,11 +273,6 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
 			"(JLjava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
 
-	// Find the native library
-	JPPyObject import = JPPyObject::call(PyImport_AddModule("importlib.util"));
-	JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
-	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
-
 	// Launch
 	jvalue val[4];
 	val[0].j = (jlong) this;
@@ -287,10 +282,14 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	if (!m_Embedded)
 	{
-		PyObject *import = PyImport_AddModule("importlib.util");
-		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import, "find_spec", "s", "_jpype"));
+		JPPyObject import = JPPyObject::call(PyImport_AddModule("importlib.util"));
+		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
 		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
 		val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
+		import.incref();  // The documentation specifies that PyImport_AddModule must return a 
+	                  // new reference, but that is not happening in Python 3.10
+	                  // so we are triggering a gc assertion failure.  To prevent
+	                  // the failure manually up the reference counter here.
 	}
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
