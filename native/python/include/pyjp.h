@@ -158,6 +158,8 @@ PyObject  *PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases);
 PyObject  *PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems );
 void       PyJPValue_free(void* obj);
 void       PyJPValue_finalize(void* obj);
+int        PyJPValue_traverse(PyObject *self, visitproc visit, void *arg);
+int        PyJPValue_clear(PyObject *self);
 
 // Generic methods that operate on any object with a Java slot
 PyObject  *PyJPValue_str(PyObject* self);

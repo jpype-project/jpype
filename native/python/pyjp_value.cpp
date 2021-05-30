@@ -43,6 +43,11 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	JP_PY_TRY("PyJPValue_alloc");
 	// Modification from Python to add size elements
 	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
+	if (!PyType_IS_GC(type))
+	{
+		printf("Fail %s\n", type->tp_name);
+		return NULL;
+	}
 	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
 			: (PyObject *) PyObject_MALLOC(size);
 	if (obj == NULL)
@@ -153,6 +158,16 @@ void PyJPValue_finalize(void* obj)
 		*value = JPValue();
 	}
 	JP_PY_CATCH_NONE();
+}
+
+int PyJPValue_traverse(PyObject *self, visitproc visit, void *arg)
+{
+	return 0;
+}
+
+int PyJPValue_clear(PyObject *self)
+{
+	return 0;
 }
 
 /** This is the way to convert an object into a python string. */

@@ -169,6 +169,8 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 		type->tp_itemsize = type->tp_base->tp_itemsize;
 	type->tp_alloc = PyJPValue_alloc;
 	type->tp_free = PyJPValue_free;
+	type->tp_clear = PyJPValue_clear;
+	type->tp_traverse = PyJPValue_traverse;
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 	for (PyType_Slot* slot = spec->slots; slot->slot; slot++)
 	{
@@ -988,7 +990,7 @@ static PyType_Spec classSpec = {
 	"_jpype._JClass",
 	sizeof (PyJPClass),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	classSlots
 };
 

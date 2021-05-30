@@ -55,8 +55,10 @@ static void PyJPMethod_dealloc(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_dealloc");
 	PyObject_GC_UnTrack(self);
+	Py_TRASHCAN_BEGIN(self, PyJPMethod_dealloc)
 	PyJPMethod_clear(self);
 	Py_TYPE(self)->tp_free(self);
+	Py_TRASHCAN_END
 	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 
@@ -394,11 +396,7 @@ void PyJPMethod_initType(PyObject* module)
 	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, &PyFunction_Type));
-	unsigned long flags = PyFunction_Type.tp_flags;
-	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
-	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
-	PyFunction_Type.tp_flags = flags;
+	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpec(&methodSpec);
 	JP_PY_CHECK();
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
