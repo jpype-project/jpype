@@ -396,8 +396,11 @@ void PyJPMethod_initType(PyObject* module)
 	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
-	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpec(&methodSpec);
-	JP_PY_CHECK();
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, &PyFunction_Type));
+	unsigned long flags = PyFunction_Type.tp_flags;
+	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
+	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
+	PyFunction_Type.tp_flags = flags;	JP_PY_CHECK();
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
 	JP_PY_CHECK();

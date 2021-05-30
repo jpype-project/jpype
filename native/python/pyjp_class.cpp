@@ -137,7 +137,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	// Python lacks a FromSpecWithMeta so we are going to have to fake it here.
 	PyTypeObject* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
 	PyHeapTypeObject* heap = (PyHeapTypeObject*) type;
-	type->tp_flags = spec->flags | Py_TPFLAGS_HEAPTYPE | Py_TPFLAGS_HAVE_GC;
+	type->tp_flags = spec->flags | Py_TPFLAGS_HEAPTYPE;
 	type->tp_name = spec->name;
 	const char *s = strrchr(spec->name, '.');
 	if (s == NULL)
@@ -169,8 +169,6 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 		type->tp_itemsize = type->tp_base->tp_itemsize;
 	type->tp_alloc = PyJPValue_alloc;
 	type->tp_free = PyJPValue_free;
-	type->tp_clear = PyJPValue_clear;
-	type->tp_traverse = PyJPValue_traverse;
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 	for (PyType_Slot* slot = spec->slots; slot->slot; slot++)
 	{
@@ -284,6 +282,17 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				JP_RAISE_PYTHON();
 				// GCOVR_EXCL_STOP
 		}
+	}
+
+	// GC objects are required to implement clear and traverse, this is a
+	// safety check to make sure we implemented all properly.   This error should
+	// never happen in production code.
+	if (PyType_IS_GC(type) && (
+			type->tp_traverse==NULL ||
+			type->tp_clear==NULL))
+	{
+		PyErr_Format(PyExc_TypeError, "GC requirements failed for %s", spec->name);
+		JP_RAISE_PYTHON();
 	}
 	PyType_Ready(type);
 	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
