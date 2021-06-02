@@ -50,6 +50,13 @@ extern "C"
 {
 #endif
 
+// Needed to write common code with older versions
+#ifndef Py_TRASHCAN_BEGIN
+// Introduced in Python 3.8
+#define Py_TRASHCAN_BEGIN(X, Y)
+#define Py_TRASHCAN_END
+#endif
+
 PyMODINIT_FUNC PyInit__jpype();
 
 /**
@@ -158,6 +165,8 @@ PyObject  *PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases);
 PyObject  *PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems );
 void       PyJPValue_free(void* obj);
 void       PyJPValue_finalize(void* obj);
+int        PyJPValue_traverse(PyObject *self, visitproc visit, void *arg);
+int        PyJPValue_clear(PyObject *self);
 
 // Generic methods that operate on any object with a Java slot
 PyObject  *PyJPValue_str(PyObject* self);

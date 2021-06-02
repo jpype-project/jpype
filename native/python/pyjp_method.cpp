@@ -55,8 +55,10 @@ static void PyJPMethod_dealloc(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_dealloc");
 	PyObject_GC_UnTrack(self);
+	Py_TRASHCAN_BEGIN(self, PyJPMethod_dealloc)
 	PyJPMethod_clear(self);
 	Py_TYPE(self)->tp_free(self);
+	Py_TRASHCAN_END
 	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 

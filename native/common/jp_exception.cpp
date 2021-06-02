@@ -490,43 +490,66 @@ PyTracebackObject *tb_create(
 		const char* funcname,
 		int linenum)
 {
-	// Create a code for this frame.
+	// Create a code for this frame. (ref count is 1)
 	PyCodeObject *code = PyCode_NewEmpty(filename, funcname, linenum);
-	// Create a frame for the traceback.
-	PyFrameObject *frame = (PyFrameObject*) PyFrame_Type.tp_alloc(&PyFrame_Type, 0);
-	frame->f_back = NULL;
+
+	// If we don't get the code object there is no point
+	if (code == NULL)
+		return NULL;
+
+	// This is a bit of a kludge.  Python lacks a way to directly create
+	// a frame from a code object except when creating from the threadstate.
+	//
+	// In reviewing Python implementation, I find that the only element accessed
+	// in the thread state was the previous frame to link to.  Because frame 
+	// objects change a lot between different Python versions, trying to 
+	// replicate the actions of setting up a frame is difficult to keep portable.
+	//
+	// Python 3.10 introduces the additional requirement that the global
+	// dictionary supplied must have a __builtins__.  We can do this once
+	// when create the module.
+	//
+	// If instead we create a thread state and point the field it needs to the
+	// previous frame we create the frames using the defined API.  Much more 
+	// portable, but we have to create a big (uninitialized object) each time we
+	// want to pass in the previous frame.
+	PyThreadState state;
 	if (last_traceback != NULL)
-	{
-		frame->f_back = last_traceback->tb_frame;
-		Py_INCREF(frame->f_back);
-	}
-	frame->f_builtins = dict;
-	Py_INCREF(frame->f_builtins);
-	frame->f_code = (PyCodeObject*) code;
-	frame->f_executing = 0;
-	frame->f_gen = NULL;
-	frame->f_globals = dict;
-	Py_INCREF(frame->f_globals);
-	frame->f_iblock = 0;
-	frame->f_lasti = 0;
-	frame->f_lineno = 0;
-	frame->f_locals = NULL;
-	frame->f_localsplus[0] = 0;
-	frame->f_stacktop = NULL;
-	frame->f_trace = NULL;
-	frame->f_valuestack = 0;
-#if PY_VERSION_HEX>=0x03070000
-	frame->f_trace_lines = 0;
-	frame->f_trace_opcodes = 0;
-#endif
+		state.frame = last_traceback->tb_frame;
+	else
+		state.frame = NULL;
+
+	// Create a frame for the traceback.
+	PyFrameObject *frame = PyFrame_New(&state, code, dict, NULL);
+	
+	// frame just borrows the reference rather than claiming it
+	// so we need to get rid of the extra reference here.
+	Py_DECREF(code);
+	
+	// If we don't get the frame object there is no point
+	if (frame == NULL)
+		return NULL;
 
 	// Create a traceback
-	PyTracebackObject *traceback = (PyTracebackObject*)
-			PyTraceBack_Type.tp_alloc(&PyTraceBack_Type, 0);
-	traceback->tb_frame = frame;
+	PyTracebackObject *traceback = (PyTracebackObject*) 
+		        PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
+
+	// We could fail in process
+	if (traceback == NULL)
+	{
+		Py_DECREF(frame);
+		return NULL;
+	}
+
+	// Set the fields
+	traceback->tb_frame = frame; // Steal the reference from frame
 	traceback->tb_lasti = frame->f_lasti;
 	traceback->tb_lineno = linenum;
+	Py_XINCREF(last_traceback);
 	traceback->tb_next = last_traceback;
+
+	// Allow GC on the object
+	PyObject_GC_Track(traceback);
 	return traceback;
 }
 

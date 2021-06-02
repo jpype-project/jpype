@@ -23,7 +23,6 @@ import logging
 from os import path
 import sys
 import unittest
-import platform
 
 CLASSPATH = None
 fast = False
@@ -34,7 +33,9 @@ def version(v):
 
 
 def requirePythonAfter(required):
-    pversion = tuple([int(i) for i in platform.python_version_tuple()])
+    import re
+    import platform
+    pversion = tuple([int(re.search(r'\d+',i).group()) for i in platform.python_version_tuple()])
 
     def g(func):
         def f(self):
