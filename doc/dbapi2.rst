@@ -376,7 +376,40 @@ so that the custom return type accurately reflects the column type.
           # Custom return converter here
           return rc
    JSON = JSONType("JSON")
-  
+
+
+Interactions with prepared statements
+-------------------------------------
+
+Certain calls can be problematic for dbapi2 depending on driver.  In
+particular, SQL calls which invalidate the state of the connection will issue
+an exception when the connection is used.   In HSQLDB the statement
+``cur.execute('shutdown')`` invalidates the connection which when the statement
+is then automatically closed will then produce an exception.
+
+This exception is due to a conflict between dbapi2, Java, and HSQLDB
+specifications.  Dbapi2 requires that statements be executed as prepared
+statements, Java requires that closing a statement yields no action if the
+connect is already closed, and HSQLBD sets the ``isValid`` to false but not
+``isClosed``.  Thus executing a shutdown through dbapi2 would be expected to
+close the prepared statement on an invalid connection resulting in an error.
+
+We can address these sort of driver specific behaviors by applying a customizer
+to the Java class to add additional behaviors.
+
+.. code-block:: python
+        @jpype.JImplementationFor("java.sql.PreparedStatement")
+        class MyStatement(object):
+            @jpype.JOverride(sticky=True, rename='_close')
+            def close(self):
+                if not self.getConnection().isValid(100):
+                     return
+                return self._close()
+
+Alternatively we can access the ``java.sql.Connection`` directly and call the
+shutdown routine using an unprepared statement.  Though that would require
+accessing private fields.
+
 
 Conclusion
 ==========
