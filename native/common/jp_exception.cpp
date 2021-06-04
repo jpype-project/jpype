@@ -497,41 +497,38 @@ PyTracebackObject *tb_create(
 	if (code == NULL)
 		return NULL;
 
-	// Create a frame for the traceback.
-	PyFrameObject *frame = (PyFrameObject*) PyObject_GC_New(PyFrameObject, &PyFrame_Type);
+	// This is a bit of a kludge.  Python lacks a way to directly create
+	// a frame from a code object except when creating from the threadstate.
+	//
+	// In reviewing Python implementation, I find that the only element accessed
+	// in the thread state was the previous frame to link to.  Because frame 
+	// objects change a lot between different Python versions, trying to 
+	// replicate the actions of setting up a frame is difficult to keep portable.
+	//
+	// Python 3.10 introduces the additional requirement that the global
+	// dictionary supplied must have a __builtins__.  We can do this once
+	// when create the module.
+	//
+	// If instead we create a thread state and point the field it needs to the
+	// previous frame we create the frames using the defined API.  Much more 
+	// portable, but we have to create a big (uninitialized object) each time we
+	// want to pass in the previous frame.
+	PyThreadState state;
+	if (last_traceback != NULL)
+		state.frame = last_traceback->tb_frame;
+	else
+		state.frame = NULL;
 
-	// We could fail to get a frame
+	// Create a frame for the traceback.
+	PyFrameObject *frame = PyFrame_New(&state, code, dict, NULL);
+	
+	// frame just borrows the reference rather than claiming it
+	// so we need to get rid of the extra reference here.
+	Py_DECREF(code);
+	
+	// If we don't get the frame object there is no point
 	if (frame == NULL)
 		return NULL;
-
-	// This code must match the pattern in cpython/Objects/frameobject.c:frame_dealloc()
-	// Every required field should be 0 or properly set and referenced.
-	
-	// f_back
-	if (last_traceback != NULL)
-	{
-		frame->f_back = last_traceback->tb_frame;
-		Py_INCREF(frame->f_back);
-	}
-	else
-		frame->f_back = NULL;
-	// f_builtins
-	frame->f_builtins = dict;
-	Py_INCREF(frame->f_builtins);
-	// f_globals
-	frame->f_globals = dict;
-	Py_INCREF(frame->f_globals);
-	// f_locals
-	frame->f_locals = NULL;
-	// f_code (steal the reference)
-	frame->f_code = (PyCodeObject*) code;
-	frame->f_trace = NULL;
-	frame->f_valuestack = NULL;
-	frame->f_localsplus[0] = NULL;
-	frame->f_stackdepth = 0;
-
-	// Allow GC on the frame
-	PyObject_GC_Track(frame);
 
 	// Create a traceback
 	PyTracebackObject *traceback = (PyTracebackObject*) 

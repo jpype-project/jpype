@@ -50,6 +50,13 @@ extern "C"
 {
 #endif
 
+// Needed to write common code with older versions
+#ifndef Py_TRASHCAN_BEGIN
+// Introduced in Python 3.8
+#define Py_TRASHCAN_BEGIN(X, Y)
+#define Py_TRASHCAN_END
+#endif
+
 PyMODINIT_FUNC PyInit__jpype();
 
 /**

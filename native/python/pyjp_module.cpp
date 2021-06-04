@@ -728,6 +728,12 @@ PyMODINIT_FUNC PyInit__jpype()
 	Py_INCREF(module);
 	PyJPModule = module;
 	PyModule_AddStringConstant(module, "__version__", "1.3.0");
+	
+	// Our module will be used for PyFrame object and it is a requirement that
+	// we have a builtins in our dictionary.
+	PyObject *builtins = PyEval_GetBuiltins();
+	Py_INCREF(builtins);
+	PyModule_AddObject(module, "__builtins__", builtins);
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
