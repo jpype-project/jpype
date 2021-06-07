@@ -390,7 +390,7 @@ is then automatically closed will then produce an exception.
 This exception is due to a conflict between dbapi2, Java, and HSQLDB
 specifications.  Dbapi2 requires that statements be executed as prepared
 statements, Java requires that closing a statement yields no action if the
-connect is already closed, and HSQLBD sets the ``isValid`` to false but not
+connection is already closed, and HSQLBD sets the ``isValid`` to false but not
 ``isClosed``.  Thus executing a shutdown through dbapi2 would be expected to
 close the prepared statement on an invalid connection resulting in an error.
 
