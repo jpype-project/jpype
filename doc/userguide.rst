@@ -742,8 +742,9 @@ Details on the standard conversions provided by JPype are given in the section
 Java casting
 ------------
 
-To access a casting operation we use the casting ``JObject`` wrapper.
-JObject accepts two arguments.  The first argument is the object to convert and
+To access a casting operation we use the casting ``JObject`` wrapper.  
+For example, ``JObject(object, Type)`` would produce a copy with specificed type.
+The first argument is the object to convert and
 the second is the type to cast to.  The second argument should always be a Java
 type specified using a class wrapper, a Java class instance, or a string.
 Casting will also add a hidden class argument to the resulting object such that
@@ -757,6 +758,24 @@ Java list that contains the elements of the original Python sequence.  In
 general JPype constructors only provide access the Java constructor methods
 that are defined in the Java documentation.  Casting on the other hand is
 entirely the domain of whatever JPype has defined including user defined casts.
+
+As ``JObject`` syntax is long and does not look much like Java syntax, the
+Python matmul operator is overloaded on JPype types such that one can use the
+``@`` operator to cast to a specific Java type.   In Java, one would write
+``(Type)@object`` to cast the variable ``object`` to ``Type``.  In Python, this
+would be written as ``Type@object``.   This can also be applied to array types
+``JLong[:]@[1,2,3]``, collection types ``Iterable@[1,2,3]`` or Java functors
+``DoubleUnaryOperator@(lambda x:x*2)``.  The result of the casting operator
+will be a Java object with the desired type or raise a ``TypeError`` if the
+cast or conversion is not possible.   For Python objects, the Java object will
+generally be a copy as it is not possible to reflect changes in an array back
+to Python.  If one needs to retrieve the resulting changes keep a copy of the
+converted array before passing it.  For an existing Java object, casting
+changes the resolution type for the object.  This can be very useful when
+trying to call a specific method overload.   For example, if we have a Java
+``a=String("hello")`` and there were an overload of the method ``foo`` between
+``String`` and ``Object`` we would need to select the overload with
+``foo(java.lang.Object@a)``.  
 
 .. _JObject:
 
@@ -778,11 +797,18 @@ indicate that the object is not available.  The equivalent concept in Python is
 ``None``.  Thus all methods that accept any object type that permit a null will
 accept None as an augment with implicit conversion.  However, sometime it is
 necessary to pass an explicit type to the method resolution.  To achieve this
-in JPype use ``JObject(None, type)`` which will create a null pointer with the
+in JPype use ``Type@None`` which will create a null pointer with the
 desired type.  To test if something is null we have to compare the handle to
 None.  This unfortunately trips up some code quality checkers.  The idiom in
 Python is ``obj is None``, but as this only matches things that Python
 considers identical, we must instead use ``obj==None``.
+
+Casting ``None`` is use to specify types when calling between overloads
+with variadic arguments such as ``foo(Object a)`` and ``foo(Object... many)``.
+If we want to call ``foo(None)`` is is ambiguous whether we intend to call the
+first with a null object or the second with a null array.  We can resolve the
+ambiguity with ``foo(java.lang.Object@None)`` or
+``foo(java.lang.Object[:]@None)``
 
 Type enforcement appears in three different places within JPype.  These are
 whenever a Java method is called, whenever a Java field is set, and whenever
@@ -1080,6 +1106,17 @@ sequence which hold the elements of the array.  If the members of the
 initializer sequence are not Java members then each will be converted.  If
 any element cannot be converted a ``TypeError`` will be raised.
 
+As a shortcut the ``[]`` operator can be used to specify an array type or
+an array instance.   For example, ``JInt[5]`` will allocate an array instance
+of Java ints with length 5.  ``JInt[:]`` will create a type instance with 
+an unspecific length which can be used for the casting operator.  To create
+an array instance with multiple dimensions we would use ``JInt[5,10]`` 
+which would create a rectangular array which was 5 by 10.   To create a
+jagged array we would substitute ``:`` for the final dimensions.  So
+``JInt[5,:]`` is a length 5 array of an array of ``int[]``.  Multidimensional
+array types are specificed like ``JInt[:,:,:]`` would be a Java type
+``int[][][]``.  This applied to both primitive and object types.
+
 JArray is an abstract base class for all Java classes that are produced.
 Thus, one can test if something is an array class using ``issubclass``
 and if Java object is an array using ``isinstance``.
@@ -1145,6 +1182,30 @@ Java arrays are currently missing some of the requirements to act as a
 to use the Java array utilities class ``java.util.Arrays`` as it has many
 methods that provide additional functionality.  Java arrays do not support any
 additional mathematical operations at this time.
+
+Creating a Java array is also required when pass by reference syntax is required.
+For example, if a Java function takes an array, modifies it and we want to
+retrieve those values.  In Java, all parameters are pass by value, but the contents
+of a container like an array can be modified which gives the appearance of 
+pass by reference.  For example.
+
+.. code-block:: java
+
+     public void modifies(int[] v) {
+         for (int i=0; i<v.length; ++i)
+              v[i]*=2;
+     }
+
+.. code-block:: python
+
+     orig = [1,2,3]
+     obj = jpype.JInt[:](orig)
+     a.modifies(obj)   #  modifies the array by multiply all by 2
+     orig[:] = obj     #  copy all the values back from Java to Python
+
+If we were to call modifies on the original Python list directly, the temporary copy
+would have been modified so the results would have been lost.
+
 
 Buffer classes
 --------------

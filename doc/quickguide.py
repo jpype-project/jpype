@@ -43,14 +43,6 @@ def python(s):
 """ % s
 
 
-def generic(s):
-    return """
-.. code-block::
-
-    %s
-""" % s
-
-
 def entry(Desc=None, Java=None, Python=None, Notes=None):
     global footnotes, footnotecounter
     if not Java:
@@ -296,7 +288,7 @@ entry("Checking if Java object wrapper", None,
 # Casting
 entry("Casting to a specific type",
       java("BaseClass b = (BaseClass)myObject;"),
-      generic("b = (BaseClass) @ myObject"),
+      python("b = (BaseClass) @ myObject"),
       "Matmul(@) is used as the casting operator.")
 endSection()
 
@@ -703,7 +695,7 @@ entry("Extending classes", None, None,
 
 entry("Lambdas",
         java('DoubleUnaryOperator u = (p->p*2);'),
-        generic('u=DoubleUnaryOperator@(lambda x: x*2)'),
+        python('u=DoubleUnaryOperator@(lambda x: x*2)'),
         'Any Java functional interface can take a lambda or callable.')
 endSection()
 
