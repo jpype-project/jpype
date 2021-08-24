@@ -3172,6 +3172,36 @@ JPype Known limitations
 This section lists those limitations that are unlikely to change, as they come
 from external sources.
 
+Annotations
+-----------
+
+Some frameworks such as Spring use Java annotations to indicate specific
+actions.  These may be either runtime annotations or compile time annotations.
+Occasionally while using JPype someone would like to add a Java annotation to a
+JProxy method so that a framework like Spring can pick up that annotation.
+
+JPype uses the Java supplied ``Proxy`` to implement an interface.  That API
+does not support addition of a runtime annotation to a method or class.  Thus,
+all methods and classes when probed with reflection that are implemented in
+Python will come back with no annotations.   
+
+Further, the majority of annotation magic within Java is actually performed at
+compile time.  This is accomplished using an annotation processor.  When a
+class or method is annotated, the compiler checks to see if there is an
+annotation processor which then can produce new code or modify the class
+annotations.  As this is a compile time process, even if annotations were added
+by Python to a class they would still not be active as the corresponding
+compilation phase would not have been executed.   
+
+This is a limitation of the implementation of annotations by the Java virtual
+machine.  It is technically possible though the use of specialized code
+generation with the ASM library or other code generation to add a runtime
+annotation.  Or through exploits of the Java virtual machine annotation
+implementation one can add annotation to existing Java classes.  But these
+annotations are unlikely to be useful. As such JPype will not be able to
+support class or method annotations.
+
+
 Restarting the JVM
 -------------------
 
