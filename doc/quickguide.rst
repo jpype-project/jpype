@@ -27,7 +27,7 @@ to be dangerous.
 
     package org.pkg;
 
-    publc class BaseClass
+    public class BaseClass
     {
        public void callMember(int i)
        {}
