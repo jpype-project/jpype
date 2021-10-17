@@ -271,7 +271,7 @@ const char* JPByteType::getBufferFormat()
 	return "b";
 }
 
-ssize_t JPByteType::getItemSize()
+Py_ssize_t JPByteType::getItemSize()
 {
 	return sizeof (jbyte);
 }

@@ -294,7 +294,7 @@ const char* JPShortType::getBufferFormat()
 	return "h";
 }
 
-ssize_t JPShortType::getItemSize()
+Py_ssize_t JPShortType::getItemSize()
 {
 	return sizeof (jshort);
 }

@@ -333,7 +333,7 @@ const char* JPBooleanType::getBufferFormat()
 	return "?";
 }
 
-ssize_t JPBooleanType::getItemSize()
+Py_ssize_t JPBooleanType::getItemSize()
 {
 	return sizeof (jboolean);
 }
