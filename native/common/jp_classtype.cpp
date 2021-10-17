@@ -36,11 +36,10 @@ JPClassType::~JPClassType()
 JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 {
 	JP_TRACE_IN("JPClass::findJavaConversion");
-	if (nullConversion->matches(this, match) != JPMatch::_none)
-		return match.type;
-	if (objectConversion->matches(this, match) != JPMatch::_none)
-		return match.type;
-	if (classConversion->matches(this, match) != JPMatch::_none)
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| classConversion->matches(this, match)
+			|| hintsConversion->matches(this, match))
 		return match.type;
 	return match.type = JPMatch::_none;
 	JP_TRACE_OUT;
@@ -52,5 +51,6 @@ void JPClassType::getConversionInfo(JPConversionInfo &info)
 	nullConversion->getInfo(this, info);
 	objectConversion->getInfo(this, info);
 	classConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
