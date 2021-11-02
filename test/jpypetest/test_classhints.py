@@ -24,6 +24,21 @@ class MyImpl(object):
         pass
 
 
+class ClassProxy:
+    def __init__(self, proxy):
+        self.proxy = proxy
+
+
+class ArrayProxy:
+    def __init__(self, proxy):
+        self.proxy = proxy
+
+
+class StringProxy:
+    def __init__(self, proxy):
+        self.proxy = proxy
+
+
 class ClassHintsTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -85,3 +100,30 @@ class ClassHintsTestCase(common.JPypeTestCase):
         cht.call(MyImpl())
         self.assertIsInstance(cht.input, self.MyCustom)
         self.assertIsInstance(cht.input.arg, MyImpl)
+
+    def testClassCustomizer(self):
+
+        @jpype.JConversion("java.lang.Class", instanceof=ClassProxy)
+        def ClassCustomizer(jcls, obj):
+            return obj.proxy
+
+        hints = jpype.JClass('java.lang.Class')._hints
+        self.assertTrue(ClassProxy in hints.implicit)
+
+    def testArrayCustomizer(self):
+
+        @jpype.JConversion(jpype.JInt[:], instanceof=ArrayProxy)
+        def ArrayCustomizer(jcls, obj):
+            return obj.proxy
+
+        hints = jpype.JClass(jpype.JInt[:])._hints
+        self.assertTrue(ArrayProxy in hints.implicit)
+
+    def testStringCustomizer(self):
+
+        @jpype.JConversion("java.lang.String", instanceof=StringProxy)
+        def STringCustomizer(jcls, obj):
+            return obj.proxy
+
+        hints = jpype.JClass("java.lang.String")._hints
+        self.assertTrue(StringProxy in hints.implicit)
