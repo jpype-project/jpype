@@ -452,7 +452,13 @@ class Connection(object):
         self._jcx = jconnection
         # Required by PEP 249
         # https://www.python.org/dev/peps/pep-0249/#commit
-        self._jcx.setAutoCommit(False)
+        try:
+            # Some driver do not support this feature.
+            # https://github.com/jpype-project/jpype/issues/1003
+            self._jcx.setAutoCommit(False)
+        except Exception as ex:
+            if ex.getClass().getSimpleName() != 'SQLFeatureNotSupportedException':
+                raise ex
 
         # Handle defaults
         if adapters is _default:

@@ -8,6 +8,9 @@ Latest Changes:
 
   - Support for user defined conversions for java.lang.Class and array types.
 
+  - Fixed issue with ssize_t on Windows for Python 3.10.
+
+
 - **1.3.0 - 2021-05-19**
 
   - Fixes for memory issues found when upgrading to Python 3.10 beta.

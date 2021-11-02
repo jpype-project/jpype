@@ -295,7 +295,7 @@ const char* JPFloatType::getBufferFormat()
 	return "f";
 }
 
-ssize_t JPFloatType::getItemSize()
+Py_ssize_t JPFloatType::getItemSize()
 {
 	return sizeof (jfloat);
 }
