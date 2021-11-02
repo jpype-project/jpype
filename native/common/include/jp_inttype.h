@@ -89,7 +89,7 @@ public:
 	virtual void getView(JPArrayView& view) override;
 	virtual void releaseView(JPArrayView& view) override;
 	virtual const char* getBufferFormat() override;
-	virtual ssize_t getItemSize() override;
+	virtual Py_ssize_t getItemSize() override;
 	virtual void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;

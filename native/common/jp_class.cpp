@@ -424,7 +424,6 @@ void JPClass::getConversionInfo(JPConversionInfo &info)
 	JP_TRACE_OUT;
 }
 
-
 //</editor-fold>
 //<editor-fold desc="hierarchy" defaultstate="collapsed">
 

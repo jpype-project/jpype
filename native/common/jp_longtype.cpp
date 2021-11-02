@@ -297,7 +297,7 @@ const char* JPLongType::getBufferFormat()
 	return "q";
 }
 
-ssize_t JPLongType::getItemSize()
+Py_ssize_t JPLongType::getItemSize()
 {
 	return sizeof (jlong);
 }
