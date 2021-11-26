@@ -67,14 +67,16 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	// found, and one to hold the test of the next overload.
 	JPMethodMatch match = bestMatch;
 
-	// Check each overload in order (the TypeManager orders them by priority
+
+    bool is_first_match = true;
+    // Check each overload in order (the TypeManager orders them by priority
 	// according to Java overload rules).
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
 
 		JP_TRACE("Trying to match", current->toString());
-		current->matches(frame, match, callInstance, arg);
+        current->matches(frame, match, callInstance, arg);
 
 		JP_TRACE("  match ended", match.m_Type);
 		if (match.m_Type == JPMatch::_exact)
@@ -88,9 +90,10 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			continue;
 
 		// If this is the first match then make it the best.
-		if (bestMatch.m_Overload == 0)
+		if (is_first_match)
 		{
 			bestMatch = match;
+            is_first_match = false;
 			continue;
 		}
 

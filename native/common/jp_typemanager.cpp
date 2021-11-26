@@ -27,6 +27,7 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
 	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
 	m_PopulateMembers = frame.GetMethodID(cls, "populateMembers", "(Ljava/lang/Class;)V");
+    m_InterfaceParameterCount = frame.GetMethodID(cls, "interfaceParameterCount", "(Ljava/lang/Class;)I");
 
 	// The object instance will be loaded later
 	JP_TRACE_OUT;
@@ -96,4 +97,14 @@ void JPTypeManager::populateMembers(JPClass* cls)
 	val[0].l = (jobject) cls->getJavaClass();
 	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);
 	JP_TRACE_OUT;
+}
+
+int JPTypeManager::interfaceParameterCount(JPClass *cls)
+{
+    JP_TRACE_IN("JPTypeManager::interfaceParameterCount");
+    JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+    jvalue val[1];
+    val[0].l = (jobject) cls->getJavaClass();
+    return frame.CallIntMethodA(m_JavaTypeManager.get(), m_InterfaceParameterCount, val);
+    JP_TRACE_OUT;
 }

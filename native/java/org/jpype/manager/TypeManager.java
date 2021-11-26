@@ -301,6 +301,34 @@ public class TypeManager
   }
 
   /**
+   * Returns the number of arguments an interface only unimplemented method accept.
+   *
+   * @param interfaceClass The class of the interface
+   * @return the number of arguments the only unimplemented method of the interface accept.
+   */
+  public int interfaceParameterCount(Class<?> interfaceClass) {
+    ClassDescriptor classDescriptor = classMap.get(interfaceClass);
+    if (classDescriptor.functional_interface_parameter_count != -1) {
+      return classDescriptor.functional_interface_parameter_count;
+    }
+    int abstractMethodParameterCount = -1;
+    for (Method method : interfaceClass.getMethods()) {
+      if (Modifier.isAbstract(method.getModifiers())) {
+        if (abstractMethodParameterCount != -1) {
+          classDescriptor.functional_interface_parameter_count = -2;
+          return -2;
+        }
+        abstractMethodParameterCount = method.getParameterCount();
+      }
+    }
+    if (abstractMethodParameterCount == -1) {
+      abstractMethodParameterCount = -2;
+    }
+    classDescriptor.functional_interface_parameter_count = abstractMethodParameterCount;
+    return abstractMethodParameterCount;
+  }
+
+  /**
    * Get a class for an object.
    *
    * @param object is the object to interrogate.

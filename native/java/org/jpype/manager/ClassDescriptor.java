@@ -46,6 +46,7 @@ public class ClassDescriptor
   public int methodCounter = 0;
   public long[] fields;
   public long anonymous;
+  public int functional_interface_parameter_count = -1; // -1 = unset; -2 = not a functional interface
 
   ClassDescriptor(Class cls, long classPtr)
   {

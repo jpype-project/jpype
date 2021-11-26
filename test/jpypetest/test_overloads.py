@@ -190,3 +190,33 @@ class OverloadTestCase(common.JPypeTestCase):
             pass
         else:
             self.assertEqual('B', testdefault.defaultMethod())
+
+    def testFunctionalInterfacesWithDifferentSignatures(self):
+        test2 = self.__jp.Test2()
+        self.assertEqual('NoArgs', test2.testFunctionalInterfaces(lambda: 'NoArgs'))
+        self.assertEqual('SingleArg', test2.testFunctionalInterfaces(lambda a: 'SingleArg'))
+        self.assertEqual('TwoArg', test2.testFunctionalInterfaces(lambda a, b: 'TwoArg'))
+
+    def testFunctionalInterfacesWithDefaults(self):
+        def my_fun(x, y=None):
+            return 'my_fun'
+
+        def my_fun_vargs(x, *vargs):
+            return 'my_fun_vargs'
+
+        def my_fun_kwargs(x, **kwargs):
+            return 'my_fun_kwargs'
+
+        def my_fun_kw(*, keyword_arg=None):
+            return 'my_fun_kw'
+
+        def my_fun_pos_only(x, /, y):
+            return 'my_fun_pos_only'
+        test2 = self.__jp.Test2()
+        self.assertRaisesRegex(
+            TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun)
+        self.assertRaisesRegex(
+            TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun_vargs)
+        self.assertEqual('SingleArg', test2.testFunctionalInterfaces(my_fun_kwargs))
+        self.assertEqual('NoArgs', test2.testFunctionalInterfaces(my_fun_kw))
+        self.assertEqual('TwoArg', test2.testFunctionalInterfaces(my_fun_pos_only))
