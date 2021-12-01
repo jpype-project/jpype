@@ -40,8 +40,8 @@ public:
 	{
 		if (!PyCallable_Check(match.object))
 			return match.type = JPMatch::_none;
-        // Modified from https://stackoverflow.com/a/1117735
 
+        // Modified from https://stackoverflow.com/a/1117735
         bool has_parameter_count = false;
         // Get the __code__ attribute of the function, which contains details about the function
         // Note: __code__ is func_code in Python 2.x
@@ -91,7 +91,7 @@ public:
             }
             Py_DECREF(function_code_object);
         }
-
+        PyErr_Clear();
         if (!has_parameter_count) {
 		    match.conversion = this;
 		    match.closure = cls;

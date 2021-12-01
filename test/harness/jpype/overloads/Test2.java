@@ -19,20 +19,23 @@ import java.util.List;
 
 public class Test2
 {
-    interface NoArg {
+    @FunctionalInterface
+    public interface NoArg {
         public String apply();
     }
 
-    interface SingleArg {
+    @FunctionalInterface
+    public interface SingleArg {
         public String apply(int a);
     }
 
-    interface TwoArg {
+    @FunctionalInterface
+    public interface TwoArg {
         public String apply(int a, int b);
     }
 
     public String testFunctionalInterfaces(NoArg noArg) {
-        return "NoArg";
+        return "NoArgs";
     }
 
     public String testFunctionalInterfaces(SingleArg singleArg) {
