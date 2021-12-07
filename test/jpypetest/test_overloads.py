@@ -210,10 +210,16 @@ class OverloadTestCase(common.JPypeTestCase):
         def my_fun_kw(*, keyword_arg=None):
             return 'my_fun_kw'
 
+        class my_fun_class:
+            def __call__(self):
+                return 'my_fun_class'
+
         test2 = self.__jp.Test2()
         self.assertRaisesRegex(
             TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun)
         self.assertRaisesRegex(
             TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun_vargs)
+        self.assertRaisesRegex(
+            TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun_class)
         self.assertEqual('SingleArg', test2.testFunctionalInterfaces(my_fun_kwargs))
         self.assertEqual('NoArgs', test2.testFunctionalInterfaces(my_fun_kw))
