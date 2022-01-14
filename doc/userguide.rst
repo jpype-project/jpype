@@ -888,7 +888,7 @@ of bits up or down relative to their storage size.
 
 JPype has mapped each of the primitive types into Python classes.  To avoid
 conflicts with Python, JPype has named each primitive with a capital letter
-``J`` followed by the primiti ve name starting with an upper case letter.
+``J`` followed by the primitive name starting with an upper case letter.
 
 .. _JBoolean:
 
