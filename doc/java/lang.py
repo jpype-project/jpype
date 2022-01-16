@@ -25,7 +25,7 @@ class AutoCloseable:
 
     .. code-block:: python
 
-        from java.nio.files import Files, Paths
+        from java.nio.file import Files, Paths
         with Files.newInputStream(Paths.get("foo")) as fd:
           # operate on the input stream
 
