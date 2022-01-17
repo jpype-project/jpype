@@ -286,6 +286,7 @@ void JPypeException::toPython()
 {
 	string mesg;
 	JP_TRACE_IN("JPypeException::toPython");
+	JP_TRACE("err", PyErr_Occurred());
 	try
 	{
 		// Check the signals before processing the exception
@@ -297,6 +298,11 @@ void JPypeException::toPython()
 		mesg = getMessage();
 		JP_TRACE(m_Error.l);
 		JP_TRACE(mesg.c_str());
+
+		// We already have a Python error on the stack.
+		if (PyErr_Occurred())
+			return;
+
 		if (m_Type == JPError::_java_error)
 		{
 			JP_TRACE("Java exception");

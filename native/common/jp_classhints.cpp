@@ -469,6 +469,11 @@ public:
 		// If it is a buffer we only need to test the first item in the list
 		JPPySequence seq = JPPySequence::use(match.object);
 		jlong length = seq.size();
+		if (length == -1 && PyErr_Occurred())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
 		match.type = JPMatch::_implicit;
 		if (length > 0)
 		{
@@ -491,6 +496,7 @@ public:
 
 	virtual jvalue convert(JPMatch &match) override
 	{
+		JP_TRACE_IN("JPConversionBuffer::convert");
 		JPJavaFrame frame(*match.frame);
 		jvalue res;
 		JPArrayClass *acls = (JPArrayClass *) match.closure;
@@ -500,6 +506,7 @@ public:
 		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
 		res.l = frame.keep(array);
 		return res;
+		JP_TRACE_OUT;
 	}
 }  _bufferConversion;
 
@@ -516,6 +523,11 @@ public:
 		JPClass *componentType = acls->getComponentType();
 		JPPySequence seq = JPPySequence::use(match.object);
 		jlong length = seq.size();
+		if (length==-1 && PyErr_Occurred())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
 		match.type = JPMatch::_implicit;
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{

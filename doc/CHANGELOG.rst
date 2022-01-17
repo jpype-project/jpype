@@ -5,6 +5,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.3.1_dev0 - 2021-06-05**
+  - Fix issue with numpy arrays with no dimensions resulting in crash..
+
 - **1.3.0 - 2021-05-19**
 
   - Fixes for memory issues found when upgrading to Python 3.10 beta.
