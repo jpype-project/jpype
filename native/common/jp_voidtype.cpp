@@ -122,7 +122,7 @@ const char* JPVoidType::getBufferFormat()
 	return NULL;
 }
 
-ssize_t JPVoidType::getItemSize()
+Py_ssize_t JPVoidType::getItemSize()
 {
 	return 0;
 }

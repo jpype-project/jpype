@@ -312,7 +312,7 @@ const char* JPDoubleType::getBufferFormat()
 	return "d";
 }
 
-ssize_t JPDoubleType::getItemSize()
+Py_ssize_t JPDoubleType::getItemSize()
 {
 	return sizeof (jdouble);
 }

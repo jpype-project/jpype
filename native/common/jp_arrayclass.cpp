@@ -43,6 +43,7 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 			|| charArrayConversion->matches(this, match)
 			|| byteArrayConversion->matches(this, match)
 			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
 	JP_TRACE("None");
@@ -57,6 +58,7 @@ void JPArrayClass::getConversionInfo(JPConversionInfo &info)
 	charArrayConversion->getInfo(this, info);
 	byteArrayConversion->getInfo(this, info);
 	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 

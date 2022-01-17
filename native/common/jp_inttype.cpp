@@ -298,7 +298,7 @@ const char* JPIntType::getBufferFormat()
 	return "i";
 }
 
-ssize_t JPIntType::getItemSize()
+Py_ssize_t JPIntType::getItemSize()
 {
 	return sizeof (jfloat);
 }
