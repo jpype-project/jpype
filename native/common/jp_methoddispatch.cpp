@@ -61,22 +61,23 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		// Anything better than explicit constitutes a hit on the cache
 		if (bestMatch.m_Type > JPMatch::_explicit)
 			return true;
+		else
+			// bad match so forget the overload.
+			bestMatch.m_Overload = 0;
 	}
 
 	// We need two copies of the match.  One to hold the best match we have
 	// found, and one to hold the test of the next overload.
 	JPMethodMatch match = bestMatch;
 
-
-    bool is_first_match = true;
-    // Check each overload in order (the TypeManager orders them by priority
+	// Check each overload in order (the TypeManager orders them by priority
 	// according to Java overload rules).
 	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
 
 		JP_TRACE("Trying to match", current->toString());
-        current->matches(frame, match, callInstance, arg);
+		current->matches(frame, match, callInstance, arg);
 
 		JP_TRACE("  match ended", match.m_Type);
 		if (match.m_Type == JPMatch::_exact)
@@ -90,10 +91,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			continue;
 
 		// If this is the first match then make it the best.
-		if (is_first_match)
+		if (bestMatch.m_Overload == 0)
 		{
 			bestMatch = match;
-            is_first_match = false;
 			continue;
 		}
 
