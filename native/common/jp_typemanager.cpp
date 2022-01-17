@@ -101,10 +101,10 @@ void JPTypeManager::populateMembers(JPClass* cls)
 
 int JPTypeManager::interfaceParameterCount(JPClass *cls)
 {
-    JP_TRACE_IN("JPTypeManager::interfaceParameterCount");
-    JPJavaFrame frame = JPJavaFrame::outer(m_Context);
-    jvalue val[1];
-    val[0].l = (jobject) cls->getJavaClass();
-    return frame.CallIntMethodA(m_JavaTypeManager.get(), m_InterfaceParameterCount, val);
-    JP_TRACE_OUT;
+	JP_TRACE_IN("JPTypeManager::interfaceParameterCount");
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	jvalue val[1];
+	val[0].l = (jobject) cls->getJavaClass();
+	return frame.CallIntMethodA(m_JavaTypeManager.get(), m_InterfaceParameterCount, val);
+	JP_TRACE_OUT;
 }
