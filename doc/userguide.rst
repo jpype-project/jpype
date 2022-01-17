@@ -92,11 +92,11 @@ set the class path, start the JVM, remove all the type declarations, and you are
 
    # Copy in the patterns from the guide to replace the example code
    db = Database("our_records")
-   with  db.connect() as DatabaseConnection:
-      c.runQuery()
-      while c.hasRecords():
-          record = db.nextRecord()
-          ...
+   with db.connect() as DatabaseConnection:
+       c.runQuery()
+       while c.hasRecords():
+           record = db.nextRecord()
+           ...
 
 Launch it in the interactive window.  You can get back to programming in Python
 once you get a good night sleep.
@@ -136,11 +136,11 @@ in your serialized object.
    from java.nio.file import Files, Paths
    from java.io import ObjectInputStream
 
-   with Files.newInputStream(Paths.get("myobject.ser") as stream:
-      ois = new ObjectInputStream(stream)
-      obj = ois.readObject()
+   with Files.newInputStream(Paths.get("myobject.ser")) as stream:
+       ois = ObjectInputStream(stream)
+       obj = ois.readObject()
 
-   print(obj) # prints org.bigstuff.MyObject@7382f612
+   print(obj)  # prints org.bigstuff.MyObject@7382f612
 
 It appears that the structure is loaded.  The problematic structure requires you
 call the getData method with the correct index.
@@ -172,7 +172,7 @@ example and watch what happens.
 
 .. code-block:: python
 
-   import matplot.pyplot as plt
+   import matplotlib.pyplot as plt
    plt.plot(d)
    plt.show()
 
@@ -227,13 +227,13 @@ Based on the previous examples, you start by defining a monitor class
 
   @JImplements(Monitor)
   class HeartMonitor:
-     def __init__(self):
-        self.readings = []
-     @JOverride
-     def onMeasurement(self, measurement):
-        self.readings.append([measurement.getTime(), measurement.getHeartRate()])
-     def getResults(self):
-        return np.array(self.readings)
+      def __init__(self):
+          self.readings = []
+      @JOverride
+      def onMeasurement(self, measurement):
+          self.readings.append([measurement.getTime(), measurement.getHeartRate()])
+      def getResults(self):
+          return np.array(self.readings)
 
 There is a bit to unpack here.  You have implemented a Java class from within Python.
 The Java implementation is simply an ordinary Python class which has be
@@ -762,7 +762,7 @@ entirely the domain of whatever JPype has defined including user defined casts.
 As ``JObject`` syntax is long and does not look much like Java syntax, the
 Python matmul operator is overloaded on JPype types such that one can use the
 ``@`` operator to cast to a specific Java type.   In Java, one would write
-``(Type)@object`` to cast the variable ``object`` to ``Type``.  In Python, this
+``(Type)object`` to cast the variable ``object`` to ``Type``.  In Python, this
 would be written as ``Type@object``.   This can also be applied to array types
 ``JLong[:]@[1,2,3]``, collection types ``Iterable@[1,2,3]`` or Java functors
 ``DoubleUnaryOperator@(lambda x:x*2)``.  The result of the casting operator
@@ -1656,28 +1656,28 @@ Here is an example:
 .. code-block:: python
 
   try :
-        # Code that throws a java.lang.RuntimeException
+      # Code that throws a java.lang.RuntimeException
   except java.lang.RuntimeException as ex:
-        print("Caught the runtime exception : ", str(ex))
-        print(ex.stacktrace())
+      print("Caught the runtime exception : ", str(ex))
+      print(ex.stacktrace())
 
 Multiple java exceptions can be caught together or separately:
 
 .. code-block:: python
 
   try:
-        # ...
+      # ...
   except (java.lang.ClassCastException, java.lang.NullPointerException) as ex:
-        print("Caught multiple exceptions : ", str(ex))
-        print(ex.stacktrace())
+      print("Caught multiple exceptions : ", str(ex))
+      print(ex.stacktrace())
   except java.lang.RuntimeException as ex:
-        print("Caught runtime exception : ", str(ex))
-        print(ex.stacktrace())
-  except jpype.JException:
-        print("Caught base exception : ", str(ex))
-        print(ex.stacktrace())
+      print("Caught runtime exception : ", str(ex))
+      print(ex.stacktrace())
+  except jpype.JException as ex:
+      print("Caught base exception : ", str(ex))
+      print(ex.stacktrace())
   except Exception as ex:
-        print("Caught python exception :", str(ex))
+      print("Caught python exception :", str(ex))
 
 Exceptions can be raised in proxies to throw an exception back to Java.
 
@@ -1903,7 +1903,7 @@ should be attached to the Java Runtime object.  The following pattern is used:
     class MyShutdownHook:
         @JOverride
         def run(self):
-           # perform any required shutdown activities
+            # perform any required shutdown activities
 
     java.lang.Runtime.getRuntime().addShutdownHook(Thread(MyShutdownHook()))
 
@@ -1975,16 +1975,16 @@ Example taken from JPype ``java.util.Map`` customizer:
   @_jcustomizer.JImplementationFor('java.util.Map')
   class _JMap:
       def __jclass_init__(self):
-         Mapping.register(self)
+          Mapping.register(self)
 
       def __len__(self):
-         return self.size()
+          return self.size()
 
       def __iter__(self):
-         return self.keySet().iterator()
+          return self.keySet().iterator()
 
       def __delitem__(self, i):
-         return self.remove(i)
+          return self.remove(i)
 
 
 The name of the class does not matter for the purposes of customizer though it
@@ -2355,19 +2355,19 @@ dispatch:
 
     @JImplements(JavaInterface)
     class MyImpl:
-       @JOverride
-       def callOverloaded(self, *args):
-         # always use the wild card args when implementing a dispatch
-         if len(args)==2:
-            return self.callMethod1(*args)
-         if len(args)==1 and isinstance(args[0], JString):
-            return self.callMethod2(*args)
-         raise RuntimeError("Incorrect arguments")
+        @JOverride
+        def callOverloaded(self, *args):
+            # always use the wild card args when implementing a dispatch
+            if len(args)==2:
+                return self.callMethod1(*args)
+            if len(args)==1 and isinstance(args[0], JString):
+                return self.callMethod2(*args)
+            raise RuntimeError("Incorrect arguments")
 
        def callMethod1(self, a1, a2):
-         # ...
+            # ...
        def callMethod2(self, jstr):
-         # ...
+            # ...
 
 Multiple interfaces
 -------------------
@@ -2388,7 +2388,7 @@ achieve this, specify the interface using a string and add the keyword argument
 
     @JImplements("org.foo.JavaInterface", deferred=True)
     class MyImpl:
-       # ...
+        # ...
 
 
 Deferred proxies are not checked at declaration time, but instead at the time
@@ -2444,27 +2444,27 @@ First, with an object:
 
 .. code-block:: python
 
-  class C :
-          def testMethod(self) :
-                  return 42
+  class C:
+      def testMethod(self):
+          return 42
 
-          def testMethod2(self) :
-                  return "Bar"
+      def testMethod2(self):
+          return "Bar"
 
   c = C()  # create an instance
-  proxy = JProxy("ITestInterface2", inst=c) # Convert it into a proxy
+  proxy = JProxy("ITestInterface2", inst=c)  # Convert it into a proxy
 
 or you can use a dictionary.
 
 .. code-block:: python
 
-    def _testMethod() :
-       return 32
+    def _testMethod():
+        return 32
 
-    def _testMethod2() :
-       return "Fooo!"
+    def _testMethod2():
+        return "Fooo!"
 
-    d = { 'testMethod' : _testMethod, 'testMethod2' : _testMethod2, }
+    d = { 'testMethod': _testMethod, 'testMethod2': _testMethod2, }
     proxy = JProxy("ITestInterface2", dict=d)
 
 
@@ -2548,19 +2548,19 @@ launches it from within Python.
     from javax.swing import *
 
     def createAndShowGUI():
-	frame = JFrame("HelloWorldSwing")
-	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
-	label = JLabel("Hello World")
-	frame.getContentPane().add(label)
-	frame.pack()
-	frame.setVisible(True)
+        frame = JFrame("HelloWorldSwing")
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+        label = JLabel("Hello World")
+        frame.getContentPane().add(label)
+        frame.pack()
+        frame.setVisible(True)
 
     # Start an event loop thread to handling gui events
     @jpype.JImplements(java.lang.Runnable)
     class Launch:
-	@jpype.JOverride
-	def run(self):
-	    createAndShowGUI()
+        @jpype.JOverride
+        def run(self):
+            createAndShowGUI()
     javax.swing.SwingUtilities.invokeLater(Launch())
 
 
@@ -2658,12 +2658,12 @@ keep the synchronization on as long as the object is kept alive.  For example,
     mySharedList = java.util.ArrayList()
 
     # Give the list to another thread that will be adding items
-    otherThread,setList(mySharedList)
+    otherThread.setList(mySharedList)
 
     # Lock the list so that we can access it without interference
     with synchronized(mySharedList):
-       if not mySharedList.isEmpty():
-         ... # process elements
+        if not mySharedList.isEmpty():
+            ...  # process elements
     # Resource is unlocked once we leave the block
 
 The Python ``with`` statement is used to control the scope.  Do not
@@ -2695,26 +2695,26 @@ results.  For example:
 
 .. code-block:: python
 
-  def limit(method, timeout):
-  """ Convert a Java method to asynchronous call with a specified timeout. """
-      def f(*args):
-           @jpype.JImplements(java.util.concurrent.Callable)
-           class g:
-               @jpype.JOverride
-               def call(self):
-                   return method(*args)
-           future = java.util.concurrent.FutureTask(g())
-           java.lang.Thread(future).start()
-           try:
-               timeunit = java.util.concurrent.TimeUnit.MILLISECONDS
-               return future.get(int(timeout*1000), timeunit)
-           except java.util.concurrent.TimeoutException as ex:
-               future.cancel(True)
-           raise RuntimeError("canceled", ex)
-      return f
+    def limit(method, timeout):
+        """ Convert a Java method to asynchronous call with a specified timeout. """
+        def f(*args):
+            @jpype.JImplements(java.util.concurrent.Callable)
+            class g:
+                @jpype.JOverride
+                def call(self):
+                    return method(*args)
+            future = java.util.concurrent.FutureTask(g())
+            java.lang.Thread(future).start()
+            try:
+                timeunit = java.util.concurrent.TimeUnit.MILLISECONDS
+                return future.get(int(timeout*1000), timeunit)
+            except java.util.concurrent.TimeoutException as ex:
+                future.cancel(True)
+            raise RuntimeError("canceled", ex)
+        return f
 
-      print(limit(java.lang.Thread.sleep, timeout=1)(200))
-      print(limit(java.lang.Thread.sleep, timeout=1)(20000))
+    print(limit(java.lang.Thread.sleep, timeout=1)(200))
+    print(limit(java.lang.Thread.sleep, timeout=1)(20000))
 
 Here we have limited the execution time of a Java call.
 
@@ -3268,7 +3268,7 @@ this block as a fixture at the start of the test suite.
         faulthandler.enable()
         faulthandler.disable()
     except:
-       pass
+        pass
 
 This code enables fault handling and then returns the default handlers which
 will point back to those set by Java.
