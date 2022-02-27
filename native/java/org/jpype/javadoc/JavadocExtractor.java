@@ -115,7 +115,11 @@ public class JavadocExtractor
     {
       Javadoc documentation = new Javadoc();
       XPath xPath = XPathFactory.newInstance().newXPath();
-      Node description = toFragment((Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE));
+      // Javadoc 8-13
+      Node n = (Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE);
+      if (n == null)  // Javadoc 14+
+        n = (Node) xPath.compile("//section[@class='description']").evaluate(doc, XPathConstants.NODE);
+      Node description = toFragment(n);
       if (description != null)
       {
         documentation.descriptionNode = description;
