@@ -61,6 +61,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		// Anything better than explicit constitutes a hit on the cache
 		if (bestMatch.m_Type > JPMatch::_explicit)
 			return true;
+		else
+			// bad match so forget the overload.
+			bestMatch.m_Overload = 0;
 	}
 
 	// We need two copies of the match.  One to hold the best match we have
