@@ -6,6 +6,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.3.1_dev0 - 2021-06-05**
 
+  - Fix issue with numpy arrays with no dimensions resulting in crash..
+
   - Support for user defined conversions for java.lang.Class and array types.
 
   - Fixed issue with ssize_t on Windows for Python 3.10.
