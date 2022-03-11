@@ -23,9 +23,6 @@ from setuptools import setup
 from setuptools import Extension
 import glob
 
-if sys.version_info[0] < 3 and sys.version_info[1] < 5:
-    raise RuntimeError("JPype requires Python 3.5 or later")
-
 import setupext
 
 
