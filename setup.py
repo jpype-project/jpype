@@ -23,9 +23,6 @@ from setuptools import setup
 from setuptools import Extension
 import glob
 
-if sys.version_info[0] < 3 and sys.version_info[1] < 5:
-    raise RuntimeError("JPype requires Python 3.5 or later")
-
 import setupext
 
 
@@ -40,8 +37,8 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
                   Path('native', 'python', 'include'),
                   Path('native', 'embedded', 'include')],
-    sources=sorted(map(str, list(Path('native', 'common').glob('*.cpp'))+
-             list(Path('native', 'python').glob('*.cpp'))+
+    sources=sorted(map(str, list(Path('native', 'common').glob('*.cpp')) +
+             list(Path('native', 'python').glob('*.cpp')) +
              list(Path('native', 'embedded').glob('*.cpp')))), platform=platform,
 ))
 jpypeJar = Extension(name="org.jpype",
@@ -61,6 +58,7 @@ setup(
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
     maintainer_email='cooperate@originell.org',
+    python_requires=">=3.5",
     url='https://github.com/jpype-project/jpype',
     platforms=[
         'Operating System :: Microsoft :: Windows',
