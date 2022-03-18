@@ -289,7 +289,7 @@ void JPDoubleType::getView(JPArrayView& view)
 	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "d";
+	view.m_Buffer.format = "=d";
 	view.m_Buffer.itemsize = sizeof (jdouble);
 }
 
@@ -309,7 +309,7 @@ void JPDoubleType::releaseView(JPArrayView& view)
 
 const char* JPDoubleType::getBufferFormat()
 {
-	return "d";
+	return "=d";
 }
 
 Py_ssize_t JPDoubleType::getItemSize()

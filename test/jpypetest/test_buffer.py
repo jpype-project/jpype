@@ -75,8 +75,7 @@ class BufferTestCase(common.JPypeTestCase):
         data = [1, 2, 3, 4, 5]
         ja = JArray(JInt)(data)
         b = memoryview(ja)  # Create a view
-        with self.assertRaises(TypeError):
-            b[0] = 123  # Alter the memory using the view
+        self.assertTrue(b.readonly)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testSlice(self):
@@ -162,7 +161,7 @@ class BufferTestCase(common.JPypeTestCase):
     def executeIntTest(self, jtype, limits, size, dtype, code):
         data = np.random.randint(limits[0], limits[1], size=size, dtype=dtype)
         a = JArray(jtype, data.ndim)(data.tolist())
-        u = np.array(a)
+        u = np.array(a, dtype=dtype)
         self.assertTrue(np.all(data == u))
         self.assertEqual(u.dtype, np.dtype(dtype))
         self.assertEqual(u.dtype.type, np.dtype(dtype).type)
@@ -199,19 +198,19 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP1D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (100,), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (100,), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP1D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (100,), np.int64, "l")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (100,), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP1D(self):
-        self.executeFloatTest(JFloat, (100,), np.float32, "f")
+        self.executeFloatTest(JFloat, (100,), np.float32, "=f")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleToNP1D(self):
-        self.executeFloatTest(JDouble, (100,), np.float64, "d")
+        self.executeFloatTest(JDouble, (100,), np.float64, "=d")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP2D(self):
@@ -231,19 +230,19 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP2D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (11, 10), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (11, 10), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP2D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (11, 10), np.int64, "l")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (11, 10), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP2D(self):
-        self.executeFloatTest(JFloat, (11, 10), np.float32, "f")
+        self.executeFloatTest(JFloat, (11, 10), np.float32, "=f")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleToNP2D(self):
-        self.executeFloatTest(JDouble, (11, 10), np.float64, "d")
+        self.executeFloatTest(JDouble, (11, 10), np.float64, "=d")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP3D(self):
@@ -265,17 +264,17 @@ class BufferTestCase(common.JPypeTestCase):
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP3D(self):
         self.executeIntTest(JInt, [-2**31, 2**31 - 1],
-                            (11, 10, 9), np.int32, "i")
+                            (11, 10, 9), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP3D(self):
         self.executeIntTest(JLong, [-2**63, 2**63 - 1],
-                            (11, 10, 9), np.int64, "l")
+                            (11, 10, 9), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP3D(self):
-        self.executeFloatTest(JFloat, (11, 10, 9), np.float32, "f")
+        self.executeFloatTest(JFloat, (11, 10, 9), np.float32, "=f")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleToNP3D(self):
-        self.executeFloatTest(JDouble, (11, 10, 9), np.float64, "d")
+        self.executeFloatTest(JDouble, (11, 10, 9), np.float64, "=d")

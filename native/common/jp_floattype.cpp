@@ -272,7 +272,7 @@ void JPFloatType::getView(JPArrayView& view)
 	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetFloatArrayElements(
 			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "f";
+	view.m_Buffer.format = "=f";
 	view.m_Buffer.itemsize = sizeof (jfloat);
 }
 
@@ -292,7 +292,7 @@ void JPFloatType::releaseView(JPArrayView& view)
 
 const char* JPFloatType::getBufferFormat()
 {
-	return "f";
+	return "=f";
 }
 
 Py_ssize_t JPFloatType::getItemSize()
