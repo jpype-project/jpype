@@ -21,7 +21,7 @@ __all__ = ['convertToDirectBuffer']
 
 
 def convertToDirectBuffer(obj):
-    __doc__ = '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''
+    '''Efficiently convert all array.array and numpy ndarray types, string and unicode to java.nio.Buffer objects.'''
 
     memoryview_of_obj = memoryview(obj)
 

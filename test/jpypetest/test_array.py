@@ -367,6 +367,10 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertIsInstance(ja, JArray(jtype))
         self.assertEqual(len(ja), 100)
         self.assertTrue(np.all(a == ja))
+        conversion_type = np.array(ja).dtype
+        expected_dtype = np.dtype(dtype)
+        self.assertEqual(conversion_type, expected_dtype)
+        self.assertEqual(conversion_type.type, expected_dtype.type)
 
         a = np.reshape(a, (20, 5))
         ja = JArray.of(a)

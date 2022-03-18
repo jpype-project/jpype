@@ -126,7 +126,7 @@ class _JArrayProto(object):
 
 
 def _toJavaClass(tp):
-    """(internal) Converts a class type in python into a internal java class.
+    """(internal) Converts a class type in python into an internal java class.
 
     Used mainly to support JArray.
 
@@ -135,11 +135,11 @@ def _toJavaClass(tp):
      - (JClass) just returns the java type.
      - (type) uses a lookup table to find the class.
     """
-    # if it a string than we lookup the class by name.
+    # if it is a string than we lookup the class by name.
     if isinstance(tp, str):
         return _jpype._java_lang_Class.forName(tp)
 
-    # if is a java.lang.Class instance, then no coversion required
+    # if is a java.lang.Class instance, then no conversion required
     if isinstance(tp, _jpype._JClass):
         return tp
 
@@ -149,7 +149,7 @@ def _toJavaClass(tp):
     except KeyError:
         pass
 
-    # See if it a class type
+    # See if it is a class type
     try:
         return tp.class_
     except AttributeError:
