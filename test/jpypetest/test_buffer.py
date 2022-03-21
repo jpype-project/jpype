@@ -161,7 +161,7 @@ class BufferTestCase(common.JPypeTestCase):
     def executeIntTest(self, jtype, limits, size, dtype, code):
         data = np.random.randint(limits[0], limits[1], size=size, dtype=dtype)
         a = JArray(jtype, data.ndim)(data.tolist())
-        u = np.array(a, dtype=dtype)
+        u = np.array(a)
         self.assertTrue(np.all(data == u))
         self.assertEqual(u.dtype, np.dtype(dtype))
         self.assertEqual(u.dtype.type, np.dtype(dtype).type)
