@@ -67,31 +67,22 @@ class JBooleanTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callBoolean(int(0)), False)
 
     @common.requireNumpy
-    def testBooleanFromNPInt(self):
-        import numpy as np
-        self.assertEqual(self.Test.callBoolean(np.int(123)), True)
-
-    @common.requireNumpy
     def testBooleanFromNPInt8(self):
-        import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int8(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint8(123)), True)
 
     @common.requireNumpy
     def testBooleanFromNPInt16(self):
-        import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int16(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint16(123)), True)
 
     @common.requireNumpy
     def testBooleanFromNPInt32(self):
-        import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int32(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint32(123)), True)
 
     @common.requireNumpy
     def testBooleanFromNPInt64(self):
-        import numpy as np
         self.assertEqual(self.Test.callBoolean(np.int64(123)), True)
         self.assertEqual(self.Test.callBoolean(np.uint64(123)), True)
 
@@ -100,20 +91,12 @@ class JBooleanTestCase(common.JPypeTestCase):
             self.Test.callBoolean(float(2))
 
     @common.requireNumpy
-    def testBooleanFromNPFloat(self):
-        import numpy as np
-        with self.assertRaises(TypeError):
-            self.Test.callBoolean(np.float(2))
-
-    @common.requireNumpy
     def testBooleanFromNPFloat32(self):
-        import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float32(2))
 
     @common.requireNumpy
     def testBooleanFromNPFloat64(self):
-        import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callBoolean(np.float64(2))
 
@@ -128,9 +111,8 @@ class JBooleanTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testSetFromNPBoolArray(self):
-        import numpy as np
         n = 100
-        a = np.random.randint(0, 1, size=n, dtype=np.bool)
+        a = np.random.randint(0, 1, size=n, dtype=bool)
         jarr = jpype.JArray(jpype.JBoolean)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)

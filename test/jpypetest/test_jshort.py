@@ -346,8 +346,8 @@ class JShortTestCase(common.JPypeTestCase):
         self.assertElementsAlmostEqual(expected, result)
 
     @common.requireNumpy
-    def testArrayInitFromNPInt(self):
-        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int)
+    def testArrayInitFromInt(self):
+        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=int)
         self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy

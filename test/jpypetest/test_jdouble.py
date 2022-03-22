@@ -374,8 +374,8 @@ class JDoubleTestCase(common.JPypeTestCase):
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testArrayInitFromNPFloat(self):
-        a = np.random.random(100).astype(np.float)
+    def testArrayInitFromFloat(self):
+        a = np.random.random(100).astype(float)
         jarr = JArray(JDouble)(a)
         self.assertElementsAlmostEqual(a, jarr)
 

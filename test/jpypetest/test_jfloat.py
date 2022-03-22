@@ -382,8 +382,8 @@ class JFloatTestCase(common.JPypeTestCase):
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testArrayInitFromNPFloat(self):
-        a = np.random.random(100).astype(np.float)
+    def testArrayInitFromFloat(self):
+        a = np.random.random(100).astype(float)
         jarr = JArray(JFloat)(a)
         self.assertElementsAlmostEqual(a, jarr)
 

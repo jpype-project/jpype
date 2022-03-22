@@ -23,12 +23,10 @@ import time
 import common
 
 
-def haveNumpy():
-    try:
-        import numpy
-        return True
-    except ImportError:
-        return False
+try:
+    import numpy as np
+except ImportError:
+    pass
 
 
 class ConversionLongTestCase(common.JPypeTestCase):
@@ -39,32 +37,23 @@ class ConversionLongTestCase(common.JPypeTestCase):
     def testLongFromInt(self):
         self.assertEqual(self.Test.callLong(int(123)), 123)
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testLongFromNPInt(self):
-        import numpy as np
-        self.assertEqual(self.Test.callLong(np.int(123)), 123)
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPInt8(self):
-        import numpy as np
         self.assertEqual(self.Test.callLong(np.int8(123)), 123)
         self.assertEqual(self.Test.callLong(np.uint8(123)), 123)
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPInt16(self):
-        import numpy as np
         self.assertEqual(self.Test.callLong(np.int16(123)), 123)
         self.assertEqual(self.Test.callLong(np.uint16(123)), 123)
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPInt32(self):
-        import numpy as np
         self.assertEqual(self.Test.callLong(np.int32(123)), 123)
         self.assertEqual(self.Test.callLong(np.uint32(123)), 123)
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPInt64(self):
-        import numpy as np
         self.assertEqual(self.Test.callLong(np.int64(123)), 123)
         self.assertEqual(self.Test.callLong(np.uint64(123)), 123)
 
@@ -72,21 +61,13 @@ class ConversionLongTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             self.Test.callLong(float(2))
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testLongFromNPFloat(self):
-        import numpy as np
-        with self.assertRaises(TypeError):
-            self.Test.callLong(np.float(2))
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPFloat32(self):
-        import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callLong(np.float32(2))
 
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    @common.requireNumpy
     def testLongFromNPFloat64(self):
-        import numpy as np
         with self.assertRaises(TypeError):
             self.Test.callLong(np.float64(2))
 

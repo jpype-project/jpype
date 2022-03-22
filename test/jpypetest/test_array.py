@@ -387,7 +387,7 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertTrue(np.all(a[:, :, 4:-2] == JArray.of(a[:, :, 4:-2])))
 
     def checkArrayOfCast(self, jtype, dtype):
-        a = np.random.randint(0, 1, size=100, dtype=np.bool)
+        a = np.random.randint(0, 1, size=100, dtype=bool)
         ja = JArray.of(a, dtype=jtype)
         self.assertIsInstance(ja, JArray(jtype))
         self.assertTrue(np.all(a.astype(dtype) == ja))
@@ -434,7 +434,7 @@ class ArrayTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testArrayOfBoolean(self):
-        self.checkArrayOf(JBoolean, np.bool, 0, 1)
+        self.checkArrayOf(JBoolean, bool, 0, 1)
 
     @common.requireNumpy
     def testArrayOfByte(self):
@@ -462,7 +462,7 @@ class ArrayTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testArrayOfBooleanCast(self):
-        self.checkArrayOfCast(JBoolean, np.bool)
+        self.checkArrayOfCast(JBoolean, bool)
 
     @common.requireNumpy
     def testArrayOfByteCast(self):
