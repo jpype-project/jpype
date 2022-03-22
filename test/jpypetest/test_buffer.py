@@ -15,16 +15,13 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import jpype
-import sys
-import logging
-import time
 import common
 from jpype.types import *
 
 
 try:
     import numpy as np
+    import numpy.testing
     gotNP = True
 except ImportError:
     gotNP = False
@@ -96,40 +93,73 @@ class BufferTestCase(common.JPypeTestCase):
                         bytes(np.array(data[::-2], dtype=np.int32)))
 
     def executeConvert(self, jtype, dtype):
+
         n = 100
-        na = np.random.randint(0, 1, size=n).astype(np.bool)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        na = np.random.randint(0, 1, size=n).astype(bool)
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(-2**7, 2**7 - 1, size=n, dtype=np.int8)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(0, 2**8 - 1, size=n, dtype=np.uint8)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(-2**15, 2**15 - 1, size=n, dtype=np.int16)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(0, 2**16 - 1, size=n, dtype=np.uint16)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(-2**31, 2**31 - 1, size=n, dtype=np.int32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(0, 2**32 - 1, size=n, dtype=np.uint32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(-2**63, 2**63 - 1, size=n, dtype=np.int64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.random(n).astype(np.float32)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
+
         na = np.random.random(n).astype(np.float64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        np.testing.assert_array_equal(
+            np.array(jtype(na), dtype=dtype),
+            np.array(na, dtype=dtype),
+        )
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBoolConvert(self):
