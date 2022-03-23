@@ -144,9 +144,10 @@ class BufferTestCase(common.JPypeTestCase):
         )
 
         na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             np.array(jtype(na), dtype=dtype),
             np.array(na, dtype=dtype),
+            decimal=6,
         )
 
         na = np.random.random(n).astype(np.float32)
