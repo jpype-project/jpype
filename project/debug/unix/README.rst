@@ -121,3 +121,22 @@ If the library does not match it should produce something like::
     ./a.out: error while loading shared libraries: libjvm.so: cannot open shared object file: No such file or directory
 
 
+Two different libstdc++ versions
+--------------------------------
+
+
+If you are compiling the source on a test environment and pushing the compiled Jpype source to a different environment (Unix/Linux) you might see a situation where running::
+
+         ldd libstdc++.so.6 
+
+links to a different version of your production environment. 
+
+You can rememdy this by copying the so file to your production system and creating a soft link to the file with::
+
+         ln -s libstdc++.so.6.0.29 libstdc++.so.6
+
+Then override the system's (in the example below, Oracle/Solaris) 64bit dynamic linker path with::
+
+         export LD_LIBRARY_PATH_64=/path/to/linked/file/above
+
+NOTE: You will want to include the path to any other .so files you will be needing.
