@@ -24,3 +24,5 @@ build:
   image: latest
   apt_packages:
     - openjdk-8-jdk
+
+
