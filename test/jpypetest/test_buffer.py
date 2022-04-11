@@ -122,8 +122,8 @@ class BufferTestCase(common.JPypeTestCase):
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
         na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        self.assertTrue(np.allclose(np.array(jtype(na), dtype=dtype),
+                               np.array(na, dtype=dtype), atol=1e-8))
         na = np.random.random(n).astype(np.float32)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
