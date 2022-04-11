@@ -40,11 +40,6 @@ class ConversionLongTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callLong(int(123)), 123)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testLongFromNPInt(self):
-        import numpy as np
-        self.assertEqual(self.Test.callLong(np.int(123)), 123)
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPInt8(self):
         import numpy as np
         self.assertEqual(self.Test.callLong(np.int8(123)), 123)
@@ -71,12 +66,6 @@ class ConversionLongTestCase(common.JPypeTestCase):
     def testLongFromFloat(self):
         with self.assertRaises(TypeError):
             self.Test.callLong(float(2))
-
-    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testLongFromNPFloat(self):
-        import numpy as np
-        with self.assertRaises(TypeError):
-            self.Test.callLong(np.float(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPFloat32(self):
