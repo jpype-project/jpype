@@ -76,7 +76,7 @@ class ConversionShortTestCase(common.JPypeTestCase):
     def testShortFromNPFloat(self):
         import numpy as np
         with self.assertRaises(TypeError):
-            self.Test.callShort(np.float(2))
+            self.Test.callShort(np.float_(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPFloat32(self):

@@ -76,7 +76,7 @@ class ConversionLongTestCase(common.JPypeTestCase):
     def testLongFromNPFloat(self):
         import numpy as np
         with self.assertRaises(TypeError):
-            self.Test.callLong(np.float(2))
+            self.Test.callLong(np.float_(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongFromNPFloat32(self):
