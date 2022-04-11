@@ -347,7 +347,7 @@ class JShortTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testArrayInitFromNPInt(self):
-        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int)
+        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int_)
         self.checkArrayType(a, a.astype(np.int16))
 
     @common.requireNumpy

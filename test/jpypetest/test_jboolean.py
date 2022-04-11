@@ -69,7 +69,7 @@ class JBooleanTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testBooleanFromNPInt(self):
         import numpy as np
-        self.assertEqual(self.Test.callBoolean(np.int(123)), True)
+        self.assertEqual(self.Test.callBoolean(np.int_(123)), True)
 
     @common.requireNumpy
     def testBooleanFromNPInt8(self):
@@ -130,7 +130,7 @@ class JBooleanTestCase(common.JPypeTestCase):
     def testSetFromNPBoolArray(self):
         import numpy as np
         n = 100
-        a = np.random.randint(0, 1, size=n, dtype=np.bool)
+        a = np.random.randint(0, 1, size=n, dtype=np.bool_)
         jarr = jpype.JArray(jpype.JBoolean)(n)
         jarr[:] = a
         self.assertCountEqual(a, jarr)

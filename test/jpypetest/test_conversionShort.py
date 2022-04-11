@@ -40,6 +40,11 @@ class ConversionShortTestCase(common.JPypeTestCase):
         self.assertEqual(self.Test.callShort(int(123)), 123)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testShortFromNPInt(self):
+        import numpy as np
+        self.assertEqual(self.Test.callShort(np.int_(123)), 123)
+
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPInt8(self):
         import numpy as np
         self.assertEqual(self.Test.callShort(np.int8(123)), 123)
@@ -66,6 +71,12 @@ class ConversionShortTestCase(common.JPypeTestCase):
     def testShortFromFloat(self):
         with self.assertRaises(TypeError):
             self.Test.callShort(float(2))
+
+    @common.unittest.skipUnless(haveNumpy(), "numpy not available")
+    def testShortFromNPFloat(self):
+        import numpy as np
+        with self.assertRaises(TypeError):
+            self.Test.callShort(np.float(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testShortFromNPFloat32(self):
