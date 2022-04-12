@@ -97,7 +97,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     def executeConvert(self, jtype, dtype):
         n = 100
-        na = np.random.randint(0, 1, size=n).astype(np.bool)
+        na = np.random.randint(0, 1, size=n).astype(np.bool_)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
         na = np.random.randint(-2**7, 2**7 - 1, size=n, dtype=np.int8)
@@ -122,8 +122,8 @@ class BufferTestCase(common.JPypeTestCase):
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
         na = np.random.randint(0, 2**64 - 1, size=n, dtype=np.uint64)
-        self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
-                               == np.array(na, dtype=dtype)))
+        self.assertTrue(np.allclose(np.array(jtype(na), dtype=dtype),
+                               np.array(na, dtype=dtype), atol=1e-8))
         na = np.random.random(n).astype(np.float32)
         self.assertTrue(np.all(np.array(jtype(na), dtype=dtype)
                                == np.array(na, dtype=dtype)))
@@ -133,7 +133,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBoolConvert(self):
-        self.executeConvert(JArray(JBoolean), np.bool)
+        self.executeConvert(JArray(JBoolean), np.bool_)
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testByteConvert(self):
@@ -181,7 +181,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP1D(self):
-        self.executeIntTest(JBoolean, [0, 1], (100,), np.bool, "?")
+        self.executeIntTest(JBoolean, [0, 1], (100,), np.bool_, "?")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testCharToNP1D(self):
@@ -213,7 +213,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP2D(self):
-        self.executeIntTest(JBoolean, [0, 1], (11, 10), np.bool, "?")
+        self.executeIntTest(JBoolean, [0, 1], (11, 10), np.bool_, "?")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testCharToNP2D(self):
@@ -245,7 +245,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testBooleanToNP3D(self):
-        self.executeIntTest(JBoolean, [0, 1], (11, 10, 9), np.bool, "?")
+        self.executeIntTest(JBoolean, [0, 1], (11, 10, 9), np.bool_, "?")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testCharToNP3D(self):

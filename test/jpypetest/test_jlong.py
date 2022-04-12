@@ -166,6 +166,7 @@ class JLongTestCase(common.JPypeTestCase):
 
     def testFromFloat(self):
         self.assertEqual(JLong._canConvertToJava(1.2345), "explicit")
+
         @jpype.JImplements("java.util.function.LongSupplier")
         class q(object):
             @jpype.JOverride
@@ -357,7 +358,7 @@ class JLongTestCase(common.JPypeTestCase):
 
     @common.requireNumpy
     def testArrayInitFromNPInt(self):
-        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int)
+        a = np.random.randint(-2**31, 2**31 - 1, size=100, dtype=np.int_)
         self.checkArrayType(a, a)
 
     @common.requireNumpy
