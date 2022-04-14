@@ -600,12 +600,12 @@ class ArrayTestCase(common.JPypeTestCase):
 
     def executeOrder(self, jtype, dtype):
         a = np.array([1, 2, 3])
-        ja2 = jpype.JLong[:](a)
+        ja2 = jtype[:](a)
         for order in ("=", "<", ">"):
             dt = np.dtype(dtype).newbyteorder(order)
             a = np.array([1, 2, 3], dtype=dt)
-            ja = jpype.JLong[:](a)
-            self.assertTrue(jpype.java.util.Arrays.equals(ja, ja2))
+            ja = jtype[:](a)
+            self.assertTrue(jpype.java.util.Arrays.equals(ja, ja2), "Order issue with %s %s" % (jtype, dtype))
 
     @common.requireNumpy
     def testOrder(self):
