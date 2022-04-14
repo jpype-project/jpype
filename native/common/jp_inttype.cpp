@@ -275,7 +275,7 @@ void JPIntType::getView(JPArrayView& view)
 	view.m_IsCopy = false;
 	view.m_Memory = (void*) frame.GetIntArrayElements(
 			(jintArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "i";
+	view.m_Buffer.format = "=i";
 	view.m_Buffer.itemsize = sizeof (jint);
 }
 
@@ -295,7 +295,7 @@ void JPIntType::releaseView(JPArrayView& view)
 
 const char* JPIntType::getBufferFormat()
 {
-	return "i";
+	return "=i";
 }
 
 Py_ssize_t JPIntType::getItemSize()

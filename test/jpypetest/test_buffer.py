@@ -71,10 +71,24 @@ class BufferTestCase(common.JPypeTestCase):
         ja = JArray(JLong)(data)
         self.assertEqual(len(bytes(ja)), 6 * 8)
 
-    def testMemoryViewWrite(self):
+    def testMemoryViewWriteShort(self):
+        data = [1, 2, 3, 4, 5]
+        ja = JArray(JShort)(data)
+        b = memoryview(ja).cast("B")  # Create a view
+        with self.assertRaises(TypeError):
+            b[0] = 123  # Alter the memory using the view
+
+    def testMemoryViewWriteInt(self):
         data = [1, 2, 3, 4, 5]
         ja = JArray(JInt)(data)
-        b = memoryview(ja)  # Create a view
+        b = memoryview(ja).cast("B")  # Create a view
+        with self.assertRaises(TypeError):
+            b[0] = 123  # Alter the memory using the view
+
+    def testMemoryViewWriteLong(self):
+        data = [1, 2, 3, 4, 5]
+        ja = JArray(JLong)(data)
+        b = memoryview(ja).cast("B")  # Create a view
         with self.assertRaises(TypeError):
             b[0] = 123  # Alter the memory using the view
 
@@ -163,12 +177,12 @@ class BufferTestCase(common.JPypeTestCase):
         data = np.random.randint(limits[0], limits[1], size=size, dtype=dtype)
         a = JArray(jtype, data.ndim)(data.tolist())
         u = np.array(a)
-        self.assertEqual(u.dtype.type, dtype)
-        self.assertTrue(np.all(data == u))
         mv = memoryview(a)
-        self.assertEqual(mv.format, code)
+        self.assertEqual(mv.format, code, "Type issue %s" % type(a))
         self.assertEqual(mv.shape, data.shape)
         self.assertTrue(mv.readonly)
+        self.assertEqual(u.dtype.type, dtype, "Problem with %s %s" % (jtype, dtype))
+        self.assertTrue(np.all(data == u))
 
     def executeFloatTest(self, jtype, size, dtype, code):
         data = np.random.rand(*size).astype(dtype)
@@ -198,7 +212,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP1D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (100,), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (100,), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP1D(self):
@@ -230,7 +244,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP2D(self):
-        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (11, 10), np.int32, "i")
+        self.executeIntTest(JInt, [-2**31, 2**31 - 1], (11, 10), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP2D(self):
@@ -264,7 +278,7 @@ class BufferTestCase(common.JPypeTestCase):
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntToNP3D(self):
         self.executeIntTest(JInt, [-2**31, 2**31 - 1],
-                            (11, 10, 9), np.int32, "i")
+                            (11, 10, 9), np.int32, "=i")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP3D(self):
