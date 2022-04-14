@@ -597,18 +597,3 @@ class ArrayTestCase(common.JPypeTestCase):
         # Test multidimensional
         self.assertEqual(JDouble[5, 5].getClass(), JArray(JDouble, 2)(5).getClass())
         self.assertEqual(JObject[5, 5].getClass(), JArray(JObject, 2)(5).getClass())
-
-    def executeOrder(self, jtype, dtype):
-        a = np.array([1, 2, 3])
-        ja2 = jtype[:](a)
-        for order in ("=", "<", ">"):
-            dt = np.dtype(dtype).newbyteorder(order)
-            a = np.array([1, 2, 3], dtype=dt)
-            ja = jtype[:](a)
-            self.assertTrue(jpype.java.util.Arrays.equals(ja, ja2), "Order issue with %s %s" % (jtype, dtype))
-
-    @common.requireNumpy
-    def testOrder(self):
-        for i in (jpype.JShort, jpype.JInt, jpype.JLong, jpype.JFloat, jpype.JDouble):
-            for j in (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64):
-                self.executeOrder(i, j)

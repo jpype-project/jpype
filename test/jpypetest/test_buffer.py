@@ -292,3 +292,125 @@ class BufferTestCase(common.JPypeTestCase):
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testDoubleToNP3D(self):
         self.executeFloatTest(JDouble, (11, 10, 9), np.float64, "d")
+
+    def executeOrder(self, jtype, dtype):
+        a = np.array([1, 2, 3])
+        ja2 = jtype[:](a)
+        for order in ("=", "<", ">"):
+            dt = np.dtype(dtype).newbyteorder(order)
+            a = np.array([1, 2, 3], dtype=dt)
+            ja = jtype[:](a)
+            self.assertTrue(jpype.java.util.Arrays.equals(ja, ja2), "Order issue with %s %s" % (jtype, dtype))
+
+    @common.requireNumpy
+    def testOrder(self):
+        for i in (jpype.JBoolean, jpype.JByte, jpype.JShort, jpype.JInt, jpype.JLong, jpype.JFloat, jpype.JDouble):
+            for j in (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float32, np.float64):
+                self.executeOrder(i, j)
+        for j in (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64):
+            self.executeOrder(jpype.JChar, j)
+
+    def testMemoryByte(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JByte[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryInt(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JInt[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryShort(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JShort[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryLong(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JLong[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryFloat(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JFloat[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryDouble(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JDouble[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryBoolean(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JBoolean[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        for dtype in ("s", "p", "P", "e"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))
+
+    def testMemoryChar(self):
+        mv = memoryview(bytes(256))
+        jtype = jpype.JChar[:]
+
+        # Simple checks
+        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "n", "N"):
+            jtype(mv.cast(dtype))
+            jtype(mv.cast("@" + dtype))
+
+        jtype(mv.cast("P"))
+        for dtype in ("s", "p", "f", "d", "@f", "@d"):
+            with self.assertRaises(Exception):
+                jtype(mv.cast(dtype))

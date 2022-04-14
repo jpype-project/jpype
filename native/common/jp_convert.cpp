@@ -386,10 +386,55 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 			}
 			break;
 		case 'n':
+			if (reverse) switch (to[0])
+			{
+				case 'z': return &Reverse<Convert<Py_ssize_t>::toZ>::call8;
+				case 'b': return &Reverse<Convert<Py_ssize_t>::toB>::call8;
+				case 'c': return &Reverse<Convert<Py_ssize_t>::toC>::call8;
+				case 's': return &Reverse<Convert<Py_ssize_t>::toS>::call8;
+				case 'i': return &Reverse<Convert<Py_ssize_t>::toI>::call8;
+				case 'j': return &Reverse<Convert<Py_ssize_t>::toJ>::call8;
+				case 'f': return &Reverse<Convert<Py_ssize_t>::toF>::call8;
+				case 'd': return &Reverse<Convert<Py_ssize_t>::toD>::call8;
+			}
+			else switch (to[0])
+			{
+				case 'z': return &Convert<Py_ssize_t>::toZ;
+				case 'b': return &Convert<Py_ssize_t>::toB;
+				case 'c': return &Convert<Py_ssize_t>::toC;
+				case 's': return &Convert<Py_ssize_t>::toS;
+				case 'i': return &Convert<Py_ssize_t>::toI;
+				case 'j': return &Convert<Py_ssize_t>::toJ;
+				case 'f': return &Convert<Py_ssize_t>::toF;
+				case 'd': return &Convert<Py_ssize_t>::toD;
+			}
+			break;
 		case 'N':
-		case 'P':
+			if (reverse) switch (to[0])
+			{
+				case 'z': return &Reverse<Convert<size_t>::toZ>::call8;
+				case 'b': return &Reverse<Convert<size_t>::toB>::call8;
+				case 'c': return &Reverse<Convert<size_t>::toC>::call8;
+				case 's': return &Reverse<Convert<size_t>::toS>::call8;
+				case 'i': return &Reverse<Convert<size_t>::toI>::call8;
+				case 'j': return &Reverse<Convert<size_t>::toJ>::call8;
+				case 'f': return &Reverse<Convert<size_t>::toF>::call8;
+				case 'd': return &Reverse<Convert<size_t>::toD>::call8;
+			}
+			else switch (to[0])
+			{
+				case 'z': return &Convert<size_t>::toZ;
+				case 'b': return &Convert<size_t>::toB;
+				case 'c': return &Convert<size_t>::toC;
+				case 's': return &Convert<size_t>::toS;
+				case 'i': return &Convert<size_t>::toI;
+				case 'j': return &Convert<size_t>::toJ;
+				case 'f': return &Convert<size_t>::toF;
+				case 'd': return &Convert<size_t>::toD;
+			}
+			break;
 		default: break;
 	}
-	PyErr_Format(PyExc_TypeError, "Unable to handle buffer type '%s'", from);
+	PyErr_Format(PyExc_ValueError, "Unable to handle buffer type '%s'", from);
 	JP_RAISE_PYTHON();
 }
