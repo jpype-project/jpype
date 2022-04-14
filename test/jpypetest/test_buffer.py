@@ -163,6 +163,7 @@ class BufferTestCase(common.JPypeTestCase):
         data = np.random.randint(limits[0], limits[1], size=size, dtype=dtype)
         a = JArray(jtype, data.ndim)(data.tolist())
         u = np.array(a)
+        self.assertEqual(u.dtype.type, dtype)
         self.assertTrue(np.all(data == u))
         mv = memoryview(a)
         self.assertEqual(mv.format, code)
@@ -201,7 +202,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP1D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (100,), np.int64, "l")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (100,), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP1D(self):
@@ -233,7 +234,7 @@ class BufferTestCase(common.JPypeTestCase):
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP2D(self):
-        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (11, 10), np.int64, "l")
+        self.executeIntTest(JLong, [-2**63, 2**63 - 1], (11, 10), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP2D(self):
@@ -268,7 +269,7 @@ class BufferTestCase(common.JPypeTestCase):
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testLongToNP3D(self):
         self.executeIntTest(JLong, [-2**63, 2**63 - 1],
-                            (11, 10, 9), np.int64, "l")
+                            (11, 10, 9), np.int64, "=q")
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testFloatToNP3D(self):
