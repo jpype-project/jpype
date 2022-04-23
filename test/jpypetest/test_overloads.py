@@ -24,6 +24,50 @@ import common
 java = jpype.java
 
 
+class MyClass:
+    def fun1(self):
+        pass
+
+    def fun2(self, *a):
+        pass
+
+    def fun3(self, a=1):
+        pass
+
+    def fun4(self, a):
+        pass
+
+
+def fun1():
+    pass
+
+
+def fun2(*a):
+    pass
+
+
+def fun3(a=1):
+    pass
+
+
+def fun4(a):
+    pass
+
+
+if __name__ == '__main__':
+    jpype.startJVM()
+    from java.lang import Runnable
+    mc = MyClass()
+    cb = Runnable @ fun1
+    cb = Runnable @ fun2
+    cb = Runnable @ fun3
+    #cb = Runnable @ fun4
+    cb = Runnable @ mc.fun1
+    cb = Runnable @ mc.fun2
+    cb = Runnable @ mc.fun3
+    cb = Runnable @ mc.fun4
+
+
 class OverloadTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -223,3 +267,19 @@ class OverloadTestCase(common.JPypeTestCase):
             TypeError, 'Ambiguous overloads found', test2.testFunctionalInterfaces, my_fun_class)
         self.assertEqual('SingleArg', test2.testFunctionalInterfaces(my_fun_kwargs))
         self.assertEqual('NoArgs', test2.testFunctionalInterfaces(my_fun_kw))
+
+    def testRunnable(self):
+        Runnable = jpype.JClass("java.lang.Runnable")
+        mc = MyClass()
+        # These should work
+        cb = Runnable @ fun1
+        cb = Runnable @ fun2
+        cb = Runnable @ fun3
+        cb = Runnable @ mc.fun1
+        cb = Runnable @ mc.fun2
+        cb = Runnable @ mc.fun3
+        # These should fail
+        with self.assertRaises(TypeError):
+            cb = Runnable @ fun4
+        with self.assertRaises(TypeError):
+            cb = Runnable @ mc.fun4
