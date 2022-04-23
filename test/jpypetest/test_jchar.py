@@ -472,3 +472,22 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
     def testPass(self):
         fixture = jpype.JClass('jpype.common.Fixture')()
         self.assertEqual(fixture.callObject(self.nc), None)
+
+
+class JCharTestCase(common.JPypeTestCase):
+
+    def testOps(self):
+        self.assertEqual(JChar("x") + "test", "xtest")
+        self.assertEqual("test" + JChar("x"), "testx")
+        self.assertEqual(JChar("x") + 1, 121)
+        self.assertEqual(1 + JChar("x"), 121)
+        self.assertEqual(JChar(1) + JChar("x"), 121)
+        self.assertEqual(JChar("x") - 1, 119)
+        self.assertEqual(1 - JChar("x"), -119)
+        self.assertEqual(JChar("x") - JChar(1), 119)
+        self.assertEqual(JChar("x") * 1, 120)
+        self.assertEqual(1 * JChar("x"), 120)
+        self.assertEqual(JChar("x") & 1, 0)
+        self.assertEqual(1 & JChar("x"), 0)
+        self.assertEqual(JChar("x") | 1, 121)
+        self.assertEqual(1 | JChar("x"), 121)
