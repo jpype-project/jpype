@@ -22,6 +22,15 @@ extern "C"
 {
 #endif
 
+/** Construct a new PyJPObject.
+ * 
+ * This method is only called when Python is requesting a new object be constructed.
+ * If the object already exists, then the  JPClass::convertToPythonObject
+ * skips the new and init method and directly populates the fields.
+ *
+ * The only exception is Throwables which must be allocated using the 
+ * standard Python new/init paths.
+ */
 static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPObject_new");
@@ -247,14 +256,20 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 		return NULL;
 	}  // GCOVR_EXCL_STOP
 
-	// Special constructor path for Exceptions
-	JPPyObjectVector args(pyargs);
-	if (args.size() == 2 && args[0] == _JObjectKey)
-		return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
-
 	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	// Special constructor path for Exceptions
+	JPPyObjectVector args(pyargs);
+	if (args.size() == 2 && PyCapsule_CheckExact(args[0]))
+	{
+		PyObject* self = ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
+		JPValue* jv = (JPValue*) PyCapsule_GetPointer(args[0], JValueKey);
+		PyJPValue_assignJavaSlot(frame, self, *jv);
+		return self;
+	}
+
 	JPValue jv = cls->newInstance(frame, args);
 
 	// Exception must be constructed with the BaseException_new
@@ -271,7 +286,7 @@ static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs
 {
 	JP_PY_TRY("PyJPException_init");
 	JPPyObjectVector args(pyargs);
-	if (args.size() == 2 && args[0] == _JObjectKey)
+	if (args.size() == 2 && PyCapsule_CheckExact(args[0]))
 		return ((PyTypeObject*) PyExc_BaseException)->tp_init(self, args[1], kwargs);
 
 	// Exception must be constructed with the BaseException_new
