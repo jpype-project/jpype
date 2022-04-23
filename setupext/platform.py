@@ -50,9 +50,9 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
                 found_jni = True
                 break
 
-            if not found_jni:
-                distutils.log.warn('Falling back to provided JNI headers, since your provided'
-                                   ' JAVA_HOME "%s" does not provide jni.h', java_home)
+        if not found_jni:
+            distutils.log.warn('Falling back to provided JNI headers, since your provided'
+                               ' JAVA_HOME "%s" does not provide jni.h', java_home)
 
     if not found_jni:
         platform_specific['include_dirs'] += [fallback_jni]
