@@ -124,7 +124,9 @@ def _jclassPre(name, bases, members):
         k2 = pysafe(k)
         if k2 != k:
             del members[k]
-            members[k2] = v
+            # Remove unmappable functions
+            if k2:
+                members[k2] = v
 
     # Apply customizers
     hints = _jcustomizer.getClassHints(name)
