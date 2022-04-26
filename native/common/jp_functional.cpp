@@ -32,6 +32,7 @@ JPFunctional::~JPFunctional()
 {
 }
 
+
 class JPConversionFunctional : public JPConversion
 {
 public:
@@ -41,64 +42,58 @@ public:
 		if (!PyCallable_Check(match.object))
 			return match.type = JPMatch::_none;
 
-		// Modified from https://stackoverflow.com/a/1117735
-		bool has_parameter_count = false;
-		// Get the __code__ attribute of the function, which contains details about the function
-		// Note: __code__ is func_code in Python 2.x
-		PyObject* function_code_object = PyObject_GetAttrString(match.object, "__code__");
-		if(function_code_object) {
-			// get the argument count
-			PyObject* parameter_count_obj = PyObject_GetAttrString(function_code_object, "co_argcount");
-			if(parameter_count_obj) {
-				has_parameter_count = true;
-				int optional_parameter_count = 0;
-				int flags = 0;
-				const int ACCEPT_VARGS_MASK = 0x04; // From https://docs.python.org/3/reference/datamodel.html
-				PyObject* flags_obj = PyObject_GetAttrString(function_code_object, "co_flags");
-				if (flags_obj) {
-					flags = PyLong_AsLong(flags_obj);
-					Py_DECREF(flags_obj);
-				}
-				PyObject* optional_parameter_tuple = PyObject_GetAttrString(match.object, "__defaults__");
-				if (optional_parameter_tuple && optional_parameter_tuple != Py_None) {
-					optional_parameter_count = PyTuple_Size(optional_parameter_tuple);
-					Py_DECREF(optional_parameter_tuple);
-				}
-				const int parameter_count = PyLong_AsLong(parameter_count_obj);
-				const int java_parameter_count = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
-				const bool is_varargs = (flags & ACCEPT_VARGS_MASK) == ACCEPT_VARGS_MASK;
-
-				// def my_func(x, y=None) should be both a Function and a BiFunction
-				// i.e. the number of parameters accepted by the interface MUST
-				// 1. Be at most the maximum number of parameters accepted by the python function (parameter_count)
-				//    (Unless the function accept a variable number of arguments, then this restriction does not
-				//     apply).
-				// 2. Be at least the minumum number of parameters accepted by the python function
-				// (parameter_count - optional_parameter_count = number of required parameters).
-				// Notes:
-				// - keywords vargs does not remove restriction 1
-				// - keyword only arguments are not counted.
-				if ((!is_varargs && parameter_count < java_parameter_count) ||
-					parameter_count - optional_parameter_count > java_parameter_count) {
-					match.type = JPMatch::_none;
-				} else {
-					match.conversion = this;
-					match.closure = cls;
-					match.type = JPMatch::_implicit;
-				}
-
-				Py_DECREF(parameter_count_obj);
-			}
-			Py_DECREF(function_code_object);
+		// def my_func(x, y=None) should be both a Function and a BiFunction
+		// i.e. the number of parameters accepted by the interface MUST
+		// 1. Be at most the maximum number of parameters accepted by the python function (parameter_count)
+		//    (Unless the function accept a variable number of arguments, then this restriction does not
+		//     apply).
+		// 2. Be at least the minumum number of parameters accepted by the python function
+		// (parameter_count - optional_parameter_count = number of required parameters).
+		// Notes:
+		// - keywords vargs does not remove restriction 1
+		// - keyword only arguments are not counted.
+		if (PyFunction_Check(match.object))
+		{
+			PyObject* func = match.object; 
+			PyCodeObject* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
+			Py_ssize_t args = code->co_argcount;
+			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
+			int optional = 0;
+			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
+			if (!defaults.isNull() && defaults.get() != Py_None)
+				optional = PyTuple_Size(defaults.get());
+			const int jargs = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
+			// Too few arguments
+			if (!is_varargs && args < jargs)
+				return match.type = JPMatch::_none;
+			// Too many arguments
+			if (args - optional > jargs) 
+				return match.type = JPMatch::_none;
 		}
-		PyErr_Clear();
-		if (!has_parameter_count) {
-			match.conversion = this;
-			match.closure = cls;
-			return match.type = JPMatch::_implicit;
-		} else {
-			return match.type;
+		else if (PyMethod_Check(match.object))
+		{
+			PyObject* func = PyMethod_Function(match.object); // borrowed
+			PyCodeObject* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
+			Py_ssize_t args = code->co_argcount;
+			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
+			int optional = 0;
+			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
+			if (!defaults.isNull() && defaults.get() != Py_None)
+				optional = PyTuple_Size(defaults.get());
+			const int jargs = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
+			// Bound self argument removes one argument
+			if ((PyMethod_Self(match.object))!=NULL) // borrowed
+				args--;
+			// Too few arguments
+			if (!is_varargs && args < jargs)
+				return match.type = JPMatch::_none;
+			// Too many arguments
+			if (args - optional > jargs) 
+				return match.type = JPMatch::_none;
 		}
+		match.conversion = this;
+		match.closure = cls;
+		return match.type = JPMatch::_implicit;
 	}
 
 	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
