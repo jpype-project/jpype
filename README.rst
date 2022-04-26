@@ -26,6 +26,8 @@ access to the entirety of CPython and Java libraries.
  <https://github.com/jpype-project/jpype>`_
 :Issue tracker: `GitHub Issues
  <https://github.com/jpype-project/jpype/issues>`_
+:Discussions: `GitHub Discussions
+ <https://github.com/jpype-project/jpype/discussions>`_
 :Documentation: `Python Docs`_
 :License: `Apache 2 License`_
 :Build status:  |TestsCI|_ |Docs|_
