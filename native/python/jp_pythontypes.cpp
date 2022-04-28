@@ -244,7 +244,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		Py_UCS4 value = PyUnicode_READ_CHAR(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into Java char");
 		}
 		return value;
 	}
@@ -268,12 +268,12 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		Py_UCS4 value = PyUnicode_ReadChar(pyobj, 0);
 		if (value > 0xffff)
 		{
-			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into java char");
+			JP_RAISE(PyExc_ValueError, "Unable to pack 4 byte unicode into Java char");
 		}
 		return value;
 	}
 #endif
-	PyErr_Format(PyExc_TypeError, "Unable to convert '%s'  to char", Py_TYPE(pyobj)->tp_name);
+	PyErr_Format(PyExc_TypeError, "Unable to convert '%s' to Java char", Py_TYPE(pyobj)->tp_name);
 	JP_RAISE_PYTHON();
 }
 
