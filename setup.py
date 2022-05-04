@@ -58,7 +58,7 @@ setup(
     author_email='devilwolf@users.sourceforge.net',
     maintainer='Luis Nell',
     maintainer_email='cooperate@originell.org',
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     url='https://github.com/jpype-project/jpype',
     platforms=[
         'Operating System :: Microsoft :: Windows',
@@ -68,10 +68,10 @@ setup(
     ],
     classifiers=[
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
     ],

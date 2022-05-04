@@ -105,18 +105,6 @@ def _JInstantConversion(jcls, obj):
     return jcls.ofEpochSecond(sec, nsec)
 
 
-if sys.version_info < (3, 6):  # pragma: no cover
-    import pathlib
-
-    @_jcustomizer.JConversion("java.nio.file.Path", instanceof=pathlib.PurePath)
-    def _JPathConvert(jcls, obj):
-        Paths = _jpype.JClass("java.nio.file.Paths")
-        return Paths.get(str(obj))
-
-    @_jcustomizer.JConversion("java.io.File", instanceof=pathlib.PurePath)
-    def _JFileConvert(jcls, obj):
-        return jcls(str(obj))
-
 # Types needed for SQL
 
 

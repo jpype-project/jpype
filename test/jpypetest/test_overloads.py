@@ -128,7 +128,7 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testPrimitive(self):
         test1 = self.__jp.Test1()
-        intexpectation = 'int' if not sys.version_info[0] > 2 and sys.maxint == 2**31 - 1 else 'long'
+        intexpectation = 'long'
         # FIXME it is not possible to determine if this is bool/char/byte currently
         #self.assertEqual(intexpectation, test1.testPrimitive(5))
         #self.assertEqual('long', test1.testPrimitive(2**31))
