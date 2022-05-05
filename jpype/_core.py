@@ -15,8 +15,13 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import sys
+from __future__ import annotations
+
 import atexit
+import os
+import sys
+import typing
+
 import _jpype
 from . import types as _jtypes
 from . import _classpath
@@ -59,6 +64,10 @@ try:
         (_jpype._JMethod, _jpype._JField)
 except Exception:
     pass
+
+
+if typing.TYPE_CHECKING:
+    _PathOrStr = typing.Union[str, os.PathLike]
 
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -104,23 +113,48 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _hasClassPath(args):
+def _hasClassPath(args: typing.Tuple[_PathOrStr, ...]) -> bool:
     for i in args:
-        if i.startswith('-Djava.class.path'):
+        if isinstance(i, str) and i.startswith('-Djava.class.path'):
             return True
     return False
 
 
-def _handleClassPath(clsList):
+def _handleClassPath(
+    classpath: typing.Union[
+        _PathOrStr,
+        typing.Tuple[_PathOrStr, ...]
+    ],
+) -> str:
+    """
+    Return a classpath which represents the given tuple of classpath specifications
+    """
     out = []
-    for s in clsList:
-        if not isinstance(s, str):
-            raise TypeError("Classpath elements must be strings")
-        if s.endswith('*'):
+
+    if isinstance(classpath, (str, os.PathLike)):
+        classpath = (classpath,)
+    try:
+        # Convert anything iterable into a tuple.
+        classpath = tuple(classpath)
+    except TypeError:
+        raise TypeError("Unknown class path element")
+
+    for element in classpath:
+        try:
+            pth = os.fspath(element)
+        except TypeError as err:
+            raise TypeError("Classpath elements must be strings or Path-like") from err
+
+        if isinstance(pth, bytes):
+            # In the future we may allow this to support Paths which are undecodable.
+            # https://docs.python.org/3/howto/unicode.html#unicode-filenames.
+            raise TypeError("Classpath elements must be strings or Path-like")
+
+        if pth.endswith('*'):
             import glob
-            out.extend(glob.glob(s + '.jar'))
+            out.extend(glob.glob(pth + '.jar'))
         else:
-            out.append(s)
+            out.append(pth)
     return _classpath._SEP.join(out)
 
 
@@ -131,7 +165,14 @@ def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
 
-def startJVM(*args, **kwargs):
+def startJVM(
+    *jvmargs: str,
+    jvmpath: typing.Optional[_PathOrStr] = None,
+    classpath: typing.Optional[_PathOrStr] = None,
+    ignoreUnrecognized: bool = False,
+    convertStrings: bool = False,
+    interrupt: bool = not interactive(),
+) -> None:
     """
     Starts a Java Virtual Machine.  Without options it will start
     the JVM with the default classpath and jvmpath.
@@ -140,14 +181,14 @@ def startJVM(*args, **kwargs):
     The default jvmpath is determined by ``jpype.getDefaultJVMPath()``.
 
     Parameters:
-     *args (Optional, str[]): Arguments to give to the JVM.
-        The first argument may be the path the JVM.
+     *jvmargs (Optional, str[]): Arguments to give to the JVM.
+        The first argument may be the path to the JVM.
 
     Keyword Arguments:
-      jvmpath (str):  Path to the jvm library file,
+      jvmpath (str, PathLike):  Path to the jvm library file,
         Typically one of (``libjvm.so``, ``jvm.dll``, ...)
         Using None will apply the default jvmpath.
-      classpath (str,[str]): Set the classpath for the JVM.
+      classpath (str, PathLike, [str, PathLike]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
       ignoreUnrecognized (bool): Option to ignore
@@ -166,8 +207,7 @@ def startJVM(*args, **kwargs):
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
-      TypeError: if an invalid keyword argument is supplied
-        or a keyword argument conflicts with the arguments.
+      TypeError: if a keyword argument conflicts with the positional arguments.
 
      """
     if _jpype.isStarted():
@@ -176,54 +216,39 @@ def startJVM(*args, **kwargs):
     if _JVM_started:
         raise OSError('JVM cannot be restarted')
 
-    args = list(args)
-
     # JVM path
-    jvmpath = None
-    if args:
+    if jvmargs:
         # jvm is the first argument the first argument is a path or None
-        if not args[0] or not args[0].startswith('-'):
-            jvmpath = args.pop(0)
-    if 'jvmpath' in kwargs:
-        if jvmpath:
-            raise TypeError('jvmpath specified twice')
-        jvmpath = kwargs.pop('jvmpath')
+        if jvmargs[0] is not None and isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-'):
+            if jvmpath:
+                raise TypeError('jvmpath specified twice')
+            jvmpath = jvmargs[0]
+            jvmargs = jvmargs[1:]
+
     if not jvmpath:
         jvmpath = getDefaultJVMPath()
+    else:
+        # Allow the path to be a PathLike.
+        jvmpath = os.fspath(jvmpath)
+
+    extra_jvm_args = tuple()
 
     # Classpath handling
-    if _hasClassPath(args):
+    if _hasClassPath(jvmargs):
         # Old style, specified in the arguments
-        if 'classpath' in kwargs:
+        if classpath is not None:
             # Cannot apply both styles, conflict
             raise TypeError('classpath specified twice')
-        classpath = None
-    elif 'classpath' in kwargs:
-        # New style, as a keywork
-        classpath = kwargs.pop('classpath')
-    else:
-        # Not speficied at all, use the default classpath
+    elif classpath is None:
+        # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
     # Handle strings and list of strings.
     if classpath:
-        if isinstance(classpath, str):
-            args.append('-Djava.class.path=%s' % _handleClassPath([classpath]))
-        elif hasattr(classpath, '__iter__'):
-            args.append('-Djava.class.path=%s' % _handleClassPath(classpath))
-        else:
-            raise TypeError("Unknown class path element")
-
-    ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
-    convertStrings = kwargs.pop('convertStrings', False)
-    interrupt = kwargs.pop('interrupt', not interactive())
-
-    if kwargs:
-        raise TypeError("startJVM() got an unexpected keyword argument '%s'"
-                        % (','.join([str(i) for i in kwargs])))
+        extra_jvm_args += (f'-Djava.class.path={_handleClassPath(classpath)}', )
 
     try:
-        _jpype.startup(jvmpath, tuple(args),
+        _jpype.startup(jvmpath, jvmargs + extra_jvm_args,
                        ignoreUnrecognized, convertStrings, interrupt)
         initializeResources()
     except RuntimeError as ex:
@@ -233,8 +258,7 @@ def startJVM(*args, **kwargs):
             match = re.search(r"([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1)) - 44
-                raise RuntimeError("%s is older than required Java version %d" % (
-                    jvmpath, version)) from ex
+                raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
 

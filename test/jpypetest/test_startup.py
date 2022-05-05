@@ -18,23 +18,20 @@
 import jpype
 import common
 import subrun
+import functools
 import os
+from pathlib import Path
 import sys
 import unittest
 
 
-def runStartJVM(*args, **kwargs):
-    jpype.startJVM(*args, **kwargs)
-
-
+@functools.wraps(jpype.startJVM)
 def runStartJVMTest(*args, **kwargs):
     jpype.startJVM(*args, **kwargs)
     try:
-        jclass = jpype.JClass('jpype.array.TestArray')
-        return
-    except:
-        pass
-    raise RuntimeError("Test class not found")
+        assert jpype.JClass('jpype.array.TestArray') is not None
+    except Exception as err:
+        raise RuntimeError("Test class not found") from err
 
 
 root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -57,17 +54,18 @@ class StartJVMCase(unittest.TestCase):
             jpype.shutdownJVM()
             jpype.startJVM(convertStrings=False)
 
-    def testJVMPathKeyword(self):
-        runStartJVM(jvmpath=self.jvmpath)
-
     def testInvalidArgsFalse(self):
         with self.assertRaises(RuntimeError):
-            runStartJVM("-for_sure_InVaLiD",
-                        ignoreUnrecognized=False, convertStrings=False)
+            jpype.startJVM(
+                "-for_sure_InVaLiD",
+                ignoreUnrecognized=False, convertStrings=False,
+            )
 
     def testInvalidArgsTrue(self):
-        runStartJVM("-for_sure_InVaLiD",
-                    ignoreUnrecognized=True, convertStrings=False)
+        jpype.startJVM(
+            "-for_sure_InVaLiD",
+            ignoreUnrecognized=True, convertStrings=False,
+        )
 
     def testClasspathArgKeyword(self):
         runStartJVMTest(classpath=cp, convertStrings=False)
@@ -81,6 +79,16 @@ class StartJVMCase(unittest.TestCase):
     def testClasspathArgDef(self):
         runStartJVMTest('-Djava.class.path=%s' % cp, convertStrings=False)
 
+    def testClasspathArgPath(self):
+        runStartJVMTest(classpath=Path(cp), convertStrings=False)
+
+    def testClasspathArgPathList(self):
+        runStartJVMTest(classpath=[Path(cp)], convertStrings=False)
+
+    def testClasspathArgGlob(self):
+        jpype.startJVM(classpath=os.path.join(cp, '..', 'jar', 'mrjar*'))
+        assert jpype.JClass('org.jpype.mrjar.A') is not None
+
     def testClasspathTwice(self):
         with self.assertRaises(TypeError):
             runStartJVMTest('-Djava.class.path=%s' %
@@ -90,13 +98,25 @@ class StartJVMCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             runStartJVMTest(classpath=1, convertStrings=False)
 
-    def testPathArg(self):
+    def testJVMPathArg_Str(self):
         runStartJVMTest(self.jvmpath, classpath=cp, convertStrings=False)
 
-    def testPathKeyword(self):
-        path = jpype.getDefaultJVMPath()
+    def testJVMPathArg_Path(self):
+        with self.assertRaises(TypeError):
+            runStartJVMTest([
+                # Pass a path as the first argument. This isn't supported (this is
+                # reflected in the type definition), but the fact that it "works"
+                # gives rise to this test.
+                Path(self.jvmpath), cp],  # type: ignore
+                convertStrings=False,
+            )
+
+    def testJVMPathKeyword_str(self):
         runStartJVMTest(classpath=cp, jvmpath=self.jvmpath,
                         convertStrings=False)
+
+    def testJVMPathKeyword_Path(self):
+        runStartJVMTest(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
 
     def testPathTwice(self):
         with self.assertRaises(TypeError):
