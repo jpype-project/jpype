@@ -27,5 +27,5 @@ class KeywordsTestCase(common.JPypeTestCase):
     def testKeywords(self):
         for kw in keyword.kwlist:
             safe = jpype._pykeywords.pysafe(kw)
-            self.assertEquals(type(safe), str)
+            self.assertEqual(type(safe), str, "Fail on keyword %s", kw)
             self.assertTrue(safe.endswith("_"))
