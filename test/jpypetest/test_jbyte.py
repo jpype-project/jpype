@@ -77,7 +77,7 @@ class JByteTestCase(common.JPypeTestCase):
     @common.requireNumpy
     def testByteFromNPInt(self):
         import numpy as np
-        self.assertEqual(self.fixture.callByte(np.int(123)), 123)
+        self.assertEqual(self.fixture.callByte(np.int_(123)), 123)
 
     @common.requireNumpy
     def testByteFromNPInt8(self):
@@ -111,7 +111,7 @@ class JByteTestCase(common.JPypeTestCase):
     def testByteFromNPFloat(self):
         import numpy as np
         with self.assertRaises(TypeError):
-            self.fixture.callByte(np.float(2))
+            self.fixture.callByte(np.float_(2))
 
     @common.requireNumpy
     def testByteFromNPFloat32(self):

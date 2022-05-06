@@ -274,7 +274,7 @@ void JPLongType::getView(JPArrayView& view)
 	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetLongArrayElements(
 			(jlongArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "q";
+	view.m_Buffer.format = "=q";
 	view.m_Buffer.itemsize = sizeof (jlong);
 }
 
@@ -294,7 +294,7 @@ void JPLongType::releaseView(JPArrayView& view)
 
 const char* JPLongType::getBufferFormat()
 {
-	return "q";
+	return "=q";
 }
 
 Py_ssize_t JPLongType::getItemSize()
