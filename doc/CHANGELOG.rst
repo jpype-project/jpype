@@ -6,6 +6,10 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.3.1_dev0 - 2021-06-05**
 
+  - Fixed issue when Java classes with dunder methods such as  ``__del__`` 
+    caused conflicts in Python type system.   Java method which match dunder 
+    patterns are longer translated to Python.
+
   - Fix issue with numpy arrays with no dimensions resulting in crash..
 
   - Support for user defined conversions for java.lang.Class and array types.

@@ -28,6 +28,8 @@ _KEYWORDS = set((
 
 
 def pysafe(s):
+    if s.startswith("__"):
+        return None
     if s in _KEYWORDS:
         return s + "_"
     return s
