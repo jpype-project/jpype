@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.4.0_dev0 - 2022-05-14**
 - **1.3.1_dev0 - 2021-06-05**
 
   - Fixed issue when Java classes with dunder methods such as  ``__del__`` 
