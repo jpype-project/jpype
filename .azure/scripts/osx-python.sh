@@ -5,19 +5,22 @@ PYTHON_VERSION="$1"
 case $PYTHON_VERSION in
 3.7)
   FULL_VERSION=3.7.9
+  INSTALLER_NAME=python-$FULL_VERSION-macosx10.9.pkg
   ;;
 3.8)
   FULL_VERSION=3.8.10
+  INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
   ;;
 3.9)
   FULL_VERSION=3.9.12
+  INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
   ;;
 3.10)
   FULL_VERSION=3.10.4
+  INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
   ;;
 esac
 
-INSTALLER_NAME=python-$FULL_VERSION-macosx10.9.pkg
 URL=https://www.python.org/ftp/python/$FULL_VERSION/$INSTALLER_NAME
 
 PY_PREFIX=/Library/Frameworks/Python.framework/Versions
