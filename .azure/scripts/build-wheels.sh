@@ -5,6 +5,8 @@ set -e -x
 pys=(/opt/python/*/bin)
 
 # Filter out Python 3.4
+pys=(${pys[@]//*36*/})
+pys=(${pys[@]//*35*/})
 pys=(${pys[@]//*34*/})
 pys=(${pys[@]//*27*/})
 
