@@ -9,14 +9,14 @@ case $PYTHON_VERSION in
   ;;
 3.8)
   FULL_VERSION=3.8.10
-  INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
+  INSTALLER_NAME=python-$FULL_VERSION-macosx10.9.pkg
   ;;
 3.9)
   FULL_VERSION=3.9.12
-  INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
+  INSTALLER_NAME=python-$FULL_VERSION-macosx10.9.pkg
   ;;
 3.10)
-  FULL_VERSION=3.10.4
+  FULL_VERSION=3.10.3
   INSTALLER_NAME=python-$FULL_VERSION-macosx11.pkg
   ;;
 esac
