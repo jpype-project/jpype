@@ -160,16 +160,12 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 		Py_ssize_t start, stop, step, slicelength;
 		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
 
-#if PY_VERSION_HEX<0x03060100
-		if (PySlice_GetIndicesEx(item, length, &start, &stop, &step, &slicelength) < 0)
-			return NULL;
-#else
 		if (PySlice_Unpack(item, &start, &stop, &step) < 0)
 			return NULL;
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
-#endif
-		if (slicelength <= 0)
+
+        if (slicelength <= 0)
 		{
 			// This should point to a null array so we don't hold worthless
 			// memory, but this is a low priority
@@ -231,16 +227,12 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 		Py_ssize_t start, stop, step, slicelength;
 		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
 
-#if PY_VERSION_HEX<0x03060100
-		if (PySlice_GetIndicesEx(item, length, &start, &stop, &step, &slicelength) < 0)
-			return -1;
-#else
 		if (PySlice_Unpack(item, &start, &stop, &step) < 0)
 			return -1;
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
-#endif
-		if (slicelength <= 0)
+
+        if (slicelength <= 0)
 			return 0;
 
 		self->m_Array->setRange((jsize) start, (jsize) slicelength, (jsize) step,  value);
