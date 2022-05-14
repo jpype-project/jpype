@@ -3,17 +3,17 @@
 PYTHON_VERSION="$1"
 
 case $PYTHON_VERSION in
-3.6)
-  FULL_VERSION=3.6.8
-  ;;
 3.7)
   FULL_VERSION=3.7.9
   ;;
 3.8)
-  FULL_VERSION=3.8.6
+  FULL_VERSION=3.8.10
   ;;
 3.9)
-  FULL_VERSION=3.9.0
+  FULL_VERSION=3.9.12
+  ;;
+3.10)
+  FULL_VERSION=3.10.4
   ;;
 esac
 
