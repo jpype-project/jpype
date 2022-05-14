@@ -49,9 +49,6 @@ Example:
 
 Proxies and other JPype specific module resources cannot be pickled currently.
 
-Requires:
-    Python 3.6 or later
-
 """
 from __future__ import absolute_import
 import _jpype
@@ -89,8 +86,7 @@ class _JDispatch(object):
         # Extension dispatch table holds reduce method
         self._call = self.reduce
 
-    # Python2 and Python3 _Pickler use get()
-
+    # Pure Python _Pickler uses get()
     def get(self, cls):
         if not issubclass(cls, (_jpype.JClass, _jpype.JObject)):
             return self._dispatch.get(cls)
@@ -102,7 +98,6 @@ class _JDispatch(object):
             return self._dispatch[cls]
         return self._call
 
-    # For Python3
     def reduce(self, obj):
         byte = bytes(self._encoder.pack(obj))
         return (self._builder, (byte, ))

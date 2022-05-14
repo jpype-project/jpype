@@ -44,14 +44,6 @@ class JVMNotRunning(RuntimeError):
     pass
 
 
-def versionTest():
-    if sys.version_info < (3,):
-        raise ImportError("Python 2 is not supported")
-
-
-versionTest()
-
-
 # Activate jedi tab completion
 try:
     import jedi as _jedi
