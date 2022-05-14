@@ -73,7 +73,7 @@ import org.jpype.ref.JPypeReferenceQueue;
 public class JPypeContext
 {
 
-  public final String VERSION = "1.4.0_dev0";
+  public final String VERSION = "1.4.0";
 
   private static JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.
