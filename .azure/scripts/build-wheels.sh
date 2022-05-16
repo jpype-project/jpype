@@ -6,6 +6,7 @@ pys=(/opt/python/cp*/bin)
 
 # Exclude specific Pythons (3.6)
 pys=(${pys[@]//*36*/})
+pys=(${pys[@]//*310*/})
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
