@@ -15,20 +15,40 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import keyword  # From the standard library.
+
+import pytest
+
 import jpype
-import common
-import keyword
 
 
-class KeywordsTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
+@pytest.mark.parametrize(
+    "identifier",
+    list(keyword.kwlist) + [
+        '__del__',
+        # Print is no longer a keyword in Python 3, but still protected to
+        # avoid API breaking in JPype v1.
+        'print',
+    ]
+)
+def testPySafe__Keywords(identifier):
+    safe = jpype._pykeywords.pysafe(identifier)
+    if identifier.startswith("__"):
+        assert safe is None
+    else:
+        assert isinstance(safe, str), f"Fail on keyword {identifier}"
+        assert safe.endswith("_")
 
-    def testKeywords(self):
-        for kw in keyword.kwlist:
-            safe = jpype._pykeywords.pysafe(kw)
-            if kw.startswith("_"):
-                continue
-            self.assertEqual(type(safe), str, "Fail on keyword %s" % kw)
-            self.assertTrue(safe.endswith("_"))
-        self.assertEqual(jpype._pykeywords.pysafe("__del__"), None)
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        'notSpecial',
+        '__notSpecial',
+        'notSpecial__',
+        '_notSpecial_',
+        '_not__special_',
+    ])
+def testPySafe__NotKeywords(identifier):
+    safe = jpype._pykeywords.pysafe(identifier)
+    assert safe == identifier

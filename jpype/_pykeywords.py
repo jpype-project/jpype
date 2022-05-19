@@ -15,21 +15,66 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from __future__ import annotations
+
+import typing
 
 # This is a superset of the keywords in Python.
 # We use this so that jpype is a bit more version independent.
-# Removing keywords from this list impacts the exposed interfaces, and therefore is a breaking change. 
-_KEYWORDS = set((
-    'False', 'None', 'True', 'and', 'as', 'assert', 'async',
-    'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else',
-    'except', 'exec', 'finally', 'for', 'from', 'global', 'if', 'import',
-    'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'print',
-    'raise', 'return', 'try', 'while', 'with', 'yield'
-))
+# Adding and removing keywords from this list impacts the exposed interfaces,
+# and therefore is technically a breaking change.
+_KEYWORDS = {
+    'False',
+    'None',
+    'True',
+    'and',
+    'as',
+    'assert',
+    'async',
+    'await',
+    'break',
+    'class',
+    'continue',
+    'def',
+    'del',
+    'elif',
+    'else',
+    'except',
+    'exec',
+    'finally',
+    'for',
+    'from',
+    'global',
+    'if',
+    'import',
+    'in',
+    'is',
+    'lambda',
+    'nonlocal',
+    'not',
+    'or',
+    'pass',
+    'print',  # No longer a Python 3 keyword. Kept for backwards compatibility.
+    'raise',
+    'return',
+    'try',
+    'while',
+    'with',
+    'yield',
+}
 
 
-def pysafe(s):
-    if s.startswith("__"):
+def pysafe(s: str) -> typing.Optional[str]:
+    """
+    Given an identifier name in Java, return an equivalent identifier name in
+    Python that is guaranteed to not collide with the Python grammar.
+
+    """
+    if s.startswith("__") and s.endswith('__'):
+        # Dunder methods should not be considered safe.
+        # (see system defined names in the Python documentation
+        # https://docs.python.org/3/reference/lexical_analysis.html#reserved-classes-of-identifiers
+        # )
         return None
     if s in _KEYWORDS:
         return s + "_"
