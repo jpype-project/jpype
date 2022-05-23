@@ -70,7 +70,7 @@ def pysafe(s: str) -> typing.Optional[str]:
     Python that is guaranteed to not collide with the Python grammar.
 
     """
-    if s.startswith("__") and s.endswith('__'):
+    if s.startswith("__") and s.endswith("__") and len(s) >= 4:
         # Dunder methods should not be considered safe.
         # (see system defined names in the Python documentation
         # https://docs.python.org/3/reference/lexical_analysis.html#reserved-classes-of-identifiers

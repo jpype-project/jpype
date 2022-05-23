@@ -20,6 +20,7 @@ import keyword  # From the standard library.
 import pytest
 
 import jpype
+import common
 
 
 @pytest.mark.parametrize(
@@ -29,6 +30,7 @@ import jpype
         # Print is no longer a keyword in Python 3, but still protected to
         # avoid API breaking in JPype v1.
         'print',
+        '____',  # Not allowed.
     ]
 )
 def testPySafe__Keywords(identifier):
@@ -48,7 +50,15 @@ def testPySafe__Keywords(identifier):
         'notSpecial__',
         '_notSpecial_',
         '_not__special_',
+        '__', '___',  # Technically these are fine.
     ])
 def testPySafe__NotKeywords(identifier):
     safe = jpype._pykeywords.pysafe(identifier)
     assert safe == identifier
+
+
+class AttributeTestCase(common.JPypeTestCase):
+    def testPySafe(self):
+        cls = jpype.JPackage("jpype").attr.TestKeywords
+        self.assertTrue(hasattr(cls, "__leading_double_underscore"))
+        self.assertFalse(hasattr(cls, "__dunder_name__"))
