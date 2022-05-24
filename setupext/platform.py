@@ -95,6 +95,10 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
     elif platform.startswith('freebsd'):
         distutils.log.info("Add freebsd settings")
         jni_md_platform = 'freebsd'
+     
+    elif platform.startswith('openbsd'):
+        distutils.log.info("Add openbsd settings")
+        jni_md_platform = 'openbsd'
 
     elif platform.startswith('android'):
         distutils.log.info("Add android settings")
@@ -137,6 +141,7 @@ ${JAVA_INCLUDE_PATH}
 ${JAVA_INCLUDE_PATH}/win32
 ${JAVA_INCLUDE_PATH}/linux
 ${JAVA_INCLUDE_PATH}/freebsd
+${JAVA_INCLUDE_PATH}/openbsd
 ${JAVA_INCLUDE_PATH}/solaris
 ${JAVA_INCLUDE_PATH}/hp-ux
 ${JAVA_INCLUDE_PATH}/alpha
