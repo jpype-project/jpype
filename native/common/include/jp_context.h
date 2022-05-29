@@ -206,7 +206,7 @@ private:
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms){};
 
 private:
-	JPContext(const JPContext& orig);
+	JPContext(const JPContext& orig) = delete;
 
 	JavaVM *m_JavaVM{};
 

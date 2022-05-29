@@ -253,7 +253,7 @@ public:
 	jlong size();
 
 private:
-	JPPySequence& operator= (const JPPySequence& ) ;
+	JPPySequence& operator= (const JPPySequence& ) = delete ;
 
 } ;
 
@@ -291,8 +291,8 @@ public:
 	}
 
 private:
-	JPPyObjectVector& operator= (const JPPyObjectVector& ) ;
-	JPPyObjectVector(const JPPyObjectVector& );
+	JPPyObjectVector& operator= (const JPPyObjectVector& ) = delete ;
+	JPPyObjectVector(const JPPyObjectVector& ) = delete;
 
 private:
 	JPPyObject m_Instance;

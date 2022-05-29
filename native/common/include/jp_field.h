@@ -75,8 +75,8 @@ public:
 	}
 
 private:
-	JPField(const JPField&);
-	JPField& operator=(const JPField&) ;
+	JPField(const JPField&) = delete;
+	JPField& operator=(const JPField&) = delete ;
 
 	string           m_Name;
 	JPClass*         m_Class;
