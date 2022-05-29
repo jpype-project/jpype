@@ -68,7 +68,6 @@ template <class T> void convert(JPJavaFrame& frame, jlongArray array, vector<T>&
 	{
 		out[i] = (T) values[i];
 	}
-	return;
 }
 
 #ifdef JP_TRACING_ENABLE
@@ -446,7 +445,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
 	JPClassList cargs;
 	convert(frame, argumentTypes, cargs);
 	auto *methodPtr = (JPMethod*) method;
-	methodPtr->setParameters((JPClass*) returnType, cargs);
+	methodPtr->setParameters((JPClass*) returnType, std::move(cargs));
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 

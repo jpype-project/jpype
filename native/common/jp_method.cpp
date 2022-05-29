@@ -15,7 +15,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "jp_arrayclass.h"
-#include "jp_boxedtype.h"
 #include "jp_method.h"
 #include "pyjp.h"
 
@@ -41,7 +40,7 @@ JPMethod::~JPMethod()
 
 void JPMethod::setParameters(
 		JPClass *returnType,
-		JPClassList parameterTypes)
+		JPClassList&& parameterTypes)
 {
 	m_ReturnType = returnType;
 	m_ParameterTypes = parameterTypes;

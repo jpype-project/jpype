@@ -31,10 +31,8 @@ public:
 			jint modifiers);
 
 	~JPMethodDispatch() override;
-
-private:
-	JPMethodDispatch(const JPMethodDispatch& method);
-	JPMethodDispatch& operator=(const JPMethodDispatch& method);
+    JPMethodDispatch(const JPMethodDispatch& method) = delete;
+	JPMethodDispatch& operator=(const JPMethodDispatch& method) = delete;
 
 public:
 
@@ -83,7 +81,6 @@ private:
 	 * when matching with a non-static.
 	 */
 	bool findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance, bool raise);
-	void dumpOverloads();
 
 	JPClass*      m_Class;
 	string        m_Name;
