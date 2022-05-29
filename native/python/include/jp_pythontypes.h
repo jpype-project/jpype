@@ -77,7 +77,6 @@ class JPPyObject
 	/** Create a new reference to a Python object.
 	 *
 	 * @param obj is the python object.
-	 * @param i is a dummy to make sure this ctor was not called accidentally.
 	 */
 	explicit JPPyObject(PyObject* obj);
 
