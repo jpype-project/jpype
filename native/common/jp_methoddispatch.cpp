@@ -14,15 +14,16 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <algorithm>
+#include <utility>
 #include "jpype.h"
 #include "jp_method.h"
 #include "jp_methoddispatch.h"
 
 JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
-		const string& name,
+		string name,
 		JPMethodList& overloads,
 		jint modifiers)
-: m_Name(name)
+: m_Name(std::move(name))
 {
 	m_Class = clazz;
 	m_Overloads = overloads;

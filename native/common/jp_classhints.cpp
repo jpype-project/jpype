@@ -13,12 +13,15 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <utility>
+
 #include <Python.h>
 #include "jpype.h"
-#include "jp_classhints.h"
 #include "jp_arrayclass.h"
-#include "jp_stringtype.h"
+#include "jp_classhints.h"
 #include "jp_proxy.h"
+#include "jp_stringtype.h"
+
 #include "pyjp.h"
 
 JPMatch::JPMatch()
@@ -176,8 +179,8 @@ class JPAttributeConversion : public JPPythonConversion
 {
 public:
 
-	JPAttributeConversion(const string &attribute, PyObject *method)
-	: JPPythonConversion(method), attribute_(attribute)
+	JPAttributeConversion(string attribute, PyObject *method)
+	: JPPythonConversion(method), attribute_(std::move(attribute))
 	{
 	}
 

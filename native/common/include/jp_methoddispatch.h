@@ -26,7 +26,7 @@ public:
 	 * Create a new method based on class and a name;
 	 */
 	JPMethodDispatch(JPClass *clazz,
-			const string& name,
+			string  name,
 			JPMethodList& overloads,
 			jint modifiers);
 
