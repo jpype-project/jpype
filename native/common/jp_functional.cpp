@@ -57,7 +57,7 @@ public:
 			auto* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
 			Py_ssize_t args = code->co_argcount;
 			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
-			int optional = 0;
+			Py_ssize_t optional = 0;
 			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
 			if (!defaults.isNull() && defaults.get() != Py_None)
 				optional = PyTuple_Size(defaults.get());
@@ -75,7 +75,7 @@ public:
 			auto* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
 			Py_ssize_t args = code->co_argcount;
 			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
-			int optional = 0;
+            Py_ssize_t optional = 0;
 			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
 			if (!defaults.isNull() && defaults.get() != Py_None)
 				optional = PyTuple_Size(defaults.get());
