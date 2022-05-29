@@ -135,7 +135,7 @@ jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 {
 	JPValue value = m_Class->newArray(frame, m_Length);
 	JPClass* compType = m_Class->getComponentType();
-	jarray out = (jarray) value.getValue().l;
+	auto out = (jarray) value.getValue().l;
 	compType->setArrayRange(frame, out, 0, m_Length, 1, obj);
 	return out;
 }
@@ -148,7 +148,7 @@ JPArrayView::JPArrayView(JPArray* array)
 	m_Buffer.obj = NULL;
 	m_Buffer.ndim = 1;
 	m_Buffer.suboffsets = NULL;
-	JPPrimitiveType *type = (JPPrimitiveType*) array->getClass()->getComponentType();
+	auto *type = (JPPrimitiveType*) array->getClass()->getComponentType();
 	type->getView(*this);
 	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
 	m_Shape[0] = array->m_Length;
@@ -172,7 +172,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	jobject item1 = frame.GetObjectArrayElement((jobjectArray) collection, 1);
 
 	// First element is the primitive type that we are packing the array from
-	JPPrimitiveType *componentType = (JPPrimitiveType*)
+	auto *componentType = (JPPrimitiveType*)
 			frame.findClass((jclass) item0);
 
 	// Second element is the shape of the array from which we compute the
@@ -211,7 +211,7 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	Py_ssize_t last = m_Shape[dims - 1];
 	for (Py_ssize_t i = 0; i < len - 2; i++)
 	{
-		jarray a1 = (jarray) frame.GetObjectArrayElement((jobjectArray) collection, (jsize) i + 2);
+		auto a1 = (jarray) frame.GetObjectArrayElement((jobjectArray) collection, (jsize) i + 2);
 		componentType->copyElements(frame, a1, 0, (jsize) last, m_Memory, offset);
 		offset += (int) (itemsize * last);
 		frame.DeleteLocalRef(a1);
@@ -250,7 +250,7 @@ void JPArrayView::reference()
 bool JPArrayView::unreference()
 {
 	m_RefCount--;
-	JPPrimitiveType *type = (JPPrimitiveType*) m_Array->getClass()->getComponentType();
+	auto *type = (JPPrimitiveType*) m_Array->getClass()->getComponentType();
 	if (m_RefCount == 0 && !m_Owned)
 		type->releaseView(*this);
 	return m_RefCount == 0;

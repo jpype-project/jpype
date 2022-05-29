@@ -55,7 +55,7 @@ public:
 		if (PyFunction_Check(match.object))
 		{
 			PyObject* func = match.object; 
-			PyCodeObject* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
+			auto* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
 			Py_ssize_t args = code->co_argcount;
 			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
 			int optional = 0;
@@ -73,7 +73,7 @@ public:
 		else if (PyMethod_Check(match.object))
 		{
 			PyObject* func = PyMethod_Function(match.object); // borrowed
-			PyCodeObject* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
+			auto* code = (PyCodeObject*) PyFunction_GetCode(func); // borrowed
 			Py_ssize_t args = code->co_argcount;
 			bool is_varargs = ((code->co_flags&CO_VARARGS)==CO_VARARGS);
 			int optional = 0;
@@ -105,11 +105,11 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPFunctional *cls = (JPFunctional*) match.closure;
+		auto *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
 		JPContext *context = PyJPModule_getContext();
 		JPJavaFrame frame = JPJavaFrame::inner(context);
-		PyJPProxy *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
+		auto *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;
 		cl.push_back(cls);

@@ -42,7 +42,7 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
 	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
 	return JPValue(this, v);
 }
@@ -226,7 +226,7 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetByteArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -279,7 +279,7 @@ Py_ssize_t JPByteType::getItemSize()
 void JPByteType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jbyte* b = (jbyte*) ((char*) memory + offset);
+	auto* b = (jbyte*) ((char*) memory + offset);
 	frame.GetByteArrayRegion((jbyteArray) a, start, len, b);
 }
 

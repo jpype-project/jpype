@@ -263,7 +263,7 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* vals)
 {
 	JP_TRACE_IN("JPClass::setArrayRange");
-	jobjectArray array = (jobjectArray) a;
+	auto array = (jobjectArray) a;
 
 	// Verify before we start the conversion, as we wont be able
 	// to abort once we start
@@ -307,7 +307,7 @@ void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* va
 JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
 	JP_TRACE_IN("JPClass::getArrayItem");
-	jobjectArray array = (jobjectArray) a;
+	auto array = (jobjectArray) a;
 
 	jobject obj = frame.GetObjectArrayElement(array, ndx);
 	JPClass *retType = this;

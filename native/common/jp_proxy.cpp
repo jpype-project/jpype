@@ -54,7 +54,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 
 	// We need the resources to be held for the full duration of the proxy.
@@ -90,7 +90,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			}
 
 			// Find the return type
-			JPClass* returnClass = (JPClass*) returnTypePtr;
+			auto* returnClass = (JPClass*) returnTypePtr;
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
@@ -123,7 +123,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 				if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
 					JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
 				jvalue res = returnMatch.convert();
-				JPBoxedType *boxed =  (JPBoxedType *) ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
+				auto *boxed =  (JPBoxedType *) ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
 				jvalue res2;
 				res2.l = boxed->box(frame, res);
 				return frame.keep(res2.l);

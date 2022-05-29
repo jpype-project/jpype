@@ -37,7 +37,7 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	JP_PY_TRY("PyJPNumber_new", type);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	JPClass *cls = (JPClass*) PyJPClass_getJPClass((PyObject*) type);
+	auto *cls = (JPClass*) PyJPClass_getJPClass((PyObject*) type);
 	if (cls == NULL)
 		JP_RAISE(PyExc_TypeError, "Class type incorrect");
 
@@ -412,7 +412,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jlong l = 0;
 		if (value.getValue().l != 0)
 		{
-			JPBoxedType* jb = (JPBoxedType*) value.getClass();
+			auto* jb = (JPBoxedType*) value.getClass();
 			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, 0);
 		}
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
@@ -423,7 +423,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jdouble l = 0;
 		if (value.getValue().l != 0)
 		{
-			JPBoxedType* jb = (JPBoxedType*) value.getClass();
+			auto* jb = (JPBoxedType*) value.getClass();
 			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, 0);
 		}
 		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));

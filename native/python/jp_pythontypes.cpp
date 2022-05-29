@@ -409,7 +409,7 @@ JPPyCallRelease::JPPyCallRelease()
 JPPyCallRelease::~JPPyCallRelease()
 {
 	// Reaquire the lock
-	PyThreadState *save = (PyThreadState *) m_State1;
+	auto *save = (PyThreadState *) m_State1;
 	PyEval_RestoreThread(save);
 }
 

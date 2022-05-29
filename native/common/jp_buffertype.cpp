@@ -61,7 +61,7 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 		m_Size = 8;
 	} else
 	{
-		JPBufferType* super = dynamic_cast<JPBufferType*> (m_SuperClass);
+		auto* super = dynamic_cast<JPBufferType*> (m_SuperClass);
 		if (super == NULL)
 			JP_RAISE(PyExc_TypeError, "Unsupported buffer type");  // GCOVR_EXCL_LINE
 		m_Type = super->m_Type;

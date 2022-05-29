@@ -91,11 +91,11 @@ extern "C"
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
 		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_newWrapper");
 	JPPyCallAcquire callback;
-	JPClass* cls = (JPClass*) jcls;
+	auto* cls = (JPClass*) jcls;
 	PyJPClass_hook(frame, cls);
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
@@ -105,7 +105,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
 		jlongArray resources,
 		jint sz)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_destroy");
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
@@ -126,15 +126,15 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDis
 		jlongArray overloadPtrs,
 		jint modifiers)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineMethodDispatch");
-	JPClass* cls = (JPClass*) clsPtr;
+	auto* cls = (JPClass*) clsPtr;
 	JPMethodList overloadList;
 	convert(frame, overloadPtrs, overloadList);
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
-	JPMethodDispatch* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
+	auto* dispatch = new JPMethodDispatch(cls, cname, overloadList, modifiers);
 	return (jlong) dispatch;
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
 }
@@ -147,12 +147,12 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClas
 		jlong componentClass,
 		jint modifiers)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineArrayClass");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
-	JPArrayClass* result = new JPArrayClass(frame, cls,
+	auto* result = new JPArrayClass(frame, cls,
 			cname,
 			(JPClass*) superClass,
 			(JPClass*) componentClass,
@@ -170,7 +170,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		jint modifiers)
 {
 	// All resources are created here are owned by Java and deleted by Java shutdown routine
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
 	string className = frame.toStringUTF8(name);
@@ -305,7 +305,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive
 		jint modifiers)
 {
 	// These resources are created by the boxed types
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_definePrimitive");
 	string cname = frame.toStringUTF8(name);
@@ -367,10 +367,10 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
 		jlongArray methodPtrs,
 		jlongArray fieldPtrs)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_assignMembers");
-	JPClass* cls = (JPClass*) clsPtr;
+	auto* cls = (JPClass*) clsPtr;
 	JPMethodDispatchList methodList;
 	convert(frame, methodPtrs, methodList);
 
@@ -392,7 +392,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
 		jlong fieldType,
 		jint modifiers)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineField");
 	string cname = frame.toStringUTF8(name);
@@ -415,7 +415,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 		jobject method,
 		jlongArray overloadList, jint modifiers)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_defineMethod");
 	jmethodID mid = frame.FromReflectedMethod(method);
@@ -440,12 +440,12 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
 		jlongArray argumentTypes
 		)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 	JP_JAVA_TRY("JPTypeFactory_populateMethod");
 	JPClassList cargs;
 	convert(frame, argumentTypes, cargs);
-	JPMethod *methodPtr = (JPMethod*) method;
+	auto *methodPtr = (JPMethod*) method;
 	methodPtr->setParameters((JPClass*) returnType, cargs);
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }

@@ -201,7 +201,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
-	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
+	for (auto iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
@@ -253,7 +253,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
-	for (JPMethodList::const_iterator iter = overloads.begin(); iter != overloads.end(); ++iter)
+	for (auto iter = overloads.begin(); iter != overloads.end(); ++iter)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
@@ -410,7 +410,7 @@ void PyJPMethod_initType(PyObject* module)
 JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 {
 	JP_TRACE_IN("PyJPMethod_create");
-	PyJPMethod* self = (PyJPMethod*) PyJPMethod_Type->tp_alloc(PyJPMethod_Type, 0);
+	auto* self = (PyJPMethod*) PyJPMethod_Type->tp_alloc(PyJPMethod_Type, 0);
 	JP_PY_CHECK();
 	self->m_Method = m;
 	self->m_Instance = instance;

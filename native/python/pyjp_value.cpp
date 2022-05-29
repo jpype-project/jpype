@@ -110,7 +110,7 @@ JPValue* PyJPValue_getJavaSlot(PyObject* self)
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
 		return NULL;
-	JPValue* value = (JPValue*) (((char*) self) + offset);
+	auto* value = (JPValue*) (((char*) self) + offset);
 	if (value->getClass() == NULL)
 		return NULL;
 	return value;
@@ -189,7 +189,7 @@ PyObject* PyJPValue_str(PyObject* self)
 				Py_INCREF(cache);
 				return cache;
 			}
-			jstring jstr = (jstring) value->getValue().l;
+			auto jstr = (jstring) value->getValue().l;
 			string str;
 			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
@@ -279,7 +279,7 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	}
 	// GCOVR_EXCL_STOP
 
-	JPValue* slot = (JPValue*) (((char*) self) + offset);
+	auto* slot = (JPValue*) (((char*) self) + offset);
 	// GCOVR_EXCL_START
 	// This is a sanity check that should never trigger in normal operations.
 	if (slot->getClass() != NULL)
@@ -302,6 +302,6 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
 		return false;  // GCOVR_EXCL_LINE
-	JPValue* slot = (JPValue*) (((char*) self) + offset);
+	auto* slot = (JPValue*) (((char*) self) + offset);
 	return slot->getClass() != NULL;
 }

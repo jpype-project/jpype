@@ -202,7 +202,7 @@ void JPypeException::convertJavaToPython()
 	}
 	// GCOVR_EXCL_STOP
 
-	PyObject *type = (PyObject*) Py_TYPE(pyvalue.get());
+	auto *type = (PyObject*) Py_TYPE(pyvalue.get());
 	Py_INCREF(type);
 
 	// Add cause to the exception
@@ -537,7 +537,7 @@ PyTracebackObject *tb_create(
 		return NULL;
 
 	// Create a traceback
-	PyTracebackObject *traceback = (PyTracebackObject*) 
+	auto *traceback = (PyTracebackObject*) 
 		        PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
 
 	// We could fail in process
@@ -563,7 +563,7 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 {
 	PyTracebackObject *last_traceback = NULL;
 	PyObject *dict = PyModule_GetDict(PyJPModule);
-	for (JPStackTrace::iterator iter = trace.begin(); iter != trace.end(); ++iter)
+	for (auto iter = trace.begin(); iter != trace.end(); ++iter)
 	{
 		last_traceback = tb_create(last_traceback, dict,  iter->getFile(),
 				iter->getFunction(), iter->getLine());
@@ -584,7 +584,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		return JPPyObject();
 
 	JNIEnv* env = frame.getEnv();
-	jobjectArray obj = (jobjectArray) env->CallObjectMethodA(context->getJavaContext(),
+	auto obj = (jobjectArray) env->CallObjectMethodA(context->getJavaContext(),
 			context->m_Context_GetStackFrameID, args);
 
 	// Eat any exceptions that were generated
@@ -598,9 +598,9 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	for (jsize i = 0; i < sz; i += 4)
 	{
 		string filename, method;
-		jstring jclassname = (jstring) frame.GetObjectArrayElement(obj, i);
-		jstring jmethodname = (jstring) frame.GetObjectArrayElement(obj, i + 1);
-		jstring jfilename = (jstring) frame.GetObjectArrayElement(obj, i + 2);
+		auto jclassname = (jstring) frame.GetObjectArrayElement(obj, i);
+		auto jmethodname = (jstring) frame.GetObjectArrayElement(obj, i + 1);
+		auto jfilename = (jstring) frame.GetObjectArrayElement(obj, i + 2);
 		if (jfilename != NULL)
 			filename = frame.toStringUTF8(jfilename);
 		else

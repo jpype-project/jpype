@@ -40,7 +40,7 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 	if (n < 0)
 		n = -n;
 
-	PyLongObject *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
+	auto *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
 	if (newobj == NULL)
 		return NULL;
 

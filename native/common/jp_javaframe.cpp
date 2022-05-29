@@ -1075,7 +1075,7 @@ public:
 
 string JPJavaFrame::toString(jobject o)
 {
-	jstring str = (jstring) CallObjectMethodA(o, m_Context->m_Object_ToStringID, 0);
+	auto str = (jstring) CallObjectMethodA(o, m_Context->m_Object_ToStringID, 0);
 	return toStringUTF8(str);
 }
 
@@ -1234,7 +1234,7 @@ jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
 jarray JPJavaFrame::getPackageContents(jobject pkg)
 {
 	jvalue v;
-	JAVA_RETURN(jarray, "JPJavaFrame::getPackageContents",
+	JAVA_RETURN(auto, "JPJavaFrame::getPackageContents",
 			(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
 }
 

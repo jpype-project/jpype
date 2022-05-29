@@ -398,7 +398,7 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	}
 
 	JP_TRACE("Delete resources");
-	for (std::list<JPResource*>::iterator iter = m_Resources.begin();
+	for (auto iter = m_Resources.begin();
 			iter != m_Resources.end(); ++iter)
 	{
 		delete *iter;

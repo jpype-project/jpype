@@ -72,7 +72,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 	// Check each overload in order (the TypeManager orders them by priority
 	// according to Java overload rules).
-	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+	for (auto it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
 		JPMethod* current = *it;
 
@@ -145,7 +145,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << " between:" << std::endl;
-		for (vector<JPMethod*>::iterator it = ambiguous.begin(); it != ambiguous.end(); ++it)
+		for (auto it = ambiguous.begin(); it != ambiguous.end(); ++it)
 		{
 			ss << "\t" << (*it)->toString() << std::endl;
 		}
@@ -176,7 +176,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << ", options are:" << std::endl;
-		for (JPMethodList::iterator it = m_Overloads.begin();
+		for (auto it = m_Overloads.begin();
 				it != m_Overloads.end();
 				++it)
 		{
@@ -229,7 +229,7 @@ string JPMethodDispatch::matchReport(JPPyObjectVector& args)
 	stringstream res;
 	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << endl;
 
-	for (JPMethodList::iterator cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
+	for (auto cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
 	{
 		JPMethod* current = *cur;
 		res << "  " << current->matchReport(args);

@@ -36,7 +36,7 @@ extern "C"
 static PyObject *PyJPArray_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPArray_new");
-	PyJPArray* self = (PyJPArray*) type->tp_alloc(type, 0);
+	auto* self = (PyJPArray*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 	self->m_Array = NULL;
 	self->m_View = NULL;
@@ -61,7 +61,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		return -1;
 
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
-	JPArrayClass* arrayClass = dynamic_cast<JPArrayClass*> (cls);
+	auto* arrayClass = dynamic_cast<JPArrayClass*> (cls);
 	if (arrayClass == NULL)
 		JP_RAISE(PyExc_TypeError, "Class must be array type");
 
@@ -69,7 +69,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JPValue *value = PyJPValue_getJavaSlot(v);
 	if (value != NULL)
 	{
-		JPArrayClass* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
+		auto* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
 		if (arrayClass2 == NULL)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
 		if (arrayClass2 != arrayClass)
@@ -158,7 +158,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 	if (PySlice_Check(item))
 	{
 		Py_ssize_t start, stop, step, slicelength;
-		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
+		auto length = (Py_ssize_t) self->m_Array->getLength();
 
 		if (PySlice_Unpack(item, &start, &stop, &step) < 0)
 			return NULL;
@@ -225,7 +225,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	if (PySlice_Check(item))
 	{
 		Py_ssize_t start, stop, step, slicelength;
-		Py_ssize_t length = (Py_ssize_t) self->m_Array->getLength();
+		auto length = (Py_ssize_t) self->m_Array->getLength();
 
 		if (PySlice_Unpack(item, &start, &stop, &step) < 0)
 			return -1;

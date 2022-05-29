@@ -103,7 +103,7 @@ template <class type_t> PyObject *convertMultiArray(
 	}
 
 	// Reserve space for array.
-	jobjectArray contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
+	auto contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
 	std::vector<Py_ssize_t> indices(view.ndim);
 	int u = view.ndim - 1;
 	int k = 0;
@@ -112,7 +112,7 @@ template <class type_t> PyObject *convertMultiArray(
 	jboolean isCopy;
 	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(a0, &isCopy);
 	JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
-	type_t *dest = (type_t*) mem;
+	auto *dest = (type_t*) mem;
 
 	Py_ssize_t step;
 	if (view.strides == NULL)
@@ -189,13 +189,13 @@ public:
 		jvalue res;
 		if (match.type == JPMatch::_exact)
 		{
-			jlong val = (jlong) PyLong_AsUnsignedLongLongMask(match.object);
+			auto val = (jlong) PyLong_AsUnsignedLongLongMask(match.object);
 			if (val == -1)
 				JP_PY_CHECK();  // GCOVR_EXCL_LINE
 			base_t::field(res) = (typename base_t::type_t) val;
 		} else
 		{
-			jlong val = (jlong) PyLong_AsLongLong(match.object);
+			auto val = (jlong) PyLong_AsLongLong(match.object);
 			if (val == -1)
 				JP_PY_CHECK();  // GCOVR_EXCL_LINE
 			base_t::field(res) = (typename base_t::type_t) base_t::assertRange(val);

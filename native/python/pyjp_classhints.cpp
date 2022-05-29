@@ -24,7 +24,7 @@ extern "C"
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClassHints_new", type);
-	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
+	auto *self = (PyJPClassHints*) type->tp_alloc(type, 0);
 	self->m_Hints = new JPClassHints();
 	return (PyObject*) self;
 	JP_PY_CATCH(NULL);

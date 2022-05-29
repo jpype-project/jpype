@@ -93,7 +93,7 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		return 0;
 	}
 
-	PyTypeObject *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
+	auto *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
 
 	// GCOVR_EXCL_START
 	// Sanity checks.  Not testable
@@ -135,8 +135,8 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
 	// Python lacks a FromSpecWithMeta so we are going to have to fake it here.
-	PyTypeObject* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
-	PyHeapTypeObject* heap = (PyHeapTypeObject*) type;
+	auto* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
+	auto* heap = (PyHeapTypeObject*) type;
 	type->tp_flags = spec->flags | Py_TPFLAGS_HEAPTYPE;
 	type->tp_name = spec->name;
 	const char *s = strrchr(spec->name, '.');
@@ -354,7 +354,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 
 	// Merge together all bases
 	std::list<PyObject*> out;
-	for (std::list<PyObject*>::iterator iter = bases.begin();
+	for (auto iter = bases.begin();
 			iter != bases.end(); ++iter)
 	{
 		PyObject *l = ((PyTypeObject*) * iter)->tp_bases;
@@ -374,7 +374,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	{
 		PyObject* front = bases.front();
 		bases.pop_front();
-		for (std::list<PyObject*>::iterator iter = bases.begin();
+		for (auto iter = bases.begin();
 				iter != bases.end(); ++iter)
 		{
 			if (PySequence_Contains(((PyTypeObject*) * iter)->tp_bases, front))
@@ -387,7 +387,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 		if (front != NULL)
 		{
 			out.push_back(front);
-			PyObject* next = (PyObject*) ((PyTypeObject*) front)->tp_base;
+			auto* next = (PyObject*) ((PyTypeObject*) front)->tp_base;
 			if (next)
 			{
 				bases.remove(next);
@@ -398,7 +398,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 
 	PyObject *obj = PyTuple_New(out.size());
 	int j = 0;
-	for (std::list<PyObject*>::iterator iter = out.begin();
+	for (auto iter = out.begin();
 			iter != out.end(); ++iter)
 	{
 		Py_INCREF(*iter);
@@ -617,7 +617,7 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 {
 	JP_PY_TRY("PyJPClass_setHints", self);
 	PyJPModule_getContext();
-	PyJPClass *cls = (PyJPClass*) self;
+	auto *cls = (PyJPClass*) self;
 	PyObject *hints = cls->m_Class->getHints();
 	if (hints != NULL)
 	{
@@ -719,7 +719,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	if (PyIndex_Check(item))
 	{
 		long sz = PyLong_AsLong(item);
-		JPArrayClass *cls = (JPArrayClass*) self->m_Class->newArrayType(frame, 1);
+		auto *cls = (JPArrayClass*) self->m_Class->newArrayType(frame, 1);
 		JPValue v = cls->newArray(frame, sz);
 		return cls->convertToPythonObject(frame, v.getValue(), true).keep();
 	}
@@ -848,7 +848,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	// a slice then we need to copy it here.
 	if (PyObject_IsInstance(other, (PyObject*) PyJPArray_Type))
 	{
-		PyJPArray *array = (PyJPArray*) other;
+		auto *array = (PyJPArray*) other;
 		if (array->m_Array->isSlice())
 		{
 			JPJavaFrame frame = JPJavaFrame::outer(context);
@@ -1075,7 +1075,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 		baseType = JPPyObject::use((PyObject*) PyJPException_Type);
 	} else if (cls->isArray())
 	{
-		JPArrayClass* acls = (JPArrayClass*) cls;
+		auto* acls = (JPArrayClass*) cls;
 		if (acls->getComponentType()->isPrimitive())
 			baseType = JPPyObject::use((PyObject*) PyJPArrayPrimitive_Type);
 		else
@@ -1125,7 +1125,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	JP_TRACE_IN("PyJPClass_create", cls);
 	// Check the cache for speed
 
-	PyObject *host = (PyObject*) cls->getHost();
+	auto *host = (PyObject*) cls->getHost();
 	if (host == NULL)
 	{
 		frame.newWrapper(cls);
@@ -1138,7 +1138,7 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 {
 	JPContext *context = frame.getContext();
-	PyObject *host = (PyObject*) cls->getHost();
+	auto *host = (PyObject*) cls->getHost();
 	if (host != NULL)
 		return;
 
@@ -1155,13 +1155,13 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		return;
 
 	const JPFieldList & instFields = cls->getFields();
-	for (JPFieldList::const_iterator iter = instFields.begin(); iter != instFields.end(); iter++)
+	for (auto iter = instFields.begin(); iter != instFields.end(); iter++)
 	{
 		JPPyObject fieldName(JPPyString::fromStringUTF8((*iter)->getName()));
 		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(*iter).get());
 	}
 	const JPMethodDispatchList& m_Methods = cls->getMethods();
-	for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+	for (auto iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
 	{
 		JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
 		PyDict_SetItem(members.get(), methodName.get(),
@@ -1171,7 +1171,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	if (cls->isInterface())
 	{
 		const JPMethodDispatchList& m_Methods = context->_java_lang_Object->getMethods();
-		for (JPMethodDispatchList::const_iterator iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+		for (auto iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
 		{
 			JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
 			PyDict_SetItem(members.get(), methodName.get(),
@@ -1186,7 +1186,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
 	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
-	PyJPClass *self = (PyJPClass*) vself.get();
+	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
 	self->m_Class = cls;

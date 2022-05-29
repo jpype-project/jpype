@@ -79,7 +79,7 @@ static int assertNotNull(JPValue *javaSlot)
 
 PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 {
-	PyJPChar  *self = (PyJPChar*) PyJPValue_alloc(type, 0);
+	auto  *self = (PyJPChar*) PyJPValue_alloc(type, 0);
 	if (self == 0)
 		return 0;
 	self->m_Data[0] = 0;
@@ -115,7 +115,7 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 	} else
 	{
 
-		Py_UCS2 *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
+		auto *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
 		data[0] = p;
 		data[1] = 0;
 		_PyUnicode_STATE(self).kind = PyUnicode_2BYTE_KIND;
@@ -154,15 +154,15 @@ Py_UCS2 fromJPChar(PyJPChar *self)
 {
 	if (_PyUnicode_STATE(self).ascii == 1)
 	{
-		Py_UCS1 *data = (Py_UCS1*) (((PyASCIIObject*) self) + 1);
+		auto *data = (Py_UCS1*) (((PyASCIIObject*) self) + 1);
 		return data[0];
 	}
 	if (_PyUnicode_STATE(self).kind == PyUnicode_1BYTE_KIND)
 	{
-		Py_UCS1 *data = (Py_UCS1*) ( ((PyCompactUnicodeObject*) self) + 1);
+		auto *data = (Py_UCS1*) ( ((PyCompactUnicodeObject*) self) + 1);
 		return data[0];
 	}
-	Py_UCS2 *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
+	auto *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
 	return data[0];
 }
 

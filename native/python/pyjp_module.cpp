@@ -173,7 +173,7 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	Py_ssize_t n = PyTuple_Size(mro);
 	for (Py_ssize_t i = 0; i < n; ++i)
 	{
-		PyTypeObject *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
+		auto *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
 		PyObject *res = PyDict_GetItem(type2->tp_dict, attr_name);
 		if (res)
 		{
@@ -465,7 +465,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 		return NULL;
 	}
 
-	PyObject *host = (PyObject*) cls->getHost();
+	auto *host = (PyObject*) cls->getHost();
 	return PyBool_FromLong(host != NULL);
 	JP_PY_CATCH(NULL);
 }
@@ -850,12 +850,12 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 	// Now we have a valid format code, so next lets get a converter for
 	// the type.
-	JPPrimitiveType *pcls = (JPPrimitiveType *) cls;
+	auto *pcls = (JPPrimitiveType *) cls;
 
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;
-	jintArray jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
+	auto jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
 	if (view.shape != NULL)
 	{
 		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,

@@ -134,7 +134,7 @@ void PyJPField_initType(PyObject* module)
 JPPyObject PyJPField_create(JPField* m)
 {
 	JP_TRACE_IN("PyJPField_create");
-	PyJPField* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
+	auto* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
 	JP_PY_CHECK();
 	self->m_Field = m;
 	return JPPyObject::claim((PyObject*) self);

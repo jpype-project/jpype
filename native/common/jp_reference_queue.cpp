@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReferen
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
 		{
-			JCleanupHook func = (JCleanupHook) cleanup;
+			auto func = (JCleanupHook) cleanup;
 			(*func)((void*) host);
 		}
 	} catch (...) // GCOVR_EXCL_LINE

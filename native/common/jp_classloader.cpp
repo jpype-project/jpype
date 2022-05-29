@@ -99,7 +99,7 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	v[0].l = frame.NewStringUTF("org.jpype.classloader.DynamicClassLoader");
 	v[1].z = true;
 	v[2].l = cl;
-	jclass dyClass = (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
+	auto dyClass = (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
 
 	// dycl.newInstance(systemClassLoader);
 	jmethodID newDyLoader = frame.GetMethodID(dyClass, "<init>", "(Ljava/lang/ClassLoader;)V");

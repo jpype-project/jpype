@@ -79,7 +79,7 @@ JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue value,
 jvalue JPArrayClass::convertToJavaVector(JPJavaFrame& frame, JPPyObjectVector& refs, jsize start, jsize end)
 {
 	JP_TRACE_IN("JPArrayClass::convertToJavaVector");
-	jsize length = (jsize) (end - start);
+	auto length = (jsize) (end - start);
 
 	jarray array = m_ComponentType->newArrayOf(frame, length);
 	jvalue res;

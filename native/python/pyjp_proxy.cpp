@@ -30,7 +30,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	JP_PY_TRY("PyJPProxy_new");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
+	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
 	// Parse arguments

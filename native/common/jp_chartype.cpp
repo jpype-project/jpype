@@ -229,7 +229,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetCharArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -282,7 +282,7 @@ Py_ssize_t JPCharType::getItemSize()
 void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jchar* b = (jchar*) ((char*) memory + offset);
+	auto* b = (jchar*) ((char*) memory + offset);
 	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }
 

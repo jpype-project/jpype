@@ -288,7 +288,7 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetBooleanArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -341,7 +341,7 @@ Py_ssize_t JPBooleanType::getItemSize()
 void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jboolean* b = (jboolean*) ((char*) memory + offset);
+	auto* b = (jboolean*) ((char*) memory + offset);
 	frame.GetBooleanArrayRegion((jbooleanArray) a, start, len, b);
 }
 

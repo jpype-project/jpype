@@ -44,7 +44,7 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
 	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, 0);
 	return JPValue(this, v);
 }
@@ -74,7 +74,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = (JPPrimitiveType*) cls2;
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -250,7 +250,7 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetFloatArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -303,7 +303,7 @@ Py_ssize_t JPFloatType::getItemSize()
 void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jfloat* b = (jfloat*) ((char*) memory + offset);
+	auto* b = (jfloat*) ((char*) memory + offset);
 	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 

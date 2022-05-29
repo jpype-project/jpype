@@ -53,7 +53,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
-	JPClass* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
 	if (out == NULL)
 	{
 		stringstream err;
@@ -70,7 +70,7 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	jvalue val;
 	val.l = obj;
-	JPClass *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+	auto *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
 	frame.check();
 	JP_TRACE("ClassName", cls == NULL ? "null" : cls->getCanonicalName());
 	return cls;

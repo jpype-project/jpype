@@ -56,7 +56,7 @@ string JPMethod::toString() const
 JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
 	JP_TRACE_IN("JPMethod::matchVars");
-	JPArrayClass *arraytype = (JPArrayClass*) vartype;
+	auto *arraytype = (JPArrayClass*) vartype;
 	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
 
@@ -191,7 +191,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	{
 		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
-		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
+		auto* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
 		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
 	}
 
@@ -284,7 +284,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];
 		if (cls->isPrimitive())
 		{
-			JPPrimitiveType* type = (JPPrimitiveType*) cls;
+			auto* type = (JPPrimitiveType*) cls;
 			PyObject *u = arg[i + match.m_Skip];
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
@@ -345,7 +345,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 	res << m_ReturnType->getCanonicalName() << " (";
 
 	bool isFirst = true;
-	for (vector<JPClass*>::iterator it = m_ParameterTypes.begin(); it != m_ParameterTypes.end(); it++)
+	for (auto it = m_ParameterTypes.begin(); it != m_ParameterTypes.end(); it++)
 	{
 		if (isFirst && !isStatic())
 		{
@@ -386,7 +386,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 
 bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 {
-	for (JPMethodList::const_iterator it = m_MoreSpecificOverloads.begin();
+	for (auto it = m_MoreSpecificOverloads.begin();
 			it != m_MoreSpecificOverloads.end();
 			++it)
 	{

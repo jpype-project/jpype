@@ -287,7 +287,7 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 	JPValue *val = PyJPValue_getJavaSlot(self);
 
 	// These two are loop invariants and must match each time
-	jthrowable th = (jthrowable) val->getValue().l;
+	auto th = (jthrowable) val->getValue().l;
 	JPPyObject exc = JPPyObject::use(self);
 	PyJPException_normalize(frame, exc, th, NULL);
 

@@ -61,7 +61,7 @@ static void dtor(PyObject *self)
 	JPContext *context = JPContext_global;
 	if (context == NULL || !context->isRunning())
 		return;
-	jobject jo = (jobject) PyCapsule_GetPointer(self, NULL);
+	auto jo = (jobject) PyCapsule_GetPointer(self, NULL);
 	if (jo == NULL)
 		return;
 	JPJavaFrame frame = JPJavaFrame::outer(context);
