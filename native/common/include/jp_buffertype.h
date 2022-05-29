@@ -25,9 +25,9 @@ public:
 	JPBufferType(JPJavaFrame& frame, jclass cls, const string& name, JPClass* superClass, const JPClassList& interfaces, jint modifiers);
 	~ JPBufferType() override;
 
-	char* getType()
+	const char* getType()
 	{
-		return const_cast<char*> (m_Type);
+		return m_Type;
 	}
 
 	int getSize()
