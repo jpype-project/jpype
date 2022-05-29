@@ -33,10 +33,6 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	JP_TRACE_OUT;
 }
 
-JPTypeManager::~JPTypeManager()
-{
-}
-
 JPClass* JPTypeManager::findClass(jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
@@ -56,7 +52,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
 	if (out == nullptr)
 	{
-		stringstream err;
+		std::stringstream err;
 		err << "Class " << name << " is not found";
 		JP_RAISE(PyExc_TypeError, err.str().c_str());
 	}

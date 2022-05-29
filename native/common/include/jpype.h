@@ -51,7 +51,7 @@
 
 #else
 
-// For all the compilers than understand standards
+// For all the compilers that understand standards
 #if (__cplusplus >= 201103L)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
@@ -66,16 +66,12 @@
 //#include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include <list>
+//#include <list>
 
 using std::map;
 using std::string;
-using std::stringstream;
-/*using std::cout;
-using std::cerr;
-using std::endl;
-*/using std::vector;
-using std::list;
+using std::vector;
+//using std::list;
 
 #ifdef JP_INSTRUMENTATION
 
@@ -103,7 +99,7 @@ extern int PyJPModuleFault_check(uint32_t code);
 #endif
 
 /** Definition of commonly used template types */
-using StringVector = vector<string>;
+using StringVector = std::vector<string>;
 
 /**
  * Converter are used for bulk byte transfers from Python to Java.

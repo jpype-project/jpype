@@ -340,12 +340,12 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 	ensureTypeCache();
 	JPContext *context = m_Class->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	stringstream res;
+	std::stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
 
 	bool isFirst = true;
-	for (auto it = m_ParameterTypes.begin(); it != m_ParameterTypes.end(); it++)
+	for (auto & m_ParameterType : m_ParameterTypes)
 	{
 		if (isFirst && !isStatic())
 		{
@@ -353,7 +353,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			continue;
 		}
 		isFirst = false;
-		res << (*it)->getCanonicalName();
+		res << m_ParameterType->getCanonicalName();
 	}
 
 	res << ") ==> ";
@@ -386,11 +386,9 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 
 bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 {
-	for (auto it = m_MoreSpecificOverloads.begin();
-			it != m_MoreSpecificOverloads.end();
-			++it)
+	for (auto m_MoreSpecificOverload : m_MoreSpecificOverloads)
 	{
-		if (other == *it)
+		if (other == m_MoreSpecificOverload)
 			return true;
 	}
 	return false;

@@ -45,9 +45,7 @@ JPClass::JPClass(JPJavaFrame& frame,
 	m_Modifiers = modifiers;
 }
 
-JPClass::~JPClass()
-{
-}
+JPClass::~JPClass()= default;
 
 void JPClass::setHost(PyObject* host)
 {
@@ -113,7 +111,7 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 {
 	if (d < 0 || d > 255)
 		JP_RAISE(PyExc_ValueError, "Invalid array dimensions");
-	stringstream ss;
+	std::stringstream ss;
 	for (long i = 0; i < d; ++i)
 		ss << "[";
 	if (isPrimitive())
@@ -234,9 +232,9 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 	JPMatch match(&frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 	{
-		stringstream err;
+		std::stringstream err;
 		err << "unable to convert to " << getCanonicalName();
-		JP_RAISE(PyExc_TypeError, err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str());
 	}
 	jobject val = match.convert().l;
 	frame.SetStaticObjectField(c, fid, val);
@@ -249,9 +247,9 @@ void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* ob
 	JPMatch match(&frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 	{
-		stringstream err;
+		std::stringstream err;
 		err << "unable to convert to " << getCanonicalName();
-		JP_RAISE(PyExc_TypeError, err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str());
 	}
 	jobject val = match.convert().l;
 	frame.SetObjectField(c, fid, val);

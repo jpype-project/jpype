@@ -138,7 +138,7 @@ void JPypeTracer::traceJavaObject(const char* msg, const void* ref)
 		JPypeTracer::trace1("- JNI", msg);
 		return;
 	}
-	stringstream str;
+	std::stringstream str;
 	str << msg << " " << (void*) ref ;
 	JPypeTracer::trace1("JNI", str.str().c_str());
 }
@@ -149,13 +149,13 @@ void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 		return;
 	if (ref != nullptr)
 	{
-		stringstream str;
+		std::stringstream str;
 		str << msg << " " << (void*) ref << " " << ref->ob_refcnt << " " << Py_TYPE(ref)->tp_name;
 		JPypeTracer::trace1("PY", str.str().c_str());
 
 	} else
 	{
-		stringstream str;
+		std::stringstream str;
 		str << msg << " " << (void*) ref;
 		JPypeTracer::trace1("PY", str.str().c_str());
 	}
