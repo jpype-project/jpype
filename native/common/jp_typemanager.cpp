@@ -54,7 +54,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	{
 		std::stringstream err;
 		err << "Class " << name << " is not found";
-		JP_RAISE(PyExc_TypeError, err.str().c_str());
+		JP_RAISE(PyExc_TypeError, err.str());
 	}
 	return out;
 	JP_TRACE_OUT;
