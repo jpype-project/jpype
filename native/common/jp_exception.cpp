@@ -242,7 +242,7 @@ int JPError::_method_not_found = 20;
 
 void JPypeException::toPython()
 {
-	const char* mesg;
+	const char* mesg = nullptr;
 	JP_TRACE_IN("JPypeException::toPython");
 	JP_TRACE("err", PyErr_Occurred());
 	try
