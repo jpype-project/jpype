@@ -24,8 +24,8 @@ public:
 	~JPFloatType() override;
 
 public:
-	typedef jfloat type_t;
-	typedef jfloatArray array_t;
+	using type_t = jfloat;
+	using array_t = jfloatArray;
 
 	static inline jfloat& field(jvalue& v)
 	{

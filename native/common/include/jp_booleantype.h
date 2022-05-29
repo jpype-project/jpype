@@ -23,8 +23,8 @@ public:
 	JPBooleanType();
 	~JPBooleanType() override;
 
-	typedef jboolean type_t;
-	typedef jbooleanArray array_t;
+	using type_t = jboolean;
+	using array_t = jbooleanArray;
 
 	static inline jboolean& field(jvalue& v)
 	{

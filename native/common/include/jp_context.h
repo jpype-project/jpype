@@ -67,10 +67,10 @@ public:
 	}
 } ;
 
-typedef JPRef<jclass> JPClassRef;
-typedef JPRef<jobject> JPObjectRef;
-typedef JPRef<jarray> JPArrayRef;
-typedef JPRef<jthrowable> JPThrowableRef;
+using JPClassRef = JPRef<jclass>;
+using JPObjectRef = JPRef<jobject>;
+using JPArrayRef = JPRef<jarray>;
+using JPThrowableRef = JPRef<jthrowable>;
 
 class JPStackInfo;
 class JPGarbageCollection;

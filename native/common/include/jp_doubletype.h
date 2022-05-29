@@ -24,8 +24,8 @@ public:
 	~JPDoubleType() override;
 
 public:
-	typedef jdouble type_t;
-	typedef jdoubleArray array_t;
+	using type_t = jdouble;
+	using array_t = jdoubleArray;
 
 	static inline jdouble& field(jvalue& v)
 	{

@@ -23,8 +23,8 @@ public:
 	JPLongType();
 	~JPLongType() override;
 
-	typedef jlong type_t;
-	typedef jlongArray array_t;
+	using type_t = jlong;
+	using array_t = jlongArray;
 
 	static inline jlong& field(jvalue& v)
 	{

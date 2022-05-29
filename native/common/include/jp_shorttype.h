@@ -23,8 +23,8 @@ public:
 	JPShortType();
 	~JPShortType() override;
 
-	typedef jshort type_t;
-	typedef jshortArray array_t;
+	using type_t = jshort;
+	using array_t = jshortArray;
 
 	static inline jshort& field(jvalue& v)
 	{

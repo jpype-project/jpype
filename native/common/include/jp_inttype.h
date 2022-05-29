@@ -24,8 +24,8 @@ public:
 	~JPIntType() override;
 
 public:
-	typedef jint type_t;
-	typedef jintArray array_t;
+	using type_t = jint;
+	using array_t = jintArray;
 
 	static inline jint& field(jvalue& v)
 	{

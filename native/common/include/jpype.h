@@ -105,12 +105,12 @@ extern int PyJPModuleFault_check(uint32_t code);
 #endif
 
 /** Definition of commonly used template types */
-typedef vector<string> StringVector;
+using StringVector = vector<string>;
 
 /**
  * Converter are used for bulk byte transfers from Python to Java.
  */
-typedef jvalue (*jconverter)(void*) ;
+using jconverter = jvalue (*)(void *) ;
 
 /**
  * Create a converter for a bulk byte transfer.
@@ -157,13 +157,13 @@ class JPContext;
 class JPBuffer;
 class JPPyObject;
 
-extern "C" typedef void (*JCleanupHook)(void*) ;
+extern "C" using JCleanupHook = void (*)(void *) ;
 extern "C" struct JPConversionInfo;
 
-typedef vector<JPClass*> JPClassList;
-typedef vector<JPField*> JPFieldList;
-typedef vector<JPMethodDispatch*> JPMethodDispatchList;
-typedef vector<JPMethod*> JPMethodList;
+using JPClassList = vector<JPClass *>;
+using JPFieldList = vector<JPField *>;
+using JPMethodDispatchList = vector<JPMethodDispatch *>;
+using JPMethodList = vector<JPMethod *>;
 
 class JPResource
 {
@@ -183,7 +183,7 @@ public:
 
 #ifndef PyObject_HEAD
 struct _object;
-typedef _object PyObject;
+using PyObject = _object;
 #endif
 
 // Base utility headers

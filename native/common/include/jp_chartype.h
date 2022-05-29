@@ -24,8 +24,8 @@ public:
 	~JPCharType() override;
 
 public:
-	typedef jchar type_t;
-	typedef jcharArray array_t;
+	using type_t = jchar;
+	using array_t = jcharArray;
 
 	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 

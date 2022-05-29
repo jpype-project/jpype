@@ -23,8 +23,9 @@
 template <typename array_t, typename ptr_t>
 class JPPrimitiveArrayAccessor
 {
-	typedef void (JPJavaFrame::*releaseFnc)(array_t, ptr_t, jint);
-	typedef ptr_t (JPJavaFrame::*accessFnc)(array_t, jboolean*);
+	using releaseFnc = void (JPJavaFrame::*)(array_t, ptr_t, jint);
+	typede;
+using accessFnc = ptr_t (JPJavaFrame::*)(array_t, jboolean *);
 
 	JPJavaFrame& _frame;
 	array_t _array;

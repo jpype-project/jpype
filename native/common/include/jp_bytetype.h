@@ -24,8 +24,8 @@ public:
 	~JPByteType() override;
 
 public:
-	typedef jbyte type_t;
-	typedef jbyteArray array_t;
+	using type_t = jbyte;
+	using array_t = jbyteArray;
 
 	static inline jbyte& field(jvalue& v)
 	{

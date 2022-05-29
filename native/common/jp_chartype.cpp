@@ -66,7 +66,7 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 
 class JPConversionAsChar : public JPConversion
 {
-	typedef JPCharType base_t;
+	using base_t = JPCharType;
 public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override

@@ -104,13 +104,13 @@ public:
 		return line_;
 	}
 } ;
-typedef vector<JPStackInfo> JPStackTrace;
+using JPStackTrace = vector<JPStackInfo>;
 
-typedef union
+using JPErrorUnion = union
 {
 	int  i;
 	void*  l;
-} JPErrorUnion;
+};
 
 /**
  * Exception issued by JPype to indicate an internal problem.
