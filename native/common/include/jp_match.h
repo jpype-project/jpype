@@ -34,7 +34,7 @@ public:
 	JPMatch();
 	JPMatch(JPJavaFrame *frame, PyObject *object);
 
-	JPContext *getContext()
+	JPContext *getContext() const
 	{
 		if (frame == nullptr)
 			return nullptr;
