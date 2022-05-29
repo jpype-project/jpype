@@ -253,7 +253,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 			// TODO support unicode
 			string v = JPPyString::asStringUTF8(obj.get());
 			JP_TRACE("arg", v);
-			args.push_back(v);
+			args.emplace_back(v);
 		} else
 		{
 			PyErr_SetString(PyExc_TypeError, "VM Arguments must be strings");

@@ -85,7 +85,7 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
-	m_Trace.push_back(info);
+	m_Trace.emplace_back(info);
 }
 
 // Okay from this point on we have to suit up in full Kevlar because
