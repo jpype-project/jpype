@@ -153,9 +153,9 @@ public:
 	}
 
 private:
-	JPContext* m_Context;
+	JPContext* m_Context{};
 	int m_Type;
-	JPErrorUnion m_Error;
+	JPErrorUnion m_Error{};
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
