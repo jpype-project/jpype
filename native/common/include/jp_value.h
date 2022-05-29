@@ -28,7 +28,6 @@ class JPValue
 public:
 
 	JPValue()
-	: m_Class(nullptr)
 	{
 		m_Value.l = nullptr;
 	}
@@ -44,9 +43,7 @@ public:
 		m_Value.l = value;
 	}
 
-	~JPValue()
-	{
-	}
+	~JPValue() = default;
 
 	JPClass* getClass() const
 	{
@@ -65,16 +62,19 @@ public:
 
 	jobject getJavaObject() const;
 
-	explicit operator jvalue&()
+    // Cast operators to jvalue.
+    // TODO: these could be explicit too, right?
+	operator jvalue&()
 	{
 		return m_Value;
 	}
 
-	explicit operator const jvalue&() const
+	operator const jvalue&() const
 	{
 		return m_Value;
 	}
 
+    // TODO: never used.
 	JPValue& global(JPJavaFrame& frame)
 	{
 		m_Value.l = frame.NewGlobalRef(m_Value.l);
@@ -82,8 +82,8 @@ public:
 	}
 
 private:
-	JPClass* m_Class;
-	jvalue  m_Value;
+	JPClass* m_Class{};
+	jvalue  m_Value{};
 } ;
 
 #endif // _JPVALUE_H_
