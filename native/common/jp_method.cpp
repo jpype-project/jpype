@@ -231,8 +231,8 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = match.m_Arguments[0].convert();
-			c = v.l;
+			auto val = match.m_Arguments[0].convert();
+			c = val.l;
 		} else
 		{
 			c = selfObj->getJavaObject();
