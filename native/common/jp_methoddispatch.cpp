@@ -31,8 +31,7 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 }
 
 JPMethodDispatch::~JPMethodDispatch()
-{
-}
+= default;
 
 const string& JPMethodDispatch::getName() const
 {

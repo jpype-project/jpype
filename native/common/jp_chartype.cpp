@@ -26,8 +26,7 @@ JPCharType::JPCharType()
 }
 
 JPCharType::~JPCharType()
-{
-}
+= default;
 
 JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {

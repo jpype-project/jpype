@@ -26,8 +26,7 @@ JPFloatType::JPFloatType()
 }
 
 JPFloatType::~JPFloatType()
-{
-}
+= default;
 
 JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {

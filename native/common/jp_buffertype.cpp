@@ -70,8 +70,7 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 }
 
 JPBufferType::~JPBufferType()
-{
-}
+= default;
 
 JPPyObject JPBufferType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {

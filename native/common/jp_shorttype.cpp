@@ -25,8 +25,7 @@ JPShortType::JPShortType()
 }
 
 JPShortType::~JPShortType()
-{
-}
+= default;
 
 JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

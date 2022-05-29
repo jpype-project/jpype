@@ -41,8 +41,7 @@
 // has the downside that we can't test it currently.
 
 JPEncoding::~JPEncoding()
-{
-}
+= default;
 
 // char* to stream from
 // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char

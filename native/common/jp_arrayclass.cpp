@@ -31,8 +31,7 @@ JPArrayClass::JPArrayClass(JPJavaFrame& frame,
 }
 
 JPArrayClass::~JPArrayClass()
-{
-}
+= default;
 
 JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 {

@@ -21,8 +21,7 @@ JPPrimitiveType::JPPrimitiveType(const string& name)
 }
 
 JPPrimitiveType::~JPPrimitiveType()
-{
-}
+= default;
 
 bool JPPrimitiveType::isPrimitive() const
 {

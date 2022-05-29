@@ -227,8 +227,7 @@ public:
 	}
 
 	~JPNoneConversion() override
-	{
-	}
+	= default;
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
@@ -267,8 +266,7 @@ public:
 	}
 
 	~JPTypeConversion() override
-	{
-	}
+	= default;
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{

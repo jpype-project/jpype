@@ -25,8 +25,7 @@ JPByteType::JPByteType()
 }
 
 JPByteType::~JPByteType()
-{
-}
+= default;
 
 JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

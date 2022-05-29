@@ -28,8 +28,7 @@ JPObjectType::JPObjectType(JPJavaFrame& frame,
 }
 
 JPObjectType::~JPObjectType()
-{
-}
+= default;
 
 JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 {

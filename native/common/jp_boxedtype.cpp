@@ -60,8 +60,7 @@ m_PrimitiveType(primitiveType)
 }
 
 JPBoxedType::~JPBoxedType()
-{
-}
+= default;
 
 JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 {

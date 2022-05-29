@@ -22,8 +22,7 @@ JPVoidType::JPVoidType()
 }
 
 JPVoidType::~JPVoidType()
-{
-}
+= default;
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {

@@ -25,8 +25,7 @@ JPLongType::JPLongType()
 }
 
 JPLongType::~JPLongType()
-{
-}
+= default;
 
 JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

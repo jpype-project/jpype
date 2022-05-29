@@ -238,9 +238,8 @@ public:
 	/** Needed for named constructor.
 	 */
 	JPPySequence(const JPPySequence& seq)
-	: m_Sequence(seq.m_Sequence)
-	{
-	}
+	 
+	= default;
 
 	/** Use an existing Python sequence in C++.
 	 */

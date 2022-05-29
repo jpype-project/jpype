@@ -37,8 +37,7 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 }
 
 JPMethod::~JPMethod()
-{
-}
+= default;
 
 void JPMethod::setParameters(
 		JPClass *returnType,

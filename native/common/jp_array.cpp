@@ -64,8 +64,7 @@ JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
 }
 
 JPArray::~JPArray()
-{
-}
+= default;
 
 jsize JPArray::getLength()
 {

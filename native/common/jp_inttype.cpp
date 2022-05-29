@@ -25,8 +25,7 @@ JPIntType::JPIntType()
 }
 
 JPIntType::~JPIntType()
-{
-}
+= default;
 
 JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

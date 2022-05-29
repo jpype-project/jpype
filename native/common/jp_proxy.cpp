@@ -243,8 +243,7 @@ JPProxyType::JPProxyType(JPJavaFrame& frame,
 }
 
 JPProxyType::~JPProxyType()
-{
-}
+= default;
 
 JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
@@ -265,8 +264,7 @@ JPProxyDirect::JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& i
 }
 
 JPProxyDirect::~JPProxyDirect()
-{
-}
+= default;
 
 JPPyObject JPProxyDirect::getCallable(const string& cname)
 {
@@ -279,8 +277,7 @@ JPProxyIndirect::JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassLis
 }
 
 JPProxyIndirect::~JPProxyIndirect()
-{
-}
+= default;
 
 JPPyObject JPProxyIndirect::getCallable(const string& cname)
 {
@@ -297,8 +294,7 @@ JPProxyFunctional::JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClas
 }
 
 JPProxyFunctional::~JPProxyFunctional()
-{
-}
+= default;
 
 JPPyObject JPProxyFunctional::getCallable(const string& cname)
 {

@@ -42,8 +42,7 @@ JPBuffer::JPBuffer(const JPValue &value)
 }
 
 JPBuffer::~JPBuffer()
-{
-}
+= default;
 
 bool JPBuffer::isReadOnly()
 {

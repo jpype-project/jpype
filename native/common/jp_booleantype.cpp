@@ -26,8 +26,7 @@ JPBooleanType::JPBooleanType()
 }
 
 JPBooleanType::~JPBooleanType()
-{
-}
+= default;
 
 JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

@@ -17,8 +17,7 @@
 #include "jp_platform.h"
 
 JPPlatformAdapter::~JPPlatformAdapter()
-{
-}
+= default;
 
 #ifdef WIN32
 #include <windows.h>

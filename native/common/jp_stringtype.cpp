@@ -28,8 +28,7 @@ JPStringType::JPStringType(JPJavaFrame& frame,
 }
 
 JPStringType::~JPStringType()
-{
-}
+= default;
 
 JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {

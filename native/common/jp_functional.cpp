@@ -29,8 +29,7 @@ JPFunctional::JPFunctional(JPJavaFrame& frame, jclass clss,
 }
 
 JPFunctional::~JPFunctional()
-{
-}
+= default;
 
 
 class JPConversionFunctional : public JPConversion
