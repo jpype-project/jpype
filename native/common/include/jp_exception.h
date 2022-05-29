@@ -19,22 +19,22 @@
 /* All exception are passed as JPypeException.  The type of the exception
  * is specified at creation.  Exceptions may be of type
  * - _java_error - exception generated from within java.
- * - _python_error - excepction generated from within python.
+ * - _python_error - exception generated from within python.
  * - _runtime_error - Failure that will issue a runtime error in python and java.
  * - _type_error - Failure that will issue a type error in python.
  *
  * We must throw the correct exception so that it can properly be handled
- * when returning back to the native code.
+ * when returning to the native code.
  *
  * If we are returning to python, and it is a
  * - _python_error, then we assume that a python exception has already been
  *   placed in the python virtual machine.
- * - _java_error, then we will covert it to a python object with the correct
+ * - _java_error, then we will convert it to a python object with the correct
  *   object type.
  * - otherwise, then we will convert it to the requested python error.
  *
  * If we are returning to java, and it is a
- * - _java_error, they we assume there is already an Java exception queue
+ * - _java_error, then we assume there is already a Java exception queue
  *   in the virtual machine.
  * - otherwise convert to a RuntimeException.
  *
