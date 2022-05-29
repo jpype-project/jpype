@@ -16,25 +16,13 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_typemanager.h"
-#include "jp_boxedtype.h"
 #include "jp_stringtype.h"
 #include "jp_classloader.h"
-#include "jp_voidtype.h"
-#include "jp_booleantype.h"
-#include "jp_bytetype.h"
-#include "jp_chartype.h"
-#include "jp_shorttype.h"
-#include "jp_inttype.h"
-#include "jp_longtype.h"
-#include "jp_floattype.h"
-#include "jp_doubletype.h"
 #include "jp_proxy.h"
 #include "jp_platform.h"
 #include "jp_gc.h"
 
-JPResource::~JPResource()
-{
-}
+JPResource::~JPResource() = default;
 
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
@@ -46,60 +34,6 @@ void JPRef_failed()
 
 JPContext::JPContext()
 {
-	m_JavaVM = nullptr;
-	_void = nullptr;
-	_byte = nullptr;
-	_boolean = nullptr;
-	_char = nullptr;
-	_short = nullptr;
-	_int = nullptr;
-	_long = nullptr;
-	_float = nullptr;
-	_double = nullptr;
-
-	_java_lang_Void = nullptr;
-	_java_lang_Boolean = nullptr;
-	_java_lang_Byte = nullptr;
-	_java_lang_Character = nullptr;
-	_java_lang_Short = nullptr;
-	_java_lang_Integer = nullptr;
-	_java_lang_Long = nullptr;
-	_java_lang_Float = nullptr;
-	_java_lang_Double = nullptr;
-
-	_java_lang_Object = nullptr;
-	_java_lang_Class = nullptr;
-	_java_lang_String = nullptr;
-
-	_java_lang_reflect_Method = nullptr;
-	_java_lang_reflect_Field = nullptr;
-	_java_nio_ByteBuffer = nullptr;
-
-	m_TypeManager = nullptr;
-	m_ClassLoader = nullptr;
-
-	m_Object_ToStringID = nullptr;
-	m_Object_EqualsID = nullptr;
-	m_Running = false;
-
-	// Java Functions
-	m_Object_ToStringID = nullptr;
-	m_Object_EqualsID = nullptr;
-	m_Object_HashCodeID = nullptr;
-	m_CallMethodID = nullptr;
-	m_Class_GetNameID = nullptr;
-	m_Context_collectRectangularID = nullptr;
-	m_Context_assembleID = nullptr;
-	m_String_ToCharArrayID = nullptr;
-	m_Context_CreateExceptionID = nullptr;
-	m_Context_GetExcClassID = nullptr;
-	m_Context_GetExcValueID = nullptr;
-	m_CompareToID = nullptr;
-	m_Buffer_IsReadOnlyID = nullptr;
-	m_Context_OrderID = nullptr;
-	m_Object_GetClassID = nullptr;
-	m_Throwable_GetCauseID = nullptr;
-	m_Context_GetStackFrameID = nullptr;
 	m_Embedded = false;
 
 	m_GC = new JPGarbageCollection(this);
