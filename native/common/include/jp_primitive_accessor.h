@@ -176,7 +176,7 @@ class JPConversionLong : public JPIndexConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object) && !PyIndex_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -184,7 +184,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		if (match.type == JPMatch::_exact)
@@ -209,7 +209,7 @@ class JPConversionLongNumber : public JPConversionLong<base_t>
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -217,14 +217,14 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 		PyList_Append(info.expl, proto.get());
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		JPPyObject obj = JPPyObject::call(PyNumber_Long(match.object));
 		match.object = obj.get();
@@ -238,18 +238,18 @@ class JPConversionLongWiden : public JPConversion
 public:
 	// GCOVR_EXCL_START
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none; // Not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info)  override
+	void getInfo(JPClass *cls, JPConversionInfo &info)  override
 	{
 		// Not used
 	}
 	// GCOVR_EXCL_STOP
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		jvalue ret;
@@ -264,7 +264,7 @@ class JPConversionAsFloat : public JPNumberConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -272,7 +272,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		double val = PyFloat_AsDouble(match.object);
@@ -288,7 +288,7 @@ class JPConversionLongAsFloat : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -296,12 +296,12 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyLong_Type);
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		jdouble v = PyLong_AsDouble(match.object);
@@ -319,17 +319,17 @@ public:
 
 	// GCOVR_EXCL_START
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		return JPMatch::_none;  // not used
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 	}
 	// GCOVR_EXCL_STOP
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		jvalue ret;

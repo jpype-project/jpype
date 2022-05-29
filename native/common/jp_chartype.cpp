@@ -79,12 +79,12 @@ public:
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		res.c = JPPyString::asCharUTF16(match.object);
@@ -96,7 +96,7 @@ class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -113,7 +113,7 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());

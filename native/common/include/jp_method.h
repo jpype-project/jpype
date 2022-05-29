@@ -31,7 +31,7 @@ public:
 			JPMethodList& moreSpecific,
 			jint modifiers);
 
-	virtual ~JPMethod();
+	~JPMethod() override;
 
 	void setParameters(
 			JPClass *returnType,

@@ -23,7 +23,7 @@ class JPBufferType : public JPClass
 {
 public:
 	JPBufferType(JPJavaFrame& frame, jclass cls, const string& name, JPClass* superClass, const JPClassList& interfaces, jint modifiers);
-	virtual~ JPBufferType();
+	~ JPBufferType() override;
 
 	char* getType()
 	{

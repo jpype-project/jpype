@@ -37,7 +37,7 @@ class JPConversionFunctional : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyCallable_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -96,14 +96,14 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
 		PyList_Append(info.implicit, proto.get());
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		JPFunctional *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");

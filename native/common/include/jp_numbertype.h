@@ -28,10 +28,10 @@ public:
 			JPClassList& interfaces,
 			jint modifiers);
 
-	virtual~ JPNumberType();
+	~ JPNumberType() override;
 
 	JPMatch::Type findJavaConversion(JPMatch& match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
+	void getConversionInfo(JPConversionInfo &info) override;
 } ;
 
 #endif // _JPNUMBERTYPE_H_

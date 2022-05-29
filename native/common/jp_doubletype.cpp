@@ -56,7 +56,7 @@ class JPConversionAsDoubleExact : public JPConversionAsFloat<JPDoubleType>
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyFloat_CheckExact(match.object))
 			return match.type = JPMatch::_none;
@@ -70,7 +70,7 @@ class JPConversionAsJDouble : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -108,7 +108,7 @@ public:
 
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());

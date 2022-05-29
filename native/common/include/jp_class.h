@@ -29,7 +29,7 @@ public:
 			JPClass* super,
 			const JPClassList& interfaces,
 			jint modifiers);
-	virtual ~JPClass();
+	~JPClass() override;
 
 	void setHost(PyObject* host);
 

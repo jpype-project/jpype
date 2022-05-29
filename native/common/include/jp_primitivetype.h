@@ -21,10 +21,10 @@ class JPPrimitiveType : public JPClass
 {
 protected:
 	JPPrimitiveType(const string& name);
-	virtual ~JPPrimitiveType();
+	~JPPrimitiveType() override;
 
 public:
-	virtual bool isPrimitive() const override;
+	bool isPrimitive() const override;
 
 	virtual JPClass* getBoxedClass(JPContext *context) const = 0;
 

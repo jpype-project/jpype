@@ -30,7 +30,7 @@ public:
 			JPMethodList& overloads,
 			jint modifiers);
 
-	virtual ~JPMethodDispatch();
+	~JPMethodDispatch() override;
 
 private:
 	JPMethodDispatch(const JPMethodDispatch& method);

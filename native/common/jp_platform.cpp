@@ -112,7 +112,7 @@ private:
 
 public:
 
-	virtual void loadLibrary(const char* path) override
+	void loadLibrary(const char* path) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::loadLibrary");
 #if defined(_HPUX) && !defined(_IA64)
@@ -137,7 +137,7 @@ public:
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
-	virtual void unloadLibrary() override
+	void unloadLibrary() override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::unloadLibrary");
 		int r = dlclose(jvmLibrary);
@@ -150,7 +150,7 @@ public:
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
-	virtual void* getSymbol(const char* name) override
+	void* getSymbol(const char* name) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
 		JP_TRACE("Load", name);

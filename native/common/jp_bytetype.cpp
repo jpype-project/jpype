@@ -54,7 +54,7 @@ class JPConversionJByte : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
 		if (value == NULL)
@@ -69,7 +69,7 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());

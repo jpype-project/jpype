@@ -47,7 +47,7 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -55,12 +55,12 @@ public:
 		return match.type = JPMatch::_exact;
 	}
 
-	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		jlong v = PyObject_IsTrue(match.object);
@@ -75,7 +75,7 @@ class JPConversionAsBooleanJBool : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 
 		JPValue *value = match.getJavaSlot();
@@ -91,7 +91,7 @@ public:
 		return JPMatch::_implicit; // search no further.
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_boolean->getHost());
@@ -104,7 +104,7 @@ class JPConversionAsBooleanLong : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -113,7 +113,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
@@ -126,7 +126,7 @@ class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -134,7 +134,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
