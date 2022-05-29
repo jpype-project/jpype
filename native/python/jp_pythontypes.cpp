@@ -50,7 +50,7 @@ JPPyObject JPPyObject::use(PyObject* obj)
 		assertValid(obj);
 		Py_INCREF(obj);
 	}
-	return JPPyObject(obj, 0);
+	return JPPyObject(obj);
 }
 
 /**
@@ -64,7 +64,7 @@ JPPyObject JPPyObject::accept(PyObject* obj)
 	JP_TRACE_PY("pyref new(accept)", obj);
 	if (obj == NULL)
 		PyErr_Clear();
-	return JPPyObject(obj, 1);
+	return JPPyObject(obj);
 }
 
 /**
@@ -79,7 +79,7 @@ JPPyObject JPPyObject::claim(PyObject* obj)
 	JP_TRACE_PY("pyref new(claim)", obj);
 	ASSERT_NOT_NULL(obj);
 	assertValid(obj);
-	return JPPyObject(obj, 2);
+	return JPPyObject(obj);
 }
 
 /**
@@ -95,10 +95,10 @@ JPPyObject JPPyObject::call(PyObject* obj)
 	JP_PY_CHECK();
 	ASSERT_NOT_NULL(obj);
 	assertValid(obj);
-	return JPPyObject(obj, 3);
+	return JPPyObject(obj);
 }
 
-JPPyObject::JPPyObject(PyObject* obj, int i)
+JPPyObject::JPPyObject(PyObject* obj)
 : m_PyObject(obj)
 {
 }

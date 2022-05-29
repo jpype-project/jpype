@@ -79,7 +79,7 @@ class JPPyObject
 	 * @param obj is the python object.
 	 * @param i is a dummy to make sure this ctor was not called accidentally.
 	 */
-	JPPyObject(PyObject* obj, int i);
+	explicit JPPyObject(PyObject* obj);
 
 public:
 
