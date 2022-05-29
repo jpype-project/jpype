@@ -19,12 +19,11 @@
 # *****************************************************************************
 import sys
 from pathlib import Path
-from setuptools import setup
+
 from setuptools import Extension
-import glob
+from setuptools import setup
 
 import setupext
-
 
 if '--android' in sys.argv:
     platform = 'android'
