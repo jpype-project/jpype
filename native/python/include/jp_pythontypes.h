@@ -228,7 +228,7 @@ class JPPySequence
 {
 	JPPyObject m_Sequence;
 
-	JPPySequence(PyObject* obj)
+	explicit JPPySequence(PyObject* obj)
 	{
 		m_Sequence = JPPyObject::use(obj);
 	}

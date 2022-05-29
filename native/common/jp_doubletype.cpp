@@ -24,10 +24,6 @@ JPDoubleType::JPDoubleType()
 {
 }
 
-JPDoubleType::~JPDoubleType()
-{
-}
-
 JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	PyTypeObject * wrapper = getHost();

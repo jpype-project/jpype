@@ -21,7 +21,7 @@ class JPDoubleType : public JPPrimitiveType
 public:
 
 	JPDoubleType();
-	~JPDoubleType() override;
+	~JPDoubleType() override = default;
 
 public:
 	using type_t = jdouble;
