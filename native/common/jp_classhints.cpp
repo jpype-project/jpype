@@ -81,20 +81,14 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 	}
 }
 
-JPConversion::~JPConversion()
-{
-}
-
-JPClassHints::JPClassHints()
-{
-}
+JPConversion::~JPConversion() = default;
+JPClassHints::JPClassHints() = default;
 
 JPClassHints::~JPClassHints()
 {
-	for (auto iter = conversions.begin();
-			iter != conversions.end(); ++iter)
+	for (auto & conversion : conversions)
 	{
-		delete *iter;
+		delete conversion;
 	}
 	conversions.clear();
 }
@@ -102,14 +96,13 @@ JPClassHints::~JPClassHints()
 JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 {
 	JPConversion *best = nullptr;
-	for (auto iter = conversions.begin();
-			iter != conversions.end(); ++iter)
+	for (auto & conversion : conversions)
 	{
-		JPMatch::Type quality = (*iter)->matches(cls, match);
+		JPMatch::Type quality = conversion->matches(cls, match);
 		if (quality > JPMatch::_explicit)
 			return match.type;
 		if (quality != JPMatch::_none)
-			best = (*iter);
+			best = conversion;
 	}
 	match.conversion = best;
 	if (best == nullptr)
@@ -144,9 +137,7 @@ public:
 		method_ = JPPyObject::use(method);
 	}
 
-	~JPPythonConversion() override  // GCOVR_EXCL_LINE
-	{
-	}
+	~JPPythonConversion() override = default;
 
 	jvalue convert(JPMatch &match) override
 	{
@@ -190,9 +181,7 @@ public:
 	{
 	}
 
-	~JPAttributeConversion() override  // GCOVR_EXCL_LINE
-	{
-	}
+	~JPAttributeConversion() override = default;
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
@@ -919,7 +908,7 @@ public:
 		// If it is any primitive except char and boolean then implicit
 		if (oc->isPrimitive())
 			return match.type = JPMatch::_implicit;
-		// Otherwise check if it is assignable according to Java
+		// Otherwise, check if it is assignable according to Java
 		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
 		return match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
 		JP_TRACE_OUT;
@@ -981,9 +970,9 @@ public:
 
 		// Check if any of the interfaces matches ...
 		vector<JPClass*> itf = proxy->getInterfaces();
-		for (unsigned int i = 0; i < itf.size(); i++)
+		for (auto & i : itf)
 		{
-			if (match.frame->IsAssignableFrom(itf[i]->getJavaClass(), cls->getJavaClass()))
+			if (match.frame->IsAssignableFrom(i->getJavaClass(), cls->getJavaClass()))
 			{
 				JP_TRACE("implicit proxy");
 				match.conversion = this;
