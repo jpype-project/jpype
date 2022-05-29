@@ -63,15 +63,10 @@
 #include <map>
 #include <string>
 #include <vector>
-//#include <iostream>
-#include <cstdlib>
-#include <cstring>
-//#include <list>
 
 using std::map;
 using std::string;
 using std::vector;
-//using std::list;
 
 #ifdef JP_INSTRUMENTATION
 
