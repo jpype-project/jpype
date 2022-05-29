@@ -67,7 +67,7 @@ JPPyObject JPArrayClass::convertToPythonObject(JPJavaFrame& frame, jvalue value,
 	JP_TRACE_IN("JPArrayClass::convertToPythonObject");
 	if (!cast)
 	{
-		if (value.l == NULL)
+		if (value.l == nullptr)
 			return JPPyObject::getNone();
 	}
 	JPPyObject wrapper = PyJPClass_create(frame, this);

@@ -23,9 +23,9 @@ JPClass::JPClass(
 		const string& name,
 		jint modifiers)
 {
-	m_Context = NULL;
+	m_Context = nullptr;
 	m_CanonicalName = name;
-	m_SuperClass = NULL;
+	m_SuperClass = nullptr;
 	m_Interfaces = JPClassList();
 	m_Modifiers = modifiers;
 }
@@ -63,7 +63,7 @@ jclass JPClass::getJavaClass() const
 {
 	jclass cls = m_Class.get();
 	// This sanity check should not be possible to exercise
-	if (cls == 0)
+	if (cls == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Class is null"); // GCOVR_EXCL_LINE
 	return cls;
 }
@@ -88,7 +88,7 @@ void JPClass::assignMembers(JPMethodDispatch* ctor,
 
 JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
-	if (m_Constructors == NULL)
+	if (m_Constructors == nullptr)
 	{
 		if (this->isInterface())
 		{
@@ -104,7 +104,7 @@ JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 JPContext* JPClass::getContext() const
 {
 	// This sanity check is for during shutdown.
-	if (m_Context == 0)
+	if (m_Context == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Null context"); // GCOVR_EXCL_LINE
 	return m_Context;
 }
@@ -127,7 +127,7 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 
 jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
-	return frame.NewObjectArray(sz, getJavaClass(), NULL);
+	return frame.NewObjectArray(sz, getJavaClass(), nullptr);
 }
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
@@ -138,7 +138,7 @@ jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 string JPClass::toString() const
 {
 	// This sanity check will not be hit in normal operation
-	if (m_Context == 0)
+	if (m_Context == nullptr)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(m_Class.get());
@@ -148,11 +148,11 @@ string JPClass::toString() const
 string JPClass::getName() const
 {
 	// This sanity check will not be hit in normal operation
-	if (m_Context == 0)
+	if (m_Context == nullptr)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 	return frame.toString(frame.CallObjectMethodA(
-			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, NULL));
+			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, nullptr));
 }
 
 //</editor-fold>
@@ -163,7 +163,7 @@ JPPyObject JPClass::getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid)
 	JP_TRACE_IN("JPClass::getStaticField");
 	jobject r = frame.GetStaticObjectField(c, fid);
 	JPClass* type = this;
-	if (r != NULL)
+	if (r != nullptr)
 		type = frame.findClassForObject(r);
 	jvalue v;
 	v.l = r;
@@ -176,7 +176,7 @@ JPPyObject JPClass::getField(JPJavaFrame& frame, jobject c, jfieldID fid)
 	JP_TRACE_IN("JPClass::getField");
 	jobject r = frame.GetObjectField(c, fid);
 	JPClass* type = this;
-	if (r != NULL)
+	if (r != nullptr)
 		type = frame.findClassForObject(r);
 	jvalue v;
 	v.l = r;
@@ -194,7 +194,7 @@ JPPyObject JPClass::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth,
 	}
 
 	JPClass *type = this;
-	if (v.l != NULL)
+	if (v.l != nullptr)
 		type = frame.findClassForObject(v.l);
 
 	return type->convertToPythonObject(frame, v, false);
@@ -210,9 +210,9 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 	// Call method
 	{
 		JPPyCallRelease call;
-		if (obj == NULL)
+		if (obj == nullptr)
 			JP_RAISE(PyExc_ValueError, "method called on null object");
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			v.l = frame.CallObjectMethodA(obj, mth, val);
 		else
 			v.l = frame.CallNonvirtualObjectMethodA(obj, clazz, mth, val);
@@ -220,7 +220,7 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 
 	// Get the return type
 	JPClass *type = this;
-	if (v.l != NULL)
+	if (v.l != nullptr)
 		type = frame.findClassForObject(v.l);
 
 	return type->convertToPythonObject(frame, v, false);
@@ -313,7 +313,7 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	JPClass *retType = this;
 	jvalue v;
 	v.l = obj;
-	if (obj != NULL)
+	if (obj != nullptr)
 		retType = frame.findClassForObject(v.l);
 	return retType->convertToPythonObject(frame, v, false);
 	JP_TRACE_OUT;
@@ -350,7 +350,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		//
 		// We will still need to have the concept of null objects
 		// but we can get those through JObject(None, cls).
-		if (value.l == NULL)
+		if (value.l == nullptr)
 		{
 			return JPPyObject::getNone();
 		}
@@ -366,13 +366,13 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	if (isThrowable())
 	{
 		JPPyObject tuple0;
-		if (value.l == NULL)
+		if (value.l == nullptr)
 		{
 			tuple0 = JPPyObject::call(PyTuple_New(0));
 		} else
 		{
 			jstring m = frame.getMessage((jthrowable) value.l);
-			if (m != NULL)
+			if (m != nullptr)
 			{
 				tuple0 = JPPyObject::call(PyTuple_Pack(1,
 						JPPyString::fromStringUTF8(frame.toStringUTF8(m)).get()));
@@ -385,7 +385,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		JPPyObject tuple1 = JPPyObject::call(PyTuple_Pack(2,
 				_JObjectKey, tuple0.get()));
 		// Exceptions need new and init
-		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), NULL));
+		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), nullptr));
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());

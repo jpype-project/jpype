@@ -34,15 +34,15 @@ bool JPPrimitiveType::isPrimitive() const
 
 PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 {
-	if (wrapper == NULL)
+	if (wrapper == nullptr)
 		JP_RAISE(PyExc_SystemError, "bad wrapper");
 	Py_ssize_t n = Py_SIZE(tmp);
 	if (n < 0)
 		n = -n;
 
 	auto *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
-	if (newobj == NULL)
-		return NULL;
+	if (newobj == nullptr)
+		return nullptr;
 
 	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
 	for (Py_ssize_t i = 0; i < n; i++)

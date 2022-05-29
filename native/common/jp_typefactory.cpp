@@ -176,9 +176,9 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	string className = frame.toStringUTF8(name);
 	JP_TRACE(className);
 	JPClassList interfaces;
-	if (interfacePtrs != NULL)
+	if (interfacePtrs != nullptr)
 		convert(frame, interfacePtrs, interfaces);
-	JPClass* result = NULL;
+	JPClass* result = nullptr;
 	if (!JPModifier::isSpecial(modifiers))
 	{
 		// Create a normal class

@@ -52,7 +52,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	//   Then make sure we don't hit the rare case that the hash was -1 by chance.
 	//   Then make sure it isn't variadic list match, as the hash of an opaque list
 	//   element can't be resolved without going through the resolution process.
-	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != 0
+	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != nullptr
 			&& !m_LastCache.m_Overload->isVarArgs())
 	{
 		bestMatch.m_Overload = m_LastCache.m_Overload;
@@ -63,7 +63,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			return true;
 		else
 			// bad match so forget the overload.
-			bestMatch.m_Overload = 0;
+			bestMatch.m_Overload = nullptr;
 	}
 
 	// We need two copies of the match.  One to hold the best match we have
@@ -91,7 +91,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			continue;
 
 		// If this is the first match then make it the best.
-		if (bestMatch.m_Overload == 0)
+		if (bestMatch.m_Overload == nullptr)
 		{
 			bestMatch = match;
 			continue;

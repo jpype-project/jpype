@@ -60,7 +60,7 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, 0);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -99,7 +99,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -179,7 +179,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallCharMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);

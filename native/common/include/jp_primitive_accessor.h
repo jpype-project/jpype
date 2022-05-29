@@ -96,10 +96,10 @@ template <class type_t> PyObject *convertMultiArray(
 	JPContext *context = frame.getContext();
 	Py_buffer& view = buffer.getView();
 	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
-	if (converter == NULL)
+	if (converter == nullptr)
 	{
 		PyErr_Format(PyExc_TypeError, "No type converter found");
-		return NULL;
+		return nullptr;
 	}
 
 	// Reserve space for array.
@@ -115,7 +115,7 @@ template <class type_t> PyObject *convertMultiArray(
 	auto *dest = (type_t*) mem;
 
 	Py_ssize_t step;
-	if (view.strides == NULL)
+	if (view.strides == nullptr)
 		step = view.itemsize;
 	else
 		step = view.strides[u];
@@ -164,7 +164,7 @@ template <class type_t> PyObject *convertMultiArray(
 
 	// Convert it to Python
 	JPClass *type = context->_java_lang_Object;
-	if (out != NULL)
+	if (out != nullptr)
 		type = frame.findClassForObject(out);
 	jvalue v;
 	v.l = out;

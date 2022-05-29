@@ -32,12 +32,12 @@ m_PrimitiveType(primitiveType)
 		m_CtorID = frame.GetMethodID(clss, "<init>", s.c_str());
 	}
 
-	m_DoubleValueID = NULL;
-	m_FloatValueID = NULL;
-	m_LongValueID = NULL;
-	m_IntValueID = NULL;
-	m_BooleanValueID = NULL;
-	m_CharValueID = NULL;
+	m_DoubleValueID = nullptr;
+	m_FloatValueID = nullptr;
+	m_LongValueID = nullptr;
+	m_IntValueID = nullptr;
+	m_BooleanValueID = nullptr;
+	m_CharValueID = nullptr;
 
 	if (name != "java.lang.Void" && name != "java.lang.Boolean" && name != "java.lang.Character" )
 	{
@@ -106,7 +106,7 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 	if (!cast)
 	{
 		// This loses type
-		if (value.l == NULL)
+		if (value.l == nullptr)
 		{
 			return JPPyObject::getNone();
 		}
@@ -123,7 +123,7 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 	{
 		jchar value2 = 0;
 		// Not null get the char value
-		if (value.l != 0)
+		if (value.l != nullptr)
 			value2 = context->_char->getValueFromObject(JPValue(this, value)).getValue().c;
 		// Create a char string object
 		obj = JPPyObject::call(PyJPChar_Create((PyTypeObject*) wrapper.get(), value2));

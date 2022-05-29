@@ -43,7 +43,7 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -57,7 +57,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -137,7 +137,7 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallByteMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);

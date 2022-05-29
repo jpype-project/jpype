@@ -82,7 +82,7 @@ public:
 				optional = PyTuple_Size(defaults.get());
 			const int jargs = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
 			// Bound self argument removes one argument
-			if ((PyMethod_Self(match.object))!=NULL) // borrowed
+			if ((PyMethod_Self(match.object))!=nullptr) // borrowed
 				args--;
 			// Too few arguments
 			if (!is_varargs && args < jargs)

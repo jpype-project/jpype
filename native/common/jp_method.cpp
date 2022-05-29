@@ -227,7 +227,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	{
 		JPValue* selfObj = PyJPValue_getJavaSlot(arg[0]);
 		jobject c;
-		if (selfObj == NULL)
+		if (selfObj == nullptr)
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
@@ -237,7 +237,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			c = selfObj->getJavaObject();
 		}
-		jclass clazz = NULL;
+		jclass clazz = nullptr;
 		if (!isAbstract() && !instance)
 		{
 			clazz = m_Class->getJavaClass();
@@ -265,20 +265,20 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 
 	//Proxy the call to
 	//   public static Object callMethod(Method method, Object obj, Object[] args)
-	jobject self = NULL;
+	jobject self = nullptr;
 	size_t len = alen;
 	if (!isStatic())
 	{
 		JP_TRACE("Call instance");
 		len--;
 		JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
-		if (selfObj == NULL)
+		if (selfObj == nullptr)
 			JP_RAISE(PyExc_RuntimeError, "Null object"); // GCOVR_EXCL_LINE
 		self = selfObj->getJavaObject();
 	}
 
 	// Convert arguments
-	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), NULL);
+	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), nullptr);
 	for (jsize i = 0; i < (jsize) len; ++i)
 	{
 		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];

@@ -117,7 +117,7 @@ public:
 	 */
 	static JPPyObject call(PyObject* obj);
 
-	JPPyObject() : m_PyObject(NULL)
+	JPPyObject() : m_PyObject(nullptr)
 	{
 	}
 
@@ -142,7 +142,7 @@ public:
 	PyObject* keepNull()
 	{
 		PyObject *out = m_PyObject;
-		m_PyObject = NULL;
+		m_PyObject = nullptr;
 		return out;
 	}
 
@@ -160,7 +160,7 @@ public:
 	 */
 	bool isNull() const
 	{
-		return m_PyObject == NULL;
+		return m_PyObject == nullptr;
 	}
 
 	/**

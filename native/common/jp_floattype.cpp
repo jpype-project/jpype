@@ -45,7 +45,7 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, 0);
+	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -60,7 +60,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -166,7 +166,7 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallFloatMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);

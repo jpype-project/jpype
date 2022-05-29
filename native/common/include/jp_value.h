@@ -28,9 +28,9 @@ class JPValue
 public:
 
 	JPValue()
-	: m_Class(NULL)
+	: m_Class(nullptr)
 	{
-		m_Value.l = 0;
+		m_Value.l = nullptr;
 	}
 
 	JPValue(JPClass* clazz, const jvalue& value)

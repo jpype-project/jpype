@@ -54,7 +54,7 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
 	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
-	if (out == NULL)
+	if (out == nullptr)
 	{
 		stringstream err;
 		err << "Class " << name << " is not found";

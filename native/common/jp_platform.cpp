@@ -123,7 +123,7 @@ public:
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
 		// GCOVR_EXCL_START
-		if (jvmLibrary == NULL)
+		if (jvmLibrary == nullptr)
 		{
 			JP_TRACE("null library");
 			JP_TRACE("errno", errno);
@@ -157,7 +157,7 @@ public:
 		void* res = dlsym(jvmLibrary, name);
 		JP_TRACE("Res", res);
 		// GCOVR_EXCL_START
-		if (res == NULL)
+		if (res == nullptr)
 		{
 			JP_TRACE("errno", errno);
 			std::stringstream msg;
@@ -180,7 +180,7 @@ PLATFORM_ADAPTER* adapter;
 
 JPPlatformAdapter* JPPlatformAdapter::getAdapter()
 {
-	if (adapter == NULL)
+	if (adapter == nullptr)
 		adapter = new PLATFORM_ADAPTER();
 	return adapter;
 }

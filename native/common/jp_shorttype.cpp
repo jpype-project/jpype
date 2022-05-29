@@ -43,7 +43,7 @@ JPValue JPShortType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -58,7 +58,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -159,7 +159,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallShortMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);

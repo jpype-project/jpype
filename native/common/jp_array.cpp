@@ -145,9 +145,9 @@ JPArrayView::JPArrayView(JPArray* array)
 	JPJavaFrame frame = JPJavaFrame::outer(array->m_Class->getContext());
 	m_Array = array;
 	m_RefCount = 0;
-	m_Buffer.obj = NULL;
+	m_Buffer.obj = nullptr;
 	m_Buffer.ndim = 1;
-	m_Buffer.suboffsets = NULL;
+	m_Buffer.suboffsets = nullptr;
 	auto *type = (JPPrimitiveType*) array->getClass()->getComponentType();
 	type->getView(*this);
 	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
@@ -218,9 +218,9 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	}
 
 	// Copy values into Python buffer for consumption
-	m_Buffer.obj = NULL;
+	m_Buffer.obj = nullptr;
 	m_Buffer.ndim = dims;
-	m_Buffer.suboffsets = NULL;
+	m_Buffer.suboffsets = nullptr;
 	m_Buffer.itemsize = itemsize;
 	m_Buffer.format = const_cast<char*> (componentType->getBufferFormat());
 	m_Buffer.buf = (char*) m_Memory + m_Buffer.itemsize * array->m_Start;

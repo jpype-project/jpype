@@ -43,7 +43,7 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallLongMethodA(jo, jb->m_LongValueID, 0);
+	field(v) = (type_t) frame.CallLongMethodA(jo, jb->m_LongValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -58,7 +58,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -162,7 +162,7 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallLongMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);

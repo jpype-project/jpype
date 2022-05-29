@@ -39,7 +39,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, 0) != 0;
+	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, nullptr) != 0;
 	return JPValue(this, v);
 }
 
@@ -79,7 +79,7 @@ public:
 	{
 
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -204,7 +204,7 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallBooleanMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);

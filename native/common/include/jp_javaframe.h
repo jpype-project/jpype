@@ -70,7 +70,7 @@ public:
 	 */
 	static JPJavaFrame outer(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return JPJavaFrame(context, NULL, size, true);
+		return JPJavaFrame(context, nullptr, size, true);
 	}
 
 	/** Create a new JavaFrame when called internal when
@@ -84,7 +84,7 @@ public:
 	 */
 	static JPJavaFrame inner(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return JPJavaFrame(context, NULL, size, false);
+		return JPJavaFrame(context, nullptr, size, false);
 	}
 
 	/** Create a new JavaFrame when called from Java.

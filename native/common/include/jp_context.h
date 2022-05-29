@@ -33,7 +33,7 @@ public:
 
 	JPRef()
 	{
-		m_Context = 0;
+		m_Context = nullptr;
 		m_Ref = 0;
 	}
 
@@ -41,7 +41,7 @@ public:
 	{
 		m_Context = context;
 		m_Ref = 0;
-		if (context == 0)
+		if (context == nullptr)
 			return;
 		JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
@@ -280,7 +280,7 @@ template<class jref>
 JPRef<jref>::JPRef(const JPRef& other)
 {
 	m_Context = other.m_Context;
-	if (m_Context != NULL)
+	if (m_Context != nullptr)
 	{
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
@@ -294,7 +294,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 template<class jref>
 JPRef<jref>::~JPRef()
 {
-	if (m_Ref != 0 && m_Context != 0)
+	if (m_Ref != 0 && m_Context != nullptr)
 	{
 		m_Context->ReleaseGlobalRef((jobject) m_Ref);
 	}
@@ -307,7 +307,7 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 		return *this;
 	// m_Context may or may not be set up here, so we need to use a
 	// different frame for unreferencing and referencing
-	if (m_Context != 0 && m_Ref != 0)
+	if (m_Context != nullptr && m_Ref != 0)
 	{  // GCOVR_EXCL_START
 		// This code is not currently used.
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
@@ -316,7 +316,7 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 	}  // GCOVR_EXCL_STOP
 	m_Context = other.m_Context;
 	m_Ref = other.m_Ref;
-	if (m_Context != 0 && m_Ref != 0)
+	if (m_Context != nullptr && m_Ref != 0)
 	{
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);

@@ -39,7 +39,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 	if (!cast)
 	{
 		// This loses type
-		if (val.l == NULL)
+		if (val.l == nullptr)
 		{
 			return JPPyObject::getNone();
 		}

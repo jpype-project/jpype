@@ -45,7 +45,7 @@ static void assertValid(PyObject *obj)
 JPPyObject JPPyObject::use(PyObject* obj)
 {
 	JP_TRACE_PY("pyref use(inc)", obj);
-	if (obj != NULL)
+	if (obj != nullptr)
 	{
 		assertValid(obj);
 		Py_INCREF(obj);
@@ -62,7 +62,7 @@ JPPyObject JPPyObject::use(PyObject* obj)
 JPPyObject JPPyObject::accept(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(accept)", obj);
-	if (obj == NULL)
+	if (obj == nullptr)
 		PyErr_Clear();
 	return JPPyObject(obj);
 }
@@ -106,7 +106,7 @@ JPPyObject::JPPyObject(PyObject* obj)
 JPPyObject::JPPyObject(const JPPyObject &self)
 : m_PyObject(self.m_PyObject)
 {
-	if (m_PyObject != NULL)
+	if (m_PyObject != nullptr)
 	{
 		incref();
 		JP_TRACE_PY("pyref copy ctor(inc)", m_PyObject);
@@ -115,7 +115,7 @@ JPPyObject::JPPyObject(const JPPyObject &self)
 
 JPPyObject::~JPPyObject()
 {
-	if (m_PyObject != NULL)
+	if (m_PyObject != nullptr)
 	{
 		JP_TRACE_PY("pyref dtor(dec)", m_PyObject);
 		decref();
@@ -129,13 +129,13 @@ JPPyObject& JPPyObject::operator=(const JPPyObject& self)
 {
 	if (m_PyObject == self.m_PyObject)
 		return *this;
-	if (m_PyObject != NULL)
+	if (m_PyObject != nullptr)
 	{
 		JP_TRACE_PY("pyref op=(dec)", m_PyObject);
 		decref();
 	}
 	m_PyObject = self.m_PyObject;
-	if (m_PyObject != NULL)
+	if (m_PyObject != nullptr)
 	{
 		incref();
 		JP_TRACE_PY("pyref op=(inc)", m_PyObject);
@@ -147,13 +147,13 @@ PyObject* JPPyObject::keep()
 {
 	// This can only happen if we have a fatal error in our reference
 	// management system.  It should never be triggered by the user.
-	if (m_PyObject == NULL)
+	if (m_PyObject == nullptr)
 	{
 		JP_RAISE(PyExc_SystemError, "Attempt to keep null reference"); // GCOVR_EXCL_LINE
 	}
 	JP_TRACE_PY("pyref keep ", m_PyObject);
 	PyObject *out = m_PyObject;
-	m_PyObject = NULL;
+	m_PyObject = nullptr;
 	return out;
 }
 
@@ -167,7 +167,7 @@ void JPPyObject::decref()
 {
 	assertValid(m_PyObject);
 	Py_DECREF(m_PyObject);
-	m_PyObject = 0;
+	m_PyObject = nullptr;
 }
 
 JPPyObject JPPyObject::getNone()
@@ -306,18 +306,18 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 	if (PyUnicode_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
-		char *buffer = NULL;
+		char *buffer = nullptr;
 		JPPyObject val = JPPyObject::call(PyUnicode_AsEncodedString(pyobj, "UTF-8", "strict"));
 		PyBytes_AsStringAndSize(val.get(), &buffer, &size);
 		JP_PY_CHECK();
-		if (buffer != NULL)
+		if (buffer != nullptr)
 			return string(buffer, size);
 		else
 			return string();
 	} else if (PyBytes_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
-		char *buffer = NULL;
+		char *buffer = nullptr;
 		PyBytes_AsStringAndSize(pyobj, &buffer, &size);
 		JP_PY_CHECK();
 		return string(buffer, size);
@@ -359,7 +359,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 	m_Instance = JPPyObject::use(inst);
 	m_Sequence = JPPyObject::use(sequence);
 	size_t n = 0;
-	if (sequence != NULL)
+	if (sequence != nullptr)
 		n = PySequence_Size(m_Sequence.get());
 	m_Contents.resize(n + 1);
 	for (size_t i = 0; i < n; ++i)
@@ -373,7 +373,7 @@ bool JPPyErr::fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPy
 {
 	PyObject *v1, *v2, *v3;
 	PyErr_Fetch(&v1, &v2, &v3);
-	if (v1 == NULL && v2 == NULL && v3 == NULL)
+	if (v1 == nullptr && v2 == nullptr && v3 == nullptr)
 		return false;
 	exceptionClass = JPPyObject::accept(v1);
 	exceptionValue = JPPyObject::accept(v2);
@@ -429,13 +429,13 @@ char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
 {
 	char *pointer = (char*) m_View.buf;
 	// No shape is just a 1D array
-	if (m_View.shape == NULL)
+	if (m_View.shape == nullptr)
 	{
 		return pointer;
 	}
 
 	// No strides is C contiguous ND array
-	if (m_View.strides == NULL)
+	if (m_View.strides == nullptr)
 	{
 		Py_ssize_t index = 0;
 		for (int i = 0; i < m_View.ndim; i++)
@@ -450,7 +450,7 @@ char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
 	for (int i = 0; i < m_View.ndim; i++)
 	{
 		pointer += m_View.strides[i] * indices[i];
-		if (m_View.suboffsets != NULL && m_View.suboffsets[i] >= 0 )
+		if (m_View.suboffsets != nullptr && m_View.suboffsets[i] >= 0 )
 		{
 			pointer = *((char**) pointer) + m_View.suboffsets[i];
 		}
@@ -487,7 +487,7 @@ void JPPyErrFrame::normalize()
 	if (!PyExceptionInstance_Check(m_ExceptionValue.get()))
 	{
 		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, m_ExceptionValue.get()));
-		m_ExceptionValue = JPPyObject::call(PyObject_Call(m_ExceptionClass.get(), args.get(), NULL));
+		m_ExceptionValue = JPPyObject::call(PyObject_Call(m_ExceptionClass.get(), args.get(), nullptr));
 		PyException_SetTraceback(m_ExceptionValue.get(), m_ExceptionTrace.get());
 		JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 		JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);

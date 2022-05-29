@@ -66,25 +66,25 @@ static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPMethod_get");
 	PyJPModule_getContext();
-	if (obj == NULL)
+	if (obj == nullptr)
 	{
 		Py_INCREF((PyObject*) self);
 		JP_TRACE_PY("method get (inc)", (PyObject*) self);
 		return (PyObject*) self;
 	}
 	PyJPMethod *out = (PyJPMethod*) PyJPMethod_create(self->m_Method, obj).keep();
-	if (self->m_Doc != NULL)
+	if (self->m_Doc != nullptr)
 	{
 		out->m_Doc = self->m_Doc;
 		Py_INCREF(out->m_Doc);
 	}
-	if (self->m_Annotations != NULL)
+	if (self->m_Annotations != nullptr)
 	{
 		out->m_Annotations = self->m_Annotations;
 		Py_INCREF(out->m_Annotations);
 	}
 	return (PyObject*) out;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
@@ -96,8 +96,8 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 	// Clear any pending interrupts if we are on the main thread
 	if (hasInterrupt())
 		frame.clearInterrupt(false);
-	PyObject *out = NULL;
-	if (self->m_Instance == NULL)
+	PyObject *out = nullptr;
+	if (self->m_Instance == nullptr)
 	{
 		JPPyObjectVector vargs(args);
 		out = self->m_Method->invoke(frame, vargs, false).keep();
@@ -107,7 +107,7 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 		out = self->m_Method->invoke(frame, vargs, true).keep();
 	}
 	return out;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *kwargs)
@@ -116,7 +116,7 @@ static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JP_TRACE(self->m_Method->getName());
-	if (self->m_Instance == NULL)
+	if (self->m_Instance == nullptr)
 	{
 		JPPyObjectVector vargs(args);
 		return PyBool_FromLong(self->m_Method->matches(frame, vargs, false));
@@ -125,7 +125,7 @@ static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *
 		JPPyObjectVector vargs(self->m_Instance, args);
 		return PyBool_FromLong(self->m_Method->matches(frame, vargs, true));
 	}
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_str(PyJPMethod *self)
@@ -136,7 +136,7 @@ static PyObject *PyJPMethod_str(PyJPMethod *self)
 	return PyUnicode_FromFormat("%s.%s",
 			self->m_Method->getClass()->getCanonicalName().c_str(),
 			self->m_Method->getName().c_str());
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_repr(PyJPMethod *self)
@@ -144,21 +144,21 @@ static PyObject *PyJPMethod_repr(PyJPMethod *self)
 	JP_PY_TRY("PyJPMethod_repr");
 	PyJPModule_getContext();
 	return PyUnicode_FromFormat("<java %smethod '%s' of '%s'>",
-			(self->m_Instance != NULL) ? "bound " : "",
+			(self->m_Instance != nullptr) ? "bound " : "",
 			self->m_Method->getName().c_str(),
 			self->m_Method->getClass()->getCanonicalName().c_str());
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getSelf(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getSelf");
 	PyJPModule_getContext();
-	if (self->m_Instance == NULL)
+	if (self->m_Instance == nullptr)
 		Py_RETURN_NONE;
 	Py_INCREF(self->m_Instance);
 	return self->m_Instance;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getNone(PyJPMethod *self, void *ctxt)
@@ -171,7 +171,7 @@ static PyObject *PyJPMethod_getName(PyJPMethod *self, void *ctxt)
 	JP_PY_TRY("PyJPMethod_getName");
 	PyJPModule_getContext();
 	return JPPyString::fromStringUTF8(self->m_Method->getName()).keep();
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
@@ -181,7 +181,7 @@ static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
 	return PyUnicode_FromFormat("%s.%s",
 			self->m_Method->getClass()->getCanonicalName().c_str(),
 			self->m_Method->getName().c_str());
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
@@ -219,11 +219,11 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
 				self, obj.get(), ov.get()));
 		JP_TRACE("Call Python");
-		self->m_Doc = PyObject_Call(_JMethodDoc, args.get(), NULL);
+		self->m_Doc = PyObject_Call(_JMethodDoc, args.get(), nullptr);
 		Py_XINCREF(self->m_Doc);
 		return self->m_Doc;
 	}
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
@@ -271,12 +271,12 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
 				self, obj.get(), ov.get()));
 		JP_TRACE("Call Python");
-		self->m_Annotations = PyObject_Call(_JMethodAnnotations, args.get(), NULL);
+		self->m_Annotations = PyObject_Call(_JMethodAnnotations, args.get(), nullptr);
 	}
 
 	Py_XINCREF(self->m_Annotations);
 	return self->m_Annotations;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject* obj, void *ctx)
@@ -291,14 +291,14 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 {
 	JP_PY_TRY("PyJPMethod_getCodeAttr");
 	PyJPModule_getContext();
-	if (self->m_CodeRep == NULL)
+	if (self->m_CodeRep == nullptr)
 	{
 		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, self));
 		JP_TRACE("Call Python");
-		self->m_CodeRep = PyObject_Call(_JMethodCode, args.get(), NULL);
+		self->m_CodeRep = PyObject_Call(_JMethodCode, args.get(), nullptr);
 	}
 	return PyObject_GetAttrString(self->m_CodeRep, attr);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 PyObject *PyJPMethod_getCode(PyJPMethod *self, void *ctxt)
@@ -321,7 +321,7 @@ PyObject *PyJPMethod_isBeanAccessor(PyJPMethod *self, PyObject *arg)
 	JP_PY_TRY("PyJPMethod_isBeanAccessor");
 	PyJPModule_getContext();
 	return PyBool_FromLong(self->m_Method->isBeanAccessor());
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 PyObject *PyJPMethod_isBeanMutator(PyJPMethod *self, PyObject *arg)
@@ -329,7 +329,7 @@ PyObject *PyJPMethod_isBeanMutator(PyJPMethod *self, PyObject *arg)
 	JP_PY_TRY("PyJPMethod_isBeanMutator");
 	PyJPModule_getContext();
 	return PyBool_FromLong(self->m_Method->isBeanMutator());
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
@@ -339,7 +339,7 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 	JPPyObjectVector vargs(args);
 	string report = self->m_Method->matchReport(vargs);
 	return JPPyString::fromStringUTF8(report).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyMethodDef methodMethods[] = {
@@ -348,21 +348,21 @@ static PyMethodDef methodMethods[] = {
 	{"matchReport", (PyCFunction) (&PyJPMethod_matchReport), METH_VARARGS, ""},
 	// This is  currently private but may be promoted
 	{"_matches", (PyCFunction) (&PyJPMethod_matches), METH_VARARGS, ""},
-	{NULL},
+	{nullptr},
 };
 
 struct PyGetSetDef methodGetSet[] = {
-	{"__self__", (getter) (&PyJPMethod_getSelf), NULL, NULL, NULL},
-	{"__name__", (getter) (&PyJPMethod_getName), NULL, NULL, NULL},
-	{"__doc__", (getter) (&PyJPMethod_getDoc), (setter) (&PyJPMethod_setDoc), NULL, NULL},
-	{"__annotations__", (getter) (&PyJPMethod_getAnnotations), (setter) (&PyJPMethod_setAnnotations), NULL, NULL},
-	{"__closure__", (getter) (&PyJPMethod_getClosure), NULL, NULL, NULL},
-	{"__code__", (getter) (&PyJPMethod_getCode), NULL, NULL, NULL},
-	{"__defaults__", (getter) (&PyJPMethod_getNone), NULL, NULL, NULL},
-	{"__kwdefaults__", (getter) (&PyJPMethod_getNone), NULL, NULL, NULL},
-	{"__globals__", (getter) (&PyJPMethod_getGlobals), NULL, NULL, NULL},
-	{"__qualname__", (getter) (&PyJPMethod_getQualName), NULL, NULL, NULL},
-	{NULL},
+	{"__self__", (getter) (&PyJPMethod_getSelf), nullptr, nullptr, nullptr},
+	{"__name__", (getter) (&PyJPMethod_getName), nullptr, nullptr, nullptr},
+	{"__doc__", (getter) (&PyJPMethod_getDoc), (setter) (&PyJPMethod_setDoc), nullptr, nullptr},
+	{"__annotations__", (getter) (&PyJPMethod_getAnnotations), (setter) (&PyJPMethod_setAnnotations), nullptr, nullptr},
+	{"__closure__", (getter) (&PyJPMethod_getClosure), nullptr, nullptr, nullptr},
+	{"__code__", (getter) (&PyJPMethod_getCode), nullptr, nullptr, nullptr},
+	{"__defaults__", (getter) (&PyJPMethod_getNone), nullptr, nullptr, nullptr},
+	{"__kwdefaults__", (getter) (&PyJPMethod_getNone), nullptr, nullptr, nullptr},
+	{"__globals__", (getter) (&PyJPMethod_getGlobals), nullptr, nullptr, nullptr},
+	{"__qualname__", (getter) (&PyJPMethod_getQualName), nullptr, nullptr, nullptr},
+	{nullptr},
 };
 
 static PyType_Slot methodSlots[] = {
@@ -378,7 +378,7 @@ static PyType_Slot methodSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPMethod_Type = NULL;
+PyTypeObject *PyJPMethod_Type = nullptr;
 static PyType_Spec methodSpec = {
 	"_jpype._JMethod",
 	sizeof (PyJPMethod),
@@ -414,9 +414,9 @@ JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance)
 	JP_PY_CHECK();
 	self->m_Method = m;
 	self->m_Instance = instance;
-	self->m_Doc = NULL;
-	self->m_Annotations = NULL;
-	self->m_CodeRep = NULL;
+	self->m_Doc = nullptr;
+	self->m_Annotations = nullptr;
+	self->m_CodeRep = nullptr;
 	Py_XINCREF(self->m_Instance);
 	return JPPyObject::claim((PyObject*) self);
 	JP_TRACE_OUT; /// GCOVR_EXCL_LINE

@@ -19,7 +19,7 @@ jobject JPValue::getJavaObject() const
 {
 	// This is all sanity check
 	// GCOVR_EXCL_START
-	if (m_Class == NULL)
+	if (m_Class == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Null class");
 	if (!m_Class->isPrimitive())
 		// GCOVR_EXCL_STOP

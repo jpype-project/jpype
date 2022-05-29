@@ -31,7 +31,7 @@ JPIntType::~JPIntType()
 JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
-	if (getHost() == NULL)
+	if (getHost() == nullptr)
 		return tmp;
 	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
@@ -45,7 +45,7 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -60,7 +60,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -162,7 +162,7 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallIntMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualIntMethodA(obj, clazz, mth, val);

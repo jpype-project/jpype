@@ -23,7 +23,7 @@ extern "C"
 {
 #endif
 
-PyTypeObject *PyJPChar_Type = NULL;
+PyTypeObject *PyJPChar_Type = nullptr;
 
 struct PyJPChar
 {
@@ -54,10 +54,10 @@ static Py_UCS4 ord(PyObject *c)
 
 static int isNull(JPValue *javaSlot)
 {
-	if (javaSlot != NULL )
+	if (javaSlot != nullptr )
 	{
 		JPClass *cls = javaSlot->getClass();
-		if (cls->isPrimitive() || javaSlot->getValue().l != NULL)
+		if (cls->isPrimitive() || javaSlot->getValue().l != nullptr)
 			return 0;
 	}
 	return 1;
@@ -66,7 +66,7 @@ static int isNull(JPValue *javaSlot)
 static PyObject* notSupported()
 {
 	PyErr_SetString(PyExc_TypeError, "unsupported operation");
-	return 0;
+	return nullptr;
 }
 
 static int assertNotNull(JPValue *javaSlot)
@@ -80,8 +80,8 @@ static int assertNotNull(JPValue *javaSlot)
 PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 {
 	auto  *self = (PyJPChar*) PyJPValue_alloc(type, 0);
-	if (self == 0)
-		return 0;
+	if (self == nullptr)
+		return nullptr;
 	self->m_Data[0] = 0;
 	self->m_Data[1] = 0;
 	self->m_Data[2] = 0;
@@ -109,8 +109,8 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		data[0] = p;
 		data[1] = 0;
 		_PyUnicode_WSTR_LENGTH(self) = 0;
-		_PyUnicode_WSTR(self) = NULL;
-		self->m_Obj.utf8 = NULL;
+		_PyUnicode_WSTR(self) = nullptr;
+		self->m_Obj.utf8 = nullptr;
 		self->m_Obj.utf8_length = 0;
 	} else
 	{
@@ -126,9 +126,9 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		} else
 		{
 			_PyUnicode_WSTR_LENGTH(self) = 0;
-			_PyUnicode_WSTR(self) = NULL;
+			_PyUnicode_WSTR(self) = nullptr;
 		}
-		self->m_Obj.utf8 = NULL;
+		self->m_Obj.utf8 = nullptr;
 		self->m_Obj.utf8_length = 0;
 	}
 	return (PyObject*) self;
@@ -142,7 +142,7 @@ Py_UCS2 fromJPValue(const JPValue & value)
 	if (cls->isPrimitive())
 		return (Py_UCS2) (value.getValue().c);
 	JPPrimitiveType* pcls = ((JPBoxedType*) cls)->getPrimitive();
-	if (value.getValue().l == 0)
+	if (value.getValue().l == nullptr)
 		return (Py_UCS2) - 1;
 	else
 		return (Py_UCS2) (pcls->getValueFromObject(value).getValue().c);
@@ -171,10 +171,10 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	JP_PY_TRY("PyJPChar_new");
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
+	if (cls == nullptr)
 	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
-		return 0;
+		return nullptr;
 	}  // GCOVR_EXCL_STOP
 
 	JPContext *context = PyJPModule_getContext();
@@ -184,7 +184,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	if (PyTuple_Size(pyargs) != 1)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java chars require one argument");
-		return 0;
+		return nullptr;
 	}
 
 	JPValue jv;
@@ -210,14 +210,14 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	{
 		// This is not strictly true as we can cast a float to a char
 		PyErr_SetString(PyExc_TypeError, "Java require index or str with length 1");
-		return 0;
+		return nullptr;
 	}
 
 	PyObject *self = PyJPChar_Create(type, fromJPValue(jv));
 	JP_PY_CHECK();
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_str(PyJPChar *self)
@@ -225,16 +225,16 @@ static PyObject *PyJPChar_str(PyJPChar *self)
 	JP_PY_TRY("PyJPChar_str");
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
-	if (javaSlot == NULL)
+	if (javaSlot == nullptr)
 	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
-		return 0;
+		return nullptr;
 	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_FromOrdinal(fromJPChar(self));
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_repr(PyJPChar *self)
@@ -242,16 +242,16 @@ static PyObject *PyJPChar_repr(PyJPChar *self)
 	JP_PY_TRY("PyJPChar_repr");
 	PyJPModule_getContext(); // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
-	if (javaSlot == NULL)
+	if (javaSlot == nullptr)
 	{  // GCOVR_EXCL_START
 		// A slot is required
 		PyErr_SetString(PyExc_TypeError, "Java slot is not set on Java char");
-		return 0;
+		return nullptr;
 	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
 		return JPPyString::fromStringUTF8("None").keep();
 	return PyUnicode_Type.tp_repr((PyObject*) self);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_index(PyJPChar *self)
@@ -260,9 +260,9 @@ static PyObject *PyJPChar_index(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 	return PyLong_FromLong(fromJPChar(self));
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_float(PyJPChar *self)
@@ -271,9 +271,9 @@ static PyObject *PyJPChar_float(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 	return PyFloat_FromDouble(fromJPChar(self));
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_abs(PyJPChar *self)
@@ -282,12 +282,12 @@ static PyObject *PyJPChar_abs(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 
 	// Promote to int as per Java rules
 	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyLong_Type.tp_as_number->nb_absolute(v.get());
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static Py_ssize_t PyJPChar_len(PyJPChar *self)
@@ -305,28 +305,28 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 {
 	JPValue *slot0 = PyJPValue_getJavaSlot(first);
 	JPValue *slot1 = PyJPValue_getJavaSlot(second);
-	if (slot0 != NULL && slot1 != NULL)
+	if (slot0 != nullptr && slot1 != nullptr)
 	{	
 		if (assertNotNull(slot0))
-			return 0;
+			return nullptr;
 		if (assertNotNull(slot1))
-			return 0;
+			return nullptr;
 		JPPyObject v1 = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
 		JPPyObject v2 = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)second)));
 		return func(v1.get(), v2.get());
 	}
-	else if (slot0 != NULL)
+	else if (slot0 != nullptr)
 	{
 		if (assertNotNull(slot0))
-			return 0;
+			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
 		return func(v.get(), second);
 	}
-	else if (slot1 != NULL)
+	else if (slot1 != nullptr)
 	{
 		if (assertNotNull(slot1))
-			return 0;
+			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)second)));
 		return func(first, v.get());
@@ -340,7 +340,7 @@ static  PyObject *PyJPChar_and(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_and");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_And);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_or(PyObject *first, PyObject *second)
@@ -348,7 +348,7 @@ static  PyObject *PyJPChar_or(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_or");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Or);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_xor(PyObject *first, PyObject *second)
@@ -356,7 +356,7 @@ static  PyObject *PyJPChar_xor(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_xor");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Xor);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
@@ -365,20 +365,20 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *slot0 = PyJPValue_getJavaSlot(first);
 	JPValue *slot1 = PyJPValue_getJavaSlot(second);
-	if (slot1 != NULL && slot0 != NULL)
+	if (slot1 != nullptr && slot0 != nullptr)
 	{	
 		if (assertNotNull(slot0))
-			return 0;
+			return nullptr;
 		if (assertNotNull(slot1))
-			return 0;
+			return nullptr;
 		JPPyObject v1 = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
 		JPPyObject v2 = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)second)));
 		return PyNumber_Add(v1.get(), v2.get());
 	}
-	else if (slot0 != NULL)
+	else if (slot0 != nullptr)
 	{
 		if (assertNotNull(slot0))
-			return 0;
+			return nullptr;
 		if (PyUnicode_Check(second))
 			return PyUnicode_Concat(first, second);
 
@@ -386,10 +386,10 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
 		return PyNumber_Add(v.get(), second);
 	}
-	else if (slot1 != NULL)
+	else if (slot1 != nullptr)
 	{
 		if (assertNotNull(slot1))
-			return 0;
+			return nullptr;
 		if (PyUnicode_Check(first))
 			return PyUnicode_Concat(first, second);
 
@@ -398,7 +398,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 		return PyNumber_Add(first, v.get());
 	}
 	return notSupported();
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 
@@ -407,7 +407,7 @@ static  PyObject *PyJPChar_subtract(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_subtract");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Subtract);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_mult(PyObject *first, PyObject *second)
@@ -415,7 +415,7 @@ static  PyObject *PyJPChar_mult(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_mult");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Multiply);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_rshift(PyObject *first, PyObject *second)
@@ -423,7 +423,7 @@ static  PyObject *PyJPChar_rshift(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_rshift");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Rshift);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_lshift(PyObject *first, PyObject *second)
@@ -431,7 +431,7 @@ static  PyObject *PyJPChar_lshift(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_lshift");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Lshift);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_floordiv(PyObject *first, PyObject *second)
@@ -439,7 +439,7 @@ static  PyObject *PyJPChar_floordiv(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_floordiv");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_FloorDivide);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static  PyObject *PyJPChar_divmod(PyObject *first, PyObject *second)
@@ -447,7 +447,7 @@ static  PyObject *PyJPChar_divmod(PyObject *first, PyObject *second)
 	JP_PY_TRY("PyJPChar_divmod");
 	PyJPModule_getContext();  // Check that JVM is running
 	return apply(first, second, PyNumber_Divmod);
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_neg(PyJPChar *self)
@@ -456,11 +456,11 @@ static PyObject *PyJPChar_neg(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 	// Promote to int as per Java rules
 	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Negative(v.get());
-	JP_PY_CATCH(0);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_pos(PyJPChar *self)
@@ -469,11 +469,11 @@ static PyObject *PyJPChar_pos(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 	// Promote to int as per Java rules
 	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Positive(v.get());
-	JP_PY_CATCH(0);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPChar_inv(PyJPChar *self)
@@ -482,11 +482,11 @@ static PyObject *PyJPChar_inv(PyJPChar *self)
 	PyJPModule_getContext();  // Check that JVM is running
 	JPValue *javaSlot = PyJPValue_getJavaSlot((PyObject*) self);
 	if (assertNotNull(javaSlot))
-		return 0;
+		return nullptr;
 	// Promote to int as per Java rules
 	JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar(self)));
 	return PyNumber_Invert(v.get());
-	JP_PY_CATCH(0);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
@@ -497,7 +497,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
 	if (isNull(javaSlot0))
 	{
-		if (javaSlot1 != NULL && isNull(javaSlot1))
+		if (javaSlot1 != nullptr && isNull(javaSlot1))
 			other = Py_None;
 		if (op == Py_EQ)
 			return PyBool_FromLong(other == Py_None );
@@ -508,7 +508,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 		return out;
 		JP_RAISE_PYTHON();
 	}
-	if (javaSlot1 != NULL && isNull(javaSlot1))
+	if (javaSlot1 != nullptr && isNull(javaSlot1))
 		return PyBool_FromLong(op == Py_NE);
 
 	if (PyUnicode_Check(other))
@@ -531,7 +531,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*) self)));
 		return PyLong_Type.tp_richcompare(v.get(), other, op);
 	}
-	if (javaSlot1 != NULL)
+	if (javaSlot1 != nullptr)
 	{
 		// char  <=> object
 		// object <=> char
@@ -551,7 +551,7 @@ static PyObject *PyJPJChar_compare(PyObject *self, PyObject *other, int op)
 	PyObject *out = Py_NotImplemented;
 	Py_INCREF(out);
 	return out;
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static Py_hash_t PyJPChar_hash(PyObject *self)
@@ -579,12 +579,12 @@ static int PyJPChar_bool(PyJPChar *self)
 
 static PyMethodDef charMethods[] = {
 	//	{"thing", (PyCFunction) PyJPMethod_matchReport, METH_VARARGS, ""},
-	{NULL},
+	{nullptr},
 };
 
 struct PyGetSetDef charGetSet[] = {
 	//	{"thing", (getter) PyJPMethod_getSelf, NULL, NULL, NULL},
-	{NULL},
+	{nullptr},
 };
 
 static PyType_Slot charSlots[] = {

@@ -44,7 +44,7 @@ JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallDoubleMethodA(jo, jb->m_DoubleValueID, 0);
+	field(v) = (type_t) frame.CallDoubleMethodA(jo, jb->m_DoubleValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -73,7 +73,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -183,7 +183,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallDoubleMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);

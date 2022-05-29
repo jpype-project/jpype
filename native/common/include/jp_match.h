@@ -36,8 +36,8 @@ public:
 
 	JPContext *getContext()
 	{
-		if (frame == NULL)
-			return NULL;
+		if (frame == nullptr)
+			return nullptr;
 		return frame->getContext();
 	}
 
