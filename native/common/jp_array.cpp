@@ -66,7 +66,7 @@ JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
 JPArray::~JPArray()
 = default;
 
-jsize JPArray::getLength()
+jsize JPArray::getLength() const
 {
 	return m_Length;
 }
@@ -236,7 +236,7 @@ JPArrayView::~JPArrayView()
 		delete [] (char*) m_Memory;
 }
 
-JPContext *JPArrayView::getContext()
+JPContext *JPArrayView::getContext() const
 {
 	return m_Array->getClass()->getContext();
 }
