@@ -414,7 +414,7 @@ static PyMethodDef arrayMethods[] = {
 };
 
 static PyGetSetDef arrayGetSets[] = {
-	{"length", (getter) (&PyJPArray_length), nullptr, const_cast<char*> (length_doc)},
+	{"length", (getter) (&PyJPArray_length), nullptr, (length_doc)},
 	{nullptr}
 };
 
