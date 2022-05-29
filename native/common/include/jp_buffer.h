@@ -26,7 +26,7 @@ class JPBufferType;
 class JPBuffer
 {
 public:
-	JPBuffer(const JPValue& array);
+	explicit JPBuffer(const JPValue& array);
 	virtual~ JPBuffer();
 
 	JPBufferType* getClass()

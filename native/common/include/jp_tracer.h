@@ -58,7 +58,7 @@ private:
 
 public:
 
-	JPypeTracer(const char *name, void *ref = nullptr);
+	explicit JPypeTracer(const char *name, void *ref = nullptr);
 	~JPypeTracer();
 
 	void gotError(const JPStackInfo& info)

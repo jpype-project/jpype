@@ -139,7 +139,7 @@ class JPPythonConversion : public JPConversion
 {
 public:
 
-	JPPythonConversion(PyObject *method)
+	explicit JPPythonConversion(PyObject *method)
 	{
 		method_ = JPPyObject::use(method);
 	}
@@ -232,7 +232,7 @@ class JPNoneConversion : public JPConversion
 {
 public:
 
-	JPNoneConversion(PyObject *type)
+	explicit JPNoneConversion(PyObject *type)
 	{
 		type_ = JPPyObject::use(type);
 	}

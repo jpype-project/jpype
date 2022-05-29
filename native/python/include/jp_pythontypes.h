@@ -269,7 +269,7 @@ public:
 
 	/** Use an existing sequence members as a vector.
 	 */
-	JPPyObjectVector(PyObject* sequence);
+	explicit JPPyObjectVector(PyObject* sequence);
 
 	/** Use an existing sequence members as a vector plus the
 	 * object instance.

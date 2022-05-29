@@ -65,12 +65,12 @@ public:
 
 	jobject getJavaObject() const;
 
-	operator jvalue&()
+	explicit operator jvalue&()
 	{
 		return m_Value;
 	}
 
-	operator const jvalue&() const
+	explicit operator const jvalue&() const
 	{
 		return m_Value;
 	}

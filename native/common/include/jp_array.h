@@ -23,7 +23,7 @@ class JPArray;
 class JPArrayView
 {
 public:
-	JPArrayView(JPArray* array);
+	explicit JPArrayView(JPArray* array);
 	JPArrayView(JPArray* array, jobject collection);
 	~JPArrayView();
 	void reference();
@@ -47,7 +47,7 @@ class JPArray
 {
 	friend class JPArrayView;
 public:
-	JPArray(const JPValue& array);
+	explicit JPArray(const JPValue& array);
 	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
 
