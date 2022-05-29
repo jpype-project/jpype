@@ -65,7 +65,6 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
-#include <sstream>
 #include <cstdlib>
 #include <cstring>
 #include <list>
@@ -175,10 +174,10 @@ public:
 //   These must be macros so that we can update the pattern and
 //   maintain the appropriate auditing information.  C++ does not
 //   have a lot for facilities to make this easy.
-#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, NULL, JP_STACKINFO()); }
+#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, nullptr, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPypeException(JPError::_os_error_unix,  msg, err, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPypeException(JPError::_os_error_windows,  msg, err, JP_STACKINFO()); }
-#define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, NULL, msg, JP_STACKINFO()); }
+#define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, nullptr, msg, JP_STACKINFO()); }
 #define JP_RAISE(type, msg)                 { throw JPypeException(JPError::_python_exc, type, msg, JP_STACKINFO()); }
 
 #ifndef PyObject_HEAD
@@ -205,6 +204,5 @@ using PyObject = _object;
 
 // Primitives classes
 #include "jp_primitivetype.h"
-#include "jp_typemanager.h"
 
 #endif // _JPYPE_H_
