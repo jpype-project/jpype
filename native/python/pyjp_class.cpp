@@ -1089,7 +1089,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 	}
 
 	const JPClassList& baseItf = cls->getInterfaces();
-	size_t count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != nullptr ? 1 : 0);
+	Py_ssize_t count = baseItf.size() + (!baseType.isNull() ? 1 : 0) + (super != nullptr ? 1 : 0);
 
 	// Pack into a tuple
 	JPPyObject result = JPPyObject::call(PyList_New(count));
@@ -1155,27 +1155,27 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		return;
 
 	const JPFieldList & instFields = cls->getFields();
-	for (auto iter = instFields.begin(); iter != instFields.end(); iter++)
+	for (auto instField : instFields)
 	{
-		JPPyObject fieldName(JPPyString::fromStringUTF8((*iter)->getName()));
-		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(*iter).get());
+		JPPyObject fieldName(JPPyString::fromStringUTF8(instField->getName()));
+		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(instField).get());
 	}
 	const JPMethodDispatchList& m_Methods = cls->getMethods();
-	for (auto iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+	for (auto m_Method : m_Methods)
 	{
-		JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
+		JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 		PyDict_SetItem(members.get(), methodName.get(),
-				PyJPMethod_create(*iter, nullptr).get());
+				PyJPMethod_create(m_Method, nullptr).get());
 	}
 
 	if (cls->isInterface())
 	{
-		const JPMethodDispatchList& m_Methods = context->_java_lang_Object->getMethods();
-		for (auto iter = m_Methods.begin(); iter != m_Methods.end(); iter++)
+		const JPMethodDispatchList& m_Methods2 = context->_java_lang_Object->getMethods();
+		for (auto m_Method : m_Methods2)
 		{
-			JPPyObject methodName(JPPyString::fromStringUTF8((*iter)->getName()));
+			JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 			PyDict_SetItem(members.get(), methodName.get(),
-					PyJPMethod_create(*iter, nullptr).get());
+					PyJPMethod_create(m_Method, nullptr).get());
 		}
 	}
 

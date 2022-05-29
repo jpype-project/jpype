@@ -39,7 +39,7 @@
  * - otherwise convert to a RuntimeException.
  *
  */
-
+#include <stdexcept>
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32   //WINDOWS
 #define __FUNCTION_NAME__   __FUNCTION__
@@ -70,7 +70,7 @@ extern int _method_not_found;
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if (X==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
+#define ASSERT_NOT_NULL(X) {if ((X)==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }
@@ -119,20 +119,22 @@ typedef union
  * to Python as the majority of errors are reported there.
  *
  */
-class JPypeException : std::exception
+class JPypeException : std::runtime_error
 {
 public:
 	JPypeException(JPJavaFrame &frame, jthrowable, const JPStackInfo& stackInfo);
 	JPypeException(int type, void* error, const JPStackInfo& stackInfo);
 	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
-	JPypeException(const JPypeException& ex);
+    // The copy constructor for an object thrown as an exception must be declared noexcept, including any implicitly-defined copy constructors.
+    // Any function declared noexcept that terminates by throwing an exception violates ERR55-CPP. Honor exception specifications.
+    JPypeException(const std::runtime_error &unnamed, const JPypeException &ex) noexcept;
 	JPypeException& operator = (const JPypeException& ex);
 	~JPypeException() override = default;
 
 	void from(const JPStackInfo& info);
 
-	string getMessage();
+	string getMessage() noexcept;
 
 	void convertJavaToPython();
 	void convertPythonToJava(JPContext* context);
@@ -157,7 +159,6 @@ private:
 	int m_Type;
 	JPErrorUnion m_Error{};
 	JPStackTrace m_Trace;
-	string m_Message;
 	JPThrowableRef m_Throwable;
 };
 
