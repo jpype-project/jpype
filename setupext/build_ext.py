@@ -234,6 +234,7 @@ class BuildExtCommand(build_ext):
 
         # has to be last call
         print("Call build extensions")
+        # FIXME: self.parallel seems to not be initialized properly.
         super().build_extensions()
 
     def build_extension(self, ext):
