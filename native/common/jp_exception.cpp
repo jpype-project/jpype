@@ -20,6 +20,9 @@
 #include "jp_exception.h"
 #include "pyjp.h"
 
+static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
+              "S must be nothrow copy constructible");
+
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
 JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackInfo& stackInfo)
@@ -563,7 +566,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	for (jsize i = 0; i < sz; i += 4)
 	{
 		string filename, method;
-		auto jclassname = (jstring) frame.GetObjectArrayElement(obj, i);
+		auto jclassname = static_cast<jstring>(frame.GetObjectArrayElement(obj, i));
 		auto jmethodname = (jstring) frame.GetObjectArrayElement(obj, i + 1);
 		auto jfilename = (jstring) frame.GetObjectArrayElement(obj, i + 2);
 		if (jfilename != nullptr)
