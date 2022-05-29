@@ -20,7 +20,7 @@
 class JPPrimitiveType : public JPClass
 {
 protected:
-	JPPrimitiveType(const string& name);
+	explicit JPPrimitiveType(const string& name);
 	~JPPrimitiveType() override;
 
 public:
