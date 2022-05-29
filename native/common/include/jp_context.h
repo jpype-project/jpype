@@ -120,8 +120,9 @@ public:
 
 	JPContext();
 	virtual ~JPContext();
+    JPContext(const JPContext& orig) = delete;
 
-	// JVM control functions
+    // JVM control functions
 	bool isRunning();
 	void startJVM(const string& vmPath, const StringVector& args,
 			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
@@ -206,7 +207,6 @@ private:
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms){};
 
 private:
-	JPContext(const JPContext& orig) = delete;
 
 	JavaVM *m_JavaVM{};
 
