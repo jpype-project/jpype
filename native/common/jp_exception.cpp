@@ -15,6 +15,7 @@
  *****************************************************************************/
 #include <Python.h>
 #include <frameobject.h>
+
 #include "jpype.h"
 #include "jp_exception.h"
 #include "pyjp.h"
@@ -86,37 +87,6 @@ void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
 	m_Trace.emplace_back(info);
-}
-
-// Okay from this point on we have to suit up in full Kevlar because
-// this code must handle every conceivable and still reach a resolution.
-// Exceptions may be throws during initialization where only a fraction
-// of the resources are available, during the middle of normal operation,
-// or worst of all as the system is being yanked out from under us during
-// shutdown.  Each and every one of these cases must be considered.
-// Further each and every function called here must be hardened similarly
-// or they will become the weak link. And remember it is not paranoia if
-// they are actually out to get you.
-//
-// Onward my friends to victory or a glorious segfault!
-// TODO: actually we can replace this completely with what() of runtime_error!
-string JPypeException::getMessage() noexcept
-{
-	JP_TRACE_IN("JPypeException::getMessage");
-	// Must be bulletproof
-	try
-	{
-		std::stringstream str;
-		str << std::runtime_error::what() << std::endl;
-		JP_TRACE(str.str());
-		return str.str();
-		// GCOVR_EXCL_START
-	} catch (...)
-	{
-		return "error during get message";
-	}
-	JP_TRACE_OUT;
-	// GCOVR_EXCL_STOP
 }
 
 bool isJavaThrowable(PyObject* exceptionClass)
@@ -252,7 +222,7 @@ void JPypeException::convertPythonToJava(JPContext* context)
 
 	if (context->m_Context_CreateExceptionID == nullptr)
 	{
-		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), getMessage().c_str());
+		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), std::runtime_error::what());
 		return;
 	}
 
@@ -279,7 +249,7 @@ int JPError::_method_not_found = 20;
 
 void JPypeException::toPython()
 {
-	string mesg;
+	const char* mesg;
 	JP_TRACE_IN("JPypeException::toPython");
 	JP_TRACE("err", PyErr_Occurred());
 	try
@@ -290,7 +260,7 @@ void JPypeException::toPython()
 		if (PyErr_CheckSignals()!=0)
 			return;
 
-		mesg = getMessage();
+		mesg = std::runtime_error::what();
 		JP_TRACE(m_Error.l);
 		JP_TRACE(mesg.c_str());
 
@@ -311,7 +281,7 @@ void JPypeException::toPython()
 			// This is hit when a proxy fails to implement a required
 			// method.  Only older style proxies should be able hit this.
 			JP_TRACE("Runtime error");
-			PyErr_SetString(PyExc_RuntimeError, mesg.c_str());
+			PyErr_SetString(PyExc_RuntimeError, mesg);
 		}// This section is only reachable during startup of the JVM.
 			// GCOVR_EXCL_START
 		else if (m_Type == JPError::_os_error_unix)
@@ -352,13 +322,13 @@ void JPypeException::toPython()
 		{
 			// All others are Python errors
 			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
-			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
+			PyErr_SetString((PyObject*) m_Error.l, mesg);
 		} else
 		{
 			// This should not be possible unless we failed to cover one of the
 			// exception type codes.
 			JP_TRACE("Unknown error");
-			PyErr_SetString(PyExc_RuntimeError, mesg.c_str()); // GCOVR_EXCL_LINE
+			PyErr_SetString(PyExc_RuntimeError, mesg); // GCOVR_EXCL_LINE
 		}
 
 		// Attach our info as the cause
@@ -388,9 +358,9 @@ void JPypeException::toPython()
 			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.m_ExceptionClass.get())->tp_name);
 			return;  // Let these go to Python so we can see the error
 		} else if (ex.m_Type == JPError::_java_error)
-			JPTracer::trace("Inner Java:", ex.getMessage());
+			JPTracer::trace("Inner Java:", ex.what());
 		else
-			JPTracer::trace("Inner:", ex.getMessage());
+			JPTracer::trace("Inner:", ex.what());
 
 		JPStackInfo info = ex.m_Trace.front();
 		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
@@ -416,7 +386,7 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_IN("JPypeException::toJava");
 	try
 	{
-		string mesg = getMessage();
+		const char* mesg = what();
 		JPJavaFrame frame = JPJavaFrame::external(context, context->getEnv());
 		if (m_Type == JPError::_java_error)
 		{
@@ -433,7 +403,7 @@ void JPypeException::toJava(JPContext *context)
 
 		if (m_Type == JPError::_method_not_found)
 		{
-			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg.c_str());
+			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg);
 			return;
 		}
 
@@ -450,14 +420,14 @@ void JPypeException::toJava(JPContext *context)
 			JPPyCallAcquire callback;
 			// All others are Python errors
 			JP_TRACE(Py_TYPE(m_Error.l)->tp_name);
-			PyErr_SetString((PyObject*) m_Error.l, mesg.c_str());
+			PyErr_SetString((PyObject*) m_Error.l, mesg);
 			convertPythonToJava(context);
 			return;
 		}
 
 		// All others are issued as RuntimeExceptions
 		JP_TRACE("String exception");
-		frame.ThrowNew(context->m_RuntimeException.get(), mesg.c_str());
+		frame.ThrowNew(context->m_RuntimeException.get(), mesg);
 		return;
 	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
 	{	// GCOVR_EXCL_START

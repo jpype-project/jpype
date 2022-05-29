@@ -103,7 +103,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		loadEntryPoints(vmPath);
 	} catch (JPypeException& ex)
 	{
-		ex.getMessage();
 		throw;
 	}
 
@@ -332,10 +331,9 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	}
 
 	JP_TRACE("Delete resources");
-	for (auto iter = m_Resources.begin();
-			iter != m_Resources.end(); ++iter)
+	for (auto & m_Resource : m_Resources)
 	{
-		delete *iter;
+		delete m_Resource;
 	}
 	m_Resources.clear();
 

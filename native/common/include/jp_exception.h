@@ -134,8 +134,6 @@ public:
 
 	void from(const JPStackInfo& info);
 
-	string getMessage() noexcept;
-
 	void convertJavaToPython();
 	void convertPythonToJava(JPContext* context);
 
