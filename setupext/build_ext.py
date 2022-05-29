@@ -16,19 +16,17 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import os
-from setuptools.command.build_ext import build_ext
-import sys
-import subprocess
 import distutils.cmd
 import distutils.log
-from distutils.errors import DistutilsPlatformError
-from distutils.dir_util import copy_tree
 import glob
-import re
+import os
 import shlex
 import shutil
-import sysconfig
+import subprocess
+from distutils.dir_util import copy_tree
+from distutils.errors import DistutilsPlatformError
+
+from setuptools.command.build_ext import build_ext
 
 
 # This setup option constructs a prototype Makefile suitable for compiling
