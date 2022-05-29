@@ -119,7 +119,7 @@ typedef union
  * to Python as the majority of errors are reported there.
  *
  */
-class JPypeException
+class JPypeException : std::exception
 {
 public:
 	JPypeException(JPJavaFrame &frame, jthrowable, const JPStackInfo& stackInfo);
@@ -128,7 +128,7 @@ public:
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
 	JPypeException(const JPypeException& ex);
 	JPypeException& operator = (const JPypeException& ex);
-	~JPypeException();
+	~JPypeException() override = default;
 
 	void from(const JPStackInfo& info);
 
@@ -147,7 +147,7 @@ public:
 	/** Transfer handling of this exception to java. */
 	void toJava(JPContext* context);
 
-	int getExceptionType()
+	int getExceptionType() const
 	{
 		return m_Type;
 	}
@@ -159,6 +159,6 @@ private:
 	JPStackTrace m_Trace;
 	string m_Message;
 	JPThrowableRef m_Throwable;
-} ;
+};
 
 #endif
