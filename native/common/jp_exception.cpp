@@ -18,7 +18,6 @@
 #include "jpype.h"
 #include "jp_exception.h"
 #include "pyjp.h"
-#include "jp_reference_queue.h"
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
@@ -83,10 +82,6 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 }
 // GCOVR_EXCL_STOP
 
-JPypeException::~JPypeException()
-{
-}
-
 void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
@@ -111,8 +106,8 @@ string JPypeException::getMessage()
 	// Must be bullet proof
 	try
 	{
-		stringstream str;
-		str << m_Message << endl;
+		std::stringstream str;
+		str << m_Message << std::endl;
 		JP_TRACE(str.str());
 		return str.str();
 		// GCOVR_EXCL_START
@@ -563,10 +558,10 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 {
 	PyTracebackObject *last_traceback = nullptr;
 	PyObject *dict = PyModule_GetDict(PyJPModule);
-	for (auto iter = trace.begin(); iter != trace.end(); ++iter)
+	for (auto & iter : trace)
 	{
-		last_traceback = tb_create(last_traceback, dict,  iter->getFile(),
-				iter->getFunction(), iter->getLine());
+		last_traceback = tb_create(last_traceback, dict,  iter.getFile(),
+				iter.getFunction(), iter.getLine());
 	}
 	if (last_traceback == nullptr)
 		Py_RETURN_NONE;
@@ -581,7 +576,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	args[0].l = th;
 	args[1].l = prev;
 	if (context->m_Context_GetStackFrameID == nullptr)
-		return JPPyObject();
+		return {};
 
 	JNIEnv* env = frame.getEnv();
 	auto obj = (jobjectArray) env->CallObjectMethodA(context->getJavaContext(),
@@ -592,7 +587,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		env->ExceptionClear();
 
 	if (obj == nullptr)
-		return JPPyObject();
+		return {};
 	jsize sz = frame.GetArrayLength(obj);
 	PyObject *dict = PyModule_GetDict(PyJPModule);
 	for (jsize i = 0; i < sz; i += 4)
@@ -617,6 +612,6 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		frame.DeleteLocalRef(jfilename);
 	}
 	if (last_traceback == nullptr)
-		return JPPyObject();
+		return {};
 	return JPPyObject::call((PyObject*) last_traceback);
 }

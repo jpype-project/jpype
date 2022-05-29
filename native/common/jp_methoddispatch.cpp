@@ -227,7 +227,7 @@ bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool 
 string JPMethodDispatch::matchReport(JPPyObjectVector& args)
 {
 	stringstream res;
-	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << endl;
+	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << std::endl;
 
 	for (auto cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
 	{

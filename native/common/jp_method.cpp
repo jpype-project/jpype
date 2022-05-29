@@ -380,7 +380,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			break;
 	}
 	// GCOVR_EXCL_STOP
-	res << endl;
+	res << std::endl;
 	return res.str();
 }
 

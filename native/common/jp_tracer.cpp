@@ -48,7 +48,7 @@ static JPypeTracer* jpype_tracer_last = nullptr;
 
 std::mutex trace_lock;
 
-#define JPYPE_TRACING_OUTPUT cerr
+#define JPYPE_TRACING_OUTPUT std::cerr
 static int INDENT_WIDTH = 2;
 static const char *INDENT =
 		"                                                                                ";
@@ -94,7 +94,7 @@ void JPypeTracer::traceIn(const char* msg, void* ref)
 	JPYPE_TRACING_OUTPUT << "> " << msg ;
 	if (ref != nullptr)
 		JPYPE_TRACING_OUTPUT << " id=\"" << ref << "\"";
-	JPYPE_TRACING_OUTPUT << endl;
+	JPYPE_TRACING_OUTPUT << std::endl;
 	JPYPE_TRACING_OUTPUT.flush();
 	jpype_traceLevel++;
 }
@@ -109,10 +109,10 @@ void JPypeTracer::traceOut(const char* msg, bool error)
 	jpype_indent(jpype_traceLevel);
 	if (error)
 	{
-		JPYPE_TRACING_OUTPUT << "EXCEPTION! " << msg << endl;
+		JPYPE_TRACING_OUTPUT << "EXCEPTION! " << msg << std::endl;
 	} else
 	{
-		JPYPE_TRACING_OUTPUT << "< " << msg << endl;
+		JPYPE_TRACING_OUTPUT << "< " << msg << std::endl;
 	}
 	JPYPE_TRACING_OUTPUT.flush();
 }
@@ -177,7 +177,7 @@ void JPypeTracer::trace1(const char* source, const char* msg)
 		JPYPE_TRACING_OUTPUT << source << ": ";
 	if (source == nullptr || (_PyJPModule_trace & 16) != 0)
 		JPYPE_TRACING_OUTPUT << name << ": ";
-	JPYPE_TRACING_OUTPUT << msg << endl;
+	JPYPE_TRACING_OUTPUT << msg << std::endl;
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
@@ -193,14 +193,14 @@ void JPypeTracer::trace2(const char* msg1, const char* msg2)
 		name = jpype_tracer_last->m_Name;
 
 	jpype_indent(jpype_traceLevel);
-	JPYPE_TRACING_OUTPUT << name << ": " << msg1 << " " << msg2 << endl;
+	JPYPE_TRACING_OUTPUT << name << ": " << msg1 << " " << msg2 << std::endl;
 	JPYPE_TRACING_OUTPUT.flush();
 }
 
 void JPypeTracer::traceLocks(const string& msg, void* ref)
 {
 	std::lock_guard<std::mutex> guard(trace_lock);
-	JPYPE_TRACING_OUTPUT << msg << ": " << ref  << endl;
+	JPYPE_TRACING_OUTPUT << msg << ": " << ref  << std::endl;
 	JPYPE_TRACING_OUTPUT.flush();
 }
 

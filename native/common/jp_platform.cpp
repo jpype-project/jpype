@@ -144,7 +144,7 @@ public:
 		// GCOVR_EXCL_START
 		if (r != 0) // error
 		{
-			cerr << dlerror() << endl;
+			std::cerr << dlerror() << std::endl;
 		}
 		// GCOVR_EXCL_STOP
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE

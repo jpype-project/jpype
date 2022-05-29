@@ -62,9 +62,8 @@
 
 #include <map>
 #include <string>
-#include <sstream>
 #include <vector>
-#include <iostream>
+//#include <iostream>
 #include <cstdlib>
 #include <cstring>
 #include <list>
@@ -72,10 +71,10 @@
 using std::map;
 using std::string;
 using std::stringstream;
-using std::cout;
+/*using std::cout;
 using std::cerr;
 using std::endl;
-using std::vector;
+*/using std::vector;
 using std::list;
 
 #ifdef JP_INSTRUMENTATION
