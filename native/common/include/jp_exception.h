@@ -128,7 +128,7 @@ public:
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
     // The copy constructor for an object thrown as an exception must be declared noexcept, including any implicitly-defined copy constructors.
     // Any function declared noexcept that terminates by throwing an exception violates ERR55-CPP. Honor exception specifications.
-    JPypeException(const std::runtime_error &unnamed, const JPypeException &ex) noexcept;
+    JPypeException(const JPypeException &ex) noexcept = default;
 	JPypeException& operator = (const JPypeException& ex);
 	~JPypeException() override = default;
 

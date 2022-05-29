@@ -23,29 +23,28 @@
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
 JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackInfo& stackInfo)
-: m_Throwable(frame, th), std::runtime_error(frame.toString(th))
+: std::runtime_error(frame.toString(th)),
+  m_Context(frame.getContext()),
+  m_Type(JPError::_java_error),
+  m_Throwable(frame, th)
 {
 	JP_TRACE("JAVA EXCEPTION THROWN with java throwable");
-	m_Context = frame.getContext();
-	m_Type = JPError::_java_error;
 	m_Error.l = nullptr;
 	from(stackInfo);
 }
 
 JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackInfo)
-: std::runtime_error("None")
+: std::runtime_error("None"), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN with error", error);
-	m_Type = type;
 	m_Error.l = error;
 	from(stackInfo);
 }
 
 JPypeException::JPypeException(int type, void* errType, const string& msn, const JPStackInfo& stackInfo)
-: std::runtime_error(msn)
+: std::runtime_error(msn), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = type;
 	m_Error.l = errType;
 	//m_Message = msn;
 	from(stackInfo);
@@ -55,26 +54,20 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 // This is only used during startup for OSError
 
 JPypeException::JPypeException(int type,  const string& msn, int errType, const JPStackInfo& stackInfo)
-: std::runtime_error(msn)
+: std::runtime_error(msn), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
-	m_Type = type;
 	m_Error.i = errType;
 	from(stackInfo);
-}
-
-JPypeException::JPypeException(const std::runtime_error &unnamed, const JPypeException &ex) noexcept
-: runtime_error(unnamed), m_Context(ex.m_Context), m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
-{
-	m_Type = ex.m_Type;
-	m_Error = ex.m_Error;
 }
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
 {
     if(this == &ex)
+    {
         return *this;
-	m_Context = ex.m_Context;
+    }
+    m_Context = ex.m_Context;
 	m_Type = ex.m_Type;
 	m_Trace = ex.m_Trace;
 	m_Throwable = ex.m_Throwable;
@@ -262,7 +255,7 @@ void JPypeException::toPython()
 
 		mesg = std::runtime_error::what();
 		JP_TRACE(m_Error.l);
-		JP_TRACE(mesg.c_str());
+		JP_TRACE(mesg);
 
 		// We already have a Python error on the stack.
 		if (PyErr_Occurred())
