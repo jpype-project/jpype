@@ -76,7 +76,7 @@ JPJavaFrame::~JPJavaFrame()
 		JP_FRAME_CHECK();
 	}
 
-	// It is not safe to detach as we would loss all local references including
+	// It is not safe to detach as we would lose all local references including
 	// any we want to keep.
 }
 
@@ -126,10 +126,10 @@ jobject JPJavaFrame::NewGlobalRef(jobject obj)
 
 /*****************************************************************************/
 // Exceptions
-
+// TODO: why is this never used? Should be deleted if obsolete.
 bool JPJavaFrame::ExceptionCheck()
 {
-	return (m_Env->ExceptionCheck() ? true : false);
+	return m_Env->ExceptionCheck() != 0;
 }
 
 void JPJavaFrame::ExceptionDescribe()
