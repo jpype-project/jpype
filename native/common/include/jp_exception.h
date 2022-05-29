@@ -106,11 +106,11 @@ public:
 } ;
 using JPStackTrace = vector<JPStackInfo>;
 
-using JPErrorUnion = union
+typedef union
 {
-	int  i;
-	void*  l;
-};
+    int  i;
+    void*  l;
+} JPErrorUnion;
 
 /**
  * Exception issued by JPype to indicate an internal problem.
