@@ -94,7 +94,7 @@ extern int PyJPModuleFault_check(uint32_t code);
 #endif
 
 /** Definition of commonly used template types */
-using StringVector = std::vector<string>;
+using StringVector = vector<string>;
 
 /**
  * Converter are used for bulk byte transfers from Python to Java.
