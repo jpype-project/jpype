@@ -77,19 +77,19 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         distutils.log.info("Add darwin settings")
         platform_specific['libraries'] = ['dl']
         platform_specific['define_macros'] = [('MACOSX', 1)]
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = ['-g0', '-std=c++14', '-O2']
         jni_md_platform = 'darwin'
 
     elif platform.startswith('linux'):
         distutils.log.info("Add linux settings")
         platform_specific['libraries'] = ['dl']
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = ['-g0', '-std=c++14', '-O2']
         jni_md_platform = 'linux'
 
     elif platform.startswith('aix7'):
         distutils.log.info("Add aix settings")
         platform_specific['libraries'] = ['dl']
-        platform_specific['extra_compile_args'] = ['-g3', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = ['-g3', '-std=c++14', '-O2']
         jni_md_platform = 'aix7'
 
     elif platform.startswith('freebsd'):
@@ -103,7 +103,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
     elif platform.startswith('android'):
         distutils.log.info("Add android settings")
         platform_specific['libraries'] = ['dl', 'c++_shared', 'SDL2']
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-fexceptions', '-frtti', '-O2']
+        platform_specific['extra_compile_args'] = ['-g0', '-std=c++14', '-fexceptions', '-frtti', '-O2']
 
         print("PLATFORM_SPECIFIC:", platform_specific)
         jni_md_platform = 'linux'
