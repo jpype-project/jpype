@@ -41,7 +41,7 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	auto* jb = (JPBoxedType*) frame.findClassForObject(jo);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
 	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }

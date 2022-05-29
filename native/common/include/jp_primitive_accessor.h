@@ -253,8 +253,8 @@ public:
 	{
 		JPValue *value = match.getJavaSlot();
 		jvalue ret;
-		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*)
-				value->getClass())->getAsLong(value->getValue());
+		base_t::field(ret) = (typename base_t::type_t) (dynamic_cast<JPPrimitiveType*>(
+				value->getClass()))->getAsLong(value->getValue());
 		return ret;
 	}
 } ;
@@ -333,7 +333,7 @@ public:
 	{
 		JPValue *value = match.getJavaSlot();
 		jvalue ret;
-		base_t::field(ret) = (typename base_t::type_t) ((JPPrimitiveType*) value->getClass())->getAsDouble(value->getValue());
+		base_t::field(ret) = (typename base_t::type_t) (dynamic_cast<JPPrimitiveType*>( value->getClass()))->getAsDouble(value->getValue());
 		return ret;
 	}
 } ;

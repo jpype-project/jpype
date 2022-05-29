@@ -719,7 +719,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	if (PyIndex_Check(item))
 	{
 		long sz = PyLong_AsLong(item);
-		auto *cls = (JPArrayClass*) self->m_Class->newArrayType(frame, 1);
+		auto *cls = dynamic_cast<JPArrayClass*>( self->m_Class->newArrayType(frame, 1));
 		JPValue v = cls->newArray(frame, sz);
 		return cls->convertToPythonObject(frame, v.getValue(), true).keep();
 	}
@@ -1075,7 +1075,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 		baseType = JPPyObject::use((PyObject*) PyJPException_Type);
 	} else if (cls->isArray())
 	{
-		auto* acls = (JPArrayClass*) cls;
+		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (acls->getComponentType()->isPrimitive())
 			baseType = JPPyObject::use((PyObject*) PyJPArrayPrimitive_Type);
 		else

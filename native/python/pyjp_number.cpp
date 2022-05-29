@@ -412,7 +412,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jlong l = 0;
 		if (value.getValue().l != nullptr)
 		{
-			auto* jb = (JPBoxedType*) value.getClass();
+			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, nullptr);
 		}
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
@@ -423,7 +423,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jdouble l = 0;
 		if (value.getValue().l != nullptr)
 		{
-			auto* jb = (JPBoxedType*) value.getClass();
+			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, nullptr);
 		}
 		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));

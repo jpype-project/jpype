@@ -141,7 +141,7 @@ Py_UCS2 fromJPValue(const JPValue & value)
 	JPClass* cls = value.getClass();
 	if (cls->isPrimitive())
 		return (Py_UCS2) (value.getValue().c);
-	JPPrimitiveType* pcls = ((JPBoxedType*) cls)->getPrimitive();
+	JPPrimitiveType* pcls = (dynamic_cast<JPBoxedType*>( cls))->getPrimitive();
 	if (value.getValue().l == nullptr)
 		return (Py_UCS2) - 1;
 	else

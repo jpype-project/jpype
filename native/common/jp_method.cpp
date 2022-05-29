@@ -54,7 +54,7 @@ string JPMethod::toString() const
 JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
 	JP_TRACE_IN("JPMethod::matchVars");
-	auto *arraytype = (JPArrayClass*) vartype;
+	auto *arraytype = dynamic_cast<JPArrayClass*>( vartype);
 	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
 
@@ -189,7 +189,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	{
 		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
-		auto* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
+		auto* type = dynamic_cast<JPArrayClass*>( m_ParameterTypes[tlen - 1]);
 		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
 	}
 
@@ -282,7 +282,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];
 		if (cls->isPrimitive())
 		{
-			auto* type = (JPPrimitiveType*) cls;
+			auto* type = dynamic_cast<JPPrimitiveType*>( cls);
 			PyObject *u = arg[i + match.m_Skip];
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
@@ -309,7 +309,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	if (retType->isPrimitive())
 	{
 		JP_TRACE("Return primitive");
-		JPClass *boxed = ((JPPrimitiveType*) retType)->getBoxedClass(context);
+		JPClass *boxed = (dynamic_cast<JPPrimitiveType*>( retType))->getBoxedClass(context);
 		JPValue out = retType->getValueFromObject(JPValue(boxed, o));
 		return retType->convertToPythonObject(frame, out.getValue(), false);
 	} else

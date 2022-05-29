@@ -27,7 +27,7 @@
 JPArray::JPArray(const JPValue &value)
 : m_Object(value.getClass()->getContext(), (jarray) value.getValue().l)
 {
-	m_Class = (JPArrayClass*) value.getClass();
+	m_Class = dynamic_cast<JPArrayClass*>( value.getClass());
 	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JP_TRACE_IN("JPArray::JPArray");
 	ASSERT_NOT_NULL(m_Class);
@@ -147,7 +147,7 @@ JPArrayView::JPArrayView(JPArray* array)
 	m_Buffer.obj = nullptr;
 	m_Buffer.ndim = 1;
 	m_Buffer.suboffsets = nullptr;
-	auto *type = (JPPrimitiveType*) array->getClass()->getComponentType();
+	auto *type = dynamic_cast<JPPrimitiveType*>( array->getClass()->getComponentType());
 	type->getView(*this);
 	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
 	m_Shape[0] = array->m_Length;
@@ -171,8 +171,8 @@ JPArrayView::JPArrayView(JPArray* array, jobject collection)
 	jobject item1 = frame.GetObjectArrayElement((jobjectArray) collection, 1);
 
 	// First element is the primitive type that we are packing the array from
-	auto *componentType = (JPPrimitiveType*)
-			frame.findClass((jclass) item0);
+	auto *componentType = dynamic_cast<JPPrimitiveType*>(
+			frame.findClass((jclass) item0));
 
 	// Second element is the shape of the array from which we compute the
 	// memory size, the shape, and strides
@@ -249,7 +249,7 @@ void JPArrayView::reference()
 bool JPArrayView::unreference()
 {
 	m_RefCount--;
-	auto *type = (JPPrimitiveType*) m_Array->getClass()->getComponentType();
+	auto *type = dynamic_cast<JPPrimitiveType*>( m_Array->getClass()->getComponentType());
 	if (m_RefCount == 0 && !m_Owned)
 		type->releaseView(*this);
 	return m_RefCount == 0;

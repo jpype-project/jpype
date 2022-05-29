@@ -123,7 +123,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 				if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
 					JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
 				jvalue res = returnMatch.convert();
-				auto *boxed =  (JPBoxedType *) ((JPPrimitiveType*) returnClass)->getBoxedClass(context);
+				auto *boxed =  dynamic_cast<JPBoxedType *>( (dynamic_cast<JPPrimitiveType*>( returnClass))->getBoxedClass(context));
 				jvalue res2;
 				res2.l = boxed->box(frame, res);
 				return frame.keep(res2.l);
@@ -290,7 +290,7 @@ JPPyObject JPProxyIndirect::getCallable(const string& cname)
 JPProxyFunctional::JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClassList& intf)
 : JPProxy(context, inst, intf)
 {
-	m_Functional = (JPFunctional*) intf[0];
+	m_Functional = dynamic_cast<JPFunctional*>( intf[0]);
 }
 
 JPProxyFunctional::~JPProxyFunctional()

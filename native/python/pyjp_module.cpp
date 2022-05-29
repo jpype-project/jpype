@@ -850,7 +850,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 	// Now we have a valid format code, so next lets get a converter for
 	// the type.
-	auto *pcls = (JPPrimitiveType *) cls;
+	auto *pcls = dynamic_cast<JPPrimitiveType *>( cls);
 
 	// Convert the shape
 	Py_ssize_t subs = 1;

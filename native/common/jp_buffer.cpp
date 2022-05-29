@@ -22,7 +22,7 @@
 JPBuffer::JPBuffer(const JPValue &value)
 : m_Object(value.getClass()->getContext(), value.getValue().l)
 {
-	m_Class = (JPBufferType*) value.getClass();
+	m_Class = dynamic_cast<JPBufferType*>( value.getClass());
 	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
 	JP_TRACE_IN("JPBuffer::JPBuffer");
 	m_Address = frame.GetDirectBufferAddress(m_Object.get());

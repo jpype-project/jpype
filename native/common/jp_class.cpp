@@ -115,7 +115,7 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 	for (long i = 0; i < d; ++i)
 		ss << "[";
 	if (isPrimitive())
-		ss << ((JPPrimitiveType*) this)->getTypeCode();
+		ss << (dynamic_cast<JPPrimitiveType*>( this))->getTypeCode();
 	else if (isArray())
 		ss << getName();
 	else
