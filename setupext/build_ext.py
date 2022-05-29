@@ -184,11 +184,6 @@ class BuildExtCommand(build_ext):
         self.jar = False
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
-        replacement = {
-            '-Wstrict-prototypes': '',
-            '-Wimplicit-function-declaration': '',
-        }
-        tracing = self.distribution.enable_tracing
 
         # Arguments to remove so we set debugging and optimization level
         remove_args = ['-O0', '-O1', '-O2', '-O3', '-g']
@@ -196,12 +191,12 @@ class BuildExtCommand(build_ext):
         for k, v in cfg_vars.items():
             if not isinstance(v, str):
                 continue
-            if not k == "OPT" and not "FLAGS" in k:
+            if not k == "OPT" and "FLAGS" not in k:
                 continue
 
             args = v.split()
             for r in remove_args:
-                args = list(filter((r).__ne__, args))
+                args = list(filter(r.__ne__, args))
 
             cfg_vars[k] = " ".join(args)
         super().initialize_options()
