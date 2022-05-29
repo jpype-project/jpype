@@ -30,7 +30,7 @@ public:
 		return m_Type;
 	}
 
-	int getSize()
+	int getSize() const
 	{
 		return m_Size;
 	}

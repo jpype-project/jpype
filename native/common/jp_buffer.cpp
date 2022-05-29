@@ -44,7 +44,7 @@ JPBuffer::JPBuffer(const JPValue &value)
 JPBuffer::~JPBuffer()
 = default;
 
-bool JPBuffer::isReadOnly()
+bool JPBuffer::isReadOnly() const
 {
 	return m_Buffer.readonly != 0;
 }
@@ -54,7 +54,7 @@ Py_buffer& JPBuffer::getView()
 	return m_Buffer;
 }
 
-bool JPBuffer::isValid()
+bool JPBuffer::isValid() const
 {
 	return m_Capacity != -1;
 }
