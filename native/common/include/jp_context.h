@@ -198,12 +198,16 @@ public:
 	JPStringType* _java_lang_String;
 	JPClass* _java_nio_ByteBuffer;
 
+	void launch();
 private:
-
 	void loadEntryPoints(const string& path);
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms);
+
+	bool m_IgnoreUnrecognized = false;
+	const StringVector* m_Args;
+	string m_VmPath;
 
 private:
 	JPContext(const JPContext& orig);
