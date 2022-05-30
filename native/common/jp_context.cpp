@@ -69,10 +69,6 @@ static DWORD WINAPI jcontext_run(PVOID arg)
 	ctx->launch();
 	jcontext_status = 1;
 	WakeConditionVariable(&jcontext_signal);
-	ReleaseSRWLockShared(&jcontext_mutex);
-
-	// Wait for message to kill JVM
-	AcquireSRWLockShared(&jcontext_mutex);
 	while (jcontext_status == 1)
 	{
 		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
@@ -138,10 +134,6 @@ static int jcontext_run(void* arg)
 	ctx->launch();
 	jcontext_status = 1;
 	cnd_signal(&jcontext_signal);
-	mtx_unlock(&jcontext_mutex);
-
-	// Wait for message to kill JVM
-	mtx_lock(&jcontext_mutex);
 	while (jcontext_status == 1)
 	{
 		cnd_wait(&jcontext_signal, &jcontext_mutex);
