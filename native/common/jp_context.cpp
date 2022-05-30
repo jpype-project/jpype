@@ -18,7 +18,7 @@
 #include <Windows.h>
 #include <synchapi.h>
 #else
-#include <threads.h>
+#include <pthread.h>
 #endif
 #endif
 
@@ -113,68 +113,68 @@ void jcontext_shutdown(bool destroyJVM)
 }
 
 #else
-static once_flag jcontext_once = ONCE_FLAG_INIT;
-static thrd_t jcontext_thread;
-static cnd_t  jcontext_signal;
-static mtx_t jcontext_mutex;
+static pthread_once_t jcontext_once = PTHREAD_ONCE_INIT;
+static pthread_t jcontext_thread;
+static pthread_cond_t jcontext_signal = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t jcontext_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int   jcontext_status = 0;
 
 static void jcontext_init()
 {
-	cnd_init(&jcontext_signal);
-	mtx_init(&jcontext_mutex, mtx_plain);
+	pthread_cond_init(&jcontext_signal, NULL);
+	pthread_mutex_init(&jcontext_mutex, NULL);
 }
 
-static int jcontext_run(void* arg)
+static void* jcontext_run(void* arg)
 {
 	JPContext* ctx = (JPContext*) arg;
 
 	// Indicate that JVM is started
-	mtx_lock(&jcontext_mutex);
+	pthread_mutex_lock(&jcontext_mutex);
 	ctx->launch();
 	jcontext_status = 1;
-	cnd_signal(&jcontext_signal);
+	pthread_cond_signal(&jcontext_signal);
 	while (jcontext_status == 1)
 	{
-		cnd_wait(&jcontext_signal, &jcontext_mutex);
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
 	}
 	if (jcontext_status == 3)
 		ctx->getJavaVM()->DestroyJavaVM();
 	jcontext_status = 4;
-	cnd_signal(&jcontext_signal);
-	mtx_unlock(&jcontext_mutex);
-	return 0;
+	pthread_cond_signal(&jcontext_signal);
+	pthread_mutex_unlock(&jcontext_mutex);
+	return NULL;
 }
 
 void jcontext_start(JPContext* context)
 {
 	// Initialize resources
-	call_once(&jcontext_once, &jcontext_init);
-	thrd_create(&jcontext_thread, &jcontext_run, context);
+	pthread_once(&jcontext_once, &jcontext_init);
+	pthread_create(&jcontext_thread, NULL, &jcontext_run, context);
 
 	// Wait for control to pass back
-	mtx_lock(&jcontext_mutex);
+	pthread_mutex_lock(&jcontext_mutex);
 	while (jcontext_status == 0)
 	{
-		cnd_wait(&jcontext_signal, &jcontext_mutex);
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
 	}
-	mtx_unlock(&jcontext_mutex);
+	pthread_mutex_unlock(&jcontext_mutex);
 }
 
 void jcontext_shutdown(bool destroyJVM)
 {
 	// Wait for control to pass back
-	mtx_lock(&jcontext_mutex);
+	pthread_mutex_lock(&jcontext_mutex);
 	if (destroyJVM)
 		jcontext_status = 3;
 	else
 		jcontext_status = 2;
-	cnd_signal(&jcontext_signal);
+	pthread_cond_signal(&jcontext_signal);
 	while (jcontext_status != 4)
 	{
-		cnd_wait(&jcontext_signal, &jcontext_mutex);
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
 	}
-	mtx_unlock(&jcontext_mutex);
+	pthread_mutex_unlock(&jcontext_mutex);
 }
 
 #endif
