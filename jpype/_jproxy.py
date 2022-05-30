@@ -230,3 +230,6 @@ class JProxy(_jpype._JProxy):
         if not isinstance(obj, _jpype._JProxy):
             return obj
         return obj.__javainst__
+
+
+_jpype.JProxy = JProxy

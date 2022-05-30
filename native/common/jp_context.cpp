@@ -13,6 +13,15 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#ifndef ANDROID
+#ifdef WIN32
+#include <Windows.h>
+#include <synchapi.h>
+#else
+#include <pthread.h>
+#endif
+#endif
+
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_typemanager.h"
@@ -36,7 +45,141 @@ JPResource::~JPResource()
 {
 }
 
+#ifndef ANDROID
+#ifdef WIN32
+static INIT_ONCE jcontext_once;
+static HANDLE jcontext_thread;
+static SRWLOCK jcontext_mutex;
+static CONDITION_VARIABLE  jcontext_signal;
+static int   jcontext_status = 0;
 
+static BOOL WINAPI jcontext_init(PINIT_ONCE once, PVOID parameter, PVOID* context)
+{
+	InitializeConditionVariable(&jcontext_signal);
+	InitializeSRWLock(&jcontext_mutex);
+	return TRUE;
+}
+
+static DWORD WINAPI jcontext_run(PVOID arg)
+{
+	JPContext* ctx = (JPContext*) arg;
+
+	// Indicate that JVM is started
+	AcquireSRWLockShared(&jcontext_mutex);
+	ctx->launch();
+	jcontext_status = 1;
+	WakeConditionVariable(&jcontext_signal);
+	while (jcontext_status == 1)
+	{
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
+	}
+	if (jcontext_status == 3)
+		ctx->getJavaVM()->DestroyJavaVM();
+	jcontext_status = 4;
+	WakeConditionVariable(&jcontext_signal);
+	ReleaseSRWLockShared(&jcontext_mutex);
+	return 0;
+}
+
+void jcontext_start(JPContext* context)
+{
+	// Initialize resources
+	InitOnceExecuteOnce(&jcontext_once, &jcontext_init, NULL, NULL);
+	jcontext_thread = CreateThread(NULL, 0, &jcontext_run, context, 0, NULL);
+
+	// Wait for control to pass back
+	AcquireSRWLockShared(&jcontext_mutex);
+	while (jcontext_status == 0)
+	{
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
+	}
+	ReleaseSRWLockShared(&jcontext_mutex);
+}
+
+void jcontext_shutdown(bool destroyJVM)
+{
+	// Wait for control to pass back
+	AcquireSRWLockShared(&jcontext_mutex);
+	if (destroyJVM)
+		jcontext_status = 3;
+	else
+		jcontext_status = 2;
+	WakeConditionVariable(&jcontext_signal);
+	while (jcontext_status != 4)
+	{
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
+	}
+	ReleaseSRWLockShared(&jcontext_mutex);
+}
+
+#else
+static pthread_once_t jcontext_once = PTHREAD_ONCE_INIT;
+static pthread_t jcontext_thread;
+static pthread_cond_t jcontext_signal = PTHREAD_COND_INITIALIZER;
+static pthread_mutex_t jcontext_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int   jcontext_status = 0;
+
+static void jcontext_init()
+{
+	pthread_cond_init(&jcontext_signal, NULL);
+	pthread_mutex_init(&jcontext_mutex, NULL);
+}
+
+static void* jcontext_run(void* arg)
+{
+	JPContext* ctx = (JPContext*) arg;
+
+	// Indicate that JVM is started
+	pthread_mutex_lock(&jcontext_mutex);
+	ctx->launch();
+	jcontext_status = 1;
+	pthread_cond_signal(&jcontext_signal);
+	while (jcontext_status == 1)
+	{
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
+	}
+	if (jcontext_status == 3)
+		ctx->getJavaVM()->DestroyJavaVM();
+	jcontext_status = 4;
+	pthread_cond_signal(&jcontext_signal);
+	pthread_mutex_unlock(&jcontext_mutex);
+	return NULL;
+}
+
+void jcontext_start(JPContext* context)
+{
+	// Initialize resources
+	pthread_once(&jcontext_once, &jcontext_init);
+	pthread_create(&jcontext_thread, NULL, &jcontext_run, context);
+
+	// Wait for control to pass back
+	pthread_mutex_lock(&jcontext_mutex);
+	while (jcontext_status == 0)
+	{
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
+	}
+	pthread_mutex_unlock(&jcontext_mutex);
+}
+
+void jcontext_shutdown(bool destroyJVM)
+{
+	// Wait for control to pass back
+	pthread_mutex_lock(&jcontext_mutex);
+	if (destroyJVM)
+		jcontext_status = 3;
+	else
+		jcontext_status = 2;
+	pthread_cond_signal(&jcontext_signal);
+	while (jcontext_status != 4)
+	{
+		pthread_cond_wait(&jcontext_signal, &jcontext_mutex);
+	}
+	pthread_mutex_unlock(&jcontext_mutex);
+}
+
+#endif
+#endif
+	
 #define USE_JNI_VERSION JNI_VERSION_1_4
 
 void JPRef_failed()
@@ -154,25 +297,10 @@ void JPContext::loadEntryPoints(const string& path)
 	JP_TRACE_OUT;
 }
 
-void JPContext::startJVM(const string& vmPath, const StringVector& args,
-		bool ignoreUnrecognized, bool convertStrings, bool interrupt)
+void JPContext::launch()
 {
-	JP_TRACE_IN("JPContext::startJVM");
-
-	JP_TRACE("Convert strings", convertStrings);
-	m_ConvertStrings = convertStrings;
-
-	// Get the entry points in the shared library
-	try
-	{
-		JP_TRACE("Load entry points");
-		loadEntryPoints(vmPath);
-	} catch (JPypeException& ex)
-	{
-		ex.getMessage();
-		throw;
-	}
-
+#ifndef ANDROID
+	JP_TRACE_IN("JPContext::launch");
 	// Pack the arguments
 	JP_TRACE("Pack arguments");
 	JavaVMInitArgs jniArgs;
@@ -180,17 +308,17 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// prepare this ...
 	jniArgs.version = USE_JNI_VERSION;
-	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
-	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
+	jniArgs.ignoreUnrecognized = m_IgnoreUnrecognized;
+	JP_TRACE("IgnoreUnrecognized", m_IgnoreUnrecognized);
 
-	jniArgs.nOptions = (jint) args.size();
+	jniArgs.nOptions = (jint) m_Args->size();
 	JP_TRACE("NumOptions", jniArgs.nOptions);
 	jniArgs.options = new JavaVMOption[jniArgs.nOptions];
 	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
 	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
-		JP_TRACE("Option", args[i]);
-		jniArgs.options[i].optionString = (char*) args[i].c_str();
+		JP_TRACE("Option", (*m_Args)[i]);
+		jniArgs.options[i].optionString = (char*) (*m_Args)[i].c_str();
 	}
 
 	// Launch the JVM
@@ -205,15 +333,52 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	}
 	JP_TRACE("JVM created");
 	delete [] jniArgs.options;
+	JP_TRACE_OUT;
+#endif
+}
 
+void JPContext::startJVM(const string& vmPath, const StringVector& args,
+		bool ignoreUnrecognized, bool convertStrings, bool interrupt)
+{
+#ifndef ANDROID
+	JP_TRACE_IN("JPContext::startJVM");
+
+	JP_TRACE("Convert strings", convertStrings);
+	m_VmPath = vmPath;
+	m_ConvertStrings = convertStrings;
+	m_IgnoreUnrecognized = ignoreUnrecognized;
+	m_Args = &args;
+
+	// This should never happen
+	if (jcontext_status != 0)
+		JP_RAISE(PyExc_SystemError, "restart jvm");
+
+	// Get the entry points in the shared library
+	JP_TRACE("Load entry points");
+	loadEntryPoints(vmPath);
+
+	{
+		JPPyCallRelease call;
+		jcontext_start(this);
+	}
+
+	// If we failed produce an exception
 	if (m_JavaVM == NULL)
 	{
 		JP_TRACE("Unable to start");
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
+	// Bind to this thread and intialize
+	JNIEnv* env;
+	jint res = m_JavaVM->functions->GetEnv(m_JavaVM, (void**) &env, USE_JNI_VERSION);
+	if (res == JNI_EDETACHED)
+	{
+		m_JavaVM->functions->AttachCurrentThreadAsDaemon(m_JavaVM, (void**) &env, NULL);
+	}
 	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
+#endif
 }
 
 void JPContext::attachJVM(JNIEnv* env)
@@ -375,18 +540,19 @@ void JPContext::onShutdown()
 
 void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 {
+#ifndef ANDROID
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == NULL)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 	//	if (m_Embedded)
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
+	if (jcontext_status != 1)
+		return;
 
 	// Wait for all non-demon threads to terminate
-	if (destroyJVM)
 	{
-		JP_TRACE("Destroy JVM");
 		JPPyCallRelease call;
-		m_JavaVM->DestroyJavaVM();
+		jcontext_shutdown(destroyJVM);
 	}
 
 	// unload the jvm library
@@ -406,6 +572,7 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	m_Resources.clear();
 
 	JP_TRACE_OUT;
+#endif
 }
 
 void JPContext::ReleaseGlobalRef(jobject obj)
