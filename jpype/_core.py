@@ -123,6 +123,14 @@ def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
 
+def _runApphelper():
+    try:
+        from PyObjCTools import AppHelper
+        AppHelper.runConsoleEventLoop()
+    except Exception as ex:
+        print(ex)
+
+
 def startJVM(*args, **kwargs):
     """
     Starts a Java Virtual Machine.  Without options it will start
@@ -209,6 +217,7 @@ def startJVM(*args, **kwargs):
     ignoreUnrecognized = kwargs.pop('ignoreUnrecognized', False)
     convertStrings = kwargs.pop('convertStrings', False)
     interrupt = kwargs.pop('interrupt', not interactive())
+    headless = kwargs.pop('headless', False)
 
     if kwargs:
         raise TypeError("startJVM() got an unexpected keyword argument '%s'"
@@ -228,6 +237,14 @@ def startJVM(*args, **kwargs):
                 raise RuntimeError("%s is older than required Java version %d" % (
                     jvmpath, version)) from ex
         raise
+
+    # If running on darwin and we are not headless then start the application loop
+    if not headless and sys.platform == 'darwin':
+        m = {'run': _runApphelper}
+        proxy = _jpype.JProxy('java.lang.Runnable', m)
+        thread = _jpype.JClass("java.lang.Thread")(proxy)
+        thread.setDaemon(True)
+        thread.start()
 
 
 def initializeResources():
