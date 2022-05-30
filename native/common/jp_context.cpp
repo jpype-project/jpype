@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef ANDROID
 #ifdef WIN32
+#include <Windows.h>
 #include <synchapi.h>
 #else
 #include <threads.h>
@@ -47,7 +48,7 @@ JPResource::~JPResource()
 #ifndef ANDROID
 #ifdef WIN32
 static INIT_ONCE jcontext_once;
-static DWORD jcontext_thread;
+static HANDLE jcontext_thread;
 static SRWLOCK jcontext_mutex;
 static CONDITION_VARIABLE  jcontext_signal;
 static int   jcontext_status = 0;
@@ -56,15 +57,16 @@ static BOOL WINAPI jcontext_init(PINIT_ONCE once, PVOID parameter, PVOID* contex
 {
 	InitializeConditionVariable(&jcontext_signal);
 	InitializeSRWLock(&jcontext_mutex);
+	return TRUE;
 }
 
-static DWORD WINAPI jcontext_launch(PVOID arg)
+static DWORD WINAPI jcontext_run(PVOID arg)
 {
 	JPContext* ctx = (JPContext*) arg;
 
 	// Indicate that JVM is started
 	AcquireSRWLockShared(&jcontext_mutex);
-	ctx->run();
+	ctx->launch();
 	jcontext_status = 1;
 	WakeConditionVariable(&jcontext_signal);
 	ReleaseSRWLockShared(&jcontext_mutex);
@@ -73,12 +75,44 @@ static DWORD WINAPI jcontext_launch(PVOID arg)
 	AcquireSRWLockShared(&jcontext_mutex);
 	while (jcontext_status == 1)
 	{
-		SleepConditionVariableCS(&jcontext_signal, &jcontext_mutex, INFINITE);
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
 	}
 	if (jcontext_status == 3)
 		ctx->getJavaVM()->DestroyJavaVM();
 	jcontext_status = 4;
 	WakeConditionVariable(&jcontext_signal);
+	ReleaseSRWLockShared(&jcontext_mutex);
+	return 0;
+}
+
+void jcontext_start(JPContext* context)
+{
+	// Initialize resources
+	InitOnceExecuteOnce(&jcontext_once, &jcontext_init, NULL, NULL);
+	jcontext_thread = CreateThread(NULL, 0, &jcontext_run, context, 0, NULL);
+
+	// Wait for control to pass back
+	AcquireSRWLockShared(&jcontext_mutex);
+	while (jcontext_status == 0)
+	{
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
+	}
+	ReleaseSRWLockShared(&jcontext_mutex);
+}
+
+void jcontext_shutdown(bool destroyJVM)
+{
+	// Wait for control to pass back
+	AcquireSRWLockShared(&jcontext_mutex);
+	if (destroyJVM)
+		jcontext_status = 3;
+	else
+		jcontext_status = 2;
+	WakeConditionVariable(&jcontext_signal);
+	while (jcontext_status != 4)
+	{
+		SleepConditionVariableSRW(&jcontext_signal, &jcontext_mutex, INFINITE, 0);
+	}
 	ReleaseSRWLockShared(&jcontext_mutex);
 }
 
@@ -95,7 +129,7 @@ static void jcontext_init()
 	mtx_init(&jcontext_mutex, mtx_plain);
 }
 
-static int jcontext_launch(void* arg)
+static int jcontext_run(void* arg)
 {
 	JPContext* ctx = (JPContext*) arg;
 
@@ -119,6 +153,38 @@ static int jcontext_launch(void* arg)
 	mtx_unlock(&jcontext_mutex);
 	return 0;
 }
+
+void jcontext_start(JPContext* context)
+{
+	// Initialize resources
+	call_once(&jcontext_once, &jcontext_init);
+	thrd_create(&jcontext_thread, &jcontext_run, context);
+
+	// Wait for control to pass back
+	mtx_lock(&jcontext_mutex);
+	while (jcontext_status == 0)
+	{
+		cnd_wait(&jcontext_signal, &jcontext_mutex);
+	}
+	mtx_unlock(&jcontext_mutex);
+}
+
+void jcontext_shutdown(bool destroyJVM)
+{
+	// Wait for control to pass back
+	mtx_lock(&jcontext_mutex);
+	if (destroyJVM)
+		jcontext_status = 3;
+	else
+		jcontext_status = 2;
+	cnd_signal(&jcontext_signal);
+	while (jcontext_status != 4)
+	{
+		cnd_wait(&jcontext_signal, &jcontext_mutex);
+	}
+	mtx_unlock(&jcontext_mutex);
+}
+
 #endif
 #endif
 	
@@ -308,31 +374,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	{
 		JPPyCallRelease call;
-#ifdef WIN32
-		// Initialize resources
-		InitOnceExecuteOnce(&jcontext_once, &jcontext_init, NULL, NULL);
-		jcontext_thread = CreateThread(NULL, 0, &jcontext_launch, this, NULL);
-
-		// Wait for control to pass back
-		AcquireSRWLockShared(&jcontext_mutex);
-		while (jcontext_status == 0)
-		{
-			SleepConditionVariableCS(&jcontext_signal, &jcontext_mutex, INFINITE);
-		}
-		ReleaseSRWLockShared(&jcontext_mutex);
-#else
-		// Initialize resources
-		call_once(&jcontext_once, &jcontext_init);
-		thrd_create(&jcontext_thread, &jcontext_launch, this);
-
-		// Wait for control to pass back
-		mtx_lock(&jcontext_mutex);
-		while (jcontext_status == 0)
-		{
-			cnd_wait(&jcontext_signal, &jcontext_mutex);
-		}
-		mtx_unlock(&jcontext_mutex);
-#endif
+		jcontext_start(this);
 	}
 
 	// If we failed produce an exception
@@ -525,33 +567,7 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	// Wait for all non-demon threads to terminate
 	{
 		JPPyCallRelease call;
-#ifdef WIN32
-		// Wait for control to pass back
-		AcquireSRWLockShared(&jcontext_mutex);
-		if (destroyJVM)
-			jcontext_status = 3;
-	        else
-			jcontext_status = 2;
-		WakeConditionVariable(&jcontext_signal);
-		while (jcontext_status != 4)
-		{
-			SleepConditionVariableCS(&jcontext_signal, &jcontext_mutex, INFINITE);
-		}
-		ReleaseSRWLockShared(&jcontext_mutex);
-#else
-		// Wait for control to pass back
-		mtx_lock(&jcontext_mutex);
-		if (destroyJVM)
-			jcontext_status = 3;
-	        else
-			jcontext_status = 2;
-		cnd_signal(&jcontext_signal);
-		while (jcontext_status != 4)
-		{
-			cnd_wait(&jcontext_signal, &jcontext_mutex);
-		}
-		mtx_unlock(&jcontext_mutex);
-#endif
+		jcontext_shutdown(destroyJVM);
 	}
 
 	// unload the jvm library
