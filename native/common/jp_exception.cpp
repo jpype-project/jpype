@@ -65,10 +65,9 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 }
 
 JPypeException::JPypeException(const JPypeException &ex) noexcept
-        : runtime_error(ex), m_Context(ex.m_Context), m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
+        : runtime_error(ex.what()), m_Context(ex.m_Context), m_Trace(ex.m_Trace),
+        m_Throwable(ex.m_Throwable), m_Type(ex.m_Type), m_Error(ex.m_Error)
 {
-    m_Type = ex.m_Type;
-    m_Error = ex.m_Error;
 }
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
