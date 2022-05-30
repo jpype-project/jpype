@@ -354,15 +354,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_RAISE(PyExc_SystemError, "restart jvm");
 
 	// Get the entry points in the shared library
-	try
-	{
-		JP_TRACE("Load entry points");
-		loadEntryPoints(vmPath);
-	} catch (JPypeException& ex)
-	{
-		ex.getMessage();
-		throw;
-	}
+	JP_TRACE("Load entry points");
+	loadEntryPoints(vmPath);
 
 	{
 		JPPyCallRelease call;
