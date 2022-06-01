@@ -59,7 +59,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
 
     platform_specific['extra_link_args'] = []
     distutils.log.info("Configure platform to", platform)
-    cpp_std = "c++14"
+    cpp_std = "c++11"
     gcc_like_cflags = ['-g0', f'-std={cpp_std}', '-O2']
 
     if platform == 'win32':
@@ -67,7 +67,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         platform_specific['define_macros'] = [('WIN32', 1)]
         if sys.version > '3':
             platform_specific['extra_compile_args'] = [
-                '/Zi', '/EHsc', f'/std:{cpp_std}']
+                '/Zi', '/EHsc', f'/std:c++14']
         else:
             platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
         jni_md_platform = 'win32'
