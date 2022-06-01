@@ -291,7 +291,7 @@ bool JPPyString::check(PyObject* obj)
  */
 JPPyObject JPPyString::fromStringUTF8(const string& str)
 {
-	size_t len = str.size();
+	auto len = static_cast<Py_ssize_t>(str.size());
 
 	// Python 3 is always unicode
 	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
@@ -358,11 +358,11 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 {
 	m_Instance = JPPyObject::use(inst);
 	m_Sequence = JPPyObject::use(sequence);
-	size_t n = 0;
+	Py_ssize_t n = 0;
 	if (sequence != nullptr)
 		n = PySequence_Size(m_Sequence.get());
 	m_Contents.resize(n + 1);
-	for (size_t i = 0; i < n; ++i)
+	for (auto i = 0; i < n; ++i)
 	{
 		m_Contents[i + 1] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
