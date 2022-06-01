@@ -26,7 +26,7 @@ public:
 	 * Create a new method based on class and a name;
 	 */
 	JPMethodDispatch(JPClass *clazz,
-			string  name,
+			const string& name,
 			JPMethodList& overloads,
 			jint modifiers);
 
@@ -86,7 +86,7 @@ private:
 	string        m_Name;
 	JPMethodList  m_Overloads;
 	jlong         m_Modifiers;
-	JPMethodCache m_LastCache;
+	JPMethodCache m_LastCache{};
 } ;
 
 #endif // _JPMETHODDISPATCH_H_
