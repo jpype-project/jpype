@@ -35,4 +35,4 @@ public:
 	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 } ;
 
-#endif /* JP_STRINGTYPE_H */
+#endif /* JP_STRINGCLASS_H */

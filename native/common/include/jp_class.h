@@ -208,7 +208,7 @@ protected:
 	JPClassRef           m_Class;
 	JPClass*             m_SuperClass;
 	JPClassList          m_Interfaces;
-	JPMethodDispatch*    m_Constructors;
+	JPMethodDispatch*    m_Constructors{};
 	JPMethodDispatchList m_Methods;
 	JPFieldList          m_Fields;
 	string               m_CanonicalName;
@@ -217,4 +217,4 @@ protected:
 	JPPyObject           m_Hints;
 } ;
 
-#endif // _JPPOBJECTTYPE_H_
+#endif // _JP_CLASS_H_

@@ -82,11 +82,11 @@ private:
 	 */
 	bool findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance, bool raise);
 
-	JPClass*      m_Class;
-	string        m_Name;
-	JPMethodList  m_Overloads;
-	jlong         m_Modifiers;
-	JPMethodCache m_LastCache;
+	JPClass*      m_Class{};
+	string        m_Name{};
+	JPMethodList  m_Overloads{};
+	jlong         m_Modifiers{};
+	JPMethodCache m_LastCache{};
 } ;
 
 #endif // _JPMETHODDISPATCH_H_

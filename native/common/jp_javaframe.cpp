@@ -1045,7 +1045,7 @@ jclass JPJavaFrame::getClass(jobject obj)
 class JPStringAccessor
 {
 	JPJavaFrame& frame_;
-	jboolean isCopy;
+	jboolean isCopy{};
 
 public:
 	const char* cstr;

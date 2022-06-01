@@ -90,4 +90,4 @@ public:
 
 } ;
 
-#endif // _JP-CHAR_TYPE_H_
+#endif // _JP_CHAR_TYPE_H_

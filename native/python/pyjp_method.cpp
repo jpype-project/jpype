@@ -201,11 +201,11 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
-	for (auto iter = overloads.begin(); iter != overloads.end(); ++iter)
+	for (auto pMethod: overloads)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
-		v.l = (*iter)->getJava();
+		v.l = pMethod->getJava();
 		JPPyObject obj(methodClass->convertToPythonObject(frame, v, true));
 		PyTuple_SetItem(ov.get(), i++, obj.keep());
 	}
@@ -253,11 +253,11 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 	JPPyObject ov = JPPyObject::call(PyTuple_New(overloads.size()));
 	int i = 0;
 	JPClass* methodClass = frame.findClassByName("java.lang.reflect.Method");
-	for (auto iter = overloads.begin(); iter != overloads.end(); ++iter)
+	for (auto pMethod : overloads)
 	{
 		JP_TRACE("Set overload", i);
 		jvalue v;
-		v.l = (*iter)->getJava();
+		v.l = pMethod->getJava();
 		JPPyObject obj(methodClass->convertToPythonObject(frame, v, true));
 		PyTuple_SetItem(ov.get(), i++, obj.keep());
 	}

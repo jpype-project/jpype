@@ -130,7 +130,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 		}
 	}
 
-	string attrName = JPPyString::asStringUTF8(attr).c_str();
+	string attrName = JPPyString::asStringUTF8(attr);
 	// Check for private attribute
 	if (attrName.compare(0, 2, "__") == 0)
 		return PyObject_GenericGetAttr((PyObject*) self, attr);

@@ -30,7 +30,7 @@ class JPPrimitiveArrayAccessor
 	array_t _array;
 	ptr_t _elem;
 	releaseFnc _release;
-	jboolean _iscopy;
+	jboolean _iscopy{};
 
 public:
 

@@ -201,7 +201,7 @@ bool       PyJPValue_isSetJavaSlot(PyObject* self);
 JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev);
 void       PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing);
 
-#define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
+#define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)(context), JP_STACKINFO())
 
 /**
  * Use this when getting the context where the context must be running.
