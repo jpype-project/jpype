@@ -43,6 +43,7 @@
 #if defined(_MSC_VER)
 
 // Visual Studio C++ does not seem have changed __cplusplus since 1997
+// see: https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170&viewFallbackFrom=vs-2019
 #if (_MSVC_LAND >= 201402)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
