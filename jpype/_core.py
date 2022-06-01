@@ -46,10 +46,14 @@ class JVMNotRunning(RuntimeError):
 
 # Activate jedi tab completion
 try:
-    import jedi as _jedi
-    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
+    from jedi import __version__ as _jedi_version
+    import jedi.access as _jedi_access
+    _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
 except ModuleNotFoundError:
     pass
+except AttributeError:
+    import warnings as _w
+    _w.warn(f"provided Jedi seems out of date. Version is {_jedi_version}.")
 
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
