@@ -72,8 +72,10 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 	// Check each overload in order (the TypeManager orders them by priority
 	// according to Java overload rules).
-	for (auto current : m_Overloads)
+	for (auto it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
 	{
+		JPMethod* current = *it;
+
 		JP_TRACE("Trying to match", current->toString());
 		current->matches(frame, match, callInstance, arg);
 
@@ -118,7 +120,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 			JP_TRACE("Adding to ambiguous list");
 			// Keep trace of ambiguous overloads for the error report.
-			ambiguous.push_back(current);
+			ambiguous.push_back(*it);
 		}
 	}
 
@@ -143,9 +145,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << " between:" << std::endl;
-		for (auto pMethod : ambiguous)
+		for (auto it = ambiguous.begin(); it != ambiguous.end(); ++it)
 		{
-			ss << "\t" << pMethod->toString() << std::endl;
+			ss << "\t" << (*it)->toString() << std::endl;
 		}
 		JP_RAISE(PyExc_TypeError, ss.str());
 		JP_TRACE(ss.str());
@@ -174,9 +176,12 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << ", options are:" << std::endl;
-		for (auto pMethod : m_Overloads)
+		for (auto it = m_Overloads.begin();
+				it != m_Overloads.end();
+				++it)
 		{
-				ss << "\t" << pMethod->toString();
+			JPMethod* current = *it;
+			ss << "\t" << current->toString();
 			ss << std::endl;
 		}
 		JP_RAISE(PyExc_TypeError, ss.str());

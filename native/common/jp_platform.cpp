@@ -99,7 +99,7 @@ public:
 #else
 #include <dlfcn.h>
 #endif // HPUX
-#include <cerrno>
+#include <errno.h>
 
 // The code in this modules is mostly excluded from coverage as it is only
 // possible to execute during a fatal error.
@@ -107,7 +107,7 @@ public:
 class LinuxPlatformAdapter : public JPPlatformAdapter
 {
 private:
-	void* jvmLibrary{};
+	void* jvmLibrary;
 
 public:
 
@@ -161,7 +161,7 @@ public:
 			JP_TRACE("errno", errno);
 			std::stringstream msg;
 			msg << "Unable to load symbol [" << name << "], error = " << dlerror();
-			JP_RAISE(PyExc_RuntimeError,  msg.str());
+			JP_RAISE(PyExc_RuntimeError,  msg.str().c_str());
 		}
 		// GCOVR_EXCL_STOP
 		return res;

@@ -98,4 +98,4 @@ private:
 	jfieldID   m_InstanceID;
 } ;
 
-#endif // _JPPROXY_H_
+#endif // JPPROXY_H

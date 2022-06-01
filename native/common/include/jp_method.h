@@ -107,12 +107,12 @@ private:
 
 private:
 	JPClass*                 m_Class{};
-	string                   m_Name{};
-	JPObjectRef              m_Method{};
+	string                   m_Name;
+	JPObjectRef              m_Method;
 	jmethodID                m_MethodID{};
 	JPClass*                 m_ReturnType{};
-	JPClassList              m_ParameterTypes{};
-	JPMethodList             m_MoreSpecificOverloads{};
+	JPClassList              m_ParameterTypes;
+	JPMethodList             m_MoreSpecificOverloads;
 	jint                     m_Modifiers{};
 } ;
 

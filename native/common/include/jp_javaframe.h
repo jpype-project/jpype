@@ -197,6 +197,10 @@ public:
     // not implemented
     JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;
 
+private:
+	jint PushLocalFrame(jint);
+	jobject PopLocalFrame(jobject);
+
 public:
 
 	bool ExceptionCheck();

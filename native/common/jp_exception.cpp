@@ -558,7 +558,7 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	for (jsize i = 0; i < sz; i += 4)
 	{
 		string filename, method;
-		auto jclassname = (jstring) frame.GetObjectArrayElement(obj, i);
+		auto jclassname = static_cast<jstring>(frame.GetObjectArrayElement(obj, i));
 		auto jmethodname = (jstring) frame.GetObjectArrayElement(obj, i + 1);
 		auto jfilename = (jstring) frame.GetObjectArrayElement(obj, i + 2);
 		if (jfilename != nullptr)

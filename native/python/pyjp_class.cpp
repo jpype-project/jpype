@@ -354,9 +354,10 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 
 	// Merge together all bases
 	std::list<PyObject*> out;
-	for (auto b : bases)
+	for (auto iter = bases.begin();
+			iter != bases.end(); ++iter)
 	{
-		PyObject *l = ((PyTypeObject*) b)->tp_bases;
+		PyObject *l = ((PyTypeObject*) * iter)->tp_bases;
 		sz = PySequence_Size(l);
 		for (Py_ssize_t i = 0; i < sz; ++i)
 		{
@@ -373,9 +374,10 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	{
 		PyObject* front = bases.front();
 		bases.pop_front();
-		for (auto b : bases)
+		for (auto iter = bases.begin();
+				iter != bases.end(); ++iter)
 		{
-			if (PySequence_Contains(((PyTypeObject*) b)->tp_bases, front))
+			if (PySequence_Contains(((PyTypeObject*) * iter)->tp_bases, front))
 			{
 				bases.push_back(front);
 				front = nullptr;
@@ -395,11 +397,12 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	}
 
 	PyObject *obj = PyTuple_New(out.size());
-	Py_ssize_t j = 0;
-	for (auto obj2 : out)
+	int j = 0;
+	for (auto iter = out.begin();
+			iter != out.end(); ++iter)
 	{
-		Py_INCREF(obj2);
-		PyTuple_SetItem(obj, j++, obj);
+		Py_INCREF(*iter);
+		PyTuple_SetItem(obj, j++, *iter);
 	}
 	return obj;
 }

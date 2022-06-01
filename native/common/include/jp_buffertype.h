@@ -42,4 +42,4 @@ private:
 	int m_Size;
 } ;
 
-#endif // _JPBUFFERTYPE_H_
+#endif // _JPBUFFERCLASS_H_

@@ -275,7 +275,7 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	{
 		std::stringstream ss;
 		ss << "Missing Java slot on `" << Py_TYPE(self)->tp_name << "`";
-		JP_RAISE(PyExc_SystemError, ss.str());
+		JP_RAISE(PyExc_SystemError, ss.str().c_str());
 	}
 	// GCOVR_EXCL_STOP
 

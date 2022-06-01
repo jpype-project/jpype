@@ -60,7 +60,7 @@ jvalue JPMatch::convert()
 }
 
 JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool callInstance)
-: JPMethodCache(), m_Arguments(args.size())
+: m_Arguments(args.size())
 {
 	m_Type = JPMatch::_none;
 	m_IsVarIndirect = false;
@@ -311,9 +311,10 @@ void JPClassHints::excludeConversion(PyObject *type)
 
 void JPClassHints::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	for (auto & conversion : conversions)
+	for (auto iter = conversions.begin();
+			iter != conversions.end(); ++iter)
 	{
-		conversion->getInfo(cls, info);
+		(*iter)->getInfo(cls, info);
 	}
 }
 

@@ -54,4 +54,4 @@ private:
     jmethodID m_InterfaceParameterCount;
 } ;
 
-#endif // _JPTYPE_MANAGER_H_
+#endif // _JPCLASS_H_
