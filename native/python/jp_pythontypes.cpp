@@ -348,7 +348,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 	m_Sequence = JPPyObject::use(sequence);
 	auto n = PySequence_Size(m_Sequence.get());
 	m_Contents.resize(n);
-	for (auto i = 0; i < n; ++i)
+	for (decltype(n) i = 0; i < n; ++i)
 	{
 		m_Contents[i] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
@@ -362,7 +362,7 @@ JPPyObjectVector::JPPyObjectVector(PyObject* inst, PyObject* sequence)
 	if (sequence != nullptr)
 		n = PySequence_Size(m_Sequence.get());
 	m_Contents.resize(n + 1);
-	for (auto i = 0; i < n; ++i)
+	for (decltype(n) i = 0; i < n; ++i)
 	{
 		m_Contents[i + 1] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
