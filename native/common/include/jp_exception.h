@@ -51,15 +51,15 @@
 /**
  * This is the type of the exception to issue.
  */
-namespace JPError
+enum JPError
 {
-extern int _java_error;
-extern int _python_error;
-extern int _python_exc;
-extern int _os_error_unix;
-extern int _os_error_windows;
-extern int _method_not_found;
-}
+_java_error,
+_python_error,
+_python_exc,
+_os_error_unix,
+_os_error_windows,
+_method_not_found,
+};
 
 // Create a stackinfo for a particular location in the code that can then
 // be passed to the handler routine for auditing.

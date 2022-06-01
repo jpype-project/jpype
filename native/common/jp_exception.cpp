@@ -242,13 +242,6 @@ void JPypeException::convertPythonToJava(JPContext* context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-int JPError::_java_error = 1;
-int JPError::_python_error = 2;
-int JPError::_python_exc = 3;
-int JPError::_os_error_unix = 10;
-int JPError::_os_error_windows = 11;
-int JPError::_method_not_found = 20;
-
 void JPypeException::toPython()
 {
 	const char* mesg = nullptr;
@@ -358,7 +351,7 @@ void JPypeException::toPython()
 		{
 			JPPyErrFrame eframe;
 			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.m_ExceptionClass.get())->tp_name);
-			return;  // Let these go to Python so we can see the error
+			return;  // Let these go to Python, so we can see the error
 		} else if (ex.m_Type == JPError::_java_error)
 			JPTracer::trace("Inner Java:", ex.what());
 		else

@@ -47,9 +47,8 @@ class JVMNotRunning(RuntimeError):
 # Activate jedi tab completion
 try:
     import jedi as _jedi
-    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += \
-        (_jpype._JMethod, _jpype._JField)
-except Exception:
+    _jedi.evaluate.compiled.access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
+except ModuleNotFoundError:
     pass
 
 
