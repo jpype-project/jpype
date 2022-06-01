@@ -311,20 +311,20 @@ string JPPyString::asStringUTF8(PyObject* pyobj)
 		PyBytes_AsStringAndSize(val.get(), &buffer, &size);
 		JP_PY_CHECK();
 		if (buffer != nullptr)
-			return string(buffer, size);
+			return {buffer, static_cast<size_t>(size)};
 		else
-			return string();
+			return {};
 	} else if (PyBytes_Check(pyobj))
 	{
 		Py_ssize_t size = 0;
 		char *buffer = nullptr;
 		PyBytes_AsStringAndSize(pyobj, &buffer, &size);
 		JP_PY_CHECK();
-		return string(buffer, size);
+		return {buffer, static_cast<size_t>(size)};
 	}
 	// GCOVR_EXCL_START
 	JP_RAISE(PyExc_TypeError, "Failed to convert to string.");
-	return string();
+	return {};
 	JP_TRACE_OUT;
 	// GCOVR_EXCL_STOP
 }
@@ -346,9 +346,9 @@ JPPyObject JPPySequence::operator[](jlong i)
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)
 {
 	m_Sequence = JPPyObject::use(sequence);
-	size_t n = PySequence_Size(m_Sequence.get());
+	auto n = PySequence_Size(m_Sequence.get());
 	m_Contents.resize(n);
-	for (size_t i = 0; i < n; ++i)
+	for (auto i = 0; i < n; ++i)
 	{
 		m_Contents[i] = JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i));
 	}
@@ -386,8 +386,6 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
-int m_count = 0;
-
 JPPyCallAcquire::JPPyCallAcquire()
 {
 	m_State = (long) PyGILState_Ensure();
@@ -403,14 +401,13 @@ JPPyCallAcquire::~JPPyCallAcquire()
 JPPyCallRelease::JPPyCallRelease()
 {
 	// Release the lock and set the thread state to NULL
-	m_State1 = (void*) PyEval_SaveThread();
+	m_State1 = PyEval_SaveThread();
 }
 
 JPPyCallRelease::~JPPyCallRelease()
 {
-	// Reaquire the lock
-	auto *save = (PyThreadState *) m_State1;
-	PyEval_RestoreThread(save);
+	// Re-acquire the lock
+	PyEval_RestoreThread(m_State1);
 }
 
 JPPyBuffer::JPPyBuffer(PyObject* obj, int flags)
@@ -425,7 +422,7 @@ JPPyBuffer::~JPPyBuffer()
 		PyBuffer_Release(&m_View);
 }
 
-char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices)
+char *JPPyBuffer::getBufferPtr(std::vector<Py_ssize_t>& indices) const
 {
 	char *pointer = (char*) m_View.buf;
 	// No shape is just a 1D array

@@ -171,7 +171,7 @@ public:
 	void decref();
 
 protected:
-	PyObject* m_PyObject;
+	PyObject* m_PyObject{nullptr};
 } ;
 
 /****************************************************************************
@@ -208,7 +208,7 @@ public:
 	 */
 	static string asStringUTF8(PyObject* obj);
 
-	static JPPyObject fromCharUTF16(const jchar c);
+	static JPPyObject fromCharUTF16(jchar c);
 	static bool checkCharUTF16(PyObject* obj);
 	static jchar asCharUTF16(PyObject* obj);
 
@@ -236,9 +236,7 @@ public:
 
 	/** Needed for named constructor.
 	 */
-	JPPySequence(const JPPySequence& seq)
-	 
-	= default;
+	JPPySequence(const JPPySequence& seq) = default;
 
 	/** Use an existing Python sequence in C++.
 	 */
@@ -355,7 +353,7 @@ public:
 	/** Reacquire the lock. */
 	~JPPyCallRelease();
 private:
-	void* m_State1;
+    PyThreadState* m_State1;
 } ;
 
 class JPPyBuffer
@@ -374,20 +372,20 @@ public:
 	JPPyBuffer(PyObject* obj, int flags);
 	~JPPyBuffer();
 
-	char *getBufferPtr(std::vector<Py_ssize_t>& indices);
+	char *getBufferPtr(std::vector<Py_ssize_t>& indices) const;
 
 	Py_buffer& getView()
 	{
 		return m_View;
 	}
 
-	bool valid()
+	bool valid() const
 	{
 		return m_Valid;
 	}
 
 private:
-	Py_buffer m_View;
+	Py_buffer m_View{};
 	bool m_Valid;
 } ;
 
