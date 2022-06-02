@@ -16,7 +16,6 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
-#include "jp_buffer.h"
 #include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 
@@ -34,7 +33,7 @@ JPArray::JPArray(const JPValue &value)
 	JP_TRACE(m_Class->toString());
 
 	// We will use this during range checks, so cache it
-	if (m_Object.get() == NULL)
+	if (m_Object.get() == nullptr)
 		m_Length = 0;  // GCOVR_EXCL_LINE
 	else
 		m_Length = frame.GetArrayLength(m_Object.get());
