@@ -34,7 +34,7 @@ public:
 	void *m_Memory{};
 	Py_buffer m_Buffer{};
 	int m_RefCount;
-	Py_ssize_t m_Shape[50]{};
+	Py_ssize_t m_Shape[5]{};
 	Py_ssize_t m_Strides[5]{};
 	jboolean m_IsCopy{};
 	jboolean m_Owned{};
