@@ -218,7 +218,7 @@ def startJVM(*args, **kwargs):
         # Keep the current locale settings, else Java will replace them.
         import locale
         categories = [locale.LC_CTYPE, locale.LC_COLLATE, locale.LC_TIME,
-                      locale.LC_MONETARY, locale.LC_MESSAGES, locale.LC_NUMERIC]
+                      locale.LC_MONETARY, locale.LC_NUMERIC]
         prior = [locale.getlocale(i) for i in categories]
         _jpype.startup(jvmpath, tuple(args),
                        ignoreUnrecognized, convertStrings, interrupt)
