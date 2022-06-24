@@ -215,9 +215,17 @@ def startJVM(*args, **kwargs):
                         % (','.join([str(i) for i in kwargs])))
 
     try:
+        # Keep the current locale settings, else Java will replace them.
+        import locale
+        categories = [locale.LC_CTYPE, locale.LC_COLLATE, locale.LC_TIME,
+                      locale.LC_MONETARY, locale.LC_MESSAGES, locale.LC_NUMERIC]
+        prior = [locale.getlocale(i) for i in categories]
         _jpype.startup(jvmpath, tuple(args),
                        ignoreUnrecognized, convertStrings, interrupt)
         initializeResources()
+        # Restore locale
+        for i, j in zip(categories, prior):
+            locale.setlocale(i, j)
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
