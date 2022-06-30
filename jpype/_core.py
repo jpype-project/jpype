@@ -227,7 +227,10 @@ def startJVM(*args, **kwargs):
         initializeResources()
         # Restore locale
         for i, j in zip(categories, prior):
-            locale.setlocale(i, j)
+            try:
+                locale.setlocale(i, j)
+            except locale.Error:
+                pass
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
