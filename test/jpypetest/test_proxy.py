@@ -138,6 +138,7 @@ class ProxyTestCase(common.JPypeTestCase):
     def testProxyImplementsForm2(self):
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
+
         @JImplements(itf1, itf2)
         class MyImpl(object):
             @JOverride
@@ -392,6 +393,7 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testUnwrap(self):
         fixture = JClass("jpype.common.Fixture")()
+
         @JImplements("java.io.Serializable")
         class Q(object):
             pass
@@ -429,6 +431,7 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testMethods(self):
         fixture = JClass("jpype.common.Fixture")()
+
         @JImplements("java.io.Serializable")
         class R(object):
             pass
@@ -472,6 +475,7 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testWeak(self):
         hc = java.lang.System.identityHashCode
+
         @JImplements("java.io.Serializable")
         class MyObj(object):
             pass
@@ -495,6 +499,14 @@ class ProxyTestCase(common.JPypeTestCase):
     def testFunctionalLambda(self):
         js = JObject(lambda x: 2 * x, "java.util.function.DoubleUnaryOperator")
         self.assertEqual(js.applyAsDouble(1), 2.0)
+
+    def testBadImplements(self):
+        with self.assertRaises(TypeError):
+            @JImplements("java.lang.Runnable")
+            def MyImpl(object):
+                @JOverride
+                def run(self):
+                    pass
 
 
 @subrun.TestCase(individual=True)
