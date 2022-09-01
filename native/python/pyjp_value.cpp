@@ -23,6 +23,8 @@ extern "C"
 {
 #endif
 
+extern PyObject * _PyObject_GC_Malloc(size_t basicsize);
+
 /**
  * Allocate a new Python object with a slot for Java.
  *
