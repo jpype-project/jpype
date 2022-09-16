@@ -79,3 +79,8 @@ class LegacyTestCase(unittest.TestCase):
         r = self._test().callProxy(p, "roundtrip")
         self.assertEqual(r, "roundtrip")
         self.assertIsInstance(r, str)
+
+    def testNullBytes(self):
+        s = self._test().callWithNullBytes()
+        self.assertEqual(s, "call\u0000With\u0000Null\u0000Bytes")
+        self.assertIsInstance(s, str)
