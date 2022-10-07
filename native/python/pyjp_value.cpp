@@ -61,12 +61,6 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 		// Allocate the fake type
 		obj = PyObject_GC_New(PyObject, &type2);
 
-		// Hot swap to the required type
-		obj->ob_type = type;
-		if (PyType_HasFeature(type, Py_TPFLAGS_HEAPTYPE))
-		{
-			Py_INCREF(type);
-		}
 		// Note the object will be inited twice which should not leak. (fingers crossed)
 	}
 	else
