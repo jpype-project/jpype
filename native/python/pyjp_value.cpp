@@ -43,8 +43,34 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	JP_PY_TRY("PyJPValue_alloc");
 	// Modification from Python to add size elements
 	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
-	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
-			: (PyObject *) PyObject_MALLOC(size);
+	PyObject *obj = NULL;
+	if (PyType_IS_GC(type))
+	{
+		// Horrible kludge because python lacks an API for allocating a GC type with extra memory
+		// The privor method _PyObject_GC_Alloc is no longer visible, so we are forced to allocate
+		// a different type with the extra memory and then hot swap the type to the real one.
+		PyTypeObject type2;
+		type2.tp_basicsize = size;
+		type2.tp_itemsize = 0;
+		type2.tp_name = NULL;
+		type2.tp_flags = type->tp_flags;
+		type2.tp_traverse = type->tp_traverse;
+
+		// Allocate the fake type
+		obj = PyObject_GC_New(PyObject, &type2);
+
+		// Hot swap to the required type
+		obj->ob_type = type;
+		if (PyType_HasFeature(type, Py_TPFLAGS_HEAPTYPE))
+		{
+			Py_INCREF(type);
+		}
+		// Note the object will be inited twice which should not leak. (fingers crossed)
+	}
+	else
+	{
+		obj = (PyObject*) PyObject_MALLOC(size);
+	}
 	if (obj == NULL)
 		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
 	memset(obj, 0, size);
