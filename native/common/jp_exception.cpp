@@ -503,41 +503,23 @@ PyObject *tb_create(
 	if (code.get() == NULL)
 		return NULL;
 
-	// This is a bit of a kludge.  Python lacks a way to directly create
-	// a frame from a code object except when creating from the threadstate.
-	//
-	// In reviewing Python implementation, I find that the only element accessed
-	// in the thread state was the previous frame to link to.  Because frame 
-	// objects change a lot between different Python versions, trying to 
-	// replicate the actions of setting up a frame is difficult to keep portable.
-	//
-	// Python 3.10 introduces the additional requirement that the global
-	// dictionary supplied must have a __builtins__.  We can do this once
-	// when create the module.
-	//
-	// If instead we create a thread state and point the field it needs to the
-	// previous frame we create the frames using the defined API.  Much more 
-	// portable, but we have to create a big (uninitialized object) each time we
-	// want to pass in the previous frame.
-	PyThreadState state;
-	JPPyObject prev;
-	if (last_traceback != NULL)
-	{
-       		prev = JPPyObject::call(PyObject_GetAttrString(last_traceback, "tb_frame"));
-		state.frame = (PyFrameObject*) prev.get();
-	}
-	else
-		state.frame = NULL;
-
 	// Create a frame for the traceback.
-	JPPyObject frame = JPPyObject::call((PyObject*) PyFrame_New(&state, (PyCodeObject*) code.get(), dict, NULL));
+	PyThreadState *state = PyThreadState_GET();
+	PyFrameObject *pframe = PyFrame_New(state, (PyCodeObject*) code.get(), dict, NULL);
+	JPPyObject frame = JPPyObject::accept((PyObject*)pframe);
+
+	// Swap the back pointer
+	//PyObject* old = frame->f_back;
+	//frame->f_back = last_traceback->tb_frame;
+	//Py_XDECREF(old);
+	//Py_XINCREF(last_traceback->tb_frame);
 	
 	// If we don't get the frame object there is no point
 	if (frame.get() == NULL)
 		return NULL;
 
 	// Create a traceback
-	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(((PyFrameObject*)frame.get())->f_lasti));
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
 	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
