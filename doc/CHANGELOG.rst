@@ -8,6 +8,8 @@ Latest Changes:
   
   - Fixed issue with startJVM changing locale settings.
 
+  - Changes to support Python 3.11
+
 - **1.4.0 - 2022-05-14**
 
   - Support for all different buffer type conversions.
