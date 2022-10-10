@@ -519,7 +519,11 @@ PyObject *tb_create(
 		return NULL;
 
 	// Create a traceback
+#if PY_VERSION_HEX<0x03110000
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(pframe->f_lasti));
+#else
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
+#endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
 	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
