@@ -23,8 +23,6 @@ extern "C"
 {
 #endif
 
-extern PyObject * _PyObject_GC_Malloc(size_t basicsize);
-
 /**
  * Allocate a new Python object with a slot for Java.
  *
@@ -49,7 +47,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	if (PyType_IS_GC(type))
 	{
 		// Horrible kludge because python lacks an API for allocating a GC type with extra memory
-		// The privor method _PyObject_GC_Alloc is no longer visible, so we are forced to allocate
+		// The private method _PyObject_GC_Alloc is no longer visible, so we are forced to allocate
 		// a different type with the extra memory and then hot swap the type to the real one.
 		PyTypeObject type2;
 		type2.tp_basicsize = size;

@@ -508,12 +508,6 @@ PyObject *tb_create(
 	PyFrameObject *pframe = PyFrame_New(state, (PyCodeObject*) code.get(), dict, NULL);
 	JPPyObject frame = JPPyObject::accept((PyObject*)pframe);
 
-	// Swap the back pointer
-	//PyObject* old = frame->f_back;
-	//frame->f_back = last_traceback->tb_frame;
-	//Py_XDECREF(old);
-	//Py_XINCREF(last_traceback->tb_frame);
-	
 	// If we don't get the frame object there is no point
 	if (frame.get() == NULL)
 		return NULL;
