@@ -489,79 +489,51 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-PyTracebackObject *tb_create(
-		PyTracebackObject *last_traceback,
+PyObject *tb_create(
+		PyObject *last_traceback,
 		PyObject *dict,
 		const char* filename,
 		const char* funcname,
 		int linenum)
 {
 	// Create a code for this frame. (ref count is 1)
-	PyCodeObject *code = PyCode_NewEmpty(filename, funcname, linenum);
+	JPPyObject code = JPPyObject::accept((PyObject*)PyCode_NewEmpty(filename, funcname, linenum));
 
 	// If we don't get the code object there is no point
-	if (code == NULL)
+	if (code.get() == NULL)
 		return NULL;
 
-	// This is a bit of a kludge.  Python lacks a way to directly create
-	// a frame from a code object except when creating from the threadstate.
-	//
-	// In reviewing Python implementation, I find that the only element accessed
-	// in the thread state was the previous frame to link to.  Because frame 
-	// objects change a lot between different Python versions, trying to 
-	// replicate the actions of setting up a frame is difficult to keep portable.
-	//
-	// Python 3.10 introduces the additional requirement that the global
-	// dictionary supplied must have a __builtins__.  We can do this once
-	// when create the module.
-	//
-	// If instead we create a thread state and point the field it needs to the
-	// previous frame we create the frames using the defined API.  Much more 
-	// portable, but we have to create a big (uninitialized object) each time we
-	// want to pass in the previous frame.
-	PyThreadState state;
-	if (last_traceback != NULL)
-		state.frame = last_traceback->tb_frame;
-	else
-		state.frame = NULL;
-
 	// Create a frame for the traceback.
-	PyFrameObject *frame = PyFrame_New(&state, code, dict, NULL);
-	
-	// frame just borrows the reference rather than claiming it
-	// so we need to get rid of the extra reference here.
-	Py_DECREF(code);
-	
+	PyThreadState *state = PyThreadState_GET();
+	PyFrameObject *pframe = PyFrame_New(state, (PyCodeObject*) code.get(), dict, NULL);
+	JPPyObject frame = JPPyObject::accept((PyObject*)pframe);
+
 	// If we don't get the frame object there is no point
-	if (frame == NULL)
+	if (frame.get() == NULL)
 		return NULL;
 
 	// Create a traceback
-	PyTracebackObject *traceback = (PyTracebackObject*) 
-		        PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
+#if PY_VERSION_HEX<0x03110000
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(pframe->f_lasti));
+#else
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
+#endif
+	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
+	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
 
 	// We could fail in process
-	if (traceback == NULL)
+	if (traceback.get() == NULL)
 	{
-		Py_DECREF(frame);
 		return NULL;
 	}
 
-	// Set the fields
-	traceback->tb_frame = frame; // Steal the reference from frame
-	traceback->tb_lasti = frame->f_lasti;
-	traceback->tb_lineno = linenum;
-	Py_XINCREF(last_traceback);
-	traceback->tb_next = last_traceback;
-
-	// Allow GC on the object
-	PyObject_GC_Track(traceback);
-	return traceback;
+	return traceback.keep();
 }
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 {
-	PyTracebackObject *last_traceback = NULL;
+	PyObject *last_traceback = NULL;
 	PyObject *dict = PyModule_GetDict(PyJPModule);
 	for (JPStackTrace::iterator iter = trace.begin(); iter != trace.end(); ++iter)
 	{
@@ -575,7 +547,7 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 
 JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev)
 {
-	PyTracebackObject *last_traceback = NULL;
+	PyObject *last_traceback = NULL;
 	JPContext *context = frame.getContext();
 	jvalue args[2];
 	args[0].l = th;
