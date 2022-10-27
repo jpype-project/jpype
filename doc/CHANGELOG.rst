@@ -5,7 +5,6 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.4.1 - 2022-10-26**
-- **1.4.1_dev0 - 2022-05-14**
   
   - Fixed issue with startJVM changing locale settings.
 
