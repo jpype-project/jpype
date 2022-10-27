@@ -513,7 +513,7 @@ PyObject *tb_create(
 		return NULL;
 
 	// Create a traceback
-#if PY_VERSION_HEX<0x03109900
+#if PY_MINOR_VERSION<10
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(pframe->f_lasti));
 #else
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
