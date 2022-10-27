@@ -12,6 +12,8 @@ Latest Changes:
 
   - Fix truncation of strings on null when using convert strings.
 
+  - Replaced distutil with packaging
+
 
 - **1.4.0 - 2022-05-14**
 

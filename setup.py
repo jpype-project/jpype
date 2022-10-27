@@ -79,7 +79,7 @@ setup(
     package_dir={'jpype': 'jpype', },
     package_data={'jpype': ['*.pyi']},
     install_requires=['typing_extensions ; python_version< "3.8"',
-        'packaging ; python_version< "3.10"'],
+        'packaging'],
     tests_require=['pytest'],
     extras_require={
         'tests': [
