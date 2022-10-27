@@ -10,6 +10,9 @@ Latest Changes:
 
   - Changes to support Python 3.11
 
+  - Fix truncation of strings on null when using convert strings.
+
+
 - **1.4.0 - 2022-05-14**
 
   - Support for all different buffer type conversions.
