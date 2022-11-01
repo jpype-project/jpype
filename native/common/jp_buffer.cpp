@@ -38,6 +38,7 @@ JPBuffer::JPBuffer(const JPValue &value)
 	m_Buffer.shape = &m_Capacity;
 	m_Buffer.strides = &m_Buffer.itemsize;
 	m_Buffer.suboffsets = 0;
+	m_Buffer.len = m_Buffer.itemsize * m_Capacity;
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
