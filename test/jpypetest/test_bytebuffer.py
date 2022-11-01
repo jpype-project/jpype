@@ -46,3 +46,6 @@ class ByteBufferCase(common.JPypeTestCase):
         bb = jpype.nio.convertToDirectBuffer(a)
         self.assertIsInstance(repr(bb), str)
         self.assertEqual(repr(bb), "<java buffer 'java.nio.DirectByteBuffer'>")
+
+    def testMemoryView(self):
+        self.assertEquals(memoryview(jpype.java.nio.ByteBuffer.allocateDirect(100)).nbytes, 100)
