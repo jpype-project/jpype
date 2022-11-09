@@ -59,6 +59,9 @@ def _createJProxyDeferred(cls, *intf):
     @JOverride notation on methods evaluated at first
     instantiation.
     """
+    if not isinstance(cls, type):
+        raise TypeError("JImplements only applies to types, not %s" % (type(cls)))
+
     def new(tp, *args, **kwargs):
         # Attach a __jpype_interfaces__ attribute to this class if
         # one doesn't already exist.
@@ -77,6 +80,9 @@ def _createJProxy(cls, *intf):
     """ (internal) Create a proxy from a Python class with
     @JOverride notation on methods evaluated at declaration.
     """
+    if not isinstance(cls, type):
+        raise TypeError("JImplements only applies to types, not %s" % (type(cls)))
+
     actualIntf = _prepareInterfaces(cls, intf)
 
     def new(tp, *args, **kwargs):

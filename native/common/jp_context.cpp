@@ -215,14 +215,10 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	if (!m_Embedded)
 	{
-		JPPyObject import = JPPyObject::call(PyImport_AddModule("importlib.util"));
+		JPPyObject import = JPPyObject::use(PyImport_AddModule("importlib.util"));
 		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
 		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
 		val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
-		import.incref();  // The documentation specifies that PyImport_AddModule must return a 
-	                  // new reference, but that is not happening in Python 3.10
-	                  // so we are triggering a gc assertion failure.  To prevent
-	                  // the failure manually up the reference counter here.
 	}
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 

@@ -49,7 +49,7 @@ jpypeJar = Extension(name="org.jpype",
 
 setup(
     name='JPype1',
-    version='1.4.1_dev0',
+    version='1.4.2_dev0',
     description='A Python to Java bridge.',
     long_description=open('README.rst').read(),
     license='License :: OSI Approved :: Apache Software License',
@@ -77,7 +77,8 @@ setup(
     packages=['jpype', 'jpype._pyinstaller'],
     package_dir={'jpype': 'jpype', },
     package_data={'jpype': ['*.pyi']},
-    install_requires=['typing_extensions ; python_version< "3.8"'],
+    install_requires=['typing_extensions ; python_version< "3.8"',
+        'packaging'],
     tests_require=['pytest'],
     extras_require={
         'tests': [

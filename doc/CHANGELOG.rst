@@ -4,7 +4,21 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.4.1_dev0 - 2022-05-14**
+- **1.4.2_dev0 - 2022-10-26**
+
+  - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
+
+- **1.4.1 - 2022-10-26**
+  
+  - Fixed issue with startJVM changing locale settings.
+
+  - Changes to support Python 3.11
+
+  - Fix truncation of strings on null when using convert strings.
+
+  - Replaced distutil with packaging
+
+
 - **1.4.0 - 2022-05-14**
 
   - Support for all different buffer type conversions.

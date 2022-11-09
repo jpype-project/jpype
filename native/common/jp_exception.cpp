@@ -72,11 +72,11 @@ JPypeException::JPypeException(const JPypeException &ex) noexcept
 
 JPypeException& JPypeException::operator = (const JPypeException& ex)
 {
-    if(this == &ex)
-    {
-        return *this;
-    }
-    m_Context = ex.m_Context;
+	if(this == &ex)
+	{
+		return *this;
+	}
+	m_Context = ex.m_Context;
 	m_Type = ex.m_Type;
 	m_Trace = ex.m_Trace;
 	m_Throwable = ex.m_Throwable;
@@ -88,8 +88,39 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
-	m_Trace.emplace_back(info);
+	m_Trace.push_back(info);
 }
+
+// Okay from this point on we have to suit up in full Kevlar because
+// this code must handle every conceivable and still reach a resolution.
+// Exceptions may be throws during initialization where only a fraction
+// of the resources are available, during the middle of normal operation,
+// or worst of all as the system is being yanked out from under us during
+// shutdown.  Each and every one of these cases must be considered.
+// Further each and every function called here must be hardened similarly
+// or they will become the weak link. And remember it is not paranoia if
+// they are actually out to get you.
+//
+// Onward my friends to victory or a glorious segfault!
+/*
+string JPypeException::getMessage()
+{
+	JP_TRACE_IN("JPypeException::getMessage");
+	// Must be bullet proof
+	try
+	{
+		stringstream str;
+		str << m_Message << endl;
+		JP_TRACE(str.str());
+		return str.str();
+		// GCOVR_EXCL_START
+	} catch (...)
+	{
+		return "error during get message";
+	}
+	JP_TRACE_OUT;
+	// GCOVR_EXCL_STOP
+}*/
 
 bool isJavaThrowable(PyObject* exceptionClass)
 {
@@ -169,7 +200,7 @@ void JPypeException::convertJavaToPython()
 	}
 	// GCOVR_EXCL_STOP
 
-	auto *type = (PyObject*) Py_TYPE(pyvalue.get());
+	PyObject *type = (PyObject*) Py_TYPE(pyvalue.get());
 	Py_INCREF(type);
 
 	// Add cause to the exception
@@ -449,83 +480,56 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-PyTracebackObject *tb_create(
-		PyTracebackObject *last_traceback,
+PyObject *tb_create(
+		PyObject *last_traceback,
 		PyObject *dict,
 		const char* filename,
 		const char* funcname,
 		int linenum)
 {
 	// Create a code for this frame. (ref count is 1)
-	PyCodeObject *code = PyCode_NewEmpty(filename, funcname, linenum);
+	JPPyObject* code = JPPyObject::accept((PyObject*)PyCode_NewEmpty(filename, funcname, linenum));
 
 	// If we don't get the code object there is no point
 	if (code == nullptr)
 		return nullptr;
 
-	// This is a bit of a kludge.  Python lacks a way to directly create
-	// a frame from a code object except when creating from the threadstate.
-	//
-	// In reviewing Python implementation, I find that the only element accessed
-	// in the thread state was the previous frame to link to.  Because frame 
-	// objects change a lot between different Python versions, trying to 
-	// replicate the actions of setting up a frame is difficult to keep portable.
-	//
-	// Python 3.10 introduces the additional requirement that the global
-	// dictionary supplied must have a __builtins__.  We can do this once
-	// when create the module.
-	//
-	// If instead we create a thread state and point the field it needs to the
-	// previous frame we create the frames using the defined API.  Much more 
-	// portable, but we have to create a big (uninitialized object) each time we
-	// want to pass in the previous frame.
-	PyThreadState state;
-	if (last_traceback != nullptr)
-		state.frame = last_traceback->tb_frame;
-	else
-		state.frame = nullptr;
-
 	// Create a frame for the traceback.
-	PyFrameObject *frame = PyFrame_New(&state, code, dict, nullptr);
-	
-	// frame just borrows the reference rather than claiming it
-	// so we need to get rid of the extra reference here.
-	Py_DECREF(code);
-	
+	PyThreadState *state = PyThreadState_GET();
+	PyFrameObject *pframe = PyFrame_New(state, (PyCodeObject*) code.get(), dict, NULL);
+	JPPyObject frame = JPPyObject::accept((PyObject*)pframe);
+
 	// If we don't get the frame object there is no point
-	if (frame == nullptr)
+	if (frame.get() == nullptr)
 		return nullptr;
 
 	// Create a traceback
-	auto *traceback = (PyTracebackObject*) 
-		        PyObject_GC_New(PyTracebackObject, &PyTraceBack_Type);
+#if PY_MINOR_VERSION<11
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(pframe->f_lasti));
+#else
+	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
+#endif
+	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
+	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
+	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
 
 	// We could fail in process
-	if (traceback == nullptr)
+	if (traceback.get() == nullptr)
 	{
 		Py_DECREF(frame);
 		return nullptr;
 	}
 
-	// Set the fields
-	traceback->tb_frame = frame; // Steal the reference from frame
-	traceback->tb_lasti = frame->f_lasti;
-	traceback->tb_lineno = linenum;
-	Py_XINCREF(last_traceback);
-	traceback->tb_next = last_traceback;
-
-	// Allow GC on the object
-	PyObject_GC_Track(traceback);
-	return traceback;
+	return traceback.keep();
 }
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 {
-	PyTracebackObject *last_traceback = nullptr;
+	PyObject *last_traceback = nullptr;
 	PyObject *dict = PyModule_GetDict(PyJPModule);
-	for (auto & iter : trace)
+	for (auto& iter : trace)
 	{
-		last_traceback = tb_create(last_traceback, dict,  iter.getFile(),
+		last_traceback = tb_create(last_traceback, dict, iter.getFile(),
 				iter.getFunction(), iter.getLine());
 	}
 	if (last_traceback == nullptr)
@@ -544,8 +548,8 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		return {};
 
 	JNIEnv* env = frame.getEnv();
-	auto obj = (jobjectArray) env->CallObjectMethodA(context->getJavaContext(),
-			context->m_Context_GetStackFrameID, args);
+	jobjectArray obj = static_cast<jobjectArray>(env->CallObjectMethodA(context->getJavaContext(),
+			context->m_Context_GetStackFrameID, args));
 
 	// Eat any exceptions that were generated
 	if (env->ExceptionCheck() == JNI_TRUE)
@@ -559,8 +563,8 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	{
 		string filename, method;
 		auto jclassname = static_cast<jstring>(frame.GetObjectArrayElement(obj, i));
-		auto jmethodname = (jstring) frame.GetObjectArrayElement(obj, i + 1);
-		auto jfilename = (jstring) frame.GetObjectArrayElement(obj, i + 2);
+		auto jmethodname = static_cast<jstring>(frame.GetObjectArrayElement(obj, i + 1));
+		auto jfilename = static_cast<jstring>(frame.GetObjectArrayElement(obj, i + 2));
 		if (jfilename != nullptr)
 			filename = frame.toStringUTF8(jfilename);
 		else

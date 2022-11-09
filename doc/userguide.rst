@@ -92,7 +92,7 @@ set the class path, start the JVM, remove all the type declarations, and you are
 
    # Copy in the patterns from the guide to replace the example code
    db = Database("our_records")
-   with db.connect() as DatabaseConnection:
+   with db.connect() as c:
        c.runQuery()
        while c.hasRecords():
            record = db.nextRecord()
