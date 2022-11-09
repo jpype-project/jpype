@@ -480,8 +480,8 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-PyTracebackObject *tb_create(
-		PyTracebackObject *last_traceback,
+PyObject *tb_create(
+		PyObject *last_traceback,
 		PyObject *dict,
 		const char* filename,
 		const char* funcname,
@@ -516,7 +516,6 @@ PyTracebackObject *tb_create(
 	// We could fail in process
 	if (traceback.get() == nullptr)
 	{
-		Py_DECREF(frame.get());
 		return nullptr;
 	}
 
@@ -539,7 +538,7 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 
 JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev)
 {
-	PyTracebackObject *last_traceback = nullptr;
+	PyObject *last_traceback = NULL;
 	JPContext *context = frame.getContext();
 	jvalue args[2];
 	args[0].l = th;
