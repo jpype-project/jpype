@@ -480,18 +480,18 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-PyObject *tb_create(
-		PyObject *last_traceback,
+PyTracebackObject *tb_create(
+		PyTracebackObject *last_traceback,
 		PyObject *dict,
 		const char* filename,
 		const char* funcname,
 		int linenum)
 {
 	// Create a code for this frame. (ref count is 1)
-	JPPyObject* code = JPPyObject::accept((PyObject*)PyCode_NewEmpty(filename, funcname, linenum));
+	JPPyObject code = JPPyObject::accept((PyObject*)PyCode_NewEmpty(filename, funcname, linenum));
 
 	// If we don't get the code object there is no point
-	if (code == nullptr)
+	if (code.get() == nullptr)
 		return nullptr;
 
 	// Create a frame for the traceback.
@@ -516,7 +516,7 @@ PyObject *tb_create(
 	// We could fail in process
 	if (traceback.get() == nullptr)
 	{
-		Py_DECREF(frame);
+		Py_DECREF(frame.get());
 		return nullptr;
 	}
 
