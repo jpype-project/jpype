@@ -6,6 +6,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.4.2_dev0 - 2022-10-26**
 
+  - Fixed crash when calling subscript on JArray.
+
   - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
 
 - **1.4.1 - 2022-10-26**

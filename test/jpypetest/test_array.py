@@ -597,3 +597,7 @@ class ArrayTestCase(common.JPypeTestCase):
         # Test multidimensional
         self.assertEqual(JDouble[5, 5].getClass(), JArray(JDouble, 2)(5).getClass())
         self.assertEqual(JObject[5, 5].getClass(), JArray(JObject, 2)(5).getClass())
+
+    def testJArrayIndex(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray[10]

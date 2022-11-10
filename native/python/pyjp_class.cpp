@@ -716,6 +716,12 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 
+	if (self->m_Class == NULL)
+	{
+		PyErr_Format(PyExc_TypeError, "Cannot instantiate unspecified array type");
+		return NULL;
+	}
+
 	if (PyIndex_Check(item))
 	{
 		long sz = PyLong_AsLong(item);
