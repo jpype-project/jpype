@@ -4,9 +4,53 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.3.1_dev0 - 2021-06-05**
+- **1.4.2_dev0 - 2022-10-26**
 
-  - Fix issue with numpy arrays with no dimensions resulting in crash..
+  - Fixed crash when calling subscript on JArray.
+
+  - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
+
+- **1.4.1 - 2022-10-26**
+  
+  - Fixed issue with startJVM changing locale settings.
+
+  - Changes to support Python 3.11
+
+  - Fix truncation of strings on null when using convert strings.
+
+  - Replaced distutil with packaging
+
+
+- **1.4.0 - 2022-05-14**
+
+  - Support for all different buffer type conversions.
+
+    - Improved buffer transfers to numpy as guaranteed to match Java types.
+      However, exact dtype for conversions is os/numpy version dependent.
+
+    - Support for byte order channels on buffer transfers.
+
+    - Byte size for buffers now fixed to Java definitions.
+      
+    - When directly accessing Java arrays using memory view, Python requires a
+      cast from buffers.  Required because Python does not support memory view
+      alterations on non-native sizes.
+
+  - Fix crash when comparing JChar.
+
+     - Order handling for numerical operations with JChar fixed.
+
+  - Improved matching for Java functors based on parameter count.
+
+  - Dropped support for Python 3.5 and 3.6
+
+  - dbapi2 handles drivers that don't support autocommit.
+
+  - Fixed issue when Java classes with dunder methods such as  ``__del__`` 
+    caused conflicts in Python type system.   Java method which match dunder 
+    patterns are longer translated to Python.
+
+  - Fix issue with numpy arrays with no dimensions resulting in crash.
 
   - Support for user defined conversions for java.lang.Class and array types.
 

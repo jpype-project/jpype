@@ -49,14 +49,6 @@ class JVMNotRunning(RuntimeError):
     pass
 
 
-def versionTest():
-    if sys.version_info < (3,):
-        raise ImportError("Python 2 is not supported")
-
-
-versionTest()
-
-
 # Activate jedi tab completion
 try:
     import jedi as _jedi
@@ -248,9 +240,22 @@ def startJVM(
         extra_jvm_args += (f'-Djava.class.path={_handleClassPath(classpath)}', )
 
     try:
+        import locale
+        # Gather a list of locale settings that Java may override (excluding LC_ALL)
+        categories = [getattr(locale, i) for i in dir(locale) if i.startswith('LC_') and i != 'LC_ALL']
+        # Keep the current locale settings, else Java will replace them.
+        prior = [locale.getlocale(i) for i in categories]
+        # Start the JVM
         _jpype.startup(jvmpath, jvmargs + extra_jvm_args,
                        ignoreUnrecognized, convertStrings, interrupt)
+        # Collect required resources for operation
         initializeResources()
+        # Restore locale
+        for i, j in zip(categories, prior):
+            try:
+                locale.setlocale(i, j)
+            except locale.Error:
+                pass
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:

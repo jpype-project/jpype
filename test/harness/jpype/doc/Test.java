@@ -32,7 +32,7 @@ public class Test
    *    hey.method(1, SecretMap());
    * }</pre></blockquote>
    * <p>
-   * <table style="width:100%" summary="Test table">
+   * <table style="width:100%" summary="foo">
    * <tr><th>North</th><th>East</th><th>Steps</th></tr>
    * <tr><td>Y</td><td>N</td><td>10</td></tr>
    * <tr><td>N</td><td>Y</td><td>20</td></tr>
@@ -54,7 +54,7 @@ public class Test
    *
    * @throws java.lang.NoSuchMethodException if something bad happens.
    * @param i an argument <code>a</code>. {@value #QQ}
-   * @param j
+   * @param j another argument.
    * @return a secret code.
    * @since 1.5
    *

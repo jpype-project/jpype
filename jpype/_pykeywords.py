@@ -16,8 +16,9 @@
 #
 # *****************************************************************************
 
-# This is a super set of the keywords in Python2 and Python3.
+# This is a superset of the keywords in Python.
 # We use this so that jpype is a bit more version independent.
+# Removing keywords from this list impacts the exposed interfaces, and therefore is a breaking change. 
 _KEYWORDS = set((
     'False', 'None', 'True', 'and', 'as', 'assert', 'async',
     'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else',
@@ -28,6 +29,8 @@ _KEYWORDS = set((
 
 
 def pysafe(s):
+    if s.startswith("__"):
+        return None
     if s in _KEYWORDS:
         return s + "_"
     return s

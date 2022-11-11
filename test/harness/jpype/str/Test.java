@@ -31,6 +31,14 @@ public class Test
     return "memberCall";
   }
 
+  public static String callWithNullBytes() {
+    return "call\0With\0Null\0Bytes";
+  }
+
+  public static String returnArgument(String argument) {
+    return argument;
+  }
+
   public static final String array[] =
   {
     "apples", "banana", "cherries", "dates", "elderberry"

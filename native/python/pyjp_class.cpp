@@ -702,14 +702,10 @@ static bool PySlice_CheckFull(PyObject *item)
 	if (!PySlice_Check(item))
 		return false;
 	Py_ssize_t start, stop, step;
-#if PY_VERSION_HEX<0x03060100
-	int rc = PySlice_GetIndices(item, 0x7fffffff, &start, &stop, &step);
-	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == 0x7fffffff);
-#elif defined(ANDROID)
 	int rc = PySlice_Unpack(item, &start, &stop, &step);
+#if defined(ANDROID)
 	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop >= 0x7fffffff);
 #else
-	int rc = PySlice_Unpack(item, &start, &stop, &step);
 	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
 #endif
 }
@@ -719,6 +715,12 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	JP_PY_TRY("PyJPClass_array");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	if (self->m_Class == NULL)
+	{
+		PyErr_Format(PyExc_TypeError, "Cannot instantiate unspecified array type");
+		return NULL;
+	}
 
 	if (PyIndex_Check(item))
 	{

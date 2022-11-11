@@ -53,7 +53,7 @@ def compileJava():
     srcs = glob.glob('test/harness/jpype/**/*.java', recursive=True)
     srcs.extend(glob.glob('test/harness/org/**/*.java', recursive=True))
     exports = ""
-    if version > 7:
+    if version == 8:
         srcs.extend(glob.glob('test/harness/java8/**/*.java', recursive=True))
     if version > 8:
         srcs.extend(glob.glob('test/harness/java9/**/*.java', recursive=True))
@@ -87,4 +87,4 @@ class TestJavaCommand(distutils.cmd.Command):
         cmdStr = compileJava()
         self.announce("  %s" % " ".join(cmdStr), level=distutils.log.INFO)
         subprocess.check_call(cmdStr)
-        subprocess.check_call(shlex.split("javadoc test/harness/jpype/doc/Test.java -d test/classes/"))
+        subprocess.check_call(shlex.split("javadoc -Xdoclint:none test/harness/jpype/doc/Test.java -d test/classes/"))
