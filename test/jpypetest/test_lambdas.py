@@ -16,9 +16,6 @@
 #
 # *****************************************************************************
 import jpype
-import sys
-import logging
-import time
 import common
 
 

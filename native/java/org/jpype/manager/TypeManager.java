@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import org.jpype.JPypeContext;
+import org.jpype.JPypeUtilities;
 import org.jpype.proxy.JPypeProxy;
 
 /**
@@ -311,21 +312,13 @@ public class TypeManager
     if (classDescriptor.functional_interface_parameter_count != -1) {
       return classDescriptor.functional_interface_parameter_count;
     }
-    int abstractMethodParameterCount = -1;
-    for (Method method : interfaceClass.getMethods()) {
-      if (Modifier.isAbstract(method.getModifiers())) {
-        if (abstractMethodParameterCount != -1) {
-          classDescriptor.functional_interface_parameter_count = -2;
-          return -2;
-        }
-        abstractMethodParameterCount = method.getParameterCount();
-      }
+    Method method = JPypeUtilities.getFunctionalInterfaceMethod(interfaceClass);
+    if (method == null) {
+      classDescriptor.functional_interface_parameter_count = -2;
+      return -2;
     }
-    if (abstractMethodParameterCount == -1) {
-      abstractMethodParameterCount = -2;
-    }
-    classDescriptor.functional_interface_parameter_count = abstractMethodParameterCount;
-    return abstractMethodParameterCount;
+    classDescriptor.functional_interface_parameter_count = method.getParameterCount();
+    return classDescriptor.functional_interface_parameter_count;
   }
 
   /**

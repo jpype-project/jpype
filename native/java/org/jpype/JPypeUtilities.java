@@ -55,7 +55,7 @@ public class JPypeUtilities
     }
   }
 
-  static Method getFunctionalInterfaceMethod(Class cls)
+  public static Method getFunctionalInterfaceMethod(Class cls)
   {
     if (!cls.isInterface() || cls.isAnnotation() || isSealed.test(cls))
       return null;
