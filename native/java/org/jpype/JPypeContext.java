@@ -566,7 +566,7 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public String getFunctional(Class cls)
+  public static String getFunctional(Class cls)
   {
     Method m = JPypeUtilities.getFunctionalInterfaceMethod(cls);
     return m != null ? m.getName() : null;
