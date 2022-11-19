@@ -20,8 +20,7 @@ import common
 
 
 def callFunctional(cls, i):
-    fun = lambda x: x
-    fun = cls._cast(fun)
+    fun = cls @(lambda x: x)
     return fun.call(i)
 
 
@@ -35,10 +34,6 @@ class FunctionalTestCase(common.JPypeTestCase):
         self._checkValidFunctional("Annotated", 0)
 
     def testNonAnnotated(self):
-        JPypeUtilities = jpype.JClass("org.jpype.JPypeUtilities")
-        NonAnnotated = jpype.JClass("jpype.functional.NonAnnotated")
-        m = JPypeUtilities.getFunctionalInterfaceMethod(NonAnnotated)
-        self.assertIsNotNone(m)
         self._checkValidFunctional("NonAnnotated", 1)
 
     def testExtendsFunctional(self):
