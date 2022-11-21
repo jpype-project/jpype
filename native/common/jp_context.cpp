@@ -287,6 +287,12 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
 		val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
 	}
+
+	// Required before launch
+	m_Context_GetFunctionalID = frame.GetStaticMethodID(contextClass,
+			"getFunctional",
+			"(Ljava/lang/Class;)Ljava/lang/String;");
+
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
 	// Post launch
@@ -308,10 +314,6 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Context_assembleID = frame.GetMethodID(contextClass,
 			"assemble",
 			"([ILjava/lang/Object;)Ljava/lang/Object;");
-
-	m_Context_GetFunctionalID = frame.GetMethodID(contextClass,
-			"getFunctional",
-			"(Ljava/lang/Class;)Ljava/lang/String;");
 
 	m_Context_CreateExceptionID = frame.GetMethodID(contextClass, "createException",
 			"(JJ)Ljava/lang/Exception;");

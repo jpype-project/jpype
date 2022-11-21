@@ -1170,8 +1170,8 @@ string JPJavaFrame::getFunctional(jclass c)
 {
 	jvalue v;
 	v.l = (jobject) c;
-	return toStringUTF8((jstring) CallObjectMethodA(
-			m_Context->m_JavaContext.get(),
+	return toStringUTF8((jstring) CallStaticObjectMethodA(
+			m_Context->m_ContextClass.get(),
 			m_Context->m_Context_GetFunctionalID, &v));
 }
 

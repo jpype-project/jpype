@@ -566,30 +566,10 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public String getFunctional(Class cls)
+  public static String getFunctional(Class cls)
   {
-    // If we don't find it to be a functional interface, then we won't return
-    // the SAM.
-    if (cls.getDeclaredAnnotation(FunctionalInterface.class) == null)
-      return null;
-    for (Method m : cls.getMethods())
-    {
-      if (Modifier.isAbstract(m.getModifiers()))
-      {
-        // This is a very odd construct.  Java allows for java.lang.Object
-        // methods to declared in FunctionalInterfaces and they don't count
-        // towards the single abstract method. So we have to probe the class
-        // until we find something that fails.
-        try
-        {
-          Object.class.getMethod(m.getName(), m.getParameterTypes());
-        } catch (NoSuchMethodException | SecurityException ex)
-        {
-          return m.getName();
-        }
-      }
-    }
-    return null;
+    Method m = JPypeUtilities.getFunctionalInterfaceMethod(cls);
+    return m != null ? m.getName() : null;
   }
 
   /**
