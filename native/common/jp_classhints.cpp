@@ -866,9 +866,11 @@ public:
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		if (value->getClass()->isPrimitive())
-			match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
+			match.type = JPMatch::_implicit;
+		else if (value->getClass() == cls)
+			match.type = JPMatch::_exact;
 		else
-			match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_derived;
+			match.type = JPMatch::_derived;
 		return match.type;
 		JP_TRACE_OUT;
 	}
