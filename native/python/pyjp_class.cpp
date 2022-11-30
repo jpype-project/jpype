@@ -687,6 +687,8 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 		return JPPyString::fromStringUTF8("explicit").keep();
 	if (match.type == JPMatch::_implicit)
 		return JPPyString::fromStringUTF8("implicit").keep();
+	if (match.type == JPMatch::_derived)
+		return JPPyString::fromStringUTF8("derived").keep();
 	if (match.type == JPMatch::_exact)
 		return JPPyString::fromStringUTF8("exact").keep();
 

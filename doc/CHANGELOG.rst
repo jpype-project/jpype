@@ -9,8 +9,13 @@ Latest Changes:
   - Fixed crash when calling subscript on JArray.
 
   - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
-  - Expand the defintion for Functional interface to include classes without 
+
+  - Expand the defintion for Functional interface to include classes without
     FunctionInterface annotation.
+
+  - Add additional matching level for derived types to resolve ambiguities when
+    a derived type is used in place of base class when determining the method
+    overload.  This will resolve some previous ambiguities between methods.  
 
 - **1.4.1 - 2022-10-26**
   

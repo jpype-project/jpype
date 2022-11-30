@@ -651,7 +651,7 @@ public:
 		}
 		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
 		JP_TRACE("assignable", assignable, oc->getCanonicalName(), cls->getCanonicalName());
-		match.type = (assignable ? JPMatch::_implicit : JPMatch::_none);
+		match.type = (assignable ? JPMatch::_derived : JPMatch::_none);
 
 		// This is the one except to the conversion rule patterns.
 		// If it is a Java value then we must prevent it from proceeding
@@ -865,7 +865,10 @@ public:
 		if (value == NULL || match.frame == NULL || value->getClass() == NULL)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
+		if (value->getClass()->isPrimitive())
+			match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_implicit;
+		else
+			match.type = (value->getClass() == cls) ? JPMatch::_exact : JPMatch::_derived;
 		return match.type;
 		JP_TRACE_OUT;
 	}
