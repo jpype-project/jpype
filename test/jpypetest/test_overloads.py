@@ -283,3 +283,50 @@ class OverloadTestCase(common.JPypeTestCase):
             cb = Runnable @ fun4
         with self.assertRaises(TypeError):
             cb = Runnable @ mc.fun4
+
+    def testDerivedStatic(self):
+        Boolean = jpype.JClass("java.lang.Boolean")
+        Object = jpype.JClass("java.lang.Object")
+        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        Base = DerivedTest.Base()
+        Derived = DerivedTest.Derived()
+        self.assertEqual(DerivedTest.testStatic(True, Base), 1)
+        self.assertEqual(DerivedTest.testStatic("that", Base), 2)
+        self.assertEqual(DerivedTest.testStatic(True, Derived), 1)
+        self.assertEqual(DerivedTest.testStatic("that", Derived), 2)
+        self.assertEqual(DerivedTest.testStatic(jpype.JBoolean(True), Base), 1)
+        self.assertEqual(DerivedTest.testStatic(jpype.JBoolean(True), Derived), 1)
+        self.assertEqual(DerivedTest.testStatic(jpype.JObject(True, Boolean), Derived), 2)
+        self.assertEqual(DerivedTest.testStatic(jpype.JObject(True, Object), Derived), 2)
+
+    def testDerivedMember(self):
+        Boolean = jpype.JClass("java.lang.Boolean")
+        Object = jpype.JClass("java.lang.Object")
+        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        Base = DerivedTest.Base()
+        Derived = DerivedTest.Derived()
+        obj = DerivedTest()
+        self.assertEqual(obj.testMember(True, Base), 3)
+        self.assertEqual(obj.testMember("that", Base), 4)
+        self.assertEqual(obj.testMember(True, Derived), 3)
+        self.assertEqual(obj.testMember("that", Derived), 4)
+        self.assertEqual(obj.testMember(jpype.JBoolean(True), Base), 3)
+        self.assertEqual(obj.testMember(jpype.JBoolean(True), Derived), 3)
+        self.assertEqual(obj.testMember(jpype.JObject(True, Boolean), Derived), 4)
+        self.assertEqual(obj.testMember(jpype.JObject(True, Object), Derived), 4)
+
+    def testDerivedSub(self):
+        Boolean = jpype.JClass("java.lang.Boolean")
+        Object = jpype.JClass("java.lang.Object")
+        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        Base = DerivedTest.Base()
+        Derived = DerivedTest.Derived()
+        obj = DerivedTest.Sub()
+        self.assertEqual(obj.testMember(True, Base), 3)
+        self.assertEqual(obj.testMember("that", Base), 4)
+        self.assertEqual(obj.testMember(True, Derived), 3)
+        self.assertEqual(obj.testMember("that", Derived), 4)
+        self.assertEqual(obj.testMember(jpype.JBoolean(True), Base), 3)
+        self.assertEqual(obj.testMember(jpype.JBoolean(True), Derived), 3)
+        self.assertEqual(obj.testMember(jpype.JObject(True, Boolean), Derived), 4)
+        self.assertEqual(obj.testMember(jpype.JObject(True, Object), Derived), 4)
