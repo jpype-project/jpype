@@ -154,7 +154,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return out;
 		}
 		obj1 = match.convert().l;
-	} else if (!null1 && javaSlot1 != NULL)
+	} else if (!null1 && javaSlot1 != NULL && !javaSlot1->getClass()->isPrimitive())
 		obj1 = javaSlot1->getValue().l;
 
 	switch (op)
