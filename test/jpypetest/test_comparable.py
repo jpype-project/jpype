@@ -102,3 +102,20 @@ class ComparableTestCase(common.JPypeTestCase):
         # test null to primitives
         self.assertFalse(N1 == V)
         self.assertFalse(V == N1)
+
+        self.assertFalse(1 == O1)
+        self.assertFalse("M" == O1)
+        self.assertFalse(O1 == 1)
+        self.assertFalse(O1 == "M")
+
+        self.assertTrue(1 != O1)
+        self.assertTrue("M" != O1)
+        self.assertTrue(O1 != 1)
+        self.assertTrue(O1 != "M")
+
+        with self.assertRaises(TypeError):
+            self.assertTrue(O1 > 1)
+        with self.assertRaises(TypeError):
+            self.assertTrue(1 > O1)
+        with self.assertRaises(TypeError):
+            self.assertTrue(O1 > O2)
