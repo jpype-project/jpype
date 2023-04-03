@@ -164,14 +164,14 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 				Py_RETURN_TRUE;
 			if (null0 || null1)
 				Py_RETURN_FALSE;
-			return PyBool_FromLong(frame.compareTo(obj0, obj1) == 0);
+			return PyBool_FromLong(frame.equals(obj0, obj1));
 
 		case Py_NE:
 			if (null0 && null1)
 				Py_RETURN_FALSE;
 			if (null0 || null1)
 				Py_RETURN_TRUE;
-			return PyBool_FromLong(frame.compareTo(obj0, obj1) != 0);
+			return PyBool_FromLong(!frame.equals(obj0, obj1));
 		case Py_LT:
 			if (null0 || null1)
 				break;

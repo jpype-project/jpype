@@ -6,6 +6,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.4.2_dev0 - 2022-10-26**
 
+  - Switched ``__eq__`` and ``__ne__`` operator to use ``.equals`` for comparable objects to
+    avoid exception when comparing object of different types.
+
   - Fixed crash when calling subscript on JArray.
 
   - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.

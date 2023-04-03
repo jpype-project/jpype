@@ -79,3 +79,9 @@ class ComparableTestCase(common.JPypeTestCase):
             print(i3 > i3)
         with self.assertRaises(ValueError):
             print(i3 >= i3)
+
+    def testComparableObj(self):
+        O1 = jpype.JClass("java.time.temporal.ChronoUnit").SECONDS
+        O2 = jpype.JClass("java.util.concurrent.TimeUnit").SECONDS
+        self.assertTrue(O1 != O2)
+        self.assertFalse(O1 == O2)
