@@ -51,7 +51,7 @@ __all__.extend(_jclass.__all__)
 __all__.extend(_jcustomizer.__all__)
 __all__.extend(_gui.__all__)
 
-__version__ = "1.4.2_dev0"
+__version__ = "1.5.0_dev0"
 __version_info__ = __version__.split('.')
 
 
@@ -65,5 +65,5 @@ JMethod = _jpype._JMethod
 JField = _jpype._JField
 
 if hasattr(_jpype, 'bootstrap'):
-   _jpype.bootstrap()
-   _core.initializeResources()
+    _jpype.bootstrap()
+    _core.initializeResources()

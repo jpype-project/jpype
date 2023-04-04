@@ -118,7 +118,23 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 				}
 			}
 
+			// If the best match is worse than current, switch
+			if (bestMatch.m_Type < match.m_Type)
+			{
+				bestMatch = match;
+				// Remove any prior ambiguity
+				ambiguous.clear();
+				continue;
+			}
+
+			// If the best match is still better than current, keep it
+			if (bestMatch.m_Type > match.m_Type)
+			{
+				continue;
+			}
+
 			JP_TRACE("Adding to ambiguous list");
+
 			// Keep trace of ambiguous overloads for the error report.
 			ambiguous.push_back(*it);
 		}

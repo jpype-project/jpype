@@ -708,8 +708,8 @@ Java conversions
 ----------------
 
 A conversion is a permitted change from an object of one type to another.
-Conversions have three different degrees.  These are: exact, implicit, and
-explicit.
+Conversions have three different degrees.  These are: exact, derived, implicit,
+and explicit.
 
 Exact conversions are those in which the type of an object is identical.  In
 Java each class has only one definition thus there is no need for an exact
@@ -718,21 +718,30 @@ identical for which exact conversion rules apply.  For example, a Java string
 and a Python string both bind equally well to a method which requires a string,
 thus this is an exact conversion for the purposes of bind types.
 
+The next level of conversion is derived.  A derived class is one which is a
+descends from a required type.  It is better that implicit but worse than
+exact.  If all of the types in a method match are exact or derived then it will
+override a method in which one argument is implicit.
+
 The next level of conversion is implicit.  An implicit conversion is one that
-Java would perform automatically.  For example converting a derived class to is
-base class when setting a field would be an implicit conversion.  Java defines
-a number of other conversions such as converting a primitive to a boxed type
-or from a boxed type back to a primitive as implicit conversions..
+Java would perform automatically.  Java defines a number of other conversions
+such as converting a primitive to a boxed type or from a boxed type back to a
+primitive as implicit conversions.  Python conversions defined by the user are
+also considered to be implicit.
 
 Of course not every cast is safe to perform.  For example, converting an object
 whose type is currently viewed as a base type to a derived type is not
 performed automatically nor is converting from one boxed type to another.  For
 those operations the conversion must be explicitly requested, hence these are
-explicit conversions.  To request an explicit conversion an object must be
-"cast" using a cast operator.  In Java, a cast is requested by placing the type
-name in parentheses in front of the object to be cast.  Unfortunately, the same
-syntax is not allowed in Python.  Not every conversion is possible between Java
-types.  Types that cannot be converted are considerer to be conversion type "none".
+explicit conversions.   In Java, a cast is requested by placing the type name
+in parentheses in front of the object to be cast.  Python does not directly
+support Java casting syntax. To request an explicit conversion an object must
+be "cast" using a cast operator @.   Overloaded methods with an explicit
+argument will not be matched.  After applying an explicit cast, the match
+quality can improve to exact or derived depending on the cast type. 
+
+Not every conversion is possible between Java types.  Types that cannot be
+converted are considerer to be conversion type "none".
 
 Details on the standard conversions provided by JPype are given in the section
 `Type Matching`_.
