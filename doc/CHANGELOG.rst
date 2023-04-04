@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.5.0_dev0 - 2023-04-03**
 - **1.4.2_dev0 - 2022-10-26**
 
   - Fixed crash when calling subscript on JArray.
