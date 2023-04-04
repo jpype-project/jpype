@@ -6,13 +6,21 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.4.2_dev0 - 2022-10-26**
 
-  - Switched ``__eq__`` and ``__ne__`` operator to use ``.equals`` for comparable objects to
-    avoid exception when comparing object of different types.
+  - Switched ``__eq__`` and ``__ne__`` operator to use ``equals`` rather than
+    ``compareTo`` for comparable objects to avoid exception when comparing
+    object of different types.
+
+  - Fixed segmentation fault when comparing Java Comparable to primitives.
+
+  - Java exceptions that occur in inequality comparisons now map to Python
+    TypeError.
 
   - Fixed crash when calling subscript on JArray.
 
-  - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
-  - Expand the defintion for Functional interface to include classes without 
+  - Fixed direct byte buffers not reporting nbytes correctly when cast to
+    memoryview.
+
+  - Expand the defintion for Functional interface to include classes without
     FunctionInterface annotation.
 
 - **1.4.1 - 2022-10-26**
