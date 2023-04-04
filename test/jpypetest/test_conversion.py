@@ -144,3 +144,9 @@ class ConversionTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             ja[0:1] = [object()]
         ja[0:1] = ["\u265E"]
+
+    def testDerived(self):
+        # Test Java Object any conversion
+        self.assertEqual(jpype.JClass("java.lang.Object")._canConvertToJava(jpype.JClass("java.lang.String")("a")), "derived")
+        # Test Java Object specific conversion
+        self.assertEqual(jpype.JClass("java.util.List")._canConvertToJava(jpype.JClass("java.util.ArrayList")()), "derived")

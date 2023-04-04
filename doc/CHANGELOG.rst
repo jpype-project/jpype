@@ -4,13 +4,19 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.5.0_dev0 - 2023-04-03**
 - **1.4.2_dev0 - 2022-10-26**
 
   - Fixed crash when calling subscript on JArray.
 
   - Fixed direct byte buffers not reporting nbytes correctly when cast to memoryview.
-  - Expand the defintion for Functional interface to include classes without 
+
+  - Expand the defintion for Functional interface to include classes without
     FunctionInterface annotation.
+
+  - Add additional matching level for derived types to resolve ambiguities when
+    a derived type is used in place of base class when determining the method
+    overload.  This will resolve some previous ambiguities between methods.  
 
 - **1.4.1 - 2022-10-26**
   
