@@ -687,6 +687,8 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 		return JPPyString::fromStringUTF8("explicit").keep();
 	if (match.type == JPMatch::_implicit)
 		return JPPyString::fromStringUTF8("implicit").keep();
+	if (match.type == JPMatch::_derived)
+		return JPPyString::fromStringUTF8("derived").keep();
 	if (match.type == JPMatch::_exact)
 		return JPPyString::fromStringUTF8("exact").keep();
 
@@ -715,6 +717,12 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 	JP_PY_TRY("PyJPClass_array");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	if (self->m_Class == NULL)
+	{
+		PyErr_Format(PyExc_TypeError, "Cannot instantiate unspecified array type");
+		return NULL;
+	}
 
 	if (PyIndex_Check(item))
 	{

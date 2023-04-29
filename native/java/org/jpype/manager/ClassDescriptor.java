@@ -46,14 +46,18 @@ public class ClassDescriptor
   public int methodCounter = 0;
   public long[] fields;
   public long anonymous;
-  public int functional_interface_parameter_count = -1; // -1 = unset; -2 = not a functional interface
+  public int functional_interface_parameter_count; 
 
-  ClassDescriptor(Class cls, long classPtr)
+  ClassDescriptor(Class cls, long classPtr, Method method)
   {
     this.cls = cls;
     this.classPtr = classPtr;
     if (this.classPtr == 0)
       throw new NullPointerException("Class pointer is null for " + cls);
+    if (method != null)
+      functional_interface_parameter_count = method.getParameterCount();
+    else
+      functional_interface_parameter_count = -1;
   }
 
   long getMethod(Method requestedMethod)

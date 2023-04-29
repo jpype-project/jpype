@@ -27,7 +27,8 @@ public:
 		_none = 0,
 		_explicit = 1,
 		_implicit = 2,
-		_exact = 3
+		_derived = 3,
+		_exact = 4
 	} ;
 
 public:

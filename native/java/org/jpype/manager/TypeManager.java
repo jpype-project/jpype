@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import org.jpype.JPypeContext;
+import org.jpype.JPypeUtilities;
 import org.jpype.proxy.JPypeProxy;
 
 /**
@@ -48,7 +49,6 @@ public class TypeManager
   public TypeFactory typeFactory = null;
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
-  public Class<? extends Annotation> functionalAnnotation = null;
   // For reasons that are less than clear, this object cannot be created
   // during shutdown
   private Destroyer destroyer = new Destroyer();
@@ -72,15 +72,6 @@ public class TypeManager
         throw new RuntimeException("Cannot be restarted");
       isStarted = true;
       isShutdown = false;
-
-      try
-      {
-        this.functionalAnnotation = Class.forName("java.lang.FunctionalInterface")
-                .asSubclass(Annotation.class);
-      } catch (ClassNotFoundException ex)
-      {
-        // It is okay if we don't find this
-      }
 
       // Create the required minimum classes
       this.java_lang_Object = createClass(Object.class, true);
@@ -306,26 +297,10 @@ public class TypeManager
    * @param interfaceClass The class of the interface
    * @return the number of arguments the only unimplemented method of the interface accept.
    */
-  public int interfaceParameterCount(Class<?> interfaceClass) {
+  public int interfaceParameterCount(Class<?> interfaceClass)
+  {
     ClassDescriptor classDescriptor = classMap.get(interfaceClass);
-    if (classDescriptor.functional_interface_parameter_count != -1) {
-      return classDescriptor.functional_interface_parameter_count;
-    }
-    int abstractMethodParameterCount = -1;
-    for (Method method : interfaceClass.getMethods()) {
-      if (Modifier.isAbstract(method.getModifiers())) {
-        if (abstractMethodParameterCount != -1) {
-          classDescriptor.functional_interface_parameter_count = -2;
-          return -2;
-        }
-        abstractMethodParameterCount = method.getParameterCount();
-      }
-    }
-    if (abstractMethodParameterCount == -1) {
-      abstractMethodParameterCount = -2;
-    }
-    classDescriptor.functional_interface_parameter_count = abstractMethodParameterCount;
-    return abstractMethodParameterCount;
+    return classDescriptor.functional_interface_parameter_count;
   }
 
   /**
@@ -472,8 +447,10 @@ public class TypeManager
       modifiers |= ModifierCode.COMPARABLE.value;
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
-    if (this.functionalAnnotation != null
-            && cls.getAnnotation(this.functionalAnnotation) != null)
+
+    // Check if is Functional class
+    Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);
+    if (method != null)
       modifiers |= ModifierCode.FUNCTIONAL.value | ModifierCode.SPECIAL.value;
 
     // FIXME watch out for anonyous and lambda here.
@@ -488,9 +465,8 @@ public class TypeManager
             modifiers);
 
     // Cache the wrapper.
-    ClassDescriptor out = new ClassDescriptor(cls, classPtr);
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr, method);
     this.classMap.put(cls, out);
-
     return out;
   }
 
@@ -525,7 +501,7 @@ public class TypeManager
                     componentTypePtr,
                     modifiers);
 
-    ClassDescriptor out = new ClassDescriptor(cls, classPtr);
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr, null);
     this.classMap.put(cls, out);
     return out;
   }
@@ -544,7 +520,7 @@ public class TypeManager
             cls,
             this.getClass(boxed).classPtr,
             cls.getModifiers() & 0xffff);
-    this.classMap.put(cls, new ClassDescriptor(cls, classPtr));
+    this.classMap.put(cls, new ClassDescriptor(cls, classPtr, null));
   }
 
 //</editor-fold>
