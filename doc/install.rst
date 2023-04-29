@@ -34,7 +34,7 @@ Java
 
   JPype source distribution includes a copy of the Java JNI header
   and precompiled Java code, thus the Java Development Kit (JDK) is not required.
-  JPype has been tested with Java versions from Java 1.7 to Java 13.
+  JPype has been tested with Java versions from Java 1.8 to Java 13.
 
 C++
   A C++ compiler which matches the ABI used to build CPython.
