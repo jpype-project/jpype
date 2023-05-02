@@ -211,7 +211,7 @@ def startJVM(
     # JVM path
     if jvmargs:
         # jvm is the first argument the first argument is a path or None
-        if jvmargs[0] is not None and isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-'):
+        if jvmargs[0] is None or (isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-')):
             if jvmpath:
                 raise TypeError('jvmpath specified twice')
             jvmpath = jvmargs[0]

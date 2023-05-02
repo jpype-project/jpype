@@ -16,12 +16,10 @@
 #
 # *****************************************************************************
 import jpype
-import common
 import subrun
 import functools
 import os
 from pathlib import Path
-import sys
 import unittest
 
 
@@ -101,13 +99,21 @@ class StartJVMCase(unittest.TestCase):
     def testJVMPathArg_Str(self):
         runStartJVMTest(self.jvmpath, classpath=cp, convertStrings=False)
 
+    def testJVMPathArg_None(self):
+        # It is allowed to pass None as a JVM path
+        runStartJVMTest(None, classpath=cp, )
+
+    def testJVMPathArg_NoArgs(self):
+        runStartJVMTest(classpath=cp)
+
     def testJVMPathArg_Path(self):
         with self.assertRaises(TypeError):
-            runStartJVMTest([
+            runStartJVMTest(
                 # Pass a path as the first argument. This isn't supported (this is
                 # reflected in the type definition), but the fact that it "works"
                 # gives rise to this test.
-                Path(self.jvmpath), cp],  # type: ignore
+                Path(self.jvmpath),   # type: ignore
+                classpath=cp,
                 convertStrings=False,
             )
 
