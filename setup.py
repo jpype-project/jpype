@@ -23,6 +23,8 @@ from pathlib import Path
 from setuptools import Extension
 from setuptools import setup
 
+# Add our setupext package to the path, and import it.
+sys.path.append(str(Path(__file__).parent))
 import setupext
 
 if '--android' in sys.argv:
@@ -48,48 +50,17 @@ jpypeJar = Extension(name="org.jpype",
 
 
 setup(
-    name='JPype1',
-    version='1.5.1_dev0',
-    description='A Python to Java bridge.',
-    long_description=open('README.rst').read(),
-    license='License :: OSI Approved :: Apache Software License',
-    author='Steve Menard',
-    author_email='devilwolf@users.sourceforge.net',
-    maintainer='Luis Nell',
-    maintainer_email='cooperate@originell.org',
-    python_requires=">=3.7",
-    url='https://github.com/jpype-project/jpype',
+    # Non-standard, and extension behaviour. See also:
+    # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#setuptools-specific-configuration
     platforms=[
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Operating System :: Unix',
         'Operating System :: MacOS',
     ],
-    classifiers=[
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Topic :: Software Development',
-        'Topic :: Scientific/Engineering',
-    ],
     packages=['jpype', 'jpype._pyinstaller'],
     package_dir={'jpype': 'jpype', },
     package_data={'jpype': ['*.pyi']},
-    install_requires=['typing_extensions ; python_version< "3.8"',
-        'packaging'],
-    tests_require=['pytest'],
-    extras_require={
-        'tests': [
-            'pytest',
-        ],
-        'docs': [
-            'readthedocs-sphinx-ext',
-            'sphinx',
-            'sphinx-rtd-theme',
-        ],
-    },
     cmdclass={
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
@@ -98,11 +69,4 @@ setup(
     },
     zip_safe=False,
     ext_modules=[jpypeJar, jpypeLib, ],
-    distclass=setupext.dist.Distribution,
-    entry_points={
-        'pyinstaller40': [
-            'hook-dirs = jpype._pyinstaller.entry_points:get_hook_dirs',
-            'tests = jpype._pyinstaller.entry_points:get_PyInstaller_tests',
-        ],
-    },
 )

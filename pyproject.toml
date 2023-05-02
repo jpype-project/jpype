@@ -1,3 +1,58 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "JPype1"
+version = '1.5.0.dev0'
+authors = [
+    {name = "Steve Menard", email = "devilwolf@users.sourceforge.net"},
+]
+maintainers = [
+    {name = "Luis Nell", email = "cooperate@originell.org"},
+]
+description = "A Python to Java bridge"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {text = "License :: OSI Approved :: Apache Software License"}
+classifiers = [
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Topic :: Software Development',
+    'Topic :: Scientific/Engineering',
+]
+dependencies = [
+    'packaging',
+    'typing_extensions ; python_version< "3.8"',
+]
+
+
+[project.optional-dependencies]
+
+docs = [
+    'readthedocs-sphinx-ext',
+    'sphinx',
+    'sphinx-rtd-theme',
+]
+tests = [
+    "pytest",
+]
+
+
+[project.entry-points.pyinstaller40]
+"hook-dirs" = "jpype._pyinstaller.entry_points:get_hook_dirs"
+"tests" = "jpype._pyinstaller.entry_points:get_PyInstaller_tests"
+
+
+[project.urls]
+homepage = "https://github.com/jpype-project/jpype"
+
+
 [[tool.mypy.overrides]]
 module = [
     "_jpype",
@@ -9,4 +64,3 @@ module = [
     "jedi.access",
 ]
 ignore_missing_imports = true
-
