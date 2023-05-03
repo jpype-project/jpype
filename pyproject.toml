@@ -1,0 +1,11 @@
+[[tool.mypy.overrides]]
+module = [
+    "_jpype",
+    "commonx",
+    "brokenx",
+    "java.*",
+    "jpypex.common",
+    "jedi",
+]
+ignore_missing_imports = true
+
