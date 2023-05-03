@@ -67,6 +67,8 @@ setup(
     cmdclass={
         'build_ext': setupext.build_ext.BuildExtCommand,
         'develop': setupext.develop.Develop,
+        # The command for pip --editable.
+        'editable_wheel': setupext.editable_wheel.EditableWheel,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
