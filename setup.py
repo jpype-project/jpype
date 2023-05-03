@@ -38,9 +38,12 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
                   Path('native', 'python', 'include'),
                   Path('native', 'embedded', 'include')],
-    sources=sorted(map(str, list(Path('native', 'common').glob('*.cpp')) +
-             list(Path('native', 'python').glob('*.cpp')) +
-             list(Path('native', 'embedded').glob('*.cpp')))), platform=platform,
+    sources=sorted(
+        list(Path('native', 'common').glob('*.cpp')) +
+        list(Path('native', 'python').glob('*.cpp')) +
+        list(Path('native', 'embedded').glob('*.cpp'))
+    ),
+    platform=platform,
 ))
 jpypeJar = Extension(name="org.jpype",
                      sources=sorted(map(str, Path("native", "java").glob("**/*.java"))),
@@ -63,6 +66,7 @@ setup(
     package_data={'jpype': ['*.pyi']},
     cmdclass={
         'build_ext': setupext.build_ext.BuildExtCommand,
+        'develop': setupext.develop.Develop,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,

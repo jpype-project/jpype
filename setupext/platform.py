@@ -18,22 +18,20 @@
 # *****************************************************************************
 import setupext
 import os
+from pathlib import Path
 import sys
 import sysconfig
+import typing
 import distutils.log
 
-# This handles all of the work to make our platform specific extension options.
+# This handles all the work to make our platform specific extension options.
 
 
-def Platform(include_dirs=None, sources=None, platform=sys.platform):
-    if include_dirs is None:
-        include_dirs = []
-    if sources is None:
-        sources = []
-
+def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Path], platform: str):
+    sources = [str(pth) for pth in sources]
     platform_specific = {
         'include_dirs': include_dirs,
-        'sources': setupext.utils.find_sources(sources),
+        'sources': sources,
     }
 
     fallback_jni = os.path.join('native', 'jni_include')
@@ -120,27 +118,13 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
                            " It may work or not!", platform)
 
-# This code is used to include python library in the build when starting Python from
-# within Java.  It will be used in the future, but is not currently required.
-#    if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
-#        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
+   # This code is used to include python library in the build when starting Python from
+   # within Java.  It will be used in the future, but is not currently required.
+   # if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
+   #     platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
         distutils.log.info("Add JNI directory %s" % os.path.join(java_home, 'include', jni_md_platform))
         platform_specific['include_dirs'] += \
             [os.path.join(java_home, 'include', jni_md_platform)]
     return platform_specific
-
-
-# include this stolen from FindJNI.cmake
-"""
-FIND_PATH(JAVA_INCLUDE_PATH2 jni_md.h
-${JAVA_INCLUDE_PATH}
-${JAVA_INCLUDE_PATH}/win32
-${JAVA_INCLUDE_PATH}/linux
-${JAVA_INCLUDE_PATH}/freebsd
-${JAVA_INCLUDE_PATH}/openbsd
-${JAVA_INCLUDE_PATH}/solaris
-${JAVA_INCLUDE_PATH}/hp-ux
-${JAVA_INCLUDE_PATH}/alpha
-)"""

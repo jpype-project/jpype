@@ -16,7 +16,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import sys
 import os
 import subprocess
 import distutils.cmd

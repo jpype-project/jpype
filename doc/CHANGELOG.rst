@@ -4,7 +4,15 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+
 - **1.5.1_dev0 - 2023-12-15**
+  - Use PEP-518 and PEP-660 configuration for the package, allowing editable and
+    configurable builds using modern Python packaging tooling.
+    Where before ``python setup.py --enable-tracing develop``, now can be done with
+    ``pip install --editable ./ --install-option="--enable-tracing"``.
+    The old setup.py usage remains, but is discouraged, and the arguments are now passed
+    after the command (previously they were specified before).
+
 - **1.5.0 - 2023-04-03**
 
   - Support for Python 3.12
@@ -17,6 +25,8 @@ Latest Changes:
 
   - Java exceptions that occur in inequality comparisons now map to Python
     TypeError.
+
+- **1.4.2_dev0 - 2022-10-26**
 
   - Fixed crash when calling subscript on JArray.
 
