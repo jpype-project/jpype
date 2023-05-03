@@ -160,7 +160,7 @@ def interactive():
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
-    classpath: typing.Optional[_PathOrStr] = None,
+    classpath: typing.Optional[typing.Sequence[_PathOrStr], _PathOrStr] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -223,7 +223,7 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
-    extra_jvm_args = tuple()
+    extra_jvm_args: typing.Tuple[str, ...] = tuple()
 
     # Classpath handling
     if _hasClassPath(jvmargs):

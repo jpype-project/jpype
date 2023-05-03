@@ -22,16 +22,6 @@ import os
 from pathlib import Path
 import unittest
 
-
-@functools.wraps(jpype.startJVM)
-def runStartJVMTest(*args, **kwargs):
-    jpype.startJVM(*args, **kwargs)
-    try:
-        assert jpype.JClass('jpype.array.TestArray') is not None
-    except Exception as err:
-        raise RuntimeError("Test class not found") from err
-
-
 root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 cp = os.path.join(root, 'classes').replace('\\', '/')
 
@@ -62,26 +52,39 @@ class StartJVMCase(unittest.TestCase):
     def testInvalidArgsTrue(self):
         jpype.startJVM(
             "-for_sure_InVaLiD",
-            ignoreUnrecognized=True, convertStrings=False,
+            ignoreUnrecognized=True,
+            convertStrings=False,
         )
 
     def testClasspathArgKeyword(self):
-        runStartJVMTest(classpath=cp, convertStrings=False)
+        jpype.startJVM(classpath=cp, convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgList(self):
-        runStartJVMTest(classpath=[cp], convertStrings=False)
+        jpype.startJVM(
+            classpath=[cp],
+            convertStrings=False,
+        )
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgListEmpty(self):
-        runStartJVMTest(classpath=[cp, ''], convertStrings=False)
+        jpype.startJVM(
+            classpath=[cp, ''],
+            convertStrings=False,
+        )
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgDef(self):
-        runStartJVMTest('-Djava.class.path=%s' % cp, convertStrings=False)
+        jpype.startJVM('-Djava.class.path=%s' % cp, convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgPath(self):
-        runStartJVMTest(classpath=Path(cp), convertStrings=False)
+        jpype.startJVM(classpath=Path(cp), convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgPathList(self):
-        runStartJVMTest(classpath=[Path(cp)], convertStrings=False)
+        jpype.startJVM(classpath=[Path(cp)], convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testClasspathArgGlob(self):
         jpype.startJVM(classpath=os.path.join(cp, '..', 'jar', 'mrjar*'))
@@ -89,40 +92,52 @@ class StartJVMCase(unittest.TestCase):
 
     def testClasspathTwice(self):
         with self.assertRaises(TypeError):
-            runStartJVMTest('-Djava.class.path=%s' %
+            jpype.startJVM('-Djava.class.path=%s' %
                             cp, classpath=cp, convertStrings=False)
 
     def testClasspathBadType(self):
         with self.assertRaises(TypeError):
-            runStartJVMTest(classpath=1, convertStrings=False)
+            jpype.startJVM(classpath=1, convertStrings=False)
 
     def testJVMPathArg_Str(self):
-        runStartJVMTest(self.jvmpath, classpath=cp, convertStrings=False)
+        jpype.startJVM(self.jvmpath, classpath=cp, convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testJVMPathArg_None(self):
         # It is allowed to pass None as a JVM path
-        runStartJVMTest(None, classpath=cp, )
+        jpype.startJVM(
+            None,  # type: ignore
+            classpath=cp,
+        )
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testJVMPathArg_NoArgs(self):
-        runStartJVMTest(classpath=cp)
+        jpype.startJVM(
+            classpath=cp,
+        )
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testJVMPathArg_Path(self):
         with self.assertRaises(TypeError):
-            runStartJVMTest(
+            jpype.startJVM(
                 # Pass a path as the first argument. This isn't supported (this is
                 # reflected in the type definition), but the fact that it "works"
                 # gives rise to this test.
-                Path(self.jvmpath),   # type: ignore
-                classpath=cp,
+                Path(self.jvmpath),  # type: ignore
                 convertStrings=False,
             )
 
     def testJVMPathKeyword_str(self):
-        runStartJVMTest(classpath=cp, jvmpath=self.jvmpath,
-                        convertStrings=False)
+        jpype.startJVM(
+            classpath=cp,
+            jvmpath=self.jvmpath,
+            convertStrings=False,
+        )
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testJVMPathKeyword_Path(self):
-        runStartJVMTest(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
+        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
+        assert jpype.JClass('jpype.array.TestArray') is not None
 
     def testPathTwice(self):
         with self.assertRaises(TypeError):
@@ -130,4 +145,4 @@ class StartJVMCase(unittest.TestCase):
 
     def testBadKeyword(self):
         with self.assertRaises(TypeError):
-            jpype.startJVM(invalid=True)
+            jpype.startJVM(invalid=True)  # type: ignore
