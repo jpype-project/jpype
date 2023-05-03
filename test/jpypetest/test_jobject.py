@@ -302,7 +302,7 @@ class JClassTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             setattr(js, object(), 1)
 
-    def testGetSetBad(self):
+    def testGetSetBad_2(self):
         jo = JClass("java.lang.Object")()
         self.assertTrue(jo != JInt(0))
         self.assertFalse(jo == JInt(0))

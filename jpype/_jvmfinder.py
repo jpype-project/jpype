@@ -26,7 +26,7 @@ __all__ = ['getDefaultJVMPath',
 try:
     import winreg
 except ImportError:
-    winreg = None
+    winreg = None   # type: ignore[assignment]
 
 
 class JVMNotFoundException(ValueError):
@@ -45,7 +45,7 @@ class JVMNotSupportedException(ValueError):
 
     This exception is raised after a search found a valid Java home directory
     was found, but the JVM shared library found is not supported. Typically
-    this occures when the JVM does not match the architecture of Python
+    this occurs when the JVM does not match the architecture of Python
     32 vs 64 bit, or the JVM is older than the version used to compile
     JPype.
     """

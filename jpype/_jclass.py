@@ -99,7 +99,7 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
         return _jpype._getClass(jc)
 
 
-class JInterface(_jpype._JObject, internal=True):
+class JInterface(_jpype._JObject, internal=True):  # type: ignore[call-arg]
     """A meta class for all Java Interfaces.
 
     ``JInterface`` is serves as the base class for any Java class that is

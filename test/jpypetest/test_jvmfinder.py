@@ -111,7 +111,7 @@ class JVMFinderTest(unittest.TestCase):
     # it is included only for coverage purposes.  Revise this to be a more meaningful test
     # next time it breaks.
     # FIXME this test does passes locally but not in the CI.  Disabling for now.
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def testPlatform(self):
         with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.WindowsJVMFinder') as finder:
             mocksys.platform = 'win32'
@@ -147,7 +147,7 @@ class JVMFinderTest(unittest.TestCase):
     # FIXME this test is faking files using the mock system.  Replace it with stub
     # files so that we have a more accurate test rather than just testing the implementation.
     # FIXME this fails in the CI but works locally.   Disabling this for now.
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def testCheckArch(self):
         import struct
         with mock.patch("builtins.open", mock.mock_open(read_data="data")) as mock_file, \

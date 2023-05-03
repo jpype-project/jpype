@@ -19,7 +19,6 @@
 import jpype
 import gc
 import sys
-import os
 from os import path
 import subrun
 import unittest
@@ -27,12 +26,11 @@ import unittest
 try:
     import resource
 except ImportError:
-    resource = None
-    pass
+    resource = None  # type: ignore[assignment]
 
 
 def haveResource():
-    return bool(resource)
+    return resource is not None
 
 
 def hasRefCount():
@@ -43,7 +41,7 @@ def hasRefCount():
         return False
 
 
-class LeakChecker():
+class LeakChecker:
 
     def __init__(self):
         self.runtime = jpype.java.lang.Runtime.getRuntime()

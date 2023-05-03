@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import unittest
+
 import _jpype
 import jpype
 from jpype import *
@@ -66,7 +68,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     # FIXME investigate why the release is not happening
     # may indicate a leak. Disabling for now
-    @common.unittest.SkipTest
+    @common.unittest.SkipTest  # type: ignore
     def testJPArray_releaseBuffer(self):
         _jpype.fault("PyJPArray_releaseBuffer")
 
@@ -363,7 +365,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     # FIXME this needs special treatment. It should call __str__()
     # if toString is not defined.  Disable for now.
-    @common.unittest.SkipTest
+    @common.unittest.SkipTest  # type: ignore[arg-type]
     def testJPProxy_str(self):
         # Java has a hidden requirement that toString be available
         @JImplements("java.util.function.DoubleUnaryOperator")
@@ -408,7 +410,7 @@ class FaultTestCase(common.JPypeTestCase):
         jo.accept(None)
 
     @common.requireInstrumentation
-    def testJPProxy_void(self):
+    def testJPProxy_void_2(self):
         @JImplements("java.util.function.Consumer")
         class f(object):
             @JOverride
@@ -550,7 +552,7 @@ class FaultTestCase(common.JPypeTestCase):
     # indicates a problem in the exception handling path.
     # AssertionError: "fault" does not match "NULL context in JPRef()
     # Disabling for now.
-    @common.unittest.SkipTest
+    @common.unittest.SkipTest  # type: ignore[arg-type]
     @common.requireInstrumentation
     def testJPTypeManagerFindClass(self):
         ja = JArray(JInt, 2)([[1, 1], [1, 1]])
@@ -930,15 +932,15 @@ class FaultTestCase(common.JPypeTestCase):
         jo = JClass("java.lang.Object")()
         _jpype.fault("JPJavaFrame::MonitorEnter")
         with self.assertRaisesRegex(SystemError, "fault"):
-            with syncronized(jo):
+            with jpype.synchronized(jo):
                 pass
         _jpype.fault("JPJavaFrame::MonitorExit")
         with self.assertRaisesRegex(SystemError, "fault"):
-            with syncronized(jo):
+            with jpype.synchronized(jo):
                 pass
 
     @common.requireInstrumentation
-    def testJPJavaFrameMonitor(self):
+    def testJPJavaFrameMonitor_2(self):
         _jpype.fault("JPJavaFrame::FromReflectedMethod")
         with self.assertRaisesRegex(SystemError, "fault"):
             raise SystemError("fault")

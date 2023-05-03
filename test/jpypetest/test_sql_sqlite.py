@@ -1,12 +1,10 @@
 # This file is Public Domain and may be used without restrictions,
-# because noone should have to waste their lives typing this again.
-import _jpype
+# because nobody should have to waste their lives typing this again.
 import jpype
 from jpype.types import *
 from jpype import java
 import jpype.dbapi2 as dbapi2
 import common
-import time
 import datetime
 import decimal
 import threading
@@ -16,7 +14,7 @@ java = jpype.java
 try:
     import zlib
 except ImportError:
-    zlib = None
+    zlib = None  # type: ignore[assignment]
 
 
 db_name = "jdbc:sqlite::memory:"
@@ -657,7 +655,7 @@ class CursorTestCase(common.JPypeTestCase):
             if nxt:
                 self.assertEqual(cu.fetchone(), booze)
 
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def test_lastrowid(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze(id INTEGER IDENTITY PRIMARY KEY, name varchar(255))")
@@ -677,7 +675,7 @@ class CursorTestCase(common.JPypeTestCase):
             self.assertEqual(f[0][0], id0)
             self.assertEqual(f[1][0], id2)
 
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def test_lastrowidMany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze(id INTEGER IDENTITY PRIMARY KEY, name varchar(255))")
@@ -721,7 +719,7 @@ class CursorTestCase(common.JPypeTestCase):
             with self.assertRaises(dbapi2.ProgrammingError):
                 r = cu.callproc("lower", ("FOO",))
 
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def test_callprocBad(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             with self.assertRaises(dbapi2.ProgrammingError):
@@ -793,6 +791,7 @@ class CursorTestCase(common.JPypeTestCase):
                 cu.execute("insert into booze(name,price) values(?,?)", object())
 
 
+@common.unittest.skipUnless(zlib, "requires zlib")
 class AdapterTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -905,6 +904,7 @@ class ConverterTestCase(common.JPypeTestCase):
                 f = cu.fetchone(types=[])
 
 
+@common.unittest.skipUnless(zlib, "requires zlib")
 class GettersTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -921,7 +921,7 @@ class GettersTestCase(common.JPypeTestCase):
                 pass
 
 
-@common.unittest.skip
+@common.unittest.skip  # type: ignore
 class TransactionsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -1327,7 +1327,7 @@ class ThreadingTestCase(common.JPypeTestCase):
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.close, (), dbapi2.ProgrammingError)
 
-    @common.unittest.skip
+    @common.unittest.skip  # type: ignore
     def test_callproc(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name VARCHAR(10))")
