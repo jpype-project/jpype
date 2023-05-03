@@ -53,7 +53,8 @@ jpypeJar = Extension(name="org.jpype",
 
 
 setup(
-    # Non-standard, and extension behaviour. See also:
+    # Non-standard, and extension behaviour of setup() - project information
+    # should be put in pyproject.toml wherever possible. See also:
     # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html#setuptools-specific-configuration
     platforms=[
         'Operating System :: Microsoft :: Windows',
@@ -67,8 +68,6 @@ setup(
     cmdclass={
         'build_ext': setupext.build_ext.BuildExtCommand,
         'develop': setupext.develop.Develop,
-        # The command for pip --editable.
-        'editable_wheel': setupext.editable_wheel.EditableWheel,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,

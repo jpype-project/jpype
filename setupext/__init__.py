@@ -19,7 +19,6 @@
 from . import platform
 from . import build_ext
 from . import develop
-from . import editable_wheel
 from . import test_java
 from . import sdist
 from . import pytester

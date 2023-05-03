@@ -943,7 +943,7 @@ must be enabled with a compiler switch to activate. To active the logger, touch
 one of the cpp files in the native directory to mark the build as dirty, then
 compile the ``jpype`` module with: ::
 
-     pip install -e . --install-option="--enable-tracing"
+     python setup.py develop --enable-tracing
 
 Once built run a short test program that demonstrates the problem and capture the
 output of the terminal to a file. This should allow the developer to isolate
@@ -964,7 +964,7 @@ Coverage
 Some of the tests require additional instrumentation to run, this can be enabled
 with the ``enable-coverage`` option::
 
-    pip install -e . --install-option="--enable-coverage"
+    python setup.py develop --enable-coverage
 
 
 Debugging issues

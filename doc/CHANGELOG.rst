@@ -9,9 +9,14 @@ Latest Changes:
   - Use PEP-518 and PEP-660 configuration for the package, allowing editable and
     configurable builds using modern Python packaging tooling.
     Where before ``python setup.py --enable-tracing develop``, now can be done with
-    ``pip install --editable ./ --install-option="--enable-tracing"``.
+    ``pip install --editable ./ --config-setting="--install-option=--enable-tracing"``.
     The old setup.py usage remains, but is discouraged, and the arguments are now passed
     after the command (previously they were specified before).
+
+  - Use PEP-518 configuration for the package, allowing
+    configurable builds using more up-to-date Python packaging tooling.
+    For editable installs, ``python setup.py --enable-tracing develop``
+    must now be done with ``python setup.py develop --enable-tracing``.
 
 - **1.5.0 - 2023-04-03**
 
