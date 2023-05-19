@@ -160,7 +160,7 @@ def interactive():
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
-    classpath: typing.Optional[_PathOrStr] = None,
+    classpath: typing.Optional[typing.Sequence[_PathOrStr], _PathOrStr] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -211,7 +211,7 @@ def startJVM(
     # JVM path
     if jvmargs:
         # jvm is the first argument the first argument is a path or None
-        if jvmargs[0] is not None and isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-'):
+        if jvmargs[0] is None or (isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-')):
             if jvmpath:
                 raise TypeError('jvmpath specified twice')
             jvmpath = jvmargs[0]
@@ -223,7 +223,7 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
-    extra_jvm_args = tuple()
+    extra_jvm_args: typing.Tuple[str, ...] = tuple()
 
     # Classpath handling
     if _hasClassPath(jvmargs):
