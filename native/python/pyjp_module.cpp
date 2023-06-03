@@ -72,6 +72,7 @@ PyObject* _JMethodAnnotations = NULL;
 PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
 PyObject* _JVMNotRunning = NULL;
+char* JValueKey = "jvalue";
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -120,8 +121,6 @@ void PyJPModule_loadResources(PyObject* module)
 		_JMethodCode = PyObject_GetAttrString(module, "getMethodCode");
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
-
-		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
 
 	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
 	{

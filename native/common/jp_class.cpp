@@ -382,8 +382,10 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 						JPPyString::fromStringUTF8(frame.toString(value.l)).get()));
 			}
 		}
+		JPValue jv(cls, value);
+		JPPyObject cap = JPPyObject::claim(PyCapsule_New(&jv, JValueKey, NULL));
 		JPPyObject tuple1 = JPPyObject::call(PyTuple_Pack(2,
-				_JObjectKey, tuple0.get()));
+				cap.get(), tuple0.get()));
 		// Exceptions need new and init
 		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), NULL));
 	} else
@@ -393,10 +395,11 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		PyObject *obj2 = type->tp_alloc(type, 0);
 		JP_PY_CHECK();
 		obj = JPPyObject::claim(obj2);
+
+		// Fill in the Java slot
+		PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
 	}
 
-	// Fill in the Java slot
-	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
 	return obj;
 	JP_TRACE_OUT;
 }

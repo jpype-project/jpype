@@ -32,6 +32,14 @@ class JException(_jpype._JException, internal=True):
     ``java.lang.Throwable``.
 
     """
+    def __new__(cls, *args):
+        self = _jpype._JException.__new__(cls, *args)
+        # Exceptions generated from Java require a different path.
+        if len(args) == 2 and type(args[1]) == tuple:
+            return self
+        # Connect the Java cause to the __cause__ field.
+        self.__cause__ = _jpype._java_lang_Throwable.getCause(self)
+        return self
 
     # Included for compatibility with JPype 0.6.3
     def message(self):
