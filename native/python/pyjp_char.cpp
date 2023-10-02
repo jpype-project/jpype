@@ -34,8 +34,6 @@ struct PyJPChar
 #define _PyUnicode_LENGTH(op) (((PyASCIIObject *)(op))->length)
 #define _PyUnicode_STATE(op) (((PyASCIIObject *)(op))->state)
 #define _PyUnicode_HASH(op) (((PyASCIIObject *)(op))->hash)
-#define _PyUnicode_WSTR(op) (((PyASCIIObject*)(op))->wstr)
-#define _PyUnicode_WSTR_LENGTH(op)  (((PyCompactUnicodeObject*)(op))->wstr_length)
 
 static Py_UCS4 ord(PyObject *c)
 {
@@ -92,7 +90,6 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 	_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
 	_PyUnicode_STATE(self).ascii = 0;
-	_PyUnicode_STATE(self).ready = 1;
 	_PyUnicode_STATE(self).interned = 0;
 	_PyUnicode_STATE(self).compact = 1;
 
@@ -108,8 +105,6 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		char *data = (char*) ( ((PyCompactUnicodeObject*) self) + 1);
 		data[0] = p;
 		data[1] = 0;
-		_PyUnicode_WSTR_LENGTH(self) = 0;
-		_PyUnicode_WSTR(self) = NULL;
 		self->m_Obj.utf8 = NULL;
 		self->m_Obj.utf8_length = 0;
 	} else
@@ -119,15 +114,6 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		data[0] = p;
 		data[1] = 0;
 		_PyUnicode_STATE(self).kind = PyUnicode_2BYTE_KIND;
-		if (sizeof (wchar_t) == 2)
-		{
-			_PyUnicode_WSTR_LENGTH(self) = 1;
-			_PyUnicode_WSTR(self) = (wchar_t *) data;
-		} else
-		{
-			_PyUnicode_WSTR_LENGTH(self) = 0;
-			_PyUnicode_WSTR(self) = NULL;
-		}
 		self->m_Obj.utf8 = NULL;
 		self->m_Obj.utf8_length = 0;
 	}
