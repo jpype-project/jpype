@@ -174,22 +174,26 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	for (Py_ssize_t i = 0; i < n; ++i)
 	{
 		PyTypeObject *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
-		PyObject *res = PyDict_GetItem(type2->tp_dict, attr_name);
-		if (res)
-		{
-			Py_INCREF(res);
-			return res;
-		}
+        if (type2->tp_dict != NULL) {
+            PyObject *res = PyDict_GetItem(type2->tp_dict, attr_name);
+            if (res)
+            {
+                Py_INCREF(res);
+                return res;
+            }
+        }
 	}
 
 	// Last check is id in the parent
 	{
-		PyObject *res = PyDict_GetItem(Py_TYPE(type)->tp_dict, attr_name);
-		if (res)
-		{
-			Py_INCREF(res);
-			return res;
-		}
+        if (Py_TYPE(type)->tp_dict != NULL) {
+            PyObject *res = PyDict_GetItem(Py_TYPE(type)->tp_dict, attr_name);
+            if (res)
+            {
+                Py_INCREF(res);
+                return res;
+            }
+        }
 	}
 
 	return NULL;
