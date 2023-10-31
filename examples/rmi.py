@@ -25,7 +25,7 @@ startJVM(getDefaultJVMPath(), "-ea", "-Djava.class.path=%s/../test/classes" % ro
 
 p = java.rmi.Naming.lookup("rmi://localhost:2004/server")
 
-print p, p.__class__
+print(p, p.__class__)
 
 p.callRemote()
 
