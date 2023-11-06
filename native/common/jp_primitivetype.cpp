@@ -47,7 +47,11 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
 	for (Py_ssize_t i = 0; i < n; i++)
 	{
+        #if PY_VERSION_HEX<0x030C0000
+        newobj->ob_digit[i] = tmp->ob_digit[i];
+        #else
         ((PyLongObject*)newobj)->long_value.ob_digit[i] = ((PyLongObject*)tmp)->long_value.ob_digit[i];
+        #endif
 	}
 	return (PyObject*) newobj;
 }
