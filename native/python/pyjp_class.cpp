@@ -295,7 +295,11 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 		JP_RAISE_PYTHON();
 	}
 	PyType_Ready(type);
-	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
+    #if PY_VERSION_HEX<0x030C0000
+    PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
+    #else
+	PyDict_SetItemString(PyType_GetDict(type), "__module__", PyUnicode_FromString("_jpype"));
+    #endif
 	return (PyObject*) type;
 	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
 }
