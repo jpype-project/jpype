@@ -36,6 +36,8 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 {
 	if (wrapper == NULL)
 		JP_RAISE(PyExc_SystemError, "bad wrapper");
+
+	// Determine number of bytes to copy
 	Py_ssize_t n = Py_SIZE(tmp);
 	if (n < 0)
 		n = -n;
@@ -44,14 +46,16 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 	if (newobj == NULL)
 		return NULL;
 
+	// Size is in units of digits
+
 	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
-#warning PY_VERSION_HEX
 #if PY_VERSION_HEX<0x030c0000
-	char *p1 = (char*)&(newobj->ob_digit);
-	char *p2 = (char*)&(tmp->ob_digit);
+	digit *p1 = (digit*)&(newobj->ob_digit);
+	digit *p2 = (digit*)&(tmp->ob_digit);
 #else
-	char *p1 = (char*)&(newobj->long_value);
-	char *p2 = (char*)&(tmp->long_value);
+	newobj->long_value.lv_tag = tmp->long_value.lv_tag;
+	digit *p1 = (digit*)&(newobj->long_value.ob_digit);
+	digit *p2 = (digit*)&(tmp->long_value.ob_digit);
 #endif
 	for (Py_ssize_t i = 0; i < n; i++)
 	{
