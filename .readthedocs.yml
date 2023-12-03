@@ -20,9 +20,9 @@ python:
         - docs
 
 build:
+  tools: python
   os: ubuntu-22.04
-  python:
-    version: "3.8"
+  python: 3.8
   apt_packages:
     - openjdk-8-jdk
 
