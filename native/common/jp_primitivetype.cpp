@@ -46,23 +46,23 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 	if (newobj == NULL)
 		return NULL;
 
-	// Size is in units of digits
-
 	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
 #if PY_VERSION_HEX<0x030c0000
 	digit *p1 = (digit*)&(newobj->ob_digit);
 	digit *p2 = (digit*)&(tmp->ob_digit);
-#else
-	newobj->long_value.lv_tag = tmp->long_value.lv_tag;
-	digit *p1 = (digit*)&(newobj->long_value.ob_digit);
-	digit *p2 = (digit*)&(tmp->long_value.ob_digit);
-#endif
+
+	// Size is in units of digits
 	for (Py_ssize_t i = 0; i < n; i++)
 	{
 		*p1 = *p2;
 		p1++;
 		p2++;
 	}
+
+#else
+	// Size is in units of bytes + tag size
+	memcpy(&newobj->long_value, &tmp->long_value, n+sizeof(uintptr_t));
+#endif
 	return (PyObject*) newobj;
 }
 
