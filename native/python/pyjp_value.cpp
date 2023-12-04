@@ -69,7 +69,10 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
 	memset(obj, 0, size);
 
+
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
+	obj->ob_type = type;
+
 	if (type->tp_itemsize == 0)
 		PyObject_Init(obj, type);
 	else
@@ -107,8 +110,13 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
 		return 0;
 	Py_ssize_t offset;
-	Py_ssize_t sz = Py_SIZE(self);
-	// I have no clue what negative sizes mean
+	Py_ssize_t sz = 0;
+	// starting in 3.12 there is no longer ob_size in PyLong
+	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
+		sz = (((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
+	else if (type->tp_itemsize != 0)
+		sz = Py_SIZE(self);
+	// PyLong abuses ob_size with negative values prior to 3.12
 	if (sz < 0)
 		sz = -sz;
 	if (type->tp_itemsize == 0)
