@@ -13,7 +13,6 @@ sphinx:
 
 # Optionally set the version of Python and requirements required to build your docs
 python:
-  version: "3.8"
   install:
     - method: pip
       path: .
@@ -21,7 +20,9 @@ python:
         - docs
 
 build:
-  image: latest
+  tools:
+    python: "3.8"
+  os: ubuntu-22.04
   apt_packages:
     - openjdk-8-jdk
 
