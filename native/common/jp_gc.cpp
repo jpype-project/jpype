@@ -85,8 +85,8 @@ size_t getWorkingSize()
 	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
-	struct mallinfo mi;
-	mi = mallinfo();
+	struct mallinfo2 mi;
+	mi = mallinfo2();
 	current = (size_t) mi.uordblks;
 #endif
 
