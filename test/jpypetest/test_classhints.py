@@ -59,7 +59,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
 
     def testInstant(self):
         import datetime
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.UTC)
         Instant = jpype.JClass("java.time.Instant")
         self.assertIsInstance(jpype.JObject(now, Instant), Instant)
 

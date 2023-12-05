@@ -428,12 +428,9 @@ static PyType_Slot arraySlots[] = {
 	{ Py_sq_length,   (void*) &PyJPArray_len},
 	{ Py_tp_getset,   (void*) &arrayGetSets},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
+	{ Py_bf_getbuffer, (void*) &PyJPArray_getBuffer},
+	{ Py_bf_releasebuffer, (void*) &PyJPArray_releaseBuffer},
 	{0}
-};
-
-static PyBufferProcs arrayBuffer = {
-	(getbufferproc) & PyJPArray_getBuffer,
-	(releasebufferproc) & PyJPArray_releaseBuffer
 };
 
 PyTypeObject *PyJPArray_Type = NULL;
@@ -445,12 +442,9 @@ static PyType_Spec arraySpec = {
 	arraySlots
 };
 
-static PyBufferProcs arrayPrimBuffer = {
-	(getbufferproc) & PyJPArrayPrimitive_getBuffer,
-	(releasebufferproc) & PyJPArray_releaseBuffer
-};
-
 static PyType_Slot arrayPrimSlots[] = {
+	{ Py_bf_getbuffer, (void*) &PyJPArrayPrimitive_getBuffer},
+	{ Py_bf_releasebuffer, (void*) &PyJPArray_releaseBuffer},
 	{0}
 };
 
@@ -472,14 +466,14 @@ void PyJPArray_initType(PyObject * module)
 	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	JP_PY_CHECK();
-	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
+	//PyJPArray_Type->tp_as_buffer = &arrayBuffer;
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
 
 	tuple = JPPyObject::call(PyTuple_Pack(1, PyJPArray_Type));
 	PyJPArrayPrimitive_Type = (PyTypeObject*)
 			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get());
-	PyJPArrayPrimitive_Type->tp_as_buffer = &arrayPrimBuffer;
+	//PyJPArrayPrimitive_Type->tp_as_buffer = &arrayPrimBuffer;
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JArrayPrimitive",
 			(PyObject*) PyJPArrayPrimitive_Type);

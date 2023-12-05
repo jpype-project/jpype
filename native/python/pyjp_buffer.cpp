@@ -113,13 +113,11 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 static PyType_Slot bufferSlots[] = {
 	{ Py_tp_dealloc,  (void*) PyJPBuffer_dealloc},
 	{ Py_tp_repr,     (void*) PyJPBuffer_repr},
+	{ Py_bf_getbuffer, (void*) PyJPBuffer_getBuffer},
+	{ Py_bf_releasebuffer, (void*) PyJPBuffer_releaseBuffer},
 	{0}
 };
 
-static PyBufferProcs directBuffer = {
-	(getbufferproc) & PyJPBuffer_getBuffer,
-	(releasebufferproc) & PyJPBuffer_releaseBuffer
-};
 
 PyTypeObject *PyJPBuffer_Type = NULL;
 static PyType_Spec bufferSpec = {
@@ -138,7 +136,6 @@ void PyJPBuffer_initType(PyObject * module)
 {
 	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
-	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JBuffer", (PyObject*) PyJPBuffer_Type);
 	JP_PY_CHECK();

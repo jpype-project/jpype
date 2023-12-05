@@ -276,6 +276,12 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 			case Py_tp_getset:
 				type->tp_getset = (PyGetSetDef*) slot->pfunc;
 				break;
+			case Py_bf_getbuffer:
+				type->tp_as_buffer->bf_getbuffer = (getbufferproc) slot->pfunc;
+				break;
+			case Py_bf_releasebuffer:
+				type->tp_as_buffer->bf_releasebuffer = (releasebufferproc) slot->pfunc;
+				break;
 				// GCOVR_EXCL_START
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
