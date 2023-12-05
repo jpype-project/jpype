@@ -49,6 +49,7 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 		return NULL;
 
 	// Size is in units of digits
+	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
 	for (Py_ssize_t i = 0; i < n; i++)
 	{
 		newobj->ob_digit[i] = tmp->ob_digit[i];
