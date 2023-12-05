@@ -172,7 +172,7 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	// Grab the mro
 	PyObject *mro = type->tp_mro;
 
-	// mco should be a tuple
+	// mro should be a tuple
 	Py_ssize_t n = PyTuple_Size(mro);
 
 	// Search the tuple for the attribute
