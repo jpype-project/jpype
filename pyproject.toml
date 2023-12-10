@@ -6,6 +6,7 @@ module = [
     "java.*",
     "jpypex.common",
     "jedi",
+    "jedi.access",
 ]
 ignore_missing_imports = true
 
