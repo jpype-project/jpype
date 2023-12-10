@@ -22,8 +22,7 @@ JPVoidType::JPVoidType()
 }
 
 JPVoidType::~JPVoidType()
-{
-}
+= default;
 
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
@@ -38,7 +37,7 @@ JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 {
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			frame.CallVoidMethodA(obj, mth, val);
 		else
 			frame.CallNonvirtualVoidMethodA(obj, clazz, mth, val);
@@ -53,7 +52,7 @@ JPValue JPVoidType::getValueFromObject(const JPValue& obj)
 	// This is needed if we call a caller sensitive method
 	// and we get a return which is expected to be a void object
 	JP_TRACE_IN("JPVoidType::getValueFromObject");
-	return JPValue(this, (jobject) 0);
+	return JPValue(this, (jobject) nullptr);
 	JP_TRACE_OUT;
 }
 
@@ -119,7 +118,7 @@ void JPVoidType::releaseView(JPArrayView& view)
 
 const char* JPVoidType::getBufferFormat()
 {
-	return NULL;
+	return nullptr;
 }
 
 Py_ssize_t JPVoidType::getItemSize()
@@ -151,7 +150,7 @@ jdouble JPVoidType::getAsDouble(jvalue v)
 PyObject *JPVoidType::newMultiArray(JPJavaFrame &frame,
 		JPPyBuffer& view, int subs, int base, jobject dims)
 {
-	return NULL;
+	return nullptr;
 }
 
 // GCOVR_EXCL_STOP

@@ -25,8 +25,7 @@ class JPEncoding
 public:
 
 	JPEncoding()
-	{
-	}
+	= default;
 	virtual ~JPEncoding();
 
 	/** Store a code point in an outgoing buffer. */

@@ -24,10 +24,6 @@ JPDoubleType::JPDoubleType()
 {
 }
 
-JPDoubleType::~JPDoubleType()
-{
-}
-
 JPPyObject JPDoubleType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	PyTypeObject * wrapper = getHost();
@@ -43,8 +39,8 @@ JPValue JPDoubleType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallDoubleMethodA(jo, jb->m_DoubleValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallDoubleMethodA(jo, jb->m_DoubleValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -56,7 +52,7 @@ class JPConversionAsDoubleExact : public JPConversionAsFloat<JPDoubleType>
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyFloat_CheckExact(match.object))
 			return match.type = JPMatch::_none;
@@ -70,10 +66,10 @@ class JPConversionAsJDouble : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -87,7 +83,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = dynamic_cast<JPPrimitiveType*>( cls2);
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -108,7 +104,7 @@ public:
 
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
@@ -183,7 +179,7 @@ JPPyObject JPDoubleType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, j
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallDoubleMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualDoubleMethodA(obj, clazz, mth, val);
@@ -267,7 +263,7 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -320,7 +316,7 @@ Py_ssize_t JPDoubleType::getItemSize()
 void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jdouble* b = (jdouble*) ((char*) memory + offset);
+	auto* b = (jdouble*) ((char*) memory + offset);
 	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
 }
 

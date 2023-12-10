@@ -15,7 +15,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "jp_arrayclass.h"
-#include "jp_boxedtype.h"
 #include "jp_method.h"
 #include "pyjp.h"
 
@@ -37,12 +36,11 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 }
 
 JPMethod::~JPMethod()
-{
-}
+= default;
 
 void JPMethod::setParameters(
 		JPClass *returnType,
-		JPClassList parameterTypes)
+		JPClassList&& parameterTypes)
 {
 	m_ReturnType = returnType;
 	m_ParameterTypes = parameterTypes;
@@ -56,7 +54,7 @@ string JPMethod::toString() const
 JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
 	JP_TRACE_IN("JPMethod::matchVars");
-	JPArrayClass *arraytype = (JPArrayClass*) vartype;
+	auto *arraytype = dynamic_cast<JPArrayClass*>( vartype);
 	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
 
@@ -191,7 +189,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	{
 		JP_TRACE("Pack indirect varargs");
 		len = tlen - 1;
-		JPArrayClass* type = (JPArrayClass*) m_ParameterTypes[tlen - 1];
+		auto* type = dynamic_cast<JPArrayClass*>( m_ParameterTypes[tlen - 1]);
 		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
 	}
 
@@ -227,17 +225,17 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	{
 		JPValue* selfObj = PyJPValue_getJavaSlot(arg[0]);
 		jobject c;
-		if (selfObj == NULL)
+		if (selfObj == nullptr)
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
-			jvalue  v = match.m_Arguments[0].convert();
-			c = v.l;
+			auto val = match.m_Arguments[0].convert();
+			c = val.l;
 		} else
 		{
 			c = selfObj->getJavaObject();
 		}
-		jclass clazz = NULL;
+		jclass clazz = nullptr;
 		if (!isAbstract() && !instance)
 		{
 			clazz = m_Class->getJavaClass();
@@ -265,26 +263,26 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 
 	//Proxy the call to
 	//   public static Object callMethod(Method method, Object obj, Object[] args)
-	jobject self = NULL;
+	jobject self = nullptr;
 	size_t len = alen;
 	if (!isStatic())
 	{
 		JP_TRACE("Call instance");
 		len--;
 		JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
-		if (selfObj == NULL)
+		if (selfObj == nullptr)
 			JP_RAISE(PyExc_RuntimeError, "Null object"); // GCOVR_EXCL_LINE
 		self = selfObj->getJavaObject();
 	}
 
 	// Convert arguments
-	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), NULL);
+	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), nullptr);
 	for (jsize i = 0; i < (jsize) len; ++i)
 	{
 		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];
 		if (cls->isPrimitive())
 		{
-			JPPrimitiveType* type = (JPPrimitiveType*) cls;
+			auto* type = dynamic_cast<JPPrimitiveType*>( cls);
 			PyObject *u = arg[i + match.m_Skip];
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(context);
@@ -311,7 +309,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	if (retType->isPrimitive())
 	{
 		JP_TRACE("Return primitive");
-		JPClass *boxed = ((JPPrimitiveType*) retType)->getBoxedClass(context);
+		JPClass *boxed = (dynamic_cast<JPPrimitiveType*>( retType))->getBoxedClass(context);
 		JPValue out = retType->getValueFromObject(JPValue(boxed, o));
 		return retType->convertToPythonObject(frame, out.getValue(), false);
 	} else
@@ -340,12 +338,12 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 	ensureTypeCache();
 	JPContext *context = m_Class->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	stringstream res;
+	std::stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
 
 	bool isFirst = true;
-	for (vector<JPClass*>::iterator it = m_ParameterTypes.begin(); it != m_ParameterTypes.end(); it++)
+	for (auto & m_ParameterType : m_ParameterTypes)
 	{
 		if (isFirst && !isStatic())
 		{
@@ -353,7 +351,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			continue;
 		}
 		isFirst = false;
-		res << (*it)->getCanonicalName();
+		res << m_ParameterType->getCanonicalName();
 	}
 
 	res << ") ==> ";
@@ -380,17 +378,15 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			break;
 	}
 	// GCOVR_EXCL_STOP
-	res << endl;
+	res << std::endl;
 	return res.str();
 }
 
 bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 {
-	for (JPMethodList::const_iterator it = m_MoreSpecificOverloads.begin();
-			it != m_MoreSpecificOverloads.end();
-			++it)
+	for (auto m_MoreSpecificOverload : m_MoreSpecificOverloads)
 	{
-		if (other == *it)
+		if (other == m_MoreSpecificOverload)
 			return true;
 	}
 	return false;

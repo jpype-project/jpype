@@ -32,7 +32,7 @@ struct PyJPMonitor
 static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_init");
-	self->m_Monitor = NULL;
+	self->m_Monitor = nullptr;
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 
@@ -42,7 +42,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		return -1;
 
 	JPValue *v1 = PyJPValue_getJavaSlot(value);
-	if (v1 == NULL)
+	if (v1 == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java object is required.");
 		return -1;
@@ -60,7 +60,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		return -1;
 	}
 
-	if (v1->getValue().l == NULL)
+	if (v1->getValue().l == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java null cannot be used to synchronize.");
 		return -1;
@@ -83,7 +83,7 @@ static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 {
 	JP_PY_TRY("PyJPMonitor_str");
 	return PyUnicode_FromFormat("<java monitor>");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
@@ -93,7 +93,7 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
@@ -103,13 +103,13 @@ static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyMethodDef monitorMethods[] = {
 	{"__enter__", (PyCFunction) (&PyJPMonitor_enter), METH_NOARGS, ""},
 	{"__exit__", (PyCFunction) (&PyJPMonitor_exit), METH_VARARGS, ""},
-	{NULL},
+	{nullptr},
 };
 
 static PyType_Slot monitorSlots[] = {
@@ -128,7 +128,7 @@ PyType_Spec PyJPMonitorSpec = {
 	monitorSlots
 };
 
-PyTypeObject* PyJPMonitor_Type = NULL;
+PyTypeObject* PyJPMonitor_Type = nullptr;
 
 #ifdef __cplusplus
 }

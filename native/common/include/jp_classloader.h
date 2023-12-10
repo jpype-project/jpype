@@ -30,7 +30,7 @@ class JPClassLoader
 public:
 	/** Initialize the class loader.
 	 */
-	JPClassLoader(JPJavaFrame& frame);
+	explicit JPClassLoader(JPJavaFrame& frame);
 
 	/** Load a class by name from the jpype.jar.
 	 *

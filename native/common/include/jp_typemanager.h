@@ -29,7 +29,7 @@ public:
 	 * Initialize the type manager caches
 	 */
 	explicit JPTypeManager(JPJavaFrame& frame);
-	~JPTypeManager();
+	~JPTypeManager() = default;
 
 	/**
 	 * Find a class using a native name.

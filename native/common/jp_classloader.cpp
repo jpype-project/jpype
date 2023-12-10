@@ -34,10 +34,10 @@ static jobject toURL(JPJavaFrame &frame, const string& path)
 
 	// url = file.toURI().toURL();
 	jmethodID toURI = frame.GetMethodID(fileClass, "toURI", "()Ljava/net/URI;");
-	jobject uri = frame.CallObjectMethodA(file, toURI, NULL);
+	jobject uri = frame.CallObjectMethodA(file, toURI, nullptr);
 	jclass uriClass = frame.GetObjectClass(uri);
 	jmethodID toURL = frame.GetMethodID(uriClass, "toURL", "()Ljava/net/URL;");
-	return frame.CallObjectMethodA(uri, toURL, NULL);
+	return frame.CallObjectMethodA(uri, toURL, nullptr);
 }
 
 JPClassLoader::JPClassLoader(JPJavaFrame& frame)
@@ -53,10 +53,10 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	jmethodID getSystemClassLoader
 			= frame.GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
 	m_SystemClassLoader = JPObjectRef(frame,
-			frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, 0));
+			frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, nullptr));
 
 	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/classloader/DynamicClassLoader");
-	if (dynamicLoaderClass != NULL)
+	if (dynamicLoaderClass != nullptr)
 	{
 		// Easy the Dynamic loader is already in the path, so just use it as the bootloader
 		jmethodID newDyLoader = frame.GetMethodID(dynamicLoaderClass, "<init>",
@@ -83,7 +83,7 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 
 	// urlArray = new URL[]{url};
 	jclass urlClass = frame.GetObjectClass(url1);
-	jobjectArray urlArray = frame.NewObjectArray(1, urlClass, NULL);
+	jobjectArray urlArray = frame.NewObjectArray(1, urlClass, nullptr);
 	frame.SetObjectArrayElement(urlArray, 0, url1);
 	//	frame.SetObjectArrayElement(urlArray, 1, url2);
 
@@ -99,7 +99,7 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	v[0].l = frame.NewStringUTF("org.jpype.classloader.DynamicClassLoader");
 	v[1].z = true;
 	v[2].l = cl;
-	jclass dyClass = (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
+	auto dyClass = (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
 
 	// dycl.newInstance(systemClassLoader);
 	jmethodID newDyLoader = frame.GetMethodID(dyClass, "<init>", "(Ljava/lang/ClassLoader;)V");

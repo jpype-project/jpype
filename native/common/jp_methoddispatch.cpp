@@ -14,6 +14,7 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <algorithm>
+#include <utility>
 #include "jpype.h"
 #include "jp_method.h"
 #include "jp_methoddispatch.h"
@@ -31,8 +32,7 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 }
 
 JPMethodDispatch::~JPMethodDispatch()
-{
-}
+= default;
 
 const string& JPMethodDispatch::getName() const
 {
@@ -52,7 +52,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	//   Then make sure we don't hit the rare case that the hash was -1 by chance.
 	//   Then make sure it isn't variadic list match, as the hash of an opaque list
 	//   element can't be resolved without going through the resolution process.
-	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != 0
+	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != nullptr
 			&& !m_LastCache.m_Overload->isVarArgs())
 	{
 		bestMatch.m_Overload = m_LastCache.m_Overload;
@@ -63,7 +63,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			return true;
 		else
 			// bad match so forget the overload.
-			bestMatch.m_Overload = 0;
+			bestMatch.m_Overload = nullptr;
 	}
 
 	// We need two copies of the match.  One to hold the best match we have
@@ -72,10 +72,8 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 	// Check each overload in order (the TypeManager orders them by priority
 	// according to Java overload rules).
-	for (JPMethodList::iterator it = m_Overloads.begin(); it != m_Overloads.end(); ++it)
+	for (auto & current : m_Overloads)
 	{
-		JPMethod* current = *it;
-
 		JP_TRACE("Trying to match", current->toString());
 		current->matches(frame, match, callInstance, arg);
 
@@ -91,7 +89,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			continue;
 
 		// If this is the first match then make it the best.
-		if (bestMatch.m_Overload == 0)
+		if (bestMatch.m_Overload == nullptr)
 		{
 			bestMatch = match;
 			continue;
@@ -136,7 +134,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			JP_TRACE("Adding to ambiguous list");
 
 			// Keep trace of ambiguous overloads for the error report.
-			ambiguous.push_back(*it);
+			ambiguous.push_back(current);
 		}
 	}
 
@@ -161,9 +159,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << " between:" << std::endl;
-		for (vector<JPMethod*>::iterator it = ambiguous.begin(); it != ambiguous.end(); ++it)
+		for (auto & ambiguous_mthd : ambiguous)
 		{
-			ss << "\t" << (*it)->toString() << std::endl;
+			ss << "\t" << ambiguous_mthd->toString() << std::endl;
 		}
 		JP_RAISE(PyExc_TypeError, ss.str());
 		JP_TRACE(ss.str());
@@ -192,12 +190,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 			ss << Py_TYPE(arg[i])->tp_name;
 		}
 		ss << ")" << ", options are:" << std::endl;
-		for (JPMethodList::iterator it = m_Overloads.begin();
-				it != m_Overloads.end();
-				++it)
+		for (auto current : m_Overloads)
 		{
-			JPMethod* current = *it;
-			ss << "\t" << current->toString();
+				ss << "\t" << current->toString();
 			ss << std::endl;
 		}
 		JP_RAISE(PyExc_TypeError, ss.str());
@@ -242,13 +237,12 @@ bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool 
 
 string JPMethodDispatch::matchReport(JPPyObjectVector& args)
 {
-	stringstream res;
-	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << endl;
+	std::stringstream res;
+	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << std::endl;
 
-	for (JPMethodList::iterator cur = m_Overloads.begin(); cur != m_Overloads.end(); cur++)
+	for (auto current : m_Overloads)
 	{
-		JPMethod* current = *cur;
-		res << "  " << current->matchReport(args);
+			res << "  " << current->matchReport(args);
 	}
 	return res.str();
 }

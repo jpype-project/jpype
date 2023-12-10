@@ -41,7 +41,7 @@ static PyObject *PyJPBuffer_repr(PyJPBuffer *self)
 {
 	JP_PY_TRY("PyJPBuffer_repr");
 	return PyUnicode_FromFormat("<java buffer '%s'>", Py_TYPE(self)->tp_name);
-	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static void PyJPBuffer_releaseBuffer(PyJPBuffer *self, Py_buffer *view)
@@ -55,7 +55,7 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 	JP_PY_TRY("PyJPBufferPrimitive_getBuffer");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	if (self->m_Buffer == NULL)
+	if (self->m_Buffer == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null buffer"); // GCOVR_EXCL_LINE
 	try
 	{
@@ -80,18 +80,18 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 		{
 			if (view->strides[0] != view->itemsize)
 				JP_RAISE(PyExc_BufferError, "slices required strides");
-			view->strides = NULL;
+			view->strides = nullptr;
 		}
 
 		// If shape is not requested
 		if ((flags & PyBUF_ND) != PyBUF_ND)
 		{
-			view->shape = NULL;
+			view->shape = nullptr;
 		}
 
 		// If format is not requested
 		if ((flags & PyBUF_FORMAT) != PyBUF_FORMAT)
-			view->format = NULL;
+			view->format = nullptr;
 
 		// Okay all successful so reference the parent object
 		view->obj = (PyObject*) self;
@@ -127,7 +127,7 @@ static PyBufferProcs directBuffer = {
 };
 #endif
 
-PyTypeObject *PyJPBuffer_Type = NULL;
+PyTypeObject *PyJPBuffer_Type = nullptr;
 static PyType_Spec bufferSpec = {
 	"_jpype._JBuffer",
 	sizeof (PyJPBuffer),

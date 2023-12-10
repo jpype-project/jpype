@@ -22,8 +22,7 @@ JPMonitor::JPMonitor(JPContext* context, jobject value) : m_Value(context, value
 }
 
 JPMonitor::~JPMonitor()
-{
-}
+= default;
 
 void JPMonitor::enter()
 {

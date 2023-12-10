@@ -30,8 +30,7 @@ JPClassType::JPClassType(JPJavaFrame& frame,
 }
 
 JPClassType::~JPClassType()
-{
-}
+= default;
 
 JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 {

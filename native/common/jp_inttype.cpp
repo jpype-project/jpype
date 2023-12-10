@@ -25,13 +25,12 @@ JPIntType::JPIntType()
 }
 
 JPIntType::~JPIntType()
-{
-}
+= default;
 
 JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
-	if (getHost() == NULL)
+	if (getHost() == nullptr)
 		return tmp;
 	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
@@ -44,8 +43,8 @@ JPValue JPIntType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -57,10 +56,10 @@ class JPConversionJInt : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -74,7 +73,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = dynamic_cast<JPPrimitiveType*>( cls2);
 			switch (prim->getTypeCode())
 			{
 				case 'C':
@@ -91,7 +90,7 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
@@ -162,7 +161,7 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallIntMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualIntMethodA(obj, clazz, mth, val);
@@ -252,7 +251,7 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetIntArrayRegion(array, ndx, 1, &val);
 	jvalue v;

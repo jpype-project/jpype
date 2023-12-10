@@ -15,8 +15,8 @@
  *****************************************************************************/
 #include "jp_encoding.h"
 
-// These encoders handle all of the codes expected to be passed between
-// Java and Python assuming they both generate complient codings.  However,
+// These encoders handle all the codes expected to be passed between
+// Java and Python assuming they both generate compliant codings.  However,
 // this code does not handle miscodings very well.  The current behavior
 // is to simply terminate the string at the bad code without producing
 // a warning.  I can add errors, but I am not sure how I would test it
@@ -33,7 +33,7 @@
 // handling.  And the last thing we want to do is throw an exception
 // while trying to convert an exception string while reporting.  That
 // would completely redirect the user.  Thus truncation seems like
-// a sane policy unless we can verify all of the potential edge cases.
+// a sane policy unless we can verify all the potential edge cases.
 //
 // Alternatively we could make them a bit more permissive and
 // try to automatically correct bad encodings by recognizing
@@ -41,8 +41,7 @@
 // has the downside that we can't test it currently.
 
 JPEncoding::~JPEncoding()
-{
-}
+= default;
 
 // char* to stream from
 // https://stackoverflow.com/questions/7781898/get-an-istream-from-a-char
@@ -77,7 +76,7 @@ std::string transcribe(const char* in, size_t len,
 	}
 	if (ascii)
 	{
-		return std::string(in, len);
+		return {in, len};
 	}
 
 	// Convert input to istream source

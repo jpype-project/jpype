@@ -22,7 +22,7 @@ class JPMethod : public JPResource
 {
 	friend class JPMethodDispatch;
 public:
-	JPMethod();
+	JPMethod() = default;
 	JPMethod(JPJavaFrame& frame,
 			JPClass* claz,
 			const string& name,
@@ -31,11 +31,11 @@ public:
 			JPMethodList& moreSpecific,
 			jint modifiers);
 
-	virtual ~JPMethod();
+	~JPMethod() override;
 
 	void setParameters(
 			JPClass *returnType,
-			JPClassList parameterTypes);
+			JPClassList&& parameterTypes);
 
 	/** Check to see if this overload matches the argument list.
 	 *
@@ -97,22 +97,23 @@ public:
 		return m_Method.get();
 	}
 
+    JPMethod& operator=(const JPMethod&) = delete;
+
 private:
 	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
 	void ensureTypeCache();
 
 	JPMethod(const JPMethod& o);
-	JPMethod& operator=(const JPMethod&) ;
 
 private:
-	JPClass*                 m_Class;
+	JPClass*                 m_Class{};
 	string                   m_Name;
 	JPObjectRef              m_Method;
-	jmethodID                m_MethodID;
-	JPClass*                 m_ReturnType;
+	jmethodID                m_MethodID{};
+	JPClass*                 m_ReturnType{};
 	JPClassList              m_ParameterTypes;
 	JPMethodList             m_MoreSpecificOverloads;
-	jint                     m_Modifiers;
+	jint                     m_Modifiers{};
 } ;
 
-#endif // _JPMETHODOVERLOAD_H_
+#endif // _JPMETHOD_H_

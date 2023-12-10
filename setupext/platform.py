@@ -59,37 +59,36 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
 
     platform_specific['extra_link_args'] = []
     distutils.log.info("Configure platform to", platform)
+    cpp_std = "c++11"
+    gcc_like_cflags = ['-g0', f'-std={cpp_std}', '-O2']
 
-    static = True
     if platform == 'win32':
         distutils.log.info("Add windows settings")
-   #     platform_specific['libraries'] = ['Advapi32']
         platform_specific['define_macros'] = [('WIN32', 1)]
         if sys.version > '3':
             platform_specific['extra_compile_args'] = [
-                '/Zi', '/EHsc', '/std:c++14']
+                '/Zi', '/EHsc', f'/std:c++14']
         else:
             platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
-   #     platform_specific['extra_link_args'] = ['/DEBUG']
         jni_md_platform = 'win32'
 
     elif platform == 'darwin':
         distutils.log.info("Add darwin settings")
         platform_specific['libraries'] = ['dl']
         platform_specific['define_macros'] = [('MACOSX', 1)]
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = gcc_like_cflags
         jni_md_platform = 'darwin'
 
     elif platform.startswith('linux'):
         distutils.log.info("Add linux settings")
         platform_specific['libraries'] = ['dl']
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = gcc_like_cflags
         jni_md_platform = 'linux'
 
     elif platform.startswith('aix7'):
         distutils.log.info("Add aix settings")
         platform_specific['libraries'] = ['dl']
-        platform_specific['extra_compile_args'] = ['-g3', '-std=c++11', '-O2']
+        platform_specific['extra_compile_args'] = gcc_like_cflags
         jni_md_platform = 'aix7'
 
     elif platform.startswith('freebsd'):
@@ -103,11 +102,10 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
     elif platform.startswith('android'):
         distutils.log.info("Add android settings")
         platform_specific['libraries'] = ['dl', 'c++_shared', 'SDL2']
-        platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-fexceptions', '-frtti', '-O2']
+        platform_specific['extra_compile_args'] = gcc_like_cflags + ['-fexceptions', '-frtti']
 
         print("PLATFORM_SPECIFIC:", platform_specific)
         jni_md_platform = 'linux'
-        static = False
 
     elif platform == 'zos':
         distutils.log.info("Add zos settings")
@@ -116,7 +114,7 @@ def Platform(include_dirs=None, sources=None, platform=sys.platform):
     elif platform == 'sunos5':
         distutils.log.info("Add solaris settings")
         jni_md_platform = 'solaris'
-        
+
     else:
         jni_md_platform = ''
         distutils.log.warn("Your platform '%s' is not being handled explicitly."

@@ -26,13 +26,13 @@ public:
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	virtual ~JPStringType();
+	~JPStringType() override;
 
 public:
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPMatch::Type findJavaConversion(JPMatch& match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
-	virtual JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
+	void getConversionInfo(JPConversionInfo &info) override;
+	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 } ;
 
 #endif /* JP_STRINGTYPE_H */

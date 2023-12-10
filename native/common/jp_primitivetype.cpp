@@ -21,8 +21,7 @@ JPPrimitiveType::JPPrimitiveType(const string& name)
 }
 
 JPPrimitiveType::~JPPrimitiveType()
-{
-}
+= default;
 
 bool JPPrimitiveType::isPrimitive() const
 {
@@ -35,7 +34,7 @@ extern "C" Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self);
 
 PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 {
-	if (wrapper == NULL)
+	if (wrapper == nullptr)
 		JP_RAISE(PyExc_SystemError, "bad wrapper");
 
 #if PY_VERSION_HEX<0x030c0000
@@ -44,9 +43,9 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 	if (n < 0)
 		n = -n;
 
-	PyLongObject *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
-	if (newobj == NULL)
-		return NULL;
+	auto *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
+	if (newobj == nullptr)
+		return nullptr;
 
 	// Size is in units of digits
 	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);

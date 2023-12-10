@@ -117,9 +117,9 @@ JPGarbageCollection::JPGarbageCollection(JPContext *context)
 	running = false;
 	in_python_gc = false;
 	java_triggered = false;
-	python_gc = NULL;
-	_SystemClass = NULL;
-	_gcMethodID = NULL;
+	python_gc = nullptr;
+	_SystemClass = nullptr;
+	_gcMethodID = nullptr;
 
 	last_python = 0;
 	last_java = 0;
@@ -248,7 +248,7 @@ void JPGarbageCollection::onEnd()
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
 			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
-			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, 0);
+			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, nullptr);
 			python_triggered++;
 		}
 	}

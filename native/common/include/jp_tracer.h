@@ -58,7 +58,7 @@ private:
 
 public:
 
-	JPypeTracer(const char *name, void *ref = 0);
+	explicit JPypeTracer(const char *name, void *ref = nullptr);
 	~JPypeTracer();
 
 	void gotError(const JPStackInfo& info)
@@ -96,14 +96,14 @@ inline void trace(const T& msg)
 		return;
 	std::stringstream str;
 	str << msg;
-	JPypeTracer::trace1(NULL, str.str().c_str());
+	JPypeTracer::trace1(nullptr, str.str().c_str());
 }
 
 inline void trace(const char *msg)
 {
 	if ((_PyJPModule_trace & 1) == 0)
 		return;
-	JPypeTracer::trace1(NULL, msg);
+	JPypeTracer::trace1(nullptr, msg);
 }
 
 template <class T1, class T2>
@@ -113,7 +113,7 @@ inline void trace(const T1& msg1, const T2 & msg2)
 		return;
 	std::stringstream str;
 	str << msg1 << " " << msg2;
-	JPypeTracer::trace1(NULL, str.str().c_str());
+	JPypeTracer::trace1(nullptr, str.str().c_str());
 }
 
 inline void trace(const char *msg1, const char *msg2)
@@ -130,7 +130,7 @@ inline void trace(const T1& msg1, const T2& msg2, const T3 & msg3)
 		return;
 	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3;
-	JPypeTracer::trace1(NULL, str.str().c_str());
+	JPypeTracer::trace1(nullptr, str.str().c_str());
 }
 
 template <class T1, class T2, class T3, class T4>
@@ -140,7 +140,7 @@ inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4 & msg
 		return;
 	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4;
-	JPypeTracer::trace1(NULL, str.str().c_str());
+	JPypeTracer::trace1(nullptr, str.str().c_str());
 }
 
 template <class T1, class T2, class T3, class T4, class T5>
@@ -150,7 +150,7 @@ inline void trace(const T1& msg1, const T2& msg2, const T3& msg3, const T4& msg4
 		return;
 	std::stringstream str;
 	str << msg1 << " " << msg2 << " " << msg3 << " " << msg4 << " " << msg5;
-	JPypeTracer::trace1(NULL, str.str().c_str());
+	JPypeTracer::trace1(nullptr, str.str().c_str());
 }
 }
 

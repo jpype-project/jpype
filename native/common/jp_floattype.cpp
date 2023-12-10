@@ -26,8 +26,7 @@ JPFloatType::JPFloatType()
 }
 
 JPFloatType::~JPFloatType()
-{
-}
+= default;
 
 JPPyObject JPFloatType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
@@ -44,8 +43,8 @@ JPValue JPFloatType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallFloatMethodA(jo, jb->m_FloatValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -57,10 +56,10 @@ class JPConversionAsJFloat : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -74,7 +73,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = dynamic_cast<JPPrimitiveType*>( cls2);
 			switch (prim->getTypeCode())
 			{
 				case 'B':
@@ -93,7 +92,7 @@ public:
 		return JPMatch::_implicit; // stop search
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
@@ -166,7 +165,7 @@ JPPyObject JPFloatType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallFloatMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualFloatMethodA(obj, clazz, mth, val);
@@ -250,7 +249,7 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetFloatArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -303,7 +302,7 @@ Py_ssize_t JPFloatType::getItemSize()
 void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jfloat* b = (jfloat*) ((char*) memory + offset);
+	auto* b = (jfloat*) ((char*) memory + offset);
 	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 

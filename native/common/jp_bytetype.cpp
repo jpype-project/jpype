@@ -25,8 +25,7 @@ JPByteType::JPByteType()
 }
 
 JPByteType::~JPByteType()
-{
-}
+= default;
 
 JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
@@ -42,8 +41,8 @@ JPValue JPByteType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -54,10 +53,10 @@ class JPConversionJByte : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -69,7 +68,7 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
@@ -137,7 +136,7 @@ JPPyObject JPByteType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallByteMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualByteMethodA(obj, clazz, mth, val);
@@ -226,7 +225,7 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetByteArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -279,7 +278,7 @@ Py_ssize_t JPByteType::getItemSize()
 void JPByteType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jbyte* b = (jbyte*) ((char*) memory + offset);
+	auto* b = (jbyte*) ((char*) memory + offset);
 	frame.GetByteArrayRegion((jbyteArray) a, start, len, b);
 }
 

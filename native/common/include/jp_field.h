@@ -38,6 +38,10 @@ public:
 	 */
 	virtual ~JPField();
 
+    // disallow copying.
+    JPField(const JPField&) = delete;
+    JPField& operator=(const JPField&) = delete;
+
 	jobject getJavaObject()
 	{
 		return this->m_Field.get();
@@ -75,9 +79,6 @@ public:
 	}
 
 private:
-	JPField(const JPField&);
-	JPField& operator=(const JPField&) ;
-
 	string           m_Name;
 	JPClass*         m_Class;
 	JPObjectRef      m_Field;

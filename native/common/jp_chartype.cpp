@@ -26,8 +26,7 @@ JPCharType::JPCharType()
 }
 
 JPCharType::~JPCharType()
-{
-}
+= default;
 
 JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 {
@@ -60,13 +59,13 @@ JPValue JPCharType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, 0);
+	field(v) = frame.CallCharMethodA(obj.getValue().l, context->_java_lang_Character->m_CharValueID, nullptr);
 	return JPValue(this, v);
 }
 
 class JPConversionAsChar : public JPConversion
 {
-	typedef JPCharType base_t;
+	using base_t = JPCharType;
 public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
@@ -79,12 +78,12 @@ public:
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		res.c = JPPyString::asCharUTF16(match.object);
@@ -96,10 +95,10 @@ class JPConversionAsJChar : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -113,7 +112,7 @@ public:
 		return JPMatch::_implicit;  // stop search
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
@@ -179,7 +178,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallCharMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualCharMethodA(obj, clazz, mth, val);
@@ -229,7 +228,7 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetCharArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -282,7 +281,7 @@ Py_ssize_t JPCharType::getItemSize()
 void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jchar* b = (jchar*) ((char*) memory + offset);
+	auto* b = (jchar*) ((char*) memory + offset);
 	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }
 

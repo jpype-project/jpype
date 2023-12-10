@@ -27,10 +27,10 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_PY_TRY("PyJPObject_new");
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
+	if (cls == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
-		return NULL;
+		return nullptr;
 	}
 
 	// Create an instance (this may fail)
@@ -46,7 +46,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_FAULT_RETURN("PyJPObject_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
@@ -55,6 +55,8 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	if (op == Py_NE)
 	{
 		PyObject *ret = PyJPObject_compare(self, other, Py_EQ);
+		if (ret == nullptr)
+			return nullptr;
 		int rc = (ret == Py_False);
 		Py_DECREF(ret);
 		return PyBool_FromLong(rc);
@@ -72,13 +74,13 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
 
 	// First slot is Null
-	if (javaSlot0 == NULL || javaSlot0->getValue().l == NULL)
+	if (javaSlot0 == nullptr || javaSlot0->getValue().l == nullptr)
 	{
-		if (javaSlot1 == NULL)
+		if (javaSlot1 == nullptr)
 			return PyBool_FromLong(other == Py_None);
 		if (javaSlot1->getClass()->isPrimitive())
 			Py_RETURN_FALSE;
-		if (javaSlot1->getValue().l == NULL)
+		if (javaSlot1->getValue().l == nullptr)
 			Py_RETURN_TRUE;
 		Py_RETURN_FALSE;
 	}
@@ -86,7 +88,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	// Check second slot is Null
 	if (other == Py_None)
 		Py_RETURN_FALSE;
-	if (javaSlot1 == NULL)
+	if (javaSlot1 == nullptr)
 	{
 		// This block seems like a giant waste as there are very few cases in which
 		// a converted object would ever satisfy equals.  But this was the original
@@ -99,11 +101,11 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	}
 	if (javaSlot1->getClass()->isPrimitive())
 		Py_RETURN_FALSE;
-	if (javaSlot1->getValue().l == NULL)
+	if (javaSlot1->getValue().l == nullptr)
 		Py_RETURN_FALSE;
 
 	return PyBool_FromLong(frame.equals(javaSlot0->getValue().l, javaSlot1->getValue().l));
-	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
@@ -118,20 +120,20 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 	bool null1 = false;
 
 	// First slot is Null
-	if (javaSlot0 == NULL ||
-			(!javaSlot0->getClass()->isPrimitive() && javaSlot0->getValue().l == NULL))
+	if (self == Py_None || javaSlot0 == nullptr ||
+			(!javaSlot0->getClass()->isPrimitive() && javaSlot0->getValue().l == nullptr))
 		null0  = true;
-	if (other == Py_None || (javaSlot1 != NULL &&
-			!javaSlot1->getClass()->isPrimitive() && javaSlot1->getValue().l == NULL))
+	if (other == Py_None || (javaSlot1 != nullptr &&
+			!javaSlot1->getClass()->isPrimitive() && javaSlot1->getValue().l == nullptr))
 		null1  = true;
 
-	jobject obj0 = NULL;
-	jobject obj1 = NULL;
+	jobject obj0 = nullptr;
+	jobject obj1 = nullptr;
 
 	if (!null0)
 		obj0 = javaSlot0->getValue().l;
 
-	if (!null0 && !null1 && javaSlot1 == NULL)
+	if (!null0 && !null1 && javaSlot1 == nullptr)
 	{
 		// Okay here is the hard part.  We need to figure out what type
 		// of object to create to make them comparable.  We can't assume
@@ -141,11 +143,11 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 		// because of type erasure we can't actually get.
 		JPClass *cls2 = javaSlot0->getClass();
 		JPMatch match(&frame, other);
-		while (cls2 != NULL && !cls2->findJavaConversion(match) && !JPModifier::isComparable(cls2->getModifiers()))
+		while (cls2 != nullptr && !cls2->findJavaConversion(match) && !JPModifier::isComparable(cls2->getModifiers()))
 			cls2 = cls2->getSuperClass();
 
 		// This should never happen.
-		if (cls2 == NULL)
+		if (cls2 == nullptr)
 		{
 			PyObject *out = Py_NotImplemented;
 			Py_INCREF(out);
@@ -160,7 +162,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return out;
 		}
 		obj1 = match.convert().l;
-	} else if (!null1 && javaSlot1 != NULL && !javaSlot1->getClass()->isPrimitive())
+	} else if (!null1 && javaSlot1 != nullptr && !javaSlot1->getClass()->isPrimitive())
 		obj1 = javaSlot1->getValue().l;
 
 	switch (op)
@@ -195,7 +197,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			return PyBool_FromLong(frame.compareTo(obj0, obj1) >= 0);
 	}
 	PyErr_SetString(PyExc_ValueError, "can't compare null");
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static Py_hash_t PyJPObject_hash(PyObject *obj)
@@ -204,10 +206,10 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
-	if (javaSlot == NULL)
+	if (javaSlot == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	jobject o = javaSlot->getJavaObject();
-	if (o == NULL)
+	if (o == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	return frame.hashCode(o);
 	JP_PY_CATCH(0);
@@ -217,7 +219,7 @@ static PyObject *PyJPObject_repr(PyObject *self)
 {
 	JP_PY_TRY("PyJPObject_repr");
 	return PyUnicode_FromFormat("<java object '%s'>", Py_TYPE(self)->tp_name);
-	JP_PY_CATCH(0); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyType_Slot objectSlots[] = {
@@ -232,7 +234,7 @@ static PyType_Slot objectSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPObject_Type = NULL;
+PyTypeObject *PyJPObject_Type = nullptr;
 static PyType_Spec objectSpec = {
 	"_jpype._JObject",
 	0,
@@ -246,10 +248,10 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	JP_PY_TRY("PyJPException_new");
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
+	if (cls == nullptr)
 	{  // GCOVR_EXCL_START
 		PyErr_SetString(PyExc_TypeError, "Java class type is incorrect");
-		return NULL;
+		return nullptr;
 	}  // GCOVR_EXCL_STOP
 
 	// Special constructor path for Exceptions
@@ -269,7 +271,7 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	JP_FAULT_RETURN("PyJPException_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
@@ -292,17 +294,17 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 	JPValue *val = PyJPValue_getJavaSlot(self);
 
 	// These two are loop invariants and must match each time
-	jthrowable th = (jthrowable) val->getValue().l;
+	auto th = (jthrowable) val->getValue().l;
 	JPPyObject exc = JPPyObject::use(self);
-	PyJPException_normalize(frame, exc, th, NULL);
+	PyJPException_normalize(frame, exc, th, nullptr);
 
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPException_args(PyBaseExceptionObject *self)
 {
-	if (self->args == NULL)
+	if (self->args == nullptr)
 		Py_RETURN_NONE;  // GCOVR_EXCL_LINE
 	Py_INCREF(self->args);
 	return self->args;
@@ -310,15 +312,15 @@ PyObject *PyJPException_args(PyBaseExceptionObject *self)
 
 static PyMethodDef exceptionMethods[] = {
 	{"_expandStacktrace", (PyCFunction) PyJPException_expandStacktrace, METH_NOARGS, ""},
-	{NULL},
+	{nullptr},
 };
 
 static PyGetSetDef exceptionGetSets[] = {
-	{"_args", (getter) PyJPException_args, NULL, ""},
-	{0}
+	{"_args", (getter) PyJPException_args, nullptr, ""},
+	{nullptr}
 };
 
-PyTypeObject *PyJPException_Type = NULL;
+PyTypeObject *PyJPException_Type = nullptr;
 static PyType_Slot excSlots[] = {
 	{Py_tp_new,      (void*) &PyJPException_new},
 	{Py_tp_init,     (void*) &PyJPException_init},
@@ -344,7 +346,7 @@ static PyType_Slot comparableSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPComparable_Type = NULL;
+PyTypeObject *PyJPComparable_Type = nullptr;
 static PyType_Spec comparableSpec = {
 	"_jpype._JComparable",
 	0,
@@ -359,7 +361,7 @@ static PyType_Spec comparableSpec = {
 
 void PyJPObject_initType(PyObject* module)
 {
-	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, NULL);
+	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, nullptr);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
@@ -384,7 +386,7 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 {
 	JP_TRACE_IN("PyJPException_normalize");
 	JPContext *context = frame.getContext();
-	while (th != NULL)
+	while (th != nullptr)
 	{
 		// Attach the frame to first
 		JPPyObject trace = PyTrace_FromJavaException(frame, th, enclosing);
@@ -393,7 +395,7 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 		// Check for the next in the cause list
 		enclosing = th;
 		th = frame.getCause(th);
-		if (th == NULL)
+		if (th == nullptr)
 			return;
 		jvalue v;
 		v.l = (jobject) th;
@@ -401,7 +403,7 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 
 		// This may already be a Python exception
 		JPValue *val = PyJPValue_getJavaSlot(next.get());
-		if (val == NULL)
+		if (val == nullptr)
 		{
 			PyException_SetCause(exc.get(), next.keep());
 			return;

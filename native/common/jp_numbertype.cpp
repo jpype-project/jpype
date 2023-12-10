@@ -28,8 +28,7 @@ JPNumberType::JPNumberType(JPJavaFrame& frame,
 }
 
 JPNumberType::~JPNumberType()
-{
-}
+= default;
 
 JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 {

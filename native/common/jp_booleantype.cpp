@@ -26,8 +26,7 @@ JPBooleanType::JPBooleanType()
 }
 
 JPBooleanType::~JPBooleanType()
-{
-}
+= default;
 
 JPPyObject JPBooleanType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
@@ -39,7 +38,7 @@ JPValue JPBooleanType::getValueFromObject(const JPValue& obj)
 	JPContext *context = obj.getClass()->getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
-	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, 0) != 0;
+	field(v) = frame.CallBooleanMethodA(obj.getValue().l, context->_java_lang_Boolean->m_BooleanValueID, nullptr) != 0;
 	return JPValue(this, v);
 }
 
@@ -47,7 +46,7 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -55,12 +54,12 @@ public:
 		return match.type = JPMatch::_exact;
 	}
 
-	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
 
-	virtual jvalue convert(JPMatch &match) override
+	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
 		jlong v = PyObject_IsTrue(match.object);
@@ -75,11 +74,11 @@ class JPConversionAsBooleanJBool : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 
 		JPValue *value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -91,7 +90,7 @@ public:
 		return JPMatch::_implicit; // search no further.
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_boolean->getHost());
@@ -104,7 +103,7 @@ class JPConversionAsBooleanLong : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyLong_CheckExact(match.object)
 				&& !PyIndex_Check(match.object))
@@ -113,7 +112,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
@@ -126,7 +125,7 @@ class JPConversionAsBooleanNumber : public JPConversionAsBoolean
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		if (!PyNumber_Check(match.object))
 			return match.type = JPMatch::_none;
@@ -134,7 +133,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	virtual void getInfo(JPClass * cls, JPConversionInfo &info) override
+	void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
@@ -204,7 +203,7 @@ JPPyObject JPBooleanType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, 
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallBooleanMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualBooleanMethodA(obj, clazz, mth, val);
@@ -288,7 +287,7 @@ void JPBooleanType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPBooleanType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetBooleanArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -341,7 +340,7 @@ Py_ssize_t JPBooleanType::getItemSize()
 void JPBooleanType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jboolean* b = (jboolean*) ((char*) memory + offset);
+	auto* b = (jboolean*) ((char*) memory + offset);
 	frame.GetBooleanArrayRegion((jbooleanArray) a, start, len, b);
 }
 

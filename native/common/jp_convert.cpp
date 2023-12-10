@@ -128,7 +128,7 @@ public:
 jconverter getConverter(const char* from, int itemsize, const char* to)
 {
 	// If not specified then the type is bytes
-	if (from == NULL)
+	if (from == nullptr)
 		from = "B";
 
 	// Skip specifiers

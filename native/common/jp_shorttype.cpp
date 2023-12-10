@@ -25,8 +25,7 @@ JPShortType::JPShortType()
 }
 
 JPShortType::~JPShortType()
-{
-}
+= default;
 
 JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
@@ -42,8 +41,8 @@ JPValue JPShortType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -55,10 +54,10 @@ class JPConversionJShort : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -72,7 +71,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = dynamic_cast<JPPrimitiveType*>( cls2);
 			switch (prim->getTypeCode())
 			{
 				case 'C':
@@ -88,7 +87,7 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
@@ -159,7 +158,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallShortMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualShortMethodA(obj, clazz, mth, val);
@@ -249,7 +248,7 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetShortArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -302,7 +301,7 @@ Py_ssize_t JPShortType::getItemSize()
 void JPShortType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jshort* b = (jshort*) ((char*) memory + offset);
+	auto* b = (jshort*) ((char*) memory + offset);
 	frame.GetShortArrayRegion((jshortArray) a, start, len, b);
 }
 
