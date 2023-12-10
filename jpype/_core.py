@@ -108,19 +108,14 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _hasClassPath(args: typing.Tuple[_PathOrStr, ...]) -> bool:
+def _hasClassPath(args) -> bool:
     for i in args:
         if isinstance(i, str) and i.startswith('-Djava.class.path'):
             return True
     return False
 
 
-def _handleClassPath(
-    classpath: typing.Union[
-        _PathOrStr,
-        typing.Tuple[_PathOrStr, ...]
-    ],
-) -> str:
+def _handleClassPath(classpath) -> str:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
@@ -163,7 +158,7 @@ def interactive():
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
-    classpath: typing.Optional[typing.Sequence[_PathOrStr], _PathOrStr] = None,
+    classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
