@@ -79,3 +79,43 @@ class ComparableTestCase(common.JPypeTestCase):
             print(i3 > i3)
         with self.assertRaises(ValueError):
             print(i3 >= i3)
+
+    def testComparableObj(self):
+        C1 = jpype.JClass("java.time.temporal.ChronoUnit")
+        C2 = jpype.JClass("java.util.concurrent.TimeUnit")
+        O1 = C1.SECONDS
+        O2 = C2.SECONDS
+        N1 = jpype.JObject(None, C1)
+        N2 = jpype.JObject(None, C2)
+        V = jpype.JInt(1)
+        # Test dissimilar objects
+        self.assertTrue(O1 != O2)
+        self.assertFalse(O1 == O2)
+        # test Nulls
+        self.assertTrue(N1 == N2)
+        self.assertFalse(N1 != N2)
+        self.assertTrue(N1 == None)
+        self.assertFalse(N1 != None)
+        # test primitives
+        self.assertFalse(O1 == V)
+        self.assertFalse(V == O1)
+        # test null to primitives
+        self.assertFalse(N1 == V)
+        self.assertFalse(V == N1)
+
+        self.assertFalse(1 == O1)
+        self.assertFalse("M" == O1)
+        self.assertFalse(O1 == 1)
+        self.assertFalse(O1 == "M")
+
+        self.assertTrue(1 != O1)
+        self.assertTrue("M" != O1)
+        self.assertTrue(O1 != 1)
+        self.assertTrue(O1 != "M")
+
+        with self.assertRaises(TypeError):
+            self.assertTrue(O1 > 1)
+        with self.assertRaises(TypeError):
+            self.assertTrue(1 > O1)
+        with self.assertRaises(TypeError):
+            self.assertTrue(O1 > O2)

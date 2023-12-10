@@ -55,8 +55,6 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 	if (op == Py_NE)
 	{
 		PyObject *ret = PyJPObject_compare(self, other, Py_EQ);
-		if (ret == NULL)
-			return NULL;
 		int rc = (ret == Py_False);
 		Py_DECREF(ret);
 		return PyBool_FromLong(rc);
@@ -120,7 +118,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 	bool null1 = false;
 
 	// First slot is Null
-	if (self == Py_None || javaSlot0 == NULL ||
+	if (javaSlot0 == NULL ||
 			(!javaSlot0->getClass()->isPrimitive() && javaSlot0->getValue().l == NULL))
 		null0  = true;
 	if (other == Py_None || (javaSlot1 != NULL &&
@@ -153,8 +151,16 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 			Py_INCREF(out);
 			return out;
 		}
+		if (match.type < JPMatch::Type::_implicit)
+		{
+			if (op == Py_EQ || op == Py_NE)
+				return  PyBool_FromLong(op == Py_NE);
+			PyObject *out = Py_NotImplemented;
+			Py_INCREF(out);
+			return out;
+		}
 		obj1 = match.convert().l;
-	} else if (!null1 && javaSlot1 != NULL)
+	} else if (!null1 && javaSlot1 != NULL && !javaSlot1->getClass()->isPrimitive())
 		obj1 = javaSlot1->getValue().l;
 
 	switch (op)
@@ -164,14 +170,13 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 				Py_RETURN_TRUE;
 			if (null0 || null1)
 				Py_RETURN_FALSE;
-			return PyBool_FromLong(frame.compareTo(obj0, obj1) == 0);
-
+			return PyBool_FromLong(frame.equals(obj0, obj1));
 		case Py_NE:
 			if (null0 && null1)
 				Py_RETURN_FALSE;
 			if (null0 || null1)
 				Py_RETURN_TRUE;
-			return PyBool_FromLong(frame.compareTo(obj0, obj1) != 0);
+			return PyBool_FromLong(!frame.equals(obj0, obj1));
 		case Py_LT:
 			if (null0 || null1)
 				break;

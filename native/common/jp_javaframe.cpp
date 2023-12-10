@@ -1194,7 +1194,13 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 {
 	jvalue v;
 	v.l = obj2;
-	return CallIntMethodA(obj, m_Context->m_CompareToID, &v);
+	jint ret = m_Env->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
+	if (m_Env->ExceptionOccurred())
+	{
+		m_Env->ExceptionClear();
+		JP_RAISE(PyExc_TypeError, "Unable to compare")
+	}
+	return ret;
 }
 
 jthrowable JPJavaFrame::getCause(jthrowable th)
