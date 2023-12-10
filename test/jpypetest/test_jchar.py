@@ -474,7 +474,7 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
         self.assertEqual(fixture.callObject(self.nc), None)
 
 
-class JCharTestCase(common.JPypeTestCase):
+class JCharTestCase_2(common.JPypeTestCase):
 
     def testOps(self):
         self.assertEqual(JChar("x") + "test", "xtest")

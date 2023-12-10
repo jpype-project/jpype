@@ -59,7 +59,7 @@ class JMapTestCase(common.JPypeTestCase):
         obj['b'] = 5
         self.assertEqual(obj['b'], 5)
 
-    def testSetItem(self):
+    def testSetItem_2(self):
         cls = jpype.JClass('java.util.TreeMap')
         obj = cls()
         obj.put("a", 1)

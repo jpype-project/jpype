@@ -15,13 +15,15 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import typing
+
 import _jpype
 from . import _jcustomizer
 
 __all__ = ['JString']
 
 
-class JString(_jpype._JObject, internal=True):
+class JString(_jpype._JObject, internal=True):  # type: ignore[call-arg]
     """ Base class for ``java.lang.String`` objects
 
     When called as a function, this class will produce a ``java.lang.String``
@@ -37,14 +39,14 @@ class JString(_jpype._JObject, internal=True):
 
 
 @_jcustomizer.JImplementationFor("java.lang.String")
-class _JStringProto(object):
-    def __add__(self, other):
-        return self.concat(other)
+class _JStringProto:
+    def __add__(self, other: str) -> str:
+        return self.concat(other)  # type: ignore[attr-defined]
 
-    def __len__(self):
-        return self.length()
+    def __len__(self) -> int:
+        return self.length()  # type: ignore[attr-defined]
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: typing.Union[slice, int]):
         if isinstance(i, slice):
             return str(self)[i]
 
@@ -54,10 +56,10 @@ class _JStringProto(object):
                 raise IndexError("Array index is negative")
         if i >= len(self):
             raise IndexError("Array index exceeds length")
-        return self.charAt(i)
+        return self.charAt(i)  # type: ignore[attr-defined]
 
-    def __contains__(self, other):
-        return self.contains(other)
+    def __contains__(self, other: str) -> bool:
+        return self.contains(other)  # type: ignore[attr-defined]
 
     def __hash__(self):
         if self == None:  # lgtm [py/test-equals-none]

@@ -28,7 +28,7 @@ __all__ = ['setupGuiEnvironment', 'shutdownGuiEnvironment']
 
 def setupGuiEnvironment(cb):
     if _sys.platform == 'darwin':
-        from PyObjCTools import AppHelper
+        from PyObjCTools import AppHelper  # type: ignore
         m = {'run': cb}
         proxy = _jproxy.JProxy('java.lang.Runnable', m)
         cbthread = _jclass.JClass("java.lang.Thread")(proxy)
@@ -40,5 +40,5 @@ def setupGuiEnvironment(cb):
 
 def shutdownGuiEnvironment():
     if _sys.platform == 'darwin':
-        from PyObjCTools import AppHelper
+        from PyObjCTools import AppHelper  # type: ignore
         AppHelper.stopEventLoop()

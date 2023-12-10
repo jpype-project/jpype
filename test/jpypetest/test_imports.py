@@ -88,18 +88,18 @@ class ImportsTestCase(common.JPypeTestCase):
 
     def testAlias1(self):
         jpype.imports.registerDomain("jpypex", alias="jpype")
-        from jpypex.common import Fixture
+        from jpypex.common import Fixture  # type: ignore
         self.assertEqual(Fixture, jpype.JClass("jpype.common.Fixture"))
 
     def testAlias2(self):
         jpype.imports.registerDomain("commonx", alias="jpype.common")
-        from commonx import Fixture as Fixture2
+        from commonx import Fixture as Fixture2  # type: ignore
         self.assertEqual(Fixture2, jpype.JClass("jpype.common.Fixture"))
 
     def testAliasBad(self):
         jpype.imports.registerDomain("brokenx", alias="jpype.broken")
         with self.assertRaises(ImportError):
-            from brokenx import Fixture as Fixture2
+            from brokenx import Fixture as Fixture2  # type: ignore
 
     def testIsPackage(self):
         import java.lang
@@ -109,7 +109,7 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue(issubclass(type(java.lang), jpype.JPackage))
 
     def testMRJar(self):
-        import org.jpype.mrjar as mrjar
+        import org.jpype.mrjar as mrjar  # type: ignore
         u = dir(mrjar)
         self.assertTrue("A" in u)
         self.assertTrue("B" in u)
@@ -120,7 +120,7 @@ class ImportsTestCase(common.JPypeTestCase):
         import org.jpype as ojp
         self.assertFalse("late" in dir(ojp))
         with self.assertRaises(ImportError):
-            import org.jpype.late as late
+            import org.jpype.late as late  # type: ignore
 
         jpype.addClassPath(pathlib.Path("test/jar/late/late.jar").absolute())
         import org.jpype.late as late

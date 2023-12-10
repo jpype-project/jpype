@@ -8,11 +8,11 @@
 import jpype
 
 # import with star the first time
-from org.jpype import *
+from org.jpype import *  # type: ignore
 
 try:
     # This should not be found
-    late2.Test()
+    late2.Test()  # type: ignore[name-defined]
     raise ImportError("late was already found")
 except NameError:
     pass
@@ -22,7 +22,7 @@ jpype.addClassPath("../jar/late/late2.jar")
 
 # Second import
 if True:
-    from org.jpype import *
+    from org.jpype import *  # type: ignore[name-defined]
 
 # This time it should work
-t = late2.Test()
+t = late2.Test()  # type: ignore[name-defined]

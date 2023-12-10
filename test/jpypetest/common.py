@@ -22,7 +22,7 @@ import jpype
 import logging
 from os import path
 import sys
-import unittest
+import unittest  # Extensively used as common.unittest.
 
 CLASSPATH = None
 fast = False

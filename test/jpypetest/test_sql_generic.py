@@ -1,16 +1,9 @@
 # This file is Public Domain and may be used without restrictions.
-import _jpype
-import jpype
 from jpype.types import *
-from jpype import java
 import jpype.dbapi2 as dbapi2
 import common
 import time
 
-try:
-    import zlib
-except ImportError:
-    zlib = None
 
 
 class SQLModuleTestCase(common.JPypeTestCase):

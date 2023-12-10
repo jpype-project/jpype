@@ -146,10 +146,6 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertEqual(a(1), "oo")
 
     def testMethodDump(self):
-        # This is replaced by doc, should be removed
-        self.assertIsInstance(jpype.JString("foo").substring.dump(), str)
-
-    def testMethodDump(self):
         # This is replaced by doc, should be removed (or do something useful)
         self.assertIsInstance(jpype.JString(
             "foo").substring.matchReport(), str)
@@ -180,7 +176,7 @@ class JMethodTestCase(common.JPypeTestCase):
             str(fixture.callInt)
 
     @common.requireInstrumentation
-    def testJMethod_str(self):
+    def testJMethod_str_2(self):
         Fixture = JClass("jpype.common.Fixture")
         fixture = Fixture()
         _jpype.fault("PyJPMethod_get")
@@ -228,7 +224,7 @@ class JMethodTestCase(common.JPypeTestCase):
             fixture.callInt.__doc__ = None
 
     @common.requireInstrumentation
-    def testJMethod_docFault(self):
+    def testJMethod_docFault_2(self):
         fixture = JClass("jpype.common.Fixture")()
         _jpype.fault("PyJPMethod_getCodeAttr")
         with self.assertRaisesRegex(SystemError, "fault"):

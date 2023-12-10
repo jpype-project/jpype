@@ -15,10 +15,11 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import _jpype
-__all__ = []
+
 import _jpype
 from . import _jclass
+
+__all__ = []  # type: ignore[var-annotated]
 
 
 def _jmethodGetDoc(method, cls, overloads):

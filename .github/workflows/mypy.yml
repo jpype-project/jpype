@@ -1,0 +1,20 @@
+name: Mypy
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: mypy
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.11
+    - name: Install Dependencies
+      run: |
+        pip install mypy numpy types-pyinstaller pytest packaging
+    - name: mypy
+      run: |
+        mypy ./jpype/ ./test/jpypetest/

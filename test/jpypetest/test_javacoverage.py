@@ -54,7 +54,7 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         cls = JClass('org.jpype.manager.ModifierCode')
         self.assertEqual(cls.get(cls.decode(1171)), 1171)
 
-    def testTypeFactory(self):
+    def testTypeFactory_2(self):
         TypeFactory = JClass("org.jpype.manager.TypeFactory")
         TypeManager = JClass("org.jpype.manager.TypeManager")
         @JImplements(TypeFactory)

@@ -20,7 +20,7 @@ from . import _jcustomizer
 
 
 @_jcustomizer.JImplementationFor('java.lang.Thread')
-class _JThread(object):
+class _JThread:
     """ Customizer for ``java.land.Thread``
 
     This adds addition JPype methods to java.lang.Thread to support
@@ -28,7 +28,7 @@ class _JThread(object):
     """
 
     @staticmethod
-    def isAttached():
+    def isAttached() -> bool:
         """ Checks if a thread is attached to the JVM.
 
         Python automatically attaches as daemon threads when a Java method is
@@ -44,7 +44,7 @@ class _JThread(object):
         return _jpype.isThreadAttachedToJVM()
 
     @staticmethod
-    def attach():
+    def attach() -> None:
         """ Attaches the current thread to the JVM as a user thread.
 
         User threads that are attached to the JVM will prevent the JVM from
@@ -57,7 +57,7 @@ class _JThread(object):
         return _jpype.attachThreadToJVM()
 
     @staticmethod
-    def attachAsDaemon():
+    def attachAsDaemon() -> None:
         """ Attaches the current thread to the JVM as a daemon.
 
         Daemon threads act as background tasks and do not prevent the JVM from
@@ -71,7 +71,7 @@ class _JThread(object):
         return _jpype.attachThreadAsDaemon()
 
     @staticmethod
-    def detach():
+    def detach() -> None:
         """ Detaches a thread from the JVM.
 
         This function detaches the thread and frees the associated resource in
