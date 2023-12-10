@@ -163,7 +163,7 @@ def interactive():
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
-    classpath: typing.Optional[typing.Sequence[_PathOrStr], _PathOrStr] = None,
+    classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
