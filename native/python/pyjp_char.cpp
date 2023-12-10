@@ -79,46 +79,63 @@ static int assertNotNull(JPValue *javaSlot)
 
 PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 {
-	auto  *self = (PyJPChar*) PyJPValue_alloc(type, 0);
+	// Allocate a new string type (derived from UNICODE)
+	PyJPChar  *self = (PyJPChar*) PyJPValue_alloc(type, 0);
 	if (self == nullptr)
 		return nullptr;
+
+	// Set up a wide char with value of zero
 	self->m_Data[0] = 0;
 	self->m_Data[1] = 0;
 	self->m_Data[2] = 0;
 	self->m_Data[3] = 0;
 
+	// Values taken from internal/cpython/unicode.h
+	
+	// Mark the type in unicode
 	_PyUnicode_LENGTH(self) = 1;
 	_PyUnicode_HASH(self) = -1;
-	_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
-	_PyUnicode_STATE(self).ascii = 0;
-	_PyUnicode_STATE(self).ready = 1;
-	_PyUnicode_STATE(self).interned = 0;
 	_PyUnicode_STATE(self).compact = 1;
+	_PyUnicode_STATE(self).interned = 0;
 
+#if PY_VERSION_HEX < 0x030c0000
+	_PyUnicode_STATE(self).ready = 1;
+#endif
+
+	// Copy the value based on the length
 	if (p < 128)
 	{
 		_PyUnicode_STATE(self).ascii = 1;
+		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
+
 		char *data = (char*) (((PyASCIIObject*) self) + 1);
 		data[0] = p;
 		data[1] = 0;
-	} else
-		if (p < 256)
+	} else if (p < 256)
 	{
+		_PyUnicode_STATE(self).ascii = 0;
+		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
+
 		char *data = (char*) ( ((PyCompactUnicodeObject*) self) + 1);
 		data[0] = p;
 		data[1] = 0;
+	
+#if PY_VERSION_HEX < 0x030c0000
 		_PyUnicode_WSTR_LENGTH(self) = 0;
 		_PyUnicode_WSTR(self) = nullptr;
-		self->m_Obj.utf8 = nullptr;
+#endif
+		self->m_Obj.utf8 = NULL;
 		self->m_Obj.utf8_length = 0;
 	} else
 	{
+		_PyUnicode_STATE(self).ascii = 0;
+		_PyUnicode_STATE(self).kind = PyUnicode_2BYTE_KIND;
 
 		auto *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
 		data[0] = p;
 		data[1] = 0;
-		_PyUnicode_STATE(self).kind = PyUnicode_2BYTE_KIND;
+#if PY_VERSION_HEX < 0x030c0000
 		if (sizeof (wchar_t) == 2)
 		{
 			_PyUnicode_WSTR_LENGTH(self) = 1;
@@ -128,9 +145,11 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 			_PyUnicode_WSTR_LENGTH(self) = 0;
 			_PyUnicode_WSTR(self) = nullptr;
 		}
+#endif
 		self->m_Obj.utf8 = nullptr;
 		self->m_Obj.utf8_length = 0;
 	}
+
 	return (PyObject*) self;
 }
 

@@ -27,7 +27,7 @@ publisher.publish("Start")
 t0 = time.time()
 for i in range(NUMMSGS):
     publisher.publish("Hello World! %s" % i)
-print "MessageRate =", float(NUMMSGS) / (time.time() - t0)
+print("MessageRate =", float(NUMMSGS) / (time.time() - t0))
 
 # The "Stop" message signals the subscriber to stop timing message receipts
 publisher.publish("Stop")

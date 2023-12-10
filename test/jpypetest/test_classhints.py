@@ -17,6 +17,7 @@
 # *****************************************************************************
 import jpype
 import common
+import sys
 
 
 class MyImpl(object):
@@ -59,7 +60,10 @@ class ClassHintsTestCase(common.JPypeTestCase):
 
     def testInstant(self):
         import datetime
-        now = datetime.datetime.utcnow()
+        if sys.version_info.major == 3 and sys.version_info.minor < 12:
+            now = datetime.datetime.utcnow()
+        else:
+            now = datetime.datetime.now(datetime.UTC)
         Instant = jpype.JClass("java.time.Instant")
         self.assertIsInstance(jpype.JObject(now, Instant), Instant)
 

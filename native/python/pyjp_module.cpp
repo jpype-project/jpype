@@ -169,11 +169,21 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	if (type->tp_mro == nullptr)
 		return nullptr;  // GCOVR_EXCL_LINE
 
+	// Grab the mro
 	PyObject *mro = type->tp_mro;
+
+	// mro should be a tuple
 	Py_ssize_t n = PyTuple_Size(mro);
+
+	// Search the tuple for the attribute
 	for (Py_ssize_t i = 0; i < n; ++i)
 	{
 		auto *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
+		
+		// Skip objects without a functioning dictionary
+		if (type2->tp_dict == NULL)
+			continue;
+
 		PyObject *res = PyDict_GetItem(type2->tp_dict, attr_name);
 		if (res)
 		{

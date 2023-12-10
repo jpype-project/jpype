@@ -113,6 +113,37 @@ class ObjectWrapperTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             jpype.JObject(Fred())
 
+    def testObjectEq(self):
+        C1 = jpype.JClass("java.lang.StringBuffer")
+        C2 = jpype.JClass("java.lang.Exception")
+        O1 = C1()
+        O2 = C2()
+        N1 = jpype.JObject(None, C1)
+        N2 = jpype.JObject(None, C2)
+        V = jpype.JInt(1)
+        # Test dissimilar objects
+        self.assertTrue(O1 != O2)
+        self.assertFalse(O1 == O2)
+        self.assertTrue(O2 != O1)
+        self.assertFalse(O2 == O1)
+        # test Nulls
+        self.assertTrue(N1 == N2)
+        self.assertFalse(N1 != N2)
+        self.assertTrue(N1 == None)
+        self.assertFalse(N1 != None)
+        self.assertTrue(None == N1)
+        self.assertFalse(None != N1)
+        # test primitives
+        self.assertFalse(O1 == V)
+        self.assertFalse(V == O1)
+        self.assertFalse(O2 == V)
+        self.assertFalse(V == O2)
+        # test null to primitives
+        self.assertFalse(N1 == V)
+        self.assertFalse(V == N1)
+        self.assertFalse(N2 == V)
+        self.assertFalse(V == N2)
+
 
 #     def testMakeSureWeCanLoadAllClasses(self):
 #         def get_system_jars():
