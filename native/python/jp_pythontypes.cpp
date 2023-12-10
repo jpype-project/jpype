@@ -340,7 +340,7 @@ jlong JPPySequence::size()
 
 JPPyObject JPPySequence::operator[](jlong i)
 {
-	return JPPyObject::call(PySequence_GetItem(m_Sequence.get(), i)); // new reference
+	return JPPyObject::call(PySequence_GetItem(m_Sequence.get(), (Py_ssize_t) i)); // new reference
 }
 
 JPPyObjectVector::JPPyObjectVector(PyObject* sequence)

@@ -224,6 +224,7 @@ void JPypeException::convertJavaToPython()
 		PyException_SetCause(pyvalue.get(), cause.keep());
 	}	catch (JPypeException& ex)
 	{
+		(void) ex;
 		JP_TRACE("FAILURE IN CAUSE");
 		// Any failures in this optional action should be ignored.
 		// worst case we don't print as much diagnostics.

@@ -110,7 +110,7 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
 		char *data = (char*) (((PyASCIIObject*) self) + 1);
-		data[0] = p;
+		data[0] = (char) p;
 		data[1] = 0;
 	} else if (p < 256)
 	{
@@ -118,7 +118,7 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
 		char *data = (char*) ( ((PyCompactUnicodeObject*) self) + 1);
-		data[0] = p;
+		data[0] = (char) p;
 		data[1] = 0;
 	
 #if PY_VERSION_HEX < 0x030c0000

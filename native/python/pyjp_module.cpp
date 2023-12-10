@@ -545,17 +545,17 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	context->m_GC->getStats(stats);
 	PyObject *out = PyDict_New();
 	PyObject *res;
-	PyDict_SetItemString(out, "current", res = PyLong_FromSsize_t(stats.current_rss));
+	PyDict_SetItemString(out, "current", res = PyLong_FromSsize_t((Py_ssize_t)(stats.current_rss)));
 	Py_DECREF(res);
-	PyDict_SetItemString(out, "java", res = PyLong_FromSsize_t(stats.java_rss));
+	PyDict_SetItemString(out, "java", res = PyLong_FromSsize_t((Py_ssize_t)(stats.java_rss)));
 	Py_DECREF(res);
-	PyDict_SetItemString(out, "python", res = PyLong_FromSsize_t(stats.python_rss));
+	PyDict_SetItemString(out, "python", res = PyLong_FromSsize_t((Py_ssize_t)(stats.python_rss)));
 	Py_DECREF(res);
-	PyDict_SetItemString(out, "max", res = PyLong_FromSsize_t(stats.max_rss));
+	PyDict_SetItemString(out, "max", res = PyLong_FromSsize_t((Py_ssize_t)(stats.max_rss)));
 	Py_DECREF(res);
-	PyDict_SetItemString(out, "min", res = PyLong_FromSsize_t(stats.min_rss));
+	PyDict_SetItemString(out, "min", res = PyLong_FromSsize_t((Py_ssize_t)(stats.min_rss)));
 	Py_DECREF(res);
-	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t(stats.python_triggered));
+	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t((Py_ssize_t)(stats.python_triggered)));
 	Py_DECREF(res);
 	return out;
 }
