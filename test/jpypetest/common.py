@@ -127,8 +127,6 @@ class JPypeTestCase(unittest.TestCase):
             jpype.startJVM(jvm_path, *args,
                            convertStrings=self._convertStrings)
         self.jpype = jpype.JPackage('jpype')
-        if sys.version < '3':
-            self.assertCountEqual = self.assertItemsEqual
 
     def tearDown(self):
         pass
