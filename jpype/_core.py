@@ -108,7 +108,7 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _hasClassPath(args: typing.Tuple[_PathOrStr, ...]) -> bool:
+def _hasClassPath(args) -> bool:
     for i in args:
         if isinstance(i, str) and i.startswith('-Djava.class.path'):
             return True
