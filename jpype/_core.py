@@ -115,12 +115,7 @@ def _hasClassPath(args) -> bool:
     return False
 
 
-def _handleClassPath(
-    classpath: typing.Union[
-        _PathOrStr,
-        typing.Tuple[_PathOrStr, ...]
-    ],
-) -> str:
+def _handleClassPath(classpath) -> str:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
