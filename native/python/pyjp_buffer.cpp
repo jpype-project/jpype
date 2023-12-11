@@ -99,6 +99,7 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 		return 0;
 	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
 	{
+		(void) ex;
 		// GCOVR_EXCL_START
 		PyJPBuffer_releaseBuffer(self, view);
 

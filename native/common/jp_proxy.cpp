@@ -59,6 +59,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
+	try
 	{
 		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 		JP_TRACE("context", context);
@@ -151,6 +152,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		return nullptr;
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
+	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed. 
+	{}
+	return NULL;
 }
 
 JPProxy::JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf)

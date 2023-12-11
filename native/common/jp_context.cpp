@@ -103,6 +103,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		loadEntryPoints(vmPath);
 	} catch (JPypeException& ex)
 	{
+		(void) ex;
 		throw;
 	}
 
