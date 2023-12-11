@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.5.0 - 2023-12-10**
 - **1.5.0_dev0 - 2023-04-03**
 
   - Switched ``__eq__`` and ``__ne__`` operator to use ``equals`` rather than
