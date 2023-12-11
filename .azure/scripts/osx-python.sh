@@ -35,7 +35,7 @@ curl $URL > $INSTALLER_NAME
 
 sudo installer -pkg $INSTALLER_NAME -target /
 
-sudo rm /usr/local/bin/python
+sudo rm -f /usr/local/bin/python
 sudo ln -s /usr/local/bin/python$PYTHON_VERSION /usr/local/bin/python
 
 which python
