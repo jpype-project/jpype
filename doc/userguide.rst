@@ -36,11 +36,11 @@ hard at work on your latest project but you just need to pip in the database
 driver for your customers database and you can call it a night.  Unfortunately,
 it appears that your customers database will not connect to the Python database
 API.  The whole thing is custom and the customer isn't going to supply you with
-a Python version.  They did sent you a Java driver for the database but fat
+a Python version.  They did send you a Java driver for the database but fat
 lot of good that will do for you.
 
 Stumbling through the internet you find a module that says it can natively
-load Java packages as Python modules.  Well, it worth a shot...
+load Java packages as Python modules.  Well, it's worth a shot...
 
 So first thing the guide says is that you need to install Java and set up
 a ``JAVA_HOME`` environment variable pointing to the JRE.  Then start the
@@ -305,9 +305,9 @@ design goals.
 - Favor clarity over performance.  This doesn't mean not trying to optimize
   paths, but just as premature optimization is the bane of programmers,
   requiring writing to maximize speed is a poor long term choice, especially
-  in a language such as Python were weak typing can promote bit rot.
+  in a language such as Python where weak typing can promote bit rot.
 
-- If a new method has to be introduced, make look familiar.
+- If a new method has to be introduced, make it look familiar.
   Java programmers look to a method named "of" to convert to a type on
   factories such as a Stream, thus ``JArray.of`` converts a Python NumPy array
   to Java.  Python programmers expect that memory backed objects can be converted
@@ -546,7 +546,7 @@ JPype Concepts
 ***************
 
 At its heart, JPype is about providing a bridge to use Java within Python.
-Depending on your prospective that can either be a means of accessing Java
+Depending on your perspective that can either be a means of accessing Java
 libraries from within Python or a way to use Java using Python syntax for
 interactivity and visualization.  This mean not only exposing a limited API but
 instead trying to provide the entirety of the Java language with Python.
@@ -2179,7 +2179,7 @@ NumPy arrays, and conversion of NumPy integer types to Java boxed types.
 Transfers to Java
 =================
 
-Memory from a NumPy array can be transferred Java in bulk.  The transfer of
+Memory from a NumPy array can be transferred to Java in bulk.  The transfer of
 a one dimensional NumPy array to Java can either be done at initialization
 or by use of the Python slice operator.
 
@@ -2271,7 +2271,7 @@ all buffers become invalid and any access to NumPy arrays backed by Java
 risk crashing.  To avoid this fate, either create the memory for the buffer from
 within Python and pass it to Java.  Or use the Java ``java.lang.Runtime.exit``
 which will terminate both the Java and Python process without leaving any
-opertunity to access a dangling buffer.
+opportunity to access a dangling buffer.
 
 Buffer backed memory is not limited to use with NumPy.  Buffer transfers are
 supported to provide shared memory between processes or memory mapped files.
@@ -2282,7 +2282,7 @@ NumPy Primitives
 ================
 
 When converting a Python type to a boxed Java type, there is the difficulty
-that Java has no way to known the size of a Python numerical value.  But when
+that Java has no way to know the size of a Python numerical value.  But when
 converting NumPy numerical types, this is not an issue.  The following
 conversions apply to NumPy primitive types.
 
