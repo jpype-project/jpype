@@ -22,6 +22,11 @@ Full process:
       ``git checkout release``
 - [ ] Make a new branch for the release cycle
       ``git checkout -b releases/{version}``
+- [ ] Check the .azure scripts to see if they are up to date.
+      Look on https://devguide.python.org/versions/ to see what versions can be dropped
+      Check Python versions for Windows
+      Check Python versions for OSX
+      Check the manylinux image for Linux
 - [ ] Merge the current master with the release
       ``git pull origin master``
 - [ ] Start a release
