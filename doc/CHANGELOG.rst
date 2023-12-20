@@ -4,7 +4,10 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.5.0_dev0 - 2023-04-03**
+- **1.5.1_dev0 - 2023-12-15**
+- **1.5.0 - 2023-04-03**
+
+  - Support for Python 3.12
 
   - Switched ``__eq__`` and ``__ne__`` operator to use ``equals`` rather than
     ``compareTo`` for comparable objects to avoid exception when comparing
