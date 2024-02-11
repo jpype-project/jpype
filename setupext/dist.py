@@ -29,6 +29,13 @@ class Distribution(_Distribution):
 
     ] + _Distribution.global_options
 
+    def __init__(self, attrs=None):
+        self.executables = []
+        if "executables" in attrs:
+            self.executables = attrs.pop("executables")
+            print("Call distibution")
+        super().__init__(attrs)
+
     def parse_command_line(self):
         self.enable_tracing = False
         self.enable_build_jar = False

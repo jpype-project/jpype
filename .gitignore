@@ -85,3 +85,5 @@ jacoco/
 wheelhouse/
 vc*.pdb
 *.class
+jpython
+jpython.exe

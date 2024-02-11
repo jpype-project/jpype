@@ -661,7 +661,7 @@ static PyObject *PyJPModule_bootstrap(PyObject *module)
 {
 	// After all the internals are created we can connect the API with the internal module
 	JNIEnv * env = Android_JNI_GetEnv();
-	JPContext_global->attachJVM(env);
+	JPContext_global->attachJVM(env, true);
 	PyJPModule_installGC(module);
 	PyJPModule_loadResources(module);
 	Py_RETURN_NONE;

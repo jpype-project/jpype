@@ -24,12 +24,14 @@ from setuptools import Extension
 from setuptools import setup
 
 import setupext
+from setupext import Jar, Executable
 
 if '--android' in sys.argv:
     platform = 'android'
     sys.argv.remove('--android')
 else:
     platform = sys.platform
+
 
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
@@ -40,12 +42,20 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
              list(Path('native', 'python').glob('*.cpp')) +
              list(Path('native', 'embedded').glob('*.cpp')))), platform=platform,
 ))
-jpypeJar = Extension(name="org.jpype",
+jpypeJar = Jar(name="org.jpype",
                      sources=sorted(map(str, Path("native", "java").glob("**/*.java"))),
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
 
+platform = setupext.platform.Platform()
+jpypeExe = Executable(name="jpython",
+        sources = [ 'native/main/main.c' ],
+        language = "c",
+        libraries = ["jvm"],
+        library_dirs = ["/usr/lib/jvm/java-17-openjdk-amd64/lib/server",],
+        include_dirs = platform['include_dirs']
+    )
 
 setup(
     name='JPype1',
@@ -71,6 +81,8 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Software Development',
         'Topic :: Scientific/Engineering',
     ],
@@ -91,13 +103,15 @@ setup(
         ],
     },
     cmdclass={
+        'build_exe': setupext.build_exe.BuildExeCommand,
         'build_ext': setupext.build_ext.BuildExtCommand,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
         'test': setupext.pytester.PyTest,
     },
     zip_safe=False,
-    ext_modules=[jpypeJar, jpypeLib, ],
+    ext_modules= [jpypeJar, jpypeLib, ],
+    executables = [jpypeExe],
     distclass=setupext.dist.Distribution,
     entry_points={
         'pyinstaller40': [

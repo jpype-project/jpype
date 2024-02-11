@@ -150,12 +150,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE_OUT;
 }
 
-void JPContext::attachJVM(JNIEnv* env)
+void JPContext::attachJVM(JNIEnv* env, bool embedded)
 {
 	env->GetJavaVM(&m_JavaVM);
-#ifndef ANDROID
-	m_Embedded = true;
-#endif
+	m_Embedded = embedded;
 	initializeResources(env, false);
 }
 

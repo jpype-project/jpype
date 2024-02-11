@@ -20,6 +20,17 @@ from . import utils
 from . import dist
 from . import platform
 from . import build_ext
+from . import build_exe
 from . import test_java
 from . import sdist
 from . import pytester
+
+from setuptools import Extension
+
+
+class Executable(Extension):
+    """Just like a regular Extension, but built as a executable instead"""
+
+class Jar(Extension):
+    """Just like a regular Extension, but built as a jar instead"""
+
