@@ -16,21 +16,27 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from setuptools.dist import Distribution as _Distribution
 
-# Add a new global option to the setup.py script.
+from setuptools.command.develop import develop as develop_cmd
 
 
-class Distribution(_Distribution):
-    global_options = [
+class Develop(develop_cmd):
+    user_options = develop_cmd.user_options + [
         ('enable-build-jar', None, 'Build the java jar portion'),
         ('enable-tracing', None, 'Set for tracing for debugging'),
         ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
+    ]
 
-    ] + _Distribution.global_options
-
-    def parse_command_line(self):
+    def initialize_options(self, *args):
         self.enable_tracing = False
         self.enable_build_jar = False
         self.enable_coverage = False
-        return _Distribution.parse_command_line(self)
+        super().initialize_options()
+
+    def reinitialize_command(self, command, reinit_subcommands=0, **kw):
+        cmd = super().reinitialize_command(command, reinit_subcommands=reinit_subcommands, **kw)
+        build_ext_command = self.distribution.get_command_obj("build_ext")
+        build_ext_command.enable_tracing = self.enable_tracing
+        build_ext_command.enable_build_jar = self.enable_build_jar
+        build_ext_command.enable_coverage = self.enable_coverage
+        return cmd
