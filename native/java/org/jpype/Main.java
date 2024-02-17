@@ -21,29 +21,31 @@ package org.jpype;
  */
 public class Main
 {
-  
+
   /**
    * Return control to Python to complete startup.
-   * 
-   * @param args 
+   *
+   * @param args
    */
   static native void launch(String[] args);
-  
-  /** Entry point for jpython.
-   * 
+
+  /**
+   * Entry point for jpython.
+   *
    * This code is only accessed from the JNI side.
-   * @param args 
+   *
+   * @param args
    */
   static void mainX(String[] args, String nativeLib)
-  { 
-    System.out.println("Load Java stubs from "+nativeLib);
-      System.load(nativeLib);
+  {
+    System.out.println("Load Java stubs from " + nativeLib);
+    System.load(nativeLib);
     System.out.println("starting main thread");
     // Create a new main thread for Python
-    Thread thread = new Thread(()->launch(args));
+    Thread thread = new Thread(() -> launch(args), "Python");
     thread.start();
     System.out.println("return control");
-    
+
     // Return control to C so we can call Destroy and wait for shutdown.
   }
 }

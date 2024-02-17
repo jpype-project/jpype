@@ -101,6 +101,7 @@ public class JPypeContext
     {
       System.load(nativeLib);
     }
+    
     INSTANCE.context = context;
     INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
     INSTANCE.typeFactory = new TypeFactoryNative();

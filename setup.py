@@ -50,7 +50,7 @@ jpypeJar = Jar(name="org.jpype",
 
 platform = setupext.platform.Platform()
 jpypeExe = Executable(name="jpython",
-        sources = [ 'native/main/main.c' ],
+        sources = [ 'native/main/main.cpp' ],
         language = "c",
         libraries = ["jvm"],
         library_dirs = ["/usr/lib/jvm/java-17-openjdk-amd64/lib/server",],

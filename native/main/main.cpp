@@ -1,6 +1,14 @@
-#include <stdio.h>
+#include <cstdio>
+#include <string>
 #include <Python.h>
+#include <iostream>
 #include "jni.h"
+
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <dlfcn.h>
+#endif
 
 char* toString(PyObject* obj)
 {
@@ -16,41 +24,41 @@ char* toString(PyObject* obj)
 
 /* Use a URLLoader to load org.jpype.   We are not going to be on the main classloader or
  we would be forced to merge user class path with our classpath. */
-jclass get_main(JNIEnv* env, char* jar)
+jclass get_main(JNIEnv*env, char* jar)
 {
-    (*env)->PushLocalFrame(env, 20);
-    jclass clsCls = (*env)->FindClass(env, "java/lang/Class");
-    jclass urlClassLoaderCls = (*env)->FindClass(env, "java/net/URLClassLoader");
-    jclass urlCls = (*env)->FindClass(env, "java/net/URL");
+    (env)->PushLocalFrame(20);
+    jclass clsCls = (env)->FindClass("java/lang/Class");
+    jclass urlClassLoaderCls = (env)->FindClass("java/net/URLClassLoader");
+    jclass urlCls = (env)->FindClass("java/net/URL");
     if (clsCls == NULL || urlClassLoaderCls == NULL || urlCls == NULL)
     {
-        (*env)->PopLocalFrame(env, NULL);
+        (env)->PopLocalFrame(NULL);
         return NULL;
     }
-    jmethodID urlConstructor = (*env)->GetMethodID(env, urlCls, "<init>", "(Ljava/lang/String;)V");
-    jmethodID uclConstructor = (*env)->GetMethodID(env, urlClassLoaderCls, "<init>", "([Ljava/net/URL;)V");
-    jmethodID forname = (*env)->GetStaticMethodID(env, clsCls, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+    jmethodID urlConstructor = (env)->GetMethodID(urlCls, "<init>", "(Ljava/lang/String;)V");
+    jmethodID uclConstructor = (env)->GetMethodID(urlClassLoaderCls, "<init>", "([Ljava/net/URL;)V");
+    jmethodID forname = (env)->GetStaticMethodID(clsCls, "forName", "(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
     if (urlConstructor == NULL || uclConstructor == NULL || forname == NULL)
     {
-        (*env)->PopLocalFrame(env, NULL);
+        (env)->PopLocalFrame(NULL);
         return NULL;
     }
-    jobject jstr = (*env)->NewStringUTF(env, jar);
-    jobject url = (*env)->NewObject(env, urlCls, urlConstructor, jstr);
-    jobjectArray urls = (*env)->NewObjectArray(env, 1, urlCls, NULL);
-    (*env)->SetObjectArrayElement(env, urls, 0, url);
-    jobject classLoader = (*env)->NewObject(env, urlClassLoaderCls, uclConstructor, urls);
-    jobject classToLoad = (*env)->NewStringUTF(env, "org.jpype.Main");
-    jobject result = (*env)->CallStaticObjectMethod(env, clsCls, forname, classToLoad, 1, classLoader);
-    return (jclass) (*env)->PopLocalFrame(env, result);
+    jobject jstr = (env)->NewStringUTF(jar);
+    jobject url = (env)->NewObject(urlCls, urlConstructor, jstr);
+    jobjectArray urls = (env)->NewObjectArray(1, urlCls, NULL);
+    (env)->SetObjectArrayElement(urls, 0, url);
+    jobject classLoader = (env)->NewObject(urlClassLoaderCls, uclConstructor, urls);
+    jobject classToLoad = (env)->NewStringUTF("org.jpype.Main");
+    jobject result = (env)->CallStaticObjectMethod(clsCls, forname, classToLoad, 1, classLoader);
+    return (jclass) (env)->PopLocalFrame(result);
 }
 
-jstring get_native(JNIEnv* env)
+jstring get_native(JNIEnv*env)
 {
    PyObject* import = PyImport_AddModule("importlib.util");
    PyObject* jpype = PyObject_CallMethod(import, "find_spec", "s", "_jpype");
    PyObject* origin = PyObject_GetAttrString(jpype, "origin");
-   jstring result = (*env)->NewStringUTF(env, toString(origin));
+   jstring result = (env)->NewStringUTF(toString(origin));
    Py_DECREF(jpype);
    Py_DECREF(origin);
    return result;
@@ -64,6 +72,9 @@ int main(int argc, char** argv)
         fprintf(stderr, "Fatal error: cannot decode argv[0]\n");
         exit(1);
     }
+
+   
+
     Py_SetProgramName(program);  /* optional but recommended */
     Py_Initialize();
     PyObject *jpype = PyImport_ImportModule("jpype._bootstrap");
@@ -77,9 +88,42 @@ int main(int argc, char** argv)
     /** FIXME load from the specified JVM */
     printf("%s\n", jvmpath);
 
+#ifdef _WIN32
+    wchar_t *java_home = Py_DecodeLocale(jvmpath, NULL);
+    if (java_home == nullptr)
+    {
+        std::cerr << "JAVA_HOME must be set" << std::endl;
+        return -1;
+    }
+    // convert to std::wstring
+    std::wstring java_home_string(java_home);
+    std::wstring libjvm_path = java_home_string + "/lib/server/libjvm.dll";
+    // load the entry point
+    void* libjvm = LoadLibraryW(libjvm_path.c_str());
+    typedef jint (*JNI_CreateJavaVM_t)(JavaVM**, JNIEnv**, void*);
+    JNI_CreateJavaVM_t JNI_CreateJavaVM = (JNI_CreateJavaVM_t)GetProcAddress((HMODULE)libjvm, "JNI_CreateJavaVM");
+#else
+    char* java_home = jvmpath;
+    if (java_home == nullptr)
+    {
+        std::cerr << "JAVA_HOME must be set" << std::endl;
+        return -1;
+    }
+    std::string java_home_string(java_home);
+    std::string libjvm_path = java_home_string + "/lib/server/libjvm.so";
+    void* libjvm = dlopen(libjvm_path.c_str(), RTLD_NOW);
+    typedef jint (*JNI_CreateJavaVM_t)(JavaVM**, JNIEnv**, void*);
+    JNI_CreateJavaVM_t JNI_CreateJavaVM = (JNI_CreateJavaVM_t)dlsym(libjvm, "JNI_CreateJavaVM");
+#endif
+    if (JNI_CreateJavaVM == nullptr)
+    {
+        std::cerr << "Unable to load JNI entrypoint." << std::endl;
+        return -1;
+    }
+ 
     // Next launch Java
     JavaVM *jvm;       /* denotes a Java VM */
-    JNIEnv *env;       /* pointer to native method interface */
+    JNIEnv* env;       /* pointer to native method interface */
     JavaVMInitArgs vm_args; /* JDK/JRE 10 VM initialization arguments */
 
     /* we need to parse the command lines looking for anything that is supposed to go to Java and pass it here */
@@ -133,8 +177,8 @@ int main(int argc, char** argv)
     vm_args.ignoreUnrecognized = 0;
 
     /* load and initialize a Java VM, return a JNI interface
-     * pointer in env */
-    JNI_CreateJavaVM(&jvm, (void**)&env, &vm_args);
+     * pointer inenv */
+    JNI_CreateJavaVM(&jvm, &env, &vm_args);
     free(options);
 
     /* Find the main entry point for JVM */
@@ -145,7 +189,7 @@ int main(int argc, char** argv)
         return -1;
     }
     free(jarpath);
-    jmethodID mid = (*env)->GetStaticMethodID(env, main, "mainX", "([Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID mid = env->GetStaticMethodID(main, "mainX", "([Ljava/lang/String;Ljava/lang/String;)V");
     if (mid == NULL)
     {
         fprintf(stderr, "Unable to find entry point for org.jpype");
@@ -153,26 +197,26 @@ int main(int argc, char** argv)
     }
  
     /* Set up arguments to main */
-    jclass str = (*env)->FindClass(env, "java/lang/String");
-    jobject stra = (*env)->NewObjectArray(env, argc, str, NULL);
+    jclass str = env->FindClass("java/lang/String");
+    jobjectArray stra = (env)->NewObjectArray(argc, str, NULL);
 
     /* Copy program name first */
-    (*env)->SetObjectArrayElement(env, stra, 0, (*env)->NewStringUTF(env, argv[0]));
+    env->SetObjectArrayElement(stra, 0, (env)->NewStringUTF(argv[0]));
     j=1;
     /* Copy remaining arguments */
     for (; i<argc; ++i)
     {
-        (*env)->SetObjectArrayElement(env, stra, j++, (*env)->NewStringUTF(env, argv[i]));
+        env->SetObjectArrayElement(stra, j++, (env)->NewStringUTF(argv[i]));
     }
     jobject native = get_native(env);
  
     /* Call jpype main method */ 
     printf("Transfer control to Java\n");
-    (*env)->CallStaticVoidMethod(env, main, mid, stra, native);
+    env->CallStaticVoidMethod(main, mid, stra, native);
 
     /* Java returns control, so now we wait for all user threads to end. */
     printf("wait for user thread to end.\n");
-    (*jvm)->DestroyJavaVM(jvm);
+    jvm->DestroyJavaVM();
 
     /* Java is done so we can free remaining Python resources */
     if (Py_FinalizeEx() < 0) {

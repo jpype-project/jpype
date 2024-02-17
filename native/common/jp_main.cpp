@@ -41,7 +41,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_Main_launch(
             //PyObject_SetAttrString(builtins.get(), "jpype", publicModule.get());
 
             printf("attach\n");
-            //JPContext_global->attachJVM(env, true);
+            JPContext_global->attachJVM(env, true);
             printf("install gc\n");
             PyJPModule_installGC(privateModule.get());
             printf("load resources\n");

@@ -32,6 +32,7 @@ JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackI
   m_Throwable(frame, th)
 {
 	JP_TRACE("JAVA EXCEPTION THROWN with java throwable");
+    printf("exception from java\n");
 	m_Error.l = nullptr;
 	from(stackInfo);
 }
@@ -40,6 +41,7 @@ JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackIn
 : std::runtime_error("None"), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN with error", error);
+    printf("exception from error\n");
 	m_Error.l = error;
 	from(stackInfo);
 }
@@ -48,6 +50,7 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 : std::runtime_error(msn), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
+    printf("msn %s\n", msn.c_str());
 	m_Error.l = errType;
 	//m_Message = msn;
 	from(stackInfo);
@@ -60,6 +63,7 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 : std::runtime_error(msn), m_Type(type)
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
+    printf("msn %s\n", msn.c_str());
 	m_Error.i = errType;
 	from(stackInfo);
 }
