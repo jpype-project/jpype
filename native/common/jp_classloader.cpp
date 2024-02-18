@@ -18,6 +18,8 @@
 #include <pyjp.h>
 #include <jp_classloader.h>
 
+jobject urlClassLoader = NULL;
+
 jobject JPClassLoader::getBootLoader()
 {
 	return m_BootLoader.get();
@@ -58,7 +60,6 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/classloader/DynamicClassLoader");
 	if (dynamicLoaderClass != nullptr)
 	{
-        printf("Loader found using FindClass\n");
 		// Easy the Dynamic loader is already in the path, so just use it as the bootloader
 		jmethodID newDyLoader = frame.GetMethodID(dynamicLoaderClass, "<init>",
 				"(Ljava/lang/ClassLoader;)V");
@@ -68,8 +69,6 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 		return;
 	}
 	frame.ExceptionClear();
-
-    printf("Loader not found.  Sideloading.\n");
 
 	// Harder, we need to find the _jpype module and use __file__ to obtain a
 	// path.
@@ -114,13 +113,23 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 
 jclass JPClassLoader::findClass(JPJavaFrame& frame, const string& name)
 {
-    printf("FindClass %s\n", name.c_str());
-#ifdef ANDROID
+    // We need to try the JVM classloader first in case org.jpype is already loaded
 	string cname = name;
 	for (int i = 0; i < cname.size(); ++i)
 		if (cname[i] == '.')
 			cname[i] = '/';
-	return frame.FindClass(cname);
+	jclass c = nullptr;
+	try {
+		c = frame.FindClass(cname);
+	    if (c != nullptr)
+        return c;
+    }
+    catch (JPypeException& ex)
+    {
+    }
+
+#ifdef ANDROID
+    return c;
 #else
 	jvalue v[3];
 	v[0].l = frame.NewStringUTF(name.c_str());
