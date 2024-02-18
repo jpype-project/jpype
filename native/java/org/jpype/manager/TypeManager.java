@@ -64,14 +64,17 @@ public class TypeManager
   }
 
 //<editor-fold desc="interface">
-  public synchronized void init()
+  public synchronized void init() throws Exception
   {
     try
     {
+      System.out.println("typemanager init");
       if (isStarted)
         throw new RuntimeException("Cannot be restarted");
       isStarted = true;
       isShutdown = false;
+
+      System.out.println("create class");
 
       // Create the required minimum classes
       this.java_lang_Object = createClass(Object.class, true);
@@ -85,13 +88,20 @@ public class TypeManager
         Class.class, Number.class, CharSequence.class, Throwable.class,
         Void.class, Boolean.class, Byte.class, Character.class,
         Short.class, Integer.class, Long.class, Float.class, Double.class,
-        String.class, JPypeProxy.class,
+        String.class, 
         Method.class, Field.class
       };
       for (Class c : cls)
       {
         createClass(c, true);
       }
+      
+      createOrdinaryClass( JPypeProxy.class, true, true, 
+              new Object[]{
+                java.lang.reflect.Proxy.class,
+                java.lang.reflect.Proxy.class.getMethod("getInvocationHandler", Object.class),
+                JPypeProxy.class.getField("instance")
+              });
 
       // Create the primitive types
       // Link boxed and primitive types so that the wrappers can find them.
@@ -104,7 +114,7 @@ public class TypeManager
       createPrimitive("long", Long.TYPE, Long.class);
       createPrimitive("float", Float.TYPE, Float.class);
       createPrimitive("double", Double.TYPE, Double.class);
-    } catch (Throwable ex)
+    } catch (NoSuchFieldException | NoSuchMethodException | RuntimeException ex)
     {
       // We can't get debugging information at this point in the process.
       ex.printStackTrace();
@@ -292,10 +302,12 @@ public class TypeManager
   }
 
   /**
-   * Returns the number of arguments an interface only unimplemented method accept.
+   * Returns the number of arguments an interface only unimplemented method
+   * accept.
    *
    * @param interfaceClass The class of the interface
-   * @return the number of arguments the only unimplemented method of the interface accept.
+   * @return the number of arguments the only unimplemented method of the
+   * interface accept.
    */
   public int interfaceParameterCount(Class<?> interfaceClass)
   {
@@ -395,10 +407,10 @@ public class TypeManager
     if (cls.isArray())
       return this.createArrayClass(cls);
 
-    return createOrdinaryClass(cls, special, true);
+    return createOrdinaryClass(cls, special, true, null);
   }
 
-  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
+  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases, Object[] args)
   {
     // Verify the class will be loadable prior to creating the class.
     // If we fail to do this then the class may end up crashing later when the
@@ -462,7 +474,8 @@ public class TypeManager
     long classPtr = typeFactory.defineObjectClass(context, cls, name,
             superClassPtr,
             interfacesPtr,
-            modifiers);
+            modifiers,
+            args);
 
     // Cache the wrapper.
     ClassDescriptor out = new ClassDescriptor(cls, classPtr, method);
@@ -479,7 +492,8 @@ public class TypeManager
             parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
-            ModifierCode.ANONYMOUS.value);
+            ModifierCode.ANONYMOUS.value,
+            null);
     return parent.anonymous;
   }
 

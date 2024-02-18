@@ -87,7 +87,7 @@ public:
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers,
-            jobjectArray args);
+			jobjectArray args);
 	~ JPProxyType() override;
 
 public: // JPClass implementation

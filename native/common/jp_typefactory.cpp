@@ -166,7 +166,8 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		jstring name,
 		jlong superClass,
 		jlongArray interfacePtrs,
-		jint modifiers)
+		jint modifiers,
+        jobjectArray args)
 {
 	// All resources are created here are owned by Java and deleted by Java shutdown routine
 	auto* context = (JPContext*) contextPtr;
@@ -278,7 +279,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (className == "org.jpype.proxy.JPypeProxy")
 		return (jlong)
 		new JPProxyType(frame, cls, className,
-			(JPClass*) superClass, interfaces, modifiers);
+			(JPClass*) superClass, interfaces, modifiers, args);
 
 	// Register reflection types for later use
 	if (className == "java.lang.reflect.Method")

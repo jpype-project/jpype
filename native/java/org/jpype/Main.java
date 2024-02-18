@@ -29,6 +29,8 @@ public class Main
    */
   static native void launch(String[] args);
 
+  static native void initialize(ClassLoader loader);
+  
   /**
    * Entry point for jpython.
    *
@@ -38,14 +40,16 @@ public class Main
    */
   static void mainX(String[] args, String nativeLib)
   {
-    System.out.println("Load Java stubs from " + nativeLib);
+    // Load the native library
     System.load(nativeLib);
-    System.out.println("starting main thread");
+    
     // Create a new main thread for Python
+    ClassLoader classLoader = Main.class.getClassLoader();
+    initialize(classLoader);
+    
+    // Launch Python in a new thread
     Thread thread = new Thread(() -> launch(args), "Python");
     thread.start();
-    System.out.println("return control");
-
     // Return control to C so we can call Destroy and wait for shutdown.
   }
 }

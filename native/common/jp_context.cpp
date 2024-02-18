@@ -214,6 +214,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	if (!m_Embedded)
 	{
+        printf("not embedded\n"); fflush(stdout);
 		JPPyObject import = JPPyObject::use(PyImport_AddModule("importlib.util"));
 		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
 		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));

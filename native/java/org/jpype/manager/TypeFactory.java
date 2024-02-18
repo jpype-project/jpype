@@ -77,12 +77,14 @@ public interface TypeFactory
           String name,
           long superClass,
           long[] interfaces,
-          int modifiers);
+          int modifiers,
+          Object[] args);
 
   /**
    * Define a primitive types.
    *
    * @param context JPContext object
+   * @param name
    * @param cls is the Java class for this primitive.
    * @param boxedPtr is the JPClass for the boxed class.
    * @param modifiers

@@ -95,7 +95,7 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
+  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt) throws Exception
   {
     if (nativeLib != null)
     {
@@ -116,7 +116,7 @@ public class JPypeContext
   {
   }
 
-  void initialize(boolean interrupt)
+  void initialize(boolean interrupt) throws Exception
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
