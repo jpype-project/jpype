@@ -81,37 +81,29 @@ int main(int argc, char** argv)
     PyObject *jpype_imports = PyImport_ImportModule("jpype.imports");
     PyObject *path = PyObject_GetAttrString(jpype, "_JPypeJarPath");
     PyObject *file = PyObject_GetAttrString(jpype, "_JPypeJVMPath");
-    PyObject *jpypePrivate = PyImport_ImportModule("_jpype");
+    PyObject *jpype_private = PyImport_ImportModule("_jpype");
     char *jvmpath = toString(file);
     char *jarpath = toString(path);
 
-    /** FIXME load from the specified JVM */
-    printf("%s\n", jvmpath);
-
+    /* Find the entry point for the JVM */
 #ifdef _WIN32
-    wchar_t *java_home = Py_DecodeLocale(jvmpath, NULL);
-    if (java_home == nullptr)
+    wchar_t *wjvmpath = Py_DecodeLocale(jvmpath, NULL);
+    if (wjvmpath == nullptr)
     {
         std::cerr << "JAVA_HOME must be set" << std::endl;
         return -1;
     }
-    // convert to std::wstring
-    std::wstring java_home_string(java_home);
-    std::wstring libjvm_path = java_home_string + "/lib/server/libjvm.dll";
     // load the entry point
-    void* libjvm = LoadLibraryW(libjvm_path.c_str());
+    void* libjvm = LoadLibraryW(wjvmpath);
     typedef jint (*JNI_CreateJavaVM_t)(JavaVM**, JNIEnv**, void*);
     JNI_CreateJavaVM_t JNI_CreateJavaVM = (JNI_CreateJavaVM_t)GetProcAddress((HMODULE)libjvm, "JNI_CreateJavaVM");
 #else
-    char* java_home = jvmpath;
-    if (java_home == nullptr)
+    if (jvmpath == nullptr)
     {
         std::cerr << "JAVA_HOME must be set" << std::endl;
         return -1;
     }
-    std::string java_home_string(java_home);
-    std::string libjvm_path = java_home_string + "/lib/server/libjvm.so";
-    void* libjvm = dlopen(libjvm_path.c_str(), RTLD_NOW);
+    void* libjvm = dlopen(jvmpath, RTLD_NOW);
     typedef jint (*JNI_CreateJavaVM_t)(JavaVM**, JNIEnv**, void*);
     JNI_CreateJavaVM_t JNI_CreateJavaVM = (JNI_CreateJavaVM_t)dlsym(libjvm, "JNI_CreateJavaVM");
 #endif
@@ -121,7 +113,7 @@ int main(int argc, char** argv)
         return -1;
     }
  
-    // Next launch Java
+    /* Next launch Java */
     JavaVM *jvm;       /* denotes a Java VM */
     JNIEnv* env;       /* pointer to native method interface */
     JavaVMInitArgs vm_args; /* JDK/JRE 10 VM initialization arguments */
@@ -202,8 +194,9 @@ int main(int argc, char** argv)
 
     /* Copy program name first */
     env->SetObjectArrayElement(stra, 0, (env)->NewStringUTF(argv[0]));
-    j=1;
+
     /* Copy remaining arguments */
+    j=1;
     for (; i<argc; ++i)
     {
         env->SetObjectArrayElement(stra, j++, (env)->NewStringUTF(argv[i]));
@@ -211,12 +204,18 @@ int main(int argc, char** argv)
     jobject native = get_native(env);
  
     /* Call jpype main method */ 
-    printf("Transfer control to Java\n");
     env->CallStaticVoidMethod(main, mid, stra, native);
 
     /* Java returns control, so now we wait for all user threads to end. */
     printf("wait for user thread to end.\n");
     jvm->DestroyJavaVM();
+
+    printf("free Python resources.\n");
+
+    if (jpype_imports)
+        Py_DECREF(jpype_imports);
+    if (jpype_private)
+        Py_DECREF(jpype_private);
 
     /* Java is done so we can free remaining Python resources */
     if (Py_FinalizeEx() < 0) {

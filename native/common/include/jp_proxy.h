@@ -86,7 +86,8 @@ public:
 			const string& name,
 			JPClass* super,
 			JPClassList& interfaces,
-			jint modifiers);
+			jint modifiers,
+            jobjectArray args);
 	~ JPProxyType() override;
 
 public: // JPClass implementation

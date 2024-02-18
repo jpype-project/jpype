@@ -208,7 +208,6 @@ void JPJavaFrame::check()
 	JP_FRAME_CHECK();
 	if (m_Env && m_Env->ExceptionCheck() == JNI_TRUE)
 	{
-        m_Env->ExceptionDescribe();
 		jthrowable th = m_Env->ExceptionOccurred();
 		JP_TRACE_JAVA("ExceptionOccurred", th);
 		m_Env->ExceptionClear();

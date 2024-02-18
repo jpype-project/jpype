@@ -19,72 +19,80 @@
 void PyJPModule_installGC(PyObject* module);
 void PyJPModule_loadResources(PyObject* module);
 
+extern jobject urlClassLoader;
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_Main_initialize(
+		JNIEnv *env, jclass clazz,
+        jobject classLoader)
+{
+    try
+    {
+        // Set the classloader so that we don't make a second one during bootstrapping
+        urlClassLoader = classLoader;
+        // Attach the JVM
+        JPContext_global->attachJVM(env, true);
+    } catch (JPypeException& ex)
+    {
+        printf("JPypeException\n");
+    } catch (...)  // GCOVR_EXCL_LINE
+    {
+        printf("other exception\n");
+    }
+}
+
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_Main_launch(
 		JNIEnv *env, jclass clazz,
 		jobjectArray args)
 {
-    try
-    {
-        JP_TRACE_IN("Java_org_jpype_Main_launch");
-        try {
-            // Attach the JVM and set up the resources for the private module
-            printf("fetch module\n");
-            JPPyObject publicModule = JPPyObject::use(PyImport_ImportModule("jpype"));
-            JPPyObject privateModule = JPPyObject::use(PyImport_ImportModule("_jpype"));
-            JPPyObject builtins = JPPyObject::use(PyEval_GetBuiltins());
-            if (publicModule.isNull() || privateModule.isNull() || builtins.isNull())
-            {
-                fprintf(stderr, "Unable to find required resources\n");
-                return;
-            }
-            printf("add to builtin\n");
-            //PyObject_SetAttrString(builtins.get(), "jpype", publicModule.get());
-
-            printf("attach\n");
-            JPContext_global->attachJVM(env, true);
-            printf("install gc\n");
-            PyJPModule_installGC(privateModule.get());
-            printf("load resources\n");
-            PyJPModule_loadResources(privateModule.get());
-
-            printf("parse args\n");
-
-            // Copy the arguments
-            int argc = env->GetArrayLength(args);
-            char** argv = new char*[argc];
-            for (int i = 0; i<argc; ++i)
-            {   
-                jboolean iscpy = 0;
-                jstring str = (jstring) env->GetObjectArrayElement(args, i);
-                const char* c = env->GetStringUTFChars(str, &iscpy);
-                argv[i] = strdup(c);
-                if (iscpy)
-                    env->ReleaseStringUTFChars(str, c);
-            }
-
-            // Redirect to Python
-            Py_BytesMain(argc, argv);
-
-            // Dump the memory
-            for (int i = 0; i<argc; ++i)
-            {   
-                free(argv[i]);
-            }
-
-            // At this point there may be other threads launched by Java or Python so we 
-            // can't cleanup.  Just return control.
-        } catch (JPypeException& ex)
+    try {
+        // Fetch the Python modules
+        JPPyObject publicModule = JPPyObject::use(PyImport_ImportModule("jpype"));
+        JPPyObject privateModule = JPPyObject::use(PyImport_ImportModule("_jpype"));
+        JPPyObject builtins = JPPyObject::use(PyEval_GetBuiltins());
+        if (publicModule.isNull() || privateModule.isNull() || builtins.isNull())
         {
-            JP_TRACE("JPypeException raised");
-            printf("JPypeException\n");
-        } catch (...)  // GCOVR_EXCL_LINE
-        {
-            printf("other exception\n");
+            fprintf(stderr, "Unable to find required resources\n");
+            return;
         }
-        return;
-        JP_TRACE_OUT;  // GCOVR_EXCL_LINE
-    }
-    catch (...) // JP_TRACE_OUT implies a throw but that is not allowed.
-    {}
-}
 
+        // Set up the GC
+        PyJPModule_installGC(privateModule.get());
+        PyObject_SetAttrString(builtins.get(), "jpype", publicModule.get());
+        PyJPModule_loadResources(privateModule.get());
+
+        // Copy the arguments
+        int argc = env->GetArrayLength(args);
+        char** argv = new char*[argc];
+        for (int i = 0; i<argc; ++i)
+        {   
+            jboolean iscpy = 0;
+            jstring str = (jstring) env->GetObjectArrayElement(args, i);
+            const char* c = env->GetStringUTFChars(str, &iscpy);
+            argv[i] = strdup(c);
+            if (iscpy)
+                env->ReleaseStringUTFChars(str, c);
+        }
+
+        // Redirect to Python
+        printf("Python main start\n"); fflush(stdout);
+        Py_BytesMain(argc, argv);
+        printf("Python main end\n"); fflush(stdout);
+
+        // Dump the memory
+        for (int i = 0; i<argc; ++i)
+        {   
+            free(argv[i]);
+        }
+
+        // At this point there may be other threads launched by Java or Python so we 
+        // can't cleanup.  Just return control.
+    } catch (JPypeException& ex)
+    {
+        JP_TRACE("JPypeException raised");
+        printf("JPypeException\n");
+    } catch (...)  // GCOVR_EXCL_LINE
+    {
+        printf("other exception\n");
+    }
+    return;
+}
