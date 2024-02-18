@@ -16,6 +16,7 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+
 import distutils.cmd
 import distutils.log
 import glob
@@ -25,8 +26,17 @@ import shutil
 import subprocess
 from distutils.dir_util import copy_tree
 from distutils.errors import DistutilsPlatformError
-
+from setuptools._distutils import sysconfig
+from setuptools._distutils import ccompiler
 from setuptools.command.build_ext import build_ext
+
+from setuptools import Extension
+from .makefile import Makefile
+class Executable(Extension):
+    """Just like a regular Extension, but built as a executable instead"""
+
+class Jar(Extension):
+    """Just like a regular Extension, but built as a jar instead"""
 
 
 # This setup option constructs a prototype Makefile suitable for compiling
@@ -42,126 +52,6 @@ from setuptools.command.build_ext import build_ext
 class FeatureNotice(Warning):
     """ indicate notices about features """
 
-
-class Makefile(object):
-    compiler_type = "unix"
-
-    def __init__(self, actual):
-        self.actual = actual
-        self.compile_command = None
-        self.compile_pre = None
-        self.compile_post = None
-        self.objects = []
-        self.sources = []
-
-    def captureCompile(self, x):
-        command = x[0]
-        x = x[1:]
-        includes = [i for i in x if i.startswith("-I")]
-        x = [i for i in x if not i.startswith("-I")]
-        i0 = None
-        i1 = None
-        for i, v in enumerate(x):
-            if v == '-c':
-                i1 = i
-            elif v == '-o':
-                i0 = i
-        pre = set(x[:i1])
-        post = x[i0 + 2:]
-
-        self.compile_command = command
-        self.compile_pre = pre
-        self.compile_post = post
-        self.includes = includes
-        self.sources.append(x[i1 + 1])
-
-    def captureLink(self, x):
-        self.link_command = x[0]
-        x = x[1:]
-        i = x.index("-o")
-        self.library = x[i + 1]
-        del x[i]
-        del x[i]
-        self.objects = [i for i in x if i.endswith(".o")]
-        self.link_options = [i for i in x if not i.endswith(".o")]
-        u = self.objects[0].split("/")
-        self.build_dir = "/".join(u[:2])
-
-    def compile(self, *args, **kwargs):
-        self.actual.spawn = self.captureCompile
-        rc = self.actual.compile(*args, **kwargs)
-        return rc
-
-    def _need_link(self, *args):
-        return True
-
-    def link_shared_object(self, *args, **kwargs):
-        self.actual._need_link = self._need_link
-        self.actual.spawn = self.captureLink
-        rc = self.actual.link_shared_object(*args, **kwargs)
-        self.write()
-        return rc
-
-    def detect_language(self, x):
-        return self.actual.detect_language(x)
-
-    def write(self):
-        print("Write makefile")
-        library = os.path.basename(self.library)
-        link_command = self.link_command
-        compile_command = self.compile_command
-        compile_pre = " ".join(list(self.compile_pre))
-        compile_post = " ".join(list(self.compile_post))
-        build = self.build_dir
-        link_flags = " ".join(self.link_options)
-        includes = " ".join(self.includes)
-        sources = " \\\n     ".join(self.sources)
-        with open("Makefile", "w") as fd:
-            print("LIB = %s" % library, file=fd)
-            print("CC = %s" % compile_command, file=fd)
-            print("LINK = %s" % link_command, file=fd)
-            print("CFLAGS = %s %s" % (compile_pre, compile_post), file=fd)
-            print("INCLUDES = %s" % includes, file=fd)
-            print("BUILD = %s" % build, file=fd)
-            print("LINKFLAGS = %s" % link_flags, file=fd)
-            print("SRCS = %s" % sources, file=fd)
-            print("""
-all: $(LIB)
-
-rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-#build/src/jp_thunk.cpp: $(call rwildcard,native/java,*.java)
-#	python setup.py build_thunk
-
-DEPDIR = build/deps
-$(DEPDIR): ; @mkdir -p $@
-
-DEPFILES := $(SRCS:%.cpp=$(DEPDIR)/%.d)
-
-deps: $(DEPFILES)
-
-%/:
-	echo $@
-
-$(DEPDIR)/%.d: %.cpp 
-	mkdir -p $(dir $@)
-	$(CC) $(INCLUDES) -MT $(patsubst $(DEPDIR)%,'$$(BUILD)%',$(patsubst %.d,%.o,$@)) -MM $< -o $@
-
-OBJS = $(addprefix $(BUILD)/, $(SRCS:.cpp=.o))
-
-
-$(BUILD)/%.o: %.cpp
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-
-$(LIB): $(OBJS)
-	$(LINK) $(OBJS) $(LINKFLAGS) -o $@
-
-
--include $(DEPFILES)
-""", file=fd)
-
-
 # Customization of the build_ext
 class BuildExtCommand(build_ext):
     """
@@ -172,16 +62,26 @@ class BuildExtCommand(build_ext):
     """
 
     user_options = build_ext.user_options + [
+        ('enable-build-jar', None, 'Build the java jar portion'),
+        ('enable-tracing', None, 'Set for tracing for debugging'),
+        ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
+
         ('android', None, 'configure for android'),
         ('makefile', None, 'Build a makefile for extensions'),
         ('jar', None, 'Build the jar only'),
+        ('exe', None, 'Build the exe only'),
     ]
 
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
+        self.enable_tracing = False
+        self.enable_build_jar = False
+        self.enable_coverage = False
+
         self.android = False
         self.makefile = False
         self.jar = False
+        self.exe = False
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
 
@@ -195,8 +95,7 @@ class BuildExtCommand(build_ext):
                 continue
 
             args = v.split()
-            for r in remove_args:
-                args = list(filter(r.__ne__, args))
+            args = [arg for arg in args if arg not in remove_args]
 
             cfg_vars[k] = " ".join(args)
         super().initialize_options()
@@ -205,12 +104,12 @@ class BuildExtCommand(build_ext):
         # set compiler flags
         c = self.compiler.compiler_type
         jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
-        if c == 'unix' and self.distribution.enable_coverage:
+        if c == 'unix' and self.enable_coverage:
             jpypeLib.extra_compile_args.extend(
                 ['-ggdb', '--coverage', '-ftest-coverage'])
             jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
             jpypeLib.extra_link_args.extend(['--coverage'])
-        if c == 'unix' and self.distribution.enable_tracing:
+        if c == 'unix' and self.enable_tracing:
             jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
 
     def build_extensions(self):
@@ -219,25 +118,21 @@ class BuildExtCommand(build_ext):
             self.force = True
 
         jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
-        tracing = self.distribution.enable_tracing
         self._set_cflags()
-        if tracing:
+        if self.enable_tracing:
             jpypeLib.define_macros.append(('JP_TRACING_ENABLE', 1))
-        coverage = self.distribution.enable_coverage
-        if coverage:
+        if self.enable_coverage:
             jpypeLib.define_macros.append(('JP_INSTRUMENTATION', 1))
 
-        # has to be last call
-        print("Call build extensions")
         super().build_extensions()
 
     def build_extension(self, ext):
-        if ext.language == "java":
+        if isinstance(ext, Jar) and not self.exe:
             return self.build_java_ext(ext)
-        if self.jar:
-            return
-        print("Call build ext")
-        return super().build_extension(ext)
+        if isinstance(ext, Executable) and not self.jar:
+            return self.build_executable(ext)
+        if isinstance(ext, Extension) and not self.jar and not self.exe:
+            return super().build_extension(ext)
 
     def copy_extensions_to_source(self):
         build_py = self.get_finalized_command('build_py')
@@ -266,7 +161,7 @@ class BuildExtCommand(build_ext):
 
     def build_java_ext(self, ext):
         """Run command."""
-        java = self.distribution.enable_build_jar
+        java = self.enable_build_jar
 
         javac = "javac"
         try:
@@ -296,8 +191,6 @@ class BuildExtCommand(build_ext):
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
-        coverage = self.distribution.enable_coverage
-
         target_version = "1.8"
         # build the jar
         try:
@@ -309,9 +202,7 @@ class BuildExtCommand(build_ext):
             cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
-            debug = "-g:none"
-            if coverage:
-                debug = "-g:lines,vars,source"
+
             os.makedirs("build/classes", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
@@ -333,3 +224,49 @@ class BuildExtCommand(build_ext):
         except subprocess.CalledProcessError as exc:
             distutils.log.error(exc.output)
             raise DistutilsPlatformError("Error executing {}".format(exc.cmd))
+
+    def build_executable(self, executable):
+        sources = executable.sources
+        if sources is None or not isinstance(sources, (list, tuple)):
+            raise DistutilsSetupError(
+                "in 'executables' option (executable '%s'), "
+                "'sources' must be present and must be "
+                "a list of source filenames" % executable.name
+            )
+        sources = list(sources)
+
+        distutils.log.info("building '%s' executable", executable.name)
+
+        py_include = sysconfig.get_python_inc()
+        plat_py_include = sysconfig.get_python_inc(plat_specific=1)
+
+        compiler = self.compiler
+#ccompiler.new_compiler(
+#            compiler=self.compiler, dry_run=self.dry_run, force=self.force
+#        )
+
+        compiler.add_library(sysconfig.get_config_vars()["BLDLIBRARY"][2:])
+        compiler.include_dirs.extend(py_include.split(os.path.pathsep))
+        if plat_py_include != py_include:
+            compiler.include_dirs.extend(plat_py_include.split(os.path.pathsep))
+        compiler.add_library_dir(sysconfig.get_config_vars()["LIBPL"])
+
+
+        macros = executable.define_macros[:]
+        for undef in executable.undef_macros:
+            macros.append((undef,))
+        objects = compiler.compile(
+            sources,
+            output_dir=self.build_temp,
+            macros=macros,
+            include_dirs=executable.include_dirs,
+            debug=self.debug,
+            depends=executable.depends
+        )
+        name = executable.name
+        if compiler.exe_extension is not None:
+            name = name + self.compile.exe_extension
+
+        compiler.link(ccompiler.CCompiler.EXECUTABLE, objects, name, library_dirs=executable.library_dirs, libraries=executable.libraries, debug=self.debug, target_lang="c++")
+
+
