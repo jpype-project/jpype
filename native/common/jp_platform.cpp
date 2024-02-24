@@ -64,13 +64,13 @@ public:
 	virtual void loadLibrary(const char* path) override
 	{
 		JP_TRACE_IN("Win32PlatformAdapter::loadLibrary");
-        wchar_t *wpath = Py_DecodeLocale(path, NULL);
-        if (wpath == NULL)
-        {
-            JP_RAISE(PyExc_SystemError, "Unable to get JVM path with locale.");
-        }
+		wchar_t *wpath = Py_DecodeLocale(path, NULL);
+		if (wpath == NULL)
+		{
+			JP_RAISE(PyExc_SystemError, "Unable to get JVM path with locale.");
+		}
 		jvmLibrary = LoadLibraryW(wpath);
-        PyMem_RawFree(wpath);
+		PyMem_RawFree(wpath);
 		if (jvmLibrary == NULL)
 		{
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
