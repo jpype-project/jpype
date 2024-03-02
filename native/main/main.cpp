@@ -73,8 +73,6 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-   
-
     Py_SetProgramName(program);  /* optional but recommended */
     Py_Initialize();
     PyObject *jpype = PyImport_ImportModule("jpype._bootstrap");
@@ -202,7 +200,13 @@ int main(int argc, char** argv)
         env->SetObjectArrayElement(stra, j++, (env)->NewStringUTF(argv[i]));
     }
     jobject native = get_native(env);
- 
+
+    /* Python may be in bad state upon returning so best to release resources early */
+    if (jpype_imports)
+        Py_DECREF(jpype_imports);
+    if (jpype_private)
+        Py_DECREF(jpype_private);
+
     /* Call jpype main method */ 
     env->CallStaticVoidMethod(main, mid, stra, native);
 
@@ -211,11 +215,6 @@ int main(int argc, char** argv)
     jvm->DestroyJavaVM();
 
     printf("free Python resources.\n");
-
-    if (jpype_imports)
-        Py_DECREF(jpype_imports);
-    if (jpype_private)
-        Py_DECREF(jpype_private);
 
     /* Java is done so we can free remaining Python resources */
     if (Py_FinalizeEx() < 0) {

@@ -50,6 +50,7 @@ public class Main
     // Launch Python in a new thread
     Thread thread = new Thread(() -> launch(args), "Python");
     thread.start();
+//    launch(args);
     // Return control to C so we can call Destroy and wait for shutdown.
   }
 }

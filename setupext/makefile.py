@@ -1,4 +1,4 @@
-
+import os
 
 class Makefile:
     compiler_type = "unix"
@@ -8,8 +8,10 @@ class Makefile:
         self.compile_command = None
         self.compile_pre = None
         self.compile_post = None
+        self.include_dirs = actual.include_dirs
         self.objects = []
         self.sources = []
+        self.exe_extension = actual.exe_extension
 
     def captureCompile(self, x):
         command = x[0]
@@ -61,6 +63,18 @@ class Makefile:
 
     def detect_language(self, x):
         return self.actual.detect_language(x)
+
+    def add_library(self, *args):
+        self.actual.add_library(*args)
+
+    def add_library_dir(self, *args):
+        self.actual.add_library_dir(*args)
+
+    def link(self, *args, **kwargs):
+        self.actual.spawn = self.captureCompile
+        rc = self.actual.link(*args, **kwargs)
+        return rc
+
 
     def write(self):
         print("Write makefile")

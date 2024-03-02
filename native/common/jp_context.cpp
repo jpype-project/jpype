@@ -309,7 +309,8 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
-	//	if (m_Embedded)
+	if (m_Embedded)
+		return;
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
 	// Wait for all non-demon threads to terminate

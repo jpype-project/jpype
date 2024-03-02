@@ -45,6 +45,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_Main_launch(
 		jobjectArray args)
 {
     try {
+        int rc = 0;
         // Fetch the Python modules
         JPPyObject publicModule = JPPyObject::use(PyImport_ImportModule("jpype"));
         JPPyObject privateModule = JPPyObject::use(PyImport_ImportModule("_jpype"));
@@ -73,10 +74,35 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_Main_launch(
                 env->ReleaseStringUTFChars(str, c);
         }
 
-        // Redirect to Python
-        printf("Python main start\n"); fflush(stdout);
-        Py_BytesMain(argc, argv);
-        printf("Python main end\n"); fflush(stdout);
+        // Set isolated mode so that Python doesn't call exit
+        PyConfig config;
+        PyConfig_InitPythonConfig(&config);
+        config.isolated = 1;
+
+        PyStatus status = PyConfig_SetBytesArgv(&config, argc, argv);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+            goto exception;
+        }
+        
+        status = Py_InitializeFromConfig(&config);
+        if (PyStatus_Exception(status)) {
+            PyConfig_Clear(&config);
+            goto exception;
+        }
+        PyConfig_Clear(&config);
+
+        // Call Python from Java
+        rc = Py_RunMain();
+
+        // Problem:  Python doesn't exist the main loop and return here.
+        // instead it finalizes and shutsdown everything even if there are 
+        // other Java threads still using Python.  This is apparently inherent
+        // in Python design.   So it may not be possible to get them cleanly
+        // working together until Python splits there main loop like Java
+        // did
+
+exception:
 
         // Dump the memory
         for (int i = 0; i<argc; ++i)
