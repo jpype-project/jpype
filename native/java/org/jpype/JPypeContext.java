@@ -19,11 +19,8 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,12 +95,13 @@ public class JPypeContext
    * @param bootLoader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
+  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt) throws Exception
   {
     if (nativeLib != null)
     {
       System.load(nativeLib);
     }
+    
     INSTANCE.context = context;
     INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
     INSTANCE.typeFactory = new TypeFactoryNative();
@@ -118,7 +116,7 @@ public class JPypeContext
   {
   }
 
-  void initialize(boolean interrupt)
+  void initialize(boolean interrupt) throws Exception
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();

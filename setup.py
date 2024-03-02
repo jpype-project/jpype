@@ -26,12 +26,14 @@ from setuptools import setup
 # Add our setupext package to the path, and import it.
 sys.path.append(str(Path(__file__).parent))
 import setupext
+from setupext import Jar, Executable
 
 if '--android' in sys.argv:
     platform = 'android'
     sys.argv.remove('--android')
 else:
     platform = sys.platform
+
 
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
@@ -45,12 +47,18 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     ),
     platform=platform,
 ))
-jpypeJar = Extension(name="org.jpype",
+jpypeJar = Jar(name="org.jpype",
                      sources=sorted(map(str, Path("native", "java").glob("**/*.java"))),
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
 
+#platform = setupext.platform.Platform()
+jpypeExe = Executable(name="jpython",  **setupext.platform.Platform(
+        sources = [ 'native/main/main.cpp' ],
+        include_dirs = [],
+        platform=platform,
+))
 
 setup(
     # Non-standard, and extension behaviour of setup() - project information
@@ -73,5 +81,5 @@ setup(
         'test': setupext.pytester.PyTest,
     },
     zip_safe=False,
-    ext_modules=[jpypeJar, jpypeLib, ],
+    ext_modules=[jpypeExe, jpypeJar, jpypeLib],
 )

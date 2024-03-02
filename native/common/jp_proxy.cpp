@@ -236,14 +236,14 @@ JPProxyType::JPProxyType(JPJavaFrame& frame,
 		const string& name,
 		JPClass* super,
 		JPClassList& interfaces,
-		jint modifiers)
+		jint modifiers,
+		jobjectArray args)
 : JPClass(frame, clss, name, super, interfaces, modifiers)
 {
-	jclass proxyClass = frame.FindClass("java/lang/reflect/Proxy");
+	jclass proxyClass = (jclass) frame.GetObjectArrayElement(args,0);
 	m_ProxyClass = JPClassRef(frame, proxyClass);
-	m_GetInvocationHandlerID = frame.GetStaticMethodID(proxyClass, "getInvocationHandler",
-			"(Ljava/lang/Object;)Ljava/lang/reflect/InvocationHandler;");
-	m_InstanceID = frame.GetFieldID(clss, "instance", "J");
+	m_GetInvocationHandlerID = frame.FromReflectedMethod(frame.GetObjectArrayElement(args,1));
+	m_InstanceID = frame.FromReflectedField(frame.GetObjectArrayElement(args,2));
 }
 
 JPProxyType::~JPProxyType()
