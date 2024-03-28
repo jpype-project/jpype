@@ -111,7 +111,7 @@ project has suffered a nasty data structure problem in one of the threads.  You
 managed to capture the data structure in a serialized form but if you could just
 make graph and call a few functions this would be so much easier.  But  the
 interactive Java shell that you are using doesn't really have much in the way of
-visualization and your don't have time to write a whole graphing applet just to
+visualization and you don't have time to write a whole graphing applet just to
 display this dataset.
 
 So poking around on the internet you find that Python has exactly the
