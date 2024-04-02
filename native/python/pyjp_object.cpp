@@ -390,7 +390,7 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 	{
 		// Attach the frame to first
 		JPPyObject trace = PyTrace_FromJavaException(frame, th, enclosing);
-		if (trace.get()!=nullptr)
+		if (trace.get() != nullptr)
 			PyException_SetTraceback(exc.get(), trace.get());
 
 		// Check for the next in the cause list
