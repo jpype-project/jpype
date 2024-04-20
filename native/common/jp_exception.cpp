@@ -220,7 +220,8 @@ void JPypeException::convertJavaToPython()
 			PyJPException_normalize(frame, prev, jcause, th);
 			PyException_SetCause(cause.get(), prev.keep());
 		}
-		PyException_SetTraceback(cause.get(), trace.get());
+		if (trace.get() != nullptr)
+			PyException_SetTraceback(cause.get(), trace.get());
 		PyException_SetCause(pyvalue.get(), cause.keep());
 	}	catch (JPypeException& ex)
 	{

@@ -9,6 +9,8 @@ Latest Changes:
 
   - Allow access to default methods implemented in interfaces when using ``@JImplements``.
 
+  - Fixed uncaught exception while setting traceback causing issues in Python 3.11/3.12.
+
   - Use PEP-518 and PEP-660 configuration for the package, allowing editable and
     configurable builds using modern Python packaging tooling.
     Where before ``python setup.py --enable-tracing develop``, now can be done with
