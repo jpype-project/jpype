@@ -303,12 +303,6 @@ void JPypeException::toPython()
 		} else if (m_Type == JPError::_python_error)
 		{
 			// Already on the stack
-		} else if (m_Type == JPError::_method_not_found)
-		{
-			// This is hit when a proxy fails to implement a required
-			// method.  Only older style proxies should be able hit this.
-			JP_TRACE("Runtime error");
-			PyErr_SetString(PyExc_RuntimeError, mesg);
 		}// This section is only reachable during startup of the JVM.
 			// GCOVR_EXCL_START
 		else if (m_Type == JPError::_os_error_unix)
@@ -425,12 +419,6 @@ void JPypeException::toJava(JPContext *context)
 				frame.Throw(m_Throwable.get());
 				return;
 			}
-			return;
-		}
-
-		if (m_Type == JPError::_method_not_found)
-		{
-			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg);
 			return;
 		}
 
