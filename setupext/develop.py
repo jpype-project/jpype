@@ -27,7 +27,20 @@ class Develop(develop_cmd):
         ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
     ]
 
+#<<<<<<< HEAD:setupext/dist.py
+#    ] + _Distribution.global_options
+#
+    def __init__(self, attrs=None):
+        self.executables = []
+        if "executables" in attrs:
+            self.executables = attrs.pop("executables")
+            print("Call distibution")
+        super().__init__(attrs)
+
+#    def parse_command_line(self):
+#=======
     def initialize_options(self, *args):
+#>>>>>>> master:setupext/develop.py
         self.enable_tracing = False
         self.enable_build_jar = False
         self.enable_coverage = False

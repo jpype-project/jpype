@@ -47,7 +47,8 @@ public class TypeFactoryNative implements TypeFactory
           String name,
           long superClass,
           long[] interfaces,
-          int modifiers);
+          int modifiers,
+          Object[] args);
 
   @Override
   public native long definePrimitive(

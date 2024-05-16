@@ -22,3 +22,7 @@ from . import develop
 from . import test_java
 from . import sdist
 from . import pytester
+
+from .build_ext import Executable, Jar
+
+

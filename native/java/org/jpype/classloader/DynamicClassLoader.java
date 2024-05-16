@@ -35,6 +35,12 @@ public class DynamicClassLoader extends ClassLoader
   public DynamicClassLoader(ClassLoader parent)
   {
     super(parent);
+    ClassLoader selfClassLoader = this.getClass().getClassLoader();
+    if (selfClassLoader instanceof URLClassLoader)
+    {
+      System.out.println("Side loaded");
+      loaders.add((URLClassLoader) selfClassLoader);
+    }
   }
 
   public int getCode()
@@ -146,6 +152,12 @@ public class DynamicClassLoader extends ClassLoader
     URL url = this.getParent().getResource(name);
     if (url != null)
       return url;
+    
+    // Try the class loader that created this class
+    url = this.getClass().getClassLoader().getResource(name);
+    if (url != null)
+      return url;
+    
     for (ClassLoader cl : this.loaders)
     {
       url = cl.getResource(name);

@@ -150,12 +150,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE_OUT;
 }
 
-void JPContext::attachJVM(JNIEnv* env)
+void JPContext::attachJVM(JNIEnv* env, bool embedded)
 {
 	env->GetJavaVM(&m_JavaVM);
-#ifndef ANDROID
-	m_Embedded = true;
-#endif
+	m_Embedded = embedded;
 	initializeResources(env, false);
 }
 
@@ -216,6 +214,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	if (!m_Embedded)
 	{
+        printf("not embedded\n"); fflush(stdout);
 		JPPyObject import = JPPyObject::use(PyImport_AddModule("importlib.util"));
 		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
 		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
@@ -310,7 +309,8 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	JP_TRACE_IN("JPContext::shutdown");
 	if (m_JavaVM == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
-	//	if (m_Embedded)
+	if (m_Embedded)
+		return;
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
 	// Wait for all non-demon threads to terminate
