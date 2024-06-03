@@ -8,7 +8,7 @@ JPype User Guide
 JPype Introduction
 ******************
 JPype is a Python module to provide full access to Java from within Python.
-Unlike Jython, JPype does not achive this by re-implementing Python, but
+Unlike Jython, JPype does not achieve this by re-implementing Python, but
 instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
 providing the access to the entirety of CPython and Java libraries.
