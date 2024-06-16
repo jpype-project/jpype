@@ -19,6 +19,9 @@ Latest Changes:
     For editable installs, ``python setup.py --enable-tracing develop``
     must now be done with ``python setup.py develop --enable-tracing``.
 
+  - Fixed a problem that caused ``dir(jpype.JPackage("mypackage"))`` to fail if
+    the class path contained non-ascii characters. See issue #1194.
+
 - **1.5.0 - 2023-04-03**
 
   - Support for Python 3.12
