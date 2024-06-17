@@ -464,7 +464,21 @@ public class JPypePackageManager
     URI uri = path.toUri();
     if (uri.getScheme().equals("jar") && uri.toString().contains("%2520"))
       uri = URI.create("jar:" + uri.getRawSchemeSpecificPart().replaceAll("%25", "%"));
-    return uri;
+
+    // `toASCIIString` ensures the URI is URL encoded with only ascii
+    // characters. This avoids issues in `sun.nio.fs.UnixUriUtils.fromUri` that
+    // naively uses `uri.getRawPath()` despite the possibility that it contains
+    // non-ascii characters that will cause errors. By using `toASCIIString` and
+    // re-wrapping it in a URI object we ensure that the URI is properly
+    // encoded. See: https://github.com/jpype-project/jpype/issues/1194
+    try {
+      return new URI(uri.toASCIIString());
+    } catch (Exception e) {
+      // This exception *should* never occur as we are re-encoding a valid URI.
+      // Throwing a runtime exception avoids java exception handling boilerplate
+      // for a situation that *should* never occur.
+      throw new RuntimeException("Failed to encode URI: " + uri, e);
+    }
   }
 //</editor-fold>
 }
