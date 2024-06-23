@@ -17,7 +17,6 @@
 #include <jpype.h>
 #include <pyjp.h>
 #include <jp_classloader.h>
-#include <filesystem>
 
 jobject JPClassLoader::getBootLoader()
 {
