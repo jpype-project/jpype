@@ -17,27 +17,11 @@
 #include <jpype.h>
 #include <pyjp.h>
 #include <jp_classloader.h>
+#include <filesystem>
 
 jobject JPClassLoader::getBootLoader()
 {
 	return m_BootLoader.get();
-}
-
-static jobject toURL(JPJavaFrame &frame, const string& path)
-{
-	//  file = new File("org.jpype.jar");
-	jclass fileClass = frame.FindClass("java/io/File");
-	jmethodID newFile = frame.GetMethodID(fileClass, "<init>", "(Ljava/lang/String;)V");
-	jvalue v[3];
-	v[0].l = frame.NewStringUTF(path.c_str());
-	jobject file = frame.NewObjectA(fileClass, newFile, v);
-
-	// url = file.toURI().toURL();
-	jmethodID toURI = frame.GetMethodID(fileClass, "toURI", "()Ljava/net/URI;");
-	jobject uri = frame.CallObjectMethodA(file, toURI, nullptr);
-	jclass uriClass = frame.GetObjectClass(uri);
-	jmethodID toURL = frame.GetMethodID(uriClass, "toURL", "()Ljava/net/URL;");
-	return frame.CallObjectMethodA(uri, toURL, nullptr);
 }
 
 JPClassLoader::JPClassLoader(JPJavaFrame& frame)
@@ -68,44 +52,8 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	}
 	frame.ExceptionClear();
 
-	// Harder, we need to find the _jpype module and use __file__ to obtain a
-	// path.
-	JPPyObject pypath = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "__file__"));
-	string path = JPPyString::asStringUTF8(pypath.get());
-	string::size_type i = path.find_last_of('\\');
-	if (i == string::npos)
-		i = path.find_last_of('/');
-	if (i == string::npos)
-		JP_RAISE(PyExc_RuntimeError, "Can't find jar path");
-	path = path.substr(0, i + 1);
-	jobject url1 = toURL(frame, path + "org.jpype.jar");
-	//	jobject url2 = toURL(frame, path + "lib/asm-8.0.1.jar");
-
-	// urlArray = new URL[]{url};
-	jclass urlClass = frame.GetObjectClass(url1);
-	jobjectArray urlArray = frame.NewObjectArray(1, urlClass, nullptr);
-	frame.SetObjectArrayElement(urlArray, 0, url1);
-	//	frame.SetObjectArrayElement(urlArray, 1, url2);
-
-	// cl = new URLClassLoader(urlArray);
-	jclass urlLoaderClass = frame.FindClass("java/net/URLClassLoader");
-	jmethodID newURLClassLoader = frame.GetMethodID(urlLoaderClass, "<init>", "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
-	jvalue v[3];
-	v[0].l = (jobject) urlArray;
-	v[1].l = (jobject) m_SystemClassLoader.get();
-	jobject cl = frame.NewObjectA(urlLoaderClass, newURLClassLoader, v);
-
-	// Class dycl = Class.forName("org.jpype.classloader.DynamicClassLoader", true, cl);
-	v[0].l = frame.NewStringUTF("org.jpype.classloader.DynamicClassLoader");
-	v[1].z = true;
-	v[2].l = cl;
-	auto dyClass = (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
-
-	// dycl.newInstance(systemClassLoader);
-	jmethodID newDyLoader = frame.GetMethodID(dyClass, "<init>", "(Ljava/lang/ClassLoader;)V");
-	v[0].l = cl;
-	m_BootLoader = JPObjectRef(frame, frame.NewObjectA(dyClass, newDyLoader, v));
-
+	// org.jpype was not loaded already so we can't proceed
+	JP_RAISE(PyExc_RuntimeError, "Can't find org.jpype.jar support library");
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
