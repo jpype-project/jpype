@@ -100,10 +100,10 @@ class JBooleanTestCase(common.JPypeTestCase):
             self.Test.callBoolean(float(2))
 
     @common.requireNumpy
-    def testBooleanFromNPFloat(self):
+    def testBooleanFromNPFloat16(self):
         import numpy as np
         with self.assertRaises(TypeError):
-            self.Test.callBoolean(np.float_(2))
+            self.Test.callBoolean(np.float16(2))
 
     @common.requireNumpy
     def testBooleanFromNPFloat32(self):
