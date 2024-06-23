@@ -52,7 +52,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		jlong hostObj,
 		jlong returnTypePtr,
 		jlongArray parameterTypePtrs,
-		jobjectArray args)
+		jobjectArray args,
+		jobject missing)
 {
 	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
@@ -84,11 +85,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
-			{
-				JP_TRACE("Callable not found");
-				JP_RAISE_METHOD_NOT_FOUND(cname);
-				return nullptr;
-			}
+                return missing;
 
 			// Find the return type
 			auto* returnClass = (JPClass*) returnTypePtr;

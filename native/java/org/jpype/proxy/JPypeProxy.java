@@ -15,6 +15,7 @@
 **************************************************************************** */
 package org.jpype.proxy;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -35,6 +36,7 @@ public class JPypeProxy implements InvocationHandler
   public long cleanup;
   Class<?>[] interfaces;
   ClassLoader cl = ClassLoader.getSystemClassLoader();
+  public static Object missing = new Object();
 
   public static JPypeProxy newProxy(JPypeContext context,
           long instance,
@@ -69,35 +71,46 @@ public class JPypeProxy implements InvocationHandler
   public Object invoke(Object proxy, Method method, Object[] args)
           throws Throwable
   {
-    try
-    {
-//      context.incrementProxy();
-      if (context.isShutdown())
-        throw new RuntimeException("Proxy called during shutdown");
 
-      // We can save a lot of effort on the C++ side by doing all the
-      // type lookup work here.
-      TypeManager typeManager = context.getTypeManager();
-      long returnType;
-      long[] parameterTypes;
-      synchronized (typeManager)
+    if (context.isShutdown())
+      throw new RuntimeException("Proxy called during shutdown");
+
+    // We can save a lot of effort on the C++ side by doing all the
+    // type lookup work here.
+    TypeManager typeManager = context.getTypeManager();
+    long returnType;
+    long[] parameterTypes;
+    synchronized (typeManager)
+    {
+      returnType = typeManager.findClass(method.getReturnType());
+      Class<?>[] types = method.getParameterTypes();
+      parameterTypes = new long[types.length];
+      for (int i = 0; i < types.length; ++i)
       {
-        returnType = typeManager.findClass(method.getReturnType());
-        Class<?>[] types = method.getParameterTypes();
-        parameterTypes = new long[types.length];
-        for (int i = 0; i < types.length; ++i)
-        {
-          parameterTypes[i] = typeManager.findClass(types[i]);
-        }
+        parameterTypes[i] = typeManager.findClass(types[i]);
       }
-
-      return hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args);
-    } finally
-    {
-//      context.decrementProxy();
     }
+
+    // Check first to see if Python has implementated it
+    Object result = hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args, missing);
+    
+    // If we get a good result than return it
+    if (result != missing)
+      return result;
+    
+    // If it is a default method in the interface then we have to invoke it using special reflection.
+    if (method.isDefault())
+    {
+      return MethodHandles.lookup()
+              .unreflectSpecial(method, method.getDeclaringClass())
+              .bindTo(proxy)
+              .invokeWithArguments(args);
+    }
+    
+    // Else throw... (this should never happen as proxies are checked when created.)
+    throw new NoSuchMethodError(method.getName());
   }
 
   private static native Object hostInvoke(long context, String name, long pyObject,
-          long returnType, long[] argsTypes, Object[] args);
+          long returnType, long[] argsTypes, Object[] args, Object bad);
 }

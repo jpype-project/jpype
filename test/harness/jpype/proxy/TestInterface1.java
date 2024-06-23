@@ -19,4 +19,6 @@ public interface TestInterface1
 {
 
   int testMethod1();
+
+  default int testDefault() { return 1234; }
 }
