@@ -60,7 +60,7 @@ public class JavadocExtractor
       }
     } catch (Exception ex)
     {
-      System.err.println("Failed to extract javadoc for " + cls);
+      System.err.println("Failed to extract javadoc for " + cls + ", caught " + ex);
       if (failures)
         throw new RuntimeException(ex);
     }
