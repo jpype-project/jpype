@@ -61,7 +61,7 @@ LLNL-CODE- 812311
 .. |javaversions| image:: https://img.shields.io/badge/java-8%20%7C%209%20%7C%2011-purple.svg
 .. |jvm| image:: https://img.shields.io/badge/jvm-Open%20%7C%20Oracle%20%7C%20Corretto-purple.svg
 .. |platform| image:: https://img.shields.io/conda/pn/conda-forge/jpype1.svg
-.. |license| image:: https://img.shields.io/github/license/clajo04/jpype.svg
+.. |license| image:: https://img.shields.io/github/license/jpype-project/jpype.svg
 .. _Apache 2 License: https://github.com/jpype-project/jpype/blob/master/LICENSE
 .. _Python Docs: http://jpype.readthedocs.org/en/latest/
 
