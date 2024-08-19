@@ -37,7 +37,6 @@ class JVMNotFoundException(ValueError):
     To avoid this exception specify the JAVA_HOME environment variable as a
     valid jre or jdk root directory.
     """
-    pass
 
 
 class JVMNotSupportedException(ValueError):
@@ -49,7 +48,6 @@ class JVMNotSupportedException(ValueError):
     32 vs 64 bit, or the JVM is older than the version used to compile
     JPype.
     """
-    pass
 
 
 def getDefaultJVMPath():
@@ -72,6 +70,9 @@ def getDefaultJVMPath():
     else:
         finder = LinuxJVMFinder()
     return finder.get_jvm_path()
+
+
+get_default_jvm_path = getDefaultJVMPath
 
 
 class JVMFinder(object):
