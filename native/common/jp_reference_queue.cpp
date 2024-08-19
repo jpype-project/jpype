@@ -21,8 +21,8 @@
 #include "jp_gc.h"
 #include "pyjp.h"
 
-static jobject s_ReferenceQueue = NULL;
-static jmethodID s_ReferenceQueueRegisterMethod = NULL;
+static jobject s_ReferenceQueue = nullptr;
+static jmethodID s_ReferenceQueueRegisterMethod = nullptr;
 
 extern "C"
 {
@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReferen
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
 		{
-			JCleanupHook func = (JCleanupHook) cleanup;
+			auto func = (JCleanupHook) cleanup;
 			(*func)((void*) host);
 		}
 	} catch (...) // GCOVR_EXCL_LINE
@@ -85,7 +85,7 @@ void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, PyObject* ho
 	// There are certain calls such as exception handling in which the 
 	// Python object is null.  In those cases, we don't need to bind the Java
 	// object lifespan and can just ignore it.
-	if (hostRef == 0)
+	if (hostRef == nullptr)
 		return;
 
 	// MATCH TO DECREF IN releasePython
@@ -103,7 +103,7 @@ void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, void* host, 
 	args[1].j = (jlong) host;
 	args[2].j = (jlong) func;
 
-	if (s_ReferenceQueue == NULL)
+	if (s_ReferenceQueue == nullptr)
 		JP_RAISE(PyExc_SystemError, "Memory queue not installed");
 	JP_TRACE("Register reference");
 	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);

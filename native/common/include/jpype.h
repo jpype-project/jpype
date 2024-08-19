@@ -43,6 +43,7 @@
 #if defined(_MSC_VER)
 
 // Visual Studio C++ does not seem have changed __cplusplus since 1997
+// see: https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-170&viewFallbackFrom=vs-2019
 #if (_MSVC_LAND >= 201402)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
@@ -51,7 +52,7 @@
 
 #else
 
-// For all the compilers than understand standards
+// For all the compilers that understand standards
 #if (__cplusplus >= 201103L)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
@@ -62,22 +63,11 @@
 
 #include <map>
 #include <string>
-#include <sstream>
 #include <vector>
-#include <iostream>
-#include <sstream>
-#include <cstdlib>
-#include <cstring>
-#include <list>
 
 using std::map;
 using std::string;
-using std::stringstream;
-using std::cout;
-using std::cerr;
-using std::endl;
 using std::vector;
-using std::list;
 
 #ifdef JP_INSTRUMENTATION
 
@@ -105,12 +95,12 @@ extern int PyJPModuleFault_check(uint32_t code);
 #endif
 
 /** Definition of commonly used template types */
-typedef vector<string> StringVector;
+using StringVector = vector<string>;
 
 /**
  * Converter are used for bulk byte transfers from Python to Java.
  */
-typedef jvalue (*jconverter)(void*) ;
+using jconverter = jvalue (*)(void *) ;
 
 /**
  * Create a converter for a bulk byte transfer.
@@ -157,13 +147,13 @@ class JPContext;
 class JPBuffer;
 class JPPyObject;
 
-extern "C" typedef void (*JCleanupHook)(void*) ;
+extern "C" using JCleanupHook = void (*)(void *) ;
 extern "C" struct JPConversionInfo;
 
-typedef vector<JPClass*> JPClassList;
-typedef vector<JPField*> JPFieldList;
-typedef vector<JPMethodDispatch*> JPMethodDispatchList;
-typedef vector<JPMethod*> JPMethodList;
+using JPClassList = vector<JPClass *>;
+using JPFieldList = vector<JPField *>;
+using JPMethodDispatchList = vector<JPMethodDispatch *>;
+using JPMethodList = vector<JPMethod *>;
 
 class JPResource
 {
@@ -175,15 +165,15 @@ public:
 //   These must be macros so that we can update the pattern and
 //   maintain the appropriate auditing information.  C++ does not
 //   have a lot for facilities to make this easy.
-#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, NULL, JP_STACKINFO()); }
+#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, nullptr, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPypeException(JPError::_os_error_unix,  msg, err, JP_STACKINFO()); }
 #define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPypeException(JPError::_os_error_windows,  msg, err, JP_STACKINFO()); }
-#define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, NULL, msg, JP_STACKINFO()); }
+#define JP_RAISE_METHOD_NOT_FOUND(msg)      { throw JPypeException(JPError::_method_not_found, nullptr, msg, JP_STACKINFO()); }
 #define JP_RAISE(type, msg)                 { throw JPypeException(JPError::_python_exc, type, msg, JP_STACKINFO()); }
 
 #ifndef PyObject_HEAD
 struct _object;
-typedef _object PyObject;
+using PyObject = _object;
 #endif
 
 // Base utility headers
@@ -205,6 +195,5 @@ typedef _object PyObject;
 
 // Primitives classes
 #include "jp_primitivetype.h"
-#include "jp_typemanager.h"
 
 #endif // _JPYPE_H_

@@ -42,7 +42,7 @@ to all classes currently loaded.  Once started it can not be undone.
 """
 import _jpype
 from . import _jcustomizer
-from ._pykeywords import pysafe
+from ._pykeywords import pysafe as _pysafe
 
 
 def _extract_accessor_pairs(members):
@@ -89,10 +89,10 @@ class _BeansCustomizer(object):
     def __jclass_init__(self):
         accessor_pairs = _extract_accessor_pairs(self.__dict__)
         for attr_name, (getter, setter) in accessor_pairs.items():
-            attr_name = pysafe(attr_name)
+            attr_name = _pysafe(attr_name)
 
             # Don't mess with an existing member
-            if attr_name in self.__dict__:
+            if attr_name is None or attr_name in self.__dict__:
                 continue
 
             # Add the property

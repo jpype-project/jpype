@@ -21,11 +21,11 @@ class JPDoubleType : public JPPrimitiveType
 public:
 
 	JPDoubleType();
-	virtual ~JPDoubleType();
+	~JPDoubleType() override = default;
 
 public:
-	typedef jdouble type_t;
-	typedef jdoubleArray array_t;
+	using type_t = jdouble;
+	using array_t = jdoubleArray;
 
 	static inline jdouble& field(jvalue& v)
 	{
@@ -37,31 +37,31 @@ public:
 		return v.d;
 	}
 
-	virtual JPClass* getBoxedClass(JPContext *context) const override
+	JPClass* getBoxedClass(JPContext *context) const override
 	{
 		return context->_java_lang_Double;
 	}
 
-	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
-	virtual JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val, bool cast) override;
-	virtual JPValue     getValueFromObject(const JPValue& obj) override;
+	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	void getConversionInfo(JPConversionInfo &info) override;
+	JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val, bool cast) override;
+	JPValue     getValueFromObject(const JPValue& obj) override;
 
-	virtual JPPyObject  invokeStatic(JPJavaFrame &frame, jclass, jmethodID, jvalue*) override;
-	virtual JPPyObject  invoke(JPJavaFrame &frame, jobject, jclass, jmethodID, jvalue*) override;
+	JPPyObject  invokeStatic(JPJavaFrame &frame, jclass, jmethodID, jvalue*) override;
+	JPPyObject  invoke(JPJavaFrame &frame, jobject, jclass, jmethodID, jvalue*) override;
 
-	virtual JPPyObject  getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid) override;
-	virtual void        setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* val) override;
-	virtual JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
-	virtual void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
+	JPPyObject  getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid) override;
+	void        setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* val) override;
+	JPPyObject  getField(JPJavaFrame& frame, jobject c, jfieldID fid) override;
+	void        setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* val) override;
 
-	virtual jarray      newArrayOf(JPJavaFrame& frame, jsize size) override;
-	virtual void        setArrayRange(JPJavaFrame& frame, jarray,
+	jarray      newArrayOf(JPJavaFrame& frame, jsize size) override;
+	void        setArrayRange(JPJavaFrame& frame, jarray,
 			jsize start, jsize length, jsize step, PyObject*) override;
-	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
-	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
+	JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
+	void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
-	virtual char getTypeCode() override
+	char getTypeCode() override
 	{
 		return 'D';
 	}
@@ -70,26 +70,26 @@ public:
 	// These are required for primitives, but converters for do not currently
 	// use them.
 
-	virtual jlong getAsLong(jvalue v) override
+	jlong getAsLong(jvalue v) override
 	{
 		return (jlong) field(v);
 	}
 
-	virtual jdouble getAsDouble(jvalue v) override
+	jdouble getAsDouble(jvalue v) override
 	{
 		return (jdouble) field(v);
 	}
 	// GCOV_EXCL_STOP
 
-	virtual void getView(JPArrayView& view) override;
-	virtual void releaseView(JPArrayView& view) override;
-	virtual const char* getBufferFormat() override;
-	virtual Py_ssize_t getItemSize() override;
-	virtual void copyElements(JPJavaFrame &frame,
+	void getView(JPArrayView& view) override;
+	void releaseView(JPArrayView& view) override;
+	const char* getBufferFormat() override;
+	Py_ssize_t getItemSize() override;
+	void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
 
-	virtual PyObject *newMultiArray(JPJavaFrame &frame,
+	PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer& view, int subs, int base, jobject dims) override;
 } ;
 

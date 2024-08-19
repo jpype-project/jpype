@@ -289,12 +289,12 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertIsInstance(u, jpype.java.lang.Long)
         self.compareTest(u, 81)
 
-    def testIntBoxOps(self):
+    def testIntBoxOps_2(self):
         u = JObject(81, JFloat)
         self.assertIsInstance(u, jpype.java.lang.Float)
         self.compareTest(u, 81)
 
-    def testLongBoxOps(self):
+    def testLongBoxOps_2(self):
         u = JObject(81, JDouble)
         self.assertIsInstance(u, jpype.java.lang.Double)
         self.compareTest(u, 81)

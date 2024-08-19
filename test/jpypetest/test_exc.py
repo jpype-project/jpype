@@ -16,9 +16,8 @@
 #
 # *****************************************************************************
 import jpype
-from jpype import JException, java, JProxy, JClass
+from jpype import java, JProxy
 from jpype.types import *
-import traceback
 import common
 
 
@@ -133,7 +132,7 @@ class ExceptionTestCase(common.JPypeTestCase):
     def testExcCauseChained1(self):
         import jpype.imports
         try:
-            from org.jpype.fail import BadInitializer
+            from org.jpype.fail import BadInitializer  # type: ignore
         except Exception as ex:
             ex1 = ex
         self.assertIsInstance(ex1, ImportError)

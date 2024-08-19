@@ -22,7 +22,7 @@ __all__ = ['JException']
 
 
 @_jcustomizer.JImplementationFor("java.lang.Throwable", base=True)
-class JException(_jpype._JException, internal=True):
+class JException(_jpype._JException, internal=True):  # type: ignore[call-arg]
     """ Base class for all ``java.lang.Throwable`` objects.
 
     Use ``issubclass(cls, JException)`` to test if a class is derived

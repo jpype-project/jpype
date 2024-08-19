@@ -36,10 +36,10 @@ public:
 			JPClassList& interfaces,
 			jint modifiers,
 			JPPrimitiveType* primitiveType);
-	virtual ~JPBoxedType();
+	~JPBoxedType() override;
 
-	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
+	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	void getConversionInfo(JPConversionInfo &info) override;
 
 	JPPrimitiveType* getPrimitive()
 	{
@@ -47,7 +47,7 @@ public:
 	}
 
 	jobject box(JPJavaFrame &frame, jvalue v);
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 protected:
 	JPPrimitiveType* m_PrimitiveType;

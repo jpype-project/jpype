@@ -22,7 +22,7 @@ from . import _jcustomizer
 __all__ = ['JArray']
 
 
-class JArray(_jpype._JObject, internal=True):
+class JArray(_jpype._JObject, internal=True):  # type: ignore[call-arg]
     """ Creates a Java array class for a Java type of a given dimension.
 
     This serves as a base type and factory for all Java array classes.

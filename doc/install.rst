@@ -83,27 +83,32 @@ from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
 
 **2. Build the source with desired options**
 
-Compile JPype using the included ``setup.py`` script: ::
+Compile JPype using the `build <https://pypi.org/project/build/>` module (this will produce a wheel): ::
 
-  python setup.py build
+  python -m build /path/to/source
 
-The setup script recognizes several arguments.
+A number of additional argument may be provided.
 
 --enable-build-jar   Force setup to recreate the jar from scratch. 
 --enable-tracing     Build a verison of JPype with full logging to the 
                      console. This can be used to diagnose tricky JNI
                      issues.
 
+For example::
+
+    python -m build /path/to/source -C--global-option=build_ext -C--global-option="--enable-tracing"
+
 After building, JPype can be tested using the test bench. The test
 bench requires JDK to build.
 
-**3. Test JPype with (optional):** ::
+**3. Install the built wheel with:** ::
 
-    python setup.py test
+    pip install /path/to/wheel
 
-**4. Install JPype with:** ::
+**4. Test JPype with (optional):** ::
 
-    python setup.py install
+    python -m pytest
+
 
 
 If it fails...
@@ -116,7 +121,7 @@ happens, preform the following steps:
 1. Identify the location of your systems JDK installation and explicitly passing
    it to setup.py. ::
 
-     JAVA_HOME=/usr/lib/java/jdk1.8.0/ python setup.py install
+     JAVA_HOME=/usr/lib/java/jdk1.8.0/ python -m build .
 
 2. If that setup.py still fails please create an Issue `on
    github <https://github.com/jpype-project/jpype/issues?state=open>`__ and
@@ -138,7 +143,7 @@ Debian/Ubuntu
 Debian/Ubuntu users will have to install ``g++`` and ``python-dev``.
 Use:
 
-    sudo apt-get install g++ python-dev python3-dev
+    sudo apt-get install g++ python3-dev
 
 Windows
 :::::::

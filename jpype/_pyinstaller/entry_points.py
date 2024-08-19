@@ -9,7 +9,7 @@ _pyinstaller_path = Path(__file__).parent
 
 
 def get_hook_dirs():
-    return [fspath(_pyinstaller_path)]
+    return [fspath(str(_pyinstaller_path))]
 
 
 def get_PyInstaller_tests():

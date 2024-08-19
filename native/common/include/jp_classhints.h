@@ -32,7 +32,7 @@ class JPIndexConversion : public JPConversion
 {
 public:
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -40,16 +40,16 @@ class JPNumberConversion : public JPIndexConversion
 {
 public:
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
 class JPConversionJavaValue : public JPConversion
 {
 public:
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) override;
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) override;
-	virtual jvalue convert(JPMatch &match) override;
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override;
+	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	jvalue convert(JPMatch &match) override;
 } ;
 
 class JPClassHints

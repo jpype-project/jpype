@@ -61,8 +61,8 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 		m_Size = 8;
 	} else
 	{
-		JPBufferType* super = dynamic_cast<JPBufferType*> (m_SuperClass);
-		if (super == NULL)
+		auto* super = dynamic_cast<JPBufferType*> (m_SuperClass);
+		if (super == nullptr)
 			JP_RAISE(PyExc_TypeError, "Unsupported buffer type");  // GCOVR_EXCL_LINE
 		m_Type = super->m_Type;
 		m_Size = super->m_Size;
@@ -70,13 +70,12 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 }
 
 JPBufferType::~JPBufferType()
-{
-}
+= default;
 
 JPPyObject JPBufferType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
 {
 	JP_TRACE_IN("JPBufferClass::convertToPythonObject");
-	if (!cast && value.l == NULL)
+	if (!cast && value.l == nullptr)
 		return JPPyObject::getNone();  // GCOVR_EXCL_LINE
 	JPPyObject wrapper = PyJPClass_create(frame, this);
 	JPPyObject obj = PyJPBuffer_create(frame, (PyTypeObject*) wrapper.get(), JPValue(this, value));

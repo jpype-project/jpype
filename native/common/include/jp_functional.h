@@ -25,10 +25,10 @@ public:
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	virtual ~JPFunctional();
+	~JPFunctional() override;
 
-	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
+	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	void getConversionInfo(JPConversionInfo &info) override;
 
 	string getMethod()
 	{

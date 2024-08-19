@@ -24,10 +24,10 @@ extern "C"
 PyObject *PyJPClassHints_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClassHints_new", type);
-	PyJPClassHints *self = (PyJPClassHints*) type->tp_alloc(type, 0);
+	auto *self = (PyJPClassHints*) type->tp_alloc(type, 0);
 	self->m_Hints = new JPClassHints();
 	return (PyObject*) self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 int PyJPClassHints_init(PyJPClassHints *self, PyObject *args, PyObject *kwargs)
@@ -51,7 +51,7 @@ PyObject *PyJPClassHints_str(PyJPClassHints *self)
 {
 	JP_PY_TRY("PyJPClassHints_str", self);
 	return PyUnicode_FromFormat("<java class hints>");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* args, PyObject* kwargs)
@@ -60,17 +60,17 @@ PyObject *PyJPClassHints_addAttributeConversion(PyJPClassHints *self, PyObject* 
 	char* attribute;
 	PyObject *method;
 	if (!PyArg_ParseTuple(args, "sO", &attribute, &method))
-		return NULL;
+		return nullptr;
 	JP_TRACE(attribute);
 	JP_TRACE(Py_TYPE(method)->tp_name);
 	if (!PyCallable_Check(method))
 	{
 		PyErr_SetString(PyExc_TypeError, "callable method is required");
-		return NULL;
+		return nullptr;
 	}
 	self->m_Hints->addAttributeConversion(string(attribute), method);
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static void badType(PyObject* t)
@@ -85,20 +85,20 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 	PyObject *method;
 	unsigned char exact;
 	if (!PyArg_ParseTuple(args, "OOb", &type, &method, &exact))
-		return NULL;
+		return nullptr;
 	if (!PyType_Check(type) && !PyObject_HasAttrString((PyObject*) type, "__instancecheck__"))
 	{
 		badType(type);
-		return NULL;
+		return nullptr;
 	}
 	if (!PyCallable_Check(method))
 	{
 		PyErr_SetString(PyExc_TypeError, "callable method is required");
-		return NULL;
+		return nullptr;
 	}
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* types, PyObject* kwargs)
@@ -113,7 +113,7 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* types
 			if (!PyType_Check(t) && !PyObject_HasAttrString(t, "__instancecheck__"))
 			{
 				badType(t);
-				return NULL;
+				return nullptr;
 			}
 		}
 		for (Py_ssize_t i = 0; i < sz; ++i)
@@ -125,19 +125,19 @@ PyObject *PyJPClassHints_excludeConversion(PyJPClassHints *self, PyObject* types
 		if (!PyType_Check(types) && !PyObject_HasAttrString( types, "__instancecheck__"))
 		{
 			badType(types);
-			return NULL;
+			return nullptr;
 		}
 		self->m_Hints->excludeConversion(types);
 	}
 	Py_RETURN_NONE;
-	JP_PY_CATCH(NULL); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
 static PyMethodDef classMethods[] = {
 	{"_addAttributeConversion", (PyCFunction) & PyJPClassHints_addAttributeConversion, METH_VARARGS, ""},
 	{"_addTypeConversion", (PyCFunction) & PyJPClassHints_addTypeConversion, METH_VARARGS, ""},
 	{"_excludeConversion", (PyCFunction) & PyJPClassHints_excludeConversion, METH_O, ""},
-	{NULL},
+	{nullptr},
 };
 
 static PyType_Slot hintsSlots[] = {
@@ -150,7 +150,7 @@ static PyType_Slot hintsSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPClassHints_Type = NULL;
+PyTypeObject *PyJPClassHints_Type = nullptr;
 PyType_Spec PyJPClassHintsSpec = {
 	"_jpype._JClassHints",
 	sizeof (PyJPClassHints),

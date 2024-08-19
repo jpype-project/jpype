@@ -30,11 +30,9 @@ public:
 			JPMethodList& overloads,
 			jint modifiers);
 
-	virtual ~JPMethodDispatch();
-
-private:
-	JPMethodDispatch(const JPMethodDispatch& method);
-	JPMethodDispatch& operator=(const JPMethodDispatch& method);
+	~JPMethodDispatch() override;
+    JPMethodDispatch(const JPMethodDispatch& method) = delete;
+	JPMethodDispatch& operator=(const JPMethodDispatch& method) = delete;
 
 public:
 
@@ -83,13 +81,12 @@ private:
 	 * when matching with a non-static.
 	 */
 	bool findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance, bool raise);
-	void dumpOverloads();
 
 	JPClass*      m_Class;
 	string        m_Name;
 	JPMethodList  m_Overloads;
 	jlong         m_Modifiers;
-	JPMethodCache m_LastCache;
+	JPMethodCache m_LastCache{};
 } ;
 
 #endif // _JPMETHODDISPATCH_H_

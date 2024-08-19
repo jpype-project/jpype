@@ -23,21 +23,21 @@ class JPArray;
 class JPArrayView
 {
 public:
-	JPArrayView(JPArray* array);
+	explicit JPArrayView(JPArray* array);
 	JPArrayView(JPArray* array, jobject collection);
 	~JPArrayView();
 	void reference();
 	bool unreference();
-	JPContext *getContext();
+	JPContext *getContext() const;
 public:
 	JPArray *m_Array;
-	void *m_Memory;
-	Py_buffer m_Buffer;
+	void *m_Memory{};
+	Py_buffer m_Buffer{};
 	int m_RefCount;
-	Py_ssize_t m_Shape[5];
-	Py_ssize_t m_Strides[5];
-	jboolean m_IsCopy;
-	jboolean m_Owned;
+	Py_ssize_t m_Shape[5]{};
+	Py_ssize_t m_Strides[5]{};
+	jboolean m_IsCopy{};
+	jboolean m_Owned{};
 } ;
 
 /**
@@ -47,7 +47,7 @@ class JPArray
 {
 	friend class JPArrayView;
 public:
-	JPArray(const JPValue& array);
+	explicit JPArray(const JPValue& array);
 	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
 
@@ -56,7 +56,7 @@ public:
 		return m_Class;
 	}
 
-	jsize     getLength();
+	jsize     getLength() const;
 	void       setRange(jsize start, jsize length, jsize step, PyObject* val);
 	JPPyObject getItem(jsize ndx);
 	void       setItem(jsize ndx, PyObject*);

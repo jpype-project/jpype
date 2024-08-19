@@ -24,7 +24,7 @@ import queue
 import unittest
 import common
 
-_modules = {}
+_modules = {}  # type: ignore[var-annotated]
 
 
 def _import(filename):

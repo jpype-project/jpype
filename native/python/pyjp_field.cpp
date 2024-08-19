@@ -30,7 +30,7 @@ struct PyJPField
 
 static void PyJPField_dealloc(PyJPField *self)
 {
-	self->m_Field = NULL;
+	self->m_Field = nullptr;
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -44,14 +44,14 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 		frame.clearInterrupt(false);
 	if (self->m_Field->isStatic())
 		return self->m_Field->getStaticField().keep();
-	if (obj == NULL)
+	if (obj == nullptr)
 		JP_RAISE(PyExc_AttributeError, "Field is not static");
 	JPValue *jval = PyJPValue_getJavaSlot(obj);
-	if (jval == NULL)
+	if (jval == nullptr)
 		JP_RAISE(PyExc_AttributeError, "Field requires instance value");
 
 	return self->m_Field->getField(jval->getValue().l).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
@@ -75,7 +75,7 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 		return -1;
 	}
 	JPValue *jval = PyJPValue_getJavaSlot(obj);
-	if (jval == NULL)
+	if (jval == nullptr)
 	{
 		PyErr_Format(PyExc_AttributeError, "Field requires instance value, not '%s'", Py_TYPE(obj)->tp_name);
 		return -1;
@@ -94,11 +94,11 @@ static PyObject *PyJPField_repr(PyJPField *self)
 			self->m_Field->getName().c_str(),
 			self->m_Field->getClass()->getCanonicalName().c_str()
 			);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyGetSetDef fieldGetSets[] = {
-	{0}
+	{nullptr}
 };
 
 static PyType_Slot fieldSlots[] = {
@@ -110,7 +110,7 @@ static PyType_Slot fieldSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPField_Type = NULL;
+PyTypeObject *PyJPField_Type = nullptr;
 PyType_Spec PyJPFieldSpec = {
 	"_jpype._JField",
 	sizeof (PyJPField),
@@ -134,7 +134,7 @@ void PyJPField_initType(PyObject* module)
 JPPyObject PyJPField_create(JPField* m)
 {
 	JP_TRACE_IN("PyJPField_create");
-	PyJPField* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
+	auto* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
 	JP_PY_CHECK();
 	self->m_Field = m;
 	return JPPyObject::claim((PyObject*) self);

@@ -33,8 +33,7 @@ JPField::JPField(JPJavaFrame& frame,
 }
 
 JPField::~JPField()
-{
-}
+= default;
 
 JPPyObject JPField::getStaticField()
 {

@@ -20,9 +20,9 @@
 static bool isNull(PyObject *self)
 {
 	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot != NULL
+	if (javaSlot != nullptr
 			&& !javaSlot->getClass()->isPrimitive()
-			&& javaSlot->getValue().l == 0)
+			&& javaSlot->getValue().l == nullptr)
 		return true;
 	return false;
 }
@@ -37,8 +37,8 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	JP_PY_TRY("PyJPNumber_new", type);
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	JPClass *cls = (JPClass*) PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
+	auto *cls = (JPClass*) PyJPClass_getJPClass((PyObject*) type);
+	if (cls == nullptr)
 		JP_RAISE(PyExc_TypeError, "Class type incorrect");
 
 	jvalue val;
@@ -77,9 +77,9 @@ static PyObject *PyJPNumber_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	} else
 	{
 		PyErr_Format(PyExc_TypeError, "Type '%s' is not a number class", type->tp_name);
-		return NULL;
+		return nullptr;
 	}
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberLong_int(PyObject *self)
@@ -90,7 +90,7 @@ static PyObject *PyJPNumberLong_int(PyObject *self)
 	if (!isNull(self))
 		return PyLong_Type.tp_as_number->nb_int(self);
 	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-int");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberLong_float(PyObject *self)
@@ -101,7 +101,7 @@ static PyObject *PyJPNumberLong_float(PyObject *self)
 	if (!isNull(self))
 		return PyLong_Type.tp_as_number->nb_float(self);
 	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-float");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberFloat_int(PyObject *self)
@@ -112,7 +112,7 @@ static PyObject *PyJPNumberFloat_int(PyObject *self)
 	if (!isNull(self))
 		return PyFloat_Type.tp_as_number->nb_int(self);
 	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-int");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberFloat_float(PyObject *self)
@@ -123,7 +123,7 @@ static PyObject *PyJPNumberFloat_float(PyObject *self)
 	if (!isNull(self))
 		return PyFloat_Type.tp_as_number->nb_float(self);
 	PyErr_SetString(PyExc_TypeError, "cast of null pointer would return non-float");
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberLong_str(PyObject *self)
@@ -134,7 +134,7 @@ static PyObject *PyJPNumberLong_str(PyObject *self)
 	if (isNull(self))
 		return Py_TYPE(Py_None)->tp_str(Py_None);
 	return PyLong_Type.tp_str(self);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberFloat_str(PyObject *self)
@@ -145,7 +145,7 @@ static PyObject *PyJPNumberFloat_str(PyObject *self)
 	if (isNull(self))
 		return Py_TYPE(Py_None)->tp_str(Py_None);
 	return PyFloat_Type.tp_str(self);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberLong_repr(PyObject *self)
@@ -156,7 +156,7 @@ static PyObject *PyJPNumberLong_repr(PyObject *self)
 	if (isNull(self))
 		return Py_TYPE(Py_None)->tp_str(Py_None);
 	return PyLong_Type.tp_repr(self);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberFloat_repr(PyObject *self)
@@ -167,7 +167,7 @@ static PyObject *PyJPNumberFloat_repr(PyObject *self)
 	if (isNull(self))
 		return Py_TYPE(Py_None)->tp_str(Py_None);
 	return PyFloat_Type.tp_repr(self);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static const char* op_names[] = {
@@ -195,7 +195,7 @@ static PyObject *PyJPNumberLong_compare(PyObject *self, PyObject *other, int op)
 		return out;
 	}
 	return PyLong_Type.tp_richcompare(self, other, op);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPNumberFloat_compare(PyObject *self, PyObject *other, int op)
@@ -219,7 +219,7 @@ static PyObject *PyJPNumberFloat_compare(PyObject *self, PyObject *other, int op
 		return out;
 	}
 	return PyFloat_Type.tp_richcompare(self, other, op);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static Py_hash_t PyJPNumberLong_hash(PyObject *self)
@@ -228,12 +228,12 @@ static Py_hash_t PyJPNumberLong_hash(PyObject *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == NULL)
+	if (javaSlot == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	if (!javaSlot->getClass()->isPrimitive())
 	{
 		jobject o = javaSlot->getJavaObject();
-		if (o == NULL)
+		if (o == nullptr)
 			return Py_TYPE(Py_None)->tp_hash(Py_None);
 	}
 	return PyLong_Type.tp_hash(self);
@@ -246,12 +246,12 @@ static Py_hash_t PyJPNumberFloat_hash(PyObject *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == NULL)
+	if (javaSlot == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	if (!javaSlot->getClass()->isPrimitive())
 	{
 		jobject o = javaSlot->getJavaObject();
-		if (o == NULL)
+		if (o == nullptr)
 			return Py_TYPE(Py_None)->tp_hash(Py_None);
 	}
 	return PyFloat_Type.tp_hash(self);
@@ -267,17 +267,17 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 	if (PyTuple_Size(args) != 1)
 	{
 		PyErr_SetString(PyExc_TypeError, "Requires one argument");
-		return NULL;
+		return nullptr;
 	}
 	int i = PyObject_IsTrue(PyTuple_GetItem(args, 0));
 	PyObject *args2 = PyTuple_Pack(1, PyLong_FromLong(i));
 	self = JPPyObject::call(PyLong_Type.tp_new(type, args2, kwargs));
 	Py_DECREF(args2);
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
-	if (cls == NULL)
+	if (cls == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Class type incorrect");
-		return NULL;
+		return nullptr;
 	}
 	JPMatch match(&frame, self.get());
 	cls->findJavaConversion(match);
@@ -285,7 +285,7 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 	PyJPValue_assignJavaSlot(frame, self.get(), JPValue(cls, val));
 	JP_TRACE("new", self.get());
 	return self.keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject* PyJPBoolean_str(PyObject* self)
@@ -296,7 +296,7 @@ static PyObject* PyJPBoolean_str(PyObject* self)
 	if (PyLong_AsLong(self) == 0)
 		return Py_TYPE(Py_False)->tp_str(Py_False);
 	return Py_TYPE(Py_True)->tp_str(Py_True);
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static PyType_Slot numberLongSlots[] = {
@@ -312,7 +312,7 @@ static PyType_Slot numberLongSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPNumberLong_Type = NULL;
+PyTypeObject *PyJPNumberLong_Type = nullptr;
 PyType_Spec numberLongSpec = {
 	"_jpype._JNumberLong",
 	0,
@@ -334,7 +334,7 @@ static PyType_Slot numberFloatSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPNumberFloat_Type = NULL;
+PyTypeObject *PyJPNumberFloat_Type = nullptr;
 PyType_Spec numberFloatSpec = {
 	"_jpype._JNumberFloat",
 	0,
@@ -356,7 +356,7 @@ static PyType_Slot numberBooleanSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPNumberBool_Type = NULL;
+PyTypeObject *PyJPNumberBool_Type = nullptr;
 PyType_Spec numberBooleanSpec = {
 	"_jpype._JBoolean",
 	0,
@@ -402,32 +402,32 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 	if (value.getClass() == context->_java_lang_Boolean)
 	{
 		jlong l = 0;
-		if (value.getValue().l != 0)
-			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, 0);
+		if (value.getValue().l != nullptr)
+			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, nullptr);
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
+		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
 	{
 		jlong l = 0;
-		if (value.getValue().l != 0)
+		if (value.getValue().l != nullptr)
 		{
-			JPBoxedType* jb = (JPBoxedType*) value.getClass();
-			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, 0);
+			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
+			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, nullptr);
 		}
 		PyObject *args = PyTuple_Pack(1, PyLong_FromLongLong(l));
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
+		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyFloat_Type))
 	{
 		jdouble l = 0;
-		if (value.getValue().l != 0)
+		if (value.getValue().l != nullptr)
 		{
-			JPBoxedType* jb = (JPBoxedType*) value.getClass();
-			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, 0);
+			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
+			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, nullptr);
 		}
 		PyObject *args = PyTuple_Pack(1, PyFloat_FromDouble(l));
-		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, NULL));
+		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
 	}
 	JP_RAISE(PyExc_TypeError, "unable to convert");  //GCOVR_EXCL_LINE
 }

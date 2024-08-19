@@ -15,7 +15,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_boxedtype.h"
 #include "jp_stringtype.h"
 
 #ifdef __cplusplus
@@ -38,12 +37,12 @@ extern "C"
  * the alloc and finalize slot to recognize which objects have this
  * extra slot appended.
  */
-PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
+PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	JP_PY_TRY("PyJPValue_alloc");
 	// Modification from Python to add size elements
 	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
-	PyObject *obj = NULL;
+	PyObject *obj = nullptr;
 	if (PyType_IS_GC(type))
 	{
 		// Horrible kludge because python lacks an API for allocating a GC type with extra memory
@@ -52,7 +51,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 		PyTypeObject type2;
 		type2.tp_basicsize = size;
 		type2.tp_itemsize = 0;
-		type2.tp_name = NULL;
+		type2.tp_name = nullptr;
 		type2.tp_flags = type->tp_flags;
 		type2.tp_traverse = type->tp_traverse;
 
@@ -65,11 +64,14 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	{
 		obj = (PyObject*) PyObject_MALLOC(size);
 	}
-	if (obj == NULL)
+	if (obj == nullptr)
 		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
 	memset(obj, 0, size);
 
+
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
+	obj->ob_type = type;
+
 	if (type->tp_itemsize == 0)
 		PyObject_Init(obj, type);
 	else
@@ -87,12 +89,12 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems )
 	}
 	JP_TRACE("alloc", type->tp_name, obj);
 	return obj;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 bool PyJPValue_hasJavaSlot(PyTypeObject* type)
 {
-	if (type == NULL
+	if (type == nullptr
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
 		return false;  // GCOVR_EXCL_LINE
@@ -102,13 +104,22 @@ bool PyJPValue_hasJavaSlot(PyTypeObject* type)
 Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 {
 	PyTypeObject *type = Py_TYPE(self);
-	if (type == NULL
+	if (type == nullptr
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
 		return 0;
 	Py_ssize_t offset;
-	Py_ssize_t sz = Py_SIZE(self);
-	// I have no clue what negative sizes mean
+	Py_ssize_t sz = 0;
+
+#if PY_VERSION_HEX>=0x030c0000
+	// starting in 3.12 there is no longer ob_size in PyLong
+	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
+		sz = (((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
+	else 
+#endif
+		if (type->tp_itemsize != 0)
+		sz = Py_SIZE(self);
+	// PyLong abuses ob_size with negative values prior to 3.12
 	if (sz < 0)
 		sz = -sz;
 	if (type->tp_itemsize == 0)
@@ -121,7 +132,7 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 /**
  * Get the Java value if attached.
  *
- * The Java class is guaranteed not to be null on success.
+ * The Java class is guaranteed not to be nullptr on success.
  *
  * @param obj
  * @return the Java value or 0 if not found.
@@ -130,10 +141,10 @@ JPValue* PyJPValue_getJavaSlot(PyObject* self)
 {
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
-		return NULL;
-	JPValue* value = (JPValue*) (((char*) self) + offset);
-	if (value->getClass() == NULL)
-		return NULL;
+		return nullptr;
+	auto value = (JPValue*) (((char*) self) + offset);
+	if (value->getClass() == nullptr)
+		return nullptr;
 	return value;
 }
 
@@ -142,7 +153,7 @@ void PyJPValue_free(void* obj)
 	JP_PY_TRY("PyJPValue_free", obj);
 	// Normally finalize is not run on simple classes.
 	PyTypeObject *type = Py_TYPE(obj);
-	if (type->tp_finalize != NULL)
+	if (type->tp_finalize != nullptr)
 		type->tp_finalize((PyObject*) obj);
 	if (type->tp_flags & Py_TPFLAGS_HAVE_GC)
 		PyObject_GC_Del(obj);
@@ -156,16 +167,16 @@ void PyJPValue_finalize(void* obj)
 	JP_PY_TRY("PyJPValue_finalize", obj);
 	JP_TRACE("type", Py_TYPE(obj)->tp_name);
 	JPValue* value = PyJPValue_getJavaSlot((PyObject*) obj);
-	if (value == NULL)
+	if (value == nullptr)
 		return;
 	JPContext *context = JPContext_global;
-	if (context == NULL || !context->isRunning())
+	if (context == nullptr || !context->isRunning())
 		return;
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
-	if (cls != NULL && context->isRunning() && !cls->isPrimitive())
+	if (cls != nullptr && context->isRunning() && !cls->isPrimitive())
 	{
 		JP_TRACE("Value", cls->getCanonicalName(), &(value->getValue()));
 		JP_TRACE("Dereference object");
@@ -182,26 +193,26 @@ PyObject* PyJPValue_str(PyObject* self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue* value = PyJPValue_getJavaSlot(self);
-	if (value == NULL)
+	if (value == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Not a Java value");
-		return NULL;
+		return nullptr;
 	}
 
 	JPClass* cls = value->getClass();
 	if (cls->isPrimitive())
 	{
 		PyErr_SetString(PyExc_TypeError, "toString requires a Java object");
-		return NULL;
+		return nullptr;
 	}
 
-	if (value->getValue().l == NULL)
+	if (value->getValue().l == nullptr)
 		return JPPyString::fromStringUTF8("null").keep();
 
 	if (cls == context->_java_lang_String)
 	{
 		PyObject *cache;
-		JPPyObject dict = JPPyObject::accept(PyObject_GenericGetDict(self, NULL));
+		JPPyObject dict = JPPyObject::accept(PyObject_GenericGetDict(self, nullptr));
 		if (!dict.isNull())
 		{
 			cache = PyDict_GetItemString(dict.get(), "_jstr");
@@ -210,7 +221,7 @@ PyObject* PyJPValue_str(PyObject* self)
 				Py_INCREF(cache);
 				return cache;
 			}
-			jstring jstr = (jstring) value->getValue().l;
+            auto jstr = (jstring) value->getValue().l;
 			string str;
 			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
@@ -221,7 +232,7 @@ PyObject* PyJPValue_str(PyObject* self)
 
 	// In general toString is not immutable, so we won't cache it.
 	return JPPyString::fromStringUTF8(frame.toString(value->getValue().l)).keep();
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
@@ -232,13 +243,13 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 		PyErr_Format(PyExc_TypeError,
 				"attribute name must be string, not '%.200s'",
 				Py_TYPE(name)->tp_name);
-		return NULL;
+		return nullptr;
 	}
 
 	// Private members are accessed directly
 	PyObject* pyattr = PyBaseObject_Type.tp_getattro(obj, name);
-	if (pyattr == NULL)
-		return NULL;
+	if (pyattr == nullptr)
+		return nullptr;
 	JPPyObject attr = JPPyObject::accept(pyattr);
 
 	// Private members go regardless
@@ -254,8 +265,8 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 		return attr.keep();
 
 	PyErr_Format(PyExc_AttributeError, "Field '%U' is static", name);
-	return NULL;
-	JP_PY_CATCH(NULL);
+	return nullptr;
+	JP_PY_CATCH(nullptr);
 }
 
 int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
@@ -272,7 +283,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 		return -1;
 	}
 	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
-	if (desc != NULL)
+	if (desc != nullptr)
 		return desc(f.get(), self, value);
 
 	// Not a descriptor
@@ -296,20 +307,20 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	{
 		std::stringstream ss;
 		ss << "Missing Java slot on `" << Py_TYPE(self)->tp_name << "`";
-		JP_RAISE(PyExc_SystemError, ss.str().c_str());
+		JP_RAISE(PyExc_SystemError, ss.str());
 	}
 	// GCOVR_EXCL_STOP
 
-	JPValue* slot = (JPValue*) (((char*) self) + offset);
+	auto* slot = (JPValue*) (((char*) self) + offset);
 	// GCOVR_EXCL_START
 	// This is a sanity check that should never trigger in normal operations.
-	if (slot->getClass() != NULL)
+	if (slot->getClass() != nullptr)
 	{
 		JP_RAISE(PyExc_SystemError, "Slot assigned twice");
 	}
 	// GCOVR_EXCL_STOP
 	JPClass* cls = value.getClass();
-	if (cls != NULL && !cls->isPrimitive())
+	if (cls != nullptr && !cls->isPrimitive())
 	{
 		jvalue q;
 		q.l = frame.NewGlobalRef(value.getValue().l);
@@ -323,6 +334,6 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(self);
 	if (offset == 0)
 		return false;  // GCOVR_EXCL_LINE
-	JPValue* slot = (JPValue*) (((char*) self) + offset);
-	return slot->getClass() != NULL;
+	auto* slot = (JPValue*) (((char*) self) + offset);
+	return slot->getClass() != nullptr;
 }

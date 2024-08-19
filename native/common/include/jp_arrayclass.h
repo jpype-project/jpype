@@ -28,11 +28,11 @@ public:
 			JPClass* superClass,
 			JPClass* componentType,
 			jint modifiers);
-	virtual~ JPArrayClass();
+	~ JPArrayClass() override;
 
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
-	virtual JPMatch::Type findJavaConversion(JPMatch &match) override;
-	virtual void getConversionInfo(JPConversionInfo &info) override;
+	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	void getConversionInfo(JPConversionInfo &info) override;
 
 	JPValue newArray(JPJavaFrame& frame, int length);
 
@@ -54,7 +54,7 @@ public:
 		return m_ComponentType;
 	}
 
-	virtual bool isArray() const override
+	bool isArray() const override
 	{
 		return true;
 	}

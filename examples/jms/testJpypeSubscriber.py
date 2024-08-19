@@ -24,12 +24,12 @@ class pyCallback:
     count = 0
 
     def onMessage(self, text):
-        print text
+        print(text)
         if text == 'Start':
             pyCallback.startTime = time.time()
             pyCallback.count = 0
         elif text == 'Stop':
-            print "Message Rate =", float(pyCallback.count) / (time.time() - pyCallback.startTime)
+            print("Message Rate =", float(pyCallback.count) / (time.time() - pyCallback.startTime))
         else:
             pyCallback.count += 1
 
@@ -39,7 +39,7 @@ proxy = JProxy(messaging.JpypeSubscriberCallback, inst=c)
 
 # Get a subscriber
 sub = pySubscriber(proxy)
-print "Listening..."
+print("Listening...")
 
 # Prevent this thread from exiting
 time.sleep(1000)

@@ -41,7 +41,7 @@ class _JCollection(object):
     """ Customizer for ``java.util.Collection``
 
     This customizer adds the Python functions ``len()`` and ``del`` to
-    Java Collions to allow for Python syntax.
+    Java Collisions to allow for Python syntax.
     """
 
     def __len__(self):

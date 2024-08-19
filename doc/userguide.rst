@@ -8,7 +8,7 @@ JPype User Guide
 JPype Introduction
 ******************
 JPype is a Python module to provide full access to Java from within Python.
-Unlike Jython, JPype does not achive this by re-implementing Python, but
+Unlike Jython, JPype does not achieve this by re-implementing Python, but
 instead by interfacing both virtual machines at the native level. This
 shared memory based approach achieves good computing performance, while
 providing the access to the entirety of CPython and Java libraries.
@@ -111,7 +111,7 @@ project has suffered a nasty data structure problem in one of the threads.  You
 managed to capture the data structure in a serialized form but if you could just
 make graph and call a few functions this would be so much easier.  But  the
 interactive Java shell that you are using doesn't really have much in the way of
-visualization and your don't have time to write a whole graphing applet just to
+visualization and you don't have time to write a whole graphing applet just to
 display this dataset.
 
 So poking around on the internet you find that Python has exactly the
@@ -166,7 +166,7 @@ you can use the casting operators.
    print(type(d))  # prints double[]
 
 Great. Now you just need to figure out how to convert from a Java array into
-our something our visualization code can deal with.  As nothing indicates that
+something our visualization code can deal with.  As nothing indicates that
 you need to convert the array, you just copy out of the visualization tool
 example and watch what happens.
 
@@ -189,7 +189,7 @@ Laboratory.  (For the purpose of this exercise we will ignore the fact that
 Hawkins was shut down in 1984 and Java was created in 1995).  You have the test
 subject strapped in and you just need to start the experiment.  So you pull up
 Jupyter notebook your boss gave you and run through the cells.  You need to
-added some heart wave monitor to the list of graphed results.
+add some heart wave monitor to the list of graphed results.
 
 The relevant section of the API for the Experiment appears to be
 
@@ -268,7 +268,7 @@ in a window.  Job well done, so you set the runtime back to one hour.  Looks
 like you still have time to make the intern woodlands hike and forest picnic.
 Though you wonder if maybe next year you should sign up for another laboratory.
 Maybe next year, you will try to sign up for those orbital lasers the President
-was talking about in the March.  That sounds like real fun.
+was talking about back in March.  That sounds like real fun.
 
 (This advanced demonstration utilized the concept of Proxies_ and
 `Code completion`_)
@@ -330,7 +330,7 @@ in Python.  However, the Java Virtual Machine (JVM) is used for many popular
 languages such a Kotlin and Scala.  As such JPype can be used for any language
 which used the JVM.
 
-That said each language has its own special properties that tend to be
+That said, each language has its own special properties that tend to be
 represented in different ways.  If you would like JPype fully to operate on your
 particular language the following is required.
 
@@ -382,7 +382,7 @@ costs to share data structures between Java and Python and potentially much
 higher level of integration.  Noted downsides of Jython are that it has lagged
 well behind the state of the art in Python; it has a limited selection of
 modules that can be used; and the Python object thrashing is not particularly
-well fit in Java virtual machine leading to some known performance issues.
+well suited for the Java virtual machine, leading to some known performance issues.
 
 `Py4J <https://py4j.org/>`_
 ---------------------------

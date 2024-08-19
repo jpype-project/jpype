@@ -16,19 +16,18 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import os
-from setuptools.command.build_ext import build_ext
-import sys
-import subprocess
+
 import distutils.cmd
 import distutils.log
-from distutils.errors import DistutilsPlatformError
-from distutils.dir_util import copy_tree
 import glob
-import re
+import os
 import shlex
 import shutil
-import sysconfig
+import subprocess
+from distutils.dir_util import copy_tree
+from distutils.errors import DistutilsPlatformError
+
+from setuptools.command.build_ext import build_ext
 
 
 # This setup option constructs a prototype Makefile suitable for compiling
@@ -45,7 +44,7 @@ class FeatureNotice(Warning):
     """ indicate notices about features """
 
 
-class Makefile(object):
+class Makefile:
     compiler_type = "unix"
 
     def __init__(self, actual):
@@ -174,6 +173,10 @@ class BuildExtCommand(build_ext):
     """
 
     user_options = build_ext.user_options + [
+        ('enable-build-jar', None, 'Build the java jar portion'),
+        ('enable-tracing', None, 'Set for tracing for debugging'),
+        ('enable-coverage', None, 'Instrument c++ code for code coverage measuring'),
+
         ('android', None, 'configure for android'),
         ('makefile', None, 'Build a makefile for extensions'),
         ('jar', None, 'Build the jar only'),
@@ -181,16 +184,15 @@ class BuildExtCommand(build_ext):
 
     def initialize_options(self, *args):
         """omit -Wstrict-prototypes from CFLAGS since its only valid for C code."""
+        self.enable_tracing = False
+        self.enable_build_jar = False
+        self.enable_coverage = False
+
         self.android = False
         self.makefile = False
         self.jar = False
         import distutils.sysconfig
         cfg_vars = distutils.sysconfig.get_config_vars()
-        replacement = {
-            '-Wstrict-prototypes': '',
-            '-Wimplicit-function-declaration': '',
-        }
-        tracing = self.distribution.enable_tracing
 
         # Arguments to remove so we set debugging and optimization level
         remove_args = ['-O0', '-O1', '-O2', '-O3', '-g']
@@ -198,12 +200,11 @@ class BuildExtCommand(build_ext):
         for k, v in cfg_vars.items():
             if not isinstance(v, str):
                 continue
-            if not k == "OPT" and not "FLAGS" in k:
+            if not k == "OPT" and "FLAGS" not in k:
                 continue
 
             args = v.split()
-            for r in remove_args:
-                args = list(filter((r).__ne__, args))
+            args = [arg for arg in args if arg not in remove_args]
 
             cfg_vars[k] = " ".join(args)
         super().initialize_options()
@@ -212,12 +213,12 @@ class BuildExtCommand(build_ext):
         # set compiler flags
         c = self.compiler.compiler_type
         jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
-        if c == 'unix' and self.distribution.enable_coverage:
+        if c == 'unix' and self.enable_coverage:
             jpypeLib.extra_compile_args.extend(
                 ['-ggdb', '--coverage', '-ftest-coverage'])
             jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
             jpypeLib.extra_link_args.extend(['--coverage'])
-        if c == 'unix' and self.distribution.enable_tracing:
+        if c == 'unix' and self.enable_tracing:
             jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
 
     def build_extensions(self):
@@ -226,16 +227,12 @@ class BuildExtCommand(build_ext):
             self.force = True
 
         jpypeLib = [i for i in self.extensions if i.name == '_jpype'][0]
-        tracing = self.distribution.enable_tracing
         self._set_cflags()
-        if tracing:
+        if self.enable_tracing:
             jpypeLib.define_macros.append(('JP_TRACING_ENABLE', 1))
-        coverage = self.distribution.enable_coverage
-        if coverage:
+        if self.enable_coverage:
             jpypeLib.define_macros.append(('JP_INSTRUMENTATION', 1))
 
-        # has to be last call
-        print("Call build extensions")
         super().build_extensions()
 
     def build_extension(self, ext):
@@ -273,7 +270,7 @@ class BuildExtCommand(build_ext):
 
     def build_java_ext(self, ext):
         """Run command."""
-        java = self.distribution.enable_build_jar
+        java = self.enable_build_jar
 
         javac = "javac"
         try:
@@ -303,8 +300,6 @@ class BuildExtCommand(build_ext):
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
-        coverage = self.distribution.enable_coverage
-
         target_version = "1.8"
         # build the jar
         try:
@@ -316,9 +311,7 @@ class BuildExtCommand(build_ext):
             cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
-            debug = "-g:none"
-            if coverage:
-                debug = "-g:lines,vars,source"
+
             os.makedirs("build/classes", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)

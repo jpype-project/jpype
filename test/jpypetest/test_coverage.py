@@ -76,9 +76,8 @@ class CoverageCase(common.JPypeTestCase):
         self.assertEqual(ja.length, len(ja))
 
     def testJArrayGetItemSlice(self):
-        with self.assertRaises(NotImplementedError):
-            ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
-            ja[0:2:-1]
+        ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
+        assert list(ja[0:2:-1]) == [1, 2, 3, 4][0:2:-1]
 
     def testJArraySetItemSlice(self):
         ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4, 5, 6])
@@ -87,22 +86,27 @@ class CoverageCase(common.JPypeTestCase):
         # FIXME ja[0:-1:2] = [-1] works but should not
         # FIXME ja[0:-1:2] = 1 gives wierd error
 
-    def testJArrayGetItemSlice(self):
+    def testJArrayGetItemSlice_2(self):
         ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
-        ja[1:]
+        assert list(ja[1:]) == [2, 3, 4]
 
-    def testJArraySetItemSlice(self):
+    def testJArraySetItemSlice_2(self):
         ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
         ja[1:] = [3, 4, 5]
         self.assertEqual(list(ja[:]), [1, 3, 4, 5])
 
     def testJArrayEQ(self):
-        ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
-        ja == [1, 2]
+        ja1 = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
+        ja2 = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
+        ja1 == ja2
+        # FIXME: This test is failing, but shouldn't be.
+        # assert ja1 == ja2
+        assert (ja1 == [1, 2]) is False
 
     def testJArrayNE(self):
         ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
-        ja != [1, 2]
+        assert ja != [1, 2]
+        assert (ja != ja) is False
 
     def testJArrayIter(self):
         ja = jpype.JArray(jpype.JInt)([1, 2, 3, 4])
@@ -257,14 +261,14 @@ class CoverageCase(common.JPypeTestCase):
             pass  # this is executed in a thread which may start later
         magic = mock.MagicMock()
         with mock.patch("sys.platform", "other"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}):
-            from PyObjCTools import AppHelper
+            from PyObjCTools import AppHelper  # type: ignore
             self.assertEqual(sys.platform, "other")
             jpype.setupGuiEnvironment(foo)
             self.assertFalse(magic.AppHelper.runConsoleEventLoop.called)
             jpype.shutdownGuiEnvironment()
             self.assertFalse(magic.AppHelper.stopEventLoop.called)
         with mock.patch("sys.platform", "darwin"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}):
-            from PyObjCTools import AppHelper
+            from PyObjCTools import AppHelper  # type: ignore
             self.assertEqual(sys.platform, "darwin")
             jpype.setupGuiEnvironment(foo)
             self.assertTrue(magic.AppHelper.runConsoleEventLoop.called)
@@ -281,4 +285,4 @@ class CoverageCase(common.JPypeTestCase):
         with mock.patch('_jpype.isStarted') as func:
             func.return_value = False
             with self.assertRaisesRegex(ImportError, "jvm"):
-                import mil.spec
+                import mil.spec  # type: ignore

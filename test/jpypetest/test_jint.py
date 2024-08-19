@@ -153,7 +153,7 @@ class JIntTestCase(common.JPypeTestCase):
         self.assertEqual(JInt(JInt(12345678)), 12345678)
         self.assertEqual(JInt(JLong(12345678)), 12345678)
 
-    def testFromJIntWiden(self):
+    def testFromJIntWiden_2(self):
         self.assertEqual(JInt(JDouble(12345678)), 12345678)
 
     def testFromNone(self):

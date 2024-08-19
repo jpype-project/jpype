@@ -30,7 +30,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	JP_PY_TRY("PyJPProxy_new");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	PyJPProxy *self = (PyJPProxy*) type->tp_alloc(type, 0);
+	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
 	// Parse arguments
@@ -38,13 +38,13 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	PyObject *pyintf;
 	int convert = 0;
 	if (!PyArg_ParseTuple(args, "OO|p", &target, &pyintf, &convert))
-		return NULL;
+		return nullptr;
 
 	// Pack interfaces
 	if (!PySequence_Check(pyintf))
 	{
 		PyErr_SetString(PyExc_TypeError, "third argument must be a list of interface");
-		return NULL;
+		return nullptr;
 	}
 
 	JPClassList interfaces;
@@ -56,10 +56,10 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	for (jlong i = 0; i < len; i++)
 	{
 		JPClass *cls = PyJPClass_getJPClass(intf[i].get());
-		if (cls == NULL)
+		if (cls == nullptr)
 		{
 			PyErr_SetString(PyExc_TypeError, "interfaces must be object class instances");
-			return NULL;
+			return nullptr;
 		}
 		interfaces.push_back(cls);
 	}
@@ -75,7 +75,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	JP_TRACE("Proxy", self);
 	JP_TRACE("Target", target);
 	return (PyObject*) self;
-	JP_PY_CATCH(NULL);
+	JP_PY_CATCH(nullptr);
 }
 
 static int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
@@ -139,13 +139,13 @@ static PyMethodDef proxyMethods[] = {
 	{"equals", (PyCFunction) (&PyJPProxy_equals), METH_O, ""},
 	{"hashCode", (PyCFunction) (&PyJPProxy_hash), METH_NOARGS, ""},
 	{"toString", (PyCFunction) (&PyJPProxy_toString), METH_NOARGS, ""},
-	{NULL},
+	{nullptr},
 };
 
 static PyGetSetDef proxyGetSets[] = {
-	{"__javainst__", (getter) PyJPProxy_inst, NULL, ""},
-	{"__javaclass__", (getter) PyJPProxy_class, NULL, ""},
-	{0}
+	{"__javainst__", (getter) PyJPProxy_inst, nullptr, ""},
+	{"__javaclass__", (getter) PyJPProxy_class, nullptr, ""},
+	{nullptr}
 };
 
 static PyType_Slot proxySlots[] = {
@@ -158,7 +158,7 @@ static PyType_Slot proxySlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPProxy_Type = NULL;
+PyTypeObject *PyJPProxy_Type = nullptr;
 PyType_Spec PyJPProxySpec = {
 	"_jpype._JProxy",
 	sizeof (PyJPProxy),
@@ -184,5 +184,5 @@ JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
 {
 	if (PyObject_IsInstance(obj, (PyObject*) PyJPProxy_Type))
 		return ((PyJPProxy*) obj)->m_Proxy;
-	return NULL;
+	return nullptr;
 }

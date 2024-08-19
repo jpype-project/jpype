@@ -25,8 +25,7 @@ JPLongType::JPLongType()
 }
 
 JPLongType::~JPLongType()
-{
-}
+= default;
 
 JPPyObject JPLongType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
@@ -42,8 +41,8 @@ JPValue JPLongType::getValueFromObject(const JPValue& obj)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
-	JPBoxedType* jb = (JPBoxedType*) frame.findClassForObject(jo);
-	field(v) = (type_t) frame.CallLongMethodA(jo, jb->m_LongValueID, 0);
+	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
+	field(v) = (type_t) frame.CallLongMethodA(jo, jb->m_LongValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -55,10 +54,10 @@ class JPConversionJLong : public JPConversionJavaValue
 {
 public:
 
-	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match)
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
-		if (value == NULL)
+		if (value == nullptr)
 			return match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -71,7 +70,7 @@ public:
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
-			JPPrimitiveType *prim = (JPPrimitiveType*) cls2;
+			auto *prim = dynamic_cast<JPPrimitiveType*>( cls2);
 			switch (prim->getTypeCode())
 			{
 				case 'I':
@@ -90,7 +89,7 @@ public:
 		return JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info)
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = cls->getContext();
 		PyList_Append(info.exact, (PyObject*) context->_long->getHost());
@@ -162,7 +161,7 @@ JPPyObject JPLongType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 	jvalue v;
 	{
 		JPPyCallRelease call;
-		if (clazz == NULL)
+		if (clazz == nullptr)
 			field(v) = frame.CallLongMethodA(obj, mth, val);
 		else
 			field(v) = frame.CallNonvirtualLongMethodA(obj, clazz, mth, val);
@@ -252,7 +251,7 @@ void JPLongType::setArrayRange(JPJavaFrame& frame, jarray a,
 
 JPPyObject JPLongType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 {
-	array_t array = (array_t) a;
+	auto array = (array_t) a;
 	type_t val;
 	frame.GetLongArrayRegion(array, ndx, 1, &val);
 	jvalue v;
@@ -305,7 +304,7 @@ Py_ssize_t JPLongType::getItemSize()
 void JPLongType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
 		void* memory, int offset)
 {
-	jlong* b = (jlong*) ((char*) memory + offset);
+	auto* b = (jlong*) ((char*) memory + offset);
 	frame.GetLongArrayRegion((jlongArray) a, start, len, b);
 }
 

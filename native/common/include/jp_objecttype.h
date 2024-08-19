@@ -34,7 +34,7 @@ public:
 			JPClassList& interfaces,
 			jint modifiers);
 
-	virtual~ JPObjectType();
+	~ JPObjectType() override;
 
 	JPMatch::Type findJavaConversion(JPMatch& match) override;
 	void getConversionInfo(JPConversionInfo &info) override;

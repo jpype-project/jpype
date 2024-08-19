@@ -17,8 +17,7 @@
 #include "jp_platform.h"
 
 JPPlatformAdapter::~JPPlatformAdapter()
-{
-}
+= default;
 
 #ifdef WIN32
 #include <windows.h>
@@ -65,7 +64,13 @@ public:
 	virtual void loadLibrary(const char* path) override
 	{
 		JP_TRACE_IN("Win32PlatformAdapter::loadLibrary");
-		jvmLibrary = LoadLibrary(path);
+		wchar_t *wpath = Py_DecodeLocale(path, NULL);
+		if (wpath == NULL)
+		{
+			JP_RAISE(PyExc_SystemError, "Unable to get JVM path with locale.");
+		}
+		jvmLibrary = LoadLibraryW(wpath);
+		PyMem_RawFree(wpath);
 		if (jvmLibrary == NULL)
 		{
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
@@ -112,7 +117,7 @@ private:
 
 public:
 
-	virtual void loadLibrary(const char* path) override
+	void loadLibrary(const char* path) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::loadLibrary");
 #if defined(_HPUX) && !defined(_IA64)
@@ -123,7 +128,7 @@ public:
 		jvmLibrary = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
 #endif // HPUX
 		// GCOVR_EXCL_START
-		if (jvmLibrary == NULL)
+		if (jvmLibrary == nullptr)
 		{
 			JP_TRACE("null library");
 			JP_TRACE("errno", errno);
@@ -137,27 +142,27 @@ public:
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
-	virtual void unloadLibrary() override
+	void unloadLibrary() override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::unloadLibrary");
 		int r = dlclose(jvmLibrary);
 		// GCOVR_EXCL_START
 		if (r != 0) // error
 		{
-			cerr << dlerror() << endl;
+			std::cerr << dlerror() << std::endl;
 		}
 		// GCOVR_EXCL_STOP
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
 
-	virtual void* getSymbol(const char* name) override
+	void* getSymbol(const char* name) override
 	{
 		JP_TRACE_IN("LinuxPlatformAdapter::getSymbol");
 		JP_TRACE("Load", name);
 		void* res = dlsym(jvmLibrary, name);
 		JP_TRACE("Res", res);
 		// GCOVR_EXCL_START
-		if (res == NULL)
+		if (res == nullptr)
 		{
 			JP_TRACE("errno", errno);
 			std::stringstream msg;
@@ -180,7 +185,7 @@ PLATFORM_ADAPTER* adapter;
 
 JPPlatformAdapter* JPPlatformAdapter::getAdapter()
 {
-	if (adapter == NULL)
+	if (adapter == nullptr)
 		adapter = new PLATFORM_ADAPTER();
 	return adapter;
 }

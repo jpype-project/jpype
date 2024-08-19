@@ -54,24 +54,24 @@ class JPProxyDirect : public JPProxy
 {
 public:
 	JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
-	virtual ~JPProxyDirect();
-	virtual JPPyObject getCallable(const string& cname) override;
+	~JPProxyDirect() override;
+	JPPyObject getCallable(const string& cname) override;
 } ;
 
 class JPProxyIndirect : public JPProxy
 {
 public:
 	JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
-	virtual ~JPProxyIndirect();
-	virtual JPPyObject getCallable(const string& cname) override;
+	~JPProxyIndirect() override;
+	JPPyObject getCallable(const string& cname) override;
 } ;
 
 class JPProxyFunctional : public JPProxy
 {
 public:
 	JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClassList& intf);
-	virtual ~JPProxyFunctional();
-	virtual JPPyObject getCallable(const string& cname) override;
+	~JPProxyFunctional() override;
+	JPPyObject getCallable(const string& cname) override;
 private:
 	JPFunctional *m_Functional;
 } ;
@@ -87,10 +87,10 @@ public:
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	virtual~ JPProxyType();
+	~ JPProxyType() override;
 
 public: // JPClass implementation
-	virtual JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 private:
 	JPClassRef m_ProxyClass;
