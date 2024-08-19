@@ -19,6 +19,11 @@ Latest Changes:
     For editable installs, ``python setup.py --enable-tracing develop``
     must now be done with ``python setup.py develop --enable-tracing``.
 
+  - Update for tests for numpy 2.0.
+
+  - Support of np.float16 conversion with arrays.
+
+
 - **1.5.0 - 2023-04-03**
 
   - Support for Python 3.12

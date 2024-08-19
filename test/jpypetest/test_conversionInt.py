@@ -73,10 +73,10 @@ class ConversionIntTestCase(common.JPypeTestCase):
             self.Test.callInt(float(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
-    def testIntFromNPFloat(self):
+    def testIntFromNPFloat16(self):
         import numpy as np
         with self.assertRaises(TypeError):
-            self.Test.callInt(np.float_(2))
+            self.Test.callInt(np.float16(2))
 
     @common.unittest.skipUnless(haveNumpy(), "numpy not available")
     def testIntFromNPFloat32(self):
