@@ -23,10 +23,7 @@ import sys
 __all__ = ['getDefaultJVMPath',
            'JVMNotFoundException', 'JVMNotSupportedException']
 
-try:
-    import winreg
-except ImportError:
-    winreg = None   # type: ignore[assignment]
+
 
 
 class JVMNotFoundException(ValueError):
@@ -392,8 +389,11 @@ class WindowsJVMFinder(JVMFinder):
 
         :return: The path found in the registry, or None
         """
-        if not winreg:
+        try:
+            import winreg
+        except ImportError:
             return None
+
         for location in reg_keys:
             try:
                 jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, location)
