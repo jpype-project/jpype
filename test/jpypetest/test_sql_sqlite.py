@@ -21,8 +21,7 @@ db_name = "jdbc:sqlite::memory:"
 
 
 if isJVMStarted():
-    java_version = str(jpype.java.lang.System.getProperty("java.version"))
-    java_version = java_version.split(".")
+    java_version = str(jpype.java.lang.System.getProperty("java.version")).split(".")
 
     if java_version[0] == "8":# and sys.platform == "win":
        raise common.unittest.SkipTest("sqlite unsupported on this config.")
