@@ -382,7 +382,8 @@ class WindowsJVMFinder(JVMFinder):
     def check(self, jvm):
         _checkJVMArch(jvm)
 
-    def _get_from_registry(self):
+    @staticmethod
+    def _get_from_registry():
         """
         Retrieves the path to the default Java installation stored in the
         Windows registry

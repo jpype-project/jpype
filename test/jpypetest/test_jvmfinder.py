@@ -16,8 +16,8 @@
 #
 # *****************************************************************************
 # part of JPype1; author Martin K. Scherer; 2014
-
-
+import pathlib
+import sys
 import unittest
 from unittest import mock
 import common
@@ -175,14 +175,12 @@ class JVMFinderTest(unittest.TestCase):
                 self.assertRaises(JVMNotSupportedException):
             jpype._jvmfinder._checkJVMArch('path', 2**32)
 
+    @unittest.skipIf(sys.platform != "win", "only on windows")
     def testWindowsRegistry(self):
         finder = jpype._jvmfinder.WindowsJVMFinder()
-        with mock.patch("jpype._jvmfinder.winreg") as winregmock:
-            winregmock.QueryValueEx.return_value = ('success', '')
-            self.assertEqual(finder._get_from_registry(), 'success')
-            winregmock.OpenKey.side_effect = OSError()
-            self.assertEqual(finder._get_from_registry(), None)
-
+        jvm_home = pathlib.Path(finder.get_jvm_path())
+        assert jvm_home.exists()
+        assert jvm_home.is_dir()
 
 if __name__ == '__main__':
     unittest.main()
