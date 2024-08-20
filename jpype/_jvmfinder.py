@@ -21,9 +21,9 @@ import os
 import sys
 
 __all__ = ['getDefaultJVMPath',
-           'JVMNotFoundException', 'JVMNotSupportedException']
-
-
+           'get_default_jvm_path',
+           'JVMNotFoundException',
+           'JVMNotSupportedException']
 
 
 class JVMNotFoundException(ValueError):
@@ -47,7 +47,7 @@ class JVMNotSupportedException(ValueError):
     """
 
 
-def getDefaultJVMPath():
+def getDefaultJVMPath() -> str:
     """
     Retrieves the path to the default or first found JVM library
 
@@ -72,21 +72,17 @@ def getDefaultJVMPath():
 get_default_jvm_path = getDefaultJVMPath
 
 
-class JVMFinder(object):
+class JVMFinder:
     """
     JVM library finder base class
     """
+    # Library file name
+    _libfile = "libjvm.so"
+
+    # Predefined locations
+    _locations = ("/usr/lib/jvm", "/usr/java")
 
     def __init__(self):
-        """
-        Sets up members
-        """
-        # Library file name
-        self._libfile = "libjvm.so"
-
-        # Predefined locations
-        self._locations = ("/usr/lib/jvm", "/usr/java")
-
         # Search methods
         self._methods = (self._get_from_java_home,
                          self._get_from_known_locations)
@@ -128,7 +124,8 @@ class JVMFinder(object):
                                    "environment variable is pointing "
                                    "to correct installation.")
 
-    def find_possible_homes(self, parents):
+    @staticmethod
+    def find_possible_homes(parents):
         """
         Generator that looks for the first-level children folders that could be
         Java installations, according to their name
@@ -251,21 +248,17 @@ class LinuxJVMFinder(JVMFinder):
     Linux JVM library finder class
     """
 
+    # Java bin file
+    _java = "/usr/bin/java"
+
+    # Library file name
+    _libfile = "libjvm.so"
+
+    # Predefined locations
+    _locations = ("/usr/lib/jvm", "/usr/java", "/opt/sun")
+
     def __init__(self):
-        """
-        Sets up members
-        """
-        # Call the parent constructor
-        JVMFinder.__init__(self)
-
-        # Java bin file
-        self._java = "/usr/bin/java"
-
-        # Library file name
-        self._libfile = "libjvm.so"
-
-        # Predefined locations
-        self._locations = ("/usr/lib/jvm", "/usr/java", "/opt/sun")
+        super().__init__()
 
         # Search methods
         self._methods = (self._get_from_java_home,
@@ -294,22 +287,19 @@ class DarwinJVMFinder(LinuxJVMFinder):
     """
     Mac OS X JVM library finder class
     """
+    # Library file name
+    _libfile = "libjli.dylib"
+    # Predefined locations
+    _locations = ('/Library/Java/JavaVirtualMachines',)
 
     def __init__(self):
         """
         Sets up members
         """
-        # Call the parent constructor
-        LinuxJVMFinder.__init__(self)
-
-        # Library file name
-        self._libfile = "libjli.dylib"
+        super().__init__()
 
         self._methods = list(self._methods)
         self._methods.append(self._javahome_binary)
-
-        # Predefined locations
-        self._locations = ('/Library/Java/JavaVirtualMachines',)
 
     def _javahome_binary(self):
         """
@@ -321,7 +311,8 @@ class DarwinJVMFinder(LinuxJVMFinder):
         from packaging.version import Version
 
         current = Version(platform.mac_ver()[0][:4])
-        if current >= Version('10.6') and current < Version('10.9'):
+        # TODO: check if the java_home tool is still available and fix the version boundaries.
+        if Version('10.6') <= current: #< Version('10.9'):
             return subprocess.check_output(
                 ['/usr/libexec/java_home']).strip()
 
@@ -356,25 +347,18 @@ def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
         raise JVMNotSupportedException("Unable to determine JVM Type")
 
 
-reg_keys = [r"SOFTWARE\JavaSoft\Java Runtime Environment",
-            r"SOFTWARE\JavaSoft\JRE",
-            ]
-
-
 class WindowsJVMFinder(JVMFinder):
     """
     Windows JVM library finder class
     """
+    reg_keys = [r"SOFTWARE\JavaSoft\Java Runtime Environment",
+                r"SOFTWARE\JavaSoft\JRE",
+                ]
+    # Library file name
+    _libfile = "jvm.dll"
 
     def __init__(self):
-        """
-        Sets up members
-        """
-        # Call the parent constructor
-        JVMFinder.__init__(self)
-
-        # Library file name
-        self._libfile = "jvm.dll"
+        super().__init__()
 
         # Search methods
         self._methods = (self._get_from_java_home, self._get_from_registry)
@@ -395,7 +379,7 @@ class WindowsJVMFinder(JVMFinder):
         except ImportError:
             return None
 
-        for location in reg_keys:
+        for location in WindowsJVMFinder.reg_keys:
             try:
                 jreKey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, location)
                 cv = winreg.QueryValueEx(jreKey, "CurrentVersion")
