@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import pytest
+
 import common
 
 
@@ -43,3 +44,13 @@ def common_opts(request):
     request.cls._convertStrings = request.config.getoption("--convertStrings")
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def java_version(request):
+    import subprocess, sys
+    java_version = subprocess.check_output([sys.executable, "-c",
+                          "import jpype; jpype.startJVM(); print(jpype.java.lang.System.getProperty('java.version'))"])
+    print("java_version", java_version)
+    request._java_version = java_version[0]
+    yield java_version
