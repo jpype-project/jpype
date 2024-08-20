@@ -1,15 +1,15 @@
 # This file is Public Domain and may be used without restrictions,
 # because nobody should have to waste their lives typing this again.
-import jpype
-from jpype.types import *
-from jpype import java
-import jpype.dbapi2 as dbapi2
-import common
 import datetime
 import decimal
+import sys
 import threading
 
-java = jpype.java
+import common
+import jpype
+import jpype.dbapi2 as dbapi2
+from jpype import java, isJVMStarted
+from jpype.types import *
 
 try:
     import zlib
@@ -20,11 +20,21 @@ except ImportError:
 db_name = "jdbc:sqlite::memory:"
 
 
+if isJVMStarted():
+    java_version = str(jpype.java.lang.System.getProperty("java.version"))
+    java_version = java_version.split(".")
+
+    if java_version[0] == "8":# and sys.platform == "win":
+       raise common.unittest.SkipTest("sqlite unsupported on this config.")
+
+
 class ConnectTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         if common.fast:
             raise common.unittest.SkipTest("fast")
+
+
 
     def testConnect(self):
         cx = dbapi2.connect(db_name)
