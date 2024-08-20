@@ -2,7 +2,6 @@
 # because nobody should have to waste their lives typing this again.
 import datetime
 import decimal
-import sys
 import threading
 
 import common
