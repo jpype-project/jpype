@@ -2,8 +2,8 @@ Authors
 -------
 
 The original author: Steve Menard
-
-Current Maintainer: Luis Nell
+Current Lead Developer: Karl Einar Nelson
+Current Maintainer: Martin K. Scherer
 
 
 Huge thanks to these CONTRIBUTORS:
