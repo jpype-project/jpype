@@ -21,7 +21,6 @@ import _jpype
 import jpype
 import logging
 from os import path
-import sys
 import unittest  # Extensively used as common.unittest.
 
 CLASSPATH = None
@@ -143,7 +142,3 @@ class JPypeTestCase(unittest.TestCase):
 
     def useEqualityFunc(self, func):
         return UseFunc(self, func, 'assertEqual')
-
-
-if __name__ == '__main__':
-    unittest.main()
