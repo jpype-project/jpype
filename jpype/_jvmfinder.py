@@ -25,9 +25,11 @@ __all__ = ['getDefaultJVMPath',
            'JVMNotFoundException',
            'JVMNotSupportedException']
 
+from typing import Sequence
+
 
 class JVMNotFoundException(ValueError):
-    """ Exception raised when no JVM was found in the search path.
+    """Exception raised when no JVM was found in the search path.
 
     This exception is raised when the all of the places searched did not
     contain a JVM. The locations searched depend on the machine architecture.
@@ -37,7 +39,7 @@ class JVMNotFoundException(ValueError):
 
 
 class JVMNotSupportedException(ValueError):
-    """ Exception raised when the JVM is not supported.
+    """Exception raised when the JVM is not supported.
 
     This exception is raised after a search found a valid Java home directory
     was found, but the JVM shared library found is not supported. Typically
@@ -48,8 +50,7 @@ class JVMNotSupportedException(ValueError):
 
 
 def getDefaultJVMPath() -> str:
-    """
-    Retrieves the path to the default or first found JVM library
+    """Retrieves the path to the default or first found JVM library.
 
     Returns:
       The path to the JVM shared library file
@@ -73,14 +74,12 @@ get_default_jvm_path = getDefaultJVMPath
 
 
 class JVMFinder:
-    """
-    JVM library finder base class
-    """
+    """JVM library finder base class."""
     # Library file name
-    _libfile = "libjvm.so"
+    _libfile: str = "libjvm.so"
 
     # Predefined locations
-    _locations = ("/usr/lib/jvm", "/usr/java")
+    _locations: Sequence = ("/usr/lib/jvm", "/usr/java")
 
     def __init__(self):
         # Search methods
@@ -88,12 +87,10 @@ class JVMFinder:
                          self._get_from_known_locations)
 
     def find_libjvm(self, java_home):
-        """
-        Recursively looks for the given file
+        """Recursively looks for the given file.
 
         Parameters:
             java_home(str): A Java home folder
-            filename(str): filename: Name of the file to find
 
         Returns:
             The first found file path, or None
@@ -244,9 +241,7 @@ class JVMFinder:
 
 
 class LinuxJVMFinder(JVMFinder):
-    """
-    Linux JVM library finder class
-    """
+    """Linux JVM library finder class."""
 
     # Java bin file
     _java = "/usr/bin/java"
